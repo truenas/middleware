@@ -77,7 +77,13 @@ class PluginsForm(ModelForm):
 
 
 class PBIUploadForm(Form):
-    pbifile = FileField(label=_("PBI file to be installed"), required=True)
+    pbifile = FileField(
+        label=_("PBI file to be installed"),
+        help_text=_("Click here to find out what PBI's are!" \
+            "<a href='http://www.pcbsd.org/en/package-management/' " \
+            "onclick='window.open(this.href);return false;'>"), 
+        required=True
+        )
     pjail = forms.ChoiceField(
         label=_("Plugin Jail"),
         help_text=_("The plugin jail that the PBI is to be installed in."),

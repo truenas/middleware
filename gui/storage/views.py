@@ -44,7 +44,9 @@ from freenasUI.common import humanize_size
 from freenasUI.common.system import is_mounted
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
@@ -173,22 +175,28 @@ def volumemanager(request):
     bysize = OrderedDict(sorted(bysize.iteritems(), reverse=True))
 
     qs = models.Volume.objects.filter(vol_fstype='ZFS')
+    swap = Advanced.objects.latest('id').adv_swapondrive
 
     return render(request, "storage/volumemanager.html", {
         'disks': json.dumps(bysize),
         'dedup_warning': forms.DEDUP_WARNING,
+        'swap_size': swap * 1024 * 1024 * 1024,
         'extend': json.dumps(
             [{'value': '', 'label': '-----'}] +
-            [{'label': x.vol_name, 'value': x.vol_name} for x in qs]
+            [{
+                'label': x.vol_name,
+                'value': x.vol_name,
+                'enc': x.vol_encrypt > 0
+            } for x in qs]
         ),
     })
 
 
-def wizard(request):
+def volumemanager_ufs(request):
 
     if request.method == "POST":
 
-        form = forms.VolumeWizardForm(request.POST)
+        form = forms.VolumeManagerUFSForm(request.POST)
         if form.is_valid():
             form.done(request)
             return JsonResp(request, message=_("Volume successfully added."))
@@ -203,7 +211,7 @@ def wizard(request):
                 for i in request.POST.keys() if zpoolfields.match(i)]
 
     else:
-        form = forms.VolumeWizardForm()
+        form = forms.VolumeManagerUFSForm()
         disks = []
         zfsextra = None
     return render(request, 'storage/wizard.html', {
@@ -215,12 +223,15 @@ def wizard(request):
     })
 
 
-def wizard_progress(request):
+def volumemanager_progress(request):
     from freenasUI.middleware import encryption
-    return HttpResponse(
-        'new Object({state: "uploading", received: %s, size: 100});' % (
-            int(encryption.PROGRESS),
-        ))
+    if encryption.PROGRESS > 0:
+        return HttpResponse(
+            'new Object({state: "uploading", received: %s, size: 100});' % (
+                int(encryption.PROGRESS),
+            ))
+    else:
+        return HttpResponse('new Object({state: "starting"})')
 
 
 def volimport(request):
@@ -273,6 +284,9 @@ def dataset_create(request, fs):
             dedup = cleaned_data.get('dataset_dedup')
             if dedup != 'off':
                 props['dedup'] = dedup.__str__()
+            recordsize = cleaned_data.get('dataset_recordsize')
+            if recordsize:
+                props['recordsize'] = recordsize
             errno, errmsg = notifier().create_zfs_dataset(
                 path=str(dataset_name),
                 props=props)
@@ -282,6 +296,9 @@ def dataset_create(request, fs):
                     message=_("Dataset successfully added."))
             else:
                 dataset_form.set_error(errmsg)
+                return JsonResp(request, form=dataset_form)
+        else:
+            return JsonResp(request, form=dataset_form)
     else:
         dataset_form = forms.ZFSDataset_CreateForm(initial=defaults, fs=fs)
     return render(request, 'storage/datasets.html', {
@@ -334,6 +351,9 @@ def dataset_edit(request, dataset_name):
                     dataset_form._errors[field] = dataset_form.error_class([
                         err,
                     ])
+                return JsonResp(request, form=dataset_form)
+        else:
+            return JsonResp(request, form=dataset_form)
     else:
         dataset_form = forms.ZFSDataset_EditForm(fs=dataset_name)
     return render(request, 'storage/dataset_edit.html', {
@@ -691,7 +711,12 @@ def volume_detach(request, vid):
 
 def zpool_scrub(request, vid):
     volume = models.Volume.objects.get(pk=vid)
-    pool = notifier().zpool_parse(volume.vol_name)
+    try:
+        pool = notifier().zpool_parse(volume.vol_name)
+    except:
+        raise MiddlewareError(
+            _('Pool output could not be parsed. Is the pool imported?')
+        )
     if request.method == "POST":
         if request.POST.get("scrub") == 'IN_PROGRESS':
             notifier().zfs_scrub(str(volume.vol_name), stop=True)
@@ -733,6 +758,7 @@ def zpool_disk_replace(request, vname, label):
     return render(request, 'storage/zpool_disk_replace.html', {
         'form': form,
         'vname': vname,
+        'encrypted': volume.vol_encrypt > 0,
         'label': label,
         'disk': disk,
     })
@@ -893,8 +919,10 @@ def volume_unlock(request, object_id):
             notifier().start("geli")
             zimport = notifier().zfs_import(
                 volume.vol_name,
-                id=volume.vol_guid)
+                id=volume.vol_guid
+            )
             if zimport and volume.is_decrypted:
+                notifier().sync_encrypted(volume=volume)
                 return JsonResp(
                     request,
                     message=_("Volume unlocked"))
@@ -902,8 +930,7 @@ def volume_unlock(request, object_id):
                 return JsonResp(
                     request,
                     message=_("Volume failed unlocked"))
-        return render(request, "storage/unlock.html", {
-        })
+        return render(request, "storage/unlock.html")
 
     if request.method == "POST":
         form = forms.UnlockPassphraseForm(request.POST, request.FILES)

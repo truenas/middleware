@@ -1209,3 +1209,106 @@ label[for=stopmsgrefresh] {
 .clear {
     clear: both;
 }
+
+table.layoutTable {
+    padding-left: 0;
+}
+
+table.layoutTable > tr {
+    padding-top: 3px;
+}
+
+table.layoutTable > tr > td {
+    border-top: 1px solid #ccc;
+    margin-top: 2px;
+    padding-top: 2px;
+}
+
+table.layoutTable > tr:first-child > td {
+    border-top: 0
+}
+
+.groupDisksTable {
+    color: #cfcfcf;
+    padding: 0;
+    table-layout: fixed;
+    border-collapse:collapse;
+    white-space:nowrap;
+}
+
+.groupDisksTable th {
+    background-color: #eaeaea;
+    padding: 0;
+    min-width: 18px;
+    white-space:nowrap;
+    border-top: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+}
+
+.groupDisksTable th.first {
+    width: 5px;
+    min-width: 5px;
+}
+
+.groupDisksTable th:last-child {
+    border-right: 1px solid #ddd;
+}
+
+.groupDisksTable th.active {
+    color: #000;
+    background-color: #ccc;
+    border-left: 1px solid #aaa;
+}
+
+.groupDisksTable th.optimal {
+    color: #000;
+    background-color: #70D0FF;
+    border-left: 1px solid #aaa;
+}
+
+.groupDisksTable th.nonoptimal {
+    color: #000;
+    background-color: #DF7F7F;
+    border-left: 1px solid #aaa;
+}
+
+.groupDisksTable td {
+    background-color: #efefef;
+    padding: 0;
+    border-left: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    height: 26px;
+}
+
+.groupDisksTable td.active {
+    color: #000;
+    background-color: #ddd;
+    border-left: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+}
+
+.groupDisksTable td.optimal {
+    color: #000;
+    background-color: #B5E7FF;
+    border-left: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+}
+
+.groupDisksTable td.nonoptimal {
+    color: #000;
+    background-color: #DCC3C3;
+    border-left: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+}
+
+.groupDisksTable td:last-child {
+    border-right: 1px solid #ddd;
+}
+
+.dojoxResizeHandle {
+    background-image: url('/static/images/ui/resizer.png');
+    width: 20px;
+    height: 20px;
+    bottom: -10px;
+    right: -10px;
+}

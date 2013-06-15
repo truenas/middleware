@@ -304,12 +304,12 @@ ZFS_AtimeChoices = (
 ZFS_CompressionChoices = (
         ('inherit', _('Inherit')),
         ('off',     _('Off')),
-        ('lzjb',    _('lzjb (recommended)')),
+        ('lz4',     _('lz4 (recommended)')),
         ('gzip',    _('gzip (default level, 6)')),
         ('gzip-1',  _('gzip (fastest)')),
         ('gzip-9',  _('gzip (maximum, slow)')),
-        ('zle',  _('zle (runs of zeros)')),
-        ('lz4',  _('lz4 (high-performance replacement for lzjb)')),
+        ('zle',     _('zle (runs of zeros)')),
+        ('lzjb',    _('lzjb (legacy, not recommended)')),
         )
 
 

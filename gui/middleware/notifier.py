@@ -34,7 +34,7 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 import ctypes
 import errno
 import glob
@@ -855,20 +855,8 @@ class notifier:
             return c, conn
         return c
 
-    def __gpt_labeldisk(self, type, devname, test4k=False, swapsize=2):
+    def __gpt_labeldisk(self, type, devname, swapsize=2):
         """Label the whole disk with GPT under the desired label and type"""
-        if test4k:
-            # Taste the disk to know whether it's 4K formatted.
-            # requires > 8.1-STABLE after r213467
-            ret_4kstripe = self.__system_nolog("geom disk list %s "
-                                               "| grep 'Stripesize: 4096'" % (devname, ))
-            ret_512bsector = self.__system_nolog("geom disk list %s "
-                                                 "| grep 'Sectorsize: 512'" % (devname, ))
-            # Make sure that the partition is 4k-aligned, if the disk reports 512byte sector
-            # while using 4k stripe, use an offset of 64.
-            need4khack = (ret_4kstripe == 0) and (ret_512bsector == 0)
-        else:
-            need4khack = False
 
         # Calculate swap size.
         swapgb = swapsize
@@ -916,8 +904,6 @@ class notifier:
         # Invalidating confxml is required or changes wont be seen
         self.__confxml = None
         self.sync_disk(devname)
-
-        return need4khack
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
@@ -969,6 +955,18 @@ class notifier:
         encdiskobj.save()
 
         return ("/dev/%s.eli" % devname)
+
+    def geli_setkey(self, dev, key, passphrase=None, slot=0):
+        command = ["geli", "setkey", "-n", str(slot)]
+        if passphrase:
+            command.extend(["-J", passphrase])
+        else:
+            command.append("-P")
+        command.extend(["-K", key, dev])
+        proc = self.__pipeopen(' '.join(command))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
 
     def geli_passphrase(self, volume, passphrase, rmrecovery=False):
         """
@@ -1216,38 +1214,17 @@ class notifier:
                         providers.append((part, part))
         return providers
 
-    def __prepare_zfs_vdev(self, disks, swapsize, force4khack, encrypt, volume):
+    def __prepare_zfs_vdev(self, disks, swapsize, encrypt, volume):
         vdevs = []
-        gnop_devs = []
-        if force4khack is None:
-            test4k = False
-            want4khack = False
-        else:
-            test4k = not force4khack
-            want4khack = force4khack
-        if encrypt:
-            test4k = False
-            force4khack = False
-            want4khack = False
-        first = True
         for disk in disks:
-            rv = self.__gpt_labeldisk(type = "freebsd-zfs",
-                                      devname = disk,
-                                      test4k = (first and test4k),
-                                      swapsize=swapsize)
-            first = False
-            if test4k:
-                test4k = False
-                want4khack = rv
+            self.__gpt_labeldisk(type = "freebsd-zfs",
+                                 devname = disk,
+                                 swapsize=swapsize)
 
         doc = self.__geom_confxml()
         for disk in disks:
             devname = self.part_type_from_device('zfs', disk)
-            if want4khack:
-                self.__system("gnop create -S 4096 /dev/%s" % devname)
-                devname = '/dev/%s.nop' % devname
-                gnop_devs.append(devname)
-            elif encrypt:
+            if encrypt:
                 uuid = doc.xpathEval("//class[name = 'PART']"
                     "/geom//provider[name = '%s']/config/rawuuid" % (devname, )
                     )
@@ -1267,19 +1244,16 @@ class notifier:
                     devname = "/dev/gptid/%s" % uuid[0].content
             vdevs.append(devname)
 
-        return vdevs, gnop_devs, want4khack
+        return vdevs
 
-    def __create_zfs_volume(self, volume, swapsize, groups, force4khack=False, path=None, init_rand=False):
+    def __create_zfs_volume(self, volume, swapsize, groups, path=None, init_rand=False):
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_name = str(volume.vol_name)
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
         # Grab all disk groups' id matching the volume ID
         self.__system("swapoff -a")
-        gnop_devs = []
         device_list = []
-
-        want4khack = force4khack
 
         for vgrp in groups.values():
             vgrp_type = vgrp['type']
@@ -1290,10 +1264,9 @@ class notifier:
             else:
                 vdev_swapsize = swapsize
             # Prepare disks nominated in this group
-            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, want4khack, encrypt, volume)
+            vdevs = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, encrypt, volume)
             z_vdev += " ".join([''] + vdevs)
             device_list += vdevs
-            gnop_devs += gnops
 
         # Initialize devices with random data
         if init_rand:
@@ -1327,21 +1300,19 @@ class notifier:
 
         self.zfs_inherit_option(z_name, 'mountpoint')
 
-        # If we have 4k hack then restore system to whatever it should be
-        if want4khack:
-            self.__system("zpool export %s" % (z_name))
-            for gnop in gnop_devs:
-                self.__system("gnop destroy %s" % gnop)
-            self.__system("zpool import -R /mnt %s" % (z_name))
-
         self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
         #TODO: geli detach -l
 
-    def zfs_volume_attach_group(self, volume, group, force4khack=False, encrypt=False):
+    def zfs_volume_attach_group(self, volume, group, encrypt=False):
         """Attach a disk group to a zfs volume"""
-        c = self.__open_db()
-        c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
-        swapsize=c.fetchone()[0]
+
+        vgrp_type = group['type']
+        if vgrp_type in ('log', 'cache'):
+            swapsize = 0
+        else:
+            c = self.__open_db()
+            c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
+            swapsize = c.fetchone()[0]
 
         assert volume.vol_fstype == 'ZFS'
         z_name = volume.vol_name
@@ -1350,12 +1321,11 @@ class notifier:
 
         # FIXME swapoff -a is overkill
         self.__system("swapoff -a")
-        vgrp_type = group['type']
         if vgrp_type != 'stripe':
             z_vdev += " " + vgrp_type
 
         # Prepare disks nominated in this group
-        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, force4khack, encrypt, volume)[0]
+        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, encrypt, volume)
         z_vdev += " ".join([''] + vdevs)
 
         # Finally, attach new groups to the zpool.
@@ -1563,7 +1533,7 @@ class notifier:
 
         assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
         if volume.vol_fstype == 'ZFS':
-            self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('force4khack', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
+            self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
         elif volume.vol_fstype == 'UFS':
             self.__create_ufs_volume(volume, swapsize, kwargs.pop('groups')['root'])
 
@@ -1654,6 +1624,7 @@ class notifier:
         return ret
 
     def zfs_offline_disk(self, volume, label):
+        from freenasUI.storage.models import EncryptedDisk
 
         assert volume.vol_fstype == 'ZFS'
 
@@ -1671,6 +1642,12 @@ class notifier:
         if p1.returncode != 0:
             error = ", ".join(stderr.split('\n'))
             raise MiddlewareError('Disk offline failed: "%s"' % error)
+        if label.endswith(".eli"):
+            self.__system("/sbin/geli detach /dev/%s" % label)
+            EncryptedDisk.objects.filter(
+                encrypted_volume=volume,
+                encrypted_provider=label[:-4]
+            ).delete()
 
     def zfs_detach_disk(self, volume, label):
         """Detach a disk from zpool
@@ -3321,6 +3298,12 @@ class notifier:
                     "-d",
                     "hpt,%d/%d" % (info["controller"] + 1, channel)
                     ]
+            elif info.get("drv").startswith("arcmsr"):
+                args = [
+                    "/dev/%s%d" % (info["drv"], info["controller"]),
+                    "-d",
+                    "areca,%d" % (info["lun"] + 1 + (info["channel"] * 8), )
+                    ]
             elif info.get("drv").startswith("hpt"):
                 args = [
                     "/dev/%s" % info["drv"],
@@ -3527,8 +3510,8 @@ class notifier:
         self.__camcontrol = {}
 
         re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S|re.M)
-        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S|re.M)
-        drv, cid, tgt, dev, devtmp = (None, ) * 5
+        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S|re.M)
+        drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
 
         proc = self.__pipeopen("camcontrol devlist -v")
         for line in proc.communicate()[0].splitlines():
@@ -3543,6 +3526,7 @@ class notifier:
                 if not reg:
                     continue
                 tgt = reg.group("tgt")
+                lun = reg.group("lun")
                 dev = reg.group("dv1")
                 devtmp = reg.group("dv2")
                 if dev.startswith("pass"):
@@ -3551,6 +3535,7 @@ class notifier:
                     'drv': drv,
                     'controller': int(cid),
                     'channel': int(tgt),
+                    'lun': int(lun)
                     }
         return self.__camcontrol
 
@@ -3571,15 +3556,10 @@ class notifier:
             disk.disk_name = devname
             disk.disk_enabled = True
         else:
-            qs = Disk.objects.filter(disk_name=devname).order_by(
-                'disk_enabled')
-            if qs.exists():
-                disk = qs[0]
-                if qs.count() > 1:
-                    Disk.objects.filter(disk_name=devname).exclude(
-                        id=disk.id).delete()
-            else:
-                disk = Disk()
+            qs = Disk.objects.filter(disk_name=devname).update(
+                disk_enabled=False
+            )
+            disk = Disk()
             disk.disk_name = devname
             disk.disk_identifier = ident
             disk.disk_enabled = True
@@ -3598,16 +3578,10 @@ class notifier:
         for disk in Disk.objects.all():
 
             dskname = self.identifier_to_device(disk.disk_identifier)
-            if not dskname:
-                dskname = disk.disk_name
-                disk.disk_identifier = self.device_to_identifier(dskname)
-                if not disk.disk_identifier:
-                    disk.disk_enabled = False
-                else:
-                    disk.disk_enabled = True
-                    disk.disk_serial = self.serial_from_device(dskname) or ''
-            elif dskname in in_disks:
-                # We are probably dealing with with multipath here
+            if not dskname or dskname in in_disks:
+                # If we cant translate the indentifier to a device, give up
+                # If dskname has already been seen once then we are probably
+                # dealing with with multipath here
                 disk.delete()
                 continue
             else:
@@ -3642,6 +3616,45 @@ class notifier:
                     else:
                         serials.append(d.disk_serial)
                 d.save()
+
+    def sync_encrypted(self, volume=None):
+        """
+        This syncs the EncryptedDisk table with the current state
+        of a volume
+        """
+        from freenasUI.storage.models import EncryptedDisk, Volume
+        if volume is not None:
+            volumes = [volume]
+        else:
+            volumes = Volume.objects.filter(vol_encrypt__gt=0)
+
+        for vol in volumes:
+            """
+            Parse zpool status to get encrypted providers
+            """
+            zpool = self.zpool_parse(vol.vol_name)
+            provs = []
+            for dev in zpool.get_devs():
+                if not dev.name.endswith(".eli"):
+                    continue
+                prov = dev.name[:-4]
+                qs = EncryptedDisk.objects.filter(encrypted_provider=prov)
+                if not qs.exists():
+                    ed = EncryptedDisk()
+                    ed.encrypted_volume = vol
+                    ed.encrypted_provider = dev[:-4]
+                    disk = Disk.objects.filter(disk_name=dev.disk, disk_enabled=True)
+                    if disk.exists():
+                        disk = disk[0]
+                    else:
+                        log.error("Could not find Disk entry for %s", dev.disk)
+                        disk = None
+                    ed.encrypted_disk = None
+                    ed.save()
+                provs.append(prov)
+            for ed in EncryptedDisk.objects.filter(encrypted_volume=vol):
+                if ed.encrypted_provider not in provs:
+                    ed.delete()
 
     def geom_disks_dump(self, volume):
         """
@@ -3712,10 +3725,10 @@ class notifier:
             True in case the label succeeded and False otherwise
         """
         p1 = subprocess.Popen(["/sbin/gmultipath", "label", name] + consumers, stdout=subprocess.PIPE)
-        if p1.wait() != 0:
-            return False
         # We need to invalidate confxml cache
         self.__confxml = None
+        if p1.wait() != 0:
+            return False
         return True
 
     def multipath_next(self):
@@ -3770,24 +3783,22 @@ class notifier:
             reserved.extend(vol.get_disks())
 
         disks = []
-        serials = {}
+        serials = defaultdict(list)
         RE_CD = re.compile('^cd[0-9]')
         for geom in doc.xpathEval("//class[name = 'DISK']/geom"):
             name = geom.xpathEval("./name")[0].content
             if RE_CD.match(name) or name in reserved or name in mp_disks:
                 continue
             serial = self.serial_from_device(name)
+            size = geom.xpathEval("./provider/mediasize")[0].content
             if not serial:
                 disks.append(name)
             else:
-                if not serials.has_key(serial):
-                    serials[serial] = [name]
-                else:
-                    serials[serial].append(name)
+                serials[(serial, size)].append(name)
 
         disks = sorted(disks)
 
-        for serial, disks in serials.items():
+        for disks in serials.values():
             if not len(disks) > 1:
                 continue
             name = self.multipath_next()
@@ -3874,6 +3885,18 @@ class notifier:
         device_blacklist_re = re.compile('a?cd[0-9]+')
 
         return filter(lambda x: not device_blacklist_re.match(x) and x not in blacklist_devs, disks)
+
+    def retaste_disks(self):
+        """
+        Retaste disks for GEOM metadata
+
+        This will not work if the device is already open
+
+        It is useful in multipath situations, for example.
+        """
+        disks = self.__get_disks()
+        for disk in disks:
+            open("/dev/%s" % disk, 'w').close()
 
     def gmirror_status(self, name):
         """

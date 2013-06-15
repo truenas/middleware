@@ -1,0 +1,20 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+{% block post_form %}
+<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+me = this;
+require(["dijit/registry"], function(registry) {
+  doSubmit({
+    form: me,
+    event: e,
+    url: '{{ request.path }}{% if inline %}?inline=true{% endif %}',
+    onComplete: function(data) {
+      if(data.error) return;
+      //FIXME: better way to get top dijit tab
+      var tab = me.containerNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+      tab = registry.getEnclosingWidget(tab);
+      tab.refresh();
+    }
+  });
+});
+</script>
+{% endblock %}

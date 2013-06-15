@@ -60,7 +60,7 @@ class UrlsTest(TestCase):
         response = self.client.get(reverse('storage_dataset'))
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.get(reverse('storage_wizard'))
+        response = self.client.get(reverse('storage_volumemanager'))
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('storage_import'))

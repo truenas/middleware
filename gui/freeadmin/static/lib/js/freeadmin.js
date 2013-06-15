@@ -74,6 +74,7 @@ require([
     "dijit/form/NumberTextBox",
     "dijit/form/Select",
     "dijit/form/Textarea",
+    "dijit/form/TextBox",
     "dijit/form/RadioButton",
     "dijit/form/TimeTextBox",
     "dijit/form/ValidationTextBox",
@@ -148,6 +149,7 @@ require([
     NumberTextBox,
     Select,
     Textarea,
+    TextBox,
     RadioButton,
     TimeTextBox,
     ValidationTextBox,
@@ -398,6 +400,140 @@ require([
             }
         }
 
+    }
+
+    jail_networking_save = function() {
+        var ipv4 = registry.byId("id_jail_ipv4");
+        var ipv6 = registry.byId("id_jail_ipv6");
+        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+
+        var jail_ipv4 = ipv4.get("value");
+        var jail_ipv6 = ipv6.get("value");
+        var jail_bridge_ipv4 = bridge_ipv4.get("value");
+        var jail_bridge_ipv6 = bridge_ipv6.get("value");
+
+        var ipv4_save = registry.byId("id_jail_ipv4_save");
+        var ipv6_save = registry.byId("id_jail_ipv6_save");
+        var bridge_ipv4_save = registry.byId("id_jail_bridge_ipv4_save");
+        var bridge_ipv6_save = registry.byId("id_jail_bridge_ipv6_save");
+
+        if (ipv4_save == undefined) {
+            ipv4_save = new TextBox({
+                id: "id_jail_ipv4_save",
+                name: "jail_ipv4_save",
+                type: "hidden"
+            });
+        }
+        if (ipv6_save == undefined) {
+            ipv6_save = new TextBox({
+                id: "id_jail_ipv6_save",
+                name: "jail_ipv6_save",
+                type: "hidden"
+            });
+        }
+        if (bridge_ipv4_save == undefined) {
+            bridge_ipv4_save = new TextBox({
+                id: "id_jail_bridge_ipv4_save",
+                name: "jail_bridge_ipv4_save",
+                type: "hidden"
+            });
+        }
+        if (bridge_ipv6_save == undefined) {
+            bridge_ipv6_save = new TextBox({
+                id: "id_jail_bridge_ipv6_save",
+                name: "jail_bridge_ipv6_save",
+                type: "hidden"
+            });
+        }
+
+        ipv4_save.set("value", jail_ipv4);
+        ipv6_save.set("value", jail_ipv6);
+        bridge_ipv4_save.set("value", jail_bridge_ipv4);
+        bridge_ipv6_save.set("value", jail_bridge_ipv6);
+    }
+
+    jail_networking_restore = function() {
+        var ipv4_save = registry.byId("id_jail_ipv4_save");
+        var ipv6_save = registry.byId("id_jail_ipv6_save");
+        var bridge_ipv4_save = registry.byId("id_jail_bridge_ipv4_save");
+        var bridge_ipv6_save = registry.byId("id_jail_bridge_ipv6_save");
+
+        var ipv4 = registry.byId("id_jail_ipv4");
+        var ipv6 = registry.byId("id_jail_ipv6");
+        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+
+        if (ipv4_save) {
+            ipv4.set("value", ipv4_save.get("value"));
+        }
+        if (ipv6_save) {
+            ipv6.set("value", ipv6_save.get("value"));
+        }
+        if (bridge_ipv4_save) {
+            bridge_ipv4.set("value", bridge_ipv4_save.get("value"));
+        }
+        if (bridge_ipv6_save) {
+            bridge_ipv6.set("value", bridge_ipv6_save.get("value"));
+        }
+    }
+
+    jail_networking_clear = function() {
+        var ipv4 = registry.byId("id_jail_ipv4");
+        var ipv6 = registry.byId("id_jail_ipv6");
+        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+
+        ipv4.set("value", "");
+        ipv6.set("value", "");
+        bridge_ipv4.set("value", "");
+        bridge_ipv6.set("value", "");
+    }
+
+    jail_type_toggle = function() {
+        var type = registry.byId("id_jail_type");
+        var vnet = registry.byId("id_jail_vnet");
+
+        var jail_type = type.get("value");
+        var jail_vnet = vnet.get("value");
+
+        if (jail_vnet == 'on' && jail_type == 'linuxjail') {
+            vnet.set("value", false);
+        }
+    }
+
+    jail_32bit_toggle = function() {
+        var arch = registry.byId("id_jail_32bit");
+        var vnet = registry.byId("id_jail_vnet");
+
+        var jail_32bit = arch.get("value");
+        var jail_vnet = vnet.get("value");
+
+        if (jail_vnet == 'on' && jail_32bit == 'on') {
+            vnet.set("value", false);
+        }
+    }
+
+    jail_vnet_toggle = function() {
+        var type = registry.byId("id_jail_type");
+        var arch = registry.byId("id_jail_32bit");
+        var vnet = registry.byId("id_jail_vnet");
+
+        var jail_type = type.get("value");
+        var jail_32bit = arch.get("value");
+        var jail_vnet = vnet.get("value");
+
+        if ((jail_vnet == 'on' && jail_32bit == 'on') ||
+            (jail_vnet == 'on' && jail_type == 'linuxjail')) {
+            vnet.set("value", false);
+        }
+
+        if (!jail_vnet) {
+            jail_networking_save();
+            jail_networking_clear(); 
+        } else {
+            jail_networking_restore();
+        }
     }
 
     mpAclChange = function(acl) {
@@ -651,6 +787,28 @@ require([
 
     }
 
+    checkJailProgress = function(pbar, pdisplay, pdiv, url, uuid, iter) {
+        if(!iter) iter = 0;
+        xhr.get(url, {
+            headers: {"X-Progress-ID": uuid}
+            }).then(function(data) {
+                var obj = JSON.parse(data);
+                if (obj.size > 0) {
+                    pdisplay.set('value', obj.data);
+                    pdisplay.domNode.scrollTop = pdisplay.domNode.scrollHeight;
+                }
+
+                pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
+                if (obj.state != 'done') {
+                    setTimeout(function() {
+                        checkJailProgress(pbar, pdisplay, pdiv, url, uuid, iter + 1);
+                        }, 1000);
+                }
+
+                pdiv.set("content", obj.eta + " ETA");
+            });
+    };
+
     checkProgressBar = function(pbar, url, uuid, iter) {
         var progress_url;
         if(typeof(url) == 'string') {
@@ -684,8 +842,7 @@ require([
     }
 
     doSubmit = function(attrs) {
-
-        var pbar, uuid, multipart, rnode, newData;
+        var pdiv, pbar, pdisplay, uuid, multipart, rnode, newData;
 
         if(!attrs) {
             attrs = {};
@@ -762,6 +919,20 @@ require([
                 rnode._size();
                 rnode._position();
             }
+            if(pdisplay) {
+                pdisplay.destroy();
+                domStyle.set(attrs.form.domNode, "display", "block");
+                //rnode.layout();
+                rnode._size();
+                rnode._position();
+            }
+            if(pdiv) {
+                pdiv.destroy();
+                domStyle.set(attrs.form.domNode, "display", "block");
+                //rnode.layout();
+                rnode._size();
+                rnode._position();
+            }
             try {
                 json = JSON.parse(data);
                 if(json.error != true && json.error != false) throw "toJson error";
@@ -793,6 +964,36 @@ require([
             rnode._size();
             rnode._position();
 
+        } else if (attrs.progresstype == 'jail') {
+            pbar = dijit.ProgressBar({
+                id: "jail_progress",
+                style: "width:600px",
+                indeterminate: true,
+                });
+
+            pdisplay = new dijit.form.SimpleTextarea({
+                id: "jail_display",
+                title: "progress",
+                rows: "5",
+                cols: "80",
+                style: "width:600px;",
+                readOnly: true
+                });
+
+            pdiv = new ContentPane({
+                id: "jail_eta",
+                border: "1",
+                style: "width:600px;"
+                });
+
+            attrs.form.domNode.parentNode.appendChild(pbar.domNode);
+            attrs.form.domNode.parentNode.appendChild(pdisplay.domNode);
+            attrs.form.domNode.parentNode.appendChild(pdiv.domNode);
+
+            //domStyle.set(attrs.form.domNode, "display", "none");
+
+            rnode._size();
+            rnode._position();
         }
 
         if( multipart ) {
@@ -822,8 +1023,11 @@ require([
 
         if (attrs.progressbar != undefined) {
             checkProgressBar(pbar, attrs.progressbar, uuid);
-        }
 
+        } else if(attrs.progresstype == 'jail' &&
+            attrs.progressurl != undefined) {
+            checkJailProgress(pbar, pdisplay, pdiv, attrs.progressurl, uuid);
+        }
     }
 
     checkNumLog = function(unselected) {
@@ -861,107 +1065,11 @@ require([
     wizardcheckings = function(vol_change, first_load) {
 
         if(!registry.byId("wizarddisks")) return;
-        var add = registry.byId("id_volume_add");
-        var add_mode = false;
-        var force4k = registry.byId("id_force4khack");
-        if(add && add.get("value") != '') {
-            add_mode = true;
-            domStyle.set("addVolLabel", "display", "none");
-            domStyle.set("extendVolLabel", "display", "");
-            if(add.get("value").indexOf("|True") != -1)
-              domStyle.set("vol_extend_enc_warn", "display", "");
-            else
-              domStyle.set("vol_extend_enc_warn", "display", "none");
-        } else {
-            domStyle.set("addVolLabel", "display", "");
-            domStyle.set("extendVolLabel", "display", "none");
-            if(add) {
-              domStyle.set("vol_extend_enc_warn", "display", "none");
-            }
-        }
+
         var disks = registry.byId("wizarddisks");
         var d = disks.get('value');
         html.set(dom.byId("wizard_num_disks"), d.length + '');
 
-        var zfs = query("input[name=volume_fstype]")[1].checked || add_mode;
-
-        var enc = query("input[name=encryption]")[0].checked;
-
-        registry.byId("id_volume_name").set('disabled', add_mode);
-        query("input[name=volume_fstype]").forEach(function(item, idx) {
-            var wg = registry.getEnclosingWidget(item);
-            if(wg && add_mode && domAttr.get(item, 'value') == 'ZFS') {
-                wg.set('checked', true);
-            }
-        });
-
-        if(vol_change == true) {
-            var unselected = [];
-            disks.invertSelection(null);
-            var opts = disks.get("value");
-            for(var i=0;i<opts.length;i++) {
-                unselected.push(opts[i]);
-            }
-            disks.invertSelection(null);
-
-            if(unselected.length > 0 && zfs == true && first_load != true) {
-
-                var tab = dom.byId("disks_unselected");
-                query("#disks_unselected tbody tr").orphan();
-                var txt = "";
-                var toappend = [];
-                for(var i=0;i<unselected.length;i++) {
-                    var tr = domConstruct.create("tr");
-                    var td = domConstruct.create("td", {innerHTML: unselected[i]});
-                    tr.appendChild(td);
-
-                    var td = domConstruct.create("td");
-                    var rad = new RadioButton({ checked: true, value: "none", name: "zpool_"+unselected[i]});
-                    on(rad, 'click', function() {checkNumLog(unselected);});
-                    td.appendChild(rad.domNode);
-                    tr.appendChild(td);
-
-                    var td = domConstruct.create("td");
-                    var rad = new RadioButton({ value: "log", name: "zpool_"+unselected[i]});
-                    on(rad, 'click', function() {checkNumLog(unselected);});
-                    td.appendChild(rad.domNode);
-                    tr.appendChild(td);
-
-                    var td = domConstruct.create("td");
-                    var rad = new RadioButton({ value: "cache", name: "zpool_"+unselected[i]});
-                    on(rad, 'click', function() {checkNumLog(unselected);});
-                    td.appendChild(rad.domNode);
-                    tr.appendChild(td);
-
-                    var td = domConstruct.create("td");
-                    var rad = new RadioButton({ value: "spare", name: "zpool_"+unselected[i]});
-                    on(rad, 'click', function() {checkNumLog(unselected);});
-                    td.appendChild(rad.domNode);
-                    tr.appendChild(td);
-
-                    toappend.push(tr);
-                }
-
-                for(var i=0;i<toappend.length;i++) {
-                    domConstruct.place(toappend[i], query("#disks_unselected tbody")[0]);
-                }
-
-               domStyle.set("zfsextra", "display", "");
-
-            } else {
-                if(zfs == true && first_load == true) {
-                    domStyle.set("zfsextra", "display", "");
-                } else {
-                    query("#disks_unselected tbody tr").orphan();
-                    domStyle.set("zfsextra", "display", "none");
-                }
-            }
-        } else if(zfs == false) {
-               domStyle.set("zfsextra", "display", "none");
-        }
-
-        var ufs = query("#fsopt input")[0].checked;
-        var zfs = query("#fsopt input")[1].checked;
         if(d.length >= 2) {
             domStyle.set("grpopt", "display", "");
         } else {
@@ -972,68 +1080,9 @@ require([
             });
         }
 
-        if(zfs) {
-            domStyle.set('zfssectorsize', 'display', 'table-row');
-            if(!add_mode) {
-                domStyle.set('zfsfulldiskencryption', 'display', 'table-row');
-                if(enc)
-                    domStyle.set('diskencryptionrand', 'display', 'table-row');
-                else
-                    domStyle.set('diskencryptionrand', 'display', 'none');
-            } else {
-                domStyle.set('zfsfulldiskencryption', 'display', 'none');
-                domStyle.set('diskencryptionrand', 'display', 'none');
-            }
-            domStyle.set('zfsdedup', 'display', 'table-row');
-            if(enc) {
-                force4k.set('disabled', true);
-                force4k.set('readonly', true);
-                force4k.set('checked', true);
-            } else {
-                force4k.set('disabled', false);
-                force4k.set('readonly', false);
-            }
-
-            if(d.length >= 3) {
-                domStyle.set("grpraidz", "display", "block");
-            } else {
-                domStyle.set("grpraidz", "display", "none");
-            }
-
-            if(d.length >= 4) {
-                domStyle.set("grpraidz2", "display", "block");
-            } else {
-                domStyle.set("grpraidz2", "display", "none");
-            }
-
-            if(d.length >= 5) {
-                domStyle.set("grpraidz3", "display", "block");
-            } else {
-                domStyle.set("grpraidz3", "display", "none");
-            }
-
+        if(d.length-1 >= 2 && (((d.length-2)&(d.length-1)) == 0)) {
+            domStyle.set("grpraid3", "display", "block");
         } else {
-            domStyle.set('zfssectorsize', 'display', 'none');
-            domStyle.set('zfsfulldiskencryption', 'display', 'none');
-            domStyle.set('zfsdedup', 'display', 'none');
-            domStyle.set("grpraidz", "display", "none");
-            domStyle.set("grpraidz2", "display", "none");
-            domStyle.set("grpraidz3", "display", "none");
-        }
-
-        if(ufs) {
-            domStyle.set("ufspath", "display", "table-row");
-            domStyle.set("ufspathen", "display", "table-row");
-
-            if(d.length-1 >= 2 && (((d.length-2)&(d.length-1)) == 0)) {
-                domStyle.set("grpraid3", "display", "block");
-            } else {
-                domStyle.set("grpraid3", "display", "none");
-            }
-
-        } else {
-            domStyle.set("ufspath", "display", "none");
-            domStyle.set("ufspathen", "display", "none");
             domStyle.set("grpraid3", "display", "none");
         }
 
@@ -1342,6 +1391,7 @@ require([
             id: "fntree",
             model: treeModel,
             showRoot: false,
+            persist: true,
             onClick: treeclick,
             onLoad: function() {
                 var fadeArgs = {

@@ -529,7 +529,11 @@ class Disk(Model):
 
 class EncryptedDisk(Model):
     encrypted_volume = models.ForeignKey(Volume)
-    encrypted_disk = models.ForeignKey(Disk)
+    encrypted_disk = models.ForeignKey(
+        Disk,
+        on_delete=models.SET_NULL,
+        null=True,
+    )
     encrypted_provider = models.CharField(
         unique=True,
         max_length=120,
@@ -773,6 +777,10 @@ class ReplRemote(Model):
 
 
 class Replication(Model):
+    repl_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+    ) 
     repl_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Filesystem/Volume"),
@@ -848,6 +856,10 @@ class Replication(Model):
 
 
 class Task(Model):
+    task_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+    ) 
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Filesystem/Volume"),

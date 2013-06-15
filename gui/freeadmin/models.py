@@ -35,6 +35,8 @@ add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.UserField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.GroupField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.PathField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.MACField"])
+add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.Network4Field"])
+add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.Network6Field"])
 
 
 class UserField(models.CharField):
@@ -110,6 +112,35 @@ class MACField(models.Field):
         if value:
             return re.sub(r'(?P<du>[0-9A-F]{2})(?!$)', '\g<du>:', value)
         return value
+
+
+class Network4Field(models.CharField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 18  # 255.255.255.255/32
+        super(Network4Field, self).__init__(*args, **kwargs)
+
+    def formfield(self, **kwargs):
+        #FIXME: Move to top (causes cycle-dependency)
+        from freenasUI.freeadmin.forms import Network4Field as NF
+        defaults = {'form_class': NF}
+        kwargs.update(defaults)
+        return super(Network4Field, self).formfield(**kwargs)
+
+
+class Network6Field(models.CharField):
+
+    def __init__(self, *args, **kwargs):
+        # ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128
+        kwargs['max_length'] = 43
+        super(Network6Field, self).__init__(*args, **kwargs)
+
+    def formfield(self, **kwargs):
+        #FIXME: Move to top (causes cycle-dependency)
+        from freenasUI.freeadmin.forms import Network6Field as NF
+        defaults = {'form_class': NF}
+        kwargs.update(defaults)
+        return super(Network6Field, self).formfield(**kwargs)
 
 
 class FreeModelBase(ModelBase):

@@ -24,6 +24,9 @@ BUILD=true
 
 # Number of jobs to pass to make. Only applies to src so far.
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
+if [ ${MAKE_JOBS} -gt 10 ]; then
+	MAKE_JOBS=10
+fi
 export MAKE_JOBS
 
 # Available targets to build
@@ -51,21 +54,21 @@ TRACE=""
 # NanoBSD flags
 NANO_ARGS=""
 
-GIT_CACHE="/freenas-build/trueos.git"
-if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE}" ] ; then
+GIT_CACHE="file:///freenas-build/trueos.git"
+if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE##file://}" ] ; then
         GIT_REPO="${GIT_CACHE}"
 fi
-if [ -e "${GIT_REPO}" ]; then
+if [ -e "${GIT_REPO##file://}" ]; then
         echo "Using local mirror in $GIT_REPO"
 else
         echo "no local mirror, to speed up builds we suggest doing"
         echo "'git clone --mirror https://github.com/trueos/trueos.git into ${HOME}/freenas/git/trueos.git"
 fi
-GIT_PORTS_CACHE="/freenas-build/ports.git"
-if [ -z "${GIT_PORTS_REPO}" -a -e "$GIT_PORTS_CACHE" ] ;then
+GIT_PORTS_CACHE="file:///freenas-build/ports.git"
+if [ -z "${GIT_PORTS_REPO}" -a -e "${GIT_PORTS_CACHE##file://}" ] ;then
     GIT_PORTS_REPO="$GIT_PORTS_CACHE" 
 fi
-if [ -e "${GIT_PORTS_REPO}" ]; then
+if [ -e "${GIT_PORTS_REPO##file://}" ]; then
     echo "Using local git ports mirror in $GIT_PORTS_REPO"
 else
     echo "no local mirror, to speed up builds we suggest doing"
@@ -92,6 +95,10 @@ usage: ${0##*/} [-aBfsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [--
 		  issues with newly created files via patch -- use with
 		  caution).
 -x		- enable sh -x debugging
+-z		- End script before images are built.  This is useful for
+		  preloading a package build so you can do a full build after this
+		  and compress the resulting thin image.
+
 EOF
 	exit 1
 }
@@ -107,7 +114,7 @@ show_build_targets()
 
 parse_cmdline()
 {
-	while getopts 'aBfj:st:ux' _optch
+	while getopts 'aBfj:st:uxz' _optch
 	do
 		case "${_optch}" in
 		a)
@@ -137,6 +144,9 @@ parse_cmdline()
 			;;
 		x)
 			TRACE="-x"
+			;;
+		z)
+			export PACKAGE_PREP_BUILD=1
 			;;
 		\?)
 			usage

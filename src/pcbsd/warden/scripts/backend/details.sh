@@ -13,13 +13,13 @@ JAILNAME="$1"
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: You must specify a jail to check"
+  warden_error "You must specify a jail to check"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -27,7 +27,7 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at ${JAILDIR}"
+  warden_error "No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -90,10 +90,10 @@ if [ -n "${IP6}" ] ; then
    activeCon6=`sockstat | grep "${IP6}" | grep -v '*.*' | wc -l | awk '{print $1}'`
 fi
 
-echo "Disk Usage: ${diskUsage}MB"
+warden_print "Disk Usage: ${diskUsage}MB"
 
-echo "Active IPv4 Ports: ${portList4}"
-echo "Current IPv4 Connections: ${activeCon4}"
+warden_print "Active IPv4 Ports: ${portList4}"
+warden_print "Current IPv4 Connections: ${activeCon4}"
 
-echo "Active IPv6 Ports: ${portList6}"
-echo "Current IPv6 Connections: ${activeCon6}"
+warden_print "Active IPv6 Ports: ${portList6}"
+warden_print "Current IPv6 Connections: ${activeCon6}"

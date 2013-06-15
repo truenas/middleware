@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix_textdump
+# BEFORE: savecore
+# KEYWORD: nojail
+
+. /etc/rc.subr
+
+name="ix_textdump"
+start_cmd="ix_textdump_start"
+stop_cmd="ix_textdump_stop"
+
+
+ix_textdump_start()
+{
+
+        if [ -z "${dumpdev}" ] ; then
+                debug "dumpdev not set exiting"
+                return 1
+        fi
+        # watchdog 38 = ~256 seconds or ~4 minutes, see sys/watchdog.h for explanation
+        ddb script "kdb.enter.panic=watchdog 38; textdump set ;capture on; show allpcpu; bt; ps ;alltrace ;show alllocks; textdump dump; reset"
+	sysctl debug.ddb.textdump.pending=1
+        sysctl debug.debugger_on_panic=1
+        mkdir -p "/data/crash"
+}
+
+ix_textdump_stop()
+{
+
+        # We don't undo start_textdump() so that we can catch crashes at shutdown.
+        # XXX: undo 'sysctl debug.debugger_on_panic=1' ?
+        #sysctl debug.debugger_on_panic=0
+        #ddb unscript "kdb.enter.panic"
+}
+
+load_rc_config $name
+run_rc_command "$1"
+

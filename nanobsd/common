@@ -185,13 +185,28 @@ do_add_pkg ()
 	mkdir -p ${NANO_OBJ}/ports/packages
 	mkdir -p ${NANO_WORLDDIR}/usr/ports/packages/All
 	mkdir -p ${NANO_WORLDDIR}/usr/ports/distfiles
+	if [ -n "${PKGCACHE}" ]; then
+		if ! [ -d ${PKGCACHE}/${NANO_ARCH} ]; then
+			mkdir -p ${PKGCACHE}/${NANO_ARCH}
+		fi
+		mount -t nullfs -o noatime ${PKGCACHE}/${NANO_ARCH} \
+			${NANO_OBJ}/ports/packages
+	fi
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
 	    ${NANO_WORLDDIR}/usr/ports/packages
+	if [ -n "${DISTCACHE}" ]; then
+		if ! [ -d ${DISTCACHE} ]; then
+			mkdir -p ${DISTCACHE}
+		fi
+		mount -t nullfs -o noatime ${DISTCACHE} ${NANO_OBJ}/ports/distfiles
+	fi
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
 	CR "cd /usr/ports/packages/All;pkg_add -F $1.tbz"
-	umount ${NANO_WORLDDIR}/usr/ports/distfiles
-	umount ${NANO_WORLDDIR}/usr/ports/packages
+	umount -f ${NANO_WORLDDIR}/usr/ports/distfiles
+	umount -f ${NANO_OBJ}/ports/distfiles
+	umount -f ${NANO_WORLDDIR}/usr/ports/packages
+	umount -f ${NANO_OBJ}/ports/packages
 	rmdir ${NANO_WORLDDIR}/usr/ports/packages/All
 	rmdir ${NANO_WORLDDIR}/usr/ports/packages
 	rmdir ${NANO_WORLDDIR}/usr/ports/distfiles
@@ -219,13 +234,28 @@ do_add_port ()
 	mkdir -p ${NANO_PORTS}/distfiles
 	mkdir -p ${NANO_WORLDDIR}/usr/src
 	mkdir -p ${NANO_WORLDDIR}/usr/ports
-      	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
+	set +e
+     	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
 	mount -t nullfs -o noatime ${NANO_PORTS} ${NANO_WORLDDIR}/usr/ports
+	if [ -n "${PKGCACHE}" ]; then
+		if ! [ -d ${PKGCACHE}/${NANO_ARCH} ]; then
+			mkdir -p ${PKGCACHE}/${NANO_ARCH}
+		fi
+		mount -t nullfs -o noatime ${PKGCACHE}/${NANO_ARCH} \
+			${NANO_OBJ}/ports/packages
+	fi
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
 	    ${NANO_WORLDDIR}/usr/ports/packages
+	if [ -n "${DISTCACHE}" ]; then
+		if ! [ -d ${DISTCACHE} ]; then
+			mkdir -p ${DISTCACHE}
+		fi
+		mount -t nullfs -o noatime ${DISTCACHE} ${NANO_OBJ}/ports/distfiles
+	fi
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
 	mkdir -p ${NANO_WORLDDIR}/usr/workdir
+	set -e
 	cp /etc/resolv.conf ${NANO_WORLDDIR}/etc/resolv.conf
 # Improvement: Don't know why package-recursive don't works here
 	CR "env \
@@ -240,10 +270,12 @@ do_add_port ()
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	rm -rf ${NANO_WORLDDIR}/usr/obj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
-	umount ${NANO_WORLDDIR}/usr/ports/packages
-	umount ${NANO_WORLDDIR}/usr/ports/distfiles
-	umount ${NANO_WORLDDIR}/usr/ports
-	umount ${NANO_WORLDDIR}/usr/src
+	umount -f ${NANO_WORLDDIR}/usr/ports/distfiles
+	umount -f ${NANO_OBJ}/ports/distfiles
+	umount -f ${NANO_WORLDDIR}/usr/ports/packages
+	umount -f ${NANO_OBJ}/ports/packages
+	umount -f ${NANO_WORLDDIR}/usr/ports
+	umount -f ${NANO_WORLDDIR}/usr/src
 }
 
 # Need to check if this function works with cross-compiling architecture!!!!
@@ -270,11 +302,34 @@ add_port ()
     set -e
 
     _add_pkg=false
+    if ! [ -d ${NANO_OBJ}/ports/packages ]; then
+        mkdir -p ${NANO_OBJ}/ports/packages
+    fi
+    if [ -n "${PKGCACHE}" ]; then
+        if ! [ -d ${PKGCACHE}/${NANO_ARCH} ]; then
+            mkdir -p ${PKGCACHE}/${NANO_ARCH}
+        fi
+        mount -t nullfs -o noatime ${PKGCACHE}/${NANO_ARCH} \
+            ${NANO_OBJ}/ports/packages
+    fi
+    if ! [ -d ${NANO_OBJ}/ports/distfiles ]; then
+        mkdir -p ${NANO_OBJ}/ports/distfiles
+    fi
+    if [ -n "${DISTCACHE}" ]; then
+        if ! [ -d ${DISTCACHE} ]; then
+            mkdir -p ${DISTCACHE}
+        fi
+        mount -t nullfs -o noatime ${DISTCACHE} ${NANO_OBJ}/ports/distfiles
+    fi
     if $do_world && $do_clean; then
         # HACK: make do_build.sh -ff work properly instead of having
         # do_add_pkg fall flat on its face when it tries to add the
         # missing package.
-        :
+        if [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
+            _add_pkg=true
+        else
+            :
+        fi
     elif [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
 	# Pkg file found: Generate add_pkg_NAME function
         _add_pkg=true
@@ -297,6 +352,12 @@ add_port ()
 	    customize_cmd add_port_${port}
 	"
 	NANO_PACKAGE_ONLY=0
+    fi
+    if [ -n "${PKGCACHE}" ]; then
+        umount -f ${NANO_OBJ}/ports/packages
+    fi
+    if [ -n "${DISTCACHE}" ]; then
+        umount -f ${NANO_OBJ}/ports/distfiles
     fi
 }
 

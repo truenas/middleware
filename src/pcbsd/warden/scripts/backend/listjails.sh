@@ -40,8 +40,8 @@ done
 
 if [ "${VERBOSE}" != "YES" ] ; then
 # Prints a listing of the available jails
-  printf "%-24s%-12s%-12s%-12s\n" ID AUTOSTART STATUS TYPE
-  line "75"
+  warden_printf "%-24s%-12s%-12s%-12s\n" ID AUTOSTART STATUS TYPE
+  warden_printf "%s\n" $(line "75")
 fi
 
 cd ${JDIR}
@@ -70,6 +70,17 @@ do
 
   ID="`cat ${i}/id 2>/dev/null`"
   HOST="`cat ${i}/host 2>/dev/null`"
+  if [ -e "${i}/vnet" ] ; then
+    VNET="Enabled"
+  else
+    VNET="Disabled"
+  fi
+
+  if [ -e "${i}/nat" ] ; then
+    NAT="Enabled"
+  else
+    NAT="Disabled"
+  fi
 
   #
   # IPv4 networking
@@ -144,7 +155,8 @@ do
   fi
 
   if [ "${VERBOSE}" = "YES" ] ; then
-    cat<<__EOF__ 
+    out="$(mktemp  /tmp/.wjvXXXXXX)"
+    cat<<__EOF__ >"${out}"
 
 id: ${ID}
 host: ${HOST}
@@ -159,13 +171,18 @@ bridge-ipv6: ${BRIDGEIP6}
 alias-bridge-ipv6: ${BRIDGEIPS6}
 defaultrouter-ipv6: ${GATEWAY6}
 autostart: ${AUTO}
+vnet: ${VNET}
+nat: ${NAT}
 status: ${STATUS}
 type: ${TYPE}
 
 __EOF__
 
+    warden_cat "${out}"
+    rm -f "${out}"
+
   else
-    printf "%-24s%-12s%-12s%-12s\n" ${JAILNAME} ${AUTO} ${STATUS} ${TYPE}
+    warden_printf "%-24s%-12s%-12s%-12s\n" ${JAILNAME} ${AUTO} ${STATUS} ${TYPE}
   fi
 done
 

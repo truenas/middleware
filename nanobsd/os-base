@@ -160,7 +160,7 @@ customize_cmd install_debug_kernel
 add_port textproc/libxml2
 add_port devel/libffi
 add_port archivers/lzo2
-add_port www/aria2
+add_port www/aria2 OPTIONS_FILE_UNSET+=SQLITE
 add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
@@ -201,12 +201,13 @@ add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
 	OPTIONS_FILE_SET+=PAM_SMBPASS
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
-add_port shells/bash WITHOUT_NLS=y
+add_port shells/bash OPTIONS_FILE_UNSET+=NLS
+add_port shells/ksh93
 add_port shells/mksh
 add_port shells/scponly
 add_port sysutils/e2fsprogs
-add_port sysutils/fusefs-kmod NOPORTDOCS=y
 add_port sysutils/fusefs-libs
+add_port sysutils/fusefs-kmod OPTIONS_FILE_UNSET+=DOCS
 add_port devel/libublio
 add_port sysutils/fusefs-ntfs
 add_port sysutils/smartmontools
@@ -238,7 +239,6 @@ add_port devel/gio-fam-backend
 add_port devel/m4
 add_port devel/bison
 add_port misc/gnomehier
-add_port devel/gobject-introspection
 add_port www/py-httplib2
 add_port net/py-oauth2
 add_port sysutils/jailme
@@ -261,7 +261,7 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11-fonts/encodings
 	add_port x11-fonts/xorg-fonts-truetype
 	add_port x11/pixman
-	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=GLIB OPTIONS_FILE_UNSET+=XCB
+	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
 	add_port x11-toolkits/pango OPTIONS_FILE_UNSET+=X11
 	add_port databases/rrdtool OPTIONS_FILE_SET+=PERL_MODULE \
 				OPTIONS_FILE_SET+=PYTHON_MODULE \
@@ -271,6 +271,8 @@ if [ "${REPORTING}" = 1 ]; then
 				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON
 fi
 
+#FIXME: gobject now requires cairo as build dependency
+add_port devel/gobject-introspection
 add_port devel/py-ipaddr
 add_port converters/base64
 add_port emulators/mtools OPTIONS_FILE_UNSET+=X11
@@ -308,6 +310,7 @@ add_port devel/py-six
 add_port devel/py-dateutil
 add_port devel/py-rose
 add_port www/py-django-tastypie
+add_port devel/py-lockfile
 add_port devel/py-daemon
 add_port devel/py-polib
 add_port devel/py-ujson
@@ -322,19 +325,13 @@ if [ "${DEBUG}" = 1 ]; then
 
 	add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
 	add_port ftp/curl
-	add_port devel/apr1
-	add_port www/neon29
-	add_port devel/subversion
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
 	add_port devel/ipython OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=ZMQ
-	add_port devel/p5-Term-ReadKey
-	add_port devel/p5-subversion
-	add_port mail/p5-Net-SMTP-SSL
-	add_port lang/p5-Error
-	add_port devel/git OPTIONS_FILE_SET+=SVN \
+	add_port devel/git OPTIONS_FILE_UNSET+=SVN \
 			OPTIONS_FILE_UNSET+=CVS \
-			OPTIONS_FILE_UNSET+=P4
+			OPTIONS_FILE_UNSET+=P4 \
+			OPTIONS_FILE_UNSET+=PERL
 	add_port devel/ctags
 fi
 
@@ -595,20 +592,6 @@ select_httpd ( )
 }
 customize_cmd select_httpd
 
-# Ths is required to be added in rescue image as it is no longer
-# in the freebsd patch
-static_dialog()
-{
-	make \
-		-C ${NANO_SRC}/gnu/usr.bin/dialog \
-		BINDIR=/rescue \
-		DESTDIR=${NANO_WORLDDIR} \
-		NO_SHARED= \
-		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
-		clean all install
-}
-customize_cmd static_dialog
-
 remove_patch_divots ( )
 {
 	find ${NANO_WORLDDIR} -name \*.orig -or -name \*.rej -delete
@@ -617,7 +600,7 @@ customize_cmd remove_patch_divots
 
 configure_mnt_md ( )
 {
-	mkdir -p ${NANO_WORLDDIR}/conf/base/mnt
+	mkdir -m 755 -p ${NANO_WORLDDIR}/conf/base/mnt
 	echo 2048 > ${NANO_WORLDDIR}/conf/base/mnt/md_size
 }
 customize_cmd configure_mnt_md
@@ -718,9 +701,10 @@ freenas_custom()
 {
 	compress_ko()
 	{
-		if [ -f ${NANO_WORLDDIR}/boot/kernel/$1 ]; then
-			gzip -v9 ${NANO_WORLDDIR}/boot/kernel/$1
-		fi
+# XXX: If we want to Dtrace the kernel it cannot be compressed
+#		if [ -f ${NANO_WORLDDIR}/boot/kernel/$1 ]; then
+#			gzip -v9 ${NANO_WORLDDIR}/boot/kernel/$1
+#		fi
 	}
 
 	# Compress the kernel and preloaded modules

@@ -13,13 +13,13 @@ JAILNAME="$1"
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: No jail specified to chroot into!"
+  warden_error "No jail specified to chroot into!"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -27,7 +27,7 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at ${JAILDIR}"
+  warden_error "No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -37,7 +37,7 @@ set_warden_metadir
 jls | grep ${JAILDIR}$ >/dev/null 2>/dev/null
 if [ "$?" != "0" ]
 then
-  echo "ERROR: Jail is not running!"
+  warden_error "Jail is not running!"
   exit 6
 fi
 
@@ -50,7 +50,7 @@ if [ -e "${JMETADIR}/jail-portjail" ] ; then
   xhost + 2>/dev/null >/dev/null
 else
  if [ "`whoami`" != "root" ] ; then
-   echo "Error: chroot can only be run as root in standard jails"
+   warden_error "chroot can only be run as root in standard jails"
    exit 1
  fi
 fi

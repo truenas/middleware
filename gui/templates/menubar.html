@@ -1,59 +1,59 @@
-<div dojoType="dijit.MenuBar" id="navMenu">
+<div data-dojo-type="dijit.MenuBar" id="navMenu">
     {% if user.is_authenticated %}
     <div id="messages"></div>
-    <div dojoType="dijit.MenuBarItem" onClick="Menu.openSystem();" class="menu_icon">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="Menu.openSystem();" class="menu_icon">
 	<img src="{{ STATIC_URL }}images/ui/menu/system.png">
 	<br />
         <span>{% trans "System" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="Menu.openNetwork();" class="menu_icon">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="Menu.openNetwork();" class="menu_icon">
 	<img src="{{ STATIC_URL }}images/ui/menu/network.png">
 	<br />
         <span>{% trans "Network" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="Menu.openStorage();" class="menu_icon">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="Menu.openStorage();" class="menu_icon">
 	<img src="{{ STATIC_URL }}images/ui/menu/storage.png">
 	<br />
         <span>{% trans "Storage" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="Menu.openSharing();" class="menu_icon">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="Menu.openSharing();" class="menu_icon">
 	<img src="{{ STATIC_URL }}images/ui/menu/sharing.png">
 	<br />
         <span>{% trans "Sharing" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="Menu.openServices();" class="menu_icon">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="Menu.openServices();" class="menu_icon">
 	<img src="{{ STATIC_URL }}images/ui/menu/services.png">
 	<br />
         <span>{% trans "Services" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="Menu.openJails();" class="menu_icon">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="Menu.openJails();" class="menu_icon">
 	<img src="{{ STATIC_URL }}images/ui/menu/jails.png">
 	<br />
         <span>{% trans "Jails" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" class="menu_icon right" onClick="alert_open();">
-    <div dojoType="dijit.layout.ContentPane" id="alert_status" class="alert_ok"></div>
+    <div data-dojo-type="dijit.MenuBarItem" class="menu_icon right" onClick="alert_open();">
+    <div data-dojo-type="dijit.layout.ContentPane" id="alert_status" class="alert_ok"></div>
         <span>Alert</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon right">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon right">
 	<img src="{{ STATIC_URL }}images/ui/menu/logout.png">
 	<br />
         <span>{% trans "Log Out" %}</span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="dijit.byId('helpDialog').show();" class="menu_icon right">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="dijit.byId('helpDialog').show();" class="menu_icon right">
 	<img src="{{ STATIC_URL }}images/ui/menu/help.png">
 	<br />
         <span>{% trans "Help" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="Menu.openAccount();" class="menu_icon right">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="Menu.openAccount();" class="menu_icon right">
 	<img src="{{ STATIC_URL }}images/ui/menu/account.png">
 	<br />
         <span>{% trans "Account" %}</span>
     </div>
 
     {% else %}
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
+    <div data-dojo-type="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
 	<img src="{{ STATIC_URL }}images/ui/menu/login.png">
 	<br />
         <span>{% trans "Log In" %}</span>

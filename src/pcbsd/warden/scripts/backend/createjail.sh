@@ -10,7 +10,7 @@ PROGDIR="/usr/local/share/warden"
 
 setup_linux_jail()
 {
-  echo "Setting up linux jail..."
+  warden_print "Setting up linux jail..."
 
   mkdir -p ${JMETADIR}
   echo "${HOST}" > ${JMETADIR}/host
@@ -28,17 +28,17 @@ setup_linux_jail()
   touch "${JMETADIR}/jail-linux"
 
   if [ -n "$LINUXARCHIVE_FILE" ] ; then
-    echo "Extracting ${LINUXARCHIVE_FILE}..."
+    warden_print "Extracting ${LINUXARCHIVE_FILE}..."
     tar xvf ${LINUXARCHIVE_FILE} -C "${JAILDIR}" 2>/dev/null
     if [ $? -ne 0 ] ; then
-       echo "Failed Extracting ${LINUXARCHIVE_FILE}"
+       warden_error "Failed Extracting ${LINUXARCHIVE_FILE}"
        warden delete --confirm ${JAILNAME} 2>/dev/null
        exit 1
     fi
   else
     sh ${LINUX_JAIL_SCRIPT} "${JAILDIR}" "${IP}" "${JMETADIR}"
     if [ $? -ne 0 ] ; then
-       echo "Failed running ${LINUX_JAIL_SCRIPT}"
+       warden_error "Failed running ${LINUX_JAIL_SCRIPT}"
        warden delete --confirm ${JAILNAME} 2>/dev/null
        exit 1
     fi
@@ -70,7 +70,7 @@ touch /etc/mtab
   # If we are auto-starting the jail, do it now
   if [ "$AUTOSTART" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
-  echo "Success! Linux jail created at ${JAILDIR}"
+  warden_print "Success! Linux jail created at ${JAILDIR}"
 }
 
 # Load our passed values
@@ -86,21 +86,60 @@ case "${JAILTYPE}" in
   standard) ;;
 esac
 
-# Location of the chroot environment
-isDirZFS "${JDIR}"
-if [ $? -eq 0 ] ; then
-  WORLDCHROOT_PLUGINJAIL="${JDIR}/.warden-pj-chroot-${ARCH}"
-  WORLDCHROOT_STANDARD="${JDIR}/.warden-chroot-${ARCH}"
+# See if we need to create a default template
+# If using a ARCHIVEFILE we can skip this step
+if [ -z "$TEMPLATE" -a -z "$ARCHIVEFILE" ] ; then
+  DEFTEMPLATE="`uname -r | cut -d '-' -f 1-2`-${ARCH}"
+
+  # If on a plugin jail, lets change the nickname
+  if [ "${PLUGINJAIL}" = "YES"  ] ; then
+    DEFTEMPLATE="${DEFTEMPLATE}-pluginjail"
+  fi
+
+  # See if we need to create a new template for this system
+  isDirZFS "${JDIR}"
+  if [ $? -eq 0 ] ; then
+     TDIR="${JDIR}/.warden-template-$DEFTEMPLATE"
+  else
+     TDIR="${JDIR}/.warden-template-$DEFTEMPLATE.tbz"
+  fi
+
+  if [ ! -e "$TDIR" ] ; then
+      FLAGS="-arch $ARCH -nick $DEFTEMPLATE"
+
+      uname -r 2>&1 | grep -q "TRUEOS"
+      if [ $? -eq 0 ] ; then
+         FLAGS="-trueos `uname -r | cut -d '-' -f 1-2` $FLAGS" ; export FLAGS
+      else
+         FLAGS="-fbsd `uname -r | cut -d '-' -f 1-2` $FLAGS" ; export FLAGS
+      fi
+
+      if [ "${PLUGINJAIL}" = "YES" ] ; then
+         FLAGS="$FLAGS -pluginjail"
+      fi
+
+      ${PROGDIR}/scripts/backend/createtemplate.sh ${FLAGS}
+      if [ $? -ne 0 ] ; then
+        warden_exit "Failed create default template"
+      fi
+  fi
+  WORLDCHROOT="${TDIR}"
+
+elif [ -z "$ARCHIVEFILE" ] ; then
+
+  # Set WORLDCHROOT to the dir we will clone / file to extract
+  WORLDCHROOT="${JDIR}/.warden-template-$TEMPLATE"
+
+  isDirZFS "${JDIR}"
+  if [ $? -ne 0 ] ; then
+    WORLDCHROOT="${WORLDCHROOT}.tbz"
+  fi
+
 else
-  WORLDCHROOT_PLUGINJAIL="${JDIR}/.warden-pj-chroot-${ARCH}.tbz"
-  WORLDCHROOT_STANDARD="${JDIR}/.warden-chroot-${ARCH}.tbz"
+
+   # See if we are overriding the default archive file
+   WORLDCHROOT="$ARCHIVEFILE"
 fi
-if [ "${PLUGINJAIL}" = "YES" ] ; then
-  WORLDCHROOT="${WORLDCHROOT_PLUGINJAIL}"
-else
-  WORLDCHROOT="${WORLDCHROOT_STANDARD}"
-fi
-export WORLDCHROOT WORLDCHROOT_PLUGINJAIL WORLDCHROOT_STANDARD
 
 if [ "${IP4}" != "OFF" ] ; then
   get_ip_and_netmask "${IP4}"
@@ -116,13 +155,8 @@ if [ "${IP6}" != "OFF" ] ; then
   if [ -z "$MASK6" ] ; then MASK6="64"; fi
 fi
 
-# See if we are overriding the default archive file
-if [ ! -z "$ARCHIVEFILE" ] ; then
-   WORLDCHROOT="$ARCHIVEFILE"
-fi
-
 if [ -z "$HOST" ] ; then
-   echo "ERROR: Missing hostname!"
+   warden_error "ERROR: Missing hostname!"
    exit 6
 fi
 
@@ -131,7 +165,7 @@ set_warden_metadir
 
 if [ -e "${JAILDIR}" ]
 then
-  echo "ERROR: This Jail directory already exists!"
+  warden_error "This Jail directory already exists!"
   exit 5
 fi
 
@@ -140,7 +174,7 @@ for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
 do
   if [ ! -e "${i}/host" ] ; then continue ; fi
   if [ "`cat ${i}/host`" = "$HOST" ] ; then
-    echo "ERROR: A jail with this hostname already exists!"
+    warden_error "A jail with this hostname already exists!"
     exit 5
   fi
 done
@@ -148,54 +182,6 @@ done
 # Get next unique ID
 META_ID="$(get_next_id "${JDIR}")"
 
-# Check if we need to download the chroot file
-
-#
-# If this is a pluginjail, we clone a regular freebsd chroot, then we
-# bootstrap packageng, install the required packages that a pluginjail
-# needs, then snapshot it. Once this is done, creating a pluginjail is
-# as easy as doing a zfs clone.
-#
-if [ "${PLUGINJAIL}" = "YES" -a ! -e "${WORLDCHROOT}" ] ; then
-  if [ ! -e "${WORLDCHROOT_STANDARD}" ] ; then
-    downloadchroot "${WORLDCHROOT_STANDARD}"
-  fi
-
-  isDirZFS "${JDIR}"
-  if [ $? -eq 0 ] ; then
-    tank=`getZFSTank "$JDIR"`
-    zfsp=`getZFSRelativePath "${WORLDCHROOT_STANDARD}"`
-    clonep="/$(basename ${WORLDCHROOT_PLUGINJAIL})"
-
-    mnt=`getZFSMountpoint ${tank}`
-    pjdir="${mnt}${clonep}"
-
-    zfs clone ${tank}${zfsp}@clean ${tank}${clonep}
-    if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS pluginjail clone"; fi
-
-    cp /etc/resolv.conf ${pjdir}/etc/resolv.conf
-
-    bootstrap_pkgng "${pjdir}" "pluginjail"
-    if [ "$?" != "0" ] ; then
-       echo "bootstrap_pkng for ${pjdir} failed"
-       zfs destroy "${tank}${clonep}"
-    fi
-
-    zfs snapshot ${tank}${clonep}@clean
-    if [ $? -ne 0 ] ; then
-       zfs destroy "${tank}${clonep}"
-       exit_err "Failed creating clean ZFS pluginjail snapshot"
-    fi
-
-  # We're on UFS :-(
-  else
-    downloadchroot "${WORLDCHROOT_STANDARD}"
-
-  fi
-
-elif [ ! -e "${WORLDCHROOT}" -a "${LINUXJAIL}" != "YES" ] ; then
-  downloadchroot "${WORLDCHROOT}"
-fi
 
 # If we are setting up a linux jail, lets do it now
 if [ "$LINUXJAIL" = "YES" ] ; then
@@ -204,11 +190,11 @@ if [ "$LINUXJAIL" = "YES" ] ; then
      # Create ZFS mount
      tank=`getZFSTank "$JDIR"`
      if [ -z "$tank" ] ; then
-       exit_err "Failed getting ZFS dataset for $JDIR..";
+       warden_exit "Failed getting ZFS dataset for $JDIR..";
      fi
      jailp=`getZFSRelativePath "${JAILDIR}"`
      zfs create -o mountpoint=/${tank}${jailp} -p ${tank}${jailp}
-     if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS dataset"; fi
+     if [ $? -ne 0 ] ; then warden_exit "Failed creating ZFS dataset"; fi
    else
      mkdir -p "${JAILDIR}"
    fi
@@ -222,7 +208,7 @@ if [ "$LINUXJAIL" = "YES" ] ; then
    exit 0
 fi
 
-echo "Building new Jail... Please wait..."
+warden_print "Building new Jail... Please wait..."
 
 isDirZFS "${JDIR}"
 if [ $? -eq 0 ] ; then
@@ -230,12 +216,13 @@ if [ $? -eq 0 ] ; then
    tank=`getZFSTank "$JDIR"`
    zfsp=`getZFSRelativePath "${WORLDCHROOT}"`
    jailp=`getZFSRelativePath "${JAILDIR}"`
+   warden_print zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
    zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
-   if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base clone"; fi
+   if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base clone"; fi
 else
    # Running on UFS
    mkdir -p "${JAILDIR}"
-   echo "Installing world..."
+   warden_print "Installing world..."
    if [ -d "${WORLDCHROOT}" ] ; then
      tar cvf - -C ${WORLDCHROOT} . 2>/dev/null | tar xpvf - -C "${JAILDIR}" 2>/dev/null
    else
@@ -247,7 +234,7 @@ else
      bootstrap_pkgng "${pjdir}" "pluginjail"
    fi
 
-   echo "Done"
+   warden_print "Done"
 fi
 
 mkdir ${JMETADIR}
@@ -262,30 +249,30 @@ echo "${META_ID}" > ${JMETADIR}/id
 
 if [ "$SOURCE" = "YES" ]
 then
-  echo "Installing source..."
+  warden_print "Installing source..."
   mkdir -p "${JAILDIR}/usr/src"
   cd ${JAILDIR}
   SYSVER="$(uname -r)"
   get_file_from_mirrors "/${SYSVER}/${ARCH}/dist/src.txz" "src.txz"
   if [ $? -ne 0 ] ; then
-    echo "Error while downloading the freebsd world."
+    warden_error "Error while downloading the freebsd world."
   else
-    echo "Extracting sources.. May take a while.."
+    warden_print "Extracting sources.. May take a while.."
     tar xvf src.txz -C "${JAILDIR}" 2>/dev/null
     rm src.txz
-    echo "Done"
+    warden_print "Done"
   fi
 fi
 
 if [ "$PORTS" = "YES" ]
 then
-  echo "Fetching ports..."
+  warden_print "Fetching ports..."
   mkdir -p "${JAILDIR}/usr/ports"
   cat /usr/sbin/portsnap | sed 's|! -t 0|-z '1'|g' | /bin/sh -s "fetch" "extract" "update" "-p" "${JAILDIR}/usr/ports" >/dev/null 2>/dev/null
   if [ $? -eq 0 ] ; then
-    echo "Done"
+    warden_print "Done"
   else
-    echo "Failed! Please run \"portsnap fetch extract update\" within the jail."
+    warden_error "Failed! Please run \"portsnap fetch extract update\" within the jail."
   fi
 fi
 
@@ -345,11 +332,11 @@ if [ -e "/etc/localtime" ] ; then
    cp /etc/localtime ${JAILDIR}/etc/localtime
 fi
 
-# Setup PC-BSD PKGNG repo / utilities
-if [ "$VANILLA" != "YES" ] ; then
+# Setup TrueOS PKGNG repo / utilities only if on TRUEOS
+if [ "$VANILLA" != "YES" -a -e "${JAILDIR}/etc/rc.delay" ] ; then
   bootstrap_pkgng "${JAILDIR}"
   if [ $? -ne 0 ] ; then
-     echo "You can manually re-try by running # warden bspkgng ${JAILNAME}"
+     warden_print "You can manually re-try by running # warden bspkgng ${JAILNAME}"
   fi
 fi
 
@@ -373,8 +360,8 @@ if [ "$PLUGINJAIL" = "YES" ] ; then mkpluginjail "${JAILDIR}" ; fi
 # If we are auto-starting the jail, do it now
 if [ "$AUTOSTART" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
-echo "Success!"
-echo "Jail created at ${JAILDIR}"
+warden_print "Success!"
+warden_print "Jail created at ${JAILDIR}"
 
 if [ "${PLUGINJAIL}" = "YES" ] ; then
   mkdir -p "${JAILDIR}/.plugins"

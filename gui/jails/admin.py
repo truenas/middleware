@@ -24,21 +24,22 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from collections import OrderedDict
+import logging
+
 from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.utils.html import escapejs
 
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.options import BaseFreeAdmin
-from freenasUI.freeadmin.api.resources import (JailsResource, NullMountPointResource)
+from freenasUI.freeadmin.api.resources import (
+    JailsResource, NullMountPointResource
+)
 from freenasUI.jails import models
 
-
-from collections import OrderedDict
-
-import logging
-
 log = logging.getLogger('jails.admin')
+
 
 class JailsFAdmin(BaseFreeAdmin):
 
@@ -61,7 +62,9 @@ class JailsFAdmin(BaseFreeAdmin):
         'jail_alias_ipv6',
         'jail_bridge_ipv6',
         'jail_alias_bridge_ipv6',
-        'jail_defaultrouter_ipv6'
+        'jail_defaultrouter_ipv6',
+        'jail_vnet',
+        'jail_nat'
     )
 
     def get_datagrid_columns(self):
@@ -105,19 +108,23 @@ class JailsFAdmin(BaseFreeAdmin):
         on_select_after = """function(evt, actionName, action) {
                 for(var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
-                    if((%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s)) {
-                        query(".grid" + actionName).forEach(function(item, idx) {
-                            domStyle.set(item, "display", "none");
-                        });
+                    if (row.data.jail_status == 'Running') {
+                        if (actionName == 'start') {
+                            query(".grid" + actionName).forEach(function(item, idx) {
+                                domStyle.set(item, "display", "none"); 
+                            });
+                        }
+                        break;
+                    } else if (row.data.jail_status == 'Stopped') {
+                        if (actionName == 'stop') {
+                            query(".grid" + actionName).forEach(function(item, idx) {
+                                domStyle.set(item, "display", "none"); 
+                            });
+                        }
                         break;
                     }
                 }
-            }""" % {
-            'hide': "false",
-            'hide_fs': "false",
-            'hide_enc': "false",
-            'hide_hasenc': "false",
-            }
+            }"""
 
         on_click = """function() {
                 var mybtn = this;
@@ -173,13 +180,12 @@ class NullMountPointFAdmin(BaseFreeAdmin):
 
     def get_datagrid_columns(self):
         columns = super(NullMountPointFAdmin,self).get_datagrid_columns()
-        columns.insert(2, {
+        columns.insert(3, {
             'name': 'mounted',
             'label': _('Mounted?'),
             'sortable': False,
         })
         return columns
-
 
 site.register(models.Jails, JailsFAdmin)
 site.register(models.NullMountPoint, NullMountPointFAdmin)

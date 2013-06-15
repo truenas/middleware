@@ -19,13 +19,13 @@ fi
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: No jail specified to delete!"
+  warden_error "No jail specified to delete!"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -33,7 +33,7 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" ]
 then
-  echo "ERROR: No jail located at ${JAILDIR}"
+  warden_error "No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -44,34 +44,104 @@ fi
 
 HOST="`cat ${JMETADIR}/host`"
 
+# Check if we need to enable vnet
+VIMAGEENABLE="NO"
+if [ -e "${JMETADIR}/vnet" ] ; then
+  VIMAGEENABLE="YES"
+fi
+
+IFACE=
+DEFAULT=0
+
+# Make sure jail uses special interface if specified
+if [ -e "${JMETADIR}/iface" ] ; then
+  IFACE=`cat "${JMETADIR}/iface"`
+fi
+if [ -z "${IFACE}" ] ; then
+   IFACE=`get_default_interface`
+   DEFAULT=1
+fi
+if [ -z "${IFACE}" ] ; then
+  warden_error "no interface specified and a default doesn't exist!"
+  exit 6
+fi
+
 # End of error checking, now shutdown this jail
 ##################################################################
 
-echo -e "Stopping the jail...\c"
+warden_printf "%s" "Stopping the jail..."
 
 # Get the JailID for this jail
 JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
 
-echo -e ".\c"
+warden_printf "%s" "."
 
 # Check if we need umount x mnts
 if [ -e "${JMETADIR}/jail-portjail" ] ; then umountjailxfs ${JAILNAME} ; fi
 
-jail_interfaces_down "${JID}"
+if [ "$VIMAGEENABLE" = "YES" ] ; then
+  jail_interfaces_down "${JID}"
+
+else
+  # Get list of IP4s for this jail
+  if [ -e "${JMETADIR}/ipv4" ] ; then
+    IP4S="`cat ${JMETADIR}/ipv4 | cut -d '/' -f 1`"
+  fi
+  if [ -e "${JMETADIR}/alias-ipv4" ] ; then
+    while read line
+    do
+      IP4S="${IP4S} `echo $line | cut -d '/' -f 1`"
+    done < ${JMETADIR}/alias-ipv4
+  fi
+
+  # Get list of IP6s for this jail
+  if [ -e "${JMETADIR}/ipv6" ] ; then
+    IP6S="`cat ${JMETADIR}/ipv6 | cut -d '/' -f 1`"
+  fi
+  if [ -e "${JMETADIR}/alias-ipv6" ] ; then
+    while read line
+    do
+      IP6S="${IP6S} `echo $line | cut -d '/' -f 1`"
+    done < ${JMETADIR}/alias-ipv6
+  fi
+
+  # Check if we need to remove the IP aliases from this jail
+  for _ip in $IP4S
+  do
+    # See if active alias
+    ifconfig $IFACE | grep -q "${_ip}"
+    if [ $? -ne 0 ] ; then continue ; fi
+
+    ifconfig $IFACE inet -alias ${_ip}
+  done
+
+  for _ip in $IP6S
+  do
+    # See if active alias
+    ifconfig $IFACE | grep -q "${_ip}"
+    if [ $? -ne 0 ] ; then continue ; fi
+
+    ifconfig $IFACE inet6 ${_ip} delete
+  done
+fi
+
 
 if [ -e "${JMETADIR}/jail-linux" ] ; then LINUXJAIL="YES" ; fi
 
 # Check for user-supplied mounts
 if [ -e "${JMETADIR}/fstab" ] ; then
-   echo "Unmounting user-supplied file-systems"
-   umount -a -f -F ${JMETADIR}/fstab
+   warden_print "Unmounting user-supplied file-systems"
+   cp ${JMETADIR}/fstab /tmp/.wardenfstab.$$
+   sed -i '' "s|%%JAILDIR%%|${JAILDIR}|g" /tmp/.wardenfstab.$$
+   umount -a -F /tmp/.wardenfstab.$$
+   rm /tmp/.wardenfstab.$$
 fi
 
 if [ "$LINUXJAIL" = "YES" ] ; then
   # If we have a custom stop script
   if [ -e "${JMETADIR}/jail-stop" ] ; then
     sCmd=`cat ${JMETADIR}/jail-stop`
-    echo "Stopping jail with: ${sCmd}"
+    warden_print "Stopping jail with: ${sCmd}"
     if [ -n "${JID}" ] ; then
       jexec ${JID} ${sCmd} 2>&1
     fi
@@ -98,12 +168,12 @@ else
   if [ -e "${JMETADIR}/jail-stop" ] ; then
     if [ -n "${JID}" ] ; then
       sCmd=`cat ${JMETADIR}/jail-stop`
-      echo "Stopping jail with: ${sCmd}"
+      warden_print "Stopping jail with: ${sCmd}"
       jexec ${JID} ${sCmd} 2>&1
     fi
   else
     if [ -n "${JID}" ] ; then
-      echo "Stopping jail with: /etc/rc.shutdown"
+      warden_print "Stopping jail with: /etc/rc.shutdown"
       jexec ${JID} /bin/sh /etc/rc.shutdown >/dev/null 2>/dev/null
     fi
   fi
@@ -111,7 +181,7 @@ fi
 
 umount -f ${JAILDIR}/dev >/dev/null 2>/dev/null
 
-echo -e ".\c"
+warden_printf "%s" "."
 
 # Skip the time consuming portion if we are shutting down
 if [ "$FAST" != "Y" ]
@@ -122,7 +192,7 @@ killall -j ${JID} -TERM 2>/dev/null
 sleep 1
 killall -j ${JID} -KILL 2>/dev/null
 
-echo -e ".\c"
+warden_printf "%s" "."
 
 # Check if we need to unmount the devfs in jail
 mount | grep "${JAILDIR}/dev" >/dev/null 2>/dev/null
@@ -143,7 +213,7 @@ then
    fi
 
    SEC="`expr $SEC + 2`"
-   echo -e ".\c"
+   warden_printf "%s" "."
 
    if [ ${SEC} -gt 60 ]
    then
@@ -165,7 +235,7 @@ fi
 
 fi # End of FAST check
 
-echo -e ".\c"
+warden_printf "%s" "."
 
 if [ -n "${JID}" ] ; then
   jail -r ${JID}
@@ -176,4 +246,4 @@ if [ -x "${JMETADIR}/jail-post-stop" ] ; then
   "${JMETADIR}/jail-post-stop"
 fi
 
-echo -e "Done"
+warden_printf "%s" "Done"

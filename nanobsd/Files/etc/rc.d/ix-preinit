@@ -4,7 +4,8 @@
 #
 
 # PROVIDE: ix-preinit
-# BEFORE: fsck
+# REQUIRE: FILESYSTEMS
+# BEFORE: SERVERS
 
 . /etc/rc.subr
 

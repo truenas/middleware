@@ -44,8 +44,8 @@ class Migration(SchemaMigration):
         u'jails.jailsconfiguration': {
             'Meta': {'object_name': 'JailsConfiguration'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'jc_ipv4_network': ('django.db.models.fields.CharField', [], {'default': "'192.168.99.0/24'", 'max_length': '120', 'blank': 'True'}),
-            'jc_ipv6_network': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
+            'jc_ipv4_network': ('freenasUI.freeadmin.models.Network4Field', [], {'default': "'192.168.99.0/24'", 'max_length': '18', 'blank': 'True'}),
+            'jc_ipv6_network': ('freenasUI.freeadmin.models.Network6Field', [], {'max_length': '43', 'blank': 'True'}),
             'jc_path': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
         },
         u'jails.nullmountpoint': {

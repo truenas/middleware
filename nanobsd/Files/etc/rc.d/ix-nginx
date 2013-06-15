@@ -88,7 +88,7 @@ __EOF__
 			" > ${tmp}
 			${HTTPD} -t -c ${tmp} 2> /dev/null > /dev/null
 			if [ $? -eq 0 ]; then
-				cat ${nginx_location} >> "${NGINX_PLUGINS_CONF}"
+				sed "s/%%PLUGIN_ID%%/${id}/g" ${nginx_location} >> "${NGINX_PLUGINS_CONF}"
 			fi
 
 		fi
@@ -185,7 +185,7 @@ __EOF__
             fastcgi_pass 127.0.0.1:9042;
             fastcgi_pass_header Authorization;
             fastcgi_intercept_errors off;
-            fastcgi_read_timeout 10m;
+            fastcgi_read_timeout 60m;
             #fastcgi_temp_path /var/tmp/firmware;
 
             # track uploads in the 'proxied' zone

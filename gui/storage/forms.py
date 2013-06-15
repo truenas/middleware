@@ -150,15 +150,11 @@ class VolumeMixin(object):
         return vname
 
 
-class VolumeWizardForm(forms.Form, VolumeMixin):
+class VolumeManagerUFSForm(forms.Form, VolumeMixin):
     volume_name = forms.CharField(
         max_length=30,
         label=_('Volume name'),
-        required=False)
-    volume_fstype = forms.ChoiceField(
-        choices=((x, x) for x in ('UFS', 'ZFS')),
-        widget=forms.RadioSelect(attrs=attrs_dict),
-        label=_('Filesystem type'))
+    )
     volume_disks = forms.MultipleChoiceField(
         choices=(),
         widget=forms.SelectMultiple(attrs=attrs_dict),
@@ -168,23 +164,6 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
         choices=(),
         widget=forms.RadioSelect(attrs=attrs_dict),
         required=False)
-    force4khack = forms.BooleanField(
-        required=False,
-        initial=False,
-        help_text=_('Force 4096 bytes sector size'))
-    encryption = forms.BooleanField(
-        required=False,
-        initial=False,
-        help_text=_('Whole disk encryption'))
-    encryption_inirand = forms.BooleanField(
-        initial=False,
-        required=False,
-    )
-    dedup = forms.ChoiceField(
-        label=_('ZFS Deduplication'),
-        choices=choices.ZFS_DEDUP,
-        initial="off",
-    )
     ufspathen = forms.BooleanField(
         initial=False,
         label=_('Specify custom path'),
@@ -195,23 +174,9 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
         required=False)
 
     def __init__(self, *args, **kwargs):
-        super(VolumeWizardForm, self).__init__(*args, **kwargs)
+        super(VolumeManagerUFSForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        qs = models.Volume.objects.filter(vol_fstype='ZFS')
-        if qs.exists():
-            self.fields['volume_add'] = forms.ChoiceField(
-                label=_('Volume add'),
-                required=False)
-            self.fields['volume_add'].choices = [('', '-----')] + [
-                ("%s|%s" % (x.vol_name, x.vol_encrypt > 0), x.vol_name)
-                for x in qs
-            ]
-            self.fields['volume_add'].widget.attrs['onChange'] = (
-                'wizardcheckings(true);')
-        self.fields['volume_fstype'].widget.attrs['onClick'] = (
-            'wizardcheckings();')
-        self.fields['encryption'].widget.attrs['onClick'] = (
-            'wizardcheckings();')
+        #qs = models.Volume.objects.filter(vol_fstype='ZFS')
         self.fields['ufspathen'].widget.attrs['onClick'] = (
             'toggleGeneric("id_ufspathen", ["id_ufspath"], true);')
         if not self.data.get("ufspathen", False):
@@ -224,24 +189,15 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             ('mirror', 'mirror'),
             ('stripe', 'stripe'),
         )
-        fstype = self.data.get("volume_fstype", None)
         if "volume_disks" in self.data:
             disks = self.data.getlist("volume_disks")
         else:
             disks = []
-        if fstype == "UFS":
-            l = len(disks) - 1
-            if l >= 2 and (((l - 1) & l) == 0):
-                grouptype_choices += (
-                    ('raid3', 'RAID-3'),
-                )
-        elif fstype == "ZFS":
-            if len(disks) >= 3:
-                grouptype_choices += (('raidz', 'RAID-Z'), )
-            if len(disks) >= 4:
-                grouptype_choices += (('raidz2', 'RAID-Z2'), )
-            if len(disks) >= 5:
-                grouptype_choices += (('raidz3', 'RAID-Z3'), )
+        l = len(disks) - 1
+        if l >= 2 and (((l - 1) & l) == 0):
+            grouptype_choices += (
+                ('raid3', 'RAID-3'),
+            )
         self.fields['group_type'].choices = grouptype_choices
 
     def _populate_disk_choices(self):
@@ -278,12 +234,9 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
                 len_disks > 1 and \
                 self.cleaned_data['group_type'] in (None, ''):
             raise forms.ValidationError(_("This field is required."))
-        if len_disks < 2:
-            if self.cleaned_data.get("volume_fstype") == 'ZFS':
-                return 'stripe'
-            else:
-                # UFS middleware expects no group_type for single disk volume
-                return ''
+        if len_disks == 1:
+            # UFS middleware expects no group_type for single disk volume
+            return ''
         return self.cleaned_data['group_type']
 
     def clean_ufspath(self):
@@ -301,102 +254,18 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name", "")
         disks = cleaned_data.get("volume_disks", [])
-        if volume_name and cleaned_data.get("volume_add"):
-            self._errors['__all__'] = self.error_class([
-                _("You cannot select an existing ZFS volume and specify a new "
-                    "volume name"),
-            ])
-        elif not(volume_name or cleaned_data.get("volume_add")):
-            self._errors['__all__'] = self.error_class([
-                _("You must specify a new volume name or select an existing "
-                    "ZFS volume to append a virtual device"),
-            ])
-        elif not volume_name:
-            volume_name = cleaned_data.get("volume_add")
 
-        if cleaned_data.get("volume_add"):
-            cleaned_data["volume_add"] = cleaned_data.get(
-                "volume_add").split("|")[0]
-            zpool = notifier().zpool_parse(cleaned_data.get("volume_add"))
-            force_vdev = True if self.data.get("force_vdev") == 'on' else False
-
-            for vdev in zpool.data:
-                errors = []
-                if vdev.type != self.cleaned_data.get('group_type'):
-                    #and not force_vdev:
-                    self.fields['force_vdev'] = forms.BooleanField(
-                        required=True,
-                        label=_("Force Volume Add"),
-                        initial=False,
-                    )
-                    if not force_vdev:
-                        errors.append(_(
-                            "You are trying to add a virtual device of type "
-                            "'%(addtype)s' in a pool that has a virtual "
-                            "device of type '%(vdevtype)s'") % {
-                                'addtype': self.cleaned_data.get('group_type'),
-                                'vdevtype': vdev.type,
-                            }
-                        )
-
-                if len(disks) > 0 and len(disks) != len(list(iter(vdev))):
-                    self.fields['force_vdev'] = forms.BooleanField(
-                        required=True,
-                        label=_("Force Volume Add"),
-                        initial=False,
-                    )
-                    if not force_vdev:
-                        errors.append(_(
-                            "You are trying to add a virtual device consisting"
-                            " of %(addnum)s device(s) in a pool that has a "
-                            "virtual device consisted of %(vdevnum)s device(s)"
-                        ) % {
-                            'addnum': len(disks),
-                            'vdevnum': len(list(iter(vdev))),
-                        })
-
-                if errors:
-                    self._errors['force_vdev'] = self.error_class(errors)
-                    break
-
-        if cleaned_data.get("volume_fstype") not in ('ZFS', 'UFS'):
-            msg = _(u"You must select a filesystem")
-            self._errors["volume_fstype"] = self.error_class([msg])
-            cleaned_data.pop("volume_fstype", None)
         if len(disks) == 0 and models.Volume.objects.filter(
                 vol_name=volume_name).count() == 0:
             msg = _(u"This field is required")
             self._errors["volume_disks"] = self.error_class([msg])
             del cleaned_data["volume_disks"]
-        if (
-            cleaned_data.get("volume_fstype") == 'ZFS'
-            and
-            models.Volume.objects.filter(vol_name=volume_name).exclude(
-                vol_fstype='ZFS').count() > 0
-        ) or (
-            cleaned_data.get("volume_fstype") == 'UFS'
-            and
-            models.Volume.objects.filter(vol_name=volume_name).count() > 0
-        ):
+        if models.Volume.objects.filter(vol_name=volume_name).count():
             msg = _(u"You already have a volume with same name")
             self._errors["volume_name"] = self.error_class([msg])
             del cleaned_data["volume_name"]
 
-        if cleaned_data.get("volume_fstype", None) == 'ZFS':
-            if volume_name in ('log',):
-                msg = _(u"\"log\" is a reserved word and thus cannot be used")
-                self._errors["volume_name"] = self.error_class([msg])
-                cleaned_data.pop("volume_name", None)
-            elif re.search(r'^c[0-9].*', volume_name) or \
-                    re.search(r'^mirror.*', volume_name) or \
-                    re.search(r'^spare.*', volume_name) or \
-                    re.search(r'^raidz.*', volume_name):
-                msg = _(
-                    u"The volume name may NOT start with c[0-9], mirror, "
-                    "raidz or spare")
-                self._errors["volume_name"] = self.error_class([msg])
-                cleaned_data.pop("volume_name", None)
-        elif cleaned_data.get("volume_fstype") == 'UFS' and volume_name:
+        if volume_name:
             if len(volume_name) > 9:
                 msg = _(u"UFS volume names cannot be higher than 9 characters")
                 self._errors["volume_name"] = self.error_class([msg])
@@ -412,103 +281,35 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
 
     def done(self, request):
         # Construct and fill forms into database.
-        volume_name = (
-            self.cleaned_data.get("volume_name")
-            or
-            self.cleaned_data.get("volume_add")
-        )
-        volume_fstype = self.cleaned_data['volume_fstype']
+        volume_name = self.cleaned_data.get("volume_name")
         disk_list = self.cleaned_data['volume_disks']
         group_type = self.cleaned_data.get('group_type')
-        force4khack = self.cleaned_data.get("force4khack", False)
-        init_rand = self.cleaned_data.get("encryption_inirand", False)
-        if self.cleaned_data.get("encryption", False):
-            volume_encrypt = 1
-        else:
-            volume_encrypt = 0
-        dedup = self.cleaned_data.get("dedup", False)
         ufspath = self.cleaned_data['ufspath']
-        mp_options = "rw"
-        mp_path = None
 
         with transaction.commit_on_success():
-            vols = models.Volume.objects.filter(
+            volume = models.Volume(
                 vol_name=volume_name,
-                vol_fstype='ZFS')
-            if vols.count() == 1:
-                volume = vols[0]
-                add = True
-            else:
-                add = False
-                volume = models.Volume(
-                    vol_name=volume_name,
-                    vol_fstype=volume_fstype,
-                    vol_encrypt=volume_encrypt)
-                volume.save()
+                vol_fstype='UFS',
+            )
+            volume.save()
 
-                mp_path = ufspath if ufspath else '/mnt/' + volume_name
+            mp_path = ufspath if ufspath else '/mnt/' + volume_name
 
-                if volume_fstype == 'UFS':
-                    mp_options = 'rw,nfsv4acls'
-
-                mp = models.MountPoint(
-                    mp_volume=volume,
-                    mp_path=mp_path,
-                    mp_options=mp_options)
-                mp.save()
+            mp = models.MountPoint(
+                mp_volume=volume,
+                mp_path=mp_path,
+                mp_options='rw,nfsv4acls')
+            mp.save()
             self.volume = volume
 
-            zpoolfields = re.compile(r'zpool_(.+)')
             grouped = OrderedDict()
             grouped['root'] = {'type': group_type, 'disks': disk_list}
-            for i, gtype in request.POST.items():
-                if zpoolfields.match(i):
-                    if gtype == 'none':
-                        continue
-                    disk = zpoolfields.search(i).group(1)
-                    if gtype in grouped:
-                        # if this is a log vdev we need to mirror it for safety
-                        if gtype == 'log':
-                            grouped[gtype]['type'] = 'log mirror'
-                        grouped[gtype]['disks'].append(disk)
-                    else:
-                        grouped[gtype] = {'type': gtype, 'disks': [disk, ]}
-
-            if len(disk_list) > 0 and add:
-                notifier().zfs_volume_attach_group(
-                    volume,
-                    grouped['root'],
-                    force4khack=force4khack)
-
-            if add:
-                for grp_type in grouped:
-                    if grp_type in ('log', 'cache', 'spare'):
-                        notifier().zfs_volume_attach_group(
-                            volume,
-                            grouped.get(grp_type),
-                            force4khack=force4khack)
-
-            else:
-                notifier().init(
-                    "volume",
-                    volume,
-                    groups=grouped,
-                    force4khack=force4khack,
-                    path=ufspath,
-                    init_rand=init_rand,
-                )
-
-                if dedup:
-                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
-
-                if volume.vol_fstype == 'ZFS':
-                    models.Scrub.objects.create(scrub_volume=volume)
-
-        if volume.vol_encrypt >= 2 and add:
-            #FIXME: ask current passphrase to the user
-            notifier().geli_passphrase(volume, None)
-            volume.vol_encrypt = 1
-            volume.save()
+            notifier().init(
+                "volume",
+                volume,
+                groups=grouped,
+                path=ufspath,
+            )
 
         if mp_path in ('/etc', '/var', '/usr'):
             device = '/dev/ufs/' + volume_name
@@ -527,14 +328,9 @@ class VolumeWizardForm(forms.Form, VolumeMixin):
             if access(mp, 0):
                 rmdir(mp)
 
-        else:
-
-            # This must be outside transaction block to make sure the changes
-            # are committed before the call of ix-fstab
-            notifier().reload("disk")
-            # For scrub cronjob
-            if volume.vol_fstype == 'ZFS':
-                notifier().restart("cron")
+        # This must be outside transaction block to make sure the changes
+        # are committed before the call of ix-fstab
+        notifier().reload("disk")
 
 
 class VolumeManagerForm(VolumeMixin, forms.Form):
@@ -555,6 +351,7 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
     dedup = forms.ChoiceField(
         choices=choices.ZFS_DEDUP,
         initial="off",
+        required=False,
     )
 
     def clean(self):
@@ -579,7 +376,6 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
         else:
             volume_encrypt = 0
         dedup = self.cleaned_data.get("dedup", False)
-        force4khack = True
 
         with transaction.commit_on_success():
             vols = models.Volume.objects.filter(
@@ -616,15 +412,13 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
                 for gtype, group in grouped.items():
                     notifier().zfs_volume_attach_group(
                         volume,
-                        group,
-                        force4khack=force4khack)
+                        group)
 
             else:
                 notifier().init(
                     "volume",
                     volume,
                     groups=grouped,
-                    force4khack=force4khack,
                     init_rand=init_rand,
                 )
 
@@ -655,7 +449,7 @@ class VolumeVdevForm(forms.Form):
         max_length=20,
     )
     disks = forms.CharField(
-        max_length=100,
+        max_length=200,
         widget=forms.widgets.SelectMultiple(),
     )
 
@@ -692,19 +486,22 @@ class VdevFormSet(BaseFormSet):
             # is valid on its own
             return
 
-        """
-        We need to make sure at least one vdev is a
-        data vdev (non-log/cache/spare)
-        """
-        has_datavdev = False
-        for i in range(0, self.total_form_count()):
-            form = self.forms[i]
-            vdevtype = form.cleaned_data['vdevtype']
-            if vdevtype in ('mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'):
-                has_datavdev = True
-                break
-        if not has_datavdev:
-            raise forms.ValidationError("You need a storage vdev")
+        if not self.form.cleaned_data.get("volume_add"):
+            """
+            We need to make sure at least one vdev is a
+            data vdev (non-log/cache/spare)
+            """
+            has_datavdev = False
+            for i in range(0, self.total_form_count()):
+                form = self.forms[i]
+                vdevtype = form.cleaned_data.get('vdevtype')
+                if vdevtype in (
+                    'mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'
+                ):
+                    has_datavdev = True
+                    break
+            if not has_datavdev:
+                raise forms.ValidationError(_("You need a data disk group"))
 
 
 class VolumeImportForm(forms.Form):
@@ -854,8 +651,13 @@ class AutoImportWizard(SessionWizardView):
         enc_disks = cdata.get("disks", [])
         key = cdata.get("key")
         passphrase = cdata.get("passphrase")
+        passfile = None
         if key and passphrase:
             encrypt = 2
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
+                f.write(passphrase)
         elif key:
             encrypt = 1
         else:
@@ -870,55 +672,67 @@ class AutoImportWizard(SessionWizardView):
         elif vol['type'] == 'zfs':
             volume_fstype = 'ZFS'
 
-        with transaction.commit_on_success():
-            volume = models.Volume(
-                vol_name=volume_name,
-                vol_fstype=volume_fstype,
-                vol_encrypt=encrypt)
-            volume.save()
-            if encrypt > 0:
-                if not os.path.exists(GELI_KEYPATH):
-                    os.mkdir(GELI_KEYPATH)
-                with open(volume.get_geli_keyfile(), 'wb') as f:
-                    f.write(key.read())
-            self.volume = volume
-
-            mp = models.MountPoint(
-                mp_volume=volume,
-                mp_path='/mnt/' + volume_name,
-                mp_options='rw')
-            mp.save()
-
-            if vol['type'] != 'zfs':
-                notifier().label_disk(
-                    volume_name,
-                    "%s/%s" % (group_type, volume_name),
-                    'UFS')
-            else:
-                volume.vol_guid = vol['id']
+        try:
+            with transaction.commit_on_success():
+                volume = models.Volume(
+                    vol_name=volume_name,
+                    vol_fstype=volume_fstype,
+                    vol_encrypt=encrypt)
                 volume.save()
-                models.Scrub.objects.create(scrub_volume=volume)
+                if encrypt > 0:
+                    if not os.path.exists(GELI_KEYPATH):
+                        os.mkdir(GELI_KEYPATH)
+                    key.seek(0)
+                    keydata = key.read()
+                    with open(volume.get_geli_keyfile(), 'wb') as f:
+                        f.write(keydata)
+                self.volume = volume
 
-            if vol['type'] == 'zfs' and not notifier().zfs_import(
-                    vol['label'], vol['id']):
-                raise MiddlewareError(_(
-                    'The volume "%s" failed to import, '
-                    'for futher details check pool status') % vol['label'])
-            for disk in enc_disks:
-                if disk.startswith("gptid"):
-                    diskname = notifier().identifier_to_device(
-                        "{uuid}%s" % disk.replace("gptid/", "")
-                    )
+                mp = models.MountPoint(
+                    mp_volume=volume,
+                    mp_path='/mnt/' + volume_name,
+                    mp_options='rw')
+                mp.save()
+
+                if vol['type'] != 'zfs':
+                    notifier().label_disk(
+                        volume_name,
+                        "%s/%s" % (group_type, volume_name),
+                        'UFS')
                 else:
-                    diskname = disk
-                ed = models.EncryptedDisk()
-                ed.encrypted_volume = volume
-                ed.encrypted_disk = models.Disk.objects.filter(
-                    disk_name=diskname,
-                    disk_enabled=True
-                )[0]
-                ed.encrypted_provider = disk
-                ed.save()
+                    volume.vol_guid = vol['id']
+                    volume.save()
+                    models.Scrub.objects.create(scrub_volume=volume)
+
+                if vol['type'] == 'zfs' and not notifier().zfs_import(
+                        vol['label'], vol['id']):
+                    raise MiddlewareError(_(
+                        'The volume "%s" failed to import, '
+                        'for futher details check pool status') % vol['label'])
+                for disk in enc_disks:
+                    notifier().geli_setkey(
+                        "/dev/%s" % disk,
+                        volume.get_geli_keyfile(),
+                        passphrase=passfile
+                    )
+                    if disk.startswith("gptid"):
+                        diskname = notifier().identifier_to_device(
+                            "{uuid}%s" % disk.replace("gptid/", "")
+                        )
+                    else:
+                        diskname = disk
+                    ed = models.EncryptedDisk()
+                    ed.encrypted_volume = volume
+                    ed.encrypted_disk = models.Disk.objects.filter(
+                        disk_name=diskname,
+                        disk_enabled=True
+                    )[0]
+                    ed.encrypted_provider = disk
+                    ed.save()
+        except:
+            if passfile:
+                os.unlink(passfile)
+            raise
 
         notifier().reload("disk")
 
@@ -977,11 +791,13 @@ class AutoImportDecryptForm(forms.Form):
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
             passphrase = passfile
 
         keyfile = tempfile.mktemp(dir='/var/tmp/firmware')
         with open(keyfile, 'wb') as f:
+            os.chmod(keyfile, 600)
             f.write(key.read())
 
         _notifier = notifier()
@@ -1278,6 +1094,26 @@ class ZFSDataset_CreateForm(Form):
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="inherit",
     )
+    dataset_recordsize = forms.CharField(
+        label=_('Record Size'),
+        initial="",
+        required=False,
+        help_text=_(
+            "Specifies a suggested block size for files in the file system. "
+            "This property is designed solely for use with database workloads "
+            "that access files in fixed-size records.  ZFS automatically tunes"
+            " block sizes according to internal algorithms optimized for "
+            "typical access patterns."
+        )
+    )
+
+    advanced_fields = (
+        'dataset_refquota',
+        'dataset_quota',
+        'dataset_refreserv',
+        'dataset_reserv',
+        'dataset_recordsize'
+    )
 
     def __init__(self, *args, **kwargs):
         self.fs = kwargs.pop('fs')
@@ -1291,6 +1127,24 @@ class ZFSDataset_CreateForm(Form):
                 "alphanumeric character and may only contain "
                 "\"-\", \"_\", \":\" and \".\"."))
         return name
+
+    def clean_dataset_recordsize(self):
+        rs = self.cleaned_data.get("dataset_recordsize")
+        if not rs:
+            return rs
+        if not re.search(r'^[0-9]+K?', rs, re.I):
+            raise forms.ValidationError(_("This is not a valid record size"))
+        if rs[-1].lower() == 'k':
+            rs = int(rs[:-1]) * 1024
+        else:
+            rs = int(rs)
+        poftwo = pow(rs, 0.5)
+        if (rs < 512 or rs > 131072) or poftwo != int(poftwo):
+            raise forms.ValidationError(_(
+                "The size specified must be a power of two greater than or "
+                "equal to 512 and less than or equal to 128 Kbytes."
+            ))
+        return rs
 
     def clean(self):
         cleaned_data = _clean_quota_fields(
@@ -1346,6 +1200,13 @@ class ZFSDataset_EditForm(Form):
         choices=choices.ZFS_DEDUP_INHERIT,
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="off",
+    )
+
+    advanced_fields = (
+        'dataset_refquota',
+        'dataset_quota',
+        'dataset_refreservation',
+        'dataset_reservation',
     )
 
     def __init__(self, *args, **kwargs):
@@ -1441,10 +1302,10 @@ class ZFSVolume_EditForm(Form):
 
 
 class ZVol_CreateForm(Form):
-    zvol_name = forms.CharField(max_length=128, label=_('ZFS Volume Name'))
+    zvol_name = forms.CharField(max_length=128, label=_('zvol name'))
     zvol_size = forms.CharField(
         max_length=128,
-        label=_('Size for this ZFS Volume'),
+        label=_('Size for this zvol'),
         help_text=_('Example: 1g'))
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
@@ -1765,6 +1626,7 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
             )
         passfile = tempfile.mktemp(dir='/tmp/')
         with open(passfile, 'w') as f:
+            os.chmod(passfile, 600)
             f.write(passphrase)
         if not notifier().geli_testkey(self.volume, passphrase=passfile):
             self._errors['pass'] = self.error_class([
@@ -1779,6 +1641,7 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
         else:
             passfile = None
@@ -2081,6 +1944,7 @@ class CreatePassphraseForm(forms.Form):
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
         else:
             passfile = None
@@ -2158,6 +2022,7 @@ class ChangePassphraseForm(forms.Form):
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
         else:
             passfile = None
@@ -2210,12 +2075,14 @@ class UnlockPassphraseForm(forms.Form):
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
             failed = notifier().geli_attach(volume, passphrase=passfile)
             os.unlink(passfile)
         elif key is not None:
             keyfile = tempfile.mktemp(dir='/tmp/')
             with open(keyfile, 'wb') as f:
+                os.chmod(keyfile, 600)
                 f.write(key.read())
             failed = notifier().geli_attach(
                 volume,
@@ -2234,6 +2101,7 @@ class UnlockPassphraseForm(forms.Form):
             else:
                 msg = _("Volume could not be imported")
             raise MiddlewareError(msg)
+        notifier().sync_encrypted(volume=volume)
 
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
@@ -2281,6 +2149,7 @@ class ReKeyForm(KeyForm):
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
                 f.write(passphrase)
             passphrase = passfile
         notifier().geli_rekey(self.volume, passphrase)

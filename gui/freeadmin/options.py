@@ -39,9 +39,6 @@ from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
-from freenasUI.freeadmin.api.utils import (
-    DojoModelResource, DjangoAuthentication, DojoPaginator
-)
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -116,6 +113,8 @@ class BaseFreeAdmin(object):
                             "in FreeAdmin" % i)
                     self.__setattr__(i, getattr(obj, i))
 
+    def get_urls(self):
+
         """
         If no resource has been set lets automatically create a
         REST tastypie model resource
@@ -124,6 +123,9 @@ class BaseFreeAdmin(object):
 
         Set resource to False to do not create one
         """
+        from freenasUI.freeadmin.api.utils import (
+            DojoModelResource, DjangoAuthentication, DojoPaginator
+        )
         if self.resource is None and self._model:
             myMeta = type('Meta', (object, ), dict(
                 queryset=self._model.objects.all(),
@@ -148,8 +150,6 @@ class BaseFreeAdmin(object):
 
         if res:
             self._admin.v1_api.register(res)
-
-    def get_urls(self):
 
         def wrap(view):
             def wrapper(*args, **kwargs):
@@ -376,11 +376,10 @@ class BaseFreeAdmin(object):
             'inline': inline,
             'extra_js': m._admin.extra_js,
             'verbose_name': m._meta.verbose_name,
+            'deletable': m._admin.deletable,
         }
 
-        if m._admin.deletable is False:
-            context.update({'deletable': False})
-        if 'deletable' in request.GET and 'deletable' not in context:
+        if 'deletable' in request.GET:
             context.update({'deletable': False})
 
         instance = get_object_or_404(m, pk=oid)

@@ -50,7 +50,7 @@
     {% block buttons %}
     <tr>
         <td colspan="2">
-            <button class="submitform" data-dojo-type="dojox.form.BusyButton" data-dojo-props="type:'submit'">
+            <button class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type:'submit'">
                 <script type="dojo/method">
                         {{ extra_js }}
                 </script>
@@ -68,7 +68,7 @@
                 </script>
             </button>
             {% endif %}
-            {% if deletable == False %}
+            {% if deletable %}
             <button data-dojo-type="dijit.form.Button" >
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
 		var button = this;

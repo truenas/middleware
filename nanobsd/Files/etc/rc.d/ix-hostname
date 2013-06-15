@@ -10,28 +10,27 @@
 
 generate_hostname()
 {
-    local IFS="|"
-    local f="id gc_hostname gc_domain"
-    eval local $f
-    local sf=$(var_to_sf $f)
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	local IFS="|"
+	local f="id gc_hostname gc_domain"
+	eval local $f
+	local sf=$(var_to_sf $f)
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
-        cp /conf/base/etc/hosts /etc/hosts
-        echo -e "127.0.0.1\t${gc_hostname} ${gc_hostname}.${gc_domain}" >> /etc/hosts
+		cp /conf/base/etc/hosts /etc/hosts
+		echo -e "127.0.0.1\t${gc_hostname} ${gc_hostname}.${gc_domain}" >> /etc/hosts
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hosts FROM network_globalconfiguration WHERE id = ${id}" >> /etc/hosts
-    done
+	done
 
-    if dirsrv_enabled nis
-    then
-        echo nis >> /etc/host.conf
-        echo "${NIS_HOSTSSTR}" >> /etc/hosts
-    else
-        local tmpfile="$(mktemp /tmp/.XXXXXX)"
-        grep -Ev '^nis' /etc/host.conf > "${tmpfile}"
-        mv "${tmpfile}" /etc/host.conf
-        chmod 644 /etc/host.conf
-    fi
+	if dirsrv_enabled nis; then
+		echo nis >> /etc/host.conf
+		echo "${NIS_HOSTSSTR}" >> /etc/hosts
+	else
+		local tmpfile="$(mktemp /tmp/.XXXXXX)"
+		grep -Ev '^nis' /etc/host.conf > "${tmpfile}" 2> /dev/null
+		mv "${tmpfile}" /etc/host.conf
+		chmod 644 /etc/host.conf
+	fi
 }
 
 name="ix-hostname"

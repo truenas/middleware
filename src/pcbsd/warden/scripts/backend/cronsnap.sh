@@ -35,7 +35,7 @@ do
   needSnap=0
   zdate=`date +%Y%m%d-%H%M%S`
   if [ "$CRONFREQ" = "daily" ] ; then
-     #echo "Checking for daily snapshots to ${jHOST}..."
+     warden_print "Checking for daily snapshots to ${jHOST}..."
      today=`date +%Y%m%d`
      lastsnap=`echo $lastsnap | cut -d '-' -f 1`
      if [ "$today" != "$lastsnap" ] ; then
@@ -43,7 +43,7 @@ do
      fi
   else
   # Hourly
-     #echo "Checking for hourly snapshots to ${jHOST}..."
+     warden_print "Checking for hourly snapshots to ${jHOST}..."
      today=`date +%Y%m%d`
      hour=`date +%H`
      lastday=`echo $lastsnap | cut -d '-' -f 1`
@@ -66,7 +66,7 @@ do
         prev="$cur"
      fi
      if [ $num -gt $CRONKEEPDAYS ] ; then
-        #echo "Pruning old snapshot: $snap"
+        warden_print "Pruning old snapshot: $snap"
         rmZFSSnap "${JAILDIR}" "$snap"
      fi
   done

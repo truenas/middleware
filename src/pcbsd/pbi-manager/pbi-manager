@@ -6798,11 +6798,13 @@ chroot_extract() {
 	# If on ZFS, we can just clone our existing base system
 	if [ -n "$PBI_CHROOTZFS" ] ; then
            tank=`getZFSTank "$PBI_CHROOTZFS"`
+           chrootzfs=`getZFSRelativePath "${PBI_CHROOTZFS}"`
+           chrootdir=`getZFSRelativePath "${PBI_CHROOTDIR}"`
 	   echo "Cloning ${PBI_CHROOTZFS} -> ${PBI_CHROOTDIR}"
 	   if [ -n "${PBI_AB_TMPDIR}" ] ; then
               echo "${tank}${PBI_CHROOTDIR}" > ${PBI_AB_TMPDIR}/${PBI_AB_BUILDER}.zmnt
 	   fi
-           zfs clone -o mountpoint=${PBI_CHROOTDIR} ${tank}${PBI_CHROOTZFS}@clean ${tank}${PBI_CHROOTDIR}
+           zfs clone -o mountpoint=${PBI_CHROOTDIR} ${tank}${chrootzfs}@clean ${tank}${chrootdir}
 	   if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
 	else
 	   echo "Extracting chroot environment..."
@@ -6984,9 +6986,10 @@ mk_chroot_file() {
             # Use ZFS base for cloning
 	    echo "Creating ZFS ${PBI_CHROOTZFS} dataset..."
             tank=`getZFSTank "$PBI_APPDIR"`
+            chrootzfs=`getZFSRelativePath "${PBI_CHROOTZFS}"` 
 	    isDirZFS "${PBI_CHROOTZFS}" "1"
             if [ $? -ne 0 ] ; then   
-              zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${PBI_CHROOTZFS}
+              zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
 	      if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
 	    fi
 	    echo "Extracting rel-$ARCH.txz..."
@@ -6999,7 +7002,7 @@ mk_chroot_file() {
 	    rm rel-$ARCH.txz
 	    rm src-$ARCH.txz
 	    rm rel-$ARCH.md5
-            zfs snapshot ${tank}${PBI_CHROOTZFS}@clean
+            zfs snapshot ${tank}${chrootzfs}@clean
 	    if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
 	  else
 	    mv rel-$ARCH.txz ${PBI_CHROOTFILE}
@@ -7026,7 +7029,7 @@ mk_chroot_file() {
  
 	# Use existing sources
         if [ -e "${PBI_BUILDSRC}/COPYRIGHT" -a -z "${PBI_OSREL}" ] ; then
-		PBI_BUILDLOG="${PBI_APPDIR}/${ARCH}/.buildWorldLog"
+		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog-${ARCH}"
 		: > ${PBI_BUILDLOG}
 		mkdir -p "${PBI_BUILDTARGET}"
 	
@@ -7038,7 +7041,7 @@ mk_chroot_file() {
                 local _osRel=$FBSDREL
 
 		echo "Building the PBI chroot environment... This may take a while..."
-		PBI_BUILDLOG="${PBI_APPDIR}/${ARCH}/.buildWorldLog"
+		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog-${ARCH}"
 		echo "" > ${PBI_BUILDLOG}
 		mkdir -p "${PBI_BUILDSRC}"
 		mkdir -p "${PBI_BUILDTARGET}"
@@ -7082,9 +7085,10 @@ mk_chroot_file() {
 		fi
 	fi # End of subversion checkout
 
-	echo "Running buildworld / installworld (into a chroot)"
+	echo "Running buildworld (into a chroot)"
 	touch ${PBI_BUILDSRC}/Makefile
 	cd ${PBI_BUILDSRC}
+        echo make ${PBI_BUILDFLAGS} TARGET=$ARCH buildworld
         make ${PBI_BUILDFLAGS} TARGET=$ARCH buildworld >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
         if [ "$?" != "0" ] ; then
                 cd
@@ -7101,15 +7105,19 @@ mk_chroot_file() {
             # Use ZFS base for cloning
 	    echo "Creating ZFS ${PBI_CHROOTZFS} dataset..."
             tank=`getZFSTank "$PBI_APPDIR"`
+            chrootzfs=`getZFSRelativePath "${PBI_CHROOTZFS}"`
 	    isDirZFS "${PBI_CHROOTZFS}" "1"
             if [ $? -ne 0 ] ; then   
-              zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${PBI_CHROOTZFS}
+              echo zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
+              zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
 	      if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
 	    fi
             rmdir "${PBI_BUILDTARGET}"
 	    PBI_BUILDTARGET="$PBI_CHROOTZFS"
 	fi
 
+	echo "Running installworld (into a chroot)"
+        echo make ${PBI_BUILDFLAGS} installworld TARGET=$ARCH DESTDIR=${PBI_BUILDTARGET}
         make ${PBI_BUILDFLAGS} installworld TARGET=$ARCH DESTDIR=${PBI_BUILDTARGET} >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
         if [ "$?" != "0" ] ; then
                 cd
@@ -7119,6 +7127,8 @@ mk_chroot_file() {
                 fi
                 exit_err "Buildworld failed! Logfile saved: ${PBI_BUILDLOG}"
         fi
+	echo "Running distribuation (into a chroot)"
+        echo make ${PBI_BUILDFLAGS} distribution TARGET=$ARCH DESTDIR=${PBI_BUILDTARGET}
         make ${PBI_BUILDFLAGS} distribution TARGET=$ARCH DESTDIR=${PBI_BUILDTARGET} >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
         if [ "$?" != "0" ] ; then
                 cd
@@ -7136,7 +7146,9 @@ mk_chroot_file() {
 
 	# If using ZFS we can stop here
 	if [ -n "$PBI_CHROOTZFS" ] ; then
-           	zfs snapshot ${tank}${PBI_CHROOTZFS}@clean
+                chrootzfs=`getZFSRelativePath "${PBI_CHROOTZFS}"`
+           	echo zfs snapshot ${tank}${chrootzfs}@clean
+           	zfs snapshot ${tank}${chrootzfs}@clean
 	    	if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
 		rm ${PBI_BUILDLOG}
 		return
@@ -7478,11 +7490,18 @@ isDirZFS() {
 # Get the ZFS tank name for a directory
 # Arg1 = Directory to check
 getZFSTank() {
-  local _chkDir="$1"
+  local _chkDir="$(realpath $1 2>/dev/null)"
+  if [ -z "${_chkDir}" ] ; then
+     _chkDir="${1}"
+  fi
 
   _chkdir=${_chkDir%/}
   while :
   do
+     if [ -d "${_chkDir}" ] ; then
+        _chkDir="$(realpath ${_chkDir})"
+     fi
+
      zpath=`zfs list | awk -v path="${_chkDir}" '$5 == path { print $1 }'`
      if [ -n "${zpath}" ] ; then
         echo $zpath | cut -f1 -d '/'
@@ -7494,6 +7513,33 @@ getZFSTank() {
   done
 
   return 1
+}
+
+# Get the mountpoint for a ZFS name
+# Arg1 = name
+getZFSMountpoint() {
+   local _chkName="${1}"
+   if [ -z "${_chkName}" ]; then return 1 ; fi
+
+   zfs list "${_chkName}" | tail -1 | awk '{ print $5 }'
+}
+
+# Get the ZFS relative path for a path
+# Arg1 = Path
+getZFSRelativePath() {
+   local _chkDir="${1}"
+   local _tank=`getZFSTank "$_chkDir"`
+   local _mp=`getZFSMountpoint "${_tank}"`
+
+   if [ -z "${_tank}" ] ; then return 1 ; fi
+
+   local _name="${_chkDir#${_mp}}"
+   if [ -z "${_name}" ] ; then
+       _name="/`basename ${_chkDir}`"
+   fi
+
+   echo "${_name}"
+   return 0
 }
 
 # Main program operation

@@ -4,4 +4,4 @@
 #
 # Garrett Cooper, March 2012
 
-sh /root/update < $SCRIPTDIR/firmware.img
+sh /root/update $SCRIPTDIR/firmware.img

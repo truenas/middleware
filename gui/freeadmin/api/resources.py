@@ -521,13 +521,15 @@ class TaskResource(DojoModelResource):
             }
         else:
             repeat = ''
-        bundle.data['how'] = _(
-            "From %(begin)s through %(end)s, every %(interv)s %(repeat)s") % {
+        bundle.data['when'] = _(
+            "From %(begin)s through %(end)s, %(repeat)s") % {
                 'begin': bundle.obj.task_begin,
                 'end': bundle.obj.task_end,
-                'interv': bundle.obj.get_task_interval_display(),
                 'repeat': repeat,
             }
+        bundle.data['interv'] = "every %s" % (
+            bundle.obj.get_task_interval_display(),
+        )
         bundle.data['keepfor'] = "%s %s" % (
             bundle.obj.task_ret_count,
             bundle.obj.task_ret_unit,

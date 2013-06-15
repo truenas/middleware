@@ -3,9 +3,9 @@
         doSubmit({
           form: this,
           event: e,
-          url: '{% url "storage_wizard" %}',
+          url: '{% url "storage_volumemanager_ufs" %}',
           onComplete: function(){wizardcheckings();},
-          progressbar: '{% url "storage_wizard_progress" %}'
+          progressbar: '{% url "storage_volumemanager_progress" %}'
           });
     </script>
     <table>
@@ -25,29 +25,6 @@
                 {{ form.volume_name }}
             </td>
         </tr>
-        {% if form.volume_add %}
-        <tr>
-            <td style="width:150px;">
-                {% trans "Volume to extend" %}
-            </td>
-            <td>
-                <span id="vol_extend_enc_warn" style="display: none; color: red;">{% trans "Extending an encrypted volume will remove your passphrase and recovery key" %}<br /></span>
-                {{ form.volume_add.errors }}
-                {{ form.volume_add }}
-            </td>
-        </tr>
-        {% endif %}
-        {% if form.force_vdev %}
-        <tr>
-            <td style="width:150px;">
-                {% trans "Force Volume Add" %}
-            </td>
-            <td>
-                {{ form.force_vdev.errors }}
-                {{ form.force_vdev }}
-            </td>
-        </tr>
-        {% endif %}
         <tr>
             <td>
                 {% trans "Member disks" %} (<span id="wizard_num_disks">0</span>)
@@ -63,47 +40,6 @@
                 {% empty %}
                 {% endfor %}
             </select>
-            </td>
-        </tr>
-        <tr id="fsopt">
-            <td>
-                {% trans "Filesystem type" %}
-            </td>
-            <td>
-                {{ form.volume_fstype.errors }}
-                <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'volume_fstype', value: 'UFS'{% if form.data.volume_fstype == "UFS" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" /> UFS
-                <br />
-                <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'volume_fstype', value: 'ZFS'{% if form.data.volume_fstype == "ZFS" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
-                ZFS
-            </td>
-        </tr>
-        <tr id="zfssectorsize" style="display: none">
-            <td>{% trans "Force 4096 bytes sector size" %}</td>
-            <td>
-                {{ form.force4khack.errors }}
-                {{ form.force4khack }}
-            </td>
-        </tr>
-        <tr id="zfsfulldiskencryption" style="display: none">
-            <td>{% trans "Enable full disk encryption" %}</td>
-            <td>
-                {{ form.encryption.errors }}
-                {{ form.encryption }}
-            </td>
-        </tr>
-        <tr id="diskencryptionrand" style="display: none">
-            <td>{% trans "Initialize with random data" %}</td>
-            <td>
-                {{ form.encryption_inirand.errors }}
-                {{ form.encryption_inirand }}
-            </td>
-        </tr>
-        <tr id="zfsdedup" style="display: none">
-            <td>{% trans "Deduplication" %}</td>
-            <td>
-                <p>{{ dedup_warning|striptags }}</p>
-                {{ form.dedup.errors }}
-                {{ form.dedup }}
             </td>
         </tr>
         <tr id="grpopt" {% if disks and disks|length >= 2 %}{% else %}style="display:none;"{% endif %}>
@@ -127,63 +63,16 @@
                     raid3
                     <br />
                 </span>
-                <span id="grpraidz">
-                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raidz'{% if form.data.group_type == "raidz" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
-                    RAID-Z
-                    <br />
-                </span>
-                <span id="grpraidz2">
-                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raidz2'{% if form.data.group_type == "raidz2" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
-                    RAID-Z2
-                </span>
-                <span id="grpraidz3">
-                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raidz3'{% if form.data.group_type == "raidz3" %}, checked: true{%endif%}, onClick: function() { wizardcheckings(true); }" />
-                    RAID-Z3
-                </span>
             </td>
         </tr>
-        <tr id="zfsextra" style="display:none;">
-            <td style="width:200px;">
-                {% trans "ZFS Extra" %}
-            </td>
-            <td style="width:250px;" id="disks_unselected">
-                {% if zfsversion < 28 %}
-                    <span id="lowlog" style="display:none;color:red;">{% trans "The use of only 1 log disk is highly discouraged" %}</span>
-                {% endif %}
-                <table>
-                    <thead>
-                        <tr>
-                            <td>{% trans "Disk" %}</td>
-                            <td>{% trans "None" %}</td>
-                            <td>{% trans "Log" %}</td>
-                            <td>{% trans "Cache" %}</td>
-                            <td>{% trans "Spare" %}</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% if zfsextra %}
-                        {% for disk, name, val in zfsextra %}
-                        <tr>
-                            <td>{{ disk }}</td>
-                            <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'none'{% if val == "none" %}, checked: true{% endif %}"/></td>
-                            <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'log'{% if val == "log" %}, checked: true{% endif %}"/></td>
-                            <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'cache'{% if val == "cache" %}, checked: true{% endif %}"/></td>
-                            <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'spare'{% if val == "spare" %}, checked: true{% endif %}"/></td>
-                        </tr>
-                        {% endfor %}
-                    {% endif %}
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-        <tr id="ufspathen" {% if ufs %}{% else %}style="display:none;"{% endif %}>
+        <tr id="ufspathen">
             <td style="width:150px;"> {% trans "Specify custom path" %}</td>
             <td>
                 {{ form.ufspathen.errors }}
                 {{ form.ufspathen }}
             </td>
         </tr>
-        <tr id="ufspath" {% if ufs %}{% else %}style="display:none;"{% endif %}>
+        <tr id="ufspath">
             <td style="width:150px;"> {% trans "Path" %}</td>
             <td>
                 {{ form.ufspath.errors }}

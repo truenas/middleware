@@ -13,13 +13,13 @@ JAILNAME="$1"
 
 if [ -z "${JAILNAME}" ]
 then
-  echo "ERROR: You must specify a jail to check"
+  warden_error "You must specify a jail to check"
   exit 5
 fi
 
 if [ -z "${JDIR}" ]
 then
-  echo "ERROR: JDIR is unset!!!!"
+  warden_error "JDIR is unset!!!!"
   exit 5
 fi
 
@@ -27,7 +27,7 @@ JAILDIR="${JDIR}/${JAILNAME}"
 
 if [ ! -d "${JAILDIR}" -a "${JAILNAME}" != "all" ]
 then
-  echo "ERROR: No jail located at ${JAILDIR}"
+  warden_error "No jail located at ${JAILDIR}"
   exit 5
 fi
 
@@ -45,8 +45,8 @@ if [ "${JAILNAME}" = "all" ] ; then
     set_warden_metadir
     if [ -e "${JMETADIR}/jail-linux" ] ; then continue; fi
 
-    echo "Checking for jail updates to ${HOST}"
-    echo "################################################"
+    warden_print "Checking for jail updates to ${HOST}"
+    warden_print "################################################"
 
     # Check for pkgng updates
     if [ -e "${JDIR}/${JAILNAME}/usr/local/sbin/pkg-static" ] ; then
@@ -60,12 +60,12 @@ else
   set_warden_metadir
   
   if [ -e "${JMETADIR}/jail-linux" ] ; then
-    echo "ERROR: Cannot check for updates to Linux Jails.. Please use any included Linux utilities for your disto."
+    warden_error "Cannot check for updates to Linux Jails.. Please use any included Linux utilities for your disto."
     exit 5
   fi
 
-   echo "Checking for jail updates to ${JAILNAME}..."
-   echo "################################################"
+   warden_print "Checking for jail updates to ${JAILNAME}..."
+   warden_print "################################################"
 
    # Check for pkgng updates
    if [ -e "${JDIR}/${JAILNAME}/usr/local/sbin/pkg-static" ] ; then

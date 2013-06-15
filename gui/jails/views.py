@@ -24,33 +24,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging   
+import logging
+import os
+import string
+import time
 
-from django.http import HttpResponse 
+from django.core.servers.basehttp import FileWrapper
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.views import JsonResp   
-from freenasUI.middleware.notifier import notifier
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails import forms, models
 from freenasUI.common.warden import (
     Warden,
-    WARDEN_STATUS_RUNNING,
-    WARDEN_STATUS_STOPPED,
     WARDEN_DELETE_FLAGS_CONFIRM,
     WARDEN_EXPORT_FLAGS_DIR
 )
 
 log = logging.getLogger("jails.views")
 
+
 def jails_home(request):
 
     try:
-        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
+        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
 
     except IndexError:
-        jailsconf = models.JailsConfiguration.objects.create().id
+        jailsconf = models.JailsConfiguration.objects.create()
 
     return render(request, 'jails/index.html', {
         'focus_form': request.GET.get('tab', 'jails.View'),
@@ -61,10 +63,10 @@ def jails_home(request):
 def jailsconfiguration(request):
 
     try:
-        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0].id
+        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
 
     except IndexError:
-        jailsconf = models.JailsConfiguration.objects.create().id
+        jailsconf = models.JailsConfiguration.objects.create()
 
     return render(request, 'jails/index.html', {
         'focus_form': request.GET.get('tab', 'jails.JailsConfiguration.View'),
@@ -79,13 +81,15 @@ def jail_edit(request, id):
     if request.method == 'POST':
         form = forms.JailsEditForm(request.POST, instance=jail)
         if form.is_valid():
-            form.save() 
-            return JsonResp(request,
-                message=_("Jail successfully edited."))
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Jail successfully edited.")
+            )
     else:
         form = forms.JailsEditForm(instance=jail)
 
-    return render(request, 'jails/edit.html', { 
+    return render(request, 'jails/edit.html', {
         'form': form
     })
 
@@ -98,15 +102,17 @@ def jail_mkdir(request, id):
         form = forms.MkdirForm(request.POST, jail=jail)
         if form.is_valid():
             form.save()
-            return JsonResp(request,
-                message=_("Directory successfully created."))
-    else: 
+            return JsonResp(
+                request,
+                message=_("Directory successfully created.")
+            )
+    else:
         form = forms.MkdirForm(jail=jail)
 
     return render(request, 'jails/mkdir.html', {
         'form': form,
-    }) 
-   
+    })
+
 
 def jail_storage_add(request, jail_id):
 
@@ -116,14 +122,17 @@ def jail_storage_add(request, jail_id):
         form = forms.NullMountPointForm(request.POST, jail=jail)
         if form.is_valid():
             form.save()
-            return JsonResp(request,
-                message=_("Storage successfully added."))
+            return JsonResp(
+                request,
+                message=_("Storage successfully added.")
+            )
     else:
         form = forms.NullMountPointForm(jail=jail)
 
     return render(request, 'jails/storage.html', {
         'form': form,
-    }) 
+    })
+
 
 def jail_storage_view(request, id):
 
@@ -134,15 +143,17 @@ def jail_storage_view(request, id):
         form = forms.NullMountPointForm(request.POST, instance=nmp, jail=jail)
         if form.is_valid():
             form.save()
-            return JsonResp(request,
-                message=_("Storage successfully added."))
+            return JsonResp(
+                request,
+                message=_("Storage successfully added.")
+            )
     else:
         form = forms.NullMountPointForm(instance=nmp, jail=jail)
 
     return render(request, 'jails/storage.html', {
         'form': form,
-    }) 
-    
+    })
+
 
 def jail_start(request, id):
 
@@ -194,7 +205,9 @@ def jail_delete(request, id):
 
     if request.method == 'POST':
         try:
-            Warden().delete(jail=jail.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
+            Warden().delete(
+                jail=jail.jail_host,
+                flags=WARDEN_DELETE_FLAGS_CONFIRM)
             return JsonResp(
                 request,
                 message=_("Jail successfully deleted.")
@@ -208,6 +221,7 @@ def jail_delete(request, id):
             'name': jail.jail_host
         })
 
+
 def jail_export(request, id):
 
     jail = models.Jails.objects.get(id=id)
@@ -216,14 +230,19 @@ def jail_export(request, id):
     dir = jailsconf.jc_path
     filename = "%s/%s.wdn" % (dir, jail.jail_host)
 
-    Warden().export(jail=jail.jail_host, path=dir, flags=WARDEN_EXPORT_FLAGS_DIR)
+    Warden().export(
+        jail=jail.jail_host, path=dir, flags=WARDEN_EXPORT_FLAGS_DIR
+    )
 
     freenas_build = "UNKNOWN"
+    #FIXME
+    """
     try:
         with open(VERSION_FILE) as d:
             freenas_build = d.read().strip()
     except:
         pass
+    """
 
     wrapper = FileWrapper(file(filename))
     response = HttpResponse(wrapper, content_type='application/octet-stream')
@@ -235,6 +254,88 @@ def jail_export(request, id):
             time.strftime('%Y%m%d%H%M%S'))
 
     return response
+
+jail_progress_estimated_time = 1800
+jail_progress_start_time = 0
+jail_progress_percent = 0
+
+def jail_progress(request):
+    global jail_progress_estimated_time
+    global jail_progress_start_time
+    global jail_progress_percent
+
+    data = {
+        'size': 0,
+        'data': '',
+        'state': 'running',
+        'eta': 0,
+        'percent': 0
+    }
+
+    jc = models.JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+
+    if os.path.exists(logfile):
+        f = open(logfile, "r") 
+        buf = f.readlines()
+        f.close()
+
+        percent = 0
+        size = len(buf)
+        if size > 0:
+            for line in buf:
+                if line.startswith('====='):
+                    parts = line.split()
+                    if len(parts) > 1:
+                        percent = parts[1][:-1]
+
+            buf = string.join(buf)
+            size = len(buf)
+
+        if not percent:
+            percent = 0
+
+        elapsed = 1
+        curtime = int(time.time())
+
+        if jail_progress_start_time == 0:
+            jail_progress_start_time = curtime
+            eta = jail_progress_estimated_time
+
+        else:
+            elapsed = curtime - jail_progress_start_time 
+            eta = jail_progress_estimated_time - elapsed
+
+        if percent > 0 and jail_progress_percent != percent:
+            p = float(percent) / 100
+            t = float(p) * jail_progress_estimated_time
+
+            estimated_time = elapsed / p
+            eta = estimated_time - elapsed
+
+            jail_progress_estimated_time = estimated_time
+
+        if eta > 3600:
+            data['eta'] = "%02d:%02d:%02d" % (eta/3600, eta/60, eta%60)
+        elif eta > 0:
+            data['eta'] = "%02d:%02d" % (eta/60, eta%60)
+        else:
+            data['eta'] = "00:00"
+
+        data['percent'] = percent
+        data['size'] = size
+        data['data'] = buf
+
+        jail_progress_percent = percent
+
+        if not os.path.exists("/var/tmp/.jailcreate"):
+            data['state'] = 'done'
+            jail_progress_estimated_time = 1800
+            jail_progress_start_time = 0
+            jail_progress_percent = 0 
+
+    return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+
 
 def jail_import(request):
     log.debug("XXX: jail_import()")

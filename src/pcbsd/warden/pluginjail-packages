@@ -27,8 +27,8 @@ devel/glib20
 devel/gamin
 devel/gio-fam-backend
 sysutils/gnome_subr
-devel/dbus OPTIONS_FILE_UNSET+=X11
-devel/dbus-glib OPTIONS_FILE_UNSET+=X11
+devel/dbus
+devel/dbus-glib
 devel/libdaemon
 databases/gdbm
 textproc/py-xml

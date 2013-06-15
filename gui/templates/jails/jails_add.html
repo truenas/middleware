@@ -1,0 +1,12 @@
+{% extends "freeadmin/generic_model_add.html" %}
+{% block post_form %}
+<script type="dojo/on" data-dojo-event="submit" data-dojo-args="e">
+    doSubmit({
+       form: this,
+       event: e,
+       url: '{{ request.path }}',
+       progressurl: '/jails/progress/',
+       progresstype: 'jail'
+    });
+</script>
+{% endblock %}

@@ -143,6 +143,23 @@ class NFSForm(ModelForm):
 
     class Meta:
         model = models.NFS
+        widgets = {
+            'nfs_srv_mountd_port': forms.widgets.TextInput(),
+            'nfs_srv_rpcstatd_port': forms.widgets.TextInput(),
+            'nfs_srv_rpclockd_port': forms.widgets.TextInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(NFSForm, self).__init__(*args, **kwargs)
+        self.fields['nfs_srv_mountd_port'].label = (
+            self.fields['nfs_srv_mountd_port'].label.lower()
+        )
+        self.fields['nfs_srv_rpcstatd_port'].label = (
+            self.fields['nfs_srv_rpcstatd_port'].label.lower()
+        )
+        self.fields['nfs_srv_rpclockd_port'].label = (
+            self.fields['nfs_srv_rpclockd_port'].label.lower()
+        )
 
     def clean_nfs_srv_bindip(self):
         ips = self.cleaned_data.get("nfs_srv_bindip")
@@ -992,14 +1009,14 @@ class iSCSITargetExtentForm(ModelForm):
     iscsi_extent_type = forms.ChoiceField(
         choices=(
             ('file', _('File')),
-            ('disk', _('Disk')),
+            ('disk', _('Device')),
         ),
         label=_("Extent Type"),
     )
     iscsi_extent_disk = forms.ChoiceField(
         choices=(),
         widget=forms.Select(attrs={'maxHeight': 200}),
-        label=_('Disk device'),
+        label=_('Device'),
         required=False,
     )
 

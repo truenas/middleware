@@ -406,7 +406,7 @@ _gen_conf()
 		echo "saver=\"daemon\""
 	fi
 
-	local nonroot mountdflags="-r" ip nfsips
+	local nonroot mountdflags="-r" ip nfsips mountdport statdport lockdport
 
 	nfsips=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_bindip FROM services_nfs ORDER BY -id LIMIT 1" | tr "," \\n | \
 	while read -r ip; do
@@ -423,17 +423,28 @@ _gen_conf()
 		echo "nfs_server_flags=\"-t -u -n ${numservers} ${nfsips}\""
 	done
 
-	nonroot=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_allow_nonroot FROM services_nfs ORDER BY -id LIMIT 1")
-	if [ "${nonroot}" -eq 1 ]; then
-		mountdflags="${mountdflags}n"
-	fi
-	if [ -n "${nfsips}" ]; then
-		mountdflags="${mountdflags} ${nfsips}"
-		echo "rpc_statd_flags=\"${nfsips}\""
-		echo "rpc_lockd_flags=\"${nfsips}\""
-		echo "rpcbind_flags=\"${nfsips}\""
-	fi
-	echo "mountd_flags=\"${mountdflags}\""
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_allow_nonroot, nfs_srv_mountd_port, nfs_srv_rpcstatd_port, nfs_srv_rpclockd_port FROM services_nfs ORDER BY -id LIMIT 1" | \
+	while read -r nonroot mountdport statdport lockdport; do
+		if [ "${nonroot}" -eq 1 ]; then
+			mountdflags="${mountdflags}n"
+		fi
+		if [ -n "${mountdport}" ]; then
+			mountdflags="${mountdflags} -p ${mountdport}"
+		fi
+		if [ -n "${statdport}" ]; then
+			statdport="-p ${statdport}"
+		fi
+		if [ -n "${lockdport}" ]; then
+			lockdport="-p ${lockdport}"
+		fi
+		if [ -n "${nfsips}" ]; then
+			mountdflags="${mountdflags} ${nfsips}"
+			echo "rpcbind_flags=\"${nfsips}\""
+		fi
+		echo "rpc_statd_flags=\"${nfsips}${statdport}\""
+		echo "rpc_lockd_flags=\"${nfsips}${lockdport}\""
+		echo "mountd_flags=\"${mountdflags}\""
+	done
 
 	local smartdint
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \

@@ -42,7 +42,8 @@ WITHOUT_IPFILTER=	true	# do not build IP Filter package
 WITHOUT_MODULES=	true	# do not build modules with the kernel
 WITHOUT_PF=		true	# do not build PF firewall package
 WITHOUT_PROFILE=	true	# Avoid compiling profiled libraries
-WITHOUT_USB=		true	# do not build usbd(8) and related programs
+# Required to build some packages within the jail (libusb, libusbhid)
+# WITHOUT_USB=		true	# do not build usbd(8) and related programs
 WITHOUT_VINUM=		true	# do not build Vinum utilities
 
 # BIND OPTIONS

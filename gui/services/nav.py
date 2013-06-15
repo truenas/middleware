@@ -115,8 +115,8 @@ class RsyncModView(TreeNode):
 
 class DirectoryServiceView(TreeNode):
 
-    gname = 'Directory Service'
-    name = _(u'Directory Service')
+    gname = 'Directory Services'
+    name = _(u'Directory Services')
     icon = u'DirectoryServiceIcon'
 
     def __init__(self, *args, **kwargs):
