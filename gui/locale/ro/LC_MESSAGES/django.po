@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2013-06-12 15:08+0200\n"
+"PO-Revision-Date: 2013-06-14 15:04+0200\n"
 "Last-Translator: liviu <vasies.liviu@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -609,7 +609,6 @@ msgid "Home directory has to start with /mnt or be /nonexistent"
 msgstr "Directorul Acasă trebuie să înceapă cu /mnt/ sau să fie /inexistent"
 
 #: account/forms.py:725
-#, fuzzy
 msgid "Allow repeated GIDs"
 msgstr "Permite GIDs repetate"
 
@@ -770,7 +769,6 @@ msgid "The group %s is not valid."
 msgstr "Grupul %s nu este valid."
 
 #: freeadmin/forms.py:174
-#, fuzzy
 msgid "The path must reside within a volume mount point"
 msgstr ""
 "Calea către conţinut trebuie să existe în interiorul volumului/setului de "
@@ -806,17 +804,17 @@ msgstr "Oprire"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "%s nu a returnat date"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Nu s-au preluat %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Au apărut erori la etichetarea discului"
+msgstr "O eroare a apărut in timpul deserializări din %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -865,36 +863,35 @@ msgstr ""
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Trebuie să specificii o adresă IPv4 deasemenea"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Trebuie să alegi o mască de rețea IPv4 deasemenea"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Trebuie să specifici o adresă IPv6 deasemenea"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Trebuie să alegeți o mască de rețea IPv6 deasemenea"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Trebuie să alegi între IPv4 sau IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Bucla locală nu este un nameserver valid"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Adresele nespecificate nu sunt valide ca nameserver"
 
 #: network/forms.py:167
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "Câmpul nu este o adresă IP sau reţea validă"
+msgstr "Acesta nu este o adresă de nameserver validă"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
@@ -1079,9 +1076,10 @@ msgid "Virtual Interface"
 msgstr "Interfeţe virtuale"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr "Interfeţe virtuale trebuie să fie vlanXX unde XX este un număr"
+msgstr ""
+"Interfeţe virtuale trebuie să fie vlanXX unde XX este un număr. Exemplu: "
+"vlan0"
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1105,9 +1103,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:293
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLAN-uri"
 
 #: network/models.py:314
 msgid "Protocol Type"
@@ -1115,11 +1112,11 @@ msgstr "Tip protocol"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
-msgstr "Link Aggregation (legături distribuite)"
+msgstr " Legături agregate (legături distribuite)"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
-msgstr "Legăturile distribuite"
+msgstr "Legături agregate"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
@@ -1159,7 +1156,7 @@ msgstr "Sumar reţea"
 
 #: network/nav.py:41
 msgid "Create Link Aggregation"
-msgstr "Crearea unei conexiuni distribuite"
+msgstr "Crearea unei legături de agregare"
 
 #: network/nav.py:50
 #, fuzzy
@@ -1172,83 +1169,82 @@ msgid "LAGG successfully added"
 msgstr "adăugat cu succes"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Un grup cu acelaşi gid există deja"
+msgstr "Acest IP este deja în folosință."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
-msgstr ""
+msgstr "Loc de punere temporară a fișierelor PBI"
 
 #: plugins/forms.py:93
-#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
-"Sistemul va folosi această locaţie pentru a salva fişierul firmware-ul "
-"înainte a fi aplicat/executat."
+"Sistemul va folosi acest loc să stocheze temporar fșierul PBI înainte de "
+"instalare."
 
 #: plugins/forms.py:119
-#, fuzzy
 msgid "PBI file to be installed"
-msgstr "Noua imagine de instalat"
+msgstr "Fișier PBI să fie instalat"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Trebuie să oprești servciul Plugins înainte de procedură."
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
-msgstr "Un grup cu acelaşi gid există deja"
+msgstr "Calea %s există deja."
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "Calea intregă JAIL nu poate depăși 76 de caractere"
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr ""
+"Calea plugin-urilor jail nu poate fi un subgrup din calea arhivei plugin-"
+"urilor."
 
 #: plugins/forms.py:205 services/forms.py:148
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr ""
+"Calea arhivei plugin-urilor nu poate fi subgrup din calea plugin-urilor "
+"jail."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
 msgstr ""
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
-msgstr "Adresă email"
+msgstr "Adresa Jail IPv4 "
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "Mască reţea (Netmask) IPv4"
+msgstr "Mască reţea Jail (Netmask) IPv4"
 
 #: plugins/forms.py:228
 msgid "Plugins archive Path"
-msgstr ""
+msgstr "Plugins calea arhivă"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
-msgstr ""
+msgstr "Plugin-uri Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "Montat?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Calea completă nu poate depăși 88 de caractere"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
-msgstr "Cache-ul nu poate fi refăcut"
+msgstr "Calea nu poate fi montată %s"
 
 #: plugins/forms.py:341
 #, fuzzy, python-format
@@ -1257,31 +1253,28 @@ msgstr "Cache-ul nu poate fi refăcut"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
-#, fuzzy
 msgid "Plugin name"
-msgstr "Nume domeniu"
+msgstr "Nume plugin"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
-msgstr ""
+msgstr "Numele plugin-ului"
 
 #: plugins/models.py:44
 msgid "Plugin info name"
-msgstr ""
+msgstr "Plugin info nume"
 
 #: plugins/models.py:45
 msgid "Info name of the plugin"
-msgstr ""
+msgstr "Numele info a plugin-ului"
 
 #: plugins/models.py:50
-#, fuzzy
 msgid "Plugin version"
-msgstr "Versiune Windows"
+msgstr "Versiune Plugin"
 
 #: plugins/models.py:51
-#, fuzzy
 msgid "Version of the plugin"
-msgstr "criptare a conexiune"
+msgstr "Versiunea plugin-ului"
 
 #: plugins/models.py:57
 #, fuzzy
@@ -1290,7 +1283,7 @@ msgstr "Versiune Windows"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
-msgstr ""
+msgstr "Arhitectura plugin-ului"
 
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
@@ -1376,9 +1369,8 @@ msgid "Jail successfully imported."
 msgstr "%s actualizat cu succes."
 
 #: services/forms.py:70
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "Utilizatorul %s este invalid"
+msgstr "Acesta nu este o mască validă %s"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1390,9 +1382,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Acest câmp este obligatoriu pentru \"Directoare Home\"."
 
 #: services/forms.py:106
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "Cache-ul nu poate fi refăcut"
+msgstr "Serviciul CIFS a eșuat să repornească."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1461,28 +1452,28 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr ""
 
 #: services/forms.py:320
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Schimbare parolă"
+msgstr "Confirmare parolă"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
 msgstr ""
 
 #: services/forms.py:374
-#, fuzzy
 msgid "This is not a valid e-mail address"
-msgstr "Câmpul nu este o adresă IP sau reţea validă"
+msgstr "Aceasta nu este o adresă de e-mail validă."
 
 #: services/forms.py:376
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
+"Contactul trebuie să conțină numai caractere alfanumerice, _, - sau o adresă "
+"de e-mail"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "Comunitatea trebuie să conțină numai caractere alfanumerice, _ sau -"
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
@@ -1498,17 +1489,17 @@ msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr ""
 
 #: services/forms.py:427 services/forms.py:1137
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Utilizatorul %s este invalid"
-msgstr[1] "Utilizatorul %s este invalid"
-msgstr[2] "Utilizatorul %s este invalid"
+msgstr[0] "E-mailurile %s sunt invalide"
+msgstr[1] "E-mailul %s este invalid"
+msgstr[2] "E-mailurile %s sunt invalide"
 
 #: services/forms.py:437
 #, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "Cache-ul nu poate fi refăcut"
+msgstr "Serviciul UPS a eșuat să se reîncarce"
 
 #: services/forms.py:442
 #, fuzzy
@@ -1573,7 +1564,7 @@ msgstr "The peer secret is required if you set a peer user."
 #: services/forms.py:1027 services/forms.py:1086 services/models.py:514
 #: services/models.py:744
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "Serviciul iSCSI a eșuat la repornire."
 
 #: services/forms.py:606
 msgid "LUN already exists in the same target."
@@ -1602,11 +1593,11 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "This value must be between %(start)d and %(end)d, inclusive."
 
 #: services/forms.py:669
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
-"This field is required if discovery method is set to CHAP or CHAP Mutal."
+"Acest câmp este necesar dacă metoda de descoperire este CHAP sau CHAP "
+"reciproc."
 
 #: services/forms.py:717
 msgid ""
@@ -1674,9 +1665,8 @@ msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
 msgstr ""
 
 #: services/forms.py:1091
-#, fuzzy
 msgid "Delete underlying file"
-msgstr "Ştergere interfaţă"
+msgstr "Ştergere fișier de bază."
 
 #: services/forms.py:1108 templates/freeadmin/generic_model_delete.html:24
 #: templates/plugins/plugin_confirm_delete.html:10
@@ -1811,7 +1801,7 @@ msgstr "Suport EA"
 
 #: services/models.py:138
 msgid "Support DOS File Attributes"
-msgstr "Suport atribute fişier DOS"
+msgstr "Suportă  Atribute Fişier  DOS"
 
 #: services/models.py:140
 msgid "Allow Empty Password"
@@ -1830,7 +1820,7 @@ msgstr ""
 
 #: services/models.py:147
 msgid "Enable home directories"
-msgstr "Activare director Home"
+msgstr "Activare director Acasă"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
@@ -1839,7 +1829,7 @@ msgstr ""
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
-msgstr "Activare parcurgere director Home"
+msgstr "Activare parcurgere director Acasă"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
@@ -1849,7 +1839,7 @@ msgstr ""
 
 #: services/models.py:156
 msgid "Home directories"
-msgstr "Director Home"
+msgstr "Director Acasă"
 
 #: services/models.py:160
 #, fuzzy
@@ -1929,8 +1919,8 @@ msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr ""
-"Denumirea server-ului. Dacă câmpul este lăsat gol, este specificat un server "
-"implicit."
+"Nume server. Dacă acest câmp este lăsat gol, server-ul implicit este "
+"specificat."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -6682,13 +6672,12 @@ msgstr "Alerte Critice"
 msgid "Selected"
 msgstr "Selectat"
 
-#, fuzzy
 msgid "SHA256 sum for the PBI file"
-msgstr "Suma SHA256 a imaginii"
+msgstr "Suma SHA256 pentru fișierul PBI"
 
 #, fuzzy
 msgid "Plugin uname"
-msgstr "Nume domeniu"
+msgstr "Uname plugin"
 
 #, fuzzy
 msgid "Path to plugin"
@@ -6842,12 +6831,11 @@ msgid ""
 "the guest service. This user must exist in the password file, but does "
 "not require a valid login."
 msgstr ""
-"Această opţiune se utilizează pentru a trece peste numele de utilizator "
-"(implicit 'ftp') folosit pentru a accesa serviciile specifice "
-"vizitatorului. Indiferent de privilegiile avute, ele vor fi disponibile "
-"oricărui client ce se conectează la serviciul de tip vizitator. Acest "
-"utilizator trebuie să existe în fişierul de parole, dar nu este necesară "
-"o logare validă."
+"Folosește această opțiune pentru a rescrie utilizatorul (”ftp” implicit) "
+"care va fi folosit pentru accesarea serviciilor care sunt speficicate ca "
+"vizitator. Orice privilegi ar avea avest utilizator va fi disponibil "
+"oricărei conexiuni la serviciul vizitator. Acest utilizator trebuie să "
+"existe in fișierul de parole, dar nu necesită o autentificare validă."
 
 #, fuzzy
 msgid "CIFS Share"
@@ -7070,13 +7058,13 @@ msgid "Level"
 msgstr "Nivel"
 
 msgid "Add Link Aggregation"
-msgstr "Adăugare unei conexiuni distribuite"
+msgstr "Adaugă legătură de agregare"
 
 msgid "View All Interfaces"
 msgstr "Vizualizare toate intefeţele"
 
 msgid "View All VLANs"
-msgstr "Vizualizare toate reţelele VLAN"
+msgstr "Vizualizare toate VLAN-urile"
 
 msgid "The version of Microsoft Windows that Active Directory is running."
 msgstr "Versiune Microsoft Windows pe care rulează Active Directory."

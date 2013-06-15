@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-06-11 13:41+0200\n"
+"PO-Revision-Date: 2013-06-14 08:23+0200\n"
 "Last-Translator: liviu <vasies.liviu@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
-msgstr "Rapoarte"
+msgstr "Raportării"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -49,7 +49,6 @@ msgstr "Stocare"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
 msgstr "Au apărut unele erori!"
 
@@ -71,7 +70,7 @@ msgstr "Ștergere disc"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr "Aştepta-ţi..."
+msgstr "Aştepta-ți vă rog..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -89,19 +88,19 @@ msgid "Plugins"
 msgstr "plugin-uri"
 
 msgid "CronJobs"
-msgstr "Job-uri Cron"
+msgstr "Sarcinii programate"
 
 msgid "Replace"
-msgstr "Înlocuire"
+msgstr "Reînlocuire"
 
 msgid "Disk Replacement"
-msgstr "Înlocuire disc"
+msgstr "Reînlocuire disc"
 
 msgid "Detach"
-msgstr "Scoatere"
+msgstr "Desprindere"
 
 msgid "Disk Detach"
-msgstr "Scoatere disc"
+msgstr "Desprindere disc"
 
 msgid "Every"
 msgstr "Fiecare"
