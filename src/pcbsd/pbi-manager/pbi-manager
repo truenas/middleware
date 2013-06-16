@@ -1518,10 +1518,12 @@ detect_pkgng()
                 export PKGNG=1
                 export PKG_ADD="pkg add"
                 export PKG_DELETE="pkg delete -y -f"
+		export PKGEXT=txz
         else
                 export PKGNG=0
                 export PKG_ADD=pkg_add
                 export PKG_DELETE=pkg_delete
+		export PKGEXT=tbz
         fi
 
 }
@@ -7549,6 +7551,7 @@ mk_required_dirs
 load_pbi_etcconf
 
 trap exit_trap 1 2 3 9 15
+umask 022
 
 # Figure out which mode we are running in
 case `basename ${0}` in
