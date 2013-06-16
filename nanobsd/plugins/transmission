@@ -54,6 +54,18 @@ then
 fi
 export PLUGINPORT
 
+# 
+# Where to cache packages
+# 
+PLUGINPKGDIR="${PBI_PKGDIR}/${PLUGIN}-${NANO_ARCH}"
+mkdir -p "${PLUGINPKGDIR}"
+if [ "$?" != "0" ]
+then
+	echo "${PLUGIN}: unable to create ${PLUGINPKGDIR}!"
+	exit 1
+fi
+export PLUGINPKGDIR
+
 #
 # Where to put the PBI
 #
@@ -198,7 +210,7 @@ last_orders()
 		${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" \
 			-c "${PLUGINCONFDIR}" \
 			-o "${PLUGINOUT}" \
-			--pkgdir "${PBI_PKGDIR}" \
+			--pkgdir "${PLUGINPKGDIR}" \
 			--tmpfs "${PBI_ARCH_FLAGS}" > "${PLUGINLOG}" 2>&1
 		if [ "$?" != "0" ]
 		then
