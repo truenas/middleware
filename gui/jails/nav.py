@@ -52,7 +52,6 @@ log = logging.getLogger('jails.nav')
 NAME = _('Jails')
 ICON = u'JailIcon'
 BLACKLIST = [
-    'JailsConfiguration',
     'JailsManager',
     'JailsQuerySet',
     'Jails',
@@ -166,6 +165,8 @@ class AddJail(TreeNode):
 
 class ViewJailsConfiguration(TreeNode):
 
+    gname = 'JailsConfiguration'
+    append_to = 'jails'
     name = _(u'Configuration')
     icon = u'SettingsIcon'
     type = 'openjails'
