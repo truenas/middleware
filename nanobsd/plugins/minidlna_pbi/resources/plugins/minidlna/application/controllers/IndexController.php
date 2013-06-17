@@ -117,6 +117,8 @@ class IndexController extends Zend_Controller_Action
             $form->serial->setValue($minidlna->getSerial());
             $form->auxiliary->setValue($minidlna->getAuxiliary());
             $form->rescan->setValue($minidlna->getRescan());
+
+            $this->view->url = $this->getRequest()->getRequestUri();
             $this->view->form = $form;
 
         }
