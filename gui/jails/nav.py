@@ -149,24 +149,23 @@ class AddJail(TreeNode):
     icon = u'JailAddIcon'
     order = 1
 
-    jc = None
-    try:
-        jc = JailsConfiguration.objects.order_by("-id")[0]
+    def __init__(self, *args, **kwargs):
+        super(AddJail, self).__init__(*args, **kwargs)
+        jc = None
+        try:
+            jc = JailsConfiguration.objects.order_by("-id")[0]
+        except:
+            pass
 
-    except:
-       pass
-
-    if jc and jc.jc_path:
-        type = 'object'
-        view = 'freeadmin_jails_jails_add'
-
-    else:
-        type = 'openjails'
+        if jc and jc.jc_path:
+            self.type = 'object'
+            self.view = 'freeadmin_jails_jails_add'
+        else:
+            self.type = 'openjails'
 
 
 class ViewJailsConfiguration(TreeNode):
 
-    gname = 'Configuration'
     name = _(u'Configuration')
     icon = u'SettingsIcon'
     type = 'openjails'
