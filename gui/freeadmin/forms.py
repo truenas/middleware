@@ -57,7 +57,9 @@ class CronMultiple(DojoWidgetMixin, Widget):
     def render(self, name, value, attrs=None):
         if value is None:
             value = ''
-        final_attrs = self.build_attrs(attrs, name=name, **{'data-dojo-name': name})
+        final_attrs = self.build_attrs(
+            attrs, name=name, **{'data-dojo-name': name}
+        )
         final_attrs['value'] = force_unicode(value)
         if value.startswith('*/'):
             final_attrs['typeChoice'] = "every"
@@ -69,6 +71,7 @@ class CronMultiple(DojoWidgetMixin, Widget):
 class DirectoryBrowser(TextInput):
     def __init__(self, *args, **kwargs):
         dirsonly = kwargs.pop('dirsonly', True)
+        kwargs.pop('filesonly', False)
         super(DirectoryBrowser, self).__init__(*args, **kwargs)
         self.attrs.update({
             'dojoType': 'freeadmin.form.PathSelector',
@@ -179,10 +182,16 @@ class GroupField(forms.ChoiceField):
 class PathField(forms.CharField):
 
     def __init__(self, *args, **kwargs):
-        dirsonly = kwargs.pop('dirsonly', True)
+        self.dirsonly = kwargs.pop('dirsonly', True)
+        self.filesonly = kwargs.pop('filesonly', False)
+        if self.dirsonly and self.filesonly:
+            raise ValueError("You cannot have dirsonly _and_ filesonly")
         self.abspath = kwargs.pop('abspath', True)
         self.includes = kwargs.pop('includes', [])
-        self.widget = DirectoryBrowser(dirsonly=dirsonly)
+        self.widget = DirectoryBrowser(
+            dirsonly=self.dirsonly,
+            filesonly=self.filesonly
+        )
         super(PathField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
@@ -200,6 +209,14 @@ class PathField(forms.CharField):
                 raise forms.ValidationError(
                     _("The path must reside within a volume mount point")
                 )
+            if self.filesonly:
+                if not(
+                    os.path.exists(absv) and
+                    (os.path.isfile(value) or os.path.islink(value))
+                ):
+                    raise forms.ValidationError(
+                        _("A file is required")
+                    )
             return value if not self.abspath else absv
         return value
 

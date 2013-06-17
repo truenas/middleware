@@ -1063,9 +1063,6 @@ class InitShutdownForm(ModelForm):
 
     class Meta:
         model = models.InitShutdown
-        widgets = {
-            'ini_script': DirectoryBrowser(dirsonly=False),
-        }
 
     def __init__(self, *args, **kwargs):
         super(InitShutdownForm, self).__init__(*args, **kwargs)
