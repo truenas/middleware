@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-22 22:31+0200\n"
+"PO-Revision-Date: 2013-06-17 23:15+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -2691,35 +2691,40 @@ msgstr ""
 
 #: services/models.py:1062
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Upload propusni opseg za lokalnog korisnika"
 
 #: services/models.py:1063
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Upload propusni opseg za lokalnog korisnika u KB/s. Nula znači beskonačno."
 
 #: services/models.py:1067
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Download propusni opseg za lokalnog korisnika"
 
 #: services/models.py:1068
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Download propusni opseg za lokalnog korisnika u KB/s. Nula znači beskonačno."
 
 #: services/models.py:1072
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Upload propusni opseg za anonimnog korisnika"
 
 #: services/models.py:1073
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Upload propusni opseg za anonimnog korisnika u KB/s. Nula znači beskonačno."
 
 #: services/models.py:1077
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Download propusni opseg za anonimnog korisnika"
 
 #: services/models.py:1078
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Download propusni opseg za anonimnog korisnika u KB/s. Nula znači "
+"beskonačno."
 
 #: services/models.py:1081
 msgid "Enable SSL/TLS"
@@ -2813,7 +2818,7 @@ msgstr "Dozvoliti Autentikaciju Lozinkom"
 
 #: services/models.py:1163
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Dozvoliti TCP port prosleđivanje"
 
 #: services/models.py:1165
 msgid "Compress Connections"
@@ -3030,7 +3035,7 @@ msgstr "Alternativni TCP port. Podrazumevano je 873"
 
 #: services/models.py:1374
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
-msgstr ""
+msgstr "Ovi parametri će biti dodati u [global] podešavanja u rsyncd.conf"
 
 #: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
@@ -3042,7 +3047,7 @@ msgstr "Ime modula"
 
 #: services/models.py:1399
 msgid "Path to be shared"
-msgstr ""
+msgstr "Putanja da bude deljena"
 
 #: services/models.py:1405
 msgid "Access Mode"
@@ -3295,7 +3300,7 @@ msgstr ""
 
 #: sharing/models.py:51
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Može se pretraživati do mrežnih klijenata"
 
 #: sharing/models.py:53
 #, fuzzy
@@ -3304,11 +3309,11 @@ msgstr "Naslediti"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Nasleđivanje dozvola"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Izvezi Recycle Bin"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
@@ -3336,7 +3341,7 @@ msgstr ""
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Host dozvoljen"
 
 #: sharing/models.py:72
 msgid ""
