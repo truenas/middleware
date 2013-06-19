@@ -60,15 +60,7 @@ BLACKLIST = [
 ]
 
 
-class ViewJailsBase(TreeNode):
-
-    gname = 'Base'
-    name = _(u'Base')
-    icon = u'JailIcon'
-    skip = True
-
-    def __init__(self, *args, **kwargs):
-        super(ViewJailsBase, self).__init__(*args, **kwargs)
+class Base(object):
 
     def new_jail_node(self, jail, icon=u'JailIcon'):
         jail_node = TreeNode()
@@ -171,7 +163,7 @@ class ViewJailsConfiguration(TreeNode):
     type = 'openjails'
 
 
-class ViewLinuxJails(ViewJailsBase):
+class ViewLinuxJails(TreeNode, Base):
 
     gname = 'Linux Jails'
     name = _(u'Linux Jails')
@@ -182,6 +174,10 @@ class ViewLinuxJails(ViewJailsBase):
         super(ViewLinuxJails, self).__init__(*args, **kwargs)
 
         jails = Jails.objects.filter(jail_type=WARDEN_TYPE_LINUXJAIL)
+
+        if len(jails) == 0:
+            self.skip = True
+
         for jail in jails:
             jail_node = self.new_jail_node(jail, u'TuxIcon')
             self.append_child(jail_node)
@@ -213,12 +209,11 @@ class ViewLinuxJails(ViewJailsBase):
             storage_node.append_child(storage_node_add)
 
 
-class ViewPluginJails(ViewJailsBase):
+class ViewPluginJails(TreeNode, Base):
 
     gname = 'Plugin Jails'
     name = _(u'Plugin Jails')
     icon = u'PluginJailIcon'
-    skip = False
 
     def __init__(self, *args, **kwargs):
         super(ViewPluginJails, self).__init__(*args, **kwargs)
@@ -226,6 +221,10 @@ class ViewPluginJails(ViewJailsBase):
 
         host = get_base_url(request)
         jails = Jails.objects.filter(jail_type=WARDEN_TYPE_PLUGINJAIL)
+
+        if len(jails) == 0:
+            self.skip = True
+
         for jail in jails:
             jail_node = self.new_jail_node(jail, u'JailPluginIcon')
             self.append_child(jail_node)
@@ -342,17 +341,20 @@ class ViewPluginJails(ViewJailsBase):
         return plugin, url, data
 
 
-class ViewPortJails(ViewJailsBase):
+class ViewPortJails(TreeNode, Base):
 
     gname = 'Port Jails'
     name = _(u'Port Jails')
     icon = u'PortJailIcon'
-    skip = False
 
     def __init__(self, *args, **kwargs):
         super(ViewPortJails, self).__init__(*args, **kwargs)
 
         jails = Jails.objects.filter(jail_type=WARDEN_TYPE_PORTJAIL)
+
+        if len(jails) == 0:
+            self.skip = True
+
         for jail in jails:
             jail_node = self.new_jail_node(jail, u'BobbleIcon')
             self.append_child(jail_node)
@@ -384,17 +386,20 @@ class ViewPortJails(ViewJailsBase):
             storage_node.append_child(storage_node_add)
 
 
-class ViewStandardJails(ViewJailsBase):
+class ViewStandardJails(TreeNode, Base):
 
     gname = 'Standard Jails'
     name = _(u'Standard Jails')
     icon = u'StandardJailIcon'
-    skip = False
 
     def __init__(self, *args, **kwargs):
         super(ViewStandardJails, self).__init__(*args, **kwargs)
 
         jails = Jails.objects.filter(jail_type=WARDEN_TYPE_STANDARD)
+
+        if len(jails) == 0:
+            self.skip = True
+
         for jail in jails:
             jail_node = self.new_jail_node(jail, u'BeastieIcon')
             self.append_child(jail_node)
