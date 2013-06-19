@@ -490,6 +490,9 @@ add_warden()
 	cp ${src}/pluginjail-packages ${share}/pluginjail-packages
 	chmod 644 ${share}/pluginjail-packages
 
+	cp ${src}/pcbsd-utils-packages ${share}/pcbsd-utils-packages
+	chmod 644 ${share}/pcbsd-utils-packages
+
 	cp ${src}/conf/warden.conf ${dst}/etc/warden.conf
 	chmod 644 ${dst}/etc/warden.conf
 
