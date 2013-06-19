@@ -188,9 +188,9 @@ export FREEBSD_FTP_MIRROR
 export FREEBSD_PACKAGE_MIRROR
 
 #
-# Up our /etc size so it can fit the jail files
+# Up /var size so it can fit the jail files
 #
-NANO_RAM_ETCSIZE="1024000"
-export NANO_RAM_ETCSIZE
+NANO_RAM_TMPVARSIZE="1024000"
+export NANO_RAM_TMPVARSIZE
 
 # vim: syntax=sh
