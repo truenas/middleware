@@ -173,7 +173,6 @@ class JailsFAdmin(BaseFreeAdmin):
 
 class NullMountPointFAdmin(BaseFreeAdmin):
 
-    menu_child_of = u"jails"
     icon_model = u"MountPointIcon"
     icon_object = u"MountPointIcon"
     icon_add = u"AddMountPointIcon"

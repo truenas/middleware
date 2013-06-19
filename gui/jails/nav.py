@@ -56,7 +56,7 @@ BLACKLIST = [
     'JailsQuerySet',
     'Jails',
     'NullMountPoint',
-    'Mkdir'
+    'Mkdir',
 ]
 
 
@@ -65,7 +65,6 @@ class ViewJailsBase(TreeNode):
     gname = 'Base'
     name = _(u'Base')
     icon = u'JailIcon'
-    order = -1
     skip = True
 
     def __init__(self, *args, **kwargs):
@@ -146,7 +145,7 @@ class AddJail(TreeNode):
     gname = 'Add Jails'
     name = _(u'Add Jails')
     icon = u'JailAddIcon'
-    order = 1
+    order = -1
 
     def __init__(self, *args, **kwargs):
         super(AddJail, self).__init__(*args, **kwargs)
@@ -170,7 +169,6 @@ class ViewJailsConfiguration(TreeNode):
     name = _(u'Configuration')
     icon = u'SettingsIcon'
     type = 'openjails'
-    order = 2
 
 
 class ViewLinuxJails(ViewJailsBase):
@@ -178,8 +176,6 @@ class ViewLinuxJails(ViewJailsBase):
     gname = 'Linux Jails'
     name = _(u'Linux Jails')
     icon = u'LinuxJailIcon'
-    skip = False
-    order = 3
     skip = True
 
     def __init__(self, *args, **kwargs):
@@ -223,7 +219,6 @@ class ViewPluginJails(ViewJailsBase):
     name = _(u'Plugin Jails')
     icon = u'PluginJailIcon'
     skip = False
-    order = 4
 
     def __init__(self, *args, **kwargs):
         super(ViewPluginJails, self).__init__(*args, **kwargs)
@@ -353,7 +348,6 @@ class ViewPortJails(ViewJailsBase):
     name = _(u'Port Jails')
     icon = u'PortJailIcon'
     skip = False
-    order = 5
 
     def __init__(self, *args, **kwargs):
         super(ViewPortJails, self).__init__(*args, **kwargs)
@@ -396,7 +390,6 @@ class ViewStandardJails(ViewJailsBase):
     name = _(u'Standard Jails')
     icon = u'StandardJailIcon'
     skip = False
-    order = 6
 
     def __init__(self, *args, **kwargs):
         super(ViewStandardJails, self).__init__(*args, **kwargs)
