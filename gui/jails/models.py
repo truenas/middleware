@@ -180,9 +180,6 @@ class Jails(Model):
         verbose_name = _("Jails")
         verbose_name_plural = _("Jails")
 
-    class FreeAdmin:
-        deletable = True
-
 
 class JailsConfiguration(Model):
 
@@ -234,9 +231,6 @@ class NullMountPoint(Model):
     class Meta:
         verbose_name = _(u"Storage")
         verbose_name_plural = _(u"Storage")
-
-    class FreeAdmin:
-        deletable = True
 
     def __unicode__(self):
         return self.source
