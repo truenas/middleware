@@ -152,6 +152,7 @@ WITHOUT_SHAREDOCS=true
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common
 
+customize_cmd get_jail_packages64
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
@@ -595,7 +596,7 @@ get_jail_distfiles()
 
 	for df in ${distfiles}
 	do
-		pprint 2 "getting ${df}"
+		pprint 2 "Getting ${df}"
 		if [ -f "${ddir}/${df}" -a -f "${ddir}/${df}.sha256" ]
 		then
 			local s1="$(cat ${ddir}/${df}.sha256)"
@@ -781,14 +782,14 @@ __EOF__
 	local error=0
 	if [ ! -f "${pdir}/.fetched" ]
 	then
-		CR "for p in "'"$(pkg rquery '%do' pcbsd-utils)"'"; do pkg fetch -y "'"$p"'"; done"
-		if [ "$?" != "0" ]
-		then
-			error=1
-		fi
+		local pkgs
 
-		for p in $(cat "${pcbsd}/warden/pluginjail-packages")
+		pkgs="$(cat "${pcbsd}/warden/pcbsd-utils-packages")"
+		pkgs="${pkgs} $(cat "${pcbsd}/warden/pluginjail-packages")"
+
+		for p in ${pkgs}
 		do
+			pprint 2 "Getting ${p}"
 			CR "pkg fetch -y ${p}"
 			if [ "$?" != "0" ]
 			then
@@ -815,7 +816,7 @@ get_jail_packages64()
 {
 	get_jail_packages "amd64"
 }
-customize_cmd get_jail_packages64
+#customize_cmd get_jail_packages64
 
 # Move the $world/data to the /data partion
 move_data()
