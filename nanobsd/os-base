@@ -53,8 +53,6 @@ NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 # SIGABRTing and crashing, and this causes other applications to get unhappy
 # (vi and friends ;(..).
 #
-# Set to a lower default for lower footprints with home usecases in FreeNAS.
-NANO_RAM_TMPVARSIZE=327680
 
 NANO_IMAGES=2
 # Remove .orig and .rej too
