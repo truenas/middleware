@@ -15,6 +15,7 @@ download_template_files() {
   local percent
   local total 
   local pmax
+  local ddir
 
   total=`echo ${DFILES}|wc|awk '{ print $2 }'`
 
@@ -26,15 +27,12 @@ download_template_files() {
       pmax=30
   fi
 
-
   # Create the download directory
   if [ -d "${JDIR}/.download" ] ; then rm -rf ${JDIR}/.download; fi
   mkdir ${JDIR}/.download
 
   if [ ! -d "${JDIR}" ] ; then mkdir -p "${JDIR}" ; fi
   cd ${JDIR}
-
-  if [ ! -d "${FDIR}" ] ; then mkdir -p "${FDIR}" ; fi
 
   warden_print "Fetching jail environment. This may take a while..."
   if [ -n "$TRUEOSVER" ] ; then
@@ -72,7 +70,7 @@ download_template_files() {
      for f in $DFILES
      do
        warden_print get_freebsd_file "${FBSDARCH}/${FBSDVER}/${f}" "${JDIR}/.download/$f"
-       if [ ! -f "${FDIR}/${f}" ] ; then
+       if [ ! -f "${DISTFILESDIR}/${f}" ] ; then
          get_freebsd_file "${FBSDARCH}/${FBSDVER}/${f}" "${JDIR}/.download/$f"
          if [ $? -ne 0 ] ; then
 	   warden_print "Trying ftp-archive..."
@@ -81,7 +79,8 @@ download_template_files() {
              warden_exit "Failed downloading: FreeBSD ${FBSDVER}"
 	   fi
          fi
-         mv "${JDIR}/.download/${f}" "${FDIR}/${f}"
+         mv "${JDIR}/.download/${f}" "${DISTFILESDIR}/${f}"
+         sha256 -q "${DISTFILESDIR}/${f}" > "${DISTFILESDIR}/${f}.sha256"
        fi
 
        : $(( i += 1 ))
@@ -144,7 +143,7 @@ create_template()
       # Extract the dist files
       for f in $DFILES
       do
-        tar xvpf ${FDIR}/$f -C ${TDIR} 2>/dev/null
+        tar xvpf ${DISTFILESDIR}/$f -C ${TDIR} 2>/dev/null
         if [ $? -ne 0 ] ; then
           zfs destroy -fr "${tank}${zfsp}"
           rm -rf "${tdir}" >/dev/null 2>&1
@@ -204,7 +203,7 @@ create_template()
       mkdir ${JDIR}/.templatedir
       for f in $DFILES
       do
-        tar xvpf ${FDIR}/$f -C ${JDIR}/.templatedir 2>/dev/null
+        tar xvpf ${DISTFILESDIR}/$f -C ${JDIR}/.templatedir 2>/dev/null
         if [ $? -ne 0 ] ; then 
            rm -rf ${JDIR}/.templatedir
            warden_exit "Failed extracting ZFS template environment"
@@ -282,7 +281,35 @@ fi
 
 # Set the template directory
 TDIR="${JDIR}/.warden-template-$TNICK"
-FDIR="${JDIR}/.warden-files-${FBSDVER}-${FBSDARCH}"
+FDIR="${JDIR}/.warden-files-cache"
+export TDIR FDIR
+
+DISTFILES="distfiles/${FBSDVER}/${FBSDARCH}"
+PACKAGES="packages/${FBSDVER}/${FBSDARCH}"
+
+DISTFILESDIR="${FDIR}/${DISTFILES}"
+PACKAGESDIR="${FDIR}/${PACKAGES}"
+export DISTFILESDIR PACKAGESDIR
+
+
+if [ ! -d "${FDIR}" ]
+then
+  mkdir -p "${DISTFILESDIR}"
+  mkdir -p "${PACKAGESDIR}"
+fi
+
+if [ -d "/var/db/warden/${DISTFILES}" ] ; then
+  diff -urN /var/db/warden/${DISTFILES}/ "${DISTFILESDIR}/" >/dev/null 2>&1
+  if [ "$?" != "0" ] ; then
+    cp /var/db/warden/${DISTFILES}/* "${DISTFILESDIR}/"
+  fi
+fi
+if [ -d "/var/db/warden/${PACKAGES}" ] ; then
+  diff -urN /var/db/warden/${PACKAGES}/ "${PACKAGESDIR}/" >/dev/null 2>&1
+  if [ "$?" != "0" ] ; then
+    cp /var/db/warden/${PACKAGES}/* "${PACKAGESDIR}/"
+  fi
+fi
 
 # Set the name based upon if using ZFS or UFS
 isDirZFS "${JDIR}"
