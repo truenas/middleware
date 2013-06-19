@@ -152,7 +152,6 @@ WITHOUT_SHAREDOCS=true
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common
 
-customize_cmd get_jail_packages64
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
@@ -816,7 +815,7 @@ get_jail_packages64()
 {
 	get_jail_packages "amd64"
 }
-#customize_cmd get_jail_packages64
+customize_cmd get_jail_packages64
 
 # Move the $world/data to the /data partion
 move_data()
