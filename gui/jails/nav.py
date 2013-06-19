@@ -424,3 +424,11 @@ class ViewStandardJails(ViewJailsBase):
             storage_node_add = self.new_storage_node_add(jail)
             storage_node_add.order = storage_order
             storage_node.append_child(storage_node_add)
+
+
+class ViewNullMountPoint(TreeNode):
+
+    gname = 'NullMountPoint.View'
+    name = _(u'View all Storage')
+    icon = 'ViewMountPointIcon'
+    type = 'openjails'
