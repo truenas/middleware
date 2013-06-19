@@ -457,7 +457,7 @@ add_pc_extractoverlay()
 	cp ${src}/${pce} ${bin}/${pce}
 	chmod 755 ${bin}/${pce}
 
-    mkdir -p ${dst}/etc
+	mkdir -p ${dst}/etc
 	mkdir -p ${pcbsd}/conf
 	mkdir -p ${pcbsd}/distfiles
 
@@ -557,6 +557,256 @@ add_pbi_wrapper()
 	fi
 }
 customize_cmd add_pbi_wrapper
+
+get_jail_distfiles()
+{
+	local arch="${1}"
+	local ftpdir
+	local ddir
+	local distfiles
+	local ixdir
+
+	if [ "${WITH_JAILS}" = "0" ]
+	then
+		return 0
+	fi
+
+	distfiles="base.txz doc.txz games.txz"
+	if [ "${arch}" = "amd64" ]
+	then
+		distfiles="${distfiles} lib32.txz"
+	fi
+
+	ftpdir="${FREEBSD_FTP_MIRROR}/pub/FreeBSD/releases/"\
+"${arch}/${FREEBSD_RELEASE_VERSION}"
+
+	ixdir="${NANO_WORLDDIR}/etc/ix/jails/distfiles/${FREEBSD_RELEASE_VERSION}/${arch}"
+	mkdir -p "${ixdir}"
+
+	ddir="${NANO_OBJ}/jails/distfiles/${FREEBSD_RELEASE_VERSION}/${arch}"
+	mkdir -p "${ddir}"
+
+	pprint 2 "Adding jails distfiles"
+
+	for df in ${distfiles}
+	do
+		pprint 2 "getting ${df}"
+		if [ -f "${ddir}/${df}" -a -f "${ddir}/${df}.sha256" ]
+		then
+			local s1="$(cat ${ddir}/${df}.sha256)"
+			local s2="$(sha256 -q ${ddir}/${df})"
+
+			if [ "${s1}" = "${s2}" ]
+			then
+				continue
+			fi
+		fi
+
+		fetch -o "${ddir}/${df}" "${ftpdir}/${df}"
+		sha256 -q "${ddir}/${df}" > "${ddir}/${df}.sha256"
+	done
+
+	mkdir -p "${ixdir}"
+	cp ${ddir}/*.txz "${ixdir}/"
+	cp ${ddir}/*.sha256 "${ixdir}/"
+}
+
+get_jail_distfiles64()
+{
+	get_jail_distfiles "amd64"
+}
+customize_cmd get_jail_distfiles64
+
+get_jail_distfiles32()
+{
+	get_jail_distfiles "i386"
+}
+customize_cmd get_jail_distfiles32
+
+create_jail()
+{
+	local arch="${1}"
+	local dir
+	local ddir
+	local jdir
+
+	if [ "${WITH_JAILS}" = "0" ]
+	then
+		return 0
+	fi
+
+	distfiles="base.txz doc.txz games.txz"
+	if [ "${arch}" = "amd64" ]
+	then
+		distfiles="${distfiles} lib32.txz"
+	fi
+
+	ddir="${NANO_OBJ}/jails/distfiles/${FREEBSD_RELEASE_VERSION}/${arch}"
+	jdir="${NANO_OBJ}/jails/jail-${arch}"
+	mkdir -p "${jdir}"
+
+	pprint 2 "Installing world"
+	for df in ${distfiles}
+	do
+		if [ -f "${ddir}/${df}.extracted" ]
+		then
+			continue
+		fi
+
+		pprint 2 "extracting ${df}"
+		tar -xvpf "${ddir}/${df}" -C "${jdir}" 2>/dev/null
+		if [ "$?" = "0" ]
+		then
+			touch "${ddir}/${df}.extracted"
+		fi
+	done
+}
+
+create_jail64()
+{
+	create_jail "amd64"
+}
+customize_cmd create_jail64
+
+create_jail32()
+{
+	create_jail "i386"
+}
+customize_cmd create_jail32
+
+get_jail_packages()
+{
+	local arch="${1}"
+	local s1
+	local s2
+	local ftpdir
+	local pdir
+	local jdir
+	local ixdir
+	local pcbsd="${AVATAR_ROOT}/src/pcbsd"
+
+	if [ "${WITH_JAILS}" = "0" ]
+	then
+		return 0
+	fi
+
+	ftpdir="${FREEBSD_PACKAGE_MIRROR}/${FREEBSD_RELEASE_VERSION}/${arch}"
+	pdir="${NANO_OBJ}/jails/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
+	mkdir -p "${pdir}"
+
+	ixdir="${NANO_WORLDDIR}/etc/ix/jails/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
+	mkdir -p "${ixdir}"
+
+	jdir="${NANO_OBJ}/jails/jail-${arch}"
+
+	local get=0
+	if [ -f "${pdir}/pkg.txz.sha256" ]
+	then
+		s1="$(cat ${pdir}/pkg.txz.sha256 2>/dev/null)"
+		s2="$(sha256 -q ${pdir}/pkg.txz 2>/dev/null)"
+		if [ "${s1}" != "${s2}" ]
+		then
+			get=1
+			
+		fi
+
+	elif [ ! -f "${pdir}/pkg.txz.sha256" ]
+	then
+		get=1
+	fi
+	if [ "${get}" = "1" ]
+	then
+		fetch -o "${pdir}/pkg.txz" ${ftpdir}/Latest/pkg.txz
+		sha256 -q "${pdir}/pkg.txz" > "${pdir}/pkg.txz.sha256"
+	fi
+	cp "${pdir}/pkg.txz" "${jdir}/pkg.txz"
+
+	get=0
+	if [ -f "${pdir}/repo.txz.sha256" ]
+	then
+		s1="$(cat ${pdir}/repo.txz.sha256 2>/dev/null)"
+		s2="$(sha256 -q ${pdir}/repo.txz 2>/dev/null)"
+		if [ "${s1}" != "${s2}" ]
+		then
+			get=1
+			
+		fi
+
+	elif [ ! -f "${pdir}/repo.txz.sha256" ]
+	then
+		get=1
+	fi
+	if [ "${get}" = "1" ]
+	then
+		fetch -o "${pdir}/repo.txz" ${ftpdir}/repo.txz
+		sha256 -q "${pdir}/repo.txz" > "${pdir}/repo.txz.sha256"
+	fi
+	cp "${pdir}/repo.txz" "${jdir}/repo.txz"
+
+	mkdir -p "${jdir}/usr/local/etc/"
+	cp "${pcbsd}/pc-extractoverlay/server-overlay/usr/local/etc/pkg-pubkey.cert" \
+		"${jdir}/usr/local/etc/pkg-pubkey.cert"
+	cp /etc/resolv.conf "${jdir}/etc/resolv.conf"
+		
+	cat<<__EOF__>"${jdir}/usr/local/etc/pkg.conf"
+PACKAGESITE: ${ftpdir}
+HTTP_MIRROR: http
+PUBKEY: /usr/local/etc/pkg-pubkey.cert
+PKG_CACHEDIR: /usr/local/tmp
+__EOF__
+
+	local nw="${NANO_WORLDDIR}"
+	local ar="${NANO_ARCH}"
+	
+	pprint 2 "Updating pkgng"
+
+	NANO_WORLDDIR="${jdir}"
+	NANO_ARCH="${arch}"
+
+	export NANO_WORLDDIR NANO_ARCH
+	
+	CR "cd /; tar -xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS"
+	CR "cd /; pkg add pkg.txz || true"
+	CR "cd /; tar -xvf repo.txz; mv repo.sqlite /var/db/pkg; rm -f signature"
+
+	local error=0
+	if [ ! -f "${pdir}/.fetched" ]
+	then
+		CR "for p in "'"$(pkg rquery '%do' pcbsd-utils)"'"; do pkg fetch -y "'"$p"'"; done"
+		if [ "$?" != "0" ]
+		then
+			error=1
+		fi
+
+		for p in $(cat "${pcbsd}/warden/pluginjail-packages")
+		do
+			CR "pkg fetch -y ${p}"
+			if [ "$?" != "0" ]
+			then
+				error=1
+			fi
+		done
+	fi
+	if [ "${error}" = "0" ]
+	then
+		touch "${pdir}/.fetched"
+	fi
+
+	NANO_WORLDDIR="${nw}"
+	NANO_ARCH="${ar}"
+
+	export NANO_WORLDDIR NANO_ARCH
+
+	mkdir -p "${ixdir}"
+	cp ${jdir}/*.txz "${ixdir}/"
+	cp ${jdir}/usr/local/tmp/All/*.txz "${ixdir}/"
+}
+
+get_jail_packages64()
+{
+	get_jail_packages "amd64"
+}
+customize_cmd get_jail_packages64
 
 # Move the $world/data to the /data partion
 move_data()

@@ -126,6 +126,10 @@ NANO_LABEL="FreeNAS"
 # etc.
 VERSION="9.1.0-BETA"
 
+# FreeBSD release we are using for this release
+: ${FREEBSD_RELEASE_VERSION:="9.1-RELEASE"}
+export FREEBSD_RELEASE_VERSION
+
 # Image name, e.g. FreeNAS-8.1-r7609-amd64 or FreeNAS-8.0.1-RC1-i386, see
 # nanobsd/freenas-common:last_orders().
 NANO_NAME="$NANO_LABEL-$VERSION${REVISION:+-$REVISION}-$NANO_ARCH_HUMANIZED"
@@ -170,5 +174,17 @@ export NANO_XZ
 
 PKGCACHE=${FREENAS_PKGCACHE="/freenas-build/freenas-packages"}
 DISTCACHE=${FREENAS_DISTCACHE="/freenas-build/freenas-distfiles"}
+
+#
+# FTP mirror where we fetch files for jails
+#
+: ${FREEBSD_FTP_MIRROR:="ftp://ftp.freebsd.org"}
+export FREEBSD_FTP_MIRROR
+
+#
+# Package mirror where we fetch packages for jails
+#
+: ${FREEBSD_PACKAGE_MIRROR:="ftp://ftp.pcbsd.org/pub/mirror/packages"}
+export FREEBSD_PACKAGE_MIRROR
 
 # vim: syntax=sh

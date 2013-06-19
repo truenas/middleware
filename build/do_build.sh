@@ -32,13 +32,16 @@ export MAKE_JOBS
 # Available targets to build
 BUILD_TARGETS="\
 os-base \
-plugins-base \
 plugins/transmission \
 plugins/firefly \
 plugins/minidlna \
 "
 
-# Targets to build (os-base, plugins-base, plugins/<plugin>).
+# Build with jails
+WITH_JAILS=0
+export WITH_JAILS
+
+# Targets to build (os-base, plugins/<plugin>).
 TARGETS=""
 
 # Should we update src + ports?
@@ -77,7 +80,7 @@ fi
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-aBfsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-- nanobsd-options]
+usage: ${0##*/} [-aBfJsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-- nanobsd-options]
 
 -a		- Build all targets
 -B		- don't build. Will pull the sources and show you the
@@ -88,8 +91,9 @@ usage: ${0##*/} [-aBfsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [--
 		  specified twice, this won't pass any options to nanobsd.sh,
 		  which will force a pristine build.
 -j make-jobs	- number of make jobs to run; defaults to ${MAKE_JOBS}.
+-J		- Build with jails
 -s		- show build targets
--t target	- target to build (os-base, plugins-base, <plugin-name>, etc).
+-t target	- target to build (os-base, <plugin-name>, etc).
 		  This switch can be used more than once to specify multiple targets.
 -u		- force an update via csup (warning: there are potential
 		  issues with newly created files via patch -- use with
@@ -114,7 +118,7 @@ show_build_targets()
 
 parse_cmdline()
 {
-	while getopts 'aBfj:st:uxz' _optch
+	while getopts 'aBfJj:st:uxz' _optch
 	do
 		case "${_optch}" in
 		a)
@@ -132,6 +136,9 @@ parse_cmdline()
 				usage
 			fi
 			MAKE_JOBS=${OPTARG}
+			;;
+		J)	WITH_JAILS=1
+			export WITH_JAILS
 			;;
 		s)	
 			show_build_targets
