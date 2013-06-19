@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-06-17 23:15+0200\n"
+"PO-Revision-Date: 2013-06-18 23:30+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -569,7 +569,7 @@ msgstr "Korisnik sa tim imenom već postoji."
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
 #: system/forms.py:682
 msgid "This field is required"
-msgstr ""
+msgstr "Ovo polje je neophodno"
 
 #: account/forms.py:377 account/forms.py:529 account/forms.py:870
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
@@ -1316,7 +1316,7 @@ msgstr ""
 
 #: plugins/models.py:121 storage/models.py:456
 msgid "Mount Point"
-msgstr ""
+msgstr "Tačka montiranja"
 
 #: plugins/models.py:122
 msgid "Mount Points"
@@ -2879,7 +2879,7 @@ msgstr "Ime radne grupe ili domena u starom formatu, npr. RADNAGRUPA"
 
 #: services/models.py:1259
 msgid "Allow Trusted Domains"
-msgstr ""
+msgstr "Dozvoli domene od poverenja"
 
 #: services/models.py:1263
 msgid "Administrator Name"
@@ -2887,7 +2887,7 @@ msgstr "Ime administratora"
 
 #: services/models.py:1264
 msgid "Domain Administrator account name"
-msgstr ""
+msgstr "Ime naloga Domenskog Administratora"
 
 #: services/models.py:1268
 msgid "Administrator Password"
@@ -2895,7 +2895,7 @@ msgstr "Administratorska lozinka"
 
 #: services/models.py:1269
 msgid "Domain Administrator account password."
-msgstr ""
+msgstr "Lozinka naloga Domenskog Administratora"
 
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
@@ -3039,7 +3039,7 @@ msgstr "Ovi parametri će biti dodati u [global] podešavanja u rsyncd.conf"
 
 #: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
-msgstr ""
+msgstr "Konfiguriši Rsyncd"
 
 #: services/models.py:1390
 msgid "Module name"
@@ -3201,7 +3201,7 @@ msgstr ""
 
 #: services/nav.py:72
 msgid "Add Device Extent"
-msgstr ""
+msgstr "Dodaj opseg uređaja"
 
 #: services/nav.py:79
 msgid "View Device Extents"
@@ -3234,9 +3234,8 @@ msgid "Add Rsync Module"
 msgstr "Dodaj Rsync modul"
 
 #: services/nav.py:159
-#, fuzzy
 msgid "View Rsync Modules"
-msgstr "Dodaj Rsync modul"
+msgstr "Prikaži Rsync module"
 
 #: services/nav.py:168 system/models.py:84 system/nav.py:28
 #: templates/system/settings.html:2
@@ -3256,9 +3255,8 @@ msgid "The service could not be started."
 msgstr "Servis nije moguće pokrenuti."
 
 #: sharing/forms.py:81
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "Promeni Šifru"
+msgstr "Potvrdite deljenu lozinku"
 
 #: sharing/forms.py:139
 #, python-format
@@ -3303,9 +3301,8 @@ msgid "Browsable to Network Clients"
 msgstr "Može se pretraživati do mrežnih klijenata"
 
 #: sharing/models.py:53
-#, fuzzy
 msgid "Inherit Owner"
-msgstr "Naslediti"
+msgstr "Naslediti vlasnika"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
@@ -3451,7 +3448,7 @@ msgstr ""
 
 #: sharing/models.py:143
 msgid "Deny List"
-msgstr ""
+msgstr "Lista odbijanja"
 
 #: sharing/models.py:145
 msgid ""
@@ -3471,6 +3468,8 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Omogućava određenim korisnicima i grupama da imaju pristup da samo čitaju "
+"sadržaj deljenog resursa. Ovo prati format dozvoliti opciju."
 
 #: sharing/models.py:155
 msgid "Read-write Access"
@@ -3481,6 +3480,8 @@ msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Omogućava određenim korisnicima i grupama da imaju čitanje/pisanje pristup "
+"do deljenog resursa. Ovo sledi format dozvoli opciju."
 
 #: sharing/models.py:160
 msgid "Disk Discovery"
@@ -3502,6 +3503,9 @@ msgid ""
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
+"Napomena! Izbor \"Time Machine\" na više deljenih resursa može da izazove "
+"nepredvidivo ponašanje u MacOS-u. Podrazumevani režim izvozi volumen kao "
+"volumen podataka za korisnike."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3512,6 +3516,8 @@ msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Postavlja informaciju baze podataka da se čuva na putanji. Morate da "
+"odredite lokaciju za upis, čak i ako je volumen samo za čitanje."
 
 #: sharing/models.py:177
 msgid "Cache CNID"
@@ -3659,6 +3665,9 @@ msgid ""
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"Mreža koja je ovlašćena za pristup NFS deljenom resursu ili listi IP adresa. "
+"Navedite broj mreža u formi 1.2.3.4/XX gde je XX broj bitova mrežne maske "
+"ili spisak IP adresa 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -3669,6 +3678,9 @@ msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Dozvoli montiranje bilo kog pod-direktorijuma pod ovom tačkom montiranja "
+"ukoliko bude naznačeno. U suprotnom, samo gornji nivo direktorijum-a može da "
+"se montira."
 
 #: sharing/models.py:277
 msgid "Read Only"
@@ -3676,7 +3688,7 @@ msgstr "Samo za čitanje"
 
 #: sharing/models.py:278
 msgid "Export the share read only. Writes are not permitted."
-msgstr ""
+msgstr "Izvesti deljeni resurs dostupan samo za čitanje. Upisi nisu dozvoljeni."
 
 #: sharing/models.py:281 system/models.py:552
 msgid "Quiet"
@@ -3686,6 +3698,8 @@ msgstr "Tihi"
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
+"Zaustavi syslog upozorenja ako postoje problemi oko izvoza ovog deljenog "
+"resursa. "
 
 #: sharing/models.py:285
 msgid "Maproot User"
@@ -3743,7 +3757,7 @@ msgstr "%s nije ispravan broj"
 #: storage/forms.py:129 storage/forms.py:426 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Ime volumena"
 
 #: storage/forms.py:134 templates/storage/import.html:32
 #: templates/storage/wizard.html:54
@@ -3752,7 +3766,7 @@ msgstr ""
 
 #: storage/forms.py:147 templates/storage/wizard.html:65
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Nametni 4096 bajtova veličinu sektora"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
@@ -3798,19 +3812,19 @@ msgstr ""
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
-msgstr ""
+msgstr "Morate da izaberete sistem datoteka"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Već imate volumen sa istim imenom"
 
 #: storage/forms.py:298
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\" je rezervisana reč i kao takva ne može da se koristi"
 
 #: storage/forms.py:305
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "Ime volumena nemože da počne sa c[0-9], mirror, raidz ili spare"
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -3822,11 +3836,11 @@ msgstr ""
 
 #: storage/forms.py:429 storage/forms.py:1050
 msgid "Member disk"
-msgstr ""
+msgstr "Član disk"
 
 #: storage/forms.py:479 storage/forms.py:592
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
+msgstr "Izabrane diskovi nisu verifikovani za ovaj uvoz pravila."
 
 #: storage/forms.py:489
 msgid "An error occurred while labeling the disk."
@@ -3835,11 +3849,11 @@ msgstr ""
 #: storage/forms.py:518 storage/models.py:59 storage/models.py:201
 #: templates/storage/scrub.html:5 templates/storage/volumes.html:58
 msgid "Volume"
-msgstr ""
+msgstr "Volumen"
 
 #: storage/forms.py:570
 msgid "You must select a volume."
-msgstr ""
+msgstr "Morate da izaberete volumen."
 
 #: storage/forms.py:636
 #, python-format
@@ -3853,42 +3867,42 @@ msgstr "SMART servis nije uspešno restartovan."
 
 #: storage/forms.py:679
 msgid "Dataset Name"
-msgstr ""
+msgstr "Ime skupa podataka"
 
 #: storage/forms.py:683 storage/forms.py:744 storage/forms.py:799
 #: storage/forms.py:850
 msgid "Compression level"
-msgstr ""
+msgstr "Nivo kompresije"
 
 #: storage/forms.py:687 storage/forms.py:748 storage/forms.py:803
 msgid "Enable atime"
-msgstr ""
+msgstr "Aktivirati atime"
 
 #: storage/forms.py:691 storage/forms.py:752
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Kvota za ovaj skup podataka"
 
 #: storage/forms.py:692 storage/forms.py:697 storage/forms.py:753
 #: storage/forms.py:758 storage/forms.py:808
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=Neograničeno; primer: 1g"
 
 #: storage/forms.py:696 storage/forms.py:757
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Kvota za ovaj skup podataka i sve njegove podskupove"
 
 #: storage/forms.py:701 storage/forms.py:762
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Rezervisan prostor za ovaj skup podataka"
 
 #: storage/forms.py:702 storage/forms.py:707 storage/forms.py:763
 #: storage/forms.py:768 storage/forms.py:813
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Nijedan; primer: 1g"
 
 #: storage/forms.py:706 storage/forms.py:767
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Rezervisan prostor za ovaj skup podataka i sve njegove podskupove"
 
 #: storage/forms.py:716
 msgid ""
@@ -3898,7 +3912,7 @@ msgstr ""
 
 #: storage/forms.py:729 storage/forms.py:870
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Već postoji skup podataka sa istim imenom"
 
 #: storage/forms.py:807
 msgid "Quota for this volume"
@@ -3928,15 +3942,15 @@ msgstr ""
 
 #: storage/forms.py:882
 msgid "Owner (user)"
-msgstr ""
+msgstr "Vlasnik (korisnik)"
 
 #: storage/forms.py:883
 msgid "Owner (group)"
-msgstr ""
+msgstr "Vlasnik (grupa)"
 
 #: storage/forms.py:884 templates/system/rsync.html:7
 msgid "Mode"
-msgstr ""
+msgstr "Režim"
 
 #: storage/forms.py:885
 msgid "Type of ACL"
@@ -3944,43 +3958,43 @@ msgstr ""
 
 #: storage/forms.py:891
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Postavi dozvolu rekurzivno"
 
 #: storage/forms.py:964
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "Najmanje jedan dan mora biti izabran"
 
 #: storage/forms.py:974
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Rekurzivni snimak"
 
 #: storage/forms.py:975
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Ime snimka"
 
 #: storage/forms.py:986
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Samo [-a-zA-Z0-9_.] su dozvoljeni kao ime snimka"
 
 #: storage/forms.py:996
 msgid "Snapshot"
-msgstr ""
+msgstr "Snimak"
 
 #: storage/forms.py:997
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Ime klona (mora biti na istom volumenu)"
 
 #: storage/forms.py:1026
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Samo [-a-zA-Z0-9_./] su dozvoljeni kao ime klona"
 
 #: storage/forms.py:1034
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Klon mora biti u istom volumenu"
 
 #: storage/forms.py:1125 storage/models.py:631
 msgid "Remote hostname"
-msgstr ""
+msgstr "Ime udaljenog host-a"
 
 #: storage/forms.py:1126 storage/models.py:635
 msgid "Remote port"
@@ -4030,7 +4044,7 @@ msgstr ""
 
 #: storage/models.py:50
 msgid "File System Type"
-msgstr ""
+msgstr "Tip sistema datoteka"
 
 #: storage/models.py:205 templates/storage/scrub.html:6
 msgid "Threshold days"
@@ -4153,27 +4167,27 @@ msgstr ""
 
 #: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Režim prenosa"
 
 #: storage/models.py:365 storage/views.py:250
 msgid "HDD Standby"
-msgstr ""
+msgstr "HDD stanje pripravnosti"
 
 #: storage/models.py:371 storage/views.py:251
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Napredno upravljanje napajanjem"
 
 #: storage/models.py:377 storage/views.py:252
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Akustični nivo"
 
 #: storage/models.py:381 storage/views.py:253
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Aktivirati S.M.A.R.T."
 
 #: storage/models.py:385
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "S.M.A.R.T. dodatne opcije"
 
 #: storage/models.py:444 system/models.py:660
 #, fuzzy
@@ -4182,11 +4196,11 @@ msgstr "Diskovi"
 
 #: storage/models.py:457
 msgid "Path to mount point"
-msgstr ""
+msgstr "Putanja do tačke montiranja"
 
 #: storage/models.py:461
 msgid "Mount options"
-msgstr ""
+msgstr "Opcije montiranja"
 
 #: storage/models.py:462
 msgid "Enter Mount Point options here"
