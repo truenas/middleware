@@ -426,6 +426,14 @@ class ViewStandardJails(ViewJailsBase):
             storage_node.append_child(storage_node_add)
 
 
+class ViewJails(TreeNode):
+
+    gname = 'Jails.View'
+    name = _(u'View all Jails')
+    icon = 'JailIcon'
+    type = 'openjails'
+
+
 class ViewNullMountPoint(TreeNode):
 
     gname = 'NullMountPoint.View'
