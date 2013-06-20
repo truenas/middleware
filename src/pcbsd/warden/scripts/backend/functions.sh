@@ -949,7 +949,7 @@ get_package_by_port()
     get_file_from_mirrors "${rpath}/All/${pkg}" \
       "${jaildir}/var/tmp/pkgs/${pkg}" | warden_pipe
 
-    local deps="$(${CR} "pkg rquery '%do' ${pkg}")"
+    local deps="$(${CR} "pkg rquery '%do' ${port}")"
     for d in ${deps} ; do
       get_package_by_port "${jaildir}" "${pkgdir}" \
         "${rpath}" "${d}"
