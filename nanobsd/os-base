@@ -789,7 +789,7 @@ __EOF__
 		for p in ${pkgs}
 		do
 			pprint 2 "Getting ${p}"
-			CR "pkg fetch -y ${p}"
+			CR "pkg fetch -d -y ${p}"
 			if [ "$?" != "0" ]
 			then
 				error=1
