@@ -483,20 +483,33 @@ class notifier:
         self.__system("/usr/sbin/service rsyncd forcestop")
         self.__system("/usr/sbin/service rsyncd restart")
 
+    def _get_stg_directoryservice(self):
+        c = self.__open_db()
+        c.execute("SELECT stg_directoryservice FROM system_settings ORDER BY -id LIMIT 1")
+        return c.fetchone()[0] 
+
     def _started_nis(self):
-        res = self.__system_nolog("/etc/directoryservice/NIS/ctl status")
+        res = False 
+        if self._get_stg_directoryservice() == 'nis':
+            res = self.__system_nolog("/etc/directoryservice/NIS/ctl status")
         return (True if res == 0 else False)
 
     def _start_nis(self):
-        res = self.__system_nolog("/etc/directoryservice/NIS/ctl start")
+        res = False 
+        if self._get_stg_directoryservice() == 'nis':
+            res = self.__system_nolog("/etc/directoryservice/NIS/ctl start")
         return (True if res == 0 else False)
 
     def _restart_nis(self):
-        res = self.__system_nolog("/etc/directoryservice/NIS/ctl restart")
+        res = False 
+        if self._get_stg_directoryservice() == 'nis':
+            res = self.__system_nolog("/etc/directoryservice/NIS/ctl restart")
         return (True if res == 0 else False)
 
     def _stop_nis(self):
-        res = self.__system_nolog("/etc/directoryservice/NIS/ctl stop")
+        res = False 
+        if self._get_stg_directoryservice() == 'nis':
+            res = self.__system_nolog("/etc/directoryservice/NIS/ctl stop")
         return (True if res == 0 else False)
 
     def _started_ldap(self):
@@ -516,34 +529,48 @@ class notifier:
         return ret
 
     def _start_ldap(self):
-        res = self.__system_nolog("/etc/directoryservice/LDAP/ctl start")
+        res = False 
+        if self._get_stg_directoryservice() == 'ldap':
+            res = self.__system_nolog("/etc/directoryservice/LDAP/ctl start")
         return (True if res == 0 else False)
 
     def _stop_ldap(self):
-        res = self.__system_nolog("/etc/directoryservice/LDAP/ctl stop")
+        res = False 
+        if self._get_stg_directoryservice() == 'ldap':
+            res = self.__system_nolog("/etc/directoryservice/LDAP/ctl stop")
         return (True if res == 0 else False)
 
     def _restart_ldap(self):
-        res = self.__system_nolog("/etc/directoryservice/LDAP/ctl restart")
+        res = False 
+        if self._get_stg_directoryservice() == 'ldap':
+            res = self.__system_nolog("/etc/directoryservice/LDAP/ctl restart")
         return (True if res == 0 else False)
 
     def _clear_activedirectory_config(self):
         self.__system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
 
     def _started_nt4(self):
-        res = self.__system_nolog("/etc/rc.d/ix-nt4 status")
+        res = False 
+        if self._get_stg_directoryservice() == 'nt4':
+            res = self.__system_nolog("/etc/rc.d/ix-nt4 status")
         return (True if res == 0 else False)
 
     def _start_nt4(self):
-        res = self.__system_nolog("/etc/directoryservice/NT4/ctl start")
+        res = False 
+        if self._get_stg_directoryservice() == 'nt4':
+            res = self.__system_nolog("/etc/directoryservice/NT4/ctl start")
         return (True if res == 0 else False)
 
     def _restart_nt4(self):
-        res = self.__system_nolog("/etc/directoryservice/NT4/ctl restart")
+        res = False 
+        if self._get_stg_directoryservice() == 'nt4':
+            res = self.__system_nolog("/etc/directoryservice/NT4/ctl restart")
         return (True if res == 0 else False)
 
     def _stop_nt4(self):
-        res = self.__system_nolog("/etc/directoryservice/NT4/ctl stop")
+        res = False 
+        if self._get_stg_directoryservice() == 'nt4':
+            res = self.__system_nolog("/etc/directoryservice/NT4/ctl stop")
         return (True if res == 0 else False)
 
     def _started_activedirectory(self):
@@ -568,15 +595,21 @@ class notifier:
         return ret
 
     def _start_activedirectory(self):
-        res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
+        res = False
+        if self._get_stg_directoryservice() == 'activedirectory':
+            res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
         return (True if res == 0 else False)
 
     def _stop_activedirectory(self):
-        res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
+        res = False
+        if self._get_stg_directoryservice() == 'activedirectory':
+            res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
         return (True if res == 0 else False)
 
     def _restart_activedirectory(self):
-        res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
+        res = False
+        if self._get_stg_directoryservice() == 'activedirectory':
+            res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
         return (True if res == 0 else False)
 
     def _restart_syslogd(self):
