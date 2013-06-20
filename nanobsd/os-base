@@ -566,7 +566,7 @@ get_jail_distfiles()
 	local ddir
 	local distfiles
 	local ixdir
-	local vw
+	local wd
 
 	if [ "${WITH_JAILS}" = "0" ]
 	then
@@ -582,10 +582,10 @@ get_jail_distfiles()
 	ftpdir="${FREEBSD_FTP_MIRROR}/pub/FreeBSD/releases/"\
 "${arch}/${FREEBSD_RELEASE_VERSION}"
 
-	vw="${NANO_WORLDDIR}/var/db/warden"
-	mkdir -p "${vw}"
+	wd="${NANO_WORLDDIR}/usr/local/share/warden"
+	mkdir -p "${wd}"
 
-	ixdir="${vw}/distfiles/${FREEBSD_RELEASE_VERSION}/${arch}"
+	ixdir="${wd}/distfiles/${FREEBSD_RELEASE_VERSION}/${arch}"
 	mkdir -p "${ixdir}"
 
 	ddir="${NANO_OBJ}/jails/distfiles/${FREEBSD_RELEASE_VERSION}/${arch}"
@@ -688,7 +688,7 @@ get_jail_packages()
 	local pdir
 	local jdir
 	local ixdir
-	local vw
+	local wd
 	local pcbsd="${AVATAR_ROOT}/src/pcbsd"
 
 	if [ "${WITH_JAILS}" = "0" ]
@@ -700,10 +700,10 @@ get_jail_packages()
 	pdir="${NANO_OBJ}/jails/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
 	mkdir -p "${pdir}"
 
-	vw="${NANO_WORLDDIR}/var/db/warden"
-	mkdir -p "${vw}"
+	wd="${NANO_WORLDDIR}/usr/local/share/warden"
+	mkdir -p "${wd}"
 
-	ixdir="${vw}/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
+	ixdir="${wd}/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
 	mkdir -p "${ixdir}"
 
 	jdir="${NANO_OBJ}/jails/jail-${arch}"
