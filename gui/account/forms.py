@@ -707,9 +707,9 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
                                     )
 
     def clean_bsdgrp_group(self):
+        bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
+        self.pw_checkname(bsdgrp_group)
         if self.instance.id is None:
-            bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
-            self.pw_checkname(bsdgrp_group)
             try:
                 models.bsdGroups.objects.get(bsdgrp_group=bsdgrp_group)
             except models.bsdGroups.DoesNotExist:
@@ -718,7 +718,10 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
                 _("A group with that name already exists.")
                 )
         else:
-            return self.instance.bsdgrp_group
+            if self.instance.bsdgrp_builtin:
+                return self.instance.bsdgrp_group
+            else:
+                return bsdgrp_group
 
     def clean_bsdgrp_gid(self):
         if self.instance.id:
