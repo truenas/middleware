@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-06-18 23:30+0200\n"
+"PO-Revision-Date: 2013-06-19 23:10+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -836,20 +836,20 @@ msgstr "%s uspešno obrisani."
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
-msgstr ""
+msgstr "Greška prilikom preuzimanja informacije o ukupnom prostoru"
 
 #: middleware/zfs.py:567 storage/models.py:586
 msgid "Error getting available space"
-msgstr ""
+msgstr "Greška prilikom preuzimanja informacije o raspoloživom prostoru"
 
 #: middleware/zfs.py:581 storage/models.py:600
 msgid "Error getting used space"
-msgstr ""
+msgstr "Greška prilikom preuzimanja informacije o upotrebljenom prostoru"
 
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
 msgid "Error"
-msgstr ""
+msgstr "Greška"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
@@ -3844,7 +3844,7 @@ msgstr "Izabrane diskovi nisu verifikovani za ovaj uvoz pravila."
 
 #: storage/forms.py:489
 msgid "An error occurred while labeling the disk."
-msgstr ""
+msgstr "Greška se dogodila prilikom obeležavanja diska."
 
 #: storage/forms.py:518 storage/models.py:59 storage/models.py:201
 #: templates/storage/scrub.html:5 templates/storage/volumes.html:58
@@ -4204,15 +4204,15 @@ msgstr "Opcije montiranja"
 
 #: storage/models.py:462
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Ovde uneti opcije za Tačku Montiranja"
 
 #: storage/models.py:643
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Udaljeni host za replikaciju"
 
 #: storage/models.py:644
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Udaljeni hostovi za replikaciju"
 
 #: storage/models.py:657 storage/models.py:718
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
@@ -4222,11 +4222,13 @@ msgstr ""
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Poslednji snimak poslat na udaljenu stranu (ostaviti prazno za punu "
+"replikaciju)"
 
 #: storage/models.py:666 system/models.py:458
 #: templates/storage/replications.html:22
 msgid "Remote Host"
-msgstr ""
+msgstr "Udaljeni host"
 
 #: storage/models.py:669
 msgid "Remote ZFS filesystem name"
@@ -4256,27 +4258,27 @@ msgstr ""
 
 #: storage/models.py:692
 msgid "Replication Task"
-msgstr ""
+msgstr "Replikacioni zadatak"
 
 #: storage/models.py:693
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Replikacioni zadaci"
 
 #: storage/models.py:722 system/models.py:526 templates/storage/tasks.html:22
 msgid "Recursive"
-msgstr ""
+msgstr "Rekurziv"
 
 #: storage/models.py:726
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Vrednost trajanja snimka"
 
 #: storage/models.py:732
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Jedinica trajanja snimka"
 
 #: storage/models.py:736
 msgid "Begin"
-msgstr ""
+msgstr "Početak"
 
 #: storage/models.py:737
 msgid "Do not snapshot before"
@@ -4284,7 +4286,7 @@ msgstr ""
 
 #: storage/models.py:741
 msgid "End"
-msgstr ""
+msgstr "Kraj"
 
 #: storage/models.py:742
 msgid "Do not snapshot after"
@@ -4292,7 +4294,7 @@ msgstr ""
 
 #: storage/models.py:748
 msgid "Interval"
-msgstr ""
+msgstr "Interval"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
@@ -4300,23 +4302,23 @@ msgstr ""
 
 #: storage/models.py:756
 msgid "Occurrence"
-msgstr ""
+msgstr "Pojavljivanje"
 
 #: storage/models.py:757
 msgid "How the task is repeated"
-msgstr ""
+msgstr "Kako se zadatak ponavlja"
 
 #: storage/models.py:762
 msgid "Weekday"
-msgstr ""
+msgstr "Radni dan"
 
 #: storage/models.py:785
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "Zadatak uzimanja periodičnog snimka"
 
 #: storage/models.py:786 templates/storage/index.html:14
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "Zadaci uzimanja periodičnog snimka"
 
 #: storage/nav.py:5 templates/menubar.html:17
 msgid "Storage"
@@ -6002,7 +6004,7 @@ msgstr ""
 
 #: templates/storage/replications.html:23
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "Udaljeni ZFS sistem datoteka"
 
 #: templates/storage/replications.html:37
 #: templates/storage/replications.html:41
