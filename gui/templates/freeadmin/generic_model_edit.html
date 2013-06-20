@@ -76,10 +76,10 @@
 		"dojo/query",
 		"dojo/request/xhr",
 		"dijit/registry"
-		], function(query, xhr) {
+		], function(query, xhr, registry) {
                     try {
                         var form = getForm(button);
-                        dojo.query('input[type=button],input[type=submit]', form.domNode).forEach(
+                        query('input[type=button],input[type=submit]', form.domNode).forEach(
                             function(inputElem){
                                  registry.getEnclosingWidget(inputElem).set('disabled',true);
                              }
