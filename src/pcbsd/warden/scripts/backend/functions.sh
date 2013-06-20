@@ -812,11 +812,8 @@ CR()
     shift
 
     mount -t devfs none ${jaildir}/dev
-    chroot ${jaildir} /bin/sh -exc "$@"
-    res=$?
+    chroot ${jaildir} /bin/sh -exc "$@" | warden_pipe
     umount ${jaildir}/dev
-
-    return ${res}
 }
 
 get_dependencies_port_list()
@@ -906,7 +903,7 @@ install_packages_by_list()
   ${CR} "mkdir -p /var/tmp/pkgs"
   mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
   for p in $(cat "${list}") ; do
-    ${CR} "pkg add /var/tmp/pkgs/${p} > /dev/null 2>&1" | warden_pipe
+    ${CR} "pkg add /var/tmp/pkgs/${p}"
     show_progress
   done
   umount "${jaildir}/var/tmp/pkgs"
@@ -947,7 +944,7 @@ get_package_by_port()
   local pkg="$(${CR} "pkg rquery '%n-%v.txz' ${port}")"
   if [ ! -f "${pkgdir}/${pkg}" ] ; then
     get_file_from_mirrors "${rpath}/All/${pkg}" \
-      "${jaildir}/var/tmp/pkgs/${pkg}" | warden_pipe
+      "${jaildir}/var/tmp/pkgs/${pkg}"
 
     local deps="$(${CR} "pkg rquery '%do' ${port}")"
     for d in ${deps} ; do
@@ -1061,8 +1058,8 @@ bootstrap_pkgng()
     local pclist="${PROGDIR}/pcbsd-utils-packages"
     local pjlist="${PROGDIR}/pluginjail-packages"
 
-    ${CR} "tar -xvf /usr/local/tmp/pkg.txz -C / --exclude +MANIFEST --exclude +MTREE_DIRS" 2>/dev/null
-    ${CR} "pkg add /usr/local/tmp/pkg.txz >/dev/null 2>&1"
+    ${CR} "tar -xvf /usr/local/tmp/pkg.txz -C / --exclude +MANIFEST --exclude +MTREE_DIRS"
+    ${CR} "pkg add /usr/local/tmp/pkg.txz"
     ${CR} "tar -xvf /usr/local/tmp/repo.txz -C /var/db/pkg/"
 
     get_packages_by_port_list "${jaildir}" \
