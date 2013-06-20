@@ -255,7 +255,7 @@ def jail_export(request, id):
 
     return response
 
-jail_progress_estimated_time = 1800
+jail_progress_estimated_time = 60
 jail_progress_start_time = 0
 jail_progress_percent = 0
 
