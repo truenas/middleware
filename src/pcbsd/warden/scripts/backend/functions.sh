@@ -16,6 +16,9 @@ PROGDIR="/usr/local/share/warden"
 JDIR="$(grep ^JDIR: /usr/local/etc/warden.conf | cut -d' ' -f2)"
 export JDIR
 
+CACHEDIR="${JDIR}/.warden-files-cache"
+export CACHEDIR
+
 HOME=${JDIR}
 export HOME
 
@@ -133,8 +136,9 @@ warden_warn() {
 };
 
 warden_run() {
-  local args="$*"
+  local args
 
+  args="$@"
   if [ -n "${args}" ]
   then
     warden_print "${args}"
@@ -801,164 +805,203 @@ install_pc_extractoverlay()
   return 0
 }
 
-make_bootstrap_pkgng_file_standard()
+CR()
 {
-  local jaildir="${1}"
-  local outfile="${2}"
+    local res
+    local jaildir="${1}"
+    shift
 
-  local release="$(uname -r | cut -d '-' -f 1-2)"
-  local arch="$(uname -m)"
+    mount -t devfs none ${jaildir}/dev
+    chroot ${jaildir} /bin/sh -exc "$@"
+    res=$?
+    umount ${jaildir}/dev
 
-  get_mirror
-  local mirror="${VAL}"
-
-cat<<__EOF__>"${outfile}"
-#!/bin/sh
-
-ret=0
-
-tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
-pkg add pkg.txz
-rm pkg.txz
-
-mount -t devfs devfs /dev
-
-echo "PACKAGESITE: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
-echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
-echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
-echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
-
-__EOF__
-
-echo '
-i=0
-percent=30
-
-pkg update
-if [ "$?" != "0" ]
-then
-   umount -f devfs
-   touch /FAIL
-   exit 4
-fi
-
-total=`pkg rquery "%do" pcbsd-utils|wc -l| awk '"'{ print '"'$1'"' }'"'`
-for p in `pkg rquery "%do" pcbsd-utils`
-do
-  pkg install -y ${p}
-  if [ "$?" != "0" ]
-  then
-      umount -f devfs
-      touch /FAIL
-      exit 5
-  fi
-
-  if [ "${i}" -ge "0" ]
-  then  
-      percent=`echo "scale=2;((${i}/${total})*70)+30"|bc|cut -f1 -d.`
-  fi
-  echo "===== ${percent}% ====="
-
-  : $(( i += 1 ))
-done
-pkg install -y pcbsd-utils
-
-umount -f devfs
-exit 0
-' >> "${outfile}"
+    return ${res}
 }
 
-make_bootstrap_pkgng_file_pluginjail()
+get_dependencies_port_list()
 {
-
   local jaildir="${1}"
-  local outfile="${2}"
+  local pkgdir="${2}"
+  local list="${3}"
+  local deplist
+  local ulist
 
-  local release="$(uname -r | cut -d '-' -f 1-2)"
-  local arch="$(uname -m)"
-
-  get_mirror
-  local mirror="${VAL}"
-
-  cp /usr/local/share/warden/pluginjail-packages "${jaildir}/pluginjail-packages"
-
-cat<<__EOF__>"${outfile}"
-#!/bin/sh
-
-i=0
-ret=0
-percent=10
-
-tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
-pkg add pkg.txz
-rm pkg.txz
-
-mount -t devfs devfs /dev
-
-echo "PACKAGESITE: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
-echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
-echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
-echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
-
-__EOF__
-
-echo '
-pkg update
-if [ "$?" != "0" ]
-then
-   umount devfs
-   touch /FAIL
-   exit 4
-fi
-
-count1=`pkg rquery "%do" pcbsd-utils|wc -l| awk '"'{ print '"'$1'"' }'"'`
-count2=`cat /pluginjail-packages|wc -l|awk '"'{ print '"'$1'"' }'"'`
-total=`echo "${count1} + ${count2}" | bc`
-
-for p in `pkg rquery "%do" pcbsd-utils`
-do
-  pkg install -y ${p}
-  if [ "$?" != "0" ]
-  then
-      umount -f devfs
-      touch /FAIL
-      exit 5
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o ! -f "${list}" ] ; then
+    return 1
   fi
 
-  if [ "${i}" -ge "0" ]
-  then  
-      percent=`echo "scale=2;((${i}/${total})*90)+10"|bc|cut -f1 -d.`
-  fi
-  echo "===== ${percent}% ====="
+  deplist="$(mktemp /tmp/.depXXXXXX)"
+  for p in $(cat "${list}") ; do
+    ${CR} "pkg rquery '%do' ${p}" >> "${deplist}"
+    echo ${p} >> "${deplist}"
+  done  
 
-  : $(( i += 1 ))
-done
-pkg install -y pcbsd-utils
+  ulist="$(mktemp /tmp/.ulXXXXXX)"
+  cat "${deplist}"|uniq > "${ulist}"
+  rm -f "${deplist}"
 
-for p in `cat /pluginjail-packages`
-do
-  pkg install -y ${p}
-  if [ "$?" != "0" ]
-  then
-      umount -f devfs
-      touch /FAIL
-      exit 6
-  fi
+  cat "${ulist}"
+  rm -f "${ulist}"
 
-  if [ "${i}" -ge "0" ]
-  then  
-      percent=`echo "scale=2;((${i}/${total})*90)+10"|bc|cut -f1 -d.`
-  fi
-  echo "===== ${percent}% ====="
-
-  : $(( i += 1 ))
-done
-
-umount -f devfs
-exit 0
-' >> "${outfile}"
+  return 0
 }
 
+get_package_install_list()
+{
+  local jaildir="${1}"
+  local pkgdir="${2}"
+  local list="${3}"
+  local pkginfo
+  local pkgs
+  local ilist
+
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o ! -f "${list}" ] ; then
+    return 1
+  fi
+
+  pkginfo="$(mktemp /tmp/.piXXXXXX)" 
+  ilist="$(mktemp /tmp/.ilXXXXXX)" 
+
+  ${CR} "mkdir -p /var/tmp/pkgs"
+  mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
+  pkgs="$(${CR} "ls /var/tmp/pkgs")"
+  for p in ${pkgs} ; do
+    ${CR} "pkg info -oF /var/tmp/pkgs/${p}" >> "${pkginfo}" 2>/dev/null
+  done
+  umount "${jaildir}/var/tmp/pkgs"
+
+  exec 3<&0
+  exec 0<"${pkginfo}"
+  while read -r pi ; do
+    local pkg="$(echo ${pi} | cut -f1 -d: | awk '{ print $1 }')"
+    local port="$(echo ${pi} | cut -f2 -d: | awk '{ print $1 }')"
+
+    grep -qw "${port}" "${list}" 2>/dev/null
+    if [ "$?" = "0" ] ; then
+      echo "${pkg}.txz" >> "${ilist}"
+    fi
+
+  done
+  exec 0<&3
+
+  rm -f "${pkginfo}"
+
+  cat "${ilist}"
+  rm -f "${ilist}"
+
+  return 0
+}
+
+install_packages_by_list()
+{
+  local jaildir="${1}"
+  local pkgdir="${2}"
+  local list="${3}"
+
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o ! -f "${list}" ] ; then
+    return 1
+  fi
+
+  ${CR} "mkdir -p /var/tmp/pkgs"
+  mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
+  for p in $(cat "${list}") ; do
+    ${CR} "pkg add /var/tmp/pkgs/${p} > /dev/null 2>&1" | warden_pipe
+    show_progress
+  done
+  umount "${jaildir}/var/tmp/pkgs"
+
+  return 0
+}
+
+create_jail_pkgconf()
+{
+  local jaildir="${1}"
+  local pkgsite="${2}"
+
+  if [ ! -d "${jaildir}" -o -z "${pkgsite}" ] ; then 
+    return 1
+  fi
+
+  cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
+PACKAGESITE: ${pkgsite}
+HTTP_MIRROR: http
+PUBKEY: /usr/local/etc/pkg-pubkey.cert
+PKG_CACHEDIR: /usr/local/tmp
+__EOF__
+
+  return 0
+}
+
+get_package_by_port()
+{
+  local jaildir="${1}"
+  local pkgdir="${2}"
+  local rpath="${3}"
+  local port="${4}"
+
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o -z "${rpath}" -o -z "${port}" ] ; then
+    return 1
+  fi
+
+  local pkg="$(${CR} "pkg rquery '%n-%v.txz' ${port}")"
+  if [ ! -f "${pkgdir}/${pkg}" ] ; then
+    get_file_from_mirrors "${rpath}/All/${pkg}" \
+      "${jaildir}/var/tmp/pkgs/${pkg}" | warden_pipe
+
+    local deps="$(${CR} "pkg rquery '%do' ${pkg}")"
+    for d in ${deps} ; do
+      get_package_by_port "${jaildir}" "${pkgdir}" \
+        "${rpath}" "${d}"
+    done
+  fi
+
+  return 0
+}
+
+get_packages_by_port_list()
+{
+  local jaildir="${1}"
+  local pkgdir="${2}"
+  local rpath="${3}"
+  local list="${4}"
+
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o -z "${rpath}" -o ! -f "${list}" ] ; then
+    return 1
+  fi
+
+  ${CR} "mkdir -p /var/tmp/pkgs"
+  mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
+  for p in $(cat "${list}") ; do 
+    get_package_by_port "${jaildir}" "${pkgdir}" "${rpath}" "${p}" 
+  done
+  umount "${jaildir}/var/tmp/pkgs"
+
+  return 0
+}
+
+show_progress()
+{
+  local percent=0
+
+  if [ -z "${CURRENT_INSTALL_FILE}" ] ; then
+    CURRENT_INSTALL_FILE=1
+    export CURRENT_INSTALL_FILE
+  fi
+
+  if [ -z "${TOTAL_INSTALL_FILES}" ] ; then
+    TOTAL_INSTALL_FILES=0
+    export TOTAL_INSTALL_FILES
+  fi
+
+  if [ "${TOTAL_INSTALL_FILES}" -gt "0" ] ; then
+    : $(( CURRENT_INSTALL_FILE += 1 ))
+    export CURRENT_INSTALL_FILE
+
+    percent=`echo "scale=2;(${CURRENT_INSTALL_FILE}/${TOTAL_INSTALL_FILES})*100"|bc|cut -f1 -d.`
+    warden_print "===== ${percent}% ====="
+  fi
+}
 
 bootstrap_pkgng()
 {
@@ -970,42 +1013,84 @@ bootstrap_pkgng()
   local release="$(uname -r | cut -d '-' -f 1-2)"
   local arch="$(uname -m)"
 
-  local ffunc="make_bootstrap_pkgng_file_standard"
-  if [ "${jailtype}" = "pluginjail" ] ; then
-    ffunc="make_bootstrap_pkgng_file_pluginjail"
-  fi
+  get_mirror
+  local mirror="${VAL}"
 
   cd ${jaildir} 
   warden_print "Boot-strapping pkgng"
 
   mkdir -p ${jaildir}/usr/local/etc
+  mkdir -p ${jaildir}/usr/local/tmp
   pubcert="/usr/local/etc/pkg-pubkey.cert"
 
   cp "${pubcert}" ${jaildir}/usr/local/etc
   install_pc_extractoverlay "${jaildir}"
 
-  ${ffunc} "${jaildir}" "${jaildir}/bootstrap-pkgng"
-  chmod 755 "${jaildir}/bootstrap-pkgng"
+  create_jail_pkgconf "${jaildir}" \
+    "${mirror}/packages/${release}/${arch}"
 
-  if [ -e "pkg.txz" ] ; then rm pkg.txz ; fi
-  get_file_from_mirrors "/packages/${release}/${arch}/Latest/pkg.txz" "pkg.txz"
-  if [ $? -eq 0 ] ; then
-    warden_print chroot ${jaildir} /bootstrap-pkgng
+  CR="CR ${jaildir}"
+  export CR
 
-    chroot ${jaildir} /bootstrap-pkgng | warden_pipe
-    if [ ! -e "${jaildir}/FAIL" ] ; then
-       rm -f "${jaildir}/bootstrap-pkgng"
-       rm -f "${jaildir}/pluginjail-packages"
-       warden_print chroot ${jaildir} pc-extractoverlay server --sysinit
-       chroot ${jaildir} pc-extractoverlay server --sysinit | warden_pipe
-       return 0
-    fi
+  local pkgdir="${CACHEDIR}/packages/${release}/${arch}"
+  local rpath="/packages/${release}/${arch}"
+
+  if [ ! -d "${pkgdir}" ] ; then
+    mkdir -p "${pkgdir}"
   fi
-  rm -f "${jaildir}/FAIL"
+
+  if [ -f "${pkgdir}/pkg.txz" ] ; then
+    cp ${pkgdir}/pkg.txz ${jaildir}/usr/local/tmp
+  else
+    get_file_from_mirrors "${rpath}/Latest/pkg.txz" \
+      "${pkgdir}/pkg.txz"
+    cp ${pkgdir}/pkg.txz ${jaildir}/usr/local/tmp
+  fi
+  local pres=$? 
+
+  if [ -f "${pkgdir}/repo.txz" ] ; then
+    cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
+  else
+    get_file_from_mirrors "/${rpath}/repo.txz" \
+      "${pkgdir}/repo.txz"
+    cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
+  fi
+  local rres=$? 
+
+  if [ "${pres}" = "0" -a "${rres}" = "0" ] ; then
+    local pclist="${PROGDIR}/pcbsd-utils-packages"
+    local pjlist="${PROGDIR}/pluginjail-packages"
+
+    ${CR} "tar -xvf /usr/local/tmp/pkg.txz -C / --exclude +MANIFEST --exclude +MTREE_DIRS" 2>/dev/null
+    ${CR} "pkg add /usr/local/tmp/pkg.txz >/dev/null 2>&1"
+    ${CR} "tar -xvf /usr/local/tmp/repo.txz -C /var/db/pkg/"
+
+    get_packages_by_port_list "${jaildir}" \
+      "${pkgdir}" "${rpath}" "${pclist}"
+
+    if [ "${jailtype}" = "pluginjail" ] ; then
+      get_packages_by_port_list "${jaildir}" "${pkgdir}" \
+        "${rpath}" "${pjlist}"
+    fi
+
+    local ilist="$(mktemp /tmp/.ilXXXXXX)"
+    get_package_install_list "${jaildir}" \
+      "${pkgdir}" "${pclist}" > "${ilist}"
+    install_packages_by_list "${jaildir}" "${pkgdir}" "${ilist}"
+
+    if [ "${jailtype}" = "pluginjail" ] ; then
+      get_package_install_list "${jaildir}" \
+        "${pkgdir}" "${pjlist}"  > "${ilist}"
+      install_packages_by_list "${jaildir}" "${pkgdir}" "${ilist}"
+    fi
+
+    rm -f "${ilist}"
+    ${CR} "pc-extractoverlay server --sysinit"
+
+    return 0
+  fi
 
   warden_error "Failed boot-strapping PKGNG, most likely cause is internet connection failure."
-  rm -f "${jaildir}/bootstrap-pkgng"
-  rm -f "${jaildir}/pluginjail-packages"
   return 1
 }
 
