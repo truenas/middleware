@@ -1777,18 +1777,20 @@ class SMART(Model):
             help_text=_("Report if the temperature had changed by at least N "
                 "degrees Celsius since last report. 0 to disable"),
             )
-    smart_informal = models.IntegerField(
-            default=0,
-            verbose_name=_("Informal"),
-            help_text=_("Report if the temperature is greater or equal than N "
-                "degrees Celsius. 0 to disable"),
-            )
+    smart_informational = models.IntegerField(
+        default=0,
+        verbose_name=_("Informational"),
+        help_text=_("Report as informational in the system log if the "
+            "temperature is greater or equal than N degrees Celsius. 0 to "
+            "disable"),
+    )
     smart_critical = models.IntegerField(
-            default=0,
-            verbose_name=_("Critical"),
-            help_text=_("Report if the temperature is greater or equal than N "
-                "degrees Celsius. 0 to disable"),
-            )
+        default=0,
+        verbose_name=_("Critical"),
+        help_text=_("Report as critical in the system log and send an "
+        "email if the temperature is greater or equal than N degrees "
+        "Celsius. 0 to disable"),
+    )
     smart_email = models.CharField(
             verbose_name=_("Email to report"),
             max_length=255,
