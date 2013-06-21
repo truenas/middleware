@@ -6757,10 +6757,11 @@ chroot_make_cleanup() {
         isDirZFS "${PBI_CHROOTDIR}" "1"
         if [ $? -eq 0 ] ; then
    	     tank=`getZFSTank "$PBI_CHROOTDIR"`
+             rp=`getZFSRelativePath "$PBI_CHROOTDIR"`
 	     sleep 1
 	     # If we are running as a result of pbi_autobuild, let it do the ZFS cleanup
 	     if [ -z "${PBI_AB_TMPDIR}" ] ; then
-             	zfs destroy ${tank}${PBI_CHROOTDIR}
+             	zfs destroy ${tank}${rp}
   	     	rmdir ${PBI_CHROOTDIR} >/dev/null 2>/dev/null
 	     fi
 	     return
@@ -6991,7 +6992,9 @@ mk_chroot_file() {
             chrootzfs=`getZFSRelativePath "${PBI_CHROOTZFS}"` 
 	    isDirZFS "${PBI_CHROOTZFS}" "1"
             if [ $? -ne 0 ] ; then   
-              zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
+              echo zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
+              #zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
+              createZFSDataset "${tank}${chrootzfs}" "${PBI_CHROOTZFS}"
 	      if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
 	    fi
 	    echo "Extracting rel-$ARCH.txz..."
@@ -7090,6 +7093,7 @@ mk_chroot_file() {
 	echo "Running buildworld (into a chroot)"
 	touch ${PBI_BUILDSRC}/Makefile
 	cd ${PBI_BUILDSRC}
+
         echo make ${PBI_BUILDFLAGS} TARGET=$ARCH buildworld
         make ${PBI_BUILDFLAGS} TARGET=$ARCH buildworld >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
         if [ "$?" != "0" ] ; then
@@ -7111,7 +7115,8 @@ mk_chroot_file() {
 	    isDirZFS "${PBI_CHROOTZFS}" "1"
             if [ $? -ne 0 ] ; then   
               echo zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
-              zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
+              createZFSDataset "${tank}${chrootzfs}" "${PBI_CHROOTZFS}"
+              #zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
 	      if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
 	    fi
             rmdir "${PBI_BUILDTARGET}"
@@ -7517,6 +7522,21 @@ getZFSTank() {
   return 1
 }
 
+getZFSDataset() {
+  local _chkDir="$(realpath $1)"
+  while :
+  do
+    local zData="$(zfs list|awk -v path="${_chkDir}" '$5 ~ path { print $0 }')"
+    if [ -n "$zData" ] ; then
+       echo "$zData"|awk '{ print $1 }'
+       return 0
+    fi
+    if [ "$_chkDir" = "/" ] ; then return 1 ; fi
+    _chkDir=`dirname $_chkDir`
+  done
+  return 1
+}
+
 # Get the mountpoint for a ZFS name
 # Arg1 = name
 getZFSMountpoint() {
@@ -7543,6 +7563,95 @@ getZFSRelativePath() {
    echo "${_name}"
    return 0
 }
+
+#
+# XXX hackity hack hack function
+#
+# If we want to create a dataset that overlaps our
+# directory structure, this is just the function to
+# do it. 
+#
+# newds = the new dataset name
+# mp = mountpoint
+# ma = mount all newly created datasets
+#
+createZFSDataset() {
+  local newds="${1}"
+  local mp="${2}"
+  local ma="${3}"
+
+  if [ -z "${newds}" ] ; then
+    return 1
+  fi
+
+  if [ -z "${mp}" ] ; then
+    return 1
+  fi
+
+  if [ -z "${ma}" ] ; then
+    ma=0
+  fi
+
+  local tank="$(getZFSTank "${newds}")"
+  if [ -z "${tank}" ]; then
+    return 1
+  fi
+
+  local tmp="$(getZFSMountpoint "${tank}")"
+  if [ -z "${tmp}" ] ; then
+    return 1
+  fi
+
+  local rp="${newds##${tank}}"
+  if [ -z "${rp}" ] ; then
+    return 1
+  fi
+
+  local fp="${tmp}${rp}"
+  if [ -z "${fp}" ] ; then
+    return 1
+  fi
+
+  local zds="$(getZFSDataset "${fp}")"
+  if [ -z "${zds}" ] ; then
+    return 1
+  fi
+
+  local diff="${newds##${zds}}"
+  if [ -z "${diff}" ] ; then
+    return 1
+  fi
+
+  zfs create -o mountpoint="${mp}" -p "${newds}"
+
+  if [ -n "${diff}" ] ; then
+    local mds="${zds}${diff}"
+
+    while :
+    do
+      if [ "${diff}" != "/" ] ; then
+        local fds="${zds}${diff}"
+
+        if [ "${ma}" = "0" ] ; then
+          zfs unmount -f "${fds}"
+        fi
+      fi
+
+      if [ "${diff}" = "/" ] ; then
+        break
+      fi
+
+      diff="$(dirname ${diff})"
+    done
+
+    if [ "${ma}" = "0" ] ; then
+      zfs mount "${mds}"
+    fi
+  fi
+
+  return 0
+}
+
 
 # Main program operation
 ##############################################################

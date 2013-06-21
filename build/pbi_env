@@ -74,7 +74,7 @@ export PBI_BUILDSRC
 #
 # Where to install the chroot
 # 
-PBI_BUILDTARGET="${PBI_APPDIR}/${PBI_OSARCH}/target"
+PBI_BUILDTARGET="${PBI_APPDIR}/.pbi-world-${PBI_OSARCH}"
 mkdir -p "${PBI_BUILDTARGET}"
 if [ "$?" != "0" ]
 then
