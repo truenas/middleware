@@ -60,6 +60,21 @@ BLACKLIST = [
 ]
 
 
+def jail_path_configured():
+    """
+    Check if there is the jail system is configured
+    by looking at the JailsConfiguration model and
+    jc_path field
+    Returns: boolean
+    """
+    try:
+        jc = JailsConfiguration.objects.latest('id')
+    except JailsConfiguration.DoesNotExist:
+        jc = None
+
+    return jc and jc.jc_path
+
+
 class Base(object):
 
     def new_jail_node(self, jail, icon=u'JailIcon'):
@@ -137,21 +152,13 @@ class AddJail(TreeNode):
     gname = 'Add Jails'
     name = _(u'Add Jails')
     icon = u'JailAddIcon'
+    type = 'object'
+    view = 'freeadmin_jails_jails_add'
     order = -1
 
     def __init__(self, *args, **kwargs):
         super(AddJail, self).__init__(*args, **kwargs)
-        jc = None
-        try:
-            jc = JailsConfiguration.objects.order_by("-id")[0]
-        except:
-            pass
-
-        if jc and jc.jc_path:
-            self.type = 'object'
-            self.view = 'freeadmin_jails_jails_add'
-        else:
-            self.type = 'openjails'
+        self.skip = not jail_path_configured()
 
 
 class ViewJailsConfiguration(TreeNode):
@@ -438,6 +445,10 @@ class ViewJails(TreeNode):
     icon = 'JailIcon'
     type = 'openjails'
 
+    def __init__(self, *args, **kwargs):
+        super(ViewJails, self).__init__(*args, **kwargs)
+        self.skip = not jail_path_configured()
+
 
 class ViewNullMountPoint(TreeNode):
 
@@ -445,3 +456,7 @@ class ViewNullMountPoint(TreeNode):
     name = _(u'View all Storage')
     icon = 'ViewMountPointIcon'
     type = 'openjails'
+
+    def __init__(self, *args, **kwargs):
+        super(ViewNullMountPoint, self).__init__(*args, **kwargs)
+        self.skip = not jail_path_configured()
