@@ -628,10 +628,6 @@ class ActiveDirectoryForm(ModelForm):
 
     class Meta:
         model = models.ActiveDirectory
-        exclude = (
-            'ad_keytab',
-            'ad_spn',
-            'ad_spnpw')
         widgets = {
             'ad_adminpw': forms.widgets.PasswordInput(render_value=False),
         }
