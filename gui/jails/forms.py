@@ -511,22 +511,18 @@ class JailsEditForm(ModelForm):
     jail_vnet = forms.BooleanField(label=_("VIMAGE"), required=False)
     jail_nat = forms.BooleanField(label=_("NAT"), required=False)
 
+    class Meta:
+        model = Jails
+        exclude = (
+            'jail_status',
+            'jail_type',
+        )
+
     def __set_ro(self, instance, key):
-        if instance and instance.id:
-            self.fields[key] = \
-                forms.CharField(
-                    label=self.fields[key].label,
-                    initial=instance.__dict__[key],
-                    widget=forms.TextInput(
-                        attrs={
-                            'readonly': True,
-                            'class': (
-                                'dijitDisabled dijitTextBoxDisabled'
-                                'dijitValidationTextBoxDisabled'
-                            ),
-                        },
-                    )
-                )
+        self.fields[key].widget.attrs['readonly'] = True
+        self.fields[key].widget.attrs['class'] = (
+            'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+        )
 
     def __instance_save(self, instance, keys):
         for key in keys:
@@ -580,8 +576,6 @@ class JailsEditForm(ModelForm):
         self.__instance_save(instance, self.__myfields)
 
         self.__set_ro(instance, 'jail_host')
-        self.__set_ro(instance, 'jail_status')
-        self.__set_ro(instance, 'jail_type')
 
     def save(self):
         jail_host = self.cleaned_data.get('jail_host')
@@ -662,9 +656,6 @@ class JailsEditForm(ModelForm):
                 args['flags'] = flags
 
                 Warden().set(**args)
-
-    class Meta:
-        model = Jails
 
 
 class NullMountPointForm(ModelForm):
