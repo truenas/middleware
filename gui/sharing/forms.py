@@ -320,7 +320,8 @@ class NFS_ShareForm(ModelForm):
             paths._non_form_errors = self.error_class([
                 _("You need at least one path for the share"),
             ])
-        return valid
+            return valid
+        return super(NFS_ShareForm, self).is_valid(formsets)
 
     def save(self, *args, **kwargs):
         super(NFS_ShareForm, self).save(*args, **kwargs)
