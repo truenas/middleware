@@ -113,6 +113,16 @@ class JailsFAdmin(BaseFreeAdmin):
         on_select_after = """function(evt, actionName, action) {
                 for(var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
+
+                    if (row.data.jail_type != 'pluginjail') {
+                        if (actionName == 'plugins') {
+                            query(".grid" + actionName).forEach(function(item, idx) {
+                                domStyle.set(item, "display", "none");
+                            });
+                        }
+                        break;
+                    }
+
                     if (row.data.jail_status == 'Running') {
                         if (actionName == 'start') {
                             query(".grid" + actionName).forEach(function(item, idx) {
