@@ -32,8 +32,6 @@ generate_syslog_conf()
 	" | \
 	while eval read -r $f; do
 		if [ -n "${stg_syslogserver}" ]; then
-			echo -e "*.err;kern.warning;auth.notice;mail.crit\t/dev/console" > /etc/syslog.conf
-			echo -e "*.notice;authpriv.none;kern.debug;lpr.info;mail.crit;news.err\t/var/log/messages" >> /etc/syslog.conf
 			echo -e "*.*\t@${stg_syslogserver}" >> /etc/syslog.conf
 		fi
 	done
