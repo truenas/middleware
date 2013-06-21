@@ -44,7 +44,8 @@ from freenasUI.common.warden import (
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
     WARDEN_TYPE_PORTJAIL,
-    WARDEN_TYPE_LINUXJAIL
+    WARDEN_TYPE_LINUXJAIL,
+    WARDEN_STATUS_RUNNING
 )
 
 log = logging.getLogger('jails.nav')
@@ -302,19 +303,20 @@ class ViewPluginJails(TreeNode, Base):
 
                 continue
 
-            plugin_node_add = TreeNode()
-            plugin_node_add.name = _('Install Plugin')
-            plugin_node_add.type = 'editobject'
-            plugin_node_add.view = 'plugin_install'
-            plugin_node_add.kwargs = {'jail_id': jail.id}
-            plugin_node_add.model = 'Plugins'
-            plugin_node_add.icon = u'PluginInstallIcon'
-            plugin_node_add.app_name = 'jails'
-            plugin_node_add.order = plugin_order
+            if jail.jail_status == WARDEN_STATUS_RUNNING:
+                plugin_node_add = TreeNode()
+                plugin_node_add.name = _('Install Plugin')
+                plugin_node_add.type = 'editobject'
+                plugin_node_add.view = 'plugin_install'
+                plugin_node_add.kwargs = {'jail_id': jail.id}
+                plugin_node_add.model = 'Plugins'
+                plugin_node_add.icon = u'PluginInstallIcon'
+                plugin_node_add.app_name = 'jails'
+                plugin_node_add.order = plugin_order
 
-            plugin_node.append_child(plugin_node_add)
+                plugin_node.append_child(plugin_node_add)
 
-            jail_node.append_child(plugin_node)
+                jail_node.append_child(plugin_node)
 
     def plugin_fetch(self, args):
         plugin, host, request = args
