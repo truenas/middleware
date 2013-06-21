@@ -600,6 +600,8 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled'
             )
+            self.fields['bsdusr_mode'].widget.attrs['disabled'] = True
+            self.fields['bsdusr_mode'].required = False
         try:
             self.fields['bsdusr_sshpubkey'].initial = open(
                 '%s/.ssh/authorized_keys' % (
@@ -669,7 +671,8 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         bsduser.bsduser_shell = self.cleaned_data['bsdusr_shell']
         if (
             os.path.exists(self.cleaned_data['bsdusr_home']) and
-            self.cleaned_data['bsdusr_home'].startswith(u'/mnt/')
+            self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') and
+            self.cleaned_data.get('bsdusr_mode', '')
         ):
             try:
                 os.chmod(
