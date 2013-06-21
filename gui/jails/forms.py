@@ -133,17 +133,17 @@ class JailCreateForm(ModelForm):
         initial=False
     )
 
-    jail_source = forms.BooleanField(
-        label=_("source"),
-        required=False,
-        initial=False
-    )
-
-    jail_ports = forms.BooleanField(
-        label=_("ports"),
-        required=False,
-        initial=False
-    )
+#    jail_source = forms.BooleanField(
+#        label=_("source"),
+#        required=False,
+#        initial=False
+#    )
+#
+#    jail_ports = forms.BooleanField(
+#        label=_("ports"),
+#        required=False,
+#        initial=False
+#    )
 
     jail_vanilla = forms.BooleanField(
         label=_("vanilla"),
@@ -178,10 +178,10 @@ class JailCreateForm(ModelForm):
         'jail_type',
         'jail_autostart',
         'jail_32bit',
-        'jail_source',
-        'jail_ports',
+#        'jail_source',
+#        'jail_ports',
         'jail_vanilla',
-        #'jail_archive',
+#        'jail_archive',
         'jail_ipv4',
         'jail_bridge_ipv4',
         'jail_ipv6',
@@ -352,10 +352,10 @@ class JailCreateForm(ModelForm):
 
         if self.cleaned_data['jail_32bit']:
             jail_flags |= WARDEN_CREATE_FLAGS_32BIT
-        if self.cleaned_data['jail_source']:
-            jail_flags |= WARDEN_CREATE_FLAGS_SRC
-        if self.cleaned_data['jail_ports']:
-            jail_flags |= WARDEN_CREATE_FLAGS_PORTS
+#        if self.cleaned_data['jail_source']:
+#            jail_flags |= WARDEN_CREATE_FLAGS_SRC
+#        if self.cleaned_data['jail_ports']:
+#            jail_flags |= WARDEN_CREATE_FLAGS_PORTS
         if self.cleaned_data['jail_vanilla']:
             jail_flags |= WARDEN_CREATE_FLAGS_VANILLA
 
@@ -498,8 +498,8 @@ class JailsConfigurationForm(ModelForm):
 class JailConfigureForm(ModelForm):
 
     jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
-    jail_source = forms.BooleanField(label=_("source"), required=False)
-    jail_ports = forms.BooleanField(label=_("ports"), required=False)
+#    jail_source = forms.BooleanField(label=_("source"), required=False)
+#    jail_ports = forms.BooleanField(label=_("ports"), required=False)
 
     class Meta:
         model = Jails
