@@ -13,6 +13,7 @@ require(["dijit/registry"], function(registry) {
       var tab = me.containerNode.parentNode.parentNode.parentNode.parentNode.parentNode;
       tab = registry.getEnclosingWidget(tab);
       tab.refresh();
+      refreshTree();
     }
   });
 });
