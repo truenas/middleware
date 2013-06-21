@@ -149,7 +149,7 @@ class Base(object):
 
 class AddJail(TreeNode):
 
-    gname = 'Add Jails'
+    gname = 'Jails.Add'
     name = _(u'Add Jails')
     icon = u'JailAddIcon'
     type = 'object'
@@ -172,7 +172,6 @@ class ViewJailsConfiguration(TreeNode):
 
 class ViewLinuxJails(TreeNode, Base):
 
-    gname = 'Linux Jails'
     name = _(u'Linux Jails')
     icon = u'LinuxJailIcon'
     skip = True
@@ -218,7 +217,6 @@ class ViewLinuxJails(TreeNode, Base):
 
 class ViewPluginJails(TreeNode, Base):
 
-    gname = 'Plugin Jails'
     name = _(u'Plugin Jails')
     icon = u'PluginJailIcon'
 
@@ -350,7 +348,6 @@ class ViewPluginJails(TreeNode, Base):
 
 class ViewPortJails(TreeNode, Base):
 
-    gname = 'Port Jails'
     name = _(u'Port Jails')
     icon = u'PortJailIcon'
 
@@ -395,7 +392,6 @@ class ViewPortJails(TreeNode, Base):
 
 class ViewStandardJails(TreeNode, Base):
 
-    gname = 'Standard Jails'
     name = _(u'Standard Jails')
     icon = u'StandardJailIcon'
 
