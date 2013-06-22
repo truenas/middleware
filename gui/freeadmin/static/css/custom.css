@@ -1312,3 +1312,15 @@ table.layoutTable > tr:first-child > td {
     bottom: -10px;
     right: -10px;
 }
+
+/* NFS Share datagrid column sizes */
+.dgrid-column-nfs_alldirs {
+    width: 95px;
+}
+.dgrid-column-nfs_ro, .dgrid-column-nfs_quiet {
+    width: 70px;
+}
+.dgrid-column-nfs_maproot_user, .dgrid-column-nfs_maproot_group,
+.dgrid-column-nfs_mapall_user, .dgrid-column-nfs_mapall_group {
+    width: 105px;
+}

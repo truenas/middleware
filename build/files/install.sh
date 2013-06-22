@@ -175,7 +175,7 @@ Would you like to upgrade the installation on ${_disk}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "Upgrade this $AVATAR_PROJECT installation" --yesno "${_msg}" 8 74
+    dialog --title "Upgrade this $AVATAR_PROJECT installation" --no-label "Fresh Install" --yes-label "Upgrade Install" --yesno "${_msg}" 9 74
     return $?
 }
 

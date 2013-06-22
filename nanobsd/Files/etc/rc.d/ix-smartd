@@ -100,7 +100,7 @@ get_prop_dev()
 generate_smartd_cfg()
 {
 	local IFS="|"
-	local f="smart_powermode smart_difference smart_informal smart_critical smart_email"
+	local f="smart_powermode smart_difference smart_informational smart_critical smart_email"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local f2="disk_name disk_smartoptions smarttest_type smarttest_hour smarttest_daymonth smarttest_month smarttest_dayweek"
@@ -132,7 +132,7 @@ EOF
 			fi
 			echo -n "${prop_dev}"
 			echo -n " -n ${smart_powermode}"
-			echo -n " -W ${smart_difference},${smart_informal},${smart_critical}"
+			echo -n " -W ${smart_difference},${smart_informational},${smart_critical}"
 			if [ -n "${smart_email}" ]; then
 				echo -n " -m ${smart_email}"
 			fi

@@ -752,6 +752,8 @@ class BsdUserResource(DojoModelResource):
 
     def dehydrate(self, bundle):
         bundle = super(BsdUserResource, self).dehydrate(bundle)
+        if bundle.obj.bsdusr_builtin:
+            bundle.data['_edit_url'] += '?deletable=false'
         bundle.data['_passwd_url'] = (
             "%sbsdUserPasswordForm?deletable=false" % (
                 bundle.obj.get_edit_url(),

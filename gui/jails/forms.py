@@ -133,17 +133,17 @@ class JailCreateForm(ModelForm):
         initial=False
     )
 
-    jail_source = forms.BooleanField(
-        label=_("source"),
-        required=False,
-        initial=False
-    )
-
-    jail_ports = forms.BooleanField(
-        label=_("ports"),
-        required=False,
-        initial=False
-    )
+#    jail_source = forms.BooleanField(
+#        label=_("source"),
+#        required=False,
+#        initial=False
+#    )
+#
+#    jail_ports = forms.BooleanField(
+#        label=_("ports"),
+#        required=False,
+#        initial=False
+#    )
 
     jail_vanilla = forms.BooleanField(
         label=_("vanilla"),
@@ -178,10 +178,10 @@ class JailCreateForm(ModelForm):
         'jail_type',
         'jail_autostart',
         'jail_32bit',
-        'jail_source',
-        'jail_ports',
+#        'jail_source',
+#        'jail_ports',
         'jail_vanilla',
-        #'jail_archive',
+#        'jail_archive',
         'jail_ipv4',
         'jail_bridge_ipv4',
         'jail_ipv6',
@@ -352,10 +352,10 @@ class JailCreateForm(ModelForm):
 
         if self.cleaned_data['jail_32bit']:
             jail_flags |= WARDEN_CREATE_FLAGS_32BIT
-        if self.cleaned_data['jail_source']:
-            jail_flags |= WARDEN_CREATE_FLAGS_SRC
-        if self.cleaned_data['jail_ports']:
-            jail_flags |= WARDEN_CREATE_FLAGS_PORTS
+#        if self.cleaned_data['jail_source']:
+#            jail_flags |= WARDEN_CREATE_FLAGS_SRC
+#        if self.cleaned_data['jail_ports']:
+#            jail_flags |= WARDEN_CREATE_FLAGS_PORTS
         if self.cleaned_data['jail_vanilla']:
             jail_flags |= WARDEN_CREATE_FLAGS_VANILLA
 
@@ -498,8 +498,8 @@ class JailsConfigurationForm(ModelForm):
 class JailConfigureForm(ModelForm):
 
     jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
-    jail_source = forms.BooleanField(label=_("source"), required=False)
-    jail_ports = forms.BooleanField(label=_("ports"), required=False)
+#    jail_source = forms.BooleanField(label=_("source"), required=False)
+#    jail_ports = forms.BooleanField(label=_("ports"), required=False)
 
     class Meta:
         model = Jails
@@ -511,22 +511,18 @@ class JailsEditForm(ModelForm):
     jail_vnet = forms.BooleanField(label=_("VIMAGE"), required=False)
     jail_nat = forms.BooleanField(label=_("NAT"), required=False)
 
+    class Meta:
+        model = Jails
+        exclude = (
+            'jail_status',
+            'jail_type',
+        )
+
     def __set_ro(self, instance, key):
-        if instance and instance.id:
-            self.fields[key] = \
-                forms.CharField(
-                    label=self.fields[key].label,
-                    initial=instance.__dict__[key],
-                    widget=forms.TextInput(
-                        attrs={
-                            'readonly': True,
-                            'class': (
-                                'dijitDisabled dijitTextBoxDisabled'
-                                'dijitValidationTextBoxDisabled'
-                            ),
-                        },
-                    )
-                )
+        self.fields[key].widget.attrs['readonly'] = True
+        self.fields[key].widget.attrs['class'] = (
+            'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+        )
 
     def __instance_save(self, instance, keys):
         for key in keys:
@@ -580,8 +576,6 @@ class JailsEditForm(ModelForm):
         self.__instance_save(instance, self.__myfields)
 
         self.__set_ro(instance, 'jail_host')
-        self.__set_ro(instance, 'jail_status')
-        self.__set_ro(instance, 'jail_type')
 
     def save(self):
         jail_host = self.cleaned_data.get('jail_host')
@@ -662,9 +656,6 @@ class JailsEditForm(ModelForm):
                 args['flags'] = flags
 
                 Warden().set(**args)
-
-    class Meta:
-        model = Jails
 
 
 class NullMountPointForm(ModelForm):

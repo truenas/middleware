@@ -22,7 +22,9 @@ do_preinit()
 		if [ "${ini_type}" = "command" ]; then
 			eval ${ini_command}
 		else
-			. ${ini_script}
+			if [ -e "${ini_script}" ]; then
+				. ${ini_script}
+			fi
 		fi
 	done
 }

@@ -237,6 +237,10 @@ else
    warden_print "Done"
 fi
 
+if [ "$VANILLA" != "YES" -a "${PLUGINJAIL}" != "YES" ] ; then
+  bootstrap_pkgng "${JAILDIR}"
+fi
+
 mkdir ${JMETADIR}
 echo "${HOST}" > ${JMETADIR}/host
 if [ "${IP4}" != "OFF" ] ; then

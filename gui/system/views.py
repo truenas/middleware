@@ -377,7 +377,8 @@ class DojoFileStore(object):
     def children(self, entry):
         _children = []
         for _entry in sorted(os.listdir(entry)):
-            if _entry.startswith("."):
+            #FIXME: better extendable way to exclude files
+            if _entry.startswith(".") or _entry == 'md_size':
                 continue
             full_path = os.path.join(self.path, _entry)
             if self.filterVolumes and len(

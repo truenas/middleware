@@ -96,29 +96,43 @@ class JailsFAdmin(BaseFreeAdmin):
 
         return columns
 
-    def _action_builder(self, name, label=None, url=None,
-        func="editObject", icon=None, show=None):
+    def _action_builder(
+        self, name, label=None, url=None, func="editObject", icon=None,
+        show=None
+    ):
 
         if url is None:
             url = "_%s_url" % (name, )
 
         if icon is None:
-            icon = name
+            icon = '<img src="%simages/ui/buttons/%s.png" width="18px" height="18px">' % (
+                settings.STATIC_URL,
+                name,
+            )
 
         on_select_after = """function(evt, actionName, action) {
                 for(var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
+
+                    if (row.data.jail_type != 'pluginjail' || row.data.jail_status == 'Stopped') {
+                        if (actionName == 'plugins') {
+                            query(".grid" + actionName).forEach(function(item, idx) {
+                                domStyle.set(item, "display", "none");
+                            });
+                        }
+                    }
+
                     if (row.data.jail_status == 'Running') {
                         if (actionName == 'start') {
                             query(".grid" + actionName).forEach(function(item, idx) {
-                                domStyle.set(item, "display", "none"); 
+                                domStyle.set(item, "display", "none");
                             });
                         }
                         break;
                     } else if (row.data.jail_status == 'Stopped') {
                         if (actionName == 'stop') {
                             query(".grid" + actionName).forEach(function(item, idx) {
-                                domStyle.set(item, "display", "none"); 
+                                domStyle.set(item, "display", "none");
                             });
                         }
                         break;
@@ -139,10 +153,7 @@ class JailsFAdmin(BaseFreeAdmin):
                 }
 
         data = {
-            'button_name': '<img src="%simages/ui/buttons/%s.png" width="18px" height="18px">' % (
-                settings.STATIC_URL,
-                icon,
-            ),
+            'button_name': icon,
             'tooltip': label,
             'on_select_after': on_select_after,
             'on_click': on_click,
@@ -153,6 +164,7 @@ class JailsFAdmin(BaseFreeAdmin):
     def get_actions(self):
         actions = OrderedDict()
 
+        actions['edit'] = self._action_builder('edit', icon=_("Edit Jail"), label=_("Edit Jail"))
         actions['storage'] = self._action_builder('jail_storage_add', label=_("Add Storage"))
         actions['plugins'] = self._action_builder('plugin_install', label=_("Install Plugins"))
         #actions['export'] = self._action_builder('jail_export', label=_("Export Jail"))
@@ -170,7 +182,6 @@ class JailsFAdmin(BaseFreeAdmin):
 
 class NullMountPointFAdmin(BaseFreeAdmin):
 
-    menu_child_of = u"jails"
     icon_model = u"MountPointIcon"
     icon_object = u"MountPointIcon"
     icon_add = u"AddMountPointIcon"
@@ -179,7 +190,7 @@ class NullMountPointFAdmin(BaseFreeAdmin):
     resource = NullMountPointResource
 
     def get_datagrid_columns(self):
-        columns = super(NullMountPointFAdmin,self).get_datagrid_columns()
+        columns = super(NullMountPointFAdmin, self).get_datagrid_columns()
         columns.insert(3, {
             'name': 'mounted',
             'label': _('Mounted?'),
