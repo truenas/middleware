@@ -187,10 +187,4 @@ export FREEBSD_FTP_MIRROR
 : ${FREEBSD_PACKAGE_MIRROR:="ftp://ftp.pcbsd.org/pub/mirror/packages"}
 export FREEBSD_PACKAGE_MIRROR
 
-#
-# Up /var size so it can fit the jail files
-#
-NANO_RAM_TMPVARSIZE="1024000"
-export NANO_RAM_TMPVARSIZE
-
 # vim: syntax=sh
