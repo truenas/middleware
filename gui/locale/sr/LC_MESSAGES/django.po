@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-06-20 11:20+0200\n"
+"PO-Revision-Date: 2013-06-21 14:40+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -3205,20 +3205,20 @@ msgstr "Dodaj opseg uređaja"
 
 #: services/nav.py:79
 msgid "View Device Extents"
-msgstr ""
+msgstr "Pogledaj oblast uređaja"
 
 #: services/nav.py:92
 msgid "File Extents"
-msgstr ""
+msgstr "Oblast datoteke"
 
 #: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add File Extent"
-msgstr ""
+msgstr "Dodati oblast datoteke"
 
 #: services/nav.py:118
 msgid "View File Extents"
-msgstr ""
+msgstr "Pogledaj oblast datoteke"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -3261,7 +3261,7 @@ msgstr "Potvrdite deljenu lozinku"
 #: sharing/forms.py:139
 #, python-format
 msgid "The path %s does not exist"
-msgstr ""
+msgstr "Putanja %s ne postoji"
 
 #: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
@@ -3924,11 +3924,11 @@ msgstr ""
 
 #: storage/forms.py:842
 msgid "ZFS Volume Name"
-msgstr ""
+msgstr "Ime ZFS volumena"
 
 #: storage/forms.py:845
 msgid "Size for this ZFS Volume"
-msgstr ""
+msgstr "Veličina ovog ZFS Volumena"
 
 #: storage/forms.py:846
 msgid "Example: 1g"
@@ -3939,6 +3939,8 @@ msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
+"Imena ZFS Volumena moraju početi alfanumeričkim karakterom i mogu da sadrže "
+"samo (-), (_), (:) i ().."
 
 #: storage/forms.py:882
 msgid "Owner (user)"
@@ -4341,7 +4343,7 @@ msgstr ""
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
 #: templates/storage/volumes.html.py:14
 msgid "Import Volume"
-msgstr ""
+msgstr "Uvezi volumen"
 
 #: storage/nav.py:63 templates/storage/volumes.html:28
 #: templates/storage/volumes.html.py:30
@@ -4370,23 +4372,23 @@ msgstr "Napraviti ZFS volumen"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "Dodati periodicni snimak"
 
 #: storage/nav.py:130
 msgid "Volumes"
-msgstr ""
+msgstr "Volumeni"
 
 #: storage/nav.py:140 storage/nav.py:188 templates/storage/volumes.html:120
 #: templates/storage/volumes.html.py:124 templates/storage/volumes.html:209
 #: templates/storage/volumes.html.py:213
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "Kreiraj ZFS skup podataka"
 
 #: storage/nav.py:148 storage/nav.py:201 templates/storage/volumes.html:139
 #: templates/storage/volumes.html.py:143 templates/storage/volumes.html:218
 #: templates/storage/volumes.html.py:222
 msgid "Change Permissions"
-msgstr ""
+msgstr "Promena dozvola"
 
 #: storage/views.py:175 storage/views.py:204 storage/views.py:227
 msgid "Volume successfully added."
@@ -4456,7 +4458,7 @@ msgstr "Snimak uspešno kloniran."
 
 #: storage/views.py:684 storage/views.py:835
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "Zamena diska je pokrenuta."
 
 #: storage/views.py:689 storage/views.py:840
 msgid "An error occurred."
@@ -4464,7 +4466,7 @@ msgstr ""
 
 #: storage/views.py:706
 msgid "Disk detach has been successfully done."
-msgstr ""
+msgstr "Uklanjanje diska je uspešno urađeno."
 
 #: storage/views.py:723
 msgid "Disk offline operation has been issued."
@@ -4527,6 +4529,8 @@ msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
 msgstr ""
+"Sistem će koristiti ovo mesto za privremeno skladištenje datoteke firmvera "
+"pre nego što se primeni."
 
 #: system/forms.py:523
 msgid "New image to be installed"
