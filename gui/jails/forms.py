@@ -686,6 +686,16 @@ class NullMountPointForm(ModelForm):
         dest = self.cleaned_data.get("destination")
         dest = os.path.abspath(dest.strip().replace("..", ""))
 
+        if not self.jail:
+            jail = self.cleaned_data.get("jail")
+            if jail: 
+                self.jail = Jails.objects.get(jail_host=jail)
+
+        if not self.jail:
+            raise forms.ValidationError(
+                _("This shouldn't happen, but the jail could not be found")
+            )
+
         full = "%s/%s%s" % (self.jc.jc_path, self.jail.jail_host, dest)
 
         if len(full) > 88:
@@ -704,6 +714,7 @@ class NullMountPointForm(ModelForm):
         if kwargs and 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
 
+        self.jc = JailsConfiguration.objects.order_by("-id")[0]
         if self.jail:
             self.fields['jail'].initial = self.jail.jail_host
             self.fields['jail'].widget.attrs = {
