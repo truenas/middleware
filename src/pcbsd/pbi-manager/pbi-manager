@@ -7634,6 +7634,7 @@ createZFSDataset() {
 
         if [ "${ma}" = "0" ] ; then
           zfs unmount -f "${fds}"
+		  zfs set canmount=off "${fds}"
         fi
       fi
 
