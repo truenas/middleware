@@ -56,8 +56,10 @@ log = logging.getLogger('storage.views')
 
 #FIXME: Move to a utils module
 def _diskcmp(a, b):
-    rega = re.search(r'^([a-z]+)(\d+)$', a[1])
-    regb = re.search(r'^([a-z]+)(\d+)$', b[1])
+    rega = re.search(r'^([a-z/]+)(\d+)$', a[1])
+    regb = re.search(r'^([a-z/]+)(\d+)$', b[1])
+    if not(rega and regb):
+        return 0
     return cmp(
         (a[0], rega.group(1), int(rega.group(2))),
         (b[0], regb.group(1), int(regb.group(2))),
