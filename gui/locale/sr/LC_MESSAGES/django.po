@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-06-22 17:41+0200\n"
+"PO-Revision-Date: 2013-06-23 21:48+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1659,7 +1659,7 @@ msgstr "Obrisati osnovnu datoteku"
 #: templates/storage/snapshot_confirm_delete_bulk.html:5
 #: templates/storage/zvol_confirm_delete.html:7
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "Želite li zaista da izbrišete?"
 
 # S.M.A.R.T. - Self-Monitoring, Analysis and Reporting Technology
 #: services/forms.py:1147
@@ -3645,22 +3645,20 @@ msgid "Use AFP3 unix privileges."
 msgstr "Upotrebi AFP3 unix privilegije."
 
 #: sharing/models.py:222
-#, fuzzy
 msgid "Default file permission"
-msgstr "Dozvole fajla"
+msgstr "Podrazumevana dozvola za datoteku"
 
 #: sharing/models.py:227
-#, fuzzy
 msgid "Default directory permission"
-msgstr "Dozvole direktorijuma"
+msgstr "Podrazumevana dozvola za direktorijum"
 
 #: sharing/models.py:238
 msgid "Apple (AFP) Share"
-msgstr ""
+msgstr "Apple (AFP) deljeni resurs"
 
 #: sharing/models.py:239
 msgid "Apple (AFP) Shares"
-msgstr ""
+msgstr "Apple (AFP) deljeni resursi"
 
 #: sharing/models.py:268
 msgid "Authorized network or IP addresses"
@@ -3742,11 +3740,11 @@ msgstr "Grupa za mapiranje svih korisnika do"
 
 #: sharing/models.py:321
 msgid "Unix (NFS) Share"
-msgstr ""
+msgstr "Unix (NFS) deljeni resurs"
 
 #: sharing/models.py:322
 msgid "Unix (NFS) Shares"
-msgstr ""
+msgstr "Unix (NFS) deljeni resursi"
 
 #: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
@@ -3781,7 +3779,7 @@ msgstr "Navedi prilagođenu putanju"
 
 #: storage/forms.py:163
 msgid "Volume add"
-msgstr "Dodaj volumen"
+msgstr "Dodavanje volumena"
 
 #: storage/forms.py:175
 msgid ""
@@ -3799,9 +3797,8 @@ msgstr ""
 "\"_\" i \".\" ."
 
 #: storage/forms.py:236
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Korisnik sa tim imenom već postoji."
+msgstr "Volumen sa tim imenom već postoji."
 
 #: storage/forms.py:252
 msgid "Path does not exist."
@@ -3920,6 +3917,8 @@ msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
+"Imena skupova podataka moraju početi alfanumeričkim karakterom i mogu da "
+"sadrži samo \"-\", \"_\", \":\" i \".\" ."
 
 #: storage/forms.py:729 storage/forms.py:870
 msgid "You already have a dataset with the same name"
@@ -3927,11 +3926,11 @@ msgstr "Već postoji skup podataka sa istim imenom"
 
 #: storage/forms.py:807
 msgid "Quota for this volume"
-msgstr ""
+msgstr "Kvota za ovaj volumen"
 
 #: storage/forms.py:812
 msgid "Reserved space for this volume"
-msgstr ""
+msgstr "Rezervisani prostor za ovaj volumen"
 
 #: storage/forms.py:842
 msgid "ZFS Volume Name"
@@ -3943,7 +3942,7 @@ msgstr "Veličina ovog ZFS Volumena"
 
 #: storage/forms.py:846
 msgid "Example: 1g"
-msgstr ""
+msgstr "Primer: 1g"
 
 #: storage/forms.py:859
 msgid ""
@@ -3967,7 +3966,7 @@ msgstr "Režim"
 
 #: storage/forms.py:885
 msgid "Type of ACL"
-msgstr ""
+msgstr "Tip ACL-a"
 
 #: storage/forms.py:891
 msgid "Set permission recursively"
@@ -4019,25 +4018,25 @@ msgstr ""
 
 #: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "Označi disk kao nov (uništiti podatke)"
 
 #: storage/forms.py:1193
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "Izbriši sve deljene resurse u vezi sa ovim volumenom"
 
 #: storage/forms.py:1218 system/forms.py:567 system/forms.py:631
 msgid "minute"
-msgstr ""
+msgstr "minut"
 
 #: storage/forms.py:1221 system/forms.py:413 system/forms.py:570
 #: system/forms.py:634
 msgid "hour"
-msgstr ""
+msgstr "Čas"
 
 #: storage/forms.py:1226 system/forms.py:416 system/forms.py:573
 #: system/forms.py:637
 msgid "day of month"
-msgstr ""
+msgstr "dan u mesecu"
 
 #: storage/forms.py:1269
 msgid "Method"
@@ -4403,7 +4402,7 @@ msgstr "Promena dozvola"
 
 #: storage/views.py:175 storage/views.py:204 storage/views.py:227
 msgid "Volume successfully added."
-msgstr "Particija uspešno dodata."
+msgstr "Volumen uspešno dodat."
 
 #: storage/views.py:254
 msgid "S.M.A.R.T. Extra Options"
@@ -4411,20 +4410,20 @@ msgstr ""
 
 #: storage/views.py:371
 msgid "Dataset successfully added."
-msgstr "Dataset uspešno dodat."
+msgstr "Skup podataka uspešno dodat."
 
 # ako % predstavlja user  kao users 
 #: storage/views.py:418
 msgid "Dataset successfully edited."
-msgstr "Dataset uspešno ažuriran."
+msgstr "Skup podataka uspešno ažuriran."
 
 #: storage/views.py:448
 msgid "ZFS Volume successfully added."
-msgstr "ZFS particija uspešno dodata."
+msgstr "ZFS volumen uspešno dodat."
 
 #: storage/views.py:470
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr ""
+msgstr "To je u upotrebi od strane iSCSI uređaja, prvo ga tamo uklonite."
 
 #: storage/views.py:475
 msgid "ZFS Volume successfully destroyed."
@@ -4433,7 +4432,7 @@ msgstr "ZFS volumen uspešno uništen."
 # ako % predstavlja user  kao users 
 #: storage/views.py:524
 msgid "Native dataset successfully edited."
-msgstr "Fizički skup podataka uspešno izmenjen."
+msgstr "Osnovni skup podataka uspešno izmenjen."
 
 #: storage/views.py:544
 msgid "Mount Point permissions successfully updated."
@@ -4473,7 +4472,7 @@ msgstr "Zamena diska je pokrenuta."
 
 #: storage/views.py:689 storage/views.py:840
 msgid "An error occurred."
-msgstr ""
+msgstr "Došlo je do greške."
 
 #: storage/views.py:706
 msgid "Disk detach has been successfully done."
@@ -4726,7 +4725,7 @@ msgstr "Prikazati konzolne poruke u podnožju stranice"
 
 #: system/models.py:182
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "Prikaži pozadinska praćenja u slučaju fatalnih greški"
 
 #: system/models.py:185
 msgid "Show advanced fields by default"
@@ -4858,6 +4857,8 @@ msgstr "SSL sertifikat"
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
 msgstr ""
+"Isecite i nalepite ovde sadržaj fajlova svojih privatnih i javnih "
+"sertifikata."
 
 #: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
@@ -4971,7 +4972,7 @@ msgstr ""
 #: templates/system/sysctl.html.py:27 templates/system/tunable.html:25
 #: templates/system/tunable.html.py:27
 msgid "Delete"
-msgstr ""
+msgstr "Izbriši"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
@@ -5051,19 +5052,19 @@ msgstr "Tunables"
 
 #: system/nav.py:5 templates/menubar.html:7
 msgid "System"
-msgstr ""
+msgstr "Sistem"
 
 #: system/nav.py:12 templates/system/reporting.html:1
 msgid "Reporting"
-msgstr ""
+msgstr "Izveštavanje"
 
 #: system/nav.py:20
 msgid "System Information"
-msgstr ""
+msgstr "Informacije o sistemu"
 
 #: system/views.py:129
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "Otpremljena datoteka nije važeća."
 
 #: system/views.py:239
 msgid "Reboot is being issued"
@@ -5120,39 +5121,39 @@ msgstr "Prijavi se"
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "Članovi"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
 #: templates/storage/tasks.html.py:134
 msgid "Modify"
-msgstr ""
+msgstr "Izmeni"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Ukloni"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr ""
+msgstr "Izmeni grupu"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
-msgstr ""
+msgstr "Izbriši grupu"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "Ne postoje definisane grupe korisnika."
 
 #: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
 msgid "Add New Group"
-msgstr ""
+msgstr "Dodaj novu grupu"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
 msgid "Home"
@@ -5161,29 +5162,29 @@ msgstr ""
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr ""
+msgstr "Izmeni korisnika"
 
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
 msgid "Auxiliary Groups"
-msgstr ""
+msgstr "Pomoćne grupe"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr ""
+msgstr "Ukloni korisnika"
 
 #: templates/account/bsdusers.html:58
 msgid "Delete User"
-msgstr ""
+msgstr "Obriši korisnika"
 
 #: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
 #: templates/services/iscsi_auth.html:33
 msgid "No users defined"
-msgstr ""
+msgstr "Nema definisanih korisnika"
 
 #: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
 msgid "Add New User"
-msgstr ""
+msgstr "Dodaj novog korisnika"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
@@ -5191,7 +5192,7 @@ msgstr ""
 
 #: templates/account/passform.html:2
 msgid "Change Admin Password"
-msgstr ""
+msgstr "Promeni administratorsku lozinku"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5209,7 +5210,7 @@ msgstr "Napredni režim"
 #: templates/plugins/plugin_info.html:25
 #: templates/storage/scrub_confirm.html:14
 msgid "OK"
-msgstr ""
+msgstr "U redu"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
@@ -5233,7 +5234,7 @@ msgstr "KRITIČAN"
 #: templates/system/reboot_dialog.html:11
 #: templates/system/shutdown_dialog.html:11
 msgid "Cancel"
-msgstr ""
+msgstr "Otkaži"
 
 #: templates/freeadmin/generic_model_delete.html:14
 #, python-format
@@ -5257,11 +5258,11 @@ msgstr ""
 #: templates/storage/zvol_confirm_delete.html:11
 #: templates/system/config_restore.html:5
 msgid "Yes"
-msgstr ""
+msgstr "Da"
 
 #: templates/freeadmin/generic_model_edit.html:13
 msgid "Your changes have been successfully updated!"
-msgstr ""
+msgstr "Vaše promene su uspešno ažurirane!"
 
 #: templates/freeadmin/generic_model_edit.html:57
 msgid "Save"
@@ -5269,7 +5270,7 @@ msgstr "Sačuvati"
 
 #: templates/freeadmin/index.html:33
 msgid "Running Processes"
-msgstr ""
+msgstr "Aktivni procesi"
 
 #: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
 #: templates/freeadmin/index.html:49
@@ -6337,7 +6338,7 @@ msgstr "Dodati NTP server"
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
 msgid "Warning!"
-msgstr ""
+msgstr "Upozorenje!"
 
 #: templates/system/reboot_dialog.html:4
 msgid ""
@@ -6398,7 +6399,7 @@ msgstr ""
 
 #: templates/system/smarttest.html:16
 msgid "Unknown"
-msgstr ""
+msgstr "Nepoznat"
 
 #: templates/system/smarttest.html:38
 msgid "No S.M.A.R.T. tests defined"
