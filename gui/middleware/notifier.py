@@ -119,13 +119,12 @@ class Byte(object):
 class StartNotify(threading.Thread):
     """
     Use kqueue to watch for an event before actually calling start/stop
-    This should help against synchronization issues under VM
-
-    If the given pid file exists attach on it, otherwise use the parent folder
+    This should help against synchronization and more responsive notify.
     """
 
-    def __init__(self, pidfile, *args, **kwargs):
+    def __init__(self, pidfile, verb, *args, **kwargs):
         self._pidfile = pidfile
+        self._verb = verb
         super(StartNotify, self).__init__(*args, **kwargs)
 
     def run(self):
@@ -133,19 +132,48 @@ class StartNotify(threading.Thread):
         if not self._pidfile:
             return None
 
-        if os.path.exists(self._pidfile):
-            _file = self._pidfile
-        else:
+        """
+        If we are using start or restart we expect that a .pid file will
+        exists at the end of the process, so attach to the directory waiting
+        for that file.
+        Otherwise we will be stopping and expect the .pid to be deleted, so
+        attach to the .pid file and wait for it to be removed
+        """
+        if self._verb in ('start', 'restart'):
+            fflags = select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND
             _file = os.path.dirname(self._pidfile)
+        else:
+            fflags = select.KQ_NOTE_WRITE|select.KQ_NOTE_DELETE
+            if os.path.exists(self._pidfile):
+                _file = self._pidfile
+            else:
+                _file = os.path.dirname(self._pidfile)
         fd = os.open(_file, os.O_RDONLY)
         evts = [
             select.kevent(fd,
                 filter=select.KQ_FILTER_VNODE,
-                flags=select.KQ_EV_ADD|select.KQ_EV_ONESHOT,
-                fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND|select.KQ_NOTE_DELETE),
-            ]
+                flags=select.KQ_EV_ADD|select.KQ_EV_CLEAR,
+                fflags=fflags,
+            )
+        ]
         kq = select.kqueue()
-        kq.control(evts, 1, 3)
+        kq.control(evts, 0, 0)
+
+        tries = 1
+        while tries < 4:
+            rv = kq.control(None, 2, 1)
+            if self._verb in ('start', 'restart'):
+                if os.path.exists(self._pidfile):
+                    # The file might have been created but it may take a little bit
+                    # for the daemon to write the PID
+                    time.sleep(0.1)
+                if os.stat(self._pidfile).st_size > 0:
+                    break
+            elif self._verb == "stop" and not os.path.exists(self._pidfile):
+                break
+            tries += 1
+        kq.close()
+        os.close(fd)
 
 
 class notifier:
@@ -226,7 +254,7 @@ class notifier:
             'webshell': (None, '/var/run/webshell.pid'),
         }
 
-    def _started_notify(self, what):
+    def _started_notify(self, verb, what):
         """
         The check for started [or not] processes is currently done in 2 steps
         This is the first step which involves a thread StartNotify that watch for event
@@ -238,7 +266,7 @@ class notifier:
 
         if what in self.__service2daemon:
             procname, pidfile = self.__service2daemon[what]
-            sn = StartNotify(pidfile=pidfile)
+            sn = StartNotify(verb=verb, pidfile=pidfile)
             sn.start()
             return sn
         else:
@@ -294,7 +322,7 @@ class notifier:
 
         The helper will use method self._start_[what]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
-        sn = self._started_notify(what)
+        sn = self._started_notify("start", what)
         self._simplecmd("start", what)
         return self.started(what, sn)
 
@@ -311,7 +339,7 @@ class notifier:
 
         The helper will use method self._stop_[what]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
-        sn = self._started_notify(what)
+        sn = self._started_notify("stop", what)
         self._simplecmd("stop", what)
         return self.started(what, sn)
 
@@ -320,7 +348,7 @@ class notifier:
 
         The helper will use method self._restart_[what]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
-        sn = self._started_notify(what)
+        sn = self._started_notify("restart", what)
         self._simplecmd("restart", what)
         return self.started(what, sn)
 
@@ -460,14 +488,21 @@ class notifier:
         os.environ['TZ'] = c.fetchone()[0]
         time.tzset()
 
-    def _reload_ssh(self):
-        self.__system("/usr/sbin/service ix-sshd quietstart")
-        self.__system("/usr/sbin/service sshd restart")
-
     def _restart_smartd(self):
         self.__system("/usr/sbin/service ix-smartd quietstart")
         self.__system("/usr/sbin/service smartd forcestop")
         self.__system("/usr/sbin/service smartd restart")
+
+    def _reload_ssh(self):
+        self.__system("/usr/sbin/service ix-sshd quietstart")
+        self.__system("/usr/sbin/service sshd restart")
+
+    def _start_ssh(self):
+        self.__system("/usr/sbin/service ix-sshd quietstart")
+        self.__system("/usr/sbin/service sshd start")
+
+    def _stop_ssh(self):
+        self.__system("/usr/sbin/service sshd forcestop")
 
     def _restart_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
@@ -836,6 +871,13 @@ class notifier:
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service avahi-daemon restart")
         self.__system("/usr/sbin/service samba forcestop")
+
+    def _start_snmp(self):
+        self.__system("/usr/sbin/service ix-bsnmpd quietstart")
+        self.__system("/usr/sbin/service bsnmpd quietstart")
+
+    def _stop_snmp(self):
+        self.__system("/usr/sbin/service bsnmpd quietstop")
 
     def _restart_snmp(self):
         self.__system("/usr/sbin/service ix-bsnmpd quietstart")

@@ -251,7 +251,20 @@ def servicesToggleView(request, formname):
                 disabled_svcs.append('cifs')
 
     if changing_service != 'directoryservice':
-        started = _notifier.restart(changing_service)
+        """
+        Using rc.d restart verb and depend on rc_var service_enable
+        does not see the best way to handle service start/stop process
+
+        For now lets handle it properly just for ssh and snmp that seems
+        to be the most affected for randomly not starting
+        """
+        if changing_service in ('snmp', 'ssh'):
+            if svc_entry.srv_enable:
+                started = _notifier.start(changing_service)
+            else:
+                started = _notifier.stop(changing_service)
+        else:
+            started = _notifier.restart(changing_service)
 
     error = False
     message = False
