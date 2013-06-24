@@ -1085,13 +1085,16 @@ class FTP(Model):
         verbose_name=_("Path"))
     ftp_onlylocal = models.BooleanField(
             verbose_name=_("Allow Local User Login"))
+    #FIXME: rename the field
     ftp_banner = models.TextField(
-            max_length=120,
-            verbose_name=_("Banner"),
-            blank=True,
-            help_text=_("Greeting banner displayed by FTP when a connection "
-                "first comes in.")
-            )
+        max_length=120,
+        verbose_name=_("Display Login"),
+        blank=True,
+        help_text=_(
+            "Message which will be displayed to the user when they initially "
+            "login."
+        ),
+    )
     ftp_filemask = models.CharField(
             max_length=3,
             default="077",
