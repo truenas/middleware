@@ -25,8 +25,8 @@ generate_ntp_conf()
 		if [ "${ntp_iburst}" = "1" ]; then
 			echo -n " iburst"
 		fi
-		if [ "${ntp_perfer}" = "1" ]; then
-			echo -n " perfer"
+		if [ "${ntp_prefer}" = "1" ]; then
+			echo -n " prefer"
 		fi
 		if [ -n "${ntp_maxpoll}" ]; then
 			echo -n " maxpoll ${ntp_maxpoll}"
