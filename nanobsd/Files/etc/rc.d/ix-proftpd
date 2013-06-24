@@ -119,24 +119,7 @@ generate_proftp()
 	else
 		echo ${ftp_banner} > ${proftpd_displaylogin}
 	fi
-	
-	#XXX missing: tls needs to be supported
-# Create SSL/TLS certificate
-#	if configxml_isset //ftpd/tls; then
-#		_certificate=`configxml_get "//ftpd/certificate"`
-#		_privatekey=`configxml_get "//ftpd/privatekey"`
-#		# Create certificate and key files
-#		if [ -n "${_certificate}" -a -n "${_privatekey}" ]; then
-#			_tmpfile=/tmp/proftpd$$.tmp
-#			echo "${_certificate}" > ${_tmpfile}
-#			/usr/bin/uudecode -m -p -r ${_tmpfile} > ${proftpd_tlsrsacertfile}
-#			/bin/chmod 0600 ${proftpd_tlsrsacertfile}
-#			echo "${_privatekey}" > ${_tmpfile}
-#			/usr/bin/uudecode -m -p -r ${_tmpfile} > ${proftpd_tlsrsakeyfile}
-#			/bin/chmod 0600 ${proftpd_tlsrsakeyfile}
-#			/bin/rm -f ${_tmpfile}
-#		fi
-#	fi
+
 	cat <<EOF > ${proftpd_config}
 ServerName "$(hostname) FTP Server"
 ServerType standalone
@@ -145,7 +128,7 @@ DefaultServer on
 UseIPv6 on
 Port ${ftp_port}
 User nobody
-Group nogroup	
+Group nogroup
 Umask ${ftp_filemask} ${ftp_dirmask}
 SyslogFacility ftp
 MultilineRFC2228 ${proftpd_multilinerfc2228}
