@@ -692,7 +692,7 @@ class NullMountPointForm(ModelForm):
 
         if not self.jail:
             jail = self.cleaned_data.get("jail")
-            if jail: 
+            if jail:
                 self.jail = Jails.objects.get(jail_host=jail)
 
         if not self.jail:
@@ -721,14 +721,11 @@ class NullMountPointForm(ModelForm):
         self.jc = JailsConfiguration.objects.order_by("-id")[0]
         if self.jail:
             self.fields['jail'].initial = self.jail.jail_host
-            self.fields['jail'].widget.attrs = {
-                'readonly': True,
-                'class': (
-                    'dijitDisabled dijitTextBoxDisabled'
-                    'dijitValidationTextBoxDisabled'
-                ),
-            }
-
+            self.fields['jail'].widget.attrs['readonly'] = True
+            self.fields['jail'].widget.attrs['class'] = (
+                'dijitDisabled dijitTextBoxDisabled'
+                'dijitValidationTextBoxDisabled'
+            )
             self.jc = JailsConfiguration.objects.order_by("-id")[0]
             jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
 
@@ -741,9 +738,8 @@ class NullMountPointForm(ModelForm):
                 widget=forms.Select(attrs={'class': 'required'}),
             )
 
-            jc = JailsConfiguration.objects.order_by("-id")[0]
             try:
-                clean_path_execbit(jc.jc_path)
+                clean_path_execbit(self.jc.jc_path)
             except forms.ValidationError, e:
                 self.errors['__all__'] = self.error_class(e.messages)
 
@@ -754,12 +750,18 @@ class NullMountPointForm(ModelForm):
                 wlist = []
 
             for wj in wlist:
-                    pjlist.append(wj[WARDEN_KEY_HOST])
+                pjlist.append(wj[WARDEN_KEY_HOST])
 
             self.fields['jail'].choices = [(pj, pj) for pj in pjlist]
+            self.fields['jail'].widget.attrs['onChange'] = (
+                'addStorageJailChange(this);'
+            )
+            if pjlist:
+                jail_path = "%s/%s" % (self.jc.jc_path, pjlist[0])
+                self.fields['destination'].widget.attrs['root'] = jail_path
 
         self.fields['jc_path'].widget = forms.widgets.HiddenInput()
-        self.fields['jc_path'].initial = jc.jc_path
+        self.fields['jc_path'].initial = self.jc.jc_path
 
         if self.instance.id:
             self.fields['mounted'].initial = self.instance.mounted

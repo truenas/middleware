@@ -306,6 +306,17 @@ require([
 
     }
 
+    addStorageJailChange = function(box) {
+      var destination = registry.byId("id_destination");
+      var jail = registry.byId("id_jail");
+      var jc_path = registry.byId("id_jc_path");
+      new_root = jc_path.get("value") + "/" + jail.get("value");
+      destination.set("root", new_root);
+      destination.tree.model.query = {root: new_root};
+      destination.tree.model.rootLabel = new_root;
+      destination.tree.reload();
+    }
+
     togglePluginService = function(from, name, id) {
 
         var td = from.parentNode;
