@@ -621,7 +621,10 @@ get_jail_distfiles()
 
 get_jail_distfiles64()
 {
-	get_jail_distfiles "amd64"
+	if [ "${NANO_ARCH}" = "amd64" ]
+	then
+		get_jail_distfiles "amd64"
+	fi
 }
 customize_cmd get_jail_distfiles64
 
@@ -672,7 +675,10 @@ create_jail()
 
 create_jail64()
 {
-	create_jail "amd64"
+	if [ "${NANO_ARCH}" = "amd64" ]
+	then
+		create_jail "amd64"
+	fi
 }
 customize_cmd create_jail64
 
@@ -816,7 +822,10 @@ __EOF__
 
 get_jail_packages64()
 {
-	get_jail_packages "amd64"
+	if [ "${NANO_ARCH}" = "amd64" ]
+	then
+		get_jail_packages "amd64"
+	fi
 }
 customize_cmd get_jail_packages64
 
