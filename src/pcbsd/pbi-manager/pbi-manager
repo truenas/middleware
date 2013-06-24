@@ -7624,10 +7624,12 @@ createZFSDataset() {
 
   zfs create -o mountpoint="${mp}" -p "${newds}"
 
+  local i=0
+  local cap=1024
   if [ -n "${diff}" ] ; then
     local mds="${zds}${diff}"
 
-    while :
+    while [ "${i}" -lt "${cap}" ]
     do
       if [ "${diff}" != "/" ] ; then
         local fds="${zds}${diff}"
@@ -7648,6 +7650,8 @@ createZFSDataset() {
     if [ "${ma}" = "0" ] ; then
       zfs mount "${mds}"
     fi
+
+    : $(( i += 1 ))
   fi
 
   return 0
