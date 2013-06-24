@@ -26,7 +26,7 @@ define([
             }
             return this.value;
         },
-        postCreate : function() {
+        postCreate: function() {
 
             var path = this;
             var target;
@@ -51,7 +51,7 @@ define([
                 deferItemLoadingUntilExpand: true
             });
 
-            var tree = new TreeLazy({
+            this.tree = new TreeLazy({
                 model: model,
                 persist: false,
                 style: "height: 250px;",
@@ -69,7 +69,7 @@ define([
                 name: path.name,
             }, this.pathField);
 
-            var browse = new Button({
+            browse = new Button({
                 label: 'Browse',
                 onClick: function() {
                     var dialog = getDialog(path);
@@ -90,7 +90,7 @@ define([
 
             this._supportingWidgets.push(browse);
             this._supportingWidgets.push(this.textfield);
-            this._supportingWidgets.push(tree);
+            this._supportingWidgets.push(this.tree);
             this._supportingWidgets.push(model);
             this._supportingWidgets.push(store);
 
