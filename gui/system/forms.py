@@ -511,6 +511,8 @@ class SSLForm(ModelForm):
 
     def clean_ssl_certfile(self):
         certfile = self.cleaned_data.get("ssl_certfile")
+        if not certfile:
+            return None
         reg = re.search(
             r'(-----BEGIN ([DR]SA) PRIVATE KEY-----.*?'
             r'-----END \2 PRIVATE KEY-----)',
