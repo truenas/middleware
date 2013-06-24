@@ -917,9 +917,11 @@ class SNMP(Model):
             verbose_name=_("Community"),
             help_text=_("In most cases, 'public' is used here.")
             )
+    #FIXME: Implement trap
     snmp_traps = models.BooleanField(
-            verbose_name=_("Send SNMP Traps"),
-            )
+        verbose_name=_("Send SNMP Traps"),
+        editable=False,
+    )
     snmp_options = models.TextField(
             verbose_name=_("Auxiliary parameters"),
             blank=True,
@@ -934,7 +936,7 @@ class SNMP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"SNMPIcon"
-        advanced_fields = ('snmp_traps',)
+        #advanced_fields = ('snmp_traps',)
 
 
 class UPS(Model):
