@@ -1169,8 +1169,8 @@ class FTP(Model):
             help_text=_("Anonymous user download bandwidth in KB/s. Zero means"
                 " infinity.")
             )
-    ftp_ssltls = models.BooleanField(
-            verbose_name=_("Enable SSL/TLS"))
+    ftp_tls = models.BooleanField(
+            verbose_name=_("Enable TLS"))
     ftp_ssltls_certfile = models.TextField(
             verbose_name=_("Certificate and private key"),
             blank=True,

@@ -52,11 +52,11 @@ http_ssl_enabled()
 	return 1
 }
 
-ftp_ssl_enabled()
+ftp_tls_enabled()
 {
 	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 		SELECT
-			ftp_ssltls
+			ftp_tls
 		FROM
 			services_ftp
 		ORDER BY
@@ -327,7 +327,7 @@ _ssl_config()
 		ssl_list="${ssl_list} nginx"
 	fi
 
-	if ftp_ssl_enabled
+	if ftp_tls_enabled
 	then
 		ssl_list="${ssl_list} proftpd"
 	fi

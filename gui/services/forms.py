@@ -216,7 +216,7 @@ class FTPForm(ModelForm):
                 pass
 
         super(FTPForm, self).__init__(*args, **kwargs)
-        self.instance._original_ftp_ssltls = self.instance.ftp_ssltls
+        self.instance._original_ftp_tls = self.instance.ftp_tls
 
     def clean_ftp_passiveportsmin(self):
         ports = self.cleaned_data['ftp_passiveportsmin']
@@ -274,14 +274,10 @@ class FTPForm(ModelForm):
 
     def done(self, *args, **kwargs):
         if (
-            self.instance._original_ftp_ssltls != self.instance.ftp_ssltls
+            self.instance._original_ftp_tls != self.instance.ftp_tls
             and
-            not self.instance._original_ftp_ssltls
-        ) or (
-            self.instance.ftp_ssltls
-            and
-            not self.instance.ftp_ssltls_certfile
-        ):
+            not self.instance._original_ftp_tls
+        ) or (self.instance.ftp_tls and not self.instance.ftp_tls_certfile):
             notifier().start_ssl("proftpd")
 
 
