@@ -666,6 +666,10 @@ class NullMountPointForm(ModelForm):
         initial=True,
     )
 
+    jc_path = forms.CharField(
+        required=False
+    )
+
     class Meta:
         model = NullMountPoint
         widgets = {
@@ -750,10 +754,12 @@ class NullMountPointForm(ModelForm):
                 wlist = []
 
             for wj in wlist:
-                if wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
                     pjlist.append(wj[WARDEN_KEY_HOST])
 
             self.fields['jail'].choices = [(pj, pj) for pj in pjlist]
+
+        self.fields['jc_path'].widget = forms.widgets.HiddenInput()
+        self.fields['jc_path'].initial = jc.jc_path
 
         if self.instance.id:
             self.fields['mounted'].initial = self.instance.mounted
