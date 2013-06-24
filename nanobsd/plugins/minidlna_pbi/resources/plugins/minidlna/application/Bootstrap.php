@@ -1,7 +1,5 @@
 <?php
 
-require_once APPLICATION_PATH . '/../library/Doctrine/Common/ClassLoader.php';
-
 use Doctrine\Common\ClassLoader,
     Doctrine\ORM\Configuration as DoctrineConfiguration,
     Doctrine\Common\EventManager as DoctrineEventManager,
