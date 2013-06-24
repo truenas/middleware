@@ -363,10 +363,6 @@ _gen_conf()
 	_bool_svcconfig inadynmt_enable dynamicdns
 	_bool_svcconfig smartd_enable smartd
 
-	if srv_enabled dynamicdns; then
-		echo "inadynmt_flags=\"$(cat /usr/local/etc/inadyn-mt.conf)\""
-	fi
-
 	if dirsrv_enabled activedirectory || dirsrv_enabled nt4; then
 		echo "winbindd_enable=\"YES\""
 	else
