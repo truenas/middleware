@@ -1113,7 +1113,7 @@ class FTP(Model):
     ftp_ident = models.BooleanField(
             verbose_name=_("Require IDENT Authentication"))
     ftp_reversedns = models.BooleanField(
-            verbose_name=_("Require Reverse DNS for IP"))
+            verbose_name=_("Perform Reverse DNS Lookups"))
     ftp_masqaddress = models.CharField(
             verbose_name=_("Masquerade address"),
             blank=True,
