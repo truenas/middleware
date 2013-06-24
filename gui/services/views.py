@@ -222,9 +222,9 @@ def servicesToggleView(request, formname):
 
     svc_entry = models.services.objects.get(srv_service=changing_service)
     if svc_entry.srv_enable:
-        svc_entry.srv_enable = 0
+        svc_entry.srv_enable = False
     else:
-        svc_entry.srv_enable = 1
+        svc_entry.srv_enable = True
 
     if changing_service != 'directoryservice':
         svc_entry.save()
@@ -239,7 +239,7 @@ def servicesToggleView(request, formname):
                 if started:
                     _notifier.stop(ds)
 
-        if svc_entry.srv_enable == 1:
+        if svc_entry.srv_enable:
             svc_entry.save()
             started = _notifier.start(directoryservice.svc)
             if models.services.objects.get(srv_service='cifs').srv_enable:
@@ -257,18 +257,18 @@ def servicesToggleView(request, formname):
     message = False
     if started is True:
         status = 'on'
-        if svc_entry.srv_enable == 0:
+        if not svc_entry.srv_enable:
             error = True
             message = _("The service could not be stopped.")
-            svc_entry.srv_enable = 1
+            svc_entry.srv_enable = True
             svc_entry.save()
 
     elif started is False:
         status = 'off'
-        if svc_entry.srv_enable == 1:
+        if svc_entry.srv_enable:
             error = True
             message = _("The service could not be started.")
-            svc_entry.srv_enable = 0
+            svc_entry.srv_enable = False
             svc_entry.save()
             if changing_service in ('ups', 'directoryservice'):
                 if changing_service == 'directoryservice':
@@ -276,7 +276,7 @@ def servicesToggleView(request, formname):
                 else:
                     _notifier.stop(changing_service)
     else:
-        if svc_entry.srv_enable == 1:
+        if svc_entry.srv_enable:
             status = 'on'
         else:
             status = 'off'
