@@ -831,12 +831,12 @@ customize_cmd get_jail_packages64
 
 get_jail_packages32()
 {
-	if [ "${NANO_ARCH}" = "i386" ]
-	then
-		get_jail_packages "i386"
-	fi
+#	if [ "${NANO_ARCH}" = "i386" ]
+#	then
+#		get_jail_packages "i386"
+#	fi
 }
-customize_cmd get_jail_packages32
+#customize_cmd get_jail_packages32
 
 # Move the $world/data to the /data partion
 move_data()
