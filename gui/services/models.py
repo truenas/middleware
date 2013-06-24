@@ -1114,7 +1114,12 @@ class FTP(Model):
     ftp_resume = models.BooleanField(
             verbose_name=_("Allow Transfer Resumption"))
     ftp_defaultroot = models.BooleanField(
-            verbose_name=_("Always Chroot"))
+        verbose_name=_("Always Chroot"),
+        help_text=_(
+            "For local users, only allow access to user home directory unless "
+            "the user is a member of group wheel."
+        )
+    )
     ftp_ident = models.BooleanField(
             verbose_name=_("Require IDENT Authentication"))
     ftp_reversedns = models.BooleanField(
