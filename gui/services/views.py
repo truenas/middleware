@@ -34,7 +34,6 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.common.jail import Jls
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
@@ -60,7 +59,7 @@ def plugins(request):
         'stop_url',
         'status_url',
         'jail_status',
-        ])
+    ])
 
     host = get_base_url(request)
     plugins = Plugins.objects.filter(plugin_enabled=True)
@@ -73,11 +72,11 @@ def plugins(request):
         #    XXX Hacky Hack XXX
         #
         #    This lets the plugins be displayed, even if they aren't reachable.
-        #    This is useful for things like viewing, deleting and updating 
-        #    plugins even if they aren't reachable. 
+        #    This is useful for things like viewing, deleting and updating
+        #    plugins even if they aren't reachable.
         #
         if not json:
-            json = {} 
+            json = {}
             json['status'] = None
 
         jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
@@ -85,11 +84,17 @@ def plugins(request):
             name=plugin.plugin_name,
             status=json['status'],
             pid=json.get("pid", None),
-            start_url="/plugins/%s/%d/_s/start" % (plugin.plugin_name, plugin.id),
-            stop_url="/plugins/%s/%d/_s/stop" % (plugin.plugin_name, plugin.id),
-            status_url="/plugins/%s/%d/_s/status" % (plugin.plugin_name, plugin.id),
+            start_url="/plugins/%s/%d/_s/start" % (
+                plugin.plugin_name, plugin.id
+            ),
+            stop_url="/plugins/%s/%d/_s/stop" % (
+                plugin.plugin_name, plugin.id
+            ),
+            status_url="/plugins/%s/%d/_s/status" % (
+                plugin.plugin_name, plugin.id
+            ),
             jail_status=jail_status,
-            )
+        )
 
     return render(request, "services/plugins.html", {
         'plugins': plugins
@@ -176,7 +181,7 @@ def core(request):
         'smart': smart,
         'ssh': ssh,
         'directoryservice': directoryservice,
-        })
+    })
 
 
 def iscsi(request):
@@ -185,7 +190,8 @@ def iscsi(request):
     return render(request, 'services/iscsi.html', {
         'focus_tab': request.GET.get('tab', ''),
         'gconfid': gconfid,
-        })
+    })
+
 
 def servicesToggleView(request, formname):
     form2namemap = {
@@ -212,6 +218,7 @@ def servicesToggleView(request, formname):
 
     enabled_svcs = []
     disabled_svcs = []
+    _notifier = notifier()
 
     svc_entry = models.services.objects.get(srv_service=changing_service)
     if svc_entry.srv_enable:
@@ -223,29 +230,28 @@ def servicesToggleView(request, formname):
         svc_entry.save()
 
     directory_services = ['activedirectory', 'ldap', 'nt4', 'nis']
-    if changing_service == "directoryservice": 
+    if changing_service == "directoryservice":
         directoryservice = DirectoryService.objects.order_by("-id")[0]
         for ds in directory_services:
             if ds != directoryservice.svc:
-                method = getattr(notifier(), "_started_%s" % ds)  
+                method = getattr(_notifier, "_started_%s" % ds)
                 started = method()
                 if started:
-                    notifier().stop(ds)
+                    _notifier.stop(ds)
 
-        n = notifier()
         if svc_entry.srv_enable == 1:
             svc_entry.save()
-            started = notifier().start(directoryservice.svc)
+            started = _notifier.start(directoryservice.svc)
             if models.services.objects.get(srv_service='cifs').srv_enable:
                 enabled_svcs.append('cifs')
         else:
-            started = notifier().stop(directoryservice.svc)
+            started = _notifier.stop(directoryservice.svc)
             svc_entry.save()
             if not models.services.objects.get(srv_service='cifs').srv_enable:
                 disabled_svcs.append('cifs')
 
     if changing_service != 'directoryservice':
-        started = notifier().restart(changing_service)
+        started = _notifier.restart(changing_service)
 
     error = False
     message = False
@@ -266,9 +272,9 @@ def servicesToggleView(request, formname):
             svc_entry.save()
             if changing_service in ('ups', 'directoryservice'):
                 if changing_service == 'directoryservice':
-                    notifier().stop(directoryservice.svc)
-                else: 
-                    notifier().stop(changing_service)
+                    _notifier.stop(directoryservice.svc)
+                else:
+                    _notifier.stop(changing_service)
     else:
         if svc_entry.srv_enable == 1:
             status = 'on'
