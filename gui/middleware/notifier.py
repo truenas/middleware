@@ -495,7 +495,7 @@ class notifier:
 
     def _reload_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
-        self.__system("/usr/sbin/service sshd restart")
+        self.__system("/usr/sbin/service sshd reload")
 
     def _start_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
