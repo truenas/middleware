@@ -167,7 +167,7 @@ class StartNotify(threading.Thread):
                     # The file might have been created but it may take a little bit
                     # for the daemon to write the PID
                     time.sleep(0.1)
-                if os.stat(self._pidfile).st_size > 0:
+                if os.path.exists(self._pidfile) and os.stat(self._pidfile).st_size > 0:
                     break
             elif self._verb == "stop" and not os.path.exists(self._pidfile):
                 break
