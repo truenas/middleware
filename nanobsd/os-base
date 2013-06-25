@@ -698,6 +698,7 @@ get_jail_packages()
 	local jdir
 	local ixdir
 	local wd
+	local pkgext="txz"
 	local pcbsd="${AVATAR_ROOT}/src/pcbsd"
 
 	if [ "${WITH_JAILS}" = "0" ]
@@ -706,6 +707,11 @@ get_jail_packages()
 	fi
 
 	ftpdir="${FREEBSD_PACKAGE_MIRROR}/${FREEBSD_RELEASE_VERSION}/${arch}"
+	if [ "${arch}" = "i386" ]
+	then
+		ftpdir="${FREEBSD_PACKAGE_MIRROR_32}"
+	fi
+
 	pdir="${NANO_OBJ}/jails/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
 	mkdir -p "${pdir}"
 
@@ -759,19 +765,29 @@ get_jail_packages()
 		fetch -o "${pdir}/repo.txz" ${ftpdir}/repo.txz
 		sha256 -q "${pdir}/repo.txz" > "${pdir}/repo.txz.sha256"
 	fi
-	cp "${pdir}/repo.txz" "${jdir}/repo.txz"
 
 	mkdir -p "${jdir}/usr/local/etc/"
+	cp "${pdir}/repo.txz" "${jdir}/repo.txz"
+
 	cp "${pcbsd}/pc-extractoverlay/server-overlay/usr/local/etc/pkg-pubkey.cert" \
 		"${jdir}/usr/local/etc/pkg-pubkey.cert"
 	cp /etc/resolv.conf "${jdir}/etc/resolv.conf"
 		
-	cat<<__EOF__>"${jdir}/usr/local/etc/pkg.conf"
+	if [ "${arch}" != "i386" ]
+	then
+		cat<<__EOF__>"${jdir}/usr/local/etc/pkg.conf"
 PACKAGESITE: ${ftpdir}
 HTTP_MIRROR: http
 PUBKEY: /usr/local/etc/pkg-pubkey.cert
 PKG_CACHEDIR: /usr/local/tmp
 __EOF__
+	else
+		cat<<__EOF__>"${jdir}/usr/local/etc/pkg.conf"
+PACKAGESITE: ${ftpdir}
+HTTP_MIRROR: http
+PKG_CACHEDIR: /usr/local/tmp
+__EOF__
+	fi
 
 	local nw="${NANO_WORLDDIR}"
 	local ar="${NANO_ARCH}"
@@ -831,12 +847,10 @@ customize_cmd get_jail_packages64
 
 get_jail_packages32()
 {
-#	if [ "${NANO_ARCH}" = "i386" ]
-#	then
-#		get_jail_packages "i386"
-#	fi
+	get_jail_packages "i386"
 }
-#customize_cmd get_jail_packages32
+customize_cmd get_jail_packages32
+
 
 # Move the $world/data to the /data partion
 move_data()
