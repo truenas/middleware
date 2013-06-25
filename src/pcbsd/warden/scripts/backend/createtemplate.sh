@@ -136,14 +136,12 @@ create_template()
     if [ "$TPLUGJAIL" = "YES" ] ; then
       cp /etc/resolv.conf ${TDIR}/etc/resolv.conf
 
-      if [ "${FBSDARCH}" != "i386" ] ; then
-        warden_print bootstrap_pkgng "${TDIR}" "pluginjail"
-        bootstrap_pkgng "${TDIR}" "pluginjail"
-        if [ $? -ne 0 ] ; then
-          zfs destroy -fr "${tank}${zfsp}"
-          rm -rf "${tdir}" >/dev/null 2>&1
-          warden_exit "Failed extracting ZFS template environment"
-        fi
+      warden_print bootstrap_pkgng "${TDIR}" "pluginjail"
+      bootstrap_pkgng "${TDIR}" "pluginjail"
+      if [ $? -ne 0 ] ; then
+        zfs destroy -fr "${tank}${zfsp}"
+        rm -rf "${tdir}" >/dev/null 2>&1
+        warden_exit "Failed extracting ZFS template environment"
       fi
     fi
 
@@ -173,9 +171,7 @@ create_template()
       # Creating a plugin jail?
       if [ "$TPLUGJAIL" = "YES" ] ; then
         cp /etc/resolv.conf ${JDIR}/.templatedir/etc/resolv.conf
-        if [ "${FBSDARCH}" != "i386" ] ; then
-          bootstrap_pkgng "${JDIR}/.templatedir/" "pluginjail"
-        fi 
+        bootstrap_pkgng "${JDIR}/.templatedir/" "pluginjail"
       fi
 
       warden_print "Creating template archive..."
@@ -197,9 +193,7 @@ create_template()
       # Creating a plugin jail?
       if [ "$TPLUGJAIL" = "YES" ] ; then
         cp /etc/resolv.conf ${JDIR}/.templatedir/etc/resolv.conf
-        if [ "${FBSDARCH}" != "i386" ] ; then
-          bootstrap_pkgng "${JDIR}/.templatedir/" "pluginjail"
-        fi
+        bootstrap_pkgng "${JDIR}/.templatedir/" "pluginjail"
       fi
 
       warden_print "Creating template archive..."
@@ -275,9 +269,12 @@ DISTFILESDIR="${CACHEDIR}/${DISTFILES}"
 PACKAGESDIR="${CACHEDIR}/${PACKAGES}"
 export DISTFILESDIR PACKAGESDIR
 
-if [ ! -d "${CACHEDIR}" ]
+if [ ! -d "${DISTFILESDIR}" ]
 then
   mkdir -p "${DISTFILESDIR}"
+fi
+if [ ! -d "${PACKAGESDIR}" ]
+then
   mkdir -p "${PACKAGESDIR}"
 fi
 

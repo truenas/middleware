@@ -925,12 +925,20 @@ create_jail_pkgconf()
     return 1
   fi
 
-  cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
+  if [ "${pubkey}" = "1" ] ; then
+  	cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
 PACKAGESITE: ${pkgsite}
 HTTP_MIRROR: http
 PUBKEY: /usr/local/etc/pkg-pubkey.cert
 PKG_CACHEDIR: /usr/local/tmp
 __EOF__
+  else
+  	cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
+PACKAGESITE: ${pkgsite}
+HTTP_MIRROR: http
+PKG_CACHEDIR: /usr/local/tmp
+__EOF__
+  fi
 
   return 0
 }
@@ -1015,8 +1023,32 @@ bootstrap_pkgng()
   local release="$(uname -r | cut -d '-' -f 1-2)"
   local arch="$(uname -m)"
 
-  get_mirror
-  local mirror="${VAL}"
+  local mirrorfile="/usr/local/share/pcbsd/conf/pcbsd-mirrors"
+  local mirror
+  local rpath
+  local pubkey
+
+  if [ "${arch}" != "i386" ] ; then
+    get_mirror
+    mirror="${VAL}"
+    rpath="/packages/${release}/${arch}"
+    pubkey=1
+  else
+    mirror="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"
+    rpath=""
+
+    grep -q "${mirror}" "${mirrorfile}" 2>/dev/null
+    if [ "$?" != "0" ] ; then
+      local tmp="$(mktemp /tmp/.mirXXXXXX)"
+      echo "${mirror}" > "${tmp}"
+      cat "${mirrorfile}" >> "${tmp}"
+      mv "${tmp}" "${mirrorfile}"
+      chmod 644 "${mirrorfile}"
+    fi
+    pubkey=0
+  fi
+
+  local pkgdir="${CACHEDIR}/packages/${release}/${arch}"
 
   cd ${jaildir} 
   warden_print "Boot-strapping pkgng"
@@ -1028,14 +1060,10 @@ bootstrap_pkgng()
   cp "${pubcert}" ${jaildir}/usr/local/etc
   install_pc_extractoverlay "${jaildir}"
 
-  create_jail_pkgconf "${jaildir}" \
-    "${mirror}/packages/${release}/${arch}"
+  create_jail_pkgconf "${jaildir}" "${mirror}/${rpath}" "${pubkey}"
 
   CR="CR ${jaildir}"
   export CR
-
-  local pkgdir="${CACHEDIR}/packages/${release}/${arch}"
-  local rpath="/packages/${release}/${arch}"
 
   if [ ! -d "${pkgdir}" ] ; then
     mkdir -p "${pkgdir}"
