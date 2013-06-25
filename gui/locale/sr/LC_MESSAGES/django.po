@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-06-23 21:48+0200\n"
+"PO-Revision-Date: 2013-06-24 16:17+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -3811,6 +3811,7 @@ msgstr "Putanja nije direktorijum."
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
 msgstr ""
+"Ne možete da izaberete postojeći ZFS volumen i odredite novo ime volumena"
 
 #: storage/forms.py:269
 msgid ""
@@ -4229,7 +4230,7 @@ msgstr "Udaljeni hostovi za replikaciju"
 #: storage/models.py:657 storage/models.py:718
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
 msgid "Filesystem/Volume"
-msgstr ""
+msgstr "Sistem datoteka/Volumen"
 
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4259,10 +4260,12 @@ msgstr "Rekurzivno ponoviti i ukloniti stari snimak na udaljenoj strani"
 #: storage/models.py:681
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
+"Inicijalizacija udaljene strane jednom. (Može izazvati gubitak podataka na "
+"udaljenoj strani!)"
 
 #: storage/models.py:686
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "Limit (kB/s)"
 
 #: storage/models.py:687
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
@@ -5284,15 +5287,15 @@ msgstr "Pomoć i podrška"
 
 #: templates/freeadmin/index.html:57
 msgid "Forum"
-msgstr ""
+msgstr "Forum"
 
 #: templates/freeadmin/index.html:59
 msgid "Community Forum"
-msgstr ""
+msgstr "Forum zajednice"
 
 #: templates/freeadmin/index.html:64
 msgid "IRC (Chat)"
-msgstr ""
+msgstr "IRC(ćaskanje)"
 
 #: templates/freeadmin/index.html:66
 msgid "#freenas on freenode"
@@ -5300,7 +5303,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:70
 msgid "Mailing Lists"
-msgstr ""
+msgstr "Liste slanja"
 
 #: templates/freeadmin/index.html:72
 msgid "FreeNAS Announce"
@@ -6345,6 +6348,8 @@ msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
 msgstr ""
+"Vi se spremate da <strong>PONOVO POKRENETE</strong> sistem, šta želite da "
+"učinite?"
 
 #: templates/system/reporting.html:2
 msgid "History"
@@ -6396,6 +6401,7 @@ msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
 msgstr ""
+"Vi se spremate da <strong>UGASITE</strong> sistem, šta želite da učinite?"
 
 #: templates/system/smarttest.html:16
 msgid "Unknown"
