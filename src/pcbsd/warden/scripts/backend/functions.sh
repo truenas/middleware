@@ -908,7 +908,9 @@ install_packages_by_list()
   ${CR} "mkdir -p /var/tmp/pkgs"
   mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
   for p in $(cat "${list}") ; do
-    ${CR} "pkg add /var/tmp/pkgs/${p}"
+    if [ -f "${jaildir}/var/tmp/pkgs/${p}" ] ; then
+      ${CR} "pkg add /var/tmp/pkgs/${p}"
+    fi
     show_progress
   done
   umount "${jaildir}/var/tmp/pkgs"
@@ -920,12 +922,13 @@ create_jail_pkgconf()
 {
   local jaildir="${1}"
   local pkgsite="${2}"
+  local arch="${3}"
 
   if [ ! -d "${jaildir}" -o -z "${pkgsite}" ] ; then 
     return 1
   fi
 
-  if [ "${pubkey}" = "1" ] ; then
+  if [ "${arch}" != "i386" ] ; then
   	cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
 PACKAGESITE: ${pkgsite}
 HTTP_MIRROR: http
@@ -950,7 +953,7 @@ get_package_by_port()
   local rpath="${3}"
   local port="${4}"
 
-  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o -z "${rpath}" -o -z "${port}" ] ; then
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o -z "${port}" ] ; then
     return 1
   fi
 
@@ -976,7 +979,7 @@ get_packages_by_port_list()
   local rpath="${3}"
   local list="${4}"
 
-  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o -z "${rpath}" -o ! -f "${list}" ] ; then
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o ! -f "${list}" ] ; then
     return 1
   fi
 
@@ -1020,32 +1023,29 @@ bootstrap_pkgng()
   if [ -z "${jailtype}" ] ; then
     jailtype="standard"
   fi
+
+  CR="CR ${jaildir}"
+  export CR
+
+  local arch="${ARCH}"
   local release="$(uname -r | cut -d '-' -f 1-2)"
-  local arch="$(uname -m)"
 
   local mirrorfile="/usr/local/share/pcbsd/conf/pcbsd-mirrors"
   local mirror
   local rpath
-  local pubkey
 
   if [ "${arch}" != "i386" ] ; then
     get_mirror
     mirror="${VAL}"
     rpath="/packages/${release}/${arch}"
-    pubkey=1
   else
     mirror="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"
     rpath=""
 
-    grep -q "${mirror}" "${mirrorfile}" 2>/dev/null
-    if [ "$?" != "0" ] ; then
-      local tmp="$(mktemp /tmp/.mirXXXXXX)"
-      echo "${mirror}" > "${tmp}"
-      cat "${mirrorfile}" >> "${tmp}"
-      mv "${tmp}" "${mirrorfile}"
-      chmod 644 "${mirrorfile}"
-    fi
-    pubkey=0
+    local tmp="$(mktemp /tmp/.mirXXXXXX)"
+    echo "${mirror}" > "${tmp}"
+    mv "${tmp}" "${mirrorfile}-i386"
+    chmod 644 "${mirrorfile}"
   fi
 
   local pkgdir="${CACHEDIR}/packages/${release}/${arch}"
@@ -1058,12 +1058,9 @@ bootstrap_pkgng()
   pubcert="/usr/local/etc/pkg-pubkey.cert"
 
   cp "${pubcert}" ${jaildir}/usr/local/etc
-  install_pc_extractoverlay "${jaildir}"
+  #install_pc_extractoverlay "${jaildir}"
 
-  create_jail_pkgconf "${jaildir}" "${mirror}/${rpath}" "${pubkey}"
-
-  CR="CR ${jaildir}"
-  export CR
+  create_jail_pkgconf "${jaildir}" "${mirror}/${rpath}" "${arch}"
 
   if [ ! -d "${pkgdir}" ] ; then
     mkdir -p "${pkgdir}"
@@ -1081,7 +1078,7 @@ bootstrap_pkgng()
   if [ -f "${pkgdir}/repo.txz" ] ; then
     cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
   else
-    get_file_from_mirrors "/${rpath}/repo.txz" \
+    get_file_from_mirrors "${rpath}/repo.txz" \
       "${pkgdir}/repo.txz"
     cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
   fi
@@ -1115,7 +1112,9 @@ bootstrap_pkgng()
     fi
 
     rm -f "${ilist}"
-    ${CR} "pc-extractoverlay server --sysinit"
+
+    #${CR} "pc-extractoverlay server --sysinit"
+    #create_jail_pkgconf "${jaildir}" "${mirror}/${rpath}" "${arch}"
 
     return 0
   fi
@@ -1374,7 +1373,7 @@ get_freebsd_file()
    local aDir="$(dirname $_lf)"
    local aFile="$(basename $_lf)"
 
-   local astatfile="${HOME}/.fbsd-aria-stat"
+   local astatfile="${HOME}/.fbsd-aria-stat-${ARCH}"
    if [ -e "${astatfile}" ] ; then
      local astat="--server-stat-of=${astatfile}
         --server-stat-if=${astatfile}

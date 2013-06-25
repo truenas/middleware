@@ -163,15 +163,30 @@ get_aria_mirror_list()
      return
   fi
 
-  if [ ! -e "/usr/local/share/pcbsd/conf/pcbsd-mirrors" ] ; then
-     exit_err "Missing mirror list: /usr/local/share/pcbsd/conf/pcbsd-mirrors"
+  local mirrorfile="/usr/local/share/pcbsd/conf/pcbsd-mirrors"
+  if [ "${ARCH}" = "amd64" ] ; then
+    if [ ! -e "${mirrorfile}" -a ! -e "${mirrorfile}-amd64" ] ; then
+      exit_err "Missing mirror list: ${mirrorfile}"
+    elif [ -e "${mirrorfile}-amd64" ] ; then
+      mirrorfile="${mirrorfile}-amd64"
+    fi
+  else
+    if [ ! -e "${mirrorfile}" -a ! -e "${mirrorfile}-i386" ] ; then
+      exit_err "Missing mirror list: ${mirrorfile}"
+    elif [ -e "${mirrorfile}-i386" ] ; then
+      mirrorfile="${mirrorfile}-i386"
+    fi
+  fi
+
+  if [ ! -e "${mirrorfile}" ] ; then
+     exit_err "Missing mirror list: ${mirrorfile}"
   fi
 
   # Build the mirror list
   while read line
   do
     VAL="$VAL ${line}${1}"
-  done < /usr/local/share/pcbsd/conf/pcbsd-mirrors
+  done < "${mirrorfile}"
   echo ${VAL}
 }
 
@@ -191,7 +206,7 @@ get_file_from_mirrors()
    local aFile=`basename $_lf`
 
    # Server status flag
-   local aStatFile=${HOME}/.pcbsd-aria-stat
+   local aStatFile=${HOME}/.pcbsd-aria-stat-${ARCH}
    if [ -e "$aStatFile" ] ; then
      local aStat="--server-stat-of=$aStatFile --server-stat-if=$aStatFile --uri-selector=adaptive --server-stat-timeout=864000"
    else
