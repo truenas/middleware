@@ -167,15 +167,14 @@ ask_upgrade()
     local _disk="$1"
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
-The $AVATAR_PROJECT installer can preserve your existing parameters, or
-it can do a fresh install overwriting the current settings,
-configuration, etc.
+Upgrading the installation will preserve your existing configuration.
+A fresh install will overwrite the current configuration.
 
-Would you like to upgrade the installation on ${_disk}?
+Do you wish to perform an upgrade or a fresh installation on ${_disk}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "Upgrade this $AVATAR_PROJECT installation" --no-label "Fresh Install" --yes-label "Upgrade Install" --yesno "${_msg}" 9 74
+    dialog --title "Upgrade this $AVATAR_PROJECT installation" --no-label "Fresh Install" --yes-label "Upgrade Install" --yesno "${_msg}" 8 74
     return $?
 }
 
