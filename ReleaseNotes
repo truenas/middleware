@@ -1,3 +1,34 @@
+Release Notes for FreeNAS 9.1.0-RELEASE
+
+1) Version 9.1-STABLE of FreeBSD with performance improvements, bug
+fixes, and updated software packages.
+
+2) Many improvements to the ZFS filesystem, including feature flags,
+TRIM support, enhanced drive removal notification, LZ4 compression,
+improved ARC memory reclamation and reliability improvements.
+
+3) Improved Plugin Jail subsystem which supports multiple jails and
+an enhanced UI including enhancements from PC-BSD Warden.
+
+4) Improved Volume manager including auto optimization of volumes
+for performance.
+
+5) Improvements to the encryption subsystem.
+
+6) Documentation enhancements.
+
+7) Increased base image size to 3.7GB.
+
+8) GUI UPGRADES FROM FREENAS 8.X ARE NOT SUPPORTED (due to image size #7)
+
+9) **IMPORTANT** Backward compatibility of FreeNAS 9.1 ZFS pools
+with older versions of ZFS is not to be expected. Upgrade pools
+with extreme caution, as all ZFS pool upgrades are one-way and only
+FreeNAS 9.1, FreeBSD 9-STABLE, and FreeBSD 8.4 currently support
+this ZFS pool format.
+
+========================
+
 Release Notes for FreeNAS 8.3.1-RELEASE-p2
 
 *** IMPORTANT ***
