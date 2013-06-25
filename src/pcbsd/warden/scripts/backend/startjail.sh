@@ -211,68 +211,54 @@ __EOF__
            mv /var/tmp/rc.conf.bak /etc/rc.conf
         fi
      fi
-     /etc/rc.d/ipfw forcerestart
+     /sbin/ipfw -f flush 
   fi
-
-#  warden_run ipfw 100 add allow ip from any to any
 
   prioroty=0
   instance=`get_ipfw_nat_instance "${IFACE}"`
   if [ -z "${instance}" ] ; then
      priority=`get_ipfw_nat_priority`
      instance=`get_ipfw_nat_instance`
-
-     #
-     # XXX for now until this can be revisited again XXX
-     #
-     ipfw "${priority}" add nat "${instance}" all from any to any
-     ipfw nat "${instance}" config if "${IFACE}" reset
-
   else  
      priority=`get_ipfw_nat_priority "${IFACE}"`
      instance=`get_ipfw_nat_instance "${IFACE}"`
   fi
 
-  #
-  # XXX for now until this can be revisited again XXX
-  #
-  return 0
-
   ext_ip4=`get_interface_ipv4_address "${IFACE}"`
   ext_ip6=`get_interface_ipv6_address "${IFACE}"`
 
-  warden_run ipfw "${priority}" nat config if "${IFACE}" reset
+  warden_run ipfw nat "${instance}" config if "${IFACE}" reset
   if [ -n "${IP4}" ] ; then
      get_ip_and_netmask "${IP4}"
-     warden_run ipfw "${priority}" add nat "${instance}" \
-        all from ${JIP} to any out xmit ${IFACE}
+     warden_run ipfw add nat "${instance}" \
+        all from ${JIP} to any
   fi
   for ip4 in ${IPS4}
   do
      get_ip_and_netmask "${ip4}"
-     warden_run ipfw "${priority}" add nat "${instance}" \
-        all from ${JIP} to any out xmit ${IFACE}
+     warden_run ipfw add nat "${instance}" \
+        all from ${JIP} to any
   done
 
   if [ -n "${IP6}" ] ; then
      get_ip_and_netmask "${IP6}"
-     warden_run ipfw "${priority}" add nat "${instance}" \
-        all from ${JIP} to any out xmit ${IFACE}
+     warden_run ipfw add nat "${instance}" \
+        all from ${JIP} to any 
   fi
   for ip6 in ${IPS6}
   do
      get_ip_and_netmask "${ip6}"
-     warden_run ipfw "${priority}" add nat "${instance}" \
-        all from ${JIP} to any out xmit ${IFACE}
+     warden_run ipfw add nat "${instance}" \
+        all from ${JIP} to any
   done
 
   if [ -n "${ext_ip4}" ] ; then
-     warden_run ipfw "${priority}" add nat "${instance}" \
-        all from any to ${ext_ip4} in recv ${IFACE}
+     warden_run ipfw add nat "${instance}" \
+        all from any to ${ext_ip4}
   fi
   if [ -n "${ext_ip6}" ] ; then
-     warden_run ipfw "${priority}" add nat "${instance}" \
-        all from any to ${ext_ip6} in recv ${IFACE}
+     warden_run ipfw add nat "${instance}" \
+        all from any to ${ext_ip6}
   fi
 
 # End of jail VIMAGE startup function
