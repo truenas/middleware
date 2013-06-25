@@ -3584,6 +3584,19 @@ class notifier:
 
         self.__camcontrol = {}
 
+        """
+        Hacky workaround
+
+        It is known that at least some HPT controller have a bug in the
+        camcontrol devlist output with multiple controllers, all controllers
+        will be presented with the same driver with index 0
+        e.g. two hpt27xx0 instead of hpt27xx0 and hpt27xx1
+
+        What we do here is increase the controller id by its order of
+        appearance in the camcontrol output
+        """
+        hptctlr = defaultdict(int)
+
         re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S|re.M)
         re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S|re.M)
         drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
@@ -3595,7 +3608,11 @@ class notifier:
                 if not reg:
                     continue
                 drv = reg.group("drv")
-                cid = reg.group("cid")
+                if drv.startswith("hpt"):
+                    cid = hptctlr[drv]
+                    hptctlr[drv] += 1
+                else:
+                    cid = reg.group("cid")
             else:
                 reg = re_tgt.search(line)
                 if not reg:
