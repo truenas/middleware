@@ -487,7 +487,12 @@ get_interface_ipv4_addresses()
 
 get_interface_ipv6_addresses()
 {
-   ifconfig ${1} | grep -w inet6 | awk '{ print $2 }'
+   local addrs
+
+   addrs="$(ifconfig ${1} | grep -w inet6 | awk '{ print $2 }')"
+   for addr in ${addrs} ; do
+      echo ${addr} | cut -f1 -d'%'
+   done
 }
 
 get_interface_address()
@@ -502,7 +507,7 @@ get_interface_ipv4_address()
 
 get_interface_ipv6_address()
 {
-   ifconfig ${1} | grep -w inet6 | head -1 | awk '{ print $2 }'
+   ifconfig ${1} | grep -w inet6 | head -1 | awk '{ print $2 }' | cut -f1 -d'%'
 }
 
 get_interface_aliases()

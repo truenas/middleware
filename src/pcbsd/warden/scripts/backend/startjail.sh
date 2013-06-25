@@ -214,17 +214,29 @@ __EOF__
      /etc/rc.d/ipfw forcerestart
   fi
 
-  warden_run ipfw 100 add allow ip from any to any
+#  warden_run ipfw 100 add allow ip from any to any
 
   prioroty=0
   instance=`get_ipfw_nat_instance "${IFACE}"`
   if [ -z "${instance}" ] ; then
      priority=`get_ipfw_nat_priority`
      instance=`get_ipfw_nat_instance`
+
+     #
+     # XXX for now until this can be revisited again XXX
+     #
+     ipfw "${priority}" add nat "${instance}" all from any to any
+     ipfw nat "${instance}" config if "${IFACE}" reset
+
   else  
      priority=`get_ipfw_nat_priority "${IFACE}"`
      instance=`get_ipfw_nat_instance "${IFACE}"`
   fi
+
+  #
+  # XXX for now until this can be revisited again XXX
+  #
+  return 0
 
   ext_ip4=`get_interface_ipv4_address "${IFACE}"`
   ext_ip6=`get_interface_ipv6_address "${IFACE}"`
