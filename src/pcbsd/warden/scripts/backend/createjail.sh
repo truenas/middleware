@@ -230,14 +230,14 @@ else
    fi
 
    # If this is a pluginjail on UFS :-( Do things the hard way.
-   if [ "${PLUGINJAIL}" = "YES" ] ; then
+   if [ "${PLUGINJAIL}" = "YES" -a "${ARCH}" != "i386" ] ; then
      bootstrap_pkgng "${pjdir}" "pluginjail"
    fi
 
    warden_print "Done"
 fi
 
-if [ "$VANILLA" != "YES" -a "${PLUGINJAIL}" != "YES" ] ; then
+if [ "$VANILLA" != "YES" -a "${PLUGINJAIL}" != "YES" -a "${ARCH}" != "i386" ] ; then
   bootstrap_pkgng "${JAILDIR}"
 fi
 
@@ -337,7 +337,7 @@ if [ -e "/etc/localtime" ] ; then
 fi
 
 # Setup TrueOS PKGNG repo / utilities only if on TRUEOS
-if [ "$VANILLA" != "YES" -a -e "${JAILDIR}/etc/rc.delay" ] ; then
+if [ "$VANILLA" != "YES" -a -e "${JAILDIR}/etc/rc.delay" -a "${ARCH}" != "i386" ] ; then
   bootstrap_pkgng "${JAILDIR}"
   if [ $? -ne 0 ] ; then
      warden_print "You can manually re-try by running # warden bspkgng ${JAILNAME}"
