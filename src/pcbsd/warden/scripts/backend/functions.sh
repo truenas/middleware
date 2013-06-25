@@ -1058,7 +1058,7 @@ bootstrap_pkgng()
   pubcert="/usr/local/etc/pkg-pubkey.cert"
 
   cp "${pubcert}" ${jaildir}/usr/local/etc
-  #install_pc_extractoverlay "${jaildir}"
+  install_pc_extractoverlay "${jaildir}"
 
   create_jail_pkgconf "${jaildir}" "${mirror}/${rpath}" "${arch}"
 
@@ -1113,8 +1113,8 @@ bootstrap_pkgng()
 
     rm -f "${ilist}"
 
-    #${CR} "pc-extractoverlay server --sysinit"
-    #create_jail_pkgconf "${jaildir}" "${mirror}/${rpath}" "${arch}"
+    ${CR} "pc-extractoverlay server --sysinit"
+    create_jail_pkgconf "${jaildir}" "${mirror}/${rpath}" "${arch}"
 
     return 0
   fi
