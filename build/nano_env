@@ -105,6 +105,7 @@ fi
 # us to keep the SVN[/git] revision number for the build.
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
 : ${REVISION=$(echo ${svn}${git})}
+REVISION=""
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 
