@@ -7648,6 +7648,7 @@ createZFSDataset() {
     done
 
     if [ "${ma}" = "0" ] ; then
+      zfs set canmount=on "${mds}"
       zfs mount "${mds}"
     fi
 
