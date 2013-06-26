@@ -650,6 +650,7 @@ main()
 		do_plugins_nullmountpoint_migration "${jail_host}"
 	fi
 
+	/usr/local/etc/rc.d/django restart
 	return 0
 }
 
