@@ -843,9 +843,9 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 	         echo $EXTRAFLAGS | sed 's|,| |g' > "${JMETADIR}/jail-flags"
                 ;;
      vnet-enable) touch "${JMETADIR}/vnet" ;;
-    vnet-disable) rm "${JMETADIR}/vnet" 2>/dev/null ;;
+    vnet-disable) rm -f "${JMETADIR}/vnet" 2>/dev/null ;;
       nat-enable) touch "${JMETADIR}/nat" ;;
-     nat-disable) rm "${JMETADIR}/nat" 2>/dev/null ;;
+     nat-disable) rm -f "${JMETADIR}/nat" 2>/dev/null ;;
               *) warden_exit "Invalid option!" ;;
 	   esac
          ;;
