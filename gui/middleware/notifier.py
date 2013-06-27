@@ -35,6 +35,7 @@ actions.
 """
 
 from collections import defaultdict, OrderedDict
+from decimal import Decimal
 import ctypes
 import errno
 import glob
@@ -2321,7 +2322,30 @@ class notifier:
         # XXX: ugly
         self.__system("rm -rf */")
 
-        proc = self.__pipeopen('/usr/bin/tar -xJpf %s' % (path, ))
+        percent = 0
+        with open('/tmp/.upgrade_extract', 'w') as f:
+            size = os.stat(path).st_size
+            proc = subprocess.Popen([
+                "/usr/bin/tar",
+                "-xJpf",
+                path,
+            ], stderr=f)
+            RE_TAR = re.compile(r"^In: (\d+)", re.M|re.S)
+            while True:
+                if proc.poll() is not None:
+                    break
+                try:
+                    os.kill(proc.pid, signal.SIGINFO)
+                except:
+                    break
+                time.sleep(1)
+                #TODO: We don't need to read the whole file
+                with open('/tmp/.upgrade_extract', 'r') as f2:
+                    line = f2.read()
+                reg = RE_TAR.findall(line)
+                if reg:
+                    current = Decimal(reg[-1])
+                    percent = (current / size ) * 100
         err = proc.communicate()[1]
         if proc.returncode != 0:
             os.chdir('/')
