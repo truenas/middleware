@@ -33,7 +33,6 @@ require([
     "dojo/_base/fx",
     "dojo/_base/lang",
     "dojo/_base/window",
-    "dojo/cookie",
     "dojo/data/ItemFileReadStore",
     "dojo/dom",
     "dojo/dom-attr",
@@ -109,7 +108,6 @@ require([
     dFx,
     lang,
     dWindow,
-    cookie,
     ItemFileReadStore,
     dom,
     domAttr,
@@ -261,7 +259,7 @@ require([
             dismiss = 1;
         }
         xhr.post("/admin/alert/dismiss/", {
-            headers: {"X-CSRFToken": cookie('csrftoken')},
+            headers: {"X-CSRFToken": CSRFToken},
             data: {
                 msgid: msgid,
                 dismiss: dismiss
@@ -281,7 +279,7 @@ require([
         xhr.post("/services/toggle/"+obj.name+"/", {
             data: "Some random text",
             handleAs: "json",
-            headers: {"X-CSRFToken": cookie('csrftoken')}
+            headers: {"X-CSRFToken": CSRFToken}
             }).then(function(data) {
                 if(data.status == 'on') {
                     obj.src = '/static/images/ui/buttons/on.png';
@@ -665,7 +663,7 @@ require([
         xhr.post(url, {
             handleAs: 'json',
             data: data,
-            headers: {"X-CSRFToken": cookie('csrftoken')}
+            headers: {"X-CSRFToken": CSRFToken}
         }).then(function(data) {
             sendbtn.set('disabled', false);
             if(!data.error) {
@@ -684,7 +682,7 @@ require([
         xhr.post(url, {
             handleAs: 'json',
             data: {host: data['remote_hostname'], port: data['remote_port']},
-            headers: {"X-CSRFToken": cookie('csrftoken')}
+            headers: {"X-CSRFToken": CSRFToken}
         }).then(function(data) {
             sendbtn.set('disabled', false);
             if(!data.error) {
@@ -1017,7 +1015,7 @@ require([
                 data: {__form_id: attrs.form.id},
                 form: attrs.form.id,
                 handleAs: 'text',
-                headers: {"X-CSRFToken": cookie('csrftoken')}
+                headers: {"X-CSRFToken": CSRFToken}
                 }).then(handleReq, function(evt) {
                     handleReq(evt.response.data, evt.response, true);
                 });
@@ -1027,7 +1025,7 @@ require([
             xhr.post(attrs.url, {
                 data: newData,
                 handleAs: 'text',
-                headers: {"X-CSRFToken": cookie('csrftoken')}
+                headers: {"X-CSRFToken": CSRFToken}
             }).then(handleReq, function(evt) {
                 handleReq(evt.response.data, evt.response, true);
                 });
