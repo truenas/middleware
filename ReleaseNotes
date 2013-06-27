@@ -27,6 +27,14 @@ with extreme caution, as all ZFS pool upgrades are one-way and only
 FreeNAS 9.1, FreeBSD 9-STABLE, and FreeBSD 8.4 currently support
 this ZFS pool format.
 
+10) To convert 8.* pluginjail to a 9.* pluginjail, please run the
+jail migration script like so (prior to configuring jails):
+
+/root/migrate_pluginjail.sh -D
+
+Any plugins installed will need to be updated manually, this can be done
+on the services->plugins page.
+
 ========================
 
 Release Notes for FreeNAS 8.3.1-RELEASE-p2
