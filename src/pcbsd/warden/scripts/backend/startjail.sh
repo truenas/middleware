@@ -49,7 +49,7 @@ start_jail_vimage()
   ifconfig ${BRIDGE} addm ${EPAIRA} up
 
   # If no bridge specified, and IP4 is enabled, lets suggest one
-  if [ -z "$BRIDGEIP4" -a -n "$IP4" -a "${NATENABLE}" = "YES"] ; then
+  if [ -z "$BRIDGEIP4" -a -n "$IP4" -a "${NATENABLE}" = "YES" ] ; then
      BRIDGEIP4="`echo $IP4 | cut -d '.' -f 1-3`.254"
   fi
 
