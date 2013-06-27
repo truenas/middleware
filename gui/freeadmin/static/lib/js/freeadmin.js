@@ -73,6 +73,7 @@ require([
     "dijit/form/MultiSelect",
     "dijit/form/NumberTextBox",
     "dijit/form/Select",
+    "dijit/form/SimpleTextarea",
     "dijit/form/Textarea",
     "dijit/form/TextBox",
     "dijit/form/RadioButton",
@@ -148,6 +149,7 @@ require([
     MultiSelect,
     NumberTextBox,
     Select,
+    SimpleTextarea,
     Textarea,
     TextBox,
     RadioButton,
@@ -769,13 +771,13 @@ require([
 
             } else {
                 //form.reset();
-                if(rnode.isInstanceOf(dijit.Dialog))
+                if(rnode.isInstanceOf(Dialog))
                     rnode.hide();
             }
 
         } else {
 
-            if(rnode.isInstanceOf(dijit.Dialog) && (data.error == false || (data.error == true && !data.type) ) ) {
+            if(rnode.isInstanceOf(Dialog) && (data.error == false || (data.error == true && !data.type) ) ) {
                 rnode.hide();
             }
 
@@ -961,7 +963,7 @@ require([
         };
 
         if (attrs.progressbar != undefined) {
-            pbar = dijit.ProgressBar({
+            pbar = ProgressBar({
                 style: "width:300px",
                 indeterminate: true,
                 });
@@ -976,13 +978,13 @@ require([
             rnode._position();
 
         } else if (attrs.progresstype == 'jail') {
-            pbar = dijit.ProgressBar({
+            pbar = ProgressBar({
                 id: "jail_progress",
                 style: "width:600px",
                 indeterminate: true,
                 });
 
-            pdisplay = new dijit.form.SimpleTextarea({
+            pdisplay = new SimpleTextarea({
                 id: "jail_display",
                 title: "progress",
                 rows: "5",
@@ -1105,7 +1107,7 @@ require([
         while(1) {
             turn = registry.getEnclosingWidget(turn.domNode.parentNode);
             if(turn == null) return null;
-            if(turn.isInstanceOf(dijit.Dialog)) break;
+            if(turn.isInstanceOf(Dialog)) break;
         }
         return turn;
 
@@ -1116,7 +1118,7 @@ require([
         var turn = from;
         while(1) {
             turn = registry.getEnclosingWidget(turn.domNode.parentNode);
-            if(turn.isInstanceOf(dijit.form.Form)) break;
+            if(turn.isInstanceOf(Form)) break;
         }
         return turn;
 
@@ -1142,12 +1144,12 @@ require([
         if(nodes && canceled == false) {
             refreshTree();
             dArray.forEach(nodes, function(entry, i) {
-                if(entry.isInstanceOf && entry.isInstanceOf(dijit.layout.ContentPane)) {
+                if(entry.isInstanceOf && entry.isInstanceOf(ContentPane)) {
                     entry.refresh();
                     var par = registry.getEnclosingWidget(entry.domNode.parentNode);
                     par.selectChild(entry);
                     var par2 = registry.getEnclosingWidget(par.domNode.parentNode);
-                    if(par2 && par2.isInstanceOf(dijit.layout.ContentPane))
+                    if(par2 && par2.isInstanceOf(ContentPane))
                         registry.byId("content").selectChild(par2);
                 } else {
                     if(entry.domNode) entry = entry.domNode;
