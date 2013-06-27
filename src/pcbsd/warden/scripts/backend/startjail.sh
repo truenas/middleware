@@ -174,7 +174,14 @@ start_jail_vimage()
   # If NAT is not enabled, return now
   #
   if [ "${NATENABLE}" = "NO" ] ; then
-      return 0
+     if [ -z "${GATEWAY4}" ] ; then
+        GATEWAY4="$(get_default_route)"
+     fi 
+     if [ -n "${GATEWAY4}" ] ; then 
+        jexec ${JID} route add -inet default ${GATEWAY4}
+     fi
+
+     return 0
   fi
 
   #
