@@ -780,6 +780,9 @@ class Replication(Model):
     repl_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
+        help_text=_(
+            "Disabling will stop any new replications being queued. "
+            "It will not stop any replications which are queued or in progress."),
     ) 
     repl_filesystem = models.CharField(
         max_length=150,
