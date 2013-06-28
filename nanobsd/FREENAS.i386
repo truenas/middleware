@@ -93,6 +93,8 @@ options		DDB			# Support DDB.
 
 # FreeNAS modifications
 options		GEOM_UZIP
+options		GEOM_MIRROR
+options		GEOM_RAID
 options		GEOM_ELI
 device		aesni
 options		NULLFS
