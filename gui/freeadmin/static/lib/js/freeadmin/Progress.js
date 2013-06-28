@@ -113,7 +113,6 @@ define([
         });
         me._iter += 1;
       } else {
-      console.log("next", me.poolUrl);
         xhr.get(me.poolUrl, {
           headers: {"X-Progress-ID": me.uuid},
           handleAs: "json"
@@ -121,18 +120,22 @@ define([
           if(data.step) {
             me._curStep = data.step;
           }
-          if(data.percent == 100) {
-            me._subProgress.update({'indeterminate': true});
-            me._masterProgress(data.percent);
-            if(me._curStep == me._numSteps)
-              return;
+          if(data.percent) {
+            if(data.percent == 100) {
+              me._subProgress.update({'indeterminate': true});
+              me._masterProgress(data.percent);
+              if(me._curStep == me._numSteps)
+                return;
+            } else {
+              me._subProgress.update({
+                maximum: 100,
+                progress: data.percent,
+                indeterminate: false
+              });
+              me._masterProgress(data.percent);
+            }
           } else {
-            me._subProgress.update({
-              maximum: 100,
-              progress: data.percent,
-              indeterminate: false
-            });
-            me._masterProgress(data.percent);
+            me._subProgress.update({'indeterminate': true});
           }
           setTimeout(function() {
             me.update();
