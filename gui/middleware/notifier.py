@@ -2331,7 +2331,7 @@ class notifier:
                 size = os.stat(path).st_size
                 proc = subprocess.Popen([
                     "/usr/bin/tar",
-                    "-xJpf",
+                    "-xSJpf", # -S for sparse
                     path,
                 ], stderr=f)
                 RE_TAR = re.compile(r"^In: (\d+)", re.M|re.S)
