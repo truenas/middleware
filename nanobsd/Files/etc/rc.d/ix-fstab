@@ -4,6 +4,7 @@
 #
 
 # PROVIDE: ix-fstab
+# REQUIRE: earlykld
 # BEFORE: fsck
 
 . /etc/rc.subr
