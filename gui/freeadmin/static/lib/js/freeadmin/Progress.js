@@ -1,31 +1,134 @@
 define([
   "dojo/_base/declare",
   "dojo/dom-attr",
+  "dojo/request/xhr",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
   "dijit/form/TextBox",
   "dijit/form/Button",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
+  "dijit/ProgressBar",
   "dojox/timing",
   "dojo/text!freeadmin/templates/progress.html"
-  ], function(declare, domAttr, _Widget, _Templated, TextBox, Button, TabContainer, ContentPane, timing, template) {
+  ], function(
+  declare,
+  domAttr,
+  xhr,
+  _Widget,
+  _Templated,
+  TextBox,
+  Button,
+  TabContainer,
+  ContentPane,
+  ProgressBar,
+  timing,
+  template) {
 
   var Progress = declare("freeadmin.Progress", [ _Widget, _Templated ], {
-      templateString : template,
-      name : "",
-      steps: 1,
-      postCreate : function() {
+    templateString : template,
+    _numSteps: 1,
+    _curStep: 1,
+    _mainProgress: "",
+    _subProgress: "",
+    _iter: 0,
+    name : "",
+    fileUpload: false,
+    poolUrl: "",
+    steps: "",
+    postCreate : function() {
 
-          var me = this;
+      var me = this;
 
-          this.inherited(arguments);
+      this._numSteps = this.steps.length;
+      this._iter = 0;
+      this._perStep = 100 / this._numSteps;
+      this._mainProgress = ProgressBar({
+        indeterminate: true
+      }, this.dapMainProgress);
 
-      },
-      destroy: function() {
-          //this.timer.stop();
-          this.inherited(arguments);
+      this._subProgress = ProgressBar({
+        indeterminate: true
+      }, this.dapSubProgress);
+
+      this.inherited(arguments);
+
+    },
+    _masterProgress: function(curSub) {
+      var initial = this._perStep * (this._curStep - 1);
+      this._mainProgress.update({
+        maximum: 100,
+        progress: initial + ((this._perStep / 100) * curSub),
+        indeterminate: false
+      });
+    },
+    update: function(uuid) {
+      var me = this;
+      if(uuid) this.uuid = uuid;
+      if(this.fileUpload && this._curStep == 1) {
+        xhr.get('/progress', {
+          headers: {"X-Progress-ID": me.uuid}
+        }).then(function(data) {
+          var obj = eval(data);
+          if(obj.state == 'uploading') {
+            var perc = Math.ceil((obj.received / obj.size)*100);
+            if(perc == 100) {
+              me._subProgressr.update({'indeterminate': true});
+              me._masterProgress(perc);
+              if(me._numSteps == 1)
+                return;
+              me._curStep += 1;
+              setTimeout(function() {
+                me.update();
+              }, 1000);
+            } else {
+              me._subProgress.update({
+                maximum: 100,
+                progress: perc,
+                indeterminate: false
+              });
+              me._masterProgress(perc);
+            }
+          }
+          if(obj.state == 'starting' || obj.state == 'uploading') {
+            if(obj.state == 'starting' && me._iter >= 3) {
+              return;
+            }
+            setTimeout(function() {
+              me.update();
+            }, 1000);
+          }
+        });
+        me._iter += 1;
+      } else {
+        xhr.get(me.poolUrl, {
+          headers: {"X-Progress-ID": me.uuid},
+          handleAs: "json"
+        }).then(function(data) {
+          me._curStep = data.step;
+          if(perc == 100) {
+            me._subProgressr.update({'indeterminate': true});
+            me._masterProgress(perc);
+            if(me._curStep == me._numSteps)
+              return;
+          } else {
+            me._subProgress.update({
+              maximum: 100,
+              progress: perc,
+              indeterminate: false
+            });
+            me._masterProgress(perc);
+          }
+          setTimeout(function() {
+            me.update();
+          }, 1000);
+        });
       }
+    },
+    destroy: function() {
+      //this.timer.stop();
+      this.inherited(arguments);
+    }
   });
   return Progress;
 });
