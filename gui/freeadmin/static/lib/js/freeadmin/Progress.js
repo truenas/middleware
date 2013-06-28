@@ -75,6 +75,7 @@ define([
     update: function(uuid) {
       var me = this;
       if(uuid) this.uuid = uuid;
+      this.dapMainLabel.innerHTML = this.steps[this._curStep-1].label;
       if(this.fileUpload && this._curStep == 1) {
         xhr.get('/progress', {
           headers: {"X-Progress-ID": me.uuid}
@@ -82,7 +83,6 @@ define([
           var obj = eval(data);
           if(obj.state == 'uploading') {
             var perc = Math.ceil((obj.received / obj.size)*100);
-            console.log(perc);
             if(perc == 100) {
               me._subProgress.update({'indeterminate': true});
               me._masterProgress(perc);
@@ -122,7 +122,7 @@ define([
             me._curStep = data.step;
           }
           if(data.percent == 100) {
-            me._subProgressr.update({'indeterminate': true});
+            me._subProgress.update({'indeterminate': true});
             me._masterProgress(data.percent);
             if(me._curStep == me._numSteps)
               return;
