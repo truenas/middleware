@@ -464,46 +464,6 @@ def file_browser(request, path='/'):
     return HttpResponse(content, mimetype='application/json')
 
 
-def smarttests(request):
-    tests = models.SMARTTest.objects.all().order_by('id')
-    return render(request, "system/smarttest.html", {
-        'smarttests': tests,
-        'model': models.SMARTTest,
-    })
-
-
-def rsyncs(request):
-    syncs = models.Rsync.objects.all().order_by('id')
-    return render(request, 'system/rsync.html', {
-        'rsyncs': syncs,
-        'model': models.Rsync,
-    })
-
-
-def sysctls(request):
-    sysctls = models.Sysctl.objects.all().order_by('id')
-    return render(request, 'system/sysctl.html', {
-        'sysctls': sysctls,
-        'model': models.Sysctl,
-    })
-
-
-def tunables(request):
-    tunables = models.Tunable.objects.all().order_by('id')
-    return render(request, 'system/tunable.html', {
-        'tunables': tunables,
-        'model': models.Tunable,
-    })
-
-
-def ntpservers(request):
-    ntpservers = models.NTPServer.objects.all().order_by('id')
-    return render(request, 'system/ntpserver.html', {
-        'ntpservers': ntpservers,
-        'model': models.NTPServer,
-    })
-
-
 def restart_httpd(request):
     """ restart httpd """
     notifier().restart("http")

@@ -53,10 +53,8 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^clear-cache/$', 'clearcache', name="system_clearcache"),
     url(r'^lsdir/(?P<path>.*)$', 'directory_browser', name="system_dirbrowser"),
     url(r'^lsfiles/(?P<path>.*)$', 'file_browser', name="system_filebrowser"),
-    url(r'^rsyncs/$', 'rsyncs', name="system_rsyncs"),
-    url(r'^smarttests/$', 'smarttests', name="system_smarttests"),
     url(r'^restart-httpd/$', 'restart_httpd', name="system_restart_httpd"),
     url(r'^reload-httpd/$', 'reload_httpd', name="system_reload_httpd"),
     url(r'^terminal/$', 'terminal', name="system_terminal"),
     url(r'^terminal/paste/$', 'terminal_paste', name="system_terminal_paste"),
-    )
+)
