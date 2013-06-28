@@ -219,6 +219,7 @@ __EOF__
         fi
      fi
      /sbin/ipfw -f flush 
+     warden_run ipfw add allow all from any to any via lo0
   fi
 
   prioroty=0
@@ -234,39 +235,45 @@ __EOF__
   ext_ip4=`get_interface_ipv4_address "${IFACE}"`
   ext_ip6=`get_interface_ipv6_address "${IFACE}"`
 
-  warden_run ipfw nat "${instance}" config if "${IFACE}" reset
+  warden_run ipfw nat "${instance}" config if "${IFACE}" reset same_ports unreg_only log
+  if [ -n "${ext_ip4}" ] ; then
+     ipfw list | grep -q "from any to ${ext_ip4} in recv ${IFACE}"
+     if [ "$?" != "0" ] ; then
+        warden_run ipfw add nat "${instance}" \
+           all from any to ${ext_ip4} in recv ${IFACE}
+     fi
+  fi
+  if [ -n "${ext_ip6}" ] ; then
+     ipfw list | grep -q "from any to ${ext_ip6} in recv ${IFACE}"
+     if [ "$?" != "0" ] ; then
+        warden_run ipfw add nat "${instance}" \
+           all from any to ${ext_ip6} in recv ${IFACE}
+     fi
+  fi
+
   if [ -n "${IP4}" ] ; then
      get_ip_and_netmask "${IP4}"
      warden_run ipfw add nat "${instance}" \
-        all from ${JIP} to any
+        all from ${JIP} to any out xmit ${IFACE}
   fi
   for ip4 in ${IPS4}
   do
      get_ip_and_netmask "${ip4}"
      warden_run ipfw add nat "${instance}" \
-        all from ${JIP} to any
+        all from ${JIP} to any out xmit ${IFACE}
   done
 
   if [ -n "${IP6}" ] ; then
      get_ip_and_netmask "${IP6}"
      warden_run ipfw add nat "${instance}" \
-        all from ${JIP} to any 
+        all from ${JIP} to any out xmit ${IFACE}
   fi
   for ip6 in ${IPS6}
   do
      get_ip_and_netmask "${ip6}"
      warden_run ipfw add nat "${instance}" \
-        all from ${JIP} to any
+        all from ${JIP} to any out xmit ${IFACE}
   done
-
-  if [ -n "${ext_ip4}" ] ; then
-     warden_run ipfw add nat "${instance}" \
-        all from any to ${ext_ip4}
-  fi
-  if [ -n "${ext_ip6}" ] ; then
-     warden_run ipfw add nat "${instance}" \
-        all from any to ${ext_ip6}
-  fi
 
 # End of jail VIMAGE startup function
 }
