@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-06-24 16:17+0200\n"
+"PO-Revision-Date: 2013-06-27 22:53+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1140,7 +1140,7 @@ msgstr "Statička ruta"
 
 #: network/models.py:398 templates/network/index.html:18
 msgid "Static Routes"
-msgstr ""
+msgstr "Statičke rute"
 
 #: network/nav.py:6 templates/menubar.html:12
 msgid "Network"
@@ -3818,6 +3818,8 @@ msgid ""
 "You must specify a new volume name or select an existing ZFS volume to "
 "append a virtual device"
 msgstr ""
+"Morate navesti ime novog volumena ili izabrali postojeći ZFS volumen da "
+"dodate virtuelni uređaj"
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
@@ -4071,23 +4073,23 @@ msgstr ""
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
 #: templates/system/rsync.html:9
 msgid "Minute"
-msgstr ""
+msgstr "Minut"
 
 #: storage/models.py:218 system/models.py:344 system/models.py:496
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "Vrednosti od 0-59 su dozvoljene."
 
 #: storage/models.py:223 system/models.py:349 system/models.py:501
 #: system/models.py:674 templates/storage/scrub.html:8
 #: templates/system/cronjob.html:6 templates/system/rsync.html:10
 #: templates/system/smarttest.html:7
 msgid "Hour"
-msgstr ""
+msgstr "Čas"
 
 #: storage/models.py:224 system/models.py:350 system/models.py:502
 #: system/models.py:675
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "Vrednosti od 0-23 su dozvoljene."
 
 #: storage/models.py:229 system/models.py:355 system/models.py:507
 #: system/models.py:679 templates/storage/scrub.html:9
@@ -4099,21 +4101,21 @@ msgstr "Dan u mesecu"
 #: storage/models.py:230 system/models.py:356 system/models.py:508
 #: system/models.py:680
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "Vrednosti od 1-31 su dozvoljene."
 
 #: storage/models.py:235 system/models.py:361 system/models.py:513
 #: system/models.py:685 templates/storage/scrub.html:10
 #: templates/system/cronjob.html:8 templates/system/rsync.html:12
 #: templates/system/smarttest.html:9
 msgid "Month"
-msgstr ""
+msgstr "Mesec"
 
 #: storage/models.py:240 system/models.py:366 system/models.py:518
 #: system/models.py:690 templates/storage/scrub.html:11
 #: templates/system/cronjob.html:9 templates/system/rsync.html:13
 #: templates/system/smarttest.html:10
 msgid "Day of week"
-msgstr ""
+msgstr "Dan u nedelji"
 
 #: storage/models.py:244 system/models.py:370 system/models.py:576
 #: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
@@ -4270,6 +4272,8 @@ msgstr "Limit (kB/s)"
 #: storage/models.py:687
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
 msgstr ""
+"Ograničiti brzinu replikacije. Jedinica u kilobajtima/sekundi. 0 = "
+"neograničeno."
 
 #: storage/models.py:692
 msgid "Replication Task"
@@ -4865,11 +4869,11 @@ msgstr ""
 
 #: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
-msgstr ""
+msgstr "Korisnik da pokrene komandu"
 
 #: system/models.py:333 templates/system/cronjob.html:11
 msgid "Command"
-msgstr ""
+msgstr "Komanda"
 
 #: system/models.py:337 system/models.py:489 system/models.py:669
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
@@ -5331,11 +5335,11 @@ msgstr "FreeNAS prevodi"
 
 #: templates/freeadmin/index.html:82
 msgid "Support Issues"
-msgstr ""
+msgstr "Podrška za probleme"
 
 #: templates/freeadmin/index.html:84
 msgid "Bug Tracker"
-msgstr ""
+msgstr "Praćenje greške"
 
 #: templates/freeadmin/index.html:89
 msgid "Documentation"
@@ -5347,7 +5351,7 @@ msgstr "FreeNAS dokumentacija"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
-msgstr ""
+msgstr "IPv6 Auto"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5387,42 +5391,42 @@ msgstr ""
 #: templates/system/sysctl.html.py:21 templates/system/tunable.html:19
 #: templates/system/tunable.html.py:21
 msgid "Edit"
-msgstr ""
+msgstr "Uređivanje"
 
 #: templates/network/interface.html:28 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
 msgid "Edit Interface"
-msgstr ""
+msgstr "Uredi interfejs"
 
 #: templates/network/interface.html:34 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr ""
+msgstr "Izbriši interfejs"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr ""
+msgstr "Nema definisanih interfejsa"
 
 #: templates/network/interface.html:47 templates/network/interface.html:49
 msgid "Add Interface"
-msgstr ""
+msgstr "Dodaj interfejs"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
 #: templates/services/plugins.html:34
 msgid "Actions"
-msgstr ""
+msgstr "Radnje"
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr ""
+msgstr "Uređivanje članova"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr ""
+msgstr "LAGG članovi"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members.html:33
 msgid "No LAGG interface defined"
-msgstr ""
+msgstr "Nema definisanog LAGG interfejsa"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "

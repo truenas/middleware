@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2013-01-09 18:28+0200\n"
-"Last-Translator: shalom <onzinmailhierheen@gmail.com>\n"
+"PO-Revision-Date: 2013-06-27 11:19+0200\n"
+"Last-Translator: Mixel <mfreund.prive@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -2493,7 +2493,7 @@ msgstr "Naar email"
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr "Ontvangende email adres. Gescheiden email adressen met comma."
+msgstr "Ontvangende email adres. Gescheiden email adressen met komma."
 
 #: services/models.py:951
 msgid "Email Subject"

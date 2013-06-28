@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2013-03-25 14:08+0200\n"
-"Last-Translator: Siljo <siljo22@gmail.com>\n"
+"PO-Revision-Date: 2013-06-27 22:53+0200\n"
+"Last-Translator: gzuri <goran.zuri@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
@@ -588,9 +588,8 @@ msgid "A user cannot belong to more than 64 auxiliary groups"
 msgstr "Kosrisnik ne može imati članstvo u više od 64 grupa.   "
 
 #: account/forms.py:416 account/forms.py:653
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Naziv početnog direktorija mora početi s /mnt/"
+msgstr "U početni direktorija se nemože pisati, ostavi ovo prazno"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
@@ -609,7 +608,7 @@ msgstr ""
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Dozvoli ponavljanje GID-ova"
 
 #: account/forms.py:739
 msgid "A group with that name already exists."
@@ -633,7 +632,7 @@ msgstr "Potvrda nove zaporke"
 
 #: account/forms.py:887
 msgid "Change root password as well"
-msgstr "Promijeni isto zaporku od root korisnika."
+msgstr "Promijeni i zaporku od root korisnika."
 
 #: account/forms.py:896
 msgid "Old password"
@@ -742,11 +741,11 @@ msgstr "Promijeni administrativnog korisnika"
 
 #: account/views.py:95
 msgid "Password successfully updated."
-msgstr "Zaporka uspješno promijenjena."
+msgstr "Zaporka je uspješno promijenjena."
 
 #: account/views.py:112
 msgid "Admin user successfully updated."
-msgstr "Administratorski korisnik uspješno promijenjen."
+msgstr "Administratorski korisnik je uspješno promijenjen."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -810,7 +809,7 @@ msgstr "Ne mogu dohvatiti %(url)s: %(error)s"
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr ""
+msgstr "Dogodio se error tokom deserializiranja sa %(url)s: %(error)a"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -828,7 +827,7 @@ msgstr "Neuspješno ponovno pokretanje servisa."
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s je uspješno obrisan."
+msgstr "%s je uspješno obrisano."
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
@@ -879,19 +878,19 @@ msgstr "Morate izabrati između IPv4 i IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback nije valjan DNS server"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Nespecificirane adrese nisu važeće za DNS servere"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr ""
+msgstr "Ovo nije validni DNS server"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254/16 subnet nije važeći DNS server"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -937,11 +936,11 @@ msgstr "Mreža '%s' nije važeća. Očekivan CIDR format."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Trebate unijeti IPv4 adresu kao i njezin alias"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Trebate odabrati IPv4 masku kao i njezin alias"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"

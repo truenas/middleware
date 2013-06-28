@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-12-05 04:30+0200\n"
-"Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
+"PO-Revision-Date: 2013-06-27 16:51+0200\n"
+"Last-Translator: coolingcurve <lc8228@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -287,11 +287,11 @@ msgstr "Disk"
 
 #: choices.py:221
 msgid "read-write"
-msgstr "read-write"
+msgstr "읽고쓰기가능"
 
 #: choices.py:222
 msgid "read-only"
-msgstr "read-only"
+msgstr "읽기전용"
 
 #: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
 #: services/forms.py:1058 templates/storage/scrub.html:24
