@@ -840,6 +840,7 @@ class notifier:
 
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
+        self.__system("/usr/sbin/service inadyn-mt forcestop")
         self.__system("/usr/sbin/service inadyn-mt restart")
 
     def _restart_system(self):
