@@ -1,6 +1,7 @@
 define([
   "dojo/_base/declare",
   "dojo/dom-attr",
+  "dojo/dom-style",
   "dojo/request/xhr",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
@@ -14,6 +15,7 @@ define([
   ], function(
   declare,
   domAttr,
+  domStyle,
   xhr,
   _Widget,
   _Templated,
@@ -34,6 +36,7 @@ define([
     _iter: 0,
     name : "",
     fileUpload: false,
+    mode: "advanced",
     poolUrl: "",
     steps: "",
     postCreate : function() {
@@ -50,6 +53,13 @@ define([
       this._subProgress = ProgressBar({
         indeterminate: true
       }, this.dapSubProgress);
+
+      if(this.mode == "simple") {
+        domStyle(this.dapMain, "display", "none");
+        domStyle(this.dapSubLabel, "display", "none");
+        domStyle(this.dapDetails, "display", "none");
+        domStyle(this.dapETA, "display", "none");
+      }
 
       this.inherited(arguments);
 
@@ -72,11 +82,13 @@ define([
           var obj = eval(data);
           if(obj.state == 'uploading') {
             var perc = Math.ceil((obj.received / obj.size)*100);
+            console.log(perc);
             if(perc == 100) {
-              me._subProgressr.update({'indeterminate': true});
+              me._subProgress.update({'indeterminate': true});
               me._masterProgress(perc);
-              if(me._numSteps == 1)
+              if(me._numSteps == 1) {
                 return;
+              }
               me._curStep += 1;
               setTimeout(function() {
                 me.update();
@@ -101,23 +113,26 @@ define([
         });
         me._iter += 1;
       } else {
+      console.log("next", me.poolUrl);
         xhr.get(me.poolUrl, {
           headers: {"X-Progress-ID": me.uuid},
           handleAs: "json"
         }).then(function(data) {
-          me._curStep = data.step;
-          if(perc == 100) {
+          if(data.step) {
+            me._curStep = data.step;
+          }
+          if(data.percent == 100) {
             me._subProgressr.update({'indeterminate': true});
-            me._masterProgress(perc);
+            me._masterProgress(data.percent);
             if(me._curStep == me._numSteps)
               return;
           } else {
             me._subProgress.update({
               maximum: 100,
-              progress: perc,
+              progress: data.percent,
               indeterminate: false
             });
-            me._masterProgress(perc);
+            me._masterProgress(data.percent);
           }
           setTimeout(function() {
             me.update();
