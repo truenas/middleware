@@ -42,7 +42,9 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $loader->register();
         $loader = new ClassLoader('Doctrine\DBAL');
         $loader->register();
-        $loader = new ClassLoader('Symfony', 'Doctrine');
+        $loader = new ClassLoader('Doctrine');
+        $loader->register();
+        $loader = new ClassLoader('Symfony');
         $loader->register();
         $loader = new ClassLoader('Entity', APPLICATION_PATH . '/models');
         $loader->register();
