@@ -55,6 +55,7 @@ require([
     "freeadmin/tree/Tree",
     "freeadmin/ESCDialog",
     "freeadmin/Menu",
+    "freeadmin/Progress",
     "freeadmin/RRDControl",
     "freeadmin/VolumeManager",
     "freeadmin/WebShell",
@@ -130,6 +131,7 @@ require([
     Tree,
     ESCDialog,
     fMenu,
+    Progress,
     RRDControl,
     VolumeManager,
     WebShell,
@@ -961,12 +963,26 @@ require([
         };
 
         if (attrs.progressbar != undefined) {
-            pbar = ProgressBar({
-                style: "width:300px",
-                indeterminate: true,
-                });
-            /*
-             * We cannot destroy form node, that's why we just hide it
+            var pattrs;
+            if(attrs.progressbar == true) {
+              pattrs = {
+                steps: [
+                  {"label": "Uploading file"}
+                ],
+                fileUpload: true,
+                mode: "simple"
+              };
+            } else {
+              pattrs = {
+                steps: attrs.progressbar.steps,
+                fileUpload: true,
+                uuid: uuid,
+                poolUrl: attrs.progressbar.poolUrl
+              };
+            }
+            pbar = Progress(pattrs);
+
+             /* We cannot destroy form node, that's why we just hide it
              * otherwise iframe.send won't work, it expects the form domNode
              */
             attrs.form.domNode.parentNode.appendChild(pbar.domNode);
@@ -1033,7 +1049,7 @@ require([
         }
 
         if (attrs.progressbar != undefined) {
-            checkProgressBar(pbar, attrs.progressbar, uuid);
+            pbar.update(uuid);
 
         } else if(attrs.progresstype == 'jail' &&
             attrs.progressurl != undefined) {
