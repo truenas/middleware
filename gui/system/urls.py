@@ -42,6 +42,7 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^firmwizard/$', FirmwareWizard.as_view(
         [FirmwareTemporaryLocationForm,FirmwareUploadForm]
         ), name='system_firmwizard'),
+    url(r'^firmwizard/progress/$', "firmware_progress", name="system_firmware_progress"),
     url(r'^config/restore/$', 'config_restore', name='system_configrestore'),
     url(r'^config/save/$', 'config_save', name='system_configsave'),
     url(r'^config/upload/$', 'config_upload', name='system_configupload'),

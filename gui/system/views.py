@@ -27,7 +27,9 @@
 
 import logging
 import os
+import re
 import shutil
+import signal
 import socket
 import string
 import subprocess
@@ -59,6 +61,9 @@ from freenasUI.system import forms, models
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 DEBUG_TEMP = '/tmp/debug.txt'
+PGFILE = '/tmp/.extract_progress'
+DDFILE = '/tmp/.upgrade_dd'
+RE_DD = re.compile(r"^(\d+) bytes", re.M | re.S)
 
 log = logging.getLogger('system.views')
 
@@ -461,6 +466,46 @@ def file_browser(request, path='/'):
     ).items()
     context = directories
     content = simplejson.dumps(context)
+    return HttpResponse(content, mimetype='application/json')
+
+
+def firmware_progress(request):
+
+    data = {}
+    if os.path.exists(PGFILE):
+        with open(PGFILE, 'r') as f:
+            last = f.readlines()
+            if last:
+                step, percent = last[-1].split("|")
+                data['step'] = int(step)
+                percent = percent.strip()
+                if percent:
+                    data['percent'] = int(percent)
+                else:
+                    data['indeterminate'] = True
+    elif os.path.exists(DDFILE):
+        with open(DDFILE, 'r') as f:
+            pid = f.readline()
+            if pid:
+                pid = int(pid.strip())
+        try:
+            os.kill(pid, signal.SIGINFO)
+            time.sleep(0.5)
+            with open(DDFILE, 'r') as f2:
+                line = f2.read()
+            reg = RE_DD.findall(line)
+            if reg:
+                current = int(reg[-1])
+                size = os.stat("/var/tmp/firmware/firmware.img").st_size
+                percent = int((current / size) * 100)
+                data = {
+                    'step': 3,
+                    'percent': percent,
+                }
+        except OSError:
+            pass
+
+    content = simplejson.dumps(data)
     return HttpResponse(content, mimetype='application/json')
 
 
