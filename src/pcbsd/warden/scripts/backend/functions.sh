@@ -477,19 +477,45 @@ get_ip_and_netmask()
 
 get_interface_addresses()
 {
-   ifconfig ${1} | grep -w inet | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+   
+   if [ -z "${jid}" ]
+   then
+      jexec="" 
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | awk '{ print $2 }'
 }
 
 get_interface_ipv4_addresses()
 {
-   ifconfig ${1} | grep -w inet | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec="" 
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | awk '{ print $2 }'
 }
 
 get_interface_ipv6_addresses()
 {
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
    local addrs
 
-   addrs="$(ifconfig ${1} | grep -w inet6 | awk '{ print $2 }')"
+   if [ -z "${jid}" ]
+   then 
+      jexec=""
+   fi
+
+   addrs="$(${jexec} ifconfig ${iface} | grep -w inet6 | awk '{ print $2 }')"
    for addr in ${addrs} ; do
       echo ${addr} | cut -f1 -d'%'
    done
@@ -497,57 +523,138 @@ get_interface_ipv6_addresses()
 
 get_interface_address()
 {
-   ifconfig ${1} | grep -w inet | head -1 | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | head -1 | awk '{ print $2 }'
 }
 
 get_interface_ipv4_address()
 {
-   ifconfig ${1} | grep -w inet | head -1 | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | head -1 | awk '{ print $2 }'
 }
 
 get_interface_ipv6_address()
 {
-   ifconfig ${1} | grep -w inet6 | head -1 | awk '{ print $2 }' | cut -f1 -d'%'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet6 | head -1 | awk '{ print $2 }' | cut -f1 -d'%'
 }
 
 get_interface_aliases()
 {
-   local _count
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+   local count
 
-   _count=`ifconfig ${1} | grep -w inet | wc -l`
-   _count="$(echo "${_count} - 1" | bc)"
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
 
-   ifconfig ${1} | grep -w inet | tail -${_count} | awk '{ print $2 }'
+   count=`${jexec} ifconfig ${iface} | grep -w inet | wc -l`
+   count="$(echo "${count} - 1" | bc)"
+   if [ "${count}" -lt "0" ]
+   then
+      return
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | tail -${count} | awk '{ print $2 }'
 }
 
 get_interface_ipv4_aliases()
 {
-   local _count
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+   local count
 
-   _count=`ifconfig ${1} | grep -w inet | wc -l`
-   _count="$(echo "${_count} - 1" | bc)"
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
 
-   ifconfig ${1} | grep -w inet | tail -${_count} | awk '{ print $2 }'
+   count=`${jexec} ifconfig ${iface} | grep -w inet | wc -l`
+   count="$(echo "${count} - 1" | bc)"
+   if [ "${count}" -lt "0" ]
+   then
+      return
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | tail -${count} | awk '{ print $2 }'
 }
 
 get_interface_ipv6_aliases()
 {
-   local _count
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+   local count
 
-   _count=`ifconfig ${1} | grep -w inet | wc -l`
-   _count="$(echo "${_count} - 1" | bc)"
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
 
-   ifconfig ${1} | grep -w inet6 | tail -${_count} | awk '{ print $2 }'
+   count=`${jexec} ifconfig ${iface} | grep -w inet | wc -l`
+   count="$(echo "${count} - 1" | bc)"
+   if [ "${count}" -lt "0" ]
+   then
+      return
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet6 | tail -${count} | awk '{ print $2 }'
 }
 
 get_default_route()
 {
-   netstat -f inet -nr | grep '^default' | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} netstat -f inet -nr | grep '^default' | awk '{ print $2 }'
 }
 
 get_default_interface()
 {
-   netstat -f inet -nrW | grep '^default' | awk '{ print $7 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} netstat -f inet -nrW | grep '^default' | awk '{ print $7 }'
 }
 
 get_bridge_interfaces()
@@ -633,6 +740,7 @@ jail_interfaces_down()
    local _bridgeif
    local _epaira
    local _epairb
+   local _addresses
 
    _epairb=`jexec ${_jid} ifconfig -a | grep '^epair' | cut -f1 -d:`
    if [ -n "${_epairb}" ] ; then
@@ -653,11 +761,77 @@ jail_interfaces_down()
          fi
       done
 
+      _addresses="$(get_interface_ipv4_addresses ${_epairb} ${_jid})"
+      for _ip4 in ${_addresses}
+      do
+         rules="$(ipfw list|egrep "from ${_ip4} to any out xmit"|awk '{ print $1 }')"
+         if [ -n "${rules}" ] 
+         then
+            for rule in ${rules}
+            do
+               ipfw delete "${rule}"
+            done
+         fi
+      done
+
+      _addresses="$(get_interface_ipv6_addresses ${_epairb} ${_jid})"
+      for _ip6 in ${_addresses}
+      do
+         rules="$(ipfw list|egrep "from ${_ip6} to any out xmit"|awk '{ print $1 }')"
+         if [ -n "${rules}" ] 
+         then
+            for rule in ${rules}
+            do
+               ipfw delete "${rule}"
+            done
+         fi
+      done
+
       jexec ${_jid} ifconfig ${_epairb} down
       ifconfig ${_epaira} down
       ifconfig ${_epaira} destroy
       _count=`ifconfig ${_bridgeif} | grep member | awk '{ print $2 }' | wc -l`
       if [ "${_count}" -le "1" ] ; then
+         local _member
+         local _instances
+
+         _member=`ifconfig ${_bridgeif}|grep member|awk '{ print $2 }'`
+
+         _instances=`get_ipfw_nat_instance ${_member}`
+         if [ -n "${_instances}" ]
+         then
+            for _instance in ${_instances}  
+            do
+               ipfw nat ${_instance} delete
+            done
+         fi
+
+         _addresses="$(get_interface_ipv4_addresses ${_member})"
+         for _ip4 in ${_addresses}
+         do
+            rules="$(ipfw list|egrep "from any to ${_ip4} in recv"|awk '{ print $1 }')"
+            if [ -n "${rules}" ] 
+            then
+               for rule in ${rules}
+               do
+                  ipfw delete "${rule}"
+               done
+            fi
+         done
+
+         _addresses="$(get_interface_ipv6_addresses ${_member})"
+         for _ip6 in ${_addresses}
+         do
+            rules="$(ipfw list|egrep "from any to ${_ip6} in recv"|awk '{ print $1 }')"
+            if [ -n "${rules}" ] 
+            then
+               for rule in ${rules}
+               do
+                  ipfw delete "${rule}"
+               done
+            fi
+         done
+
          ifconfig ${_bridgeif} destroy
       fi
    fi
