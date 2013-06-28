@@ -2324,35 +2324,43 @@ class notifier:
         self.__system("rm -rf */")
 
         percent = 0
-        with open('/tmp/.upgrade_extract', 'w') as f:
-            size = os.stat(path).st_size
-            proc = subprocess.Popen([
-                "/usr/bin/tar",
-                "-xJpf",
-                path,
-            ], stderr=f)
-            RE_TAR = re.compile(r"^In: (\d+)", re.M|re.S)
-            while True:
-                if proc.poll() is not None:
-                    break
-                try:
-                    os.kill(proc.pid, signal.SIGINFO)
-                except:
-                    break
-                time.sleep(1)
-                #TODO: We don't need to read the whole file
-                with open('/tmp/.upgrade_extract', 'r') as f2:
-                    line = f2.read()
-                reg = RE_TAR.findall(line)
-                if reg:
-                    current = Decimal(reg[-1])
-                    percent = (current / size ) * 100
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            os.chdir('/')
-            raise MiddlewareError(
-                'The firmware image is invalid, make sure to use .txz file: %s' % err
-            )
+        with open('/tmp/.extract_progress', 'w') as fp:
+            fp.write("2|%d\n" % percent)
+            fp.flush()
+            with open('/tmp/.upgrade_extract', 'w') as f:
+                size = os.stat(path).st_size
+                proc = subprocess.Popen([
+                    "/usr/bin/tar",
+                    "-xJpf",
+                    path,
+                ], stderr=f)
+                RE_TAR = re.compile(r"^In: (\d+)", re.M|re.S)
+                while True:
+                    if proc.poll() is not None:
+                        break
+                    try:
+                        os.kill(proc.pid, signal.SIGINFO)
+                    except:
+                        break
+                    time.sleep(1)
+                    #TODO: We don't need to read the whole file
+                    with open('/tmp/.upgrade_extract', 'r') as f2:
+                        line = f2.read()
+                    reg = RE_TAR.findall(line)
+                    if reg:
+                        current = Decimal(reg[-1])
+                        percent = (current / size ) * 100
+                        fp.write("2|%d\n" % percent)
+                        fp.flush()
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                os.chdir('/')
+                raise MiddlewareError(
+                    'The firmware image is invalid, make sure to use .txz file: %s' % err
+                )
+            fp.write("3|\n")
+            fp.flush()
+        os.unlink('/tmp/.extract_progress')
         try:
             subprocess.check_output(
                                     ['bin/install_worker.sh', 'pre-install'],
