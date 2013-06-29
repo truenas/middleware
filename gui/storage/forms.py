@@ -1316,7 +1316,7 @@ class ZVol_CreateForm(Form):
         help_text=_(
             'Creates a sparse volume with no reservation, also kown '
             'as "thin provisioning". A "sparse volume" is a volume where the '
-            'reservation is less then the volume size. Consequently, writes '
+            'reservation is less than the volume size. Consequently, writes '
             'to a sparse volume can fail with ENOSPC when the pool is low on '
             'space. (NOT RECOMMENDED)'),
         required=False,
