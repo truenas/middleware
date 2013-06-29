@@ -786,7 +786,7 @@ class Replication(Model):
     ) 
     repl_filesystem = models.CharField(
         max_length=150,
-        verbose_name=_("Filesystem/Volume"),
+        verbose_name=_("Volume/Dataset"),
         blank=True,
     )
     repl_lastsnapshot = models.CharField(
@@ -802,10 +802,10 @@ class Replication(Model):
     )
     repl_zfs = models.CharField(
         max_length=120,
-        verbose_name=_("Remote ZFS filesystem name"),
+        verbose_name=_("Remote ZFS Volume/Dataset"),
         help_text=_(
             "This should be the name of the ZFS filesystem on "
-            "remote side. eg: poolname/datasetname not the mountpoint or "
+            "remote side. eg: Volumename/Datasetname not the mountpoint or "
             "filesystem path"),
     )
     repl_userepl = models.BooleanField(
@@ -865,7 +865,7 @@ class Task(Model):
     ) 
     task_filesystem = models.CharField(
         max_length=150,
-        verbose_name=_("Filesystem/Volume"),
+        verbose_name=_("Volume/Dataset"),
     )
     task_recursive = models.BooleanField(
         default=False,
