@@ -163,10 +163,6 @@ for task in TaskObjects:
             tasklist = [task]
         mp_to_task_map[(fs, expire_time)] = tasklist
 
-# Do not proceed further if we are not going to generate any snapshots for this run
-if len(mp_to_task_map) == 0:
-    exit()
-
 # Grab all existing snapshot and filter out the expiring ones
 snapshots = {}
 snapshots_pending_delete = set()
