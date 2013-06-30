@@ -188,16 +188,6 @@ for line in lines:
                     else:
                         snapshots[(fs, snap_ret_policy)] = snap_infodict
 
-# Exclude snapshots that have clones associated from being deleted
-if len(snapshots_pending_delete) > 0:
-    snapshots_cloned = set()
-    zfsproc = pipeopen("/sbin/zfs list -H -t filesystem,volume -o origin", debug, logger=log)
-    lines = zfsproc.communicate()[0].split('\n')
-    for snapshot_name in lines:
-        if snapshot_name != '-':
-            snapshots_cloned.add(snapshot_name)
-    snapshots_pending_delete = snapshots_pending_delete.difference(snapshots_cloned)
-
 list_mp = mp_to_task_map.keys()
 
 for mpkey in list_mp:
@@ -249,7 +239,7 @@ for snapshot in snapshots_pending_delete:
     if output != '':
         fsname, attrname, value, source = output.split('\n')[0].split('\t')
         if value == '-':
-            snapcmd = '/sbin/zfs destroy -r %s' % (snapshot)
+            snapcmd = '/sbin/zfs destroy -r -d %s' % (snapshot) #snapshots with clones will have destruction deferred
             proc = pipeopen(snapcmd, logger=log)
             err = proc.communicate()[1]
             if proc.returncode != 0:
