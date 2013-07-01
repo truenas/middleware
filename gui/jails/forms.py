@@ -633,11 +633,7 @@ class JailsEditForm(ModelForm):
                     args['defaultrouter-ipv6'] = self.cleaned_data.get(cf)
 
                 elif cf == 'jail_vnet':
-                    if (
-                        self.cleaned_data.get(cf)
-                        and
-                        self.cleaned_data['jail_type'] != WARDEN_TYPE_LINUXJAIL
-                    ):
+                    if (self.cleaned_data.get(cf)):
                             flags |= WARDEN_SET_FLAGS_VNET_ENABLE
                             args['vnet-enable'] = self.cleaned_data.get(cf)
                     else:
