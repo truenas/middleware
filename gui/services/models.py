@@ -140,8 +140,6 @@ class CIFS(Model):
             help_text=_("Use this option to override the directory creation "
                 "mask (0777 by default).")
             )
-    cifs_srv_sendfile = models.BooleanField(
-            verbose_name=_("Send files with sendfile(2)"))
     cifs_srv_easupport = models.BooleanField(
             verbose_name=_("EA Support"))
     cifs_srv_dosattr = models.BooleanField(
