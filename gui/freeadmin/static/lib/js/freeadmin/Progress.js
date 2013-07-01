@@ -49,11 +49,13 @@ define([
       this._iter = 0;
       this._perStep = 100 / this._numSteps;
       this._mainProgress = ProgressBar({
-        indeterminate: true
+        indeterminate: true,
+        style: {width: "280px"}
       }, this.dapMainProgress);
 
       this._subProgress = ProgressBar({
-        indeterminate: true
+        indeterminate: true,
+        style: {width: "280px"}
       }, this.dapSubProgress);
 
       if(this.mode == "simple") {
