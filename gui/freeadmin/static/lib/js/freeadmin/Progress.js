@@ -11,6 +11,7 @@ define([
   "dijit/layout/ContentPane",
   "dijit/ProgressBar",
   "dojox/timing",
+  "dojox/string/sprintf",
   "dojo/text!freeadmin/templates/progress.html"
   ], function(
   declare,
@@ -25,6 +26,7 @@ define([
   ContentPane,
   ProgressBar,
   timing,
+  sprintf,
   template) {
 
   var Progress = declare("freeadmin.Progress", [ _Widget, _Templated ], {
@@ -75,7 +77,7 @@ define([
     update: function(uuid) {
       var me = this;
       if(uuid) this.uuid = uuid;
-      this.dapMainLabel.innerHTML = this.steps[this._curStep-1].label;
+      this.dapMainLabel.innerHTML = sprintf("(%d/%d) %s", this._curStep, this._numSteps, this.steps[this._curStep-1].label);
       if(this.fileUpload && this._curStep == 1) {
         xhr.get('/progress', {
           headers: {"X-Progress-ID": me.uuid}
