@@ -79,6 +79,7 @@ define([
     update: function(uuid) {
       var me = this;
       if(uuid) this.uuid = uuid;
+      if(!this.dapMainLabel) return;
       this.dapMainLabel.innerHTML = sprintf("(%d/%d) %s", this._curStep, this._numSteps, this.steps[this._curStep-1].label);
       if(this.fileUpload && this._curStep == 1) {
         xhr.get('/progress', {
