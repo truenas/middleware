@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-06-27 22:53+0200\n"
+"PO-Revision-Date: 2013-06-30 23:31+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1312,7 +1312,7 @@ msgstr "Izvor"
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
 msgid "Destination"
-msgstr ""
+msgstr "Odredište"
 
 #: plugins/models.py:121 storage/models.py:456
 msgid "Mount Point"
@@ -3874,7 +3874,7 @@ msgstr "Volumen \"%s\" neuspešno uvezen, za više detalja proveriti status grup
 
 #: storage/forms.py:673
 msgid "The SMART service failed to restart."
-msgstr "SMART servis nije uspešno restartovan."
+msgstr "SMART servis nije uspeo da se ponovno pokrene."
 
 #: storage/forms.py:679
 msgid "Dataset Name"
@@ -4013,7 +4013,7 @@ msgstr "Ime udaljenog host-a"
 
 #: storage/forms.py:1126 storage/models.py:635
 msgid "Remote port"
-msgstr ""
+msgstr "Udaljeni port"
 
 #: storage/forms.py:1128 storage/models.py:639
 msgid "Remote hostkey"
@@ -4138,29 +4138,29 @@ msgstr "Svakog minuta"
 #: storage/models.py:265 system/models.py:393 system/models.py:602
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "Svakih %s minut(a)"
 
 #: storage/models.py:271 system/models.py:399 system/models.py:608
 #: system/models.py:695
 msgid "Every hour"
-msgstr ""
+msgstr "Svakog časa"
 
 #: storage/models.py:273 system/models.py:401 system/models.py:610
 #: system/models.py:697
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "Svakih %s čas(ova)"
 
 #: storage/models.py:281 system/models.py:409 system/models.py:618
 #: system/models.py:705
 #, python-format
 msgid "Every %s days"
-msgstr ""
+msgstr "Svakih %s dana"
 
 #: storage/models.py:288 system/models.py:416 system/models.py:625
 #: system/models.py:712
 msgid "Every month"
-msgstr ""
+msgstr "Svakog meseca"
 
 #: storage/models.py:306 system/models.py:434 system/models.py:639
 #: system/models.py:726
@@ -4878,7 +4878,7 @@ msgstr "Komanda"
 #: system/models.py:337 system/models.py:489 system/models.py:669
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
 msgid "Short description"
-msgstr ""
+msgstr "Kratak opis"
 
 #: system/models.py:374
 msgid "Cron Job"
@@ -4890,11 +4890,11 @@ msgstr ""
 
 #: system/models.py:459
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "IP adresa ili ime hosta"
 
 #: system/models.py:468
 msgid "Remote Module Name"
-msgstr ""
+msgstr "Ime udaljenog modula"
 
 #: system/models.py:470
 msgid "Name of the module defined in the remote rsync daemon"
@@ -4930,23 +4930,23 @@ msgstr ""
 
 #: system/models.py:532
 msgid "Preserve modification times"
-msgstr ""
+msgstr "Očuvaj modifikaciona vremena"
 
 #: system/models.py:536
 msgid "Compress"
-msgstr ""
+msgstr "Komprimovati"
 
 #: system/models.py:537
 msgid "Compress data during the transfer"
-msgstr ""
+msgstr "Komprimuj podatke tokom prenosa"
 
 #: system/models.py:541
 msgid "Archive"
-msgstr ""
+msgstr "Arhiva"
 
 #: system/models.py:542
 msgid "Archive mode"
-msgstr ""
+msgstr "Režim arhiviranja"
 
 #: system/models.py:546 templates/freeadmin/generic_model_edit.html:89
 #: templates/network/interface.html:32 templates/network/lagg.html:44
@@ -4983,7 +4983,7 @@ msgstr "Izbriši"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr ""
+msgstr "Obrisati datoteke na prijemnoj strani koje ne postoje kod pošiljaoca"
 
 #: system/models.py:553
 msgid "Suppress non-error messages"
@@ -4991,7 +4991,7 @@ msgstr ""
 
 #: system/models.py:557
 msgid "Preserve permissions"
-msgstr ""
+msgstr "Očuvaj dozvole"
 
 #: system/models.py:558
 msgid ""
@@ -5430,23 +5430,23 @@ msgstr "Nema definisanog LAGG interfejsa"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr ""
+msgstr "Dodaj LAGG Interfejs"
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
-msgstr ""
+msgstr "Dodaj LAGG"
 
 #: templates/network/lagg_members.html:6
 msgid "Ordering Priority"
-msgstr ""
+msgstr "Određivanje prioriteta"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
-msgstr ""
+msgstr "Opcija pokretanja"
 
 #: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
 msgid "Action"
-msgstr ""
+msgstr "Radnja"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
@@ -5455,47 +5455,47 @@ msgstr ""
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr ""
+msgstr "Uredi statičku rutu"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "Izbriši statičku rutu"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr ""
+msgstr "Statička ruta nije definisana"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr ""
+msgstr "Dodaj statičku rutu"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr ""
+msgstr "Server imena"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr ""
+msgstr "Server imena nije definisan"
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr ""
+msgstr "Podrazumevana ruta"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr ""
+msgstr "Nije definisana podrazumevana ruta"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "Izmeni VLAN"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "Izbriši VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr ""
+msgstr "VLAN nije definisan"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
