@@ -274,36 +274,34 @@ class ViewPluginJails(TreeNode, Base):
                 )
             )
 
-            plugin_order = 1
-            pool = eventlet.GreenPool(20)
-            for plugin, url, data in pool.imap(self.plugin_fetch, args):
-                if not data:
-                    continue
-
-                try:
-                    data = simplejson.loads(data)
-                    nodes = unserialize_tree(data)
-                    for node in nodes:
-                        node.order = plugin_order
-                        plugin_node.append_child(node)
-                        plugin_order += 1
-
-                except Exception, e:
-                    log.warn(_(
-                        "An error occurred while unserializing from "
-                        "%(url)s: %(error)s") % {'url': url, 'error': e})
-                    log.debug(_(
-                        "Error unserializing %(url)s (%(error)s), data "
-                        "retrieved:") % {
-                            'url': url,
-                            'error': e,
-                        })
-                    for line in data.splitlines():
-                        log.debug(line)
-
-                continue
-
             if jail.jail_status == WARDEN_STATUS_RUNNING:
+                plugin_order = 1
+                pool = eventlet.GreenPool(20)
+                for plugin, url, data in pool.imap(self.plugin_fetch, args):
+                    if not data:
+                        continue
+
+                    try:
+                        data = simplejson.loads(data)
+                        nodes = unserialize_tree(data)
+                        for node in nodes:
+                            node.order = plugin_order
+                            plugin_node.append_child(node)
+                            plugin_order += 1
+
+                    except Exception, e:
+                        log.warn(_(
+                            "An error occurred while unserializing from "
+                            "%(url)s: %(error)s") % {'url': url, 'error': e})
+                        log.debug(_(
+                            "Error unserializing %(url)s (%(error)s), data "
+                            "retrieved:") % {
+                                'url': url,
+                                'error': e,
+                            })
+                        for line in data.splitlines():
+                            log.debug(line)
+
                 plugin_node_add = TreeNode()
                 plugin_node_add.name = _('Install Plugin')
                 plugin_node_add.type = 'editobject'
