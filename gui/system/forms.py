@@ -141,6 +141,11 @@ class FileWizard(SessionWizardView):
 
 class FirmwareWizard(FileWizard):
 
+    def get_template_names(self):
+        return [
+            'system/firmware_wizard_%s.html' % self.get_step_index(),
+        ]
+
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
         firmware = cleaned_data.get('firmware')
