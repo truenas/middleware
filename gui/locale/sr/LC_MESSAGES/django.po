@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-06-30 23:31+0200\n"
+"PO-Revision-Date: 2013-07-01 22:56+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -5001,7 +5001,7 @@ msgstr ""
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
-msgstr ""
+msgstr "Sačuvati proširene atribute"
 
 #: system/models.py:565
 msgid ""
@@ -5499,7 +5499,7 @@ msgstr "VLAN nije definisan"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr ""
+msgstr "Dodaj VLAN interfejs"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
@@ -5575,7 +5575,7 @@ msgstr "Otpremiti"
 
 #: templates/registration/login.html:40
 msgid "Your username and password didn't match. Please try again."
-msgstr ""
+msgstr "Korisničko ime i lozinka se ne podudaraju. Molimo Vas pokušajte ponovo."
 
 #: templates/registration/login.html:44
 #, python-format
