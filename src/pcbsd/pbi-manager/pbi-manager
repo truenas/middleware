@@ -7580,6 +7580,9 @@ createZFSDataset() {
   local mp="${2}"
   local ma="${3}"
 
+  echo "createZFSDataset: newds = $newds, mp = $mp, ma = $ma"
+  echo "createZFSDataset: ARCH = $ARCH"
+
   if [ -z "${newds}" ] ; then
     return 1
   fi
@@ -7622,12 +7625,14 @@ createZFSDataset() {
     return 1
   fi
 
+  echo "createZFSDatset: zfs create -o mountpoint="${mp}" -p "${newds}""
   zfs create -o mountpoint="${mp}" -p "${newds}"
 
   local i=0
   local cap=1024
   if [ -n "${diff}" ] ; then
     local mds="${zds}${diff}"
+    echo "createZFSDataset: mds = $mds"
 
     while [ "${i}" -lt "${cap}" ]
     do
@@ -7635,8 +7640,11 @@ createZFSDataset() {
         local fds="${zds}${diff}"
 
         if [ "${ma}" = "0" ] ; then
+          echo "createZFSDataset: zfs unmount -f "${fds}""
           zfs unmount -f "${fds}"
-		  zfs set canmount=off "${fds}"
+
+          echo "createZFSDataset: zfs set canmount=off "${fds}""
+          zfs set canmount=off "${fds}"
         fi
       fi
 
@@ -7648,7 +7656,10 @@ createZFSDataset() {
     done
 
     if [ "${ma}" = "0" ] ; then
+      echo "createZFSDataset: zfs set canmount=on "${mds}""
       zfs set canmount=on "${mds}"
+
+      echo "createZFSDataset: zfs mount "${mds}""
       zfs mount "${mds}"
     fi
 
