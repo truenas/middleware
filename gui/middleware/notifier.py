@@ -718,7 +718,7 @@ class notifier:
             svc = "ups"
         else:
             svc = "upsmon"
-        sn = self._started_notify("upsmon")
+        sn = self._started_notify("start", "upsmon")
         return self._started(svc, sn)
 
     def _load_afp(self):
