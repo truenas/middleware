@@ -59,10 +59,10 @@ define([
       }, this.dapSubProgress);
 
       if(this.mode == "simple") {
-        domStyle(this.dapMain, "display", "none");
-        domStyle(this.dapSubLabel, "display", "none");
-        domStyle(this.dapDetails, "display", "none");
-        domStyle(this.dapETA, "display", "none");
+        domStyle.set(this.dapMain, "display", "none");
+        domStyle.set(this.dapSubLabel, "display", "none");
+        domStyle.set(this.dapDetails, "display", "none");
+        domStyle.set(this.dapETA, "display", "none");
       }
 
       this.inherited(arguments);
