@@ -7610,20 +7610,28 @@ createZFSDataset() {
     return 1
   fi
 
+  echo "createZFSDatset: rp = ${rp}"
+
   local fp="${tmp}${rp}"
   if [ -z "${fp}" ] ; then
     return 1
   fi
+
+  echo "createZFSDatset: fp = ${fp}"
 
   local zds="$(getZFSDataset "${fp}")"
   if [ -z "${zds}" ] ; then
     return 1
   fi
 
+  echo "createZFSDatset: zds = ${zds}"
+
   local diff="${newds##${zds}}"
   if [ -z "${diff}" ] ; then
     return 1
   fi
+
+  echo "createZFSDatset: diff = ${diff}"
 
   echo "createZFSDatset: zfs create -o mountpoint="${mp}" -p "${newds}""
   zfs create -o mountpoint="${mp}" -p "${newds}"
