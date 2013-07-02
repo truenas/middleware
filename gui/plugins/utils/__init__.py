@@ -30,6 +30,7 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from eventlet.green import urllib2
+from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('plugins.utils')
 
@@ -58,6 +59,10 @@ def get_plugin_status(args):
         plugin.plugin_name,
         plugin.id)
     json = None
+
+    jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
+    if not jail_status:
+        return plugin, json, jail_status
 
     try:
         opener = urllib2.build_opener()
