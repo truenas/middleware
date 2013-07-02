@@ -972,6 +972,15 @@ require([
                 fileUpload: true,
                 mode: "simple"
               };
+            } else if(typeof(attrs.progressbar) == 'string') {
+              pattrs = {
+                steps: [
+                  {"label": "Processing"}
+                ],
+                fileUpload: false,
+                mode: "simple",
+                poolUrl: attrs.progressbar
+              };
             } else {
               pattrs = {
                 steps: attrs.progressbar.steps,
