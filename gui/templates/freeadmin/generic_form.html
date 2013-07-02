@@ -1,5 +1,5 @@
-{% load i18n freeadmin %}
-<form data-dojo-type="dijit.form.Form" {% if form and form.is_multipart %}enctype="multipart/form-data" {% endif %}method="POST">
+{% load freeadmin %}
+<form data-dojo-type="dijit.form.Form" id="form_{% cls_name form %}" {% if form and form.is_multipart %}enctype="multipart/form-data" {% endif %}method="POST">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
         {% block onSubmit %}
         doSubmit({
@@ -16,11 +16,11 @@
     {% endblock %}
 </table>
     {% block buttons %}
-    <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
+    <button id="btn_{% cls_name form %}_Ok" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
         {% block oklabel %}{% trans "OK" %}{% endblock %}
     </button>
     {% if not inline %}
-    <button data-dojo-type="dijit.form.Button"type="button">
+    <button id="btn_{% cls_name form %}_Cancel" data-dojo-type="dijit.form.Button"type="button">
         {% trans "Cancel" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             cancelDialog(this);
