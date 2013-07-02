@@ -391,6 +391,7 @@ class NavTree(object):
                             subopt.kwargs = {
                                 'oid': e.id,
                             }
+                            subopt.gname = e.id
                             try:
                                 subopt.name = unicode(e)
                             except:
