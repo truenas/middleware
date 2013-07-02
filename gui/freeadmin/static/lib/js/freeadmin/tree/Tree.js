@@ -1,12 +1,29 @@
 define([
     "dijit/Tree",
+    "dijit/registry",
     "dojo/_base/declare",
     "dojo/_base/array",
     "dojo/_base/Deferred",
     "dojo/_base/lang"
-    ], function(Tree, declare, array, Deferred, lang) {
+    ], function(Tree, registry, declare, array, Deferred, lang) {
 
     var MyTree = declare("freeadmin.tree.Tree", [Tree], {
+        _createTreeNode: function(/*Object*/ args){
+          /*
+           * This is an override to set a custom ID for the tree node
+           */
+          //return new TreeNode(args);
+          if(args.item.gname) {
+            var myId = "treeNode_" + args.item.gname;
+            while(registry.byId(myId)) {
+              console.warn("The id already exists:", myId);
+              myId = myId + "_";
+            }
+            args['id'] = myId;
+          }
+          return this.inherited(arguments);
+
+        },
         _expandNode: function( node, recursive){
             if(node._expandNodeDeferred && !recursive){
                 return node._expandNodeDeferred;    // dojo.Deferred
