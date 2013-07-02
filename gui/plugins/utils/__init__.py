@@ -25,7 +25,6 @@
 #
 #####################################################################
 import logging
-import os
 
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
@@ -34,6 +33,7 @@ from eventlet.green import urllib2
 
 log = logging.getLogger('plugins.utils')
 
+
 def get_base_url(request=None):
     proto = 'https' if request.is_secure() else 'http'
     addr = request.META.get("SERVER_ADDR")
@@ -41,8 +41,10 @@ def get_base_url(request=None):
         addr = request.get_host()
     else:
         port = int(request.META.get("SERVER_PORT", 80))
-        if ((proto == 'http' and port != 80) or
-            (proto == 'https' and port != 443)):
+        if (
+            (proto == 'http' and port != 80) or
+            (proto == 'https' and port != 443)
+        ):
             addr = "%s:%d" % (addr, port)
 
     return "%s://%s" % (proto, addr)
@@ -62,8 +64,8 @@ def get_plugin_status(args):
         opener.addheaders = [
             ('Cookie', 'sessionid=%s' % (
                 request.COOKIES.get("sessionid", ''),
-                ))
-            ]
+            ))
+        ]
         #TODO: Increase timeout based on number of plugins
         response = opener.open(url, None, 5).read()
         json = simplejson.loads(response)
@@ -71,5 +73,5 @@ def get_plugin_status(args):
         log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
             'url': url,
             'error': e,
-            })
+        })
     return plugin, json
