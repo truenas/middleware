@@ -132,10 +132,10 @@ create_template()
       done
     fi
 
+    cp /etc/resolv.conf ${TDIR}/etc/resolv.conf
+
     # Creating a plugin jail?
     if [ "$TPLUGJAIL" = "YES" ] ; then
-      cp /etc/resolv.conf ${TDIR}/etc/resolv.conf
-
       warden_print bootstrap_pkgng "${TDIR}" "pluginjail"
       bootstrap_pkgng "${TDIR}" "pluginjail"
       if [ $? -ne 0 ] ; then
