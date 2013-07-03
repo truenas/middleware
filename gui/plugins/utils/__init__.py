@@ -79,4 +79,4 @@ def get_plugin_status(args):
             'url': url,
             'error': e,
         })
-    return plugin, json
+    return plugin, json, jail_status
