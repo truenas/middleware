@@ -81,6 +81,7 @@ from freenasUI.common.warden import (
     WARDEN_KEY_STATUS,
     WARDEN_STATUS_RUNNING
 )
+from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.system.forms import clean_path_execbit
 
@@ -166,7 +167,7 @@ class JailCreateForm(ModelForm):
     jail_nat = forms.BooleanField(
         label=_("NAT"),
         required=False,
-        initial=True
+        initial=False
     )
 
 #    jail_script = forms.CharField(
@@ -235,8 +236,45 @@ class JailCreateForm(ModelForm):
             st_ipv4_network = sipcalc_type(jc.jc_ipv4_network)
             st_ipv6_network = sipcalc_type(jc.jc_ipv6_network)
 
-        except:
+        except Exception as e:
+            log.debug("Exception caught: %s", e)
             pass
+
+        #
+        # If a jails configuration exists (as it should),
+        # create sipcalc objects
+        #
+        if st_ipv4_network:
+            high_ipv4 = sipcalc_type("%s/%d" % (
+                jc.jc_ipv4_network_start,
+                st_ipv4_network.network_mask_bits
+            ))
+        if st_ipv6_network:
+            high_ipv6 = sipcalc_type("%s/%d" % (
+                jc.jc_ipv6_network_start,
+                st_ipv6_network.prefix_length
+            ))
+        
+        #
+        # Attempt to determine the primary interface network.
+        # This is done so that we don't set a bridge address
+        # (we leave it blank, in which case the Warden will
+        # figure out the default gateway and set that up inside
+        # the jail if on the same network as the host).
+        #
+        st_host_ipv4_network = None
+        try:
+            iface = notifier().guess_default_interface()
+            st_ha = sipcalc_type(iface=iface)
+            if not st_ha.is_ipv4():
+                st_host_ipv4_network = None
+            else:
+                st_host_ipv4_network = sipcalc_type("%s/%d" % (
+                    st_ha.network_address, st_ha.network_mask_bits
+                ))
+        except Exception as e:
+            log.debug("Exception caught: %s", e)
+            pass 
 
         if jc and jc.jc_path:
             logfile = "%s/warden.log" % jc.jc_path
@@ -244,18 +282,20 @@ class JailCreateForm(ModelForm):
                 os.unlink(logfile)
 
         #
-        # Reserve the first 25 addresses
+        # Be extra careful, if no start and end addresses
+        # are configured, take the first network address
+        # and add 25 to it.
         #
-        if st_ipv4_network is not None:
+        if not high_ipv4 and st_ipv4_network:
             high_ipv4 = sipcalc_type("%s/%d" % (
                 st_ipv4_network.usable_range[0],
                 st_ipv4_network.network_mask_bits,
             ))
             high_ipv4 += 25
 
-        if st_ipv6_network is not None:
+        if not high_ipv6 and st_ipv6_network:
             high_ipv6 = sipcalc_type("%s/%d" % (
-                st_ipv6_network .network_range[0],
+                st_ipv6_network.network_range[0],
                 st_ipv6_network.prefix_length,
             ))
             high_ipv6 += 25
@@ -270,6 +310,10 @@ class JailCreateForm(ModelForm):
 
             st_ipv4 = None
             st_ipv6 = None
+
+            #
+            # This figures out the highest IP address currently in use
+            #
 
             if wo.ipv4:
                 st_ipv4 = sipcalc_type(wo.ipv4)
@@ -313,7 +357,12 @@ class JailCreateForm(ModelForm):
         elif high_ipv4 is not None:
             self.fields['jail_ipv4'].initial = high_ipv4
 
-        if st_ipv4_network is not None:
+        #
+        # If a network is configured for jails, and it is NOT on 
+        # the same network as the host, setup a bridge address.
+        # (This will be the default gateway of the jail).
+        #
+        if st_ipv4_network is not None and not st_host_ipv4_network:
             bridge_ipv4 = sipcalc_type("%s/%d" % (
                 st_ipv4_network.usable_range[0],
                 st_ipv4_network.network_mask_bits,
@@ -486,6 +535,12 @@ class JailCreateForm(ModelForm):
 
 class JailsConfigurationForm(ModelForm):
 
+    advanced_fields = [
+        'jc_ipv6_network',
+        'jc_ipv6_network_start',
+        'jc_ipv6_network_end'
+    ]
+
     class Meta:
         model = JailsConfiguration
         widgets = {
@@ -494,6 +549,59 @@ class JailsConfigurationForm(ModelForm):
             }),
         }
 
+    #
+    # Make sure the proper netmask/prefix length get saved
+    #
+    def clean(self):
+        cdata = self.cleaned_data
+
+        st_ipv4_network = None
+        network = cdata.get('jc_ipv4_network', None)
+        if network:
+            st_ipv4_network = sipcalc_type(network)
+
+        st_ipv6_network = None
+        network = cdata.get('jc_ipv6_network', None)
+        if network:
+            st_ipv6_network = sipcalc_type(network)
+ 
+        ipv4_start = cdata.get('jc_ipv4_network_start', None)
+        if ipv4_start:
+            parts = ipv4_start.split('/')
+            ipv4_start = parts[0]
+            if st_ipv4_network: 
+                ipv4_start = "%s/%d" % (ipv4_start, st_ipv4_network.network_mask_bits)
+                if st_ipv4_network.in_network(ipv4_start):
+                    cdata['jc_ipv4_network_start'] = ipv4_start
+
+        ipv4_end = cdata.get('jc_ipv4_network_end', None)
+        if ipv4_end:
+            parts = ipv4_end.split('/')
+            ipv4_end = parts[0]
+            if st_ipv4_network: 
+                ipv4_end = "%s/%d" % (ipv4_end, st_ipv4_network.network_mask_bits)
+                if st_ipv4_network.in_network(ipv4_end):
+                    cdata['jc_ipv4_network_end'] = ipv4_end
+
+        ipv6_start = cdata.get('jc_ipv6_network_start', None)
+        if ipv6_start:
+            parts = ipv6_start.split('/')
+            ipv6_start = parts[0]
+            if st_ipv6_network: 
+                ipv6_start = "%s/%d" % (ipv6_start, st_ipv6_network.prefix_length)
+                if st_ipv6_network.in_network(ipv6_start):
+                    cdata['jc_ipv6_network_start'] = ipv6_start
+
+        ipv6_end = cdata.get('jc_ipv6_network_end', None)
+        if ipv6_end:
+            parts = ipv6_end.split('/')
+            ipv6_end = parts[0]
+            if st_ipv6_network: 
+                ipv6_end = "%s/%d" % (ipv6_end, st_ipv6_network.prefix_length)
+                if st_ipv6_network.in_network(ipv6_end):
+                    cdata['jc_ipv6_network_end'] = ipv6_end
+
+        return cdata
 
 class JailConfigureForm(ModelForm):
 
