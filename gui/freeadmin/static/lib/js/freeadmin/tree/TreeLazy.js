@@ -1,14 +1,15 @@
 define(["dijit/Tree","dojo/_base/declare"], function(Tree, declare) {
 
     var TreeLazy = declare("freeadmin.tree.TreeLazy", [Tree], {
-        _collapseNode: function( node, recursive){
+        _collapseNode: function(node, recursive){
             if(node._collapseNodeDeferred && !recursive){
                  return node._collapseNodeDeferred;    // dojo.Deferred
             }
             /*
              * Force the node to be checked again if collapsed
              */
-            node.state="UNCHECKED";
+            node.state = "NotLoaded";
+            node._loadDeferred = null;
             return this.inherited(arguments);
         },
         reload: function () {
@@ -20,7 +21,7 @@ define(["dijit/Tree","dojo/_base/declare"], function(Tree, declare) {
                 this.rootNode.destroyRecursive();
             }
 
-            this.rootNode.state = "UNCHECKED";
+            this.rootNode.state = "NotLoaded";
 
             storeTarget = this.model.store.target;
             for (var idx in dojox.rpc.Rest._index) {
