@@ -180,9 +180,10 @@ create_template()
       cat ${oldStr}.?? | tar --unlink -xpzf - -C ${JDIR}/.templatedir 2>/dev/null
       cd ${JDIR}
 
+      cp /etc/resolv.conf ${JDIR}/.templatedir/etc/resolv.conf
+
       # Creating a plugin jail?
       if [ "$TPLUGJAIL" = "YES" ] ; then
-        cp /etc/resolv.conf ${JDIR}/.templatedir/etc/resolv.conf
         bootstrap_pkgng "${JDIR}/.templatedir/" "pluginjail"
       fi
 
@@ -204,9 +205,10 @@ create_template()
         rm -f ${JDIR}/.download/${f}
       done
 
+      cp /etc/resolv.conf ${JDIR}/.templatedir/etc/resolv.conf
+
       # Creating a plugin jail?
       if [ "$TPLUGJAIL" = "YES" ] ; then
-        cp /etc/resolv.conf ${JDIR}/.templatedir/etc/resolv.conf
         bootstrap_pkgng "${JDIR}/.templatedir/" "pluginjail"
       fi
 
