@@ -11,7 +11,7 @@
   href: '{% url "freeadmin_jails_nullmountpoint_datagrid" %}',
   refreshOnShow: true" class="objrefresh data_jails_NullMountPoint"" tab="jails.NullMountPoint.View" id="tab_NullMountPoint">
   </div>
-if %}
+{% endif %}
 
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Configuration"|escapejs %}'
   {% if focus_form == "jails.JailsConfiguration" %}, selected: true{% endif %},
