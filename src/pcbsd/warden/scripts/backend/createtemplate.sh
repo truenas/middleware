@@ -153,16 +153,28 @@ create_template()
     trap INT QUIT ABRT KILL TERM EXIT
 
   else
+
+    clean_exit()
+    {
+       find ${JDIR}/.templatedir |xargs chflags noschg
+       rm -rf ${JDIR}/.templatedir
+       warden_exit "Failed to create UFS template directory"
+    }
+
+    trap clean_exit INT QUIT ABRT KILL TERM EXIT
+
     # Sigh, still on UFS??
     if [ -d "${JDIR}/.templatedir" ]; then
+       find ${JDIR}/.templatedir |xargs chflags noschg
        rm -rf ${JDIR}/.templatedir
     fi
 
     if [ -n "$FBSDTAR" ] ; then
       # User-supplied tar file 
       cp $FBSDTAR ${TDIR}
+
     elif [ "$oldFBSD" = "YES" ] ; then
-      mkdir ${JDIR}/.templatedir
+      mkdir -p ${JDIR}/.templatedir
       cd ${JDIR}/.download/
       warden_print "Extrating FreeBSD..."
       cat ${oldStr}.?? | tar --unlink -xpzf - -C ${JDIR}/.templatedir 2>/dev/null
@@ -177,15 +189,17 @@ create_template()
       warden_print "Creating template archive..."
       tar cvjf ${TDIR} -C ${JDIR}/.templatedir 2>/dev/null
       rm -rf ${JDIR}/.templatedir
+
     else
       # Extract the dist files
-      mkdir ${JDIR}/.templatedir
+      mkdir -p ${JDIR}/.templatedir
       for f in $DFILES
       do
         tar xvpf ${DISTFILESDIR}/$f -C ${JDIR}/.templatedir 2>/dev/null
         if [ $? -ne 0 ] ; then 
+           find ${JDIR}/.templatedir |xargs chflags noschg
            rm -rf ${JDIR}/.templatedir
-           warden_exit "Failed extracting ZFS template environment"
+           warden_exit "Failed extracting UFS template environment"
         fi
         rm -f ${JDIR}/.download/${f}
       done
@@ -198,9 +212,12 @@ create_template()
 
       warden_print "Creating template archive..."
       tar cvjf ${TDIR} -C ${JDIR}/.templatedir 2>/dev/null
+      find ${JDIR}/.templatedir |xargs chflags noschg
       rm -rf ${JDIR}/.templatedir
     fi
   fi
+
+  trap INT QUIT ABRT KILL TERM EXIT
 
   rm -rf ${JDIR}/.download
   warden_print "Created jail template: $TNICK"

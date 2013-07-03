@@ -1182,10 +1182,14 @@ show_progress()
   fi
 
   if [ "${TOTAL_INSTALL_FILES}" -gt "0" ] ; then
+    percent=`echo "scale=2;(${CURRENT_INSTALL_FILE}/${TOTAL_INSTALL_FILES})*100"|bc|cut -f1 -d.`
+    if [ "${CURRENT_INSTALL_FILE}" -ge "${TOTAL_INSTALL_FILES}" ] ; then
+      percent=100
+    fi
+
     : $(( CURRENT_INSTALL_FILE += 1 ))
     export CURRENT_INSTALL_FILE
 
-    percent=`echo "scale=2;(${CURRENT_INSTALL_FILE}/${TOTAL_INSTALL_FILES})*100"|bc|cut -f1 -d.`
     warden_print "===== ${percent}% ====="
   fi
 }
@@ -1209,9 +1213,8 @@ bootstrap_pkgng()
   local rpath
 
   if [ "${arch}" != "i386" ] ; then
-    get_mirror
-    mirror="${VAL}"
-    rpath="/packages/${release}/${arch}"
+    mirror="http://pkg.cdn.pcbsd.org/${release}/${arch}"
+    rpath=""
   else
     mirror="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"
     rpath=""
@@ -1264,7 +1267,21 @@ bootstrap_pkgng()
 
     ${CR} "tar -xvf /usr/local/tmp/pkg.txz -C / --exclude +MANIFEST --exclude +MTREE_DIRS"
     ${CR} "pkg add /usr/local/tmp/pkg.txz"
-    ${CR} "tar -xvf /usr/local/tmp/repo.txz -C /var/db/pkg/"
+    ${CR} "mkdir -p /var/tmp/pkg"
+
+    if [ -f "${pkgdir}/repo.sqlite" ] ; then
+      cp ${pkgdir}/repo.sqlite ${jaildir}/var/db/pkg
+    else
+      ${CR} "tar -xvf /usr/local/tmp/repo.txz -C /var/db/pkg/"
+    fi
+
+    if [ -f "${pkgdir}/local.sqlite" ] ; then
+      cp ${pkgdir}/local.sqlite ${jaildir}/var/db/pkg
+    fi
+
+    if [ -f "${pkgdir}/repo-packagesite.sqlite" ] ; then
+      cp ${pkgdir}/repo-packagesite.sqlite ${jaildir}/var/db/pkg
+    fi
 
     get_packages_by_port_list "${jaildir}" \
       "${pkgdir}" "${rpath}" "${pclist}"
