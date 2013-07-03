@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2011-12-26 04:57+0200\n"
-"Last-Translator: buithephong <buithephong@gmail.com>\n"
+"PO-Revision-Date: 2013-07-02 06:56+0200\n"
+"Last-Translator: zadd3l <vzadd3l@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
@@ -429,18 +429,17 @@ msgstr "Không quan tâm - Kiểm tra các thiết bị không phân biệt ch�
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Chế độ Ngủ - Chỉ kiểm tra thiết bị khi thiết bị đang ở chế độ Ngủ"
+msgstr "Chế độ Ngủ - Không kiểm tra thiết bị khi nó đang ở chế độ ngủ"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
-"Chế độ chờ - Chỉ kiểm tra thiết bị khi thiết bị đang ở chế độ Ngủ hoặc Chờ"
+msgstr "Chế độ chờ - Không kiểm tra thiết bị khi nó đang ở chế độ NGỦ hoặc CHỜ"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Chế độ nhàn rỗi - Chỉ kiểm tra thiết bị khi thiết bị đang ở chế độ Ngủ, Chờ "
-"hoặc Nhàn rỗi"
+"Chế độ nhàn rỗi - Không kiểm tra thiết bị khi thiết bị đang ở chế độ NGỦ, "
+"CHỜ hoặc NHÀN RỖI"
 
 #: choices.py:530
 msgid "Long Self-Test"
@@ -460,11 +459,11 @@ msgstr ""
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr ""
+msgstr "Rsync module"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync qua SSH"
 
 #: choices.py:567
 msgid "Push"
@@ -476,11 +475,11 @@ msgstr ""
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Tên bạn không thể bắt đầu với \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Ký tự $ chỉ được dùng như ký tự cuối"
 
 #: account/forms.py:66
 #, python-format
@@ -528,7 +527,7 @@ msgstr "Nhập lại mật khẩu giống như trên để xác nhận "
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: account/forms.py:269 account/forms.py:553
 #, fuzzy
