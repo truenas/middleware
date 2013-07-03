@@ -211,7 +211,7 @@ create_template()
       fi
 
       warden_print "Creating template archive..."
-      tar cvjf ${TDIR} -C ${JDIR}/.templatedir 2>/dev/null
+      tar -cvjf - -C ${JDIR}/.templatedir . > ${TDIR} 2>/dev/null
       find ${JDIR}/.templatedir |xargs chflags noschg
       rm -rf ${JDIR}/.templatedir
     fi
