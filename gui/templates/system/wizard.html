@@ -1,7 +1,7 @@
 {% load freeadmin %}<div data-dojo-type="dijit.layout.ContentPane" class="objrefresh" doLayout="false">
   <h1>{% blocktrans with step=wizard.steps.step1 step_count=wizard.steps.count %}Step {{ step }} of {{ step_count }}{% endblocktrans %}</h1>
   <form data-dojo-type="dijit.form.Form" action="." enctype="multipart/form-data" method="post">{% csrf_token %}
-    <script type="dojo/event" event="onSubmit" args="e">
+    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
       {% block onSubmit %}
       doSubmit({
         form: this,
@@ -18,9 +18,15 @@
     <tr>
       <td colspan="2">
         <button id="btn_{% cls_name form %}_Ok" class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
-          {% trans "Apply Update" %}
-          <script type="dojo/method" event="onClick" args="evt">
+          {% block oklabel %}{% trans "OK" %}{% endblock %}
+          <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             this.set('label', '{% trans "Please wait..."|escapejs %}');
+          </script>
+        </button>
+        <button id="btn_{% cls_name form %}_Cancel" class="cancelform" data-dojo-type="dijit.form.Button">
+          {% trans "Cancel" %}
+          <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            cancelDialog(this);
           </script>
         </button>
       </td>
