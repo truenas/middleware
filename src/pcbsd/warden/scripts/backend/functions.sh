@@ -1009,7 +1009,7 @@ get_dependencies_port_list()
 
   deplist="$(mktemp /tmp/.depXXXXXX)"
   for p in $(cat "${list}") ; do
-    ${CR} "pkg rquery '%do' ${p}" >> "${deplist}"
+    ${CR} "pkg rquery '%do' ${p}" >> "${deplist}" 2>/dev/null
     echo ${p} >> "${deplist}"
   done  
 
@@ -1050,8 +1050,8 @@ get_package_install_list()
   exec 3<&0
   exec 0<"${pkginfo}"
   while read -r pi ; do
-    local pkg="$(echo ${pi} | cut -f1 -d: | awk '{ print $1 }')"
-    local port="$(echo ${pi} | cut -f2 -d: | awk '{ print $1 }')"
+    local pkg="$(echo ${pi} | cut -f1 -d' ' -d':' | awk '{ print $1 }')"
+    local port="$(echo ${pi} | cut -f2 -d' ' | awk '{ print $1 }')"
 
     grep -qw "${port}" "${list}" 2>/dev/null
     if [ "$?" = "0" ] ; then
@@ -1131,12 +1131,12 @@ get_package_by_port()
     return 1
   fi
 
-  local pkg="$(${CR} "pkg rquery '%n-%v.txz' ${port}")"
+  local pkg="$(${CR} "pkg rquery '%n-%v.txz' ${port}" 2>/dev/null)"
   if [ ! -f "${pkgdir}/${pkg}" ] ; then
     get_file_from_mirrors "${rpath}/All/${pkg}" \
       "${jaildir}/var/tmp/pkgs/${pkg}"
 
-    local deps="$(${CR} "pkg rquery '%do' ${port}")"
+    local deps="$(${CR} "pkg rquery '%do' ${port}" 2>/dev/null)"
     for d in ${deps} ; do
       get_package_by_port "${jaildir}" "${pkgdir}" \
         "${rpath}" "${d}"
@@ -1213,8 +1213,8 @@ bootstrap_pkgng()
   local rpath
 
   if [ "${arch}" != "i386" ] ; then
-    mirror="http://pkg.cdn.pcbsd.org/${release}/${arch}"
-    rpath=""
+    mirror="http://pkg.cdn.pcbsd.org"
+    rpath="/packages/${release}/${arch}"
   else
     mirror="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"
     rpath=""
@@ -1237,7 +1237,7 @@ bootstrap_pkgng()
   cp "${pubcert}" ${jaildir}/usr/local/etc
   install_pc_extractoverlay "${jaildir}"
 
-  create_jail_pkgconf "${jaildir}" "${mirror}/${rpath}" "${arch}"
+  create_jail_pkgconf "${jaildir}" "${mirror}${rpath##/packages}" "${arch}"
 
   if [ ! -d "${pkgdir}" ] ; then
     mkdir -p "${pkgdir}"
@@ -1267,7 +1267,6 @@ bootstrap_pkgng()
 
     ${CR} "tar -xvf /usr/local/tmp/pkg.txz -C / --exclude +MANIFEST --exclude +MTREE_DIRS"
     ${CR} "pkg add /usr/local/tmp/pkg.txz"
-    ${CR} "mkdir -p /var/tmp/pkg"
 
     if [ -f "${pkgdir}/repo.sqlite" ] ; then
       cp ${pkgdir}/repo.sqlite ${jaildir}/var/db/pkg
@@ -1281,6 +1280,11 @@ bootstrap_pkgng()
 
     if [ -f "${pkgdir}/repo-packagesite.sqlite" ] ; then
       cp ${pkgdir}/repo-packagesite.sqlite ${jaildir}/var/db/pkg
+    fi
+
+    chroot "${jaildir}" /bin/sh -exc "pkg rquery '%n' pkg" 2>/dev/null
+    if [ "$?" != "0" ] ; then
+      ${CR} "pkg update"   
     fi
 
     get_packages_by_port_list "${jaildir}" \
@@ -1305,7 +1309,7 @@ bootstrap_pkgng()
     rm -f "${ilist}"
 
     ${CR} "pc-extractoverlay server --sysinit"
-    create_jail_pkgconf "${jaildir}" "${mirror}/${rpath}" "${arch}"
+    create_jail_pkgconf "${jaildir}" "${mirror}/${rpath##/packages}" "${arch}"
 
     return 0
   fi
