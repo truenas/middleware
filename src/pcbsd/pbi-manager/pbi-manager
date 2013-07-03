@@ -7526,7 +7526,7 @@ getZFSDataset() {
   local _chkDir="$(realpath $1)"
   while :
   do
-    local zData="$(zfs list|awk -v path="${_chkDir}" '$5 ~ path { print $0 }')"
+    local zData="$(zfs list|awk -v path="${_chkDir}" '$5 ~ path { print $1 }')"
     if [ -n "$zData" ] ; then
        echo "$zData"|awk '{ print $1 }'
        return 0
@@ -7580,8 +7580,8 @@ createZFSDataset() {
   local mp="${2}"
   local ma="${3}"
 
-  echo "createZFSDataset: newds = $newds, mp = $mp, ma = $ma"
-  echo "createZFSDataset: ARCH = $ARCH"
+  echo "createZFSDataset: newds = \"${newds}\", mp = \"${mp}\", ma = \"${ma}\""
+  echo "createZFSDataset: ARCH = \"${ARCH}\""
 
   if [ -z "${newds}" ] ; then
     return 1
@@ -7610,48 +7610,52 @@ createZFSDataset() {
     return 1
   fi
 
-  echo "createZFSDatset: rp = ${rp}"
+  echo "createZFSDatset: rp = \"${rp}\""
 
   local fp="${tmp}${rp}"
   if [ -z "${fp}" ] ; then
     return 1
   fi
 
-  echo "createZFSDatset: fp = ${fp}"
+  echo "createZFSDatset: fp = \"${fp}\""
 
   local zds="$(getZFSDataset "${fp}")"
   if [ -z "${zds}" ] ; then
     return 1
   fi
 
-  echo "createZFSDatset: zds = ${zds}"
+  echo "createZFSDatset: zds = \"${zds}\""
 
   local diff="${newds##${zds}}"
   if [ -z "${diff}" ] ; then
     return 1
   fi
 
-  echo "createZFSDatset: diff = ${diff}"
+  echo "createZFSDatset: diff = \"${diff}\""
 
-  echo "createZFSDatset: zfs create -o mountpoint="${mp}" -p "${newds}""
+  echo "createZFSDatset: zfs create -o mountpoint=\"${mp}\" -p \"${newds}\""
   zfs create -o mountpoint="${mp}" -p "${newds}"
 
   local i=0
   local cap=1024
   if [ -n "${diff}" ] ; then
     local mds="${zds}${diff}"
-    echo "createZFSDataset: mds = $mds"
+    echo "createZFSDataset: mds = \"${mds}\""
 
     while [ "${i}" -lt "${cap}" ]
     do
       if [ "${diff}" != "/" ] ; then
         local fds="${zds}${diff}"
 
+        echo "createZFSDataset: zds = \"${zds}\""
+        echo "createZFSDataset: diff = \"${diff}\""
+        echo "createZFSDataset: fds = \"${fds}\""
+
         if [ "${ma}" = "0" ] ; then
-          echo "createZFSDataset: zfs unmount -f "${fds}""
+          echo "createZFSDataset: zfs unmount -f \"${fds}\""
           zfs unmount -f "${fds}"
 
-          echo "createZFSDataset: zfs set canmount=off "${fds}""
+          echo "createZFSDataset: zfs set canmount=off \"${fds}\""
           zfs set canmount=off "${fds}"
         fi
       fi
@@ -7664,10 +7668,10 @@ createZFSDataset() {
     done
 
     if [ "${ma}" = "0" ] ; then
-      echo "createZFSDataset: zfs set canmount=on "${mds}""
+      echo "createZFSDataset: zfs set canmount=on \"${mds}\""
       zfs set canmount=on "${mds}"
 
-      echo "createZFSDataset: zfs mount "${mds}""
+      echo "createZFSDataset: zfs mount \"${mds}\""
       zfs mount "${mds}"
     fi
 
