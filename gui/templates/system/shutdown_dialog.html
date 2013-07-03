@@ -4,13 +4,13 @@
 <p>{% trans "You are about to <strong>SHUTDOWN</strong> the system, what would you like to do?" %}</p>
 {% endblock %}
 {% block buttons %}
-<button data-dojo-type="dijit.form.Button" type="button">
+<button id="btn_Shutdown_Ok" data-dojo-type="dijit.form.Button" type="button">
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
     cancelDialog(this);
     </script>
     {% trans "Cancel" %}
 </button>
-<button data-dojo-type="dijit.form.Button" type="submit">
+<button id="btn_Shutdown_Cancel" data-dojo-type="dijit.form.Button" type="submit">
     {% trans "Shutdown" %}
 </button>
 {% endblock %}

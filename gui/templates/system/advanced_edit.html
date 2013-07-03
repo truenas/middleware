@@ -1,19 +1,20 @@
 {% extends "freeadmin/generic_model_edit.html" %}
+{% load freeadmin %}
 
 {% block buttons_extra %}
-            <button data-dojo-type="dijit.form.Button">
+            <button id="btn_{% cls_name form %}_ADCache" data-dojo-type="dijit.form.Button">
             {% trans "Rebuild LDAP/AD Cache" %}
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
                 rebuildAdLdapCache('{% url "system_clearcache" %}', this);
                 </script>
             </button>
-            <button data-dojo-type="dijit.form.Button" type="button">
+            <button id="btn_{% cls_name form %}_Debug" data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Save Debug" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                     addObject('{% trans "Save Debug"|force_escape|force_escape %}', '{% url "system_debug" %}');
                 </script>
             </button>
-            <button data-dojo-type="dijit.form.Button" type="button">
+            <button id="btn_{% cls_name form %}_FwUpdate" data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Firmware Update" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                     addObject('{% trans "Firmware Update"|force_escape|force_escape %}', '{% url "system_firmwizard" %}');

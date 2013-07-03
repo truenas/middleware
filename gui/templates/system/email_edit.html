@@ -1,7 +1,8 @@
 {% extends "freeadmin/generic_model_edit.html" %}
+{%load freeadmin %}
 
 {% block buttons_extra %}
-            <button data-dojo-type="dijit.form.Button">
+            <button id="btn_{% cls_name form %}_TestEmail" data-dojo-type="dijit.form.Button">
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
                     form = getForm(this);
                     doSubmit({

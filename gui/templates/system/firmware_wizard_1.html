@@ -1,18 +1,18 @@
 {% extends "system/wizard.html" %}
-{% block onSubmit %}                                                      
-doSubmit({                                                                
-  form: this,                                                             
-  event: e,                                                               
-  url: '{{ request.path }}',                                              
-  progressbar: {                                                          
-    steps: [                                                              
-      {"label": "Uploading firmware"},                                    
-      {"label": "Extracting firmware"},                                   
-      {"label": "Writing new firmware"}                                   
-    ],                                                                    
-    poolUrl: '{% url "system_firmware_progress" %}'                       
-  }                                                                       
-});                                                                       
+{% block onSubmit %}
+doSubmit({
+  form: this,
+  event: e,
+  url: '{{ request.path }}',
+  progressbar: {
+    steps: [
+      {"label": "Uploading firmware"},
+      {"label": "Extracting firmware"},
+      {"label": "Writing new firmware"}
+    ],
+    poolUrl: '{% url "system_firmware_progress" %}'
+  }
+});
 {% endblock %}
 {% block form %}
 <tr>

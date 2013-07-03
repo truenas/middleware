@@ -17,7 +17,7 @@
     {% endblock %}
     <tr>
       <td colspan="2">
-        <button class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
+        <button id="btn_{% cls_name form %}_Ok" class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
           {% trans "Apply Update" %}
           <script type="dojo/method" event="onClick" args="evt">
             this.set('label', '{% trans "Please wait..."|escapejs %}');

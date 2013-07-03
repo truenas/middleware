@@ -1,19 +1,20 @@
 {% extends "freeadmin/generic_model_edit.html" %}
+{% load freeadmin %}
 
 {% block buttons_extra %}
-    <button data-dojo-type="dijit.form.Button" type="button">
+    <button id="btn_{% cls_name form %}_Restore" data-dojo-type="dijit.form.Button" type="button">
         {% trans "Factory Restore" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             addObject('{% trans "Restore Config"|force_escape|force_escape %}', '{% url "system_configrestore" %}');
         </script>
     </button>
-    <button data-dojo-type="dijit.form.Button">
+    <button id="btn_{% cls_name form %}_SvCfg" data-dojo-type="dijit.form.Button">
         {% trans "Save Config" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             window.location='{% url "system_configsave" %}';
         </script>
     </button>
-    <button data-dojo-type="dijit.form.Button" type="button">
+    <button id="btn_{% cls_name form %}_UpCfg" data-dojo-type="dijit.form.Button" type="button">
         {% trans "Upload Config" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             addObject('{% trans "Upload Config"|force_escape|force_escape %}', '{% url "system_configupload" %}');
