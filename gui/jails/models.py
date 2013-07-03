@@ -25,10 +25,12 @@
 #
 #####################################################################
 import logging
+import string
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.system import is_mounted, mount, umount
 from freenasUI.common.warden import (
     Warden,
@@ -192,12 +194,31 @@ class JailsConfiguration(Model):
         blank=True,
         verbose_name=_("IPv4 Network"),
         help_text=_("IPv4 network range for jails and plugins"),
-        default="192.168.99.0/24"
+    )
+    jc_ipv4_network_start = Network4Field(
+        blank=True,
+        verbose_name=_("IPv4 Network Start Address"),
+        help_text=_("IPv4 network start address for jails and plugins"),
+    )
+    jc_ipv4_network_end = Network4Field(
+        blank=True,
+        verbose_name=_("IPv4 Network End Address"),
+        help_text=_("IPv4 network end address for jails and plugins"),
     )
     jc_ipv6_network = Network6Field(
         blank=True,
         verbose_name=_("IPv6 Network"),
         help_text=_("IPv6 network range for jails and plugins")
+    )
+    jc_ipv6_network_start = Network6Field(
+        blank=True,
+        verbose_name=_("IPv6 Network Start Address"),
+        help_text=_("IPv6 network start address for jails and plugins")
+    )
+    jc_ipv6_network_end = Network6Field(
+        blank=True,
+        verbose_name=_("IPv6 Network End Address"),
+        help_text=_("IPv6 network end address for jails and plugins")
     )
 
     def save(self, *args, **kwargs):
@@ -210,6 +231,37 @@ class JailsConfiguration(Model):
 
     class FreeAdmin:
         deletable = False
+
+    def __init__(self, *args, **kwargs):
+        super(JailsConfiguration, self).__init__(*args, **kwargs)
+        iface = notifier().guess_default_interface()
+        if not iface:
+            return
+
+        st = sipcalc_type(iface=iface)
+        if not st:
+            return
+
+        if not st.is_ipv4():
+            return
+
+        if not self.jc_ipv4_network:
+            self.jc_ipv4_network = "%s/%d" % (
+                st.network_address, st.network_mask_bits)
+
+        ha = sipcalc_type(st.host_address) + 1
+
+        if not self.jc_ipv4_network_start:
+            self.jc_ipv4_network_start = ha.host_address
+        else:
+            parts = self.jc_ipv4_network_start.split('/')
+            self.jc_ipv4_network_start = parts[0]
+
+        if not self.jc_ipv4_network_end:
+            self.jc_ipv4_network_end = st.usable_range[1]
+        else:
+            parts = self.jc_ipv4_network_end.split('/')
+            self.jc_ipv4_network_end = parts[0]
 
 
 class NullMountPoint(Model):

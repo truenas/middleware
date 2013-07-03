@@ -255,7 +255,7 @@ def jail_export(request, id):
 
     return response
 
-jail_progress_estimated_time = 60
+jail_progress_estimated_time = 600
 jail_progress_start_time = 0
 jail_progress_percent = 0
 
@@ -330,7 +330,7 @@ def jail_progress(request):
 
         if not os.path.exists("/var/tmp/.jailcreate"):
             data['state'] = 'done'
-            jail_progress_estimated_time = 1800
+            jail_progress_estimated_time = 600
             jail_progress_start_time = 0
             jail_progress_percent = 0 
 
