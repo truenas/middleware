@@ -835,6 +835,7 @@ __EOF__
 	mkdir -p "${ixdir}"
 	cp ${jdir}/*.txz "${ixdir}/"
 	cp ${jdir}/usr/local/tmp/All/*.txz "${ixdir}/"
+	cp ${jdir}/var/db/pkg/* "${ixdir}/"
 }
 
 get_jail_packages64()
