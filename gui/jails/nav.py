@@ -446,7 +446,7 @@ class ViewStandardJails(TreeNode, Base):
 class ViewJails(TreeNode):
 
     gname = 'Jails.View'
-    name = _(u'View all Jails')
+    name = _(u'View Jails')
     icon = 'JailIcon'
     type = 'openjails'
 
@@ -458,7 +458,7 @@ class ViewJails(TreeNode):
 class ViewNullMountPoint(TreeNode):
 
     gname = 'NullMountPoint.View'
-    name = _(u'View all Storage')
+    name = _(u'View Storage')
     icon = 'ViewMountPointIcon'
     type = 'openjails'
 
