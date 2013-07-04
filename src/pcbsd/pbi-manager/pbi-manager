@@ -7524,9 +7524,13 @@ getZFSTank() {
 
 getZFSDataset() {
   local _chkDir="$(realpath $1)"
+  if [ -n "${_chkDir}" ] ; then
+     _chkDir=${_chkDir%/}
+  fi
+
   while :
   do
-    local zData="$(zfs list|awk -v path="${_chkDir}" '$5 ~ path { print $1 }')"
+    local zData="$(zfs list|awk -v path="${_chkDir}" '$5 == path { print $1 }')"
     if [ -n "$zData" ] ; then
        echo "$zData"|awk '{ print $1 }'
        return 0
