@@ -91,6 +91,7 @@ class Base(object):
         jail_node_view = TreeNode()
 
         jail_node_view.name = _('Edit')
+        jail_node_view.gname = 'Edit'
         jail_node_view.type = 'editobject'
         jail_node_view.view = 'jail_edit'
         jail_node_view.kwargs = {'id': jail.id}
@@ -113,6 +114,7 @@ class Base(object):
         storage_node_view = TreeNode()
 
         storage_node_view.name = _('%s' % nmp.destination)
+        storage_node_view.gname = nmp.id
         storage_node_view.type = 'editobject'
         storage_node_view.view = 'jail_storage_view'
         storage_node_view.kwargs = {'id': nmp.id}
@@ -126,6 +128,7 @@ class Base(object):
         storage_node_add = TreeNode()
 
         storage_node_add.name = _('Add Storage')
+        storage_node_add.gname = 'Add'
         storage_node_add.type = 'editobject'
         storage_node_add.view = 'jail_storage_add'
         storage_node_add.kwargs = {'jail_id': jail.id}
@@ -139,6 +142,7 @@ class Base(object):
         storage_node_add = TreeNode()
 
         storage_node_add.name = _('Make Directory')
+        storage_node_add.gname = 'MakeDirectory'
         storage_node_add.type = 'editobject'
         storage_node_add.view = 'jail_mkdir'
         storage_node_add.kwargs = {'id': jail.id}
@@ -173,6 +177,7 @@ class ViewJailsConfiguration(TreeNode):
 
 class ViewLinuxJails(TreeNode, Base):
 
+    gname = 'LinuxJails'
     name = _(u'Linux Jails')
     icon = u'LinuxJailIcon'
     skip = True
@@ -218,6 +223,7 @@ class ViewLinuxJails(TreeNode, Base):
 
 class ViewPluginJails(TreeNode, Base):
 
+    gname = 'PluginJails'
     name = _(u'Plugin Jails')
     icon = u'PluginJailIcon'
 
@@ -304,6 +310,7 @@ class ViewPluginJails(TreeNode, Base):
 
                 plugin_node_add = TreeNode()
                 plugin_node_add.name = _('Install Plugin')
+                plugin_node_add.gname = 'InstallPlugin'
                 plugin_node_add.type = 'editobject'
                 plugin_node_add.view = 'plugin_install'
                 plugin_node_add.kwargs = {'jail_id': jail.id}
@@ -348,6 +355,7 @@ class ViewPluginJails(TreeNode, Base):
 
 class ViewPortJails(TreeNode, Base):
 
+    gname = 'PortJails'
     name = _(u'Port Jails')
     icon = u'PortJailIcon'
 
@@ -392,6 +400,7 @@ class ViewPortJails(TreeNode, Base):
 
 class ViewStandardJails(TreeNode, Base):
 
+    gname = 'StandardJails'
     name = _(u'Standard Jails')
     icon = u'StandardJailIcon'
 
