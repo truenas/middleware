@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2013-07-02 06:56+0200\n"
+"PO-Revision-Date: 2013-07-03 07:26+0200\n"
 "Last-Translator: zadd3l <vzadd3l@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
@@ -467,11 +467,11 @@ msgstr "Rsync qua SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Push"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Pull"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -484,12 +484,12 @@ msgstr "Ký tự $ chỉ được dùng như ký tự cuối"
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Tên bạn chưa kí tự không cho phép(%s)"
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "Tên đầy đủ của bạn có kí tự không được phép(%s)"
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -499,15 +499,16 @@ msgid "Username"
 msgstr "Tên đăng nhập"
 
 #: account/forms.py:223
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Yêu cầu phải có. Tối đa 30 ký tự. Chỉ dùng chữ cái, số và các ký tự @/./+/-/_"
+"Yêu cầu phải có. Tối đa 16 ký tự. Chỉ dùng chữ cái, số và các ký tự .(dấu "
+"chấm),-(gạch ngang),_(gạch dưới)"
 
 #: account/forms.py:226
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Giá trị này chỉ chấp nhận các chữ, số và các ký tự @/./+/-/_."
+msgstr ""
+"Giá trị này chỉ chấp nhận các chữ, số và các ký tự .(dấu chấm),-(gạch "
+"ngang),_(gạch dưới)"
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -536,11 +537,11 @@ msgstr "Vô hiệu hóa đăng nhập"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
-msgstr ""
+msgstr "Khóa người dùng"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Tạo nhóm chính mới cho người dùng"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -548,21 +549,19 @@ msgstr "Nhóm chính"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
-msgstr ""
+msgstr "Khóa công khai của SSH"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Thư mục gốc"
+msgstr "Chế độ Thư mục gốc"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
 msgstr "Nhóm phụ"
 
 #: account/forms.py:347
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Tên đăng nhập này đã tồn tại."
+msgstr "Tên đăng nhập với uid này đã tồn tại."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -586,7 +585,7 @@ msgstr "Thư mục Home phải bắt đầu bằng /mnt/ hoặc là /nonexistent
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Một người dùng không thể thuộc quá 64 nhóm phụ"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
@@ -603,23 +602,20 @@ msgid "This field is required."
 msgstr "Mục này là bắt buộc"
 
 #: account/forms.py:632
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Thư mục Home phải bắt đầu bằng /mnt/"
+msgstr "Thư mục Home phải bắt đầu bằng /mnt/ hoặc là /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
 msgstr "Cho phép lặp lại GIDs"
 
 #: account/forms.py:739
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Tên đăng nhập này đã tồn tại."
+msgstr "Tên nhóm này đã tồn tại."
 
 #: account/forms.py:759
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Tên đăng nhập này đã tồn tại."
+msgstr "Tên nhóm với gid này đã tồn tại"
 
 #: account/forms.py:772
 msgid "Member users"
@@ -647,7 +643,7 @@ msgstr "Bạn nhập không đúng mật khẩu cũ. Vui lòng nhập lại."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr ""
+msgstr "Bạn có muốn xóa tất cả người dùng thuộc về nhóm chính này không?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
@@ -689,7 +685,7 @@ msgstr "Mật khẩu UNIX đã làm rối"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Mật khẩu SMB được hash"
 
 #: account/models.py:105
 msgid "Primary Group ID"
@@ -728,9 +724,8 @@ msgid "Account"
 msgstr ""
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Tài khoản của tôi"
+msgstr "Tài khoản Quản trị"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -741,7 +736,7 @@ msgstr "Thay đổi mật khẩu"
 #: account/nav.py:24 templates/account/changeform.html:2
 #: templates/account/index.html:3
 msgid "Change Admin User"
-msgstr "Thay đổi mật khẩu tài khoản Admin (tài khoản quản trị hệ thống)"
+msgstr "Thay đổi người quản trị hệ thống(Admin)"
 
 #: account/views.py:95
 msgid "Password successfully updated."
@@ -762,7 +757,7 @@ msgstr "Các nhóm đã cập nhật thành công."
 #: freeadmin/forms.py:114
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Người dùng %s đúng"
 
 #: freeadmin/forms.py:149
 #, python-format
@@ -771,12 +766,12 @@ msgstr ""
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "Đường dẫn phải nằm trong một volume được mount"
 
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
-msgstr ""
+msgstr "Lỗi: %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
@@ -784,9 +779,9 @@ msgid "Add %s"
 msgstr "Thêm  %s"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "Xem tất cả %s"
+msgstr "Xem %s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
@@ -803,21 +798,21 @@ msgstr "Tắt"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "%s trả lại dữ liệu trống"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "Không thể đọc %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr ""
+msgstr "Lỗi xảy ra khi unserializing từ %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Không thể xem trạng thái hiện tại "
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
@@ -826,12 +821,12 @@ msgstr "%s đã cập nhật thành công."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
-msgstr "Khởi động lại dịch vụ đã không thành công."
+msgstr "Khởi động lại dịch vụ không thành công."
 
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
-msgstr "Đã xóa thành công %s."
+msgstr "%s Đã xóa thành công"
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
@@ -858,59 +853,59 @@ msgstr "NIC"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "Bạn không thể cấu hình nhiều giao diện với địa chỉ IP giống nhau (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Bạn phải điền địa chỉ IPv4 "
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Bạn phải chọn mặt nạ mạng IPv4"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Bạn phải chỉ ra IPv6"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Bạn phải chọn mặt nạ mạng IPv6"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Bạn phải chọn giữa IPv4 và IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Địa chỉ loopback không phải là máy chủ tên miền hợp pháp"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Địa chỉ không rõ ràng không phải là địa chỉ tên miền hợp pháp"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr ""
+msgstr "Đây không phải là địa chỉ máy chủ tên miền hợp pháp"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "Mạng 160.254/16 không phải là máy chủ tên miền"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Phải điền máy chủ 2 trước khi điền máy chủ 3"
+msgstr "Phải điền máy chủ tên miền 2 trước khi điền máy chủ tên miền 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "Cần thiết khi sử dụng máy chủ 3"
+msgstr "Cần thiết khi sử dụng máy chủ tên miền 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Phải điền máy chủ 1 trước khi điền máy chủ 3"
+msgstr "Phải điền máy chủ tên miền 1 trước khi điền máy chủ tên miền 3"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Phải điền máy chủ 1 trước khi điền máy chủ 2"
+msgstr "Phải điền máy chủ tên miền 1 trước khi điền máy chủ tên miền 2"
 
 #: network/forms.py:229
 msgid "Parent Interface"
@@ -923,11 +918,11 @@ msgstr "Định dạng tên phải là vlanXX với XX là các chữ số tự 
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "Phần đuôi của VLAN là 1 - 4095 được thêm"
 
 #: network/forms.py:275
 msgid "Physical NICs in the LAGG"
-msgstr "Cạc mạng trong LAGG "
+msgstr "Card mạng trong LAGG "
 
 #: network/forms.py:286
 msgid "LAGG Physical NIC"
@@ -936,27 +931,27 @@ msgstr ""
 #: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Mạng '%s' không chính xác, thiếu CIDR."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "Bạn phải điền địa chỉ IPV4 cho mỗi alias"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "Bạn phải chọn mặt nạ mạng IPV4 cho mỗi alias"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "Bạn phải điền địa chỉ IPv6 cho mỗi alias"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "Bạn phải chọn mặt nạ mạng IPv6 cho mỗi alias"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "Bạn phải chọn IPV4 hoặc IPv6 cho mỗi alias"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
@@ -981,15 +976,15 @@ msgstr "Gateway mặc định cho IPv6"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr "Máy chủ 1"
+msgstr "Máy chủ tên miền 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr "Máy chủ 2"
+msgstr "Máy chủ tên miền 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr "Máy chủ 3"
+msgstr "Máy chủ tên miền 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:22
 #: templates/network/index.html:2
@@ -1015,7 +1010,7 @@ msgstr "DHCP"
 #: network/models.py:96
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
-msgstr ""
+msgstr "Khi có thể, dùng địa chỉ IP và gateway được cấp từ DHCP"
 
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
@@ -1024,7 +1019,7 @@ msgstr "địa chỉ IPv4"
 
 #: network/models.py:108 network/models.py:224
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "Mặt nạ mạng của IPv4"
 
 #: network/models.py:112
 msgid "Auto configure IPv6"
@@ -1032,14 +1027,12 @@ msgstr "Tự động cấu hình IPv6"
 
 #: network/models.py:113
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
-"Khi được bật, sử dụng DHCP để nhận địa chỉ IPv4, gateway mặc định và các "
-"thông số khác"
+msgstr "Khi có thể, tự động cấu hình địa chỉ IPv6 qua rtsol(8)"
 
 #: network/models.py:116 network/models.py:228
 #: templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "Địa chỉ IPv6"
 
 #: network/models.py:125 network/models.py:237
 msgid "IPv6 Prefix Length"
@@ -1048,16 +1041,16 @@ msgstr ""
 #: network/models.py:130 network/models.py:358
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Các tùy chọn"
 
 #: network/models.py:156 network/models.py:212 network/models.py:310
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "giao diện"
 
 #: network/models.py:157 templates/network/index.html:8
 msgid "Interfaces"
-msgstr ""
+msgstr "Các giao diện"
 
 #: network/models.py:253 templates/services/iscsi_targets.html:6
 msgid "Alias"
@@ -1070,7 +1063,7 @@ msgstr ""
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Giao diện ảo"
 
 #: network/models.py:266
 #, fuzzy
@@ -1080,11 +1073,11 @@ msgstr "Định dạng tên phải là vlanXX với XX là các chữ số tự 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
 msgid "Physical Interface"
-msgstr ""
+msgstr "Giao diện vật lý"
 
 #: network/models.py:274 templates/network/vlan.html:6
 msgid "VLAN Tag"
-msgstr ""
+msgstr "Đuôi VLAN"
 
 #: network/models.py:278 network/models.py:392 services/models.py:86
 #: services/models.py:916 storage/models.py:211 storage/models.py:352
@@ -1092,51 +1085,51 @@ msgstr ""
 #: templates/network/vlan.html:7 templates/system/cronjob.html:4
 #: templates/system/smarttest.html:6
 msgid "Description"
-msgstr ""
+msgstr "Miêu tả"
 
 #: network/models.py:292 templates/network/index.html:23
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:293
 msgid "VLANs"
-msgstr ""
+msgstr "Các VLAN"
 
 #: network/models.py:314
 msgid "Protocol Type"
-msgstr ""
+msgstr "Loại giao thức"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Kết hợp đường truyền"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Các đường truyền kết hợp"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "Nhóm giao diện LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "Số ưu tiên LAGG"
 
 #: network/models.py:354
 msgid "Physical NIC"
-msgstr ""
+msgstr "NIC vật lý"
 
 #: network/models.py:384
 msgid "Destination network"
-msgstr ""
+msgstr "Mạng đích"
 
 #: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Gateway"
 
 #: network/models.py:397
 msgid "Static Route"
-msgstr ""
+msgstr "Route tĩnh"
 
 #: network/models.py:398 templates/network/index.html:18
 msgid "Static Routes"
@@ -1148,11 +1141,11 @@ msgstr ""
 
 #: network/nav.py:14 templates/network/index.html:28
 msgid "Network Summary"
-msgstr ""
+msgstr "Tóm tắt thông tin mạng"
 
 #: network/nav.py:41
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Tạo đường truyền kết hợp"
 
 #: network/nav.py:50
 msgid "View Link Aggregations"
@@ -1362,11 +1355,11 @@ msgstr ""
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "Trường này bắt buộc để \"Cho phép duyệt thư mục chính\""
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Mục này bắt buộc cho \"Thư mục chính\""
 
 #: services/forms.py:106
 #, fuzzy
@@ -1393,19 +1386,19 @@ msgstr "Khởi động lại dịch vụ đã không thành công."
 
 #: services/forms.py:169
 msgid "File Permission"
-msgstr ""
+msgstr "Bộ quyền của file"
 
 #: services/forms.py:170
 msgid "Directory Permission"
-msgstr ""
+msgstr "Bộ quyền của thư mục"
 
 #: services/forms.py:200
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Giá trị này phải từ 1024 tới 65535, mặc định là 0"
 
 #: services/forms.py:210
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "Giá trị này phải từ 1024 tới 65535, mặc định là 0"
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
@@ -1413,7 +1406,7 @@ msgstr ""
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Mục này bắt buộc khi dùng đăng nhập nặc danh"
 
 #: services/forms.py:242
 msgid "The ftp service failed to start."
@@ -1496,7 +1489,7 @@ msgstr ""
 
 #: services/forms.py:498 services/models.py:598
 msgid "Secret"
-msgstr ""
+msgstr "Bí mật"
 
 #: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
