@@ -547,6 +547,28 @@ require([
         }
     }
 
+    jail_nat_toggle = function() {
+        var nat = registry.byId("id_jail_nat");
+        var defaultrouter_ipv4 = registry.byId("id_jail_defaultrouter_ipv4");
+        var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
+        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+
+        var jail_nat = nat.get("value");
+        if (jail_nat == 'on') {
+            defaultrouter_ipv4.set("disabled", true);
+            defaultrouter_ipv6.set("disabled", true);
+            bridge_ipv4.set("disabled", false);
+            bridge_ipv6.set("disabled", false);
+
+        } else {
+            defaultrouter_ipv4.set("disabled", false);
+            defaultrouter_ipv6.set("disabled", false);
+            bridge_ipv4.set("disabled", true);
+            bridge_ipv6.set("disabled", true);
+        }
+    }
+   
     mpAclChange = function(acl) {
       var mode = registry.byId("id_mp_mode");
       if(acl.get('value') === false) {

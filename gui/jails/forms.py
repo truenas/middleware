@@ -185,8 +185,10 @@ class JailCreateForm(ModelForm):
 #        'jail_archive',
         'jail_ipv4',
         'jail_bridge_ipv4',
+        'jail_defaultrouter_ipv4',
         'jail_ipv6',
         'jail_bridge_ipv6',
+        'jail_defaultrouter_ipv6',
         'jail_script',
         'jail_vnet',
         'jail_nat'
@@ -199,10 +201,8 @@ class JailCreateForm(ModelForm):
             'jail_status',
             'jail_alias_ipv4',
             'jail_alias_bridge_ipv4',
-            'jail_defaultrouter_ipv4',
             'jail_alias_ipv6',
-            'jail_alias_bridge_ipv6',
-            'jail_defaultrouter_ipv6'
+            'jail_alias_bridge_ipv6'
         )
 
     def __init__(self, *args, **kwargs):
@@ -222,6 +222,9 @@ class JailCreateForm(ModelForm):
         )
         self.fields['jail_vnet'].widget.attrs['onChange'] = (
             "jail_vnet_toggle();"
+        )
+        self.fields['jail_nat'].widget.attrs['onChange'] = (
+            "jail_nat_toggle();"
         )
 
         high_ipv4 = None
@@ -453,36 +456,39 @@ class JailCreateForm(ModelForm):
         if os.path.exists(createfile):
             os.unlink(createfile)
 
-        jail_bridge_ipv4 = self.cleaned_data.get('jail_bridge_ipv4')
-        jail_bridge_ipv6 = self.cleaned_data.get('jail_bridge_ipv6')
-        jail_vnet = self.cleaned_data.get('jail_vnet')
-        jail_nat = self.cleaned_data.get('jail_nat')
 
-        jail_set_args = {}
-        jail_set_args['jail'] = jail_host
-        jail_flags = WARDEN_FLAGS_NONE
-        if jail_bridge_ipv4:
-            jail_flags |= WARDEN_SET_FLAGS_BRIDGE_IPV4
-            jail_set_args['bridge-ipv4'] = jail_bridge_ipv4
-            jail_set_args['flags'] = jail_flags
-            try:
-                w.set(**jail_set_args)
-            except Exception as e:
-                self.errors['__all__'] = self.error_class([_(e.message)])
-                return
+        for key in ('jail_bridge_ipv4', 'jail_bridge_ipv6', \
+            'jail_defaultrouter_ipv4', 'jail_defaultrouter_ipv6'):
+            jail_set_args = {}
+            jail_set_args['jail'] = jail_host
+            jail_flags = WARDEN_FLAGS_NONE
+            val = self.cleaned_data.get(key, None)
+            if val:
+                if key == 'jail_bridge_ipv4':
+                    jail_flags |= WARDEN_SET_FLAGS_BRIDGE_IPV4
+                    jail_set_args['bridge-ipv4'] = val
 
-        jail_set_args = {}
-        jail_set_args['jail'] = jail_host
-        jail_flags = WARDEN_FLAGS_NONE
-        if jail_bridge_ipv6:
-            jail_flags |= WARDEN_SET_FLAGS_BRIDGE_IPV6
-            jail_set_args['bridge-ipv6'] = jail_bridge_ipv6
-            jail_set_args['flags'] = jail_flags
-            try:
-                w.set(**jail_set_args)
-            except Exception as e:
-                self.errors['__all__'] = self.error_class([_(e.message)])
-                return
+                elif key == 'jail_bridge_ipv6':
+                    jail_flags |= WARDEN_SET_FLAGS_BRIDGE_IPV6
+                    jail_set_args['bridge-ipv6'] = val
+
+                elif key == 'jail_defaultrouter_ipv4':
+                    jail_flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4
+                    jail_set_args['defaultrouter-ipv4'] = val
+
+                elif key == 'jail_defaultrouter_ipv6':
+                    jail_flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6
+                    jail_set_args['defaultrouter-ipv6'] = val
+
+                jail_set_args['flags'] = jail_flags
+                try:
+                    w.set(**jail_set_args)
+                except Exception as e:
+                    self.errors['__all__'] = self.error_class([_(e.message)])
+                    return
+
+        jail_nat = self.cleaned_data.get('jail_nat', None)
+        jail_vnet = self.cleaned_data.get('jail_vnet', None)
 
         jail_set_args = {}
         jail_set_args['jail'] = jail_host
