@@ -31,10 +31,10 @@
     {% endblock %}
     <tr>
         <td>
-            <button class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
+            <button id="btn_{{ verbose_name}}_Ok" class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
                 {% trans "Yes" %}
             </button>
-            <button data-dojo-type="dijit.form.Button" class="cancelform">
+            <button id="btn_{{ verbose_name}}_Cancel" data-dojo-type="dijit.form.Button" class="cancelform">
                 {% trans "Cancel" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                     cancelDialog(this);
