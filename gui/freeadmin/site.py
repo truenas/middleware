@@ -33,8 +33,9 @@ class FreeAdminSite(object):
         self._registry = {}
         self.v1_api = Api(api_name='v1.0')
 
-    def register(self, model_or_iterable, admin_class=None,
-            freeadmin=None, **options):
+    def register(
+        self, model_or_iterable, admin_class=None, freeadmin=None, **options
+    ):
         """
         Registers the given model(s) with the given admin class.
 
@@ -57,22 +58,27 @@ class FreeAdminSite(object):
         else:
             for model in model_or_iterable:
                 if model._meta.abstract:
-                    log.warn("Model %r is abstract and thus cannot be registered",
+                    log.warn(
+                        "Model %r is abstract and thus cannot be registered",
                         model)
                     return None
                 if model in self._registry:
-                    log.debug("Model %r already registered, overwriting...", model)
+                    log.debug(
+                        "Model %r already registered, overwriting...",
+                        model)
 
                 # If we got **options then dynamically construct a subclass of
                 # admin_class with those **options.
                 if options:
-                    # For reasons I don't quite understand, without a __module__
+                    # For reasons I don't quite understand, without a __module_
                     # the created class appears to "live" in the wrong place,
                     # which causes issues later on.
                     options['__module__'] = __name__
-                    admin_class = type("%sAdmin" % model.__name__,
+                    admin_class = type(
+                        "%sAdmin" % model.__name__,
                         (admin_class, ),
-                        options)
+                        options
+                    )
 
                 # Instantiate the admin class to save in the registry
                 admin_obj = admin_class(c=freeadmin, model=model, admin=self)
@@ -95,7 +101,7 @@ class FreeAdminSite(object):
             if model not in self._registry:
                 raise NotRegistered('The model %s is not registered' % (
                     model.__name__,
-                    ))
+                ))
             del self._registry[model]
 
     def has_permission(self, request):
@@ -154,7 +160,8 @@ class FreeAdminSite(object):
             return update_wrapper(wrapper, view)
 
         # Admin-site-wide views.
-        urlpatterns = patterns('',
+        urlpatterns = patterns(
+            '',
             url(r'^$',
                 wrap(self.adminInterface),
                 name='index'),
@@ -174,7 +181,8 @@ class FreeAdminSite(object):
 
         # Add in each model's views.
         for model_admin in self._registry.itervalues():
-            urlpatterns += patterns('',
+            urlpatterns += patterns(
+                '',
                 url(r'^%s/%s/' % (
                     model_admin.app_label,
                     model_admin.module_name,
@@ -182,7 +190,8 @@ class FreeAdminSite(object):
                     include(model_admin.urls))
             )
 
-        urlpatterns += patterns('',
+        urlpatterns += patterns(
+            '',
             url(r'^api/',
                 include(self.v1_api.urls)),
         )
@@ -242,8 +251,11 @@ class FreeAdminSite(object):
                 # Skip dismissed alerts
                 if msgid in dismisseds:
                     continue
-                if (status == 'WARN' and current == 'OK') or \
-                  status == 'CRIT' and current in ('OK', 'WARN'):
+                if (
+                    (status == 'WARN' and current == 'OK') or
+                    status == 'CRIT' and
+                    current in ('OK', 'WARN')
+                ):
                     current = status
             return HttpResponse(current)
         else:
@@ -270,11 +282,11 @@ class FreeAdminSite(object):
 
             return render(request, "freeadmin/alert_status.html", {
                 'alerts': alerts,
-                })
+            })
         else:
             return HttpResponse(
                 _("It was not possible to retrieve the current status")
-                )
+            )
 
     @never_cache
     def alert_dismiss(self, request):
@@ -292,7 +304,7 @@ class FreeAdminSite(object):
                 alert = Alert.objects.create(
                     message_id=msgid,
                     dismiss=True,
-                    )
+                )
         return JsonResp(request, message="OK")
 
 site = FreeAdminSite()
