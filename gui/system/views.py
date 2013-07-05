@@ -632,6 +632,8 @@ class MyServer(xmlrpclib.ServerProxy):
 def terminal(request):
 
     sid = int(request.POST.get("s", 0))
+    jid = request.POST.get("jid", 0)
+    shell = request.POST.get("shell", "")
     k = request.POST.get("k")
     w = int(request.POST.get("w", 80))
     h = int(request.POST.get("h", 24))
@@ -640,9 +642,10 @@ def terminal(request):
     alive = False
     for i in range(3):
         try:
-            alive = multiplex.proc_keepalive(sid, w, h)
+            alive = multiplex.proc_keepalive(sid, jid, shell, w, h)
             break
-        except:
+        except Exception, e:
+            log.error("%s", e)
             notifier().restart("webshell")
             time.sleep(0.5)
 

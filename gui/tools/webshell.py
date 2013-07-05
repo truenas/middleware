@@ -144,8 +144,6 @@ def main(argv):
 
 class Terminal:
 
-    version = '1.0'
-
     def __init__(self, w, h):
         self.w = w
         self.h = h
@@ -1290,15 +1288,20 @@ class Multiplex:
         self.signal_stop = 1
         self.thread.join()
 
-    def proc_keepalive(self, sid, w, h):
+    def proc_keepalive(self, sid, jid, shell, w, h):
         if not sid in self.session:
+            if not shell:
+                shell = self.cmd
             # Start a new session
             self.session[sid] = {
+                'jid': jid,
+                'shell': shell,
                 'state': 'unborn',
                 'term': Terminal(w, h),
                 'time': time.time(),
                 'w': w,
-                'h': h}
+                'h': h,
+            }
             return self.proc_spawn(sid)
         elif self.session[sid]['state'] == 'alive':
             self.session[sid]['time'] = time.time()
@@ -1322,6 +1325,7 @@ class Multiplex:
     def proc_spawn(self, sid):
         # Session
         self.session[sid]['state'] = 'alive'
+        shell = self.session[sid]['shell']
         w, h = self.session[sid]['w'], self.session[sid]['h']
         # Fork new process
         try:
@@ -1347,14 +1351,21 @@ class Multiplex:
                         '/usr/local/sbin'),
                     'LANG': ls[0] + '.UTF-8',
                     'HOME': '/root',
-                    'SHELL': self.cmd,
+                    'SHELL': shell,
                 }
 
                 libc = cdll.LoadLibrary('libc.so.7')
                 buff = create_string_buffer(len(self.cmd) + 1)
                 buff.value = self.cmd
                 libc.setproctitle(byref(buff))
-                os.execve(self.cmd, ['bash'], env)
+                if self.session[sid]['jid']:
+                    os.execve(
+                        "jexec %d %s" % (self.session[sid]['jid'], shell),
+                        shell.split("/")[-1:],
+                        env
+                    )
+                else:
+                    os.execve(self.cmd, shell.split("/")[-1:], env)
             except (IOError, OSError), e:
                 log.error("Impossible to start a subshell: %s", e)
             #self.proc_finish(sid)
