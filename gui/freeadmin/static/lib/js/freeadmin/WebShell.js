@@ -3,7 +3,6 @@ define([
   "dojo/_base/lang",
   "dojo/_base/array",
   "dojo/_base/window",
-  "dojo/cookie",
   "dojo/dom",
   "dojo/on",
   "dojo/request/xhr",
@@ -12,7 +11,6 @@ define([
   lang,
   dArray,
   dWindow,
-  cookie,
   dom,
   on,
   xhr,
@@ -89,7 +87,7 @@ define([
           },
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': cookie('csrftoken')
+            'X-CSRFToken': CSRFToken
           },
           sync: false,
           preventCache: true,
