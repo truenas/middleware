@@ -65,11 +65,13 @@ define([
             }, this.treeNode);
 
             this.textfield = new TextBox({
+                id: path.name + "_textBox",
                 value: path.value,
                 name: path.name,
             }, this.pathField);
 
             browse = new Button({
+                id: path.name + "_openClose",
                 label: 'Browse',
                 onClick: function() {
                     var dialog = getDialog(path);
