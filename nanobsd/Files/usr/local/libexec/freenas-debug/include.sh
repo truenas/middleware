@@ -26,8 +26,8 @@
 #
 #####################################################################
 
-. /etc/rc.freenas
-. /etc/rc.conf.local
+test -e /etc/rc.freenas && . /etc/rc.freenas
+test -e /etc/rc.conf.local && . /etc/rc.conf.local
 
 : ${FREENAS_DEBUG_FILE:="/var/tmp/freenas-debug.txt"}
 : ${FREENAS_DEBUG_MODULEDIR:="/usr/local/libexec/freenas-debug"}
@@ -100,7 +100,11 @@ section_footer()
 
 freenas_header()
 {
-	section_header "$(cat $VERSION_FILE)"
+	if [ -e "$VERSION_FILE" ] ; then
+        section_header "$(cat $VERSION_FILE)"
+    else
+        section_header "no version file found"
+    fi
 
 	desc=$(sysctl -nd kern.ostype)
 	out=$(sysctl -n kern.ostype)
