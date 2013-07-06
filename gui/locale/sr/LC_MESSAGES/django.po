@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-07-04 22:08+0200\n"
+"PO-Revision-Date: 2013-07-05 16:09+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -3222,7 +3222,7 @@ msgstr "Pogledaj oblast datoteke"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
@@ -4043,19 +4043,19 @@ msgstr "dan u mesecu"
 
 #: storage/forms.py:1269
 msgid "Method"
-msgstr ""
+msgstr "Metod"
 
 #: storage/forms.py:1271
 msgid "Quick"
-msgstr ""
+msgstr "Brzo"
 
 #: storage/forms.py:1272
 msgid "Full with zeros"
-msgstr ""
+msgstr "Pun sa nulama"
 
 #: storage/forms.py:1273
 msgid "Full with random data"
-msgstr ""
+msgstr "Pun sa nasumičnim podacima"
 
 #: storage/models.py:50
 msgid "File System Type"
@@ -4491,7 +4491,7 @@ msgstr ""
 
 #: storage/views.py:740
 msgid "Disk has been removed."
-msgstr ""
+msgstr "Disk je uklonjen."
 
 #: storage/views.py:766
 msgid "The volume has been successfully detached"
@@ -4511,14 +4511,12 @@ msgid "Language (Require UI reload)"
 msgstr "Jezik (Zahteva ponovno učitavanje korisničkog interfejsa)"
 
 #: system/forms.py:214
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Ova vrednost mora biti izmedju 0 i 65535, uključujući i njih."
+msgstr "Morate navesti broj izmedju 1 i 65535, uključujući i njih."
 
 #: system/forms.py:216
-#, fuzzy
 msgid "Number is required."
-msgstr "Ovo polje je obavezno."
+msgstr "Broj je obavezan."
 
 #: system/forms.py:245
 msgid "Force"
@@ -4559,7 +4557,7 @@ msgstr "SHA256 zbir za sliku"
 
 #: system/forms.py:538
 msgid "Invalid firmware"
-msgstr ""
+msgstr "Nevažeći firmver"
 
 #: system/forms.py:544
 msgid "Invalid checksum"
@@ -4998,6 +4996,8 @@ msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
+"Ova opcija uzrokuje da primjemni rsync podesi odredišne dozvole da budu iste "
+"kao dozvole izvora"
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
@@ -5624,19 +5624,19 @@ msgstr "Podešavanja za dinamički DNS"
 
 #: templates/services/core.html:56
 msgid "FTP Settings"
-msgstr ""
+msgstr "FTP podešavanja"
 
 #: templates/services/core.html:69
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "ISCSI podešavanja"
 
 #: templates/services/core.html:80
 msgid "LDAP Settings"
-msgstr ""
+msgstr "LDAP podešavanja"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
-msgstr ""
+msgstr "NFS podešavanja"
 
 # dodatna komponenta - dodatak
 #: templates/services/core.html:103 templates/services/core.html.py:105
@@ -5653,7 +5653,7 @@ msgstr "Rsync Podešavanja"
 
 #: templates/services/core.html:128
 msgid "SNMP Settings"
-msgstr ""
+msgstr "SNMP podešavanja"
 
 #: templates/services/core.html:139
 msgid "S.M.A.R.T. Settings"
@@ -5661,11 +5661,11 @@ msgstr "S.M.A.R.T. Podešavanja"
 
 #: templates/services/core.html:150
 msgid "SSH Settings"
-msgstr ""
+msgstr "SSH podešavanja"
 
 #: templates/services/core.html:161
 msgid "TFTP Settings"
-msgstr ""
+msgstr "TFTP podešavanja"
 
 #: templates/services/core.html:172
 msgid "UPS Settings"
@@ -5685,7 +5685,7 @@ msgstr "Jezgro"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
-msgstr ""
+msgstr "iSCSI upravljanje"
 
 #: templates/services/iscsi.html:8
 msgid "Portals"
@@ -5701,7 +5701,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
-msgstr ""
+msgstr "Ciljevi"
 
 #: templates/services/iscsi.html:38
 msgid "Extents"
