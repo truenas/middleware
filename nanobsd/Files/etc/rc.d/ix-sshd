@@ -25,9 +25,8 @@ generate_sshd()
     local cmd cfg
     cfg=/etc/ssh/sshd_config
 
-    for file in $AVAHI_SFTP_SERVICE $AVAHI_SSH_SERVICE; do
-        if srv_enabled ssh; then
-	    cat > $file <<EOF
+	if srv_enabled ssh; then
+		cat > $AVAHI_SFTP_SERVICE <<EOF
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
@@ -38,10 +37,20 @@ generate_sshd()
   </service>
 </service-group>
 EOF
+		cat > $AVAHI_SSH_SERVICE <<EOF
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">%h</name>
+  <service>
+    <type>_ssh._tcp</type>
+    <port>22</port>
+  </service>
+</service-group>
+EOF
 	else
-	    rm -f $file
-        fi
-    done
+		rm -f $AVAHI_SFTP_SERVICE $AVAHI_SSH_SERVICE
+	fi
 
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ssh ORDER BY -id LIMIT 1" | \
