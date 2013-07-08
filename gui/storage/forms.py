@@ -1825,7 +1825,7 @@ class Dataset_Destroy(Form):
                 len(self.datasets)
             )
             self.fields['cascade'] = forms.BooleanField(
-                initial=True,
+                initial=False,
                 label=label)
 
 
