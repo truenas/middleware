@@ -1397,7 +1397,7 @@ require([
             } else if(item.action == 'displayprocs') {
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {
-                registry.byId("shell_dialog").show();
+                new WebShell();
             } else if(item.type == 'opensharing') {
                 Menu.openSharing(item.gname);
             } else if(item.type == 'openstorage') {
@@ -1472,98 +1472,6 @@ require([
             }
         });
         registry.byId("menupane").set('content', mytree);
-
-        var shell = new ESCDialog({
-            id: "shell_dialog",
-            content: '<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>',
-            style: "min-height:400px;background-color: black;",
-            title: 'Shell',
-            region: 'center',
-            onShow: function() {
-
-                function handler(msg,value) {
-                    switch(msg) {
-                    case 'conn':
-                        break;
-                    case 'disc':
-                        registry.byId("shell_dialog").hide();
-                        break;
-                    case 'curs':
-                        cy=value;
-                        //scroll(cy);
-                        break;
-                    }
-                }
-
-                try {
-                    _webshell.start();
-                } catch(e) {
-                    var size = registry.byId("webshellSize").get("value").split('x');
-                    _webshell=new WebShell({
-                        node: "shell_output",
-                        handler: handler,
-                        width: size[0],
-                        height: size[1],
-                        onUpdate: function() {
-                            if(this.sizeChange) {
-                                shell._size();
-                                shell._position();
-                                this.sizeChange = false;
-                            }
-                        }
-                    });
-                    _webshell.start();
-                }
-
-            },
-            onHide: function(e) {
-                if(_webshell) {
-                    _webshell.stop();
-                    delete _webshell;
-                    _webshell = undefined;
-                }
-            }
-        }, "shell_dialog_holder");
-        var paste = new Button({
-            label: gettext('Paste'),
-            onClick: function() {
-
-                var pasteDialog = new Dialog({
-                    title: gettext("Paste"),
-                    href: '/system/terminal/paste/',
-                    onShow: function() {
-                        _webshell._stopConnections();
-                    },
-                    onHide: function() {
-                        _webshell._startConnections();
-                        dom.byId("shell_output").focus();
-                    }
-                });
-                pasteDialog.show();
-
-            }
-        });
-        shell.domNode.appendChild(paste.domNode);
-        var size = new Select({
-            id: "webshellSize",
-            name: "size",
-            options: [
-                { label: "80x25", value: "80x25", selected: true },
-                { label: "80x30", value: "80x30" },
-                { label: "80x50", value: "80x50" },
-                { label: "132x25", value: "132x25" },
-                { label: "132x43", value: "132x43" },
-                { label: "132x50", value: "132x50" }
-            ],
-            onChange: function(val) {
-                var xy = val.split('x');
-                _webshell.width = xy[0];
-                _webshell.height = xy[1];
-                _webshell.sizeChange = true;
-                dom.byId("shell_output").focus();
-            }
-        });
-        shell.domNode.appendChild(size.domNode);
 
     });
 });

@@ -4,19 +4,35 @@ define([
   "dojo/_base/array",
   "dojo/_base/window",
   "dojo/dom",
+  "dojo/dom-construct",
   "dojo/on",
   "dojo/request/xhr",
-  "dojox/timing"
+  "dijit/_base/manager",
+  "dijit/_Widget",
+  "dijit/Dialog",
+  "dijit/form/Button",
+  "dijit/form/Select",
+  "dijit/form/Textarea",
+  "dojox/timing",
+  "freeadmin/ESCDialog"
   ], function(declare,
   lang,
   dArray,
   dWindow,
   dom,
+  domConst,
   on,
   xhr,
-  timing) {
+  manager,
+  _Widget,
+  Dialog,
+  Button,
+  Select,
+  Textarea,
+  timing,
+  ESCDialog) {
 
-  var WebShell = declare("freeadmin.WebShell", [], {
+  var WebShell = declare("freeadmin.WebShell", [_Widget], {
     width: 80,
     height: 24,
     qtime: 100,
@@ -24,7 +40,6 @@ define([
     cy: 0,
     kb: [],
     connections: [],
-    onUpdate: undefined,
     sizeChange: true,
     node: "",
     sid: "",
@@ -32,14 +47,120 @@ define([
     shell: "",
     islocked: false,
     isactive: false,
-    handler: "",
+    handler: function handler(msg,value) {
+      switch(msg) {
+      case 'conn':
+        break;
+      case 'disc':
+        this._dialog.hide();
+        break;
+      case 'curs':
+        cy=value;
+        //scroll(cy);
+        break;
+      }
+    },
     constructor: function(/*Object*/ kwArgs){
       lang.mixin(this, kwArgs);
 
       this.sid = ""+Math.round(Math.random()*1000000000);
       this.qtimer = new timing.Timer(1);
       this.qtimer.onTick = lang.hitch(this, this.update);
-      this.div = dom.byId(this.node);
+    },
+    postCreate: function() {
+      var me = this;
+      this._content = domConst.toDom('<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>');
+      this._dialog = ESCDialog({
+        style: "min-height:400px;background-color: black;",
+        baseClass: "Terminal",
+        content: me._content,
+        title: 'Shell',
+        region: 'center',
+        onShow: function() {
+          me.start();
+        },
+        onHide: function(e) {
+          me.stop();
+          setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
+        }
+      });
+      this._dialog.startup();
+
+      var paste = new Button({
+        label: gettext('Paste'),
+        onClick: function() {
+
+          var pasteDialog;
+          var text = new Textarea({
+            style: {width: "200px"}
+          });
+
+          var ok = new Button({
+            label: "OK",
+            onClick: function() {
+              me.paste(text.get("value"));
+              pasteDialog.hide();
+            }
+          });
+
+          var cancel = new Button({
+            label: "Cancel",
+            onClick: function() {
+              pasteDialog.hide();
+            }
+          });
+
+          pasteDialog = new Dialog({
+            title: gettext("Paste"),
+            onShow: function() {
+              me._stopConnections();
+            },
+            onHide: function() {
+              me._startConnections();
+              me._content.focus();
+              text.destroy();
+              ok.destroy();
+              cancel.destroy();
+              setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
+            }
+          });
+          pasteDialog.domNode.appendChild(text.domNode);
+          pasteDialog.domNode.appendChild(ok.domNode);
+          pasteDialog.domNode.appendChild(cancel.domNode);
+          pasteDialog.show();
+
+        }
+      });
+      this._dialog.domNode.appendChild(paste.domNode);
+
+      var size = new Select({
+        name: "size",
+        options: [
+          { label: "80x25", value: "80x25", selected: true },
+          { label: "80x30", value: "80x30" },
+          { label: "80x50", value: "80x50" },
+          { label: "132x25", value: "132x25" },
+          { label: "132x43", value: "132x43" },
+          { label: "132x50", value: "132x50" }
+        ],
+        onChange: function(val) {
+          var xy = val.split('x');
+          me.width = xy[0];
+          me.height = xy[1];
+          me.sizeChange = true;
+          dom.byId("shell_output").focus();
+        }
+      });
+      this._dialog.domNode.appendChild(size.domNode);
+
+      this._dialog.show();
+    },
+    onUpdate: function() {
+      if(this.sizeChange) {
+        this._dialog._size();
+        this._dialog._position();
+        this.sizeChange = false;
+      }
     },
     start: function() {
       this.qtimer.start();
@@ -104,7 +225,7 @@ define([
           cy = data.substring(45, 48);
           html = data.substring(52);
           if(html.length > 0) {
-            me.div.innerHTML = html;
+            me._content.innerHTML = html;
             me.handler('curs', cy);
             qtime = 100;
           } else {

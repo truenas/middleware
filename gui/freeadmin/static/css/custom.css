@@ -68,10 +68,10 @@ a:hover {
 #shell_dialog_underlay {
     background-color:#000;
 }
-#shell_dialog .dijitDialogPaneContent {
+.Terminal .dijitDialogPaneContent {
     background-color:#000 !important;
 }
-#shell_dialog pre {
+.Terminal pre {
     border:none !important;
 }
 #log_dialog .dijitDialogPaneContent {
