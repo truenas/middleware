@@ -11,8 +11,10 @@ exports.testPage = function() {
 	var content = put(page, 'body div.header $\
 			+div.content', 'Hello World');
 	put(content, 'div.left', 'Left');
+	put.addNamespace('foo', 'http://foo.com/foo');
+	put(content, 'foo|bar');
 	put(content, 'div.right', {innerHTML: 'Right <b>text</b>'});
-	assert.equal(page.toString(), '<!DOCTYPE html>\n<html><head><script src=\"test.js\"></script><link href=\"test.css\"><link href=\"test2.css\"></head><body><div class=\"header\">Hello World</div><div class=\"content\"><div class=\"left\">Left</div><div class=\"right\">Right <b>text</b></div></div></body></html>');
+	assert.equal(page.toString(), '<!DOCTYPE html>\n<html><head><script src=\"test.js\"></script><link href=\"test.css\"><link href=\"test2.css\"></head><body><div class=\"header\">Hello World</div><div class=\"content\"><div class=\"left\">Left</div><foo:bar></foo:bar><div class=\"right\">Right <b>text</b></div></div></body></html>');
 };
 exports.testStream = function() {
 	//put.indentation = '  ';

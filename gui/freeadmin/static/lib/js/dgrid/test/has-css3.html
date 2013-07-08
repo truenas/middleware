@@ -3,10 +3,10 @@
 	<head>
 		<meta charset="utf-8">
 		<title>has-css3 tests</title>
-		<meta name="viewport" content="width=570" />
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<meta name="viewport" content="width=570">
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			require(["dgrid/util/has-css3", "put-selector/put"], function(has, put){
 				var resultsNode = document.getElementById("results");
 				put(resultsNode, "div", "css-transitions: " + has("css-transitions"));

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Test Grid Complex Columns</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta charset="utf-8">
+		<title>Test Column Resizer with Complex Columns</title>
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../../dojo/resources/dojo.css";
 			@import "../../css/skins/claro.css";
 			@import "../../css/dgrid.css"; /* this ensures that our rules come after dgrid.css */
@@ -32,9 +32,9 @@
 			}
 		</style>
 
-		<script type="text/javascript" src="../../../dojo/dojo.js" 
+		<script src="../../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			require(["dgrid/OnDemandGrid", "dgrid/ColumnSet", "dgrid/Selection", "dgrid/Keyboard", "dgrid/extensions/ColumnResizer", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"],
 				function(Grid, ColumnSet, Selection, Keyboard, ColumnResizer, declare, testStore){
 					window.grid = new (declare([Grid, ColumnSet, Selection, Keyboard, ColumnResizer]))({

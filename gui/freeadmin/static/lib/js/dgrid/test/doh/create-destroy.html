@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Create/Destroy Tests</title>
+		<script src="../../../dojo/dojo.js" data-dojo-config="async: true"></script>
+		<script>
+			require([
+				"doh",
+				"dgrid/List",
+				"dgrid/Grid",
+				"dgrid/editor",
+				"dijit/registry",
+				"dijit/form/TextBox",
+				"dgrid/test/data/base",
+				"dojo/domReady!"
+			], function(doh, List, Grid, editor, registry, TextBox){
+				var body = document.body;
+				
+				doh.register("create-destroy", [
+					function noParamsList(doh){
+						// Test creating a List w/ no constructor params
+						var list = window.list = new List();
+						
+						body.appendChild(list.domNode);
+						list.startup();
+						list.renderArray([ "foo", "bar", "baz" ]);
+						doh.is(3, list.contentNode.children.length,
+							"List's contentNode has expected number of children after renderArray");
+						
+						list.destroy();
+						doh.isNot(body, list.parentNode,
+							"List is removed from body after destroy");
+					},
+					function editorGrid(doh){
+						// Test creating a Grid w/ editor plugins, then destroy and count widgets
+						doh.is(0, registry.length,
+							"dijit registry should have no entries before creating grid");
+						var grid = new Grid({
+							columns: {
+								order: "step",
+								name: editor({}, TextBox, "dblclick"),
+								description: editor({ label: "what to do", sortable: false }, TextBox)
+							}
+						});
+						body.appendChild(grid.domNode);
+						grid.startup();
+						grid.renderArray(testOrderedData);
+						
+						doh.is(testOrderedData.length + 1, registry.length,
+							"dijit registry has 1 entry per row plus 1 shared editor widget");
+						
+						grid.destroy();
+						doh.is(0, registry.length,
+							"dijit registry has 0 entries after destroy");
+					}
+				]);
+				doh.run();
+			});
+		</script>
+	</head>
+	<body></body>
+</html>

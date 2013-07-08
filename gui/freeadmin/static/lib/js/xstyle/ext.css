@@ -1,4 +1,5 @@
 x-function { 
+	extends: require(xstyle/xstyle);
 	scrollbar: require(xstyle/ext/scrollbar);
 }
 x-pseudo {
@@ -6,5 +7,7 @@ x-pseudo {
 	unsupported: require(xstyle/ext/supported);
 }
 x-property {
-	-x-widget: require(xstyle/ext/widget);
-}			
+	widget: require(xstyle/ext/widget);
+	-x-content: require(xstyle/ext/generate);
+	onclick: require(xstyle/ext/event);
+}

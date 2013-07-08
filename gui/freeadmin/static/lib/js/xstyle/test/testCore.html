@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8">
+<title>Test Core Functionality</title>
+<style>
+test-variable=var: 163px;
+test-expression=var: test;
+test-component {
+	display: block;
+}
+test-component {
+	=>
+		h1 (label) { color: red},
+		p (content) {
+			color: green;
+			width: var(test-variable);
+		},
+		div (test-expression);
+	label=var: Label;
+	content=var: cont asdfkadskf anskldf naskldfn adsklnf dsklanfl kadsnent;
+	main-color=var: #00f;
+	background-color: #ddd;
+	display: block;
+	width: 200px;
+	height: 200px;
+	color: var(main-color);
+	border: 4px solid var(main-color);
+}
+
+with-content = test-component{
+	background-color: green;
+	main-color: #aaa;
+	label: new title;
+}
+/* a mixin can extend another element, using it's tag and properties when being created */
+mixin = div {
+	width: 200px;
+}
+hello-world = {
+	mixin: 300px;
+}
+body {
+	=> test-component {
+		label: Hi there;
+		content: some content;
+	},
+	hello-world, with-content;
+}
+</style>
+
+<script src="../../dojo/dojo.js" data-dojo-config="async:true, deps:['xstyle/main']"></script>
+
+</head>
+<body>
+
+<div class="widget"></div>
+
+</body>
+</html>

@@ -1,1 +1,1 @@
-define(["xstyle/./css"], function(main){return main;});
+define(["xstyle/./main"], function(main){return main;});

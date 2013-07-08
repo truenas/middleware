@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="utf-8">
 		<title>Test JsonRest Tree with objects repeated in different places in hierarchy</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/skins/claro.css";
 			h2 {
@@ -14,9 +14,9 @@
 				margin: 10px;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js"
+		<script src="../../dojo/dojo.js"
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			function deleteSelected(){
 				for(var i in grid.selection){
 					testStore.remove(i);
@@ -29,11 +29,11 @@
 				});
 			}
 			
-			require(["dgrid/List", "dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/Keyboard",
+			require(["dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/Keyboard",
 				"dgrid/editor", "dgrid/tree", "dojo/_base/declare",
 				"dojo/store/JsonRest", "dojo/store/Observable", "dojo/store/Cache", "dojo/store/Memory",
 				"dojo/store/util/SimpleQueryEngine", "dojo/domReady!"], 
-			function(List, Grid, Selection, Keyboard, editor, tree, declare, JsonRest, Observable, Cache, Memory, SimpleQueryEngine){
+			function(Grid, Selection, Keyboard, editor, tree, declare, JsonRest, Observable, Cache, Memory, SimpleQueryEngine){
 				var testStore = window.testStore = Observable(Cache(JsonRest({
 					target:"./data/rest.php?", 
 					idProperty: "id",

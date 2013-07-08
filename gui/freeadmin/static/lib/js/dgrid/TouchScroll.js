@@ -270,10 +270,10 @@ function(declare, on, touchUtil, has, put){
 			}
 		}
 		
-		// Squelch the event, and scroll the area if beyond the threshold.
-		evt.preventDefault();
-		
 		if(curr.scrollbarsShown && (curr.scrollableX || curr.scrollableY)){
+			// If area can be scrolled, prevent default behavior and perform scroll.
+			evt.preventDefault();
+			
 			nx = curr.scrollableX ? curr.startX + touch.pageX : 0;
 			ny = curr.scrollableY ? curr.startY + touch.pageY : 0;
 			

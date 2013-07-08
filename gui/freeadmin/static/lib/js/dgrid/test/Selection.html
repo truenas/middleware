@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="utf-8">
 		<title>Test Selection</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/skins/nihilo.css";
 			.heading {
@@ -18,9 +18,9 @@
 				margin: 10px;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			require(["dojo/_base/lang", "dojo/_base/declare", "dojo/_base/array", "dojo/json", "dojo/on",
 					"dgrid/OnDemandGrid", "dgrid/editor","dgrid/Selection", "dgrid/CellSelection", "dgrid/Keyboard",
 					"dgrid/test/data/base", "dojo/domReady!"],
@@ -102,6 +102,13 @@
 			<button type="button" onclick="gridRowNavigation.set('selectionMode', 'single');">Single</button>
 			<button type="button" onclick="gridRowNavigation.set('selectionMode', 'multiple');">Multiple</button>
 			<button type="button" onclick="gridRowNavigation.set('selectionMode', 'extended');">Extended</button>
+			<button type="button" onclick="gridRowNavigation.set('selectionMode', 'toggle');">Toggle</button>
+		</div>
+		<div>Set allowTextSelection:
+			<button type="button" onclick="gridRowNavigation.set('allowTextSelection', true);">Always allow</button>
+			<button type="button" onclick="gridRowNavigation.set('allowTextSelection', false);">Always prevent</button>
+			<button type="button" onclick="gridRowNavigation.set('allowTextSelection', undefined);">Default</button>
+			(default = allowed only when selectionMode == none)
 		</div>
 		<div id="grid-row-navigation"></div>
 		<h2>A grid with cell-level selection (default selection mode of "extended")</h2>
@@ -117,6 +124,7 @@
 			<button type="button" onclick="gridCellNavigationNone.set('selectionMode', 'single');">Single</button>
 			<button type="button" onclick="gridCellNavigationNone.set('selectionMode', 'multiple');">Multiple</button>
 			<button type="button" onclick="gridCellNavigationNone.set('selectionMode', 'extended');">Extended</button>
+			<button type="button" onclick="gridCellNavigationNone.set('selectionMode', 'toggle');">Toggle</button>
 		</div>
 		<div id="grid-cell-navigation-none"></div>
 		<h2>A grid with row-level selection and cell-level navigation</h2>

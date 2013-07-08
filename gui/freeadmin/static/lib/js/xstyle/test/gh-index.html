@@ -1,0 +1,101 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+	<meta charset="UTF-8">
+	<title>Try xstyle</title>
+	<style>
+	@import './gh-ui.css';
+	body{
+		=>
+			h1 'xstyle',
+			h2 'An extensible CSS framework that fully leverages modern browsers for building web applications with a single, simple, consistent technology.',
+			div.button {
+				=> span.icon.icon-download,
+					span 'Download xstyle'; 
+				background-color: #bbb;
+				margin-right: 160px;
+			},
+			a[href=http://kriszyp.github.com/xstyle/].button 'View xstyle project and documentation' {
+				background-color: #ddd;		
+			},
+			div.tiles {
+				=>
+					div.tile {
+						=>	span.icon '</>' {font-weight: bold;}, 
+							span.title 'Element generation',
+							div.content 'Create UI elements directly in CSS';
+						background-color: #acf;
+					},
+					div.tile {
+						=> span.icon.icon-exchange, 
+							span.title 'Data Binding',
+							div.content 'Bind data to elements with declarative syntax in stylesheets';
+						background-color: #bde;
+					},
+					div.tile {
+						=> span.icon.icon-resize-full, 
+							span.title 'Extensible CSS',
+							div.content 'Create your extensions to CSS';
+						background-color: #cdd;
+					},
+					div.tile {
+						=> span.icon.icon-th-list, 
+							span.title 'Variables',
+							div.content 'Use CSS variables';
+						background-color: #bdf;
+					},
+					div.tile {
+						=> span.icon.icon-cog, 
+							span.title 'Expressions',
+							div.content 'Use expressions with data bindings directly in stylesheets';
+						background-color: #cef;
+					},
+					div.tile {
+						=> span.icon.icon-certificate, 
+							span.title 'CSS shimming',
+							div.content 'Write modern CSS, with shims for older browsers';
+						background-color: #ded;
+					};
+			},
+			div.more-explanation 'With xstyle you
+can define data bindings, UI elements, variables, extensions, and shims to create modern
+web applications with an elegantly simple, stylesheet driven approach. Try it out now:',
+			div.column {=>
+				h2 'data:',
+				textarea[data-continuous].live-source(converter/data),
+				span.error(converter/data/error);
+			},
+			div.column {=>
+				h2 'presentation (xstyle CSS):',
+				textarea[data-continuous].live-source(converter/ui),
+				span.error(converter/ui/error); 
+			},
+			div.column {=>
+				h2 'result: #target',
+				div#target; /*[title='The result of the data rendered according to the presentation CSS'];*/ 
+			},
+			div.more-explanation ' 
+Modern web browsers have increasingly moved towards relying on CSS to define the 
+presentation of the user interface. Furthermore, CSS is fundamentally built on the 
+powerful paradigms of declarative, function reactive programming, providing similar types of
+expressiveness as dependency injection systems. By adding a few simple CSS constructs,
+xstyle bridges the gap to provide the capabilities for composition and modular extensions that
+allow virtually unlimited expression of user interfaces, with a familiar syntax. Xstyle goes
+beyond the capabilities of preprocessor because it runs in the browser and extensions
+can interact with the DOM. Xstyle prevents the common abuse of HTML for UI, by allowing
+the definition of UI elements with the presentation definition, where they belong.';
+	}
+	</style>
+	
+	<script src="../../dojo/dojo.js" data-dojo-config="async:true"></script>
+	<script>
+		require(['xstyle/xstyle'], function(layout){
+		});
+	
+	</script>
+	
+	</head>
+	<body>
+		<a href="https://github.com/kriszyp/xstyle"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>	
+	</body>
+</html>

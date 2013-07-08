@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Test renderRow and legacy functionality</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570"/>
-		<style type="text/css">
+		<meta charset="utf-8">
+		<title>Test Declarative Dijit Layout</title>
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dijit/themes/claro/document.css";
 			@import "../../dijit/themes/claro/claro.css";
 			@import "../css/skins/claro.css";
@@ -17,16 +17,16 @@
 				width: 99%;
 				height: 99%;
 			}
-			.bcLeft, .bcRight {
+			.bcLeft {
 				width: 300px;
 			}
 			.dijitDialog {
 				width: 500px;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			// callbacks for button clicks
 			function showDeclDialog(){ dlgDecl.show(); }
 			
@@ -43,23 +43,21 @@
 			require(["dgrid/OnDemandGrid",
 				"dgrid/extensions/DijitRegistry",
 				"dijit/Dialog",
-				"dojo/_base/lang",
 				"dojo/_base/declare",
 				"dojo/parser",
 				// widgets only used declaratively
 				"dijit/layout/BorderContainer",
 				"dijit/layout/TabContainer",
-				"dijit/layout/ContentPane",
 				"dijit/Toolbar",
 				"dijit/form/Button",
 				// non-returns
 				"dgrid/test/data/base",
 				"dojo/domReady!"
-			], function(Grid, DijitRegistry, Dialog, lang, declare, parser){
+			], function(Grid, DijitRegistry, Dialog, declare, parser){
 			
 				var CustomGrid = declare([Grid, DijitRegistry]);
 				
-				// simply passing columns via data-dojo-props, don't want GridFromHtml
+				// Simply passing columns via data-dojo-props, don't want GridFromHtml
 				window.dgrid = { Grid: CustomGrid };
 				
 				parser.parse();
@@ -75,26 +73,20 @@
 					Show declarative dialog
 				</span>
 			</div>
-			<div data-dojo-type="dijit.layout.ContentPane"
-				data-dojo-props="id:'cpLeft', region:'left'">
-				<!-- left: dgrid inside contentpane -->
-				<div data-dojo-type="dgrid.Grid" id="gridBCCP" class="bcLeft"
-					data-dojo-props="store: testStore, columns: getGridCols()"></div>
+			<!-- left: dgrid as direct child -->
+			<div data-dojo-type="dgrid.Grid" id="gridBCCP" class="bcLeft"
+				data-dojo-props="region: 'left', splitter: true, store: testStore, columns: getGridCols()">
 			</div>
 			<!-- center: tabcontainer -->
 			<div data-dojo-type="dijit.layout.TabContainer" class="bcCenter" id="tc"
 				data-dojo-props="region: 'center'">
-				<!-- initial tab: dgrid inside contentpane -->
-				<div data-dojo-type="dijit.layout.ContentPane"
-					data-dojo-props="id: 'tab1', title: 'Tab 1'">
-					<div data-dojo-type="dgrid.Grid" id="gridTab1" class="gridTab"
-						data-dojo-props="store: testStore, columns: getGridCols()"></div>
+				<!-- initial tab: dgrid as direct child -->
+				<div data-dojo-type="dgrid.Grid" id="gridTab1" class="gridTab"
+					data-dojo-props="title: 'Tab 1', store: testStore, columns: getGridCols()">
 				</div>
-				<!-- tab 2: dgrid inside contentpane again, but not initially visible -->
-				<div data-dojo-type="dijit.layout.ContentPane"
-					data-dojo-props="id: 'tab2', title: 'Tab 2'">
-					<div data-dojo-type="dgrid.Grid" id="gridTab2" class="gridTab"
-						data-dojo-props="store: testStore, columns: getGridCols()"></div>
+				<!-- tab 2: dgrid as direct child again, but not initially visible -->
+				<div data-dojo-type="dgrid.Grid" id="gridTab2" class="gridTab"
+					data-dojo-props="title: 'Tab 2', store: testStore, columns: getGridCols()">
 				</div>
 			</div>
 		</div>

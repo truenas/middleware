@@ -6,10 +6,11 @@ define([
 	"dojo/on",
 	"dojo/aspect",
 	"dojo/has",
+	"dojo/query",
 	"./Grid",
 	"put-selector/put",
 	"dojo/_base/sniff"
-], function(kernel, lang, arrayUtil, Deferred, on, aspect, has, Grid, put){
+], function(kernel, lang, arrayUtil, Deferred, on, aspect, has, query, Grid, put){
 
 // Variables to track info for cell currently being edited (editOn only).
 var activeCell, activeValue, activeOptions;
@@ -18,7 +19,7 @@ function updateInputValue(input, value){
 	// common code for updating value of a standard input
 	input.value = value;
 	if(input.type == "radio" || input.type == "checkbox"){
-		input.checked = !!value;
+		input.checked = input.defaultChecked = !!value;
 	}
 }
 
@@ -50,7 +51,7 @@ function setProperty(grid, cellElement, oldValue, value, triggerEvent){
 	// Updates dirty hash and fires dgrid-datachange event for a changed value.
 	var cell, row, column, eventObject;
 	// test whether old and new values are inequal, with coercion (e.g. for Dates)
-	if(!(oldValue >= value && oldValue <= value)){
+	if((oldValue && oldValue.valueOf()) != (value && value.valueOf())){
 		cell = grid.cell(cellElement);
 		row = cell.row;
 		column = cell.column;
@@ -102,7 +103,7 @@ function setProperty(grid, cellElement, oldValue, value, triggerEvent){
 
 // intermediary frontend to setProperty for HTML and widget editors
 function setPropertyFromEditor(grid, column, cmp, triggerEvent) {
-	var value;
+	var value, id, editedRow;
 	if(!cmp.isValid || cmp.isValid()){
 		value = setProperty(grid, (cmp.domNode || cmp).parentNode,
 			activeCell ? activeValue : cmp._dgridLastValue,
@@ -112,6 +113,30 @@ function setPropertyFromEditor(grid, column, cmp, triggerEvent) {
 			activeValue = value;
 		}else{ // for always-on editors, update _dgridLastValue immediately
 			cmp._dgridLastValue = value;
+		}
+
+		if(cmp.type === "radio" && cmp.name && !column.editOn && column.field){
+			editedRow = grid.row(cmp);
+			
+			// Update all other rendered radio buttons in the group
+			query("input[type=radio][name=" + cmp.name + "]", grid.contentNode).forEach(function(radioBtn){
+				var row = grid.row(radioBtn);
+				// Only update _dgridLastValue and the dirty data if it exists
+				// and is not already false
+				if(radioBtn !== cmp && radioBtn._dgridLastValue){
+					radioBtn._dgridLastValue = false;
+					if(grid.updateDirty){
+						grid.updateDirty(row.id, column.field, false);
+					}
+				}
+			});
+			
+			// Also update dirty data for rows that are not currently rendered
+			for(id in grid.dirty){
+				if(editedRow.id !== id && grid.dirty[id][column.field]){
+					grid.updateDirty(id, column.field, false);
+				}
+			}
 		}
 	}
 }
@@ -191,6 +216,7 @@ function createSharedEditor(column, originalRenderCell){
 	// shared usage across an entire column (for columns with editOn specified).
 	
 	var cmp = createEditor(column),
+		grid = column.grid,
 		isWidget = cmp.domNode,
 		node = cmp.domNode || cmp,
 		focusNode = cmp.focusNode || node,
@@ -205,13 +231,23 @@ function createSharedEditor(column, originalRenderCell){
 	
 	function onblur(){
 		var parentNode = node.parentNode,
-			cell = column.grid.cell(node),
 			i = parentNode.children.length - 1,
 			options = { alreadyHooked: true },
-			renderedNode;
+			cell = grid.cell(node);
 		
+		// emit an event immediately prior to removing an editOn editor
+		on.emit(cell.element, "dgrid-editor-hide", {
+			grid: grid,
+			cell: cell,
+			column: column,
+			editor: cmp,
+			bubbles: true,
+			cancelable: false
+		});
 		// Remove the editor from the cell, to be reused later.
 		parentNode.removeChild(node);
+		
+		put(cell.element, "!dgrid-cell-editing");
 		
 		// Clear out the rest of the cell's contents, then re-render with new value.
 		while(i--){ put(parentNode.firstChild, "!"); }
@@ -226,7 +262,7 @@ function createSharedEditor(column, originalRenderCell){
 	
 	function dismissOnKey(evt){
 		// Contains logic for reacting to enter/escape keypresses to save/cancel edits.
-		// Returns boolean specifying whether this key event should dismiss the field.
+		// Calls `focusNode.blur()` in cases where field should be dismissed.
 		var key = evt.keyCode || evt.which;
 		
 		if(key == 27){ // escape: revert + dismiss
@@ -248,19 +284,19 @@ function createSharedEditor(column, originalRenderCell){
 	return cmp;
 }
 
-function showEditor(cmp, column, cell, value){
+function showEditor(cmp, column, cellElement, value){
 	// Places a shared editor into the newly-active cell in the column.
 	// Also called when rendering an editor in an "always-on" editor column.
 	
-	var grid = column.grid,
-		editor = column.editor,
-		isWidget = cmp.domNode;
+	var isWidget = cmp.domNode,
+		grid = column.grid;
 	
 	// for regular inputs, we can update the value before even showing it
 	if(!isWidget){ updateInputValue(cmp, value); }
 	
-	cell.innerHTML = "";
-	put(cell, cmp.domNode || cmp);
+	cellElement.innerHTML = "";
+	put(cellElement, ".dgrid-cell-editing");
+	put(cellElement, cmp.domNode || cmp);
 	
 	if(isWidget){
 		// For widgets, ensure startup is called before setting value,
@@ -277,7 +313,18 @@ function showEditor(cmp, column, cell, value){
 	cmp._dgridLastValue = value;
 	// if this is an editor with editOn, also update activeValue
 	// (activeOptions will have been updated previously)
-	if(activeCell){ activeValue = value; }
+	if(activeCell){ 
+		activeValue = value; 
+		// emit an event immediately prior to placing a shared editor
+		on.emit(cellElement, "dgrid-editor-show", {
+			grid: grid,
+			cell: grid.cell(cellElement),
+			column: column,
+			editor: cmp,
+			bubbles: true,
+			cancelable: false
+		});
+	}
 }
 
 function edit(cell) {
@@ -294,6 +341,8 @@ function edit(cell) {
 	var row, column, cellElement, dirty, field, value, cmp, dfd;
 	
 	if(!cell.column){ cell = this.cell(cell); }
+	if(!cell || !cell.element){ return null; }
+	
 	column = cell.column;
 	field = column.field;
 	cellElement = cell.element.contents || cell.element;
@@ -353,10 +402,10 @@ return function(column, editor, editOn){
 	
 	isWidget = typeof editor != "string";
 	
-	// warn for widgetArgs -> editorArgs; TODO: remove @ 1.0
+	// warn for widgetArgs -> editorArgs; TODO: remove @ 0.4
 	if(column.widgetArgs){
 		kernel.deprecated("column.widgetArgs", "use column.editorArgs instead",
-			"dgrid 1.0");
+			"dgrid 0.4");
 		column.editorArgs = column.widgetArgs;
 	}
 	

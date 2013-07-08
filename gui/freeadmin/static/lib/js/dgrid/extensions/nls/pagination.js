@@ -9,5 +9,8 @@ define({
 		jumpPage: "Jump to page"
 	},
 	es: true,
-	ja: true
+	fr: true,
+	pt: true,
+	ja: true,
+	sk: true
 });

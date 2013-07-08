@@ -65,3 +65,33 @@ the wiki repository, as indicated under the "Git Access" tab.
 
 In addition to the documentation on the wiki, if upgrading from a previous
 dgrid release, please be sure to read the changelog, found in CHANGES.md.
+
+# Community
+
+## Reporting Issues
+
+Bugs or enhancements can be filed by opening an issue in the
+[issue tracker on GitHub](https://github.com/SitePen/dgrid/issues?state=open).
+
+When reporting a bug, please provide the following information:
+
+* Affected browsers and Dojo versions
+* A clear list of steps to reproduce the problem
+* If the problem cannot be easily reproduced in an existing dgrid test page,
+  include a [Gist](https://gist.github.com/) with code for a page containing a
+  reduced test case
+
+If you would like to suggest a fix for a particular issue, you are welcome to
+fork dgrid, create a branch, and submit a pull request.  Please note that a
+[Dojo CLA](http://www.dojofoundation.org/about/cla) is required for any
+non-trivial modifications.
+
+## Getting Support
+
+Questions about dgrid usage can be discussed on the
+[dojo-interest mailing list](http://mail.dojotoolkit.org/mailman/listinfo/dojo-interest)
+or in the #dojo IRC channel on irc.freenode.net. Web interfaces are available
+from the [Dojo Toolkit Community page](https://dojotoolkit.org/community/).
+
+SitePen also offers [commercial support](https://www.sitepen.com/support/)
+for dgrid, as well as Dojo and a number of other JavaScript libraries.

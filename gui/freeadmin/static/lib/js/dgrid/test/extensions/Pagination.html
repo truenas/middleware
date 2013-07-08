@@ -37,10 +37,17 @@
 				right: 0;
 			}
 			
+			/* styles for columnset grid */
+			#gridColumnSet .dgrid-cell {
+				width: 100px;
+			}
+			#gridColumnSet .field-col4 {
+				width: 20em;
+			}
 		</style>
-		<script type="text/javascript" src="../../../dojo/dojo.js" 
+		<script src="../../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			// allow retrieving skin from GET param
 			var skin = "claro",
 				match = /\bskin=([^&]*)/.exec(location.search),
@@ -50,15 +57,19 @@
 			skinDep = "xstyle/css!dgrid/css/skins/" + skin + ".css";
 			
 			require([skinDep, "dgrid/Grid", "dgrid/extensions/Pagination",
-					"dgrid/Selection", "dgrid/Keyboard", "dgrid/GridFromHtml",
-					"dojo/_base/lang", "dojo/_base/declare", "dojo/dom-construct", "dojo/dom-form", "dgrid/test/data/base", "dojo/domReady!"],
-				function(skinResource, Grid, Pagination, Selection, Keyboard, GridFromHtml,
-						lang, declare, domConstruct, domForm, testStore){
+					"dgrid/Selection", "dgrid/Keyboard", "dgrid/ColumnSet", "dgrid/GridFromHtml",
+					"dojo/_base/lang", "dojo/_base/declare", "dojo/on", "dojo/dom-construct",
+					"dojo/dom-form", "dgrid/test/data/errorStores", "dgrid/test/data/base", "dojo/domReady!"],
+				function(skinResource, Grid, Pagination, Selection, Keyboard, ColumnSet, GridFromHtml,
+						lang, declare, on, domConstruct, domForm, errorStores, testStore){
+					
+					window.errorStores = errorStores; // for easy access by button handlers
 					
 					var CustomGrid = declare([Grid, Keyboard, Selection, Pagination]);
 					
 					getColumns = function(){
 						return {
+							id: "ID",
 							col1: 'Column 1',
 							col2: {label: 'Column2', sortable: false},
 							col3: 'Column 3',
@@ -77,22 +88,13 @@
 					
 					document.body.className = skin;
 					
-					window.grid2 = new CustomGrid({
-						store: testStore,
-						columns: getColumns2(),
-						pagingLinks: false,
-						pagingTextBox: true,
-						firstLastArrows: true,
-						pageSizeOptions: [10, 15, 25]
-					}, "grid2");
-					
-					window.gridfromhtml = new (declare([GridFromHtml, Keyboard, Selection, Pagination]))({
-						store: testStore
-					}, "gridfromhtml");
-					
 					function createGrid(args){
-						window.grid = new CustomGrid(
-							lang.mixin({ store: testAsyncStore, columns: getColumns() }, args),
+						window.grid = new CustomGrid(lang.mixin({
+									store: testAsyncStore,
+									columns: getColumns(),
+									noDataMessage: "No results.",
+									loadingMessage: "Loading..."
+								}, args),
 							"grid");
 					}
 					createGrid();
@@ -102,6 +104,7 @@
 						var args = domForm.toObject(form);
 						args.pagingLinks = +args.pagingLinks;
 						if (!args.previousNextArrows) { args.previousNextArrows = false; }
+						if (!args.showLoadingMessage) { args.showLoadingMessage = false; }
 						
 						// recreate grid using args from form
 						window.grid.destroy();
@@ -110,6 +113,41 @@
 						
 						return false;
 					};
+					
+					on(document.body, "dgrid-error", function(evt){
+						console.warn("error on grid: ", evt.grid.id, evt.error);
+					});
+					
+					// auto-height grid
+					var grid2 = window.grid2 = new CustomGrid({
+						store: testStore,
+						columns: getColumns2(),
+						pagingLinks: false,
+						pagingTextBox: true,
+						firstLastArrows: true,
+						rowsPerPage: 15,
+						pageSizeOptions: [10, 15, 25]
+					}, "grid2");
+					
+					// GridFromHtml
+					window.gridfromhtml = new (declare([GridFromHtml, Keyboard, Selection, Pagination]))({
+						store: testStore
+					}, "gridfromhtml");
+					
+					// ColumnSet grid
+					window.gridColumnSet = new (declare([Grid, Keyboard, Selection, ColumnSet, Pagination]))({
+						store: testStore,
+						columnSets: [
+							[[
+								{ label: "ID", field: "id" }
+							]], [[
+								{ label: "Column 1", field: "col1" },
+								{ label: "Column 3", field: "col3" },
+								{ label: "Column 4", field: "col4" },
+								{ label: "Column 5", field: "col5" }
+							]]
+						]
+					}, "gridColumnSet");
 				});
 		</script>
 	</head>
@@ -123,6 +161,8 @@
 				Show previous/next page arrows</label></div>
 			<div><label><input type="checkbox" name="pagingTextBox">
 				Show "jump-to" textbox</label></div>
+			<div><label><input type="checkbox" name="showLoadingMessage" checked>
+				Show loading message while loading data</label></div>
 			<div>
 				<label><input type="text" name="pagingLinks" value="2" size="1">
 					Number of neighboring page numbers to display to each side of current
@@ -133,10 +173,19 @@
 		<div id="grid"></div>
 		<div>Buttons to test changing column structure:
 			<button onclick="grid.set('columns', getColumns2());">New Structure</button>
-			<button onclick="grid.set('columns', getColumns());">Original</button>
-			<button onclick="grid.set('store', emptyStore);">Set to empty store</button>
-			<button onclick="grid.set('store', testStore);">Set to original store</button>
-			<button onclick="testStore.add({col1:'new', col2:true});">Add row to original store</button>
+			<button onclick="grid.set('columns', getColumns());">Original Structure</button>
+		</div>
+		<div>Buttons to test different stores:
+			<button onclick="grid.set('store', testAsyncStore);">Set to async store</button>
+			<button onclick="grid.set('store', testStore);">Set to sync store</button>
+			<button onclick="grid.set('store', emptyAsyncStore);">Set to async empty store</button>
+			<button onclick="grid.set('store', emptyStore);">Set to sync empty store</button>
+			<button onclick="grid.set('store', errorStores.asyncQuery);">Set to async error store</button>
+			<button onclick="grid.set('store', errorStores.query);">Set to sync error store</button>
+		</div>
+		<div>Buttons to test store operations:
+			<button onclick="grid.store.remove(5);">Delete item with id 5 from store</button>
+			<button onclick="grid.store.add({col1:'new', col2:true});">Add item to store</button>
 			<button onclick="grid.set('showFooter', !grid.get('showFooter'));">Toggle footer</button>
 		</div>
 		
@@ -154,5 +203,8 @@
 		<h2>An autoheight grid with the Pagination extension,
 			with a rows-per-page drop-down</h2>
 		<div id="grid2"></div>
+		
+		<h2>A grid with ColumnSets with the Pagination extension</h2>
+		<div id="gridColumnSet"></div>
 	</body>
 </html>

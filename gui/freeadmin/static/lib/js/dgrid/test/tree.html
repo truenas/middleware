@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Test Tree Grid</title>
 		<meta charset="utf-8">
+		<title>Test Tree Grid</title>
 		<meta name="viewport" content="width=570">
 		<style>
 			@import "../../dojo/resources/dojo.css";
@@ -95,7 +95,14 @@
 					function getTreeSelectorColumns(){
 						return [
 							selector({className: "selector"}),
-							tree({label:"Name", field:"name", sortable: false}),
+							tree({
+								label: "Name",
+								field: "name",
+								formatter: function(value){
+									return "<strong>" + value + "</strong>";
+								},
+								sortable: false
+							}),
 							editor({label: "Visited", field: "bool", sortable: false}, "checkbox"),
 							{label:"Type", field:"type", sortable: false},
 							{label:"Population", field:"population"},
@@ -159,7 +166,7 @@
 		<button id="edit-continent">Edit Europe</button>
 		<button id="move-rome-na">Move Rome to North America</button>
 		
-		<h2>Tree grid with checkbox selector to test select-all on children</h2>
+		<h2>Tree grid with formatter on tree column, and a checkbox selector to test select-all on children</h2>
 		<div id="treeSelector"></div>
 		<button id="resetColumns">Reset Columns</button> (to test column.init/destroy)
 		<h2>Tree grid with subRows</h2>

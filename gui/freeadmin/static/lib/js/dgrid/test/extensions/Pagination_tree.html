@@ -38,9 +38,9 @@
 			}
 			
 		</style>
-		<script type="text/javascript" src="../../../dojo/dojo.js" 
+		<script src="../../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			// allow retrieving skin from GET param
 			var skin = "claro",
 				match = /\bskin=([^&]*)/.exec(location.search),
@@ -91,8 +91,10 @@
 					}, "grid2");
 					
 					function createGrid(args){
-						window.grid = new CustomGrid(
-							lang.mixin({ store: testStore, columns: getColumns() }, args),
+						window.grid = new CustomGrid(lang.mixin({
+									store: testStore,
+									columns: getColumns()
+								}, args),
 							"grid");
 					}
 					createGrid();
@@ -102,6 +104,7 @@
 						var args = domForm.toObject(form);
 						args.pagingLinks = +args.pagingLinks;
 						if (!args.previousNextArrows) { args.previousNextArrows = false; }
+						if (!args.showLoadingMessage) { args.showLoadingMessage = false; }
 						
 						// recreate grid using args from form
 						window.grid.destroy();
@@ -123,6 +126,8 @@
 				Show previous/next page arrows</label></div>
 			<div><label><input type="checkbox" name="pagingTextBox">
 				Show "jump-to" textbox</label></div>
+			<div><label><input type="checkbox" name="showLoadingMessage" checked>
+				Show loading message while loading data</label></div>
 			<div>
 				<label><input type="text" name="pagingLinks" value="2" size="1">
 					Number of neighboring page numbers to display to each side of current

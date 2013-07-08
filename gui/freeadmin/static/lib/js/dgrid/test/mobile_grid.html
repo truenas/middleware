@@ -1,20 +1,19 @@
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 	<head>
-		<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"/>
-		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
 		<title>Mobile dgrid test</title>
 		<link rel="stylesheet" href="../../dojo/resources/dojo.css">
 		<link rel="stylesheet" href="../../dojox/mobile/themes/iphone/base.css">
 		<link rel="stylesheet" href="../css/skins/claro.css">
 		<link rel="stylesheet" href="../css/dgrid.css">
 
-		<script language="JavaScript" type="text/javascript">
-			var dojoConfig = { deps: [ "dojox/mobile", "dojox/mobile/parser", "dojox/mobile/compat" ], parseOnLoad: true, async: true }
+		<script>
+			var dojoConfig = { deps: [ "dojox/mobile", "dojox/mobile/parser", "dojox/mobile/compat" ], parseOnLoad: true, async: true };
 		</script>
-		<script type="text/javascript"  src="../../dojo/dojo.js"></script>
-		<script type="text/javascript">
+		<script  src="../../dojo/dojo.js"></script>
+		<script>
 			require(["dojo/on", "dgrid/OnDemandGrid", "dgrid/extensions/ColumnResizer", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"],
 				function(on, Grid, ColumnResizer, declare, testStore){
 					window.grid = new (declare([Grid, ColumnResizer]))({

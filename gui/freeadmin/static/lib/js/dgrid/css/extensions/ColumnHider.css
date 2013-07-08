@@ -1,13 +1,9 @@
 .dgrid-hider-toggle {
-	font-weight:normal;
+	background-position: 0 -192px;
 	cursor: pointer;
-}
-.dgrid-hider-toggle:hover {
-	font-weight: bold;
-}
-html.has-quirks .dgrid-header-scroll .dgrid-hider-toggle,
-html.has-ie-6 .dgrid-header-scroll .dgrid-hider-toggle {
-	font-size: 12px; /* override zeroed font-size for IE6/Quirks in dgrid.css */
+	position: absolute;
+	right: 0;
+	top: 0;
 }
 
 .dgrid-hider-menu {

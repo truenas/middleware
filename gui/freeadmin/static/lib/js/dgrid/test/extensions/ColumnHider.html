@@ -27,54 +27,87 @@
 				width: 150px;
 			}
 		</style>
-		<script type="text/javascript" src="../../../dojo/dojo.js" 
+		<script src="../../../dojo/dojo.js"
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
-			var columns1, columns2;
+		<script>
+			// Functions defined within require callback
+			var getColumns, getAltColumns, createGrid, destroyGrid;
+			
 			require(["dojo/_base/lang", "dojo/_base/declare",
 				"dgrid/OnDemandGrid", "dgrid/Selection",
-				"dgrid/extensions/ColumnHider", "dgrid/extensions/ColumnResizer",
-				"dgrid/test/data/base", "dojo/domReady!"],
-			function(lang, declare, Grid, Selection, ColumnHider, ColumnResizer, testStore){
+				"dgrid/extensions/ColumnHider", "dgrid/extensions/ColumnResizer", "dgrid/extensions/ColumnReorder",
+				"put-selector/put", "dgrid/test/data/base", "dojo/domReady!"],
+			function(lang, declare, Grid, Selection, ColumnHider, ColumnResizer, ColumnReorder, put, testStore){
 				var columns = {
 						col1: "Column 1Column1Column 1 Column 1",
 						col2: { label: "Column2 (unhidable)", sortable: false, unhidable: true },
-						col3: "Column3333333333333333333",
+						col3: {
+							label: "Column3 (initially hidden)",
+							hidden: true
+						},
 						col4: "Column 4",
 						col5: "Column 5"
 					},
-					columns1 = window.columns1 = lang.clone(columns),
-					columns2 = window.columns2 = [
+					altColumns = [
 						{ field: "col2", label: "Col2" },
 						// test setting unhidable *and* hidden (i.e. not in menu, not displayed)
 						{ field: "col4", label: "Col4", sortable: false, hidden: true, unhidable: true },
 						{ field: "col1", label: "Col1" },
 						{ field: "col5" } // no label, to test fallback to field
 					],
+					grid,
+					gridResize,
+					gridReorder;
+				
+				getColumns = function(){
+					return lang.clone(columns);
+				};
+				
+				getAltColumns = function(){
+					return lang.clone(altColumns);
+				};
+				
+				createGrid = function(){
+					if(grid){
+						var next = grid.domNode.nextSibling;
+						grid.destroy();
+						document.body.insertBefore(put("div#grid"), next);
+					}
 					grid = window.grid = new (declare([Grid, Selection, ColumnHider]))({
 						store: testStore,
-						columns: columns1
-					}, "grid"),
-					gridresize = window.gridresize = new (declare([Grid, Selection, ColumnHider, ColumnResizer]))({
-						store: testStore,
-						columns: lang.clone(columns)
-					}, "gridresize");
+						columns: getColumns()
+					}, "grid");
+					
+					grid.on("dgrid-columnstatechange", function(evt){
+						console.log("Column for field " + evt.column.field + " is now " +
+							(evt.hidden ? "hidden" : "shown"));
+					});
+				};
 				
-				grid.on("dgrid-columnstatechange", function(evt){
-					console.log("Column for field " + evt.column.field + " is now " +
-						(evt.hidden ? "hidden" : "shown"));
-				});
+				createGrid();
+				
+				gridResize = window.gridResize = new (declare([Grid, Selection, ColumnHider, ColumnResizer]))({
+					store: testStore,
+					columns: lang.clone(columns)
+				}, "gridresize");
+				gridReorder = window.gridReorder = new (declare([Grid, Selection, ColumnReorder, ColumnHider]))({
+					store: testStore,
+					columns: lang.clone(columns)
+				}, "gridreorder");
 			});
 		</script>
 	</head>
 	<body class="claro">
 		<h2>A basic grid with the column hider plugin</h2>
 		<div id="grid"></div>
-		<div>Buttons to test changing column structure:
-			<button onclick="grid.set('columns', columns2);">New Structure</button>
-			<button onclick="grid.set('columns', columns1);">Original Structure</button>
+		<div>Buttons to test changing column structure and recreating grid:
+			<button onclick="grid.set('columns', getColumns());">Original Structure</button>
+			<button onclick="grid.set('columns', getAltColumns());">New Structure</button>
+			<button onclick="createGrid();">Recreate Grid</button>
 		</div>
 		<h2>Another grid w/ ColumnHider and ColumnResizer</h2>
 		<div id="gridresize"></div>
+		<h2>Another grid w/ ColumnHider and ColumnReorder</h2>
+		<div id="gridreorder"></div>
 	</body>
 </html>

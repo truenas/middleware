@@ -1,11 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
-	"http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="utf-8">
 		<title>GridFromHtml Tests</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/skins/claro.css";
 			body {
@@ -20,9 +19,9 @@
 				text-decoration: underline;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			var store; // defined later, Memory store containing data
 			
 			function getOrdinal(num){
@@ -69,9 +68,9 @@
 
 			require(["dgrid/GridFromHtml", "dgrid/OnDemandList",
 				"dojo/store/Memory", "dojo/store/Observable",
-				"dojo/_base/declare", "dojo/parser", "dojo/query",
+				"dojo/_base/declare", "dojo/parser",
 				"dgrid/test/data/base", "dojo/domReady!"],
-			function(GridFromHtml, OnDemandList, Memory, Observable, declare, parser, query){
+			function(GridFromHtml, OnDemandList, Memory, Observable, declare, parser){
 				
 				window.gridFromHtmlLegacyFormatter = new GridFromHtml({},
 					"gridFromHtmlLegacyFormatter");
@@ -135,7 +134,7 @@
 			</tr>
 		</table>
 		
-		<hr/>
+		<hr>
 		
 		<h2>2a: same as 1a, parsed from declarative markup (using a store)</h2>
 		<table id="gridDeclarativeLegacyFormatter" data-dojo-id="gridDeclarativeLegacyFormatter"
@@ -168,7 +167,7 @@
 			</tr>
 		</table>
 		
-		<hr/>
+		<hr>
 		
 		<h2>3a: Testing boolean property (un)specification in GridFromHtml</h2>
 		<table id="gridFromHtmlTestProps">

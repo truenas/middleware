@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<title>Test Keyboard Mixin</title>
 		<meta name="viewport" content="width=570">
-		<style type="text/css">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/skins/claro.css";
 			/* add styles to size this grid appropriately */
@@ -28,38 +28,30 @@
 				clear: both;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			var getFirstTarget; // function, defined within require callback
 			
-			require(["dgrid/List", "dgrid/Grid", "dgrid/Keyboard", "dojo/_base/declare", "dojo/on", "dojo/query", "put-selector/put", "dojo/domReady!"],
-			function(List, Grid, Keyboard, declare, on, query, put){
-				var data = [
-						{order: 1, name:"preheat", description:"Preheat your oven to 350F"},
-						{order: 2, name:"mix dry", description:"In a medium bowl, combine flour, salt, and baking soda"},
-						{order: 3, name:"mix butter", description:"In a large bowl, beat butter, then add the brown sugar and white sugar then mix"},
-						{order: 4, name:"mix together", description:"Slowly add the dry ingredients from the medium bowl to the wet ingredients in the large bowl, mixing until the dry ingredients are totally combined"},
-						{order: 5, name:"chocolate chips", description:"Add chocolate chips"},
-						{order: 6, name:"make balls", description:"Scoop up a golf ball size amount of dough with a spoon and drop in onto a cookie sheet"},
-						{order: 7, name:"bake", description:"Put the cookies in the oven and bake for about 10-14 minutes"},
-						{order: 8, name:"remove", description:"Using a spatula, lift cookies off onto wax paper or a cooling rack"},
-						{order: 9, name:"eat", description:"Eat and enjoy!"}
-					],
-					columns = {
-						order: "step", // give column a custom name
-						name: {},
-						description: {label: "what to do", sortable: false}
+			require(["dgrid/OnDemandList", "dgrid/OnDemandGrid", "dgrid/Keyboard", "dojo/_base/declare", "dojo/on", "dojo/query", "put-selector/put", "dgrid/test/data/base", "dojo/domReady!"],
+			function(OnDemandList, OnDemandGrid, Keyboard, declare, on, query, put){
+				var columns = {
+						col1: "Column 1",
+						col3: "Column 3",
+						col5: "Column 5"
 					},
-					KeyboardList = declare([List, Keyboard]),
-					KeyboardGrid = declare([Grid, Keyboard]),
+					KeyboardList = declare([OnDemandList, Keyboard]),
+					KeyboardGrid = declare([OnDemandGrid, Keyboard]),
 					list = window.list = new KeyboardList({
-						renderRow: function(item){ return put("div", item.name); }
+						store: testStore,
+						renderRow: function(item){ return put("div", item.col5); }
 					}, "list"),
 					grid = window.grid = new KeyboardGrid({
+						store: testStore,
 						columns: columns
 					}, "grid"),
 					rowGrid = window.rowGrid = new KeyboardGrid({
+						store: testStore,
 						columns: columns,
 						cellNavigation: false
 					}, "rowGrid");
@@ -68,10 +60,6 @@
 					return query(".dgrid-content .dgrid-cell", grid.domNode)[0] ||
 						query(".dgrid-content .dgrid-row", grid.domNode)[0];
 				};
-				
-				list.renderArray(data);
-				grid.renderArray(data);
-				rowGrid.renderArray(data);
 				
 				on(document.body, "dgrid-cellfocusin,dgrid-cellfocusout",
 					function(event){
@@ -104,6 +92,8 @@
 			</div>
 			<div>Focus header (no argument):
 				<button onclick="grid.focusHeader();">Cell-navigation Grid</button>
+				<button onclick="grid.set('columns', grid.columns); grid.focusHeader();">
+					Reset columns, then focus</button>
 			</div>
 		</div>
 	</body>

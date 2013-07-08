@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Test Grid Common Cases</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta charset="utf-8">
+		<title>Test Grid Common Cases with showHeader: false</title>
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/dgrid.css";
 			@import "../css/skins/claro.css";
@@ -63,9 +63,9 @@
 				width: 6em;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			require(["dojo/on", "dgrid/List", "dgrid/OnDemandGrid", "dgrid/tree", "dgrid/editor", "dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dijit/form/DateTextBox", "dijit/form/HorizontalSlider", "dijit/form/NumberSpinner", "dgrid/test/data/base", "dojo/domReady!"],
 				function(on, List, Grid, tree, editor, Selection, Keyboard, declare, DateTextBox, Slider, NumberSpinner, testStore){
 

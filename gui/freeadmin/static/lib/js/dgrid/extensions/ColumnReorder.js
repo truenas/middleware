@@ -8,7 +8,7 @@ define([
 	"put-selector/put",
 	"xstyle/css!../css/extensions/ColumnReorder.css"
 ], function(lang, declare, arrayUtil, on, query, DndSource, put){
-	var dndTypeRx = /-(\d+)(?:-(\d+))?$/; // used to determine subrow from dndType
+	var dndTypeRx = /(\d+)(?:-(\d+))?$/; // used to determine subrow from dndType
 	
 	// The following 2 functions are used by onDropInternal logic for
 	// retrieving/modifying a given subRow.  The `match` variable in each is
@@ -27,6 +27,18 @@ define([
 		}else{
 			grid.subRows[match[1]] = subRow;
 		}
+	}
+
+	// Builds a prefix for a dndtype value based on a grid id.
+	function makeDndTypePrefix(gridId) {
+		return "dgrid-" + gridId + '-';
+	}
+
+	// Removes the grid id prefix from a dndtype value.  This allows the grid id to contain
+	// a dash-number suffix.  This works only if a column is dropped on the grid from which it
+	// originated.  Otherwise, a dash-number suffix will cause the regex to match on the wrong values.
+	function stripIdPrefix(gridId, dndtype) {
+		return dndtype.slice(makeDndTypePrefix(gridId).length);
 	}
 	
 	var ColumnDndSource = declare(DndSource, {
@@ -48,7 +60,7 @@ define([
 		
 		onDropInternal: function(nodes){
 			var grid = this.grid,
-				match = dndTypeRx.exec(nodes[0].getAttribute("dndType")),
+				match = dndTypeRx.exec(stripIdPrefix(grid.id, nodes[0].getAttribute("dndType"))),
 				structureProperty = match[2] ? "columnSets" : "subRows",
 				oldSubRow = getMatchingSubRow(grid, match),
 				columns = grid.columns;
@@ -91,6 +103,10 @@ define([
 					// (since the inherited logic invoked above will have shifted cells).
 					setMatchingSubRow(grid, match, oldSubRow);
 					grid.renderHeader();
+					// After re-rendering the header, re-apply the sort arrow if needed.
+					if (this._sort && this._sort.length){
+						this.updateSortArrow(this._sort);
+					}
 				}
 			}, 0);
 		}
@@ -136,7 +152,7 @@ define([
 		},
 		
 		renderHeader: function(){
-			var dndTypePrefix = "dgrid-" + this.id + "-",
+			var dndTypePrefix = makeDndTypePrefix(this.id),
 				csLength, cs;
 			
 			this.inherited(arguments);

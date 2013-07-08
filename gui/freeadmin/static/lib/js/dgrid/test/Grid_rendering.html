@@ -1,11 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
-	"http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 	<head>
-		<title>Test renderRow and legacy functionality</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta charset="utf-8">
+		<title>Test get, formatter, and renderCell</title>
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/skins/claro.css";
 			body {
@@ -20,9 +19,9 @@
 				text-decoration: underline;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			var store; // defined later, Memory store containing data
 			
 			function getOrdinal(num){
@@ -65,6 +64,14 @@
 				return div;
 			}
 			
+			var testFormatterScope = {
+				foo: function(item){
+					return "<h3>" + this.word + " " + item.order + ": " + item.name + "</h3><p>" +
+						item.description + "</p>";
+				},
+				word: "Step" // for testing proper execution context
+			};
+			
 			var columnsLegacyFormatter = [
 				{
 					label: "Step",
@@ -72,6 +79,15 @@
 					formatter: testFormatter
 				}
 			];
+			
+			var columnsLegacyFormatterScope = [
+				{
+					label: "Step",
+					field: "_item",
+					formatter: "foo"
+				}
+			];
+			
 			var columnsLegacyGet = {
 				order: {
 					label: "Step",
@@ -98,6 +114,13 @@
 					columns: columnsLegacyFormatter
 				}, "gridLegacyFormatter");
 				gridLegacyFormatter.renderArray(testOrderedData);
+				
+				window.gridLegacyFormatterScope = new Grid({
+					columns: columnsLegacyFormatterScope,
+					formatterScope: testFormatterScope
+				}, "gridLegacyFormatterScope");
+				gridLegacyFormatterScope.renderArray(testOrderedData);
+				
 				
 				window.gridLegacyGet = new Grid({
 					columns: columnsLegacyGet
@@ -159,14 +182,16 @@
 			particularly those sensitive to dojox-grid-friendly properties.</p>
 		<h2>1a: Grid with single column with formatter for _item field (legacy grid behavior)</h2>
 		<div id="gridLegacyFormatter"></div>
-		<h2>1b: Grid with single column with get for order field (legacy grid behavior)</h2>
+		<h2>1b: Grid with single column with formatter for _item field, using formatterScope (legacy grid behavior)</h2>
+		<div id="gridLegacyFormatterScope"></div>
+		<h2>1c: Grid with single column with get for order field (legacy grid behavior)</h2>
 		<div id="gridLegacyGet"></div>
-		<h2>1c: Grid with single column with renderCell function</h2>
+		<h2>1d: Grid with single column with renderCell function</h2>
 		<p>(dgrid behavior; should look same as previous but with underlined first header cell
 			and italicized first column values)</p>
 		<div id="gridNew"></div>
 		
-		<hr/>
+		<hr>
 		
 		<h2>2a: Grid on domnode with no initial id, id specified as param (will become DOM node id)</h2>
 		<div class="test2a"></div>

@@ -56,4 +56,5 @@ var checkbox = put(div, "input[type=checkbox][checked]");
 console.assert(checkbox.type == "checkbox");
 console.assert(checkbox.getAttribute("checked") == "checked");
 
+
 put(body, "div", {innerHTML: "finished tests, check console for errors"});

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta charset="utf-8">
 		<title>Test Simple Grid ColumnReorder</title>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../../dojo/resources/dojo.css";
 			@import "../../../dojo/resources/dnd.css";
 			@import "../../css/skins/claro.css";
@@ -17,7 +17,7 @@
 			}
 
 			/* add styles to size this grid appropriately */
-			#grid {
+			#grid, #grid2, #grid-99 {
 				height: 20em;
 			}
 			.field-order {
@@ -30,7 +30,7 @@
 
 		<script src="../../../dojo/dojo.js" data-dojo-config="async: true"></script>
 
-		<script type="text/javascript">
+		<script>
 			var data = [
 				{order: 1, name:"preheat", description:"Preheat your oven to 350F"},
 				{order: 2, name:"mix dry", description:"In a medium bowl, combine flour, salt, and baking soda"},
@@ -47,10 +47,11 @@
 				name: {},
 				description: { label: "what to do", sortable: false }
 			};
-			var columns2 = {
-				name: {},
-				description: { label: "what to do", sortable: false }
-			};
+			// columns2 tests using an array of columns with explicit IDs
+			var columns2 = [
+				{ id: "name", field: "name", label: "name" },
+				{ id: "description", field: "description", label: "what to do", sortable: false }
+			];
 			
 			var prevent;
 			
@@ -76,6 +77,11 @@
 							evt);
 						if(prevent){ evt.preventDefault(); }
 					});
+
+                    window.gridDash1 = new (declare([Grid, ColumnReorder]))({
+                        columns: columns1
+                    }, "grid-99");
+                    gridDash1.renderArray(data);
 				});
 				
 		</script>
@@ -92,5 +98,8 @@
 		</div>
 		<h2>A grid with column re-ordering and resizing, and a non-reorderable Step field</h2>
 		<div id="grid2"></div>
+
+        <h2>A basic grid with a dash and a number at the end of the id</h2>
+        <div id="grid-99"></div>
 	</body>
 </html>

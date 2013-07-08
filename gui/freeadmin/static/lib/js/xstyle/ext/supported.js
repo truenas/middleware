@@ -1,4 +1,4 @@
-define("xstyle/ext/supported",[], function(){
+define([], function(){
 	var selectorParse = /(([-+])|[,<> ])?\s*(\.|!|#|:)?([-\w$]+)?(?:\[([^\]=]+)=?['"]?([^\]'"]*)['"]?\])?/g;
 	return {
 		onPseudo: function(name, rule){

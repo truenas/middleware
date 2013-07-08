@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<title>Test Setting Class</title>
 		<meta name="viewport" content="width=570">
-		<style type="text/css">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/dgrid.css";
 			@import "../css/skins/claro.css";
@@ -43,9 +43,9 @@
 				border-color: #0c0;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			var getFirstCell; // function, defined within require callback
 			
 			require(["dgrid/List", "dgrid/Grid", "dgrid/GridFromHtml", "dojo/_base/array", "dojo/parser", "put-selector/put", "dgrid/test/data/base", "dojo/domReady!"],
