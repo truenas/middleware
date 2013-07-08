@@ -171,6 +171,31 @@ class JailsFAdmin(BaseFreeAdmin):
         #actions['import'] = self._action_builder('jail_import', label=_("Import Jail"))
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
+        actions['shell'] = {
+            'button_name': "Shell",
+            'on_select_after': """function(evt, actionName, action) {
+    for(var i=0;i < evt.rows.length;i++) {
+        var row = evt.rows[i];
+
+        if (row.data.jail_status == 'Stopped') {
+            query(".grid" + actionName).forEach(function(item, idx) {
+                domStyle.set(item, "display", "none");
+            });
+            break;
+        }
+    }
+ }""",
+            'on_click': """function() {
+    var mybtn = this;
+    require(["freeadmin/WebShell"], function(WebShell) {
+        for (var i in grid.selection) {
+            var data = grid.row(i).data;
+            //FIXME: use jail id
+            new WebShell();
+        }
+    });
+}"""
+        }
         actions['delete'] = self._action_builder(
             'jail_delete',
             label=_("Delete"),
