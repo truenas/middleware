@@ -449,7 +449,7 @@ ports_checkout_git()
 		if [ "x${GIT_PORTS_TAG}" != "x" ] ; then
 			(
 			spl="$-";set -x
-			cd src && git checkout "tags/${GIT_PORTS_TAG}"
+			cd ports && git checkout "tags/${GIT_PORTS_TAG}"
 			echo $spl | grep -q x || set +x
 			)
 		fi
