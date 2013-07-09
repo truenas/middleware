@@ -69,6 +69,7 @@ urlpatterns = patterns('',
     (r'^services/', include('freenasUI.services.urls')),
     (r'^sharing/', include('freenasUI.sharing.urls')),
     (r'^storage/', include('freenasUI.storage.urls')),
+    (r'^support/', include('freenasUI.support.urls')),
     (r'^system/', include('freenasUI.system.urls')),
     )
 

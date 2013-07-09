@@ -207,6 +207,13 @@ class NavTree(object):
                 log_traceback(log=log)
 
         nav = TreeRoot(
+            'support',
+            name=_('Request Support'),
+            action='opensupport',
+            icon='SupportIcon')
+        tree_roots.register(nav)
+
+        nav = TreeRoot(
             'display',
             name=_('Display System Processes'),
             action='displayprocs',

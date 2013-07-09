@@ -174,6 +174,7 @@ INSTALLED_APPS = (
     'freenasUI.storage',
     'freenasUI.sharing',
     'freenasUI.services',
+    'freenasUI.support',
     'freenasUI.plugins',
     'freenasUI.jails',
 )

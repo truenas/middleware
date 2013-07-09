@@ -337,7 +337,35 @@ define([
                 p.selectChild(pane);
             }
 
-        }
+        },
+
+        openSupport: function(onload) {
+            if(!onload) onload = function() {};
+            var opened = false;
+            var p = registry.byId("content");
+            var href = this.urlSupport;
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].tab == 'support'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                    if(onload) lang.hitch(this, onload)();
+                }
+            }
+            if(opened != true) {
+                var pane = new ContentPane({
+                    title: gettext('Support'),
+                    closable: true,
+                    href: href,
+                    onLoad: onload,
+                });
+                pane.tab = 'support';
+                p.addChild(pane);
+                p.selectChild(pane);
+                domClass.add(pane.domNode,["objrefresh", "data_support_support"]);
+            }
+         }
 
     });
     return Menu;

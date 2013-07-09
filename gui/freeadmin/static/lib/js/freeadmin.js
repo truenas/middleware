@@ -1398,6 +1398,8 @@ require([
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {
                 new WebShell();
+            } else if(item.action == 'opensupport') {
+                Menu.openSupport();
             } else if(item.type == 'opensharing') {
                 Menu.openSharing(item.gname);
             } else if(item.type == 'openstorage') {
