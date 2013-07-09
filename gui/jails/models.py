@@ -127,6 +127,12 @@ class Jails(Model):
             null=True,
             verbose_name=_("IPv6 default gateway")
             )
+    jail_mac = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True,
+            verbose_name=_("MAC")
+            )
     jail_autostart = models.CharField(
             max_length=120,
             blank=True,

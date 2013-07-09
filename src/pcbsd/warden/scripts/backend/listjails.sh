@@ -82,6 +82,11 @@ do
     NAT="Disabled"
   fi
 
+  MAC=
+  if [ -e "${i}/mac" ] ; then
+     MAC=`cat ${i}/mac`
+  fi 
+
   #
   # IPv4 networking
   # 
@@ -173,6 +178,7 @@ defaultrouter-ipv6: ${GATEWAY6}
 autostart: ${AUTO}
 vnet: ${VNET}
 nat: ${NAT}
+mac: ${MAC}
 status: ${STATUS}
 type: ${TYPE}
 

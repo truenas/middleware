@@ -98,6 +98,13 @@ start_jail_vimage()
 
   JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
 
+  if [ -e "${JMETADIR}/mac" ] ; then
+    MAC="$(cat "${JMETADIR}/mac")"
+    if [ -n "${MAC}" ] ; then
+      ifconfig ${EPAIRB} ether "${MAC}"
+    fi
+  fi
+
   # Move epairb into jail
   ifconfig ${EPAIRB} vnet ${JID}
 

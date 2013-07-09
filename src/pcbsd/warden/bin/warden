@@ -103,6 +103,7 @@ defaultrouter-ipv6: Lets you see the default IPv6 router for this jail
              flags: Lets you see additional flags to pass to the 'jail' command at startup
               vnet: Lets you see if vnet support is enabled for this jail
                nat: Lets you see if nat support is enabled for this jail
+               mac: Lets you see the mac address for this jail
 
 Usage:
 
@@ -142,6 +143,7 @@ defaultrouter-ipv6: Set the default vnet IPv6 router for this jail
       vnet-disable: Disables vnet support for this jail
         nat-enable: Enables nat support for the jail
        nat-disable: Disables nat support for this jail
+               mac: Set the mac address for this jail
 
 
 Usage:
@@ -846,6 +848,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
     vnet-disable) rm -f "${JMETADIR}/vnet" 2>/dev/null ;;
       nat-enable) touch "${JMETADIR}/nat" ;;
      nat-disable) rm -f "${JMETADIR}/nat" 2>/dev/null ;;
+             mac) echo "${4}" > "${JMETADIR}/mac" ;;
               *) warden_exit "Invalid option!" ;;
 	   esac
          ;;
