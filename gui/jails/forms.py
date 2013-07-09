@@ -72,6 +72,7 @@ from freenasUI.common.warden import (
     WARDEN_SET_FLAGS_VNET_DISABLE,
     WARDEN_SET_FLAGS_NAT_ENABLE,
     WARDEN_SET_FLAGS_NAT_DISABLE,
+    WARDEN_SET_FLAGS_MAC,
     #WARDEN_SET_FLAGS_FLAGS,
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
@@ -189,6 +190,7 @@ class JailCreateForm(ModelForm):
         'jail_ipv6',
         'jail_bridge_ipv6',
         'jail_defaultrouter_ipv6',
+        'jail_mac',
         'jail_script',
         'jail_vnet',
         'jail_nat'
@@ -458,7 +460,7 @@ class JailCreateForm(ModelForm):
 
 
         for key in ('jail_bridge_ipv4', 'jail_bridge_ipv6', \
-            'jail_defaultrouter_ipv4', 'jail_defaultrouter_ipv6'):
+            'jail_defaultrouter_ipv4', 'jail_defaultrouter_ipv6', 'jail_mac'):
             jail_set_args = {}
             jail_set_args['jail'] = jail_host
             jail_flags = WARDEN_FLAGS_NONE
@@ -479,6 +481,10 @@ class JailCreateForm(ModelForm):
                 elif key == 'jail_defaultrouter_ipv6':
                     jail_flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6
                     jail_set_args['defaultrouter-ipv6'] = val
+
+                elif key == 'jail_mac':
+                    jail_flags |= WARDEN_SET_FLAGS_MAC
+                    jail_set_args['mac'] = val
 
                 jail_set_args['flags'] = jail_flags
                 try:
@@ -682,6 +688,7 @@ class JailsEditForm(ModelForm):
             'jail_bridge_ipv6',
             'jail_alias_bridge_ipv6',
             'jail_defaultrouter_ipv6',
+            'jail_mac',
             'jail_vnet',
             'jail_nat',
         ]
@@ -745,6 +752,10 @@ class JailsEditForm(ModelForm):
                 elif cf == 'jail_defaultrouter_ipv6':
                     flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6
                     args['defaultrouter-ipv6'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_mac':
+                    flags |= WARDEN_SET_FLAGS_MAC
+                    args['mac'] = self.cleaned_data.get(cf)
 
                 elif cf == 'jail_vnet':
                     if (self.cleaned_data.get(cf)):
