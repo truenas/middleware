@@ -1,0 +1,57 @@
+diff -urN www/py-django-simple-captcha/Makefile www/py-django-simple-captcha/Makefile
+--- www/py-django-simple-captcha/Makefile	1969-12-31 16:00:00.000000000 -0800
++++ www/py-django-simple-captcha/Makefile	2013-07-09 19:37:27.397707248 -0700
+@@ -0,0 +1,27 @@
++# New ports collection makefile for:	py-django-simple-captcha
++# Date created:	July 10, 2013
++# Whom:	John Hixson <john@ixsystems.com>
++# $FreeBSD$
++#
++
++PORTNAME=	django-simple-captcha
++PORTVERSION=	0.3.8
++CATEGORIES=	www python
++MASTER_SITES=	https://pypi.python.org/packages/source/d/django-simple-captcha/
++PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
++
++MAINTAINER=	john@ixsystems.com
++COMMENT=	A very simple, yet powerful, Django captcha application
++
++LICENSE=	MIT
++
++BUILD_DEPENDS=	${PYTHON_PKGNAMEPREFIX}imaging>0:${PORTSDIR}/graphics/py-imaging
++RUN_DEPENDS=	${PYTHON_SITELIBDIR}/django/bin/django-admin.py:${PORTSDIR}/www/py-django
++
++USE_PYTHON=	yes
++USE_PYDISTUTILS=	easy_install
++PLIST_FILES=	%%PYTHON_SITELIBDIR%%/%%PYEASYINSTALL_EGG%%
++
++.include <bsd.port.mk>
+diff -urN www/py-django-simple-captcha/distinfo www/py-django-simple-captcha/distinfo
+--- www/py-django-simple-captcha/distinfo	1969-12-31 16:00:00.000000000 -0800
++++ www/py-django-simple-captcha/distinfo	2013-07-09 19:26:36.767632315 -0700
+@@ -0,0 +1,2 @@
++SHA256 (django-simple-captcha-0.3.8.tar.gz) = f0f098bed5835d59e77fa93c11a714bab09f141d1bb57a2cdea952f136abd55b
++SIZE (django-simple-captcha-0.3.8.tar.gz) = 58118
+diff -urN www/py-django-simple-captcha/files/patch-setup.py www/py-django-simple-captcha/files/patch-setup.py
+--- www/py-django-simple-captcha/files/patch-setup.py	1969-12-31 16:00:00.000000000 -0800
++++ www/py-django-simple-captcha/files/patch-setup.py	2013-07-09 19:28:04.548255914 -0700
+@@ -0,0 +1,11 @@
++--- setup.py.orig	2013-07-09 19:27:19.678257605 -0700
+++++ setup.py	2013-07-09 19:27:26.158257076 -0700
++@@ -27,7 +27,6 @@
++     install_requires=[
++         'setuptools',
++         'six >=1.2.0',
++-        'Django >= 1.3',
++-        'Pillow >=2.0.0'
+++        'Django >= 1.3'
++     ]
++ )
+diff -urN www/py-django-simple-captcha/pkg-descr www/py-django-simple-captcha/pkg-descr
+--- www/py-django-simple-captcha/pkg-descr	1969-12-31 16:00:00.000000000 -0800
++++ www/py-django-simple-captcha/pkg-descr	2013-07-09 19:23:43.457640242 -0700
+@@ -0,0 +1,3 @@
++Django Simple Captcha is an extremely simple, yet highly customizable Django application to add captcha images to any Django form.
++
++https://pypi.python.org/pypi/django-simple-captcha
