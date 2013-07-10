@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-07-05 16:09+0200\n"
+"PO-Revision-Date: 2013-07-09 22:20+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1061,7 +1061,7 @@ msgstr "Interfejsi"
 
 #: network/models.py:253 templates/services/iscsi_targets.html:6
 msgid "Alias"
-msgstr ""
+msgstr "Alias"
 
 #: network/models.py:254
 msgid "Aliases"
@@ -3197,7 +3197,7 @@ msgstr "Kontrolni servisi"
 
 #: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
-msgstr ""
+msgstr "Oblasti uređaja"
 
 #: services/nav.py:72
 msgid "Add Device Extent"
@@ -4178,7 +4178,7 @@ msgstr ""
 
 #: storage/models.py:346
 msgid "Multipath member"
-msgstr ""
+msgstr "Član višestrukih putanja"
 
 #: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
@@ -4205,7 +4205,6 @@ msgid "S.M.A.R.T. extra options"
 msgstr "S.M.A.R.T. dodatne opcije"
 
 #: storage/models.py:444 system/models.py:660
-#, fuzzy
 msgid "Disks"
 msgstr "Diskovi"
 
@@ -4247,13 +4246,15 @@ msgstr "Udaljeni host"
 
 #: storage/models.py:669
 msgid "Remote ZFS filesystem name"
-msgstr ""
+msgstr "Udaljeno ZFS ime sistema datoteka"
 
 #: storage/models.py:670
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"To bi trebalo da bude ime ZFS sistema datoteka na udaljenoj strani. npr: "
+"poolname/datasetname nije tačka montiranja ili putanja sistema datoteka"
 
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4301,7 +4302,7 @@ msgstr "Početak"
 
 #: storage/models.py:737
 msgid "Do not snapshot before"
-msgstr ""
+msgstr "Ne uzimati snimak pre"
 
 #: storage/models.py:741
 msgid "End"
@@ -4309,7 +4310,7 @@ msgstr "Kraj"
 
 #: storage/models.py:742
 msgid "Do not snapshot after"
-msgstr ""
+msgstr "Ne uzimati snimak posle"
 
 #: storage/models.py:748
 msgid "Interval"
@@ -4354,7 +4355,7 @@ msgstr "Pogledaj ZFS premotavanja"
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
 msgid "Volume Manager"
-msgstr ""
+msgstr "Upravljač volumenom"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4370,7 +4371,7 @@ msgstr "Pogledati diskove"
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
 msgid "View Multipaths"
-msgstr ""
+msgstr "Pogledaj višestruke putanje"
 
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
@@ -4378,9 +4379,8 @@ msgid "Auto Import Volume"
 msgstr "Automatski uvoz Volumena"
 
 #: storage/nav.py:96
-#, fuzzy
 msgid "View Volumes"
-msgstr "Pogledaj Sve Korisnike"
+msgstr "Pogledaj volumene"
 
 #: storage/nav.py:108 templates/storage/volumes.html:129
 #: templates/storage/volumes.html.py:133
@@ -4561,7 +4561,7 @@ msgstr "Nevažeći firmver"
 
 #: system/forms.py:544
 msgid "Invalid checksum"
-msgstr ""
+msgstr "Nevažeći kontrolni zbir"
 
 #: system/forms.py:557
 msgid "New config to be installed"
@@ -4577,20 +4577,19 @@ msgstr ""
 
 #: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "Navodnici nisu dozvoljeni"
 
 #: system/models.py:44
 msgid "Protocol"
 msgstr "Protokol"
 
 #: system/models.py:50
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "IPv4 Addresa"
+msgstr "WebGUI Addresa"
 
 #: system/models.py:56
 msgid "WebGUI Port"
-msgstr ""
+msgstr "WebGUI Port"
 
 #: system/models.py:62
 msgid "Language"
@@ -4606,7 +4605,7 @@ msgstr "Vremenska zona"
 
 #: system/models.py:80
 msgid "Syslog server"
-msgstr ""
+msgstr "Syslog server"
 
 #: system/models.py:92 templates/system/ntpserver.html:5
 msgid "Address"
@@ -4757,6 +4756,8 @@ msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
+"E-mail adresa koju će sistem koristiti kao adresu za slanje za mail koji "
+"šalje, npr: freenas@example.com"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
@@ -5105,15 +5106,15 @@ msgstr "Vaša test email poruka je poslata!"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Stranica nije pronađena"
 
 #: templates/base.html:51
 msgid "expand all"
-msgstr ""
+msgstr "Raširi sve"
 
 #: templates/base.html:52
 msgid "collapse all"
-msgstr ""
+msgstr "Skupi sve"
 
 #: templates/menubar.html:36
 msgid "Log Out"
@@ -5197,7 +5198,7 @@ msgstr "Dodaj novog korisnika"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
-msgstr ""
+msgstr "Promeni E-mail"
 
 #: templates/account/passform.html:2
 msgid "Change Admin Password"
@@ -5345,7 +5346,7 @@ msgstr "Praćenje greške"
 
 #: templates/freeadmin/index.html:89
 msgid "Documentation"
-msgstr ""
+msgstr "Dokumentacija"
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Documentation"
@@ -5364,7 +5365,7 @@ msgstr "IPv6 Auto"
 #: templates/system/smarttest.html:11 templates/system/sysctl.html:9
 #: templates/system/tunable.html:9
 msgid "Available actions"
-msgstr ""
+msgstr "Dostupne radnje"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -5689,7 +5690,7 @@ msgstr "iSCSI upravljanje"
 
 #: templates/services/iscsi.html:8
 msgid "Portals"
-msgstr ""
+msgstr "Portali"
 
 #: templates/services/iscsi.html:14
 msgid "Authorized Initiators"
@@ -5697,7 +5698,7 @@ msgstr "Autorizovani inicijatori"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
-msgstr ""
+msgstr "Potvrda identiteta"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5705,11 +5706,11 @@ msgstr "Ciljevi"
 
 #: templates/services/iscsi.html:38
 msgid "Extents"
-msgstr ""
+msgstr "Oblasti"
 
 #: templates/services/iscsi.html:44
 msgid "Associated Targets"
-msgstr ""
+msgstr "Vezani ciljevi"
 
 #: templates/services/iscsi_assoctargets.html:31
 msgid "No associated targets defined"
@@ -5717,23 +5718,23 @@ msgstr "Nema povezanih definisanih odredišta"
 
 #: templates/services/iscsi_assoctargets.html:37
 msgid "Add Extent to Target"
-msgstr ""
+msgstr "Dodati oblast cilju"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent To Target"
-msgstr ""
+msgstr "Dodati oblast cilju"
 
 #: templates/services/iscsi_auth.html:7
 msgid "Peer"
-msgstr ""
+msgstr "Ravnopravni uređaj"
 
 #: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
 msgid "Add iSCSI User"
-msgstr ""
+msgstr "Dodati iSCSI korisnika"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
-msgstr ""
+msgstr "Autorizovana mreža"
 
 #: templates/services/iscsi_authini.html:35
 msgid "No authorized initiators defined"
@@ -5742,7 +5743,7 @@ msgstr "Nema definisanih ovlašćenih inicijatora"
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
-msgstr ""
+msgstr "Dodaj autorizovani inicijator"
 
 #: templates/services/iscsi_dextents.html:33
 msgid "No device extents defined"
@@ -5751,7 +5752,7 @@ msgstr "Nisu definisana područja uređaja"
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
 msgid "Add Extent"
-msgstr ""
+msgstr "Dodaj oblast"
 
 #: templates/services/iscsi_extents.html:5
 msgid "File Extent"
@@ -5763,7 +5764,7 @@ msgstr "Područja nisu definisana"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
-msgstr ""
+msgstr "Slušaj"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
@@ -5771,11 +5772,11 @@ msgstr "NIje definisan IP za ovaj Portal"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
-msgstr ""
+msgstr "Uredi portal"
 
 #: templates/services/iscsi_portals.html:32
 msgid "Delete Portal"
-msgstr ""
+msgstr "Brisanje portala"
 
 #: templates/services/iscsi_portals.html:39
 msgid "No portals defined"
@@ -5784,16 +5785,16 @@ msgstr "Portali nisu definisani"
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
 msgid "Add Portal"
-msgstr ""
+msgstr "Dodaj portal"
 
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr ""
+msgstr "Ciljevi nisu definisani"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr ""
+msgstr "Dodaj cilj"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 msgid "View Mount Points"
@@ -5846,7 +5847,7 @@ msgstr "Ni jedan rsync modul nije definisan"
 #: templates/sharing/apple.html:5 templates/sharing/unix.html:5
 #: templates/sharing/windows.html:5
 msgid "Active Shares"
-msgstr ""
+msgstr "Aktivni deljeni resursi"
 
 #: templates/sharing/apple.html:7
 msgid "There are no active Apple (AFP) shares."
@@ -5863,7 +5864,7 @@ msgstr "Obrisati Apple (AFP) deljeni resurs"
 #: templates/sharing/apple.html:42 templates/sharing/unix.html:42
 #: templates/sharing/windows.html:46
 msgid "No shares defined"
-msgstr ""
+msgstr "Nisu definisani deljeni resursi"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 msgid "Add Apple (AFP) Share"
@@ -5887,7 +5888,7 @@ msgstr "Nema aktivnih UNIX (NFS) deljenih resursa."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
-msgstr ""
+msgstr "Tačka montiranja"
 
 #: templates/sharing/unix.html:29
 msgid "Edit UNIX (NFS) Share"
@@ -5919,7 +5920,7 @@ msgstr "Dodati Windows (CIFS) deljenje"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "Kloniraj snimak"
 
 #: templates/storage/dataset_confirm_delete.html:5
 #, python-format
@@ -5942,7 +5943,7 @@ msgstr[2] "Ovo će obrisati sve fajlove unutar skupa podataka i podređenih skup
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
-msgstr ""
+msgstr "Urediti skup podataka"
 
 #: templates/storage/datasets.html:3
 #, python-format
@@ -5951,7 +5952,7 @@ msgstr "Kreirati ZFS skup podataka u %(fs)s"
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
-msgstr ""
+msgstr "Dodaj skup podataka"
 
 #: templates/storage/disk_detach.html:7
 #: templates/storage/volume_detach.html:20
