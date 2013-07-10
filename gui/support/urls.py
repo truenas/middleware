@@ -25,8 +25,9 @@
 #
 #####################################################################
 
-from django.conf.urls import patterns, url
+from django.conf.urls import include, patterns, url
 
 urlpatterns = patterns('freenasUI.support.views',
     url(r'^index/$', 'index', name="support_home"),
+    url(r'^captcha/', include('captcha.urls')),
     )

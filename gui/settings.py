@@ -168,6 +168,7 @@ INSTALLED_APPS = (
     'freenasUI.freeadmin',
     'south',
     'dojango',
+    'captcha',
     'freenasUI.account',
     'freenasUI.system',
     'freenasUI.network',

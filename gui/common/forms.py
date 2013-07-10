@@ -27,7 +27,6 @@
 from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
 
-
 class AdvMixin(object):
 
     def __init__(self, *args, **kwargs):

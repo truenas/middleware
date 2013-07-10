@@ -28,12 +28,15 @@ import logging
 from dojango import forms
 
 from freenasUI import choices
-from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.forms import ModelForm
 from freenasUI.support import models
+from freenasUI.support.supportcaptcha import SupportCaptchaField
 
 log = logging.getLogger("support.forms")
 
 class SupportForm(ModelForm):
+    captcha = SupportCaptchaField()
+
     class Meta:
         model = models.Support
 
@@ -43,6 +46,5 @@ class SupportForm(ModelForm):
             email = kwargs.pop('email', None)
 
         super(SupportForm, self).__init__(*args, **kwargs)
-
         if email:
             self.fields['support_email'].initial = email
