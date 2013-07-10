@@ -322,6 +322,10 @@ add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
 add_port graphics/jpeg
+add_port graphics/lcms OPTIONS_FILE_UNSET+=X11 \
+	OPTIONS_FILE_UNSET+=JPEGICC OPTIONS_FILE_UNSET+=TIFFICC
+add_port graphics/py-imaging OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=TKINTER
+add_port www/py-django-simple-captcha OPTIONS_FILE_UNSET+=X11
 
 if [ "${DEBUG}" = 1 ]; then
 
