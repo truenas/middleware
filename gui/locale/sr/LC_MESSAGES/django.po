@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-07-09 22:20+0200\n"
+"PO-Revision-Date: 2013-07-10 21:43+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -3767,7 +3767,7 @@ msgstr "Ime volumena"
 #: storage/forms.py:134 templates/storage/import.html:32
 #: templates/storage/wizard.html:54
 msgid "Filesystem type"
-msgstr ""
+msgstr "Tip sistema datoteka"
 
 #: storage/forms.py:147 templates/storage/wizard.html:65
 msgid "Force 4096 bytes sector size"
@@ -4318,7 +4318,7 @@ msgstr "Interval"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
-msgstr ""
+msgstr "Koliko vremena je prošlo između dva pokušaja uzimanja snimka."
 
 #: storage/models.py:756
 msgid "Occurrence"
@@ -4413,7 +4413,7 @@ msgstr "Volumen uspešno dodat."
 
 #: storage/views.py:254
 msgid "S.M.A.R.T. Extra Options"
-msgstr ""
+msgstr "S.M.A.R.T. Ekstra Opcije"
 
 #: storage/views.py:371
 msgid "Dataset successfully added."
@@ -4881,11 +4881,11 @@ msgstr "Kratak opis"
 
 #: system/models.py:374
 msgid "Cron Job"
-msgstr ""
+msgstr "Cron zadatak"
 
 #: system/models.py:375
 msgid "Cron Jobs"
-msgstr ""
+msgstr "Cron zadaci"
 
 #: system/models.py:459
 msgid "IP Address or hostname"
@@ -5284,9 +5284,8 @@ msgstr "Aktivni procesi"
 
 #: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
 #: templates/freeadmin/index.html:49
-#, fuzzy
 msgid "Loading..."
-msgstr "Restartovanje..."
+msgstr "Učitavanje..."
 
 #: templates/freeadmin/index.html:53
 msgid "Help & Support"
@@ -5454,7 +5453,7 @@ msgstr "Radnja"
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
 msgid "Add LAGG Member"
-msgstr ""
+msgstr "Dodaj LAGG člana"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
@@ -5678,7 +5677,7 @@ msgstr "Želite li da omogućite ovu uslugu?"
 
 #: templates/services/enable.html:16 templates/storage/tasks.html:37
 msgid "No"
-msgstr ""
+msgstr "Ne"
 
 #: templates/services/index.html:2
 msgid "Core"
@@ -5978,40 +5977,40 @@ msgstr "Zamena diska"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
-msgstr ""
+msgstr "Zameni disk"
 
 #: templates/storage/index.html:2
 msgid "Active Volumes"
-msgstr ""
+msgstr "Aktivni volumeni"
 
 #: templates/storage/index.html:8
 msgid "ZFS Snapshots"
-msgstr ""
+msgstr "ZFS snimci"
 
 #: templates/storage/index.html:20
 msgid "ZFS Replication"
-msgstr ""
+msgstr "ZFS replikacija"
 
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
-msgstr ""
+msgstr "Ručno kreiraj snimak"
 
 #: templates/storage/permission.html:2
 msgid "Change"
-msgstr ""
+msgstr "Promeni"
 
 #: templates/storage/permission.html:4
 msgid "Change permission"
-msgstr ""
+msgstr "Promeni dozvolu"
 
 #: templates/storage/permission.html:5
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "Promeni dozvolu na %(path)s u"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
-msgstr ""
+msgstr "Dodaj replikaciju"
 
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
@@ -6028,7 +6027,7 @@ msgstr ""
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
-msgstr ""
+msgstr "Poslednji snimak"
 
 #: templates/storage/replications.html:23
 msgid "Remote ZFS filesystem"
@@ -6037,16 +6036,16 @@ msgstr "Udaljeni ZFS sistem datoteka"
 #: templates/storage/replications.html:37
 #: templates/storage/replications.html:41
 msgid "Delete Replication"
-msgstr ""
+msgstr "Izbriši replikaciju"
 
 #: templates/storage/replications.html:46
 #: templates/storage/replications.html:50
 msgid "Edit Replication"
-msgstr ""
+msgstr "Uredi replikaciju"
 
 #: templates/storage/replications.html:56
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "ZFS replikacija nije dostupna"
 
 #: templates/storage/scrub.html:42
 msgid "No scrub tasks defined."
@@ -6082,7 +6081,7 @@ msgstr ""
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
-msgstr ""
+msgstr "Kloniraj snimak"
 
 #: templates/storage/snapshots.html:32
 msgid "Destroy Snapshot"
@@ -6098,7 +6097,7 @@ msgstr "Vraćanje snimka"
 
 #: templates/storage/snapshots.html:53
 msgid "Rollback to this snapshot"
-msgstr ""
+msgstr "Vrati na ovaj snimak"
 
 #: templates/storage/snapshots.html:126
 msgid "Destroy"
@@ -6110,35 +6109,35 @@ msgstr "Brisanje snimaka"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
-msgstr ""
+msgstr "Periodični snimci"
 
 #: templates/storage/tasks.html:13
 msgid "Periodic Snapshot Schedule"
-msgstr ""
+msgstr "Periodični raspored uzimanja snimka"
 
 #: templates/storage/tasks.html:16
 msgid "There are no scheduled snapshots."
-msgstr ""
+msgstr "Nema zakazanih snimaka."
 
 #: templates/storage/tasks.html:23
 msgid "How"
-msgstr ""
+msgstr "Kako"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
-msgstr ""
+msgstr "Zadrži snimak za"
 
 #: templates/storage/tasks.html:41
 msgid "From"
-msgstr ""
+msgstr "Od"
 
 #: templates/storage/tasks.html:43
 msgid "through"
-msgstr ""
+msgstr "kroz"
 
 #: templates/storage/tasks.html:45
 msgid ", every"
-msgstr ""
+msgstr ", svaki"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
@@ -6194,7 +6193,7 @@ msgstr "Editovati ZFS Opcije"
 #: templates/storage/volumes.html:227 templates/storage/volumes.html.py:231
 #: templates/storage/volumes.html:257 templates/storage/volumes.html.py:261
 msgid "Create Snapshot"
-msgstr ""
+msgstr "Kreiraj snimak"
 
 #: templates/storage/volumes.html:159 templates/storage/volumes.html.py:163
 msgid "Volume Status"
@@ -6597,7 +6596,7 @@ msgid "The volume failed to export"
 msgstr "Volumen nije uspešno izvezen"
 
 msgid "Used space"
-msgstr "Iskorišten prostor"
+msgstr "Upotrebljen prostor"
 
 msgid "Restore to Factory Defaults"
 msgstr "Vratiti na fabrička podrazumevana podešavanja"
