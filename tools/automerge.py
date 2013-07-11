@@ -38,8 +38,10 @@ Author: William Grzybowski <wg@FreeBSD.org>
 """
 import os
 import re
+import smtplib
 import struct
 import subprocess
+from email.mime.text import MIMEText
 
 import pygit2
 
@@ -58,12 +60,15 @@ class Merge(object):
         self._repo = repo
         self._commit = commit
 
+    def do(self):
+
         values = ''
-        for name, value in RE_NAME.findall(commit.message):
+        for name, value in RE_NAME.findall(self._commit.message):
             if name.lower() == 'merge':
                 values = value
                 break
 
+        repo  = self._repo
         ext_repos = repo.config.get_multivar("automerge.repos")
         defaultrepos = repo.config.get_multivar("automerge.default")
 
@@ -99,8 +104,7 @@ class Merge(object):
             else:
                 failed.extend(self._external_do(name, branches))
             values = RE_REPO.sub("", values, 1)
-
-        print failed
+        return failed
 
     def _git_run(self, cmd):
         print cmd
@@ -184,6 +188,47 @@ def _pack(rev):
     )
 
 
+def mail(repo, commit, errors):
+
+    host = repo.config.get_multivar("automerge.smtphost") or ["localhost"]
+    port = repo.config.get_multivar("automerge.smtpport") or [25]
+    user = repo.config.get_multivar("automerge.smtpuser")
+    passwd = repo.config.get_multivar("automerge.smtppassword")
+    sendto = repo.config.get_multivar("automerge.toemail") or [
+        "spam@agencialivre.com.br"
+    ]
+
+    server = smtplib.SMTP(
+        host[0],
+        int(port[0]),
+        timeout=5
+    )
+    if user and passwd:
+        server.login(user[0], passwd[0])
+
+    text = """Hi,
+
+The commit "%(hex)s" failed to automerge for the following branches:
+""" % {'hex': commit.hex}
+    for branch, error in errors:
+        text += """
+----
+%(name)s:
+%(desc)s
+----
+""" % {'name': branch, 'desc': str(error)}
+    msg = MIMEText(text, _charset='utf-8')
+
+    try:
+        server.sendmail(
+            commit.committer.email,
+            sendto,
+            msg.as_string()
+        )
+    except Exception, e:
+        print e
+
+
 def main():
 
     repo_path = os.path.join(
@@ -210,9 +255,12 @@ def main():
                 break
             commits.append(commit)
         for commit in reversed(commits):
+            errors = Merge(repo, commit).do()
             # Workaround bug in pygit2
             repo = pygit2.Repository(repo_path)
-            Merge(repo, commit)
+            if errors:
+                mail(repo, commit, errors)
+
 
 if __name__ == "__main__":
     main()
