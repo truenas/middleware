@@ -230,6 +230,8 @@ install_pbi_manager()
 	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi-crashhandler
 	rm -f ${PBI_BINDIR}/pbi-manager
 
+	cp ${TOP}/src/pcbsd/libsh/functions.sh ${PBI_BINDIR}/functions.sh
+
 	PATH="${PBI_BINDIR}:${PATH}"
 	export PATH
 }

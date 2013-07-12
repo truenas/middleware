@@ -257,7 +257,7 @@ then
   mkdir -p "${JAILDIR}/usr/src"
   cd ${JAILDIR}
   SYSVER="$(uname -r)"
-  get_file_from_mirrors "/${SYSVER}/${ARCH}/dist/src.txz" "src.txz"
+  get_file_from_mirrors "/${SYSVER}/${ARCH}/dist/src.txz" "src.txz" "pkg"
   if [ $? -ne 0 ] ; then
     warden_error "Error while downloading the freebsd world."
   else

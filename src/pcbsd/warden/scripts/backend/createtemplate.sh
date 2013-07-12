@@ -22,7 +22,7 @@ download_template_files() {
   if [ -n "$TRUEOSVER" ] ; then
      for f in $DFILES
      do
-       get_file_from_mirrors "/${TRUEOSVER}/${FBSDARCH}/dist/$f" "${JDIR}/.download/$f"
+       get_file_from_mirrors "/${TRUEOSVER}/${FBSDARCH}/dist/$f" "${JDIR}/.download/$f" "pkg"
        if [ $? -ne 0 ] ; then
          warden_exit "Failed downloading: /${TRUEOS}/${FBSDARCH}/dist/${f}"
        fi

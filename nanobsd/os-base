@@ -537,32 +537,37 @@ add_pcbsd_libsh()
 }
 customize_cmd add_pcbsd_libsh
 
-add_pcbsd_mirrors()
+add_pcbsd_xtrafiles()
 {
 	local src dst
-	src="${AVATAR_ROOT}/src/pcbsd/conf"
+	src="${AVATAR_ROOT}/src/pcbsd/xtrafiles/local/share/pcbsd/conf"
 	dst="${NANO_WORLDDIR}/usr/local/share/pcbsd/conf"
 
 	pprint 2 "Adding pcbsd mirrors"
 
 	mkdir -p ${dst} >/dev/null 2>/dev/null
 
-	cp ${src}/pcbsd-mirrors ${dst}/pcbsd-mirrors
-	chmod 644 ${dst}/pcbsd-mirrors
+	for xf in $(ls ${src})
+	do
+		cp ${src}/${xf} ${dst}/${xf}
+		chmod 644 ${dst}/${xf}
+	done
 }
-customize_cmd add_pcbsd_mirrors
+customize_cmd add_pcbsd_xtrafiles
 
 add_pbi_wrapper()
 {
 	local _pm 
-	_pm="${NANO_WORLDDIR}/usr/pbi/.pbiwrapper"
+	_pm="${NANO_WORLDDIR}/usr/pbi/.pbiwrapper-${NANO_ARCH}"
 
 	pprint 2 "Adding PBI wrapper"
 
+	mkdir -p "${PBI_APPDIR}"
 	mkdir -p "${PBI_BUILDDIR}"
+
 	if [ ! -s "${PBI_BUILDDIR}/.pbiwrapper" ]
 	then
-		cp "${_pm}" "${PBI_BUILDDIR}/.pbiwrapper"
+		cp "${_pm}" "${PBI_APPDIR}/.pbiwrapper-${NANO_ARCH}"
 	fi
 }
 customize_cmd add_pbi_wrapper

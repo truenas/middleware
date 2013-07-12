@@ -1134,7 +1134,7 @@ get_package_by_port()
   local pkg="$(${CR} "pkg rquery '%n-%v.txz' ${port}" 2>/dev/null)"
   if [ ! -f "${pkgdir}/${pkg}" ] ; then
     get_file_from_mirrors "${rpath}/All/${pkg}" \
-      "${jaildir}/var/tmp/pkgs/${pkg}"
+      "${jaildir}/var/tmp/pkgs/${pkg}" "pkg"
 
     local deps="$(${CR} "pkg rquery '%do' ${port}" 2>/dev/null)"
     for d in ${deps} ; do
@@ -1247,7 +1247,7 @@ bootstrap_pkgng()
     cp ${pkgdir}/pkg.txz ${jaildir}/usr/local/tmp
   else
     get_file_from_mirrors "${rpath}/Latest/pkg.txz" \
-      "${pkgdir}/pkg.txz"
+      "${pkgdir}/pkg.txz" "pkg"
     cp ${pkgdir}/pkg.txz ${jaildir}/usr/local/tmp
   fi
   local pres=$? 
@@ -1256,7 +1256,7 @@ bootstrap_pkgng()
     cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
   else
     get_file_from_mirrors "${rpath}/repo.txz" \
-      "${pkgdir}/repo.txz"
+      "${pkgdir}/repo.txz" "pkg"
     cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
   fi
   local rres=$? 
