@@ -60,9 +60,10 @@ log = logging.getLogger("tools.automerge")
 
 class Merge(object):
 
-    def __init__(self, repo, commit):
+    def __init__(self, repo, commit, nopush=False):
         self._repo = repo
         self._commit = commit
+        self._nopush = nopush
 
     def do(self):
 
@@ -193,7 +194,10 @@ class Merge(object):
             log.debug("Diff:\n%s", output)
             raise ValueError(output[0])
 
-        self._git_run("git push %s %s:%s" % (remote, refname, branch))
+        if not self._nopush:
+            self._git_run("git push %s %s:%s" % (remote, refname, branch))
+        else:
+            log.debug("Skipping git push as told (--no-push)")
 
 
 def _pack(rev):
@@ -269,6 +273,10 @@ def main():
         'revs', metavar='oldrev..newrev', type=revrange, nargs='?',
         help='Git commit range',
     )
+    parser.add_argument(
+        '-n', '--no-push', action='store_true', dest='nopush',
+        help='Do not git push the merges',
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG)
@@ -303,7 +311,7 @@ def main():
                 break
             commits.append(commit)
         for commit in reversed(commits):
-            errors = Merge(repo, commit).do()
+            errors = Merge(repo, commit, nopush=args.nopush).do()
             # Workaround bug in pygit2
             repo = pygit2.Repository(repo_path)
             if errors:
