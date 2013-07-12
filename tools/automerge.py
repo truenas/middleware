@@ -241,6 +241,7 @@ The commit "%(hex)s" failed to automerge for the following branches:
 ----
 """ % {'name': branch, 'desc': str(error)}
     msg = MIMEText(text, _charset='utf-8')
+    msg['Subject'] = "Merge failed for %s" % commit.hex[:8]
     msg['From'] = commit.committer.email
     msg['To'] = ', '.join(sendto)
 
@@ -253,6 +254,8 @@ The commit "%(hex)s" failed to automerge for the following branches:
     except Exception, e:
         log.warn("Email send failed: %s", e)
         print e
+    finally:
+        server.quit()
 
 
 def revrange(string):
