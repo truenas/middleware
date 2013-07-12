@@ -219,6 +219,8 @@ The commit "%(hex)s" failed to automerge for the following branches:
 ----
 """ % {'name': branch, 'desc': str(error)}
     msg = MIMEText(text, _charset='utf-8')
+    msg['From'] = commit.committer.email
+    msg['To'] = ', '.join(sendto)
 
     try:
         server.sendmail(
