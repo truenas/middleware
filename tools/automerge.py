@@ -242,7 +242,7 @@ The commit "%(hex)s" failed to automerge for the following branches:
 %(name)s:
 %(desc)s
 ----
-""" % {'name': branch, 'desc': str(error)}
+""" % {'name': branch, 'desc': unicode(str(error), errors='ignore')}
     msg = MIMEText(text, _charset='utf-8')
     msg['Subject'] = "Merge failed for %s" % commit.hex[:8]
     msg['From'] = commit.committer.email
