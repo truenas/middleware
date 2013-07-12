@@ -457,11 +457,12 @@ class NavTree(object):
                 try:
                     url = option.get_absolute_url()
                 except NoReverseMatch, e:
-                    log.warn(
-                        _("Could not reverse url, skipping node %s: %s") % (
-                            option,
-                            e,
-                        ))
+                    log.warn(_(
+                        "Could not reverse url, skipping node %(node)s: "
+                        "%(error)s") % {
+                            'node': option,
+                            'erorr': e,
+                        })
                     continue
                 try:
                     view, args, kwargs = resolve(url)
