@@ -182,17 +182,20 @@ class Merge(object):
 
         try:
             self._git_run("git cherry-pick -x %s" % self._commit.hex)
-        except:
+        except Exception, e:
             output = self._git_run("git diff HEAD")
             log.error(
                 "Cherry-pick of %s failed on %s %s.",
                 self._commit.hex,
                 remote,
                 branch,
-                output
             )
             log.debug("Diff:\n%s", output)
-            raise ValueError(output[0])
+            raise ValueError("Cherry-pick %s:\n%s\n\nDiff:\n%s" % (
+                self._commit.hex,
+                e,
+                output[0]
+            ))
 
         if not self._nopush:
             self._git_run("git push %s %s:%s" % (remote, refname, branch))
