@@ -36,6 +36,7 @@ Examples of commit messages:
 
 Author: William Grzybowski <wg@FreeBSD.org>
 """
+import argparse
 import os
 import re
 import smtplib
@@ -68,7 +69,7 @@ class Merge(object):
                 values = value
                 break
 
-        repo  = self._repo
+        repo = self._repo
         ext_repos = repo.config.get_multivar("automerge.repos")
         defaultrepos = repo.config.get_multivar("automerge.default")
 
@@ -229,13 +230,30 @@ The commit "%(hex)s" failed to automerge for the following branches:
         print e
 
 
+def revrange(string):
+
+    reg = re.search(r'^([0-9a-f]{7,40})\.\.([0-9a-f]{7,40})$', string)
+    if not reg:
+        raise argparse.ArgumentTypeError(
+            "Not a valid commit range"
+        )
+
+    return reg.groups()
+
+
 def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'revs', metavar='oldrev..newrev', type=revrange, nargs='?',
+        help='Git commit range',
+    )
+    args = parser.parse_args()
 
     repo_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
         ".."
     )
-
     repo = pygit2.Repository(repo_path)
 
     proc = subprocess.Popen([
@@ -244,7 +262,12 @@ def main():
         "origin",
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stderr = proc.communicate()[1]
-    for oldrev, newrev, ref in RE_FETCH.findall(stderr):
+
+    if args.revs:
+        fetch = [args.revs + ("origin/master", )]
+    else:
+        fetch = RE_FETCH.findall(stderr)
+    for oldrev, newrev, ref in fetch:
         if ref != "origin/master":
             continue
         newoid = repo[_pack(newrev)].oid
