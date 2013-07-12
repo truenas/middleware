@@ -379,9 +379,7 @@ class AdvancedForm(ModelForm):
                 notifier().reload("loader")
                 loader_reloaded = True
         if (
-            (
-                self.instance._original_adv_autotune != self.instance.adv_autotune
-            )
+            self.instance._original_adv_autotune != self.instance.adv_autotune
             and not loader_reloaded
         ):
             notifier().reload("loader")
