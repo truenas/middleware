@@ -184,7 +184,7 @@ export FREEBSD_FTP_MIRROR
 #
 # Package mirror where we fetch packages for jails
 #
-: ${FREEBSD_PACKAGE_MIRROR:="http://pkg.cdn.pcbsd.org"}
+: ${FREEBSD_PACKAGE_MIRROR:="http://pkg.cdn.pcbsd.org/freenas"}
 export FREEBSD_PACKAGE_MIRROR
 
 : ${FREEBSD_PACKAGE_MIRROR_32="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"}
