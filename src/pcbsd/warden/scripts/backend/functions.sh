@@ -1214,7 +1214,7 @@ bootstrap_pkgng()
 
   if [ "${arch}" != "i386" ] ; then
     mirror="http://pkg.cdn.pcbsd.org"
-    rpath="/packages/${release}/${arch}"
+    rpath="/freenas/${release}/${arch}"
   else
     mirror="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"
     rpath=""
