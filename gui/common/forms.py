@@ -27,6 +27,7 @@
 from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
 
+
 class AdvMixin(object):
 
     def __init__(self, *args, **kwargs):
@@ -80,6 +81,9 @@ class ModelForm(AdvMixin, MF):
             else:
                 self._errors['__all__'] += self._fserrors
         return valid
+
+    def done(self, request, events):
+        pass
 
 
 class Form(AdvMixin, F):
