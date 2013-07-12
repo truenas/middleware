@@ -330,6 +330,10 @@ copypbiscripts() {
     fi
     cp "${man}" "${1}${man}"
   done
+
+  # Copy libsh
+  mkdir -p ${1}/usr/local/share/pcbsd/scripts >/dev/null 2>/dev/null
+  cp /usr/local/share/pcbsd/scripts/functions.sh ${1}/usr/local/share/pcbsd/scripts/functions.sh
 }
 
 mkportjail() {
