@@ -161,7 +161,7 @@ class Merge(object):
         try:
             ref = repo.lookup_reference("refs/heads/%s" % refname)
         except KeyError:
-            self._git_run("git checkout remotes/%s/%s -b %s" % (
+            self._git_run("git checkout -f remotes/%s/%s -b %s" % (
                 remote,
                 branch,
                 refname,
