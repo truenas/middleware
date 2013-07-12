@@ -258,19 +258,22 @@ The commit "%(hex)s" failed to automerge for the following branches:
 def revrange(string):
 
     reg = re.search(r'^([0-9a-f]{7,40})\.\.([0-9a-f]{7,40})$', string)
-    if not reg:
+    reg2 = re.search(r'^([0-9a-f]{7,40})$', string)
+    if not reg and not reg2:
         raise argparse.ArgumentTypeError(
-            "Not a valid commit range"
+            "Not a valid commit or range"
         )
-
-    return reg.groups()
+    if reg:
+        return reg.groups()
+    else:
+        return (string, )
 
 
 def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        'revs', metavar='oldrev..newrev', type=revrange, nargs='?',
+        'revs', metavar='oldrev[..newrev]', type=revrange, nargs='?',
         help='Git commit range',
     )
     parser.add_argument(
@@ -297,19 +300,25 @@ def main():
     log.debug("Git fetch: %s", stderr)
 
     if args.revs:
+        if len(args.revs) == 1:
+            args.revs = (None, ) + args.revs
         fetch = [args.revs + ("origin/master", )]
     else:
         fetch = RE_FETCH.findall(stderr)
     for oldrev, newrev, ref in fetch:
         if ref != "origin/master":
             continue
-        newoid = repo[_pack(newrev)].oid
-        oldoid = repo[_pack(oldrev)].oid
+        newcommit = repo[_pack(newrev)]
         commits = []
-        for commit in repo.walk(newoid, pygit2.GIT_SORT_TOPOLOGICAL):
-            if commit.oid == oldoid:
-                break
-            commits.append(commit)
+        if oldrev:
+            oldoid = repo[_pack(oldrev)].oid
+            for commit in repo.walk(newcommit.oid, pygit2.GIT_SORT_TOPOLOGICAL):
+                if commit.oid == oldoid:
+                    break
+                log.debug("Adding commit %s", commit.hex)
+                commits.append(commit)
+        else:
+            commits = [newcommit]
         for commit in reversed(commits):
             errors = Merge(repo, commit, nopush=args.nopush).do()
             # Workaround bug in pygit2
