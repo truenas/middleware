@@ -37,6 +37,7 @@ Examples of commit messages:
 Author: William Grzybowski <wg@FreeBSD.org>
 """
 import argparse
+import logging
 import os
 import re
 import smtplib
@@ -53,6 +54,8 @@ RE_FETCH = re.compile(
 RE_NAME = re.compile(r'^(?P<name>\S+):\s*(?P<value>.+)$', re.M)
 RE_REPO = re.compile(r'(?P<name>[^\[\s]+)(?:\[(?P<values>[^\]]+)\])?')
 RE_BRANCH = re.compile(r'(?P<name>\S+)')
+
+log = logging.getLogger("tools.automerge")
 
 
 class Merge(object):
@@ -72,6 +75,8 @@ class Merge(object):
         repo = self._repo
         ext_repos = repo.config.get_multivar("automerge.repos")
         defaultrepos = repo.config.get_multivar("automerge.default")
+
+        log.debug("Defaulting merge to repos: %s", ", ".join(defaultrepos))
 
         repos = RE_REPO.findall(values)
         for default in defaultrepos:
@@ -108,12 +113,13 @@ class Merge(object):
         return failed
 
     def _git_run(self, cmd):
-        print cmd
+        log.debug("Running command: %s", cmd)
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )
         rv = proc.communicate()
         if proc.returncode != 0:
+            log.debug("Failed with error(%d): %s", proc.returncode, rv[1])
             raise ValueError(rv[1])
         return rv
 
@@ -161,7 +167,7 @@ class Merge(object):
         try:
             ref = repo.lookup_reference("refs/heads/%s" % refname)
         except KeyError:
-            self._git_run("git checkout -f remotes/%s/%s -b %s" % (
+            self._git_run("git checkout remotes/%s/%s -b %s" % (
                 remote,
                 branch,
                 refname,
@@ -177,6 +183,14 @@ class Merge(object):
             self._git_run("git cherry-pick -x %s" % self._commit.hex)
         except:
             output = self._git_run("git diff HEAD")
+            log.error(
+                "Cherry-pick of %s failed on %s %s.",
+                self._commit.hex,
+                remote,
+                branch,
+                output
+            )
+            log.debug("Diff:\n%s", output)
             raise ValueError(output[0])
 
         self._git_run("git push %s %s:%s" % (remote, refname, branch))
@@ -191,6 +205,8 @@ def _pack(rev):
 
 def mail(repo, commit, errors):
 
+    log.debug("Sending email for failed merge of commit %s", commit.hex)
+
     host = repo.config.get_multivar("automerge.smtphost") or ["localhost"]
     port = repo.config.get_multivar("automerge.smtpport") or [25]
     user = repo.config.get_multivar("automerge.smtpuser")
@@ -198,6 +214,8 @@ def mail(repo, commit, errors):
     sendto = repo.config.get_multivar("automerge.toemail") or [
         "spam@agencialivre.com.br"
     ]
+
+    log.debug("Using SMTP host %s port %s", host[0], port[0])
 
     server = smtplib.SMTP(
         host[0],
@@ -229,6 +247,7 @@ The commit "%(hex)s" failed to automerge for the following branches:
             msg.as_string()
         )
     except Exception, e:
+        log.warn("Email send failed: %s", e)
         print e
 
 
@@ -252,6 +271,8 @@ def main():
     )
     args = parser.parse_args()
 
+    logging.basicConfig(level=logging.DEBUG)
+
     repo_path = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
         ".."
@@ -264,6 +285,8 @@ def main():
         "origin",
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stderr = proc.communicate()[1]
+
+    log.debug("Git fetch: %s", stderr)
 
     if args.revs:
         fetch = [args.revs + ("origin/master", )]
