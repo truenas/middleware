@@ -23,8 +23,8 @@ rm -rf release_stage
 set -x
 set -e
 mkdir -p release_stage
-cd release_stage
 for arch in x64 x86 ; do 
+	cd ${TOP}/release_stage
 	eval mapped_arch=\$map_$arch
 	echo $arch = $mapped_arch
 	mkdir $arch
