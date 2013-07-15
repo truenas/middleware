@@ -303,6 +303,7 @@ build_target()
 
 	if ! $BUILD
 	then
+		echo ${_cmd}
 		exit 0
 	fi
 
