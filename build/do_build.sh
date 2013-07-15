@@ -359,7 +359,7 @@ freebsd_checkout_svn()
 freebsd_checkout_git()
 {
 	(
-	: ${GIT_BRANCH=freenas-9-stable}
+	: ${GIT_BRANCH=freenas-9.1-releng}
 	: ${GIT_REPO=https://github.com/trueos/trueos.git}
 	cd "$AVATAR_ROOT/FreeBSD"
 	if [ -d src/.git ] ; then
@@ -443,7 +443,7 @@ ports_checkout_git()
 		git pull --depth 1
 		cd ..
 	else
-		: ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
+		: ${GIT_PORTS_BRANCH=freenas/9.1-releng}
 		: ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
 		spl="$-";set -x
 		git clone -b ${GIT_PORTS_BRANCH} ${GIT_PORTS_REPO} --depth 1 ports
