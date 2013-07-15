@@ -285,7 +285,7 @@ add_port sysutils/arcconf
 add_port sysutils/tw_cli
 add_port sysutils/megacli
 add_port sysutils/areca-cli
-add_port net/py-ldap2 WITH_SASL=y
+add_port net/py-ldap2 OPTIONS_FILE_SET+=SASL
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
 add_port devel/dbus OPTIONS_FILE_UNSET+=X11
@@ -300,7 +300,10 @@ add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port devel/libevent
 add_port sysutils/tmux
-add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y
+add_port net/netatalk OPTIONS_FILE_SET+=PAM \
+	OPTIONS_FILE_SET+=ZEROCONF \
+	OPTIONS_FILE_SET+=LDAP \
+	OPTIONS_FILE_UNSET+=APPLETALK
 add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
