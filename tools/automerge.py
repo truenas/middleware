@@ -177,7 +177,6 @@ class Merge(object):
 
         repo.checkout(pygit2.GIT_CHECKOUT_FORCE, ref)
 
-        self._git_run("git reset --hard")
         self._git_run("git rebase remotes/%s/%s" % (remote, branch))
 
         try:
