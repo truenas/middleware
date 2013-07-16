@@ -165,6 +165,13 @@ class Merge(object):
         else:
             refname = branch
 
+        # For some reason git reset --hard hungs
+        # Workaround it checking out to another branch first
+        repo.checkout(
+            refname="refs/remotes/origin/master",
+            strategy=pygit2.GIT_CHECKOUT_FORCE,
+        )
+
         try:
             repo.checkout(
                 refname="refs/heads/%s" % refname,
@@ -177,7 +184,7 @@ class Merge(object):
                 refname,
             ))
 
-        self._git_run("git reset --hard")
+        #self._git_run("git reset --hard")
         self._git_run("git rebase remotes/%s/%s" % (remote, branch))
 
         try:
