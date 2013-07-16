@@ -184,7 +184,7 @@ class Merge(object):
                 refname,
             ))
 
-        #self._git_run("git reset --hard")
+        self._git_run("git reset --hard")
         self._git_run("git rebase remotes/%s/%s" % (remote, branch))
 
         try:
