@@ -545,7 +545,7 @@ do_pbi_wrapper_hack()
 	fi
 	cp ${_src}/* ${_dst}
 
-	NANO_LOCAL_DIRS="pbi-wrapper"
+	NANO_LOCAL_DIRS="${NANO_LOCAL_DIRS} pbi-wrapper"
 	export NANO_LOCAL_DIRS
 }
 
