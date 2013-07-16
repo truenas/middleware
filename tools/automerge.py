@@ -203,24 +203,30 @@ class Merge(object):
             log.debug("Skipping git push as told (--no-push)")
 
 
-def _pack(rev):
-    return struct.pack(
-        'B' * (len(rev) / 2),
-        *[int(rev[i*2:i*2+2], 16) for i in xrange(len(rev) / 2)]
-    )
-
-
 def mail(repo, commit, errors):
 
     log.debug("Sending email for failed merge of commit %s", commit.hex)
 
-    host = repo.config.get_multivar("automerge.smtphost") or ["localhost"]
-    port = repo.config.get_multivar("automerge.smtpport") or [25]
-    user = repo.config.get_multivar("automerge.smtpuser")
-    passwd = repo.config.get_multivar("automerge.smtppassword")
-    sendto = repo.config.get_multivar("automerge.toemail") or [
-        "spam@agencialivre.com.br"
-    ]
+    try:
+        host = repo.config.get_multivar("automerge.smtphost")
+    except KeyError:
+        host = ["localhost"]
+    try:
+        port = repo.config.get_multivar("automerge.smtpport")
+    except KeyError:
+        port = [25]
+    try:
+        user = repo.config.get_multivar("automerge.smtpuser")
+    except KeyError:
+        user = []
+    try:
+        passwd = repo.config.get_multivar("automerge.smtppassword")
+    except KeyError:
+        passwd = []
+    try:
+        sendto = repo.config.get_multivar("automerge.toemail")
+    except KeyError:
+        sendto = ["spam@agencialivre.com.br"]
 
     log.debug("Using SMTP host %s port %s", host[0], port[0])
 
@@ -314,10 +320,10 @@ def main():
     for oldrev, newrev, ref in fetch:
         if ref != "origin/master":
             continue
-        newcommit = repo[_pack(newrev)]
+        newcommit = repo[newrev]
         commits = []
         if oldrev:
-            oldoid = repo[_pack(oldrev)].oid
+            oldoid = repo[oldrev].oid
             for commit in repo.walk(newcommit.oid, pygit2.GIT_SORT_TOPOLOGICAL):
                 if commit.oid == oldoid:
                     break
