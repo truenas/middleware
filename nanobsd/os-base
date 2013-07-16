@@ -265,6 +265,7 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11-fonts/bitstream-vera
 	add_port x11-fonts/font-util
 	add_port x11-fonts/encodings
+	add_port x11-fonts/dejavu
 	add_port x11-fonts/xorg-fonts-truetype
 	add_port x11/pixman
 	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
