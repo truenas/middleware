@@ -166,16 +166,16 @@ class Merge(object):
             refname = branch
 
         try:
-            ref = repo.lookup_reference("refs/heads/%s" % refname)
+            repo.checkout(
+                refname="refs/heads/%s" % refname,
+                strategy=pygit2.GIT_CHECKOUT_FORCE,
+            )
         except KeyError:
             self._git_run("git checkout remotes/%s/%s -b %s" % (
                 remote,
                 branch,
                 refname,
             ))
-            ref = repo.lookup_reference("refs/heads/%s" % refname)
-
-        repo.checkout(pygit2.GIT_CHECKOUT_FORCE, ref)
 
         self._git_run("git reset --hard")
         self._git_run("git rebase remotes/%s/%s" % (remote, branch))
