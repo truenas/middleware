@@ -461,7 +461,7 @@ class NavTree(object):
                         "Could not reverse url, skipping node %(node)s: "
                         "%(error)s") % {
                             'node': option,
-                            'erorr': e,
+                            'error': e,
                         })
                     continue
                 try:
