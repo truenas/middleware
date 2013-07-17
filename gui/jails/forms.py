@@ -839,46 +839,35 @@ class NullMountPointForm(ModelForm):
             self.instance = kwargs.pop('instance')
 
         self.jc = JailsConfiguration.objects.order_by("-id")[0]
+        self.fields['jail'] = forms.ChoiceField(
+            label=_("Jail"),
+            choices=(),
+            widget=forms.Select(attrs={'class': 'required'}),
+        )
         if self.jail:
             self.fields['jail'].initial = self.jail.jail_host
-            self.fields['jail'].widget.attrs['readonly'] = True
-            self.fields['jail'].widget.attrs['class'] = (
-                'dijitDisabled dijitTextBoxDisabled'
-                'dijitValidationTextBoxDisabled'
-            )
-            self.jc = JailsConfiguration.objects.order_by("-id")[0]
-            jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
 
-            self.fields['destination'].widget.attrs['root'] = (jail_path)
+        try:
+            clean_path_execbit(self.jc.jc_path)
+        except forms.ValidationError, e:
+            self.errors['__all__'] = self.error_class(e.messages)
 
-        else:
-            self.fields['jail'] = forms.ChoiceField(
-                label=_("Jail"),
-                choices=(),
-                widget=forms.Select(attrs={'class': 'required'}),
-            )
+        pjlist = []
+        try:
+            wlist = Warden().list()
+        except:
+            wlist = []
 
-            try:
-                clean_path_execbit(self.jc.jc_path)
-            except forms.ValidationError, e:
-                self.errors['__all__'] = self.error_class(e.messages)
+        for wj in wlist:
+            pjlist.append(wj[WARDEN_KEY_HOST])
 
-            pjlist = []
-            try:
-                wlist = Warden().list()
-            except:
-                wlist = []
-
-            for wj in wlist:
-                pjlist.append(wj[WARDEN_KEY_HOST])
-
-            self.fields['jail'].choices = [(pj, pj) for pj in pjlist]
-            self.fields['jail'].widget.attrs['onChange'] = (
-                'addStorageJailChange(this);'
-            )
-            if pjlist:
-                jail_path = "%s/%s" % (self.jc.jc_path, pjlist[0])
-                self.fields['destination'].widget.attrs['root'] = jail_path
+        self.fields['jail'].choices = [(pj, pj) for pj in pjlist]
+        self.fields['jail'].widget.attrs['onChange'] = (
+            'addStorageJailChange(this);'
+        )
+        if pjlist:
+            jail_path = "%s/%s" % (self.jc.jc_path, pjlist[0])
+            self.fields['destination'].widget.attrs['root'] = jail_path
 
         self.fields['jc_path'].widget = forms.widgets.HiddenInput()
         self.fields['jc_path'].initial = self.jc.jc_path
