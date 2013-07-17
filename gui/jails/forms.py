@@ -882,12 +882,17 @@ class NullMountPointForm(ModelForm):
         mounted = self.cleaned_data.get("mounted")
         if mounted == obj.mounted:
             return obj
-        if mounted and not obj.mount():
-            #FIXME better error handling, show the user why
-            raise MiddlewareError(_("The path could not be mounted %s") % (
-                obj.source,
-            ))
-        if not mounted and not obj.umount():
+        if mounted:
+            try:
+                obj.mount()
+            except ValueError, e:
+                raise MiddlewareError(_(
+                    "The path could not be mounted %s: %s") % (
+                        obj.source,
+                        e,
+                    )
+                )
+        elif obj.umount():
             #FIXME better error handling, show the user why
             raise MiddlewareError(_("The path could not be umounted %s") % (
                 obj.source,
