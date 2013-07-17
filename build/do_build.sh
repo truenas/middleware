@@ -360,6 +360,10 @@ freebsd_checkout_svn()
 freebsd_checkout_git()
 {
 	(
+	local _depth_arg="--depth 1"
+	if [ "x${GIT_TAG}" != "x" ] ; then
+		_depth_arg=""
+	fi
 	: ${GIT_BRANCH=freenas-9-stable}
 	: ${GIT_REPO=https://github.com/trueos/trueos.git}
 	cd "$AVATAR_ROOT/FreeBSD"
@@ -369,11 +373,11 @@ freebsd_checkout_git()
 
 			git checkout ${GIT_BRANCH}
 		fi
-		git pull --depth 1
+		git pull $_depth_arg
 		cd ..
 	else
 		spl="$-";set -x
-		git clone -b ${GIT_BRANCH} ${GIT_REPO} --depth 1 src
+		git clone -b ${GIT_BRANCH} ${GIT_REPO} $_depth_arg src
 		echo $spl | grep -q x || set +x
 		if [ "x${GIT_TAG}" != "x" ] ; then
 			(
@@ -438,16 +442,20 @@ checkout_freebsd_source()
 ports_checkout_git()
 {
 	(
+	local _depth_arg="--depth 1"
+	if [ "x${GIT_PORTS_TAG}" != "x" ] ; then
+		_depth_arg=""
+	fi
 	cd "$AVATAR_ROOT/FreeBSD"
 	if [ -d ports/.git ] ; then
 		cd ports
-		git pull --depth 1
+		git pull $_depth_arg
 		cd ..
 	else
 		: ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
 		: ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
 		spl="$-";set -x
-		git clone -b ${GIT_PORTS_BRANCH} ${GIT_PORTS_REPO} --depth 1 ports
+		git clone -b ${GIT_PORTS_BRANCH} ${GIT_PORTS_REPO} $_depth_arg ports
 		echo $spl | grep -q x || set +x
 		if [ "x${GIT_PORTS_TAG}" != "x" ] ; then
 			(
