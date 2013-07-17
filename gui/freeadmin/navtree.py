@@ -460,8 +460,8 @@ class NavTree(object):
                     log.warn(_(
                         "Could not reverse url, skipping node %(node)s: "
                         "%(error)s") % {
-                            'node': option,
-                            'error': e,
+                            'node': repr(option),
+                            'error': repr(e),
                         })
                     continue
                 try:
