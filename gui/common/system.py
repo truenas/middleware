@@ -38,6 +38,8 @@ from email.mime.text import MIMEText
 from email.Utils import formatdate
 from datetime import datetime, timedelta
 
+from django.utils.translation import ugettext_lazy as _
+
 RE_MOUNT = re.compile(
     r'^(?P<fs_spec>.+?) on (?P<fs_file>.+?) \((?P<fs_vfstype>\w+)', re.S
 )
@@ -266,7 +268,12 @@ def mount(dev, path, mntopts=None, fstype=None):
 
     if proc.returncode != 0:
         log.debug("Mount failed (%s): %s", proc.returncode, output)
-        return False
+        raise ValueError(_(
+            "Mount failed (%s) -> %s" % (
+                proc.returncode,
+                output,
+            )
+        ))
     else:
         return True
 
