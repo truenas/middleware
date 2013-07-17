@@ -115,8 +115,8 @@ class Base(object):
         storage_node_view.name = _('%s' % nmp.destination)
         storage_node_view.gname = nmp.id
         storage_node_view.type = 'editobject'
-        storage_node_view.view = 'jail_storage_view'
-        storage_node_view.kwargs = {'id': nmp.id}
+        storage_node_view.view = 'freeadmin_jails_nullmountpoint_edit'
+        storage_node_view.kwargs = {'oid': nmp.id}
         storage_node_view.model = 'NullMountPoint'
         storage_node_view.icon = u'SettingsIcon'
         storage_node_view.app_name = 'jails'
