@@ -167,10 +167,12 @@ class Merge(object):
 
         # For some reason git reset --hard hungs
         # Workaround it checking out to another branch first
-        repo.checkout(
-            refname="refs/remotes/origin/master",
-            strategy=pygit2.GIT_CHECKOUT_FORCE,
-        )
+        #repo.checkout(
+        #    refname="refs/remotes/origin/master",
+        #    strategy=pygit2.GIT_CHECKOUT_FORCE,
+        #)
+        #FIXME: For some reason repo.checkout doesnt work the same way
+        self._git_run("git checkout -f origin/master")
 
         try:
             repo.checkout(
