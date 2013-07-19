@@ -19,12 +19,17 @@ class Plugin(object):
 class Available(object):
 
     def get_local(self):
-
-        results = []
-
-        results.append(
-            Plugin(name="transmission", description="BitTorrent client")
-        )
+        results = [
+            Plugin(name="Transmission", description="BitTorrent client"),
+            Plugin(
+                name="MiniDLNA",
+                description="Multimedia streamer using DLNA",
+            ),
+            Plugin(
+                name="Firefly",
+                description="Audio media server for iTunes and Roku",
+            ),
+        ]
 
         return results
 
