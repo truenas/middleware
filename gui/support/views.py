@@ -108,12 +108,10 @@ def index(request):
 
             if r.status_code == 200:
                 return JsonResp(request, message=_("Support request successfully sent"))
-            else: 
-                return JsonResp(
-                    request,
-                    error=True,
-                    message=_("Error posting to URL"),
-                )
+            else:
+                errors = simplejson.loads(r.text)
+                for e in errors:
+                    form._errors[e] = form.error_class(errors[e])
 
     else:
         form = forms.SupportForm(email=email)
