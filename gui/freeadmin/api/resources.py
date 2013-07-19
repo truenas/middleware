@@ -919,7 +919,7 @@ class SnapshotResource(DojoResource):
 
 class AvailablePluginsResource(DojoResource):
 
-    #id = fields.CharField(attribute='id')
+    id = fields.CharField(attribute='id')
     name = fields.CharField(attribute='name')
     description = fields.CharField(attribute='description')
 
