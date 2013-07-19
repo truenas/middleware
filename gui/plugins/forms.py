@@ -180,3 +180,10 @@ class PBIUpdateForm(PBIUploadForm):
         notifier()._restart_plugins(
             self.plugin.plugin_jail,
             self.plugin.plugin_name)
+
+
+class AvailableBrowse(forms.Form):
+    url = forms.CharField(
+        label=_("URL"),
+        help_text=_("URL for the plugins index"),
+    )
