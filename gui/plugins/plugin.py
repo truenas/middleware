@@ -1,4 +1,9 @@
 import hashlib
+import logging
+
+import requests
+
+log = logging.getLogger("plugins.plugin")
 
 
 class Plugin(object):
@@ -43,6 +48,31 @@ class Available(object):
                 description="Audio media server for iTunes and Roku",
             ),
         ]
+
+        return results
+
+    def get_remote(self, url):
+        results = []
+
+        log.debug("Retrieving available plugins from %s", url)
+        r = requests.get(url)
+
+        if r.status_code != requests.codes.ok:
+            log.debug(
+                "HTTP request to %s did not return OK (%d)", url, r.status_code
+            )
+            return results
+
+        data = r.json()
+
+        for p in data['plugins']:
+            results.append(
+                Plugin(
+                    name=data['name'],
+                    description=data['description'],
+                    version=data['version'],
+                )
+            )
 
         return results
 
