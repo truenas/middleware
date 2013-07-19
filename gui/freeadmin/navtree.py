@@ -282,6 +282,9 @@ class NavTree(object):
         else:
             nav.name = self.titlecase(app)
 
+        if hasattr(modnav, 'TYPE'):
+            nav.type = modnav.TYPE
+
         if modnav:
             modname = "%s.nav" % app
             for c in dir(modnav):
