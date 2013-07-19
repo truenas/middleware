@@ -29,6 +29,7 @@ from collections import OrderedDict
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
+from freenasUI.freeadmin.api.resources import AvailablePluginsResource
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.plugins import models
@@ -43,4 +44,16 @@ class PluginsFAdmin(BaseFreeAdmin):
         'plugin_version',
     )
 
+
+class AvailableFAdmin(BaseFreeAdmin):
+
+    icon_model = u"PluginsIcon"
+
+    resource = AvailablePluginsResource
+
+    fields = (
+        'name',
+    )
+
 site.register(models.Plugins, PluginsFAdmin)
+site.register(models.Available, AvailableFAdmin)
