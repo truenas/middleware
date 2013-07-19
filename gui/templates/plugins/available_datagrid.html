@@ -1,3 +1,12 @@
 {% extends "freeadmin/generic_model_datagrid.html" %}
 {% block actions_static_pane %}
+{{ block.super }}
+{% endblock %}
+{% block actions_static_buttons %}
+    <button id="availPluginsBrowse" data-dojo-type="dijit.form.Button">
+    <p>{% trans "Browse" %}</p>
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt"> 
+        editObject('{% trans "Browse"|escapejs %}', '{% url "freeadmin_plugins_available_browse" %}', [this,]);
+    </script>
+    </button>
 {% endblock %}
