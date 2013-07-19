@@ -921,6 +921,7 @@ class AvailablePluginsResource(DojoResource):
 
     #id = fields.CharField(attribute='id')
     name = fields.CharField(attribute='name')
+    description = fields.CharField(attribute='description')
 
     class Meta:
         resource_name = 'availableplugins'

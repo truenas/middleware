@@ -114,5 +114,10 @@ class Available(models.Model):
         max_length=200,
     )
 
+    description = models.CharField(
+        verbose_name=_("Description"),
+        max_length=200,
+    )
+
     class Meta:
         abstract = True
