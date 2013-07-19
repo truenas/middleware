@@ -31,6 +31,7 @@ from jsonrpc import jsonrpc_site
 import freenasUI.plugins.views
 
 urlpatterns = patterns('freenasUI.plugins.views',
+    url(r'^plugin/install/(?P<oid>[0-9a-f]{32,64})/$', 'plugin_install_available', name="plugin_install_available"),
     url(r'^plugin/install/(?P<jail_id>\d+)/$', 'plugin_install', name="plugin_install"),
     url(r'^plugin/install/$', 'plugin_install_nojail', name="plugin_install_nojail"),
     url(r'^plugin/edit/(?P<plugin_id>\d+)/$', 'plugin_edit', name="plugin_edit"),
