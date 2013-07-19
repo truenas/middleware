@@ -98,10 +98,21 @@ class Plugins(Model):
         )
 
     class Meta:
-        verbose_name = _(u"Plugins")
+        verbose_name = _(u"Plugin")
         verbose_name_plural = _(u"Plugins")
 
     def delete(self, *args, **kwargs):
         with transaction.commit_on_success():
             super(Plugins, self).delete(*args, **kwargs)
             self.plugin_secret.delete()
+
+
+class Available(models.Model):
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=200,
+    )
+
+    class Meta:
+        abstract = True
