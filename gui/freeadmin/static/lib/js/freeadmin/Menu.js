@@ -221,6 +221,44 @@ define([
             }
         },
 
+        openPlugins: function(tab) {
+            var opened = false;
+            var p = registry.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].tab == 'plugins'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                    if(tab) {
+                        var tabnet = registry.byId("tab_jails");
+                        if(tabnet) {
+                            var c2 = tabnet.getChildren();
+                            for(var j=0; j<c2.length; j++){
+                                if(c2[j].domNode.getAttribute("tab") == tab)
+                                    tabnet.selectChild(c2[j]);
+                            }
+                        }
+                    }
+                }
+            }
+            if(opened != true) {
+                openurl = this.urlPlugins;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
+                var pane = new ContentPane({
+                    title: gettext('Plugins'),
+                    closable: true,
+                    href: openurl,
+                });
+                pane.tab = 'plugins';
+                p.addChild(pane);
+                p.selectChild(pane);
+                domClass.add(pane.domNode,["objrefresh", "data_plugins_plugins"]);
+            }
+        },
+
         openAccount: function(tab) {
             var opened = false;
             var p = registry.byId("content");
