@@ -59,6 +59,7 @@ class BaseFreeAdmin(object):
     deletable = True
     menu_child_of = None
 
+    fields = ()
     exclude_fields = ('id', )
     resource = None
     double_click = True
@@ -722,7 +723,15 @@ class BaseFreeAdmin(object):
             raise NotImplementedError
 
         columns = []
-        for field in self._model._meta.fields:
+        if self.fields:
+            fields = [
+                field for field in self._model._meta.fields
+                if field.name in self.fields
+            ]
+        else:
+            fields = self._model._meta.fields
+
+        for field in fields:
 
             if field.name in self.exclude_fields:
                 continue
