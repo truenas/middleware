@@ -68,9 +68,9 @@ class Available(object):
         for p in data['plugins']:
             results.append(
                 Plugin(
-                    name=data['name'],
-                    description=data['description'],
-                    version=data['version'],
+                    name=p['name'],
+                    description=p['description'],
+                    version=p['version'],
                 )
             )
 
