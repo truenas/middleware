@@ -16,4 +16,10 @@
       });
     </script>
   </div>
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Plugins"|escapejs %}'
+  {% if focus_form == "services.Plugins" %}, selected: true{% endif %},
+  href: '{% url "services_plugins" %}',
+  doLayout: false,
+  refreshOnShow: true" class="objrefresh data_services_Plugins" id="servicesTab_Plugins">
+  </div>
 </div>
