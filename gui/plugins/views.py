@@ -127,15 +127,14 @@ def available_browse(request):
     if request.method == "POST":
         form = forms.AvailableBrowse(request.POST)
         if form.is_valid():
-            request.session['plugins_browse_url'] = (
-                form.cleaned_data.get("url")
-            )
+            url = form.cleaned_data.get("url")
+            if url:
+                request.session['plugins_browse_url'] = url
         return JsonResp(request, form=form)
     else:
-        url = request.session.get(
-            'plugins_browse_url',
-            'http://localhost/static/FreeNAS-index',
-        )
+        url = request.session.get('plugins_browse_url')
+        if not url:
+            url = models.PLUGINS_INDEX
         form = forms.AvailableBrowse(initial={'url': url})
     return render(request, "plugins/available_browse.html", {
         'form': form,

@@ -46,6 +46,7 @@ from freenasUI.services.models import (
 )
 from freenasUI.jails.models import NullMountPoint
 from freenasUI.plugins import availablePlugins, Plugin
+from freenasUI.plugins.models import PLUGINS_INDEX
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
@@ -932,7 +933,10 @@ class AvailablePluginsResource(DojoResource):
         paginator_class = DojoPaginator
 
     def get_list(self, request, **kwargs):
-        results = availablePlugins.all()
+        url = request.session.get('plugins_browse_url')
+        if not url:
+            url = PLUGINS_INDEX
+        results = availablePlugins.get_remote(url=url)
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
                 field = sfield[1:]

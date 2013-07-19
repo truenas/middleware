@@ -186,4 +186,5 @@ class AvailableBrowse(forms.Form):
     url = forms.CharField(
         label=_("URL"),
         help_text=_("URL for the plugins index"),
+        required=False,
     )
