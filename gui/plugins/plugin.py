@@ -1,9 +1,11 @@
 class Plugin(object):
 
     name = None
+    description = None
 
-    def __init__(self, name):
+    def __init__(self, name, description):
         self.name = name
+        self.description = description
 
     def __setattr__(self, name, value):
         if not hasattr(self, name):
@@ -21,7 +23,7 @@ class Available(object):
         results = []
 
         results.append(
-            Plugin(name="transmission")
+            Plugin(name="transmission", description="BitTorrent client")
         )
 
         return results

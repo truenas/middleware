@@ -51,9 +51,5 @@ class AvailableFAdmin(BaseFreeAdmin):
 
     resource = AvailablePluginsResource
 
-    fields = (
-        'name',
-    )
-
 site.register(models.Plugins, PluginsFAdmin)
 site.register(models.Available, AvailableFAdmin)
