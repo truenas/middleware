@@ -35,6 +35,7 @@ var form, iterFunction;
                     </td>
                 </tr>
                 {% endfor %}
+
                 <tr>
                     <td colspan="2">
                     <a href="javascript:void(0);" onClick="add_formset(this, '{{ model.get_empty_formset_url }}', '{{ formset.prefix|escapejs }}');">Add extra {{ formset.verbose_name }}</a>
@@ -45,6 +46,7 @@ var form, iterFunction;
     </tr>
     {% endfor %}
     {% endblock %}
+
     <tr><td colspan="2">
         <button id="btn_{{ verbose_name}}_Add" class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
             <script type="dojo/method">

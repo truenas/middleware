@@ -24,6 +24,7 @@
 #
 #####################################################################
 import logging
+import requests
 
 from dojango import forms
 
@@ -32,7 +33,6 @@ from django.forms.fields import MultiValueField
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings as django_settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse,  NoReverseMatch
 from django.forms import ValidationError
 from django.forms.widgets import MultiWidget
 
@@ -43,7 +43,16 @@ from captcha.conf import settings
 from captcha.models import CaptchaStore, get_safe_now
 from captcha.fields import CaptchaField, CaptchaTextInput
 
+from bs4 import BeautifulSoup
+
 log = logging.getLogger("support.supportcaptcha")
+
+SUPPORT_PROTO = "http"
+SUPPORT_HOST = "tickets.ixsystems.com"
+SUPPORT_BASE = "%s://%s" % (SUPPORT_PROTO, SUPPORT_HOST)
+SUPPORT_URL = "%s/postproxy/index" % SUPPORT_BASE
+SUPPORT_URL_GET = SUPPORT_URL
+SUPPORT_URL_POST = "%s/" % SUPPORT_URL
 
 class BaseSupportCaptchaTextInput(MultiWidget):
     """
@@ -54,6 +63,14 @@ class BaseSupportCaptchaTextInput(MultiWidget):
             forms.HiddenInput(attrs),
             forms.TextInput(attrs),
         )
+
+        try:
+            self.req = requests.get(SUPPORT_URL_GET)
+            self.soup = BeautifulSoup(self.req.text)  
+
+        except Exception as e:
+            raise ValidationError("Unable to reach %s: %s" % (SUPPORT_URL_GET, e))
+
         super(BaseSupportCaptchaTextInput, self).__init__(widgets, attrs)
 
     def decompress(self, value):
@@ -66,34 +83,24 @@ class BaseSupportCaptchaTextInput(MultiWidget):
         Fetches a new CaptchaStore
         This has to be called inside render
         """
-        try:
-            reverse('captcha-image', args=('dummy',))
-        except NoReverseMatch:
-            raise ImproperlyConfigured('Make sure you\'ve included captcha.urls as explained in the INSTALLATION section on http://readthedocs.org/docs/django-simple-captcha/en/latest/usage.html#installation')
 
-        key = CaptchaStore.generate_key()
+       	key = self.soup.find(id='id_captcha_0')['value']
 
         # these can be used by format_output and render
         self._value = [key, u'']
         self._key = key
-        self.id_ = self.build_attrs(attrs).get('id', None)
+        self.id_ = "id_captcha"
 
     def render(self, name, value, attrs=None):
-        #self.fetch_captcha_store(name, value, attrs)
         return super(BaseSupportCaptchaTextInput, self).render(name, self._value, attrs=attrs)
 
     def id_for_label(self, id_):
-        return id_ + '_1'
+        return "id_captcha_1"
+        #return id_ + '_1'
 
     def image_url(self):
-        return reverse('captcha-image', kwargs={'key': self._key})
-
-    def audio_url(self):
-        return reverse('captcha-audio', kwargs={'key': self._key}) if settings.CAPTCHA_FLITE_PATH else None
-
-    def refresh_url(self):
-        return reverse('captcha-refresh')
-
+        src = self.soup.find('img')['src']
+        return "%s%s" % (SUPPORT_BASE, src)
 
 class SupportCaptchaTextInput(BaseSupportCaptchaTextInput):
     def __init__(self, attrs=None, **kwargs):
@@ -120,9 +127,6 @@ class SupportCaptchaTextInput(BaseSupportCaptchaTextInput):
         self.fetch_captcha_store(name, value, attrs)
 
         self.image_and_audio = '<img src="%s" alt="captcha" class="captcha" />' % self.image_url()
-        if settings.CAPTCHA_FLITE_PATH:
-            self.image_and_audio = '<a href="%s" title="%s">%s</a>' % (self.audio_url(), ugettext('Play CAPTCHA as audio file'), self.image_and_audio)
-
         return super(SupportCaptchaTextInput, self).render(name, self._value, attrs=attrs)
 
 
@@ -149,7 +153,11 @@ class SupportCaptchaField(MultiValueField):
     def clean(self, value):
         super(SupportCaptchaField, self).clean(value)
         response, value[1] = value[1].strip().lower(), ''
-        CaptchaStore.remove_expired()
+        #CaptchaStore.remove_expired()
+
+        # XXX
+        return value  
+
         if settings.CATPCHA_TEST_MODE and response.lower() == 'passed':
             # automatically pass the test
             try:
