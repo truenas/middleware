@@ -960,4 +960,8 @@ class AvailablePluginsResource(DojoResource):
         return response
 
     def dehydrate(self, bundle):
+        bundle.data['_install_url'] = reverse(
+            'plugin_install_available',
+            kwargs={'oid': bundle.obj.id},
+        )
         return bundle

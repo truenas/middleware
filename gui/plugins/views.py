@@ -33,7 +33,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
-from freenasUI.plugins import models, forms
+from freenasUI.plugins import models, forms, availablePlugins
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
 from freenasUI.jails.models import Jails, JailsConfiguration
 
@@ -120,6 +120,20 @@ def plugin_update(request, plugin_id):
     return render(request, "plugins/plugin_update.html", {
         'form': form,
         })
+
+
+def plugin_install_available(request, oid):
+
+    plugin = None
+    for p in availablePlugins.all():
+        if p.id == oid:
+            plugin = p
+            break
+
+    if not plugin:
+        raise MiddlewareError(_("Invalid plugin"))
+
+    raise NotImplementedError
 
 
 def plugin_install(request, jail_id=-1):
