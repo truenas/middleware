@@ -30,6 +30,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.models import Model
 
+PLUGINS_INDEX = 'http://localhost/static/FreeNAS-index'
 
 class Plugins(Model):
     plugin_name = models.CharField(
