@@ -25,28 +25,22 @@
 #
 #####################################################################
 import logging
-import os
 import shutil
 
 from django.forms import FileField
-from django.utils.translation import ugettext_lazy as _, ugettext as __
+from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
-from freenasUI import choices
-from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.warden import (Warden,
-    WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
-    WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING)
-from freenasUI.freeadmin.views import JsonResp
-from freenasUI.freeadmin.forms import PathField
-from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.common.warden import (
+    Warden, WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
+    WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING,
+)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
-from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import (
-    clean_path_execbit, clean_path_locked, FileWizard
+    clean_path_execbit
 )
 from freenasUI.jails.models import JailsConfiguration
 
@@ -54,8 +48,10 @@ log = logging.getLogger('plugins.forms')
 
 
 def _clean_jail_ipv4address(jip):
-    if Alias.objects.filter(alias_v4address=jip).exists() or \
-        Interfaces.objects.filter(int_ipv4address=jip).exists():
+    if (
+        Alias.objects.filter(alias_v4address=jip).exists() or
+        Interfaces.objects.filter(int_ipv4address=jip).exists()
+    ):
         raise forms.ValidationError(_("This IP is already in use."))
     return jip
 
@@ -64,8 +60,10 @@ class PluginsForm(ModelForm):
 
     class Meta:
         model = models.Plugins
-        exclude = ('plugin_pbiname', 'plugin_arch', 'plugin_version',
-            'plugin_path', 'plugin_key', 'plugin_secret')
+        exclude = (
+            'plugin_pbiname', 'plugin_arch', 'plugin_version',
+            'plugin_path', 'plugin_key', 'plugin_secret',
+        )
 
     def __init__(self, *args, **kwargs):
         super(PluginsForm, self).__init__(*args, **kwargs)
@@ -79,21 +77,23 @@ class PluginsForm(ModelForm):
 class PBIUploadForm(Form):
     pbifile = FileField(
         label=_("PBI file to be installed"),
-        help_text=_("Click here to find out what PBI's are!" \
-            "<a href='http://www.pcbsd.org/en/package-management/' " \
-            "onclick='window.open(this.href);return false;'>"), 
+        help_text=_(
+            "Click here to find out what PBI's are!"
+            "<a href='http://www.pcbsd.org/en/package-management/' "
+            "onclick='window.open(this.href);return false;'>"
+        ),
         required=True
-        )
+    )
     pjail = forms.ChoiceField(
         label=_("Plugin Jail"),
         help_text=_("The plugin jail that the PBI is to be installed in."),
         choices=(),
         widget=forms.Select(attrs={'class': 'required'}),
-        )
+    )
 
     def __init__(self, *args, **kwargs):
         self.jail = None
-        if kwargs and kwargs.has_key('jail'):
+        if kwargs and 'jail' in kwargs:
             self.jail = kwargs.pop('jail')
 
         super(PBIUploadForm, self).__init__(*args, **kwargs)
@@ -108,14 +108,18 @@ class PBIUploadForm(Form):
             pjlist = []
             wlist = Warden().list()
             for wj in wlist:
-                if wj[WARDEN_KEY_TYPE] == WARDEN_TYPE_PLUGINJAIL and \
-                    wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING:
+                if (
+                    wj[WARDEN_KEY_TYPE] == WARDEN_TYPE_PLUGINJAIL and
+                    wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING
+                ):
                     pjlist.append(wj[WARDEN_KEY_HOST])
 
-            self.fields['pjail'].choices = [(pj, pj) for pj in pjlist ]
+            self.fields['pjail'].choices = [(pj, pj) for pj in pjlist]
 
         else:
-            self.fields['pjail'].choices = [(self.jail.jail_host, self.jail.jail_host)]
+            self.fields['pjail'].choices = [
+                (self.jail.jail_host, self.jail.jail_host)
+            ]
             self.fields['pjail'].widget.attrs = {
                 'readonly': True,
                 'class': (
@@ -132,7 +136,7 @@ class PBIUploadForm(Form):
                 shutil.move(
                     cleaned_data['pbifile'].temporary_file_path(),
                     filename
-                    )
+                )
             else:
                 with open(filename, 'wb+') as sp:
                     for c in cleaned_data['pbifile'].chunks():
@@ -140,7 +144,7 @@ class PBIUploadForm(Form):
         else:
             self._errors["pbifile"] = self.error_class([
                 _("This field is required."),
-                ])
+            ])
         return cleaned_data
 
     def done(self, *args, **kwargs):
@@ -148,15 +152,17 @@ class PBIUploadForm(Form):
         pjail = self.cleaned_data.get('pjail')
         if notifier().install_pbi(pjail, newplugin):
             newplugin = newplugin[0]
-            notifier()._restart_plugins(newplugin.plugin_jail,
-                newplugin.plugin_name)
+            notifier()._restart_plugins(
+                newplugin.plugin_jail,
+                newplugin.plugin_name,
+            )
 
 
 class PBIUpdateForm(PBIUploadForm):
     def __init__(self, *args, **kwargs):
         self.plugin = None
-        if kwargs and kwargs.has_key('plugin'):
-            self.plugin = kwargs.pop('plugin') 
+        if kwargs and 'plugin' in kwargs:
+            self.plugin = kwargs.pop('plugin')
 
         super(PBIUpdateForm, self).__init__(*args, **kwargs)
 
@@ -171,5 +177,6 @@ class PBIUpdateForm(PBIUploadForm):
 
     def done(self, *args, **kwargs):
         notifier().update_pbi(self.plugin)
-        notifier()._restart_plugins(self.plugin.plugin_jail,
+        notifier()._restart_plugins(
+            self.plugin.plugin_jail,
             self.plugin.plugin_name)
