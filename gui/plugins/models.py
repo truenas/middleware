@@ -101,9 +101,6 @@ class Plugins(Model):
         verbose_name = _(u"Plugins")
         verbose_name_plural = _(u"Plugins")
 
-    class FreeAdmin:
-        icon_model = u"PluginsIcon"
-
     def delete(self, *args, **kwargs):
         with transaction.commit_on_success():
             super(Plugins, self).delete(*args, **kwargs)
