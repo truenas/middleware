@@ -1386,6 +1386,8 @@ require([
                 Menu.openServices();
             } else if(item.type == 'openjails') {
                 Menu.openJails(item.gname);
+            } else if(item.type == 'openplugins') {
+                Menu.openPlugins(item.gname);
             } else if(item.type == 'pluginsfcgi') {
                 Menu.openPluginsFcgi(p, item);
             } else if(item.type == 'openaccount') {
