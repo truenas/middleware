@@ -145,7 +145,7 @@ def plugin_install_available(request, oid):
     w = warden.Warden()
     w.create(
         jail=jailname,
-        ipv4="192.168.3.50",i  #FIXME
+        ipv4="192.168.3.50",  #FIXME
         flags=(
             warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
             warden.WARDEN_CREATE_FLAGS_SYSLOG |
