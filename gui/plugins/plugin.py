@@ -12,12 +12,14 @@ class Plugin(object):
     name = None
     description = None
     version = None
+    url = None
 
-    def __init__(self, name, description, version):
+    def __init__(self, name, description, version, url=None):
         self.id = hashlib.sha256("%s:%s" % (name, version)).hexdigest()
         self.name = name
         self.description = description
         self.version = version
+        self.url = url
 
     def __setattr__(self, name, value):
         if not hasattr(self, name):
@@ -71,6 +73,7 @@ class Available(object):
                     name=p['name'],
                     description=p['description'],
                     version=p['version'],
+                    url=p['url'],
                 )
             )
 
