@@ -30,12 +30,13 @@ from django.shortcuts import render
 from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext as _
 
+from freenasUI.common import warden
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.jails.models import Jails, JailsConfiguration
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
-from freenasUI.jails.models import Jails, JailsConfiguration
 
 import freenasUI.plugins.api_calls
 
@@ -133,7 +134,47 @@ def plugin_install_available(request, oid):
     if not plugin:
         raise MiddlewareError(_("Invalid plugin"))
 
-    raise NotImplementedError
+    jailname = None
+    for i in xrange(1, 1000):
+        tmpname = "%s_%d" % (plugin.name.lower(), i)
+        jails = Jails.objects.filter(jail_host=tmpname)
+        if not jails:
+            jailname = tmpname
+            break
+
+    w = warden.Warden()
+    w.create(
+        jail=jailname,
+        ipv4="192.168.3.50",i  #FIXME
+        flags=(
+            warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
+            warden.WARDEN_CREATE_FLAGS_SYSLOG |
+            warden.WARDEN_CREATE_FLAGS_IPV4
+        ),
+    )
+    w.set(
+        jail=jailname,
+        flags=(
+            warden.WARDEN_SET_FLAGS_VNET_ENABLE
+        )
+    )
+    w.start(jail=jailname)
+
+    newplugin = []
+    if notifier().install_pbi(jailname, newplugin):
+        newplugin = newplugin[0]
+        notifier()._restart_plugins(
+            newplugin.plugin_jail,
+            newplugin.plugin_name,
+        )
+    else:
+        #FIXME
+        pass
+
+    return JsonResp(
+        request,
+        message=_("Plugin successfully installed"),
+    )
 
 
 def plugin_install(request, jail_id=-1):
