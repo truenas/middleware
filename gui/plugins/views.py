@@ -144,7 +144,10 @@ def available_browse(request):
 def plugin_install_available(request, oid):
 
     plugin = None
-    for p in availablePlugins.all():
+    url = request.session.get('plugins_browse_url')
+    if not url:
+        url = models.PLUGINS_INDEX
+    for p in availablePlugins.get_remote(url=url):
         if p.id == oid:
             plugin = p
             break
