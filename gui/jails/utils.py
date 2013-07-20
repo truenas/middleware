@@ -1,7 +1,11 @@
 import logging
+
+from django.utils.translation import ugettext as _
+
 from freenasUI.common.sipcalc import sipcalc_type
-from freenasUI.common.warden import Warden, WardenJail
-from freenasUI.jails.models import JailsConfiguration
+from freenasUI.common import warden
+from freenasUI.jails.models import Jails, JailsConfiguration
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('jails.utils')
@@ -77,12 +81,12 @@ def guess_adresses():
         high_ipv6 += 25
 
     try:
-        wlist = Warden().list()
+        wlist = warden.Warden().list()
     except:
         wlist = []
 
     for wj in wlist:
-        wo = WardenJail(**wj)
+        wo = warden.WardenJail(**wj)
 
         st_ipv4 = None
         st_ipv6 = None
@@ -153,3 +157,40 @@ def guess_adresses():
         'bridge_ipv4': bridge_ipv4,
         'bridge_ipv6': bridge_ipv6,
     }
+
+
+def new_default_plugin_jail(basename):
+    addrs = guess_adresses()
+    if not addrs['high_ipv4']:
+        raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
+
+    jailname = None
+    for i in xrange(1, 1000):
+        tmpname = "%s_%d" % (basename, i)
+        jails = Jails.objects.filter(jail_host=tmpname)
+        if not jails:
+            jailname = tmpname
+            break
+
+    w = warden.Warden()
+    try:
+        w.create(
+            jail=jailname,
+            ipv4=addrs['high_ipv4'],
+            flags=(
+                warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
+                warden.WARDEN_CREATE_FLAGS_SYSLOG |
+                warden.WARDEN_CREATE_FLAGS_IPV4
+            ),
+        )
+    except Exception, e:
+        raise MiddlewareError(_("Failed to install plugin: %s") % e)
+    w.auto(jail=jailname)
+    w.set(
+        jail=jailname,
+        flags=(
+            warden.WARDEN_SET_FLAGS_VNET_ENABLE
+        )
+    )
+    w.start(jail=jailname)
+    return Jails.objects.get(jail_host=jailname)

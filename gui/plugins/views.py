@@ -36,7 +36,7 @@ from freenasUI.common import warden
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails.models import Jails, JailsConfiguration
-from freenasUI.jails.utils import guess_adresses
+from freenasUI.jails.utils import guess_adresses, new_default_plugin_jail
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
@@ -193,38 +193,14 @@ def plugin_install_available(request, oid):
         if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
             raise MiddlewareError(_("Failed to download plugin"))
 
-        jailname = None
-        for i in xrange(1, 1000):
-            tmpname = "%s_%d" % (plugin.name.lower(), i)
-            jails = Jails.objects.filter(jail_host=tmpname)
-            if not jails:
-                jailname = tmpname
-                break
+        jail = new_default_plugin_jail(plugin.name.lower())
 
-        w = warden.Warden()
-        try:
-            w.create(
-                jail=jailname,
-                ipv4=addrs['high_ipv4'],
-                flags=(
-                    warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
-                    warden.WARDEN_CREATE_FLAGS_SYSLOG |
-                    warden.WARDEN_CREATE_FLAGS_IPV4
-                ),
-            )
-        except Exception, e:
-            raise MiddlewareError(_("Failed to install plugin: %s") % e)
-        w.auto(jail=jailname)
-        w.set(
-            jail=jailname,
-            flags=(
-                warden.WARDEN_SET_FLAGS_VNET_ENABLE
-            )
-        )
-        w.start(jail=jailname)
+        if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
+            jail.delete()
+            raise MiddlewareError(_("Failed to download plugin"))
 
         newplugin = []
-        if notifier().install_pbi(jailname, newplugin):
+        if notifier().install_pbi(jail.jail_host, newplugin):
             newplugin = newplugin[0]
             notifier()._restart_plugins(
                 newplugin.plugin_jail,
