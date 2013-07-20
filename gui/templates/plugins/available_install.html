@@ -1,0 +1,4 @@
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
+{% blocktrans with plugin=plugin.name %}Are you sure you want to install "{{ plugin }}" plugin?{% endblocktrans %}
+{% endblock %}
