@@ -176,10 +176,13 @@ DocumentFragment.prototype.toString = function(){
 
 var lessThanRegex = /</g, ampersandRegex = /&/g;
 module.exports = function(putModule, putFactory){
-	put = putModule.exports = putFactory().forDocument({
+	put = putModule.exports = putFactory({
 	// setup a document for string-based HTML creation, using our classes 
 		createElement: function(tag){
 			return new Element(tag);
+		},
+		createElementNS: function(uri, tag){
+			return new Element(namespacePrefixes[uri] + ':' + tag);
 		},
 		createTextNode: function(value){
 			return (typeof value == 'string' ? value : ('' + value)).replace(lessThanRegex, "&lt;").replace(ampersandRegex, "&amp;");
@@ -196,4 +199,10 @@ module.exports = function(putModule, putFactory){
 	put.Page = function(stream){
 		return put('html').sendTo(stream);
 	};
+	var namespacePrefixes = {};
+	var addNamespace = put.addNamespace;
+	put.addNamespace = function(name, uri){
+		namespacePrefixes[uri] = name;
+		addNamespace(name, uri);
+	}
 };

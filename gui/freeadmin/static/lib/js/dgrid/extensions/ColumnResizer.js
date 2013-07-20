@@ -1,8 +1,6 @@
 define(["dojo/_base/declare", "dojo/on", "dojo/query", "dojo/_base/lang", "dojo/dom", "dojo/dom-geometry", "dojo/has", "../util/misc", "put-selector/put", "dojo/_base/html", "xstyle/css!../css/extensions/ColumnResizer.css"],
 function(declare, listen, query, lang, dom, geom, has, miscUtil, put){
 
-var hasPointFromNode = has("touch") && webkitConvertPointFromNodeToPage;
-
 function addRowSpan(table, span, startRow, column, id){
 	// loop through the rows of the table and add this column's id to
 	// the rows' column
@@ -68,30 +66,46 @@ function subRowAssoc(subRows){
 }
 
 function resizeColumnWidth(grid, colId, width, parentType){
-	// Keep track of old styles so we don't get a long list in the stylesheet
-	
 	// don't react to widths <= 0, e.g. for hidden columns
 	if(width <= 0){ return; }
 
-	var event = {
-		grid: grid,
-		columnId: colId,
-		width: width,
-		bubbles: true,
-		cancelable: true
-	};
+	var column = grid.columns[colId],
+		event = {
+			grid: grid,
+			columnId: colId,
+			width: width,
+			bubbles: true,
+			cancelable: true
+		},
+		rule;
+	
 	if(parentType){
 		event.parentType = parentType;
 	}
-	if(listen.emit(grid.headerNode, "dgrid-columnresize", event)){
-		width = (width !== "auto" ? (width + "px") : width) + ";";
-		var old = grid._columnStyles[colId],
-			x = grid.styleColumn(colId, "width: " + width);
-
-		old && old.remove();
+	
+	if(!grid._resizedColumns || listen.emit(grid.headerNode, "dgrid-columnresize", event)){
+		// Update width on column object, then convert value for CSS
+		if(width === "auto"){
+			delete column.width;
+		}else{
+			column.width = width;
+			width += "px";
+		}
+		
+		rule = grid._columnSizes[colId];
+		
+		if(rule){
+			// Modify existing, rather than deleting + adding
+			rule.set("width", width);
+		}else{
+			// Use miscUtil function directly, since we clean these up ourselves anyway
+			rule = miscUtil.addCssRule(
+				"#" + miscUtil.escapeCssIdentifier(grid.domNode.id) + " .dgrid-column-" + colId, "width: " + width + ";");
+		}
 
 		// keep a reference for future removal
-		grid._columnStyles[colId] = x;
+		grid._columnSizes[colId] = rule;
+		grid.resize();
 		return true;
 	}
 }
@@ -125,9 +139,17 @@ var resizer = {
 
 return declare(null, {
 	resizeNode: null,
-	minWidth: 40,	//minimum column width in px
-	gridWidth: null, //place holder for the grid width property
-	_resizedColumns: false, //flag that indicates if resizer has converted column widths to px
+	
+	// minWidth: Number
+	//		Minimum column width, in px.
+	minWidth: 40,
+	
+	// adjustLastColumn: Boolean
+	//		If true, adjusts the last column's width to "auto" at times where the
+	//		browser would otherwise stretch all columns to span the grid.
+	adjustLastColumn: true,
+	
+	_resizedColumns: false, // flag indicating if resizer has converted column widths to px
 	
 	buildRendering: function(){
 		this.inherited(arguments);
@@ -140,6 +162,11 @@ return declare(null, {
 	
 	destroy: function(){
 		this.inherited(arguments);
+		
+		// Remove any applied column size styles since we're tracking them directly
+		for(var name in this._columnSizes){
+			this._columnSizes[name].remove();
+		}
 		
 		// If this is the last grid on the page with ColumnResizer, destroy the
 		// shared resizerNode
@@ -159,29 +186,48 @@ return declare(null, {
 	},
 	
 	configStructure: function(){
-		// Reset and remove column styles when a new structure is set
+		var oldSizes = this._oldColumnSizes = lang.mixin({}, this._columnSizes), // shallow clone
+			k;
+		
 		this._resizedColumns = false;
-		for(var name in this._columnStyles){
-			this._columnStyles[name].remove();
+		this._columnSizes = {};
+		
+		this.inherited(arguments);
+		
+		// Remove old column styles that are no longer relevant; this is specifically
+		// done *after* calling inherited so that _columnSizes will contain keys
+		// for all columns in the new structure that were assigned widths.
+		for(k in oldSizes){
+			if(!(k in this._columnSizes)){
+				oldSizes[k].remove();
+			}
 		}
-		this._columnStyles = {};
-
-		this.inherited(arguments);
+		delete this._oldColumnSizes;
 	},
-	_configColumn: function(column, columnId){
+	
+	_configColumn: function(column){
 		this.inherited(arguments);
-
-		// set the widths of columns from the column config
+		
+		var colId = column.id,
+			rule;
+		
 		if("width" in column){
-			this.resizeColumnWidth(columnId, column.width);
+			// Update or add a style rule for the specified width
+			if((rule = this._oldColumnSizes[colId])){
+				rule.set("width", column.width + "px");
+			}else{
+				rule = miscUtil.addCssRule(
+					"#" + this.domNode.id + " .dgrid-column-" + colId, "width: " + column.width + "px;");
+			}
+			this._columnSizes[colId] = rule;
 		}
 	},
+	
 	renderHeader: function(){
 		this.inherited(arguments);
 		
 		var grid = this;
-		grid.gridWidth = grid.headerNode.clientWidth - 1; //for some reason, total column width needs to be 1 less than this
-
+		
 		var assoc;
 		if(this.columnSets && this.columnSets.length){
 			var csi = this.columnSets.length;
@@ -225,18 +271,18 @@ return declare(null, {
 					grid.mouseUpListen.resume();
 				}
 			);
-			grid.mouseMoveListen = listen.pausable(document,
+			grid._listeners.push(grid.mouseMoveListen = listen.pausable(document,
 				"mousemove" + (has("touch") ? ",touchmove" : ""),
 				miscUtil.throttleDelayed(function(e){ grid._updateResizerPosition(e); })
-			);
-			grid.mouseUpListen = listen.pausable(document,
+			));
+			grid._listeners.push(grid.mouseUpListen = listen.pausable(document,
 				"mouseup" + (has("touch") ? ",touchend" : ""),
 				function(e){
 					grid._resizeMouseUp(e);
 					grid.mouseMoveListen.pause();
 					grid.mouseUpListen.pause();
 				}
-			);
+			));
 			// initially pause the move/up listeners until a drag happens
 			grid.mouseMoveListen.pause();
 			grid.mouseUpListen.pause();
@@ -255,8 +301,6 @@ return declare(null, {
 		dom.setSelectable(this.domNode, false);
 		this._startX = this._getResizeMouseLocation(e); //position of the target
 		
-		var pos = geom.position(this.bodyNode);
-		
 		this._targetCell = query(".dgrid-column-" + target.columnId, this.headerNode)[0];
 
 		// Show resizerNode after initializing its x position
@@ -269,32 +313,40 @@ return declare(null, {
 		// e: Object
 		//      mouseup event object
 		
+		var columnSizes = this._columnSizes,
+			colNodes, colWidths, gridWidth;
+		
+		if(this.adjustLastColumn){
+			// For some reason, total column width needs to be 1 less than this
+			gridWidth = this.headerNode.clientWidth - 1;
+		}
+		
 		//This is used to set all the column widths to a static size
 		if(!this._resizedColumns){
-			var colNodes = query(".dgrid-cell", this.headerNode);
+			colNodes = query(".dgrid-cell", this.headerNode);
 			
 			if(this.columnSets && this.columnSets.length){
 				colNodes = colNodes.filter(function(node){
 					var idx = node.columnId.split("-");
-					return idx[0] == "0";
+					return idx[0] == "0" && !(node.columnId in columnSizes);
 				});
 			}else if(this.subRows && this.subRows.length > 1){
 				colNodes = colNodes.filter(function(node){
-					return node.columnId.charAt(0) == "0";
+					return node.columnId.charAt(0) == "0" && !(node.columnId in columnSizes);
 				});
 			}
 			
 			// Get a set of sizes before we start mutating, to avoid
 			// weird disproportionate measures if the grid has set
 			// column widths, but no full grid width set
-			var colSizes = colNodes.map(function(colNode){
+			colWidths = colNodes.map(function(colNode){
 				return colNode.offsetWidth;
 			});
 			
 			// Set a baseline size for each column based on
 			// its original measure
 			colNodes.forEach(function(colNode, i){
-				this.resizeColumnWidth(colNode.columnId, colSizes[i]);
+				this.resizeColumnWidth(colNode.columnId, colWidths[i]);
 			}, this);
 			
 			this._resizedColumns = true;
@@ -315,15 +367,14 @@ return declare(null, {
 		}
 		
 		if(resizeColumnWidth(this, cell.columnId, newWidth, e.type)){
-			if(cell.columnId != lastCol){
-				if(totalWidth + delta < this.gridWidth) {
+			if(cell.columnId != lastCol && this.adjustLastColumn){
+				if(totalWidth + delta < gridWidth) {
 					//need to set last column's width to auto
 					resizeColumnWidth(this, lastCol, "auto", e.type);
 				}else if(lastColWidth-delta <= this.minWidth) {
 					//change last col width back to px, unless it is the last column itself being resized...
 					resizeColumnWidth(this, lastCol, this.minWidth, e.type);
 				}
-				this.resize();
 			}
 		}
 		resizer.hide();

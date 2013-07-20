@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Test TreeGrid</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta charset="utf-8">
+		<title>Test Tree Grid Expanding while Hidden</title>
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/skins/claro.css";
 			.dgrid {
@@ -18,9 +18,9 @@
 				width: 7em;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			require(["dojo/on", "dgrid/OnDemandGrid", "dgrid/tree", "dgrid/Keyboard", "dgrid/Selection", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"], 
 				function(on, Grid, tree, Keyboard, Selection, declare, testStore){
 					var columns = [

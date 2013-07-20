@@ -126,7 +126,7 @@
     <input type="hidden" name="title" value="{{ exception_type|escape }} at {{ request.path_info|escape }}">
     <input type="hidden" name="source" value="Django Dpaste Agent">
     <input type="hidden" name="poster" value="Django">
-    <textarea name="content" cols="120" rows="25" data-dojo-type="dijit.form.Textarea">
+    <textarea name="content" cols="120" rows="25" readonly="yes" data-dojo-type="dijit.form.Textarea">
 Environment:
 
 Software Version: {{ sw_version }}

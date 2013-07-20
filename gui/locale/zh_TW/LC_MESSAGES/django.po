@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2013-02-21 21:48+0200\n"
-"Last-Translator: linichun872 <linichun872@gmail.com>\n"
+"PO-Revision-Date: 2013-06-14 08:41+0200\n"
+"Last-Translator: kentwelcome <kentwelcome@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -4753,7 +4753,7 @@ msgstr "遠端主機"
 
 #: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr ""
+msgstr "Rsync遠端路徑 (e.g. /mnt/tank)"
 
 #: system/models.py:481 templates/system/rsync.html:8
 #, fuzzy
@@ -5148,7 +5148,7 @@ msgstr "IRC (Chat)"
 
 #: templates/freeadmin/index.html:66
 msgid "#freenas on freenode"
-msgstr "#在 freenode 的 freenas"
+msgstr "freenode上的頻道#freenas"
 
 #: templates/freeadmin/index.html:70
 msgid "Mailing Lists"

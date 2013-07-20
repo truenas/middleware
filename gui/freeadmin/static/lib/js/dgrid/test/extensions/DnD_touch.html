@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<title>Test Grid DnD on Touch Devices</title>
 		<meta name="viewport" content="width=570">
-		<style type="text/css">
+		<style>
 			@import "../../../dojo/resources/dojo.css";
 			/* need a theme for some dnd styles (e.g. before/after indicators).
 			   Using tundra because claro has a silly dojoDndItemBefore/After bug
@@ -35,9 +35,9 @@
 				border: 1px dotted #999;
 			}
 		</style>
-		<script type="text/javascript" src="../../../dojo/dojo.js"
+		<script src="../../../dojo/dojo.js"
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			require(["dgrid/OnDemandGrid", "dgrid/extensions/DnD", "put-selector/put",
 				"dojo/_base/declare", "dojo/_base/lang", "dgrid/test/data/base", "dojo/domReady!"],
 			function(Grid, DnD, put, declare, lang){

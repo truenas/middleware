@@ -43,8 +43,10 @@ download_cache_packages()
   fi
   export PKG_CACHEDIR
 
+  PKGREL=`uname -r | cut -d '-' -f 1-2`
+
   # Where are the packages on our mirrors?
-  pkgUrl="/packages/`uname -r`/${ARCH}"
+  pkgUrl="/${PKGREL}/${ARCH}"
 
   if [ ! -d "$PKG_CACHEDIR/All" ] ; then
      mkdir -p ${PKG_CACHEDIR}/All
@@ -52,12 +54,24 @@ download_cache_packages()
 
   for i in $pkgList
   do
-    if [ -e "${PKG_CACHEDIR}/All/${i}" ] ; then rm ${PKG_CACHEDIR}/All/${i} ; fi
-    get_file_from_mirrors "${pkgUrl}/All/${i}" "${PKG_CACHEDIR}/All/${i}"
+    # Does the package already exist?
+    if [ -e "${PKG_CACHEDIR}/All/${i}" ] ; then 
+	# For now just remove the cached file
+	# Once bapt gives us a working rquery string, we can add a check here to skip
+	# re-downloading already valid files
+	#pName=`echo $i | sed 's|.txz$||g'`
+	# Check the sizes
+	#eSize=`pkg rquery "%sb" $pName`
+	#dSize=`ls -al `
+	rm ${PKG_CACHEDIR}/All/${i} ; 
+    fi
+    get_file_from_mirrors "${pkgUrl}/All/${i}" "${PKG_CACHEDIR}/All/${i}" "pkg"
     if [ $? -ne 0 ] ; then
-      exit_err "Failed downloading: /${pkgUrl}/All/${i}"
+      echo "Failed downloading: /${pkgUrl}/All/${i}"
+      return 1
     fi
   done
+  return 0
 }
 
 verify_mirror() {
@@ -155,23 +169,56 @@ get_aria_mirror_list()
   if [ -z $1 ] ; then
      exit_err "Need to supply file to grab from mirrors..."
   fi
+  if [ -z $2 ] ; then
+     exit_err "Need to supply which mirror to fetch from..."
+  fi
+
+  case $2 in
+    pkg) mirrorTag="PKG_MIRROR" 
+         mirrorFile="/usr/local/share/pcbsd/conf/pkg-mirror"
+         ;;
+    pbi) mirrorTag="PBI_MIRROR" 
+         mirrorFile="/usr/local/share/pcbsd/conf/pbi-mirror"
+         ;;
+    iso) mirrorTag="ISO_MIRROR" 
+         mirrorFile="/usr/local/share/pcbsd/conf/iso-mirror"
+         ;;
+  update) mirrorTag="UPDATE_MIRROR" 
+         mirrorFile="/usr/local/share/pcbsd/conf/update-mirror"
+         ;;
+    *) exit_err "Bad mirror type!" ;;
+  esac
 
   # Set the mirror URL
-  local VAL="`cat ${PCBSD_ETCCONF} 2>/dev/null | grep 'PCBSD_MIRROR: ' | sed 's|PCBSD_MIRROR: ||g'`"
+  local VAL=`cat ${PCBSD_ETCCONF} 2>/dev/null | grep "^${mirrorTag}:" | sed "s|^${mirrorTag}: ||g"`
   if [ -n "$VAL" ] ; then
      echo "${VAL}${1}"
      return
   fi
 
-  if [ ! -e "/usr/local/share/pcbsd/conf/pcbsd-mirrors" ] ; then
-     exit_err "Missing mirror list: /usr/local/share/pcbsd/conf/pcbsd-mirrors"
+  if [ "${ARCH}" = "amd64" ] ; then
+    if [ ! -e "${mirrorFile}" -a ! -e "${mirrorFile}-amd64" ] ; then
+      exit_err "Missing mirror list: ${mirrorFile}"
+    elif [ -e "${mirrorFile}-amd64" ] ; then
+      mirrorFile="${mirrorFile}-amd64"
+    fi
+  else
+    if [ ! -e "${mirrorFile}" -a ! -e "${mirrorFile}-i386" ] ; then
+      exit_err "Missing mirror list: ${mirrorFile}"
+    elif [ -e "${mirrorFile}-i386" ] ; then
+      mirrorFile="${mirrorFile}-i386"
+    fi
+  fi
+
+  if [ ! -e "${mirrorFile}" ] ; then
+     exit_err "Missing mirror list: ${mirrorFile}"
   fi
 
   # Build the mirror list
   while read line
   do
     VAL="$VAL ${line}${1}"
-  done < /usr/local/share/pcbsd/conf/pcbsd-mirrors
+  done < "${mirrorFile}"
   echo ${VAL}
 }
 
@@ -182,6 +229,12 @@ get_file_from_mirrors()
 {
    _rf="${1}"
    _lf="${2}"
+   _mtype="${3}"
+
+   case $_mtype in
+      iso|pbi|pkg|update) ;;
+      *) exit_err "Fixme! Missing mirror type in get_file_from_mirrors" ;;
+   esac
 
    # Get any proxy information
    . /etc/profile
@@ -191,7 +244,7 @@ get_file_from_mirrors()
    local aFile=`basename $_lf`
 
    # Server status flag
-   local aStatFile=${HOME}/.pcbsd-aria-stat
+   local aStatFile=${HOME}/.pcbsd-aria-stat-${ARCH}
    if [ -e "$aStatFile" ] ; then
      local aStat="--server-stat-of=$aStatFile --server-stat-if=$aStatFile --uri-selector=adaptive --server-stat-timeout=864000"
    else
@@ -200,7 +253,7 @@ get_file_from_mirrors()
    touch $aStatFile
 
    # Get mirror list
-   local mirrorList="$(get_aria_mirror_list $1)"
+   local mirrorList="$(get_aria_mirror_list ${_rf} ${_mtype})"
    
    # Running from a non GUI?
    if [ "$GUI_FETCH_PARSING" != "YES" -a "$PBI_FETCH_PARSING" != "YES" -a -z "$PCFETCHGUI" ] ; then
@@ -378,34 +431,24 @@ getZFSMount() {
   return 1
 }
 
-# Get the ZFS dataset of a particular directory
-getZFSDataset() {
-  local _chkDir="$1"
-  while :
-  do
-    local zData=`mount | grep " on ${_chkDir} " | grep "(zfs," | awk '{print $1}'`
-    if [ -n "$zData" ] ; then
-       echo "$zData"
-       return 0
-    fi
-    if [ "$2" != "rec" ] ; then return 1 ; fi
-    if [ "$_chkDir" = "/" ] ; then return 1 ; fi
-    _chkDir=`dirname $_chkDir`
-  done
-  return 1
-}
-
 # Get the ZFS tank name for a directory
 # Arg1 = Directory to check
 getZFSTank() {
-  local _chkDir="$1"
+  local _chkDir="$(realpath $1 2>/dev/null)"
+  if [ -z "${_chkDir}" ] ; then
+     _chkDir="${1}"
+  fi
 
   _chkdir=${_chkDir%/}
   while :
   do
+     if [ -d "${_chkDir}" ] ; then
+        _chkDir="$(realpath ${_chkDir})"
+     fi
+
      zpath=`zfs list | awk -v path="${_chkDir}" '$5 == path { print $1 }'`
      if [ -n "${zpath}" ] ; then
-        echo $zpath
+        echo $zpath | cut -f1 -d '/'
         return 0
      fi
 
@@ -413,6 +456,25 @@ getZFSTank() {
      _chkDir=`dirname $_chkDir`
   done
 
+  return 1
+}
+
+getZFSDataset() {
+  local _chkDir="$(realpath $1)"
+  if [ -n "${_chkDir}" ] ; then
+     _chkDir=${_chkDir%/}
+  fi
+
+  while :
+  do
+    local zData="$(zfs list|awk -v path="${_chkDir}" '$5 == path { print $1 }')"
+    if [ -n "$zData" ] ; then
+       echo "$zData"|awk '{ print $1 }'
+       return 0
+    fi
+    if [ "$_chkDir" = "/" ] ; then return 1 ; fi
+    _chkDir=`dirname $_chkDir`
+  done
   return 1
 }
 
@@ -435,12 +497,129 @@ getZFSRelativePath() {
    if [ -z "${_tank}" ] ; then return 1 ; fi
 
    local _name="${_chkDir#${_mp}}"
-   if [ -z "${_name}" ] ; then 
+   if [ -z "${_name}" ] ; then
        _name="/`basename ${_chkDir}`"
    fi
 
    echo "${_name}"
    return 0
+}
+
+#
+# XXX hackity hack hack function
+#
+# If we want to create a dataset that overlaps our
+# directory structure, this is just the function to
+# do it. 
+#
+# newds = the new dataset name
+# mp = mountpoint
+# ma = mount all newly created datasets
+#
+createZFSDataset() {
+  local newds="${1}"
+  local mp="${2}"
+  local ma="${3}"
+
+  echo "createZFSDataset: newds = \"${newds}\", mp = \"${mp}\", ma = \"${ma}\""
+  echo "createZFSDataset: ARCH = \"${ARCH}\""
+
+  if [ -z "${newds}" ] ; then
+    return 1
+  fi
+
+  if [ -z "${mp}" ] ; then
+    return 1
+  fi
+
+  if [ -z "${ma}" ] ; then
+    ma=0
+  fi
+
+  local tank="$(getZFSTank "${newds}")"
+  if [ -z "${tank}" ]; then
+    return 1
+  fi
+
+  local tmp="$(getZFSMountpoint "${tank}")"
+  if [ -z "${tmp}" ] ; then
+    return 1
+  fi
+
+  local rp="${newds##${tank}}"
+  if [ -z "${rp}" ] ; then
+    return 1
+  fi
+
+  echo "createZFSDatset: rp = \"${rp}\""
+
+  local fp="${tmp}${rp}"
+  if [ -z "${fp}" ] ; then
+    return 1
+  fi
+
+  echo "createZFSDatset: fp = \"${fp}\""
+
+  local zds="$(getZFSDataset "${fp}")"
+  if [ -z "${zds}" ] ; then
+    return 1
+  fi
+
+  echo "createZFSDatset: zds = \"${zds}\""
+
+  local diff="${newds##${zds}}"
+  if [ -z "${diff}" ] ; then
+    return 1
+  fi
+
+  echo "createZFSDatset: diff = \"${diff}\""
+
+  echo "createZFSDatset: zfs create -o mountpoint=\"${mp}\" -p \"${newds}\""
+  zfs create -o mountpoint="${mp}" -p "${newds}"
+
+  local i=0
+  local cap=1024
+  if [ -n "${diff}" ] ; then
+    local mds="${zds}${diff}"
+    echo "createZFSDataset: mds = \"${mds}\""
+
+    while [ "${i}" -lt "${cap}" ]
+    do
+      if [ "${diff}" != "/" ] ; then
+        local fds="${zds}${diff}"
+
+        echo "createZFSDataset: zds = \"${zds}\""
+        echo "createZFSDataset: diff = \"${diff}\""
+        echo "createZFSDataset: fds = \"${fds}\""
+
+        if [ "${ma}" = "0" ] ; then
+          echo "createZFSDataset: zfs unmount -f \"${fds}\""
+          zfs unmount -f "${fds}"
+
+          echo "createZFSDataset: zfs set canmount=off \"${fds}\""
+          zfs set canmount=off "${fds}"
+        fi
+      fi
+
+      if [ "${diff}" = "/" ] ; then
+        break
+      fi
+
+      diff="$(dirname ${diff})"
+    done
+
+    if [ "${ma}" = "0" ] ; then
+      echo "createZFSDataset: zfs set canmount=on \"${mds}\""
+      zfs set canmount=on "${mds}"
+
+      echo "createZFSDataset: zfs mount \"${mds}\""
+      zfs mount "${mds}"
+    fi
+
+    : $(( i += 1 ))
+  fi
+
+  return 0
 }
 
 # Check if an address is IPv6
@@ -526,3 +705,113 @@ check_ip()
 
   return 0
 };
+
+check_pkg_conflicts()
+{
+  # Lets test if we have any conflicts
+  pkg-static ${1} 2>/tmp/.pkgConflicts.$$ >/tmp/.pkgConflicts.$$
+  if [ $? -eq 0 ] ; then rm /tmp/.pkgConflicts.$$ ; return ; fi
+ 
+  # Found conflicts, suprise suprise, yet another reason I hate packages
+  # Lets start building a list of the old packages we can prompt to remove
+
+  # Nice ugly sed line, sure this can be neater
+  cat /tmp/.pkgConflicts.$$ | grep 'WARNING: locally installed' \
+	| sed 's|.*installed ||g' | sed 's| conflicts.*||g' | sort | uniq \
+	> /tmp/.pkgConflicts.$$.2
+  while read line
+  do
+    cList="$line $cList"
+  done < /tmp/.pkgConflicts.$$.2
+  rm /tmp/.pkgConflicts.$$.2 
+  rm /tmp/.pkgConflicts.$$
+
+  if [ "$GUI_FETCH_PARSING" != "YES" -a "$PBI_FETCH_PARSING" != "YES" -a -z "$PCFETCHGUI" ] ; then
+        echo "The following packages will conflict with your pkg command:"
+        echo "-------------------------------------"
+        echo "$cList" | more
+	echo "Do you wish to remove them automatically?"
+	echo -e "Default yes: (y/n)\c"
+        read tmp
+	if [ "$tmp" != "y" -a "$tmp" != "Y" ] ; then return 1 ; fi
+  else
+	echo "PKGCONFLICTS: $cList"
+	echo "PKGREPLY: /tmp/pkgans.$$"
+	while : 
+        do
+	  if [ -e "/tmp/pkgans.$$" ] ; then
+	    ans=`cat /tmp/pkgans.$$`
+            if [ "$ans" = "yes" ] ; then 
+	       break
+            else
+               return 1
+            fi
+          fi 
+	  sleep 3
+	done
+  fi
+
+  # Lets auto-resolve these bad-boys
+  # Right now the logic is pretty simple, you conflict, you die
+  for bPkg in $cList
+  do
+     # Nuked!
+     echo "Removing conflicting package: $bPkg"
+     pkg delete -q -y -f ${bPkg}
+  done
+
+  # Lets test if we still have any conflicts
+  pkg-static ${1} 2>/dev/null >/dev/null
+  if [ $? -eq 0 ] ; then return 0; fi
+
+  # Crapola, we still have conflicts, lets warn and bail
+  echo "ERROR: pkg ${1} is still reporting conflicts... Resolve these manually and try again"
+  return 1
+}
+
+# Run the first boot wizard
+# Should be called from a .xinitrc script, after fluxbox is already running
+run_firstboot()
+{
+  # Is the trigger file set?
+  if [ ! -e "/var/.pcbsd-firstgui" ] ; then return; fi
+
+  # Set all our path variables
+  PATH="/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/usr/local/bin:/usr/local/sbin"
+  HOME="/root"
+  export PATH HOME
+
+  # Unset the PROGDIR variable
+  PROGDIR=""
+  export PROGDIR
+
+  if [ -e "/root/.xprofile" ] ; then . /root/.xprofile ; fi
+
+  # Figure out which intro video to play
+  res=`xdpyinfo | grep dimensions: | awk "{print $2}"`
+  h=`echo $res | cut -d "x" -f 1`
+  w=`echo $res | cut -d "x" -f 2`
+  h=`expr 100 \* $h`
+  ratio=`expr $h \/ $w | cut -c 1-2`
+  case $ratio in
+    13) mov="PCBSD9_4-3_UXGA.flv";;
+    16) mov="PCBSD9_16-10_WUXGA.flv";;
+    17) mov="PCBSD9_16-9_1080p.flv";;
+     *) mov="PCBSD9_4-3_UXGA.flv";;
+  esac
+
+  # Play the video now
+  mplayer -fs -nomouseinput -zoom /usr/local/share/pcbsd/movies/$mov
+
+  # Setting a language
+  if [ -e "/etc/pcbsd-lang" ] ; then
+    LANG=`cat /etc/pcbsd-lang`
+    export LANG
+  fi
+
+  # Start first-boot wizard
+  /usr/local/bin/pc-firstboot
+  if [ $? -eq 0 ] ; then
+    rm /var/.pcbsd-firstgui
+  fi
+}

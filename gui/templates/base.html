@@ -17,7 +17,7 @@
         parseOnLoad:true,
         baseUrl:"{{ DOJANGO.DOJO_URL }}",
         async: true,
-	cacheBust: '{{ cache_hash }}',
+        cacheBust: '{{ cache_hash }}',
         packages: [
         {name: "freeadmin", location: "../../../../../static/lib/js/freeadmin"},
         {name: "dgrid", location: "../../../../../static/lib/js/dgrid"},
@@ -25,6 +25,7 @@
         {name: "put-selector", location: "../../../../../static/lib/js/put-selector"}
         ]
     };
+    var CSRFToken = '{{ csrf_token }}';
 </script>
 
 <script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/dojo.js?cache={{ cache_hash }}">

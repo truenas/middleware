@@ -23,48 +23,46 @@ define([
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'system.Reporting'){
-                    p.selectChild(c[i]);
-                    opened = true;
-                } else if(c[i].tab == 'system.Settings'){
-                    p.selectChild(c[i]);
-                    opened2 = true;
-                } else if(c[i].tab == 'system.SysInfo'){
-                    p.selectChild(c[i]);
-                    opened3 = true;
-                }
+              if(c[i].id == 'systemTab_Reporting'){
+                p.selectChild(c[i]);
+                opened = true;
+              } else if(c[i].id == 'systemTab_Settings'){
+                p.selectChild(c[i]);
+                opened2 = true;
+              } else if(c[i].id == 'systemTab_SysInfo'){
+                p.selectChild(c[i]);
+                opened3 = true;
+              }
             }
             if(opened != true) {
                 var pane = new ContentPane({
+                    id: "systemTab_Reporting",
                     title: gettext('Reporting'),
                     refreshOnShow: true,
                     closable: true,
                     href: this.urlReporting,
                 });
-                pane.tab = 'system.Reporting';
                 p.addChild(pane);
             }
 
             if(opened2 != true) {
                 var pane2 = new ContentPane({
-                    id: 'settingstab',
+                    id: 'systemTab_Settings',
                     title: gettext('Settings'),
                     closable: true,
                     href: this.urlSettings,
                 });
-                pane2.tab = 'system.Settings';
                 p.addChild(pane2);
             }
 
             if(opened3 != true) {
                 var pane3 = new ContentPane({
-                    id: 'sysinfotab',
+                    id: 'systemTab_SysInfo',
                     title: gettext('System Information'),
                     refreshOnShow: true,
                     closable: true,
                     href: this.urlInfo,
                 });
-                pane3.tab = 'system.SysInfo';
                 p.addChild(pane3);
                 p.selectChild(pane3);
             }
@@ -339,7 +337,35 @@ define([
                 p.selectChild(pane);
             }
 
-        }
+        },
+
+        openSupport: function(onload) {
+            if(!onload) onload = function() {};
+            var opened = false;
+            var p = registry.byId("content");
+            var href = this.urlSupport;
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].tab == 'support'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                    if(onload) lang.hitch(this, onload)();
+                }
+            }
+            if(opened != true) {
+                var pane = new ContentPane({
+                    title: gettext('Support'),
+                    closable: true,
+                    href: href,
+                    onLoad: onload,
+                });
+                pane.tab = 'support';
+                p.addChild(pane);
+                p.selectChild(pane);
+                domClass.add(pane.domNode,["objrefresh", "data_support_support"]);
+            }
+         }
 
     });
     return Menu;

@@ -173,3 +173,26 @@ def do_dojo_render(parser, token):
         ))
 
     return DojoFormRender(arg)
+
+
+class ClsName(template.Node):
+
+    def __init__(self, arg):
+        self.arg = arg
+
+    def render(self, context):
+        obj = self.arg.resolve(context)
+        return type(obj).__name__
+
+
+@register.tag(name="cls_name")
+def do_cls_name(parser, token):
+    try:
+        tag_name, arg = token.split_contents()
+        arg = parser.compile_filter(arg)
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires arguments" % (
+            token.contents.split()[0],
+        ))
+
+    return ClsName(arg)

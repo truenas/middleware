@@ -94,26 +94,6 @@ def jail_edit(request, id):
     })
 
 
-def jail_mkdir(request, id):
-
-    jail = models.Jails.objects.get(id=id)
-
-    if request.method == 'POST':
-        form = forms.MkdirForm(request.POST, jail=jail)
-        if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_("Directory successfully created.")
-            )
-    else:
-        form = forms.MkdirForm(jail=jail)
-
-    return render(request, 'jails/mkdir.html', {
-        'form': form,
-    })
-
-
 def jail_storage_add(request, jail_id):
 
     jail = models.Jails.objects.get(id=jail_id)
@@ -128,27 +108,6 @@ def jail_storage_add(request, jail_id):
             )
     else:
         form = forms.NullMountPointForm(jail=jail)
-
-    return render(request, 'jails/storage.html', {
-        'form': form,
-    })
-
-
-def jail_storage_view(request, id):
-
-    nmp = models.NullMountPoint.objects.get(id=id)
-    jail = models.Jails.objects.get(jail_host=nmp.jail)
-
-    if request.method == 'POST':
-        form = forms.NullMountPointForm(request.POST, instance=nmp, jail=jail)
-        if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_("Storage successfully added.")
-            )
-    else:
-        form = forms.NullMountPointForm(instance=nmp, jail=jail)
 
     return render(request, 'jails/storage.html', {
         'form': form,
@@ -255,9 +214,10 @@ def jail_export(request, id):
 
     return response
 
-jail_progress_estimated_time = 1800
+jail_progress_estimated_time = 600
 jail_progress_start_time = 0
 jail_progress_percent = 0
+
 
 def jail_progress(request):
     global jail_progress_estimated_time
@@ -276,7 +236,7 @@ def jail_progress(request):
     logfile = '%s/warden.log' % jc.jc_path
 
     if os.path.exists(logfile):
-        f = open(logfile, "r") 
+        f = open(logfile, "r")
         buf = f.readlines()
         f.close()
 
@@ -303,12 +263,12 @@ def jail_progress(request):
             eta = jail_progress_estimated_time
 
         else:
-            elapsed = curtime - jail_progress_start_time 
+            elapsed = curtime - jail_progress_start_time
             eta = jail_progress_estimated_time - elapsed
 
         if percent > 0 and jail_progress_percent != percent:
             p = float(percent) / 100
-            t = float(p) * jail_progress_estimated_time
+            #t = float(p) * jail_progress_estimated_time
 
             estimated_time = elapsed / p
             eta = estimated_time - elapsed
@@ -316,9 +276,9 @@ def jail_progress(request):
             jail_progress_estimated_time = estimated_time
 
         if eta > 3600:
-            data['eta'] = "%02d:%02d:%02d" % (eta/3600, eta/60, eta%60)
+            data['eta'] = "%02d:%02d:%02d" % (eta / 3600, eta / 60, eta % 60)
         elif eta > 0:
-            data['eta'] = "%02d:%02d" % (eta/60, eta%60)
+            data['eta'] = "%02d:%02d" % (eta / 60, eta % 60)
         else:
             data['eta'] = "00:00"
 
@@ -330,69 +290,83 @@ def jail_progress(request):
 
         if not os.path.exists("/var/tmp/.jailcreate"):
             data['state'] = 'done'
-            jail_progress_estimated_time = 1800
+            jail_progress_estimated_time = 600
             jail_progress_start_time = 0
-            jail_progress_percent = 0 
+            jail_progress_percent = 0
 
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
 
 
 def jail_import(request):
     log.debug("XXX: jail_import()")
-    return render(request, 'jails/import.html', { }) 
+    return render(request, 'jails/import.html', {})
+
 
 def jail_auto(request, id):
     log.debug("XXX: jail_auto()")
-    return render(request, 'jails/auto.html', { }) 
+    return render(request, 'jails/auto.html', {})
+
 
 def jail_checkup(request, id):
     log.debug("XXX: jail_checkup()")
-    return render(request, 'jails/checkup.html', { }) 
+    return render(request, 'jails/checkup.html', {})
+
 
 def jail_details(request, id):
     log.debug("XXX: jail_details()")
-    return render(request, 'jails/details.html', { }) 
+    return render(request, 'jails/details.html', {})
+
 
 def jail_options(request, id):
     log.debug("XXX: jail_options()")
-    return render(request, 'jails/options.html', { }) 
+    return render(request, 'jails/options.html', {})
+
 
 def jail_pkgs(request, id):
     log.debug("XXX: jail_pkgs()")
-    return render(request, 'jails/pkgs.html', { }) 
+    return render(request, 'jails/pkgs.html', {})
+
 
 def jail_pbis(request, id):
     log.debug("XXX: jail_pbis()")
-    return render(request, 'jails/pbis.html', { }) 
+    return render(request, 'jails/pbis.html', {})
+
 
 def jail_zfsmksnap(request, id):
     log.debug("XXX: jail_zfsmksnap()")
-    return render(request, 'jails/zfsmksnap.html', { }) 
+    return render(request, 'jails/zfsmksnap.html', {})
+
 
 def jail_zfslistclone(request, id):
     log.debug("XXX: jail_zfslistclone()")
-    return render(request, 'jails/zfslistclone.html', { }) 
+    return render(request, 'jails/zfslistclone.html', {})
+
 
 def jail_zfslistsnap(request, id):
     log.debug("XXX: jail_zfslistsnap()")
-    return render(request, 'jails/zfslistsnap.html', { }) 
+    return render(request, 'jails/zfslistsnap.html', {})
+
 
 def jail_zfsclonesnap(request, id):
     log.debug("XXX: jail_zfsclonesnap()")
-    return render(request, 'jails/zfsclonesnap.html', { }) 
+    return render(request, 'jails/zfsclonesnap.html', {})
+
 
 def jail_zfscronsnap(request, id):
     log.debug("XXX: jail_zfscronsnap()")
-    return render(request, 'jails/zfscronsnap.html', { }) 
+    return render(request, 'jails/zfscronsnap.html', {})
+
 
 def jail_zfsrevertsnap(request, id):
     log.debug("XXX: jail_zfsrevertsnap()")
-    return render(request, 'jails/zfsrevertsnap.html', { }) 
+    return render(request, 'jails/zfsrevertsnap.html', {})
+
 
 def jail_zfsrmclonesnap(request, id):
     log.debug("XXX: jail_zfsrmclonesnap()")
-    return render(request, 'jails/zfsrmclonesnap.html', { }) 
+    return render(request, 'jails/zfsrmclonesnap.html', {})
+
 
 def jail_zfsrmsnap(request, id):
     log.debug("XXX: jail_zfsrmsnap()")
-    return render(request, 'jails/zfsrmsnap.html', { }) 
+    return render(request, 'jails/zfsrmsnap.html', {})

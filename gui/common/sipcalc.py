@@ -32,13 +32,23 @@ from freenasUI.common.pipesubr import pipeopen
 SIPCALC_PATH = "/usr/local/bin/sipcalc"
 
 class sipcalc_base_type(object):
-    def __init__(self, *args):    
+    def __init__(self, *args, **kwargs):    
         self.sipcalc = SIPCALC_PATH
         self.args = args 
+        self.iface = None
 
         self.sipcalc_args = [self.sipcalc]
         for arg in args:
             self.sipcalc_args.append(str(arg))
+
+        network = kwargs.get('network', None)
+        if network:
+            self.sipcalc_args.append(str(network))
+
+        iface = kwargs.get('iface', None)
+        if iface:
+            self.sipcalc_args.append(str(iface))
+            self.iface = iface
 
         obj = None
         p1 = pipeopen(string.join(self.sipcalc_args, ' '), allowfork=True)
@@ -50,13 +60,15 @@ class sipcalc_base_type(object):
 
     def is_ipv4(self):
         res = False
-        if self.sipcalc_out[0].startswith("-[ipv4"): 
+        if self.sipcalc_out[0].startswith("-[ipv4") or (
+            self.iface != None and self.sipcalc_out[0].startswith("-[int-ipv4")):
             res = True
         return res
 
     def is_ipv6(self):
         res = False
-        if self.sipcalc_out[0].startswith("-[ipv6"): 
+        if self.sipcalc_out[0].startswith("-[ipv6") or (
+            self.iface != None and self.sipcalc_out[0].startswith("-[int-ipv6")):
             res = True
         return res
 
@@ -298,8 +310,8 @@ class sipcalc_base_type(object):
         return sipcalc_type(addr)
 
 class sipcalc_ipv4_type(sipcalc_base_type):
-    def __init__(self, *args):
-        super(sipcalc_ipv4_type, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(sipcalc_ipv4_type, self).__init__(*args, **kwargs)
 
         for line in self.sipcalc_out:
             parts = line.split("-") 
@@ -399,8 +411,8 @@ class sipcalc_ipv4_type(sipcalc_base_type):
         return naddr
 
 class sipcalc_ipv6_type(sipcalc_base_type):
-    def __init__(self, *args):
-        super(sipcalc_ipv6_type, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(sipcalc_ipv6_type, self).__init__(*args, **kwargs)
 
         network_range = 0
         for line in self.sipcalc_out:
@@ -573,14 +585,14 @@ class sipcalc_ipv6_type(sipcalc_base_type):
         return naddr
 
 class sipcalc_type(sipcalc_base_type):
-    def __new__(cls, *args):    
+    def __new__(cls, *args, **kwargs):    
         obj = None
-        sbt = sipcalc_base_type(*args) 
+        sbt = sipcalc_base_type(*args, **kwargs) 
 
         if sbt.is_ipv4():
-            obj = sipcalc_ipv4_type(*args)
+            obj = sipcalc_ipv4_type(*args, **kwargs)
 
         elif sbt.is_ipv6():
-            obj = sipcalc_ipv6_type(*args)
+            obj = sipcalc_ipv6_type(*args, **kwargs)
 
         return obj

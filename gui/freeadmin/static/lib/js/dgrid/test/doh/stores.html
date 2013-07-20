@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>OnDemand and Pagination Initial Render Tests</title>
+		<script src="../../../dojo/dojo.js" data-dojo-config="async: true"></script>
+		<script>
+			require([
+				"doh",
+				"dojo/_base/declare",
+				"dojo/on",
+				"dgrid/Grid",
+				"dgrid/OnDemandGrid",
+				"dgrid/extensions/Pagination",
+				"dgrid/test/data/errorStores",
+				"dgrid/test/data/base",
+				"dojo/domReady!"
+			], function(doh, declare, on, Grid, OnDemandGrid, Pagination, errorStores){
+				var PaginationGrid = declare([Grid, Pagination]),
+					grid;
+				
+				function test(CustomGrid, store, expectSuccess){
+					// Common reusable function for tests
+					var dfd = new doh.Deferred(),
+						expectedEvent = expectSuccess ? "dgrid-refresh-complete" : "dgrid-error",
+						unexpectedEvent = !expectSuccess ? "dgrid-refresh-complete" : "dgrid-error";
+					
+					grid = new CustomGrid({
+						store: store
+					});
+					
+					// Hook up event handler before calling startup, to be able to
+					// test both synchronous and asynchronous stores
+					on.once(grid, expectedEvent, function(){
+						// After receiving the expected event, perform a refresh,
+						// to also test resolution/rejection of the promise it returns.
+						grid.refresh().then(function(){
+							dfd[expectSuccess ? "callback" : "errback"](true);
+						}, function(){
+							dfd[!expectSuccess ? "callback" : "errback"](true);
+						});
+					});
+					
+					// Also hook up the opposite event handler, to signal failure
+					on.once(grid, unexpectedEvent, function(){
+						dfd.errback(new Error("Expected " + expectedEvent + " to fire, but " +
+							unexpectedEvent + " fired instead."));
+					});
+					
+					grid.startup();
+					return dfd;
+				}
+				
+				function tearDown(){
+					// Common reusable function for test teardown
+					grid.destroy();
+				}
+				
+				doh.register("stores", [
+					{
+						name: "OnDemandGrid + sync store",
+						runTest: function(){
+							return test(OnDemandGrid, testStore, true);
+						},
+						tearDown: tearDown
+					},
+					{
+						name: "OnDemandGrid + async store",
+						runTest: function(){
+							return test(OnDemandGrid, testAsyncStore, true);
+						},
+						tearDown: tearDown
+					},
+					{
+						name: "OnDemandGrid + sync store w/ error",
+						runTest: function(){
+							return test(OnDemandGrid, errorStores.query, false);
+						},
+						tearDown: tearDown
+					},
+					{
+						name: "OnDemandGrid + async store w/ error",
+						runTest: function(){
+							return test(OnDemandGrid, errorStores.asyncQuery, false);
+						},
+						tearDown: tearDown
+					},
+					{
+						name: "PaginationGrid + sync store",
+						runTest: function(){
+							return test(PaginationGrid, testStore, true);
+						},
+						tearDown: tearDown
+					},
+					{
+						name: "PaginationGrid + async store",
+						runTest: function(){
+							return test(PaginationGrid, testAsyncStore, true);
+						},
+						tearDown: tearDown
+					},
+					{
+						name: "PaginationGrid + sync store w/ error",
+						runTest: function(){
+							return test(PaginationGrid, errorStores.query, false);
+						},
+						tearDown: tearDown
+					},
+					{
+						name: "PaginationGrid + async store w/ error",
+						runTest: function(){
+							return test(PaginationGrid, errorStores.asyncQuery, false);
+						},
+						tearDown: tearDown
+					}
+				]);
+				doh.run();
+			});
+		</script>
+	</head>
+	<body></body>
+</html>

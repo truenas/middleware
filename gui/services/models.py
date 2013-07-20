@@ -140,8 +140,6 @@ class CIFS(Model):
             help_text=_("Use this option to override the directory creation "
                 "mask (0777 by default).")
             )
-    cifs_srv_sendfile = models.BooleanField(
-            verbose_name=_("Send files with sendfile(2)"))
     cifs_srv_easupport = models.BooleanField(
             verbose_name=_("EA Support"))
     cifs_srv_dosattr = models.BooleanField(
@@ -917,9 +915,11 @@ class SNMP(Model):
             verbose_name=_("Community"),
             help_text=_("In most cases, 'public' is used here.")
             )
+    #FIXME: Implement trap
     snmp_traps = models.BooleanField(
-            verbose_name=_("Send SNMP Traps"),
-            )
+        verbose_name=_("Send SNMP Traps"),
+        editable=False,
+    )
     snmp_options = models.TextField(
             verbose_name=_("Auxiliary parameters"),
             blank=True,
@@ -934,7 +934,7 @@ class SNMP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"SNMPIcon"
-        advanced_fields = ('snmp_traps',)
+        #advanced_fields = ('snmp_traps',)
 
 
 class UPS(Model):
@@ -1083,13 +1083,16 @@ class FTP(Model):
         verbose_name=_("Path"))
     ftp_onlylocal = models.BooleanField(
             verbose_name=_("Allow Local User Login"))
+    #FIXME: rename the field
     ftp_banner = models.TextField(
-            max_length=120,
-            verbose_name=_("Banner"),
-            blank=True,
-            help_text=_("Greeting banner displayed by FTP when a connection "
-                "first comes in.")
-            )
+        max_length=120,
+        verbose_name=_("Display Login"),
+        blank=True,
+        help_text=_(
+            "Message which will be displayed to the user when they initially "
+            "login."
+        ),
+    )
     ftp_filemask = models.CharField(
             max_length=3,
             default="077",
@@ -1109,11 +1112,16 @@ class FTP(Model):
     ftp_resume = models.BooleanField(
             verbose_name=_("Allow Transfer Resumption"))
     ftp_defaultroot = models.BooleanField(
-            verbose_name=_("Always Chroot"))
+        verbose_name=_("Always Chroot"),
+        help_text=_(
+            "For local users, only allow access to user home directory unless "
+            "the user is a member of group wheel."
+        )
+    )
     ftp_ident = models.BooleanField(
             verbose_name=_("Require IDENT Authentication"))
     ftp_reversedns = models.BooleanField(
-            verbose_name=_("Require Reverse DNS for IP"))
+            verbose_name=_("Perform Reverse DNS Lookups"))
     ftp_masqaddress = models.CharField(
             verbose_name=_("Masquerade address"),
             blank=True,
@@ -1167,8 +1175,8 @@ class FTP(Model):
             help_text=_("Anonymous user download bandwidth in KB/s. Zero means"
                 " infinity.")
             )
-    ftp_ssltls = models.BooleanField(
-            verbose_name=_("Enable SSL/TLS"))
+    ftp_tls = models.BooleanField(
+            verbose_name=_("Enable TLS"))
     ftp_ssltls_certfile = models.TextField(
             verbose_name=_("Certificate and private key"),
             blank=True,
@@ -1777,18 +1785,20 @@ class SMART(Model):
             help_text=_("Report if the temperature had changed by at least N "
                 "degrees Celsius since last report. 0 to disable"),
             )
-    smart_informal = models.IntegerField(
-            default=0,
-            verbose_name=_("Informal"),
-            help_text=_("Report if the temperature is greater or equal than N "
-                "degrees Celsius. 0 to disable"),
-            )
+    smart_informational = models.IntegerField(
+        default=0,
+        verbose_name=_("Informational"),
+        help_text=_("Report as informational in the system log if the "
+            "temperature is greater or equal than N degrees Celsius. 0 to "
+            "disable"),
+    )
     smart_critical = models.IntegerField(
-            default=0,
-            verbose_name=_("Critical"),
-            help_text=_("Report if the temperature is greater or equal than N "
-                "degrees Celsius. 0 to disable"),
-            )
+        default=0,
+        verbose_name=_("Critical"),
+        help_text=_("Report as critical in the system log and send an "
+        "email if the temperature is greater or equal than N degrees "
+        "Celsius. 0 to disable"),
+    )
     smart_email = models.CharField(
             verbose_name=_("Email to report"),
             max_length=255,

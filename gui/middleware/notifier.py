@@ -35,6 +35,7 @@ actions.
 """
 
 from collections import defaultdict, OrderedDict
+from decimal import Decimal
 import ctypes
 import errno
 import glob
@@ -119,13 +120,12 @@ class Byte(object):
 class StartNotify(threading.Thread):
     """
     Use kqueue to watch for an event before actually calling start/stop
-    This should help against synchronization issues under VM
-
-    If the given pid file exists attach on it, otherwise use the parent folder
+    This should help against synchronization and more responsive notify.
     """
 
-    def __init__(self, pidfile, *args, **kwargs):
+    def __init__(self, pidfile, verb, *args, **kwargs):
         self._pidfile = pidfile
+        self._verb = verb
         super(StartNotify, self).__init__(*args, **kwargs)
 
     def run(self):
@@ -133,19 +133,48 @@ class StartNotify(threading.Thread):
         if not self._pidfile:
             return None
 
-        if os.path.exists(self._pidfile):
-            _file = self._pidfile
-        else:
+        """
+        If we are using start or restart we expect that a .pid file will
+        exists at the end of the process, so attach to the directory waiting
+        for that file.
+        Otherwise we will be stopping and expect the .pid to be deleted, so
+        attach to the .pid file and wait for it to be removed
+        """
+        if self._verb in ('start', 'restart'):
+            fflags = select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND
             _file = os.path.dirname(self._pidfile)
+        else:
+            fflags = select.KQ_NOTE_WRITE|select.KQ_NOTE_DELETE
+            if os.path.exists(self._pidfile):
+                _file = self._pidfile
+            else:
+                _file = os.path.dirname(self._pidfile)
         fd = os.open(_file, os.O_RDONLY)
         evts = [
             select.kevent(fd,
                 filter=select.KQ_FILTER_VNODE,
-                flags=select.KQ_EV_ADD|select.KQ_EV_ONESHOT,
-                fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND|select.KQ_NOTE_DELETE),
-            ]
+                flags=select.KQ_EV_ADD|select.KQ_EV_CLEAR,
+                fflags=fflags,
+            )
+        ]
         kq = select.kqueue()
-        kq.control(evts, 1, 3)
+        kq.control(evts, 0, 0)
+
+        tries = 1
+        while tries < 4:
+            rv = kq.control(None, 2, 1)
+            if self._verb in ('start', 'restart'):
+                if os.path.exists(self._pidfile):
+                    # The file might have been created but it may take a little bit
+                    # for the daemon to write the PID
+                    time.sleep(0.1)
+                if os.path.exists(self._pidfile) and os.stat(self._pidfile).st_size > 0:
+                    break
+            elif self._verb == "stop" and not os.path.exists(self._pidfile):
+                break
+            tries += 1
+        kq.close()
+        os.close(fd)
 
 
 class notifier:
@@ -226,7 +255,7 @@ class notifier:
             'webshell': (None, '/var/run/webshell.pid'),
         }
 
-    def _started_notify(self, what):
+    def _started_notify(self, verb, what):
         """
         The check for started [or not] processes is currently done in 2 steps
         This is the first step which involves a thread StartNotify that watch for event
@@ -238,7 +267,7 @@ class notifier:
 
         if what in self.__service2daemon:
             procname, pidfile = self.__service2daemon[what]
-            sn = StartNotify(pidfile=pidfile)
+            sn = StartNotify(verb=verb, pidfile=pidfile)
             sn.start()
             return sn
         else:
@@ -294,7 +323,7 @@ class notifier:
 
         The helper will use method self._start_[what]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
-        sn = self._started_notify(what)
+        sn = self._started_notify("start", what)
         self._simplecmd("start", what)
         return self.started(what, sn)
 
@@ -311,7 +340,7 @@ class notifier:
 
         The helper will use method self._stop_[what]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
-        sn = self._started_notify(what)
+        sn = self._started_notify("stop", what)
         self._simplecmd("stop", what)
         return self.started(what, sn)
 
@@ -320,7 +349,7 @@ class notifier:
 
         The helper will use method self._restart_[what]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
-        sn = self._started_notify(what)
+        sn = self._started_notify("restart", what)
         self._simplecmd("restart", what)
         return self.started(what, sn)
 
@@ -460,14 +489,21 @@ class notifier:
         os.environ['TZ'] = c.fetchone()[0]
         time.tzset()
 
-    def _reload_ssh(self):
-        self.__system("/usr/sbin/service ix-sshd quietstart")
-        self.__system("/usr/sbin/service sshd restart")
-
     def _restart_smartd(self):
         self.__system("/usr/sbin/service ix-smartd quietstart")
         self.__system("/usr/sbin/service smartd forcestop")
         self.__system("/usr/sbin/service smartd restart")
+
+    def _reload_ssh(self):
+        self.__system("/usr/sbin/service ix-sshd quietstart")
+        self.__system("/usr/sbin/service sshd reload")
+
+    def _start_ssh(self):
+        self.__system("/usr/sbin/service ix-sshd quietstart")
+        self.__system("/usr/sbin/service sshd start")
+
+    def _stop_ssh(self):
+        self.__system("/usr/sbin/service sshd forcestop")
 
     def _restart_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
@@ -483,20 +519,33 @@ class notifier:
         self.__system("/usr/sbin/service rsyncd forcestop")
         self.__system("/usr/sbin/service rsyncd restart")
 
+    def _get_stg_directoryservice(self):
+        c = self.__open_db()
+        c.execute("SELECT stg_directoryservice FROM system_settings ORDER BY -id LIMIT 1")
+        return c.fetchone()[0] 
+
     def _started_nis(self):
-        res = self.__system_nolog("/etc/directoryservice/NIS/ctl status")
+        res = False 
+        if self._get_stg_directoryservice() == 'nis':
+            res = self.__system_nolog("/etc/directoryservice/NIS/ctl status")
         return (True if res == 0 else False)
 
     def _start_nis(self):
-        res = self.__system_nolog("/etc/directoryservice/NIS/ctl start")
+        res = False 
+        if self._get_stg_directoryservice() == 'nis':
+            res = self.__system_nolog("/etc/directoryservice/NIS/ctl start")
         return (True if res == 0 else False)
 
     def _restart_nis(self):
-        res = self.__system_nolog("/etc/directoryservice/NIS/ctl restart")
+        res = False 
+        if self._get_stg_directoryservice() == 'nis':
+            res = self.__system_nolog("/etc/directoryservice/NIS/ctl restart")
         return (True if res == 0 else False)
 
     def _stop_nis(self):
-        res = self.__system_nolog("/etc/directoryservice/NIS/ctl stop")
+        res = False 
+        if self._get_stg_directoryservice() == 'nis':
+            res = self.__system_nolog("/etc/directoryservice/NIS/ctl stop")
         return (True if res == 0 else False)
 
     def _started_ldap(self):
@@ -516,34 +565,48 @@ class notifier:
         return ret
 
     def _start_ldap(self):
-        res = self.__system_nolog("/etc/directoryservice/LDAP/ctl start")
+        res = False 
+        if self._get_stg_directoryservice() == 'ldap':
+            res = self.__system_nolog("/etc/directoryservice/LDAP/ctl start")
         return (True if res == 0 else False)
 
     def _stop_ldap(self):
-        res = self.__system_nolog("/etc/directoryservice/LDAP/ctl stop")
+        res = False 
+        if self._get_stg_directoryservice() == 'ldap':
+            res = self.__system_nolog("/etc/directoryservice/LDAP/ctl stop")
         return (True if res == 0 else False)
 
     def _restart_ldap(self):
-        res = self.__system_nolog("/etc/directoryservice/LDAP/ctl restart")
+        res = False 
+        if self._get_stg_directoryservice() == 'ldap':
+            res = self.__system_nolog("/etc/directoryservice/LDAP/ctl restart")
         return (True if res == 0 else False)
 
     def _clear_activedirectory_config(self):
         self.__system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
 
     def _started_nt4(self):
-        res = self.__system_nolog("/etc/rc.d/ix-nt4 status")
+        res = False 
+        if self._get_stg_directoryservice() == 'nt4':
+            res = self.__system_nolog("/etc/rc.d/ix-nt4 status")
         return (True if res == 0 else False)
 
     def _start_nt4(self):
-        res = self.__system_nolog("/etc/directoryservice/NT4/ctl start")
+        res = False 
+        if self._get_stg_directoryservice() == 'nt4':
+            res = self.__system_nolog("/etc/directoryservice/NT4/ctl start")
         return (True if res == 0 else False)
 
     def _restart_nt4(self):
-        res = self.__system_nolog("/etc/directoryservice/NT4/ctl restart")
+        res = False 
+        if self._get_stg_directoryservice() == 'nt4':
+            res = self.__system_nolog("/etc/directoryservice/NT4/ctl restart")
         return (True if res == 0 else False)
 
     def _stop_nt4(self):
-        res = self.__system_nolog("/etc/directoryservice/NT4/ctl stop")
+        res = False 
+        if self._get_stg_directoryservice() == 'nt4':
+            res = self.__system_nolog("/etc/directoryservice/NT4/ctl stop")
         return (True if res == 0 else False)
 
     def _started_activedirectory(self):
@@ -568,15 +631,21 @@ class notifier:
         return ret
 
     def _start_activedirectory(self):
-        res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
+        res = False
+        if self._get_stg_directoryservice() == 'activedirectory':
+            res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
         return (True if res == 0 else False)
 
     def _stop_activedirectory(self):
-        res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
+        res = False
+        if self._get_stg_directoryservice() == 'activedirectory':
+            res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
         return (True if res == 0 else False)
 
     def _restart_activedirectory(self):
-        res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
+        res = False
+        if self._get_stg_directoryservice() == 'activedirectory':
+            res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
         return (True if res == 0 else False)
 
     def _restart_syslogd(self):
@@ -649,7 +718,7 @@ class notifier:
             svc = "ups"
         else:
             svc = "upsmon"
-        sn = self._started_notify("upsmon")
+        sn = self._started_notify("start", "upsmon")
         return self._started(svc, sn)
 
     def _load_afp(self):
@@ -739,19 +808,22 @@ class notifier:
     def pluginjail_running(self, pjail=None):
         running = False
 
-        wlist = Warden().list()
-        for wj in wlist:
-            wj = WardenJail(**wj)
-            if pjail and wj.host == pjail:
-                if wj.type == WARDEN_TYPE_PLUGINJAIL and \
+        try:
+            wlist = Warden().list()
+            for wj in wlist:
+                wj = WardenJail(**wj)
+                if pjail and wj.host == pjail:
+                    if wj.type == WARDEN_TYPE_PLUGINJAIL and \
+                        wj.status == WARDEN_STATUS_RUNNING:
+                        running = True
+                        break
+
+                elif not pjail and wj.type == WARDEN_TYPE_PLUGINJAIL and \
                     wj.status == WARDEN_STATUS_RUNNING:
                     running = True
                     break
-
-            elif not pjail and wj.type == WARDEN_TYPE_PLUGINJAIL and \
-                wj.status == WARDEN_STATUS_RUNNING:
-                running = True
-                break
+        except:
+            pass
 
         return running
 
@@ -769,6 +841,7 @@ class notifier:
 
     def _restart_dynamicdns(self):
         self.__system("/usr/sbin/service ix-inadyn quietstart")
+        self.__system("/usr/sbin/service inadyn-mt forcestop")
         self.__system("/usr/sbin/service inadyn-mt restart")
 
     def _restart_system(self):
@@ -803,6 +876,13 @@ class notifier:
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service avahi-daemon restart")
         self.__system("/usr/sbin/service samba forcestop")
+
+    def _start_snmp(self):
+        self.__system("/usr/sbin/service ix-bsnmpd quietstart")
+        self.__system("/usr/sbin/service bsnmpd quietstart")
+
+    def _stop_snmp(self):
+        self.__system("/usr/sbin/service bsnmpd quietstop")
 
     def _restart_snmp(self):
         self.__system("/usr/sbin/service ix-bsnmpd quietstart")
@@ -2182,7 +2262,7 @@ class notifier:
             "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, ))
         #prov = doc.xpathEval("//provider[@id = '%s']" % pref[0].content)
         if not pref:
-            proc = self.__pipeopen("mdconfig -a -t swap -s 2g")
+            proc = self.__pipeopen("/sbin/mdconfig -a -t swap -s 2800m -o reserve")
             mddev, err = proc.communicate()
             if proc.returncode != 0:
                 raise MiddlewareError("Could not create memory device: %s" % err)
@@ -2243,13 +2323,44 @@ class notifier:
         # XXX: ugly
         self.__system("rm -rf */")
 
-        proc = self.__pipeopen('/usr/bin/tar -xJpf %s' % (path, ))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            os.chdir('/')
-            raise MiddlewareError(
-                'The firmware image is invalid, make sure to use .txz file: %s' % err
-            )
+        percent = 0
+        with open('/tmp/.extract_progress', 'w') as fp:
+            fp.write("2|%d\n" % percent)
+            fp.flush()
+            with open('/tmp/.upgrade_extract', 'w') as f:
+                size = os.stat(path).st_size
+                proc = subprocess.Popen([
+                    "/usr/bin/tar",
+                    "-xSJpf", # -S for sparse
+                    path,
+                ], stderr=f)
+                RE_TAR = re.compile(r"^In: (\d+)", re.M|re.S)
+                while True:
+                    if proc.poll() is not None:
+                        break
+                    try:
+                        os.kill(proc.pid, signal.SIGINFO)
+                    except:
+                        break
+                    time.sleep(1)
+                    #TODO: We don't need to read the whole file
+                    with open('/tmp/.upgrade_extract', 'r') as f2:
+                        line = f2.read()
+                    reg = RE_TAR.findall(line)
+                    if reg:
+                        current = Decimal(reg[-1])
+                        percent = (current / size ) * 100
+                        fp.write("2|%d\n" % percent)
+                        fp.flush()
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                os.chdir('/')
+                raise MiddlewareError(
+                    'The firmware image is invalid, make sure to use .txz file: %s' % err
+                )
+            fp.write("3|\n")
+            fp.flush()
+        os.unlink('/tmp/.extract_progress')
         try:
             subprocess.check_output(
                                     ['bin/install_worker.sh', 'pre-install'],
@@ -3250,6 +3361,17 @@ class notifier:
     def interface_mtu(self, iface, mtu):
         self.__system("ifconfig %s mtu %s" % (iface, mtu))
 
+    def guess_default_interface(self):
+        p1 = self.__pipeopen("netstat -nr|egrep '^default'|awk '{ print $6}'")
+        iface = p1.communicate()
+        if p1.returncode != 0:
+            iface = None
+        try:  
+            iface = iface[0].strip()
+        except:
+            pass
+        return iface
+
     def lagg_remove_port(self, lagg, iface):
         return self.__system_nolog("ifconfig %s -laggport %s" % (lagg, iface))
 
@@ -3509,6 +3631,19 @@ class notifier:
 
         self.__camcontrol = {}
 
+        """
+        Hacky workaround
+
+        It is known that at least some HPT controller have a bug in the
+        camcontrol devlist output with multiple controllers, all controllers
+        will be presented with the same driver with index 0
+        e.g. two hpt27xx0 instead of hpt27xx0 and hpt27xx1
+
+        What we do here is increase the controller id by its order of
+        appearance in the camcontrol output
+        """
+        hptctlr = defaultdict(int)
+
         re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S|re.M)
         re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S|re.M)
         drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
@@ -3520,7 +3655,11 @@ class notifier:
                 if not reg:
                     continue
                 drv = reg.group("drv")
-                cid = reg.group("cid")
+                if drv.startswith("hpt"):
+                    cid = hptctlr[drv]
+                    hptctlr[drv] += 1
+                else:
+                    cid = reg.group("cid")
             else:
                 reg = re_tgt.search(line)
                 if not reg:

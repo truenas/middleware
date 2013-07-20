@@ -59,6 +59,8 @@ usage()
 	    -n <ipv4 network>
 	    -p <jails configuration path>
 	    -t <jail type>
+	    -v # enable VIMAGE
+	    -x # enable NAT
 
 	    -A # do all migrations
 	    -D # do default migration
@@ -224,6 +226,38 @@ get_services_pluginsjail_jail_name()
 	"
 }
 
+get_services_pluginsjail_jail_ipv4address()
+{
+	try runsql "
+	SELECT
+		jail_ipv4address
+
+	FROM
+		services_pluginsjail
+
+	ORDER BY
+		-id
+
+	LIMIT 1;
+	"
+}
+
+get_services_pluginsjail_jail_ipv4netmask()
+{
+	try runsql "
+	SELECT
+		jail_ipv4netmask
+
+	FROM
+		services_pluginsjail
+
+	ORDER BY
+		-id
+
+	LIMIT 1;
+	"
+}
+
 create_warden_jail()
 {
 	local jc_path="${1}"
@@ -232,8 +266,10 @@ create_warden_jail()
 	local jail_ipv4="${4}"
 	local jail_defaultrouter_ipv4="${5}"
 	local jail_bridge_ipv4="${6}"
+	local jail_vimage="${7}"
+	local jail_nat="${8}"
 
-	shift 6
+	shift 8
 	local rsync_dirs="$*"
 
 	local jail_dir="${jc_path}/${jail_host}"
@@ -270,8 +306,27 @@ create_warden_jail()
 	fi
 
 	try ${WARDEN} set ipv4 ${jail_host} ${jail_ipv4}
-	try ${WARDEN} set bridge-ipv4 ${jail_host} ${jail_bridge_ipv4}
 	try ${WARDEN} auto ${jail_host}
+
+	if [ "${jail_vimage}" = "1" ]
+	then
+		try ${WARDEN} set vnet-enable ${jail_host}
+	fi
+
+	if [ "${jail_nat}" = "1" ]
+	then
+		try ${WARDEN} set nat-enable ${jail_host}
+	fi
+
+	if [ "${jail_nat}" = "0" -a "${jail_vimage}" = "1" -a -z "${jail_bridge_ipv4}" ]
+	then
+		try ${WARDEN} set defaultrouter-ipv4 ${jail_host} ${jail_defaultrouter_ipv4}
+	fi		
+	
+	if [ "${jail_vimage}" = "1" -a "${jail_nat}" = "1" -a ! -z "${jail_bridge_ipv4}" ]
+	then
+		try ${WARDEN} set bridge-ipv4 ${jail_host} ${jail_bridge_ipv4}
+	fi
 }
 
 update_warden_conf()
@@ -294,6 +349,8 @@ do_services_pluginsjail_migration()
 	local jail_ipv4="${4}"
 	local jail_defaultrouter_ipv4="${5}"
 	local jail_bridge_ipv4="${6}"
+	local jail_vimage="${7}"
+	local jail_nat="${8}"
 
 	try runsql "
 	INSERT INTO
@@ -329,6 +386,8 @@ do_services_pluginsjail_migration()
 		"${jail_ipv4}" \
 		"${jail_defaultrouter_ipv4}" \
 		"${jail_bridge_ipv4}" \
+		"${jail_vimage}" \
+		"${jail_nat}" \
 		"${plugins_path}/pbi:${jail_dir}/usr/pbi"
 
 	return 0
@@ -408,6 +467,8 @@ main()
 	local jail_bridge_ipv4
 	local jail_type
 	local jail_host
+	local jail_vimage
+	local jail_nat
 	local jail_defaultrouter_ipv4
 	local pluginsjail_migration
 	local plugins_migration
@@ -420,17 +481,12 @@ main()
 #		exit 1
 #	fi
 
-	local args="$(getopt b:d:hj:n:p:t:ADJNP $*)"
+	local args="$(getopt b:d:hi:j:n:p:t:vxADJNP $*)"
 	if [ "$?" != "0" ]
 	then		
 		usage
 		exit 2
 	fi
-
-	pluginsjail_migration=0
-	plugins_migration=0
-	nullmountpoint_migration=0
-	default_migration=0
 
 	set -- $args
 	while true
@@ -438,10 +494,60 @@ main()
 		case "$1" in
 
 		-b) jail_bridge_ipv4="${2}"
-			shift
+			shift; shift
 			;;
 
 		-d) jail_defaultrouter_ipv4="${2}"
+			shift; shift 
+			;;
+
+		-i) jail_ipv4="${2}"
+			shift; shift
+			;;
+
+		-j) jail_host="${2}"
+			shift; shift
+			;;
+
+		-n) jc_ipv4_network="${2}"
+			shift; shift
+			;;
+
+		-p) jc_path="${2}"
+			shift; shift
+			;;
+
+		-t) jail_type="${2}"
+			shift; shift
+			;;
+
+		-v) jail_vimage=1
+			shift
+			;;
+
+		-x) jail_nat=1
+			shift
+			;;
+
+		-A) pluginsjail_migration=1
+			plugins_migration=1
+			nullmountpoint_migration=1
+			shift
+			;;
+
+		-D) default_migration=1
+			shift
+			;;
+
+		-J) pluginsjail_migration=1
+			shift
+			;;
+
+		-N) plugins_migration=1
+			shift
+			;;
+
+		-P) nullmountpoint_migration=1
 			shift
 			;;
 
@@ -449,49 +555,10 @@ main()
 			exit 0
 			;;
 
-		-i) jail_ipv4="${2}"
-			shift
-			;;
-
-		-j) jail_host="${2}"
-			shift
-			;;
-
-		-n) jc_ipv4_network="${2}"
-			shift
-			;;
-
-		-p) jc_path="${2}"
-			shift
-			;;
-
-		-t) jail_type="${2}"
-			shift
-			;;
-
-		-A) pluginsjail_migration=1
-			plugins_migration=1
-			nullmountpoint_migration=1
-			;;
-
-		-D) default_migration=1
-			;;
-
-		-J) pluginsjail_migration=1
-			;;
-
-		-N) plugins_migration=1
-			;;
-
-		-P) nullmountpoint_migration=1
-			;;
-
-		--) break
+		--) shift; break
 			;;
 
 		esac
-
-		shift
 	done
 
 	do_backup
@@ -500,15 +567,32 @@ main()
 
 	if [ "${default_migration}" = "1" ]
 	then
-		jc_path="$(get_services_pluginsjail_jail_path)"
-		jc_ipv4_network="192.168.99.0/24"
-		jail_host="$(get_services_pluginsjail_jail_name)"
-		jail_ipv4="192.168.99.26/24"
-		jail_bridge_ipv4="192.168.99.1/24"
-		jail_type='pluginjail'
-		pluginsjail_migration=1
-		plugins_migration=1
-		nullmountpoint_migration=1
+		: ${jail_vimage:=1}
+		: ${jail_nat:=0}
+
+		: ${jc_path:="$(get_services_pluginsjail_jail_path)"}
+		: ${jc_ipv4_network:="192.168.99.0/24"}
+		: ${jail_host:="$(get_services_pluginsjail_jail_name)"}
+
+		if [ -z "${jail_ipv4}" -a "${jail_nat}" = "1" ] 
+		then
+			jail_ipv4="192.168.99.26/24"
+			jail_bridge_ipv4="192.168.99.1/24"
+		fi
+
+		if [ -z "${jail_ipv4}" ]
+		then
+			local jail_ipv4address="$(get_services_pluginsjail_jail_ipv4address)"
+			local jail_ivp4netmask="$(get_services_pluginsjail_jail_ipv4netmask)"
+
+			jail_ipv4="${jail_ipv4address}/${jail_ivp4netmask}"
+		fi	
+
+		: ${jail_type:='pluginjail'}
+
+		: ${pluginsjail_migration:=1}
+		: ${plugins_migration:=1}
+		: ${nullmountpoint_migration:=1}
 	fi
 
 	if [ -z "${jc_path}" ]
@@ -531,7 +615,13 @@ main()
 		kill_thyself "jail_ipv4 is null"
 	fi
 
-	if [ -z "${jail_defaultrouter_ipv4}" -a -z "${jail_bridge_ipv4}" ]
+	if [ "${jail_nat}" = "0" -a -z "${jail_defaultrouter_ipv4}" ]
+	then
+		jail_defaultrouter_ipv4="$(get_default_route)"
+	fi
+
+	if [ -z "${jail_defaultrouter_ipv4}" -a -z "${jail_bridge_ipv4}" -a \
+		"${jail_vimage}" = "1" -a "${jail_nat}" = "1" ]
 	then
 		kill_thyself "jail_defaultrouter_ipv4 and jail_bridge_ipv4 " \
 			"are both null, one of these must be set"
@@ -545,7 +635,9 @@ main()
 			"${jail_host}" \
 			"${jail_ipv4}" \
 			"${jail_defaultrouter_ipv4}" \
-			"${jail_bridge_ipv4}"
+			"${jail_bridge_ipv4}" \
+			"${jail_vimage}" \
+			"${jail_nat}"
 	fi
 
 	if [ "${plugins_migration}" = "1" ]
@@ -558,6 +650,7 @@ main()
 		do_plugins_nullmountpoint_migration "${jail_host}"
 	fi
 
+	/usr/local/etc/rc.d/django restart
 	return 0
 }
 

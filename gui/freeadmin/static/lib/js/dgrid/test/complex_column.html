@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="utf-8">
 		<title>Test Grid Complex Columns</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/skins/claro.css";
 			@import "../css/dgrid.css"; /* this ensures that are rules come after dgrid.css */
@@ -35,9 +35,9 @@
 			}
 		</style>
 
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			require(["dgrid/OnDemandGrid", "dgrid/GridWithColumnSetsFromHtml", "dgrid/ColumnSet", "dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dojo/on", "dojo/parser", "dgrid/test/data/base", "dgrid/test/data/DeferredWrapper", "dojo/domReady!"],
 				function(OnDemandGrid, GridFromHtml, ColumnSet, Selection, Keyboard, declare, on, parser, testStore, DeferredWrapper){
 					var columnSets1 = [

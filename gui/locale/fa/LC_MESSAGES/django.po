@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-03-15 11:46+0200\n"
-"Last-Translator: purya.ghahremani <pgh.443@gmail.com>\n"
+"PO-Revision-Date: 2013-07-03 16:11+0200\n"
+"Last-Translator: rnc <rasawebmaster@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fa\n"
 "MIME-Version: 1.0\n"
@@ -427,7 +427,7 @@ msgstr "هرگز - بررسی دستگاه بدون در نظر گرفتن حا�
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "خواب - مگر دستگاه در وضعیت خواب باشد"
+msgstr "خواب - دستگاه را بررسی کنید مگر اینکه در حالت خواب باشد"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
@@ -478,12 +478,12 @@ msgstr "نام شما نباید با \"-\" شروع شود"
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "کاراکتر $ فقط به عنوان کاراکتر نهایی مجاز است"
 
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "نام شما حاوی کاراکترهای غیر مجاز است (%$)"
 
 #: account/forms.py:79
 #, python-format
@@ -523,7 +523,7 @@ msgstr "رمز عبور را وارد کنید همانطور که در بالا
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr "خط فرمان"
+msgstr "خط فرمان ( شل)"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
@@ -551,7 +551,7 @@ msgstr ""
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "گروه های کمکی"
 
 #: account/forms.py:347
 msgid "A user with that uid already exists."
@@ -571,7 +571,7 @@ msgstr ""
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr "هردو فیلد رمز عبور همگون نیستند"
+msgstr "فیلدهای کلمه عبور یکسان نیستند"
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"

@@ -35,6 +35,7 @@ from django.conf.urls import patterns, url
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
@@ -351,7 +352,7 @@ class BaseFreeAdmin(object):
         )
         try:
             get_template(template)
-        except:
+        except TemplateDoesNotExist:
             template = 'freeadmin/generic_model_add.html'
 
         return render(request, template, context)
@@ -531,7 +532,7 @@ class BaseFreeAdmin(object):
         )
         try:
             get_template(template)
-        except:
+        except TemplateDoesNotExist:
             template = 'freeadmin/generic_model_edit.html'
 
         if 'iframe' in request.GET:
@@ -636,7 +637,7 @@ class BaseFreeAdmin(object):
         )
         try:
             get_template(template)
-        except:
+        except TemplateDoesNotExist:
             template = 'freeadmin/generic_model_delete.html'
 
         return render(request, template, context)
@@ -710,7 +711,7 @@ class BaseFreeAdmin(object):
         template = "%s/%s_datagrid.html" % info
         try:
             get_template(template)
-        except:
+        except TemplateDoesNotExist:
             template = 'freeadmin/generic_model_datagrid.html'
 
         return render(request, template, context)

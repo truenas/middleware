@@ -9,7 +9,7 @@
 	height: 100px;
 	width: 0;
 	position: absolute;
-	right: -1px;
+	right: -4px;
 	top:-4px;
 	cursor: col-resize;
 	z-index: 999;
@@ -42,7 +42,6 @@ html.has-ie-6 .dgrid-resize-header-container {
 } 
 .dgrid-header .dgrid-cell-padding {
 	overflow: hidden;
-	padding-right:0px;
 }
 html.has-ie-6 .dgrid-header .dgrid-cell-padding {
 	margin-right: 4px; /* for IE6, keep the resizer visible */

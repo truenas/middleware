@@ -8,25 +8,25 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2011-05-21 14:21+0200\n"
-"Last-Translator: r_t_f_m <reuf_m@hotmail.com>\n"
+"PO-Revision-Date: 2013-06-06 22:19+0200\n"
+"Last-Translator: dj_amil <djulic@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr ""
+msgstr "Običan"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:42 choices.py:558
 msgid "TLS"
@@ -313,7 +313,7 @@ msgstr ""
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS radi na bateriji"
 
 #: choices.py:255
 msgid "Preferred"
@@ -5916,7 +5916,7 @@ msgstr ""
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
-msgstr ""
+msgstr "Zamjeni Disk"
 
 #: templates/storage/zvols.html:3
 #, python-format
@@ -5994,11 +5994,11 @@ msgstr ""
 
 #: templates/system/ntpserver.html:38
 msgid "No NTP servers defined."
-msgstr ""
+msgstr "NTP server nije definisan"
 
 #: templates/system/ntpserver.html:44
 msgid "Add NTP server"
-msgstr ""
+msgstr "Dodaj NTP server"
 
 #: templates/system/ntpserver.html:46
 msgid "Add NTP Server"
@@ -6017,15 +6017,15 @@ msgstr ""
 
 #: templates/system/reporting.html:2
 msgid "History"
-msgstr ""
+msgstr "Historija"
 
 #: templates/system/rsync.html:5
 msgid "Local Path"
-msgstr ""
+msgstr "Lokalna putanja"
 
 #: templates/system/rsync.html:6
 msgid "Remote"
-msgstr ""
+msgstr "Udaljen"
 
 #: templates/system/rsync.html:48
 msgid "No rsync tasks defined."
@@ -6120,7 +6120,7 @@ msgstr ""
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Konektovan putem"
 
 #: templates/system/tunable.html:34
 msgid "No tunable setting defined."
@@ -6175,6 +6175,8 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"Sljedeća IP adresa je povezana sa iSCSI portalom, ali nije pronađena u "
+"sistemu: %s"
 
 #: tools/alert.py:177
 msgid "Critical Alerts"

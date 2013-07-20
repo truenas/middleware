@@ -116,6 +116,16 @@ class JailsQuerySet(QuerySet):
 
         return models
 
+    def latest(self, field_name=None):
+        if field_name is not None:
+            field_name = "-%s" % field_name
+        #FIXME: not efficient
+        models = self.order_by(field_name)
+        if len(models) == 0:
+            raise self.model.DoesNotExist
+        else:
+            return models[0]
+
     def get(self, *args, **kwargs):
         results = []
         for wj in self.__wlist:

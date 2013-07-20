@@ -98,6 +98,12 @@ html.has-quirks .dgrid-header-hidden .dgrid-cell {
 	width: 100%;
 }
 
+.dgrid-preload {
+	/* Force IE6 to honor 0 height */
+	font-size: 0;
+	line-height: 0;
+}
+
 .dgrid-loading {
 	position: relative;
 	height: 100%;

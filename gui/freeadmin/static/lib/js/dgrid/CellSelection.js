@@ -1,4 +1,12 @@
-define(["dojo/_base/declare", "./Selection", "dojo/on", "put-selector/put", "dojo/has"], function(declare, Selection, listen, put, has){
+define([
+	"dojo/_base/declare",
+	"dojo/aspect",
+	"dojo/on",
+	"dojo/has",
+	"./Selection",
+	"put-selector/put"
+], function(declare, aspect, listen, has, Selection, put){
+
 return declare(Selection, {
 	// summary:
 	//		Add cell level selection capabilities to a grid. The grid will have a selection property and
@@ -16,9 +24,17 @@ return declare(Selection, {
 		if(typeof cell != "object" || !("element" in cell)){
 			cell = this.cell(cell);
 		}else if(!cell.row){
-			// it is row, with the value being a hash
-			for(id in value){
-				this.select(this.cell(cell.id, id), null, value[id]);
+			// Row object was passed instead of cell
+			if(value && typeof value === "object"){
+				// value is a hash of true/false values
+				for(id in value){
+					this.select(this.cell(cell.id, id), null, value[id]);
+				}
+			}else{
+				// Select/deselect all columns in row
+				for(id in this.columns){
+					this.select(this.cell(cell.id, id), null, value);
+				}
 			}
 			return;
 		}
@@ -99,7 +115,7 @@ return declare(Selection, {
 					// and now loop through each column to be selected
 					for(i = 0; i < columnIds.length; i++){
 						cell = this.cell(nextNode, columnIds[i]);
-						this.select(cell);
+						this.select(cell, null, value);
 					}
 					if(nextNode == toElement){
 						break;
@@ -109,14 +125,25 @@ return declare(Selection, {
 		}
 	},
 	isSelected: function(object, columnId){
-		if(!object){
+		// summary:
+		//		Returns true if the indicated cell is selected.
+		
+		if(typeof object === "undefined" || object === null){
 			return false;
 		}
 		if(!object.element){
 			object = this.cell(object, columnId);
 		}
-
-		return this.selection[object.row.id] && !!this.selection[object.row.id][object.column.id];
+		
+		// First check whether the given cell is indicated in the selection hash;
+		// failing that, check if allSelected is true (testing against the
+		// allowSelect method if possible)
+		var rowId = object.row.id;
+		if(rowId in this.selection){
+			return !!this.selection[rowId][object.column.id];
+		}else{
+			return this.allSelected && (!object.row.data || this.allowSelect(object));
+		}
 	},
 	clearSelection: function(exceptId){
 		// disable exceptId in cell selection, since it would require double parameters

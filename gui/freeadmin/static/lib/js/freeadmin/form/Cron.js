@@ -36,7 +36,7 @@ define([
         typeChoice: "every",
         value: "",
         start: "0",
-        postCreate : function() {
+        postCreate: function() {
 
             var cron = this;
             if(!gettext) {
@@ -58,14 +58,15 @@ define([
             }
 
             var sel = new ContentPane({
-                 title: gettext('Each selected') + ' ' + this.label,
-                 onShow: function(ev) {
-                 varr = [];
-                 query(':checked', sel.containerNode).forEach(function(node, index, arr){
-                     varr.push(registry.getEnclosingWidget(node).get('label'));
-                 });
-                 cron.set('value', varr.join(','));
-                 },
+              id: cron.name + "_pane_each",
+              title: gettext('Each selected') + ' ' + this.label,
+              onShow: function(ev) {
+                varr = [];
+                query(':checked', sel.containerNode).forEach(function(node, index, arr){
+                  varr.push(registry.getEnclosingWidget(node).get('label'));
+                });
+                cron.set('value', varr.join(','));
+              },
             }, this.selectedNode);
 
             //var rulesNode = document.createElement('div'); 
@@ -90,6 +91,7 @@ define([
                 this.sliderValue.innerHTML = Math.floor((this.numChoices+this.start)/4).toString();
             }
             var slider = new HorizontalSlider({
+                id: cron.name + "_slider",
                 name: "slider",
                 value: parseInt(this.sliderValue.innerHTML),
                 minimum: 1,
@@ -111,15 +113,16 @@ define([
             slider.startup();
 
             var every = new ContentPane({
-                 title: gettext('Every N')+' '+this.label,
-                 onShow: function(ev) {
-                    var value = slider.get('value');
-                    sldval.innerHTML = Math.floor(value);
-                    if(Math.floor(value) == 1)
-                        cron.set('value', '*');
-                    else
-                        cron.set('value', '*/'+Math.floor(value).toString());
-                 },
+              id: cron.name + "_pane_every",
+              title: gettext('Every N')+' '+this.label,
+              onShow: function(ev) {
+                 var value = slider.get('value');
+                 sldval.innerHTML = Math.floor(value);
+                 if(Math.floor(value) == 1)
+                     cron.set('value', '*');
+                 else
+                     cron.set('value', '*/'+Math.floor(value).toString());
+              },
             }, this.everyNode);
 
             var myvals = [];
@@ -129,23 +132,25 @@ define([
             for(var i=0;i<this.numChoices;i++) {
                 var checked = (array.indexOf(myvals, sprintf("%.2d", i+this.start)) != -1) ? true : false;
                 var tg = new ToggleButton({
+                    id: cron.name + "_toggle_" + (cron.start + i),
                     showLabel: true,
                     checked: checked,
                     baseClass: 'mytoggle',
                     onChange: function(val) {
-                 varr = [];
-                 query(':checked', sel.containerNode).forEach(function(node, index, arr){
-                     varr.push(registry.getEnclosingWidget(node).get('label'));
-                 });
-                 cron.set('value', varr.join(','));
+                      varr = [];
+                      query(':checked', sel.containerNode).forEach(function(node, index, arr){
+                        varr.push(registry.getEnclosingWidget(node).get('label'));
+                      });
+                      cron.set('value', varr.join(','));
                     },
-                    label: sprintf("%.2d", i+this.start),
+                    label: sprintf("%.2d", i+cron.start),
                 });
                 tg.set('checked', checked);
                 sel.containerNode.appendChild(tg.domNode);
             }
 
             var tc = new TabContainer({
+                id: cron.name + "_tab",
                 name: "tab",
                 style: "height: 100%; width: 100%;",
             }, this.tab);

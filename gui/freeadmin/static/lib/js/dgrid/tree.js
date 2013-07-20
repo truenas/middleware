@@ -1,7 +1,58 @@
-define(["dojo/_base/declare", "dojo/_base/array", "dojo/_base/Deferred", "dojo/has", "dojo/query", "dojo/on", "dojo/aspect", "./Grid", "dojo/has!touch?./util/touch", "put-selector/put"],
-function(declare, arrayUtil, Deferred, has, querySelector, on, aspect, Grid, touchUtil, put){
+define([
+	"dojo/_base/declare",
+	"dojo/_base/array",
+	"dojo/_base/Deferred",
+	"dojo/query",
+	"dojo/on",
+	"dojo/aspect",
+	"./util/has-css3",
+	"./Grid",
+	"dojo/has!touch?./util/touch",
+	"put-selector/put"
+], function(declare, arrayUtil, Deferred, querySelector, on, aspect, has, Grid, touchUtil, put){
 
-return function(column){
+function defaultRenderExpando(level, hasChildren, expanded, object){
+	// summary:
+	//		Provides default implementation for column.renderExpando.
+	
+	var dir = this.grid.isRTL ? "right" : "left",
+		cls = ".dgrid-expando-icon",
+		node;
+	if(hasChildren){
+		cls += ".ui-icon.ui-icon-triangle-1-" + (expanded ? "se" : "e");
+	}
+	node = put("div" + cls + "[style=margin-" + dir + ": " +
+		(level * (this.indentWidth || 9)) + "px; float: " + dir + "]");
+	node.innerHTML = "&nbsp;"; // for opera to space things properly
+	return node;
+}
+
+function ontransitionend(event){
+	var container = this,
+		height = this.style.height;
+	if(height){
+		// After expansion, ensure display is correct;
+		// after collapse, set display to none to improve performance
+		this.style.display = height == "0px" ? "none" : "block";
+	}
+	
+	// Reset height to be auto, so future height changes (from children
+	// expansions, for example), will expand to the right height.
+	if(event){
+		// For browsers with CSS transition support, setting the height to
+		// auto or "" will cause an animation to zero height for some
+		// reason, so temporarily set the transition to be zero duration
+		put(this, ".dgrid-tree-resetting");
+		setTimeout(function(){
+			// Turn off the zero duration transition after we have let it render
+			put(container, "!dgrid-tree-resetting");
+		});
+	}
+	// Now set the height to auto
+	this.style.height = "";
+}
+
+function tree(column){
 	// summary:
 	//		Adds tree navigation capability to a column.
 	
@@ -25,28 +76,14 @@ return function(column){
 	aspect.after(column, "init", function(){
 		var grid = column.grid,
 			colSelector = ".dgrid-content .dgrid-column-" + column.id,
-			transitionEventSupported,
-			listeners = [], // to be removed when this column is "destroyed"
-			tr, query;
+			listeners = []; // to be removed when this column is destroyed
 		
 		if(!grid.store){
 			throw new Error("dgrid tree column plugin requires a store to operate.");
 		}
 		
 		if (!column.renderExpando){
-			// If no renderExpando function exists, create one with default logic.
-			column.renderExpando = function(level, hasChildren, expanded){
-				var dir = this.grid.isRTL ? "right" : "left",
-					cls = ".dgrid-expando-icon",
-					node;
-				if(hasChildren){
-					cls += ".ui-icon.ui-icon-triangle-1-" + (expanded ? "se" : "e");
-				}
-				node = put("div" + cls + "[style=margin-" + dir + ": " +
-					(level * (this.indentWidth || 9)) + "px; float: " + dir + "]");
-				node.innerHTML = "&nbsp;"; // for opera to space things properly
-				return node;
-			};
+			column.renderExpando = defaultRenderExpando;
 		}
 		
 		// Set up the event listener once and use event delegation for better memory use.
@@ -133,21 +170,28 @@ return function(column){
 			//		If specified, designates whether to expand or collapse the row;
 			//		if unspecified, toggles the current state.
 			
-			var row = target.element ? target : grid.row(target);
+			var row = target.element ? target : grid.row(target),
+				hasTransitionend = has("transitionend");
 			
 			target = row.element;
 			target = target.className.indexOf("dgrid-expando-icon") > -1 ? target :
 				querySelector(".dgrid-expando-icon", target)[0];
 			
-			if(target && target.mayHaveChildren){
+			if(target && target.mayHaveChildren &&
+					(noTransition || expand !== !!this._expanded[row.id])){
 				// toggle or set expand/collapsed state based on optional 2nd argument
 				var expanded = expand === undefined ? !this._expanded[row.id] : expand;
 				
 				// update the expando display
-				target.className = "dgrid-expando-icon ui-icon ui-icon-triangle-1-" + (expanded ? "se" : "e");
+				put(target, ".ui-icon-triangle-1-" + (expanded ? "se" : "e") +
+					"!ui-icon-triangle-1-" + (expanded ? "e" : "se"));
+				
 				var preloadNode = target.preloadNode,
 					rowElement = row.element,
-					container, options;
+					container,
+					containerStyle,
+					scrollHeight,
+					options;
 				
 				if(!preloadNode){
 					// if the children have not been created, create a container, a preload node and do the 
@@ -172,43 +216,17 @@ return function(column){
 							grid.renderArray(query(options), preloadNode, {query: query}),
 						function(){
 							// Expand once results are retrieved, if the row is still expanded.
-							if(grid._expanded[row.id]){
+							if(grid._expanded[row.id] && hasTransitionend){
 								var scrollHeight = container.scrollHeight;
 								container.style.height = scrollHeight ? scrollHeight + "px" : "auto";
 							}
 						}
 					);
-					var transitionend = function(event){
-						// NOTE: this == container
-						var height = this.style.height;
-						if(height){
-							// after expansion, ensure display is correct, and we set it to none for hidden containers to improve performance
-							this.style.display = height == "0px" ? "none" : "block";
-						}
-						if(event){
-							// now we need to reset the height to be auto, so future height changes 
-							// (from children expansions, for example), will expand to the right height
-							// However setting the height to auto or "" will cause an animation to zero height for some
-							// reason, so we set the transition to be zero duration for the time being
-							put(this, ".dgrid-tree-resetting");
-							setTimeout(function(){
-								// now we can turn off the zero duration transition after we have let it render
-								put(container, "!dgrid-tree-resetting");
-							});
-							// this was triggered as a real event, we remember that so we don't fire the setTimeout's in the future
-							transitionEventSupported = true;
-						}else if(!transitionEventSupported){
-							// if this was not triggered as a real event, we remember that so we shortcut animations
-							transitionEventSupported = false;
-						}
-						// now set the height to auto
-						this.style.height = "";
-					};
-					on(container, "transitionend,webkitTransitionEnd,oTransitionEnd,MSTransitionEnd", transitionend);
-					if(!transitionEventSupported){
-						setTimeout(function(){
-							transitionend.call(container);
-						}, 600);
+					
+					if(hasTransitionend){
+						on(container, hasTransitionend, ontransitionend);
+					}else{
+						ontransitionend.call(container);
 					}
 				}
 				
@@ -216,11 +234,10 @@ return function(column){
 				
 				container = rowElement.connected;
 				container.hidden = !expanded;
-				var containerStyle = container.style,
-					scrollHeight;
+				containerStyle = container.style;
 				
 				// make sure it is visible so we can measure it
-				if(transitionEventSupported === false || noTransition){
+				if(!hasTransitionend || noTransition){
 					containerStyle.display = expanded ? "block" : "none";
 					containerStyle.height = "";
 				}else{
@@ -274,7 +291,7 @@ return function(column){
 		
 		level = currentLevel = isNaN(level) ? 0 : level;
 		expando = column.renderExpando(level, mayHaveChildren,
-			grid._expanded[(parentId ? parentId + "-" : "") + grid.store.getIdentity(object)]);
+			grid._expanded[(parentId ? parentId + "-" : "") + grid.store.getIdentity(object)], object);
 		expando.level = level;
 		expando.mayHaveChildren = mayHaveChildren;
 		
@@ -287,5 +304,8 @@ return function(column){
 		}
 	};
 	return column;
-};
+}
+
+tree.defaultRenderExpando = defaultRenderExpando;
+return tree;
 });

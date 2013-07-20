@@ -10,10 +10,10 @@ define([
 
     var MyDialog = declare("freeadmin.ESCDialog", [Dialog], {
         _onKey: function(evt) {
-            if(evt.charOrCode == keys.ESCAPE ||
-               evt.charOrCode == keys.BACKSPACE ||
+            if(evt.keyCode == keys.ESCAPE ||
+               evt.keyCode == keys.BACKSPACE ||
                (dojo.isWebKit && (
-                   evt.charOrCode == keys.TAB
+                   evt.keyCode == keys.TAB
                    ))) {
                 if(_webshell) {
                     _webshell.keypress(evt);

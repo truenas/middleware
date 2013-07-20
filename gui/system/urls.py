@@ -42,6 +42,7 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^firmwizard/$', FirmwareWizard.as_view(
         [FirmwareTemporaryLocationForm,FirmwareUploadForm]
         ), name='system_firmwizard'),
+    url(r'^firmwizard/progress/$', "firmware_progress", name="system_firmware_progress"),
     url(r'^config/restore/$', 'config_restore', name='system_configrestore'),
     url(r'^config/save/$', 'config_save', name='system_configsave'),
     url(r'^config/upload/$', 'config_upload', name='system_configupload'),
@@ -53,10 +54,8 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^clear-cache/$', 'clearcache', name="system_clearcache"),
     url(r'^lsdir/(?P<path>.*)$', 'directory_browser', name="system_dirbrowser"),
     url(r'^lsfiles/(?P<path>.*)$', 'file_browser', name="system_filebrowser"),
-    url(r'^rsyncs/$', 'rsyncs', name="system_rsyncs"),
-    url(r'^smarttests/$', 'smarttests', name="system_smarttests"),
     url(r'^restart-httpd/$', 'restart_httpd', name="system_restart_httpd"),
     url(r'^reload-httpd/$', 'reload_httpd', name="system_reload_httpd"),
     url(r'^terminal/$', 'terminal', name="system_terminal"),
     url(r'^terminal/paste/$', 'terminal_paste', name="system_terminal_paste"),
-    )
+)

@@ -27,7 +27,9 @@
 
 import logging
 import os
+import re
 import shutil
+import signal
 import socket
 import string
 import subprocess
@@ -59,6 +61,9 @@ from freenasUI.system import forms, models
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 DEBUG_TEMP = '/tmp/debug.txt'
+PGFILE = '/tmp/.extract_progress'
+DDFILE = '/tmp/.upgrade_dd'
+RE_DD = re.compile(r"^(\d+) bytes", re.M | re.S)
 
 log = logging.getLogger('system.views')
 
@@ -69,11 +74,13 @@ def _system_info(request=None):
     platform = subprocess.check_output(['sysctl', '-n', 'hw.model'])
     physmem = str(int(int(
         subprocess.check_output(['sysctl', '-n', 'hw.physmem'])
-        ) / 1048576)) + 'MB'
+    ) / 1048576)) + 'MB'
     # All this for a timezone, because time.asctime() doesn't add it in.
     date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
-    uptime = subprocess.check_output("env -u TZ uptime | "
-        "awk -F', load averages:' '{ print $1 }'", shell=True)
+    uptime = subprocess.check_output(
+        "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
+        shell=True
+    )
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
     freenas_build = "Unrecognized build (%s        missing?)" % VERSION_FILE
@@ -132,7 +139,7 @@ def config_upload(request):
                 form._errors['__all__'] = \
                     form.error_class([
                         _('The uploaded file is not valid.'),
-                        ])
+                    ])
             else:
                 request.session['allow_reboot'] = True
                 return render(request, 'system/config_ok.html', variables)
@@ -240,9 +247,11 @@ def top(request):
 def reboot_dialog(request):
     if request.method == "POST":
         request.session['allow_reboot'] = True
-        return JsonResp(request,
-                    message=_("Reboot is being issued"),
-                    events=['window.location="%s"' % reverse('system_reboot')])
+        return JsonResp(
+            request,
+            message=_("Reboot is being issued"),
+            events=['window.location="%s"' % reverse('system_reboot')]
+        )
     return render(request, 'system/reboot_dialog.html')
 
 
@@ -265,7 +274,8 @@ def reboot_run(request):
 def shutdown_dialog(request):
     if request.method == "POST":
         request.session['allow_shutdown'] = True
-        return JsonResp(request,
+        return JsonResp(
+            request,
             message=_("Shutdown is being issued"),
             events=['window.location="%s"' % reverse('system_shutdown')])
     return render(request, 'system/shutdown_dialog.html')
@@ -299,11 +309,13 @@ def testmail(request):
 
     email = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
     if not email:
-        return JsonResp(request,
+        return JsonResp(
+            request,
             error=True,
-            message=_("You must configure the root email"
-                " (Accounts->Users->root)"),
-            )
+            message=_(
+                "You must configure the root email (Accounts->Users->root)"
+            ),
+        )
 
     sid = transaction.savepoint()
     form.save()
@@ -329,7 +341,8 @@ def clearcache(request):
     error = False
     errmsg = ''
 
-    os.system("(/usr/local/bin/python "
+    os.system(
+        "(/usr/local/bin/python "
         "/usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1 &&"
         " /usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py "
         "fill >/dev/null 2>&1) &")
@@ -337,7 +350,7 @@ def clearcache(request):
     return HttpResponse(simplejson.dumps({
         'error': error,
         'errmsg': errmsg,
-        }))
+    }))
 
 
 class DojoFileStore(object):
@@ -346,9 +359,12 @@ class DojoFileStore(object):
         self.root = os.path.abspath(str(root))
         self.filterVolumes = filterVolumes
         if self.filterVolumes:
-            self.mp = [os.path.abspath(mp.mp_path.encode('utf8')) \
+            self.mp = [
+                os.path.abspath(mp.mp_path.encode('utf8'))
                 for mp in MountPoint.objects.filter(
-                    mp_volume__vol_fstype__in=('ZFS', 'UFS'))]
+                    mp_volume__vol_fstype__in=('ZFS', 'UFS')
+                )
+            ]
 
         self.path = os.path.join(self.root, path.replace("..", ""))
         self.path = os.path.abspath(self.path)
@@ -377,14 +393,18 @@ class DojoFileStore(object):
     def children(self, entry):
         _children = []
         for _entry in sorted(os.listdir(entry)):
-            if _entry.startswith("."):
+            #FIXME: better extendable way to exclude files
+            if _entry.startswith(".") or _entry == 'md_size':
                 continue
             full_path = os.path.join(self.path, _entry)
             if self.filterVolumes and len(
-                [f for f in self.mp \
-                    if full_path.startswith(f + '/') or full_path == f or \
-                        full_path.startswith('/mnt')]
-                ) > 0:
+                [
+                    f for f in self.mp if (
+                        full_path.startswith(f + '/') or full_path == f or
+                        full_path.startswith('/mnt')
+                    )
+                ]
+            ) > 0:
                 _children.append(self._item(self.path, _entry))
         if self.dirsonly:
             _children = [child for child in _children if child['directory']]
@@ -406,16 +426,15 @@ class DojoFileStore(object):
             'name': os.path.basename(full_path),
             'directory': isdir,
             'path': path,
-            }
+        }
         if isdir:
             item['children'] = True
 
         item['$ref'] = os.path.abspath(
             reverse(self._lookupurl, kwargs={
                 'path': path + '?root=' + urllib.quote_plus(self.root),
-                }
-                )
-            )
+            })
+        )
         item['id'] = item['$ref']
         return item
 
@@ -425,10 +444,11 @@ def directory_browser(request, path='/'):
     #if not path.startswith('/'):
     #    path = '/%s' % path
 
-    directories = DojoFileStore(path,
+    directories = DojoFileStore(
+        path,
         dirsonly=True,
         root=request.GET.get("root", "/"),
-        ).items()
+    ).items()
     context = directories
     content = simplejson.dumps(context)
     return HttpResponse(content, mimetype='application/json')
@@ -439,53 +459,54 @@ def file_browser(request, path='/'):
     #if not path.startswith('/'):
     #    path = '/%s' % path
 
-    directories = DojoFileStore(path,
+    directories = DojoFileStore(
+        path,
         dirsonly=False,
         root=request.GET.get("root", "/"),
-        ).items()
+    ).items()
     context = directories
     content = simplejson.dumps(context)
     return HttpResponse(content, mimetype='application/json')
 
 
-def smarttests(request):
-    tests = models.SMARTTest.objects.all().order_by('id')
-    return render(request, "system/smarttest.html", {
-        'smarttests': tests,
-        'model': models.SMARTTest,
-        })
+def firmware_progress(request):
 
+    data = {}
+    if os.path.exists(PGFILE):
+        with open(PGFILE, 'r') as f:
+            last = f.readlines()
+            if last:
+                step, percent = last[-1].split("|")
+                data['step'] = int(step)
+                percent = percent.strip()
+                if percent:
+                    data['percent'] = int(percent)
+                else:
+                    data['indeterminate'] = True
+    elif os.path.exists(DDFILE):
+        with open(DDFILE, 'r') as f:
+            pid = f.readline()
+            if pid:
+                pid = int(pid.strip())
+        try:
+            os.kill(pid, signal.SIGINFO)
+            time.sleep(0.5)
+            with open(DDFILE, 'r') as f2:
+                line = f2.read()
+            reg = RE_DD.findall(line)
+            if reg:
+                current = int(reg[-1])
+                size = os.stat("/var/tmp/firmware/firmware.img").st_size
+                percent = int((current / size) * 100)
+                data = {
+                    'step': 3,
+                    'percent': percent,
+                }
+        except OSError:
+            pass
 
-def rsyncs(request):
-    syncs = models.Rsync.objects.all().order_by('id')
-    return render(request, 'system/rsync.html', {
-        'rsyncs': syncs,
-        'model': models.Rsync,
-        })
-
-
-def sysctls(request):
-    sysctls = models.Sysctl.objects.all().order_by('id')
-    return render(request, 'system/sysctl.html', {
-        'sysctls': sysctls,
-        'model': models.Sysctl,
-        })
-
-
-def tunables(request):
-    tunables = models.Tunable.objects.all().order_by('id')
-    return render(request, 'system/tunable.html', {
-        'tunables': tunables,
-        'model': models.Tunable,
-        })
-
-
-def ntpservers(request):
-    ntpservers = models.NTPServer.objects.all().order_by('id')
-    return render(request, 'system/ntpserver.html', {
-        'ntpservers': ntpservers,
-        'model': models.NTPServer,
-        })
+    content = simplejson.dumps(data)
+    return HttpResponse(content, mimetype='application/json')
 
 
 def restart_httpd(request):
@@ -530,7 +551,7 @@ def debug_save(request):
         'attachment; filename=debug-%s-%s.txt' % (
             hostname.encode('utf-8'),
             time.strftime('%Y%m%d%H%M%S'),
-            )
+        )
     return response
 
 
@@ -583,15 +604,19 @@ class MyServer(xmlrpclib.ServerProxy):
     def __request(self, methodname, params):
         # call a method on the remote server
 
-        request = xmlrpclib.dumps(params, methodname, encoding=self.__encoding,
-                        allow_none=self.__allow_none)
+        request = xmlrpclib.dumps(
+            params,
+            methodname,
+            encoding=self.__encoding,
+            allow_none=self.__allow_none,
+        )
 
         response = self.__transport.request(
             self.__host,
             self.__handler,
             request,
             verbose=self.__verbose
-            )
+        )
 
         if len(response) == 1:
             response = response[0]
@@ -607,6 +632,8 @@ class MyServer(xmlrpclib.ServerProxy):
 def terminal(request):
 
     sid = int(request.POST.get("s", 0))
+    jid = request.POST.get("jid", 0)
+    shell = request.POST.get("shell", "")
     k = request.POST.get("k")
     w = int(request.POST.get("w", 80))
     h = int(request.POST.get("h", 24))
@@ -615,18 +642,20 @@ def terminal(request):
     alive = False
     for i in range(3):
         try:
-            alive = multiplex.proc_keepalive(sid, w, h)
+            alive = multiplex.proc_keepalive(sid, jid, shell, w, h)
             break
-        except:
+        except Exception, e:
+            log.error("%s", e)
             notifier().restart("webshell")
             time.sleep(0.5)
 
     try:
         if alive:
             if k:
-                multiplex.proc_write(sid,
+                multiplex.proc_write(
+                    sid,
                     xmlrpclib.Binary(bytearray(k.encode('utf-8')))
-                    )
+                )
             time.sleep(0.002)
             content_data = '<?xml version="1.0" encoding="UTF-8"?>' + \
                 multiplex.proc_dump(sid)

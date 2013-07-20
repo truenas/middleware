@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-03-31 22:44+0200\n"
-"Last-Translator: kent1983 <kent_starup@hotmail.com>\n"
+"PO-Revision-Date: 2013-06-08 17:09+0200\n"
+"Last-Translator: Bjarne <bjarne.pedersen@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -1434,7 +1434,7 @@ msgstr "Bekræft adgangskode"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
-msgstr "Dynamic DNS servicen kunne ikke genstarte."
+msgstr "Dynamisk DNS service kunne ikke genstarte."
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
@@ -6257,7 +6257,7 @@ msgstr ""
 
 #: templates/system/system_info.html:34
 msgid "Connected through"
-msgstr ""
+msgstr "Forbundet gennem"
 
 #: templates/system/tunable.html:34
 #, fuzzy

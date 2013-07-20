@@ -65,6 +65,7 @@ WARDEN_KEY_DEFAULTROUTER6 = "defaultrouter_ipv6"
 WARDEN_KEY_AUTOSTART      = "autostart"
 WARDEN_KEY_VNET           = "vnet"
 WARDEN_KEY_NAT            = "nat"
+WARDEN_KEY_MAC            = "mac"
 WARDEN_KEY_STATUS         = "status"
 WARDEN_KEY_TYPE           = "type"
 
@@ -183,6 +184,7 @@ WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000200, "defaultrouter-ipv6
 WARDEN_GET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags")
 WARDEN_GET_FLAGS_VNET			= warden_arg(0x00000800, "vnet")
 WARDEN_GET_FLAGS_NAT			= warden_arg(0x00001000, "nat")
+WARDEN_GET_FLAGS_MAC			= warden_arg(0x00002000, "mac")
 WARDEN_GET_FLAGS = [
     WARDEN_GET_FLAGS_IPV4,
     WARDEN_GET_FLAGS_IPV6,
@@ -196,7 +198,8 @@ WARDEN_GET_FLAGS = [
     WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6,
     WARDEN_GET_FLAGS_FLAGS,
     WARDEN_GET_FLAGS_VNET,
-    WARDEN_GET_FLAGS_NAT
+    WARDEN_GET_FLAGS_NAT,
+    WARDEN_GET_FLAGS_MAC
 ]
 
 WARDEN_IMPORT = "import"
@@ -237,6 +240,7 @@ WARDEN_SET_FLAGS_VNET_ENABLE		= warden_arg(0x00000800, "vnet-enable" )
 WARDEN_SET_FLAGS_VNET_DISABLE		= warden_arg(0x00001000, "vnet-disable" )
 WARDEN_SET_FLAGS_NAT_ENABLE		= warden_arg(0x00002000, "nat-enable" )
 WARDEN_SET_FLAGS_NAT_DISABLE		= warden_arg(0x00004000, "nat-disable" )
+WARDEN_SET_FLAGS_MAC			= warden_arg(0x00008000, "mac", True, "mac")
 WARDEN_SET_FLAGS = [
     WARDEN_SET_FLAGS_IPV4,
     WARDEN_SET_FLAGS_IPV6,
@@ -252,7 +256,8 @@ WARDEN_SET_FLAGS = [
     WARDEN_SET_FLAGS_VNET_ENABLE,
     WARDEN_SET_FLAGS_VNET_DISABLE,
     WARDEN_SET_FLAGS_NAT_ENABLE,
-    WARDEN_SET_FLAGS_NAT_DISABLE
+    WARDEN_SET_FLAGS_NAT_DISABLE,
+    WARDEN_SET_FLAGS_MAC
 ]
 
 WARDEN_START = "start"
@@ -345,6 +350,7 @@ class WardenJail(object):
         self.autostart = kwargs.get(WARDEN_KEY_AUTOSTART)
         self.vnet = kwargs.get(WARDEN_KEY_VNET)
         self.nat = kwargs.get(WARDEN_KEY_NAT)
+        self.mac = kwargs.get(WARDEN_KEY_MAC)
         self.status = kwargs.get(WARDEN_KEY_STATUS)
         self.type = kwargs.get(WARDEN_KEY_TYPE)
 
@@ -626,6 +632,7 @@ class warden_list(warden_base):
             'autostart': WARDEN_KEY_AUTOSTART,
             'vnet': WARDEN_KEY_VNET,
             'nat': WARDEN_KEY_NAT,
+            'mac': WARDEN_KEY_MAC,
             'status': WARDEN_KEY_STATUS,
             'type': WARDEN_KEY_TYPE
         } 

@@ -1,0 +1,55 @@
+@import "../../dijit/themes/claro/claro.css";
+@import '../ext.css';
+
+body {
+	button {
+		font-weight: bold;
+	}
+}
+content = require(xstyle/test/test-data);
+{}
+validated-content {
+	require(dbind/Validator)
+	from: content;
+	name: String;
+	age: {
+		minimum: 0;
+		type: number;
+	}
+}
+button {
+	widget: {
+		type: dijit/form/Button;
+		label: Test;
+	};
+	font-weight: bold;
+	onclick: toggle(.highlighted);
+}
+dijit-text {
+	width: 100px;
+	widget: dijit/form/TextBox;
+	height: 30px;
+	display: block;
+	background-color: red;
+}
+red-dijit-text  {
+	extends(dijit-text);
+	height: 50px;
+}
+form.edit-object { 
+	=>
+		label 'Some label',
+		textarea {
+			from: content.price;
+			background-color: green;
+		},
+		input[type=number] {
+			from: content.quantity;
+		},
+		div {
+			from: content.price*content.quantity;
+		},
+		red-dijit-text 'red-dijit-text';
+	background-color: blue;
+}
+

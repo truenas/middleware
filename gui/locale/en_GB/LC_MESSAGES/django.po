@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2013-03-07 15:01+0200\n"
-"Last-Translator: levisguy <eweweng@ewie.com.my>\n"
+"PO-Revision-Date: 2013-06-19 15:37+0200\n"
+"Last-Translator: Andi <andi@gowling.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en_GB\n"
 "MIME-Version: 1.0\n"
@@ -3077,14 +3077,18 @@ msgid "Power mode"
 msgstr "Power mode"
 
 #: services/models.py:1470
+#, fuzzy
 msgid "Difference"
-msgstr ""
+msgstr "Difference"
 
 #: services/models.py:1471
+#, fuzzy
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
+"Report if the temperature had changed by at least N degrees Celsius since "
+"last report. 0 to disable"
 
 #: services/models.py:1475
 #, fuzzy

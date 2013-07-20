@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Test dijit programmatic layout</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570"/>
-		<style type="text/css">
+		<meta charset="utf-8">
+		<title>Test Programmatic Dijit Layout</title>
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dijit/themes/claro/document.css";
 			@import "../../dijit/themes/claro/claro.css";
 			@import "../css/skins/claro.css";
@@ -18,7 +18,7 @@
 				height: 100%;
 			}
 			
-			#cpLeft .dgrid {
+			.bcLeft {
 				width: 300px;
 			}
 			
@@ -26,9 +26,9 @@
 				width: 500px;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js"
+		<script src="../../dojo/dojo.js"
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			// callbacks for button clicks
 			function showProgContentDialog(){
 				dlgProgContent.show();
@@ -39,18 +39,15 @@
 				"dgrid/Selection",
 				"dgrid/extensions/DijitRegistry",
 				"dijit/Dialog",
-				"dijit/registry",
 				"dojo/_base/lang",
 				"dojo/_base/declare",
 				"dijit/layout/BorderContainer",
 				"dijit/layout/TabContainer",
-				"dijit/layout/ContentPane",
 				"dijit/Toolbar",
 				"dijit/form/Button",
-				// non-returns
 				"dgrid/test/data/base",
 				"dojo/domReady!"
-			], function(Grid, Selection, DijitRegistry, Dialog, registry, lang, declare, BC, TC, CP, Toolbar, Button){
+			], function(Grid, Selection, DijitRegistry, Dialog, lang, declare, BC, TC, Toolbar, Button, testStore){
 				
 				var
 					gridCols = window.gridCols = {
@@ -62,21 +59,26 @@
 					CustomGrid = declare([Grid, Selection, DijitRegistry]),
 					gridLeft = new CustomGrid({
 						id: "gridLeft",
+						className: "bcLeft",
 						store: testStore,
 						columns: lang.clone(gridCols),
-						selectionMode: "single"
+						selectionMode: "single",
+						region: "left",
+						splitter: true
 					}),
 					gridTab1 = new CustomGrid({
 						id: "gridTab1",
 						store: testStore,
 						columns: lang.clone(gridCols),
-						selectionMode: "single"
+						selectionMode: "single",
+						title: "Tab 1"
 					}),
 					gridTab2 = new CustomGrid({
 						id: "gridTab2",
 						store: testStore,
 						columns: lang.clone(gridCols),
-						selectionMode: "single"
+						selectionMode: "single",
+						title: "Tab 2"
 					});
 				
 				var bc = new BC({
@@ -102,23 +104,11 @@
 					region: "center"
 				});
 				
-				tc.addChild(new CP({
-					id: "tab1",
-					title: "Tab 1",
-					content: gridTab1
-				}));
-				tc.addChild(new CP({
-					id: "tab2",
-					title: "Tab 2",
-					content: gridTab2
-				}));
+				tc.addChild(gridTab1);
+				tc.addChild(gridTab2);
 
 				bc.addChild(tb);
-				bc.addChild(new CP({
-					id: "cpLeft",
-					region: "left",
-					content: gridLeft
-				}));
+				bc.addChild(gridLeft);
 				bc.addChild(tc);
 				
 				bc.startup();

@@ -75,4 +75,22 @@ console.assert(div.lastChild.className == "c3");
 put(div, "#encode%3A%20d");
 console.assert(div.id == "encode%3A%20d");
 
-put(body, "div", {innerHTML: "finished tests, check console for errors"});
+var styled = put("div.someClass[style=color:green;margin-left:10px]");
+console.assert(styled.style.marginLeft.slice(0,2) == "10");
+
+
+put.addNamespace("put", "http://github.com/kriszyp/dgrid");
+var namespaced = put("put|foo[bar=test1][put|bar=test2]");
+console.assert((namespaced.namespaceURI || namespaced.tagUrn) == "http://github.com/kriszyp/dgrid");
+console.assert(namespaced.tagName == "foo");
+console.assert(namespaced.getAttribute("bar") == "test1");
+if(document.createElementNS){
+	console.assert(namespaced.getAttributeNS("http://github.com/kriszyp/dgrid","bar") == "test2");
+}
+
+put.addNamespace("svg", "http://www.w3.org/2000/svg");
+var svg = put(document.body, "svg|svg#svg-test");
+put(svg, "!");
+console.assert(document.getElementById("svg-test") == null);
+
+put(body, "div", {innerHTML: "finised tests, check console for errors"});

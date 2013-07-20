@@ -16,6 +16,9 @@ PROGDIR="/usr/local/share/warden"
 JDIR="$(grep ^JDIR: /usr/local/etc/warden.conf | cut -d' ' -f2)"
 export JDIR
 
+CACHEDIR="${JDIR}/.warden-files-cache"
+export CACHEDIR
+
 HOME=${JDIR}
 export HOME
 
@@ -133,8 +136,9 @@ warden_warn() {
 };
 
 warden_run() {
-  local args="$*"
+  local args
 
+  args="$@"
   if [ -n "${args}" ]
   then
     warden_print "${args}"
@@ -326,6 +330,10 @@ copypbiscripts() {
     fi
     cp "${man}" "${1}${man}"
   done
+
+  # Copy libsh
+  mkdir -p ${1}/usr/local/share/pcbsd/scripts >/dev/null 2>/dev/null
+  cp /usr/local/share/pcbsd/scripts/functions.sh ${1}/usr/local/share/pcbsd/scripts/functions.sh
 }
 
 mkportjail() {
@@ -473,72 +481,184 @@ get_ip_and_netmask()
 
 get_interface_addresses()
 {
-   ifconfig ${1} | grep -w inet | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+   
+   if [ -z "${jid}" ]
+   then
+      jexec="" 
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | awk '{ print $2 }'
 }
 
 get_interface_ipv4_addresses()
 {
-   ifconfig ${1} | grep -w inet | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec="" 
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | awk '{ print $2 }'
 }
 
 get_interface_ipv6_addresses()
 {
-   ifconfig ${1} | grep -w inet6 | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+   local addrs
+
+   if [ -z "${jid}" ]
+   then 
+      jexec=""
+   fi
+
+   addrs="$(${jexec} ifconfig ${iface} | grep -w inet6 | awk '{ print $2 }')"
+   for addr in ${addrs} ; do
+      echo ${addr} | cut -f1 -d'%'
+   done
 }
 
 get_interface_address()
 {
-   ifconfig ${1} | grep -w inet | head -1 | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | head -1 | awk '{ print $2 }'
 }
 
 get_interface_ipv4_address()
 {
-   ifconfig ${1} | grep -w inet | head -1 | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | head -1 | awk '{ print $2 }'
 }
 
 get_interface_ipv6_address()
 {
-   ifconfig ${1} | grep -w inet6 | head -1 | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet6 | head -1 | awk '{ print $2 }' | cut -f1 -d'%'
 }
 
 get_interface_aliases()
 {
-   local _count
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+   local count
 
-   _count=`ifconfig ${1} | grep -w inet | wc -l`
-   _count="$(echo "${_count} - 1" | bc)"
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
 
-   ifconfig ${1} | grep -w inet | tail -${_count} | awk '{ print $2 }'
+   count=`${jexec} ifconfig ${iface} | grep -w inet | wc -l`
+   count="$(echo "${count} - 1" | bc)"
+   if [ "${count}" -lt "0" ]
+   then
+      return
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | tail -${count} | awk '{ print $2 }'
 }
 
 get_interface_ipv4_aliases()
 {
-   local _count
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+   local count
 
-   _count=`ifconfig ${1} | grep -w inet | wc -l`
-   _count="$(echo "${_count} - 1" | bc)"
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
 
-   ifconfig ${1} | grep -w inet | tail -${_count} | awk '{ print $2 }'
+   count=`${jexec} ifconfig ${iface} | grep -w inet | wc -l`
+   count="$(echo "${count} - 1" | bc)"
+   if [ "${count}" -lt "0" ]
+   then
+      return
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet | tail -${count} | awk '{ print $2 }'
 }
 
 get_interface_ipv6_aliases()
 {
-   local _count
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+   local count
 
-   _count=`ifconfig ${1} | grep -w inet | wc -l`
-   _count="$(echo "${_count} - 1" | bc)"
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
 
-   ifconfig ${1} | grep -w inet6 | tail -${_count} | awk '{ print $2 }'
+   count=`${jexec} ifconfig ${iface} | grep -w inet | wc -l`
+   count="$(echo "${count} - 1" | bc)"
+   if [ "${count}" -lt "0" ]
+   then
+      return
+   fi
+
+   ${jexec} ifconfig ${iface} | grep -w inet6 | tail -${count} | awk '{ print $2 }'
 }
 
 get_default_route()
 {
-   netstat -f inet -nr | grep '^default' | awk '{ print $2 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} netstat -f inet -nr | grep '^default' | awk '{ print $2 }'
 }
 
 get_default_interface()
 {
-   netstat -f inet -nrW | grep '^default' | awk '{ print $7 }'
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} netstat -f inet -nrW | grep '^default' | awk '{ print $7 }'
 }
 
 get_bridge_interfaces()
@@ -624,6 +744,7 @@ jail_interfaces_down()
    local _bridgeif
    local _epaira
    local _epairb
+   local _addresses
 
    _epairb=`jexec ${_jid} ifconfig -a | grep '^epair' | cut -f1 -d:`
    if [ -n "${_epairb}" ] ; then
@@ -644,11 +765,77 @@ jail_interfaces_down()
          fi
       done
 
+      _addresses="$(get_interface_ipv4_addresses ${_epairb} ${_jid})"
+      for _ip4 in ${_addresses}
+      do
+         rules="$(ipfw list|egrep "from ${_ip4} to any out xmit"|awk '{ print $1 }')"
+         if [ -n "${rules}" ] 
+         then
+            for rule in ${rules}
+            do
+               ipfw delete "${rule}"
+            done
+         fi
+      done
+
+      _addresses="$(get_interface_ipv6_addresses ${_epairb} ${_jid})"
+      for _ip6 in ${_addresses}
+      do
+         rules="$(ipfw list|egrep "from ${_ip6} to any out xmit"|awk '{ print $1 }')"
+         if [ -n "${rules}" ] 
+         then
+            for rule in ${rules}
+            do
+               ipfw delete "${rule}"
+            done
+         fi
+      done
+
       jexec ${_jid} ifconfig ${_epairb} down
       ifconfig ${_epaira} down
       ifconfig ${_epaira} destroy
       _count=`ifconfig ${_bridgeif} | grep member | awk '{ print $2 }' | wc -l`
       if [ "${_count}" -le "1" ] ; then
+         local _member
+         local _instances
+
+         _member=`ifconfig ${_bridgeif}|grep member|awk '{ print $2 }'`
+
+         _instances=`get_ipfw_nat_instance ${_member}`
+         if [ -n "${_instances}" ]
+         then
+            for _instance in ${_instances}  
+            do
+               ipfw nat ${_instance} delete
+            done
+         fi
+
+         _addresses="$(get_interface_ipv4_addresses ${_member})"
+         for _ip4 in ${_addresses}
+         do
+            rules="$(ipfw list|egrep "from any to ${_ip4} in recv"|awk '{ print $1 }')"
+            if [ -n "${rules}" ] 
+            then
+               for rule in ${rules}
+               do
+                  ipfw delete "${rule}"
+               done
+            fi
+         done
+
+         _addresses="$(get_interface_ipv6_addresses ${_member})"
+         for _ip6 in ${_addresses}
+         do
+            rules="$(ipfw list|egrep "from any to ${_ip6} in recv"|awk '{ print $1 }')"
+            if [ -n "${rules}" ] 
+            then
+               for rule in ${rules}
+               do
+                  ipfw delete "${rule}"
+               done
+            fi
+         done
+
          ifconfig ${_bridgeif} destroy
       fi
    fi
@@ -801,164 +988,215 @@ install_pc_extractoverlay()
   return 0
 }
 
-make_bootstrap_pkgng_file_standard()
+CR()
 {
-  local jaildir="${1}"
-  local outfile="${2}"
+    local res
+    local jaildir="${1}"
+    shift
 
-  local release="$(uname -r | cut -d '-' -f 1-2)"
-  local arch="$(uname -m)"
-
-  get_mirror
-  local mirror="${VAL}"
-
-cat<<__EOF__>"${outfile}"
-#!/bin/sh
-
-ret=0
-
-tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
-pkg add pkg.txz
-rm pkg.txz
-
-mount -t devfs devfs /dev
-
-echo "PACKAGESITE: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
-echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
-echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
-echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
-
-__EOF__
-
-echo '
-i=0
-percent=30
-
-pkg update
-if [ "$?" != "0" ]
-then
-   umount -f devfs
-   touch /FAIL
-   exit 4
-fi
-
-total=`pkg rquery "%do" pcbsd-utils|wc -l| awk '"'{ print '"'$1'"' }'"'`
-for p in `pkg rquery "%do" pcbsd-utils`
-do
-  pkg install -y ${p}
-  if [ "$?" != "0" ]
-  then
-      umount -f devfs
-      touch /FAIL
-      exit 5
-  fi
-
-  if [ "${i}" -ge "0" ]
-  then  
-      percent=`echo "scale=2;((${i}/${total})*70)+30"|bc|cut -f1 -d.`
-  fi
-  echo "===== ${percent}% ====="
-
-  : $(( i += 1 ))
-done
-pkg install -y pcbsd-utils
-
-umount -f devfs
-exit 0
-' >> "${outfile}"
+    mount -t devfs none ${jaildir}/dev
+    chroot ${jaildir} /bin/sh -exc "$@" | warden_pipe
+    umount ${jaildir}/dev
 }
 
-make_bootstrap_pkgng_file_pluginjail()
+get_dependencies_port_list()
 {
-
   local jaildir="${1}"
-  local outfile="${2}"
+  local pkgdir="${2}"
+  local list="${3}"
+  local deplist
+  local ulist
 
-  local release="$(uname -r | cut -d '-' -f 1-2)"
-  local arch="$(uname -m)"
-
-  get_mirror
-  local mirror="${VAL}"
-
-  cp /usr/local/share/warden/pluginjail-packages "${jaildir}/pluginjail-packages"
-
-cat<<__EOF__>"${outfile}"
-#!/bin/sh
-
-i=0
-ret=0
-percent=10
-
-tar xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS 2>/dev/null
-pkg add pkg.txz
-rm pkg.txz
-
-mount -t devfs devfs /dev
-
-echo "PACKAGESITE: ${mirror}/packages/${release}/${arch}" >/usr/local/etc/pkg.conf
-echo "HTTP_MIRROR: http" >>/usr/local/etc/pkg.conf
-echo "PUBKEY: /usr/local/etc/pkg-pubkey.cert" >>/usr/local/etc/pkg.conf
-echo "PKG_CACHEDIR: /usr/local/tmp" >>/usr/local/etc/pkg.conf
-
-__EOF__
-
-echo '
-pkg update
-if [ "$?" != "0" ]
-then
-   umount devfs
-   touch /FAIL
-   exit 4
-fi
-
-count1=`pkg rquery "%do" pcbsd-utils|wc -l| awk '"'{ print '"'$1'"' }'"'`
-count2=`cat /pluginjail-packages|wc -l|awk '"'{ print '"'$1'"' }'"'`
-total=`echo "${count1} + ${count2}" | bc`
-
-for p in `pkg rquery "%do" pcbsd-utils`
-do
-  pkg install -y ${p}
-  if [ "$?" != "0" ]
-  then
-      umount -f devfs
-      touch /FAIL
-      exit 5
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o ! -f "${list}" ] ; then
+    return 1
   fi
 
-  if [ "${i}" -ge "0" ]
-  then  
-      percent=`echo "scale=2;((${i}/${total})*90)+10"|bc|cut -f1 -d.`
-  fi
-  echo "===== ${percent}% ====="
+  deplist="$(mktemp /tmp/.depXXXXXX)"
+  for p in $(cat "${list}") ; do
+    ${CR} "pkg rquery '%do' ${p}" >> "${deplist}" 2>/dev/null
+    echo ${p} >> "${deplist}"
+  done  
 
-  : $(( i += 1 ))
-done
-pkg install -y pcbsd-utils
+  ulist="$(mktemp /tmp/.ulXXXXXX)"
+  cat "${deplist}"|uniq > "${ulist}"
+  rm -f "${deplist}"
 
-for p in `cat /pluginjail-packages`
-do
-  pkg install -y ${p}
-  if [ "$?" != "0" ]
-  then
-      umount -f devfs
-      touch /FAIL
-      exit 6
-  fi
+  cat "${ulist}"
+  rm -f "${ulist}"
 
-  if [ "${i}" -ge "0" ]
-  then  
-      percent=`echo "scale=2;((${i}/${total})*90)+10"|bc|cut -f1 -d.`
-  fi
-  echo "===== ${percent}% ====="
-
-  : $(( i += 1 ))
-done
-
-umount -f devfs
-exit 0
-' >> "${outfile}"
+  return 0
 }
 
+get_package_install_list()
+{
+  local jaildir="${1}"
+  local pkgdir="${2}"
+  local list="${3}"
+  local pkginfo
+  local pkgs
+  local ilist
+
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o ! -f "${list}" ] ; then
+    return 1
+  fi
+
+  pkginfo="$(mktemp /tmp/.piXXXXXX)" 
+  ilist="$(mktemp /tmp/.ilXXXXXX)" 
+
+  ${CR} "mkdir -p /var/tmp/pkgs"
+  mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
+  pkgs="$(${CR} "ls /var/tmp/pkgs")"
+  for p in ${pkgs} ; do
+    ${CR} "pkg info -oF /var/tmp/pkgs/${p}" >> "${pkginfo}" 2>/dev/null
+  done
+  umount "${jaildir}/var/tmp/pkgs"
+
+  exec 3<&0
+  exec 0<"${pkginfo}"
+  while read -r pi ; do
+    local pkg="$(echo ${pi} | cut -f1 -d' ' -d':' | awk '{ print $1 }')"
+    local port="$(echo ${pi} | cut -f2 -d' ' | awk '{ print $1 }')"
+
+    grep -qw "${port}" "${list}" 2>/dev/null
+    if [ "$?" = "0" ] ; then
+      echo "${pkg}.txz" >> "${ilist}"
+    fi
+
+  done
+  exec 0<&3
+
+  rm -f "${pkginfo}"
+
+  cat "${ilist}"
+  rm -f "${ilist}"
+
+  return 0
+}
+
+install_packages_by_list()
+{
+  local jaildir="${1}"
+  local pkgdir="${2}"
+  local list="${3}"
+
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o ! -f "${list}" ] ; then
+    return 1
+  fi
+
+  ${CR} "mkdir -p /var/tmp/pkgs"
+  mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
+  for p in $(cat "${list}") ; do
+    if [ -f "${jaildir}/var/tmp/pkgs/${p}" ] ; then
+      ${CR} "pkg add /var/tmp/pkgs/${p}"
+    fi
+    show_progress
+  done
+  umount "${jaildir}/var/tmp/pkgs"
+
+  return 0
+}
+
+create_jail_pkgconf()
+{
+  local jaildir="${1}"
+  local pkgsite="${2}"
+  local arch="${3}"
+
+  if [ ! -d "${jaildir}" -o -z "${pkgsite}" ] ; then 
+    return 1
+  fi
+
+  if [ "${arch}" != "i386" ] ; then
+  	cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
+PACKAGESITE: ${pkgsite}
+HTTP_MIRROR: http
+PUBKEY: /usr/local/etc/pkg-pubkey.cert
+PKG_CACHEDIR: /usr/local/tmp
+__EOF__
+  else
+  	cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
+PACKAGESITE: ${pkgsite}
+HTTP_MIRROR: http
+PKG_CACHEDIR: /usr/local/tmp
+__EOF__
+  fi
+
+  return 0
+}
+
+get_package_by_port()
+{
+  local jaildir="${1}"
+  local pkgdir="${2}"
+  local rpath="${3}"
+  local port="${4}"
+
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o -z "${port}" ] ; then
+    return 1
+  fi
+
+  local pkg="$(${CR} "pkg rquery '%n-%v.txz' ${port}" 2>/dev/null)"
+  if [ ! -f "${pkgdir}/${pkg}" ] ; then
+    get_file_from_mirrors "${rpath}/All/${pkg}" \
+      "${jaildir}/var/tmp/pkgs/${pkg}" "pkg"
+
+    local deps="$(${CR} "pkg rquery '%do' ${port}" 2>/dev/null)"
+    for d in ${deps} ; do
+      get_package_by_port "${jaildir}" "${pkgdir}" \
+        "${rpath}" "${d}"
+    done
+  fi
+
+  return 0
+}
+
+get_packages_by_port_list()
+{
+  local jaildir="${1}"
+  local pkgdir="${2}"
+  local rpath="${3}"
+  local list="${4}"
+
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o ! -f "${list}" ] ; then
+    return 1
+  fi
+
+  ${CR} "mkdir -p /var/tmp/pkgs"
+  mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
+  for p in $(cat "${list}") ; do 
+    get_package_by_port "${jaildir}" "${pkgdir}" "${rpath}" "${p}" 
+  done
+  umount "${jaildir}/var/tmp/pkgs"
+
+  return 0
+}
+
+show_progress()
+{
+  local percent=0
+
+  if [ -z "${CURRENT_INSTALL_FILE}" ] ; then
+    CURRENT_INSTALL_FILE=1
+    export CURRENT_INSTALL_FILE
+  fi
+
+  if [ -z "${TOTAL_INSTALL_FILES}" ] ; then
+    TOTAL_INSTALL_FILES=0
+    export TOTAL_INSTALL_FILES
+  fi
+
+  if [ "${TOTAL_INSTALL_FILES}" -gt "0" ] ; then
+    percent=`echo "scale=2;(${CURRENT_INSTALL_FILE}/${TOTAL_INSTALL_FILES})*100"|bc|cut -f1 -d.`
+    if [ "${CURRENT_INSTALL_FILE}" -ge "${TOTAL_INSTALL_FILES}" ] ; then
+      percent=100
+    fi
+
+    : $(( CURRENT_INSTALL_FILE += 1 ))
+    export CURRENT_INSTALL_FILE
+
+    warden_print "===== ${percent}% ====="
+  fi
+}
 
 bootstrap_pkgng()
 {
@@ -967,45 +1205,120 @@ bootstrap_pkgng()
   if [ -z "${jailtype}" ] ; then
     jailtype="standard"
   fi
-  local release="$(uname -r | cut -d '-' -f 1-2)"
-  local arch="$(uname -m)"
 
-  local ffunc="make_bootstrap_pkgng_file_standard"
-  if [ "${jailtype}" = "pluginjail" ] ; then
-    ffunc="make_bootstrap_pkgng_file_pluginjail"
+  CR="CR ${jaildir}"
+  export CR
+
+  local arch="${ARCH}"
+  local release="$(uname -r | cut -d '-' -f 1-2)"
+
+  local mirrorfile="/usr/local/share/pcbsd/conf/pcbsd-mirrors"
+  local mirror
+  local rpath
+
+  if [ "${arch}" != "i386" ] ; then
+    mirror="http://pkg.cdn.pcbsd.org"
+    rpath="/freenas/${release}/${arch}"
+  else
+    mirror="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"
+    rpath=""
+
+    local tmp="$(mktemp /tmp/.mirXXXXXX)"
+    echo "${mirror}" > "${tmp}"
+    mv "${tmp}" "${mirrorfile}-i386"
+    chmod 644 "${mirrorfile}"
   fi
+
+  local pkgdir="${CACHEDIR}/packages/${release}/${arch}"
 
   cd ${jaildir} 
   warden_print "Boot-strapping pkgng"
 
   mkdir -p ${jaildir}/usr/local/etc
+  mkdir -p ${jaildir}/usr/local/tmp
   pubcert="/usr/local/etc/pkg-pubkey.cert"
 
   cp "${pubcert}" ${jaildir}/usr/local/etc
   install_pc_extractoverlay "${jaildir}"
 
-  ${ffunc} "${jaildir}" "${jaildir}/bootstrap-pkgng"
-  chmod 755 "${jaildir}/bootstrap-pkgng"
+  create_jail_pkgconf "${jaildir}" "${mirror}${rpath##/packages}" "${arch}"
 
-  if [ -e "pkg.txz" ] ; then rm pkg.txz ; fi
-  get_file_from_mirrors "/packages/${release}/${arch}/Latest/pkg.txz" "pkg.txz"
-  if [ $? -eq 0 ] ; then
-    warden_print chroot ${jaildir} /bootstrap-pkgng
-
-    chroot ${jaildir} /bootstrap-pkgng | warden_pipe
-    if [ ! -e "${jaildir}/FAIL" ] ; then
-       rm -f "${jaildir}/bootstrap-pkgng"
-       rm -f "${jaildir}/pluginjail-packages"
-       warden_print chroot ${jaildir} pc-extractoverlay server --sysinit
-       chroot ${jaildir} pc-extractoverlay server --sysinit | warden_pipe
-       return 0
-    fi
+  if [ ! -d "${pkgdir}" ] ; then
+    mkdir -p "${pkgdir}"
   fi
-  rm -f "${jaildir}/FAIL"
+
+  if [ -f "${pkgdir}/pkg.txz" ] ; then
+    cp ${pkgdir}/pkg.txz ${jaildir}/usr/local/tmp
+  else
+    get_file_from_mirrors "${rpath}/Latest/pkg.txz" \
+      "${pkgdir}/pkg.txz" "pkg"
+    cp ${pkgdir}/pkg.txz ${jaildir}/usr/local/tmp
+  fi
+  local pres=$? 
+
+  if [ -f "${pkgdir}/repo.txz" ] ; then
+    cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
+  else
+    get_file_from_mirrors "${rpath}/repo.txz" \
+      "${pkgdir}/repo.txz" "pkg"
+    cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
+  fi
+  local rres=$? 
+
+  if [ "${pres}" = "0" -a "${rres}" = "0" ] ; then
+    local pclist="${PROGDIR}/pcbsd-utils-packages"
+    local pjlist="${PROGDIR}/pluginjail-packages"
+
+    ${CR} "tar -xvf /usr/local/tmp/pkg.txz -C / --exclude +MANIFEST --exclude +MTREE_DIRS"
+    ${CR} "pkg add /usr/local/tmp/pkg.txz"
+
+    if [ -f "${pkgdir}/repo.sqlite" ] ; then
+      cp ${pkgdir}/repo.sqlite ${jaildir}/var/db/pkg
+    else
+      ${CR} "tar -xvf /usr/local/tmp/repo.txz -C /var/db/pkg/"
+    fi
+
+    if [ -f "${pkgdir}/local.sqlite" ] ; then
+      cp ${pkgdir}/local.sqlite ${jaildir}/var/db/pkg
+    fi
+
+    if [ -f "${pkgdir}/repo-packagesite.sqlite" ] ; then
+      cp ${pkgdir}/repo-packagesite.sqlite ${jaildir}/var/db/pkg
+    fi
+
+    chroot "${jaildir}" /bin/sh -exc "pkg rquery '%n' pkg" 2>/dev/null
+    if [ "$?" != "0" ] ; then
+      ${CR} "pkg update"   
+    fi
+
+    get_packages_by_port_list "${jaildir}" \
+      "${pkgdir}" "${rpath}" "${pclist}"
+
+    if [ "${jailtype}" = "pluginjail" ] ; then
+      get_packages_by_port_list "${jaildir}" "${pkgdir}" \
+        "${rpath}" "${pjlist}"
+    fi
+
+    local ilist="$(mktemp /tmp/.ilXXXXXX)"
+    get_package_install_list "${jaildir}" \
+      "${pkgdir}" "${pclist}" > "${ilist}"
+    install_packages_by_list "${jaildir}" "${pkgdir}" "${ilist}"
+
+    if [ "${jailtype}" = "pluginjail" ] ; then
+      get_package_install_list "${jaildir}" \
+        "${pkgdir}" "${pjlist}"  > "${ilist}"
+      install_packages_by_list "${jaildir}" "${pkgdir}" "${ilist}"
+    fi
+
+    rm -f "${ilist}"
+
+    ${CR} "pc-extractoverlay server --sysinit"
+    create_jail_pkgconf "${jaildir}" "${mirror}/${rpath##/packages}" "${arch}"
+
+    return 0
+  fi
 
   warden_error "Failed boot-strapping PKGNG, most likely cause is internet connection failure."
-  rm -f "${jaildir}/bootstrap-pkgng"
-  rm -f "${jaildir}/pluginjail-packages"
   return 1
 }
 
@@ -1259,7 +1572,7 @@ get_freebsd_file()
    local aDir="$(dirname $_lf)"
    local aFile="$(basename $_lf)"
 
-   local astatfile="${HOME}/.fbsd-aria-stat"
+   local astatfile="${HOME}/.fbsd-aria-stat-${ARCH}"
    if [ -e "${astatfile}" ] ; then
      local astat="--server-stat-of=${astatfile}
         --server-stat-if=${astatfile}

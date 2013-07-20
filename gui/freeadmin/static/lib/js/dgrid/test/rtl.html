@@ -1,11 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
-	"http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" dir="rtl">
 	<head>
+		<meta charset="utf-8">
 		<title>Test Right-To-Left</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../../dijit/themes/claro/claro.css";
 			@import "../css/skins/claro.css";
@@ -43,9 +42,9 @@
 				width: 300px;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 		
 			require(["dgrid/OnDemandGrid","dgrid/Selection", "dgrid/Keyboard", "dgrid/tree", "dgrid/editor", "dojo/_base/lang", "dojo/_base/declare", "dojo/on", "dojo/data/ObjectStore", "dijit/form/CheckBox", "dijit/form/TimeTextBox",  "dijit/form/Select", "dijit/form/FilteringSelect", "dgrid/test/data/base", "dojo/domReady!", "xstyle/css!../css/dgrid_rtl.css"], 
 				function(Grid, Selection, Keyboard, tree, editor, lang, declare, on, ObjectStore, CheckBox, TimeTextBox, Select, FilteringSelect, testStore){

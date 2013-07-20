@@ -1,5 +1,5 @@
 This put-selector/put module/package provides a high-performance, lightweight 
-(~1.5KB minified, ~0.7KB gzipped with other code) function for creating 
+(~2KB minified, ~1KB gzipped with other code) function for creating 
 and manipulating DOM elements with succinct, elegant, familiar CSS selector-based 
 syntax across all browsers and platforms (including HTML generation on NodeJS). 
 The single function from the module creates or updates DOM elements by providing
@@ -54,8 +54,11 @@ and the type attribute set to "checkbox". The attribute assignment will always u
 setAttribute to assign the attribute to the element. Multiple attributes and classes
 can be assigned to a single element. 
 
-The put function returns the last top level element created or referenced. In the 
-examples above, the newly create element would be returned.
+The put function returns the last top level element created or referenced from a selector. 
+In the examples above, the newly create element would be returned. Note that passing 
+in an existing node will not change the return value (as it is assumed you already have 
+a reference to it). Also note that if you only pass existing nodes reference, the first 
+passed reference will be returned.
 
 Modifying Elements
 ----------------
@@ -92,7 +95,21 @@ To delete an element, we can simply use the "!" operator by itself as the entire
 
 	put(elementToDelete, "!");
 
-This will destroy the element from the DOM (using parent innerHTML destruction that reduces memory leaks in IE). 
+This will destroy the element from the DOM, using either parent innerHTML destruction (IE only, that 
+reduces memory leaks in IE), or removeChild (for all other browsers).
+
+Creating/Modifying Elements with XML Namespaces
+-----------
+
+To work with elements and attributes that are XML namespaced, start by adding the namespace using addNamespace:
+
+	put.addNamespace("svg", "http://www.w3.org/2000/svg");
+	put.addNamespace("xlink", "http://www.w3.org/1999/xlink");
+
+From there, you can use the CSS3 selector syntax to work with elements and attributes:
+
+	var surface = put("svg|svg[width='100'][height='100']");
+	var img = put(surface, "svg|image[xlink|href='path/to/my/image.png']");
 
 Text Content
 -----------
@@ -169,10 +186,16 @@ the "child" element to the new &lt;div>:
 
 Or we can do a simple append of an existing element to another element:
 
+	put(parent, child);
+
+We could also do this more explicitly by using a child descendant, '>' (which has the
+same meaning as a space operator, and is the default action between arguments in put-selector):
+
 	put(parent, ">", child);
 
 We could also use sibling combinators to place the referenced element. We could place
-the "second" element after (as the next sibling) the "first" element:
+the "second" element after (as the next sibling) the "first" element (which needs a parent
+in order to have a sibling):
  
 	put(first, "+", second);
 

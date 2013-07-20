@@ -24,7 +24,7 @@ define([],function(vendor){
 		}
 	}[vendor.prefix];
 	return {
-		onIdentifier: function(name, value, rule){
+		onFunction: function(name, value, rule){
 			var parts = value.match(/(\w+-gradient)\(([^\)]*)\)/);
 			var type = parts[1];
 			var args = parts[2].split(/,\s*/);

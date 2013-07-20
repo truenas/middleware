@@ -82,6 +82,9 @@ class ModelForm(AdvMixin, MF):
                 self._errors['__all__'] += self._fserrors
         return valid
 
+    def done(self, request, events):
+        pass
+
 
 class Form(AdvMixin, F):
     """

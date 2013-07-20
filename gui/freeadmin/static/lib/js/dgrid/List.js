@@ -1,59 +1,36 @@
-define(["dojo/_base/array","dojo/_base/kernel", "dojo/_base/declare", "dojo/on", "dojo/has", "./util/misc", "dojo/has!touch?./TouchScroll", "xstyle/has-class", "put-selector/put", "dojo/_base/sniff", "xstyle/css!./css/dgrid.css"], 
-function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
+define(["dojo/_base/kernel", "dojo/_base/declare", "dojo/on", "dojo/has", "./util/misc", "dojo/has!touch?./TouchScroll", "xstyle/has-class", "put-selector/put", "dojo/_base/sniff", "xstyle/css!./css/dgrid.css"], 
+function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 	// Add user agent/feature CSS classes 
 	hasClass("mozilla", "opera", "webkit", "ie", "ie-6", "ie-6-7", "quirks", "no-quirks", "touch");
 	
-	var scrollbarWidth;
-
-	// establish an extra stylesheet which addCssRule calls will use,
-	// plus an array to track actual indices in stylesheet for removal
-	var
-		extraSheet = put(document.getElementsByTagName("head")[0], "style"),
-		extraRules = [],
-		oddClass = "dgrid-row-odd",
-		evenClass = "dgrid-row-even";
-	// keep reference to actual StyleSheet object (.styleSheet for IE < 9)
-	extraSheet = extraSheet.sheet || extraSheet.styleSheet;
-	
-	// functions for adding and removing extra style rules.
-	// addExtraRule is exposed on the List prototype as addCssRule.
-	function addExtraRule(selector, css){
-		var index = extraRules.length;
-		extraRules[index] = (extraSheet.cssRules || extraSheet.rules).length;
-		extraSheet.addRule ?
-			extraSheet.addRule(selector, css) :
-			extraSheet.insertRule(selector + '{' + css + '}', extraRules[index]);
-		return {
-			remove: function(){ removeExtraRule(index); }
-		};
-	}
-	function removeExtraRule(index){
-		var
-			realIndex = extraRules[index],
-			i, l = extraRules.length;
-		if (realIndex === undefined) { return; } // already removed
-		
-		// remove rule indicated in internal array at index
-		extraSheet.deleteRule ?
-			extraSheet.deleteRule(realIndex) :
-			extraSheet.removeRule(realIndex); // IE < 9
-		
-		// Clear internal array item representing rule that was just deleted.
-		// NOTE: we do NOT splice, since the point of this array is specifically
-		// to negotiate the splicing that occurs in the stylesheet itself!
-		extraRules[index] = undefined;
-		
-		// Then update array items as necessary to downshift remaining rule indices.
-		// Can start at index, since array is sparse but strictly increasing.
-		for(i = index; i < l; i++){
-			if(extraRules[i] > realIndex){ extraRules[i]--; }
-		}
-	}
+	var oddClass = "dgrid-row-odd",
+		evenClass = "dgrid-row-even",
+		scrollbarWidth, scrollbarHeight;
 	
 	function byId(id){
 		return document.getElementById(id);
 	}
-
+	
+	function getScrollbarSize(node, dimension){
+		// Used by has tests for scrollbar width/height
+		var body = document.body,
+			size;
+		
+		put(body, node, ".dgrid-scrollbar-measure");
+		size = node["offset" + dimension] - node["client" + dimension];
+		
+		put(node, "!dgrid-scrollbar-measure");
+		body.removeChild(node);
+		
+		return size;
+	}
+	has.add("dom-scrollbar-width", function(global, doc, element){
+		return getScrollbarSize(element, "Width");
+	});
+	has.add("dom-scrollbar-height", function(global, doc, element){
+		return getScrollbarSize(element, "Height");
+	});
+	
 	// var and function for autogenerating ID when one isn't provided
 	var autogen = 0;
 	function generateId(){
@@ -112,9 +89,15 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 		//		in the footer area should set this to true.
 		showFooter: false,
 		// maintainOddEven: Boolean
-		//		Indicates whether to maintain the odd/even classes when new rows are inserted.
+		//		Whether to maintain the odd/even classes when new rows are inserted.
 		//		This can be disabled to improve insertion performance if odd/even styling is not employed.
 		maintainOddEven: true,
+		
+		// cleanAddedRules: Boolean
+		//		Whether to track rules added via the addCssRule method to be removed
+		//		when the list is destroyed.  Note this is effective at the time of
+		//		the call to addCssRule, not at the time of destruction.
+		cleanAddedRules: true,
 		
 		postscript: function(params, srcNodeRef){
 			// perform setup and invoke create in postScript to allow descendants to
@@ -151,7 +134,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 				// Check for initial class or className in params or on domNode
 				cls = params["class"] || params.className || domNode.className;
 				
-				// handle sort param - TODO: revise @ 1.0 when _sort -> sort
+				// handle sort param - TODO: revise @ 0.4 when _sort -> sort
 				this._sort = params.sort || [];
 				delete this.sort; // ensure back-compat method isn't shadowed
 			}else{
@@ -243,8 +226,8 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			//		Called automatically after postCreate if the component is already
 			//		visible; otherwise, should be called manually once placed.
 			
-			this.inherited(arguments);
 			if(this._started){ return; } // prevent double-triggering
+			this.inherited(arguments);
 			this._started = true;
 			this.resize();
 			// apply sort (and refresh) now that we're ready to render
@@ -282,23 +265,26 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			
 			if(!scrollbarWidth){
 				// Measure the browser's scrollbar width using a DIV we'll delete right away
-				var scrollDiv = put(document.body, "div.dgrid-scrollbar-measure");
-				scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
-				put(scrollDiv, "!");
+				scrollbarWidth = has("dom-scrollbar-width");
+				scrollbarHeight = has("dom-scrollbar-height");
 				
-				// avoid crazy issues in IE7 only, with certain widgets inside
-				if(has("ie") === 7){ scrollbarWidth++; }
+				// Avoid issues with certain widgets inside in IE7, and
+				// ColumnSet scroll issues with all supported IE versions
+				if(has("ie")){
+					scrollbarWidth++;
+					scrollbarHeight++;
+				}
 				
 				// add rules that can be used where scrollbar width/height is needed
-				this.addCssRule(".dgrid-scrollbar-width", "width: " + scrollbarWidth + "px");
-				this.addCssRule(".dgrid-scrollbar-height", "height: " + scrollbarWidth + "px");
+				miscUtil.addCssRule(".dgrid-scrollbar-width", "width: " + scrollbarWidth + "px");
+				miscUtil.addCssRule(".dgrid-scrollbar-height", "height: " + scrollbarHeight + "px");
 				
 				if(scrollbarWidth != 17 && !quirks){
 					// for modern browsers, we can perform a one-time operation which adds
 					// a rule to account for scrollbar width in all grid headers.
-					this.addCssRule(".dgrid-header", "right: " + scrollbarWidth + "px");
+					miscUtil.addCssRule(".dgrid-header", "right: " + scrollbarWidth + "px");
 					// add another for RTL grids
-					this.addCssRule(".dgrid-rtl-nonwebkit .dgrid-header", "left: " + scrollbarWidth + "px");
+					miscUtil.addCssRule(".dgrid-rtl-nonwebkit .dgrid-header", "left: " + scrollbarWidth + "px");
 				}
 			}
 			
@@ -311,7 +297,20 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 				}, 0);
 			}
 		},
-		addCssRule: addExtraRule,
+		
+		addCssRule: function(selector, css){
+			// summary:
+			//		Version of util/misc.addCssRule which tracks added rules and removes
+			//		them when the List is destroyed.
+			
+			var rule = miscUtil.addCssRule(selector, css);
+			if(this.cleanAddedRules){
+				// Although this isn't a listener, it shares the same remove contract
+				this._listeners.push(rule);
+			}
+			return rule;
+		},
+		
 		on: function(eventType, listener){
 			// delegate events to the domNode
 			var signal = listen(this.domNode, eventType, listener);
@@ -347,8 +346,8 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			// summary:
 			//		Destroys this grid
 			
-			// remove any event listeners
-			if(this._listeners){ // guard against accidental subsequent calls to destroy
+			// Remove any event listeners and other such removables
+			if(this._listeners){ // Guard against accidental subsequent calls to destroy
 				for(var i = this._listeners.length; i--;){
 					this._listeners[i].remove();
 				}
@@ -372,10 +371,9 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			this.scrollTo({ x: 0, y: 0 });
 		},
 		
-		newRow: function(object, before, to, options){
-			if(!before || before.parentNode){
-				var i = options.start + to;
-				var row = this.insertRow(object, before ? before.parentNode : this.contentNode, before, i, options);
+		newRow: function(object, parentNode, beforeNode, i, options){
+			if(parentNode){
+				var row = this.insertRow(object, parentNode, beforeNode, i, options);
 				put(row, ".ui-state-highlight");
 				setTimeout(function(){
 					put(row, "!ui-state-highlight");
@@ -384,21 +382,21 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			}
 		},
 		adjustRowIndices: function(firstRow){
-			if(this.maintainOddEven){
-				// this traverses through rows to maintain odd/even classes on the rows when indexes shift;
-				var next = firstRow;
-				var rowIndex = next.rowIndex;
-				if(rowIndex > -1){ // make sure we have a real number in case this is called on a non-row
-					do{
-						if(next.rowIndex > -1){
-							// skip non-numeric, non-rows
+			// this traverses through rows to maintain odd/even classes on the rows when indexes shift;
+			var next = firstRow;
+			var rowIndex = next.rowIndex;
+			if(rowIndex > -1){ // make sure we have a real number in case this is called on a non-row
+				do{
+					// Skip non-numeric, non-rows
+					if(next.rowIndex > -1){
+						if(this.maintainOddEven){
 							if((next.className + ' ').indexOf("dgrid-row ") > -1){
 								put(next, '.' + (rowIndex % 2 == 1 ? oddClass : evenClass) + '!' + (rowIndex % 2 == 0 ? oddClass : evenClass));
 							}
-							next.rowIndex = rowIndex++;
 						}
-					}while((next = next.nextSibling) && next.rowIndex != rowIndex && !next.blockRowIndex);
-				}
+						next.rowIndex = rowIndex++;
+					}
+				}while((next = next.nextSibling) && next.rowIndex != rowIndex);
 			}
 		},
 		renderArray: function(results, beforeNode, options){
@@ -417,7 +415,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			if(results.observe){
 				// observe the results for changes
 				var observerIndex = this.observers.push(results.observe(function(object, from, to){
-					var firstRow, nextNode;
+					var firstRow, nextNode, parentNode;
 					// a change in the data took place
 					if(from > -1 && rows[from]){
 						// remove from old slot
@@ -449,7 +447,9 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 								nextNode = (nextNode.connected || nextNode).nextSibling;
 							}
 						}
-						row = self.newRow(object, nextNode, to, options);
+						parentNode = (beforeNode && beforeNode.parentNode) ||
+							(nextNode && nextNode.parentNode) || self.contentNode;
+						row = self.newRow(object, parentNode, nextNode, options.start + to, options);
 						
 						if(row){
 							row.observerIndex = observerIndex;
@@ -465,6 +465,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 						options.count++;
 					}
 					from != to && firstRow && self.adjustRowIndices(firstRow);
+					self._onNotification(rows, object, from, to);
 				}, true)) - 1;
 			}
 			var rowsFragment = document.createDocumentFragment();
@@ -497,7 +498,13 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			}
 			return whenDone(rows);
 		},
-		
+
+		_onNotification: function(rows, object, from, to){
+			// summary:
+			//		Protected method called whenever a store notification is observed.
+			//		Intended to be extended as necessary by mixins/extensions.
+		},
+
 		renderHeader: function(){
 			// no-op in a plain list
 		},
@@ -516,17 +523,14 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 						this.store.getIdentity(object) : this._autoId++),
 				row = byId(id),
 				previousRow = row && row.previousSibling;
-			
-			if(!row || // we must create a row if it doesn't exist, or if it previously belonged to a different container 
-					(beforeNode && row.parentNode != beforeNode.parentNode)){
-				if(row){// if it existed elsewhere in the DOM, we will remove it, so we can recreate it
-					this.removeRow(row);
-				}
-				row = this.renderRow(object, options);
-				row.className = (row.className || "") + " ui-state-default dgrid-row " + (i % 2 == 1 ? oddClass : evenClass);
-				// get the row id for easy retrieval
-				this._rowIdToObject[row.id = id] = object;
+		
+			if(row){// if it existed elsewhere in the DOM, we will remove it, so we can recreate it
+				this.removeRow(row);
 			}
+			row = this.renderRow(object, options);
+			row.className = (row.className || "") + " ui-state-default dgrid-row " + (i % 2 == 1 ? oddClass : evenClass);
+			// get the row id for easy retrieval
+			this._rowIdToObject[row.id = id] = object;
 			parent.insertBefore(row, beforeNode || null);
 			if(previousRow){
 				// in this case, we are pulling the row from another location in the grid, and we need to readjust the rowIndices from the point it was removed
@@ -733,12 +737,12 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			//		Sets named properties on a List object.
 			//		A programmatic setter may be defined in subclasses.
 			//
-			//	set() may also be called with a hash of name/value pairs, ex:
+			//		set() may also be called with a hash of name/value pairs, ex:
 			//	|	myObj.set({
 			//	|		foo: "Howdy",
 			//	|		bar: 3
 			//	|	})
-			//	This is equivalent to calling set(foo, "Howdy") and set(bar, 3)
+			//		This is equivalent to calling set(foo, "Howdy") and set(bar, 3)
 			
 			if(typeof name === "object"){
 				for(var k in name){
@@ -804,9 +808,9 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 				this.renderArray(this._lastCollection);
 			}
 		},
-		// TODO: remove the following two (and rename _sort to sort) in 1.0
+		// TODO: remove the following two (and rename _sort to sort) in 0.4
 		sort: function(property, descending){
-			kernel.deprecated("sort(...)", 'use set("sort", ...) instead', "dgrid 1.0");
+			kernel.deprecated("sort(...)", 'use set("sort", ...) instead', "dgrid 0.4");
 			this.set("sort", property, descending);
 		},
 		_getSort: function(){
@@ -834,7 +838,7 @@ function(arrayUtil, kernel, declare, listen, has, miscUtil, TouchScroll, hasClas
 			}
 		},
 		setShowHeader: function(show){
-			kernel.deprecated("setShowHeader(...)", 'use set("showHeader", ...) instead', "dgrid 1.0");
+			kernel.deprecated("setShowHeader(...)", 'use set("showHeader", ...) instead', "dgrid 0.4");
 			this.set("showHeader", show);
 		},
 		

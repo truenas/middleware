@@ -33,7 +33,6 @@ require([
     "dojo/_base/fx",
     "dojo/_base/lang",
     "dojo/_base/window",
-    "dojo/cookie",
     "dojo/data/ItemFileReadStore",
     "dojo/dom",
     "dojo/dom-attr",
@@ -56,6 +55,7 @@ require([
     "freeadmin/tree/Tree",
     "freeadmin/ESCDialog",
     "freeadmin/Menu",
+    "freeadmin/Progress",
     "freeadmin/RRDControl",
     "freeadmin/VolumeManager",
     "freeadmin/WebShell",
@@ -73,6 +73,7 @@ require([
     "dijit/form/MultiSelect",
     "dijit/form/NumberTextBox",
     "dijit/form/Select",
+    "dijit/form/SimpleTextarea",
     "dijit/form/Textarea",
     "dijit/form/TextBox",
     "dijit/form/RadioButton",
@@ -108,7 +109,6 @@ require([
     dFx,
     lang,
     dWindow,
-    cookie,
     ItemFileReadStore,
     dom,
     domAttr,
@@ -131,6 +131,7 @@ require([
     Tree,
     ESCDialog,
     fMenu,
+    Progress,
     RRDControl,
     VolumeManager,
     WebShell,
@@ -148,6 +149,7 @@ require([
     MultiSelect,
     NumberTextBox,
     Select,
+    SimpleTextarea,
     Textarea,
     TextBox,
     RadioButton,
@@ -259,7 +261,7 @@ require([
             dismiss = 1;
         }
         xhr.post("/admin/alert/dismiss/", {
-            headers: {"X-CSRFToken": cookie('csrftoken')},
+            headers: {"X-CSRFToken": CSRFToken},
             data: {
                 msgid: msgid,
                 dismiss: dismiss
@@ -279,7 +281,7 @@ require([
         xhr.post("/services/toggle/"+obj.name+"/", {
             data: "Some random text",
             handleAs: "json",
-            headers: {"X-CSRFToken": cookie('csrftoken')}
+            headers: {"X-CSRFToken": CSRFToken}
             }).then(function(data) {
                 if(data.status == 'on') {
                     obj.src = '/static/images/ui/buttons/on.png';
@@ -304,6 +306,17 @@ require([
                 //alert
             });
 
+    }
+
+    addStorageJailChange = function(box) {
+      var destination = registry.byId("id_destination");
+      var jail = registry.byId("id_jail");
+      var jc_path = registry.byId("id_jc_path");
+      new_root = jc_path.get("value") + "/" + jail.get("value");
+      destination.set("root", new_root);
+      destination.tree.model.query = {root: new_root};
+      destination.tree.model.rootLabel = new_root;
+      destination.tree.reload();
     }
 
     togglePluginService = function(from, name, id) {
@@ -536,6 +549,28 @@ require([
         }
     }
 
+    jail_nat_toggle = function() {
+        var nat = registry.byId("id_jail_nat");
+        var defaultrouter_ipv4 = registry.byId("id_jail_defaultrouter_ipv4");
+        var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
+        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+
+        var jail_nat = nat.get("value");
+        if (jail_nat == 'on') {
+            defaultrouter_ipv4.set("disabled", true);
+            defaultrouter_ipv6.set("disabled", true);
+            bridge_ipv4.set("disabled", false);
+            bridge_ipv6.set("disabled", false);
+
+        } else {
+            defaultrouter_ipv4.set("disabled", false);
+            defaultrouter_ipv6.set("disabled", false);
+            bridge_ipv4.set("disabled", true);
+            bridge_ipv6.set("disabled", true);
+        }
+    }
+   
     mpAclChange = function(acl) {
       var mode = registry.byId("id_mp_mode");
       if(acl.get('value') === false) {
@@ -652,7 +687,7 @@ require([
         xhr.post(url, {
             handleAs: 'json',
             data: data,
-            headers: {"X-CSRFToken": cookie('csrftoken')}
+            headers: {"X-CSRFToken": CSRFToken}
         }).then(function(data) {
             sendbtn.set('disabled', false);
             if(!data.error) {
@@ -671,7 +706,7 @@ require([
         xhr.post(url, {
             handleAs: 'json',
             data: {host: data['remote_hostname'], port: data['remote_port']},
-            headers: {"X-CSRFToken": cookie('csrftoken')}
+            headers: {"X-CSRFToken": CSRFToken}
         }).then(function(data) {
             sendbtn.set('disabled', false);
             if(!data.error) {
@@ -758,13 +793,13 @@ require([
 
             } else {
                 //form.reset();
-                if(rnode.isInstanceOf(dijit.Dialog))
+                if(rnode.isInstanceOf(Dialog))
                     rnode.hide();
             }
 
         } else {
 
-            if(rnode.isInstanceOf(dijit.Dialog) && (data.error == false || (data.error == true && !data.type) ) ) {
+            if(rnode.isInstanceOf(Dialog) && (data.error == false || (data.error == true && !data.type) ) ) {
                 rnode.hide();
             }
 
@@ -950,12 +985,35 @@ require([
         };
 
         if (attrs.progressbar != undefined) {
-            pbar = dijit.ProgressBar({
-                style: "width:300px",
-                indeterminate: true,
-                });
-            /*
-             * We cannot destroy form node, that's why we just hide it
+            var pattrs;
+            if(attrs.progressbar == true) {
+              pattrs = {
+                steps: [
+                  {"label": "Uploading file"}
+                ],
+                fileUpload: true,
+                mode: "simple"
+              };
+            } else if(typeof(attrs.progressbar) == 'string') {
+              pattrs = {
+                steps: [
+                  {"label": "Processing"}
+                ],
+                fileUpload: false,
+                mode: "simple",
+                poolUrl: attrs.progressbar
+              };
+            } else {
+              pattrs = {
+                steps: attrs.progressbar.steps,
+                fileUpload: true,
+                uuid: uuid,
+                poolUrl: attrs.progressbar.poolUrl
+              };
+            }
+            pbar = Progress(pattrs);
+
+             /* We cannot destroy form node, that's why we just hide it
              * otherwise iframe.send won't work, it expects the form domNode
              */
             attrs.form.domNode.parentNode.appendChild(pbar.domNode);
@@ -965,13 +1023,13 @@ require([
             rnode._position();
 
         } else if (attrs.progresstype == 'jail') {
-            pbar = dijit.ProgressBar({
+            pbar = ProgressBar({
                 id: "jail_progress",
                 style: "width:600px",
                 indeterminate: true,
                 });
 
-            pdisplay = new dijit.form.SimpleTextarea({
+            pdisplay = new SimpleTextarea({
                 id: "jail_display",
                 title: "progress",
                 rows: "5",
@@ -1004,7 +1062,7 @@ require([
                 data: {__form_id: attrs.form.id},
                 form: attrs.form.id,
                 handleAs: 'text',
-                headers: {"X-CSRFToken": cookie('csrftoken')}
+                headers: {"X-CSRFToken": CSRFToken}
                 }).then(handleReq, function(evt) {
                     handleReq(evt.response.data, evt.response, true);
                 });
@@ -1014,7 +1072,7 @@ require([
             xhr.post(attrs.url, {
                 data: newData,
                 handleAs: 'text',
-                headers: {"X-CSRFToken": cookie('csrftoken')}
+                headers: {"X-CSRFToken": CSRFToken}
             }).then(handleReq, function(evt) {
                 handleReq(evt.response.data, evt.response, true);
                 });
@@ -1022,7 +1080,7 @@ require([
         }
 
         if (attrs.progressbar != undefined) {
-            checkProgressBar(pbar, attrs.progressbar, uuid);
+            pbar.update(uuid);
 
         } else if(attrs.progresstype == 'jail' &&
             attrs.progressurl != undefined) {
@@ -1094,7 +1152,7 @@ require([
         while(1) {
             turn = registry.getEnclosingWidget(turn.domNode.parentNode);
             if(turn == null) return null;
-            if(turn.isInstanceOf(dijit.Dialog)) break;
+            if(turn.isInstanceOf(Dialog)) break;
         }
         return turn;
 
@@ -1105,7 +1163,7 @@ require([
         var turn = from;
         while(1) {
             turn = registry.getEnclosingWidget(turn.domNode.parentNode);
-            if(turn.isInstanceOf(dijit.form.Form)) break;
+            if(turn.isInstanceOf(Form)) break;
         }
         return turn;
 
@@ -1131,12 +1189,12 @@ require([
         if(nodes && canceled == false) {
             refreshTree();
             dArray.forEach(nodes, function(entry, i) {
-                if(entry.isInstanceOf && entry.isInstanceOf(dijit.layout.ContentPane)) {
+                if(entry.isInstanceOf && entry.isInstanceOf(ContentPane)) {
                     entry.refresh();
                     var par = registry.getEnclosingWidget(entry.domNode.parentNode);
                     par.selectChild(entry);
                     var par2 = registry.getEnclosingWidget(par.domNode.parentNode);
-                    if(par2 && par2.isInstanceOf(dijit.layout.ContentPane))
+                    if(par2 && par2.isInstanceOf(ContentPane))
                         registry.byId("content").selectChild(par2);
                 } else {
                     if(entry.domNode) entry = entry.domNode;
@@ -1339,7 +1397,9 @@ require([
             } else if(item.action == 'displayprocs') {
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {
-                registry.byId("shell_dialog").show();
+                new WebShell();
+            } else if(item.action == 'opensupport') {
+                Menu.openSupport();
             } else if(item.type == 'opensharing') {
                 Menu.openSharing(item.gname);
             } else if(item.type == 'openstorage') {
@@ -1414,98 +1474,6 @@ require([
             }
         });
         registry.byId("menupane").set('content', mytree);
-
-        var shell = new ESCDialog({
-            id: "shell_dialog",
-            content: '<pre class="ix" tabindex="1" id="shell_output">Loading...</pre>',
-            style: "min-height:400px;background-color: black;",
-            title: 'Shell',
-            region: 'center',
-            onShow: function() {
-
-                function handler(msg,value) {
-                    switch(msg) {
-                    case 'conn':
-                        break;
-                    case 'disc':
-                        registry.byId("shell_dialog").hide();
-                        break;
-                    case 'curs':
-                        cy=value;
-                        //scroll(cy);
-                        break;
-                    }
-                }
-
-                try {
-                    _webshell.start();
-                } catch(e) {
-                    var size = registry.byId("webshellSize").get("value").split('x');
-                    _webshell=new WebShell({
-                        node: "shell_output",
-                        handler: handler,
-                        width: size[0],
-                        height: size[1],
-                        onUpdate: function() {
-                            if(this.sizeChange) {
-                                shell._size();
-                                shell._position();
-                                this.sizeChange = false;
-                            }
-                        }
-                    });
-                    _webshell.start();
-                }
-
-            },
-            onHide: function(e) {
-                if(_webshell) {
-                    _webshell.stop();
-                    delete _webshell;
-                    _webshell = undefined;
-                }
-            }
-        }, "shell_dialog_holder");
-        var paste = new Button({
-            label: gettext('Paste'),
-            onClick: function() {
-
-                var pasteDialog = new Dialog({
-                    title: gettext("Paste"),
-                    href: '/system/terminal/paste/',
-                    onShow: function() {
-                        _webshell._stopConnections();
-                    },
-                    onHide: function() {
-                        _webshell._startConnections();
-                        dom.byId("shell_output").focus();
-                    }
-                });
-                pasteDialog.show();
-
-            }
-        });
-        shell.domNode.appendChild(paste.domNode);
-        var size = new Select({
-            id: "webshellSize",
-            name: "size",
-            options: [
-                { label: "80x25", value: "80x25", selected: true },
-                { label: "80x30", value: "80x30" },
-                { label: "80x50", value: "80x50" },
-                { label: "132x25", value: "132x25" },
-                { label: "132x43", value: "132x43" },
-                { label: "132x50", value: "132x50" }
-            ],
-            onChange: function(val) {
-                var xy = val.split('x');
-                _webshell.width = xy[0];
-                _webshell.height = xy[1];
-                _webshell.sizeChange = true;
-                dom.byId("shell_output").focus();
-            }
-        });
-        shell.domNode.appendChild(size.domNode);
 
     });
 });

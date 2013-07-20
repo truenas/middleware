@@ -68,10 +68,10 @@ a:hover {
 #shell_dialog_underlay {
     background-color:#000;
 }
-#shell_dialog .dijitDialogPaneContent {
+.Terminal .dijitDialogPaneContent {
     background-color:#000 !important;
 }
-#shell_dialog pre {
+.Terminal pre {
     border:none !important;
 }
 #log_dialog .dijitDialogPaneContent {
@@ -1033,6 +1033,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.SupportIcon {
+    background-image:url('/static/images/ui/tree/support.png');
+    width:16px;
+    height:16px;
+}
 .dijitTextArea {
     min-height:60px;
 }
@@ -1311,4 +1316,16 @@ table.layoutTable > tr:first-child > td {
     height: 20px;
     bottom: -10px;
     right: -10px;
+}
+
+/* NFS Share datagrid column sizes */
+.dgrid-column-nfs_alldirs {
+    width: 95px;
+}
+.dgrid-column-nfs_ro, .dgrid-column-nfs_quiet {
+    width: 70px;
+}
+.dgrid-column-nfs_maproot_user, .dgrid-column-nfs_maproot_group,
+.dgrid-column-nfs_mapall_user, .dgrid-column-nfs_mapall_group {
+    width: 105px;
 }

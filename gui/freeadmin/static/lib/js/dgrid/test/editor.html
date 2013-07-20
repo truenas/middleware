@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="utf-8">
 		<title>Test Cell Editors</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=570" />
-		<style type="text/css">
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../../dijit/themes/claro/claro.css";
 			@import "../css/skins/claro.css";
@@ -22,13 +22,16 @@
 				border: 1px solid #333;
 				padding: 0 4px;
 			}
-			.inner {
-				background-color: #ccc;
+			.rendercell {
+				background-color: #ccf;
+			}
+			.formatter {
+				background-color: #cfc;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js"
+		<script src="../../dojo/dojo.js"
 			data-dojo-config="async: true, isDebug: true"></script>
-		<script type="text/javascript">
+		<script>
 			var grid, // stores global reference to grid instance
 				editFirst; // function defined within require callback
 			
@@ -65,7 +68,7 @@
 							// native input types
 							{ label: "text", generate: generateText },
 							{ label: "checkbox", generate: generateBool },
-							{ label: "radio", generate: generateBool },
+							{ label: "radio", generate: generateBoolRadio },
 							{
 								label: "textarea",
 								generate: generateText,
@@ -88,8 +91,7 @@
 									},
 									set: function(item){
 										// convert to boolean for save
-										item.editor = !!item.editor;
-										return item;
+										return !!item.editor;
 									}
 								}
 							},
@@ -122,17 +124,6 @@
 									// need to set width directly for Select to size correctly
 									style: { width: "99%" }
 								} }
-							},
-							{
-								label: "dijit/Editor",
-								generate: generateText,
-								column: {
-									renderCell: function(object, data){
-										// this editor supports rich text; don't escape HTML in view
-										return domConstruct.create("div", { innerHTML: data });
-									},
-									editorArgs: { style: "height: 100px;" }
-								}
 							},
 							{
 								label: "text input combining first/last name",
@@ -175,6 +166,10 @@
 					function generateBool() {
 						return { editor: Math.random() > 0.5 ? true : false };
 					}
+					function generateBoolRadio(i) {
+						// Variant of generateBool that only returns true for i = 0
+						return { editor: !i };
+					}
 					function generateDate() {
 						// return a date within the past year
 						return { editor: new Date(today - Math.random() * 31536000000) };
@@ -204,9 +199,14 @@
 					
 					function customRenderCell(object, data) {
 						var container = domConstruct.create("div", { "class": "outer" });
-						domConstruct.place('<span class="inner">' +
+						domConstruct.place('<span class="rendercell">' +
 							("" + data).replace(/</g, "&lt;") + "</span>", container);
 						return container;
+					}
+					
+					function customFormatter(data) {
+						return '<div class="outer"><span class="formatter">' +
+							("" + data).replace(/</g, "&lt;") + "</span></div>";
 					}
 					
 					var cancelDataChange = false;
@@ -221,7 +221,7 @@
 							i;
 						
 						for (i = 0; i < 100; i++){
-							data.push(lang.mixin(options.generate(), { id: i }));
+							data.push(lang.mixin(options.generate(i), { id: i }));
 						}
 						
 						require(deps, function(ctor){
@@ -232,6 +232,9 @@
 							if(editOn){ columnArgs.editOn = editOn; }
 							if(form.elements.customRenderCell.checked){
 								columnArgs.renderCell = customRenderCell;
+							}
+							if(form.elements.customFormatter.checked){
+								columnArgs.formatter = customFormatter;
 							}
 							cancelDataChange = form.elements.cancelDataChange.checked;
 							
@@ -244,10 +247,11 @@
 								}, "grid");
 							}else{
 								// instead of destroying/recreating, just reset store + columns
-								grid.set("store", Observable(new TestStore({ data: data })));
+								grid.set("store", null);
 								grid.set("columns", {
 									"editor": editor(lang.mixin({}, options.column, columnArgs))
 								});
+								grid.set("store", Observable(new TestStore({ data: data })));
 							}
 						});
 						
@@ -262,12 +266,19 @@
 					
 					on(document.body, "dgrid-datachange", function(evt){
 						console.log(evt.grid.id + " row " + evt.cell.row.id + " data changed" +
-						(event.parentType ? " (via " + event.parentType + "): " : ": "),
+						(evt.parentType ? " (via " + evt.parentType + "): " : ": "),
 						evt.oldValue, " -> ", evt.value);
 
 						if(cancelDataChange){
 							evt.preventDefault();
 						}
+					});
+					
+					on(document.body, "dgrid-editor-show", function(evt){
+						console.log("show editOn editor: ", evt);
+					});
+					on(document.body, "dgrid-editor-hide", function(evt){
+						console.log("hide editOn editor: ", evt);
 					});
 					
 					editFirst = function() {
@@ -295,6 +306,7 @@
 			<p><label><input type="checkbox" name="autoSave" value="true"> autoSave</label></p>
 			<p><label><input type="checkbox" name="cancelDataChange" value="false"> cancel dgrid-datachange</label></p>
 			<p><label><input type="checkbox" name="customRenderCell" value="true"> use custom renderCell</label></p>
+			<p><label><input type="checkbox" name="customFormatter" value="true"> use custom formatter (note: customRenderCell supersedes this setting)</label></p>
 			<div><button type="submit" id="editorFormSubmit">Recreate Grid</button></div>
 		</form>
 		<div id="grid"></div>

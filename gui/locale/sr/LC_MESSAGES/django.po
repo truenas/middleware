@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-04-22 22:31+0200\n"
+"PO-Revision-Date: 2013-07-10 21:43+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -569,7 +569,7 @@ msgstr "Korisnik sa tim imenom već postoji."
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
 #: system/forms.py:682
 msgid "This field is required"
-msgstr ""
+msgstr "Ovo polje je neophodno"
 
 #: account/forms.py:377 account/forms.py:529 account/forms.py:870
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
@@ -836,20 +836,20 @@ msgstr "%s uspešno obrisani."
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
-msgstr ""
+msgstr "Greška prilikom preuzimanja informacije o ukupnom prostoru"
 
 #: middleware/zfs.py:567 storage/models.py:586
 msgid "Error getting available space"
-msgstr ""
+msgstr "Greška prilikom preuzimanja informacije o raspoloživom prostoru"
 
 #: middleware/zfs.py:581 storage/models.py:600
 msgid "Error getting used space"
-msgstr ""
+msgstr "Greška prilikom preuzimanja informacije o upotrebljenom prostoru"
 
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
 msgid "Error"
-msgstr ""
+msgstr "Greška"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
@@ -1061,7 +1061,7 @@ msgstr "Interfejsi"
 
 #: network/models.py:253 templates/services/iscsi_targets.html:6
 msgid "Alias"
-msgstr ""
+msgstr "Alias"
 
 #: network/models.py:254
 msgid "Aliases"
@@ -1140,7 +1140,7 @@ msgstr "Statička ruta"
 
 #: network/models.py:398 templates/network/index.html:18
 msgid "Static Routes"
-msgstr ""
+msgstr "Statičke rute"
 
 #: network/nav.py:6 templates/menubar.html:12
 msgid "Network"
@@ -1312,11 +1312,11 @@ msgstr "Izvor"
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
 msgid "Destination"
-msgstr ""
+msgstr "Odredište"
 
 #: plugins/models.py:121 storage/models.py:456
 msgid "Mount Point"
-msgstr ""
+msgstr "Tačka montiranja"
 
 #: plugins/models.py:122
 msgid "Mount Points"
@@ -1659,7 +1659,7 @@ msgstr "Obrisati osnovnu datoteku"
 #: templates/storage/snapshot_confirm_delete_bulk.html:5
 #: templates/storage/zvol_confirm_delete.html:7
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "Želite li zaista da izbrišete?"
 
 # S.M.A.R.T. - Self-Monitoring, Analysis and Reporting Technology
 #: services/forms.py:1147
@@ -2691,35 +2691,40 @@ msgstr ""
 
 #: services/models.py:1062
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Upload propusni opseg za lokalnog korisnika"
 
 #: services/models.py:1063
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Upload propusni opseg za lokalnog korisnika u KB/s. Nula znači beskonačno."
 
 #: services/models.py:1067
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Download propusni opseg za lokalnog korisnika"
 
 #: services/models.py:1068
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Download propusni opseg za lokalnog korisnika u KB/s. Nula znači beskonačno."
 
 #: services/models.py:1072
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Upload propusni opseg za anonimnog korisnika"
 
 #: services/models.py:1073
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Upload propusni opseg za anonimnog korisnika u KB/s. Nula znači beskonačno."
 
 #: services/models.py:1077
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Download propusni opseg za anonimnog korisnika"
 
 #: services/models.py:1078
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Download propusni opseg za anonimnog korisnika u KB/s. Nula znači "
+"beskonačno."
 
 #: services/models.py:1081
 msgid "Enable SSL/TLS"
@@ -2813,7 +2818,7 @@ msgstr "Dozvoliti Autentikaciju Lozinkom"
 
 #: services/models.py:1163
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Dozvoliti TCP port prosleđivanje"
 
 #: services/models.py:1165
 msgid "Compress Connections"
@@ -2874,7 +2879,7 @@ msgstr "Ime radne grupe ili domena u starom formatu, npr. RADNAGRUPA"
 
 #: services/models.py:1259
 msgid "Allow Trusted Domains"
-msgstr ""
+msgstr "Dozvoli domene od poverenja"
 
 #: services/models.py:1263
 msgid "Administrator Name"
@@ -2882,7 +2887,7 @@ msgstr "Ime administratora"
 
 #: services/models.py:1264
 msgid "Domain Administrator account name"
-msgstr ""
+msgstr "Ime naloga Domenskog Administratora"
 
 #: services/models.py:1268
 msgid "Administrator Password"
@@ -2890,7 +2895,7 @@ msgstr "Administratorska lozinka"
 
 #: services/models.py:1269
 msgid "Domain Administrator account password."
-msgstr ""
+msgstr "Lozinka naloga Domenskog Administratora"
 
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
@@ -3030,11 +3035,11 @@ msgstr "Alternativni TCP port. Podrazumevano je 873"
 
 #: services/models.py:1374
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
-msgstr ""
+msgstr "Ovi parametri će biti dodati u [global] podešavanja u rsyncd.conf"
 
 #: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
-msgstr ""
+msgstr "Konfiguriši Rsyncd"
 
 #: services/models.py:1390
 msgid "Module name"
@@ -3042,7 +3047,7 @@ msgstr "Ime modula"
 
 #: services/models.py:1399
 msgid "Path to be shared"
-msgstr ""
+msgstr "Putanja da bude deljena"
 
 #: services/models.py:1405
 msgid "Access Mode"
@@ -3192,32 +3197,32 @@ msgstr "Kontrolni servisi"
 
 #: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
-msgstr ""
+msgstr "Oblasti uređaja"
 
 #: services/nav.py:72
 msgid "Add Device Extent"
-msgstr ""
+msgstr "Dodaj opseg uređaja"
 
 #: services/nav.py:79
 msgid "View Device Extents"
-msgstr ""
+msgstr "Pogledaj oblast uređaja"
 
 #: services/nav.py:92
 msgid "File Extents"
-msgstr ""
+msgstr "Oblast datoteke"
 
 #: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add File Extent"
-msgstr ""
+msgstr "Dodati oblast datoteke"
 
 #: services/nav.py:118
 msgid "View File Extents"
-msgstr ""
+msgstr "Pogledaj oblast datoteke"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
@@ -3229,18 +3234,17 @@ msgid "Add Rsync Module"
 msgstr "Dodaj Rsync modul"
 
 #: services/nav.py:159
-#, fuzzy
 msgid "View Rsync Modules"
-msgstr "Dodaj Rsync modul"
+msgstr "Prikaži Rsync module"
 
 #: services/nav.py:168 system/models.py:84 system/nav.py:28
 #: templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Podešavanja"
 
 #: services/nav.py:186
 msgid "Management"
-msgstr ""
+msgstr "Upravljanje"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3251,14 +3255,13 @@ msgid "The service could not be started."
 msgstr "Servis nije moguće pokrenuti."
 
 #: sharing/forms.py:81
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "Promeni Šifru"
+msgstr "Potvrdite deljenu lozinku"
 
 #: sharing/forms.py:139
 #, python-format
 msgid "The path %s does not exist"
-msgstr ""
+msgstr "Putanja %s ne postoji"
 
 #: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
@@ -3295,20 +3298,19 @@ msgstr ""
 
 #: sharing/models.py:51
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Može se pretraživati do mrežnih klijenata"
 
 #: sharing/models.py:53
-#, fuzzy
 msgid "Inherit Owner"
-msgstr "Naslediti"
+msgstr "Naslediti vlasnika"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Nasleđivanje dozvola"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Izvezi Recycle Bin"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
@@ -3323,6 +3325,8 @@ msgid ""
 "If true then no password is required to connect to the share. Privileges "
 "will be those of the guest account."
 msgstr ""
+"Ako je istina onda lozinka nije potrebna za povezivanje na deljeni resurs. "
+"Privilegije će biti one kao za nalog gosta."
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
@@ -3333,10 +3337,13 @@ msgid ""
 "If true then only guest connections to the share are permitted. This "
 "parameter will have no effect if Allow Guest Access is not set for the share."
 msgstr ""
+"Ako je istina onda su samo konekcije sa gost nalogom dozvoljene na deljeni "
+"resurs. Ovaj parametar neće imati efekta ako \"Dozvoli Gost Pristup\" nije "
+"postavljen za deljeni resurs."
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Host dozvoljen"
 
 #: sharing/models.py:72
 msgid ""
@@ -3376,11 +3383,11 @@ msgstr "Ovi parametri su dodati na [Share] sekciju smb.conf"
 
 #: sharing/models.py:94
 msgid "Windows (CIFS) Share"
-msgstr ""
+msgstr "Windows (CIFS) deljeni resurs"
 
 #: sharing/models.py:95
 msgid "Windows (CIFS) Shares"
-msgstr ""
+msgstr "Windows (CIFS) deljeni resurs"
 
 #: sharing/models.py:114
 msgid ""
@@ -3446,7 +3453,7 @@ msgstr ""
 
 #: sharing/models.py:143
 msgid "Deny List"
-msgstr ""
+msgstr "Lista odbijanja"
 
 #: sharing/models.py:145
 msgid ""
@@ -3466,6 +3473,8 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Omogućava određenim korisnicima i grupama da imaju pristup da samo čitaju "
+"sadržaj deljenog resursa. Ovo prati format dozvoliti opciju."
 
 #: sharing/models.py:155
 msgid "Read-write Access"
@@ -3476,6 +3485,8 @@ msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Omogućava određenim korisnicima i grupama da imaju čitanje/pisanje pristup "
+"do deljenog resursa. Ovo sledi format dozvoli opciju."
 
 #: sharing/models.py:160
 msgid "Disk Discovery"
@@ -3497,6 +3508,9 @@ msgid ""
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
+"Napomena! Izbor \"Time Machine\" na više deljenih resursa može da izazove "
+"nepredvidivo ponašanje u MacOS-u. Podrazumevani režim izvozi volumen kao "
+"volumen podataka za korisnike."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3507,6 +3521,8 @@ msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Postavlja informaciju baze podataka da se čuva na putanji. Morate da "
+"odredite lokaciju za upis, čak i ako je volumen samo za čitanje."
 
 #: sharing/models.py:177
 msgid "Cache CNID"
@@ -3557,13 +3573,15 @@ msgstr ""
 
 #: sharing/models.py:189
 msgid "Enable .AppleDouble"
-msgstr ""
+msgstr "Aktivirati .AppleDouble"
 
 #: sharing/models.py:190
 msgid ""
 "This will enable automatic creation of the .AppleDouble directories. This "
 "option should be used if files are accessed by Mac computers."
 msgstr ""
+"Ovo će automatski aktivirati .AppleDouble direktorijume. Ova opcija bi "
+"trebalo da se koristi ako se datotekama pristupa Mac računarima."
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3627,22 +3645,20 @@ msgid "Use AFP3 unix privileges."
 msgstr "Upotrebi AFP3 unix privilegije."
 
 #: sharing/models.py:222
-#, fuzzy
 msgid "Default file permission"
-msgstr "Dozvole fajla"
+msgstr "Podrazumevana dozvola za datoteku"
 
 #: sharing/models.py:227
-#, fuzzy
 msgid "Default directory permission"
-msgstr "Dozvole direktorijuma"
+msgstr "Podrazumevana dozvola za direktorijum"
 
 #: sharing/models.py:238
 msgid "Apple (AFP) Share"
-msgstr ""
+msgstr "Apple (AFP) deljeni resurs"
 
 #: sharing/models.py:239
 msgid "Apple (AFP) Shares"
-msgstr ""
+msgstr "Apple (AFP) deljeni resursi"
 
 #: sharing/models.py:268
 msgid "Authorized network or IP addresses"
@@ -3654,6 +3670,9 @@ msgid ""
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"Mreža koja je ovlašćena za pristup NFS deljenom resursu ili listi IP adresa. "
+"Navedite broj mreža u formi 1.2.3.4/XX gde je XX broj bitova mrežne maske "
+"ili spisak IP adresa 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -3664,6 +3683,9 @@ msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Dozvoli montiranje bilo kog pod-direktorijuma pod ovom tačkom montiranja "
+"ukoliko bude naznačeno. U suprotnom, samo gornji nivo direktorijum-a može da "
+"se montira."
 
 #: sharing/models.py:277
 msgid "Read Only"
@@ -3671,7 +3693,7 @@ msgstr "Samo za čitanje"
 
 #: sharing/models.py:278
 msgid "Export the share read only. Writes are not permitted."
-msgstr ""
+msgstr "Izvesti deljeni resurs dostupan samo za čitanje. Upisi nisu dozvoljeni."
 
 #: sharing/models.py:281 system/models.py:552
 msgid "Quiet"
@@ -3681,6 +3703,8 @@ msgstr "Tihi"
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
+"Zaustavi syslog upozorenja ako postoje problemi oko izvoza ovog deljenog "
+"resursa."
 
 #: sharing/models.py:285
 msgid "Maproot User"
@@ -3716,11 +3740,11 @@ msgstr "Grupa za mapiranje svih korisnika do"
 
 #: sharing/models.py:321
 msgid "Unix (NFS) Share"
-msgstr ""
+msgstr "Unix (NFS) deljeni resurs"
 
 #: sharing/models.py:322
 msgid "Unix (NFS) Shares"
-msgstr ""
+msgstr "Unix (NFS) deljeni resursi"
 
 #: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
@@ -3728,7 +3752,7 @@ msgstr "Deljenje"
 
 #: storage/forms.py:105
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr ""
+msgstr "Unesite pozitivan broj (opcionalno sa sufiksom K, M, G, T), ili, 0"
 
 #: storage/forms.py:120
 #, python-format
@@ -3738,248 +3762,258 @@ msgstr "%s nije ispravan broj"
 #: storage/forms.py:129 storage/forms.py:426 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Ime volumena"
 
 #: storage/forms.py:134 templates/storage/import.html:32
 #: templates/storage/wizard.html:54
 msgid "Filesystem type"
-msgstr ""
+msgstr "Tip sistema datoteka"
 
 #: storage/forms.py:147 templates/storage/wizard.html:65
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Nametni 4096 bajtova veličinu sektora"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
-msgstr ""
+msgstr "Navedi prilagođenu putanju"
 
 #: storage/forms.py:163
 msgid "Volume add"
-msgstr "Dodaj volumen"
+msgstr "Dodavanje volumena"
 
 #: storage/forms.py:175
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
+"Ostavljanjo prazno će dati volumenu podrazumevanu putanju "
+"/mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:233
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
+"Ime volumena mora da počne sa slovima i može da uključuje i brojeve, \"-\", "
+"\"_\" i \".\" ."
 
 #: storage/forms.py:236
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Korisnik sa tim imenom već postoji."
+msgstr "Volumen sa tim imenom već postoji."
 
 #: storage/forms.py:252
 msgid "Path does not exist."
-msgstr ""
+msgstr "Putanja ne postoji."
 
 #: storage/forms.py:255
 msgid "Path is not a directory."
-msgstr ""
+msgstr "Putanja nije direktorijum."
 
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
 msgstr ""
+"Ne možete da izaberete postojeći ZFS volumen i odredite novo ime volumena"
 
 #: storage/forms.py:269
 msgid ""
 "You must specify a new volume name or select an existing ZFS volume to "
 "append a virtual device"
 msgstr ""
+"Morate navesti ime novog volumena ili izabrali postojeći ZFS volumen da "
+"dodate virtuelni uređaj"
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
-msgstr ""
+msgstr "Morate da izaberete sistem datoteka"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Već imate volumen sa istim imenom"
 
 #: storage/forms.py:298
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\" je rezervisana reč i kao takva ne može da se koristi"
 
 #: storage/forms.py:305
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "Ime volumena nemože da počne sa c[0-9], mirror, raidz ili spare"
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr ""
+msgstr "UFS ime volumena nemože biti više od 9 karaktera"
 
 #: storage/forms.py:315
 msgid "UFS volume names can only contain alphanumeric characters"
-msgstr ""
+msgstr "UFS ime volumena može samo da sadrži alfanumeričke karaktere"
 
 #: storage/forms.py:429 storage/forms.py:1050
 msgid "Member disk"
-msgstr ""
+msgstr "Član disk"
 
 #: storage/forms.py:479 storage/forms.py:592
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
+msgstr "Izabrane diskovi nisu verifikovani za ovaj uvoz pravila."
 
 #: storage/forms.py:489
 msgid "An error occurred while labeling the disk."
-msgstr ""
+msgstr "Greška se dogodila prilikom obeležavanja diska."
 
 #: storage/forms.py:518 storage/models.py:59 storage/models.py:201
 #: templates/storage/scrub.html:5 templates/storage/volumes.html:58
 msgid "Volume"
-msgstr ""
+msgstr "Volumen"
 
 #: storage/forms.py:570
 msgid "You must select a volume."
-msgstr ""
+msgstr "Morate da izaberete volumen."
 
 #: storage/forms.py:636
 #, python-format
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
-msgstr ""
+msgstr "Volumen \"%s\" neuspešno uvezen, za više detalja proveriti status grupe"
 
 #: storage/forms.py:673
 msgid "The SMART service failed to restart."
-msgstr "SMART servis nije uspešno restartovan."
+msgstr "SMART servis nije uspeo da se ponovno pokrene."
 
 #: storage/forms.py:679
 msgid "Dataset Name"
-msgstr ""
+msgstr "Ime skupa podataka"
 
 #: storage/forms.py:683 storage/forms.py:744 storage/forms.py:799
 #: storage/forms.py:850
 msgid "Compression level"
-msgstr ""
+msgstr "Nivo kompresije"
 
 #: storage/forms.py:687 storage/forms.py:748 storage/forms.py:803
 msgid "Enable atime"
-msgstr ""
+msgstr "Aktivirati atime"
 
 #: storage/forms.py:691 storage/forms.py:752
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Kvota za ovaj skup podataka"
 
 #: storage/forms.py:692 storage/forms.py:697 storage/forms.py:753
 #: storage/forms.py:758 storage/forms.py:808
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=Neograničeno; primer: 1g"
 
 #: storage/forms.py:696 storage/forms.py:757
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Kvota za ovaj skup podataka i sve njegove podskupove"
 
 #: storage/forms.py:701 storage/forms.py:762
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Rezervisan prostor za ovaj skup podataka"
 
 #: storage/forms.py:702 storage/forms.py:707 storage/forms.py:763
 #: storage/forms.py:768 storage/forms.py:813
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Nijedan; primer: 1g"
 
 #: storage/forms.py:706 storage/forms.py:767
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Rezervisan prostor za ovaj skup podataka i sve njegove podskupove"
 
 #: storage/forms.py:716
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
+"Imena skupova podataka moraju početi alfanumeričkim karakterom i mogu da "
+"sadrži samo \"-\", \"_\", \":\" i \".\" ."
 
 #: storage/forms.py:729 storage/forms.py:870
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Već postoji skup podataka sa istim imenom"
 
 #: storage/forms.py:807
 msgid "Quota for this volume"
-msgstr ""
+msgstr "Kvota za ovaj volumen"
 
 #: storage/forms.py:812
 msgid "Reserved space for this volume"
-msgstr ""
+msgstr "Rezervisani prostor za ovaj volumen"
 
 #: storage/forms.py:842
 msgid "ZFS Volume Name"
-msgstr ""
+msgstr "Ime ZFS volumena"
 
 #: storage/forms.py:845
 msgid "Size for this ZFS Volume"
-msgstr ""
+msgstr "Veličina ovog ZFS Volumena"
 
 #: storage/forms.py:846
 msgid "Example: 1g"
-msgstr ""
+msgstr "Primer: 1g"
 
 #: storage/forms.py:859
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
+"Imena ZFS Volumena moraju početi alfanumeričkim karakterom i mogu da sadrže "
+"samo (-), (_), (:) i ().."
 
 #: storage/forms.py:882
 msgid "Owner (user)"
-msgstr ""
+msgstr "Vlasnik (korisnik)"
 
 #: storage/forms.py:883
 msgid "Owner (group)"
-msgstr ""
+msgstr "Vlasnik (grupa)"
 
 #: storage/forms.py:884 templates/system/rsync.html:7
 msgid "Mode"
-msgstr ""
+msgstr "Režim"
 
 #: storage/forms.py:885
 msgid "Type of ACL"
-msgstr ""
+msgstr "Tip ACL-a"
 
 #: storage/forms.py:891
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Postavi dozvolu rekurzivno"
 
 #: storage/forms.py:964
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "Najmanje jedan dan mora biti izabran"
 
 #: storage/forms.py:974
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Rekurzivni snimak"
 
 #: storage/forms.py:975
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Ime snimka"
 
 #: storage/forms.py:986
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Samo [-a-zA-Z0-9_.] su dozvoljeni kao ime snimka"
 
 #: storage/forms.py:996
 msgid "Snapshot"
-msgstr ""
+msgstr "Snimak"
 
 #: storage/forms.py:997
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Ime klona (mora biti na istom volumenu)"
 
 #: storage/forms.py:1026
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Samo [-a-zA-Z0-9_./] su dozvoljeni kao ime klona"
 
 #: storage/forms.py:1034
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Klon mora biti u istom volumenu"
 
 #: storage/forms.py:1125 storage/models.py:631
 msgid "Remote hostname"
-msgstr ""
+msgstr "Ime udaljenog host-a"
 
 #: storage/forms.py:1126 storage/models.py:635
 msgid "Remote port"
-msgstr ""
+msgstr "Udaljeni port"
 
 #: storage/forms.py:1128 storage/models.py:639
 msgid "Remote hostkey"
@@ -3987,75 +4021,75 @@ msgstr ""
 
 #: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "Označi disk kao nov (uništiti podatke)"
 
 #: storage/forms.py:1193
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "Izbriši sve deljene resurse u vezi sa ovim volumenom"
 
 #: storage/forms.py:1218 system/forms.py:567 system/forms.py:631
 msgid "minute"
-msgstr ""
+msgstr "minut"
 
 #: storage/forms.py:1221 system/forms.py:413 system/forms.py:570
 #: system/forms.py:634
 msgid "hour"
-msgstr ""
+msgstr "Čas"
 
 #: storage/forms.py:1226 system/forms.py:416 system/forms.py:573
 #: system/forms.py:637
 msgid "day of month"
-msgstr ""
+msgstr "dan u mesecu"
 
 #: storage/forms.py:1269
 msgid "Method"
-msgstr ""
+msgstr "Metod"
 
 #: storage/forms.py:1271
 msgid "Quick"
-msgstr ""
+msgstr "Brzo"
 
 #: storage/forms.py:1272
 msgid "Full with zeros"
-msgstr ""
+msgstr "Pun sa nulama"
 
 #: storage/forms.py:1273
 msgid "Full with random data"
-msgstr ""
+msgstr "Pun sa nasumičnim podacima"
 
 #: storage/models.py:50
 msgid "File System Type"
-msgstr ""
+msgstr "Tip sistema datoteka"
 
 #: storage/models.py:205 templates/storage/scrub.html:6
 msgid "Threshold days"
-msgstr ""
+msgstr "Granična vrednost u danima"
 
 #: storage/models.py:207
 msgid "Determine how many days shall be between scrubs"
-msgstr ""
+msgstr "Odredite koliko dana će biti između premotavanja"
 
 #: storage/models.py:217 system/models.py:343 system/models.py:495
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
 #: templates/system/rsync.html:9
 msgid "Minute"
-msgstr ""
+msgstr "Minut"
 
 #: storage/models.py:218 system/models.py:344 system/models.py:496
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "Vrednosti od 0-59 su dozvoljene."
 
 #: storage/models.py:223 system/models.py:349 system/models.py:501
 #: system/models.py:674 templates/storage/scrub.html:8
 #: templates/system/cronjob.html:6 templates/system/rsync.html:10
 #: templates/system/smarttest.html:7
 msgid "Hour"
-msgstr ""
+msgstr "Čas"
 
 #: storage/models.py:224 system/models.py:350 system/models.py:502
 #: system/models.py:675
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "Vrednosti od 0-23 su dozvoljene."
 
 #: storage/models.py:229 system/models.py:355 system/models.py:507
 #: system/models.py:679 templates/storage/scrub.html:9
@@ -4067,21 +4101,21 @@ msgstr "Dan u mesecu"
 #: storage/models.py:230 system/models.py:356 system/models.py:508
 #: system/models.py:680
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "Vrednosti od 1-31 su dozvoljene."
 
 #: storage/models.py:235 system/models.py:361 system/models.py:513
 #: system/models.py:685 templates/storage/scrub.html:10
 #: templates/system/cronjob.html:8 templates/system/rsync.html:12
 #: templates/system/smarttest.html:9
 msgid "Month"
-msgstr ""
+msgstr "Mesec"
 
 #: storage/models.py:240 system/models.py:366 system/models.py:518
 #: system/models.py:690 templates/storage/scrub.html:11
 #: templates/system/cronjob.html:9 templates/system/rsync.html:13
 #: templates/system/smarttest.html:10
 msgid "Day of week"
-msgstr ""
+msgstr "Dan u nedelji"
 
 #: storage/models.py:244 system/models.py:370 system/models.py:576
 #: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
@@ -4091,11 +4125,11 @@ msgstr "Omogućeno"
 
 #: storage/models.py:248
 msgid "ZFS Scrub"
-msgstr ""
+msgstr "ZFS premotavanje"
 
 #: storage/models.py:249
 msgid "ZFS Scrubs"
-msgstr ""
+msgstr "ZFS premotavanja"
 
 #: storage/models.py:263 system/models.py:391 system/models.py:600
 msgid "Every minute"
@@ -4104,29 +4138,29 @@ msgstr "Svakog minuta"
 #: storage/models.py:265 system/models.py:393 system/models.py:602
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "Svakih %s minut(a)"
 
 #: storage/models.py:271 system/models.py:399 system/models.py:608
 #: system/models.py:695
 msgid "Every hour"
-msgstr ""
+msgstr "Svakog časa"
 
 #: storage/models.py:273 system/models.py:401 system/models.py:610
 #: system/models.py:697
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "Svakih %s čas(ova)"
 
 #: storage/models.py:281 system/models.py:409 system/models.py:618
 #: system/models.py:705
 #, python-format
 msgid "Every %s days"
-msgstr ""
+msgstr "Svakih %s dana"
 
 #: storage/models.py:288 system/models.py:416 system/models.py:625
 #: system/models.py:712
 msgid "Every month"
-msgstr ""
+msgstr "Svakog meseca"
 
 #: storage/models.py:306 system/models.py:434 system/models.py:639
 #: system/models.py:726
@@ -4144,160 +4178,167 @@ msgstr ""
 
 #: storage/models.py:346
 msgid "Multipath member"
-msgstr ""
+msgstr "Član višestrukih putanja"
 
 #: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Režim prenosa"
 
 #: storage/models.py:365 storage/views.py:250
 msgid "HDD Standby"
-msgstr ""
+msgstr "HDD stanje pripravnosti"
 
 #: storage/models.py:371 storage/views.py:251
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Napredno upravljanje napajanjem"
 
 #: storage/models.py:377 storage/views.py:252
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Akustični nivo"
 
 #: storage/models.py:381 storage/views.py:253
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Aktivirati S.M.A.R.T."
 
 #: storage/models.py:385
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "S.M.A.R.T. dodatne opcije"
 
 #: storage/models.py:444 system/models.py:660
-#, fuzzy
 msgid "Disks"
 msgstr "Diskovi"
 
 #: storage/models.py:457
 msgid "Path to mount point"
-msgstr ""
+msgstr "Putanja do tačke montiranja"
 
 #: storage/models.py:461
 msgid "Mount options"
-msgstr ""
+msgstr "Opcije montiranja"
 
 #: storage/models.py:462
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Ovde uneti opcije za Tačku Montiranja"
 
 #: storage/models.py:643
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Udaljeni host za replikaciju"
 
 #: storage/models.py:644
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Udaljeni hostovi za replikaciju"
 
 #: storage/models.py:657 storage/models.py:718
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
 msgid "Filesystem/Volume"
-msgstr ""
+msgstr "Sistem datoteka/Volumen"
 
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Poslednji snimak poslat na udaljenu stranu (ostaviti prazno za punu "
+"replikaciju)"
 
 #: storage/models.py:666 system/models.py:458
 #: templates/storage/replications.html:22
 msgid "Remote Host"
-msgstr ""
+msgstr "Udaljeni host"
 
 #: storage/models.py:669
 msgid "Remote ZFS filesystem name"
-msgstr ""
+msgstr "Udaljeno ZFS ime sistema datoteka"
 
 #: storage/models.py:670
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"To bi trebalo da bude ime ZFS sistema datoteka na udaljenoj strani. npr: "
+"poolname/datasetname nije tačka montiranja ili putanja sistema datoteka"
 
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
-msgstr ""
+msgstr "Rekurzivno ponoviti i ukloniti stari snimak na udaljenoj strani"
 
 #: storage/models.py:681
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
+"Inicijalizacija udaljene strane jednom. (Može izazvati gubitak podataka na "
+"udaljenoj strani!)"
 
 #: storage/models.py:686
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "Limit (kB/s)"
 
 #: storage/models.py:687
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
 msgstr ""
+"Ograničiti brzinu replikacije. Jedinica u kilobajtima/sekundi. 0 = "
+"neograničeno."
 
 #: storage/models.py:692
 msgid "Replication Task"
-msgstr ""
+msgstr "Replikacioni zadatak"
 
 #: storage/models.py:693
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Replikacioni zadaci"
 
 #: storage/models.py:722 system/models.py:526 templates/storage/tasks.html:22
 msgid "Recursive"
-msgstr ""
+msgstr "Rekurziv"
 
 #: storage/models.py:726
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Vrednost trajanja snimka"
 
 #: storage/models.py:732
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Jedinica trajanja snimka"
 
 #: storage/models.py:736
 msgid "Begin"
-msgstr ""
+msgstr "Početak"
 
 #: storage/models.py:737
 msgid "Do not snapshot before"
-msgstr ""
+msgstr "Ne uzimati snimak pre"
 
 #: storage/models.py:741
 msgid "End"
-msgstr ""
+msgstr "Kraj"
 
 #: storage/models.py:742
 msgid "Do not snapshot after"
-msgstr ""
+msgstr "Ne uzimati snimak posle"
 
 #: storage/models.py:748
 msgid "Interval"
-msgstr ""
+msgstr "Interval"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
-msgstr ""
+msgstr "Koliko vremena je prošlo između dva pokušaja uzimanja snimka."
 
 #: storage/models.py:756
 msgid "Occurrence"
-msgstr ""
+msgstr "Pojavljivanje"
 
 #: storage/models.py:757
 msgid "How the task is repeated"
-msgstr ""
+msgstr "Kako se zadatak ponavlja"
 
 #: storage/models.py:762
 msgid "Weekday"
-msgstr ""
+msgstr "Radni dan"
 
 #: storage/models.py:785
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "Zadatak uzimanja periodičnog snimka"
 
 #: storage/models.py:786 templates/storage/index.html:14
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "Zadaci uzimanja periodičnog snimka"
 
 #: storage/nav.py:5 templates/menubar.html:17
 msgid "Storage"
@@ -4314,13 +4355,13 @@ msgstr "Pogledaj ZFS premotavanja"
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
 msgid "Volume Manager"
-msgstr ""
+msgstr "Upravljač volumenom"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
 #: templates/storage/volumes.html.py:14
 msgid "Import Volume"
-msgstr ""
+msgstr "Uvezi volumen"
 
 #: storage/nav.py:63 templates/storage/volumes.html:28
 #: templates/storage/volumes.html.py:30
@@ -4330,7 +4371,7 @@ msgstr "Pogledati diskove"
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
 msgid "View Multipaths"
-msgstr ""
+msgstr "Pogledaj višestruke putanje"
 
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
@@ -4338,9 +4379,8 @@ msgid "Auto Import Volume"
 msgstr "Automatski uvoz Volumena"
 
 #: storage/nav.py:96
-#, fuzzy
 msgid "View Volumes"
-msgstr "Pogledaj Sve Korisnike"
+msgstr "Pogledaj volumene"
 
 #: storage/nav.py:108 templates/storage/volumes.html:129
 #: templates/storage/volumes.html.py:133
@@ -4349,69 +4389,69 @@ msgstr "Napraviti ZFS volumen"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "Dodati periodicni snimak"
 
 #: storage/nav.py:130
 msgid "Volumes"
-msgstr ""
+msgstr "Volumeni"
 
 #: storage/nav.py:140 storage/nav.py:188 templates/storage/volumes.html:120
 #: templates/storage/volumes.html.py:124 templates/storage/volumes.html:209
 #: templates/storage/volumes.html.py:213
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "Kreiraj ZFS skup podataka"
 
 #: storage/nav.py:148 storage/nav.py:201 templates/storage/volumes.html:139
 #: templates/storage/volumes.html.py:143 templates/storage/volumes.html:218
 #: templates/storage/volumes.html.py:222
 msgid "Change Permissions"
-msgstr ""
+msgstr "Promena dozvola"
 
 #: storage/views.py:175 storage/views.py:204 storage/views.py:227
 msgid "Volume successfully added."
-msgstr "Particija uspešno dodata."
+msgstr "Volumen uspešno dodat."
 
 #: storage/views.py:254
 msgid "S.M.A.R.T. Extra Options"
-msgstr ""
+msgstr "S.M.A.R.T. Ekstra Opcije"
 
 #: storage/views.py:371
 msgid "Dataset successfully added."
-msgstr "Dataset uspešno dodat."
+msgstr "Skup podataka uspešno dodat."
 
 # ako % predstavlja user  kao users 
 #: storage/views.py:418
 msgid "Dataset successfully edited."
-msgstr "Dataset uspešno ažuriran."
+msgstr "Skup podataka uspešno ažuriran."
 
 #: storage/views.py:448
 msgid "ZFS Volume successfully added."
-msgstr "ZFS particija uspešno dodata."
+msgstr "ZFS volumen uspešno dodat."
 
 #: storage/views.py:470
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr ""
+msgstr "To je u upotrebi od strane iSCSI uređaja, prvo ga tamo uklonite."
 
 #: storage/views.py:475
 msgid "ZFS Volume successfully destroyed."
-msgstr ""
+msgstr "ZFS volumen uspešno uništen."
 
 # ako % predstavlja user  kao users 
 #: storage/views.py:524
 msgid "Native dataset successfully edited."
-msgstr "Fizički skup podataka uspešno izmenjen."
+msgstr "Osnovni skup podataka uspešno izmenjen."
 
 #: storage/views.py:544
 msgid "Mount Point permissions successfully updated."
-msgstr ""
+msgstr "Dozvole za tačku postavljanja uspešno ažurirane."
 
 #: storage/views.py:564
 msgid "Dataset successfully destroyed."
-msgstr ""
+msgstr "Skup podataka uspešno uništen."
 
 #: storage/views.py:583
 msgid "Snapshot successfully deleted."
-msgstr ""
+msgstr "Snimak uspešno izbrisan."
 
 #: storage/views.py:604
 msgid "Snapshots successfully deleted."
@@ -4419,7 +4459,7 @@ msgstr "Snimak uspešno obrisan."
 
 #: storage/views.py:616
 msgid "Rollback successful."
-msgstr ""
+msgstr "Vraćanje uspešno."
 
 #: storage/views.py:634
 msgid "Snapshot successfully added."
@@ -4435,15 +4475,15 @@ msgstr "Snimak uspešno kloniran."
 
 #: storage/views.py:684 storage/views.py:835
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "Zamena diska je pokrenuta."
 
 #: storage/views.py:689 storage/views.py:840
 msgid "An error occurred."
-msgstr ""
+msgstr "Došlo je do greške."
 
 #: storage/views.py:706
 msgid "Disk detach has been successfully done."
-msgstr ""
+msgstr "Uklanjanje diska je uspešno urađeno."
 
 #: storage/views.py:723
 msgid "Disk offline operation has been issued."
@@ -4451,7 +4491,7 @@ msgstr ""
 
 #: storage/views.py:740
 msgid "Disk has been removed."
-msgstr ""
+msgstr "Disk je uklonjen."
 
 #: storage/views.py:766
 msgid "The volume has been successfully detached"
@@ -4459,7 +4499,7 @@ msgstr "Volumen je bio uspešno odvojen"
 
 #: storage/views.py:788
 msgid "The scrub process has begun"
-msgstr ""
+msgstr "Proces premotavanja je počeo"
 
 # wipe - isto kao i delete ali se prostor popunjava nulama i jedinicama u nekoliko iteracija
 #: storage/views.py:922
@@ -4468,17 +4508,15 @@ msgstr "Disk je uspešno trajno obrisan"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "Jezik (Zahteva ponovno učitavanje korisničkog interfejsa)"
 
 #: system/forms.py:214
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Ova vrednost mora biti izmedju 0 i 65535, uključujući i njih."
+msgstr "Morate navesti broj izmedju 1 i 65535, uključujući i njih."
 
 #: system/forms.py:216
-#, fuzzy
 msgid "Number is required."
-msgstr "Ovo polje je obavezno."
+msgstr "Broj je obavezan."
 
 #: system/forms.py:245
 msgid "Force"
@@ -4499,33 +4537,35 @@ msgstr "Sledeći diskovi već imaju testove za ovaj tip: %s"
 
 #: system/forms.py:507
 msgid "Place to temporarily place firmware file"
-msgstr ""
+msgstr "Mesto za privremeno smeštanje firmver datoteke"
 
 #: system/forms.py:508
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
 msgstr ""
+"Sistem će koristiti ovo mesto za privremeno skladištenje datoteke firmvera "
+"pre nego što se primeni."
 
 #: system/forms.py:523
 msgid "New image to be installed"
-msgstr ""
+msgstr "Nova slika da se instalira"
 
 #: system/forms.py:524
 msgid "SHA256 sum for the image"
-msgstr ""
+msgstr "SHA256 zbir za sliku"
 
 #: system/forms.py:538
 msgid "Invalid firmware"
-msgstr ""
+msgstr "Nevažeći firmver"
 
 #: system/forms.py:544
 msgid "Invalid checksum"
-msgstr ""
+msgstr "Nevažeći kontrolni zbir"
 
 #: system/forms.py:557
 msgid "New config to be installed"
-msgstr ""
+msgstr "Nova konfiguracija da se instalira"
 
 #: system/forms.py:718
 msgid ""
@@ -4537,24 +4577,23 @@ msgstr ""
 
 #: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "Navodnici nisu dozvoljeni"
 
 #: system/models.py:44
 msgid "Protocol"
-msgstr ""
+msgstr "Protokol"
 
 #: system/models.py:50
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "IPv4 Addresa"
+msgstr "WebGUI Addresa"
 
 #: system/models.py:56
 msgid "WebGUI Port"
-msgstr ""
+msgstr "WebGUI Port"
 
 #: system/models.py:62
 msgid "Language"
-msgstr ""
+msgstr "Jezik"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
@@ -4562,11 +4601,11 @@ msgstr "Tastature Konzole"
 
 #: system/models.py:74
 msgid "Timezone"
-msgstr ""
+msgstr "Vremenska zona"
 
 #: system/models.py:80
 msgid "Syslog server"
-msgstr ""
+msgstr "Syslog server"
 
 #: system/models.py:92 templates/system/ntpserver.html:5
 msgid "Address"
@@ -4644,35 +4683,35 @@ msgstr "NTP serveri"
 
 #: system/models.py:157
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Omogući konzolni meni"
 
 #: system/models.py:159
 msgid "Use Serial Console"
-msgstr ""
+msgstr "Koristiti serijsku konzolu"
 
 #: system/models.py:161
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Omogućiti čuvar ekrana"
 
 #: system/models.py:163
 msgid "Automatically Check for New Firmware"
-msgstr ""
+msgstr "Automatski proveri novi Firmver"
 
 #: system/models.py:165
 msgid "Beep on boot"
-msgstr ""
+msgstr "Zvučni signal prilikom pokretanja sistema"
 
 #: system/models.py:167
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "Omogućiti specijalno sistemsko podešavanje"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "Omogućiti powerd (Demon za uštedu energije)"
 
 #: system/models.py:171
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "Omogućiti Zeroconf/Bonjour"
 
 # ovo u zagradi me buni, nisam bas siguran
 #: system/models.py:174
@@ -4690,7 +4729,7 @@ msgstr "Prikazati konzolne poruke u podnožju stranice"
 
 #: system/models.py:182
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "Prikaži pozadinska praćenja u slučaju fatalnih greški"
 
 #: system/models.py:185
 msgid "Show advanced fields by default"
@@ -4702,153 +4741,159 @@ msgstr "Omogućiti automatsko podešavanje"
 
 #: system/models.py:196
 msgid "MOTD banner"
-msgstr ""
+msgstr "MOTD natpis"
 
 #: system/models.py:200 templates/system/settings.html:5
 msgid "Advanced"
-msgstr ""
+msgstr "Napredno"
 
 #: system/models.py:209
 msgid "From email"
-msgstr ""
+msgstr "Iz e-pošte"
 
 #: system/models.py:210
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
+"E-mail adresa koju će sistem koristiti kao adresu za slanje za mail koji "
+"šalje, npr: freenas@example.com"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "Server odlazne pošte"
 
 #: system/models.py:217
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
+"Ime hosta ili IP koja će prihvatiti našu poštu, na primer mail.example.org, "
+"ili 192.168.1.1"
 
 #: system/models.py:224
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "Ceo broj od 1 - 65535, obično će biti 25, 465, ili 587"
 
 #: system/models.py:226
 msgid "Port to connect to"
-msgstr ""
+msgstr "Port za povezivanje sa"
 
 #: system/models.py:232
 msgid "encryption of the connection"
-msgstr ""
+msgstr "enkripcija veze"
 
 #: system/models.py:233
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:236
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "Koristi SMTP potvrdu identiteta"
 
 #: system/models.py:244
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "Korisničko ime za potvrdu identiteta na udaljenom serveru"
 
 #: system/models.py:251
 msgid "A password to authenticate to the remote server"
-msgstr ""
+msgstr "Lozinka za potvrdu identiteta na udaljenom serveru"
 
 #: system/models.py:255 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "E-pošta"
 
 #: system/models.py:266
 msgid "Organization"
-msgstr ""
+msgstr "Organizacija"
 
 #: system/models.py:267
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "Ime organizacije (npr., firma)"
 
 #: system/models.py:273
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Organizaciona jedinica"
 
 #: system/models.py:274
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "Ime organizacione jedinice (na primer, nabavka)"
 
 #: system/models.py:280 system/models.py:281
 msgid "Email Address"
-msgstr ""
+msgstr "Adresa E-pošte"
 
 #: system/models.py:287
 msgid "Locality"
-msgstr ""
+msgstr "Lokalitet"
 
 #: system/models.py:288
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "Ime lokaliteta (npr., grad)"
 
 #: system/models.py:294
 msgid "State"
-msgstr ""
+msgstr "Država"
 
 #: system/models.py:295
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "Država ili pokrajina (puno ime)"
 
 #: system/models.py:301
 msgid "Country"
-msgstr ""
+msgstr "Zemlja"
 
 #: system/models.py:302
 msgid "Country Name (2 letter code)"
-msgstr ""
+msgstr "Ime zemlje (kod koji sadrži 2 slova)"
 
 #: system/models.py:308
 msgid "Common Name"
-msgstr ""
+msgstr "Zajedničko ime"
 
 #: system/models.py:309
 msgid "Common Name (eg, YOUR name)"
-msgstr ""
+msgstr "Zajedničko ime (npr., VAŠE ime)"
 
 #: system/models.py:314
 msgid "SSL Certificate"
-msgstr ""
+msgstr "SSL sertifikat"
 
 #: system/models.py:315
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
 msgstr ""
+"Isecite i nalepite ovde sadržaj fajlova svojih privatnih i javnih "
+"sertifikata."
 
 #: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
-msgstr ""
+msgstr "Korisnik da pokrene komandu"
 
 #: system/models.py:333 templates/system/cronjob.html:11
 msgid "Command"
-msgstr ""
+msgstr "Komanda"
 
 #: system/models.py:337 system/models.py:489 system/models.py:669
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
 msgid "Short description"
-msgstr ""
+msgstr "Kratak opis"
 
 #: system/models.py:374
 msgid "Cron Job"
-msgstr ""
+msgstr "Cron zadatak"
 
 #: system/models.py:375
 msgid "Cron Jobs"
-msgstr ""
+msgstr "Cron zadaci"
 
 #: system/models.py:459
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "IP adresa ili ime hosta"
 
 #: system/models.py:468
 msgid "Remote Module Name"
-msgstr ""
+msgstr "Ime udaljenog modula"
 
 #: system/models.py:470
 msgid "Name of the module defined in the remote rsync daemon"
@@ -4884,23 +4929,23 @@ msgstr ""
 
 #: system/models.py:532
 msgid "Preserve modification times"
-msgstr ""
+msgstr "Očuvaj modifikaciona vremena"
 
 #: system/models.py:536
 msgid "Compress"
-msgstr ""
+msgstr "Komprimovati"
 
 #: system/models.py:537
 msgid "Compress data during the transfer"
-msgstr ""
+msgstr "Komprimuj podatke tokom prenosa"
 
 #: system/models.py:541
 msgid "Archive"
-msgstr ""
+msgstr "Arhiva"
 
 #: system/models.py:542
 msgid "Archive mode"
-msgstr ""
+msgstr "Režim arhiviranja"
 
 #: system/models.py:546 templates/freeadmin/generic_model_edit.html:89
 #: templates/network/interface.html:32 templates/network/lagg.html:44
@@ -4933,11 +4978,11 @@ msgstr ""
 #: templates/system/sysctl.html.py:27 templates/system/tunable.html:25
 #: templates/system/tunable.html.py:27
 msgid "Delete"
-msgstr ""
+msgstr "Izbriši"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr ""
+msgstr "Obrisati datoteke na prijemnoj strani koje ne postoje kod pošiljaoca"
 
 #: system/models.py:553
 msgid "Suppress non-error messages"
@@ -4945,27 +4990,31 @@ msgstr ""
 
 #: system/models.py:557
 msgid "Preserve permissions"
-msgstr ""
+msgstr "Očuvaj dozvole"
 
 #: system/models.py:558
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
+"Ova opcija uzrokuje da primjemni rsync podesi odredišne dozvole da budu iste "
+"kao dozvole izvora"
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
-msgstr ""
+msgstr "Sačuvati proširene atribute"
 
 #: system/models.py:565
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
 msgstr ""
+"Ova opcija čini da rsync ažurira udaljene proširene atribute da budu isti "
+"kao i lokalni"
 
 #: system/models.py:571
 msgid "Extra options to rsync command line (usually empty)"
-msgstr ""
+msgstr "Dodatne opcije za rsync komandnu liniju (obično prazno)"
 
 #: system/models.py:580
 msgid "Rsync Task"
@@ -5013,19 +5062,19 @@ msgstr "Tunables"
 
 #: system/nav.py:5 templates/menubar.html:7
 msgid "System"
-msgstr ""
+msgstr "Sistem"
 
 #: system/nav.py:12 templates/system/reporting.html:1
 msgid "Reporting"
-msgstr ""
+msgstr "Izveštavanje"
 
 #: system/nav.py:20
 msgid "System Information"
-msgstr ""
+msgstr "Informacije o sistemu"
 
 #: system/views.py:129
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "Otpremljena datoteka nije važeća."
 
 #: system/views.py:239
 msgid "Reboot is being issued"
@@ -5057,15 +5106,15 @@ msgstr "Vaša test email poruka je poslata!"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Stranica nije pronađena"
 
 #: templates/base.html:51
 msgid "expand all"
-msgstr ""
+msgstr "Raširi sve"
 
 #: templates/base.html:52
 msgid "collapse all"
-msgstr ""
+msgstr "Skupi sve"
 
 #: templates/menubar.html:36
 msgid "Log Out"
@@ -5082,39 +5131,39 @@ msgstr "Prijavi se"
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "Članovi"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
 #: templates/storage/tasks.html.py:134
 msgid "Modify"
-msgstr ""
+msgstr "Izmeni"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Ukloni"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr ""
+msgstr "Izmeni grupu"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
-msgstr ""
+msgstr "Izbriši grupu"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "Ne postoje definisane grupe korisnika."
 
 #: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
 msgid "Add New Group"
-msgstr ""
+msgstr "Dodaj novu grupu"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
 msgid "Home"
@@ -5123,37 +5172,37 @@ msgstr ""
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr ""
+msgstr "Izmeni korisnika"
 
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
 msgid "Auxiliary Groups"
-msgstr ""
+msgstr "Pomoćne grupe"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr ""
+msgstr "Ukloni korisnika"
 
 #: templates/account/bsdusers.html:58
 msgid "Delete User"
-msgstr ""
+msgstr "Obriši korisnika"
 
 #: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
 #: templates/services/iscsi_auth.html:33
 msgid "No users defined"
-msgstr ""
+msgstr "Nema definisanih korisnika"
 
 #: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
 msgid "Add New User"
-msgstr ""
+msgstr "Dodaj novog korisnika"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
-msgstr ""
+msgstr "Promeni E-mail"
 
 #: templates/account/passform.html:2
 msgid "Change Admin Password"
-msgstr ""
+msgstr "Promeni administratorsku lozinku"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5171,7 +5220,7 @@ msgstr "Napredni režim"
 #: templates/plugins/plugin_info.html:25
 #: templates/storage/scrub_confirm.html:14
 msgid "OK"
-msgstr ""
+msgstr "U redu"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
@@ -5195,7 +5244,7 @@ msgstr "KRITIČAN"
 #: templates/system/reboot_dialog.html:11
 #: templates/system/shutdown_dialog.html:11
 msgid "Cancel"
-msgstr ""
+msgstr "Otkaži"
 
 #: templates/freeadmin/generic_model_delete.html:14
 #, python-format
@@ -5219,11 +5268,11 @@ msgstr ""
 #: templates/storage/zvol_confirm_delete.html:11
 #: templates/system/config_restore.html:5
 msgid "Yes"
-msgstr ""
+msgstr "Da"
 
 #: templates/freeadmin/generic_model_edit.html:13
 msgid "Your changes have been successfully updated!"
-msgstr ""
+msgstr "Vaše promene su uspešno ažurirane!"
 
 #: templates/freeadmin/generic_model_edit.html:57
 msgid "Save"
@@ -5231,13 +5280,12 @@ msgstr "Sačuvati"
 
 #: templates/freeadmin/index.html:33
 msgid "Running Processes"
-msgstr ""
+msgstr "Aktivni procesi"
 
 #: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
 #: templates/freeadmin/index.html:49
-#, fuzzy
 msgid "Loading..."
-msgstr "Restartovanje..."
+msgstr "Učitavanje..."
 
 #: templates/freeadmin/index.html:53
 msgid "Help & Support"
@@ -5245,15 +5293,15 @@ msgstr "Pomoć i podrška"
 
 #: templates/freeadmin/index.html:57
 msgid "Forum"
-msgstr ""
+msgstr "Forum"
 
 #: templates/freeadmin/index.html:59
 msgid "Community Forum"
-msgstr ""
+msgstr "Forum zajednice"
 
 #: templates/freeadmin/index.html:64
 msgid "IRC (Chat)"
-msgstr ""
+msgstr "IRC(ćaskanje)"
 
 #: templates/freeadmin/index.html:66
 msgid "#freenas on freenode"
@@ -5261,7 +5309,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:70
 msgid "Mailing Lists"
-msgstr ""
+msgstr "Liste slanja"
 
 #: templates/freeadmin/index.html:72
 msgid "FreeNAS Announce"
@@ -5289,15 +5337,15 @@ msgstr "FreeNAS prevodi"
 
 #: templates/freeadmin/index.html:82
 msgid "Support Issues"
-msgstr ""
+msgstr "Podrška za probleme"
 
 #: templates/freeadmin/index.html:84
 msgid "Bug Tracker"
-msgstr ""
+msgstr "Praćenje greške"
 
 #: templates/freeadmin/index.html:89
 msgid "Documentation"
-msgstr ""
+msgstr "Dokumentacija"
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Documentation"
@@ -5305,7 +5353,7 @@ msgstr "FreeNAS dokumentacija"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
-msgstr ""
+msgstr "IPv6 Auto"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5316,7 +5364,7 @@ msgstr ""
 #: templates/system/smarttest.html:11 templates/system/sysctl.html:9
 #: templates/system/tunable.html:9
 msgid "Available actions"
-msgstr ""
+msgstr "Dostupne radnje"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -5345,115 +5393,115 @@ msgstr ""
 #: templates/system/sysctl.html.py:21 templates/system/tunable.html:19
 #: templates/system/tunable.html.py:21
 msgid "Edit"
-msgstr ""
+msgstr "Uređivanje"
 
 #: templates/network/interface.html:28 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
 msgid "Edit Interface"
-msgstr ""
+msgstr "Uredi interfejs"
 
 #: templates/network/interface.html:34 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr ""
+msgstr "Izbriši interfejs"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr ""
+msgstr "Nema definisanih interfejsa"
 
 #: templates/network/interface.html:47 templates/network/interface.html:49
 msgid "Add Interface"
-msgstr ""
+msgstr "Dodaj interfejs"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
 #: templates/services/plugins.html:34
 msgid "Actions"
-msgstr ""
+msgstr "Radnje"
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr ""
+msgstr "Uređivanje članova"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr ""
+msgstr "LAGG članovi"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members.html:33
 msgid "No LAGG interface defined"
-msgstr ""
+msgstr "Nema definisanog LAGG interfejsa"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr ""
+msgstr "Dodaj LAGG Interfejs"
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
-msgstr ""
+msgstr "Dodaj LAGG"
 
 #: templates/network/lagg_members.html:6
 msgid "Ordering Priority"
-msgstr ""
+msgstr "Određivanje prioriteta"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
-msgstr ""
+msgstr "Opcija pokretanja"
 
 #: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
 msgid "Action"
-msgstr ""
+msgstr "Radnja"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
 msgid "Add LAGG Member"
-msgstr ""
+msgstr "Dodaj LAGG člana"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr ""
+msgstr "Uredi statičku rutu"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "Izbriši statičku rutu"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr ""
+msgstr "Statička ruta nije definisana"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr ""
+msgstr "Dodaj statičku rutu"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr ""
+msgstr "Server imena"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr ""
+msgstr "Server imena nije definisan"
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr ""
+msgstr "Podrazumevana ruta"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr ""
+msgstr "Nije definisana podrazumevana ruta"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "Izmeni VLAN"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "Izbriši VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr ""
+msgstr "VLAN nije definisan"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr ""
+msgstr "Dodaj VLAN interfejs"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
@@ -5529,12 +5577,12 @@ msgstr "Otpremiti"
 
 #: templates/registration/login.html:40
 msgid "Your username and password didn't match. Please try again."
-msgstr ""
+msgstr "Korisničko ime i lozinka se ne podudaraju. Molimo Vas pokušajte ponovo."
 
 #: templates/registration/login.html:44
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr ""
+msgstr "Dobro došli, %(username)s. Hvala na prijavljivanju."
 
 # nisam siguran????pomoc!!!
 #: templates/registration/login.html:46
@@ -5548,47 +5596,47 @@ msgstr "Molim vas prijavite se."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr ""
+msgstr "Odjavljen"
 
 #: templates/registration/logout.html:24
 msgid "You are now logged out."
-msgstr ""
+msgstr "Vi ste sada odjavljeni."
 
 #: templates/registration/logout.html:24
 msgid "Log back in"
-msgstr ""
+msgstr "Ponovo se prijavite"
 
 #: templates/services/core.html:10
 msgid "AFP Settings"
-msgstr ""
+msgstr "AFP podešavanja"
 
 #: templates/services/core.html:21
 msgid "Active Directory Settings"
-msgstr ""
+msgstr "Podešavanja za Aktivni Direktorijum"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
-msgstr ""
+msgstr "CIFS podešavanja"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
-msgstr ""
+msgstr "Podešavanja za dinamički DNS"
 
 #: templates/services/core.html:56
 msgid "FTP Settings"
-msgstr ""
+msgstr "FTP podešavanja"
 
 #: templates/services/core.html:69
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "ISCSI podešavanja"
 
 #: templates/services/core.html:80
 msgid "LDAP Settings"
-msgstr ""
+msgstr "LDAP podešavanja"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
-msgstr ""
+msgstr "NFS podešavanja"
 
 # dodatna komponenta - dodatak
 #: templates/services/core.html:103 templates/services/core.html.py:105
@@ -5605,7 +5653,7 @@ msgstr "Rsync Podešavanja"
 
 #: templates/services/core.html:128
 msgid "SNMP Settings"
-msgstr ""
+msgstr "SNMP podešavanja"
 
 #: templates/services/core.html:139
 msgid "S.M.A.R.T. Settings"
@@ -5613,11 +5661,11 @@ msgstr "S.M.A.R.T. Podešavanja"
 
 #: templates/services/core.html:150
 msgid "SSH Settings"
-msgstr ""
+msgstr "SSH podešavanja"
 
 #: templates/services/core.html:161
 msgid "TFTP Settings"
-msgstr ""
+msgstr "TFTP podešavanja"
 
 #: templates/services/core.html:172
 msgid "UPS Settings"
@@ -5629,7 +5677,7 @@ msgstr "Želite li da omogućite ovu uslugu?"
 
 #: templates/services/enable.html:16 templates/storage/tasks.html:37
 msgid "No"
-msgstr ""
+msgstr "Ne"
 
 #: templates/services/index.html:2
 msgid "Core"
@@ -5637,11 +5685,11 @@ msgstr "Jezgro"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
-msgstr ""
+msgstr "iSCSI upravljanje"
 
 #: templates/services/iscsi.html:8
 msgid "Portals"
-msgstr ""
+msgstr "Portali"
 
 #: templates/services/iscsi.html:14
 msgid "Authorized Initiators"
@@ -5649,19 +5697,19 @@ msgstr "Autorizovani inicijatori"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
-msgstr ""
+msgstr "Potvrda identiteta"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
-msgstr ""
+msgstr "Ciljevi"
 
 #: templates/services/iscsi.html:38
 msgid "Extents"
-msgstr ""
+msgstr "Oblasti"
 
 #: templates/services/iscsi.html:44
 msgid "Associated Targets"
-msgstr ""
+msgstr "Vezani ciljevi"
 
 #: templates/services/iscsi_assoctargets.html:31
 msgid "No associated targets defined"
@@ -5669,23 +5717,23 @@ msgstr "Nema povezanih definisanih odredišta"
 
 #: templates/services/iscsi_assoctargets.html:37
 msgid "Add Extent to Target"
-msgstr ""
+msgstr "Dodati oblast cilju"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent To Target"
-msgstr ""
+msgstr "Dodati oblast cilju"
 
 #: templates/services/iscsi_auth.html:7
 msgid "Peer"
-msgstr ""
+msgstr "Ravnopravni uređaj"
 
 #: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
 msgid "Add iSCSI User"
-msgstr ""
+msgstr "Dodati iSCSI korisnika"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
-msgstr ""
+msgstr "Autorizovana mreža"
 
 #: templates/services/iscsi_authini.html:35
 msgid "No authorized initiators defined"
@@ -5694,7 +5742,7 @@ msgstr "Nema definisanih ovlašćenih inicijatora"
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
-msgstr ""
+msgstr "Dodaj autorizovani inicijator"
 
 #: templates/services/iscsi_dextents.html:33
 msgid "No device extents defined"
@@ -5703,7 +5751,7 @@ msgstr "Nisu definisana područja uređaja"
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
 msgid "Add Extent"
-msgstr ""
+msgstr "Dodaj oblast"
 
 #: templates/services/iscsi_extents.html:5
 msgid "File Extent"
@@ -5715,7 +5763,7 @@ msgstr "Područja nisu definisana"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
-msgstr ""
+msgstr "Slušaj"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
@@ -5723,11 +5771,11 @@ msgstr "NIje definisan IP za ovaj Portal"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
-msgstr ""
+msgstr "Uredi portal"
 
 #: templates/services/iscsi_portals.html:32
 msgid "Delete Portal"
-msgstr ""
+msgstr "Brisanje portala"
 
 #: templates/services/iscsi_portals.html:39
 msgid "No portals defined"
@@ -5736,16 +5784,16 @@ msgstr "Portali nisu definisani"
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
 msgid "Add Portal"
-msgstr ""
+msgstr "Dodaj portal"
 
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr ""
+msgstr "Ciljevi nisu definisani"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr ""
+msgstr "Dodaj cilj"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 msgid "View Mount Points"
@@ -5798,7 +5846,7 @@ msgstr "Ni jedan rsync modul nije definisan"
 #: templates/sharing/apple.html:5 templates/sharing/unix.html:5
 #: templates/sharing/windows.html:5
 msgid "Active Shares"
-msgstr ""
+msgstr "Aktivni deljeni resursi"
 
 #: templates/sharing/apple.html:7
 msgid "There are no active Apple (AFP) shares."
@@ -5815,7 +5863,7 @@ msgstr "Obrisati Apple (AFP) deljeni resurs"
 #: templates/sharing/apple.html:42 templates/sharing/unix.html:42
 #: templates/sharing/windows.html:46
 msgid "No shares defined"
-msgstr ""
+msgstr "Nisu definisani deljeni resursi"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 msgid "Add Apple (AFP) Share"
@@ -5839,7 +5887,7 @@ msgstr "Nema aktivnih UNIX (NFS) deljenih resursa."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
-msgstr ""
+msgstr "Tačka montiranja"
 
 #: templates/sharing/unix.html:29
 msgid "Edit UNIX (NFS) Share"
@@ -5871,7 +5919,7 @@ msgstr "Dodati Windows (CIFS) deljenje"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "Kloniraj snimak"
 
 #: templates/storage/dataset_confirm_delete.html:5
 #, python-format
@@ -5894,7 +5942,7 @@ msgstr[2] "Ovo će obrisati sve fajlove unutar skupa podataka i podređenih skup
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
-msgstr ""
+msgstr "Urediti skup podataka"
 
 #: templates/storage/datasets.html:3
 #, python-format
@@ -5903,7 +5951,7 @@ msgstr "Kreirati ZFS skup podataka u %(fs)s"
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
-msgstr ""
+msgstr "Dodaj skup podataka"
 
 #: templates/storage/disk_detach.html:7
 #: templates/storage/volume_detach.html:20
@@ -5929,40 +5977,40 @@ msgstr "Zamena diska"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
-msgstr ""
+msgstr "Zameni disk"
 
 #: templates/storage/index.html:2
 msgid "Active Volumes"
-msgstr ""
+msgstr "Aktivni volumeni"
 
 #: templates/storage/index.html:8
 msgid "ZFS Snapshots"
-msgstr ""
+msgstr "ZFS snimci"
 
 #: templates/storage/index.html:20
 msgid "ZFS Replication"
-msgstr ""
+msgstr "ZFS replikacija"
 
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
-msgstr ""
+msgstr "Ručno kreiraj snimak"
 
 #: templates/storage/permission.html:2
 msgid "Change"
-msgstr ""
+msgstr "Promeni"
 
 #: templates/storage/permission.html:4
 msgid "Change permission"
-msgstr ""
+msgstr "Promeni dozvolu"
 
 #: templates/storage/permission.html:5
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "Promeni dozvolu na %(path)s u"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
-msgstr ""
+msgstr "Dodaj replikaciju"
 
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
@@ -5979,25 +6027,25 @@ msgstr ""
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
-msgstr ""
+msgstr "Poslednji snimak"
 
 #: templates/storage/replications.html:23
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "Udaljeni ZFS sistem datoteka"
 
 #: templates/storage/replications.html:37
 #: templates/storage/replications.html:41
 msgid "Delete Replication"
-msgstr ""
+msgstr "Izbriši replikaciju"
 
 #: templates/storage/replications.html:46
 #: templates/storage/replications.html:50
 msgid "Edit Replication"
-msgstr ""
+msgstr "Uredi replikaciju"
 
 #: templates/storage/replications.html:56
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "ZFS replikacija nije dostupna"
 
 #: templates/storage/scrub.html:42
 msgid "No scrub tasks defined."
@@ -6033,7 +6081,7 @@ msgstr ""
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
-msgstr ""
+msgstr "Kloniraj snimak"
 
 #: templates/storage/snapshots.html:32
 msgid "Destroy Snapshot"
@@ -6049,7 +6097,7 @@ msgstr "Vraćanje snimka"
 
 #: templates/storage/snapshots.html:53
 msgid "Rollback to this snapshot"
-msgstr ""
+msgstr "Vrati na ovaj snimak"
 
 #: templates/storage/snapshots.html:126
 msgid "Destroy"
@@ -6061,35 +6109,35 @@ msgstr "Brisanje snimaka"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
-msgstr ""
+msgstr "Periodični snimci"
 
 #: templates/storage/tasks.html:13
 msgid "Periodic Snapshot Schedule"
-msgstr ""
+msgstr "Periodični raspored uzimanja snimka"
 
 #: templates/storage/tasks.html:16
 msgid "There are no scheduled snapshots."
-msgstr ""
+msgstr "Nema zakazanih snimaka."
 
 #: templates/storage/tasks.html:23
 msgid "How"
-msgstr ""
+msgstr "Kako"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
-msgstr ""
+msgstr "Zadrži snimak za"
 
 #: templates/storage/tasks.html:41
 msgid "From"
-msgstr ""
+msgstr "Od"
 
 #: templates/storage/tasks.html:43
 msgid "through"
-msgstr ""
+msgstr "kroz"
 
 #: templates/storage/tasks.html:45
 msgid ", every"
-msgstr ""
+msgstr ", svaki"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
@@ -6145,7 +6193,7 @@ msgstr "Editovati ZFS Opcije"
 #: templates/storage/volumes.html:227 templates/storage/volumes.html.py:231
 #: templates/storage/volumes.html:257 templates/storage/volumes.html.py:261
 msgid "Create Snapshot"
-msgstr ""
+msgstr "Kreiraj snimak"
 
 #: templates/storage/volumes.html:159 templates/storage/volumes.html.py:163
 msgid "Volume Status"
@@ -6299,13 +6347,15 @@ msgstr "Dodati NTP server"
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
 msgid "Warning!"
-msgstr ""
+msgstr "Upozorenje!"
 
 #: templates/system/reboot_dialog.html:4
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
 msgstr ""
+"Vi se spremate da <strong>PONOVO POKRENETE</strong> sistem, šta želite da "
+"učinite?"
 
 #: templates/system/reporting.html:2
 msgid "History"
@@ -6357,10 +6407,11 @@ msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
 msgstr ""
+"Vi se spremate da <strong>UGASITE</strong> sistem, šta želite da učinite?"
 
 #: templates/system/smarttest.html:16
 msgid "Unknown"
-msgstr ""
+msgstr "Nepoznat"
 
 #: templates/system/smarttest.html:38
 msgid "No S.M.A.R.T. tests defined"
@@ -6545,7 +6596,7 @@ msgid "The volume failed to export"
 msgstr "Volumen nije uspešno izvezen"
 
 msgid "Used space"
-msgstr "Iskorišten prostor"
+msgstr "Upotrebljen prostor"
 
 msgid "Restore to Factory Defaults"
 msgstr "Vratiti na fabrička podrazumevana podešavanja"

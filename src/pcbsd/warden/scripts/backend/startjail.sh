@@ -49,7 +49,7 @@ start_jail_vimage()
   ifconfig ${BRIDGE} addm ${EPAIRA} up
 
   # If no bridge specified, and IP4 is enabled, lets suggest one
-  if [ -z "$BRIDGEIP4" -a -n "$IP4" ] ; then
+  if [ -z "$BRIDGEIP4" -a -n "$IP4" -a "${NATENABLE}" = "YES" ] ; then
      BRIDGEIP4="`echo $IP4 | cut -d '.' -f 1-3`.254"
   fi
 
@@ -97,6 +97,13 @@ start_jail_vimage()
   fi
 
   JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
+
+  if [ -e "${JMETADIR}/mac" ] ; then
+    MAC="$(cat "${JMETADIR}/mac")"
+    if [ -n "${MAC}" ] ; then
+      ifconfig ${EPAIRB} ether "${MAC}"
+    fi
+  fi
 
   # Move epairb into jail
   ifconfig ${EPAIRB} vnet ${JID}
@@ -174,7 +181,14 @@ start_jail_vimage()
   # If NAT is not enabled, return now
   #
   if [ "${NATENABLE}" = "NO" ] ; then
-      return 0
+     if [ -z "${GATEWAY4}" ] ; then
+        GATEWAY4="$(get_default_route)"
+     fi 
+     if [ -n "${GATEWAY4}" ] ; then 
+        jexec ${JID} route add -inet default ${GATEWAY4}
+     fi
+
+     return 0
   fi
 
   #
@@ -211,10 +225,9 @@ __EOF__
            mv /var/tmp/rc.conf.bak /etc/rc.conf
         fi
      fi
-     /etc/rc.d/ipfw forcerestart
+     /sbin/ipfw -f flush 
+     warden_run ipfw add allow all from any to any via lo0
   fi
-
-  warden_run ipfw 100 add allow ip from any to any
 
   prioroty=0
   instance=`get_ipfw_nat_instance "${IFACE}"`
@@ -229,39 +242,45 @@ __EOF__
   ext_ip4=`get_interface_ipv4_address "${IFACE}"`
   ext_ip6=`get_interface_ipv6_address "${IFACE}"`
 
-  warden_run ipfw "${priority}" nat config if "${IFACE}" reset
+  warden_run ipfw nat "${instance}" config if "${IFACE}" reset same_ports unreg_only log
+  if [ -n "${ext_ip4}" ] ; then
+     ipfw list | grep -q "from any to ${ext_ip4} in recv ${IFACE}"
+     if [ "$?" != "0" ] ; then
+        warden_run ipfw add nat "${instance}" \
+           all from any to ${ext_ip4} in recv ${IFACE}
+     fi
+  fi
+  if [ -n "${ext_ip6}" ] ; then
+     ipfw list | grep -q "from any to ${ext_ip6} in recv ${IFACE}"
+     if [ "$?" != "0" ] ; then
+        warden_run ipfw add nat "${instance}" \
+           all from any to ${ext_ip6} in recv ${IFACE}
+     fi
+  fi
+
   if [ -n "${IP4}" ] ; then
      get_ip_and_netmask "${IP4}"
-     warden_run ipfw "${priority}" add nat "${instance}" \
+     warden_run ipfw add nat "${instance}" \
         all from ${JIP} to any out xmit ${IFACE}
   fi
   for ip4 in ${IPS4}
   do
      get_ip_and_netmask "${ip4}"
-     warden_run ipfw "${priority}" add nat "${instance}" \
+     warden_run ipfw add nat "${instance}" \
         all from ${JIP} to any out xmit ${IFACE}
   done
 
   if [ -n "${IP6}" ] ; then
      get_ip_and_netmask "${IP6}"
-     warden_run ipfw "${priority}" add nat "${instance}" \
+     warden_run ipfw add nat "${instance}" \
         all from ${JIP} to any out xmit ${IFACE}
   fi
   for ip6 in ${IPS6}
   do
      get_ip_and_netmask "${ip6}"
-     warden_run ipfw "${priority}" add nat "${instance}" \
+     warden_run ipfw add nat "${instance}" \
         all from ${JIP} to any out xmit ${IFACE}
   done
-
-  if [ -n "${ext_ip4}" ] ; then
-     warden_run ipfw "${priority}" add nat "${instance}" \
-        all from any to ${ext_ip4} in recv ${IFACE}
-  fi
-  if [ -n "${ext_ip6}" ] ; then
-     warden_run ipfw "${priority}" add nat "${instance}" \
-        all from any to ${ext_ip6} in recv ${IFACE}
-  fi
 
 # End of jail VIMAGE startup function
 }

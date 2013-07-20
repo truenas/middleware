@@ -32,13 +32,16 @@ export MAKE_JOBS
 # Available targets to build
 BUILD_TARGETS="\
 os-base \
-plugins-base \
 plugins/transmission \
 plugins/firefly \
 plugins/minidlna \
 "
 
-# Targets to build (os-base, plugins-base, plugins/<plugin>).
+# Build with jails
+WITH_JAILS=0
+export WITH_JAILS
+
+# Targets to build (os-base, plugins/<plugin>).
 TARGETS=""
 
 # Should we update src + ports?
@@ -77,7 +80,7 @@ fi
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-aBfsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-- nanobsd-options]
+usage: ${0##*/} [-aBfJsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-- nanobsd-options]
 
 -a		- Build all targets
 -B		- don't build. Will pull the sources and show you the
@@ -88,8 +91,9 @@ usage: ${0##*/} [-aBfsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [--
 		  specified twice, this won't pass any options to nanobsd.sh,
 		  which will force a pristine build.
 -j make-jobs	- number of make jobs to run; defaults to ${MAKE_JOBS}.
+-J		- Build with jails
 -s		- show build targets
--t target	- target to build (os-base, plugins-base, <plugin-name>, etc).
+-t target	- target to build (os-base, <plugin-name>, etc).
 		  This switch can be used more than once to specify multiple targets.
 -u		- force an update via csup (warning: there are potential
 		  issues with newly created files via patch -- use with
@@ -114,7 +118,7 @@ show_build_targets()
 
 parse_cmdline()
 {
-	while getopts 'aBfj:st:uxz' _optch
+	while getopts 'aBfJj:st:uxz' _optch
 	do
 		case "${_optch}" in
 		a)
@@ -132,6 +136,9 @@ parse_cmdline()
 				usage
 			fi
 			MAKE_JOBS=${OPTARG}
+			;;
+		J)	WITH_JAILS=1
+			export WITH_JAILS
 			;;
 		s)	
 			show_build_targets
@@ -223,6 +230,8 @@ install_pbi_manager()
 	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi-crashhandler
 	rm -f ${PBI_BINDIR}/pbi-manager
 
+	cp ${TOP}/src/pcbsd/libsh/functions.sh ${PBI_BINDIR}/functions.sh
+
 	PATH="${PBI_BINDIR}:${PATH}"
 	export PATH
 }
@@ -294,6 +303,7 @@ build_target()
 
 	if ! $BUILD
 	then
+		echo ${_cmd}
 		exit 0
 	fi
 
@@ -350,6 +360,10 @@ freebsd_checkout_svn()
 freebsd_checkout_git()
 {
 	(
+	local _depth_arg="--depth 1"
+	if [ "x${GIT_TAG}" != "x" ] ; then
+		_depth_arg=""
+	fi
 	: ${GIT_BRANCH=freenas-9-stable}
 	: ${GIT_REPO=https://github.com/trueos/trueos.git}
 	cd "$AVATAR_ROOT/FreeBSD"
@@ -359,11 +373,11 @@ freebsd_checkout_git()
 
 			git checkout ${GIT_BRANCH}
 		fi
-		git pull --depth 1
+		git pull $_depth_arg
 		cd ..
 	else
 		spl="$-";set -x
-		git clone -b ${GIT_BRANCH} ${GIT_REPO} --depth 1 src
+		git clone -b ${GIT_BRANCH} ${GIT_REPO} $_depth_arg src
 		echo $spl | grep -q x || set +x
 		if [ "x${GIT_TAG}" != "x" ] ; then
 			(
@@ -428,21 +442,25 @@ checkout_freebsd_source()
 ports_checkout_git()
 {
 	(
+	local _depth_arg="--depth 1"
+	if [ "x${GIT_PORTS_TAG}" != "x" ] ; then
+		_depth_arg=""
+	fi
 	cd "$AVATAR_ROOT/FreeBSD"
 	if [ -d ports/.git ] ; then
 		cd ports
-		git pull --depth 1
+		git pull $_depth_arg
 		cd ..
 	else
 		: ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
 		: ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
 		spl="$-";set -x
-		git clone -b ${GIT_PORTS_BRANCH} ${GIT_PORTS_REPO} --depth 1 ports
+		git clone -b ${GIT_PORTS_BRANCH} ${GIT_PORTS_REPO} $_depth_arg ports
 		echo $spl | grep -q x || set +x
 		if [ "x${GIT_PORTS_TAG}" != "x" ] ; then
 			(
 			spl="$-";set -x
-			cd src && git checkout "tags/${GIT_PORTS_TAG}"
+			cd ports && git checkout "tags/${GIT_PORTS_TAG}"
 			echo $spl | grep -q x || set +x
 			)
 		fi
@@ -535,7 +553,7 @@ do_pbi_wrapper_hack()
 	fi
 	cp ${_src}/* ${_dst}
 
-	NANO_LOCAL_DIRS="pbi-wrapper"
+	NANO_LOCAL_DIRS="${NANO_LOCAL_DIRS} pbi-wrapper"
 	export NANO_LOCAL_DIRS
 }
 

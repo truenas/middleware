@@ -9,18 +9,12 @@
 .dgrid-pagination .dgrid-navigation, .dgrid-pagination .dgrid-page-size {
 	float: right;
 }
-.dgrid-navigation a {
+.dgrid-navigation .dgrid-page-link {
+	cursor: pointer;
 	font-weight: bold;
 	text-decoration: none;
 	color: inherit;
 	padding: 0 4px;
-}
-.has-ie-6-7 .dgrid-navigation a,
-.has-ie.has-quirks .dgrid-navigation a {
-	/* IE < 8 (and IE quirksmode) doesn't support inherit in most cases.
-		Unfortunately this makes more work for some skins as well...
-	*/
-	color: #000;
 }
 .dgrid-first, .dgrid-last, .dgrid-next, .dgrid-previous {
 	font-size: 130%;

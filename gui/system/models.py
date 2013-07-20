@@ -906,6 +906,8 @@ class InitShutdown(Model):
     )
     ini_script = PathField(
         verbose_name=_("Script"),
+        filesonly=True,
+        dirsonly=False,
         blank=True,
     )
     ini_when = models.CharField(

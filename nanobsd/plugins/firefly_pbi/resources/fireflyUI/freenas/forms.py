@@ -95,7 +95,7 @@ class FireflyForm(forms.ModelForm):
             f.write("port = %d\n" % (obj.port, ))
             f.write("admin_pw = %s\n" % (obj.admin_pw, ))
             f.write("db_type = %s\n" % ("sqlite3", ))
-            f.write("db_params = %s\n" % ("/var/cache/mt-daapd", ))
+            f.write("db_parms = %s\n" % ("/var/db/mt-daapd", ))
             f.write("mp3_dir = %s\n" % (obj.mp3_dir, ))
             f.write("servername = %s\n" % (obj.servername, ))
             f.write("runas = %s\n" % ("daapd", ))

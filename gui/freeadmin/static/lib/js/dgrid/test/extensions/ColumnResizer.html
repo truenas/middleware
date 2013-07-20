@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Test Grid Column Resize</title>
+		<title>Test Column Resizer</title>
 		<meta name="viewport" content="width=800">
 		<style>
 			@import "../../../dojo/resources/dojo.css";
@@ -95,18 +95,24 @@
 					};
 					columns1 = lang.clone(columns);
 
-					columns2 = { // you can declare columns as an object hash (key translates to field)
-						col2: 'Col2',
-						col4: {label: 'Col4', sortable: false},
-						col1: 'Col1',
-						col5: 'Column 5'
-					};
+					// columns2 tests using an array of columns with explicit IDs
+					columns2 = [
+						{ id: "col2", field: "col2", label: "Column 2" },
+						{ id: "col4", field: "col4", label: "Column 4", sortable: false },
+						{ id: "col1", field: "col1", label: "Column 1" },
+						{ id: "col5", field: "col5", label: "Column 5" }
+					];
 
 					var ResizeGrid = declare([Grid, Selection, ColumnResizer]);
 					window.grid = new ResizeGrid({
 						store: testStore,
 						columns: columns1
 					}, "grid");
+					window.gridPeriod = new ResizeGrid({
+						id: "gridPeriod",
+						store: testStore,
+						columns: columns1
+					}, "grid.period");
 					window.gridWide = new ResizeGrid({
 						store: testStore,
 						columns: lang.clone(columns)
@@ -156,6 +162,12 @@
 			<button onclick="grid.set('columns', columns2);">New Structure</button>
 			<button onclick="grid.set('columns', columns1);">Original</button>
 		</div>
+		<div>Buttons to test adjusting last column when resizing below the table's width:
+			<button onclick="grid.set('adjustLastColumn', true);">Enable</button>
+			<button onclick="grid.set('adjustLastColumn', false);">Disable</button>
+		</div>
+		<h2>A basic grid with a period in its ID, to ensure injected size rules work</h2>
+		<div id="grid.period"></div>
 		<h2>Another grid w/ columns whose width initially exceed the table's width,
 			placed within a relatively-positioned element</h2>
 		<div class="testrelative">

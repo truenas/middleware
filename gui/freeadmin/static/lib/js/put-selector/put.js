@@ -12,8 +12,8 @@ define([], forDocument = function(doc, newFragmentFasterHeuristic){
 	//		To create a simple div with a class name of "foo":
 	//		|	put("div.foo");
 	fragmentFasterHeuristic = newFragmentFasterHeuristic || fragmentFasterHeuristic;
-	var selectorParse = /(?:\s*([-+ ,<>]))?\s*(\.|!\.?|#)?([-\w%$]+)?(?:\[([^\]=]+)=?['"]?([^\]'"]*)['"]?\])?/g,
-		undefined,
+	var selectorParse = /(?:\s*([-+ ,<>]))?\s*(\.|!\.?|#)?([-\w%$|]+)?(?:\[([^\]=]+)=?['"]?([^\]'"]*)['"]?\])?/g,
+		undefined, namespaceIndex, namespaces = false,
 		doc = doc || document,
 		ieCreateElement = typeof doc.createElement == "object"; // telltale sign of the old IE behavior with createElement that does not support later addition of name 
 	function insertTextNode(element, text){
@@ -121,7 +121,10 @@ define([], forDocument = function(doc, newFragmentFasterHeuristic){
 								// in IE, we have to use the crazy non-standard createElement to create input's that have a name 
 								tag = '<' + tag + ' name="' + ieInputName + '">';
 							}
-							current = doc.createElement(tag);
+							// we swtich between creation methods based on namespace usage
+							current = namespaces && ~(namespaceIndex = tag.indexOf('|')) ?
+								doc.createElementNS(namespaces[tag.slice(0, namespaceIndex)], tag.slice(namespaceIndex + 1)) : 
+								doc.createElement(tag);
 						}
 					}
 					if(prefix){
@@ -143,9 +146,15 @@ define([], forDocument = function(doc, newFragmentFasterHeuristic){
 							}else{
 								// else a '!' class removal
 								if(argument == "!"){
+									var parentNode;
 									// special signal to delete this element
-									// use the ol' innerHTML trick to get IE to do some cleanup
-									put("div", current, '<').innerHTML = "";
+									if(ieCreateElement){
+										// use the ol' innerHTML trick to get IE to do some cleanup
+										put("div", current, '<').innerHTML = "";
+									}else if(parentNode = current.parentNode){ // intentional assigment
+										// use a faster, and more correct (for namespaced elements) removal (http://jsperf.com/removechild-innerhtml)
+										parentNode.removeChild(current);
+									}
 								}else{
 									// we already have removed the class, just need to trim
 									removed = removed.substring(1, removed.length - 1);
@@ -167,7 +176,12 @@ define([], forDocument = function(doc, newFragmentFasterHeuristic){
 							// handle the special case of setAttribute not working in old IE
 							current.style.cssText = attrValue;
 						}else{
-							current[attrName.charAt(0) == "!" ? (attrName = attrName.substring(1)) && 'removeAttribute' : 'setAttribute'](attrName, attrValue === '' ? attrName : attrValue);
+							var method = attrName.charAt(0) == "!" ? (attrName = attrName.substring(1)) && 'removeAttribute' : 'setAttribute';
+							attrValue = attrValue === '' ? attrName : attrValue;
+							// determine if we need to use a namespace
+							namespaces && ~(namespaceIndex = attrName.indexOf('|')) ?
+								current[method + "NS"](namespaces[attrName.slice(0, namespaceIndex)], attrName.slice(namespaceIndex + 1), attrValue) :
+								current[method](attrName, attrValue);
 						}
 					}
 					return '';
@@ -185,16 +199,30 @@ define([], forDocument = function(doc, newFragmentFasterHeuristic){
 		}
 		return returnValue;
 	}
+	put.addNamespace = function(name, uri){
+		if(doc.createElementNS){
+			(namespaces || (namespaces = {}))[name] = uri;
+		}else{
+			// for old IE
+			doc.namespaces.add(name, uri);
+		}
+	};
 	put.defaultTag = "div";
 	put.forDocument = forDocument;
 	return put;
 });
-})(typeof define == "undefined" ? function(deps, factory){
-	if(typeof window == "undefined"){
+})(function(id, deps, factory){
+	factory = factory || deps;
+	if(typeof define === "function"){
+		// AMD loader
+		define([], function(){
+			return factory();
+		});
+	}else if(typeof window == "undefined"){
 		// server side JavaScript, probably (hopefully) NodeJS
 		require("./node-html")(module, factory);
 	}else{
 		// plain script in a browser
 		put = factory();
 	}
-} : define);
+});

@@ -63,6 +63,7 @@ Options:
   -o outdir    -- Where to place the finished PBI file(s) <required>
   -p <num>     -- Number of PBI builds to run concurrently (Defaults to 1)
   -32          -- Build i386 PBIs on amd64 host
+  -32fallback  -- On amd64 host, build 32bit PBIs if only i386 can be built
   --genpatch   -- Generate patch files (*.pbp) from archived PBIs to current
   --keep <num> -- Keep <num> old versions in archive folder for each built PBI
   --prune      -- Remove files from 'outdir' that no longer have a module
@@ -1018,6 +1019,11 @@ parse_autob_pbi_cmdline() {
 			PBI_AB32="YES"
 			ARCH=i386
                         ;;
+        -32fallback)    if [ "$REALARCH" != "amd64" ] ; then 
+				exit_err "-32fallback can only be used on amd64 host"
+			fi	
+			PBI_ABFB32="YES"
+                        ;;
 
         --genpatch)     PBI_AB_GENPATCH="YES" 
                         ;;
@@ -1323,6 +1329,7 @@ init_vars() {
         # Where is pbi-manager installed?
         PROGBASE=/usr/local
 	SYS_LOCALBASE=/usr/local
+	PBI_SHARE_DIR="${PROGBASE}/share/pbi-manager"
 	if [ -z "${PBI_BINDIR}" ]
 	then
 		PBI_BINDIR="${PROGBASE}/sbin"
@@ -1330,10 +1337,10 @@ init_vars() {
 	if [ -z "${PBI_APPDIR}" -o "`basename $0`" = "pbi_makeport_chroot" ] ; then
 		PBI_APPDIR="/usr/pbi"
         fi
-	PBI_WRAPPERFILE="${PBI_APPDIR}/.pbiwrapper"
-	if [ -n "${PBI_BUILDDIR}" ] ; then
-		PBI_WRAPPERFILE="${PBI_BUILDDIR}/.pbiwrapper"
-	fi
+	PBI_WRAPPERFILE="${PBI_APPDIR}/.pbiwrapper-${ARCH}"
+	#if [ -n "${PBI_BUILDDIR}" ] ; then
+	#	PBI_WRAPPERFILE="${PBI_BUILDDIR}/.pbiwrapper-${ARCH}"
+	#fi
 
 	# Set the FreeBSD Major & Release
   	FBSDREL=`uname -r`
@@ -1348,7 +1355,7 @@ init_vars() {
 		PKGEXT="tbz"
 	fi
 
-	PBI_CHROOTFILE="${PBI_APPDIR}/.pbi-world-$ARCH.txz"
+	PBI_WORLDCHROOT="${PBI_APPDIR}/.pbi-world-$ARCH"
 	if [ `id -u` = "0" ] ; then 
 		PBI_HASHDIR="${PBI_APPDIR}/.hashdir"
 	else
@@ -1368,8 +1375,28 @@ init_vars() {
 	PBI_PATCH_ICON="${PROGBASE}/share/pbi-manager/icons/patch.png"
 	PBI_LDCONFIGFILE="${PROGBASE}/etc/ldpbiconfig"
 	PBI_LDCONFIGRC="${PROGBASE}/etc/rc.d/ldpbiconfig"
+
+	# Set the PBI DB dir
+	if [ -z "${PBI_DBDIR}" ] ; then
+		PBI_DBDIR="/var/db/pbi"
+	fi
+	PBI_DBKEYDIR="${PBI_DBDIR}/keys"
 	PROGVERSION="1.0"
-	PBIDSLEEP="300"		# Amount of time to sleep before waking up pbid
+
+	# Load the etc/pbi.conf file
+	load_pbi_etcconf
+
+	# Overrides from pbi.conf
+	if [ -z "$PBIDSLEEP" ] ; then
+		PBIDSLEEP="300"	# Amount of time to sleep before waking up pbid
+	fi
+	if [ -z "$PBI_INDEXREFRESH" ] ; then
+		PBI_INDEXREFRESH="24" # Hours to wait until we re-download PBI indexes
+	fi
+	if [ -n "$PBI_MAJORVERSION" ] ; then
+		FBSDMAJOR=${PBI_FBSDMAJOR}
+	fi
+
 	PBI_LOG_LINES="500"
 	PBI_INSTALLGROUP="operator"
 
@@ -1412,7 +1439,6 @@ init_vars() {
 	PBI_FILENAME=""
 	PBI_FORCEADD="NO"
 	PBI_HASHLIST=".pbi-hash-list"
-	PBI_INDEXREFRESH="24" # Hours to wait until we re-download PBI indexes
 	PBI_INDEXUPFILE="pbi-index-$FBSDMAJOR"
 	PBI_METAUPFILE="pbi-meta-$FBSDMAJOR"
 	PBI_INFONAME=""
@@ -1469,15 +1495,11 @@ init_vars() {
 	PBI_CREATE_HASHLIST="YES"
 	PBI_CUPDATE=""
 	PBI_CWEB=""
-	if [ -z "${PBI_DBDIR}" ] ; then
-		PBI_DBDIR="/var/db/pbi"
-	fi
 	PBI_DBAPPDIR="${PBI_DBDIR}/installed"
 	PBI_DBDIRTYFILE="${PBI_DBDIR}/.hashdirty"
 	PBI_DBHASHQUEUEDIR="${PBI_DBDIR}/.hashqueue"
 	PBI_DBICONDIR="${PBI_DBDIR}/repo-icons"
 	PBI_DBINDEXDIR="${PBI_DBDIR}/index"
-	PBI_DBKEYDIR="${PBI_DBDIR}/keys"
 	PBI_DBMIRRORDIR="${PBI_DBDIR}/mirrors"
 	PBI_DBREPODIR="${PBI_DBDIR}/repos"
 	PBI_DISABLEHASHDIR="NO"
@@ -1507,6 +1529,7 @@ init_vars() {
 	PBI_USESYSFONTS="YES"
 	PBI_VERBOSE="NO"
 	PORTSDIR="/usr/ports"
+
 }
 
 detect_pkgng()
@@ -1518,10 +1541,12 @@ detect_pkgng()
                 export PKGNG=1
                 export PKG_ADD="pkg add"
                 export PKG_DELETE="pkg delete -y -f"
+		export PKGEXT=txz
         else
                 export PKGNG=0
                 export PKG_ADD=pkg_add
                 export PKG_DELETE=pkg_delete
+		export PKGEXT=tbz
         fi
 
 }
@@ -1764,7 +1789,6 @@ set_make_options() {
 	export FORCE_PKG_REGISTER
 
 }
-
 
 # Confirm we are running as root
 require_root() {
@@ -3764,8 +3788,7 @@ mk_path_wrappers() {
 	fi
 
 	# Copy the wrapper binary
-	#PBI_WRAPPERFILE="${PBI_APPDIR}/.pbiwrapper-$ARCH"
-	PBI_WRAPPERFILE="${PBI_APPDIR}/.pbiwrapper"
+	PBI_WRAPPERFILE="/.pbiwrapper-${ARCH}"
 	cp ${PBI_WRAPPERFILE} ${dir}/${fbin}
 	chmod 755 ${dir}/${fbin}
 
@@ -5355,12 +5378,23 @@ pbi_add_fetch_remote() {
 	_rVer="current"
 	if [ -n "$PBI_ADD_ALTVER" ] ; then _rVer=$PBI_ADD_ALTVER ; fi
 
-
 	check_pbi_update "$_rtar" "nodisplay" \
 	 "$_rtar" "$_rVer" \
 	 "$FBSDMAJOR" "$_rArch" "${PBI_ADDREPO_ID}"
 	if [ "$?" != "0" ] ; then 
-		exit_err "Could not find \"$_rtar\" in any indexes" 
+		# If we are on amd64, do a fallback check to i386 for this PBI
+		# This catches apps like wine / skype and others
+		if [ "$_rArch" = "amd64" ] ; then
+			_rArch="i386"
+			check_pbi_update "$_rtar" "nodisplay" \
+	 		"$_rtar" "$_rVer" \
+	 		"$FBSDMAJOR" "$_rArch" "${PBI_ADDREPO_ID}"
+			if [ "$?" != "0" ] ; then 
+				exit_err "Could not find \"$_rtar\" in any indexes" 
+			fi
+		else
+			exit_err "Could not find \"$_rtar\" in any indexes" 
+		fi
 	fi
 
 	# We've gotten this far, now download the updated PBI
@@ -5508,19 +5542,27 @@ pbi_update_dl() {
 	# Start download from repos mirror(s) in order
 	for _cMirror in $_mirrorList
 	do
-		if [ "$_cMirror" = "PCBSDCDN" ] ; then
-			get_pcbsd_mirror
-			_furl="${VAL}${_uFile}"
+		if [ "$_cMirror" = "PCBSDCDN" -o "$_cMirror" = "http://pbi.cdn.pcbsd.org" ] ; then
+
+			# Strip the /PBI from the mirror URL
+			_uFile="`echo ${_uFile} | sed 's|^/PBI||g'`"
+			
+			get_file_from_mirrors "${_uFile}" "$_dl_loc" "pbi"
+			if [ "$?" != "0" ]  ; then 
+				rm "${_dl_loc}" >/dev/null 2>/dev/null
+				echo "Download Failed: ${_furl}"
+				continue
+			fi
 		else
 			_furl="`echo $_cMirror | sed 's/\/*$//'`${_uFile}"
-		fi
 
-		echo "Downloading ${_furl}"
-		pbi_get_file "$_furl" "$_dl_loc"
-		if [ "$?" != "0" ]  ; then 
-			rm "${_dl_loc}" >/dev/null 2>/dev/null
-			echo "Download Failed: ${_furl}"
-			continue
+			echo "Downloading ${_furl}"
+			pbi_get_file "$_furl" "$_dl_loc"
+			if [ "$?" != "0" ]  ; then 
+				rm "${_dl_loc}" >/dev/null 2>/dev/null
+				echo "Download Failed: ${_furl}"
+				continue
+			fi
 		fi
 		_upcsum=`sha256 -q "$_dl_loc"`
 		if [ "$_CKSUM" != "OFF" -a "$_upcsum" != "$PBI_UPCSUM" ] ; then
@@ -5600,12 +5642,14 @@ is_num()
 check_port_compat_arch()
 {
 	local sPort=$1
+        have32="false";
  	local cValues="`make -C $sPort -V ONLY_FOR_ARCHS PORTSDIR=${PORTSDIR}`"
 	if [ -z "$cValues" ] ; then return 0 ; fi
 
 	for cArch in $cValues
 	do
 		if [ "$cArch" = "$ARCH" ] ; then return 0; fi
+                if [ "$cArch" = "i386" ] ; then have32="true" ; fi
 	done
 	
 	return 1
@@ -5764,8 +5808,14 @@ ab_get_build_list()
 	# Check if this port can be built on this architecture
 	check_port_compat_arch "${PORTSDIR}/${PBI_MAKEPORT}"
 	if [ "$?" = "1" ] ; then
-		#echo "${PBI_MAKEPORT} - Skipping for invalid system arch"
+           if [ "$PBI_ABFB32" != "YES" ] ; then
+		echo "${PBI_MAKEPORT} - Skipping for invalid system arch"
 		continue
+           fi
+           if [ "$have32" != "true" ] ; then
+		echo "${PBI_MAKEPORT} - Skipping for invalid system arch"
+		continue
+           fi
 	fi
 	
 	# Check for missing port target
@@ -5830,8 +5880,10 @@ ab_get_build_list()
   done
 
   # Sort the list
-  sort -n -r ${PBI_TMPDIR}/.abtmp > ${PBI_TMPDIR}/.ablist
-  rm ${PBI_TMPDIR}/.abtmp
+  if [ -e "${PBI_TMPDIR}/.abtmp" ] ; then
+    sort -n -r ${PBI_TMPDIR}/.abtmp > ${PBI_TMPDIR}/.ablist
+    rm ${PBI_TMPDIR}/.abtmp
+  fi
 }
 
 start_next_ab_target()
@@ -5930,6 +5982,14 @@ start_ext_ab() {
 
 	# Are we doing 32bit builds?
  	if [ "$PBI_AB32" = "YES" ] ; then _flags="${_flags} -32"; fi
+
+        # Check if this port can be built on this architecture
+        check_port_compat_arch "${PORTSDIR}/${_mp}"
+        if [ $? -ne 0 ] ; then
+           if [ "$PBI_ABFB32" = "YES" -a "$have32" = "true" ] ; then
+ 	      _flags="${_flags} -32"
+           fi
+        fi
 
 	get_pbi_progversion
 
@@ -6605,6 +6665,7 @@ do_pbi_make() {
 	fi
 
 	if [ "`basename $0`" != "pbi_makeport_chroot" ] ; then return ; fi
+	
 
   	# Check if we have some specific make options to use
   	load_pbi_conffile
@@ -6755,10 +6816,11 @@ chroot_make_cleanup() {
         isDirZFS "${PBI_CHROOTDIR}" "1"
         if [ $? -eq 0 ] ; then
    	     tank=`getZFSTank "$PBI_CHROOTDIR"`
+             rp=`getZFSRelativePath "$PBI_CHROOTDIR"`
 	     sleep 1
 	     # If we are running as a result of pbi_autobuild, let it do the ZFS cleanup
 	     if [ -z "${PBI_AB_TMPDIR}" ] ; then
-             	zfs destroy ${tank}${PBI_CHROOTDIR}
+             	zfs destroy ${tank}${rp}
   	     	rmdir ${PBI_CHROOTDIR} >/dev/null 2>/dev/null
 	     fi
 	     return
@@ -6774,19 +6836,12 @@ chroot_make_cleanup() {
 chroot_extract() {
 
 	# If no freebsd base exists, make it first
-	isDirZFS "${PBI_APPDIR}"
-	if [ $? -eq 0 ] ; then
-		# Use ZFS base for cloning
-		PBI_CHROOTZFS="${PBI_APPDIR}/.pbi-world-$ARCH"
-		[ -e "${PBI_CHROOTZFS}/COPYRIGHT" ] || mk_chroot_file
-	else
-		# Use regular .txz file
-		PBI_CHROOTFILE="${PBI_APPDIR}/.pbi-world-$ARCH.txz"
-		[ -e "${PBI_CHROOTFILE}" ] || mk_chroot_file
-	fi
+	PBI_WORLDCHROOT="${PBI_APPDIR}/.pbi-world-$ARCH"
+	export PBI_WORLDCHROOT
+	[ -e "${PBI_WORLDCHROOT}/COPYRIGHT" ] || mk_chroot_file
 
 	# Set the chroot path
-	PBI_CHROOTDIR="${PBI_PROGDIRPATH}.chroot"
+	PBI_CHROOTDIR="${PBI_PROGDIRPATH}.chroot.$$"
 	export PBI_CHROOTDIR
 	
 	# See if there is old chroot to clean first
@@ -6796,20 +6851,21 @@ chroot_extract() {
 	mkdir -p "${PBI_CHROOTDIR}"
 
 	# If on ZFS, we can just clone our existing base system
-	if [ -n "$PBI_CHROOTZFS" ] ; then
-           tank=`getZFSTank "$PBI_CHROOTZFS"`
-           chrootzfs=`getZFSRelativePath "${PBI_CHROOTZFS}"`
+	isDirZFS "${PBI_APPDIR}"
+        if [ $? -eq 0 ] ; then   
+           tank=`getZFSTank "$PBI_WORLDCHROOT"`
+           chrootzfs=`getZFSRelativePath "${PBI_WORLDCHROOT}"`
            chrootdir=`getZFSRelativePath "${PBI_CHROOTDIR}"`
-	   echo "Cloning ${PBI_CHROOTZFS} -> ${PBI_CHROOTDIR}"
+	   echo "Cloning ${PBI_WORLDCHROOT} -> ${PBI_CHROOTDIR}"
 	   if [ -n "${PBI_AB_TMPDIR}" ] ; then
               echo "${tank}${PBI_CHROOTDIR}" > ${PBI_AB_TMPDIR}/${PBI_AB_BUILDER}.zmnt
 	   fi
-           zfs clone -o mountpoint=${PBI_CHROOTDIR} ${tank}${chrootzfs}@clean ${tank}${chrootdir}
+           zfs clone ${tank}${chrootzfs}@clean ${tank}${chrootdir}
 	   if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
 	else
-	   echo "Extracting chroot environment..."
-	   tar xvf ${PBI_CHROOTFILE} -C "${PBI_CHROOTDIR}" >/dev/null 2>/dev/null
-	   [ $? -ne 0 ] && exit_err "Failed extracting chroot environment!"
+	   echo "Creating chroot environment..."
+	   tar cvf - -C ${PBI_WORLDCHROOT} . | tar xvf - -C "${PBI_CHROOTDIR}" 2>/dev/null
+	   [ $? -ne 0 ] && exit_err "Failed copying chroot environment!"
 	fi
 
 	# If we plan on using TMPFS mount it now
@@ -6823,7 +6879,8 @@ chroot_extract() {
 
 	# Copy our binary wrapper
 	mkdir -p ${PBI_CHROOTDIR}/usr/pbi
-	cp ${PBI_WRAPPERFILE} ${PBI_CHROOTDIR}/usr/pbi/
+	PBI_WRAPPERFILE="${PBI_APPDIR}/.pbiwrapper-${ARCH}"
+	cp ${PBI_WRAPPERFILE} ${PBI_CHROOTDIR}/.pbiwrapper-$ARCH
 
 	# If we have a custom PBI_MAKECONF include it
 	[ -e "${PBI_MAKECONF}" ] && cp ${PBI_MAKECONF} ${PBI_CHROOTDIR}/etc/make.conf
@@ -6853,8 +6910,16 @@ EOF
 	fi
 	
 	# Now copy over the pbi_* scripts
-	mkdir -p ${PBI_CHROOTDIR}/usr/local/sbin
+	mkdir -p ${PBI_CHROOTDIR}/usr/local/sbin 2>/dev/null
 	cp ${PBI_BINDIR}/pbi_* ${PBI_CHROOTDIR}/usr/local/sbin
+	chmod 755 ${PBI_CHROOTDIR}/usr/local/sbin/pbi_*
+
+	# Copy the functions.sh
+	mkdir -p ${PBI_CHROOTDIR}/usr/local/share/pcbsd/scripts/
+	#cp ${PROGBASE}/share/pcbsd/scripts/functions.sh ${PBI_CHROOTDIR}/usr/local/share/pcbsd/scripts/
+	cp ${PBI_BINDIR}/functions.sh ${PBI_CHROOTDIR}/usr/local/share/pcbsd/scripts/
+
+	# Copy over the pbi_makeport app
 	cp ${PBI_CHROOTDIR}/usr/local/sbin/pbi_makeport ${PBI_CHROOTDIR}/usr/local/sbin/pbi_makeport_chroot
 	chmod 755 ${PBI_CHROOTDIR}/usr/local/sbin/pbi_*
 
@@ -6915,49 +6980,6 @@ EOF
 
 }
 
-# Get the default PC-BSD mirror to use
-get_pcbsd_mirror() {
-
-  # Check if we already looked up a mirror we can keep using
-  if [ -n "$CACHED_PCBSD_MIRROR" ] ; then
-     VAL="$CACHED_PCBSD_MIRROR"
-     export VAL
-     return
-  fi
-
-  # Set the mirror URL
-  VAL="`cat ${PCBSD_ETCCONF} 2>/dev/null | grep 'PCBSD_MIRROR: ' | sed 's|PCBSD_MIRROR: ||g'`"
-  if [ -n "$VAL" ] ; then
-     echo "Using mirror: $VAL"
-     CACHED_PCBSD_MIRROR="$VAL"
-     export VAL CACHED_PCBSD_MIRROR
-     return
-  fi
-
-  echo "Getting regional mirror..."
-  . /etc/profile
-
-  # No URL? Lets get one from the master server
-  local mFile="${HOME}/.mirrorUrl.$$"
-  touch $mFile
-  fetch -o $mFile http://getmirror.pcbsd.org >/dev/null 2>/dev/null
-  VAL="`cat $mFile | grep 'URL: ' | sed 's|URL: ||g'`"
-  rm $mFile
-  if [ -n "$VAL" ] ; then
-     echo "Using mirror: $VAL"
-     CACHED_PCBSD_MIRROR="$VAL"
-     export VAL CACHED_PCBSD_MIRROR
-     return
-  fi
-
-  # Still no mirror? Lets try the PC-BSD FTP server...
-  VAL="ftp://ftp.pcbsd.org/pub/mirror"
-  CACHED_PCBSD_MIRROR="$VAL"
-  export VAL CACHED_PCBSD_MIRROR
-  echo "Using mirror: $VAL"
-  return 
-}
-
 # No chroot environment tar file exists yet, lets build or extract
 mk_chroot_file() {
 
@@ -6966,48 +6988,56 @@ mk_chroot_file() {
 
 	  cd "$PBI_APPDIR"
 
-	  # Set the mirror URL
-	  get_pcbsd_mirror
-          MIRRORURL="$VAL"
-
   	  # Get the system version we are checking for updates to
-  	  SYSVER="`pbreg get /PC-BSD/Version`" ; export SYSVER
+  	  SYSVER="`uname -r | cut -d '-' -f 1-2`" ; export SYSVER
 
-  	  # To fetch the jail environment
- 	  echo "Fetching FreeBSD chroot environment... This may take a while..."
-  	  fetch -o rel-$ARCH.txz ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.txz
-    	  fetch -o rel-$ARCH.md5 ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/fbsd-release.txz.md5
-  	  fetch -o src-$ARCH.txz ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/extras/components/src.txz
+          local dFiles="base.txz doc.txz games.txz src.txz"
+          if [ "$ARCH" = "amd64" ] ; then
+             dFiles="$dFiles lib32.txz"
+          fi
 
-    	  [ `md5 -q rel-$ARCH.txz` != `cat rel-$ARCH.md5` ] && exit_err "Error in download data, checksum mismatch.. Please try again later."
+          echo "Fetching chroot environment. This may take a while..."
+          for i in $dFiles
+          do
+            echo "Downloading /${SYSVER}/${ARCH}/dist/${i} ..."
+            get_file_from_mirrors "/${SYSVER}/${ARCH}/dist/${i}" "${i}" "iso"
+            [ $? -ne 0 ] && exit_err "Error while downloading the freebsd world."
+          done
 
+	  # Create the WORLDCHROOT
 	  isDirZFS "${PBI_APPDIR}"
           if [ $? -eq 0 ] ; then   
             # Use ZFS base for cloning
-	    echo "Creating ZFS ${PBI_CHROOTZFS} dataset..."
+	    echo "Creating ZFS ${PBI_WORLDCHROOT} dataset..."
             tank=`getZFSTank "$PBI_APPDIR"`
-            chrootzfs=`getZFSRelativePath "${PBI_CHROOTZFS}"` 
-	    isDirZFS "${PBI_CHROOTZFS}" "1"
+            chrootzfs=`getZFSRelativePath "${PBI_WORLDCHROOT}"` 
+	    isDirZFS "${PBI_WORLDCHROOT}" "1"
             if [ $? -ne 0 ] ; then   
-              zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
+              echo zfs create -o mountpoint=${PBI_WORLDCHROOT} -p ${tank}${chrootzfs}
+              #zfs create -o mountpoint=${PBI_WORLDCHROOT} -p ${tank}${chrootzfs}
+              createZFSDataset "${tank}${chrootzfs}" "${PBI_WORLDCHROOT}"
 	      if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
 	    fi
-	    echo "Extracting rel-$ARCH.txz..."
-	    tar xvpf rel-$ARCH.txz -C ${PBI_CHROOTZFS} 2>/dev/null
-	    if [ $? -ne 0 ] ; then exit_err "Failed extracting ZFS base dataset"; fi
-	    mkdir -p ${PBI_CHROOTZFS}/usr/src 2>/dev/null
-	    echo "Extracting src-$ARCH.txz..."
-	    tar xvpf src-$ARCH.txz -C ${PBI_CHROOTZFS}/usr/src 2>/dev/null
-	    if [ $? -ne 0 ] ; then exit_err "Failed extracting ZFS base src dataset"; fi
-	    rm rel-$ARCH.txz
-	    rm src-$ARCH.txz
-	    rm rel-$ARCH.md5
+	  else
+            mkdir ${PBI_WORLDCHROOT}
+	  fi
+
+ 	  # Extract dist files
+          for i in $dFiles
+          do
+            tar xvpf ${i} -C ${PBI_WORLDCHROOT} 2>/dev/null
+            if [ $? -ne 0 ] ; then exit_err "Failed extracting freebsd environment"; fi
+            rm ${i}
+          done
+
+          # Create the clean snapshot
+	  isDirZFS "${PBI_APPDIR}"
+          if [ $? -eq 0 ] ; then   
+            tank=`getZFSTank "$PBI_APPDIR"`
+            chrootzfs=`getZFSRelativePath "${PBI_WORLDCHROOT}"` 
             zfs snapshot ${tank}${chrootzfs}@clean
 	    if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
-	  else
-	    mv rel-$ARCH.txz ${PBI_CHROOTFILE}
-	    rm rel-$ARCH.md5
-	  fi
+          fi
 
 	  return
  	fi
@@ -7017,7 +7047,7 @@ mk_chroot_file() {
                 PBI_BUILDSRC="${_srcdir}"
         fi
 
-        local _targetDir="${PBI_APPDIR}/.worldTarget.$$"
+        local _targetDir="${PBI_WORLDCHROOT}"
         if [ -z "${PBI_BUILDTARGET}" ] ; then
                 PBI_BUILDTARGET="${_targetDir}"
         fi
@@ -7029,7 +7059,7 @@ mk_chroot_file() {
  
 	# Use existing sources
         if [ -e "${PBI_BUILDSRC}/COPYRIGHT" -a -z "${PBI_OSREL}" ] ; then
-		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog-${ARCH}"
+		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog"
 		: > ${PBI_BUILDLOG}
 		mkdir -p "${PBI_BUILDTARGET}"
 	
@@ -7041,7 +7071,7 @@ mk_chroot_file() {
                 local _osRel=$FBSDREL
 
 		echo "Building the PBI chroot environment... This may take a while..."
-		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog-${ARCH}"
+		PBI_BUILDLOG="${PBI_APPDIR}/.buildWorldLog"
 		echo "" > ${PBI_BUILDLOG}
 		mkdir -p "${PBI_BUILDSRC}"
 		mkdir -p "${PBI_BUILDTARGET}"
@@ -7088,6 +7118,7 @@ mk_chroot_file() {
 	echo "Running buildworld (into a chroot)"
 	touch ${PBI_BUILDSRC}/Makefile
 	cd ${PBI_BUILDSRC}
+
         echo make ${PBI_BUILDFLAGS} TARGET=$ARCH buildworld
         make ${PBI_BUILDFLAGS} TARGET=$ARCH buildworld >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
         if [ "$?" != "0" ] ; then
@@ -7103,17 +7134,16 @@ mk_chroot_file() {
 	isDirZFS "${PBI_APPDIR}"
         if [ $? -eq 0 ] ; then   
             # Use ZFS base for cloning
-	    echo "Creating ZFS ${PBI_CHROOTZFS} dataset..."
+	    echo "Creating ZFS ${PBI_WORLDCHROOT} dataset..."
             tank=`getZFSTank "$PBI_APPDIR"`
-            chrootzfs=`getZFSRelativePath "${PBI_CHROOTZFS}"`
-	    isDirZFS "${PBI_CHROOTZFS}" "1"
+            chrootzfs=`getZFSRelativePath "${PBI_WORLDCHROOT}"`
+	    isDirZFS "${PBI_WORLDCHROOT}" "1"
             if [ $? -ne 0 ] ; then   
-              echo zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
-              zfs create -o mountpoint=${PBI_CHROOTZFS} -p ${tank}${chrootzfs}
+              echo zfs create -o mountpoint=${PBI_WORLDCHROOT} -p ${tank}${chrootzfs}
+              createZFSDataset "${tank}${chrootzfs}" "${PBI_WORLDCHROOT}"
+              #zfs create -o mountpoint=${PBI_WORLDCHROOT} -p ${tank}${chrootzfs}
 	      if [ $? -ne 0 ] ; then exit_err "Failed creating ZFS base dataset"; fi
 	    fi
-            rmdir "${PBI_BUILDTARGET}"
-	    PBI_BUILDTARGET="$PBI_CHROOTZFS"
 	fi
 
 	echo "Running installworld (into a chroot)"
@@ -7143,28 +7173,7 @@ mk_chroot_file() {
 	echo "Copying FreeBSD sources to chroot environment"
 	mkdir -p ${PBI_BUILDTARGET}/usr/src >/dev/null 2>/dev/null
 	tar cvf - -C "${PBI_BUILDSRC}" --exclude "\.svn/" . 2>/dev/null | tar xvf - -C "${PBI_BUILDTARGET}/usr/src" 2>/dev/null
-
-	# If using ZFS we can stop here
-	if [ -n "$PBI_CHROOTZFS" ] ; then
-                chrootzfs=`getZFSRelativePath "${PBI_CHROOTZFS}"`
-           	echo zfs snapshot ${tank}${chrootzfs}@clean
-           	zfs snapshot ${tank}${chrootzfs}@clean
-	    	if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
-		rm ${PBI_BUILDLOG}
-		return
-	fi
-
-	echo "Creating chroot environment tarball"
-	tar cvjf ${PBI_CHROOTFILE} -C ${PBI_BUILDTARGET} . >>${PBI_BUILDLOG} 2>>${PBI_BUILDLOG}
-	if [ $? -ne 0 ] ; then
-		cd
-                if [ "${PBI_BUILDSRC}" != "/usr/src" -a "${PBI_DELETE_BUILD}" != "0" ] ; then
-                        rm -rf "${PBI_BUILDSRC}"
-                        rm -rf "${PBI_BUILDTARGET}"
-                fi
-		rm -rf "${PBI_CHROOTFILE}"
-		exit_err "Making chroot environment tarball failed! Logfile saved: ${PBI_BUILDLOG}"
-	fi
+	cd
 
 	# Cleanup after ourselves
 	chflags -R noschg "${PBI_BUILDTARGET}" >/dev/null 2>/dev/null
@@ -7175,6 +7184,17 @@ mk_chroot_file() {
                 rm -rf "${PBI_BUILDTARGET}" >/dev/null 2>/dev/null
         fi
 	rm ${PBI_BUILDLOG}
+
+	# If on ZFS, create snapshot
+	isDirZFS "${PBI_APPDIR}"
+	if [ $? -eq 0 ] ; then
+            tank=`getZFSTank "$PBI_APPDIR"`
+            chrootzfs=`getZFSRelativePath "${PBI_WORLDCHROOT}"`
+           	zfs snapshot ${tank}${chrootzfs}@clean
+	    	if [ $? -ne 0 ] ; then exit_err "Failed creating clean ZFS base snapshot"; fi
+		rm ${PBI_BUILDLOG}
+		return
+	fi
 }
 
 # Read the target ports plist, and generate a external_links config based upon it
@@ -7284,6 +7304,12 @@ load_pbi_etcconf() {
 	_ckPBIIR="`sed -n 's/^PBI_INDEXREFRESH: //gp' ${PBI_ETCCONF}`"
 	if [ -n "${_ckPBIIR}" -a $(is_num "$_ckPBIIR") ] ; then 
 		PBI_INDEXREFRESH="${_ckPBIIR}"
+	fi
+
+	# Check for a custom FBSDMAJOR version
+	_ckPBIMAJOR="`sed -n 's/^PBI_FBSDMAJOR: //gp' ${PBI_ETCCONF}`"
+	if [ -n "${_ckPBIMAJOR}" -a $(is_num "$_ckPBIMAJOR") ] ; then 
+		PBI_FBSDMAJOR="${_ckPBIMAJOR}"
 	fi
 
 	# See if we have a custom pbid refresh time
@@ -7467,86 +7493,22 @@ do_port_build()
   do_port_install "${_lPort}"
 };
 
-# Check if the target directory is on ZFS
-# Arg1 = The dir to check
-# Arg2 = If set to 1, don't dig down to lower level directory
-isDirZFS() {
-  local _chkDir="$1"
-  while :
-  do
-     # Is this dir a ZFS mount
-     mount | grep -Ew "on (.+)?$_chkDir " | grep -qw "(zfs," && return 0
-        
-     # Quit if not walking down
-     if [ "$2" = "1" ] ; then return 1 ; fi
-        
-     if [ "$_chkDir" = "/" ] ; then break ; fi
-     _chkDir=`dirname $_chkDir`
-  done
- 
-  return 1
-}
 
-# Get the ZFS tank name for a directory
-# Arg1 = Directory to check
-getZFSTank() {
-  local _chkDir="$(realpath $1 2>/dev/null)"
-  if [ -z "${_chkDir}" ] ; then
-     _chkDir="${1}"
-  fi
+# Source our shared PCBSD functions
+if [ -f "${PBI_BINDIR}/functions.sh" ] ; then
+   . ${PBI_BINDIR}/functions.sh
+else
+   . /usr/local/share/pcbsd/scripts/functions.sh
+fi
 
-  _chkdir=${_chkDir%/}
-  while :
-  do
-     if [ -d "${_chkDir}" ] ; then
-        _chkDir="$(realpath ${_chkDir})"
-     fi
 
-     zpath=`zfs list | awk -v path="${_chkDir}" '$5 == path { print $1 }'`
-     if [ -n "${zpath}" ] ; then
-        echo $zpath | cut -f1 -d '/'
-        return 0
-     fi
-
-     if [ "$_chkDir" = "/" ] ; then return 1 ; fi
-     _chkDir=`dirname $_chkDir`
-  done
-
-  return 1
-}
-
-# Get the mountpoint for a ZFS name
-# Arg1 = name
-getZFSMountpoint() {
-   local _chkName="${1}"
-   if [ -z "${_chkName}" ]; then return 1 ; fi
-
-   zfs list "${_chkName}" | tail -1 | awk '{ print $5 }'
-}
-
-# Get the ZFS relative path for a path
-# Arg1 = Path
-getZFSRelativePath() {
-   local _chkDir="${1}"
-   local _tank=`getZFSTank "$_chkDir"`
-   local _mp=`getZFSMountpoint "${_tank}"`
-
-   if [ -z "${_tank}" ] ; then return 1 ; fi
-
-   local _name="${_chkDir#${_mp}}"
-   if [ -z "${_name}" ] ; then
-       _name="/`basename ${_chkDir}`"
-   fi
-
-   echo "${_name}"
-   return 0
-}
+# Set the default umask
+umask 022
 
 # Main program operation
 ##############################################################
 init_vars
 mk_required_dirs
-load_pbi_etcconf
 
 trap exit_trap 1 2 3 9 15
 

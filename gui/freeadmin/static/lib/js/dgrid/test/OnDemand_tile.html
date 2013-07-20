@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Test Tile Layout in OnDemandList</title>
-		<style type="text/css">
+		<style>
 			@import "../../dojo/resources/dojo.css";
 			@import "../css/dgrid.css";
 			@import "../css/skins/claro.css";
@@ -29,9 +29,9 @@
 				clear: both;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js" 
+		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			var logRendered; // Function defined in require factory
 			require(["dgrid/OnDemandList", "dojo/query", "dojo/store/Memory", "put-selector/put", "dojo/domReady!"],
 			function(OnDemandList, query, Memory, put){

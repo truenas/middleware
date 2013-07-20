@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2012-12-05 04:30+0200\n"
-"Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
+"PO-Revision-Date: 2013-07-15 07:31+0200\n"
+"Last-Translator: Richard Peter <shon9178@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -287,11 +287,11 @@ msgstr "Disk"
 
 #: choices.py:221
 msgid "read-write"
-msgstr "read-write"
+msgstr "읽고쓰기가능"
 
 #: choices.py:222
 msgid "read-only"
-msgstr "read-only"
+msgstr "읽기전용"
 
 #: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
 #: services/forms.py:1058 templates/storage/scrub.html:24
@@ -877,7 +877,7 @@ msgstr "지정되지 않은 주소들은 네임서버로서 유효하지 않습�
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr "이것은 유효하지 않은 네임서버 주소입니다."
+msgstr "유효하지 않은 네임서버 주소입니다."
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
@@ -6488,7 +6488,7 @@ msgid "View All Interfaces"
 msgstr "모든 인터페이스 목록 보기"
 
 msgid "View All VLANs"
-msgstr "모든 VLAN들을 보기"
+msgstr "VLAN 다 보기"
 
 msgid "sucessfully edited"
 msgstr "수정 되었습니다"

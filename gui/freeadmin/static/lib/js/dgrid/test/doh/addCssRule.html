@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>addCssRule and Related Tests</title>
+		<script src="../../../dojo/dojo.js" data-dojo-config="async: true"></script>
+		<script>
+			require([
+				"doh",
+				"dojo/dom-style", // for cross-browser getComputedStyle
+				"dojo/query",
+				"dgrid/Grid",
+				"dgrid/util/misc",
+				"dojo/domReady!"
+			], function(doh, domStyle, query, Grid, miscUtil){
+				var testDiv = document.getElementById("test");
+				
+				// These tests use width styles because it tends to be one that
+				// browsers won't morph the value of when getting computed style.
+				doh.register("addCssRule", [
+					{
+						name: "addCssRule + remove",
+						setUp: function(){
+							testDiv.className = "foo";
+						},
+						runTest: function(doh){
+							var origStyle = domStyle.getComputedStyle(testDiv).fontSize,
+								rule = miscUtil.addCssRule(".foo", "font-size: 8px;");
+							
+							doh.is("8px", domStyle.getComputedStyle(testDiv).fontSize,
+								"Node with matching class has expected font-size");
+							
+							rule.remove();
+							doh.is(origStyle, domStyle.getComputedStyle(testDiv).fontSize,
+								"Node with matching class no longer has font-size from removed rule");
+						},
+						tearDown: function(){
+							testDiv.className = "";
+						}
+					},
+					{
+						name: "addCssRule get/set/remove",
+						setUp: function(){
+							testDiv.className = "bar";
+						},
+						runTest: function(doh){
+							var origStyle = domStyle.getComputedStyle(testDiv).fontSize,
+								rule = miscUtil.addCssRule(".bar", "font-size: 8px;");
+							
+							doh.is("8px", rule.get("fontSize"),
+								"rule.get('fontSize') reports expected value");
+							
+							rule.set("fontSize", "9px");
+							doh.is("9px", domStyle.getComputedStyle(testDiv).fontSize,
+								"Node with matching class has expected font-size after set");
+							doh.is("9px", rule.get("fontSize"),
+								"rule.get('fontSize') reports expected value after set");
+							
+							rule.remove();
+							doh.is(origStyle, domStyle.getComputedStyle(testDiv).fontSize,
+								"Node with matching class no longer has font-size from removed rule");
+						},
+						tearDown: function(){
+							testDiv.className = "";
+						}
+					},
+					{
+						name: "add/remove multiple rules in mixed order",
+						runTest: function(doh){
+							var origStyle = domStyle.getComputedStyle(testDiv).fontSize,
+								rules = [],
+								expected = { // hash containing test classes / values
+									foo: "7px",
+									bar: "8px",
+									baz: "9px"
+								},
+								cls;
+							
+							function check(){
+								// Test that all expected styles hold
+								var cls;
+								for(cls in expected){
+									testDiv.className = cls;
+									doh.is(expected[cls], domStyle.getComputedStyle(testDiv).fontSize,
+										"Node with class " + cls + " has expected font-size");
+								}
+								testDiv.className = "";
+							}
+							
+							// Create rules and maintain references to returned objects
+							for(cls in expected){
+								rules.push(miscUtil.addCssRule("." + cls, "font-size: " + expected[cls] + ";"));
+							}
+							
+							// Do initial check, then remove rules one by one, out of order,
+							// updating the hash and checking each time along the way
+							check();
+							
+							rules[2].remove();
+							expected.baz = origStyle;
+							check();
+							
+							rules[0].remove();
+							expected.foo = origStyle;
+							check();
+							
+							rules[1].remove();
+							expected.bar = origStyle;
+							check();
+						}
+					},
+					{
+						name: "addCssRule via dgrid APIs",
+						runTest: function(doh){
+							var values = ["7px", "8px"],
+								origValues,
+								grid;
+							
+							function createGrid(cleanAddedRules){
+								grid = new Grid({
+									id: "my.grid", // test escaping of CSS identifiers from methods
+									columns: {
+										name: "Name",
+										value: "Value",
+										comment: "Comment" // unstyled buffer
+									},
+									cleanAddedRules: cleanAddedRules
+								});
+								document.body.appendChild(grid.domNode);
+								grid.startup();
+							}
+							
+							function addRules(){
+								var rules = [];
+								
+								rules.push(grid.addCssRule(".field-value", "font-size: " + values[0] + ";"));
+								rules.push(grid.styleColumn("name", "font-size: " + values[1] + ";"));
+								
+								return rules;
+							}
+							
+							function getStyles(){
+								return [
+									domStyle.getComputedStyle(query(".field-value", grid.domNode)[0]).fontSize,
+									domStyle.getComputedStyle(query(".dgrid-column-name", grid.domNode)[0]).fontSize
+								];
+							}
+							
+							function checkRules(expected){
+								var actual = getStyles(grid);
+								doh.is(expected[0], actual[0],
+									"Style modified via addCssRule has expected value");
+								doh.is(expected[1], actual[1],
+									"Style modified via styleColumn has expected value");
+							}
+							
+							// Create grid for the first time
+							createGrid(true);
+							// Collect original style values for later cleanup check
+							origValues = getStyles();
+							// Add rules and make sure they applied as expected
+							addRules();
+							checkRules(values);
+							// Destroy the grid, which should remove the style rules
+							grid.destroy();
+							
+							// Create grid for the second time, with cleanAddedRules: false
+							createGrid(false);
+							// Before adding styles, make sure the ones from last time were removed
+							checkRules(origValues);
+							// Add rules and check again;
+							// store the rules for tearDown since they won't be cleaned up
+							this.rules = addRules();
+							checkRules(values);
+							// Destroy the grid, which should *not* remove the style rules
+							grid.destroy();
+							
+							// Create grid for the third time
+							createGrid(true);
+							// Check that styles from last time still exist
+							checkRules(values);
+							// Destroy the grid (which won't remove the styles from last time,
+							// since no handles were added to this exact instance)
+							grid.destroy();
+						},
+						tearDown: function(){
+							// Clean up rule litter from cleanAddedRules: false test
+							var i;
+							for(i in this.rules){
+								this.rules[i].remove();
+							}
+						}
+					}
+				]);
+				doh.run();
+			});
+		</script>
+	</head>
+	<body>
+		<div id="test"></div>
+	</body>
+</html>

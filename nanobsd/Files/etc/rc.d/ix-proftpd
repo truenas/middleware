@@ -93,8 +93,8 @@ generate_proftp()
     local IFS="|"
 #XXX missing: ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
     local ftp_chrooteveryone=0 ftp_mod_ban=0 ftp_banner
-#XXX unused: ftp_chrooteveryone ftp_ssltls
-    local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls ftp_anonpath"
+#XXX unused: ftp_chrooteveryone
+    local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_tls ftp_anonpath"
     eval local $f
     local sf=$(var_to_sf $f)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
@@ -119,24 +119,7 @@ generate_proftp()
 	else
 		echo ${ftp_banner} > ${proftpd_displaylogin}
 	fi
-	
-	#XXX missing: tls needs to be supported
-# Create SSL/TLS certificate
-#	if configxml_isset //ftpd/tls; then
-#		_certificate=`configxml_get "//ftpd/certificate"`
-#		_privatekey=`configxml_get "//ftpd/privatekey"`
-#		# Create certificate and key files
-#		if [ -n "${_certificate}" -a -n "${_privatekey}" ]; then
-#			_tmpfile=/tmp/proftpd$$.tmp
-#			echo "${_certificate}" > ${_tmpfile}
-#			/usr/bin/uudecode -m -p -r ${_tmpfile} > ${proftpd_tlsrsacertfile}
-#			/bin/chmod 0600 ${proftpd_tlsrsacertfile}
-#			echo "${_privatekey}" > ${_tmpfile}
-#			/usr/bin/uudecode -m -p -r ${_tmpfile} > ${proftpd_tlsrsakeyfile}
-#			/bin/chmod 0600 ${proftpd_tlsrsakeyfile}
-#			/bin/rm -f ${_tmpfile}
-#		fi
-#	fi
+
 	cat <<EOF > ${proftpd_config}
 ServerName "$(hostname) FTP Server"
 ServerType standalone
@@ -145,7 +128,7 @@ DefaultServer on
 UseIPv6 on
 Port ${ftp_port}
 User nobody
-Group nogroup	
+Group nogroup
 Umask ${ftp_filemask} ${ftp_dirmask}
 SyslogFacility ftp
 MultilineRFC2228 ${proftpd_multilinerfc2228}
@@ -218,7 +201,7 @@ $(bool_on ${ftp_resume} "  AllowStoreRestart on")
 </Global>
 EOF
 
-	if [ ${ftp_ssltls} -gt 0 ]; then
+	if [ ${ftp_tls} -gt 0 ]; then
 	    cat <<EOF >> ${proftpd_config}
 LoadModule mod_tls.c
 <IfModule mod_tls.c>

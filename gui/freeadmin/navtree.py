@@ -27,29 +27,17 @@
 import logging
 import re
 
-import eventlet
 
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, resolve
 from django.db import models
 from django.forms import ModelForm
-from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
-
-from eventlet.green import urllib2
 
 from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.tree import (
-    tree_roots, TreeRoot, TreeNode, unserialize_tree
+    tree_roots, TreeRoot, TreeNode
 )
-from freenasUI.middleware.notifier import notifier
-#from freenasUI.plugins.models import Plugins
-#from freenasUI.plugins.utils import get_base_url
-
-from freenasUI.common.warden import WARDEN_STATUS_RUNNING, \
-    WARDEN_TYPE_PLUGINJAIL
-
-from freenasUI.jails.models import Jails
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -217,6 +205,13 @@ class NavTree(object):
                     app,
                     e)
                 log_traceback(log=log)
+
+        nav = TreeRoot(
+            'support',
+            name=_('Request Support'),
+            action='opensupport',
+            icon='SupportIcon')
+        tree_roots.register(nav)
 
         nav = TreeRoot(
             'display',
@@ -403,6 +398,7 @@ class NavTree(object):
                             subopt.kwargs = {
                                 'oid': e.id,
                             }
+                            subopt.gname = e.id
                             try:
                                 subopt.name = unicode(e)
                             except:
@@ -461,11 +457,12 @@ class NavTree(object):
                 try:
                     url = option.get_absolute_url()
                 except NoReverseMatch, e:
-                    log.warn(
-                        _("Could not reverse url, skipping node %s: %s") % (
-                            option,
-                            e,
-                        ))
+                    log.warn(_(
+                        "Could not reverse url, skipping node %(node)s: "
+                        "%(error)s") % {
+                            'node': repr(option),
+                            'error': repr(e),
+                        })
                     continue
                 try:
                     view, args, kwargs = resolve(url)

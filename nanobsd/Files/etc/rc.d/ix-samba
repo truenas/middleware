@@ -234,7 +234,6 @@ generate_smbconf()
 		cifs_srv_guest,
 		cifs_srv_filemask,
 		cifs_srv_dirmask,
-		cifs_srv_sendfile,
 		cifs_srv_easupport,
 		cifs_srv_dosattr,
 		cifs_srv_nullpw,
@@ -257,8 +256,7 @@ generate_smbconf()
 	" | \
 	while read -r authmodel netbiosname workgroup cifs_description doscharset \
 		unixcharset loglevel localmaster timeserver guest \
-		cifs_filemask cifs_dirmask \
-		sendfile easupport dosattr nullpw unixext \
+		cifs_filemask cifs_dirmask easupport dosattr nullpw unixext \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_hostlookup cifs_homedir \
 		cifs_homedir_browseable cifs_homedir_mp ;
 	do
@@ -327,10 +325,6 @@ EOF
 		
 		if [ -n "${cifs_description}" ]; then
 			echo "    server string = ${cifs_description}"
-		fi
-
-		if [ "${sendfile}" = "1" ]; then
-			echo "    use sendfile = yes"
 		fi
 
 		if [ "${easupport}" = "1" ]; then

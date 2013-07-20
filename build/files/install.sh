@@ -42,10 +42,10 @@ upgrade_version_to_avatar_conf()
     arch=$4
 
     sed \
-        -e "s/^AVATAR_ARCH=\".*\"/AVATAR_ARCH=\"$arch\"/g" \
-        -e "s/^AVATAR_BUILD_NUMBER=\".*\"\$/AVATAR_BUILD_NUMBER=\"$revision\"/g" \
-        -e "s/^AVATAR_PROJECT=\".*\"\$/AVATAR_PROJECT=\"$project\"/g" \
-        -e "s/^AVATAR_VERSION=\".*\"\$/AVATAR_VERSION=\"$version\"/g" \
+        -e "s,^AVATAR_ARCH=\".*\",AVATAR_ARCH=\"$arch\",g" \
+        -e "s,^AVATAR_BUILD_NUMBER=\".*\"\$,AVATAR_BUILD_NUMBER=\"$revision\",g" \
+        -e "s,^AVATAR_PROJECT=\".*\"\$,AVATAR_PROJECT=\"$project\",g" \
+        -e "s,^AVATAR_VERSION=\".*\"\$,AVATAR_VERSION=\"$version\",g" \
         < $srcconf > $destconf.$$
 
     mv $destconf.$$ $destconf
@@ -167,15 +167,14 @@ ask_upgrade()
     local _disk="$1"
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
-The $AVATAR_PROJECT installer can preserve your existing parameters, or
-it can do a fresh install overwriting the current settings,
-configuration, etc.
+Upgrading the installation will preserve your existing configuration.
+A fresh install will overwrite the current configuration.
 
-Would you like to upgrade the installation on ${_disk}?
+Do you wish to perform an upgrade or a fresh installation on ${_disk}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "Upgrade this $AVATAR_PROJECT installation" --yesno "${_msg}" 8 74
+    dialog --title "Upgrade this $AVATAR_PROJECT installation" --no-label "Fresh Install" --yes-label "Upgrade Install" --yesno "${_msg}" 8 74
     return $?
 }
 
@@ -302,6 +301,7 @@ menu_install()
         /etc/rc.d/dmesg start
         mkdir /tmp/data
         mount /dev/${_disk}s1a /tmp/data
+	# XXX need to find out why
 	ls /tmp/data > /dev/null
         # pre-avatar.conf build. Convert it!
         if [ ! -e /tmp/data/conf/base/etc/avatar.conf ]

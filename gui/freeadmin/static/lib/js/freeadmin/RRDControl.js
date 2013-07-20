@@ -19,13 +19,17 @@ define([
         href: "",
         step: 0,
         unit: "hourly",
+        plugin: "",
         identifier: "",
-        postCreate : function() {
+        postCreate: function() {
 
             var me, zoomIn, zoomOut, left, right, t;
 
+            this.name = this.plugin + "_" + this.identifier;
+
             me = this;
             zoomIn = new Button({
+                id: "rrd_" + me.name + "_zoomIn",
                 label: this.zoomInButton.innerHTML,
                 onClick: function(e) {
                     var newunit = me.zoomInUnit(me.unit)
@@ -41,6 +45,7 @@ define([
             }, this.zoomInButton);
 
             zoomOut = new Button({
+                id: "rrd_" + me.name + "_zoomOut",
                 label: this.zoomOutButton.innerHTML,
                 onClick: function(e) {
                     var newunit = me.zoomOutUnit(me.unit)
@@ -55,6 +60,7 @@ define([
             }, this.zoomOutButton);
 
             right = new Button({
+                id: "rrd_" + me.name + "_right",
                 label: '>>',
                 onClick: function(e) {
                     var newstep = me.step - 1;
@@ -70,6 +76,7 @@ define([
             }, this.rightButton);
 
             left = new Button({
+                id: "rrd_" + me.name + "_left",
                 label: '<<',
                 onClick: function(e) {
                     var newstep = me.step + 1;

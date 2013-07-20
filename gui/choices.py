@@ -688,4 +688,14 @@ DIRECTORY_SERVICE_CHOICES = (
     ('ldap', _('LDAP')),
     ('nt4', _('NT4')),
     ('nis', _('NIS')),
-)
+    )
+
+
+SUPPORT_TYPE_CHOICES = (
+    ('type1', _('type1')),
+    ('type2', _('type2')),
+    ('type3', _('type3')),
+    ('type4', _('type4')),
+    ('type5', _('type5')),
+    )
+

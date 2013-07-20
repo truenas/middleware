@@ -45,7 +45,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.freeadmin.forms import CronMultiple, DirectoryBrowser
+from freenasUI.freeadmin.forms import CronMultiple
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
@@ -98,16 +98,18 @@ class FileWizard(SessionWizardView):
             'retval': getattr(self, 'retval', None),
         })
         if not self.request.is_ajax():
-            response.content = ("<html><body><textarea>"
-            + response.content +
-            "</textarea></boby></html>")
+            response.content = (
+                "<html><body><textarea>"
+                + response.content +
+                "</textarea></boby></html>"
+            )
         return response
 
     def get_template_names(self):
         return [
             'system/wizard_%s.html' % self.get_step_index(),
             'system/wizard.html',
-            ]
+        ]
 
     def process_step(self, form):
         proc = super(FileWizard, self).process_step(form)
@@ -115,7 +117,8 @@ class FileWizard(SessionWizardView):
         We execute the form done method if there is one, for each step
         """
         if hasattr(form, 'done'):
-            retval = form.done(request=self.request,
+            retval = form.done(
+                request=self.request,
                 form_list=self.form_list,
                 wizard=self)
             if self.get_step_index() == self.steps.count - 1:
@@ -123,17 +126,25 @@ class FileWizard(SessionWizardView):
         return proc
 
     def render_to_response(self, context, **kwargs):
-        response = super(FileWizard, self).render_to_response(context,
+        response = super(FileWizard, self).render_to_response(
+            context,
             **kwargs)
         # This is required for the workaround dojo.io.frame for file upload
         if not self.request.is_ajax():
-            return HttpResponse("<html><body><textarea>"
-            + response.rendered_content +
-            "</textarea></boby></html>")
+            return HttpResponse(
+                "<html><body><textarea>"
+                + response.rendered_content +
+                "</textarea></boby></html>"
+            )
         return response
 
 
 class FirmwareWizard(FileWizard):
+
+    def get_template_names(self):
+        return [
+            'system/firmware_wizard_%s.html' % self.get_step_index(),
+        ]
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
@@ -174,9 +185,11 @@ class FirmwareWizard(FileWizard):
             'retval': getattr(self, 'retval', None),
         })
         if not self.request.is_ajax():
-            response.content = ("<html><body><textarea>"
-            + response.content +
-            "</textarea></boby></html>")
+            response.content = (
+                "<html><body><textarea>"
+                + response.content +
+                "</textarea></boby></html>"
+            )
         return response
 
 
@@ -195,19 +208,27 @@ class SettingsForm(ModelForm):
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
         self.instance._original_stg_guiaddress = self.instance.stg_guiaddress
         self.instance._original_stg_guiport = self.instance.stg_guiport
-        self.instance._original_stg_syslogserver = self.instance.stg_syslogserver
-        self.instance._original_stg_directoryservice = self.instance.stg_directoryservice
+        self.instance._original_stg_syslogserver = (
+            self.instance.stg_syslogserver
+        )
+        self.instance._original_stg_directoryservice = (
+            self.instance.stg_directoryservice
+        )
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
         self.fields['stg_guiaddress'] = forms.ChoiceField(
             label=self.fields['stg_guiaddress'].label
-            )
-        self.fields['stg_guiaddress'].choices = [['0.0.0.0', '0.0.0.0']] + list(choices.IPChoices(ipv6=False))
+        )
+        self.fields['stg_guiaddress'].choices = [
+            ['0.0.0.0', '0.0.0.0']
+        ] + list(choices.IPChoices(ipv6=False))
 
         self.fields['stg_guiv6address'] = forms.ChoiceField(
             label=self.fields['stg_guiv6address'].label
-            )
-        self.fields['stg_guiv6address'].choices = [['::', '::']] + list(choices.IPChoices(ipv4=False))
+        )
+        self.fields['stg_guiv6address'].choices = [
+            ['::', '::']
+        ] + list(choices.IPChoices(ipv4=False))
 
     def clean_stg_guiport(self):
         val = self.cleaned_data.get("stg_guiport")
@@ -216,7 +237,9 @@ class SettingsForm(ModelForm):
         try:
             val = int(val)
             if val < 1 or val > 65535:
-                raise forms.ValidationError(_("You must specify a number between 1 and 65535, inclusive."))
+                raise forms.ValidationError(_(
+                    "You must specify a number between 1 and 65535, inclusive."
+                ))
         except ValueError:
             raise forms.ValidationError(_("Number is required."))
         return val
@@ -226,24 +249,28 @@ class SettingsForm(ModelForm):
         if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
             notifier().restart("syslogd")
         notifier().reload("timeservices")
-        if self.instance._original_stg_directoryservice != self.instance.stg_directoryservice \
-            and self.instance._original_stg_directoryservice:
-            method = getattr(notifier(), "_stop_%s" % \
-                self.instance._original_stg_directoryservice)
-            method()
-
+        if (
+            self.instance._original_stg_directoryservice != self.instance.stg_directoryservice
+            and self.instance._original_stg_directoryservice
+        ):
+            getattr(notifier(), "_stop_%s" % (
+                self.instance._original_stg_directoryservice
+            ))()
 
     def done(self, request, events):
-        if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or \
-            self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or \
-            self.instance._original_stg_guiport != self.instance.stg_guiport:
+        if (
+            self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or
+            self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or
+            self.instance._original_stg_guiport != self.instance.stg_guiport
+        ):
             if self.instance.stg_guiaddress == "0.0.0.0":
                 address = request.META['HTTP_HOST'].split(':')[0]
             else:
                 address = self.instance.stg_guiaddress
-            newurl = "%s://%s" % (self.instance.stg_guiprotocol,
-                                    address
-                                    )
+            newurl = "%s://%s" % (
+                self.instance.stg_guiprotocol,
+                address
+            )
             if self.instance.stg_guiport != '':
                 newurl += ":" + self.instance.stg_guiport
             if self.instance._original_stg_guiprotocol == 'http':
@@ -264,8 +291,11 @@ class NTPForm(ModelForm):
 
     def clean_ntp_address(self):
         addr = self.cleaned_data.get("ntp_address")
-        p1 = subprocess.Popen(["ntpq", "-c", "rv", addr],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p1 = subprocess.Popen(
+            ["ntpq", "-c", "rv", addr],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         data = p1.communicate()[0]
         #TODO: ntpq does not return error code in case of errors
         if not re.search(r'version=', data):
@@ -276,13 +306,18 @@ class NTPForm(ModelForm):
         maxp = self.cleaned_data.get("ntp_maxpoll")
         minp = self.cleaned_data.get("ntp_minpoll")
         if not maxp > minp:
-            raise forms.ValidationError(_("Max Poll should be higher than Min Poll"))
+            raise forms.ValidationError(_(
+                "Max Poll should be higher than Min Poll"
+            ))
         return maxp
 
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("force", False) and not self.usable:
-            self._errors['ntp_address'] = self.error_class([_("Server could not be reached. Check \"Force\" to continue regardless.")])
+            self._errors['ntp_address'] = self.error_class([_(
+                "Server could not be reached. Check \"Force\" to continue "
+                "regardless."
+            )])
             del cdata['ntp_address']
         return cdata
 
@@ -295,7 +330,12 @@ class NTPForm(ModelForm):
 class AdvancedForm(ModelForm):
 
     class Meta:
-        exclude = ('adv_zeroconfbonjour', 'adv_tuning', 'adv_firmwarevc', 'adv_systembeep')
+        exclude = (
+            'adv_zeroconfbonjour',
+            'adv_tuning',
+            'adv_firmwarevc',
+            'adv_systembeep',
+        )
         model = models.Advanced
 
     def __init__(self, *args, **kwargs):
@@ -303,10 +343,16 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_motd = self.instance.adv_motd
         self.instance._original_adv_consolemenu = self.instance.adv_consolemenu
         self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
-        self.instance._original_adv_serialconsole = self.instance.adv_serialconsole
-        self.instance._original_adv_consolescreensaver = self.instance.adv_consolescreensaver
+        self.instance._original_adv_serialconsole = (
+            self.instance.adv_serialconsole
+        )
+        self.instance._original_adv_consolescreensaver = (
+            self.instance.adv_consolescreensaver
+        )
         self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
-        self.instance._original_adv_advancedmode = self.instance.adv_advancedmode
+        self.instance._original_adv_advancedmode = (
+            self.instance.adv_advancedmode
+        )
         self.instance._original_adv_autotune = self.instance.adv_autotune
         self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
 
@@ -333,9 +379,7 @@ class AdvancedForm(ModelForm):
                 notifier().reload("loader")
                 loader_reloaded = True
         if (
-            (
-                self.instance._original_adv_autotune != self.instance.adv_autotune
-            )
+            self.instance._original_adv_autotune != self.instance.adv_autotune
             and not loader_reloaded
         ):
             notifier().reload("loader")
@@ -380,16 +424,17 @@ class EmailForm(ModelForm):
             self.fields['em_pass2'].initial = self.instance.em_pass
         except:
             pass
-        self.fields['em_smtp'].widget.attrs['onChange'] = ('javascript:'
+        self.fields['em_smtp'].widget.attrs['onChange'] = (
             'toggleGeneric("id_em_smtp", ["id_em_pass1", "id_em_pass2", '
-            '"id_em_user"], true);')
+            '"id_em_user"], true);'
+        )
         ro = True
 
         if len(self.data) > 0:
             if self.data.get("em_smtp", None) == "on":
                 ro = False
         else:
-            if self.instance.em_smtp == True:
+            if self.instance.em_smtp is True:
                 ro = False
         if ro:
             self.fields['em_user'].widget.attrs['disabled'] = 'disabled'
@@ -397,29 +442,37 @@ class EmailForm(ModelForm):
             self.fields['em_pass2'].widget.attrs['disabled'] = 'disabled'
 
     def clean_em_user(self):
-        if self.cleaned_data['em_smtp'] == True and \
-                self.cleaned_data['em_user'] == "":
+        if (
+            self.cleaned_data['em_smtp'] is True and
+            self.cleaned_data['em_user'] == ""
+        ):
             raise forms.ValidationError(_("This field is required"))
         return self.cleaned_data['em_user']
 
     def clean_em_pass1(self):
-        if self.cleaned_data['em_smtp'] == True and \
-                self.cleaned_data['em_pass1'] == "":
+        if (
+            self.cleaned_data['em_smtp'] is True and
+            self.cleaned_data['em_pass1'] == ""
+        ):
             if self.instance.em_pass:
                 return self.instance.em_pass
             raise forms.ValidationError(_("This field is required"))
         return self.cleaned_data['em_pass1']
 
     def clean_em_pass2(self):
-        if self.cleaned_data['em_smtp'] == True and \
-                self.cleaned_data.get('em_pass2', "") == "":
+        if (
+            self.cleaned_data['em_smtp'] is True and
+            self.cleaned_data.get('em_pass2', "") == ""
+        ):
             if self.instance.em_pass:
                 return self.instance.em_pass
             raise forms.ValidationError(_("This field is required"))
         pass1 = self.cleaned_data.get("em_pass1", "")
         pass2 = self.cleaned_data.get("em_pass2", "")
         if pass1 != pass2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+            )
         return pass2
 
     def save(self, commit=True):
@@ -431,17 +484,18 @@ class EmailForm(ModelForm):
 
 
 class SSLForm(ModelForm):
-    ssl_passphrase2 = forms.CharField(max_length=120,
-            label=_("Confirm Passphrase"),
-            widget=forms.widgets.PasswordInput(),
-            required=False,
-            )
+    ssl_passphrase2 = forms.CharField(
+        max_length=120,
+        label=_("Confirm Passphrase"),
+        widget=forms.widgets.PasswordInput(),
+        required=False,
+    )
 
     class Meta:
         model = models.SSL
         widgets = {
             'ssl_passphrase': forms.widgets.PasswordInput(render_value=False),
-            }
+        }
 
     def __init__(self, *args, **kwargs):
         super(SSLForm, self).__init__(*args, **kwargs)
@@ -456,7 +510,7 @@ class SSLForm(ModelForm):
             'ssl_passphrase',
             'ssl_passphrase2',
             'ssl_certfile',
-            ]
+        ]
         if self.instance.ssl_passphrase:
             self.fields['ssl_passphrase'].required = False
 
@@ -464,7 +518,9 @@ class SSLForm(ModelForm):
         passphrase1 = self.cleaned_data.get("ssl_passphrase")
         passphrase2 = self.cleaned_data.get("ssl_passphrase2")
         if passphrase1 != passphrase2:
-            raise forms.ValidationError(_("The two passphrase fields didn't match."))
+            raise forms.ValidationError(
+                _("The two passphrase fields didn't match.")
+            )
         return passphrase2
 
     def get_x509_modulus(self, x509_file_path):
@@ -477,10 +533,7 @@ class SSLForm(ModelForm):
             "-noout",
             "-modulus",
             "-in", x509_file_path,
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            )
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         modulus, err = proc.communicate()
         if proc.returncode != 0:
@@ -498,10 +551,7 @@ class SSLForm(ModelForm):
             "-noout",
             "-modulus",
             "-in", key_file_path,
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            )
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         modulus, err = proc.communicate()
         if proc.returncode != 0:
@@ -511,15 +561,18 @@ class SSLForm(ModelForm):
 
     def clean_ssl_certfile(self):
         certfile = self.cleaned_data.get("ssl_certfile")
+        if not certfile:
+            return None
         reg = re.search(
             r'(-----BEGIN ([DR]SA) PRIVATE KEY-----.*?'
             r'-----END \2 PRIVATE KEY-----)',
             certfile,
-            re.M|re.S)
+            re.M | re.S
+        )
         if not reg:
             raise forms.ValidationError(
                 _("RSA or DSA private key not found")
-                )
+            )
         priv = reg.group()
 
         priv_file = tempfile.mktemp(dir='/tmp/')
@@ -541,7 +594,8 @@ class SSLForm(ModelForm):
             r'(-----BEGIN CERTIFICATE-----.*?'
             r'-----END CERTIFICATE-----)',
             certfile,
-            re.M|re.S)
+            re.M | re.S
+        )
 
         verified = False
         for cert in reg:
@@ -558,7 +612,7 @@ class SSLForm(ModelForm):
         if not verified:
             raise forms.ValidationError(
                 _("The modulus of certificate and key must match")
-                )
+            )
 
         return certfile
 
@@ -580,16 +634,18 @@ class SMARTTestForm(ModelForm):
         widgets = {
             'smarttest_hour': CronMultiple(
                 attrs={'numChoices': 24, 'label': _("hour")}
-                ),
+            ),
             'smarttest_daymonth': CronMultiple(
-                attrs={'numChoices': 31, 'start': 1, 'label': _("day of month")}
-                ),
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
             'smarttest_dayweek': forms.CheckboxSelectMultiple(
                 choices=choices.WEEKDAYS_CHOICES
-                ),
+            ),
             'smarttest_month': forms.CheckboxSelectMultiple(
                 choices=choices.MONTHS_CHOICES
-                ),
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -655,18 +711,17 @@ class SMARTTestForm(ModelForm):
             qs = models.SMARTTest.objects.filter(
                 smarttest_disks__in=[disk],
                 smarttest_type=test,
-                )
+            )
             if self.instance.id:
                 qs = qs.exclude(id=self.instance.id)
             if qs.count() > 0:
                 used_disks.append(disk.disk_name)
         if used_disks:
-            self._errors['smarttest_disks'] = self.error_class([
-                _("The following disks already have tests for this type: "
-                    "%s" % (
-                        ', '.join(used_disks),
-                    )),
-                ])
+            self._errors['smarttest_disks'] = self.error_class([_(
+                "The following disks already have tests for this type: %s" % (
+                    ', '.join(used_disks),
+                )),
+            ])
             self.cleaned_data.pop("smarttest_disks", None)
         return self.cleaned_data
 
@@ -674,11 +729,12 @@ class SMARTTestForm(ModelForm):
 class FirmwareTemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(
         label=_("Place to temporarily place firmware file"),
-        help_text=_("The system will use this place to temporarily store the "
+        help_text=_(
+            "The system will use this place to temporarily store the "
             "firmware file before it's being applied."),
         choices=(),
         widget=forms.Select(attrs={'class': 'required'}),
-        )
+    )
 
     def clean_mountpoint(self):
         mp = self.cleaned_data.get("mountpoint")
@@ -689,7 +745,10 @@ class FirmwareTemporaryLocationForm(Form):
 
     def __init__(self, *args, **kwargs):
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
-        self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')]
+        self.fields['mountpoint'].choices = [
+            (x.mp_path, x.mp_path)
+            for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')
+        ]
         self.fields['mountpoint'].choices.append(
             (':temp:', _('Memory device'))
         )
@@ -704,7 +763,10 @@ class FirmwareTemporaryLocationForm(Form):
 
 class FirmwareUploadForm(Form):
     firmware = FileField(label=_("New image to be installed"), required=True)
-    sha256 = forms.CharField(label=_("SHA256 sum for the image"), required=True)
+    sha256 = forms.CharField(
+        label=_("SHA256 sum for the image"),
+        required=True
+    )
 
 
 class ConfigUploadForm(Form):
@@ -719,19 +781,21 @@ class CronJobForm(ModelForm):
             'cron_command': forms.widgets.TextInput(),
             'cron_minute': CronMultiple(
                 attrs={'numChoices': 60, 'label': _("minute")}
-                ),
+            ),
             'cron_hour': CronMultiple(
                 attrs={'numChoices': 24, 'label': _("hour")}
-                ),
+            ),
             'cron_daymonth': CronMultiple(
-                attrs={'numChoices': 31, 'start': 1, 'label': _("day of month")}
-                ),
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
             'cron_dayweek': forms.CheckboxSelectMultiple(
                 choices=choices.WEEKDAYS_CHOICES
-                ),
+            ),
             'cron_month': forms.CheckboxSelectMultiple(
                 choices=choices.MONTHS_CHOICES
-                ),
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -749,7 +813,9 @@ class CronJobForm(ModelForm):
         user = self.cleaned_data.get("cron_user")
         # See #1061 or FreeBSD PR 162976
         if len(user) > 17:
-            raise forms.ValidationError("Usernames cannot exceed 17 characters for cronjobs")
+            raise forms.ValidationError(_(
+                "Usernames cannot exceed 17 characters for cronjobs"
+            ))
         # Windows users can have spaces in their usernames
         # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
         if ' ' in user:
@@ -783,19 +849,21 @@ class RsyncForm(ModelForm):
         widgets = {
             'rsync_minute': CronMultiple(
                 attrs={'numChoices': 60, 'label': _("minute")}
-                ),
+            ),
             'rsync_hour': CronMultiple(
                 attrs={'numChoices': 24, 'label': _("hour")}
-                ),
+            ),
             'rsync_daymonth': CronMultiple(
-                attrs={'numChoices': 31, 'start': 1, 'label': _("day of month")}
-                ),
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
             'rsync_dayweek': forms.CheckboxSelectMultiple(
                 choices=choices.WEEKDAYS_CHOICES
-                ),
+            ),
             'rsync_month': forms.CheckboxSelectMultiple(
                 choices=choices.MONTHS_CHOICES
-                ),
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -808,18 +876,21 @@ class RsyncForm(ModelForm):
             if ins.rsync_dayweek == '*':
                 ins.rsync_dayweek = "1,2,3,4,5,6,7"
         super(RsyncForm, self).__init__(*args, **kwargs)
-        self.fields['rsync_mode'].widget.attrs['onChange'] = "rsyncModeToggle();"
+        self.fields['rsync_mode'].widget.attrs['onChange'] = (
+            "rsyncModeToggle();"
+        )
 
     def clean_rsync_user(self):
         user = self.cleaned_data.get("rsync_user")
         # See #1061 or FreeBSD PR 162976
         if len(user) > 17:
-            raise forms.ValidationError("Usernames cannot exceed 17 "
-                "characters for rsync tasks")
+            raise forms.ValidationError(_(
+                "Usernames cannot exceed 17 characters for rsync tasks"
+            ))
         # Windows users can have spaces in their usernames
         # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
         if ' ' in user:
-            raise forms.ValidationError("Usernames cannot have spaces")
+            raise forms.ValidationError(_("Usernames cannot have spaces"))
         return user
 
     def clean_rsync_remotemodule(self):
@@ -871,7 +942,7 @@ class RsyncForm(ModelForm):
                 self._errors['rsync_user'] = self.error_class([
                     _("In order to use rsync over SSH you need a user<br />"
                       "with a public key (DSA/ECDSA/RSA) set up in home dir."),
-                    ])
+                ])
                 cdata.pop('rsync_user', None)
         return cdata
 
@@ -905,7 +976,9 @@ valid_sysctls = [
 ]
 
 assert len(filter(SYSCTL_VARNAME_FORMAT_RE.match, invalid_sysctls)) == 0
-assert len(filter(SYSCTL_VARNAME_FORMAT_RE.match, valid_sysctls)) == len(valid_sysctls)
+assert len(
+    filter(SYSCTL_VARNAME_FORMAT_RE.match, valid_sysctls)) == len(valid_sysctls
+)
 """
 
 # NOTE:
@@ -980,57 +1053,57 @@ class DebugForm(Form):
         label=_("Dump Active Directory Configuration"),
         initial=True,
         required=False,
-        )
+    )
     adcache = forms.BooleanField(
         label=_("Dump (AD|LDAP) Cache"),
         initial=False,
         required=False,
-        )
+    )
     geom = forms.BooleanField(
         label=_("Dump GEOM configuration"),
         initial=True,
         required=False,
-        )
+    )
     hardware = forms.BooleanField(
         label=_("Dump Hardware Configuration"),
         initial=True,
         required=False,
-        )
+    )
     ldap = forms.BooleanField(
         label=_("Dump LDAP Configuration"),
         initial=True,
         required=False,
-        )
+    )
     loader = forms.BooleanField(
         label=_("Loader Configuration Information"),
         initial=True,
         required=False,
-        )
+    )
     network = forms.BooleanField(
         label=_("Dump Network Configuration"),
         initial=True,
         required=False,
-        )
+    )
     ssl = forms.BooleanField(
         label=_("Dump SSL Configuration"),
         initial=True,
         required=False,
-        )
+    )
     sysctl = forms.BooleanField(
         label=_("Dump Sysctl Configuration"),
         initial=True,
         required=False,
-        )
+    )
     system = forms.BooleanField(
         label=_("Dump System Information"),
         initial=True,
         required=False,
-        )
+    )
     zfs = forms.BooleanField(
         label=_("Dump ZFS configuration"),
         initial=True,
         required=False,
-        )
+    )
 
     def get_options(self):
         opts = []
@@ -1063,13 +1136,12 @@ class InitShutdownForm(ModelForm):
 
     class Meta:
         model = models.InitShutdown
-        widgets = {
-            'ini_script': DirectoryBrowser(dirsonly=False),
-        }
 
     def __init__(self, *args, **kwargs):
         super(InitShutdownForm, self).__init__(*args, **kwargs)
-        self.fields['ini_type'].widget.attrs['onChange'] = "initshutdownModeToggle();"
+        self.fields['ini_type'].widget.attrs['onChange'] = (
+            "initshutdownModeToggle();"
+        )
 
     def clean_ini_command(self):
         _type = self.cleaned_data.get("ini_type")

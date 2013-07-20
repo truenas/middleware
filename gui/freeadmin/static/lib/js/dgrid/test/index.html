@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>dgrid Tests</title>
+		<style>
+			@import "../css/dgrid.css";
+			@import "../css/skins/slate.css";
+			
+			html, body {
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+			}
+			body {
+				font-family: Calibri, Verdana, Arial, Helvetica, sans-serif;
+			}
+			.toc {
+				border: none;
+				height: 100%;
+			}
+			.toc .header-title {
+				padding: 7px 20px;
+			}
+			.toc .dgrid-cell {
+				border: none;
+			}
+			.toc .dgrid-row {
+				background-color: #fff;
+				border-bottom: 1px solid #ccc;
+				cursor: pointer;
+			}
+			.toc .dgrid-row:hover {
+				background-color: #def;
+			}
+			.toc a {
+				/* Subdue default link styles, since entire row is clickable */
+				color: #000;
+				text-decoration: none;
+			}
+			
+			.toc .field-name {
+				width: 20em;
+			}
+		</style>
+	</head>
+	<body class="slate">
+		<div id="grid"></div>
+		<script src="../../dojo/dojo.js" data-dojo-config="async: true"></script>
+		<script>
+			require([
+				"dojo/_base/xhr",
+				"dojo/on",
+				"dojo/json",
+				"dojo/store/Memory",
+				"dojo/cookie",
+				"dgrid/OnDemandGrid",
+				"dgrid/tree",
+				"put-selector/put",
+				"dojo/query",
+				"dojo/domReady!"
+			], function(xhr, on, json, Memory, cookie, OnDemandGrid, tree, put){
+				xhr.get({
+					url: "data/index.json",
+					handleAs: "json"
+				}).then(function(data){
+					var store = window.store = new Memory({
+						data: data,
+						idProperty: "url",
+						getChildren: function(parent, options){
+							return this.query({ parent: parent.url }, options);
+						},
+						mayHaveChildren: function(parent){
+							return !parent.title; // Items with title are html pages, leaves
+						}
+					});
+					
+					var cookieName = "dgrid-test-index",
+						persistedInfo = cookie(cookieName);
+					persistedInfo = persistedInfo ?
+						json.parse(persistedInfo) : { expanded: {} };
+					
+					function shouldExpand(row, level, previouslyExpanded) {
+						return previouslyExpanded || !!persistedInfo.expanded[row.id];
+					}
+					
+					function renderLinkCell(object, value){
+						// Render a link for cells in rows representing pages
+						// (not parent directories)
+						return put(object.title ? "a[href=" + object.url + "]" : "div",
+							value || "");
+					}
+					
+					var grid = new OnDemandGrid({
+						className: "toc",
+						columns: {
+							name: tree({
+								shouldExpand: shouldExpand,
+								renderCell: renderLinkCell,
+								expandOn: ".dgrid-row:click"
+							}),
+							title: { renderCell: renderLinkCell }
+						},
+						renderHeader: function(){
+							put(this.headerNode, "div.header-title", "dgrid Tests");
+						},
+						query: { parent: "" },
+						sort: "name",
+						store: store
+					}, "grid");
+					
+					if(persistedInfo.scroll){
+						// Restore scroll position on initial refresh
+						on.once(grid, "dgrid-refresh-complete", function(){
+							grid.scrollTo({ y: persistedInfo.scroll });
+						});
+					}
+					
+					grid.on(".dgrid-row:click", function(evt){
+						var item = grid.row(evt).data;
+						if(item.title){
+							// Persist state of expansion and scroll
+							cookie(cookieName, json.stringify({
+								expanded: grid._expanded,
+								scroll: grid.getScrollPosition().y
+							}));
+							// Navigate to test page, unless a link was clicked
+							// (in which case navigation will occur anyway)
+							if(evt.target.tagName !== "A"){
+								location.href = item.url;
+							}
+						}
+					});
+				});
+			});
+		</script>
+	</body>
+</html>

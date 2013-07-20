@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="utf-8"/>
+		<meta charset="utf-8">
 		<title>Test Complex Grid ColumnReorder</title>
 		<meta name="viewport" content="width=570">
 		<link rel="stylesheet" href="../../../dojo/resources/dojo.css">
 		<link rel="stylesheet" href="../../../dojo/resources/dnd.css">
 		<link rel="stylesheet" href="../../../dgrid/css/dgrid.css">
 		<link rel="stylesheet" href="../../../dgrid/css/skins/claro.css">
-		<style type="text/css">
+		<style>
 			.dgrid {
 				margin: 10px;
 				height: 20em;
@@ -19,24 +19,35 @@
 		<h2>A grid with column re-ordering within simple columns or subrows</h2>
 		<div id="grid"></div>
 		<div>Buttons to test different column arrangements in the grid above:
-			<button onclick="grid.set('columns', columns);">simple columns</button>
-			<button onclick="grid.set('subRows', subRows);">subrows</button>
+			<button onclick="grid.set('columns', getColumns()); console.log(getColumns(), grid.columns);">simple columns</button>
+			<button onclick="grid.set('subRows', getSubRows());">subrows</button>
 		</div>
+
 		<h2>A grid with column re-ordering within columnsets</h2>
 		<div id="gridColumnSets"></div>
-		
+
+		<h2>A grid with column re-ordering within subrows with a dash-number id</h2>
+		<div id="grid-99"></div>
+
+		<h2>A grid with column re-ordering within columnsets with a dash-number id</h2>
+		<div id="gridColumnSets-99"></div>
+
 		<script src="../../../dojo/dojo.js"
 			data-dojo-config="async: true, isDebug: true"></script>
-		<script type="text/javascript">
+		<script>
 			// Structures are declared outside require for callbacks defined above.
-			var columns = {
+			function getColumns(){
+				return {
 					col1: "Column 1",
 					col2: { label: "Column 2", sortable: false },
 					col3: "Column 3",
 					col4: "Column 4",
 					col5: "Column 5"
-				},
-				subRows = [
+				};
+			}
+			
+			function getSubRows(){
+				return [
 					[
 						{label: 'Column 1', field: 'col1'},
 						{label: 'Column 2', field: 'col2', sortable: false},
@@ -44,30 +55,45 @@
 					], [
 						{label: 'Column 4', field: 'col4', colSpan: 2},
 						{label: 'Column 5', field: 'col5'}
-					]];
+					]
+				];
+			}
+			
+			function getColumnSets(){
+				return [
+					[
+						[
+							{label: 'Column 1', field: 'col1'},
+							{label: 'Column 2', field: 'col2', sortable: false}
+						]
+					], [
+						[
+							{label: 'Column 3', field: 'col3'},
+							{label: 'Column 5', field: 'col5'}
+						]
+					]
+				];
+			}
+			
 			require(["dgrid/OnDemandGrid", "dgrid/ColumnSet", "dgrid/extensions/ColumnReorder",
 				"dojo/_base/declare", "dojo/on", "dgrid/test/data/base", "dojo/domReady!"],
 			function(OnDemandGrid, ColumnSet, ColumnReorder, declare, on, testStore){
 				var grid = window.grid = new (declare([OnDemandGrid, ColumnReorder]))({
 						store: testStore,
-						columns: columns
+						columns: getColumns()
 					}, "grid"),
+					grid2 = window.grid2 = new (declare([OnDemandGrid, ColumnReorder]))({
+						store: testStore,
+						subRows: getSubRows()
+					}, "grid-99"),
 					gridColumnSets = window.gridColumnSets = new (declare([OnDemandGrid, ColumnSet, ColumnReorder]))({
 						store: testStore,
-						columnSets: [
-							[
-								[
-									{label: 'Column 1', field: 'col1'},
-									{label: 'Column 2', field: 'col2', sortable: false}
-								]
-							], [
-								[
-									{label: 'Column 3', field: 'col3'},
-									{label: 'Column 5', field: 'col5'}
-								]
-							]
-						]
-					}, "gridColumnSets");
+						columnSets: getColumnSets()
+					}, "gridColumnSets"),
+					gridColumnSets2 = window.gridColumnSets2 = new (declare([OnDemandGrid, ColumnSet, ColumnReorder]))({
+						store: testStore,
+						columnSets: getColumnSets()
+					}, "gridColumnSets-99");
 				
 				on(document.body, "dgrid-columnreorder", function(evt){
 					console.log(evt.grid.id + " dgrid-columnreorder" + ": ",

@@ -9,7 +9,7 @@ define([], function(){
 "use strict";
 
 /*
- * RequireJS css! plugin
+ * AMD css! plugin
  * This plugin will load and wait for css files.  This could be handy when
  * loading css files as part of a layer or as a way to apply a run-time theme.
  * Most browsers do not support the load event handler of the link element.
@@ -88,7 +88,9 @@ define([], function(){
 		cache = typeof _css_cache == "undefined" ? {} : _css_cache,
 		undef,
 		features = {
-			"event-link-onload": false, //); /*document.createElement("link").onload === null);*/
+			"event-link-onload": document.createElement("link").onload === null &&
+				// safari lies about the onload event
+				!navigator.userAgent.match(/AppleWebKit/),
 			"dom-create-style-element": !document.createStyleSheet
 		},
 		// find the head element and set it to it's standard property if nec.
@@ -152,59 +154,21 @@ define([], function(){
 			}
 		
 		
-			// Chrome 8 hax0rs!
-			// This is an ugly hack needed by Chrome 8+ which no longer waits for rules
-			// to be applied to the document before exposing them to javascript.
-			// Unfortunately, this routine will never fire for XD stylsheets since
-			// Chrome will also throw an exception if attempting to access the rules
-			// of an XD stylesheet.  Therefore, there's no way to detect the load
-			// event of XD stylesheets until Google fixes this, preferably with a
-			// functional load event!  As a work-around, use ready() before rendering
-			// widgets / components that need the css to be ready.
-			var testEl;
-			function styleIsApplied () {
-				if (!testEl) {
-					testEl = document[createElement]('div');
-					testEl.id = '_cssx_load_test';
-					testEl.style.cssText = 'position:absolute;top:-999px;left:-999px;';
-					doc.body.appendChild(testEl);
-				}
-				return doc.defaultView.getComputedStyle(testEl, null).marginTop == '-5px';
-			}
-		
 			function isLinkReady (link) {
-				// This routine is a bit fragile: browser vendors seem oblivious to
-				// the need to know precisely when stylesheets load.  Therefore, we need
+				// based on http://www.yearofmoo.com/2011/03/cross-browser-stylesheet-preloading.html
+				// Therefore, we need
 				// to continually test beta browsers until they all support the LINK load
 				// event like IE and Opera.
-				var sheet, rules, ready = false;
-				try {
-					// webkit's and IE's sheet is null until the sheet is loaded
-					sheet = link.sheet || link.styleSheet;
-					if(sheet){
-						// mozilla's sheet throws an exception if trying to access xd rules
-						rules = sheet.cssRules || sheet.rules;
-						// webkit's xd sheet returns rules == null
-						// opera's sheet always returns rules, but length is zero until loaded
-						// friggin IE doesn't count @import rules as rules, but IE should
-						// never hit this routine anyways.
-						ready = rules ?
-							rules.length > 0 : // || (sheet.imports && sheet.imports.length > 0) :
-							rules !== undef;
-						// thanks, Chrome 8, for this lovely hack
-						if (ready && navigator.userAgent.indexOf('Chrome') >= 0) {
-							sheet.insertRule('#_cssx_load_test{margin-top:-5px;}', 0);
-							ready = styleIsApplied();
-							sheet.deleteRule(0);
+				// webkit's and IE's sheet is null until the sheet is loaded
+				var sheet = link.sheet || link.styleSheet;
+				if(sheet){
+					var styleSheets = document.styleSheets;
+					for(var i = styleSheets.length; i > 0; i--){
+						if(styleSheets[i-1] == sheet){
+							return true;
 						}
 					}
 				}
-				catch (ex) {
-					// 1000 means FF loaded an xd stylesheet
-					// other browsers just throw a security error here (IE uses the phrase 'Access is denied')
-					ready = (ex.code == 1000) || (ex.message.match(/security|denied/i));
-				}
-				return ready;
 			}
 		
 			function ssWatcher (params, cb) {
@@ -293,7 +257,7 @@ define([], function(){
 						params = {
 							link: link,
 							url: url,
-							wait: config && config.cssWatchPeriod || 50
+							wait: config && config.cssWatchPeriod || 25
 						};
 					// hook up load detector(s)
 					loadDetector(params, loaded);

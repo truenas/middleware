@@ -1,7 +1,7 @@
 /*
     Handles transitions and animations
 */
-define(["../xstyle", "../elemental"],function(xstyle, elemental){
+define(["../main"],function(xstyle){
 	var transitions = [];
 	function propertyChange(event){
 		if(event.propertyName != "className"){
@@ -152,7 +152,7 @@ define(["../xstyle", "../elemental"],function(xstyle, elemental){
 	}
 	return {
 		onProperty: function(name, value, rule){
-			return elemental.addRenderer(name, value, rule, function(element){
+			return xstyle.addRenderer(name, value, rule, function(element){
 				var currentStyle = element.currentStyle;
 				var previousStyle = element._previousStyle = {};
 				if(name == "transition-duration"){

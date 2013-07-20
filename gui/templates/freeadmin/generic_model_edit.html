@@ -1,5 +1,5 @@
 {% load i18n freeadmin %}
-<form data-dojo-type="dijit.form.Form" encType="multipart/form-data">
+<form data-dojo-type="dijit.form.Form" encType="multipart/form-data" id="dialogForm_{{ verbose_name }}">
 {% block post_form %}
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
      doSubmit({
@@ -50,7 +50,7 @@
     {% block buttons %}
     <tr>
         <td colspan="2">
-            <button class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type:'submit'">
+            <button id="btn_{{ verbose_name}}_Ok" class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type:'submit'">
                 <script type="dojo/method">
                         {{ extra_js }}
                 </script>
@@ -61,7 +61,7 @@
                 {% endif %}
             </button>
             {% if not inline %}
-            <button data-dojo-type="dijit.form.Button" class="cancelform">
+            <button id="btn_{{ verbose_name}}_Cancel" data-dojo-type="dijit.form.Button" class="cancelform">
                 {% trans "Cancel" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                     cancelDialog(this);
@@ -69,17 +69,17 @@
             </button>
             {% endif %}
             {% if deletable %}
-            <button data-dojo-type="dijit.form.Button" >
+            <button id="btn_{{ verbose_name}}_Delete" data-dojo-type="dijit.form.Button" >
                 <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
 		var button = this;
 		require([
 		"dojo/query",
 		"dojo/request/xhr",
 		"dijit/registry"
-		], function(query, xhr) {
+		], function(query, xhr, registry) {
                     try {
                         var form = getForm(button);
-                        dojo.query('input[type=button],input[type=submit]', form.domNode).forEach(
+                        query('input[type=button],input[type=submit]', form.domNode).forEach(
                             function(inputElem){
                                  registry.getEnclosingWidget(inputElem).set('disabled',true);
                              }

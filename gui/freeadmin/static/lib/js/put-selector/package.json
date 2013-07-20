@@ -1,7 +1,7 @@
 {
   "name": "put-selector",
   "author": "Kris Zyp",
-  "version": "0.3.2",
+  "version": "0.3.4",
   "description": "A high-performance, lightweight function for creating and manipulating DOM elements with succinct, elegant, familiar CSS selector-based syntax",
   "licenses": [
      {

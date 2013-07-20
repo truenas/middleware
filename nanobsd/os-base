@@ -56,6 +56,7 @@ NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 # Set to a lower default for lower footprints with home usecases in FreeNAS.
 NANO_RAM_TMPVARSIZE=327680
 
+
 NANO_IMAGES=2
 # Remove .orig and .rej too
 # Removing X11 needs more work, it blows rdd + fonts
@@ -144,7 +145,10 @@ ${DEBUG_INSTALL}
 # WITHOUT_INFO=true			makeinfo
 # WITHOUT_RCS=true
 PKG_ONLY_MAKE_CONF="
-WITHOUT_TOOLCHAIN=true
+WITHOUT_BINUTILS=true
+WITHOUT_CLANG=true
+WITHOUT_CLANG_IS_CC=true
+WITHOUT_GCC=true
 WITHOUT_INSTALLLIB=true
 WITHOUT_INFO=true
 WITHOUT_RCS=true
@@ -189,6 +193,7 @@ add_port net/nss_ldap
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
 add_port lang/python27
 add_port dns/py-dnspython
+add_port devel/tevent
 add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port devel/libexecinfo
 add_port devel/popt
@@ -198,7 +203,8 @@ add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
 	OPTIONS_FILE_SET+=ADS \
 	OPTIONS_FILE_SET+=AIO_SUPPORT \
 	OPTIONS_FILE_SET+=EXP_MODULES \
-	OPTIONS_FILE_SET+=PAM_SMBPASS
+	OPTIONS_FILE_SET+=PAM_SMBPASS \
+	OPTIONS_FILE_SET+=SYSLOG
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash OPTIONS_FILE_UNSET+=NLS
@@ -259,6 +265,7 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11-fonts/bitstream-vera
 	add_port x11-fonts/font-util
 	add_port x11-fonts/encodings
+	add_port x11-fonts/dejavu
 	add_port x11-fonts/xorg-fonts-truetype
 	add_port x11/pixman
 	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
@@ -280,7 +287,7 @@ add_port sysutils/arcconf
 add_port sysutils/tw_cli
 add_port sysutils/megacli
 add_port sysutils/areca-cli
-add_port net/py-ldap2 WITH_SASL=y
+add_port net/py-ldap2 OPTIONS_FILE_SET+=SASL
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
 add_port devel/dbus OPTIONS_FILE_UNSET+=X11
@@ -295,7 +302,10 @@ add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port devel/libevent
 add_port sysutils/tmux
-add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y
+add_port net/netatalk OPTIONS_FILE_SET+=PAM \
+	OPTIONS_FILE_SET+=ZEROCONF \
+	OPTIONS_FILE_SET+=LDAP \
+	OPTIONS_FILE_UNSET+=APPLETALK
 add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
@@ -320,6 +330,12 @@ add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
 add_port graphics/jpeg
+add_port graphics/lcms OPTIONS_FILE_UNSET+=X11 \
+	OPTIONS_FILE_UNSET+=JPEGICC OPTIONS_FILE_UNSET+=TIFFICC
+add_port graphics/py-imaging OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=TKINTER
+add_port www/py-django-simple-captcha OPTIONS_FILE_UNSET+=X11
+add_port www/py-requests
+add_port www/py-beautifulsoup
 
 if [ "${DEBUG}" = 1 ]; then
 
@@ -457,7 +473,7 @@ add_pc_extractoverlay()
 	cp ${src}/${pce} ${bin}/${pce}
 	chmod 755 ${bin}/${pce}
 
-    mkdir -p ${dst}/etc
+	mkdir -p ${dst}/etc
 	mkdir -p ${pcbsd}/conf
 	mkdir -p ${pcbsd}/distfiles
 
@@ -491,6 +507,9 @@ add_warden()
 
 	cp ${src}/pluginjail-packages ${share}/pluginjail-packages
 	chmod 644 ${share}/pluginjail-packages
+
+	cp ${src}/pcbsd-utils-packages ${share}/pcbsd-utils-packages
+	chmod 644 ${share}/pcbsd-utils-packages
 
 	cp ${src}/conf/warden.conf ${dst}/etc/warden.conf
 	chmod 644 ${dst}/etc/warden.conf
@@ -528,35 +547,331 @@ add_pcbsd_libsh()
 }
 customize_cmd add_pcbsd_libsh
 
-add_pcbsd_mirrors()
+add_pcbsd_xtrafiles()
 {
 	local src dst
-	src="${AVATAR_ROOT}/src/pcbsd/conf"
+	src="${AVATAR_ROOT}/src/pcbsd/xtrafiles/local/share/pcbsd/conf"
 	dst="${NANO_WORLDDIR}/usr/local/share/pcbsd/conf"
 
 	pprint 2 "Adding pcbsd mirrors"
 
 	mkdir -p ${dst} >/dev/null 2>/dev/null
 
-	cp ${src}/pcbsd-mirrors ${dst}/pcbsd-mirrors
-	chmod 644 ${dst}/pcbsd-mirrors
+	for xf in $(ls ${src})
+	do
+		cp ${src}/${xf} ${dst}/${xf}
+		chmod 644 ${dst}/${xf}
+	done
 }
-customize_cmd add_pcbsd_mirrors
+customize_cmd add_pcbsd_xtrafiles
 
 add_pbi_wrapper()
 {
 	local _pm 
-	_pm="${NANO_WORLDDIR}/usr/pbi/.pbiwrapper"
+	_pm="${NANO_WORLDDIR}/usr/pbi/.pbiwrapper-${NANO_ARCH}"
 
 	pprint 2 "Adding PBI wrapper"
 
+	mkdir -p "${PBI_APPDIR}"
 	mkdir -p "${PBI_BUILDDIR}"
+
 	if [ ! -s "${PBI_BUILDDIR}/.pbiwrapper" ]
 	then
-		cp "${_pm}" "${PBI_BUILDDIR}/.pbiwrapper"
+		cp "${_pm}" "${PBI_APPDIR}/.pbiwrapper-${NANO_ARCH}"
 	fi
 }
 customize_cmd add_pbi_wrapper
+
+get_jail_distfiles()
+{
+	local arch="${1}"
+	local ftpdir
+	local ddir
+	local distfiles
+	local ixdir
+	local wd
+
+	if [ "${WITH_JAILS}" = "0" ]
+	then
+		return 0
+	fi
+
+	distfiles="base.txz doc.txz games.txz"
+	if [ "${arch}" = "amd64" ]
+	then
+		distfiles="${distfiles} lib32.txz"
+	fi
+
+	ftpdir="${FREEBSD_FTP_MIRROR}/pub/FreeBSD/releases/"\
+"${arch}/${FREEBSD_RELEASE_VERSION}"
+
+	wd="${NANO_WORLDDIR}/usr/local/share/warden"
+	mkdir -p "${wd}"
+
+	ixdir="${wd}/distfiles/${FREEBSD_RELEASE_VERSION}/${arch}"
+	mkdir -p "${ixdir}"
+
+	ddir="${NANO_OBJ}/jails/distfiles/${FREEBSD_RELEASE_VERSION}/${arch}"
+	mkdir -p "${ddir}"
+
+	pprint 2 "Adding jails distfiles"
+
+	for df in ${distfiles}
+	do
+		pprint 2 "Getting ${df}"
+		if [ -f "${ddir}/${df}" -a -f "${ddir}/${df}.sha256" ]
+		then
+			local s1="$(cat ${ddir}/${df}.sha256)"
+			local s2="$(sha256 -q ${ddir}/${df})"
+
+			if [ "${s1}" = "${s2}" ]
+			then
+				continue
+			fi
+		fi
+
+		fetch -o "${ddir}/${df}" "${ftpdir}/${df}"
+		sha256 -q "${ddir}/${df}" > "${ddir}/${df}.sha256"
+	done
+
+	mkdir -p "${ixdir}"
+	cp ${ddir}/*.txz "${ixdir}/"
+	cp ${ddir}/*.sha256 "${ixdir}/"
+}
+
+get_jail_distfiles64()
+{
+	if [ "${NANO_ARCH}" = "amd64" ]
+	then
+		get_jail_distfiles "amd64"
+	fi
+}
+customize_cmd get_jail_distfiles64
+
+get_jail_distfiles32()
+{
+	get_jail_distfiles "i386"
+}
+customize_cmd get_jail_distfiles32
+
+create_jail()
+{
+	local arch="${1}"
+	local dir
+	local ddir
+	local jdir
+
+	if [ "${WITH_JAILS}" = "0" ]
+	then
+		return 0
+	fi
+
+	distfiles="base.txz doc.txz games.txz"
+	if [ "${arch}" = "amd64" ]
+	then
+		distfiles="${distfiles} lib32.txz"
+	fi
+
+	ddir="${NANO_OBJ}/jails/distfiles/${FREEBSD_RELEASE_VERSION}/${arch}"
+	jdir="${NANO_OBJ}/jails/jail-${arch}"
+	mkdir -p "${jdir}"
+
+	pprint 2 "Installing world"
+	for df in ${distfiles}
+	do
+		if [ -f "${ddir}/${df}.extracted" ]
+		then
+			continue
+		fi
+
+		pprint 2 "extracting ${df}"
+		tar -xvpf "${ddir}/${df}" -C "${jdir}" 2>/dev/null
+		if [ "$?" = "0" ]
+		then
+			touch "${ddir}/${df}.extracted"
+		fi
+	done
+}
+
+create_jail64()
+{
+	if [ "${NANO_ARCH}" = "amd64" ]
+	then
+		create_jail "amd64"
+	fi
+}
+customize_cmd create_jail64
+
+create_jail32()
+{
+	create_jail "i386"
+}
+customize_cmd create_jail32
+
+get_jail_packages()
+{
+	local arch="${1}"
+	local s1
+	local s2
+	local ftpdir
+	local pdir
+	local jdir
+	local ixdir
+	local wd
+	local pkgext="txz"
+	local pcbsd="${AVATAR_ROOT}/src/pcbsd"
+
+	if [ "${WITH_JAILS}" = "0" ]
+	then
+		return 0
+	fi
+
+	ftpdir="${FREEBSD_PACKAGE_MIRROR}/${FREEBSD_RELEASE_VERSION}/${arch}"
+	if [ "${arch}" = "i386" ]
+	then
+		ftpdir="${FREEBSD_PACKAGE_MIRROR_32}"
+	fi
+
+	pdir="${NANO_OBJ}/jails/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
+	mkdir -p "${pdir}"
+
+	wd="${NANO_WORLDDIR}/usr/local/share/warden"
+	mkdir -p "${wd}"
+
+	ixdir="${wd}/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
+	mkdir -p "${ixdir}"
+
+	jdir="${NANO_OBJ}/jails/jail-${arch}"
+
+	local get=0
+	if [ -f "${pdir}/pkg.txz.sha256" ]
+	then
+		s1="$(cat ${pdir}/pkg.txz.sha256 2>/dev/null)"
+		s2="$(sha256 -q ${pdir}/pkg.txz 2>/dev/null)"
+		if [ "${s1}" != "${s2}" ]
+		then
+			get=1
+			
+		fi
+
+	elif [ ! -f "${pdir}/pkg.txz.sha256" ]
+	then
+		get=1
+	fi
+	if [ "${get}" = "1" ]
+	then
+		fetch -o "${pdir}/pkg.txz" ${ftpdir}/Latest/pkg.txz
+		sha256 -q "${pdir}/pkg.txz" > "${pdir}/pkg.txz.sha256"
+	fi
+	cp "${pdir}/pkg.txz" "${jdir}/pkg.txz"
+
+	get=0
+	if [ -f "${pdir}/repo.txz.sha256" ]
+	then
+		s1="$(cat ${pdir}/repo.txz.sha256 2>/dev/null)"
+		s2="$(sha256 -q ${pdir}/repo.txz 2>/dev/null)"
+		if [ "${s1}" != "${s2}" ]
+		then
+			get=1
+			
+		fi
+
+	elif [ ! -f "${pdir}/repo.txz.sha256" ]
+	then
+		get=1
+	fi
+	if [ "${get}" = "1" ]
+	then
+		fetch -o "${pdir}/repo.txz" ${ftpdir}/repo.txz
+		sha256 -q "${pdir}/repo.txz" > "${pdir}/repo.txz.sha256"
+	fi
+
+	mkdir -p "${jdir}/usr/local/etc/"
+	cp "${pdir}/repo.txz" "${jdir}/repo.txz"
+
+	cp "${pcbsd}/pc-extractoverlay/server-overlay/usr/local/etc/pkg-pubkey.cert" \
+		"${jdir}/usr/local/etc/pkg-pubkey.cert"
+	cp /etc/resolv.conf "${jdir}/etc/resolv.conf"
+		
+	if [ "${arch}" != "i386" ]
+	then
+		cat<<__EOF__>"${jdir}/usr/local/etc/pkg.conf"
+PACKAGESITE: ${ftpdir}
+HTTP_MIRROR: http
+PUBKEY: /usr/local/etc/pkg-pubkey.cert
+PKG_CACHEDIR: /usr/local/tmp
+__EOF__
+	else
+		cat<<__EOF__>"${jdir}/usr/local/etc/pkg.conf"
+PACKAGESITE: ${ftpdir}
+HTTP_MIRROR: http
+PKG_CACHEDIR: /usr/local/tmp
+__EOF__
+	fi
+
+	local nw="${NANO_WORLDDIR}"
+	local ar="${NANO_ARCH}"
+	
+	pprint 2 "Updating pkgng"
+
+	NANO_WORLDDIR="${jdir}"
+	NANO_ARCH="${arch}"
+
+	export NANO_WORLDDIR NANO_ARCH
+	
+	CR "cd /; tar -xvf pkg.txz --exclude +MANIFEST --exclude +MTREE_DIRS"
+	CR "cd /; pkg add pkg.txz || true"
+	CR "cd /; tar -xvf repo.txz; mv repo.sqlite /var/db/pkg; rm -f signature"
+
+	local error=0
+	if [ ! -f "${pdir}/.fetched" ]
+	then
+		local pkgs
+
+		pkgs="$(cat "${pcbsd}/warden/pcbsd-utils-packages")"
+		pkgs="${pkgs} $(cat "${pcbsd}/warden/pluginjail-packages")"
+
+		for p in ${pkgs}
+		do
+			pprint 2 "Getting ${p}"
+			CR "pkg fetch -d -y ${p}"
+			if [ "$?" != "0" ]
+			then
+				error=1
+			fi
+		done
+	fi
+	if [ "${error}" = "0" ]
+	then
+		touch "${pdir}/.fetched"
+	fi
+
+	NANO_WORLDDIR="${nw}"
+	NANO_ARCH="${ar}"
+
+	export NANO_WORLDDIR NANO_ARCH
+
+	mkdir -p "${ixdir}"
+	cp ${jdir}/*.txz "${ixdir}/"
+	cp ${jdir}/usr/local/tmp/All/*.txz "${ixdir}/"
+	cp ${jdir}/var/db/pkg/* "${ixdir}/"
+}
+
+get_jail_packages64()
+{
+	if [ "${NANO_ARCH}" = "amd64" ]
+	then
+		get_jail_packages "amd64"
+	fi
+}
+customize_cmd get_jail_packages64
+
+get_jail_packages32()
+{
+	get_jail_packages "i386"
+}
+customize_cmd get_jail_packages32
+
 
 # Move the $world/data to the /data partion
 move_data()

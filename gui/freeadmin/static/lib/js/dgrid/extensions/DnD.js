@@ -11,18 +11,19 @@ define([
 	"dojo/dnd/Manager",
 	"dojo/_base/NodeList",
 	"put-selector/put",
+	"../Selection",
 	"dojo/has!touch?../util/touch",
 	"dojo/has!touch?./_DnD-touch-autoscroll",
 	"xstyle/css!dojo/resources/dnd.css"
-], function(declare, lang, arrayUtil, Deferred, aspect, on, topic, has, DnDSource, DnDManager, NodeList, put, touchUtil){
-	// Requirements:
+], function(declare, lang, arrayUtil, Deferred, aspect, on, topic, has, DnDSource, DnDManager, NodeList, put, Selection, touchUtil){
+	// Requirements
 	// * requires a store (sounds obvious, but not all Lists/Grids have stores...)
 	// * must support options.before in put calls
 	//   (if undefined, put at end)
 	// * should support copy
 	//   (copy should also support options.before as above)
 	
-	// TODOs:
+	// TODOs
 	// * consider sending items rather than nodes to onDropExternal/Internal
 	// * consider emitting store errors via OnDemandList._trackError
 	
@@ -198,7 +199,10 @@ define([
 		// not doing that just yet until we're sure about default impl.
 	});
 	
-	var DnD = declare(null, {
+	// Mix in Selection for more resilient dnd handling, particularly when part
+	// of the selection is scrolled out of view and unrendered (which we
+	// handle below).
+	var DnD = declare(Selection, {
 		// dndSourceType: String
 		//		Specifies the type which will be set for DnD items in the grid,
 		//		as well as what will be accepted by it by default.
@@ -232,25 +236,23 @@ define([
 				})
 			);
 			
-			// If dgrid's Selection mixin is in use, set up handlers to maintain references.
-			var selectedNodes, selectRow, deselectRow;
+			// Set up select/deselect handlers to maintain references, in case selected
+			// rows are scrolled out of view and unrendered, but then dragged.
+			var selectedNodes = this.dndSource._selectedNodes = {};
 			
-			if(this.selection){
-				selectedNodes = this.dndSource._selectedNodes = {};
-				selectRow = function(row){
-					selectedNodes[row.id] = row.element;
-				};
-				deselectRow = function(row){
-					delete selectedNodes[row.id];
-				};
-				
-				this.on("dgrid-select", function(event){
-					arrayUtil.forEach(event.rows, selectRow);
-				});
-				this.on("dgrid-deselect", function(event){
-					arrayUtil.forEach(event.rows, deselectRow);
-				});
+			function selectRow(row){
+				selectedNodes[row.id] = row.element;
 			}
+			function deselectRow(row){
+				delete selectedNodes[row.id];
+			}
+			
+			this.on("dgrid-select", function(event){
+				arrayUtil.forEach(event.rows, selectRow);
+			});
+			this.on("dgrid-deselect", function(event){
+				arrayUtil.forEach(event.rows, deselectRow);
+			});
 			
 			aspect.after(this, "destroy", function(){
 				delete this.dndSource._selectedNodes;
@@ -271,6 +273,11 @@ define([
 				type: type instanceof Array ? type : [type]
 			});
 			return row;
+		},
+		
+		removeRow: function (rowElement) {
+			this.dndSource.delItem(this.row(rowElement));
+			this.inherited(arguments);
 		}
 	});
 	DnD.GridSource = GridDnDSource;

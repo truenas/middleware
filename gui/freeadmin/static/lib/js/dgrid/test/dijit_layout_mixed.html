@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<title>Test dijit mixed layout</title>
-		<meta name="viewport" content="width=570"/>
-		<style type="text/css">
+		<meta charset="utf-8">
+		<title>Test Mixed Dijit Layout</title>
+		<meta name="viewport" content="width=570">
+		<style>
 			@import "../../dijit/themes/claro/document.css";
 			@import "../../dijit/themes/claro/claro.css";
 			@import "../css/skins/claro.css";
@@ -21,9 +21,9 @@
 				height:95%;
 			}
 		</style>
-		<script type="text/javascript" src="../../dojo/dojo.js"
+		<script src="../../dojo/dojo.js"
 			data-dojo-config="async: true"></script>
-		<script type="text/javascript">
+		<script>
 			require(["dgrid/OnDemandGrid",
 				"dgrid/Selection",
 				"dgrid/extensions/DijitRegistry",
@@ -32,12 +32,11 @@
 				"dojo/_base/declare",
 				"dijit/layout/BorderContainer",
 				"dijit/layout/TabContainer",
-				"dijit/layout/ContentPane",
 				"dojo/parser",
-				// non-returns
 				"dgrid/test/data/base",
+				"dijit/layout/ContentPane",
 				"dojo/domReady!"
-			], function(Grid, Selection, DijitRegistry, registry, lang, declare, BC, TC, CP, parser){
+			], function(Grid, Selection, DijitRegistry, registry, lang, declare, BC, TC, parser, testStore){
 				var
 					gridCols = window.gridCols = {
 						col1: "Column 1",
@@ -45,38 +44,41 @@
 						col3: "Column 3",
 						col4: "Column 4"
 					},
-					CustomGrid = declare([Grid, Selection, DijitRegistry]);
+					CustomGrid = declare([Grid, Selection, DijitRegistry]),
+					grid1,
+					grid2;
 					
 				parser.parse();
 				
-				// add grids as content to ContentPanes parsed within page
-				window.grid1 = new CustomGrid({
+				// Add grids to TabContainer parsed within page
+				grid1 = window.grid1 = new CustomGrid({
 					id: "grid1",
 					store: testStore,
 					columns: lang.clone(gridCols),
-					selectionMode: "single"
+					selectionMode: "single",
+					title: "Tab 1"
 				});
-				registry.byId("cp1").set("content", grid1);
+				registry.byId("tc").addChild(grid1);
 				
-				window.grid2 = new CustomGrid({
+				grid2 = window.grid2 = new CustomGrid({
 					id: "grid2",
 					store: testStore,
 					columns: lang.clone(gridCols),
-					selectionMode: "single"
+					selectionMode: "single",
+					title: "Tab 2"
 				});
-				registry.byId("cp2").set("content", grid2);
+				registry.byId("tc").addChild(grid2);
 			});
 		</script>
 	</head>
 	<body class="claro">
 		<div id="appLayout" data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="design: 'headline'">
-			<div class="centerPanel" data-dojo-type="dijit.layout.TabContainer" data-dojo-props="region: 'center', tabPosition: 'top'">
-				<div data-dojo-type="dijit.layout.ContentPane" id="cp1" title="grid 1" selected="true">
-				</div>
-				<div data-dojo-type="dijit.layout.ContentPane" id="cp2" title="grid 2">
-				</div>
+			<div class="centerPanel" data-dojo-type="dijit.layout.TabContainer" id="tc"
+				data-dojo-props="region: 'center', tabPosition: 'top'">
 			</div>
-			<div class="edgePanel" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'top'">Test dijit mixed layout - programmatic dgrid in declarative layout</div>
+			<div class="edgePanel" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'top'">
+				Test dijit mixed layout - programmatic dgrid in declarative layout
+			</div>
 		</div>
 	</body>
 </html>

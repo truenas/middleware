@@ -1,9 +1,7 @@
 #!/bin/sh
 #
-# Automatically build images for nightly snapshots and upload them to SF
-# This script heavily depends on the layout and configuration of the build
-# machine.  Unless you have a build.ix it most likely will fail.
-
+# Automatically run the builds, keep some logs, and wipe our backside
+#
 # nightly.sh depends:		devel/git, net/rsync
 # FreeNAS depends:		lang/python, sysutils/cdrtools
 
@@ -12,6 +10,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 set -x
 
 FREENAS_GIT="file:///freenas-build/freenas.git"
+FREENAS_BRANCH="releng/9.1.0"
 GIT_REPO="file:///freenas-build/trueos.git"
 GIT_PORTS_REPO="file:///freenas-build/ports.git"
 MASTER_SITE_OVERRIDE='http://localhost/freenas/ports-distfiles/${DIST_SUBDIR}/'
@@ -67,7 +66,7 @@ done
 
 # Create and populate build environment
 /sbin/zfs create -p ${ZPOOL}/${BUILDPATH}/${TONIGHT}
-/usr/local/bin/git clone --depth 1 ${FREENAS_GIT} ${ZBUILDPATH} 2>&1 > \
+/usr/local/bin/git clone -b ${FREENAS_BRANCH} --depth 1 ${FREENAS_GIT} ${ZBUILDPATH} 2>&1 > \
 	${ZLOGPATH}/checkout.log || exit
 
 # Locate to top level of working clone and force checkout
@@ -95,7 +94,7 @@ cd ${ZBUILDPATH} || exit
 	MASTER_SITE_OVERRID=${MASTER_SITE_OVERRIDE} \
 	FREENAS_ARCH=amd64 \
 	/bin/sh build/do_build.sh \
-	-t os-base 2>&1 > ${ZLOGPATH}/amd64.log
+	-a -J 2>&1 > ${ZLOGPATH}/amd64.log
 /usr/bin/env FREENAS_ARCH=amd64 /bin/sh build/create_iso.sh \
 	2>&1 >> ${ZLOGPATH}/amd64.log || exit
 
@@ -110,15 +109,17 @@ cd ${ZBUILDPATH} || exit
 	MASTER_SITE_OVERRID=${MASTER_SITE_OVERRIDE} \
 	FREENAS_ARCH=i386 \
 	/bin/sh build/do_build.sh \
-	-t os-base 2>&1 > ${ZLOGPATH}/i386.log
+	-a -J 2>&1 > ${ZLOGPATH}/i386.log
 /usr/bin/env FREENAS_ARCH=i386 /bin/sh build/create_iso.sh \
 	2>&1 >> ${ZLOGPATH}/i386.log || exit
 
 # If we made it this far, start boxing the finished product
-/bin/mkdir -p ${ZBUILDPATH}/sandbox/x64
+/bin/mkdir -p ${ZBUILDPATH}/sandbox/x64/plugins
 /bin/cp ${ZBUILDPATH}/os-base/amd64/FreeNAS* ${ZBUILDPATH}/sandbox/x64
-/bin/mkdir -p ${ZBUILDPATH}/sandbox/x86
+/bin/cp ${ZBUILDPATH}/{transmission,minidlna,firefly}/amd64/*.pbi ${ZBUILDPATH}/sandbox/x64/plugins
+/bin/mkdir -p ${ZBUILDPATH}/sandbox/x86/plugins
 /bin/cp ${ZBUILDPATH}/os-base/i386/FreeNAS* ${ZBUILDPATH}/sandbox/x86
+/bin/cp ${ZBUILDPATH}/{transmission,minidlna,firefly}/i386/*.pbi ${ZBUILDPATH}/sandbox/x86/plugins
 
 
 # Generate checksums for our build
