@@ -24,12 +24,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from collections import namedtuple
 import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext as _
 
+import eventlet
 from freenasUI.common import warden
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
@@ -38,11 +40,57 @@ from freenasUI.jails.utils import guess_adresses
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
+from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
 
 import freenasUI.plugins.api_calls
 
 log = logging.getLogger('plugins.views')
+
+
+def home(request):
+
+    Service = namedtuple('Service', [
+        'name',
+        'status',
+        'pid',
+        'start_url',
+        'stop_url',
+        'status_url',
+        'jail_status',
+    ])
+
+    host = get_base_url(request)
+    plugins = models.Plugins.objects.filter(plugin_enabled=True)
+    args = map(lambda y: (y, host, request), plugins)
+
+    pool = eventlet.GreenPool(20)
+    for plugin, json, jail_status in pool.imap(get_plugin_status, args):
+
+        if not json:
+            json = {}
+            json['status'] = None
+
+        plugin.service = Service(
+            name=plugin.plugin_name,
+            status=json['status'],
+            pid=json.get("pid", None),
+            start_url="/plugins/%s/%d/_s/start" % (
+                plugin.plugin_name, plugin.id
+            ),
+            stop_url="/plugins/%s/%d/_s/stop" % (
+                plugin.plugin_name, plugin.id
+            ),
+            status_url="/plugins/%s/%d/_s/status" % (
+                plugin.plugin_name, plugin.id
+            ),
+            jail_status=jail_status,
+        )
+
+    return render(request, "plugins/index.html", {
+        'plugins': plugins
+    })
+
 
 def plugin_edit(request, plugin_id):
     plugin = models.Plugins.objects.filter(id=plugin_id)[0]
