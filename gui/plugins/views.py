@@ -70,27 +70,6 @@ def plugin_info(request, plugin_id):
     })
 
 
-def plugin_delete(request, plugin_id):
-    plugin_id = int(plugin_id)
-    plugin = models.Plugins.objects.get(id=plugin_id)
-
-    if request.method == 'POST':
-        notifier()._stop_plugins(plugin.plugin_name)
-        if notifier().delete_pbi(plugin):
-            return JsonResp(request,
-                message=_("Plugin successfully removed."),
-                events=['reloadHttpd()']
-                )
-        else:
-            return JsonResp(request,
-                error=True,
-                message=_("Unable to remove plugin."))
-    else:
-        return render(request, 'plugins/plugin_confirm_delete.html', {
-            'plugin': plugin,
-        })
-
-
 def plugin_update(request, plugin_id):
     plugin_id = int(plugin_id)
     plugin = models.Plugins.objects.get(id=plugin_id)
@@ -168,15 +147,18 @@ def plugin_install_available(request, oid):
             break
 
     w = warden.Warden()
-    w.create(
-        jail=jailname,
-        ipv4="192.168.3.50",  #FIXME
-        flags=(
-            warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
-            warden.WARDEN_CREATE_FLAGS_SYSLOG |
-            warden.WARDEN_CREATE_FLAGS_IPV4
-        ),
-    )
+    try:
+        w.create(
+            jail=jailname,
+            ipv4="192.168.3.50",  #FIXME
+            flags=(
+                warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
+                warden.WARDEN_CREATE_FLAGS_SYSLOG |
+                warden.WARDEN_CREATE_FLAGS_IPV4
+            ),
+        )
+    except Exception, e:
+        raise MiddlewareError(_("Failed to install plugin: %s") % e)
     w.set(
         jail=jailname,
         flags=(
