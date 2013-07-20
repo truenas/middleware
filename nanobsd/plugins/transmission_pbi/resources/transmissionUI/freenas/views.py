@@ -332,7 +332,7 @@ def treemenu(request, plugin_id):
 
     plugin = {
         'name': name,
-        'append_to': 'services',
+        'append_to': 'plugins',
         'icon': reverse('treemenu_icon', kwargs={'plugin_id': plugin_id}),
         'type': 'pluginsfcgi',
         'url': reverse('transmission_edit', kwargs={'plugin_id': plugin_id}),
