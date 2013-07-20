@@ -24,10 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import namedtuple
 import logging
-
-import eventlet
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -35,8 +32,6 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from freenasUI.middleware.notifier import notifier
-from freenasUI.plugins.models import Plugins
-from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services import models
 from freenasUI.services.directoryservice import DirectoryService
 
