@@ -43,6 +43,7 @@ from freenasUI.system.forms import (
     clean_path_execbit
 )
 from freenasUI.jails.models import JailsConfiguration
+from freenasUI.jails.utils import new_default_plugin_jail
 
 log = logging.getLogger('plugins.forms')
 
@@ -89,12 +90,6 @@ class PBIUploadForm(Form):
         ),
         required=True
     )
-    pjail = forms.ChoiceField(
-        label=_("Plugin Jail"),
-        help_text=_("The plugin jail that the PBI is to be installed in."),
-        choices=(),
-        widget=forms.Select(attrs={'class': 'required'}),
-    )
 
     def __init__(self, *args, **kwargs):
         self.jail = None
@@ -103,35 +98,22 @@ class PBIUploadForm(Form):
 
         super(PBIUploadForm, self).__init__(*args, **kwargs)
 
-        if not self.jail:
-            jc = JailsConfiguration.objects.order_by("-id")[0]
-            try:
-                clean_path_execbit(jc.jc_path)
-            except forms.ValidationError, e:
-                self.errors['__all__'] = self.error_class(e.messages)
-
-            pjlist = []
-            wlist = Warden().list()
-            for wj in wlist:
-                if (
-                    wj[WARDEN_KEY_TYPE] == WARDEN_TYPE_PLUGINJAIL and
-                    wj[WARDEN_KEY_STATUS] == WARDEN_STATUS_RUNNING
-                ):
-                    pjlist.append(wj[WARDEN_KEY_HOST])
-
-            self.fields['pjail'].choices = [(pj, pj) for pj in pjlist]
-
-        else:
-            self.fields['pjail'].choices = [
-                (self.jail.jail_host, self.jail.jail_host)
-            ]
-            self.fields['pjail'].widget.attrs = {
-                'readonly': True,
-                'class': (
-                    'dijitDisabled dijitTextBoxDisabled'
-                    ' dijitValidationTextBoxDisabled'
+        if self.jail:
+            self.fields['pjail'] = forms.ChoiceField(
+                label=_("Plugin Jail"),
+                help_text=_("The plugin jail that the PBI is to be installed in."),
+                choices=(
+                    (self.jail.jail_host, self.jail.jail_host),
                 ),
-            }
+                widget=forms.Select(attrs={
+                    'class': (
+                        'requireddijitDisabled dijitTextBoxDisabled '
+                        'dijitValidationTextBoxDisabled'
+                    ),
+                    'readonly': True,
+                }),
+                required=False,
+            )
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -155,12 +137,19 @@ class PBIUploadForm(Form):
     def done(self, *args, **kwargs):
         newplugin = []
         pjail = self.cleaned_data.get('pjail')
+        jail = None
+        if not pjail:
+            #FIXME: Better base name, using pbi_info
+            jail = new_default_plugin_jail("customplugin")
+            pjail = jail.jail_host
         if notifier().install_pbi(pjail, newplugin):
             newplugin = newplugin[0]
             notifier()._restart_plugins(
                 newplugin.plugin_jail,
                 newplugin.plugin_name,
             )
+        elif jail:
+            jail.delete()
 
 
 class PBIUpdateForm(PBIUploadForm):
