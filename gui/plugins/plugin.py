@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import platform
 import urllib2
 
 import requests
@@ -9,13 +10,15 @@ log = logging.getLogger("plugins.plugin")
 
 class Plugin(object):
 
+    arch = None
     name = None
     description = None
     version = None
     hash = None
     urls = None
 
-    def __init__(self, name, description, version, hash, urls=None):
+    def __init__(self, name, description, arch, version, hash, urls=None):
+        self.arch = arch
         self.name = name
         self.description = description
         self.version = version
@@ -129,9 +132,10 @@ class Available(object):
         data = r.json()
 
         for p in data['plugins']:
-            results.append(
-                Plugin(**p)
-            )
+            if p['arch'] == platform.machine():
+                results.append(
+                    Plugin(**p)
+                )
 
         return results
 
