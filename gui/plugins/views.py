@@ -213,6 +213,7 @@ def plugin_install_available(request, oid):
         return JsonResp(
             request,
             message=_("Plugin successfully installed"),
+            events=['reloadHttpd()'],
         )
 
     return render(request, "plugins/available_install.html", {
