@@ -34,6 +34,7 @@ from freenasUI.common import warden
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails.models import Jails, JailsConfiguration
+from freenasUI.jails.utils import guess_adresses
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
@@ -137,6 +138,10 @@ def plugin_install_available(request, oid):
 
     if request.method == "POST":
 
+        addrs = guess_adresses()
+        if not addrs['high_ipv4']:
+            raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
+
         if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
             raise MiddlewareError(_("Failed to download plugin"))
 
@@ -152,7 +157,7 @@ def plugin_install_available(request, oid):
         try:
             w.create(
                 jail=jailname,
-                ipv4="192.168.3.50",  #FIXME
+                ipv4=addrs['high_ipv4'],
                 flags=(
                     warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
                     warden.WARDEN_CREATE_FLAGS_SYSLOG |
@@ -161,6 +166,7 @@ def plugin_install_available(request, oid):
             )
         except Exception, e:
             raise MiddlewareError(_("Failed to install plugin: %s") % e)
+        w.auto(jail=jailname)
         w.set(
             jail=jailname,
             flags=(
