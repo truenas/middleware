@@ -148,7 +148,7 @@ def plugin_install_available(request, oid):
     if not url:
         url = models.PLUGINS_INDEX
     for p in availablePlugins.get_remote(url=url):
-        if p.id == oid:
+        if p.hash == oid:
             plugin = p
             break
 

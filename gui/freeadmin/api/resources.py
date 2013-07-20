@@ -920,10 +920,8 @@ class SnapshotResource(DojoResource):
 
 class AvailablePluginsResource(DojoResource):
 
-    id = fields.CharField(attribute='id')
     name = fields.CharField(attribute='name')
     description = fields.CharField(attribute='description')
-    url = fields.CharField(attribute='url', null=True)
 
     class Meta:
         resource_name = 'availableplugins'
@@ -967,6 +965,6 @@ class AvailablePluginsResource(DojoResource):
     def dehydrate(self, bundle):
         bundle.data['_install_url'] = reverse(
             'plugin_install_available',
-            kwargs={'oid': bundle.obj.id},
+            kwargs={'oid': bundle.obj.hash},
         )
         return bundle

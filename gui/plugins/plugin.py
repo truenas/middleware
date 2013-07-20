@@ -1,4 +1,3 @@
-import hashlib
 import logging
 
 import requests
@@ -8,18 +7,18 @@ log = logging.getLogger("plugins.plugin")
 
 class Plugin(object):
 
-    id = None
     name = None
     description = None
     version = None
-    url = None
+    hash = None
+    urls = None
 
-    def __init__(self, name, description, version, url=None):
-        self.id = hashlib.sha256("%s:%s" % (name, version)).hexdigest()
+    def __init__(self, name, description, version, hash, urls=None):
         self.name = name
         self.description = description
         self.version = version
-        self.url = url
+        self.hash = hash
+        self.urls = urls
 
     def __setattr__(self, name, value):
         if not hasattr(self, name):
@@ -53,12 +52,7 @@ class Available(object):
 
         for p in data['plugins']:
             results.append(
-                Plugin(
-                    name=p['name'],
-                    description=p['description'],
-                    version=p['version'],
-                    url=p['url'],
-                )
+                Plugin(**p)
             )
 
         return results
