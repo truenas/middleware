@@ -305,7 +305,7 @@ class NavTree(object):
 
             tree_roots.register(nav)  # We register it to the tree root
             if hasattr(modnav, 'init'):
-                modnav.init(tree_roots, nav)
+                modnav.init(tree_roots, nav, request)
 
         else:
             log.debug("App %s has no nav.py module, skipping", app)
