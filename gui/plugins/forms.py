@@ -73,6 +73,11 @@ class PluginsForm(ModelForm):
         super(PluginsForm, self).save()
         notifier()._restart_plugins(self.instance.plugin_name)
 
+    def delete(self, request=None, events=None):
+        super(PluginsForm, self).delete(request=request, events=events)
+        if events is not None:
+            events.append('reloadHttpd()')
+
 
 class PBIUploadForm(Form):
     pbifile = FileField(
