@@ -132,5 +132,10 @@ class Available(models.Model):
         max_length=200,
     )
 
+    version = models.CharField(
+        verbose_name=_("Version"),
+        max_length=200,
+    )
+
     class Meta:
         abstract = True
