@@ -66,8 +66,13 @@ class Plugin(object):
 
         csize = 20480
         downloaded = 0
+        last_percent = 0
 
         with open(path, 'wb+') as f, open("/tmp/.plugininstall_progess", 'w') as f2:
+
+            if total_size:
+                f2.write("0\n")
+                f2.flush()
 
             while True:
                 chunk = response.read(csize)
@@ -80,8 +85,10 @@ class Plugin(object):
                     downloaded += len(chunk)
                     percent = float(downloaded) / total_size
                     percent = round(percent * 100, 2)
-                    f2.write("%d\n" % percent)
-                    f2.flush()
+                    if int(percent) != last_percent:
+                        f2.write("%d\n" % percent)
+                        f2.flush()
+                    last_percent = int(percent)
 
             if total_size and downloaded != total_size:
                 return False
