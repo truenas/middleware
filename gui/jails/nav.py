@@ -298,15 +298,3 @@ class ViewJails(TreeNode):
     def __init__(self, *args, **kwargs):
         super(ViewJails, self).__init__(*args, **kwargs)
         self.skip = not jail_path_configured()
-
-
-class ViewNullMountPoint(TreeNode):
-
-    gname = 'NullMountPoint.View'
-    name = _(u'View Storage')
-    icon = 'ViewMountPointIcon'
-    type = 'openjails'
-
-    def __init__(self, *args, **kwargs):
-        super(ViewNullMountPoint, self).__init__(*args, **kwargs)
-        self.skip = not jail_path_configured()
