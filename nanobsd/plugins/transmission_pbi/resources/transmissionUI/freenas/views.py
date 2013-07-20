@@ -312,9 +312,27 @@ def treemenu(request, plugin_id):
     that describes a node and possible some children.
     """
 
+    (transmission_key,
+    transmission_secret) = utils.get_transmission_oauth_creds()
+    url = utils.get_rpc_url(request)
+    trans = OAuthTransport(url, key=transmission_key,
+        secret=transmission_secret)
+    server = jsonrpclib.Server(url, transport=trans)
+    jail = json.loads(server.plugins.jail.info(plugin_id))[0]
+    jail_name = jail['fields']['jail_host']
+    number = jail_name.rsplit('_', 1)
+    name = "Transmission"
+    if len(number) == 2:
+        try:
+            number = int(number)
+            if number > 1:
+                name = "Transmission (%d)" % number
+        except:
+            pass
+
     plugin = {
-        'name': 'Transmission',
-        'append_to': 'services.Plugins',
+        'name': name,
+        'append_to': 'services',
         'icon': reverse('treemenu_icon', kwargs={'plugin_id': plugin_id}),
         'type': 'pluginsfcgi',
         'url': reverse('transmission_edit', kwargs={'plugin_id': plugin_id}),
