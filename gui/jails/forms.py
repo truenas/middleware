@@ -39,6 +39,7 @@ from freenasUI.jails.models import (
     Jails,
     NullMountPoint
 )
+from freenasUI.jails.utils import guess_adresses
 from freenasUI.common.warden import (
     Warden,
     WardenJail,
@@ -228,157 +229,19 @@ class JailCreateForm(ModelForm):
             "jail_nat_toggle();"
         )
 
-        high_ipv4 = None
-        high_ipv6 = None
+        addrs = guess_adresses()
 
-        st_ipv4_network = None
-        st_ipv6_network = None
+        if addrs['high_ipv6']:
+            self.fields['jail_ipv6'].initial = addrs['high_ipv6']
 
-        jc = None
-        try:
-            jc = JailsConfiguration.objects.order_by("-id")[0]
-            st_ipv4_network = sipcalc_type(jc.jc_ipv4_network)
-            st_ipv6_network = sipcalc_type(jc.jc_ipv6_network)
+        if addrs['high_ipv4']:
+            self.fields['jail_ipv4'].initial = addrs['high_ipv4']
 
-        except Exception as e:
-            log.debug("Exception caught: %s", e)
-            pass
+        if addrs['bridge_ipv4']:
+            self.fields['jail_bridge_ipv4'].initial = addrs['bridge_ipv4']
 
-        #
-        # If a jails configuration exists (as it should),
-        # create sipcalc objects
-        #
-        if st_ipv4_network:
-            high_ipv4 = sipcalc_type("%s/%d" % (
-                jc.jc_ipv4_network_start,
-                st_ipv4_network.network_mask_bits
-            ))
-        if st_ipv6_network:
-            high_ipv6 = sipcalc_type("%s/%d" % (
-                jc.jc_ipv6_network_start,
-                st_ipv6_network.prefix_length
-            ))
-        
-        #
-        # Attempt to determine the primary interface network.
-        # This is done so that we don't set a bridge address
-        # (we leave it blank, in which case the Warden will
-        # figure out the default gateway and set that up inside
-        # the jail if on the same network as the host).
-        #
-        st_host_ipv4_network = None
-        try:
-            iface = notifier().guess_default_interface()
-            st_ha = sipcalc_type(iface=iface)
-            if not st_ha.is_ipv4():
-                st_host_ipv4_network = None
-            else:
-                st_host_ipv4_network = sipcalc_type("%s/%d" % (
-                    st_ha.network_address, st_ha.network_mask_bits
-                ))
-        except Exception as e:
-            log.debug("Exception caught: %s", e)
-            pass 
-
-        if jc and jc.jc_path:
-            logfile = "%s/warden.log" % jc.jc_path
-            if os.path.exists(logfile):
-                os.unlink(logfile)
-
-        #
-        # Be extra careful, if no start and end addresses
-        # are configured, take the first network address
-        # and add 25 to it.
-        #
-        if not high_ipv4 and st_ipv4_network:
-            high_ipv4 = sipcalc_type("%s/%d" % (
-                st_ipv4_network.usable_range[0],
-                st_ipv4_network.network_mask_bits,
-            ))
-            high_ipv4 += 25
-
-        if not high_ipv6 and st_ipv6_network:
-            high_ipv6 = sipcalc_type("%s/%d" % (
-                st_ipv6_network.network_range[0],
-                st_ipv6_network.prefix_length,
-            ))
-            high_ipv6 += 25
-
-        try:
-            wlist = Warden().list()
-        except:
-            wlist = []
-
-        for wj in wlist:
-            wo = WardenJail(**wj)
-
-            st_ipv4 = None
-            st_ipv6 = None
-
-            #
-            # This figures out the highest IP address currently in use
-            #
-
-            if wo.ipv4:
-                st_ipv4 = sipcalc_type(wo.ipv4)
-            if wo.ipv6:
-                st_ipv6 = sipcalc_type(wo.ipv6)
-
-            if st_ipv4 and st_ipv4_network is not None:
-                if st_ipv4_network.in_network(st_ipv4):
-                    if st_ipv4 > high_ipv4:
-                        high_ipv4 = st_ipv4
-
-            if st_ipv6 and st_ipv6_network is not None:
-                if st_ipv6_network.in_network(st_ipv6):
-                    if st_ipv6 > high_ipv6:
-                        high_ipv6 = st_ipv6
-
-        if high_ipv4 is None and st_ipv4_network is not None:
-            high_ipv4 = sipcalc_type("%s/%d" % (
-                st_ipv4_network.usable_range[0],
-                st_ipv4_network.network_mask_bits,
-            ))
-
-        elif high_ipv4 is not None and st_ipv4_network is not None:
-            high_ipv4 += 1
-            if not st_ipv4_network.in_network(high_ipv4):
-                high_ipv4 = None
-
-        if high_ipv6 is None and st_ipv6_network is not None:
-            high_ipv6 = sipcalc_type("%s/%d" % (
-                st_ipv6_network.network_range[0],
-                st_ipv6_network.prefix_length,
-            ))
-
-        elif high_ipv6 is not None and st_ipv6_network is not None:
-            high_ipv6 += 1
-            if not st_ipv6_network.in_network(high_ipv6):
-                high_ipv6 = None
-
-        if high_ipv6 is not None:
-            self.fields['jail_ipv6'].initial = high_ipv6
-        elif high_ipv4 is not None:
-            self.fields['jail_ipv4'].initial = high_ipv4
-
-        #
-        # If a network is configured for jails, and it is NOT on 
-        # the same network as the host, setup a bridge address.
-        # (This will be the default gateway of the jail).
-        #
-        if st_ipv4_network is not None and not st_host_ipv4_network:
-            bridge_ipv4 = sipcalc_type("%s/%d" % (
-                st_ipv4_network.usable_range[0],
-                st_ipv4_network.network_mask_bits,
-            ))
-            self.fields['jail_bridge_ipv4'].initial = bridge_ipv4
-
-        if st_ipv6_network is not None:
-            bridge_ipv6 = sipcalc_type("%s/%d" % (
-                st_ipv6_network.network_range[0],
-                st_ipv6_network.prefix_length,
-            ))
-            self.fields['jail_bridge_ipv6'].initial = bridge_ipv6
+        if addrs['bridge_ipv6']:
+            self.fields['jail_bridge_ipv6'].initial = addrs['bridge_ipv6']
 
     def save(self):
         try:
