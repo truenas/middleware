@@ -252,6 +252,7 @@ define([
                     title: gettext('Plugins'),
                     closable: true,
                     href: openurl,
+                    refreshOnShow: true
                 });
                 pane.tab = 'plugins';
                 p.addChild(pane);
