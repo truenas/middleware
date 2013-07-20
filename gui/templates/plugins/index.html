@@ -1,13 +1,13 @@
-<button id="addPluginDG" data-dojo-type="dijit.form.Button">
-  <p>{% trans "Available Plugins" %}</p>
-  <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-      viewModel('{% trans "Available Plugins"|escapejs %}', '{% url "freeadmin_plugins_available_datagrid" %}');
-  </script>
-</button>
+<div data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="gutters: true, splitter:true">
+
+<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region:'top', href: '{% url "freeadmin_plugins_available_datagrid" %}'" style="height: 50%">
+</div>
+
+<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'" style="height: 50%">
 
 <button id="btn_ServicesPlugins_install" data-dojo-type="dijit.form.Button">
   <img src="{{ STATIC_URL }}images/ui/buttons/plugin_install.png" />
-  <p>{% trans "Upload Plugin" %}</p>
+  <p>{% trans "Upload" %}</p>
   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
     addObject('{% trans "Install Plugin"|force_escape|force_escape %}', '{% url "plugin_install_nojail" %}', [this,]);
   </script>
@@ -48,12 +48,14 @@
            </td>
            <td>
                 {% if p.service.jail_status %}
+                {% comment %}
                 <button data-dojo-type="dijit.form.Button" type="button">
                   {% trans "Update" %}
                   <script id="btn_Plugins_{{ p.id }}_Update" type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                       editObject('{% trans "Update plugin"|force_escape|force_escape %}', '{% url "plugin_update" plugin_id=p.id %}', [this,]);
                   </script>
                 </button>
+                {% endcomment %}
                 {% endif %}
                 <button id="btn_Plugins_{{ p.id }}_Delete" data-dojo-type="dijit.form.Button" type="button">
                   {% trans "Delete" %}
@@ -71,3 +73,7 @@
       </tr>
 {% endfor %}
 </table>
+
+</div>
+
+</div>

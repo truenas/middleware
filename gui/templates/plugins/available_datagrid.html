@@ -4,7 +4,7 @@
 {% endblock %}
 {% block actions_static_buttons %}
     <button id="availPluginsBrowse" data-dojo-type="dijit.form.Button">
-    <p>{% trans "Browse" %}</p>
+    <p>{% trans "Refresh" %}</p>
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt"> 
         editObject('{% trans "Browse"|escapejs %}', '{% url "freeadmin_plugins_available_browse" %}', [this,]);
     </script>
