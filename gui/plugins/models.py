@@ -29,8 +29,11 @@ from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.models import Model
+from freenasUI.jails.models import Jails
+from freenasUI.middleware.notifier import notifier
 
 PLUGINS_INDEX = 'http://localhost/static/FreeNAS-index'
+
 
 class Plugins(Model):
     plugin_name = models.CharField(
@@ -103,9 +106,18 @@ class Plugins(Model):
         verbose_name_plural = _(u"Plugins")
 
     def delete(self, *args, **kwargs):
+        qs = Plugins.objects.filter(plugin_jail=self.plugin_jail).exclude(
+            id__exact=self.id
+        )
         with transaction.commit_on_success():
             super(Plugins, self).delete(*args, **kwargs)
             self.plugin_secret.delete()
+            notifier()._stop_plugins(self.plugin_name)
+            if qs.count() > 0:
+                notifier().delete_pbi(self)
+            else:
+                jail = Jails.objects.get(jail_host=self.plugin_jail)
+                jail.delete()
 
 
 class Available(models.Model):
