@@ -75,6 +75,136 @@ def jail_path_configured():
     return jc and jc.jc_path
 
 
+def plugin_fetch(args):
+    plugin, host, request = args
+    data = None
+    url = "%s/plugins/%s/%d/_s/treemenu" % (
+        host,
+        plugin.plugin_name,
+        plugin.id
+    )
+    try:
+        opener = urllib2.build_opener()
+        opener.addheaders = [(
+            'Cookie', 'sessionid=%s' % (
+                request.COOKIES.get("sessionid", ''),
+            )
+        )]
+        #TODO: Increase timeout based on number of plugins
+        response = opener.open(url, None, 5)
+        data = response.read()
+        if not data:
+            log.warn(_("Empty data returned from %s") % (url,))
+
+    except Exception, e:
+        log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+            'url': url,
+            'error': e,
+        })
+
+    return plugin, url, data
+
+
+def init(tree_roots, nav, request):
+    self = Base()
+    jails = Jails.objects.all()
+    log.debug("jails.... %r", jails)
+
+    for jail in jails:
+        if jail.jail_type == WARDEN_TYPE_PLUGINJAIL:
+            icon = 'JailPluginIcon'
+        elif jail.jail_type == WARDEN_TYPE_STANDARD:
+            icon = 'BeastieIcon'
+        elif jail.jail_type == WARDEN_TYPE_PORTJAIL:
+            icon = 'BobbleIcon'
+        elif jail.jail_type == WARDEN_TYPE_LINUXJAIL:
+            icon = 'TuxIcon'
+        jail_node = self.new_jail_node(jail, icon)
+        nav.append_child(jail_node)
+
+        jail_node_view = self.new_jail_node_view(jail)
+        jail_node_view.order = 1
+        jail_node.append_child(jail_node_view)
+
+        storage_node = self.new_storage_node(jail)
+        storage_node.order = 2
+        jail_node.append_child(storage_node)
+
+        storage_order = 1
+        nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
+        for nmp in nmps:
+            storage_node_view = self.new_storage_node_view(nmp)
+            storage_node_view.order = storage_order
+            storage_node.append_child(storage_node_view)
+            storage_order += 1
+
+        storage_node_add = self.new_storage_node_add(jail)
+        storage_node_add.order = storage_order
+        storage_node.append_child(storage_node_add)
+
+        if (
+            jail.jail_status == WARDEN_STATUS_RUNNING and
+            jail.jail_type == WARDEN_TYPE_PLUGINJAIL
+        ):
+            plugin_node = TreeNode()
+            plugin_node.gname = 'Plugins'
+            plugin_node.name = _(u'Plugins')
+            plugin_node.icon = u'PluginIcon'
+            plugin_node.order = 3
+
+            host = get_base_url(request)
+
+            args = map(
+                lambda y: (y, host, request),
+                Plugins.objects.filter(
+                    plugin_enabled=True,
+                    plugin_jail=jail.jail_host
+                )
+            )
+
+            plugin_order = 1
+            pool = eventlet.GreenPool(20)
+            for plugin, url, data in pool.imap(plugin_fetch, args):
+                if not data:
+                    continue
+
+                try:
+                    data = simplejson.loads(data)
+                    nodes = unserialize_tree(data)
+                    for node in nodes:
+                        node.order = plugin_order
+                        plugin_node.append_child(node)
+                        plugin_order += 1
+
+                except Exception, e:
+                    log.warn(_(
+                        "An error occurred while unserializing from "
+                        "%(url)s: %(error)s") % {'url': url, 'error': e})
+                    log.debug(_(
+                        "Error unserializing %(url)s (%(error)s), data "
+                        "retrieved:") % {
+                            'url': url,
+                            'error': e,
+                        })
+                    for line in data.splitlines():
+                        log.debug(line)
+
+            plugin_node_add = TreeNode()
+            plugin_node_add.name = _('Install Plugin')
+            plugin_node_add.gname = 'InstallPlugin'
+            plugin_node_add.type = 'editobject'
+            plugin_node_add.view = 'plugin_install'
+            plugin_node_add.kwargs = {'jail_id': jail.id}
+            plugin_node_add.model = 'Plugins'
+            plugin_node_add.icon = u'PluginInstallIcon'
+            plugin_node_add.app_name = 'jails'
+            plugin_node_add.order = plugin_order
+
+            plugin_node.append_child(plugin_node_add)
+
+            jail_node.append_child(plugin_node)
+
+
 class Base(object):
 
     def new_jail_node(self, jail, icon=u'JailIcon'):
@@ -159,254 +289,6 @@ class ViewJailsConfiguration(TreeNode):
     name = _(u'Configuration')
     icon = u'SettingsIcon'
     type = 'openjails'
-
-
-class ViewLinuxJails(TreeNode, Base):
-
-    gname = 'LinuxJails'
-    name = _(u'Linux Jails')
-    icon = u'LinuxJailIcon'
-    skip = True
-
-    def __init__(self, *args, **kwargs):
-        super(ViewLinuxJails, self).__init__(*args, **kwargs)
-
-        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_LINUXJAIL)
-
-        if len(jails) == 0:
-            self.skip = True
-
-        for jail in jails:
-            jail_node = self.new_jail_node(jail, u'TuxIcon')
-            self.append_child(jail_node)
-
-            jail_node_view = self.new_jail_node_view(jail)
-            jail_node_view.order = 1
-            jail_node.append_child(jail_node_view)
-
-            storage_node = self.new_storage_node(jail)
-            storage_node.order = 2
-            jail_node.append_child(storage_node)
-
-            storage_order = 1
-            nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
-            for nmp in nmps:
-
-                storage_node_view = self.new_storage_node_view(nmp)
-                storage_node_view.order = storage_order
-                storage_node.append_child(storage_node_view)
-                storage_order += 1
-
-            storage_node_add = self.new_storage_node_add(jail)
-            storage_node_add.order = storage_order
-            storage_node.append_child(storage_node_add)
-
-
-class ViewPluginJails(TreeNode, Base):
-
-    gname = 'PluginJails'
-    name = _(u'Plugin Jails')
-    icon = u'PluginJailIcon'
-
-    def __init__(self, *args, **kwargs):
-        super(ViewPluginJails, self).__init__(*args, **kwargs)
-        request = kwargs.get('request')
-
-        host = get_base_url(request)
-        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_PLUGINJAIL)
-
-        if len(jails) == 0:
-            self.skip = True
-
-        for jail in jails:
-            jail_node = self.new_jail_node(jail, u'JailPluginIcon')
-            self.append_child(jail_node)
-
-            jail_node_view = self.new_jail_node_view(jail)
-            jail_node_view.order = 1
-            jail_node.append_child(jail_node_view)
-
-            storage_node = self.new_storage_node(jail)
-            storage_node.order = 2
-            jail_node.append_child(storage_node)
-
-            storage_order = 1
-            nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
-            for nmp in nmps:
-                storage_node_view = self.new_storage_node_view(nmp)
-                storage_node_view.order = storage_order
-                storage_node.append_child(storage_node_view)
-                storage_order += 1
-
-            storage_node_add = self.new_storage_node_add(jail)
-            storage_node_add.order = storage_order
-            storage_node.append_child(storage_node_add)
-
-            plugin_node = TreeNode()
-            plugin_node.gname = 'Plugins'
-            plugin_node.name = _(u'Plugins')
-            plugin_node.icon = u'PluginIcon'
-            plugin_node.order = 3
-
-            args = map(
-                lambda y: (y, host, request),
-                Plugins.objects.filter(
-                    plugin_enabled=True,
-                    plugin_jail=jail.jail_host
-                )
-            )
-
-            if jail.jail_status == WARDEN_STATUS_RUNNING:
-                plugin_order = 1
-                pool = eventlet.GreenPool(20)
-                for plugin, url, data in pool.imap(self.plugin_fetch, args):
-                    if not data:
-                        continue
-
-                    try:
-                        data = simplejson.loads(data)
-                        nodes = unserialize_tree(data)
-                        for node in nodes:
-                            node.order = plugin_order
-                            plugin_node.append_child(node)
-                            plugin_order += 1
-
-                    except Exception, e:
-                        log.warn(_(
-                            "An error occurred while unserializing from "
-                            "%(url)s: %(error)s") % {'url': url, 'error': e})
-                        log.debug(_(
-                            "Error unserializing %(url)s (%(error)s), data "
-                            "retrieved:") % {
-                                'url': url,
-                                'error': e,
-                            })
-                        for line in data.splitlines():
-                            log.debug(line)
-
-                plugin_node_add = TreeNode()
-                plugin_node_add.name = _('Install Plugin')
-                plugin_node_add.gname = 'InstallPlugin'
-                plugin_node_add.type = 'editobject'
-                plugin_node_add.view = 'plugin_install'
-                plugin_node_add.kwargs = {'jail_id': jail.id}
-                plugin_node_add.model = 'Plugins'
-                plugin_node_add.icon = u'PluginInstallIcon'
-                plugin_node_add.app_name = 'jails'
-                plugin_node_add.order = plugin_order
-
-                plugin_node.append_child(plugin_node_add)
-
-                jail_node.append_child(plugin_node)
-
-    def plugin_fetch(self, args):
-        plugin, host, request = args
-        data = None
-        url = "%s/plugins/%s/%d/_s/treemenu" % (
-            host,
-            plugin.plugin_name,
-            plugin.id
-        )
-        try:
-            opener = urllib2.build_opener()
-            opener.addheaders = [(
-                'Cookie', 'sessionid=%s' % (
-                    request.COOKIES.get("sessionid", ''),
-                )
-            )]
-            #TODO: Increase timeout based on number of plugins
-            response = opener.open(url, None, 5)
-            data = response.read()
-            if not data:
-                log.warn(_("Empty data returned from %s") % (url,))
-
-        except Exception, e:
-            log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
-                'url': url,
-                'error': e,
-            })
-
-        return plugin, url, data
-
-
-class ViewPortJails(TreeNode, Base):
-
-    gname = 'PortJails'
-    name = _(u'Port Jails')
-    icon = u'PortJailIcon'
-
-    def __init__(self, *args, **kwargs):
-        super(ViewPortJails, self).__init__(*args, **kwargs)
-
-        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_PORTJAIL)
-
-        if len(jails) == 0:
-            self.skip = True
-
-        for jail in jails:
-            jail_node = self.new_jail_node(jail, u'BobbleIcon')
-            self.append_child(jail_node)
-
-            jail_node_view = self.new_jail_node_view(jail)
-            jail_node_view.order = 1
-            jail_node.append_child(jail_node_view)
-
-            storage_node = self.new_storage_node(jail)
-            storage_node.order = 2
-            jail_node.append_child(storage_node)
-
-            storage_order = 1
-            nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
-            for nmp in nmps:
-
-                storage_node_view = self.new_storage_node_view(nmp)
-                storage_node_view.order = storage_order
-                storage_node.append_child(storage_node_view)
-                storage_order += 1
-
-            storage_node_add = self.new_storage_node_add(jail)
-            storage_node_add.order = storage_order
-            storage_node.append_child(storage_node_add)
-
-
-class ViewStandardJails(TreeNode, Base):
-
-    gname = 'StandardJails'
-    name = _(u'Standard Jails')
-    icon = u'StandardJailIcon'
-
-    def __init__(self, *args, **kwargs):
-        super(ViewStandardJails, self).__init__(*args, **kwargs)
-
-        jails = Jails.objects.filter(jail_type=WARDEN_TYPE_STANDARD)
-
-        if len(jails) == 0:
-            self.skip = True
-
-        for jail in jails:
-            jail_node = self.new_jail_node(jail, u'BeastieIcon')
-            self.append_child(jail_node)
-
-            jail_node_view = self.new_jail_node_view(jail)
-            jail_node_view.order = 1
-            jail_node.append_child(jail_node_view)
-
-            storage_node = self.new_storage_node(jail)
-            storage_node.order = 2
-            jail_node.append_child(storage_node)
-
-            storage_order = 1
-            nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
-            for nmp in nmps:
-
-                storage_node_view = self.new_storage_node_view(nmp)
-                storage_node_view.order = storage_order
-                storage_node.append_child(storage_node_view)
-                storage_order += 1
-
-            storage_node_add = self.new_storage_node_add(jail)
-            storage_node_add.order = storage_order
-            storage_node.append_child(storage_node_add)
 
 
 class ViewJails(TreeNode):
