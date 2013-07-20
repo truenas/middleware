@@ -120,7 +120,14 @@ def setflags(keys):
 
 class JailCreateForm(ModelForm):
     jail_type = forms.ChoiceField(
-        label=_("type")
+        label=_("type"),
+        choices=(
+            (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
+            (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
+            (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
+            #(WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
+        ),
+        initial=WARDEN_TYPE_STANDARD,
     )
 
     jail_autostart = forms.BooleanField(
@@ -209,12 +216,6 @@ class JailCreateForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(JailCreateForm, self).__init__(*args, **kwargs)
-        self.fields['jail_type'].choices = (
-            (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
-            (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
-            (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
-#            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
-        )
 
         self.fields['jail_type'].widget.attrs['onChange'] = (
             "jail_type_toggle();"
