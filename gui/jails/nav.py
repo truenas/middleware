@@ -24,17 +24,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import eventlet
 import logging
 
 from eventlet.green import urllib2
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import simplejson
 
-from freenasUI.freeadmin.tree import TreeNode, unserialize_tree
-from freenasUI.plugins.models import Plugins
-from freenasUI.plugins.utils import get_base_url
+from freenasUI.freeadmin.tree import TreeNode
 from freenasUI.jails.models import (
     Jails,
     JailsConfiguration,
@@ -45,7 +41,6 @@ from freenasUI.common.warden import (
     WARDEN_TYPE_PLUGINJAIL,
     WARDEN_TYPE_PORTJAIL,
     WARDEN_TYPE_LINUXJAIL,
-    WARDEN_STATUS_RUNNING
 )
 
 log = logging.getLogger('jails.nav')
@@ -141,68 +136,6 @@ def init(tree_roots, nav, request):
         storage_node_add = self.new_storage_node_add(jail)
         storage_node_add.order = storage_order
         storage_node.append_child(storage_node_add)
-
-        if (
-            jail.jail_status == WARDEN_STATUS_RUNNING and
-            jail.jail_type == WARDEN_TYPE_PLUGINJAIL
-        ):
-            plugin_node = TreeNode()
-            plugin_node.gname = 'Plugins'
-            plugin_node.name = _(u'Plugins')
-            plugin_node.icon = u'PluginIcon'
-            plugin_node.order = 3
-
-            host = get_base_url(request)
-
-            args = map(
-                lambda y: (y, host, request),
-                Plugins.objects.filter(
-                    plugin_enabled=True,
-                    plugin_jail=jail.jail_host
-                )
-            )
-
-            plugin_order = 1
-            pool = eventlet.GreenPool(20)
-            for plugin, url, data in pool.imap(plugin_fetch, args):
-                if not data:
-                    continue
-
-                try:
-                    data = simplejson.loads(data)
-                    nodes = unserialize_tree(data)
-                    for node in nodes:
-                        node.order = plugin_order
-                        plugin_node.append_child(node)
-                        plugin_order += 1
-
-                except Exception, e:
-                    log.warn(_(
-                        "An error occurred while unserializing from "
-                        "%(url)s: %(error)s") % {'url': url, 'error': e})
-                    log.debug(_(
-                        "Error unserializing %(url)s (%(error)s), data "
-                        "retrieved:") % {
-                            'url': url,
-                            'error': e,
-                        })
-                    for line in data.splitlines():
-                        log.debug(line)
-
-            plugin_node_add = TreeNode()
-            plugin_node_add.name = _('Install Plugin')
-            plugin_node_add.gname = 'InstallPlugin'
-            plugin_node_add.type = 'editobject'
-            plugin_node_add.view = 'plugin_install'
-            plugin_node_add.kwargs = {'jail_id': jail.id}
-            plugin_node_add.model = 'Plugins'
-            plugin_node_add.icon = u'PluginInstallIcon'
-            plugin_node_add.app_name = 'jails'
-            plugin_node_add.order = plugin_order
-
-            plugin_node.append_child(plugin_node_add)
-
-            jail_node.append_child(plugin_node)
 
 
 class Base(object):
