@@ -34,6 +34,7 @@ from freenasUI.common import warden
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails.models import Jails, JailsConfiguration
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
@@ -154,6 +155,9 @@ def plugin_install_available(request, oid):
 
     if not plugin:
         raise MiddlewareError(_("Invalid plugin"))
+
+    if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
+        raise MiddlewareError(_("Failed to download plugin"))
 
     jailname = None
     for i in xrange(1, 1000):
