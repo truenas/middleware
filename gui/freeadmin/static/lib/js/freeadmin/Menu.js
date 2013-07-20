@@ -174,6 +174,7 @@ define([
                     closable: true,
                     href: href,
                     onLoad: onload,
+                    refreshOnShow: true
                 });
                 pane.tab = 'services';
                 p.addChild(pane);
