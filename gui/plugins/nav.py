@@ -31,5 +31,6 @@ ICON = u'PluginIcon'
 BLACKLIST = [
     'Plugins',
     'Available',
+    'Configuration',
 ]
 TYPE = 'openplugins'

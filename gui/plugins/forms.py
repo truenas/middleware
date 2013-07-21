@@ -176,9 +176,7 @@ class PBIUpdateForm(PBIUploadForm):
             self.plugin.plugin_name)
 
 
-class AvailableBrowse(forms.Form):
-    url = forms.CharField(
-        label=_("URL"),
-        help_text=_("URL for the plugins index"),
-        required=False,
-    )
+class ConfigurationForm(ModelForm):
+
+    class Meta:
+        model = models.Configuration
