@@ -32,6 +32,7 @@ import freenasUI.plugins.views
 
 urlpatterns = patterns('freenasUI.plugins.views',
     url(r'^plugin/home/$', 'home', name="plugins_home"),
+    url(r'^plugin/plugins/$', 'plugins', name="plugins_plugins"),
     url(r'^plugin/install/(?P<oid>[0-9a-f]{32,64})/$', 'plugin_install_available', name="plugin_install_available"),
     url(r'^plugin/install/(?P<jail_id>\d+)/$', 'plugin_install', name="plugin_install"),
     url(r'^plugin/install/$', 'plugin_install_nojail', name="plugin_install_nojail"),
