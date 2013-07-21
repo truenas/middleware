@@ -50,6 +50,14 @@ log = logging.getLogger('plugins.views')
 
 def home(request):
 
+    conf = models.Configuration.objects.latest('id')
+    return render(request, "plugins/index.html", {
+        'conf': conf,
+    })
+
+
+def plugins(request):
+
     Service = namedtuple('Service', [
         'name',
         'status',
@@ -87,11 +95,8 @@ def home(request):
             jail_status=jail_status,
         )
 
-    conf = models.Configuration.objects.latest('id')
-
-    return render(request, "plugins/index.html", {
+    return render(request, "plugins/plugins.html", {
         'plugins': plugins,
-        'conf': conf,
     })
 
 
