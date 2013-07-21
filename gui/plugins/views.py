@@ -87,8 +87,11 @@ def home(request):
             jail_status=jail_status,
         )
 
+    conf = models.Configuration.objects.latest('id')
+
     return render(request, "plugins/index.html", {
-        'plugins': plugins
+        'plugins': plugins,
+        'conf': conf,
     })
 
 

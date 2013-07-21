@@ -1,3 +1,10 @@
+<div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_pluginssettings">
+
+<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Plugins"|escapejs %}'
+{% if focus == "plugins.Plugins" %}, selected: true{% endif %},
+doLayout: true,
+refreshOnShow: true" class="objrefresh" tab="plugins.Plugins" id="tab_Plugins">
+
 <div data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="gutters: true, splitter:true">
 
 <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region:'top', href: '{% url "freeadmin_plugins_available_datagrid" %}'" style="height: 50%">
@@ -5,13 +12,9 @@
 
 <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'" style="height: 50%">
 
-<button id="btn_ServicesPlugins_install" data-dojo-type="dijit.form.Button">
-  <img src="{{ STATIC_URL }}images/ui/buttons/plugin_install.png" />
-  <p>{% trans "Upload" %}</p>
-  <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-    addObject('{% trans "Install Plugin"|force_escape|force_escape %}', '{% url "plugin_install_nojail" %}', [this,]);
-  </script>
-</button>
+<div style="background-color: #eee; padding: 3px; border-bottom: 1px solid #ccc;">
+{% trans "Installed" %}
+</div>
 
 <table class="grid">
     <thead class="header">
@@ -74,6 +77,16 @@
 {% endfor %}
 </table>
 
+</div>
+
+</div>
+
+</div>
+<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Configuration"|escapejs %}'
+{% if focus == "plugins.Configuration" %}, selected: true{% endif %},
+doLayout: false,
+href: '{% url "freeadmin_plugins_configuration_edit" oid=conf.id %}',
+refreshOnShow: true" class="objrefresh" tab="plugins.Configuration" id="tab_Configuration">
 </div>
 
 </div>
