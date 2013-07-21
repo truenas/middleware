@@ -139,3 +139,16 @@ class Available(models.Model):
 
     class Meta:
         abstract = True
+
+
+class Configuration(Model):
+
+    collectionurl = models.CharField(
+        verbose_name=_("Collection URL"),
+        max_length=255,
+        help_text=_("URL for the plugins index"),
+        blank=True,
+    )
+
+    class FreeAdmin:
+        deletable = False
