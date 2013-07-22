@@ -24,6 +24,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from django.utils.translation import ugettext_lazy as _
 
-def init(tree_roots, nav):
-    tree_roots.unregister(nav)
+NAME = _('Plugins')
+ICON = u'PluginIcon'
+BLACKLIST = [
+    'Plugins',
+    'Available',
+    'Configuration',
+]
+TYPE = 'openplugins'

@@ -56,10 +56,13 @@ class FreeAdminSite(object):
             self._registry[admin_obj] = admin_obj
         else:
             for model in model_or_iterable:
-                if model._meta.abstract:
-                    log.warn("Model %r is abstract and thus cannot be registered",
-                        model)
-                    return None
+                #FIXME: Do not allow abstract models expect for the ones
+                #       In a whitelist
+                #if model._meta.abstract:
+                #    log.warn(
+                #        "Model %r is abstract and thus cannot be registered",
+                #        model)
+                #    return None
                 if model in self._registry:
                     log.debug("Model %r already registered, overwriting...", model)
 

@@ -24,10 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import namedtuple
 import logging
-
-import eventlet
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -35,8 +32,6 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from freenasUI.middleware.notifier import notifier
-from freenasUI.plugins.models import Plugins
-from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services import models
 from freenasUI.services.directoryservice import DirectoryService
 
@@ -66,20 +61,12 @@ def plugins(request):
     args = map(lambda y: (y, host, request), plugins)
 
     pool = eventlet.GreenPool(20)
-    for plugin, json in pool.imap(get_plugin_status, args):
+    for plugin, json, jail_status in pool.imap(get_plugin_status, args):
 
-        #
-        #    XXX Hacky Hack XXX
-        #
-        #    This lets the plugins be displayed, even if they aren't reachable.
-        #    This is useful for things like viewing, deleting and updating
-        #    plugins even if they aren't reachable.
-        #
         if not json:
             json = {}
             json['status'] = None
 
-        jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
         plugin.service = Service(
             name=plugin.plugin_name,
             status=json['status'],

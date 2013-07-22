@@ -24,10 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
 import logging
 import re
-
-import eventlet
 
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, resolve
@@ -36,20 +35,19 @@ from django.forms import ModelForm
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
+import eventlet
 from eventlet.green import urllib2
-
 from freenasUI.common.log import log_traceback
+from freenasUI.common.warden import (
+    WARDEN_STATUS_RUNNING, WARDEN_TYPE_PLUGINJAIL
+)
 from freenasUI.freeadmin.tree import (
     tree_roots, TreeRoot, TreeNode, unserialize_tree
 )
-from freenasUI.middleware.notifier import notifier
-#from freenasUI.plugins.models import Plugins
-#from freenasUI.plugins.utils import get_base_url
-
-from freenasUI.common.warden import WARDEN_STATUS_RUNNING, \
-    WARDEN_TYPE_PLUGINJAIL
-
 from freenasUI.jails.models import Jails
+from freenasUI.middleware.notifier import notifier
+from freenasUI.plugins.models import Plugins
+from freenasUI.plugins.utils import get_base_url
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -263,6 +261,14 @@ class NavTree(object):
 
         self.replace_navs(tree_roots)
 
+        jails = []
+        #FIXME: use .filter
+        for j in Jails.objects.all():
+            if j.jail_type == WARDEN_TYPE_PLUGINJAIL and \
+                j.jail_status == WARDEN_STATUS_RUNNING:
+                jails.append(j)
+        self._get_plugins_nodes(request, jails)
+
     def _generate_app(self, app, request, tree_roots, childs_of):
 
         # Thats the root node for the app tree menu
@@ -281,6 +287,9 @@ class NavTree(object):
             nav.name = modnav.NAME
         else:
             nav.name = self.titlecase(app)
+
+        if hasattr(modnav, 'TYPE'):
+            nav.type = modnav.TYPE
 
         if modnav:
             modname = "%s.nav" % app
@@ -302,7 +311,7 @@ class NavTree(object):
 
             tree_roots.register(nav)  # We register it to the tree root
             if hasattr(modnav, 'init'):
-                modnav.init(tree_roots, nav)
+                modnav.init(tree_roots, nav, request)
 
         else:
             log.debug("App %s has no nav.py module, skipping", app)
@@ -313,6 +322,7 @@ class NavTree(object):
 
             modname = '%s.models' % app
             for c in dir(modmodels):
+
                 model = getattr(modmodels, c)
                 try:
                     if (
@@ -441,6 +451,83 @@ class NavTree(object):
                     subopt.type = 'viewmodel'
                     self.register_option(subopt, navopt)
 
+    def _plugin_fetch(self, args):
+        plugin, host, request = args
+        data = None
+        url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
+        try:
+            opener = urllib2.build_opener()
+            opener.addheaders = [(
+                'Cookie', 'sessionid=%s' % (
+                    request.COOKIES.get("sessionid", ''),
+                )
+            )]
+            #TODO: Increase timeout based on number of plugins
+            response = opener.open(url, None, 5)
+            data = response.read()
+            if not data:
+                log.warn(_("Empty data returned from %s") % (url,))
+        except Exception, e:
+            log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+                'url': url,
+                'error': e,
+            })
+        return plugin, url, data
+
+    def _get_plugins_nodes(self, request, jails):
+
+        host = get_base_url(request)
+        args = map(
+            lambda y: (y, host, request),
+            Plugins.objects.filter(plugin_enabled=True, plugin_jail__in=[jail.jail_host for jail in jails]))
+
+        pool = eventlet.GreenPool(20)
+        for plugin, url, data in pool.imap(self._plugin_fetch, args):
+
+            if not data:
+                continue
+
+            try:
+                data = json.loads(data)
+
+                nodes = unserialize_tree(data)
+                for node in nodes:
+                    #We have our TreeNode's, find out where to place them
+
+                    found = False
+                    if node.append_to:
+                        log.debug(
+                            "Plugin %s requested to be appended to %s",
+                            plugin.plugin_name, node.append_to)
+                        places = node.append_to.split('.')
+                        places.reverse()
+                        for root in tree_roots:
+                            find = root.find_place(list(places))
+                            if find is not None:
+                                find.append_child(node)
+                                found = True
+                                break
+                    else:
+                        log.debug(
+                            "Plugin %s didn't request to be appended "
+                            "anywhere specific",
+                            plugin.plugin_name)
+
+                    if not found:
+                        tree_roots.register(node)
+
+            except Exception, e:
+                log.warn(_(
+                    "An error occurred while unserializing from "
+                    "%(url)s: %(error)s") % {'url': url, 'error': e})
+                log.debug(_(
+                    "Error unserializing %(url)s (%(error)s), data "
+                    "retrieved:") % {
+                        'url': url,
+                        'error': e,
+                    })
+                continue
+
     def _build_nav(self, user):
         navs = []
         for nav in tree_roots['main']:
@@ -486,7 +573,6 @@ class NavTree(object):
                 option.get_absolute_url()
                 option.option_list = self.build_options(option, user)
                 options.append(option)
-
         return options
 
     def dehydrate(self, o, uid, gname=None):

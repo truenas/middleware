@@ -24,3 +24,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from .plugin import Plugin, availablePlugins

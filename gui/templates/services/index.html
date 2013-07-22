@@ -1,16 +1,17 @@
-<div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_services">
-        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Core"|force_escape|force_escape %}'
-        {% if focus_form == "services.services" %}, selected: true{% endif %},
-        href: '{% url "services_core" %}',
-        doLayout: false,
-        {% if toggleCore %}toggleCore: '{{ toggleCore|escapejs }}',{% endif %}
-        refreshOnShow: true" class="objrefresh data_services_services" tab="services.services">
-            <script type="dojo/event" data-dojo-event="onLoad" data-dojo-args="data">
-                if(this.toggleCore) {
-                    var svc = dojo.byId(this.toggleCore + "_toggle");
-                    toggle_service(svc);
-                    this.toggleCore = null;
-                }
-            </script>
-        </div>
-</div>
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Core"|escapejs %}'
+  {% if focus_form == "services.services" %}, selected: true{% endif %},
+  href: '{% url "services_core" %}',
+  doLayout: false,
+  {% if toggleCore %}toggleCore: '{{ toggleCore|escapejs }}',{% endif %}
+  refreshOnShow: true" class="objrefresh data_services_services" id="servicesTab_Core">
+    <script type="dojo/event" data-dojo-event="onLoad" data-dojo-args="data">
+      var me = this;
+      require(["dojo/dom"], function(dom) {
+        if(me.toggleCore) {
+          var svc = dom.byId(me.toggleCore + "_toggle");
+          toggle_service(svc);
+          me.toggleCore = null;
+        }
+      });
+    </script>
+  </div>
