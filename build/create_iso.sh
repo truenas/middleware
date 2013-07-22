@@ -49,7 +49,14 @@ main()
 
 	cd "$AVATAR_ROOT"
 
-	mkdir -p ${STAGEDIR}/dev ${ISODIR}/data
+	mkdir -p ${STAGEDIR}/dev
+	mkdir -p ${STAGEDIR}/.mount
+
+	mkdir -p ${ISODIR}/data
+	mkdir -p ${ISODIR}/dev
+	mkdir -p ${ISODIR}/.mount
+	mkdir -p ${ISODIR}/mnt
+	mkdir -p ${ISODIR}/tmp
 
 	# Create a quick and dirty nano image from the world tree
 	mkdir -p ${INSTALLUFSDIR}
