@@ -181,35 +181,24 @@ CR()
 do_add_pkg ()
 {
 	# Need to create ${NANO_OBJ}/ports in this add_pkg_${port} function
-	mkdir -p ${NANO_OBJ}/ports/distfiles
 	mkdir -p ${NANO_OBJ}/ports/packages
 	mkdir -p ${NANO_WORLDDIR}/usr/ports/packages/All
-	mkdir -p ${NANO_WORLDDIR}/usr/ports/distfiles
 	if [ -n "${PKGCACHE}" ]; then
 		if ! [ -d ${PKGCACHE}/${NANO_ARCH} ]; then
 			mkdir -p ${PKGCACHE}/${NANO_ARCH}
 		fi
 		mount -t nullfs -o noatime ${PKGCACHE}/${NANO_ARCH} \
-			${NANO_OBJ}/ports/packages
+			${NANO_WORLDDIR}/usr/ports/packages
+	else
+		mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
+	    		${NANO_WORLDDIR}/usr/ports/packages
 	fi
-	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
-	    ${NANO_WORLDDIR}/usr/ports/packages
-	if [ -n "${DISTCACHE}" ]; then
-		if ! [ -d ${DISTCACHE} ]; then
-			mkdir -p ${DISTCACHE}
-		fi
-		mount -t nullfs -o noatime ${DISTCACHE} ${NANO_OBJ}/ports/distfiles
-	fi
-	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
-	    ${NANO_WORLDDIR}/usr/ports/distfiles
+
 	CR "cd /usr/ports/packages/All;pkg_add -F $1.tbz"
-	umount -f ${NANO_WORLDDIR}/usr/ports/distfiles
-	umount -f ${NANO_OBJ}/ports/distfiles
+	set -e
 	umount -f ${NANO_WORLDDIR}/usr/ports/packages
-	umount -f ${NANO_OBJ}/ports/packages
 	rmdir ${NANO_WORLDDIR}/usr/ports/packages/All
 	rmdir ${NANO_WORLDDIR}/usr/ports/packages
-	rmdir ${NANO_WORLDDIR}/usr/ports/distfiles
 	rmdir ${NANO_WORLDDIR}/usr/ports
 }
 
@@ -242,18 +231,20 @@ do_add_port ()
 			mkdir -p ${PKGCACHE}/${NANO_ARCH}
 		fi
 		mount -t nullfs -o noatime ${PKGCACHE}/${NANO_ARCH} \
-			${NANO_OBJ}/ports/packages
+			${NANO_WORLDDIR}/usr/ports/packages
+	else
+		mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
+	    		${NANO_WORLDDIR}/usr/ports/packages
 	fi
-	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
-	    ${NANO_WORLDDIR}/usr/ports/packages
 	if [ -n "${DISTCACHE}" ]; then
 		if ! [ -d ${DISTCACHE} ]; then
 			mkdir -p ${DISTCACHE}
 		fi
-		mount -t nullfs -o noatime ${DISTCACHE} ${NANO_OBJ}/ports/distfiles
+		mount -t nullfs -o noatime ${DISTCACHE} ${NANO_WORLDDIR}/usr/ports/distfiles
+	else
+		mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
+	    		${NANO_WORLDDIR}/usr/ports/distfiles
 	fi
-	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
-	    ${NANO_WORLDDIR}/usr/ports/distfiles
 	mkdir -p ${NANO_WORLDDIR}/usr/workdir
 	set -e
 	cp /etc/resolv.conf ${NANO_WORLDDIR}/etc/resolv.conf
@@ -271,9 +262,7 @@ do_add_port ()
 	rm -rf ${NANO_WORLDDIR}/usr/obj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
 	umount -f ${NANO_WORLDDIR}/usr/ports/distfiles
-	umount -f ${NANO_OBJ}/ports/distfiles
 	umount -f ${NANO_WORLDDIR}/usr/ports/packages
-	umount -f ${NANO_OBJ}/ports/packages
 	umount -f ${NANO_WORLDDIR}/usr/ports
 	umount -f ${NANO_WORLDDIR}/usr/src
 }
