@@ -27,7 +27,6 @@
 import json
 import logging
 import re
-import urllib2
 
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, resolve
@@ -36,6 +35,7 @@ from django.forms import ModelForm
 from django.utils.translation import ugettext_lazy as _
 
 import eventlet
+from eventlet.green import urllib2
 from freenasUI.common.log import log_traceback
 from freenasUI.common.warden import (
     WARDEN_STATUS_RUNNING, WARDEN_TYPE_PLUGINJAIL
@@ -267,10 +267,13 @@ class NavTree(object):
 
         self.replace_navs(tree_roots)
 
+        jails = []
+        #FIXME: use .filter
         for j in Jails.objects.all():
             if j.jail_type == WARDEN_TYPE_PLUGINJAIL and \
                 j.jail_status == WARDEN_STATUS_RUNNING:
-                self._get_plugins_nodes(request, j)
+                jails.append(j)
+        self._get_plugins_nodes(request, jails)
 
     def _generate_app(self, app, request, tree_roots, childs_of):
 
@@ -478,12 +481,12 @@ class NavTree(object):
             })
         return plugin, url, data
 
-    def _get_plugins_nodes(self, request, jail):
+    def _get_plugins_nodes(self, request, jails):
 
         host = get_base_url(request)
         args = map(
             lambda y: (y, host, request),
-            Plugins.objects.filter(plugin_enabled=True, plugin_jail=jail.jail_host))
+            Plugins.objects.filter(plugin_enabled=True, plugin_jail__in=[jail.jail_host for jail in jails]))
 
         pool = eventlet.GreenPool(20)
         for plugin, url, data in pool.imap(self._plugin_fetch, args):
