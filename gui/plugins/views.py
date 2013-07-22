@@ -166,8 +166,10 @@ def plugin_update(request, plugin_id):
 def plugin_install_available(request, oid):
 
     plugin = None
-    url = request.session.get('plugins_browse_url')
-    if not url:
+    conf = models.Configuration.objects.latest('id')
+    if conf:
+        url = conf.collectionurl
+    else:
         url = models.PLUGINS_INDEX
     for p in availablePlugins.get_remote(url=url):
         if p.hash == oid:
