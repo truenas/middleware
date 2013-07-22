@@ -155,6 +155,7 @@ require([
         store: store,
         columns: columns,
         }, griddiv);
+    griddiv.grid = grid;
 
     {% if double_click %}
     grid.on(".dgrid-row:dblclick", function(evt) {
