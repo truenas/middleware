@@ -3,6 +3,9 @@ import logging
 import platform
 import urllib2
 
+from django.utils.translation import ugettext as _
+from freenasUI.middleware.exceptions import MiddlewareError
+
 import requests
 
 PROGRESS_FILE = "/tmp/.plugininstall_progess"
@@ -45,13 +48,18 @@ class Plugin(object):
                 if rv:
                     break
             except Exception, e:
-                raise
                 log.debug(
                     "Failed to download %s (%s): %s",
                     url,
                     type(e).__class__,
                     e,
                 )
+                #FIXME: try to download from multiple urls
+                raise MiddlewareError(_("Failed to download %s: %s" % (
+                    url,
+                    e,
+                )))
+
         return rv
 
     def __download(self, url, path):
@@ -132,13 +140,30 @@ class Available(object):
 
         data = r.json()
 
-        for p in data['plugins']:
-            if p['arch'] == platform.machine():
-                results.append(
-                    Plugin(**p)
-                )
+        for p in data:
+            try:
+                item = self._get_remote_item(p)
+                if item is False:
+                    continue
+                results.append(item)
+            except Exception, e:
+                log.debug("Failed to get remote item: %s", e)
 
         return results
+
+    def _get_remote_item(self, p):
+        status = p['Status']
+        if status['architecture'] != platform.machine():
+            return False
+
+        return Plugin(
+            name=p['Pbi']['title'],
+            description="Not implemented",
+            version=status['pbi_version'],
+            arch=status['architecture'],
+            hash=status['hash'],
+            urls=[status['location']],
+        )
 
     def all(self):
         return self.get_local()
