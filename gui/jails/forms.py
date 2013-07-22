@@ -478,15 +478,6 @@ class JailsConfigurationForm(ModelForm):
 
         return cdata
 
-class JailConfigureForm(ModelForm):
-
-    jail_autostart = forms.BooleanField(label=_("autostart"), required=False)
-#    jail_source = forms.BooleanField(label=_("source"), required=False)
-#    jail_ports = forms.BooleanField(label=_("ports"), required=False)
-
-    class Meta:
-        model = Jails
-
 
 class JailsEditForm(ModelForm):
 
