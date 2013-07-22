@@ -945,7 +945,6 @@ class AvailablePluginsResource(DojoResource):
             else:
                 field = sfield
                 reverse = False
-            field = FIELD_MAP.get(field, field)
             results.sort(
                 key=lambda item: getattr(item, field),
                 reverse=reverse)
