@@ -30,21 +30,20 @@ import logging
 import os
 
 from django.shortcuts import render
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 
 import eventlet
-from freenasUI.common import warden
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.jails.models import Jails, JailsConfiguration
+from freenasUI.jails.models import Jails
 from freenasUI.jails.utils import guess_adresses, new_default_plugin_jail
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
 from freenasUI.plugins.plugin import PROGRESS_FILE
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
-from freenasUI.plugins.utils.fcgi_client import FCGIApp
+#from freenasUI.plugins.utils.fcgi_client import FCGIApp
 
 import freenasUI.plugins.api_calls
 
@@ -76,16 +75,16 @@ def plugins(request):
     args = map(lambda y: (y, host, request), plugins)
 
     pool = eventlet.GreenPool(20)
-    for plugin, json, jail_status in pool.imap(get_plugin_status, args):
+    for plugin, _json, jail_status in pool.imap(get_plugin_status, args):
 
-        if not json:
-            json = {}
-            json['status'] = None
+        if not _json:
+            _json = {}
+            _json['status'] = None
 
         plugin.service = Service(
             name=plugin.plugin_name,
-            status=json['status'],
-            pid=json.get("pid", None),
+            status=_json['status'],
+            pid=_json.get("pid", None),
             start_url="/plugins/%s/%d/_s/start" % (
                 plugin.plugin_name, plugin.id
             ),
@@ -141,10 +140,11 @@ def plugin_update(request, plugin_id):
         form = forms.PBIUpdateForm(request.POST, request.FILES, plugin=plugin)
         if form.is_valid():
             form.done()
-            return JsonResp(request,
+            return JsonResp(
+                request,
                 message=_('Plugin successfully updated'),
                 events=['reloadHttpd()'],
-                )
+            )
         else:
             resp = render(request, "plugins/plugin_update.html", {
                 'form': form,
@@ -153,14 +153,14 @@ def plugin_update(request, plugin_id):
                 "<html><body><textarea>"
                 + resp.content +
                 "</textarea></boby></html>"
-                )
+            )
             return resp
     else:
         form = forms.PBIUpdateForm(plugin=plugin)
 
     return render(request, "plugins/plugin_update.html", {
         'form': form,
-        })
+    })
 
 
 def plugin_install_available(request, oid):
@@ -239,17 +239,19 @@ def plugin_install(request, jail_id=-1):
         try:
             jail = Jails.objects.filter(pk=jail_id)[0]
 
-        except Exception, e: 
+        except Exception, e:
+            log.debug("Failed to get jail %d: %s", jail_id, repr(e))
             jail = None
 
     if request.method == "POST":
         form = forms.PBIUploadForm(request.POST, request.FILES, jail=jail)
         if form.is_valid():
             form.done()
-            return JsonResp(request,
+            return JsonResp(
+                request,
                 message=_('Plugin successfully installed'),
                 events=['reloadHttpd()'],
-                )
+            )
         else:
             resp = render(request, "plugins/plugin_install.html", {
                 'form': form,
@@ -258,14 +260,15 @@ def plugin_install(request, jail_id=-1):
                 "<html><body><textarea>"
                 + resp.content +
                 "</textarea></boby></html>"
-                )
+            )
             return resp
     else:
         form = forms.PBIUploadForm(jail=jail)
 
     return render(request, "plugins/plugin_install.html", {
         'form': form,
-        })
+    })
+
 
 def plugin_install_nojail(request):
     return plugin_install(request)
