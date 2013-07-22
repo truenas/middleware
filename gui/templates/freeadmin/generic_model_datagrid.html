@@ -154,6 +154,8 @@ require([
     var grid = new StandardGrid({
         store: store,
         columns: columns,
+	loadingMessage: '{% trans "Loading..."|escapejs %}',
+	noDataMessage: '{% trans "No entry has been found"|escapejs %}'
         }, griddiv);
     griddiv.grid = grid;
 
