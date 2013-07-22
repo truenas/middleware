@@ -33,7 +33,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.api.resources import AvailablePluginsResource
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
-from freenasUI.plugins import models, views
+from freenasUI.plugins import models
 
 
 class PluginsFAdmin(BaseFreeAdmin):
@@ -71,15 +71,6 @@ class AvailableFAdmin(BaseFreeAdmin):
         }
         return actions
 
-    def get_urls(self):
-        urlpatterns = super(AvailableFAdmin, self).get_urls()
-        urlpatterns += patterns(
-            '',
-            url(r'^browse/$',
-                views.available_browse,
-                name='freeadmin_plugins_available_browse'),
-        )
-        return urlpatterns
 
 site.register(models.Plugins, PluginsFAdmin)
 site.register(models.Available, AvailableFAdmin)
