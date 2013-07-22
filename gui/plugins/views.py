@@ -185,14 +185,14 @@ def plugin_install_available(request, oid):
         if not addrs['high_ipv4']:
             raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
 
-        if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
-            raise MiddlewareError(_("Failed to download plugin"))
-
-        jail = new_default_plugin_jail(plugin.name.lower())
+        plugin_upload_path = notifier().get_plugin_upload_path()
+        notifier().change_upload_location(plugin_upload_path)
 
         if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
             jail.delete()
             raise MiddlewareError(_("Failed to download plugin"))
+
+        jail = new_default_plugin_jail(plugin.name.lower())
 
         newplugin = []
         if notifier().install_pbi(jail.jail_host, newplugin):
