@@ -189,7 +189,6 @@ def plugin_install_available(request, oid):
         notifier().change_upload_location(plugin_upload_path)
 
         if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
-            jail.delete()
             raise MiddlewareError(_("Failed to download plugin"))
 
         jail = new_default_plugin_jail(plugin.name.lower())
@@ -202,8 +201,7 @@ def plugin_install_available(request, oid):
                 newplugin.plugin_name,
             )
         else:
-            #FIXME
-            pass
+            jail.delete()
 
         return JsonResp(
             request,
