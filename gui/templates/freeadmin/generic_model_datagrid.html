@@ -158,10 +158,7 @@ require([
     griddiv.grid = grid;
 
     {% if double_click %}
-    grid.on(".dgrid-row:dblclick", function(evt) {
-        var row = grid.row(evt);
-        editObject('{% trans "Edit"|escapejs %}', row.data._edit_url, [this, ]);
-    });
+{{ double_click|safe }}
     {% endif %}
 
     var selectionCheck = function(evt) {

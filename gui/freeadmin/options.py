@@ -37,6 +37,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
+from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
@@ -681,6 +682,24 @@ class BaseFreeAdmin(object):
     def get_datagrid_filters(self, request):
         return {}
 
+    def get_datagrid_dblclick(self, request=None):
+        if self.double_click is False:
+            return False
+        if self.double_click is True:
+            dblclick = {}
+        else:
+            dblclick = self.double_click
+        func = """
+grid.on(".dgrid-row:dblclick", function(evt) {
+    var row = grid.row(evt);
+    editObject('%(label)s', row.data.%(field)s, [this, ]);
+});
+""" % {
+            'label': escapejs(dblclick.get('label', _('Edit'))),
+            'field': dblclick.get('field', '_edit_url'),
+        }
+        return func
+
     def datagrid(self, request):
 
         m = self._model
@@ -693,7 +712,7 @@ class BaseFreeAdmin(object):
             filters = ''
 
         context = {
-            'double_click': self.double_click,
+            'double_click': self.get_datagrid_dblclick(request=request),
             'model': m,
             'datagrid_filters': filters,
             'verbose_name': self.verbose_name,
