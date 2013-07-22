@@ -52,6 +52,11 @@ class AvailableFAdmin(BaseFreeAdmin):
 
     resource = AvailablePluginsResource
 
+    double_click = {
+        'label': _('Install'),
+        'field': '_install_url',
+    }
+
     def get_actions(self):
         actions = OrderedDict()
         actions["Install"] = {
