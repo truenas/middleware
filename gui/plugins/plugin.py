@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import os
 import platform
 import urllib2
 
@@ -76,6 +77,7 @@ class Plugin(object):
             )
             total_size = None
 
+        rv = True
         csize = 20480
         downloaded = 0
         last_percent = 0
@@ -114,9 +116,11 @@ class Plugin(object):
                 dohash.update(chunk)
             if dohash.hexdigest() != self.hash:
                 log.debug("SHA256 failed for %s", url)
-                return False
+                rv = False
 
-        return True
+        os.unlink(PROGRESS_FILE)
+
+        return rv
 
 
 class Available(object):
