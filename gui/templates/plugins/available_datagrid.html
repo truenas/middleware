@@ -10,7 +10,11 @@
   <img src="{{ STATIC_URL }}images/ui/buttons/refresh.png" width="16" height="16" />
   <p>{% trans "Refresh" %}</p>
   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-    editObject('{% trans "Browse"|escapejs %}', '{% url "freeadmin_plugins_available_browse" %}', [this,]);
+    var me = this;
+    require(["dojo/query"], function(query) {
+      var grid = query(".gridDiv", me.domNode.parentNode.parentNode)[0].grid;
+      grid.set("store", grid.store);
+    });
   </script>
 </button>
 
