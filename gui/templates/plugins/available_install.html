@@ -2,3 +2,11 @@
 {% block form %}
 {% blocktrans with plugin=plugin.name %}Are you sure you want to install "{{ plugin }}" plugin?{% endblocktrans %}
 {% endblock %}
+{% block onSubmit %}
+doSubmit({
+    form: this,
+    event: e,
+    url: '{% block formpost %}{{ request.path }}{% endblock %}',
+    progressbar: '{% url "plugins_install_progress" %}'
+});
+{% endblock %}

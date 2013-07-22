@@ -25,7 +25,9 @@
 #
 #####################################################################
 from collections import namedtuple
+import json
 import logging
+import os
 
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
@@ -40,6 +42,7 @@ from freenasUI.jails.utils import guess_adresses, new_default_plugin_jail
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
+from freenasUI.plugins.plugin import PROGRESS_FILE
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
 
@@ -209,6 +212,22 @@ def plugin_install_available(request, oid):
     return render(request, "plugins/available_install.html", {
         'plugin': plugin,
     })
+
+
+def install_progress(request):
+
+    current = None
+    if os.path.exists(PROGRESS_FILE):
+        with open(PROGRESS_FILE, 'r') as f:
+            try:
+                current = int(f.readlines()[-1].strip())
+            except:
+                pass
+        if current < 100:
+            return HttpResponse(json.dumps({
+                'percent': current,
+            }))
+    return HttpResponse('{}')
 
 
 def plugin_install(request, jail_id=-1):

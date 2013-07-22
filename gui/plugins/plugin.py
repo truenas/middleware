@@ -5,6 +5,7 @@ import urllib2
 
 import requests
 
+PROGRESS_FILE = "/tmp/.plugininstall_progess"
 log = logging.getLogger("plugins.plugin")
 
 
@@ -71,7 +72,7 @@ class Plugin(object):
         downloaded = 0
         last_percent = 0
 
-        with open(path, 'wb+') as f, open("/tmp/.plugininstall_progess", 'w') as f2:
+        with open(path, 'wb+') as f, open(PROGRESS_FILE, 'w') as f2:
 
             if total_size:
                 f2.write("0\n")
