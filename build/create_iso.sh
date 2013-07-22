@@ -57,7 +57,7 @@ main()
 
 	# copy /rescue and /boot from the image to the iso
 	tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
-	tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
+	tar -cf - -C ${INSTALLUFSDIR} boot --exclude boot/kernel-debug | tar -xf - -C ${ISODIR}
 	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
 	echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
