@@ -858,9 +858,10 @@ __EOF__
 	export NANO_WORLDDIR NANO_ARCH
 
 	mkdir -p "${ixdir}"
-	cp ${jdir}/*.txz "${ixdir}/"
-	cp ${jdir}/usr/local/tmp/All/*.txz "${ixdir}/"
-	cp ${jdir}/var/db/pkg/* "${ixdir}/"
+	# We need to shrink the image, don't cache packages.
+	#cp ${jdir}/*.txz "${ixdir}/"
+	#cp ${jdir}/usr/local/tmp/All/*.txz "${ixdir}/"
+	#cp ${jdir}/var/db/pkg/* "${ixdir}/"
 }
 
 get_jail_packages64()
