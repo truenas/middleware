@@ -22,7 +22,9 @@ ix_textdump_start()
                 return 1
         fi
         # watchdog 38 = ~256 seconds or ~4 minutes, see sys/watchdog.h for explanation
-        ddb script "kdb.enter.panic=watchdog 38; textdump set ;capture on; show allpcpu; bt; ps ;alltrace ;show alllocks; textdump dump; reset"
+	ddb script "kdb.enter.break=watchdog 38; textdump set; capture on"
+	ddb script "kdb.enter.sysctl=watchdog 38; textdump set; capture on"
+	ddb script "kdb.enter.default=watchdog 38; textdump set; capture on; show allpcpu; bt; ps; alltrace; textdump dump; reset"
 	sysctl debug.ddb.textdump.pending=1
         sysctl debug.debugger_on_panic=1
         mkdir -p "/data/crash"

@@ -45,6 +45,8 @@ from freenasUI.services.models import (
     iSCSITargetPortal, iSCSITargetExtent, iSCSITargetToExtent
 )
 from freenasUI.jails.models import NullMountPoint
+from freenasUI.plugins import availablePlugins, Plugin
+from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
@@ -913,4 +915,58 @@ class SnapshotResource(DojoResource):
                 'snapname': bundle.obj.name,
             }),
         }
+        return bundle
+
+
+class AvailablePluginsResource(DojoResource):
+
+    name = fields.CharField(attribute='name')
+    description = fields.CharField(attribute='description')
+    version = fields.CharField(attribute='version')
+
+    class Meta:
+        resource_name = 'availableplugins'
+        include_resource_uri = False
+        authentication = DjangoAuthentication()
+        object_class = Plugin
+        paginator_class = DojoPaginator
+
+    def get_list(self, request, **kwargs):
+        conf = PluginConf.objects.latest('id')
+        if conf:
+            url = conf.collectionurl
+        else:
+            url = PLUGINS_INDEX
+        results = availablePlugins.get_remote(url=url)
+        for sfield in self._apply_sorting(request.GET):
+            if sfield.startswith('-'):
+                field = sfield[1:]
+                reverse = True
+            else:
+                field = sfield
+                reverse = False
+            results.sort(
+                key=lambda item: getattr(item, field),
+                reverse=reverse)
+        paginator = self._meta.paginator_class(request, results, resource_uri=self.get_resource_uri(), limit=self._meta.limit, max_limit=self._meta.max_limit, collection_name=self._meta.collection_name)
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (paginator.offset, paginator.offset+length-1, len(results))
+        return response
+
+    def dehydrate(self, bundle):
+        bundle.data['_install_url'] = reverse(
+            'plugin_install_available',
+            kwargs={'oid': bundle.obj.hash},
+        )
         return bundle

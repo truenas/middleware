@@ -2415,7 +2415,7 @@ class notifier:
 
         return plugin_upload_path
 
-    def install_pbi(self, pjail, newplugin):
+    def install_pbi(self, pjail, newplugin, pbifile="/var/tmp/firmware/pbifile.pbi"):
         log.debug("install_pbi: pjail = %s", pjail)
         """
         Install a .pbi file into the plugins jail
@@ -2470,7 +2470,7 @@ class notifier:
         log.debug("install_pbi: pjail_path = %s, plugins_path = %s", pjail_path, plugins_path)
 
         pbi = pbiname = prefix = name = version = arch = None
-        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/var/tmp/firmware/pbifile.pbi")
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbifile)
         out = p.info(False, -1, 'pbi information for', 'prefix', 'name', 'version', 'arch')
 
         if not out:
@@ -2505,7 +2505,8 @@ class notifier:
                 #FIXME: do pbi_update instead
                 pass
 
-        self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
+        if pbifile == "/var/tmp/firmware/pbifile.pbi":
+            self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
         p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE, pbi="%s/%s" %
             ("/.plugins", pbi))
