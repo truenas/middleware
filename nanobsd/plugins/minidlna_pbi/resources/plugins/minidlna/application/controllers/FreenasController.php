@@ -17,7 +17,7 @@ class FreenasController extends Zend_Controller_Action
         echo json_encode(array(
             array(
                 'name' => 'MiniDLNA',
-                'append_to' => 'services.Plugins',
+                'append_to' => 'plugins',
                 'type' => 'pluginsfcgi',
                 'icon' => '/plugins/minidlna/' . $this->getParam("plugin_id") . '/index/treemenuicon',
                 'url' => '/plugins/minidlna/' . $this->getParam("plugin_id") . '/index/edit',
