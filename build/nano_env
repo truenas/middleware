@@ -180,6 +180,9 @@ export NANO_XZ
 
 PKGCACHE=${FREENAS_PKGCACHE="/freenas-build/freenas-packages"}
 DISTCACHE=${FREENAS_DISTCACHE="/freenas-build/freenas-distfiles"}
+FREEBSD_DISTCACHE=${FREEBSD_DISTCACHE="/freenas-build/freebsd-distfiles"}
+FREEBSD_PKGCACHE=${FREEBSD_PKGCACHE="/freenas-build/freebsd-packages"}
+FREEBSD_PKGCACHE_32=${FREEBSD_PKGCACHE_32="/freenas-build/freebsd-packages-32"}
 
 #
 # FTP mirror where we fetch files for jails
