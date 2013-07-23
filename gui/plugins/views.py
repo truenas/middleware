@@ -163,7 +163,7 @@ def plugin_update(request, plugin_id):
     })
 
 
-def plugin_install_available(request, oid):
+def install_available(request, oid):
 
     plugin = None
     conf = models.Configuration.objects.latest('id')
@@ -230,7 +230,7 @@ def install_progress(request):
     return HttpResponse('{}')
 
 
-def plugin_install(request, jail_id=-1):
+def upload(request, jail_id=-1):
     plugin_upload_path = notifier().get_plugin_upload_path()
     notifier().change_upload_location(plugin_upload_path)
 
@@ -265,13 +265,13 @@ def plugin_install(request, jail_id=-1):
     else:
         form = forms.PBIUploadForm(jail=jail)
 
-    return render(request, "plugins/plugin_install.html", {
+    return render(request, "plugins/upload.html", {
         'form': form,
     })
 
 
-def plugin_install_nojail(request):
-    return plugin_install(request)
+def upload_nojail(request):
+    return upload(request)
 
 
 @public

@@ -824,7 +824,7 @@ class JailsResource(DojoModelResource):
         bundle.data['_jail_storage_add_url'] = reverse('jail_storage_add', kwargs={
             'jail_id': bundle.obj.id
         })
-        bundle.data['_plugin_install_url'] = reverse('plugin_install', kwargs={
+        bundle.data['_upload_url'] = reverse('upload', kwargs={
             'jail_id': bundle.obj.id
         })
         bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
@@ -966,7 +966,7 @@ class AvailablePluginsResource(DojoResource):
 
     def dehydrate(self, bundle):
         bundle.data['_install_url'] = reverse(
-            'plugin_install_available',
+            'plugins_install_available',
             kwargs={'oid': bundle.obj.hash},
         )
         return bundle
