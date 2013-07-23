@@ -36,6 +36,7 @@ from freenasUI.jails.models import (
     JailsConfiguration,
     NullMountPoint
 )
+from freenasUI.jails.utils import jail_path_configured
 from freenasUI.common.warden import (
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
@@ -53,21 +54,6 @@ BLACKLIST = [
     'Jails',
     'NullMountPoint'
 ]
-
-
-def jail_path_configured():
-    """
-    Check if there is the jail system is configured
-    by looking at the JailsConfiguration model and
-    jc_path field
-    Returns: boolean
-    """
-    try:
-        jc = JailsConfiguration.objects.latest('id')
-    except JailsConfiguration.DoesNotExist:
-        jc = None
-
-    return jc and jc.jc_path
 
 
 def plugin_fetch(args):

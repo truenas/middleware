@@ -194,3 +194,19 @@ def new_default_plugin_jail(basename):
     )
     w.start(jail=jailname)
     return Jails.objects.get(jail_host=jailname)
+
+
+def jail_path_configured():
+    """
+    Check if there is the jail system is configured
+    by looking at the JailsConfiguration model and
+    jc_path field
+
+    :Returns: boolean
+    """
+    try:
+        jc = JailsConfiguration.objects.latest('id')
+    except JailsConfiguration.DoesNotExist:
+        jc = None
+
+    return jc and jc.jc_path
