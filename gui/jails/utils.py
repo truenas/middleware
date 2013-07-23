@@ -7,6 +7,8 @@ from freenasUI.common import warden
 from freenasUI.jails.models import Jails, JailsConfiguration
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.zfs import list_datasets
+from freenasUI.storage.models import Volume
 
 log = logging.getLogger('jails.utils')
 
@@ -210,3 +212,42 @@ def jail_path_configured():
         jc = None
 
     return jc and jc.jc_path
+
+
+def jail_auto_configure():
+    """
+    Auto configure the jail settings
+
+    The first ZFS volume found will be selected.
+    A dataset called jails will be created, if it already exists then
+    append "_N" where N 2..100 until a dataset is not found.
+    """
+
+    volume = Volume.objects.filter(vol_fstype='ZFS')
+    if not volume.exists():
+        raise MiddlewareError(_("Volume not found"))
+    volume = volume[0]
+    basename = "%s/jails" % volume.vol_name
+    name = basename
+    for i in xrange(2, 100):
+        datasets = list_datasets(
+            path="/mnt/%s" % name,
+            recursive=False,
+        )
+        if not datasets:
+            break
+        else:
+            name = "%s_%d" % (basename, i)
+    rv, err = notifier().create_zfs_dataset(name)
+    if rv != 0:
+        raise MiddlewareError(_("Failed to create dataset %s: %s") % (
+            name,
+            err,
+        ))
+
+    try:
+        jail = JailsConfiguration.objects.latest('id')
+    except JailsConfiguration.DoesNotExist:
+        jail = JailsConfiguration()
+    jail.jc_path = "/mnt/%s" % name
+    jail.save()
