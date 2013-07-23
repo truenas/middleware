@@ -2724,14 +2724,11 @@ class notifier:
     def delete_pbi(self, plugin):
         ret = False
 
-        (c, conn) = self.__open_db(ret_conn=True)
-        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
-        row = c.fetchone()
-        if not row:
+        if not plugin.id:
             log.debug("delete_pbi: plugins plugin not in database")
             return False
-        
-        jail_name = row[0]
+
+        jail_name = plugin.plugin_jail
 
         jail = None
         for j in Jls():
@@ -2750,7 +2747,6 @@ class notifier:
 
         # Plugin is not installed in the jail at all
         if res[0] == 0 and plugin.plugin_name not in plugins:
-            plugin.delete()
             return True
 
         pbi_path = os.path.join(

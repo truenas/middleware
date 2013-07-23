@@ -110,14 +110,14 @@ class Plugins(Model):
             id__exact=self.id
         )
         with transaction.commit_on_success():
-            super(Plugins, self).delete(*args, **kwargs)
-            self.plugin_secret.delete()
             notifier()._stop_plugins(self.plugin_name)
             if qs.count() > 0:
                 notifier().delete_pbi(self)
             else:
                 jail = Jails.objects.get(jail_host=self.plugin_jail)
                 jail.delete()
+            super(Plugins, self).delete(*args, **kwargs)
+            self.plugin_secret.delete()
 
 
 class Available(models.Model):
