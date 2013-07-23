@@ -602,8 +602,12 @@ get_jail_distfiles()
 		distfiles="${distfiles} lib32.txz"
 	fi
 
-	ftpdir="${FREEBSD_FTP_MIRROR}/pub/FreeBSD/releases/"\
-"${arch}/${FREEBSD_RELEASE_VERSION}"
+	if [ -d "${FREEBSD_DISTCACHE}" ] ;then
+	    ftpdir="${FREEBSD_DISTCACHE}/releases"
+	else
+	    ftpdir="${FREEBSD_FTP_MIRROR}/pub/FreeBSD/releases"
+	fi
+	ftpdir="${ftpdir}/${arch}/${FREEBSD_RELEASE_VERSION}"
 
 	wd="${NANO_WORLDDIR}/usr/local/share/warden"
 	mkdir -p "${wd}"
@@ -726,10 +730,21 @@ get_jail_packages()
 		return 0
 	fi
 
-	ftpdir="${FREEBSD_PACKAGE_MIRROR}/${FREEBSD_RELEASE_VERSION}/${arch}"
+	#if [ -d "${FREEBSD_PKGCACHE}/${FREEBSD_RELEASE_VERSION}/${arch}"] ; then
+	#    ftpdir="${FREEBSD_PKGCACHE}/${FREEBSD_RELEASE_VERSION}/${arch}"
+	#else
+	    ftpdir="${FREEBSD_PACKAGE_MIRROR}/${FREEBSD_RELEASE_VERSION}/${arch}"
+	#fi
+
+	# why... what is up here?
 	if [ "${arch}" = "i386" ]
 	then
-		ftpdir="${FREEBSD_PACKAGE_MIRROR_32}"
+		# use the local pkg cache if it exists.
+		#if [ -d "${FREEBSD_PKGCACHE_32}" ] ; then
+		#    ftpdir="${FREEBSD_PKGCACHE_32}"
+		#else
+		    ftpdir="${FREEBSD_PACKAGE_MIRROR_32}"
+		#fi
 	fi
 
 	pdir="${NANO_OBJ}/jails/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
