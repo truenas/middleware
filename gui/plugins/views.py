@@ -37,7 +37,10 @@ import eventlet
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails.models import Jails
-from freenasUI.jails.utils import guess_adresses, new_default_plugin_jail
+from freenasUI.jails.utils import (
+    jail_path_configured, jail_auto_configure, guess_adresses,
+    new_default_plugin_jail
+)
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
@@ -165,6 +168,9 @@ def plugin_update(request, plugin_id):
 
 def install_available(request, oid):
 
+    if not jail_path_configured():
+        jail_auto_configure()
+
     plugin = None
     conf = models.Configuration.objects.latest('id')
     if conf:
@@ -231,6 +237,10 @@ def install_progress(request):
 
 
 def upload(request, jail_id=-1):
+
+    if not jail_path_configured():
+        jail_auto_configure()
+
     plugin_upload_path = notifier().get_plugin_upload_path()
     notifier().change_upload_location(plugin_upload_path)
 
