@@ -10,6 +10,7 @@
 . /etc/rc.subr
 
 name="ix_textdump"
+rcvar="ix_textdump_enable"
 start_cmd="ix_textdump_start"
 stop_cmd="ix_textdump_stop"
 
