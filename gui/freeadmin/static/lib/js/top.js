@@ -54,7 +54,7 @@ require([
             return;
         _topstarted = true;
         xhr('/system/top/', {
-            handleAs: "xml",
+            handleAs: "xml"
             }).then(function(data) {
 
                 _topstarted = false;
