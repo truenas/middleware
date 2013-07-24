@@ -37,6 +37,10 @@ class Plugin(object):
     def __repr__(self):
         return '<Plugin: %s>' % self.name
 
+    @property
+    def unixname(self):
+        return self.name.split(' ')[0].lower()
+
     def download(self, path):
         if not self.urls:
             raise ValueError("Not downloadable")
