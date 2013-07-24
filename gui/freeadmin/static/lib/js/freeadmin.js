@@ -992,6 +992,11 @@ require([
              * otherwise iframe.send won't work, it expects the form domNode
              */
             attrs.form.domNode.parentNode.appendChild(pbar.domNode);
+            if(attrs.progressbarText) {
+              attrs.form.domNode.parentNode.appendChild(
+                document.createTextNode(attrs.progressbarText)
+              );
+            }
             domStyle.set(attrs.form.domNode, "display", "none");
             //rnode.layout();
             rnode._size();

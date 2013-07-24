@@ -28,6 +28,7 @@ from collections import namedtuple
 import json
 import logging
 import os
+import subprocess
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -229,8 +230,17 @@ def install_available(request, oid):
             events=['reloadHttpd()'],
         )
 
+    proc = subprocess.Popen(
+        "/usr/local/bin/warden template list|grep pluginjail",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    )
+    notemplate = proc.wait() != 0
+
     return render(request, "plugins/available_install.html", {
         'plugin': plugin,
+        'notemplate': notemplate,
     })
 
 
@@ -238,18 +248,17 @@ def install_progress(request):
 
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = '%s/warden.log' % jc.jc_path
-    data = {}
+
+    percent = 0.0
     if os.path.exists(PROGRESS_FILE):
-        data = {'step': 1}
         with open(PROGRESS_FILE, 'r') as f:
             try:
-                current = int(f.readlines()[-1].strip())
+                percent = int(f.readlines()[-1].strip())
             except:
                 pass
-        data['percent'] = current
+        percent = percent * 0.2
 
     if os.path.exists(logfile):
-        data = {'step': 2}
         percent = 0
         with open(logfile, 'r') as f:
             for line in f.xreadlines():
@@ -260,13 +269,16 @@ def install_progress(request):
 
         if not percent:
             percent = 0
-        data['percent'] = percent
+        percent = percent * 0.7
+        percent += 20
 
     if os.path.exists("/tmp/.plugin_upload_install"):
-        data = {'step': 3}
+        percent = 100
 
-    content = json.dumps(data)
-    return HttpResponse(content, mimetype='application/json')
+    return HttpResponse(
+        'new Object({state: "uploading", received: %s, size: 100});' % (
+            int(percent),
+        ))
 
 
 def upload(request, jail_id=-1):
@@ -323,8 +335,17 @@ def upload(request, jail_id=-1):
     else:
         form = forms.PBIUploadForm(jail=jail)
 
+    proc = subprocess.Popen(
+        "/usr/local/bin/warden template list|grep pluginjail",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+    )
+    notemplate = proc.wait() != 0
+
     return render(request, "plugins/upload.html", {
         'form': form,
+        'notemplate': notemplate,
     })
 
 
@@ -343,13 +364,12 @@ def upload_progress(request):
     try:
         r = requests.get("http://localhost/progress", headers={
             "X-Progress-ID": progid,
-        })
+        }, timeout=0.7)
         data = json.loads(r.text[1:-2])
         percent = float(data['received']) / int(data['size'])
         percent = percent * 0.1
 
     except Exception, e:
-        log.error("erro %s", e)
         pass
 
     if os.path.exists(logfile):

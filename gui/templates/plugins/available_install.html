@@ -7,6 +7,9 @@ doSubmit({
     form: this,
     event: e,
     url: '{% block formpost %}{{ request.path }}{% endblock %}',
+    {% if notemplate %}
+    progressbarText: '{% trans "Creating jail template, this may take a while!"|escapejs %}',
+    {% endif %}
     progressbar: '{% url "plugins_install_progress" %}'
 });
 {% endblock %}
