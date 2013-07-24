@@ -134,7 +134,7 @@ class Available(object):
         results = []
 
         log.debug("Retrieving available plugins from %s", url)
-        r = requests.get(url)
+        r = requests.get(url, timeout=8)
 
         if r.status_code != requests.codes.ok:
             log.debug(
