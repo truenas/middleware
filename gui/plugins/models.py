@@ -32,7 +32,7 @@ from freenasUI.freeadmin.models import Model
 from freenasUI.jails.models import Jails
 from freenasUI.middleware.notifier import notifier
 
-PLUGINS_INDEX = 'http://localhost/static/FreeNAS-index'
+PLUGINS_INDEX = 'http://www.appcafe.org/freenas/json'
 
 
 class Plugins(Model):
