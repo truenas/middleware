@@ -360,7 +360,11 @@ freebsd_checkout_git()
 {
 	(
 	local _depth_arg="--depth 1"
-	if [ "x${GIT_TAG}" != "x" ] ; then
+	# If tags are set, then it appears we need a full checkout to get
+	# the tags.  If GIT_DEEP is set, then we don't want a shallow
+	# copy because we need to tag for a release or otherwise work
+	# on the repo we are cloning.
+	if [ "x${GIT_TAG}" != "x" -o "x${GIT_DEEP}" != "x" ] ; then
 		_depth_arg=""
 	fi
 	: ${GIT_BRANCH=freenas-9.1-releng}
@@ -442,7 +446,7 @@ ports_checkout_git()
 {
 	(
 	local _depth_arg="--depth 1"
-	if [ "x${GIT_PORTS_TAG}" != "x" ] ; then
+	if [ "x${GIT_PORTS_TAG}" != "x" -o "x${GIT_DEEP}" != "x" ] ; then
 		_depth_arg=""
 	fi
 	cd "$AVATAR_ROOT/FreeBSD"
