@@ -140,6 +140,7 @@ define([
               me._masterProgress(data.percent);
             }
           } else {
+            me._masterProgress(0);
             me._subProgress.update({'indeterminate': true});
           }
           setTimeout(function() {
