@@ -185,6 +185,8 @@ def install_available(request, oid):
         os.unlink("/tmp/.plugin_upload_install")
     if os.path.exists("/tmp/.jailcreate"):
         os.unlink("/tmp/.jailcreate")
+    if os.path.exists(PROGRESS_FILE):
+        os.unlink(PROGRESS_FILE)
 
     plugin = None
     conf = models.Configuration.objects.latest('id')
