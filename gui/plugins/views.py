@@ -37,7 +37,10 @@ import eventlet
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails.models import Jails
-from freenasUI.jails.utils import guess_adresses, new_default_plugin_jail
+from freenasUI.jails.utils import (
+    jail_path_configured, jail_auto_configure, guess_adresses,
+    new_default_plugin_jail
+)
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
@@ -163,7 +166,10 @@ def plugin_update(request, plugin_id):
     })
 
 
-def plugin_install_available(request, oid):
+def install_available(request, oid):
+
+    if not jail_path_configured():
+        jail_auto_configure()
 
     plugin = None
     conf = models.Configuration.objects.latest('id')
@@ -230,7 +236,11 @@ def install_progress(request):
     return HttpResponse('{}')
 
 
-def plugin_install(request, jail_id=-1):
+def upload(request, jail_id=-1):
+
+    if not jail_path_configured():
+        jail_auto_configure()
+
     plugin_upload_path = notifier().get_plugin_upload_path()
     notifier().change_upload_location(plugin_upload_path)
 
@@ -265,13 +275,13 @@ def plugin_install(request, jail_id=-1):
     else:
         form = forms.PBIUploadForm(jail=jail)
 
-    return render(request, "plugins/plugin_install.html", {
+    return render(request, "plugins/upload.html", {
         'form': form,
     })
 
 
-def plugin_install_nojail(request):
-    return plugin_install(request)
+def upload_nojail(request):
+    return upload(request)
 
 
 @public

@@ -166,7 +166,7 @@ class JailsFAdmin(BaseFreeAdmin):
 
         actions['edit'] = self._action_builder('edit', icon=_("Edit Jail"), label=_("Edit Jail"))
         actions['storage'] = self._action_builder('jail_storage_add', label=_("Add Storage"))
-        actions['plugins'] = self._action_builder('plugin_install', label=_("Install Plugins"))
+        actions['plugins'] = self._action_builder('upload', label=_("Install Plugins"))
         #actions['export'] = self._action_builder('jail_export', label=_("Export Jail"))
         #actions['import'] = self._action_builder('jail_import', label=_("Import Jail"))
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
