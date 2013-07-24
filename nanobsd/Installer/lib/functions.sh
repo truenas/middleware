@@ -4,23 +4,42 @@
 #
 # Garrett Cooper, March 2012
 
+LOGGER=1
+
 error()
 {
 	echo >&2 "${0##*/}: ERROR: $@"
 	exit 1
 }
 
+myecho()
+{
+    local _type
+    _type="$1"
+    shift
+    echo "${0##*/}: ${_type}: $@"
+    echo "${0##*/}: ${_type}: $@" | logger
+}
+
+# verbose echo
 vecho()
 {
-	if [ $VERBOSE -gt 0 ]
+	if [ "$VERBOSE" != "0" ]
 	then
-		echo "${0##*/}: INFO: $@"
+        myecho "INFO:" "$@"
 	fi
+}
+
+# normal echo
+necho()
+{
+    myecho "INFO:" "$@"
 }
 
 warn()
 {
 	echo >&2 "${0##*/}: WARNING: $@"
+    echo "${0##*/}: WARNING: $@" | logger
 }
 
 sysctl_n()
