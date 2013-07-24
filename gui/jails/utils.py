@@ -175,15 +175,21 @@ def new_default_plugin_jail(basename):
             break
 
     w = warden.Warden()
+
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = "%s/warden.log" % jc.jc_path
+
     try:
         w.create(
             jail=jailname,
             ipv4=addrs['high_ipv4'],
             flags=(
+                warden.WARDEN_CREATE_FLAGS_LOGFILE |
                 warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
                 warden.WARDEN_CREATE_FLAGS_SYSLOG |
                 warden.WARDEN_CREATE_FLAGS_IPV4
             ),
+            logfile=logfile,
         )
     except Exception, e:
         raise MiddlewareError(_("Failed to install plugin: %s") % e)
