@@ -169,7 +169,7 @@ class Available(object):
         return Plugin(
             id=int(p['Pbi']['id']),
             name=p['Pbi']['title'],
-            description="Not implemented",
+            description=p['Pbi'].get("description", "Not implemented"),
             version=status['pbi_version'],
             arch=status['architecture'],
             hash=status.get('hash', None),
