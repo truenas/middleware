@@ -1006,10 +1006,12 @@ require([
             } else {
               pattrs = {
                 steps: attrs.progressbar.steps,
-                fileUpload: true,
+                fileUpload: attrs.progressbar.fileUpload,
                 uuid: uuid,
                 poolUrl: attrs.progressbar.poolUrl
               };
+              if(pattrs.fileUpload === undefined)
+                pattrs.fileUpload = true;
             }
             pbar = Progress(pattrs);
 

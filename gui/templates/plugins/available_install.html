@@ -7,6 +7,14 @@ doSubmit({
     form: this,
     event: e,
     url: '{% block formpost %}{{ request.path }}{% endblock %}',
-    progressbar: '{% url "plugins_install_progress" %}'
+    progressbar: {
+      steps: [
+        {"label": "Downloading plugin"},
+        {"label": "Creating jail"},
+        {"label": "Installing plugin"},
+      ],
+      poolUrl: '{% url "plugins_install_progress" %}',
+      fileUpload: false
+    }
 });
 {% endblock %}
