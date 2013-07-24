@@ -12,6 +12,28 @@
 SCRIPTDIR=$(realpath "$(dirname "$0")/..")
 . "$SCRIPTDIR/lib/functions.sh"
 
+set -x
+
+FIFO_DIR=`mktemp -d -t instfifo`
+if [ $? != 0 ] ; then
+    echo "mktemp failed"
+    exit 1
+fi
+
+trap "rm -rf $FIFO_DIR" EXIT
+
+FIFO="$FIFO_DIR/logger_fifo"
+mkfifo $FIFO
+if [ $? != 0 ] ; then
+    echo "mkfifo failed"
+    exit 1
+fi
+
+logger < $FIFO &
+
+exec 3>&1 4>&2 >$FIFO 2>&1
+
+
 usage()
 {
 	cat <<EOF
@@ -46,7 +68,7 @@ EOF
 BLACKLIST_EXPR=
 INSTALL_DESTDIR="/"
 INSTALL_SRCDIR=$SCRIPTDIR
-VERBOSE=0
+VERBOSE=1
 
 while getopts 'D:f:m:v' opt
 do
@@ -117,7 +139,7 @@ done 2> $stage_log
 # Gather all data possible and spit it out at the end.
 if [ -s $stage_log ]
 then
-	echo "${0##*/}: $stage summary"
+	necho "${0##*/}: $stage summary"
 	cat $stage_log
 fi
 rm -f $stage_log
