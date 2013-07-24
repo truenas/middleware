@@ -187,7 +187,7 @@ def install_available(request, oid):
 
     plugin = None
     conf = models.Configuration.objects.latest('id')
-    if conf:
+    if conf and conf.collectionurl:
         url = conf.collectionurl
     else:
         url = models.PLUGINS_INDEX

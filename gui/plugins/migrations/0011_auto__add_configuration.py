@@ -16,6 +16,7 @@ class Migration(DataMigration):
         db.send_create_signal(u'plugins', ['Configuration'])
 
         conf = orm.Configuration()
+        conf.collectionurl = 'http://www.appcafe.org/freenas/json'
         conf.save()
 
 

@@ -934,7 +934,7 @@ class AvailablePluginsResource(DojoResource):
 
     def get_list(self, request, **kwargs):
         conf = PluginConf.objects.latest('id')
-        if conf:
+        if conf and conf.collectionurl:
             url = conf.collectionurl
         else:
             url = PLUGINS_INDEX
