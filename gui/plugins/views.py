@@ -176,6 +176,15 @@ def install_available(request, oid):
                 'error': e.value,
             })
 
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+    if os.path.exists(logfile):
+        os.unlink(logfile)
+    if os.path.exists("/tmp/.plugin_upload_install"):
+        os.unlink("/tmp/.plugin_upload_install")
+    if os.path.exists("/tmp/.jailcreate"):
+        os.unlink("/tmp/.jailcreate")
+
     plugin = None
     conf = models.Configuration.objects.latest('id')
     if conf:
@@ -227,18 +236,37 @@ def install_available(request, oid):
 
 def install_progress(request):
 
-    current = None
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+    data = {}
     if os.path.exists(PROGRESS_FILE):
+        data = {'step': 1}
         with open(PROGRESS_FILE, 'r') as f:
             try:
                 current = int(f.readlines()[-1].strip())
             except:
                 pass
-        if current < 100:
-            return HttpResponse(json.dumps({
-                'percent': current,
-            }))
-    return HttpResponse('{}')
+        data['percent'] = current
+
+    if os.path.exists(logfile):
+        data = {'step': 2}
+        percent = 0
+        with open(logfile, 'r') as f:
+            for line in f.xreadlines():
+                if line.startswith('====='):
+                    parts = line.split()
+                    if len(parts) > 1:
+                        percent = parts[1][:-1]
+
+        if not percent:
+            percent = 0
+        data['percent'] = percent
+
+    if os.path.exists("/tmp/.plugin_upload_install"):
+        data = {'step': 3}
+
+    content = json.dumps(data)
+    return HttpResponse(content, mimetype='application/json')
 
 
 def upload(request, jail_id=-1):
