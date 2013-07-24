@@ -4,7 +4,7 @@ doSubmit({
     form: this,
     event: e,
     url: '{{ request.path }}',
-    progressbar: true
+    progressbar: '{% url "plugins_upload_progress" %}'
     });
 {% endblock %}
 {% block oklabel %}{% trans "Upload" %}{% endblock %}

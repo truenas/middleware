@@ -279,6 +279,15 @@ def upload(request, jail_id=-1):
                 'error': e.value,
             })
 
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+    if os.path.exists(logfile):
+        os.unlink(logfile)
+    if os.path.exists("/tmp/.plugin_upload_install"):
+        os.unlink("/tmp/.plugin_upload_install")
+    if os.path.exists("/tmp/.jailcreate"):
+        os.unlink("/tmp/.jailcreate")
+
     plugin_upload_path = notifier().get_plugin_upload_path()
     notifier().change_upload_location(plugin_upload_path)
 
@@ -292,14 +301,6 @@ def upload(request, jail_id=-1):
             jail = None
 
     if request.method == "POST":
-        jc = JailsConfiguration.objects.order_by("-id")[0]
-        logfile = '%s/warden.log' % jc.jc_path
-        if os.path.exists(logfile):
-            os.unlink(logfile)
-        if os.path.exists("/tmp/.plugin_upload_install"):
-            os.unlink("/tmp/.plugin_upload_install")
-        if os.path.exists("/tmp/.jailcreate"):
-            os.unlink("/tmp/.jailcreate")
 
         form = forms.PBIUploadForm(request.POST, request.FILES, jail=jail)
         if form.is_valid():
@@ -332,29 +333,49 @@ def upload_nojail(request):
 
 
 def upload_progress(request):
+    import requests
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = '%s/warden.log' % jc.jc_path
 
-    data = {}
+    percent = 0.0
+
+    progid = request.META.get("X-Progress-ID")
+    try:
+        r = requests.get("http://localhost/progress", headers={
+            "X-Progress-ID": progid,
+        })
+        data = json.loads(r.text[1:-2])
+        percent = float(data['received']) / int(data['size'])
+        percent = percent * 0.1
+
+    except Exception, e:
+        log.error("erro %s", e)
+        pass
+
     if os.path.exists(logfile):
-        data['step'] = 2
         percent = 0
         with open(logfile, 'r') as f:
             for line in f.xreadlines():
                 if line.startswith('====='):
                     parts = line.split()
                     if len(parts) > 1:
-                        percent = parts[1][:-1]
+                        try:
+                            percent = int(parts[1][:-1])
+                        except:
+                            pass
 
         if not percent:
             percent = 0
-        data['percent'] = percent
+        percent = percent * 0.8
+        percent += 10
 
     if os.path.exists("/tmp/.plugin_upload_install"):
-        data = {'step': 3}
+        percent = 100
 
-    content = json.dumps(data)
-    return HttpResponse(content, mimetype='application/json')
+    return HttpResponse(
+        'new Object({state: "uploading", received: %s, size: 100});' % (
+            int(percent),
+        ))
 
 
 @public
