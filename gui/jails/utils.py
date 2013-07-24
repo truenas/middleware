@@ -1,4 +1,5 @@
 import logging
+import os
 
 from django.utils.translation import ugettext as _
 
@@ -217,7 +218,7 @@ def jail_path_configured():
     except JailsConfiguration.DoesNotExist:
         jc = None
 
-    return jc and jc.jc_path
+    return jc and jc.jc_path and os.path.exists(jc.jc_path)
 
 
 def jail_auto_configure():
