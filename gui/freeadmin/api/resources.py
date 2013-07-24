@@ -937,7 +937,11 @@ class AvailablePluginsResource(DojoResource):
             url = conf.collectionurl
         else:
             url = PLUGINS_INDEX
-        results = availablePlugins.get_remote(url=url)
+        try:
+            results = availablePlugins.get_remote(url=url)
+        except Exception, e:
+            log.debug("Failed to fetch remote: %s", e)
+            results = []
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
                 field = sfield[1:]
