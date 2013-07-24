@@ -128,9 +128,9 @@ VERSION="9.1.0-RC2"
 
 # Set the tag to use for this release.
 #  for FreeBSD/src
-export GIT_TAG="9.1.0-RC1"
+export GIT_TAG="9.1.0-RC2"
 #  for FreeBSD/ports
-export GIT_PORTS_TAG="9.1.0-RC1"
+export GIT_PORTS_TAG="9.1.0-RC2"
 
 # FreeBSD release we are using for this release
 : ${FREEBSD_RELEASE_VERSION:="9.1-RELEASE"}
