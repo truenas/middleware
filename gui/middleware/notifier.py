@@ -2431,6 +2431,8 @@ class notifier:
         from freenasUI.jails.models import JailsConfiguration
         ret = False
 
+        open('/tmp/.plugin_upload_install', 'w+').close()
+
         if not pjail:
             log.debug("install_pbi: pjail is NULL")
             return False
