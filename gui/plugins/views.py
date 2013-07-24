@@ -36,7 +36,7 @@ from django.utils.translation import ugettext as _
 import eventlet
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.jails.models import Jails
+from freenasUI.jails.models import Jails, JailsConfiguration
 from freenasUI.jails.utils import (
     jail_path_configured, jail_auto_configure, guess_adresses,
     new_default_plugin_jail
@@ -264,6 +264,15 @@ def upload(request, jail_id=-1):
             jail = None
 
     if request.method == "POST":
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+        logfile = '%s/warden.log' % jc.jc_path
+        if os.path.exists(logfile):
+            os.unlink(logfile)
+        if os.path.exists("/tmp/.plugin_upload_install"):
+            os.unlink("/tmp/.plugin_upload_install")
+        if os.path.exists("/tmp/.jailcreate"):
+            os.unlink("/tmp/.jailcreate")
+
         form = forms.PBIUploadForm(request.POST, request.FILES, jail=jail)
         if form.is_valid():
             form.done()
@@ -292,6 +301,32 @@ def upload(request, jail_id=-1):
 
 def upload_nojail(request):
     return upload(request)
+
+
+def upload_progress(request):
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+
+    data = {}
+    if os.path.exists(logfile):
+        data['step'] = 2
+        percent = 0
+        with open(logfile, 'r') as f:
+            for line in f.xreadlines():
+                if line.startswith('====='):
+                    parts = line.split()
+                    if len(parts) > 1:
+                        percent = parts[1][:-1]
+
+        if not percent:
+            percent = 0
+        data['percent'] = percent
+
+    if os.path.exists("/tmp/.plugin_upload_install"):
+        data = {'step': 3}
+
+    content = json.dumps(data)
+    return HttpResponse(content, mimetype='application/json')
 
 
 @public
