@@ -1,6 +1,6 @@
 {% extends "freeadmin/generic_form.html" %}
 {% block form %}
-{% blocktrans with plugin=plugin.unixname %}Are you sure you want to install "{{ plugin }}" plugin?{% endblocktrans %}
+{% blocktrans with plugin=plugin.name %}Are you sure you want to install "{{ plugin }}" plugin?{% endblocktrans %}
 {% endblock %}
 {% block onSubmit %}
 doSubmit({
