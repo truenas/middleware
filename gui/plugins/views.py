@@ -169,13 +169,18 @@ def plugin_update(request, plugin_id):
 
 def install_available(request, oid):
 
-    if not jail_path_configured():
-        try:
+    try:
+        if not jail_path_configured():
             jail_auto_configure()
-        except MiddlewareError, e:
-            return render(request, "plugins/install_error.html", {
-                'error': e.value,
-            })
+        addrs = guess_adresses()
+        if not addrs['high_ipv4']:
+            raise MiddlewareError(_(
+                "You must configure your network interface and a default "
+                "gateway"))
+    except MiddlewareError, e:
+        return render(request, "plugins/install_error.html", {
+            'error': e.value,
+        })
 
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = '%s/warden.log' % jc.jc_path
@@ -203,10 +208,6 @@ def install_available(request, oid):
         raise MiddlewareError(_("Invalid plugin"))
 
     if request.method == "POST":
-
-        addrs = guess_adresses()
-        if not addrs['high_ipv4']:
-            raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
 
         plugin_upload_path = notifier().get_plugin_upload_path()
         notifier().change_upload_location(plugin_upload_path)
@@ -285,13 +286,19 @@ def install_progress(request):
 
 def upload(request, jail_id=-1):
 
-    if not jail_path_configured():
-        try:
+    #FIXME: duplicated code with available_install
+    try:
+        if not jail_path_configured():
             jail_auto_configure()
-        except MiddlewareError, e:
-            return render(request, "plugins/install_error.html", {
-                'error': e.value,
-            })
+        addrs = guess_adresses()
+        if not addrs['high_ipv4']:
+            raise MiddlewareError(_(
+                "You must configure your network interface and a default "
+                "gateway"))
+    except MiddlewareError, e:
+        return render(request, "plugins/install_error.html", {
+            'error': e.value,
+        })
 
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = '%s/warden.log' % jc.jc_path
