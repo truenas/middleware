@@ -32,9 +32,7 @@ from freenasUI.freeadmin.models import Model
 from freenasUI.jails.models import Jails
 from freenasUI.middleware.notifier import notifier
 
-# Use test location for now - official location at appcafe.org not yet ready.
-#PLUGINS_INDEX = 'http://www.appcafe.org/freenas/json'
-PLUGINS_INDEX = 'http://test-cafe.ixsystems.com/freenas/json'
+PLUGINS_INDEX = 'http://www.appcafe.org/freenas/json'
 
 
 class Plugins(Model):
