@@ -4,4 +4,8 @@
 #
 # Garrett Cooper, March 2012
 
-sh /root/update $SCRIPTDIR/firmware.img
+if [ "$VERBOSE" != "" -a "$VERBOSE" != "0" ] ; then
+    sh -x $SCRIPTDIR/bin/update $SCRIPTDIR/firmware.img
+else
+    sh $SCRIPTDIR/bin/update $SCRIPTDIR/firmware.img
+fi
