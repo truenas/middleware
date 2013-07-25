@@ -1146,10 +1146,19 @@ last_orders() {
 		# NOTE: keep in synch with create_*_diskimage.
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
 
+		# the -s arguments map root's "update*" files into the
+		# gui image's bin directory.
 		tar -cpvf - \
+			-s '@^update$@bin/update@' \
+			-s '@^updatep1$@bin/updatep1@' \
+			-s '@^updatep2$@bin/updatep2@' \
+			-C "$AVATAR_ROOT/nanobsd/Files/root" \
+				update updatep1 updatep2 \
 			-C "$NANO_WORLDDIR" \
 				etc/avatar.conf \
 			-C "$AVATAR_ROOT/nanobsd/Installer" \
+				. \
+			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
 				. \
 			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
 				. \
