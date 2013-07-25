@@ -3,6 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
+from freenasUI.plugins.models import PLUGINS_INDEX
 
 
 class Migration(DataMigration):
@@ -16,7 +17,7 @@ class Migration(DataMigration):
         db.send_create_signal(u'plugins', ['Configuration'])
 
         conf = orm.Configuration()
-        conf.collectionurl = 'http://www.appcafe.org/freenas/json'
+        conf.collectionurl = PLUGINS_INDEX
         conf.save()
 
 
