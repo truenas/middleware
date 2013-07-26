@@ -168,7 +168,6 @@ add_port www/aria2 OPTIONS_FILE_UNSET+=SQLITE
 add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
-add_port lang/perl5.14
 add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
 add_port devel/pkgconf
@@ -969,17 +968,6 @@ unmute_console_logging()
 			"${NANO_WORLDDIR}/etc/syslog.conf"
 }
 customize_cmd unmute_console_logging
-
-else
-
-remove_perl()
-{
-	# Perl seems to be needed for build, but nothing after the
-	# build.  cope with bad dependencies (or misunderstood) and
-	# blow it away (saves 45MB)
-	CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
-}
-customize_cmd remove_perl
 
 fi
 
