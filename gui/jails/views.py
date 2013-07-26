@@ -134,8 +134,6 @@ def jail_start(request, id):
             'name': jail.jail_host
         })
 
-        Warden().start(jail=jail.jail_host)
-
 
 def jail_stop(request, id):
 
