@@ -290,9 +290,10 @@ Hello,
         sshproc = pipeopen('%s -p %d %s %s' % (sshcmd, remote_port, remote, rzfscmd))
         output = sshproc.communicate()[0]
         if output != '':
-            expected_local_snapshot = '%s@%s' % (localfs, output.split('\n')[0])
+            remote_snap = output.split('\n')[0]
+            expected_local_snapshot = '%s@%s' % (localfs, remote_snap)
             if expected_local_snapshot == snapname:
-                system('%s -p %d %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote_port, remote, remotefs_final))
+                system('%s -p %d %s "/sbin/zfs inherit freenas:state %s@%s"' % (sshcmd, remote_port, remote, remotefs_final, remote_snap))
                 # Replication was successful, mark as such
                 MNTLOCK.lock()
                 if last_snapshot != '':
