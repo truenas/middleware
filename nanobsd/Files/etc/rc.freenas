@@ -692,8 +692,8 @@ jail_post_start()
 	do
 		local control="${plugin_path}/control"
 
-		echo jexec ${jid} "${control}" start "${jip}" "${jail_port}"
-		jexec ${jid} "${control}" start "${jip}" "${jail_port}"
+		echo jexec ${jid} "${control}" start "${jip}" "${plugin_port}"
+		jexec ${jid} "${control}" start "${jip}" "${plugin_port}"
 	done
 }
 
