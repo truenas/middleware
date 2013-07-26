@@ -169,7 +169,7 @@ add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
 add_port lang/perl5.14
-add_port converters/iconv
+add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
 add_port devel/pkgconf
 add_port devel/libpthread-stubs
@@ -236,7 +236,7 @@ add_port www/nginx OPTIONS_FILE_SET+=HTTP_DAV \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
 		OPTIONS_FILE_SET+=STATUS
-add_port net-mgmt/net-snmp
+add_port net-mgmt/net-snmp OPTIONS_FILE_UNSET+=PERL OPTIONS_FILE_UNSET+=PERL_EMBEDDED
 add_port sysutils/nut OPTIONS_FILE_UNSET+="NEON"
 add_port textproc/py-libxml2
 add_port textproc/expat2
@@ -270,7 +270,7 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11/pixman
 	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
 	add_port x11-toolkits/pango OPTIONS_FILE_UNSET+=X11
-	add_port databases/rrdtool OPTIONS_FILE_SET+=PERL_MODULE \
+	add_port databases/rrdtool OPTIONS_FILE_UNSET+=PERL_MODULE \
 				OPTIONS_FILE_SET+=PYTHON_MODULE \
 				OPTIONS_FILE_SET+=JSON
 	add_port net/liboping
