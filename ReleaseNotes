@@ -8,7 +8,7 @@ TRIM support, enhanced drive removal notification, LZ4 compression,
 improved ARC memory reclamation and reliability improvements.
 
 3) New Plugin management interface, with support for direct uploading and
-easy browsing and installation of plugins a central FreeNAS plugin repository.
+easy browsing and installation of plugins from a central FreeNAS plugin repository.
 
 4) Improved Jail subsystem with support for multiple jails and an enhanced
 UI including enhancements from PC-BSD's Warden.
