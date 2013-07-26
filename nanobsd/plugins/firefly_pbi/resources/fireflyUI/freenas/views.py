@@ -292,11 +292,9 @@ def treemenu(request, plugin_id):
     that describes a node and possible some children.
     """
 
-    (transmission_key,
-    transmission_secret) = utils.get_transmission_oauth_creds()
+    firefly_key, firefly_secret = utils.get_firefly_oauth_creds()
     url = utils.get_rpc_url(request)
-    trans = OAuthTransport(url, key=transmission_key,
-        secret=transmission_secret)
+    trans = OAuthTransport(url, key=firefly_key, secret=firefly_secret)
     server = jsonrpclib.Server(url, transport=trans)
     jail = json.loads(server.plugins.jail.info(plugin_id))[0]
     jail_name = jail['fields']['jail_host']
