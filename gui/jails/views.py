@@ -127,7 +127,7 @@ def jail_start(request, id):
             )
 
         except Exception, e:
-            return JsonResp(request, error=True, message=e)
+            return JsonResp(request, error=True, message=repr(e))
 
     else:
         return render(request, "jails/start.html", {
@@ -150,7 +150,7 @@ def jail_stop(request, id):
             )
 
         except Exception, e:
-            return JsonResp(request, error=True, message=e)
+            return JsonResp(request, error=True, message=repr(e))
 
     else:
         return render(request, "jails/stop.html", {
