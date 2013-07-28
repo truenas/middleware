@@ -271,6 +271,7 @@ Hello,
     last_snapshot = known_latest_snapshot
 
     for snapname in wanted_list:
+        local_fs, local_snap = snapname.split('@')
         if replication.repl_limit != 0:
             limit = ' | /usr/local/bin/throttle -K %d' % replication.repl_limit
         else:
@@ -291,8 +292,7 @@ Hello,
         output = sshproc.communicate()[0]
         if output != '':
             remote_snap = output.split('\n')[0]
-            expected_local_snapshot = '%s@%s' % (localfs, remote_snap)
-            if expected_local_snapshot == snapname:
+            if local_snap == remote_snap:
                 system('%s -p %d %s "/sbin/zfs inherit freenas:state %s@%s"' % (sshcmd, remote_port, remote, remotefs_final, remote_snap))
                 # Replication was successful, mark as such
                 MNTLOCK.lock()
@@ -307,7 +307,7 @@ Hello,
                 replication.save()
                 continue
             else:
-                log.warn("Remote and local mismatch after replication: %s vs %s" % (expected_local_snapshot, snapname))
+                log.warn("Remote and local mismatch after replication: %s: local=%s vs remote=%s" % (local_fs, local_snap, remote_snap))
                 rzfscmd = '"zfs list -Ho name -t snapshot -d 1 %s | tail -n 1 | cut -d@ -f2"' % (remotefs_final)
                 sshproc = pipeopen('%s -p %d %s %s' % (sshcmd, remote_port, remote, rzfscmd))
                 output = sshproc.communicate()[0]
