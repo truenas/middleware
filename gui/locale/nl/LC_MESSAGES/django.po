@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2013-06-27 11:19+0200\n"
-"Last-Translator: Mixel <mfreund.prive@gmail.com>\n"
+"PO-Revision-Date: 2013-07-27 10:57+0200\n"
+"Last-Translator: Willem1987 <willem1987@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -1198,7 +1198,7 @@ msgstr ""
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
-msgstr ""
+msgstr "Locatie jail plugin"
 
 #: plugins/forms.py:218
 msgid "Jail IPv4 Address"
@@ -1799,9 +1799,8 @@ msgid "Home directories"
 msgstr "Thuismappen"
 
 #: services/models.py:160
-#, fuzzy
 msgid "Homes auxiliary parameters"
-msgstr "Hulp Parameters"
+msgstr "Hulpparameters voor thuislocaties"
 
 #: services/models.py:162
 msgid "These parameters are added to [homes] section of smb.conf"
@@ -1852,7 +1851,7 @@ msgstr ""
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
-msgstr ""
+msgstr "Zeroconf shares automatisch ontdekken"
 
 #: services/models.py:189
 msgid ""
@@ -2353,14 +2352,12 @@ msgid "Dynamic DNS"
 msgstr "Dynamische DNS"
 
 #: services/models.py:804
-#, fuzzy
 msgid "Path to the plugins jail"
-msgstr "Pad naar extent"
+msgstr "Pad naar de jail plugin"
 
 #: services/models.py:809
-#, fuzzy
 msgid "Jail name"
-msgstr "Domeinnaam"
+msgstr "Jailnaam"
 
 #: services/models.py:810
 msgid "Name of the plugins jail"
@@ -3531,20 +3528,17 @@ msgstr ""
 "computers worden gebruikt."
 
 #: sharing/models.py:189
-#, fuzzy
 msgid "Enable .AppleDouble"
-msgstr "Geen .AppleDouble"
+msgstr ".AppleDouble inschakelen"
 
 #: sharing/models.py:190
-#, fuzzy
 msgid ""
 "This will enable automatic creation of the .AppleDouble directories. This "
 "option should be used if files are accessed by Mac computers."
 msgstr ""
-"Creër .AppleDouble map alleen als het absoluut nodig is. Deze optie moet "
-"niet gebruikt worden wanneer de bestanden vooral door Mac computers worden "
-"benaderd. Met het inschakelen van deze optie wordt het aanmaken hiervan "
-"gedeactiveerd."
+"Dit zal het automatisch creëren van .AppleDouble-directories inschakelen. "
+"Deze optie zou alleen gebruikt moeten worden als bestanden door Mac "
+"computers worden benaderd."
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3607,24 +3601,20 @@ msgid "Use AFP3 unix privileges."
 msgstr "Gebruik AFP3 Unix privileges"
 
 #: sharing/models.py:222
-#, fuzzy
 msgid "Default file permission"
-msgstr "Bestands Rechten"
+msgstr "Standaard Bestandspermissies"
 
 #: sharing/models.py:227
-#, fuzzy
 msgid "Default directory permission"
-msgstr "Folder Rechten"
+msgstr "Standaard directory permissies"
 
 #: sharing/models.py:238
-#, fuzzy
 msgid "Apple (AFP) Share"
-msgstr "Apple Share"
+msgstr "Apple (AFP) Share"
 
 #: sharing/models.py:239
-#, fuzzy
 msgid "Apple (AFP) Shares"
-msgstr "Apple Shares (gedeelde mappen)"
+msgstr "Apple (AFP) Shares"
 
 #: sharing/models.py:268
 msgid "Authorized network or IP addresses"
@@ -3706,14 +3696,12 @@ msgid "Group to map all users to"
 msgstr "Groep naar map alle gebruiker"
 
 #: sharing/models.py:321
-#, fuzzy
 msgid "Unix (NFS) Share"
-msgstr "NFS Share Wijzigen"
+msgstr "Unix (NFS) Share"
 
 #: sharing/models.py:322
-#, fuzzy
 msgid "Unix (NFS) Shares"
-msgstr "UNIX Shares"
+msgstr "Unix (NFS) Shares"
 
 #: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
@@ -3747,9 +3735,8 @@ msgid "Specify custom path"
 msgstr "Geef een aangepast pad op"
 
 #: storage/forms.py:163
-#, fuzzy
 msgid "Volume add"
-msgstr "Volumenaam"
+msgstr "Volume toevoegen"
 
 #: storage/forms.py:175
 msgid ""
@@ -3759,27 +3746,24 @@ msgstr ""
 "/mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:233
-#, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"Het volumenaam moet beginnen met letters en mag nummers bevatten, \"-\", \"_"
-"\"."
+"Het volumenaam moet beginnen met letters en mag nummers bevatten, \"-\", \"_\" "
+"en \". \" bevatten."
 
 #: storage/forms.py:236
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Er bestaat al een gebruiker met deze naam."
+msgstr "Er bestaat al een volume met deze naam."
 
 #: storage/forms.py:252
-#, fuzzy
 msgid "Path does not exist."
-msgstr "Pad naar extent"
+msgstr "De locatie bestaat niet."
 
 #: storage/forms.py:255
 msgid "Path is not a directory."
-msgstr ""
+msgstr "Locatie is geen directory"
 
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
@@ -3808,13 +3792,12 @@ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "De volumenaam mag niet beginnen met c[0-9], mirror, raidz of spare"
 
 #: storage/forms.py:311
-#, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr "Uw Groep ID kan niet hoger zijn dan %d"
+msgstr "UFS volumenamen mogen niet langer zijn dan 9 tekens."
 
 #: storage/forms.py:315
 msgid "UFS volume names can only contain alphanumeric characters"
-msgstr ""
+msgstr "UFS volumenamen mogen alleen alfanumerieke tekens bevatten."
 
 #: storage/forms.py:429 storage/forms.py:1050
 msgid "Member disk"
@@ -3843,6 +3826,8 @@ msgstr "U moet een volume selecteren."
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
+"Het importen van volume \"%s\" is mislukt, voor meer details controleer de "
+"pool status."
 
 #: storage/forms.py:673
 #, fuzzy
@@ -3889,12 +3874,11 @@ msgid "Reserved space for this dataset and all children"
 msgstr "Gereserveerde ruimte voor deze dataset en alle children"
 
 #: storage/forms.py:716
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
-"Datasetnamen moeten beginnen met een alfanummeriek karakter en mag alleen "
+"Datasetnamen moeten beginnen met een alfanummeriek karakter en mogen alleen "
 "(-), (_), (:) en (.) bevatten."
 
 #: storage/forms.py:729 storage/forms.py:870
@@ -3902,14 +3886,12 @@ msgid "You already have a dataset with the same name"
 msgstr "Er is al een dataset met dezelfde naam"
 
 #: storage/forms.py:807
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "Quota voor deze dataset"
+msgstr "Quota voor dit volume"
 
 #: storage/forms.py:812
-#, fuzzy
 msgid "Reserved space for this volume"
-msgstr "Gereserveerde ruimte voor deze dataset"
+msgstr "Gereserveerde ruimte voor dit volume"
 
 #: storage/forms.py:842
 msgid "ZFS Volume Name"
@@ -3920,9 +3902,8 @@ msgid "Size for this ZFS Volume"
 msgstr "De grootte van dit ZFS volume"
 
 #: storage/forms.py:846
-#, fuzzy
 msgid "Example: 1g"
-msgstr "0=Geen; voorbeeld: 1g"
+msgstr "Bijvoorbeeld: 1g"
 
 #: storage/forms.py:859
 msgid ""
@@ -3946,7 +3927,7 @@ msgstr "Modus"
 
 #: storage/forms.py:885
 msgid "Type of ACL"
-msgstr ""
+msgstr "Type ACL"
 
 #: storage/forms.py:891
 msgid "Set permission recursively"
@@ -3999,11 +3980,11 @@ msgstr "Remote hostkey"
 
 #: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "Markeer de schijven als nieuw (vernietig de data)"
 
 #: storage/forms.py:1193
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "Verwijder alle gedeelde locaties gekoppeld aan dit volume"
 
 #: storage/forms.py:1218 system/forms.py:567 system/forms.py:631
 msgid "minute"
@@ -4209,9 +4190,8 @@ msgstr "Remote Replicatie Hosts"
 
 #: storage/models.py:657 storage/models.py:718
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
-#, fuzzy
 msgid "Filesystem/Volume"
-msgstr "Type bestandssysteem"
+msgstr "Bestandssysteem/Volume"
 
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
