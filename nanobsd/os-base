@@ -1042,6 +1042,10 @@ freenas_custom()
 
 	# kill docs (saves 22MB)
 	rm -rf ${NANO_WORLDDIR}/usr/local/share/doc
+	rm -rf ${NANO_WORLDDIR}/usr/local/share/gtk-doc
+
+	# kill gobject introspection xml
+	rm -rf ${NANO_WORLDDIR}/usr/local/share/gir-1.0
 
 	# and info (2MB)
 	rm -rf ${NANO_WORLDDIR}/usr/local/info
