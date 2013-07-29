@@ -7,6 +7,7 @@ import sys
 import stat
 import signal
 
+import daemon
 from flup.server.fcgi import WSGIServer
 from subprocess import Popen, PIPE
 
@@ -28,14 +29,6 @@ def firefly_fcgi_start(args):
 
     ip = args[0]
     port = long(args[1])
-
-    pid = os.fork()
-    if pid < 0:
-        return False
-    if pid != 0:
-        sys.exit(0)
-
-    os.setsid()
 
     os.environ['DJANGO_SETTINGS_MODULE'] = 'fireflyUI.settings'
     import django.core.handlers.wsgi
@@ -92,12 +85,12 @@ def main(argc, argv):
         'status': firefly_fcgi_status,
         'configure': firefly_fcgi_configure
     }
+    with daemon.DaemonContext():
+        if not commands.has_key(argv[0]):
+            sys.exit(1)
 
-    if not commands.has_key(argv[0]):
-        sys.exit(1)
-
-    if not commands[argv[0]](argv[1:]):
-        sys.exit(1)
+        if not commands[argv[0]](argv[1:]):
+            sys.exit(1)
 
     sys.exit(0)
 
