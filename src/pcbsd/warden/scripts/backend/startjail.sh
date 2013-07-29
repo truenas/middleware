@@ -175,7 +175,7 @@ start_jail_vimage()
   #
   # Configure lo0 interface
   #
-  jexec ${JID} ifconfig lo0 up
+  jexec ${JID} ifconfig lo0 inet 127.0.0.1 up
 
   #
   # If NAT is not enabled, return now
