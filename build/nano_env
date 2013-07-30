@@ -124,13 +124,13 @@ NANO_LABEL="FreeNAS"
 
 # Version of the software to use. This should be 8.2-BETA1, 9.0-PRERELEASE,
 # etc.
-VERSION="9.1.0-RC2"
+VERSION="9.1.0-RELEASE"
 
 # Set the tag to use for this release.
 #  for FreeBSD/src
-export GIT_TAG="9.1.0-RC2"
+export GIT_TAG="9.1.0-RELEASE"
 #  for FreeBSD/ports
-export GIT_PORTS_TAG="9.1.0-RC2"
+export GIT_PORTS_TAG="9.1.0-RELEASE"
 
 # FreeBSD release we are using for this release
 : ${FREEBSD_RELEASE_VERSION:="9.1-RELEASE"}
