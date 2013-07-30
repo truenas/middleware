@@ -653,7 +653,10 @@ customize_cmd get_jail_distfiles64
 
 get_jail_distfiles32()
 {
-	get_jail_distfiles "i386"
+	if [ "${NANO_ARCH}" = "i386" ]
+	then
+		get_jail_distfiles "i386"
+	fi
 }
 customize_cmd get_jail_distfiles32
 
@@ -707,7 +710,10 @@ customize_cmd create_jail64
 
 create_jail32()
 {
-	create_jail "i386"
+	if [ "${NANO_ARCH}" = "i386" ]
+	then
+		create_jail "i386"
+	fi
 }
 customize_cmd create_jail32
 
@@ -883,7 +889,10 @@ customize_cmd get_jail_packages64
 
 get_jail_packages32()
 {
-	get_jail_packages "i386"
+	if [ "${NANO_ARCH}" = "i386" ]
+	then
+		get_jail_packages "i386"
+	fi
 }
 customize_cmd get_jail_packages32
 
