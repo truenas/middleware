@@ -348,7 +348,9 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/git OPTIONS_FILE_UNSET+=SVN \
 			OPTIONS_FILE_UNSET+=CVS \
 			OPTIONS_FILE_UNSET+=P4 \
-			OPTIONS_FILE_UNSET+=PERL
+			OPTIONS_FILE_UNSET+=PERL \
+			OPTIONS_FILE_UNSET+=CONTRIB \
+			OPTIONS_FILE_UNSET+=NLS
 	add_port devel/ctags
 fi
 
