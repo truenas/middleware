@@ -25,6 +25,8 @@
 #
 #####################################################################
 import logging
+import re
+import subprocess
 
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -814,10 +816,25 @@ class JailsResource(DojoModelResource):
         include_resource_uri = False
         allowed_methods = ['get']
 
+    def dispatch_list(self, request, **kwargs):
+        proc = subprocess.Popen(
+            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        self.__jls = proc.communicate()[0]
+        return super(JailsResource, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(JailsResource, self).dehydrate(bundle)
 
         bundle.data['name'] = bundle.obj.jail_host
+        try:
+            reg = re.search(
+                r'\s*?(\d+).*?\b%s\b' % bundle.obj.jail_host,
+                self.__jls,
+            )
+            bundle.data['jid'] = int(reg.groups()[0])
+        except:
+            bundle.data['jid'] = None
         bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
             'id': bundle.obj.id
         })
