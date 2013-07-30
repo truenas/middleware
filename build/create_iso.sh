@@ -67,7 +67,6 @@ main()
 	tar -cf - -C ${INSTALLUFSDIR} boot --exclude boot/kernel-debug | tar -xf - -C ${ISODIR}
 	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
-	echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
 	rm -rf ${INSTALLUFSDIR}/bin ${INSTALLUFSDIR}/sbin ${INSTALLUFSDIR}/usr/local
 	rm -rf ${INSTALLUFSDIR}/usr/bin ${INSTALLUFSDIR}/usr/sbin
@@ -80,6 +79,15 @@ main()
 	cp "$AVATAR_CONF" ${INSTALLUFSDIR}/etc/.
 	mkdir -p ${INSTALLUFSDIR}/usr/local/
 	tar -cf - -C${INSTALLER_FILES} --exclude .svn . | tar -xpf - -C ${INSTALLUFSDIR}/usr/local/.
+
+	mkdir -p ${INSTALLUFSDIR}/.mount
+	mkdir -p ${INSTALLUFSDIR}/cdrom
+	mkdir -p ${INSTALLUFSDIR}/conf/default/etc
+	mkdir -p ${INSTALLUFSDIR}/conf/default/tmp
+	mkdir -p ${INSTALLUFSDIR}/conf/default/var
+	tar -c -f - -C ${INSTALLUFSDIR}/etc . | tar -x -p -f - -C ${INSTALLUFSDIR}/conf/default/etc
+	tar -c -f - -C ${INSTALLUFSDIR}/var . | tar -x -p -f - -C ${INSTALLUFSDIR}/conf/default/var
+	touch ${INSTALLUFSDIR}/etc/diskless
 
 	cat > ${INSTALLUFSDIR}/usr/local/pre-install/0005.verify_media_size.sh <<EOF
 #!/bin/sh
@@ -126,6 +134,8 @@ EOF
 #
 autoboot_delay="2"
 #loader_logo="freenas"
+
+boot_cdrom="YES"
 EOF
 	eval ${MKISOFS_CMD}
 	echo "Created ${OUTPUT}"
