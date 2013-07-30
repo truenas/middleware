@@ -274,7 +274,9 @@ if [ "${REPORTING}" = 1 ]; then
 				OPTIONS_FILE_SET+=JSON
 	add_port net/liboping
 	add_port net-mgmt/collectd5 OPTIONS_FILE_UNSET+=BIND OPTIONS_FILE_UNSET+=SNMP \
-				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON
+				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON \
+				   OPTIONS_FILE_SET+=RRDTOOL \
+				   OPTIONS_FILE_SET+=STATGRAB
 fi
 
 #FIXME: gobject now requires cairo as build dependency
