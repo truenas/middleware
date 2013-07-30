@@ -27,7 +27,7 @@
 import re
 
 from django.utils.translation import ugettext_lazy as _
-from django.db import models
+from django.db import models, transaction
 
 from freenasUI import choices
 from freenasUI.contrib.IPAddressField import (IPAddressField, IP4AddressField,
@@ -171,9 +171,11 @@ class Interfaces(Model):
         self._original_int_options = self.int_options
 
     def delete(self):
-        for lagg in self.lagginterface_set.all():
-            lagg.delete()
-        super(Interfaces, self).delete()
+        with transaction.commit_on_success():
+            for lagg in self.lagginterface_set.all():
+                lagg.delete()
+            if self.id:
+                super(Interfaces, self).delete()
         notifier().stop("netif")
         notifier().start("network")
 
