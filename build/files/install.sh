@@ -12,12 +12,12 @@ export TERM
 
 get_product_path()
 {
-    echo "/cdrom"
+    echo /cdrom /.mount
 }
 
 get_image_name()
 {
-    find "$(get_product_path)" -name "$AVATAR_PROJECT-$AVATAR_ARCH.img.xz" -type f
+    find $(get_product_path) -name "$AVATAR_PROJECT-$AVATAR_ARCH.img.xz" -type f
 }
 
 # Convert /etc/version* to /etc/avatar.conf
