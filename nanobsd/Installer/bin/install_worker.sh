@@ -14,25 +14,54 @@ SCRIPTDIR=$(realpath "$(dirname "$0")/..")
 
 set -x
 
-FIFO_DIR=`mktemp -d -t instfifo`
-if [ $? != 0 ] ; then
-    echo "mktemp failed"
-    exit 1
-fi
+#
+# Try to log output of this script.
+#  try first logger,
+#  if that fails try to fall back to a file,
+#  if that fails then I guess stdout/stderr is as
+#     good as it gets.
+# 
+redirect_output_to_logger()
+{
+	# below we can run ourselves to reset output 
+	# redirection, so prevent infinite recursion
+	# by using an env variable.
+	if [ "x$INSTALLER_REDIRECTING" != "x" ] ; then
+		return 0
+	fi
 
-trap "rm -rf $FIFO_DIR" EXIT
+	# Try to redirect everything to logger(1)
+	FIFO_DIR=`mktemp -d -t instfifo`
+	if [ $? != 0 ] ; then
+	    echo "mktemp for fifo failed, logging to logger disabled."
+	    return 1
+	fi
 
-FIFO="$FIFO_DIR/logger_fifo"
-mkfifo $FIFO
-if [ $? != 0 ] ; then
-    echo "mkfifo failed"
-    exit 1
-fi
+	# if mkfifo isn't available, then try to
+	# run a copy of ourself with output tee(1)'d
+	# to a file
+	if [ ! -x /usr/bin/mkfifo -o ! -x /usr/bin/logger ] ; then
+	    if [ ! -x /usr/bin/tee ] ; then
+		return 1
+	    fi
+	    echo "mkfifo/logger not available, using logfile"
+	    export INSTALLER_REDIRECTING=TRUE
+	    $0 ${1+"$@"} 2>&1 | tee $FIFO_DIR/install.log
+	    exit $?
+	fi
 
-logger < $FIFO &
+	FIFO="$FIFO_DIR/logger_fifo"
+	mkfifo $FIFO
+	if [ $? != 0 ] ; then
+	    echo "mkfifo failed, logging to logger disabled."
+	    return 1
+	fi
+	logger < $FIFO &
+	exec 3>&1 4>&2 >$FIFO 2>&1
+	return 0
+}
 
-exec 3>&1 4>&2 >$FIFO 2>&1
-
+redirect_output_to_logger
 
 usage()
 {
