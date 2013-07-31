@@ -64,8 +64,10 @@ if [ -c /dev/${ROOTDEV} ]; then
 		if [ "${VOLUME_DEVICE##/dev/}" = ${VOLUME_DEVICE} ]; then
 			POOL=${VOLUME_DEVICE%%/*}
 			IMPORTCMD="/rescue/zpool import -R /mnt -o readonly=on -f ${POOL}"
+			EXPORTCMD="/rescue/zpool export ${POOL}"
 		else
 			IMPORTCMD="/rescue/mkdir -p ${SCRIPTDIR} ; /rescue/mount -o ro ${VOLUME_DEVICE} ${VOLUME_MOUNTPOINT}"
+			EXPORTCMD="/rescue/umount ${VOLUME_MOUNTPOINT}"
 		fi
 			
 
@@ -146,7 +148,7 @@ if [ -e ${SCRIPTDIR}/newdisk.img ]; then
 	echo "Upgrade is being applied, please be patient..."
 	dd if=${SCRIPTDIR}/newdisk.img of=/dev/${ROOTDEV} bs=1m
 	umount ${SCRIPTDIR}/..
-	zpool export -a
+	${EXPORTCMD}
 	mount -o ro /dev/${NANO_DRIVE}s1a /nextroot
 	mount -t devfs devfs /nextroot/dev
 else
