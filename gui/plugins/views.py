@@ -259,7 +259,10 @@ def install_progress(request):
                 if line.startswith('====='):
                     parts = line.split()
                     if len(parts) > 1:
-                        percent = parts[1][:-1]
+                        try:
+                            percent = int(parts[1][:-1])
+                        except:
+                            pass
 
         if not percent:
             percent = 0
@@ -353,7 +356,10 @@ def upload_progress(request):
                 if line.startswith('====='):
                     parts = line.split()
                     if len(parts) > 1:
-                        percent = parts[1][:-1]
+                        try:
+                            percent = int(parts[1][:-1])
+                        except:
+                            pass
 
         if not percent:
             percent = 0
