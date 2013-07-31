@@ -7,7 +7,7 @@ if len(sys.argv) < 2:
 	print "Usage: %s file" % sys.argv[0]
 	sys.exit(1)
 
-url = 'http://ext-data.ixsystems.com:8080/myapp/list/'
+url = 'http://ext-data.ixsystems.com/uploader/list/'
 files = {'docfile': open(sys.argv[1], 'rb')}
 
 r= requests.post(url, files=files)
