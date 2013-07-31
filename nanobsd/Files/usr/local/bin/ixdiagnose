@@ -5,6 +5,8 @@
 #
 #
 
+mydir=`dirname $0`
+
 # there is a dumpfile in /var/crash
 # sets "$actualdump" -> to $dumpdir/textdump.tar.N
 dumpfile_to_submit_exists ()
@@ -50,7 +52,7 @@ dir=$topdir/ixdiagnose
 
 set -e
 mkdir $dir
-freenas-debug -A > $dir/nas-debug.log
+$mydir/freenas-debug -A > $dir/nas-debug.log
 tar -cf - -C /var log | tar -C $dir -xf -
 
 if ! dumpfile_to_submit_exists $dumpdir ; then
@@ -63,7 +65,7 @@ else
 fi
 
 tar -C $dir/.. -czf $dir/../ixdiagnose.tgz ixdiagnose
-crashuploader $topdir/ixdiagnose.tgz
+$mydir/crashuploader $topdir/ixdiagnose.tgz
 if [ "$actualdump" != "" ] ; then
 	touch $actualdump.submitted
 fi
