@@ -154,6 +154,7 @@ get_module_options()
 		export "$(echo module_func_${opt})=${m}_func"
 		export "$(echo module_help_${opt})=${m}_help"
 		opts="${opts}${opt}"
+        opts_spaced="$opts_spaced ${opt}"
 	done
 
 	#local i=1
@@ -168,6 +169,8 @@ get_module_options()
 
 	VAL="${opts}"
 	export VAL
+	VAL_SPACED="${opts_spaced}"
+	export VAL_SPACED
 }
 
 main()
@@ -177,37 +180,51 @@ main()
 	local cmd="$0 $*"
 	local func
 	local var
+    local all_debug=false
 
 	load_modules
 	get_module_options
 	opts="${VAL}"
+	opts_spaced="${VAL_SPACED}"
 
 	aopts="${opts}${email_opt}:"
-	while getopts "${aopts}" opt
+	while getopts "A${aopts}" opt
 	do
 		case "${opt}" in
 		$email_opt)
 			email="${OPTARG}"
 			;;
-		*)
+        A)
+            all_debug=true
+            ;;
+		[${opts}])
 			has_debug_command=true
 			;;
-		:|\?)
+		\?)
 			usage "${opts}"
 			return 2
 			;;
 		esac
 	done
 
-	if ! $has_debug_command; then
+	if ! $has_debug_command && ! $all_debug; then
 		usage "${opts}"
 		return 2
 	fi
 
 	OPTIND=1
 	: > ${FREENAS_DEBUG_FILE}
+
 	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
-	while getopts "${aopts}" opt
+    if $all_debug; then
+        for opt in ${opts_spaced} ; do
+			var=\$$(echo "module_func_${opt}")
+			func=$(eval "echo ${var}")
+
+			eval "${func}" 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
+        done
+    else
+    while getopts "${aopts}" opt
 	do
 		if [ "${opt}" != "${email_opt}" ]; then
 			var=\$$(echo "module_func_${opt}")
@@ -216,6 +233,7 @@ main()
 			eval "${func}" 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
 		fi
 	done
+    fi
 
 	if [ -n "$email" ]; then
 		send_email "${email}" \
