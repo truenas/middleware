@@ -35,6 +35,12 @@ command-line:
 Any plugins installed will need to be updated manually; this can be done
 on the services->plugins page.
 
+10) There is a GUI image to upgrade older installations of FreeNAS
+from version 8.0.1 through 8.0.4p3, the names of those files are:
+FreeNAS-9.1.0-RELEASE-x64.8_0_x_LEGACY_GUI_Upgrade.xz
+FreeNAS-9.1.0-RELEASE-x86.8_0_x_LEGACY_GUI_Upgrade.xz
+for amd64 and i386 platforms respectively.
+
 ========================
 
 Release Notes for FreeNAS 8.3.1-RELEASE-p2
