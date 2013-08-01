@@ -93,10 +93,6 @@ if [ -z "${SVNVERSION}" ]; then
 					git="${git}"
 				fi
 			fi
-			if $git_cmd --work-tree=${AVATAR_ROOT} diff-index \
-			    --name-only HEAD | read dummy; then
-				git="${git}_dirty"
-			fi
 		fi
 	fi
 fi
