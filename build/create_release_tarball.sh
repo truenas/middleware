@@ -29,7 +29,7 @@ for arch in x64 x86 ; do
 	echo $arch = $mapped_arch
 	mkdir $arch
 	cd $arch
-	for ext in img.xz GUI_Upgrade.txz iso ; do
+	for ext in img.xz GUI_Upgrade.txz 8_0_x_LEGACY_GUI_Upgrade.xz iso ; do
 		ln ${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext} .
 		ln ${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext}.sha256.txt .
 	done
