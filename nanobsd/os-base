@@ -1125,10 +1125,12 @@ last_orders() {
 	cd_image_log="${MAKEOBJDIRPREFIX}/_.cd_iso"
 	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
 	gui_image_log="${MAKEOBJDIRPREFIX}/_.gui_image"
+	legacy_gui_image_log="${MAKEOBJDIRPREFIX}/_.legacy_gui_image"
 
 	firmware_img="$NANO_DISKIMGDIR/firmware.img"
 	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.img"
 	gui_upgrade_bname="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
+	legacy_gui_upgrade_compressed_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.8_0_x_LEGACY_GUI_Upgrade.xz"
 
 	if $do_copyout_partition; then
 
@@ -1162,6 +1164,13 @@ last_orders() {
 			| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
 		) > "${gui_image_log}" 2>&1
 	fi
+
+	pprint 2 "Compressing legacy gui upgrader"
+	pprint 3 "log: ${legacy_gui_image_log}"
+	(
+	set -x ;
+	time ${NANO_XZ} --verbose -9 -c "$firmware_img" > "$legacy_gui_upgrade_compressed_image"
+	) > "${legacy_gui_image_log}" 2>&1
 
 	pprint 2 "Compressing full disk image"
 	pprint 3 "log: ${full_image_log}"
