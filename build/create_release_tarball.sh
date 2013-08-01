@@ -18,7 +18,7 @@ PLUGINS="transmission firefly minidlna"
 map_x86=i386
 map_x64=amd64
 
-TARBALL="$TOP/$IMG_PREFIX-release.tar"
+TARBALL="$TOP/os-base/$IMG_PREFIX-release.tar"
 rm -rf release_stage
 set -x
 set -e
