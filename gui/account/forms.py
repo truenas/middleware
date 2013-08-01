@@ -584,6 +584,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
 
     def __init__(self, *args, **kwargs):
         super(bsdUserChangeForm, self).__init__(*args, **kwargs)
+        self.oldhome = self.instance.bsdusr_home
         if self.instance.id:
             self.fields['bsdusr_username'].widget.attrs['readonly'] = True
             self.fields['bsdusr_username'].widget.attrs['class'] = (
@@ -709,6 +710,17 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
                     bsdusr_sshpubkey,
                     bsduser.bsdusr_username,
                     bsduser.bsdusr_group.bsdgrp_group)
+        try:
+            if self.cleaned_data['bsdusr_home'] not in (
+                '/nonexistent', self.oldhome
+            ):
+                os.chown(
+                    self.cleaned_data['bsdusr_home'],
+                    self.instance.bsdusr_uid,
+                    self.instance.bsdusr_group.bsdgrp_gid
+                )
+        except:
+            log.warn("Failed to chown home dir %s", homedir)
         return bsduser
 
 
