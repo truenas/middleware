@@ -734,8 +734,11 @@ class notifier:
         self.__system("/usr/sbin/service netatalk start")
 
     def _stop_afp(self):
-        # XXX: fix rc.d/netatalk to honor the force verbs properly.
+        self.__system("/usr/sbin/service netatalk forcestop")
+        #FIXME: fix rc.d/netatalk to honor the force verbs properly.
         self.__system("killall afpd")
+        self.__system("killall cnid_metad")
+        self.__system("killall cnid_dbd")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service dbus forcestop")
 
