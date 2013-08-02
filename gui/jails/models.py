@@ -43,7 +43,6 @@ from freenasUI.freeadmin.models import Model, Network4Field, Network6Field
 from freenasUI.jails.queryset import JailsQuerySet
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.plugins.models import Plugins
 
 log = logging.getLogger('jails.models')
 
@@ -184,10 +183,12 @@ class Jails(Model):
             self.jail_nat = False
 
     def delete(self):
+        #FIXME: Cyclic dependency
+        from freenasUI.plugins.models import Plugins
         qs = Plugins.objects.filter(plugin_jail=self.jail_host)
         if qs.exists():
             raise MiddlewareError(
-                _("This jail is required by %d plugins") % qs.count()
+                _("This jail is required by %d plugin(s)") % qs.count()
             )
         Warden().delete(jail=self.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
 
