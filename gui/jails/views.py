@@ -171,7 +171,7 @@ def jail_delete(request, id):
             )
 
         except Exception, e:
-            return JsonResp(request, error=True, message=e)
+            return JsonResp(request, error=True, message=repr(e))
 
     else:
         return render(request, "jails/delete.html", {
