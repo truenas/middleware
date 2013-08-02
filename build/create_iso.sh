@@ -114,7 +114,7 @@ main()
 	makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
 	mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
 
-	cp loader.conf.cdrom ${ISODIR}/boot/loader.conf
+	cp -p ${AVATAR_ROOT}/build/files/loader.conf.cdrom ${ISODIR}/boot/loader.conf
 	cp -p ${AVATAR_ROOT}/build/files/mount.conf.cdrom ${ISODIR}/.mount.conf
 
 	eval ${MKISOFS_CMD}
