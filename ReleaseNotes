@@ -32,8 +32,7 @@ command-line:
 
 /root/migrate_pluginjail.sh -D
 
-Any plugins installed will need to be updated manually; this can be done
-on the services->plugins page.
+Any installed 8.x plugins will need to be updated manually.
 
 10) There is a GUI image to upgrade older installations of FreeNAS
 from version 8.0.1 through 8.0.4p3, the names of those files are:
