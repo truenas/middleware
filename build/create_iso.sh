@@ -112,110 +112,12 @@ EOF
 	makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
 	mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
 
-	# Magic scripts for the LiveCD
-	cat > ${STAGEDIR}/baseroot.rc << 'EOF'
-#!/bin/sh
-
-# Helper routines for mounting the CD...
-
-# Try to mount the media.  If successful, check to see if there's
-# actually a baseroot image on it.  If so, leave it mounted and
-# return 0.  Otherwise, return 1 with the media unmounted.
-try_mount()
-{
-	local CD
-	local DEV
-
-	CD=$1
-	DEV=$2
-
-	[ -c ${CD} ] || return 1
-	echo -n " ${CD}"
-	if mount -r ${DEV} ${CD} ${CDROM_MP} > /dev/null 2>&1; then
-		[ -f ${CDROM_MP}${BASEROOT_IMG} ] && return 0
-		umount ${CDROM_MP}
-	fi
-	return 1
-}
-
-# Loop over the first 10 /dev/cd devices and the first 10 /dev/acd
-# devices.  These devices are cd9660 formatted.
-mount_cd()
-{
-	local CD
-
-	for CD in /dev/cd[0-9] /dev/acd[0-9] /dev/vtbd[0-9]*; do
-		try_mount ${CD} "-t cd9660" && return 0
-	done
-	return 1
-}
-
-# Loop over all the daX devices that we can find.  These devices
-# are assumed to be in UFS format, so no second arg is passed
-# to try_mount.
-mount_memstick()
-{
-	local DA
-
-	for DA in /dev/da[0-9]*; do
-		try_mount ${DA} && return 0
-	done
-	return 1
-}
-
-PATH=/rescue
-
-BASEROOT_MP=/baseroot
-RWROOT_MP=/rwroot
-CDROM_MP=/cdrom
-BASEROOT_IMG=/data/base.ufs.uzip
-
-# Re-mount root R/W, so that we can create necessary sub-directories
-mount -uw /
-
-mkdir -p ${BASEROOT_MP} ${RWROOT_MP} ${CDROM_MP}
-
-# Mount the CD device.  Since we mounted off the MD device loaded
-# into memory, CAM might not have had a chance to fully discover
-# a USB or SCSI cdrom drive.  Loop looking for it (also look
-# for memory sticks, but that isn't fully tested yet).  Loop forever
-# so you can insert a different CD if there's problems with the
-# first.
-echo -n "Looking for installation cdrom on "
-while [ ! -f ${CDROM_MP}${BASEROOT_IMG} ]; do
-	mount_cd && break
-	mount_memstick && break
-	sleep 1
-done
-
-# Mount future live root
-mdconfig -a -t vnode -f ${CDROM_MP}${BASEROOT_IMG} -u 9
-mount -r /dev/md9.uzip ${BASEROOT_MP}
-
-# Create in-memory filesystem
-mdconfig -a -t swap -s 64m -u 10
-newfs /dev/md10
-mount /dev/md10 ${RWROOT_MP}
-
-# Union-mount it over live root to make it appear as R/W
-mount -t unionfs ${RWROOT_MP} ${BASEROOT_MP}
-
-# Mount devfs in live root
-DEV_MP=${BASEROOT_MP}/dev
-mkdir -p ${DEV_MP}
-mount -t devfs devfs ${DEV_MP}
-
-# Make whole CD content available in live root via nullfs
-mkdir -p ${BASEROOT_MP}${CDROM_MP}
-mount -t nullfs -o ro ${CDROM_MP} ${BASEROOT_MP}${CDROM_MP}
-
-kenv init_shell="/bin/sh"
-echo "baseroot setup done"
-exit 0
+	cat > ${ISODIR}/.mount.conf <<EOF
+.timeout 5
+.onfail retry
+.md /data/base.ufs.uzip
+ufs:/dev/md#.uzip ro
 EOF
-
-	makefs -b 10% ${ISODIR}/boot/memroot.ufs ${STAGEDIR}
-	gzip -9 ${ISODIR}/boot/memroot.ufs
 
 	# More magic scripts for the LiveCD
 	cat > ${ISODIR}/boot/loader.conf <<EOF
@@ -224,15 +126,6 @@ EOF
 #
 autoboot_delay="2"
 #loader_logo="freenas"
-
-mfsroot_load="YES"
-mfsroot_type="md_image"
-mfsroot_name="/boot/memroot.ufs"
-
-init_path="/rescue/init"
-init_shell="/rescue/sh"
-init_script="/baseroot.rc"
-init_chroot="/baseroot"
 EOF
 	eval ${MKISOFS_CMD}
 	echo "Created ${OUTPUT}"
