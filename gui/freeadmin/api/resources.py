@@ -25,6 +25,8 @@
 #
 #####################################################################
 import logging
+import re
+import subprocess
 
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -814,17 +816,32 @@ class JailsResource(DojoModelResource):
         include_resource_uri = False
         allowed_methods = ['get']
 
+    def dispatch_list(self, request, **kwargs):
+        proc = subprocess.Popen(
+            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        self.__jls = proc.communicate()[0]
+        return super(JailsResource, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(JailsResource, self).dehydrate(bundle)
 
         bundle.data['name'] = bundle.obj.jail_host
+        try:
+            reg = re.search(
+                r'\s*?(\d+).*?\b%s\b' % bundle.obj.jail_host,
+                self.__jls,
+            )
+            bundle.data['jid'] = int(reg.groups()[0])
+        except:
+            bundle.data['jid'] = None
         bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
             'id': bundle.obj.id
         })
         bundle.data['_jail_storage_add_url'] = reverse('jail_storage_add', kwargs={
             'jail_id': bundle.obj.id
         })
-        bundle.data['_upload_url'] = reverse('upload', kwargs={
+        bundle.data['_upload_url'] = reverse('plugins_upload', kwargs={
             'jail_id': bundle.obj.id
         })
         bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
@@ -920,6 +937,7 @@ class SnapshotResource(DojoResource):
 
 class AvailablePluginsResource(DojoResource):
 
+    id = fields.CharField(attribute='id')
     name = fields.CharField(attribute='name')
     description = fields.CharField(attribute='description')
     version = fields.CharField(attribute='version')
@@ -933,11 +951,15 @@ class AvailablePluginsResource(DojoResource):
 
     def get_list(self, request, **kwargs):
         conf = PluginConf.objects.latest('id')
-        if conf:
+        if conf and conf.collectionurl:
             url = conf.collectionurl
         else:
             url = PLUGINS_INDEX
-        results = availablePlugins.get_remote(url=url)
+        try:
+            results = availablePlugins.get_remote(url=url)
+        except Exception, e:
+            log.debug("Failed to fetch remote: %s", e)
+            results = []
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
                 field = sfield[1:]
@@ -967,6 +989,6 @@ class AvailablePluginsResource(DojoResource):
     def dehydrate(self, bundle):
         bundle.data['_install_url'] = reverse(
             'plugins_install_available',
-            kwargs={'oid': bundle.obj.hash},
+            kwargs={'oid': bundle.obj.id},
         )
         return bundle

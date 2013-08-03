@@ -22,7 +22,7 @@
   <img src="{{ STATIC_URL }}images/ui/buttons/plugin_install.png" />
   <p>{% trans "Upload" %}</p>
   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-    addObject('{% trans "Install Plugin"|force_escape|force_escape %}', '{% url "plugins_upload_nojail" %}', [this,]);
+    addObject('{% trans "Upload Plugin"|escapejs %}', '{% url "plugins_upload_nojail" %}', [this,]);
   </script>
 </button>
 {% endblock %}

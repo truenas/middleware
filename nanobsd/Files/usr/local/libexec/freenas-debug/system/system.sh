@@ -66,4 +66,9 @@ system_func()
 	section_header "dmesg"
 	dmesg
 	section_footer
+
+	section_header "procstat -akk"
+	procstat -akk
+	section_footer
+
 }

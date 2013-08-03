@@ -1360,14 +1360,17 @@ class Multiplex:
                 libc.setproctitle(byref(buff))
                 if self.session[sid]['jid']:
                     os.execve(
-                        "jexec %d %s" % (self.session[sid]['jid'], shell),
-                        shell.split("/")[-1:],
+                        "/usr/sbin/jexec",
+                        (
+                            shell.split("/")[-1:] +
+                            [self.session[sid]['jid'], shell]
+                        ),
                         env
                     )
                 else:
-                    os.execve(self.cmd, shell.split("/")[-1:], env)
-            except (IOError, OSError), e:
-                log.error("Impossible to start a subshell: %s", e)
+                    os.execve(shell, shell.split("/")[-1:], env)
+            except Exception, e:
+                log.error("Impossible to start a subshell (%r): %s", e, e)
             #self.proc_finish(sid)
             os._exit(0)
         else:

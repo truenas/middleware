@@ -105,10 +105,14 @@ class JailsFAdmin(BaseFreeAdmin):
             url = "_%s_url" % (name, )
 
         if icon is None:
+            icon = name
+        if icon is not False:
             icon = '<img src="%simages/ui/buttons/%s.png" width="18px" height="18px">' % (
                 settings.STATIC_URL,
-                name,
+                icon,
             )
+        else:
+            icon = label
 
         on_select_after = """function(evt, actionName, action) {
                 for(var i=0;i < evt.rows.length;i++) {
@@ -164,11 +168,21 @@ class JailsFAdmin(BaseFreeAdmin):
     def get_actions(self):
         actions = OrderedDict()
 
-        actions['edit'] = self._action_builder('edit', icon=_("Edit Jail"), label=_("Edit Jail"))
-        actions['storage'] = self._action_builder('jail_storage_add', label=_("Add Storage"))
-        actions['plugins'] = self._action_builder('upload', label=_("Install Plugins"))
-        #actions['export'] = self._action_builder('jail_export', label=_("Export Jail"))
-        #actions['import'] = self._action_builder('jail_import', label=_("Import Jail"))
+        actions['edit'] = self._action_builder(
+            'edit', icon=False, label=_("Edit Jail")
+        )
+        actions['storage'] = self._action_builder(
+            'jail_storage_add', label=_("Add Storage")
+        )
+        actions['plugins'] = self._action_builder(
+            'upload', icon='plugin_install', label=_("Upload Plugin")
+        )
+        #actions['export'] = self._action_builder(
+        #    'jail_export', label=_("Export Jail")
+        #)
+        #actions['import'] = self._action_builder(
+        #    'jail_import', label=_("Import Jail")
+        #)
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
         actions['shell'] = {
@@ -190,8 +204,7 @@ class JailsFAdmin(BaseFreeAdmin):
     require(["freeadmin/WebShell"], function(WebShell) {
         for (var i in grid.selection) {
             var data = grid.row(i).data;
-            //FIXME: use jail id
-            new WebShell();
+            new WebShell({jid: data.jid, shell: "/bin/csh"});
         }
     });
 }"""

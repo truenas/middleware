@@ -15,6 +15,7 @@ log = logging.getLogger("plugins.plugin")
 
 class Plugin(object):
 
+    id = None
     arch = None
     name = None
     description = None
@@ -22,7 +23,8 @@ class Plugin(object):
     hash = None
     urls = None
 
-    def __init__(self, name, description, arch, version, hash, urls=None):
+    def __init__(self, id, name, description, arch, version, hash, urls=None):
+        self.id = id
         self.arch = arch
         self.name = name
         self.description = description
@@ -37,6 +39,10 @@ class Plugin(object):
 
     def __repr__(self):
         return '<Plugin: %s>' % self.name
+
+    @property
+    def unixname(self):
+        return self.name.split(' ')[0].lower()
 
     def download(self, path):
         if not self.urls:
@@ -107,18 +113,18 @@ class Plugin(object):
             if total_size and downloaded != total_size:
                 return False
 
-            f.seek(0)
-            dohash = hashlib.sha256()
-            while True:
-                chunk = f.read(csize)
-                if not chunk:
-                    break
-                dohash.update(chunk)
-            if dohash.hexdigest() != self.hash:
-                log.debug("SHA256 failed for %s", url)
-                rv = False
-
-        os.unlink(PROGRESS_FILE)
+            if self.hash:
+                log.debug("No hash provided to validate download (%r)", self)
+                f.seek(0)
+                dohash = hashlib.sha256()
+                while True:
+                    chunk = f.read(csize)
+                    if not chunk:
+                        break
+                    dohash.update(chunk)
+                if dohash.hexdigest() != self.hash:
+                    log.debug("SHA256 failed for %s", url)
+                    return False
 
         return rv
 
@@ -134,7 +140,7 @@ class Available(object):
         results = []
 
         log.debug("Retrieving available plugins from %s", url)
-        r = requests.get(url)
+        r = requests.get(url, timeout=8)
 
         if r.status_code != requests.codes.ok:
             log.debug(
@@ -161,11 +167,12 @@ class Available(object):
             return False
 
         return Plugin(
+            id=int(p['Pbi']['id']),
             name=p['Pbi']['title'],
-            description="Not implemented",
+            description=p['Pbi'].get("description", "Not implemented"),
             version=status['pbi_version'],
             arch=status['architecture'],
-            hash=status['hash'],
+            hash=status.get('hash', None),
             urls=[status['location']],
         )
 

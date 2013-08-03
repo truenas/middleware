@@ -1,4 +1,5 @@
 import logging
+import os
 
 from django.utils.translation import ugettext as _
 
@@ -175,15 +176,21 @@ def new_default_plugin_jail(basename):
             break
 
     w = warden.Warden()
+
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = "%s/warden.log" % jc.jc_path
+
     try:
         w.create(
             jail=jailname,
             ipv4=addrs['high_ipv4'],
             flags=(
+                warden.WARDEN_CREATE_FLAGS_LOGFILE |
                 warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
                 warden.WARDEN_CREATE_FLAGS_SYSLOG |
                 warden.WARDEN_CREATE_FLAGS_IPV4
             ),
+            logfile=logfile,
         )
     except Exception, e:
         raise MiddlewareError(_("Failed to install plugin: %s") % e)
@@ -211,7 +218,7 @@ def jail_path_configured():
     except JailsConfiguration.DoesNotExist:
         jc = None
 
-    return jc and jc.jc_path
+    return jc and jc.jc_path and os.path.exists(jc.jc_path)
 
 
 def jail_auto_configure():
@@ -225,7 +232,7 @@ def jail_auto_configure():
 
     volume = Volume.objects.filter(vol_fstype='ZFS')
     if not volume.exists():
-        raise MiddlewareError(_("Volume not found"))
+        raise MiddlewareError(_("You need to create a Volume to proceed!"))
     volume = volume[0]
     basename = "%s/jails" % volume.vol_name
     name = basename

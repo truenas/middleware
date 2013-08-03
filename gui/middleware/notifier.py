@@ -734,8 +734,11 @@ class notifier:
         self.__system("/usr/sbin/service netatalk start")
 
     def _stop_afp(self):
-        # XXX: fix rc.d/netatalk to honor the force verbs properly.
+        self.__system("/usr/sbin/service netatalk forcestop")
+        #FIXME: fix rc.d/netatalk to honor the force verbs properly.
         self.__system("killall afpd")
+        self.__system("killall cnid_metad")
+        self.__system("killall cnid_dbd")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service dbus forcestop")
 
@@ -2431,6 +2434,8 @@ class notifier:
         from freenasUI.jails.models import JailsConfiguration
         ret = False
 
+        open('/tmp/.plugin_upload_install', 'w+').close()
+
         if not pjail:
             log.debug("install_pbi: pjail is NULL")
             return False
@@ -2756,14 +2761,11 @@ class notifier:
     def delete_pbi(self, plugin):
         ret = False
 
-        (c, conn) = self.__open_db(ret_conn=True)
-        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
-        row = c.fetchone()
-        if not row:
+        if not plugin.id:
             log.debug("delete_pbi: plugins plugin not in database")
             return False
-        
-        jail_name = row[0]
+
+        jail_name = plugin.plugin_jail
 
         jail = None
         for j in Jls():
@@ -2782,7 +2784,6 @@ class notifier:
 
         # Plugin is not installed in the jail at all
         if res[0] == 0 and plugin.plugin_name not in plugins:
-            plugin.delete()
             return True
 
         pbi_path = os.path.join(

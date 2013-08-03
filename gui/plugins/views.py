@@ -36,7 +36,7 @@ from django.utils.translation import ugettext as _
 import eventlet
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.jails.models import Jails
+from freenasUI.jails.models import Jails, JailsConfiguration
 from freenasUI.jails.utils import (
     jail_path_configured, jail_auto_configure, guess_adresses,
     new_default_plugin_jail
@@ -168,17 +168,38 @@ def plugin_update(request, plugin_id):
 
 def install_available(request, oid):
 
-    if not jail_path_configured():
-        jail_auto_configure()
+    try:
+        if not jail_path_configured():
+            jail_auto_configure()
+        addrs = guess_adresses()
+        if not addrs['high_ipv4']:
+            raise MiddlewareError(_(
+                "You must configure your network interface and a default "
+                "gateway"))
+    except MiddlewareError, e:
+        return render(request, "plugins/install_error.html", {
+            'error': e.value,
+        })
+
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+    if os.path.exists(logfile):
+        os.unlink(logfile)
+    if os.path.exists("/tmp/.plugin_upload_install"):
+        os.unlink("/tmp/.plugin_upload_install")
+    if os.path.exists("/tmp/.jailcreate"):
+        os.unlink("/tmp/.jailcreate")
+    if os.path.exists(PROGRESS_FILE):
+        os.unlink(PROGRESS_FILE)
 
     plugin = None
     conf = models.Configuration.objects.latest('id')
-    if conf:
+    if conf and conf.collectionurl:
         url = conf.collectionurl
     else:
         url = models.PLUGINS_INDEX
     for p in availablePlugins.get_remote(url=url):
-        if p.hash == oid:
+        if p.id == int(oid):
             plugin = p
             break
 
@@ -187,17 +208,13 @@ def install_available(request, oid):
 
     if request.method == "POST":
 
-        addrs = guess_adresses()
-        if not addrs['high_ipv4']:
-            raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
-
         plugin_upload_path = notifier().get_plugin_upload_path()
         notifier().change_upload_location(plugin_upload_path)
 
         if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
             raise MiddlewareError(_("Failed to download plugin"))
 
-        jail = new_default_plugin_jail(plugin.name.lower())
+        jail = new_default_plugin_jail(plugin.unixname)
 
         newplugin = []
         if notifier().install_pbi(jail.jail_host, newplugin):
@@ -222,24 +239,57 @@ def install_available(request, oid):
 
 def install_progress(request):
 
-    current = None
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+    data = {}
     if os.path.exists(PROGRESS_FILE):
+        data = {'step': 1}
         with open(PROGRESS_FILE, 'r') as f:
             try:
                 current = int(f.readlines()[-1].strip())
             except:
                 pass
-        if current < 100:
-            return HttpResponse(json.dumps({
-                'percent': current,
-            }))
-    return HttpResponse('{}')
+        data['percent'] = current
+
+    if os.path.exists(logfile):
+        data = {'step': 2}
+        percent = 0
+        with open(logfile, 'r') as f:
+            for line in f.xreadlines():
+                if line.startswith('====='):
+                    parts = line.split()
+                    if len(parts) > 1:
+                        try:
+                            percent = int(parts[1][:-1])
+                        except:
+                            pass
+
+        if not percent:
+            percent = 0
+        data['percent'] = percent
+
+    if os.path.exists("/tmp/.plugin_upload_install"):
+        data = {'step': 3}
+
+    content = json.dumps(data)
+    return HttpResponse(content, mimetype='application/json')
 
 
 def upload(request, jail_id=-1):
 
-    if not jail_path_configured():
-        jail_auto_configure()
+    #FIXME: duplicated code with available_install
+    try:
+        if not jail_path_configured():
+            jail_auto_configure()
+        addrs = guess_adresses()
+        if not addrs['high_ipv4']:
+            raise MiddlewareError(_(
+                "You must configure your network interface and a default "
+                "gateway"))
+    except MiddlewareError, e:
+        return render(request, "plugins/install_error.html", {
+            'error': e.value,
+        })
 
     plugin_upload_path = notifier().get_plugin_upload_path()
     notifier().change_upload_location(plugin_upload_path)
@@ -254,6 +304,15 @@ def upload(request, jail_id=-1):
             jail = None
 
     if request.method == "POST":
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+        logfile = '%s/warden.log' % jc.jc_path
+        if os.path.exists(logfile):
+            os.unlink(logfile)
+        if os.path.exists("/tmp/.plugin_upload_install"):
+            os.unlink("/tmp/.plugin_upload_install")
+        if os.path.exists("/tmp/.jailcreate"):
+            os.unlink("/tmp/.jailcreate")
+
         form = forms.PBIUploadForm(request.POST, request.FILES, jail=jail)
         if form.is_valid():
             form.done()
@@ -282,6 +341,35 @@ def upload(request, jail_id=-1):
 
 def upload_nojail(request):
     return upload(request)
+
+
+def upload_progress(request):
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+
+    data = {}
+    if os.path.exists(logfile):
+        data['step'] = 2
+        percent = 0
+        with open(logfile, 'r') as f:
+            for line in f.xreadlines():
+                if line.startswith('====='):
+                    parts = line.split()
+                    if len(parts) > 1:
+                        try:
+                            percent = int(parts[1][:-1])
+                        except:
+                            pass
+
+        if not percent:
+            percent = 0
+        data['percent'] = percent
+
+    if os.path.exists("/tmp/.plugin_upload_install"):
+        data = {'step': 3}
+
+    content = json.dumps(data)
+    return HttpResponse(content, mimetype='application/json')
 
 
 @public

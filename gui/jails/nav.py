@@ -89,7 +89,6 @@ def plugin_fetch(args):
 def init(tree_roots, nav, request):
     self = Base()
     jails = Jails.objects.all()
-    log.debug("jails.... %r", jails)
 
     for jail in jails:
         if jail.jail_type == WARDEN_TYPE_PLUGINJAIL:

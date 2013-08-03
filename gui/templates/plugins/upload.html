@@ -4,7 +4,14 @@ doSubmit({
     form: this,
     event: e,
     url: '{{ request.path }}',
-    progressbar: true
-    });
+    progressbar: {
+      steps: [
+        {"label": "Uploading plugin"},
+	{"label": "Creating jail"},
+	{"label": "Installing plugin"},
+      ],
+      poolUrl: '{% url "plugins_upload_progress" %}'
+    }
+});
 {% endblock %}
 {% block oklabel %}{% trans "Upload" %}{% endblock %}

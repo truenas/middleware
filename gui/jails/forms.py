@@ -641,6 +641,11 @@ class NullMountPointForm(ModelForm):
         initial=True,
     )
 
+    # Do not remove: used in javascript side
+    mpjc_path = forms.CharField(
+        required=False
+    )
+
     class Meta:
         model = NullMountPoint
         widgets = {
@@ -716,9 +721,11 @@ class NullMountPointForm(ModelForm):
         self.fields['jail'].widget.attrs['onChange'] = (
             'addStorageJailChange(this);'
         )
-        if pjlist:
-            jail_path = "%s/%s" % (self.jc.jc_path, pjlist[0])
-            self.fields['destination'].widget.attrs['root'] = jail_path
+        jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
+        self.fields['destination'].widget.attrs['root'] = jail_path
+
+        self.fields['mpjc_path'].widget = forms.widgets.HiddenInput()
+        self.fields['mpjc_path'].initial = self.jc.jc_path
 
         if self.instance.id:
             self.fields['mounted'].initial = self.instance.mounted

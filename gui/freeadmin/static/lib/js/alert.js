@@ -80,7 +80,7 @@ require([
             href: "/admin/alert/",
             onHide: function() {
                 setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
-            },
+            }
         });
         alertdlg.show();
     }
