@@ -292,13 +292,12 @@ class NTPForm(ModelForm):
     def clean_ntp_address(self):
         addr = self.cleaned_data.get("ntp_address")
         p1 = subprocess.Popen(
-            ["ntpq", "-c", "rv", addr],
+            ["/usr/sbin/ntpdate", "-q", addr],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        data = p1.communicate()[0]
-        #TODO: ntpq does not return error code in case of errors
-        if not re.search(r'version=', data):
+        p1.communicate()
+        if p1.returncode != 0:
             self.usable = False
         return addr
 

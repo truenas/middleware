@@ -61,7 +61,7 @@ NANO_IMAGES=2
 # Remove .orig and .rej too
 # Removing X11 needs more work, it blows rdd + fonts
 NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|\.orig$|\.rej$)/')
-FlashDevice generic 3700m
+FlashDevice generic 2g
 
 if [ "$DEBUG" = 1 ]; then
 	DEBUG_BUILD="
@@ -168,8 +168,7 @@ add_port www/aria2 OPTIONS_FILE_UNSET+=SQLITE
 add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
-add_port lang/perl5.14
-add_port converters/iconv
+add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
 add_port devel/pkgconf
 add_port devel/libpthread-stubs
@@ -236,14 +235,13 @@ add_port www/nginx OPTIONS_FILE_SET+=HTTP_DAV \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
 		OPTIONS_FILE_SET+=STATUS
-add_port net-mgmt/net-snmp
+add_port net-mgmt/net-snmp OPTIONS_FILE_UNSET+=PERL OPTIONS_FILE_UNSET+=PERL_EMBEDDED
 add_port sysutils/nut OPTIONS_FILE_UNSET+="NEON"
 add_port textproc/py-libxml2
 add_port textproc/expat2
 add_port devel/gamin
 add_port devel/gio-fam-backend
 add_port devel/m4
-add_port devel/bison
 add_port misc/gnomehier
 add_port www/py-httplib2
 add_port net/py-oauth2
@@ -270,12 +268,14 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11/pixman
 	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
 	add_port x11-toolkits/pango OPTIONS_FILE_UNSET+=X11
-	add_port databases/rrdtool OPTIONS_FILE_SET+=PERL_MODULE \
+	add_port databases/rrdtool OPTIONS_FILE_UNSET+=PERL_MODULE \
 				OPTIONS_FILE_SET+=PYTHON_MODULE \
 				OPTIONS_FILE_SET+=JSON
 	add_port net/liboping
 	add_port net-mgmt/collectd5 OPTIONS_FILE_UNSET+=BIND OPTIONS_FILE_UNSET+=SNMP \
-				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON
+				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON \
+				   OPTIONS_FILE_SET+=RRDTOOL \
+				   OPTIONS_FILE_SET+=STATGRAB
 fi
 
 #FIXME: gobject now requires cairo as build dependency
@@ -347,7 +347,9 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port devel/git OPTIONS_FILE_UNSET+=SVN \
 			OPTIONS_FILE_UNSET+=CVS \
 			OPTIONS_FILE_UNSET+=P4 \
-			OPTIONS_FILE_UNSET+=PERL
+			OPTIONS_FILE_UNSET+=PERL \
+			OPTIONS_FILE_UNSET+=CONTRIB \
+			OPTIONS_FILE_UNSET+=NLS
 	add_port devel/ctags
 fi
 
@@ -602,8 +604,12 @@ get_jail_distfiles()
 		distfiles="${distfiles} lib32.txz"
 	fi
 
-	ftpdir="${FREEBSD_FTP_MIRROR}/pub/FreeBSD/releases/"\
-"${arch}/${FREEBSD_RELEASE_VERSION}"
+	if [ -d "${FREEBSD_DISTCACHE}" ] ;then
+	    ftpdir="${FREEBSD_DISTCACHE}/releases"
+	else
+	    ftpdir="${FREEBSD_FTP_MIRROR}/pub/FreeBSD/releases"
+	fi
+	ftpdir="${ftpdir}/${arch}/${FREEBSD_RELEASE_VERSION}"
 
 	wd="${NANO_WORLDDIR}/usr/local/share/warden"
 	mkdir -p "${wd}"
@@ -650,7 +656,10 @@ customize_cmd get_jail_distfiles64
 
 get_jail_distfiles32()
 {
-	get_jail_distfiles "i386"
+	if [ "${NANO_ARCH}" = "i386" ]
+	then
+		get_jail_distfiles "i386"
+	fi
 }
 customize_cmd get_jail_distfiles32
 
@@ -704,7 +713,10 @@ customize_cmd create_jail64
 
 create_jail32()
 {
-	create_jail "i386"
+	if [ "${NANO_ARCH}" = "i386" ]
+	then
+		create_jail "i386"
+	fi
 }
 customize_cmd create_jail32
 
@@ -726,10 +738,21 @@ get_jail_packages()
 		return 0
 	fi
 
-	ftpdir="${FREEBSD_PACKAGE_MIRROR}/${FREEBSD_RELEASE_VERSION}/${arch}"
+	#if [ -d "${FREEBSD_PKGCACHE}/${FREEBSD_RELEASE_VERSION}/${arch}"] ; then
+	#    ftpdir="${FREEBSD_PKGCACHE}/${FREEBSD_RELEASE_VERSION}/${arch}"
+	#else
+	    ftpdir="${FREEBSD_PACKAGE_MIRROR}/${FREEBSD_RELEASE_VERSION}/${arch}"
+	#fi
+
+	# why... what is up here?
 	if [ "${arch}" = "i386" ]
 	then
-		ftpdir="${FREEBSD_PACKAGE_MIRROR_32}"
+		# use the local pkg cache if it exists.
+		#if [ -d "${FREEBSD_PKGCACHE_32}" ] ; then
+		#    ftpdir="${FREEBSD_PKGCACHE_32}"
+		#else
+		    ftpdir="${FREEBSD_PACKAGE_MIRROR_32}"
+		#fi
 	fi
 
 	pdir="${NANO_OBJ}/jails/packages/${FREEBSD_RELEASE_VERSION}/${arch}"
@@ -868,7 +891,10 @@ customize_cmd get_jail_packages64
 
 get_jail_packages32()
 {
-	get_jail_packages "i386"
+	if [ "${NANO_ARCH}" = "i386" ]
+	then
+		get_jail_packages "i386"
+	fi
 }
 customize_cmd get_jail_packages32
 
@@ -954,17 +980,6 @@ unmute_console_logging()
 }
 customize_cmd unmute_console_logging
 
-else
-
-remove_perl()
-{
-	# Perl seems to be needed for build, but nothing after the
-	# build.  cope with bad dependencies (or misunderstood) and
-	# blow it away (saves 45MB)
-	CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl* || :"
-}
-customize_cmd remove_perl
-
 fi
 
 remove_var_db_pkg()
@@ -1038,6 +1053,10 @@ freenas_custom()
 
 	# kill docs (saves 22MB)
 	rm -rf ${NANO_WORLDDIR}/usr/local/share/doc
+	rm -rf ${NANO_WORLDDIR}/usr/local/share/gtk-doc
+
+	# kill gobject introspection xml
+	rm -rf ${NANO_WORLDDIR}/usr/local/share/gir-1.0
 
 	# and info (2MB)
 	rm -rf ${NANO_WORLDDIR}/usr/local/info
@@ -1130,10 +1149,19 @@ last_orders() {
 		# NOTE: keep in synch with create_*_diskimage.
 		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
 
+		# the -s arguments map root's "update*" files into the
+		# gui image's bin directory.
 		tar -cpvf - \
+			-s '@^update$@bin/update@' \
+			-s '@^updatep1$@bin/updatep1@' \
+			-s '@^updatep2$@bin/updatep2@' \
+			-C "$AVATAR_ROOT/nanobsd/Files/root" \
+				update updatep1 updatep2 \
 			-C "$NANO_WORLDDIR" \
 				etc/avatar.conf \
 			-C "$AVATAR_ROOT/nanobsd/Installer" \
+				. \
+			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
 				. \
 			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
 				. \

@@ -223,7 +223,7 @@ require([
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             onHide: function() {
                 setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
-            },
+            }
         });
         dialog.show();
 
@@ -233,7 +233,7 @@ require([
 
         xhr.get(url, {
             query: {
-                fsname: name,
+                fsname: name
             },
             sync: true
             }).then(function(data) {
@@ -311,7 +311,7 @@ require([
     addStorageJailChange = function(box) {
       var destination = registry.byId("id_destination");
       var jail = registry.byId("id_jail");
-      var jc_path = registry.byId("id_jc_path");
+      var jc_path = registry.byId("id_mpjc_path");
       new_root = jc_path.get("value") + "/" + jail.get("value");
       destination.set("root", new_root);
       destination.tree.model.query = {root: new_root};
@@ -1006,10 +1006,12 @@ require([
             } else {
               pattrs = {
                 steps: attrs.progressbar.steps,
-                fileUpload: true,
+                fileUpload: attrs.progressbar.fileUpload,
                 uuid: uuid,
                 poolUrl: attrs.progressbar.poolUrl
               };
+              if(pattrs.fileUpload === undefined)
+                pattrs.fileUpload = true;
             }
             pbar = Progress(pattrs);
 
@@ -1026,7 +1028,7 @@ require([
             pbar = ProgressBar({
                 id: "jail_progress",
                 style: "width:600px",
-                indeterminate: true,
+                indeterminate: true
                 });
 
             pdisplay = new SimpleTextarea({
@@ -1315,7 +1317,7 @@ require([
             title: name,
             closable: true,
             parseOnLoad: true,
-            refreshOnShow: true,
+            refreshOnShow: true
         });
         if(tab)
             pane.tab = tab;
@@ -1341,7 +1343,7 @@ require([
         Menu.openSystem();
         var store = new JsonRestStore({
             target: Menu.urlTree,
-            labelAttribute: "name",
+            labelAttribute: "name"
         });
 
         var treeModel = new ForestStoreModel({
@@ -1386,6 +1388,8 @@ require([
                 Menu.openServices();
             } else if(item.type == 'openjails') {
                 Menu.openJails(item.gname);
+            } else if(item.type == 'openplugins') {
+                Menu.openPlugins(item.gname);
             } else if(item.type == 'pluginsfcgi') {
                 Menu.openPluginsFcgi(p, item);
             } else if(item.type == 'openaccount') {
@@ -1419,7 +1423,7 @@ require([
                     title: item.name,
                     closable: true,
                     refreshOnShow: true,
-                    parseOnLoad: true,
+                    parseOnLoad: true
                 });
                 p.addChild(pane);
                 domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
@@ -1437,7 +1441,7 @@ require([
                     href: item.url,
                     title: item.name,
                     closable: true,
-                    parseOnLoad: true,
+                    parseOnLoad: true
                 });
                 pane.tab = item.gname;
                 domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
@@ -1455,7 +1459,7 @@ require([
             onClick: treeclick,
             onLoad: function() {
                 var fadeArgs = {
-                   node: "fntree",
+                   node: "fntree"
                  };
                 dFx.fadeIn(fadeArgs).play();
             },

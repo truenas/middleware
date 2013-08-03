@@ -25,6 +25,8 @@
 #
 #####################################################################
 import logging
+import re
+import subprocess
 
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -45,6 +47,8 @@ from freenasUI.services.models import (
     iSCSITargetPortal, iSCSITargetExtent, iSCSITargetToExtent
 )
 from freenasUI.jails.models import NullMountPoint
+from freenasUI.plugins import availablePlugins, Plugin
+from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
@@ -812,17 +816,32 @@ class JailsResource(DojoModelResource):
         include_resource_uri = False
         allowed_methods = ['get']
 
+    def dispatch_list(self, request, **kwargs):
+        proc = subprocess.Popen(
+            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        self.__jls = proc.communicate()[0]
+        return super(JailsResource, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(JailsResource, self).dehydrate(bundle)
 
         bundle.data['name'] = bundle.obj.jail_host
+        try:
+            reg = re.search(
+                r'\s*?(\d+).*?\b%s\b' % bundle.obj.jail_host,
+                self.__jls,
+            )
+            bundle.data['jid'] = int(reg.groups()[0])
+        except:
+            bundle.data['jid'] = None
         bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
             'id': bundle.obj.id
         })
         bundle.data['_jail_storage_add_url'] = reverse('jail_storage_add', kwargs={
             'jail_id': bundle.obj.id
         })
-        bundle.data['_plugin_install_url'] = reverse('plugin_install', kwargs={
+        bundle.data['_upload_url'] = reverse('plugins_upload', kwargs={
             'jail_id': bundle.obj.id
         })
         bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
@@ -913,4 +932,63 @@ class SnapshotResource(DojoResource):
                 'snapname': bundle.obj.name,
             }),
         }
+        return bundle
+
+
+class AvailablePluginsResource(DojoResource):
+
+    id = fields.CharField(attribute='id')
+    name = fields.CharField(attribute='name')
+    description = fields.CharField(attribute='description')
+    version = fields.CharField(attribute='version')
+
+    class Meta:
+        resource_name = 'availableplugins'
+        include_resource_uri = False
+        authentication = DjangoAuthentication()
+        object_class = Plugin
+        paginator_class = DojoPaginator
+
+    def get_list(self, request, **kwargs):
+        conf = PluginConf.objects.latest('id')
+        if conf and conf.collectionurl:
+            url = conf.collectionurl
+        else:
+            url = PLUGINS_INDEX
+        try:
+            results = availablePlugins.get_remote(url=url)
+        except Exception, e:
+            log.debug("Failed to fetch remote: %s", e)
+            results = []
+        for sfield in self._apply_sorting(request.GET):
+            if sfield.startswith('-'):
+                field = sfield[1:]
+                reverse = True
+            else:
+                field = sfield
+                reverse = False
+            results.sort(
+                key=lambda item: getattr(item, field),
+                reverse=reverse)
+        paginator = self._meta.paginator_class(request, results, resource_uri=self.get_resource_uri(), limit=self._meta.limit, max_limit=self._meta.max_limit, collection_name=self._meta.collection_name)
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (paginator.offset, paginator.offset+length-1, len(results))
+        return response
+
+    def dehydrate(self, bundle):
+        bundle.data['_install_url'] = reverse(
+            'plugins_install_available',
+            kwargs={'oid': bundle.obj.id},
+        )
         return bundle

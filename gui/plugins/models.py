@@ -29,6 +29,10 @@ from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.models import Model
+from freenasUI.jails.models import Jails
+from freenasUI.middleware.notifier import notifier
+
+PLUGINS_INDEX = 'http://www.appcafe.org/freenas/json'
 
 
 class Plugins(Model):
@@ -98,13 +102,53 @@ class Plugins(Model):
         )
 
     class Meta:
-        verbose_name = _(u"Plugins")
+        verbose_name = _(u"Plugin")
         verbose_name_plural = _(u"Plugins")
 
-    class FreeAdmin:
-        icon_model = u"PluginsIcon"
-
     def delete(self, *args, **kwargs):
+        qs = Plugins.objects.filter(plugin_jail=self.plugin_jail).exclude(
+            id__exact=self.id
+        )
         with transaction.commit_on_success():
+            notifier()._stop_plugins(self.plugin_name)
+            if qs.count() > 0:
+                notifier().delete_pbi(self)
+            else:
+                jail = Jails.objects.get(jail_host=self.plugin_jail)
+                jail.delete()
             super(Plugins, self).delete(*args, **kwargs)
             self.plugin_secret.delete()
+
+
+class Available(models.Model):
+
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=200,
+    )
+
+    description = models.CharField(
+        verbose_name=_("Description"),
+        max_length=200,
+    )
+
+    version = models.CharField(
+        verbose_name=_("Version"),
+        max_length=200,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class Configuration(Model):
+
+    collectionurl = models.CharField(
+        verbose_name=_("Collection URL"),
+        max_length=255,
+        help_text=_("URL for the plugins index"),
+        blank=True,
+    )
+
+    class FreeAdmin:
+        deletable = False

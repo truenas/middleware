@@ -543,19 +543,14 @@ class iSCSITargetExtent(Model):
     def delete(self):
         if self.iscsi_target_extent_type in ("Disk", "ZVOL"):
             try:
-                disk = Disk.objects.get(id=self.iscsi_target_extent_path)
                 if self.iscsi_target_extent_type == "Disk":
+                    disk = Disk.objects.get(id=self.iscsi_target_extent_path)
                     devname = disk.identifier_to_device()
                     if not devname:
                         disk.disk_enabled = False
                         disk.save()
-                expected_iscsi_volume_name = 'iscsi:%s' % (
-                    self.iscsi_target_extent_name,
-                    )
-                vol = Volume.objects.get(vol_name=expected_iscsi_volume_name)
-                vol.delete()
             except Exception, e:
-                log.error("Unable to sync of iSCSI extent delete: %s", e)
+                log.error("Unable to sync iSCSI extent delete: %s", e)
 
         for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
             te.delete()

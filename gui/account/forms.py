@@ -316,8 +316,8 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             'bsdusr_password1',
             'bsdusr_password2',
             'bsdusr_password_disabled',
-            'bsdusr_sshpubkey',
             'bsdusr_locked',
+            'bsdusr_sshpubkey',
             'bsdusr_to_group',
         )
 
@@ -343,6 +343,12 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         self.fields['bsdusr_to_group'].choices = [
             (x.id, x.bsdgrp_group) for x in models.bsdGroups.objects.all()
         ]
+        self.fields['bsdusr_password_disabled'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_bsdusr_password_disabled", '
+            '["id_bsdusr_locked"], false);')
+        self.fields['bsdusr_locked'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_bsdusr_locked", '
+            '["id_bsdusr_password_disabled"], false);')
 
     def clean_bsdusr_username(self):
         if self.instance.id is None:
@@ -578,6 +584,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
 
     def __init__(self, *args, **kwargs):
         super(bsdUserChangeForm, self).__init__(*args, **kwargs)
+        self.oldhome = self.instance.bsdusr_home
         if self.instance.id:
             self.fields['bsdusr_username'].widget.attrs['readonly'] = True
             self.fields['bsdusr_username'].widget.attrs['class'] = (
@@ -613,6 +620,12 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
         self.fields['bsdusr_group'].widget.attrs['maxHeight'] = 200
+        self.fields['bsdusr_password_disabled'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_bsdusr_password_disabled", '
+            '["id_bsdusr_locked"], false);')
+        self.fields['bsdusr_locked'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_bsdusr_locked", '
+            '["id_bsdusr_password_disabled"], false);')
 
     def clean_bsdusr_uid(self):
         if self.instance.bsdusr_builtin:
@@ -697,6 +710,17 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
                     bsdusr_sshpubkey,
                     bsduser.bsdusr_username,
                     bsduser.bsdusr_group.bsdgrp_group)
+        try:
+            if self.cleaned_data['bsdusr_home'] not in (
+                '/nonexistent', self.oldhome
+            ):
+                os.chown(
+                    self.cleaned_data['bsdusr_home'],
+                    self.instance.bsdusr_uid,
+                    self.instance.bsdusr_group.bsdgrp_gid
+                )
+        except:
+            log.warn("Failed to chown home dir %s", homedir)
         return bsduser
 
 

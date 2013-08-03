@@ -734,8 +734,11 @@ class notifier:
         self.__system("/usr/sbin/service netatalk start")
 
     def _stop_afp(self):
-        # XXX: fix rc.d/netatalk to honor the force verbs properly.
+        self.__system("/usr/sbin/service netatalk forcestop")
+        #FIXME: fix rc.d/netatalk to honor the force verbs properly.
         self.__system("killall afpd")
+        self.__system("killall cnid_metad")
+        self.__system("killall cnid_dbd")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service dbus forcestop")
 
@@ -2415,7 +2418,7 @@ class notifier:
 
         return plugin_upload_path
 
-    def install_pbi(self, pjail, newplugin):
+    def install_pbi(self, pjail, newplugin, pbifile="/var/tmp/firmware/pbifile.pbi"):
         log.debug("install_pbi: pjail = %s", pjail)
         """
         Install a .pbi file into the plugins jail
@@ -2430,6 +2433,8 @@ class notifier:
         from freenasUI.plugins.models import Plugins
         from freenasUI.jails.models import JailsConfiguration
         ret = False
+
+        open('/tmp/.plugin_upload_install', 'w+').close()
 
         if not pjail:
             log.debug("install_pbi: pjail is NULL")
@@ -2470,7 +2475,7 @@ class notifier:
         log.debug("install_pbi: pjail_path = %s, plugins_path = %s", pjail_path, plugins_path)
 
         pbi = pbiname = prefix = name = version = arch = None
-        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi="/var/tmp/firmware/pbifile.pbi")
+        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbifile)
         out = p.info(False, -1, 'pbi information for', 'prefix', 'name', 'version', 'arch')
 
         if not out:
@@ -2505,7 +2510,8 @@ class notifier:
                 #FIXME: do pbi_update instead
                 pass
 
-        self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
+        if pbifile == "/var/tmp/firmware/pbifile.pbi":
+            self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
         p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE, pbi="%s/%s" %
             ("/.plugins", pbi))
@@ -2755,14 +2761,11 @@ class notifier:
     def delete_pbi(self, plugin):
         ret = False
 
-        (c, conn) = self.__open_db(ret_conn=True)
-        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
-        row = c.fetchone()
-        if not row:
+        if not plugin.id:
             log.debug("delete_pbi: plugins plugin not in database")
             return False
-        
-        jail_name = row[0]
+
+        jail_name = plugin.plugin_jail
 
         jail = None
         for j in Jls():
@@ -2781,7 +2784,6 @@ class notifier:
 
         # Plugin is not installed in the jail at all
         if res[0] == 0 and plugin.plugin_name not in plugins:
-            plugin.delete()
             return True
 
         pbi_path = os.path.join(

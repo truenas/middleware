@@ -1,0 +1,71 @@
+#!/bin/sh
+
+#
+# Script to capture debug for system crash reporting.
+#
+#
+
+mydir=`dirname $0`
+
+# there is a dumpfile in /var/crash
+# sets "$actualdump" -> to $dumpdir/textdump.tar.N
+dumpfile_to_submit_exists ()
+{
+	local dumpdir=$1
+
+	# no crashdump at all
+	if [ ! -e $dumpdir/textdump.tar.last ] ; then
+		return 1
+	fi
+	actualdump=$(realpath $dumpdir/textdump.tar.last)
+	if [ $? -gt 0 ] ; then
+		echo "can not realpath $dumpdir/textdump.tar.last" >&2
+		return 2
+	fi
+
+	# dump already submitted
+	if [ -e "$actualdump.submitted" ] ; then
+		return 1
+	fi
+	return 0
+}
+
+test -e /etc/rc.conf && . /etc/rc.conf
+[ "$dumpdir" = "" ] && dumpdir="$dumpdir"
+
+# during boot ix-diagnose will call us with --boot
+# if there is no crashdump, then just exit
+if [ "$1" = "--boot" ] ; then
+	if ! dumpfile_to_submit_exists $dumpdir ; then
+		exit 0
+	fi
+fi
+
+set -x
+topdir=`mktemp -d -t ixdiagnose`
+if [ $? -gt 0 ] ; then
+	echo "can't make temp directory"
+	exit 1
+fi
+trap "rm -rf $topdir" EXIT
+dir=$topdir/ixdiagnose
+
+set -e
+mkdir $dir
+$mydir/freenas-debug -A > $dir/nas-debug.log
+tar -cf - -C /var log | tar -C $dir -xf -
+
+if ! dumpfile_to_submit_exists $dumpdir ; then
+	if [ $? = 2 ] ; then
+		exit 2
+	fi
+else
+	cp $dumpdir/textdump.tar.last "$dir"
+	cp $dumpdir/info.last "$dir"
+fi
+
+tar -C $dir/.. -czf $dir/../ixdiagnose.tgz ixdiagnose
+$mydir/crashuploader $topdir/ixdiagnose.tgz
+if [ "$actualdump" != "" ] ; then
+	touch $actualdump.submitted
+fi

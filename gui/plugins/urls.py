@@ -31,12 +31,16 @@ from jsonrpc import jsonrpc_site
 import freenasUI.plugins.views
 
 urlpatterns = patterns('freenasUI.plugins.views',
-    url(r'^plugin/install/(?P<jail_id>\d+)/$', 'plugin_install', name="plugin_install"),
-    url(r'^plugin/install/$', 'plugin_install_nojail', name="plugin_install_nojail"),
+    url(r'^plugin/home/$', 'home', name="plugins_home"),
+    url(r'^plugin/plugins/$', 'plugins', name="plugins_plugins"),
+    url(r'^plugin/install/(?P<oid>[0-9a-f]{1,64})/$', 'install_available', name="plugins_install_available"),
+    url(r'^plugin/upload/(?P<jail_id>\d+)/$', 'upload', name="plugins_upload"),
+    url(r'^plugin/upload/$', 'upload_nojail', name="plugins_upload_nojail"),
+    url(r'^plugin/upload/progress/$', 'upload_progress', name="plugins_upload_progress"),
+    url(r'^plugin/install/progress/$', 'install_progress', name="plugins_install_progress"),
     url(r'^plugin/edit/(?P<plugin_id>\d+)/$', 'plugin_edit', name="plugin_edit"),
     url(r'^plugin/info/(?P<plugin_id>\d+)/$', 'plugin_info', name="plugin_info"),
     url(r'^plugin/update/(?P<plugin_id>\d+)/$', 'plugin_update', name="plugin_update"),
-    url(r'^plugin/delete/(?P<plugin_id>\d+)/$', 'plugin_delete', name="plugin_delete"),
     url(r'^json-rpc/v1/', jsonrpc_site.dispatch, name="plugins_jsonrpc_v1"),
     url(r'^(?P<name>[^/]+)/(?P<path>.+)$', 'plugin_fcgi_client', name="plugin_fcgi_client"),
-    )
+)

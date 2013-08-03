@@ -107,4 +107,9 @@ network_func()
 	netstat -i
 	section_footer
 
+	section_header "protocols"
+    for proto in ip arp udp tcp icmp ; do
+        netstat -p $proto -s
+    done
+	section_footer
 }

@@ -27,9 +27,22 @@
   </div>
 
   <div id="menuBar_Services" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openServices();" class="menu_icon">
-    <img src="{{ STATIC_URL }}images/ui/menu/services.png"/ >
+    <img src="{{ STATIC_URL }}images/ui/menu/services.png" />
     <br />
     <span>{% trans "Services" %}</span>
+  </div>
+
+
+  <div id="menuBar_Plugins" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openPlugins();" class="menu_icon">
+    <img src="{{ STATIC_URL }}images/ui/menu/plugins.png" />
+    <br />
+    <span>{% trans "Plugins" %}</span>
+  </div>
+
+  <div id="menuBar_Jails" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openJails();" class="menu_icon">
+    <img src="{{ STATIC_URL }}images/ui/menu/jails.png" />
+    <br />
+    <span>{% trans "Jails" %}</span>
   </div>
 
   <div id="menuBar_Support" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openSupport();" class="menu_icon">

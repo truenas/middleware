@@ -2,6 +2,7 @@ import os
 import sys
 import signal
 
+import daemon
 from flup.server.fcgi import WSGIServer
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -15,14 +16,6 @@ def transmission_fcgi_start(args):
 
     ip = args[0]
     port = long(args[1])
-
-    pid = os.fork()
-    if pid < 0:
-        return False
-    if pid != 0:
-        sys.exit(0)
-
-    os.setsid()
 
     os.environ['DJANGO_SETTINGS_MODULE'] = 'transmissionUI.settings'
     import django.core.handlers.wsgi
@@ -80,11 +73,12 @@ def main(argc, argv):
         'configure': transmission_fcgi_configure
     }
 
-    if not commands.has_key(argv[0]):
-        sys.exit(1)
+    with daemon.DaemonContext():
+        if not commands.has_key(argv[0]):
+            sys.exit(1)
 
-    if not commands[argv[0]](argv[1:]):
-        sys.exit(1)
+        if not commands[argv[0]](argv[1:]):
+            sys.exit(1)
 
     sys.exit(0)
 

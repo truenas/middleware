@@ -58,6 +58,8 @@ define([
                 onClick: function(obj, node, ev) {
                     if(node.item.path) {
                         path.textfield.set('value', node.item.path);
+                    } else if(node.item.root) {
+                        path.textfield.set('value', '/');
                     } else {
                         path.textfield.set('value', node.get('label'));
                     }

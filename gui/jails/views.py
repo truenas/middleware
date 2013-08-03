@@ -42,6 +42,7 @@ from freenasUI.common.warden import (
     WARDEN_DELETE_FLAGS_CONFIRM,
     WARDEN_EXPORT_FLAGS_DIR
 )
+from freenasUI.middleware.exceptions import MiddlewareError
 
 log = logging.getLogger("jails.views")
 
@@ -127,14 +128,12 @@ def jail_start(request, id):
             )
 
         except Exception, e:
-            return JsonResp(request, error=True, message=e)
+            return JsonResp(request, error=True, message=repr(e))
 
     else:
         return render(request, "jails/start.html", {
             'name': jail.jail_host
         })
-
-        Warden().start(jail=jail.jail_host)
 
 
 def jail_stop(request, id):
@@ -150,7 +149,7 @@ def jail_stop(request, id):
             )
 
         except Exception, e:
-            return JsonResp(request, error=True, message=e)
+            return JsonResp(request, error=True, message=repr(e))
 
     else:
         return render(request, "jails/stop.html", {
@@ -164,16 +163,15 @@ def jail_delete(request, id):
 
     if request.method == 'POST':
         try:
-            Warden().delete(
-                jail=jail.jail_host,
-                flags=WARDEN_DELETE_FLAGS_CONFIRM)
+            jail.delete()
             return JsonResp(
                 request,
                 message=_("Jail successfully deleted.")
             )
-
+        except MiddlewareError:
+            raise
         except Exception, e:
-            return JsonResp(request, error=True, message=e)
+            return JsonResp(request, error=True, message=repr(e))
 
     else:
         return render(request, "jails/delete.html", {

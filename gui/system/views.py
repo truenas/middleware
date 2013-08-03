@@ -497,7 +497,7 @@ def firmware_progress(request):
             if reg:
                 current = int(reg[-1])
                 size = os.stat("/var/tmp/firmware/firmware.img").st_size
-                percent = int((current / size) * 100)
+                percent = int((float(current) / size) * 100)
                 data = {
                     'step': 3,
                     'percent': percent,
