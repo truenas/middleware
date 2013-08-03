@@ -74,7 +74,6 @@ main()
 	ln -s ../rescue ${INSTALLUFSDIR}/bin
 	ln -s ../rescue ${INSTALLUFSDIR}/sbin
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
-	cp -p ${AVATAR_ROOT}/build/files/install_sata_dom.sh ${INSTALLUFSDIR}/etc
 	cp -p ${AVATAR_ROOT}/build/files/rc ${INSTALLUFSDIR}/etc
 
 	cp "$AVATAR_CONF" ${INSTALLUFSDIR}/etc/
