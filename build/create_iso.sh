@@ -93,6 +93,7 @@ main()
 	# installer code.
 	rm -f "$INSTALLUFSDIR/etc/rc.conf.local"
 	rm -f $INSTALLUFSDIR/etc/fstab
+	rm -f $INSTALLUFSDIR/conf/default/etc/remount
 
 	# NOTE: only glabel and gpart work statically when hardlinked as
 	# geom(8).
