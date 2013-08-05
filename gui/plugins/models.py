@@ -152,3 +152,6 @@ class Configuration(Model):
 
     class FreeAdmin:
         deletable = False
+
+    class Meta:
+        verbose_name = _("Configuration")
