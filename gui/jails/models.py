@@ -182,14 +182,15 @@ class Jails(Model):
         else:
             self.jail_nat = False
 
-    def delete(self):
+    def delete(self, force=False):
         #FIXME: Cyclic dependency
         from freenasUI.plugins.models import Plugins
-        qs = Plugins.objects.filter(plugin_jail=self.jail_host)
-        if qs.exists():
-            raise MiddlewareError(
-                _("This jail is required by %d plugin(s)") % qs.count()
-            )
+        if not force:
+            qs = Plugins.objects.filter(plugin_jail=self.jail_host)
+            if qs.exists():
+                raise MiddlewareError(
+                    _("This jail is required by %d plugin(s)") % qs.count()
+                )
         Warden().delete(jail=self.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
 
     class Meta:
