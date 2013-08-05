@@ -693,6 +693,10 @@ class NullMountPointForm(ModelForm):
 
         if kwargs and 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
+            if not self.jail:
+                self.jail = Jails.objects.filter(
+                    jail_host=self.instance.jail
+                )[0]
 
         self.jc = JailsConfiguration.objects.order_by("-id")[0]
         self.fields['jail'] = forms.ChoiceField(
