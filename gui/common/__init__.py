@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+from decimal import Decimal
 def __humanize_number_common(number, maptbl):
     number = int(number)
     for suffix, factor in maptbl:
@@ -55,3 +56,15 @@ def humanize_size(number):
         ('B', 1),
         )
     return (__humanize_number_common(number, humanize_iec_map))
+
+def zfs_size_to_bytes(size):
+    if 'K' in size:
+        return Decimal(size.replace('K', '')) * 1024
+    elif 'M' in size:
+        return Decimal(size.replace('M', '')) * 1048576
+    elif 'G' in size:
+        return Decimal(size.replace('G', '')) * 1073741824
+    elif 'T' in size:
+        return Decimal(size.replace('T', '')) * 1099511627776
+    else:
+        return size 

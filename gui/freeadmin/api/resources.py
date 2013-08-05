@@ -850,6 +850,8 @@ class SnapshotResource(DojoResource):
     fullname = fields.CharField(attribute='fullname')
     refer = fields.CharField(attribute='refer')
     used = fields.CharField(attribute='used')
+    written = fields.CharField(attribute='written')
+    freenasstate = fields.CharField(attribute='freenasstate') 
     mostrecent = fields.BooleanField(attribute='mostrecent')
     parent_type = fields.CharField(attribute='parent_type')
 
@@ -867,6 +869,7 @@ class SnapshotResource(DojoResource):
             results.extend(snaps)
         FIELD_MAP = {
             'used': 'used_bytes',
+            'written': 'written_bytes',
             'refer': 'refer_bytes',
             'extra': 'mostrecent',
         }

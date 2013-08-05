@@ -780,13 +780,10 @@ class Replication(Model):
     repl_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
-        help_text=_(
-            "Disabling will stop any new replications being queued. "
-            "It will not stop any replications which are queued or in progress."),
     ) 
     repl_filesystem = models.CharField(
         max_length=150,
-        verbose_name=_("Volume/Dataset"),
+        verbose_name=_("Filesystem/Volume"),
         blank=True,
     )
     repl_lastsnapshot = models.CharField(
@@ -802,16 +799,21 @@ class Replication(Model):
     )
     repl_zfs = models.CharField(
         max_length=120,
-        verbose_name=_("Remote ZFS Volume/Dataset"),
+        verbose_name=_("Remote ZFS filesystem name"),
         help_text=_(
             "This should be the name of the ZFS filesystem on "
-            "remote side. eg: Volumename/Datasetname not the mountpoint or "
+            "remote side. eg: poolname/datasetname not the mountpoint or "
             "filesystem path"),
     )
+    repl_recurse = models.BooleanField(
+        default=False,
+        verbose_name=_(
+            "Recursively replicate"),
+    ) 
     repl_userepl = models.BooleanField(
         default=False,
         verbose_name=_(
-            "Recursively replicate and remove stale snapshot "
+            "Recursively replicate AND remove stale snapshot "
             "on remote side"),
     )
     repl_resetonce = models.BooleanField(
@@ -820,6 +822,15 @@ class Replication(Model):
             "Initialize remote side for once. (May cause data"
             " loss on remote side!)"),
     )
+    repl_preservefs = models.BooleanField(
+        default=True,
+        verbose_name=_(
+            "Preserve Local Filesystem structure on remote system"),
+        help_text=_(            
+            "If checked LocalPool/Data1/Data2 replicated to RemotePool/Repl => RemotePool/Repl/Data1/Data2 "
+            "Similar LocalPool replicated to RemotePool/Repl => RemotePool/Repl "
+            "If not checked would result => RemotePool/Repl/Data2 and => RemotePool/Repl/LocalPool"),
+    ) 
     repl_limit = models.IntegerField(
         default=0,
         verbose_name=_("Limit (kB/s)"),
@@ -850,10 +861,29 @@ class Replication(Model):
 
     def delete(self):
         try:
-            if self.repl_lastsnapshot != "":
-                zfsname = self.repl_lastsnapshot.split('@')[0]
-                notifier().zfs_inherit_option(zfsname, 'freenas:state', True)
-        except:
+             notifier().zfs_dataset_release_snapshots(self.repl_filesystem, self.repl_userepl)
+
+             if self.repl_remote.ssh_fast_cipher:
+                 sshcmd = ('/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
+                           'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
+                           ' -o BatchMode=yes -o StrictHostKeyChecking=yes -q')
+             else:
+                 sshcmd = ('/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
+                           ' -o StrictHostKeyChecking=yes -q')
+             if self.repl_remote.ssh_remote_dedicateduser_enabled == True:
+                 sshcmd = "%s -l %s" % (
+                     sshcmd,
+                     self.repl_remote.ssh_remote_dedicateduser.encode('utf-8'),
+                 )
+             if self.repl_preservefs:
+                 remotefs_final = "%s%s%s" % (self.repl_zfs, self.repl_filesystem.partition('/')[1], self.repl_filesystem.partition('/')[2])
+             else:
+                 remotefs_final = "%s/%s" % (self.repl_zfs, self.repl_filesystem.rpartition('/')[2])
+             sshpartproc = ('%s -p %d %s' % (sshcmd, self.repl_remote.ssh_remote_port, self.repl_remote.ssh_remote_hostname))
+
+             notifier().zfs_dataset_release_snapshots(remotefs_final, self.repl_userepl, sshpartproc) 
+
+       except:
             pass
         super(Replication, self).delete()
 
@@ -865,7 +895,7 @@ class Task(Model):
     ) 
     task_filesystem = models.CharField(
         max_length=150,
-        verbose_name=_("Volume/Dataset"),
+        verbose_name=_("Filesystem/Volume"),
     )
     task_recursive = models.BooleanField(
         default=False,

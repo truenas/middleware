@@ -24,7 +24,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-from decimal import Decimal
 import logging
 import os
 import re
@@ -34,6 +33,7 @@ from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common import humanize_size
+from freenasUI.common import zfs_size_to_bytes
 
 log = logging.getLogger('middleware.zfs')
 
@@ -60,20 +60,6 @@ def _vdev_type(name):
         if name.startswith(_type):
             return _type
     return False
-
-
-def zfs_size_to_bytes(size):
-    if 'K' in size:
-        return Decimal(size.replace('K', '')) * 1024
-    elif 'M' in size:
-        return Decimal(size.replace('M', '')) * 1048576
-    elif 'G' in size:
-        return Decimal(size.replace('G', '')) * 1073741824
-    elif 'T' in size:
-        return Decimal(size.replace('T', '')) * 1099511627776
-    else:
-        return size
-
 
 class Pool(object):
     """
@@ -542,6 +528,8 @@ class Snapshot(object):
     filesystem = None
     used = None
     refer = None
+    written = None
+    freenasstate = None
     mostrecent = False
     parent_type = None
 
@@ -551,6 +539,8 @@ class Snapshot(object):
         filesystem,
         used,
         refer,
+        written,
+        freenasstate,
         mostrecent=False,
         parent_type=None
     ):
@@ -558,6 +548,8 @@ class Snapshot(object):
         self.filesystem = filesystem
         self.used = used
         self.refer = refer
+        self.written = written
+        self.freenasstate = freenasstate
         self.mostrecent = mostrecent
         self.parent_type = parent_type
 
@@ -575,6 +567,10 @@ class Snapshot(object):
     @property
     def refer_bytes(self):
         return zfs_size_to_bytes(self.refer)
+
+    @property
+    def written_bytes(self):
+        return zfs_size_to_bytes(self.written)
 
 
 def parse_status(name, doc, data):
