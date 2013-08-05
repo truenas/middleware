@@ -114,8 +114,11 @@ class Plugins(Model):
             if qs.count() > 0:
                 notifier().delete_pbi(self)
             else:
-                jail = Jails.objects.get(jail_host=self.plugin_jail)
-                jail.delete(force=True)
+                try:
+                    jail = Jails.objects.get(jail_host=self.plugin_jail)
+                    jail.delete(force=True)
+                except Jails.DoesNotExist:
+                    pass
             super(Plugins, self).delete(*args, **kwargs)
             self.plugin_secret.delete()
 
