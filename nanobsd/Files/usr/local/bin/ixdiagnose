@@ -33,9 +33,41 @@ dumpfile_to_submit_exists ()
 test -e /etc/rc.conf && . /etc/rc.conf
 [ "$dumpdir" = "" ] && dumpdir="$dumpdir"
 
+boot_time=false
+force_upload=false
+has_ticket_info=false
+
+while getopts "bFt:" opt ; do
+	case "${opt}" in
+	b)
+		boot_time=true
+		;;
+	F)	force_upload=true
+		;;
+	t)	has_ticket_info=true
+		ticket_info=$OPTARG
+		;;
+	\?)	exit 2
+		;;
+	esac
+done
+
+if [ -t 1 ] && ! $boot_time && ! $force_upload ; then
+	cat <<END_TEXT
+Welcome to ixdiagnose.
+
+ixdiagnos sends iXsystems the debugging information of your
+computer.  In this mode we will send your logs and the
+contents of your diagnostics to iXsystems.
+
+Press 'Enter' to continue or ^C (control+C) to abort.
+END_TEXT
+	read dummy
+fi
+
 # during boot ix-diagnose will call us with --boot
 # if there is no crashdump, then just exit
-if [ "$1" = "--boot" ] ; then
+if $boot_time ; then
 	if ! dumpfile_to_submit_exists $dumpdir ; then
 		exit 0
 	fi
@@ -52,8 +84,11 @@ dir=$topdir/ixdiagnose
 
 set -e
 mkdir $dir
-$mydir/freenas-debug -A > $dir/nas-debug.log
-tar -cf - -C /var log | tar -C $dir -xf -
+
+if ! $boot_time ; then
+	$mydir/freenas-debug -A > $dir/nas-debug.log
+	tar -cf - -C /var log | tar -C $dir -xf -
+fi
 
 if ! dumpfile_to_submit_exists $dumpdir ; then
 	if [ $? = 2 ] ; then
@@ -64,8 +99,13 @@ else
 	cp $dumpdir/info.last "$dir"
 fi
 
+if $has_ticket_info ; then
+	TICKET_ARG="-t $ticket_info"
+	cp $ticket_info "$dir/ticket_info.json"
+fi
+
 tar -C $dir/.. -czf $dir/../ixdiagnose.tgz ixdiagnose
-$mydir/crashuploader $topdir/ixdiagnose.tgz
+$mydir/crashuploader $TICKET_ARG $topdir/ixdiagnose.tgz
 if [ "$actualdump" != "" ] ; then
 	touch $actualdump.submitted
 fi
