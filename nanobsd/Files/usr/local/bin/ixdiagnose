@@ -105,7 +105,7 @@ if $has_ticket_info ; then
 fi
 
 tar -C $dir/.. -czf $dir/../ixdiagnose.tgz ixdiagnose
-$mydir/crashuploader $TICKET_ARG $topdir/ixdiagnose.tgz
+$mydir/crashuploader $topdir/ixdiagnose.tgz
 if [ "$actualdump" != "" ] ; then
 	touch $actualdump.submitted
 fi
