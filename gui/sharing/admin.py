@@ -62,8 +62,11 @@ class NFSShareFAdmin(BaseFreeAdmin):
         },
     ]
     resource = NFSShareResource
-    exclude_fields = (
-        'id',
+    fields = (
+        'nfs_paths',
+        'nfs_comment',
+        'nfs_network',
+        'nfs_hosts',
     )
 
     def get_datagrid_columns(self):
