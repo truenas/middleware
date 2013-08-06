@@ -359,6 +359,16 @@ class VolumeStatusResource(DojoModelResource):
                             'cksum': current.cksum,
                             'children': [],
                         }
+                        if (
+                            current.parent.name == "logs" and
+                            not current.name.startswith("stripe")
+                        ):
+                            data['_remove_url'] = reverse(
+                                'storage_zpool_disk_remove',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                })
                     elif isinstance(current, zfs.Dev):
                         data = {
                             'name': current.devname,
@@ -410,12 +420,20 @@ class VolumeStatusResource(DojoModelResource):
                             'cache',
                             'logs',
                         ):
-                            data['_remove_url'] = reverse(
-                                'storage_zpool_disk_remove',
-                                kwargs={
-                                    'vname': pool.name,
-                                    'label': current.name,
-                                })
+                            if not current.parent.name.startswith("stripe"):
+                                data['_detach_url'] = reverse(
+                                    'storage_disk_detach',
+                                    kwargs={
+                                        'vname': pool.name,
+                                        'label': current.name,
+                                    })
+                            else:
+                                data['_remove_url'] = reverse(
+                                    'storage_zpool_disk_remove',
+                                    kwargs={
+                                        'vname': pool.name,
+                                        'label': current.name,
+                                    })
 
                     else:
                         raise ValueError("Invalid node")
