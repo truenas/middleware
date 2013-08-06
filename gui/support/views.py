@@ -25,7 +25,6 @@
 #
 #####################################################################
 import logging
-import requests
 import string
 import os
 
@@ -38,14 +37,6 @@ from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.support import forms, models
 from freenasUI.system.models import Email
-from freenasUI.support.supportcaptcha import (
-    SUPPORT_PROTO,
-    SUPPORT_HOST,
-    SUPPORT_BASE,
-    SUPPORT_URL,
-    SUPPORT_URL_GET,
-    SUPPORT_URL_POST
-)
 
 from tempfile import NamedTemporaryFile
 
