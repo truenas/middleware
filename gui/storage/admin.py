@@ -366,7 +366,7 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
         if url is None:
             url = "_%s_url" % (name, )
 
-        hide = "row.data.type != 'dev' || row.data.%s === undefined" % url
+        hide = "row.data.%s === undefined" % url
 
         on_select_after = """function(evt, actionName, action) {
                 for(var i=0;i < evt.rows.length;i++) {
