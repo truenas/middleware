@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix_diagnose
+# REQUIRE: NETWORKING FILESYSTEMS ix-fstab
+# KEYWORD: nojail
+
+. /etc/rc.subr
+
+name="ix_diagnose"
+rcvar="ix_diagnose_enable"
+start_cmd="ix_diagnose_start"
+stop_cmd="ix_diagnose_stop"
+
+
+ix_diagnose_start()
+{
+	# add /usr/local/bin for python..
+	PATH="$PATH:/usr/local/bin:/usr/local/sbin"
+	export PATH
+	echo "running ixdiagnose"
+	/usr/local/bin/ixdiagnose -b
+}
+
+ix_diagnose_stop()
+{
+	# nothing
+}
+
+load_rc_config $name
+run_rc_command "$1"
+
