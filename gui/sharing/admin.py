@@ -28,6 +28,27 @@ class AFPShareFAdmin(BaseFreeAdmin):
     )
 
 
+class CIFSShareFAdmin(BaseFreeAdmin):
+
+    icon_model = u"WindowsShareIcon"
+    icon_add = u"AddWindowsShareIcon"
+    icon_view = u"ViewAllWindowsSharesIcon"
+    icon_object = u"WindowsShareIcon"
+    advanced_fields = (
+        'cifs_hostsallow',
+        'cifs_hostsdeny',
+        'cifs_auxsmbconf',
+    )
+    fields = (
+        'cifs_name',
+        'cifs_comment',
+        'cifs_path',
+        'cifs_ro',
+        'cifs_browsable',
+        'cifs_guestok',
+    )
+
+
 class NFSShareFAdmin(BaseFreeAdmin):
 
     icon_model = u"UNIXShareIcon"
@@ -56,4 +77,5 @@ class NFSShareFAdmin(BaseFreeAdmin):
 
 
 site.register(models.AFP_Share, AFPShareFAdmin)
+site.register(models.CIFS_Share, CIFSShareFAdmin)
 site.register(models.NFS_Share, NFSShareFAdmin)

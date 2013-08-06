@@ -95,17 +95,6 @@ class CIFS_Share(Model):
         verbose_name_plural = _("Windows (CIFS) Shares")
         ordering = ["cifs_name"]
 
-    class FreeAdmin:
-        icon_model = u"WindowsShareIcon"
-        icon_add = u"AddWindowsShareIcon"
-        icon_view = u"ViewAllWindowsSharesIcon"
-        icon_object = u"WindowsShareIcon"
-        advanced_fields = (
-            'cifs_hostsallow',
-            'cifs_hostsdeny',
-            'cifs_auxsmbconf',
-        )
-
 
 class AFP_Share(Model):
     afp_name = models.CharField(
