@@ -104,7 +104,7 @@ if $has_ticket_info ; then
 	cp $ticket_info "$dir/ticket_info.json"
 fi
 
-tar -C $dir/.. -czf $dir/../ixdiagnose.tgz ixdiagnose
+tar -C $dir/.. -cHzf $dir/../ixdiagnose.tgz ixdiagnose
 $mydir/crashuploader $topdir/ixdiagnose.tgz
 if [ "$actualdump" != "" ] ; then
 	touch $actualdump.submitted
