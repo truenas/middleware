@@ -45,7 +45,7 @@ class SupportForm(ModelForm):
 
         super(SupportForm, self).__init__(*args, **kwargs)
 
-        self.fields['captcha'] = SupportCaptchaField()
+#        self.fields['captcha'] = SupportCaptchaField()
 
         if email:
             self.fields['support_email'].initial = email

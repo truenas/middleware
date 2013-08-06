@@ -47,6 +47,8 @@ from freenasUI.support.supportcaptcha import (
     SUPPORT_URL_POST
 )
 
+from tempfile import NamedTemporaryFile
+
 log = logging.getLogger("support.views")
 
 def index(request):
@@ -65,53 +67,32 @@ def index(request):
     if request.method == "POST":
         form = forms.SupportForm(request.POST, email=email)
         if form.is_valid():
-            debug_file = "/tmp/freenas-debug.txt"
-            crash_file = "/var/crash/textdump"
-            version_file = "/etc/version"
-
-            files = {}
-            args = ["/usr/local/bin/freenas-debug",
-                "-g", "-h", "-T", "-n", "-s", "-y", "-t", "-z"]
-            p1 = pipeopen(string.join(args, ' '), allowfork=True)
-            debug_out = p1.communicate()[0]
-            with open(debug_file, 'w') as f:
-                f.write(debug_out)
-
-            if os.path.exists(debug_file):
-                files['debug_file'] = open(debug_file, 'rb')
-
-            if os.path.exists(crash_file):
-                files['crash_file'] = open(crash_file, 'rb')
-
-            if os.path.exists(version_file):
-                files['version_file'] = open(version_file, 'rb')
-
-            payload = {
+            error = None
+            support_info = {
                 'support_issue': request.POST['support_issue'],
                 'support_description': request.POST['support_description'],
                 'support_type': request.POST['support_type'],
-                'support_email': request.POST['support_email'],
-                'captcha_0': request.POST['captcha_0'],
-                'captcha_1': request.POST['captcha_1']
+                'support_email': request.POST['support_email']
             }
 
-            i = 0
-            ntries = 10 
-            while i < ntries:
-                try:
-                    r = requests.post(SUPPORT_URL_POST, data=payload, files=files)
-                    break
-                except:
-                    pass
+            try:
+                f = NamedTemporaryFile(delete=False)
+                f.write(simplejson.dumps(support_info))
+                f.close()
 
-                i += 1
+                args = ["/usr/local/bin/ixdiagnose", "-t", f.name]
+                p1 = pipeopen(string.join(args, ' '), allowfork=True)
+                p1.communicate()
 
-            if r.status_code == 200:
+            except Exception as e:
+                error = e
+
+            os.unlink(f.name)
+
+            if not error:
                 return JsonResp(request, message=_("Support request successfully sent"))
             else:
-                errors = simplejson.loads(r.text)
-                for e in errors:
-                    form._errors[e] = form.error_class(errors[e])
+                return JsonResp(request, error=True, message=error)
 
     else:
         form = forms.SupportForm(email=email)
