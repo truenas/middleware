@@ -500,6 +500,8 @@ class DFPlugin(RRDBase):
         ids = []
         for entry in glob.glob('%s/df-*' % self._base_path):
             ident = entry.split('-', 1)[-1]
+            if not ident.startswith("mnt"):
+                continue
             if os.path.exists(os.path.join(entry, 'df_complex-free.rrd')):
                 ids.append(ident)
         return ids
