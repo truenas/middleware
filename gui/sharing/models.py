@@ -240,21 +240,6 @@ class AFP_Share(Model):
         verbose_name_plural = _("Apple (AFP) Shares")
         ordering = ["afp_name"]
 
-    class FreeAdmin:
-        icon_model = u"AppleShareIcon"
-        icon_add = u"AddAppleShareIcon"
-        icon_view = u"ViewAllAppleSharesIcon"
-        icon_object = u"AppleShareIcon"
-        advanced_fields = (
-            'afp_cachecnid',
-            'afp_sharecharset',
-            'afp_nofileid',
-            'afp_nodev',
-            'afp_nohex',
-            'afp_prodos',
-            'afp_nostat',
-        )
-
 
 class NFS_Share(Model):
     nfs_comment = models.CharField(
