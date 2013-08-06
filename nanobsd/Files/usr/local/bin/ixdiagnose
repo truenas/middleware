@@ -87,7 +87,7 @@ mkdir $dir
 
 if ! $boot_time ; then
 	$mydir/freenas-debug -A > $dir/nas-debug.log
-	tar -cf - -C /var log | tar -C $dir -xf -
+	tar -cHf - -C /var log | tar -C $dir -xf -
 fi
 
 if ! dumpfile_to_submit_exists $dumpdir ; then
