@@ -79,8 +79,6 @@ _interface_config()
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
 	local vlan_vint vlan_pint vlan_tag
 
-	ipv6_interfaces=""
-
 	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` -eq 0 ]; then
 		echo "ifconfig_DEFAULT=\"DHCP\""
 	fi
@@ -113,37 +111,34 @@ _interface_config()
 		fi
 		echo \"
 
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_v4address, alias_v4netmaskbit, alias_v6address, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
+		local aliases has_ipv6
+		aliases=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_v4address, alias_v4netmaskbit, alias_v6address, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
 		while read alias_id v4addr v4netmask v6addr v6netmask; do
-			eval count_v4=\${counter_${interface}_v4:-0}
-			eval count_v6=\${counter_${interface}_v6:-0}
+			eval counter=\${counter_${interface}:-0}
 			if [ -n "${v4addr}" ]; then
-				echo "ifconfig_${interface}_alias${count_v4}=\"inet ${v4addr}/${v4netmask}\""
-				eval "counter_${interface}_v4=\$((count_v4+1))"
+				echo "ifconfig_${interface}_alias${counter}=\"inet ${v4addr}/${v4netmask}\""
+				eval "counter_${interface}=\$((counter+1))"
 			fi
 			if [ -n "${v6addr}" ]; then
-				echo "ipv6_ifconfig_${interface}_alias${count_v6}=\"inet6 ${v6addr}/${v6netmask}\""
-				eval "counter_${interface}_v6=\$((count_v6+1))"
+				echo "ifconfig_${interface}_alias${counter}=\"inet6 ${v6addr}/${v6netmask}\""
+				eval "counter_${interface}=\$((counter+1))"
 			fi
-		done
+		done)
+		echo ${aliases}
+		has_ipv6=$(echo ${aliases}|grep -c inet6)
 
 		if [ "${doipv6auto}" = "0" ]; then
 			if [ -n "${ipv6addr}" ]; then
-				echo ipv6_ifconfig_${interface}=\"${ipv6addr}/${ipv6netmask}\"
-				ipv6_interfaces="${ipv6_interfaces} ${interface}"
+				echo ifconfig_${interface}_ipv6=\"${ipv6addr}/${ipv6netmask}\"
+			elif [ ${has_ipv6} -gt 0 ]; then
+				echo ifconfig_${interface}_ipv6=\"inet6\"
 			fi
 		else
-			ipv6_interfaces="${ipv6_interfaces} ${interface}"
+			echo ifconfig_${interface}_ipv6=\"inet6 auto_linklocal\"
 		fi
 		if [ -n "${lagg_id}" ]; then
 			cloned_interfaces="${cloned_interfaces} ${interface}"
 			echo "cloned_interfaces=\"${cloned_interfaces}\""
-		fi
-		# TODO: Since the variable exists only in the subshell, we
-		# have to make a workaround.
-		if [ -n "${ipv6_interfaces}" ]; then
-			echo "ipv6_enable=\"YES\""
-			echo "ipv6_network_interfaces=\"lo0${ipv6_interfaces}\""
 		fi
 	done
 
