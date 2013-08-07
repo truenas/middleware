@@ -41,6 +41,7 @@ from django.forms import FileField
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.translation import ugettext_lazy as _
+from django.utils import simplejson
 
 from dojango import forms
 from freenasUI import choices
@@ -1155,3 +1156,33 @@ class InitShutdownForm(ModelForm):
         if _type == 'script' and not val:
             raise forms.ValidationError(_("This field is required"))
         return val
+
+
+class RegistrationForm(ModelForm):
+
+    class Meta:
+        model = models.Registration
+
+    def save(self):
+        super(RegistrationForm, self).save()
+        registration_info = {
+            'reg_firstname': None,
+            'reg_lastname': None,
+            'reg_company': None,
+            'reg_address': None,
+            'reg_city': None,
+            'reg_state': None,
+            'reg_zip': None,
+            'reg_email': None,
+            'reg_homephone': None,
+            'reg_cellphone': None,
+            'reg_workphone': None
+        }
+
+        for key in registration_info:
+            if self.cleaned_data[key]:
+                registration_info[key] = str(self.cleaned_data[key])
+
+        f = open("/usr/local/etc/registration", "w")
+        f.write(simplejson.dumps(registration_info))
+        f.close()

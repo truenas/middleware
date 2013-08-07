@@ -36,16 +36,28 @@ from django.utils.translation import ugettext as _
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.support import forms, models
+from freenasUI.system.models import Registration
 
 from tempfile import NamedTemporaryFile
 
 log = logging.getLogger("support.views")
 
 def index(request):
+    registered = False
+
     try:
         ticket = models.Support.objects.order_by("-id")[0]
+
     except IndexError:
         ticket = models.Support.objects.create()
+
+    try:
+        registration = Registration.objects.all()[0]
+        registered = True
+
+    except:
+        registration = None
+        registered = False
 
     if request.method == "POST":
         form = forms.SupportForm(request.POST)
@@ -57,18 +69,18 @@ def index(request):
             }
 
             try:
-                f = NamedTemporaryFile(delete=False)
-                f.write(simplejson.dumps(support_info))
-                f.close()
+                fsi = NamedTemporaryFile(delete=False)
+                fsi.write(simplejson.dumps(support_info))
+                fsi.close()
 
-                args = ["/usr/local/bin/ixdiagnose", "-F", "-t", f.name]
+                args = ["/usr/local/bin/ixdiagnose", "-F", "-t", fsi.name]
                 p1 = pipeopen(string.join(args, ' '), allowfork=True)
                 p1.communicate()
 
+                os.unlink(fsi.name)
+
             except Exception as e:
                 error = e
-
-            os.unlink(f.name)
 
             if not error:
                 return JsonResp(request, message=_("Support request successfully sent"))
@@ -79,5 +91,6 @@ def index(request):
         form = forms.SupportForm()
 
     return render(request, "support/index.html", {
-        'form': form
+        'form': form,
+        'registered': registered
     })

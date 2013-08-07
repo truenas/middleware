@@ -104,6 +104,14 @@ if $has_ticket_info ; then
 	cp $ticket_info "$dir/ticket_info.json"
 fi
 
+if [ -f /etc/hostid ] ; then
+	cp /etc/hostid "$dir/hostid"
+fi
+
+if [ -f /usr/local/etc/registration ] ; then
+	cp /usr/local/etc/registration "$dir/registration.json"
+fi
+
 tar -C $dir/.. -cHzf $dir/../ixdiagnose.tgz ixdiagnose
 $mydir/crashuploader $topdir/ixdiagnose.tgz
 if [ "$actualdump" != "" ] ; then

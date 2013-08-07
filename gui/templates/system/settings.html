@@ -8,4 +8,6 @@
     </div>
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "SSL" %}', doLayout:false {% if focus_form == "ssl" %}, selected:true{% endif %}, href: '{{ ssl.get_edit_url }}?inline=true', refreshOnShow: true" class="objrefresh">
     </div>
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Registration" %}', doLayout:false {% if focus_form == "registration" %}, selected:true{% endif %}, href: '{% if registration %}{% url "freeadmin_system_registration_edit" oid=registration.id %}{% else %}{% url "freeadmin_system_registration_add" %}{% endif %}?inline=true', refreshOnShow: true" class="objrefresh">
+    </div>
 </div>

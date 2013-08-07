@@ -215,11 +215,17 @@ def settings(request):
     except:
         advanced = None
 
+    try:
+        registration = models.Registration.objects.order_by("-id")[0]
+    except:
+        registration = None
+
     return render(request, 'system/settings.html', {
         'settings': settings,
         'email': email,
         'ssl': ssl,
         'advanced': advanced,
+        'registration': registration,
     })
 
 
