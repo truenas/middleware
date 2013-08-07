@@ -169,8 +169,8 @@ class Volume(Model):
         from freenasUI.services.models import iSCSITargetExtent
 
         # TODO: This is ugly.
-        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
-        reloads = (False, False, False,  False)
+        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'jails')
+        reloads = (False, False, False,  False, False)
 
         n = notifier()
         if cascade:
@@ -187,7 +187,7 @@ class Volume(Model):
                     if destroy:
                         notifier().destroy_zfs_vol(zvol)
                     qs.delete()
-                reloads = map(sum, zip(reloads, (False, False, False, True)))
+                reloads = map(sum, zip(reloads, (False, False, False, True, False)))
 
         else:
 
@@ -572,6 +572,7 @@ class MountPoint(Model):
         Return a dict composed by the name of services and ids of shares
         dependent of this MountPoint
         """
+        from freenasUI.jails.models import Jails, JailsConfiguration
         from freenasUI.sharing.models import (
             CIFS_Share, AFP_Share, NFS_Share_Path
         )
@@ -582,6 +583,7 @@ class MountPoint(Model):
             'afp': [],
             'nfs': [],
             'iscsitarget': [],
+            'jails': [],
         }
 
         for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
@@ -604,6 +606,15 @@ class MountPoint(Model):
                 iscsi_target_extent_type='ZVOL')
             if qs.exists():
                 attachments['iscsitarget'].append(qs[0].id)
+
+        try:
+            jc = JailsConfiguration.objects.latest("id")
+        except:
+            jc = None
+        if jc and jc.jc_path.startswith(self.mp_path):
+            attachments['jails'].extend(
+                [j.id for j in Jails.objects.all()]
+            )
 
         return attachments
 
@@ -637,7 +648,9 @@ class MountPoint(Model):
                     id__in=attachments['iscsitarget']):
                 target.delete()
             reload_iscsi = True
-        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi)
+        reload_jails = len(attachments['jails']) > 0
+
+        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi, reload_jails)
 
     def delete(self, do_reload=True):
         if do_reload:
