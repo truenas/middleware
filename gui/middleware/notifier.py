@@ -432,6 +432,20 @@ class notifier:
                 self.__system("/usr/sbin/service netif stop")
         self.__system("/etc/netstart")
 
+    def _stop_jails(self):
+        from freenasUI.jails.models import Jails
+        for jail in Jails.objects.all():
+            Warden().stop(jail=jail.jail_host)
+
+    def _start_jails(self):
+        from freenasUI.jails.models import Jails
+        for jail in Jails.objects.all():
+            Warden().start(jail=jail.jail_host)
+
+    def _restart_jails(self):
+        self._stop_jails()
+        self._start_jails()
+
     def ifconfig_alias(self, iface, oldip=None, newip=None, oldnetmask=None, newnetmask=None):
         if not iface:
             return False
