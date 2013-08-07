@@ -529,6 +529,8 @@ class AliasForm(ModelForm):
         qs = models.Interfaces.objects.all()
         if self.instance.id:
             qs = qs.exclude(id=self.instance.alias_interface.id)
+        elif self.parent.instance.id:
+            qs = qs.exclude(id=self.parent.instance.id)
         for iface in qs:
             if iface.int_v4netmaskbit:
                 used_networks.append(
