@@ -36,34 +36,24 @@ from django.utils.translation import ugettext as _
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.support import forms, models
-from freenasUI.system.models import Email
 
 from tempfile import NamedTemporaryFile
 
 log = logging.getLogger("support.views")
 
 def index(request):
-    try: 
-        email = Email.objects.order_by("-id")[0]
-        if email:
-            email = email.em_fromemail
-    except:
-        email = None
-
     try:
         ticket = models.Support.objects.order_by("-id")[0]
     except IndexError:
         ticket = models.Support.objects.create()
 
     if request.method == "POST":
-        form = forms.SupportForm(request.POST, email=email)
+        form = forms.SupportForm(request.POST)
         if form.is_valid():
             error = None
             support_info = {
-                'support_issue': request.POST['support_issue'],
-                'support_description': request.POST['support_description'],
-                'support_type': request.POST['support_type'],
-                'support_email': request.POST['support_email']
+                'support_subject': request.POST['support_subject'],
+                'support_description': request.POST['support_description']
             }
 
             try:
@@ -71,7 +61,7 @@ def index(request):
                 f.write(simplejson.dumps(support_info))
                 f.close()
 
-                args = ["/usr/local/bin/ixdiagnose", "-t", f.name]
+                args = ["/usr/local/bin/ixdiagnose", "-F", "-t", f.name]
                 p1 = pipeopen(string.join(args, ' '), allowfork=True)
                 p1.communicate()
 
@@ -86,7 +76,7 @@ def index(request):
                 return JsonResp(request, error=True, message=error)
 
     else:
-        form = forms.SupportForm(email=email)
+        form = forms.SupportForm()
 
     return render(request, "support/index.html", {
         'form': form

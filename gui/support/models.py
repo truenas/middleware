@@ -35,25 +35,14 @@ from freenasUI.freeadmin.models import Model
 log = logging.getLogger("support.models")
 
 class Support(Model):
-    support_issue = models.CharField(
+    support_subject = models.CharField(
         max_length=50,
-        verbose_name=_("Issue"),
-        help_text=_("Support issue.")
+        verbose_name=_("Subject"),
+        help_text=_("Support subject.")
         )
     support_description = models.TextField(
         verbose_name=_("Description"),
         help_text=_("A description of the issue.")
-        )
-    support_type = models.CharField(
-        max_length=20,
-        choices=choices.SUPPORT_TYPE_CHOICES,
-        verbose_name=_("Type"),
-        help_text=_("Type type of support needed.")
-        )
-    support_email = models.CharField(
-        max_length=50,
-        verbose_name=_("Email"),
-        help_text=_("Your email address.")
         )
 
     class Meta:

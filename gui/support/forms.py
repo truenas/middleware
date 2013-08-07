@@ -37,11 +37,4 @@ class SupportForm(ModelForm):
         model = models.Support
 
     def __init__(self, *args, **kwargs):
-        email = None
-        if kwargs and 'email' in kwargs:
-            email = kwargs.pop('email', None)
-
         super(SupportForm, self).__init__(*args, **kwargs)
-
-        if email:
-            self.fields['support_email'].initial = email
