@@ -1,0 +1,119 @@
+#!/bin/sh
+
+#
+# Script to capture debug for system crash reporting.
+#
+#
+
+mydir=`dirname $0`
+
+# there is a dumpfile in /var/crash
+# sets "$actualdump" -> to $dumpdir/textdump.tar.N
+dumpfile_to_submit_exists ()
+{
+	local dumpdir=$1
+
+	# no crashdump at all
+	if [ ! -e $dumpdir/textdump.tar.last ] ; then
+		return 1
+	fi
+	actualdump=$(realpath $dumpdir/textdump.tar.last)
+	if [ $? -gt 0 ] ; then
+		echo "can not realpath $dumpdir/textdump.tar.last" >&2
+		return 2
+	fi
+
+	# dump already submitted
+	if [ -e "$actualdump.submitted" ] ; then
+		return 1
+	fi
+	return 0
+}
+
+test -e /etc/rc.conf && . /etc/rc.conf
+[ "$dumpdir" = "" ] && dumpdir="$dumpdir"
+
+boot_time=false
+force_upload=false
+has_ticket_info=false
+
+while getopts "bFt:" opt ; do
+	case "${opt}" in
+	b)
+		boot_time=true
+		;;
+	F)	force_upload=true
+		;;
+	t)	has_ticket_info=true
+		ticket_info=$OPTARG
+		;;
+	\?)	exit 2
+		;;
+	esac
+done
+
+if [ -t 1 ] && ! $boot_time && ! $force_upload ; then
+	cat <<END_TEXT
+Welcome to ixdiagnose.
+
+ixdiagnos sends iXsystems the debugging information of your
+computer.  In this mode we will send your logs and the
+contents of your diagnostics to iXsystems.
+
+Press 'Enter' to continue or ^C (control+C) to abort.
+END_TEXT
+	read dummy
+fi
+
+# during boot ix-diagnose will call us with --boot
+# if there is no crashdump, then just exit
+if $boot_time ; then
+	if ! dumpfile_to_submit_exists $dumpdir ; then
+		exit 0
+	fi
+fi
+
+set -x
+topdir=`mktemp -d -t ixdiagnose`
+if [ $? -gt 0 ] ; then
+	echo "can't make temp directory"
+	exit 1
+fi
+trap "rm -rf $topdir" EXIT
+dir=$topdir/ixdiagnose
+
+set -e
+mkdir $dir
+
+if ! $boot_time ; then
+	$mydir/freenas-debug -A > $dir/nas-debug.log
+	tar -cHf - -C /var log | tar -C $dir -xf -
+fi
+
+if ! dumpfile_to_submit_exists $dumpdir ; then
+	if [ $? = 2 ] ; then
+		exit 2
+	fi
+else
+	cp $dumpdir/textdump.tar.last "$dir"
+	cp $dumpdir/info.last "$dir"
+fi
+
+if $has_ticket_info ; then
+	TICKET_ARG="-t $ticket_info"
+	cp $ticket_info "$dir/ticket_info.json"
+fi
+
+if [ -f /etc/hostid ] ; then
+	cp /etc/hostid "$dir/hostid"
+fi
+
+if [ -f /usr/local/etc/registration ] ; then
+	cp /usr/local/etc/registration "$dir/registration.json"
+fi
+
+tar -C $dir/.. -cHzf $dir/../ixdiagnose.tgz ixdiagnose
+$mydir/crashuploader $topdir/ixdiagnose.tgz
+if [ "$actualdump" != "" ] ; then
+	touch $actualdump.submitted
+fi
