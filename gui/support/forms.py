@@ -24,13 +24,11 @@
 #
 #####################################################################
 import logging
-import requests
 
 from dojango import forms
 
 from freenasUI.common.forms import ModelForm
 from freenasUI.support import models
-from freenasUI.support.supportcaptcha import SupportCaptchaField
 
 log = logging.getLogger("support.forms")
 
@@ -39,13 +37,4 @@ class SupportForm(ModelForm):
         model = models.Support
 
     def __init__(self, *args, **kwargs):
-        email = None
-        if kwargs and 'email' in kwargs:
-            email = kwargs.pop('email', None)
-
         super(SupportForm, self).__init__(*args, **kwargs)
-
-        self.fields['captcha'] = SupportCaptchaField()
-
-        if email:
-            self.fields['support_email'].initial = email

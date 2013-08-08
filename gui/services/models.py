@@ -616,6 +616,12 @@ class iSCSITargetPortalIP(Model):
             )
         verbose_name = _("Portal IP")
 
+    def __unicode__(self):
+        return "%s:%d" % (
+            self.iscsi_target_portalip_ip,
+            self.iscsi_target_portalip_port,
+        )
+
 
 class iSCSITargetAuthorizedInitiator(Model):
     iscsi_target_initiator_tag = models.IntegerField(

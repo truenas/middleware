@@ -94,27 +94,9 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
+import sysctl
 
 log = logging.getLogger('middleware.notifier')
-
-
-class Byte(object):
-    """
-    Used in sysctl hack to return a byte array
-    """
-
-    def __init__(self, array, as_string=True):
-        self.array = array
-        self.as_string = as_string
-
-    @property
-    def value(self):
-        array = ""
-        for byte in self.array:
-            if byte == 0 and self.as_string:
-                break
-            array += chr(byte)
-        return array
 
 
 class StartNotify(threading.Thread):
@@ -423,7 +405,7 @@ class notifier:
         ipv6_interfaces = c.fetchone()[0]
         if ipv6_interfaces > 0:
             try:
-                auto_linklocal = self.sysctl("net.inet6.ip6.auto_linklocal", _type='INT')
+                auto_linklocal = self.sysctl("net.inet6.ip6.auto_linklocal")
             except AssertionError:
                 auto_linklocal = 0
             if auto_linklocal == 0:
@@ -431,6 +413,20 @@ class notifier:
                 self.__system("/usr/sbin/service autolink auto_linklocal quietstart")
                 self.__system("/usr/sbin/service netif stop")
         self.__system("/etc/netstart")
+
+    def _stop_jails(self):
+        from freenasUI.jails.models import Jails
+        for jail in Jails.objects.all():
+            Warden().stop(jail=jail.jail_host)
+
+    def _start_jails(self):
+        from freenasUI.jails.models import Jails
+        for jail in Jails.objects.all():
+            Warden().start(jail=jail.jail_host)
+
+    def _restart_jails(self):
+        self._stop_jails()
+        self._start_jails()
 
     def ifconfig_alias(self, iface, oldip=None, newip=None, oldnetmask=None, newnetmask=None):
         if not iface:
@@ -1338,7 +1334,24 @@ class notifier:
         self.__system("swapoff -a")
         device_list = []
 
-        for vgrp in groups.values():
+        """
+        stripe vdevs must come first because of the ordering in the
+        zpool create command.
+
+        e.g. zpool create tank ada0 mirror ada1 ada2
+             vs
+             zpool create tank mirror ada1 ada2 ada0
+
+        For further details see #2388
+        """
+        def stripe_first(a, b):
+            if a['type'] == 'stripe':
+                return -1
+            if b['type'] == 'stripe':
+                return 1
+            return 0
+
+        for vgrp in sorted(groups.values(), cmp=stripe_first):
             vgrp_type = vgrp['type']
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
@@ -2265,7 +2278,7 @@ class notifier:
             "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, ))
         #prov = doc.xpathEval("//provider[@id = '%s']" % pref[0].content)
         if not pref:
-            proc = self.__pipeopen("/sbin/mdconfig -a -t swap -s 2800m -o reserve")
+            proc = self.__pipeopen("/sbin/mdconfig -a -t swap -s 2800m")
             mddev, err = proc.communicate()
             if proc.returncode != 0:
                 raise MiddlewareError("Could not create memory device: %s" % err)
@@ -4083,96 +4096,14 @@ class notifier:
 
         return 0 < pipe.communicate()[0].find(module + '.ko')
 
-
-    def zfs_get_version(self):
-        """Get the ZFS (SPA) version reported via zfs(4).
-
-        This allows us to better tune warning messages and provide
-        conditional support for features in the GUI/CLI.
-
-        Returns:
-            An integer corresponding to the version retrieved from zfs(4) or
-            0 if the module hasn't been loaded.
-
-        Raises:
-            ValueError: the ZFS version could not be parsed from sysctl(8).
+    def sysctl(self, name):
         """
-
-        if not self.kern_module_is_loaded('zfs'):
-            return 0
-
-        try:
-            version = self.sysctl('vfs.zfs.version.spa', _type='INT')
-        except ValueError, ve:
-            raise ValueError('Could not determine ZFS version: %s'
-                             % (str(ve), ))
-        if 0 < version:
-            return version
-        raise ValueError('Invalid ZFS (SPA) version: %d' % (version, ))
-
-    def __sysctl_error(self, libc, name):
-        errloc = getattr(libc,'__error')
-        errloc.restype = ctypes.POINTER(ctypes.c_int)
-        error = errloc().contents.value
-        if error == errno.ENOENT:
-            msg = "The name is unknown."
-        elif error == errno.ENOMEM:
-            msg = "The length pointed to by oldlenp is too short to hold " \
-                  "the requested value."
-        else:
-            msg = "Unknown error (%d)" % (error, )
-        raise AssertionError("Sysctl by name (%s) failed: %s" % (name, msg))
-
-    def sysctl(self, name, value=None, osize=None, _type='CHAR'):
-        """Get any sysctl value using libc call
-
-        This cut down the overhead of launching subprocesses
-
-        XXX: reimplment with a C extension because ctypes.CDLL can be leaky and
-             has a tendency to crash given the right inputs.
-
-        Returns:
-            The value of the given ``name'' sysctl
-
-        Raises:
-            AssertionError: sysctlbyname(3) returned an error
+        Tiny wrapper for sysctl module for compatibility
         """
-
-        log.debug("sysctlbyname: %s", name)
-
-        if value:
-            #TODO: set sysctl
-            raise NotImplementedError
-
-        libc = ctypes.CDLL('libc.so.7')
-        size = ctypes.c_size_t()
-
-        if _type in ('CHAR', 'VOID'):
-            if osize is None:
-                #We need find out the size
-                rv = libc.sysctlbyname(str(name), None, ctypes.byref(size), None, 0)
-                if rv != 0:
-                    self.__sysctl_error(libc, name)
-            else:
-                size.value = osize
-
-            arg = (ctypes.c_ubyte * size.value)()
-            buf = Byte(arg)
-
-            if _type == 'VOID':
-                buf.as_string = False
-
-        else:
-            buf = ctypes.c_int()
-            size.value = ctypes.sizeof(buf)
-            arg = ctypes.byref(buf)
-
-        # Grab the sysctl value
-        rv = libc.sysctlbyname(str(name), arg, ctypes.byref(size), None, 0)
-        if rv != 0:
-            self.__sysctl_error(libc, name)
-
-        return buf.value
+        sysc = sysctl.filter(unicode(name))
+        if sysctl:
+            return sysc[0].value
+        raise ValueError(name)
 
     def staticroute_delete(self, sr):
         """

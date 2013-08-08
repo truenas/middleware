@@ -940,3 +940,72 @@ class InitShutdown(Model):
         icon_object = u"TunableIcon"
         icon_add = u"AddTunableIcon"
         icon_view = u"ViewTunableIcon"
+
+
+class Registration(Model):
+    reg_firstname = models.CharField(
+            max_length=120,
+            verbose_name=_("First Name")
+            )
+    reg_lastname = models.CharField(
+            max_length=120,
+            verbose_name=_("Last Name")
+            )
+    reg_company = models.CharField(
+            max_length=120,
+            verbose_name=_("Company"),
+            blank=True,
+            null=True
+            )
+    reg_address = models.CharField(
+            max_length=120,
+            verbose_name=_("Address"),
+            blank=True,
+            null=True
+            )
+    reg_city = models.CharField(
+            max_length=120,
+            verbose_name=_("City"),
+            blank=True,
+            null=True
+            )
+    reg_state = models.CharField(
+            max_length=120,
+            verbose_name=_("State"),
+            blank=True,
+            null=True
+            )
+    reg_zip = models.CharField(
+            max_length=120,
+            verbose_name=_("Zip"),
+            blank=True,
+            null=True
+            )
+    reg_email = models.CharField(
+            max_length=120,
+            verbose_name=_("Email")
+            )
+    reg_homephone = models.CharField(
+            max_length=120,
+            verbose_name=_("Home Phone"),
+            blank=True,
+            null=True
+            )
+    reg_cellphone = models.CharField(
+            max_length=120,
+            verbose_name=_("Cell Phone"),
+            blank=True,
+            null=True
+            )
+    reg_workphone = models.CharField(
+            max_length=120,
+            verbose_name=_("Work Phone"),
+            blank=True,
+            null=True
+            )
+
+    class Meta:
+        verbose_name = _("Registration")
+
+    class FreeAdmin:
+        deletable = False

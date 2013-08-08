@@ -162,3 +162,13 @@ class bsdGroupMembership(Model):
         bsdUsers,
         verbose_name=_("User"),
     )
+
+    class Meta:
+        verbose_name = _("Group Membership")
+        verbose_name_plural = _("Group Memberships")
+
+    def __unicode__(self):
+        return "%s:%s" % (
+            self.bsdgrpmember_group.bsdgrp_group,
+            self.bsdgrpmember_user.bsdusr_username,
+        )

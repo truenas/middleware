@@ -215,11 +215,17 @@ def settings(request):
     except:
         advanced = None
 
+    try:
+        registration = models.Registration.objects.order_by("-id")[0]
+    except:
+        registration = None
+
     return render(request, 'system/settings.html', {
         'settings': settings,
         'email': email,
         'ssl': ssl,
         'advanced': advanced,
+        'registration': registration,
     })
 
 
@@ -645,7 +651,7 @@ def terminal(request):
             alive = multiplex.proc_keepalive(sid, jid, shell, w, h)
             break
         except Exception, e:
-            log.error("%s", e)
+            log.debug("proc_keepalive - %r: %s", e)
             notifier().restart("webshell")
             time.sleep(0.5)
 

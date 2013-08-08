@@ -2,6 +2,7 @@
 
 import requests
 import sys
+import os
 
 if len(sys.argv) < 2:
 	print "Usage: %s file" % sys.argv[0]
@@ -10,5 +11,12 @@ if len(sys.argv) < 2:
 url = 'http://ext-data.ixsystems.com/uploader/list/'
 files = {'docfile': open(sys.argv[1], 'rb')}
 
-r= requests.post(url, files=files)
+data = None
+if os.path.isfile("/etc/hostid"):
+    f = open("/etc/hostid")
+    hostid = f.read().strip()
+    f.close() 
+    data = { 'hostid': hostid }
+
+r = requests.post(url, data=data, files=files)
 #print r.text

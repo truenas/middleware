@@ -43,6 +43,7 @@
     </tr>
     {% endfor %}
     {% endblock %}
+    {% block buttons %}
     <tr><td colspan="2">
         <button id="btn_{{ verbose_name}}_Add" class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
             <script type="dojo/method">
@@ -62,5 +63,6 @@
         {% block buttons_extra %}
         {% endblock %}
     </td></tr>
+    {% endblock %}
 </table>
 </form>

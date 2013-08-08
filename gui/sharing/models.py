@@ -95,17 +95,6 @@ class CIFS_Share(Model):
         verbose_name_plural = _("Windows (CIFS) Shares")
         ordering = ["cifs_name"]
 
-    class FreeAdmin:
-        icon_model = u"WindowsShareIcon"
-        icon_add = u"AddWindowsShareIcon"
-        icon_view = u"ViewAllWindowsSharesIcon"
-        icon_object = u"WindowsShareIcon"
-        advanced_fields = (
-            'cifs_hostsallow',
-            'cifs_hostsdeny',
-            'cifs_auxsmbconf',
-        )
-
 
 class AFP_Share(Model):
     afp_name = models.CharField(
@@ -239,21 +228,6 @@ class AFP_Share(Model):
         verbose_name = _("Apple (AFP) Share")
         verbose_name_plural = _("Apple (AFP) Shares")
         ordering = ["afp_name"]
-
-    class FreeAdmin:
-        icon_model = u"AppleShareIcon"
-        icon_add = u"AddAppleShareIcon"
-        icon_view = u"ViewAllAppleSharesIcon"
-        icon_object = u"AppleShareIcon"
-        advanced_fields = (
-            'afp_cachecnid',
-            'afp_sharecharset',
-            'afp_nofileid',
-            'afp_nodev',
-            'afp_nohex',
-            'afp_prodos',
-            'afp_nostat',
-        )
 
 
 class NFS_Share(Model):

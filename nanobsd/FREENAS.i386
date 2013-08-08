@@ -145,6 +145,7 @@ device		amd		# AMD 53C974 (Tekram DC-390(T))
 device		hptiop		# Highpoint RocketRaid 3xxx series
 device		isci		# Intel C600 SAS controllers
 device		isp		# Qlogic family
+options		ISP_TARGET_MODE
 #device		ispfw		# Firmware for QLogic HBAs- normally a module
 device		mpt		# LSI-Logic MPT-Fusion
 device		mps		# LSI-Logic MPT-Fusion 2 family

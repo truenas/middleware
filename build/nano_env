@@ -113,18 +113,19 @@ NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 : ${NANO_LOCAL_DIRS=""}
 
 # Modules to build with the kernel.
-NANO_MODULES="cxgb cxgbe cxgbe/firmware cyclic dtrace ext2fs geom ipmi iscsi nfsclient krpc nfs_common nfslock tmpfs fdescfs lindev linprocfs linsysfs linux pf pflog smbfs libiconv libmchain syscons udf zfs opensolaris usb/xhci"
+NANO_MODULES="ctl cxgb cxgbe cxgbe/firmware cyclic dtrace ext2fs geom ipmi iscsi nfsclient krpc nfs_common nfslock tmpfs fdescfs lindev linprocfs linsysfs linux pf pflog smbfs libiconv libmchain syscons udf zfs opensolaris usb/xhci"
 
 
 # Feature sets to enable as part of the build.
-SW_FEATURES="REPORTING"
+SW_FEATURES="DEBUG REPORTING"
 
 # The GEOM label to use.
 NANO_LABEL="FreeNAS"
 
 # Version of the software to use. This should be 8.2-BETA1, 9.0-PRERELEASE,
 # etc.
-VERSION="9.1.1-ALPHA"
+VERSION="9.2.0-ALPHA"
+export VERSION
 
 # FreeBSD release we are using for this release
 : ${FREEBSD_RELEASE_VERSION:="9.1-RELEASE"}
@@ -174,9 +175,15 @@ export NANO_XZ
 
 PKGCACHE=${FREENAS_PKGCACHE="/freenas-build/freenas-packages"}
 DISTCACHE=${FREENAS_DISTCACHE="/freenas-build/freenas-distfiles"}
+export PKGCACHE DISTCACHE
+
 FREEBSD_DISTCACHE=${FREEBSD_DISTCACHE="/freenas-build/freebsd-distfiles"}
 FREEBSD_PKGCACHE=${FREEBSD_PKGCACHE="/freenas-build/freebsd-packages"}
 FREEBSD_PKGCACHE_32=${FREEBSD_PKGCACHE_32="/freenas-build/freebsd-packages-32"}
+export FREEBSD_DISTCACHE FREEBSD_PKGCACHE FREEBSD_PKGCACHE_32
+
+: ${FREENAS_PLUGINCACHE:="/freenas-build/freenas-plugins"}
+export FREENAS_PLUGINCACHE
 
 #
 # FTP mirror where we fetch files for jails
