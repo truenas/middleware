@@ -72,6 +72,7 @@ compare_project()
 #
 # See rewrite_release_phases for more details.
 readonly RELEASE_PHASES="
+STABLE
 ALPHA
 BETA
 RC
