@@ -54,10 +54,22 @@ then
 fi
 export PLUGINPORT
 
+#
+# Filesystem cache for null mounts
+#
+PLUGINPKGCACHEDIR="${FREENAS_PLUGINCACHE}/${PLUGIN}/${NANO_ARCH}/packages"
+mkdir -p "${PLUGINPKGCACHEDIR}"
+if [ "$?" != "0" ]
+then
+	echo "${PLUGIN}: unable to create ${PLUGINPKGCACHEDIR}!"
+	exit 1
+fi
+export PLUGINPKGCACHEDIR
+
 # 
 # Where to cache packages
 # 
-PLUGINPKGDIR="${PBI_PKGDIR}/${PLUGIN}-${NANO_ARCH}"
+PLUGINPKGDIR="${NANO_OBJ}/packages"
 mkdir -p "${PLUGINPKGDIR}"
 if [ "$?" != "0" ]
 then
@@ -67,9 +79,21 @@ fi
 export PLUGINPKGDIR
 
 #
+# Filesystem cache for PBI's
+#
+PLUGINPBICACHEDIR="${FREENAS_PLUGINCACHE}/${PLUGIN}/${NANO_ARCH}/pbi"
+mkdir -p "${PLUGINPBICACHEDIR}"
+if [ "$?" != "0" ]
+then
+	echo "${PLUGIN}: unable to create ${PLUGINPBICACHEDIR}!"
+	exit 1
+fi
+export PLUGINPBICACHEDIR
+
+#
 # Where to put the PBI
 #
-PLUGINOUT="${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}"
+PLUGINOUT="${AVATAR_ROOT}/${PLUGIN}/${NANO_ARCH}/pbi"
 mkdir -p "${PLUGINOUT}"
 if [ "$?" != "0" ]
 then
@@ -114,7 +138,7 @@ export PLUGINCONF
 #
 # logfile for build
 #
-PLUGINLOG="${PLUGINOUT}/${PLUGIN}.log"
+PLUGINLOG="${NANO_OBJ}/${PLUGIN}.log"
 export PLUGINLOG
 
 #
@@ -196,6 +220,8 @@ export NANO_NAME NANO_IMGNAME
 
 last_orders()
 {
+	local ret=0
+
 	if [ "${transmission_FORCE}" = "1" -o ! -f "${PLUGINOUT}/${PBIFILE}" ]
 	then
 		pprint 2 "Creating PBI"
@@ -207,7 +233,27 @@ last_orders()
 			PBI_ARCH_FLAGS="-32"
 		fi
 
-		${PBIMAKEPORT} -d "${PLUGINPORTSDIR}" \
+		local portsdir="${AVATAR_ROOT}/FreeBSD/ports"
+
+		mkdir -p "${NANO_OBJ}/ports"
+		mount_nullfs "${portsdir}" "${NANO_OBJ}/ports"
+
+		if [ -n "${DISTCACHE}" -a -d "${DISTCACHE}" ]
+		then
+			mount_nullfs "${DISTCACHE}" "${NANO_OBJ}/ports/distfiles"
+		fi
+
+		if [ -n "${PLUGINPKGCACHEDIR}" -a -d "${PLUGINPKGCACHEDIR}" ]
+		then
+			mount_nullfs "${PLUGINPKGCACHEDIR}" "${PLUGINPKGDIR}"
+		fi
+
+		#if [ -n "${PLUGINPBICACHEDIR}" -a -d "${PLUGINPBICACHEDIR}" ]
+		#then
+		#	mount_nullfs "${PLUGINPBICACHEDIR}" "${PLUGINOUT}"
+		#fi
+
+		${PBIMAKEPORT} -d "${NANO_OBJ}/ports" \
 			-c "${PLUGINCONFDIR}" \
 			-o "${PLUGINOUT}" \
 			--pkgdir "${PLUGINPKGDIR}" \
@@ -215,7 +261,14 @@ last_orders()
 		if [ "$?" != "0" ]
 		then
 			echo "${PLUGIN}: failed to build PBI!"
-			exit 1
+			ret=1
 		fi
+
+		#umount -f "${PLUGINOUT}"
+		umount -f "${PLUGINPKGDIR}"
+		umount -f "${NANO_OBJ}/ports/distfiles"
+		umount -f "${NANO_OBJ}/ports"
 	fi
+
+	exit ${ret}
 }
