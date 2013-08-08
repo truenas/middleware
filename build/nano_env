@@ -125,6 +125,7 @@ NANO_LABEL="FreeNAS"
 # Version of the software to use. This should be 8.2-BETA1, 9.0-PRERELEASE,
 # etc.
 VERSION="9.2.0-ALPHA"
+export VERSION
 
 # FreeBSD release we are using for this release
 : ${FREEBSD_RELEASE_VERSION:="9.1-RELEASE"}

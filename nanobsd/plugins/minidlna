@@ -58,7 +58,7 @@ export PLUGINPORT
 #
 # Filesystem cache for null mounts
 #
-PLUGINPKGCACHEDIR="${FREENAS_PLUGINCACHE}/${PLUGIN}/${NANO_ARCH}/packages"
+PLUGINPKGCACHEDIR="${FREENAS_PLUGINCACHE}/${VERSION}/${PLUGIN}/${NANO_ARCH}/packages"
 mkdir -p "${PLUGINPKGCACHEDIR}"
 if [ "$?" != "0" ]
 then
@@ -82,7 +82,7 @@ export PLUGINPKGDIR
 #
 # Filesystem cache for PBI's
 #
-PLUGINPBICACHEDIR="${FREENAS_PLUGINCACHE}/${PLUGIN}/${NANO_ARCH}/pbi"
+PLUGINPBICACHEDIR="${FREENAS_PLUGINCACHE}/${VERSION}/${PLUGIN}/${NANO_ARCH}/pbi"
 mkdir -p "${PLUGINPBICACHEDIR}"
 if [ "$?" != "0" ]
 then
