@@ -117,7 +117,7 @@ NANO_MODULES="ctl cxgb cxgbe cxgbe/firmware cyclic dtrace ext2fs geom ipmi iscsi
 
 
 # Feature sets to enable as part of the build.
-SW_FEATURES="REPORTING"
+SW_FEATURES="DEBUG REPORTING"
 
 # The GEOM label to use.
 NANO_LABEL="FreeNAS"
