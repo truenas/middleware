@@ -4096,33 +4096,6 @@ class notifier:
 
         return 0 < pipe.communicate()[0].find(module + '.ko')
 
-
-    def zfs_get_version(self):
-        """Get the ZFS (SPA) version reported via zfs(4).
-
-        This allows us to better tune warning messages and provide
-        conditional support for features in the GUI/CLI.
-
-        Returns:
-            An integer corresponding to the version retrieved from zfs(4) or
-            0 if the module hasn't been loaded.
-
-        Raises:
-            ValueError: the ZFS version could not be parsed from sysctl(8).
-        """
-
-        if not self.kern_module_is_loaded('zfs'):
-            return 0
-
-        try:
-            version = self.sysctl('vfs.zfs.version.spa', _type='INT')
-        except ValueError, ve:
-            raise ValueError('Could not determine ZFS version: %s'
-                             % (str(ve), ))
-        if 0 < version:
-            return version
-        raise ValueError('Invalid ZFS (SPA) version: %d' % (version, ))
-
     def sysctl(self, name):
         """
         Tiny wrapper for sysctl module for compatibility
