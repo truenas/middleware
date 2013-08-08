@@ -94,27 +94,9 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
+import sysctl
 
 log = logging.getLogger('middleware.notifier')
-
-
-class Byte(object):
-    """
-    Used in sysctl hack to return a byte array
-    """
-
-    def __init__(self, array, as_string=True):
-        self.array = array
-        self.as_string = as_string
-
-    @property
-    def value(self):
-        array = ""
-        for byte in self.array:
-            if byte == 0 and self.as_string:
-                break
-            array += chr(byte)
-        return array
 
 
 class StartNotify(threading.Thread):
@@ -423,7 +405,7 @@ class notifier:
         ipv6_interfaces = c.fetchone()[0]
         if ipv6_interfaces > 0:
             try:
-                auto_linklocal = self.sysctl("net.inet6.ip6.auto_linklocal", _type='INT')
+                auto_linklocal = self.sysctl("net.inet6.ip6.auto_linklocal")
             except AssertionError:
                 auto_linklocal = 0
             if auto_linklocal == 0:
@@ -4141,69 +4123,14 @@ class notifier:
             return version
         raise ValueError('Invalid ZFS (SPA) version: %d' % (version, ))
 
-    def __sysctl_error(self, libc, name):
-        errloc = getattr(libc,'__error')
-        errloc.restype = ctypes.POINTER(ctypes.c_int)
-        error = errloc().contents.value
-        if error == errno.ENOENT:
-            msg = "The name is unknown."
-        elif error == errno.ENOMEM:
-            msg = "The length pointed to by oldlenp is too short to hold " \
-                  "the requested value."
-        else:
-            msg = "Unknown error (%d)" % (error, )
-        raise AssertionError("Sysctl by name (%s) failed: %s" % (name, msg))
-
-    def sysctl(self, name, value=None, osize=None, _type='CHAR'):
-        """Get any sysctl value using libc call
-
-        This cut down the overhead of launching subprocesses
-
-        XXX: reimplment with a C extension because ctypes.CDLL can be leaky and
-             has a tendency to crash given the right inputs.
-
-        Returns:
-            The value of the given ``name'' sysctl
-
-        Raises:
-            AssertionError: sysctlbyname(3) returned an error
+    def sysctl(self, name):
         """
-
-        log.debug("sysctlbyname: %s", name)
-
-        if value:
-            #TODO: set sysctl
-            raise NotImplementedError
-
-        libc = ctypes.CDLL('libc.so.7')
-        size = ctypes.c_size_t()
-
-        if _type in ('CHAR', 'VOID'):
-            if osize is None:
-                #We need find out the size
-                rv = libc.sysctlbyname(str(name), None, ctypes.byref(size), None, 0)
-                if rv != 0:
-                    self.__sysctl_error(libc, name)
-            else:
-                size.value = osize
-
-            arg = (ctypes.c_ubyte * size.value)()
-            buf = Byte(arg)
-
-            if _type == 'VOID':
-                buf.as_string = False
-
-        else:
-            buf = ctypes.c_int()
-            size.value = ctypes.sizeof(buf)
-            arg = ctypes.byref(buf)
-
-        # Grab the sysctl value
-        rv = libc.sysctlbyname(str(name), arg, ctypes.byref(size), None, 0)
-        if rv != 0:
-            self.__sysctl_error(libc, name)
-
-        return buf.value
+        Tiny wrapper for sysctl module for compatibility
+        """
+        sysc = sysctl.filter(unicode(name))
+        if sysctl:
+            return sysc[0].value
+        raise ValueError(name)
 
     def staticroute_delete(self, sr):
         """
