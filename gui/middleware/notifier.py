@@ -1352,7 +1352,24 @@ class notifier:
         self.__system("swapoff -a")
         device_list = []
 
-        for vgrp in groups.values():
+        """
+        stripe vdevs must come first because of the ordering in the
+        zpool create command.
+
+        e.g. zpool create tank ada0 mirror ada1 ada2
+             vs
+             zpool create tank mirror ada1 ada2 ada0
+
+        For further details see #2388
+        """
+        def stripe_first(a, b):
+            if a['type'] == 'stripe':
+                return -1
+            if b['type'] == 'stripe':
+                return 1
+            return 0
+
+        for vgrp in sorted(groups.values(), cmp=stripe_first):
             vgrp_type = vgrp['type']
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
