@@ -332,6 +332,7 @@ add_port net/py-eventlet
 add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
+add_port devel/py-sysctl
 
 if [ "${DEBUG}" = 1 ]; then
 
