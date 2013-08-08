@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 8.3.1-RELEASE-p2
+Release Notes for FreeNAS 8.3.2-RELEASE
 
 *** IMPORTANT ***
 
@@ -136,6 +136,34 @@ route.
 
 The plugin jail currently doesn't work properly if the external interface is
 a vlan pseudo-device.
+
+Changes since 8.3.1-RELEASE-p2:
+
+Bugfixes
+========================
+
+1. Fix adding a hotspare to an existing volume.  Ticket #2183
+
+2. Fix a number of bugs in the volume encryption, specifically
+   in regards to replacing disks in degraded encrypted arrays and
+   handling the encryption and recovery keys in a way that doesn't
+   involve command line magic to import the volume.
+
+3. Fix the view multipath screen.  For systems with multipath capable
+   hardware, specifically SAS drives on dual expander SAS backplanes or
+   multipath attached FC LUNs the view multipath screen was not
+   displaying properly.  This error does not affect systems with SATA
+   drives or single expander SAS backplanes as this screen is hidden
+   in those cases.
+
+4. Fix a bug that prevented changing a Unix group from propigating to
+   the OS.  The GUI would allow the group name change but it would not
+   take effect on the system. Ticket #2299
+
+5. When offlining a disk from a ZFS volume the disk is offlined and the
+   swap partition if it exists is stopped, but the geli device that
+   encrypts the swap is not destroyed. Do the right thing in this case
+   and destroy the geli device when the disk is offlined. 
 
 Changes since 8.3.1-RELEASE-p1:
 
