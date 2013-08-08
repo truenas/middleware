@@ -2295,7 +2295,7 @@ class notifier:
             "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, ))
         #prov = doc.xpathEval("//provider[@id = '%s']" % pref[0].content)
         if not pref:
-            proc = self.__pipeopen("/sbin/mdconfig -a -t swap -s 2800m -o reserve")
+            proc = self.__pipeopen("/sbin/mdconfig -a -t swap -s 2800m")
             mddev, err = proc.communicate()
             if proc.returncode != 0:
                 raise MiddlewareError("Could not create memory device: %s" % err)
