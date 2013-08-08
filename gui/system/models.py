@@ -954,29 +954,36 @@ class Registration(Model):
     reg_company = models.CharField(
             max_length=120,
             verbose_name=_("Company"),
-            blank=True
+            blank=True,
+            null=True
             )
     reg_address = models.CharField(
             max_length=120,
-            verbose_name=_("Address")
+            verbose_name=_("Address"),
+            blank=True,
+            null=True
             )
     reg_city = models.CharField(
             max_length=120,
-            verbose_name=_("City")
+            verbose_name=_("City"),
+            blank=True,
+            null=True
             )
     reg_state = models.CharField(
             max_length=120,
-            verbose_name=_("State")
+            verbose_name=_("State"),
+            blank=True,
+            null=True
             )
     reg_zip = models.CharField(
             max_length=120,
-            verbose_name=_("Zip")
+            verbose_name=_("Zip"),
+            blank=True,
+            null=True
             )
     reg_email = models.CharField(
             max_length=120,
-            verbose_name=_("Email"),
-            blank=True,
-            null=True
+            verbose_name=_("Email")
             )
     reg_homephone = models.CharField(
             max_length=120,

@@ -1163,6 +1163,9 @@ class RegistrationForm(ModelForm):
     class Meta:
         model = models.Registration
 
+    def __init__(self, *args, **kwargs):
+        super(RegistrationForm, self).__init__(*args, **kwargs)
+
     def save(self):
         super(RegistrationForm, self).save()
         registration_info = {
