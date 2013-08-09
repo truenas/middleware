@@ -129,12 +129,22 @@ class Plugin(object):
 
 class Available(object):
 
+    __cache = None
+
+    def __init__(self):
+        self.__cache = dict()
+
     def get_local(self):
         results = []
 
         return results
 
-    def get_remote(self, url):
+    def get_remote(self, url, cache=False):
+
+        if cache and url in self.__cache:
+            log.debug("Using cached results for %s", url)
+            return self.__cache.get(url)
+
         results = []
 
         log.debug("Retrieving available plugins from %s", url)
@@ -156,6 +166,8 @@ class Available(object):
                 results.append(item)
             except Exception, e:
                 log.debug("Failed to get remote item: %s", e)
+
+        self.__cache[url] = results
 
         return results
 
