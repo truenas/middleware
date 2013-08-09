@@ -1158,7 +1158,7 @@ get_packages_by_port_list()
   fi
 
   local pkgs="$(${CR} "pkg rquery '%n-%v.txz\n%dn-%dv.txz' $(cat ${list} | tr -s '\n' ' ')")"
-  pkgs=$(echo ${pkgs} | sort | uniq)
+  pkgs=$(echo ${pkgs} | tr -s " " "\n" | sort | uniq)
 
   ${CR} "mkdir -p /var/tmp/pkgs"
   mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
