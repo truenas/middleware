@@ -8,7 +8,7 @@ LOGGER=1
 
 error()
 {
-	echo >&2 "${0##*/}: ERROR: $@"
+	echo >&3 "${0##*/}: ERROR: $@"
 	exit 1
 }
 
@@ -18,7 +18,6 @@ myecho()
     _type="$1"
     shift
     echo "${0##*/}: ${_type}: $@"
-    echo "${0##*/}: ${_type}: $@" | logger
 }
 
 # verbose echo
@@ -38,8 +37,7 @@ necho()
 
 warn()
 {
-	echo >&2 "${0##*/}: WARNING: $@"
-    echo "${0##*/}: WARNING: $@" | logger
+	echo >&3 "${0##*/}: WARNING: $@"
 }
 
 sysctl_n()
@@ -72,6 +70,7 @@ compare_project()
 #
 # See rewrite_release_phases for more details.
 readonly RELEASE_PHASES="
+STABLE
 ALPHA
 BETA
 RC

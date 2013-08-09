@@ -237,6 +237,7 @@ last_orders()
 
 		mkdir -p "${NANO_OBJ}/ports"
 		mount_nullfs "${portsdir}" "${NANO_OBJ}/ports"
+		mkdir -p "${NANO_OBJ}/ports/distfiles"
 
 		if [ -n "${DISTCACHE}" -a -d "${DISTCACHE}" ]
 		then
