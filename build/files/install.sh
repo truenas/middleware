@@ -388,10 +388,71 @@ menu_shutdown()
     halt -p >/dev/null
 }
 
+#
+# Use the following kernel environment variables
+#
+#  test.nfs_mount -  The NFS directory to mount to get
+#                    access to the test script.
+#  test.script    -  The path of the test script to run,
+#                    relative to the NFS mount directory.
+#  test.run_tests_on_boot - If set to 'yes', then run the
+#                           tests on bootup, before displaying
+#                           the install menu. 
+#
+#  For example, if the following variables are defined:
+#
+#    test.nfs_mount=10.5.0.24:/usr/jails/pxeserver/tests
+#    test.script=/tests/run_tests.sh
+#
+#  Then the system will execute the following:
+#     mount -t nfs 10.5.0.24:/usr/jails/pxeserver/tests /tmp/tests
+#     /tmp/tests/tests/run_tests.sh
+menu_test()
+{
+    local _script
+    local _nfs_mount
+
+    _script="$(kenv test.script)"
+    _nfs_mount="$(kenv test.nfs_mount)"
+    if [ -z "$_script" -o -z "$_nfs_mount"  ]; then
+        return
+    fi
+  
+    if [ -e /tmp/tests ]; then
+        umount /tmp/tests 2> /dev/null
+        rm -fr /tmp/tests
+    fi 
+    mkdir -p /tmp/tests
+    if [ ! -d /tmp/tests ]; then
+        echo "No test directory"
+        wait_keypress
+    fi
+    umount /tmp/tests 2> /dev/null
+    mount -t nfs -o ro "$_nfs_mount" /tmp/tests
+    if [ ! -e "/tmp/tests/$_script" ]; then
+        echo "Cannot find /tmp/tests/$_script"
+        wait_keypress
+        return
+    fi
+
+    dialog --stdout --prgbox /tmp/tests/$_script 15 80
+}
+
 main()
 {
     local _tmpfile="/tmp/answer"
     local _number
+    local _test_option=
+
+    case "$(kenv test.run_tests_on_boot)" in
+    [Yy][Ee][Ss])
+        menu_test
+        ;;
+    esac
+
+    if [ -n "$(kenv test.script)" ]; then
+        _test_option="5 Test"
+    fi
 
     while :; do
 
@@ -400,6 +461,7 @@ main()
             "2" "Shell" \
             "3" "Reboot System" \
             "4" "Shutdown System" \
+            $_test_option \
             2> "${_tmpfile}"
         _number=`cat "${_tmpfile}"`
         case "${_number}" in
@@ -407,6 +469,7 @@ main()
             2) menu_shell ;;
             3) menu_reboot ;;
             4) menu_shutdown ;;
+            5) menu_test ;;
         esac
     done
 }
