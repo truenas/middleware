@@ -198,7 +198,7 @@ def install_available(request, oid):
         url = conf.collectionurl
     else:
         url = models.PLUGINS_INDEX
-    for p in availablePlugins.get_remote(url=url):
+    for p in availablePlugins.get_remote(url=url, cache=True):
         if p.id == int(oid):
             plugin = p
             break
