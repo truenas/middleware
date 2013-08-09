@@ -1126,27 +1126,21 @@ __EOF__
   return 0
 }
 
-get_package_by_port()
+get_package()
 {
   local jaildir="${1}"
   local pkgdir="${2}"
   local rpath="${3}"
-  local port="${4}"
+  local pkg="${4}"
 
-  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o -z "${port}" ] ; then
+  if [ ! -d "${jaildir}" -o ! -d "${pkgdir}" -o -z "${pkg}" ] ; then
     return 1
   fi
+  warden_print "Downloading ${pkg}"
 
-  local pkg="$(${CR} "pkg rquery '%n-%v.txz' ${port}" 2>/dev/null)"
   if [ ! -f "${pkgdir}/${pkg}" ] ; then
     get_file_from_mirrors "${rpath}/All/${pkg}" \
       "${jaildir}/var/tmp/pkgs/${pkg}" "pkg"
-
-    local deps="$(${CR} "pkg rquery '%do' ${port}" 2>/dev/null)"
-    for d in ${deps} ; do
-      get_package_by_port "${jaildir}" "${pkgdir}" \
-        "${rpath}" "${d}"
-    done
   fi
 
   return 0
@@ -1163,10 +1157,13 @@ get_packages_by_port_list()
     return 1
   fi
 
+  local pkgs="$(${CR} "pkg rquery '%n-%v.txz\n%dn-%dv.txz' $(cat ${list} | tr -s '\n' ' ')")"
+  pkgs=$(echo ${pkgs} | sort | uniq)
+
   ${CR} "mkdir -p /var/tmp/pkgs"
   mount_nullfs "${pkgdir}" "${jaildir}/var/tmp/pkgs"
-  for p in $(cat "${list}") ; do 
-    get_package_by_port "${jaildir}" "${pkgdir}" "${rpath}" "${p}" 
+  for p in ${pkgs} ; do 
+    get_package "${jaildir}" "${pkgdir}" "${rpath}" "${p}" 
   done
   umount "${jaildir}/var/tmp/pkgs"
 
