@@ -502,8 +502,8 @@ generate_exports()
 			vfs_objects=
 			fs=$(zfs list -H -o mountpoint,name|grep -E "${mountpoint}	"|awk '{print $2}')
 			if [ -n "${fs}" ]; then
-				task_rint=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_count FROM storage_task WHERE task_filesystem='${fs}' LIMIT 1;"`
-				task_runit=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_unit FROM storage_task WHERE task_filesystem=\"${fs}\" LIMIT 1;" | /usr/bin/cut -c1`
+				task_rint=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_count FROM storage_task WHERE task_filesystem='${fs}' OR ('${fs}' LIKE (task_filesystem || '/%') AND task_recursive=1) LIMIT 1;"`
+				task_runit=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_unit FROM storage_task WHERE task_filesystem='${fs}' OR ('${fs}' LIKE (task_filesystem || '/%') AND task_recursive=1) LIMIT 1;" | /usr/bin/cut -c1`
 			fi
 
 			echo "[${name}]"
