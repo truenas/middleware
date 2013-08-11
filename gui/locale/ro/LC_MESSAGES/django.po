@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2013-06-17 12:13+0200\n"
-"Last-Translator: liviu <vasies.liviu@gmail.com>\n"
+"PO-Revision-Date: 2013-08-10 20:09+0200\n"
+"Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
@@ -114,7 +114,7 @@ msgstr "Dezactivat"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Nivel 1 + Utilizare cu consum minim cu mod în așteptare"
+msgstr "Nivel 1 - Mod aşteptare, consum minim"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -3201,7 +3201,7 @@ msgstr "Servicii control"
 
 #: services/nav.py:53 templates/services/iscsi.html:32
 msgid "Device Extents"
-msgstr ""
+msgstr "Extensii dispozitiv"
 
 #: services/nav.py:72
 msgid "Add Device Extent"
@@ -3798,9 +3798,8 @@ msgid "Specify custom path"
 msgstr ""
 
 #: storage/forms.py:163
-#, fuzzy
 msgid "Volume add"
-msgstr "Nume volum"
+msgstr "Adăugare volum"
 
 #: storage/forms.py:175
 msgid ""
@@ -3895,9 +3894,8 @@ msgid ""
 msgstr ""
 
 #: storage/forms.py:673
-#, fuzzy
 msgid "The SMART service failed to restart."
-msgstr "Cache-ul nu poate fi refăcut"
+msgstr "Serviciul SMART nu a putut fi repornit."
 
 #: storage/forms.py:679
 msgid "Dataset Name"
@@ -4111,47 +4109,45 @@ msgstr "minute,"
 
 #: storage/models.py:218 system/models.py:344 system/models.py:496
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "Sînt permise valori în intervalul 0-59."
 
 #: storage/models.py:223 system/models.py:349 system/models.py:501
 #: system/models.py:674 templates/storage/scrub.html:8
 #: templates/system/cronjob.html:6 templates/system/rsync.html:10
 #: templates/system/smarttest.html:7
-#, fuzzy
 msgid "Hour"
-msgstr "Din oră în oră"
+msgstr "Oră"
 
 #: storage/models.py:224 system/models.py:350 system/models.py:502
 #: system/models.py:675
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "Sînt permise valori în intervalul 0-23."
 
 #: storage/models.py:229 system/models.py:355 system/models.py:507
 #: system/models.py:679 templates/storage/scrub.html:9
 #: templates/system/cronjob.html:7 templates/system/rsync.html:11
 #: templates/system/smarttest.html:8
 msgid "Day of month"
-msgstr ""
+msgstr "Ziua din lună"
 
 #: storage/models.py:230 system/models.py:356 system/models.py:508
 #: system/models.py:680
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "Sînt permise valori în intervalul 1-31."
 
 #: storage/models.py:235 system/models.py:361 system/models.py:513
 #: system/models.py:685 templates/storage/scrub.html:10
 #: templates/system/cronjob.html:8 templates/system/rsync.html:12
 #: templates/system/smarttest.html:9
-#, fuzzy
 msgid "Month"
-msgstr "Lunar"
+msgstr "Lună"
 
 #: storage/models.py:240 system/models.py:366 system/models.py:518
 #: system/models.py:690 templates/storage/scrub.html:11
 #: templates/system/cronjob.html:9 templates/system/rsync.html:13
 #: templates/system/smarttest.html:10
 msgid "Day of week"
-msgstr ""
+msgstr "Ziua din săptămînă"
 
 #: storage/models.py:244 system/models.py:370 system/models.py:576
 #: system/models.py:784 system/models.py:823 templates/plugins/index.html:16
@@ -4170,36 +4166,35 @@ msgid "ZFS Scrubs"
 msgstr "Partajare UNIX"
 
 #: storage/models.py:263 system/models.py:391 system/models.py:600
-#, fuzzy
 msgid "Every minute"
-msgstr "minute,"
+msgstr "În fiecare minut"
 
 #: storage/models.py:265 system/models.py:393 system/models.py:602
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "La fiecare %s minute"
 
 #: storage/models.py:271 system/models.py:399 system/models.py:608
 #: system/models.py:695
 msgid "Every hour"
-msgstr ""
+msgstr "În fiecare oră"
 
 #: storage/models.py:273 system/models.py:401 system/models.py:610
 #: system/models.py:697
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "La fiecare %s ore"
 
 #: storage/models.py:281 system/models.py:409 system/models.py:618
 #: system/models.py:705
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "Zilnic"
+msgstr "La fiecare %s zile"
 
 #: storage/models.py:288 system/models.py:416 system/models.py:625
 #: system/models.py:712
 msgid "Every month"
-msgstr ""
+msgstr "În fiecare lună"
 
 #: storage/models.py:306 system/models.py:434 system/models.py:639
 #: system/models.py:726
@@ -4614,14 +4609,12 @@ msgid "SHA256 sum for the image"
 msgstr "Suma SHA256 a imaginii"
 
 #: system/forms.py:538
-#, fuzzy
 msgid "Invalid firmware"
-msgstr "Firmware sau verificare invalidă"
+msgstr "Firmware invalid"
 
 #: system/forms.py:544
-#, fuzzy
 msgid "Invalid checksum"
-msgstr "Firmware sau verificare invalidă"
+msgstr "Sumă de control incorectă"
 
 #: system/forms.py:557
 msgid "New config to be installed"
@@ -4635,20 +4628,19 @@ msgstr ""
 
 #: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "Ghilimelele nu sînt permise"
 
 #: system/models.py:44
 msgid "Protocol"
 msgstr "Protocol"
 
 #: system/models.py:50
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "Adresa IPv4"
+msgstr "Adresă WebGUI"
 
 #: system/models.py:56
 msgid "WebGUI Port"
-msgstr ""
+msgstr "Port WebGUI"
 
 #: system/models.py:62
 msgid "Language"
@@ -4656,7 +4648,7 @@ msgstr "Limbă"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
-msgstr ""
+msgstr "Mapare taste consolă"
 
 #: system/models.py:74
 msgid "Timezone"
@@ -4789,11 +4781,11 @@ msgstr ""
 
 #: system/models.py:185
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "Afişează setările avansate în mod implicit"
 
 #: system/models.py:188
 msgid "Enable autotune"
-msgstr ""
+msgstr "Activare reglaj automat"
 
 #: system/models.py:196
 msgid "MOTD banner"
@@ -4932,9 +4924,8 @@ msgstr "Comentariu"
 
 #: system/models.py:337 system/models.py:489 system/models.py:669
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
-#, fuzzy
 msgid "Short description"
-msgstr "Descriere"
+msgstr "Scurtă descriere"
 
 #: system/models.py:374
 msgid "Cron Job"
@@ -4946,11 +4937,11 @@ msgstr ""
 
 #: system/models.py:459
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "Adresă IP sau nume sistem"
 
 #: system/models.py:468
 msgid "Remote Module Name"
-msgstr ""
+msgstr "Nume modul remote"
 
 #: system/models.py:470
 msgid "Name of the module defined in the remote rsync daemon"
@@ -5088,20 +5079,18 @@ msgid "S.M.A.R.T. Test"
 msgstr "Activare S.M.A.R.T."
 
 #: system/models.py:757
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "Opţiuni suplimentare S.M.A.R.T"
+msgstr "Teste S.M.A.R.T"
 
 #: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "Disponibil"
+msgstr "Variabil"
 
 #: system/models.py:775 system/models.py:814 templates/system/sysctl.html:6
 #: templates/system/tunable.html:6
 msgid "Value"
-msgstr ""
+msgstr "Valoare"
 
 #: system/models.py:795
 msgid "Sysctl"
@@ -5112,14 +5101,12 @@ msgid "Sysctls"
 msgstr ""
 
 #: system/models.py:834
-#, fuzzy
 msgid "Tunable"
-msgstr "Activare AIO"
+msgstr "Reglabil"
 
 #: system/models.py:835
-#, fuzzy
 msgid "Tunables"
-msgstr "Activare AIO"
+msgstr "Reglabile"
 
 #: system/nav.py:5 templates/menubar.html:7
 msgid "System"
@@ -5138,14 +5125,12 @@ msgid "The uploaded file is not valid."
 msgstr "Fişierul încărcat nu este valid."
 
 #: system/views.py:239
-#, fuzzy
 msgid "Reboot is being issued"
-msgstr "Parolă legătură Root"
+msgstr "A fost iniţiată comanda de repornire"
 
 #: system/views.py:264
-#, fuzzy
 msgid "Shutdown is being issued"
-msgstr "Oprire sistem"
+msgstr "A fost iniţiată comada de oprire"
 
 #: system/views.py:297
 #, python-format
@@ -5164,11 +5149,11 @@ msgstr ""
 
 #: system/views.py:304
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Testul dumneavoastră de email a fost trimis!"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Pagina nu a fost găsită"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5188,7 +5173,7 @@ msgstr "Ajutor"
 
 #: templates/menubar.html:54 templates/registration/login.html:59
 msgid "Log In"
-msgstr "Conectare"
+msgstr "Autentificare"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
@@ -5259,23 +5244,20 @@ msgid "Add New User"
 msgstr "Adăugare utilizator nou"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
-#, fuzzy
 msgid "Change E-mail"
-msgstr "E-mail"
+msgstr "Schimbare email"
 
 #: templates/account/passform.html:2
 msgid "Change Admin Password"
 msgstr "Modificare parola administrator"
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "Mod transfer"
+msgstr "Modul de bază"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
-msgstr "Avansat"
+msgstr "Modul avansat"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:15
@@ -5317,6 +5299,8 @@ msgid ""
 "There are %(related_num)s related entries that are going to be delete as "
 "well because depend on this"
 msgstr ""
+"Există un număr de %(related_num)s înregistrări asociate care vor fi "
+"deasemenea şterse"
 
 #: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
@@ -5461,12 +5445,12 @@ msgstr "Acţiuni dsiponibile"
 #: templates/system/sysctl.html.py:21 templates/system/tunable.html:19
 #: templates/system/tunable.html.py:21
 msgid "Edit"
-msgstr "Modificare"
+msgstr "Editare"
 
 #: templates/network/interface.html:28 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
 msgid "Edit Interface"
-msgstr "Modificare interfaţă"
+msgstr "Editare interfaţă"
 
 #: templates/network/interface.html:34 templates/network/lagg.html:46
 msgid "Delete Interface"
@@ -5474,7 +5458,7 @@ msgstr "Ştergere interfaţă"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr "Nu există nici o interfaţă"
+msgstr "Nicio interfaţă definită"
 
 #: templates/network/interface.html:47 templates/network/interface.html:49
 msgid "Add Interface"
@@ -5500,7 +5484,7 @@ msgstr "Nu există nici o interfaţă LAGG"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr "Adăugare interfaţă LAGG"
+msgstr "Adăugare interfaţă LAGG "
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
@@ -5520,9 +5504,8 @@ msgstr "Acţiune"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
-#, fuzzy
 msgid "Add LAGG Member"
-msgstr "Membri LAGG"
+msgstr "Adăugare membru LAGG"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
@@ -5574,35 +5557,32 @@ msgstr "Adăugare interfaţă VLAN"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Instalat..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Instalare plugin"
 
 #: templates/plugins/index.html:31
-#, fuzzy
 msgid "Info"
-msgstr "Normal"
+msgstr "Info"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
-msgstr ""
+msgstr "Informaţii plugin"
 
 #: templates/plugins/index.html:39
-#, fuzzy
 msgid "Edit Plugin"
-msgstr "Modificare portal"
+msgstr "Editare plugin"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
-#, fuzzy
 msgid "Delete plugin"
-msgstr "Ştergere copie"
+msgstr "Ştergere plugin"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
-msgstr ""
+msgstr "Niciun plugin instalat"
 
 #: templates/plugins/jail_import.html:2
 #, fuzzy
@@ -5612,11 +5592,11 @@ msgstr "Import volum"
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Pasul %(step)s din %(step_count)s"
 
 #: templates/plugins/jailpbi.html:18
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "Încărcare Jail PBI"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5665,7 +5645,7 @@ msgstr "Bine ai venit, %(username)s. Acum eşti conectat."
 #: templates/registration/login.html:46
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Bun venit la %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:47
 #, fuzzy
@@ -5735,9 +5715,8 @@ msgid "SNMP Settings"
 msgstr "Setări SNMP"
 
 #: templates/services/core.html:139
-#, fuzzy
 msgid "S.M.A.R.T. Settings"
-msgstr "Opţiuni suplimentare S.M.A.R.T"
+msgstr "Setări S.M.A.R.T"
 
 #: templates/services/core.html:150
 msgid "SSH Settings"
@@ -5748,13 +5727,12 @@ msgid "TFTP Settings"
 msgstr "Setări TFTP"
 
 #: templates/services/core.html:172
-#, fuzzy
 msgid "UPS Settings"
-msgstr "Setări NFS"
+msgstr "Setări UPS"
 
 #: templates/services/enable.html:3
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "Activaţi acest serviciu?"
 
 #: templates/services/enable.html:16 templates/storage/tasks.html:37
 msgid "No"
@@ -5770,7 +5748,7 @@ msgstr "Management iSCSI"
 
 #: templates/services/iscsi.html:8
 msgid "Portals"
-msgstr ""
+msgstr "Portaluri"
 
 #: templates/services/iscsi.html:14
 #, fuzzy
@@ -5787,24 +5765,23 @@ msgstr ""
 
 #: templates/services/iscsi.html:38
 msgid "Extents"
-msgstr ""
+msgstr "Extensii"
 
 #: templates/services/iscsi.html:44
 msgid "Associated Targets"
-msgstr ""
+msgstr "Destinaţii asociate"
 
 #: templates/services/iscsi_assoctargets.html:31
-#, fuzzy
 msgid "No associated targets defined"
-msgstr "Nici o partajare definită"
+msgstr "Nicio destinaţie asociată definită"
 
 #: templates/services/iscsi_assoctargets.html:37
 msgid "Add Extent to Target"
-msgstr ""
+msgstr "Adăugare extensi la destinaţie"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent To Target"
-msgstr ""
+msgstr "Adăugare extensii la destinaţie"
 
 #: templates/services/iscsi_auth.html:7
 msgid "Peer"
@@ -5819,9 +5796,8 @@ msgid "Authorized Network"
 msgstr "Reţea autorizată"
 
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
-msgstr "Iniţiator autorizat"
+msgstr "Niciun iniţiator autorizat definit"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -5829,9 +5805,8 @@ msgid "Add Authorized Initiator"
 msgstr ""
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
-msgstr "Nu există rute statice"
+msgstr "Nicio extensie dispozitiv definită"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -5876,12 +5851,12 @@ msgstr "Adăugare portal"
 
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr ""
+msgstr "Nicio destinaţie definită"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr ""
+msgstr "Adăugare destinaţie"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -5893,20 +5868,20 @@ msgid ""
 "ATTENTION: The plugins service is not running, several functionalities have "
 "been disabled."
 msgstr ""
+"ATENŢIE: Serviciul pentru pluginuri nu este activ, mai multe funcţionalităţi "
+"au fost dezactivate."
 
 #: templates/services/plugins.html:31
-#, fuzzy
 msgid "Version"
-msgstr "Versiune sist. operare"
+msgstr "Versiune"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
-#, fuzzy
 msgid "Service status"
-msgstr "Servicii"
+msgstr "Stare serviciu"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
@@ -5941,19 +5916,16 @@ msgid "Active Shares"
 msgstr "Partajări active"
 
 #: templates/sharing/apple.html:7
-#, fuzzy
 msgid "There are no active Apple (AFP) shares."
-msgstr "Nu există partajări Apple"
+msgstr "Nu există partajări active Apple (AFP)"
 
 #: templates/sharing/apple.html:29
-#, fuzzy
 msgid "Edit Apple (AFP) Share"
-msgstr "Modificare partajare Apple"
+msgstr "Editare partajare Apple (AFP)"
 
 #: templates/sharing/apple.html:35
-#, fuzzy
 msgid "Delete Apple (AFP) Share"
-msgstr "Ştergere partajare Apple"
+msgstr "Ştergere partajare Apple (AFP)"
 
 #: templates/sharing/apple.html:42 templates/sharing/unix.html:42
 #: templates/sharing/windows.html:46
@@ -5961,9 +5933,8 @@ msgid "No shares defined"
 msgstr "Nici o partajare definită"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-#, fuzzy
 msgid "Add Apple (AFP) Share"
-msgstr "Adăugare partajare Apple"
+msgstr "Adăugare partajare Apple (AFP)"
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
@@ -6044,9 +6015,9 @@ msgid "Edit Dataset"
 msgstr "Modificare set date"
 
 #: templates/storage/datasets.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "Creare set de date ZFS"
+msgstr "Creare set de date ZFS în %(fs)s"
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
@@ -6058,14 +6029,12 @@ msgid "Are you sure you want to detach?"
 msgstr "Sigur doriţi să scoateţi discul?"
 
 #: templates/storage/disk_offline.html:3
-#, fuzzy
 msgid "Are you sure you want to offline?"
-msgstr "Sigur doriţi să ştergeţi?"
+msgstr "Activaţi modul offline?"
 
 #: templates/storage/disk_remove.html:3
-#, fuzzy
 msgid "Are you sure you want to remove?"
-msgstr "Sigur doriţi să ştergeţi?"
+msgstr "Ştergeţi discul?"
 
 #: templates/storage/disk_wipe.html:4
 #, fuzzy
@@ -6092,7 +6061,7 @@ msgstr "Puncte restaurare ZFS"
 
 #: templates/storage/index.html:20
 msgid "ZFS Replication"
-msgstr ""
+msgstr "Replicare ZFS"
 
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
@@ -6118,7 +6087,7 @@ msgstr "Adăugare copie"
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "Vizualizare cheie publică"
 
 #: templates/storage/replications.html:16
 msgid ""
@@ -6167,18 +6136,16 @@ msgid ""
 msgstr ""
 
 #: templates/storage/scrub_confirm.html:8
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "Sigur doriţi să scoateţi discul?"
+msgstr "Verificaţi discul?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
-msgstr ""
+msgstr "Această operaţie va creşte gradul de încărcare al sistemului"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
-msgstr "Sigur doriți să reveniți la un punct de restaurare anterior?"
+msgstr "Reveniți la o imagine a sistemului salvată anterior?"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
@@ -6204,9 +6171,8 @@ msgid "Rollback to this snapshot"
 msgstr "Revenire la acest punct de restaurare"
 
 #: templates/storage/snapshots.html:126
-#, fuzzy
 msgid "Destroy"
-msgstr "Ştergere volum"
+msgstr "Distrugere volum"
 
 #: templates/storage/snapshots.html:136
 msgid "Delete snapshots"
@@ -6312,9 +6278,8 @@ msgid "Destroy Dataset"
 msgstr "Ştergere set date"
 
 #: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "Ştergere volum"
+msgstr "Distrugere volum ZFS"
 
 #: templates/storage/volumes.html:268
 msgid "No volumes defined"
@@ -6337,9 +6302,8 @@ msgid "ZFS Extra"
 msgstr "ZFS Extra"
 
 #: templates/storage/wizard.html:109
-#, fuzzy
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Utilizarea unui singur disc pt. loguri nu este deloc recomandată"
+msgstr "Utilizarea unui singur disc pentru loguri nu este deloc recomandată"
 
 #: templates/storage/wizard.html:116
 #, fuzzy
@@ -6373,9 +6337,8 @@ msgid "Create ZFS volume on %(name)s"
 msgstr "Creare volum"
 
 #: templates/storage/zvols.html:6
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "Volum ZFS"
+msgstr "Adăugare volum ZFS"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
@@ -6420,11 +6383,11 @@ msgstr "Nu există utilizatori definiţi"
 
 #: templates/system/cronjob.html:47
 msgid "Add a cron job"
-msgstr ""
+msgstr "Adaugă o sarcină programată în cron"
 
 #: templates/system/cronjob.html:49
 msgid "Add cron job"
-msgstr ""
+msgstr "Adăugare sarcină cron"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6439,6 +6402,8 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
+"SUGESTIE: Emailurile de test sînt trimise utilizatorului root. Pentru "
+"configurare folosiţi Utilizatori -> root -> Modificare email"
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
@@ -6491,7 +6456,7 @@ msgstr ""
 
 #: templates/system/rsync.html:56
 msgid "Add Rsync"
-msgstr ""
+msgstr "Adăugare Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6499,12 +6464,11 @@ msgstr "General"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "Revenire la setările din fabrică"
 
 #: templates/system/settings_edit.html:7
-#, fuzzy
 msgid "Restore Config"
-msgstr "Salvare configuraţie"
+msgstr "Restaurare configuraţie"
 
 #: templates/system/settings_edit.html:11
 msgid "Save Config"
@@ -6565,7 +6529,7 @@ msgstr "Platformă"
 
 #: templates/system/system_info.html:17
 msgid "Memory"
-msgstr ""
+msgstr "Memorie"
 
 #: templates/system/system_info.html:21
 msgid "System Time"
@@ -6592,9 +6556,8 @@ msgid "Add Tunable"
 msgstr "Adaugă setări predefinite"
 
 #: templates/system/tunable.html:42
-#, fuzzy
 msgid "Add Loader"
-msgstr "Adăugare portal"
+msgstr "Adăugare încărcător"
 
 #: templates/system/wizard.html:14
 #, fuzzy
@@ -6684,9 +6647,8 @@ msgstr "Au apărut erori la setarea opţiunilor"
 msgid "Service Pack image to be installed"
 msgstr "Imaginea service pack-ului de instalat"
 
-#, fuzzy
 msgid "Invalid service pack"
-msgstr "Service pack sau verificare invalide"
+msgstr "Service pack invalid"
 
 #, fuzzy
 msgid "View Rsync Tasks"
@@ -6700,13 +6662,11 @@ msgstr "Opţiuni suplimentare S.M.A.R.T"
 msgid "View Sysctls"
 msgstr "Vizualizare discuri"
 
-#, fuzzy
 msgid "View Tunables"
-msgstr "Vizualizare toţi utilizatorii"
+msgstr "Vizualizare setări reglabile"
 
-#, fuzzy
 msgid "Add Apple (CIFS) Share"
-msgstr "Adăugare partajare Apple"
+msgstr "Adăugare partajare Apple (CIFS)"
 
 msgid "Apply Service Pack"
 msgstr "Aplicare service pack"
@@ -6865,13 +6825,11 @@ msgstr "Modificare set date"
 msgid "Are you sure you want to export?"
 msgstr "Sigur doriţi să ştergeţi?"
 
-#, fuzzy
 msgid "Export Volume"
-msgstr "Import volum"
+msgstr "Export volum"
 
-#, fuzzy
 msgid "Add loader"
-msgstr "Adăugare portal"
+msgstr "Adăugare încărcător"
 
 msgid "Volume from which this dataset will be created on"
 msgstr "Volum de la care se va crea setul de date"
@@ -6892,9 +6850,8 @@ msgstr "Grupul de discuri ce conţine acest disc"
 msgid "successfully added"
 msgstr "adăugat cu succes"
 
-#, fuzzy
 msgid "successfully deleted"
-msgstr "a fost şters"
+msgstr "a fost şters cu succes"
 
 msgid "successfully edited"
 msgstr "adăugat cu succes"
@@ -7023,9 +6980,8 @@ msgstr "minute,"
 msgid "Create ZFS zvol"
 msgstr "Creare set de date ZFS"
 
-#, fuzzy
 msgid "Add ZVol"
-msgstr "Adăugare volum"
+msgstr "Adăugare ZVol"
 
 msgid "English"
 msgstr "Engleză"
@@ -7101,7 +7057,7 @@ msgid "sucessfully edited"
 msgstr "a fost modificat"
 
 msgid "Lagg Interface was successfully added"
-msgstr "Interfaţa LAGG a fost adăugată"
+msgstr "Interfaţa LAGG a fost adăugată cu succes"
 
 msgid "ActiveDirectory Settings"
 msgstr "Setări ActiveDirectory"
