@@ -30,7 +30,7 @@ redirect_output_to_logger()
 	fi
 
 	# Try to redirect everything to logger(1)
-	FIFO_DIR=`mktemp -d -t /tmp/instfifo`
+	FIFO_DIR=`mktemp -d -t instfifo`
 	if [ $? != 0 ] ; then
 	    echo "mktemp for fifo failed, logging to logger disabled."
 	    return 1
@@ -147,7 +147,7 @@ then
 	error "Could not load the avatar.conf file from the destination directory ($INSTALL_DESTDIR/etc)"
 fi
 
-if ! stage_log=$(mktemp /tmp/install_worker.XXXXXX)
+if ! stage_log=$(mktemp -t install_worker.XXXXXX)
 then
 	exit 1
 fi
