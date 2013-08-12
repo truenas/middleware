@@ -98,6 +98,7 @@ class OAuth2Authentication(Authentication):
         except Exception:
             log.exception("auth2 error")
             authorized = False
+        request.oauth2 = authorized
 
         return authorized
 
@@ -163,6 +164,9 @@ class ResourceMixin(object):
             allowed = ['get']
         return super(ResourceMixin, self).method_check(request, allowed=allowed)
 
+    def is_webclient(self, request):
+        return getattr(request, 'oauth2', None) != True
+
 
 class DojoModelResource(ResourceMixin, ModelResource):
 
@@ -207,8 +211,9 @@ class DojoModelResource(ResourceMixin, ModelResource):
         return data['objects']
 
     def dehydrate(self, bundle):
-        bundle.data['_edit_url'] = bundle.obj.get_edit_url()
-        bundle.data['_delete_url'] = bundle.obj.get_delete_url()
+        if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] = bundle.obj.get_edit_url()
+            bundle.data['_delete_url'] = bundle.obj.get_delete_url()
         return bundle
 
 
