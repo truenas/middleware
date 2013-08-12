@@ -128,7 +128,8 @@ class BaseFreeAdmin(object):
         Set resource to False to do not create one
         """
         from freenasUI.api.utils import (
-            DojoModelResource, APIAuthentication, DojoPaginator
+            APIAuthentication, APIAuthorization, DojoModelResource,
+            DojoPaginator
         )
         if self.resource is None and self._model:
             myMeta = type('Meta', (object, ), dict(
@@ -140,6 +141,7 @@ class BaseFreeAdmin(object):
                 include_resource_uri=False,
                 paginator_class=DojoPaginator,
                 authentication=APIAuthentication,
+                authorization=APIAuthorization(),
             ))
 
             myres = type(

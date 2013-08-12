@@ -29,6 +29,7 @@ import re
 
 import oauth2
 from tastypie.authentication import Authentication, MultiAuthentication
+from tastypie.authorization import Authorization
 from tastypie.paginator import Paginator
 from tastypie.resources import ModelResource, Resource
 from freenasUI.api.models import APIClient
@@ -58,20 +59,27 @@ class OAuth2Authentication(Authentication):
         self.realm = realm
 
     def verify_access_token(self, request, key):
-        oauth_params = {}
-        for key in request.REQUEST:
-            if key.startswith("oauth"):
-                oauth_params[key] = request.REQUEST.get(key)
 
-        key = oauth_params.get("oauth_consumer_key", None)
-        host = "%s://%s" % (
+        uurl = "%s://%s%s" % (
             'https' if request.is_secure() else 'http',
             request.get_host(),
+            request.path,
         )
-        uurl = host + request.path
 
-        oreq = oauth2.Request(request.method, uurl, oauth_params, '', False)
-        server = oauth2.Server()
+        auth_header = {}
+        if 'Authorization' in request.META:
+            auth_header = {'Authorization': request.META['Authorization']}
+        elif 'HTTP_AUTHORIZATION' in request.META:
+            auth_header = {'Authorization': request.META['HTTP_AUTHORIZATION']}
+
+        oreq = oauth2.Request.from_request(
+            request.method,
+            uurl,
+            headers=auth_header,
+            query_string=request.META.get('QUERY_STRING', None),
+        )
+
+        key = oreq.get("oauth_consumer_key", None)
 
         secret = None
         client = APIClient.objects.get(name=key)
@@ -82,6 +90,7 @@ class OAuth2Authentication(Authentication):
             return False
 
         try:
+            server = oauth2.Server()
             cons = oauth2.Consumer(key, secret)
             server.add_signature_method(oauth2.SignatureMethod_HMAC_SHA1())
             server.verify_request(oreq, cons, None)
@@ -126,6 +135,10 @@ class OAuth2Authentication(Authentication):
             log.exception("Error in OAuth2Authentication")
             return False
         return True
+
+
+class APIAuthorization(Authorization):
+    pass
 
 
 class DojoPaginator(Paginator):
