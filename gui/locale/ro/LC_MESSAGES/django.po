@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2013-08-10 20:09+0200\n"
+"PO-Revision-Date: 2013-08-11 08:28+0200\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -114,7 +114,7 @@ msgstr "Dezactivat"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Nivel 1 - Mod aşteptare, consum minim"
+msgstr "Nivel 1 - Mod aşteptare, consum minim (discuri oprite)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -1208,7 +1208,7 @@ msgstr ""
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
-msgstr ""
+msgstr "Calea către zona plugin jail"
 
 #: plugins/forms.py:218
 msgid "Jail IPv4 Address"
@@ -1344,9 +1344,8 @@ msgid "Plugin successfully installed"
 msgstr "Plugin instalat cu succes"
 
 #: plugins/views.py:201
-#, fuzzy
 msgid "There was a problem importing the jail."
-msgstr "A existat o problemă cu importarea jail."
+msgstr "Eroare import jail."
 
 #: plugins/views.py:204
 msgid "Jail successfully imported."
@@ -1407,7 +1406,7 @@ msgstr ""
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr "Trebuie să fie mai mare decât minimul portului pasiv."
+msgstr "Acesta trebuie să fie mai mare decît portul pasiv minim."
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -1554,13 +1553,12 @@ msgid "Controller Auth Group"
 msgstr "Controller Auth Group"
 
 #: services/forms.py:620
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
-"The istgtcontrol can access the targets with correct user and secret in "
-"specific Auth Group."
+"Istgtcontrol poate accesa destinaţiile pe baza numelui de utilizator şi a "
+"secretului specificat în setările Grupului autorizat."
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
@@ -1588,7 +1586,7 @@ msgstr ""
 
 #: services/forms.py:730
 msgid "This is not a valid network"
-msgstr "Acesta nu este o rețea validă."
+msgstr "Acesta nu este o rețea validă"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
@@ -1613,8 +1611,7 @@ msgstr ""
 
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr ""
-"Fișierul trebuie să existe dacă mărimea, dimensiunea este fixată auto (0)"
+msgstr "Fișierul trebuie să existe dacă mărimea este setată pe auto (0)"
 
 #: services/forms.py:830
 msgid "Disk device"
@@ -1635,8 +1632,8 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
-"Acest câmp nu este o adresă IP sau rețea validă. Cuvântul cheie ”ALL” poate "
-"fi folosit pentru a permite totul."
+"Acest câmp nu reprezintă o adresă IP sau de reţea validă. Puteţi folosi "
+"cuvântul ”ALL” pentru a permite toate adresele."
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
@@ -1850,11 +1847,11 @@ msgstr "Activare AIO"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr "Aceasta activează\\dezactivează suportul pentru AIO"
+msgstr "Activare/dezactivare suport AIO."
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
-msgstr "Mărime citire AIO minimă"
+msgstr "Dimensiune minimă AIO la citire"
 
 #: services/models.py:177
 msgid ""
@@ -1865,7 +1862,7 @@ msgstr ""
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
-msgstr "Mărime scriere AIO minimă"
+msgstr "Dimensiune minimă AIO la scriere"
 
 #: services/models.py:183
 msgid ""
@@ -1876,7 +1873,7 @@ msgstr ""
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
-msgstr ""
+msgstr "Descoperire partajare Zeroconf"
 
 #: services/models.py:189
 msgid ""
@@ -1884,6 +1881,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"Suportul Zeroconf via Avahi permite clienţilor (în special clienţilor Mac "
+"OSX) să descopere partajările CIFS din sistem similar serviciului Computer "
+"Browser din Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
@@ -1913,12 +1913,12 @@ msgstr ""
 
 #: services/models.py:219
 msgid "Max. Connections"
-msgstr "Nr. max. de conexiuni"
+msgstr "Nr. maxim conexiuni"
 
 #: services/models.py:221
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "Număr maxim de conexiuni permise via AFP. Limita implicită este 50."
+msgstr "Număr maxim de conexiuni permise prin AFP. Limita implicită este 50."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
@@ -2040,7 +2040,7 @@ msgstr "Parametru iniţial iSCSI (implicit: 262144)"
 
 #: services/models.py:323
 msgid "Max receive data segment length"
-msgstr "Lungimea maximă a segmentului de date primit"
+msgstr "Lungimea max. a segmentului de date la primire"
 
 #: services/models.py:329
 msgid "DefaultTime2Wait"
@@ -2056,7 +2056,7 @@ msgstr "DefaultTime2Retain"
 
 #: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
-msgstr "Parametru iniţial iSCSI (implicit: 60)"
+msgstr "Parametru iniţial iSCSI (implicit 60)"
 
 #: services/models.py:341
 msgid "Enable LUC"
@@ -2080,24 +2080,22 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Portul TCP al controlerului unităţii logice (implicit 3261)"
 
 #: services/models.py:358
-#, fuzzy
 msgid "Controller Authorized Network"
-msgstr "Mască reţea autorizată a controler-ului"
+msgstr "Reţea autorizată controler"
 
 #: services/models.py:360
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
 msgstr ""
-"Mască reţea autorizată a controler-ului unităţii logice (implict: "
-"255.255.255.0)"
+"Mască de reţea autorizată a controlerului unităţii logice (implict "
+"127.0.0.0/8)"
 
 #: services/models.py:368
 msgid "Controller Auth Method"
-msgstr "Controller Auth Method"
+msgstr "Metodă autorizare controler"
 
 #: services/models.py:369
 msgid "The method can be accepted in the controller."
-msgstr "Metoda poate fi acceptată în controler"
+msgstr "Metoda poate fi acceptată în controler."
 
 #: services/models.py:375
 msgid ""
@@ -2110,43 +2108,45 @@ msgstr ""
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
-msgstr "Target Global Configuration"
+msgstr "Configuraţie generală destinaţie"
 
 #: services/models.py:396
 msgid "Extent Name"
-msgstr "Extent Name"
+msgstr "Nume extensie"
 
 #: services/models.py:397
 msgid "String identifier of the extent."
-msgstr "String identifier of the extent."
+msgstr "Identificatorul text al extensiei."
 
 #: services/models.py:401
 msgid "Extent Type"
-msgstr "Extent Type"
+msgstr "Tip extensie"
 
 #: services/models.py:402
 msgid "Type used as extent."
-msgstr "Type used as extent."
+msgstr "Tip utilizat ca extensie."
 
 #: services/models.py:407
 msgid "Path to the extent"
-msgstr "Path to the extent"
+msgstr "Calea către extensie"
 
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
+msgstr ""
+"Calea către fişierul utilizat ca extensie (ex. "
+"/mnt/sharename/extent/extent0)."
 
 #: services/models.py:413
 msgid "Extent size"
-msgstr "Extent size"
+msgstr "Dimensiune extensie"
 
 #: services/models.py:414
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
-"TB for convenience."
+"Dimensiunea extensiei. 0 înseamă auto, un număr oarecare reprezintă octeţii, "
+"puteţi folosi şi sufixe gen KB, MB, TB."
 
 #: services/models.py:419 services/models.py:480 services/models.py:557
 #: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
@@ -2161,13 +2161,13 @@ msgstr "Comentariu"
 
 #: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
-msgstr "Aici puteţi introduce descrieri cu titlu informativ"
+msgstr "Puteţi introduce aici un comentariu pentru referinţă."
 
 #: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
 msgid "Extent"
-msgstr "Extent"
+msgstr "Extensie"
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
@@ -2178,26 +2178,24 @@ msgid "Portal"
 msgstr "Portal"
 
 #: services/models.py:522
-#, fuzzy
 msgid "IP Address"
-msgstr "Adresa IPv4"
+msgstr "Adresa IP"
 
 #: services/models.py:534
-#, fuzzy
 msgid "Portal IP"
-msgstr "Portal"
+msgstr "IP portal"
 
 #: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr "Iniţiator"
+msgstr "Iniţiatori"
 
 #: services/models.py:546
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
-"Iniţiator autorizat să acceseze iSCSI. Poate fi un nume sau 'ALL' pentru "
-"orice alt iniţiator."
+"Iniţiator autorizat să acceseze destinaţia iSCSI. Poate fi un nume sau 'ALL' "
+"pentru orice iniţiator."
 
 #: services/models.py:550
 msgid "Authorized network"
@@ -2208,8 +2206,8 @@ msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
-"Rețea autorizată să acceseze iSCSI. Poate fi o adresă IP sau CIDR sau 'ALL' "
-"pentru oricare alt IP."
+"Rețea autorizată să acceseze destinaţia iSCSI. Poate fi o adresă IP sau CIDR "
+"sau 'ALL' pentru oricare IP."
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2217,15 +2215,17 @@ msgstr "Iniţiator"
 
 #: services/models.py:594
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr "Target side user name. It is usually the initiator name by default."
+msgstr ""
+"Nume utilizator la destinaţie. Implicit este numele de utilizator de la "
+"iniţiator."
 
 #: services/models.py:604
 msgid "Peer User"
-msgstr "Peer User"
+msgstr "Utilizator reţea peer"
 
 #: services/models.py:609
 msgid "Peer Secret"
-msgstr "Peer Secret"
+msgstr "Secret reţea peer"
 
 #: services/models.py:614
 msgid "Authorized Access"
@@ -2237,19 +2237,20 @@ msgstr "Accesări autorizate"
 
 #: services/models.py:632
 msgid "Target Name"
-msgstr "Target Name"
+msgstr "Nume destinaţie"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr "Base Name will be appended automatically when starting without 'iqn.'."
+msgstr ""
+"Numele de bază va fi automat ataşat atunci cînd nu începe cu şirul 'iqn.'."
 
 #: services/models.py:640
 msgid "Target Alias"
-msgstr "Target Alias"
+msgstr "Alias destinaţie"
 
 #: services/models.py:641
 msgid "Optional user-friendly string of the target."
-msgstr "Optional user-friendly string of the target."
+msgstr "Text opţional, personalizat, pentru destinaţie."
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
@@ -2268,11 +2269,11 @@ msgstr "Tip"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
-msgstr "Logical Unit Type mapped to LUN."
+msgstr "Tip unitate logică mapată la LUN."
 
 #: services/models.py:660
 msgid "Target Flags"
-msgstr "Target Flags"
+msgstr "Indicatori destinaţie"
 
 #: services/models.py:668
 msgid "Initiator Group ID"
@@ -2287,8 +2288,8 @@ msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
-"The method can be accepted by the target. Auto means both none and "
-"authentication."
+"Metoda poate fi acceptată de destinaţie. Auto înseamnă şi fără şi cu "
+"autentificare."
 
 #: services/models.py:679
 msgid "Authentication Group ID"
@@ -2296,15 +2297,15 @@ msgstr "ID grup autentificare"
 
 #: services/models.py:692
 msgid "Queue Depth"
-msgstr "Queue Depth"
+msgstr "Mărime listă comenzi"
 
 #: services/models.py:693
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
-"0=disabled, 1-255=enabled command queuing with specified depth. The "
-"recommended queue depth is 32."
+"0=dizactivat, 1-255=activează lista de comenzi cu mărimea corespunzătoare. "
+"Valoarea recomandată este 32."
 
 #: services/models.py:698
 msgid "Logical Block Size"
@@ -2315,31 +2316,30 @@ msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
-"You may specify logical block length (512 by default). The recommended "
-"length for compatibility is 512."
+"Puteţi specifica lungimea blocului logic (implicit 512). Lungimea "
+"recomandată pentru compatibilitate este 512."
 
 #: services/models.py:703 services/models.py:724
 #: templates/services/iscsi_assoctargets.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr "Target"
+msgstr "Destinaţie"
 
 #: services/models.py:725
 msgid "Target this extent belongs to"
-msgstr "Target this extent belongs to"
+msgstr "Destinaţia acestei extensii aparţine"
 
 #: services/models.py:734
 msgid "Target / Extent"
-msgstr "Target / Extent"
+msgstr "Destinaţie / Extensie"
 
 #: services/models.py:735
-#, fuzzy
 msgid "Targets / Extents"
-msgstr "Target / Extent"
+msgstr "Destinaţii / Extensii"
 
 #: services/models.py:759
 msgid "Provider"
-msgstr "Provider"
+msgstr "Furnizor"
 
 #: services/models.py:763
 msgid "Domain name"
@@ -2350,8 +2350,9 @@ msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
+"Un alias pentru sistem. Această opţiune poate apare de mai multe ori, pentru "
+"fiecare domeniu care are aceeaşi adresă IP. Separaţi aliasurile prin "
+"caracterul spaţiu."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2359,7 +2360,7 @@ msgstr "Perioada de actualizare"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
-msgstr ""
+msgstr "Timp în secunde. Implicit aprox. 1 min."
 
 #: services/models.py:783
 msgid "Forced update period"
@@ -2377,34 +2378,32 @@ msgid "Dynamic DNS"
 msgstr "DNS dinamic"
 
 #: services/models.py:804
-#, fuzzy
 msgid "Path to the plugins jail"
-msgstr "Path to the extent"
+msgstr "Calea către zona plugin jail"
 
 #: services/models.py:809
-#, fuzzy
 msgid "Jail name"
-msgstr "Nume domeniu"
+msgstr "Nume pentru zona jail"
 
 #: services/models.py:810
 msgid "Name of the plugins jail"
-msgstr ""
+msgstr "Numele pentru zona plugins jail"
 
 #: services/models.py:815
 msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"Numele pentru jail poate conţine litere, numere şi cratime. Ultimul caracter "
+"nu poate fi cratima."
 
 #: services/models.py:821
-#, fuzzy
 msgid "Jail IP address"
-msgstr "Adresă email"
+msgstr "Adresă IP jail"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
-msgstr "Mască reţea (Netmask) IPv4"
+msgstr "Mască reţea IP pentru jail"
 
 #: services/models.py:829
 msgid "Plugins archive path"
@@ -2419,8 +2418,8 @@ msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
-"Informaţii despre localizare, de ex. unde se află sistemului: 'Etajul patru, "
-"camera xyz'."
+"Informaţii localizare, de ex. localizarea fizică a sistemului: 'parterul "
+"clădirii, camera xyzzy'."
 
 #: services/models.py:859
 msgid "Contact"
@@ -2431,8 +2430,8 @@ msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
-"Informaţii de contact, de ex. nume sau adresă email a persoanei responsabile "
-"de sistem: 'admin@email.address'"
+"Informaţii de contact, de ex. numele sau adresa de email a persoanei "
+"responsabile pentru acest sistem: 'admin@email.address'."
 
 #: services/models.py:867
 msgid "Community"
@@ -2457,7 +2456,9 @@ msgstr "Identificator"
 
 #: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr "Acest nume este folosit pentru a identifica UPS-ul de pe acest sistem."
+msgstr ""
+"Acest nume este folosit pentru a identifica în mod unic UPS-ul acestui "
+"sistem."
 
 #: services/models.py:898
 msgid "Driver"
@@ -2472,13 +2473,12 @@ msgid "The serial or USB port where your UPS is connected."
 msgstr "Portul serial sau USB unde este conectat UPS-ul."
 
 #: services/models.py:910
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "Parametri auxiliari"
+msgstr "Parametri auxiliari (ups.conf)"
 
 #: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr ""
+msgstr "Parametri suplimentari specifici părţii hardware a driverului."
 
 #: services/models.py:923
 msgid "Shutdown mode"
@@ -2497,13 +2497,12 @@ msgstr ""
 "de a expira acest interval, oprirea este anulată."
 
 #: services/models.py:933
-#, fuzzy
 msgid "UPS Master User Password"
-msgstr "Parolă partajare"
+msgstr "Parolă administrare UPS"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "Utilizatori suplimentari (upsd.users)"
 
 #: services/models.py:940
 msgid "Remote Monitor"
@@ -2525,7 +2524,7 @@ msgstr ""
 
 #: services/models.py:951
 msgid "Email Subject"
-msgstr ""
+msgstr "Subiect email"
 
 #: services/models.py:952
 msgid ""
@@ -2687,36 +2686,40 @@ msgid "Local user upload bandwidth"
 msgstr "Bandă upload utilizator local"
 
 #: services/models.py:1063
-#, fuzzy
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
-msgstr "Bandă upload utilizator local în KB/s. Zero înseamnă infinit."
+msgstr ""
+"Lăţimea de bandă la încărcare pentru utilizatorii locali în KB/s. Zero "
+"înseamnă fără limită."
 
 #: services/models.py:1067
 msgid "Local user download bandwidth"
 msgstr "Bandă download utilizator local"
 
 #: services/models.py:1068
-#, fuzzy
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
-msgstr "Bandă download utilizator local în KB/s. Zero înseamnă infinit."
+msgstr ""
+"Lăţimea de bandă la descărcare pentru utilizatorii locali în KB/s. Zero "
+"înseamnă fără limită."
 
 #: services/models.py:1072
 msgid "Anonymous user upload bandwidth"
 msgstr "Bandă upload utilizator Anonim"
 
 #: services/models.py:1073
-#, fuzzy
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
-msgstr "Bandă upload utilizator Anonim în KB/s. Zero înseamnă infinit."
+msgstr ""
+"Lăţimea de bandă la încărcare pentru utilizatorii anonimi în KB/s. Zero "
+"înseamnă fără limită."
 
 #: services/models.py:1077
 msgid "Anonymous user download bandwidth"
 msgstr "Bandă download utilizator Anonim"
 
 #: services/models.py:1078
-#, fuzzy
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
-msgstr "Bandă download utilizator Anonim în KB/s. Zero înseamnă infinit."
+msgstr ""
+"Lăţimea de bandă la descărcare pentru utilizatorii anonimi în KB/s. Zero "
+"înseamnă fără limită."
 
 #: services/models.py:1081
 msgid "Enable SSL/TLS"
@@ -2736,11 +2739,12 @@ msgid "Directory"
 msgstr "Director"
 
 #: services/models.py:1114
-#, fuzzy
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
-msgstr "Directorul care conţine fişierele pentru a fi publicate. "
+msgstr ""
+"Folderul conţine fişierele pe care doriţi să le publicaţi. Sistemul gazdă nu "
+"are nevoie să trimită folderul ca parte a transferului."
 
 #: services/models.py:1117
 msgid "Allow New Files"
@@ -2838,7 +2842,7 @@ msgstr "SSH"
 
 #: services/models.py:1239
 msgid "Domain Controller Name"
-msgstr "Nume Domain Controller"
+msgstr "Nume controler domeniu"
 
 #: services/models.py:1240
 msgid "AD or PDC name."
@@ -2850,7 +2854,7 @@ msgstr "Nume domeniu (DNS/Realm-Name)"
 
 #: services/models.py:1245
 msgid "Domain Name, eg example.com"
-msgstr "Nume domeniu, de ex. domeniu.com"
+msgstr "Nume domeniu, de ex. exemplu.com"
 
 #: services/models.py:1249
 msgid "NetBIOS Name"
@@ -2863,7 +2867,7 @@ msgstr "Nume în format vechi, de ex. EXEMPLU"
 
 #: services/models.py:1254
 msgid "Workgroup Name"
-msgstr "Nume Workgroup"
+msgstr "Nume grup de lucru"
 
 #: services/models.py:1255
 #, fuzzy
@@ -3025,48 +3029,42 @@ msgid "LDAP"
 msgstr "LDAP"
 
 #: services/models.py:1369
-#, fuzzy
 msgid "Alternate TCP port. Default is 873"
-msgstr "Port TCP alternativ. Implicit este 22"
+msgstr "Port TCP alternativ. Implicit este 873"
 
 #: services/models.py:1374
-#, fuzzy
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr ""
-"Aceşti parametri vor fi adaugaţi la setările globale din fişierul inadyn."
-"conf."
+"Aceşti parametri vor fi adaugaţi la secţiunea [global] din fişierul "
+"inadyn.conf"
 
 #: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
 msgstr ""
 
 #: services/models.py:1390
-#, fuzzy
 msgid "Module name"
-msgstr "Nume volum"
+msgstr "Nume modul"
 
 #: services/models.py:1399
-#, fuzzy
 msgid "Path to be shared"
-msgstr "Path to the extent"
+msgstr "Calea de partajat"
 
 #: services/models.py:1405
 msgid "Access Mode"
-msgstr ""
+msgstr "Mod acces"
 
 #: services/models.py:1406
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Acesta controlează modul de acces al sistemului remote la acest modul."
 
 #: services/models.py:1410
-#, fuzzy
 msgid "Maximum connections"
-msgstr "Nr. max. de conxiuni"
+msgstr "Nr. maxim de conexiuni"
 
 #: services/models.py:1411
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "Numărul maxim de conexiuni per adresă IP (0 = nelimitate)"
+msgstr "Numărul maxim de conexiuni simultane. Implicit este 0 (nelimitat)"
 
 #: services/models.py:1417
 msgid ""
@@ -3075,37 +3073,39 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Această opţiune specifică numele utilizatorului pentru care acest modul "
+"poate transfera fişiere. În combinaţie cu opţiunea 'Grup' ea determină care "
+"sînt permisiunile disponibile pentru fişiere. Lăsaţi cîmpul necompletat "
+"pentru setările implicite."
 
 #: services/models.py:1424
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Această opţiune specifică numele grupului pentru care acest modul poate "
+"transfera fişiere. Lăsaţi cîmpul necompletat pentru setările implicite."
 
 #: services/models.py:1428
-#, fuzzy
 msgid "Hosts allow"
-msgstr "Calculatoare acceptate"
+msgstr "Sisteme acceptate"
 
 #: services/models.py:1429
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
-"Această opţiune este un set / listă de calculatoare - delimitate prin "
-"virgulă, spaţiu sau indent - cărora le este permisă accesarea acestei "
-"resurse din reţea. Calculatoarele pot fi identificate prin nume sau IP. "
-"Lăsaţi gol acest spaţiu pentru a folosi setările implicite. "
+"Această opţiune reprezintă o listă de sisteme, separate prin virgule, spaţii "
+"sau taburi, care au permisiunea de a accesa acest modul. Puteţi specifica "
+"sistemele prin nume sau prin adresa IP. Lăsaţi cîmpul necompletat pentru "
+"setările implicite."
 
 #: services/models.py:1433
-#, fuzzy
 msgid "Hosts deny"
-msgstr "Calculatoare interzise"
+msgstr "Sisteme interzise"
 
 #: services/models.py:1434
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -3114,29 +3114,26 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
-"Această opţiune este o un set/listă de calculatoare - delimitate prin "
-"virgulă, spaţiu sau indent - cărora NU le este permisă accesarea acestei "
-"resurse din reţea. Când apar conflicte în listă, prevalează lista cu "
-"calculatoare acceptate. Dacă este nevoie să fie toate interzise, utilizaţi "
-"cuvântul ALL (sau masca de reţea 0.0.0.0/0) şi specificaţi explicit în lista "
-"de calculatoare acceptate pe acele calculatoare cărora li se permite "
-"accesul. Lăsaţi gol acest spaţiu pentru a folosi setările implicite."
+"Această opţiune reprezintă o listă de sisteme, separate prin virgule, spaţii "
+"sau taburi, care NU au permisiunea de a accesa acest modul. Dacă apar "
+"conflicte între liste, lista de permisiuni are prioritate. Dacă aveţi nevoie "
+"să blocaţi accesul tuturor sistemelor în mod implicit, folosiţi cuvîntul "
+"'ALL' (sau masca de reţea 0.0.0.0/0) trecînd apoi în mod explicit fiecare "
+"sistem care are acces. Lăsaţi cîmpul necompletat pentru setările implicite."
 
 #: services/models.py:1439
-#, fuzzy
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr ""
-"Aceşti parametri vor fi adaugaţi la setările globale din fişierul inadyn."
-"conf."
+"Aceşti parametri vor fi adaugaţi la configuraţia modulului din inadyn.conf."
 
 #: services/models.py:1444
 msgid "Rsync Module"
-msgstr ""
+msgstr "Modul Rsync"
 
 #: services/models.py:1445
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Module Rsync"
 
 #: services/models.py:1459
 #, fuzzy
@@ -3205,7 +3202,7 @@ msgstr "Extensii dispozitiv"
 
 #: services/nav.py:72
 msgid "Add Device Extent"
-msgstr ""
+msgstr "Adăugare extensie dispozitiv"
 
 #: services/nav.py:79
 #, fuzzy
@@ -3233,7 +3230,7 @@ msgstr "iSCSI"
 
 #: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/nav.py:149 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
@@ -3434,8 +3431,9 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
-"Această opţiune permite setarea unei parole pe volum care poate avea maximum "
-"8 caractere (utilizând codarea recomandată, ASCII)"
+"Această opţiune vă permite să definiţi o parolă pentru volum, ea putînd avea "
+"maxim 8 caractere (la momentul scrierii acestui text recomandăm cu tărie "
+"coduri ASCII)."
 
 #: sharing/models.py:131
 msgid "Share Character Set"
@@ -3460,7 +3458,7 @@ msgid ""
 "by a @ prefix."
 msgstr ""
 "Această opţiune permite specificarea utilizatorilor şi grupurilor care pot "
-"accesa o partajare. Utilizatorii şi grupurile sunt delimitate de virgulă. "
+"accesa o partajare. Utilizatorii şi grupurile sunt delimitaţi prin virgulă. "
 "Grupurile sunt marcate cu prefixul @."
 
 #: sharing/models.py:143
@@ -3473,19 +3471,19 @@ msgid ""
 "share. It follows the same format as the allow option."
 msgstr ""
 "Opţiunea de restricţionare specifică utilizatorii şi grupurile care NU pot "
-"accesa o partajare. Are acelaşi format ca şi opţiunea de permitere a "
+"accesa partajarea. Are acelaşi format ca şi opţiunea de permitere a "
 "accesului."
 
 #: sharing/models.py:149
 msgid "Read-only Access"
-msgstr "Acces doar în citire"
+msgstr "Acces doar pentru citire"
 
 #: sharing/models.py:151
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
-"Permite anumitor utilizatori şi grupuri să acceseze o partajare doar în "
+"Permite anumitor utilizatori şi grupuri să acceseze o partajare doar pentru "
 "citire. Respectă acelaşi format ca şi lista acces permis."
 
 #: sharing/models.py:155
@@ -6616,9 +6614,8 @@ msgstr "Selectat"
 msgid "SHA256 sum for the PBI file"
 msgstr "Suma SHA256 pentru fișierul PBI"
 
-#, fuzzy
 msgid "Plugin uname"
-msgstr "Uname plugin"
+msgstr "Plugin uname"
 
 msgid "Path to plugin"
 msgstr "Calea către plugin"
