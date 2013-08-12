@@ -155,6 +155,8 @@ class RequireLoginMiddleware(object):
 
         if request.path == settings.LOGIN_URL:
             return None
+        if request.path.startswith('/api/'):
+            return None
         if hasattr(view_func, '__is_public'):
             return None
 
