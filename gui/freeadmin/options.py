@@ -133,7 +133,10 @@ class BaseFreeAdmin(object):
         if self.resource is None and self._model:
             myMeta = type('Meta', (object, ), dict(
                 queryset=self._model.objects.all(),
-                resource_name=self.module_name,
+                resource_name="%s/%s" % (
+                    self.app_label,
+                    self.module_name,
+                ),
                 allowed_methods=['get'],
                 include_resource_uri=False,
                 paginator_class=DojoPaginator,
