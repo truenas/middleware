@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import NFSShareResource
+from freenasUI.api.resources import NFSShareResource
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.sharing import models

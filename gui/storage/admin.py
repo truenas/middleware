@@ -4,9 +4,10 @@ from django.conf import settings
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import (DiskResource,
-    ReplicationResource, ScrubResource, TaskResource, VolumeResource,
-    VolumeStatusResource)
+from freenasUI.api.resources import (
+    DiskResource, ReplicationResource, ScrubResource, TaskResource,
+    VolumeResource, VolumeStatusResource
+)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.storage import models

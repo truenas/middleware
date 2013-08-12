@@ -4,7 +4,7 @@ from django.conf import settings
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import BsdUserResource, BsdGroupResource
+from freenasUI.api.resources import BsdUserResource, BsdGroupResource
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.account import models

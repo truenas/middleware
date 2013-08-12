@@ -152,7 +152,7 @@ class FreeAdminSite(object):
         return update_wrapper(inner, view)
 
     def get_urls(self):
-        from freenasUI.freeadmin.api.resources import SnapshotResource
+        from freenasUI.api.resources import SnapshotResource
 
         self.v1_api.register(SnapshotResource())
 

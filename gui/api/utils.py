@@ -32,7 +32,7 @@ from tastypie.paginator import Paginator
 from tastypie.resources import ModelResource, Resource
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
-log = logging.getLogger('freeadmin.api.resources')
+log = logging.getLogger('api.resources')
 
 
 class DjangoAuthentication(Authentication):

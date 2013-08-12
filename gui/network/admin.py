@@ -1,7 +1,8 @@
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import (InterfacesResource,
-     LAGGInterfaceResource, LAGGInterfaceMembersResource)
+from freenasUI.api.resources import (
+    InterfacesResource, LAGGInterfaceResource, LAGGInterfaceMembersResource
+)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.network import models

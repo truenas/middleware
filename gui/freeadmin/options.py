@@ -126,7 +126,7 @@ class BaseFreeAdmin(object):
 
         Set resource to False to do not create one
         """
-        from freenasUI.freeadmin.api.utils import (
+        from freenasUI.api.utils import (
             DojoModelResource, DjangoAuthentication, DojoPaginator
         )
         if self.resource is None and self._model:

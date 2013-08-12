@@ -34,7 +34,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI import choices
 from freenasUI.account.models import bsdUsers, bsdGroups
-from freenasUI.freeadmin.api.utils import (
+from freenasUI.api.utils import (
     DojoResource, DojoModelResource, DjangoAuthentication, DojoPaginator
 )
 from freenasUI.jails.models import (
@@ -55,7 +55,7 @@ from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
 from tastypie import fields
 
-log = logging.getLogger('freeadmin.api.resources')
+log = logging.getLogger('api.resources')
 
 
 def _common_human_fields(bundle):

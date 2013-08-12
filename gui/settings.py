@@ -169,6 +169,7 @@ INSTALLED_APPS = (
     'south',
     'dojango',
     'freenasUI.account',
+    'freenasUI.api',
     'freenasUI.system',
     'freenasUI.network',
     'freenasUI.storage',

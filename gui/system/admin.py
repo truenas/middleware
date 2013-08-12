@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 
-from freenasUI.freeadmin.api.resources import (
+from freenasUI.api.resources import (
     CronJobResource, RsyncResource, SMARTTestResource
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
