@@ -140,7 +140,18 @@ class DojoPaginator(Paginator):
                 self.limit = int(r[1]) + 1 - self.offset
 
 
-class DojoModelResource(ModelResource):
+class ResourceMixin(object):
+
+    def method_check(self, request, allowed=None):
+        """
+        Make sure only OAuth2 is allowed to POST/PUT/DELETE
+        """
+        if request.user.is_authenticated():
+            allowed = ['get']
+        return super(ResourceMixin, self).method_check(request, allowed=allowed)
+
+
+class DojoModelResource(ResourceMixin, ModelResource):
 
     def apply_sorting(self, obj_list, options=None):
         """
@@ -188,7 +199,7 @@ class DojoModelResource(ModelResource):
         return bundle
 
 
-class DojoResource(Resource):
+class DojoResource(ResourceMixin, Resource):
 
     def _apply_sorting(self, options=None):
         """

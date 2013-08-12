@@ -137,7 +137,6 @@ class BaseFreeAdmin(object):
                     self.app_label,
                     self.module_name,
                 ),
-                allowed_methods=['get'],
                 include_resource_uri=False,
                 paginator_class=DojoPaginator,
                 authentication=APIAuthentication,
