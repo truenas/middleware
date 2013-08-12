@@ -177,7 +177,9 @@ class TreeType(object):
         mypath = self._get_path()
         path = gname.split('.')
 
-        if len(mypath) >= len(path):
+        if len(mypath) == len(path) and self.gname == gname:
+            return self
+        elif len(mypath) > len(path):
             return False
 
         for idx in xrange(len(mypath)):
