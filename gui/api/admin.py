@@ -31,10 +31,6 @@ from freenasUI.freeadmin.site import site
 
 class APICLientFAdmin(BaseFreeAdmin):
     menu_child_of = "system"
-    exclude_fields = (
-        'id',
-        'secret',
-    )
 
 
 site.register(models.APIClient, APICLientFAdmin)
