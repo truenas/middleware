@@ -27,7 +27,6 @@
 import re
 
 from django.db import models
-from django.db.models.base import ModelBase
 
 from south.modelsinspector import add_introspection_rules
 
@@ -35,8 +34,12 @@ add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.UserField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.GroupField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.PathField"])
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.MACField"])
-add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.Network4Field"])
-add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.Network6Field"])
+add_introspection_rules(
+    [], ["^(freenasUI\.)?freeadmin\.models\.Network4Field"]
+)
+add_introspection_rules(
+    [], ["^(freenasUI\.)?freeadmin\.models\.Network6Field"]
+)
 
 
 class UserField(models.CharField):
@@ -145,55 +148,3 @@ class Network6Field(models.CharField):
         defaults = {'form_class': NF}
         kwargs.update(defaults)
         return super(Network6Field, self).formfield(**kwargs)
-
-
-class FreeModelBase(ModelBase):
-    def __new__(cls, name, bases, attrs):
-        from freenasUI.freeadmin.site import site
-
-        new_class = ModelBase.__new__(cls, name, bases, attrs)
-        if new_class._meta.abstract:
-            pass
-        elif hasattr(new_class, 'FreeAdmin'):
-            site.register(new_class, freeadmin=new_class.FreeAdmin)
-
-        return new_class
-
-
-class Model(models.Model):
-    __metaclass__ = FreeModelBase
-
-    class Meta:
-        abstract = True
-
-    @models.permalink
-    def get_add_url(self):
-        return ('freeadmin_%s_%s_add' % (
-            self._meta.app_label,
-            self._meta.module_name,
-            ), )
-
-    @models.permalink
-    def get_edit_url(self):
-        return ('freeadmin_%s_%s_edit' % (
-            self._meta.app_label,
-            self._meta.module_name,
-            ), (), {
-            'oid': self.id,
-            })
-
-    @models.permalink
-    def get_delete_url(self):
-        return ('freeadmin_%s_%s_delete' % (
-            self._meta.app_label,
-            self._meta.module_name,
-            ), (), {
-            'oid': self.id,
-            })
-
-    @models.permalink
-    def get_empty_formset_url(self):
-        return ('freeadmin_%s_%s_empty_formset' % (
-            self._meta.app_label,
-            self._meta.module_name,
-            ), )
