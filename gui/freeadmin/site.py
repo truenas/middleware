@@ -17,7 +17,6 @@ from django.views.decorators.csrf import csrf_protect
 
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.options import BaseFreeAdmin
-from tastypie.api import Api
 
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
 log = logging.getLogger('freeadmin.site')
@@ -31,7 +30,6 @@ class FreeAdminSite(object):
 
     def __init__(self):
         self._registry = {}
-        self.v1_api = Api(api_name='v1.0')
 
     def register(
         self, model_or_iterable, admin_class=None, freeadmin=None, **options
@@ -152,9 +150,6 @@ class FreeAdminSite(object):
         return update_wrapper(inner, view)
 
     def get_urls(self):
-        from freenasUI.api.resources import SnapshotResource
-
-        self.v1_api.register(SnapshotResource())
 
         def wrap(view, cacheable=False):
             def wrapper(*args, **kwargs):
@@ -192,11 +187,6 @@ class FreeAdminSite(object):
                     include(model_admin.urls))
             )
 
-        urlpatterns += patterns(
-            '',
-            url(r'^api/',
-                include(self.v1_api.urls)),
-        )
         return urlpatterns
 
     @property

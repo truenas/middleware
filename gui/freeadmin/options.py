@@ -41,6 +41,7 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
+from freenasUI.api import v1_api
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -152,7 +153,7 @@ class BaseFreeAdmin(object):
             res = self.resource()
 
         if res:
-            self._admin.v1_api.register(res)
+            v1_api.register(res)
 
         def wrap(view):
             def wrapper(*args, **kwargs):

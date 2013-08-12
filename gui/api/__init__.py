@@ -24,3 +24,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from tastypie.api import Api
+
+v1_api = Api(api_name='v1.0')

@@ -33,12 +33,16 @@ from django.conf import settings
 from django.template.loader import add_to_builtins
 
 from freenasUI import freeadmin
+from freenasUI.api import v1_api
+from freenasUI.api.resources import SnapshotResource
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.navtree import navtree
 
 handler500 = 'freenasUI.freeadmin.views.server_error'
 handler404 = 'freenasUI.freeadmin.views.page_not_found'
+
+v1_api.register(SnapshotResource())
 
 navtree.prepare_modelforms()
 freeadmin.autodiscover()
@@ -61,6 +65,7 @@ urlpatterns = patterns('',
         {'document_root': '/usr/local/www/dojo'}),
     (r'^account/', include('freenasUI.account.urls')),
     (r'^admin/', include(site.urls)),
+    url(r'^api/', include(v1_api.urls)),
     (r'^jails/', include('freenasUI.jails.urls')),
     (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
     (r'^network/', include('freenasUI.network.urls')),
@@ -71,6 +76,6 @@ urlpatterns = patterns('',
     (r'^storage/', include('freenasUI.storage.urls')),
     (r'^support/', include('freenasUI.support.urls')),
     (r'^system/', include('freenasUI.system.urls')),
-    )
+)
 
 urlpatterns += staticfiles_urlpatterns()
