@@ -49,6 +49,9 @@ class APIClient(Model):
         verbose_name = _("API Client")
         verbose_name_plural = _("API Clients")
 
+    def __unicode__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if not self.secret:
             log.debug('Generating new secret for %s', self.name)
