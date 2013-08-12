@@ -147,7 +147,7 @@ then
 	error "Could not load the avatar.conf file from the destination directory ($INSTALL_DESTDIR/etc)"
 fi
 
-if ! stage_log=$(mktemp install_worker.XXXXXX)
+if ! stage_log=$(mktemp -t install_worker.XXXXXX)
 then
 	exit 1
 fi
