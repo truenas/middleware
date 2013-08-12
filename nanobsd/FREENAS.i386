@@ -250,6 +250,7 @@ device		ti		# Alteon Networks Tigon I/II gigabit Ethernet
 device		txp		# 3Com 3cR990 (``Typhoon'')
 device		vx		# 3Com 3c590, 3c595 (``Vortex'')
 device		oce		# Emulex 10Gbe Ethernet
+device		sfgxe		# Solarflare SFC9000 family 10Gb Ethernet adapters
 
 # PCI Ethernet NICs that use the common MII bus controller code.
 # NOTE: Be sure to keep the 'device miibus' line in order to use these NICs!
