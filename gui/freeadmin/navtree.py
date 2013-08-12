@@ -331,11 +331,10 @@ class NavTree(object):
 
                 model = getattr(modmodels, c)
                 try:
-                    if (
-                        issubclass(model, models.Model)
-                        and
-                        model._meta.app_label == app
-                    ):
+                    if issubclass(model, models.Model):
+                        if model._meta.app_label == app:
+                            continue
+                    else:
                         continue
                 except TypeError, e:
                     continue
