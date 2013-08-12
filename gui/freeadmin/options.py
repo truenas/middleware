@@ -44,6 +44,7 @@ from dojango.forms.models import inlineformset_factory
 from freenasUI.api import v1_api
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
+from tastypie.validation import FormValidation
 
 log = logging.getLogger('freeadmin.options')
 
@@ -131,8 +132,9 @@ class BaseFreeAdmin(object):
             APIAuthentication, APIAuthorization, DojoModelResource,
             DojoPaginator
         )
+        from freenasUI.freeadmin.navtree import navtree
         if self.resource is None and self._model:
-            myMeta = type('Meta', (object, ), dict(
+            myArgs = dict(
                 queryset=self._model.objects.all(),
                 resource_name="%s/%s" % (
                     self.app_label,
@@ -142,7 +144,11 @@ class BaseFreeAdmin(object):
                 paginator_class=DojoPaginator,
                 authentication=APIAuthentication,
                 authorization=APIAuthorization(),
-            ))
+            )
+            if not isinstance(navtree._modelforms[self._model], dict):
+                mf = navtree._modelforms[self._model]
+                myArgs['validation'] = FormValidation(form_class=mf)
+            myMeta = type('Meta', (object, ), myArgs)
 
             myres = type(
                 self._model._meta.object_name + 'Resource',
