@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'APIClient'
         db.create_table(u'api_apiclient', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
             ('secret', self.gf('django.db.models.fields.CharField')(max_length=1024)),
         ))
         db.send_create_signal(u'api', ['APIClient'])
@@ -26,7 +26,7 @@ class Migration(SchemaMigration):
         u'api.apiclient': {
             'Meta': {'object_name': 'APIClient'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'secret': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
         }
     }

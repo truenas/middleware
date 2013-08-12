@@ -24,17 +24,37 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import hashlib
+import hmac
+import logging
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.models import Model
 
+log = logging.getLogger('api.models')
+
 
 class APIClient(Model):
 
-    name = models.CharField(verbose_name=_("Name"), max_length=100)
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=100,
+        unique=True,
+    )
     secret = models.CharField(max_length=1024, editable=False)
 
     class Meta:
         verbose_name = _("API Client")
         verbose_name_plural = _("API Clients")
+
+    def save(self, *args, **kwargs):
+        if not self.secret:
+            log.debug('Generating new secret for %s', self.name)
+            h = hmac.HMAC(
+                key=self.name.encode('utf8'),
+                digestmod=hashlib.sha512
+            )
+            self.secret = str(h.hexdigest())
+        super(APIClient, self).save(*args, **kwargs)
