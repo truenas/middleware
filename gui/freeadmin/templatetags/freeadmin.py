@@ -101,17 +101,19 @@ class FormRender(template.Node):
                 html += u"</td></tr>"
                 output.append(html)
             else:
-                bf = BoundField(form, form.fields.get(field), field)
+                ffield = form.fields.get(field)
+                help_text = ffield.widget.attrs.get(
+                    'extra_field_attrs', {}
+                ).pop('help_text', '')
+                bf = BoundField(form, ffield, field)
                 bf_errors = form.error_class(
                     [conditional_escape(error) for error in bf.errors]
                 )
                 if bf.is_hidden:
                     hidden_fields.append(unicode(bf))
                 else:
-                    if bf.help_text:
-                        help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><img id="%shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % (bf.auto_id, bf.help_text, bf.auto_id)
-                    else:
-                        help_text = ""
+                    if help_text:
+                        help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><img id="%shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % (bf.auto_id, help_text, bf.auto_id)
                     html = u"""<tr%s%s><th>%s</th><td>%s%s %s</td></tr>""" % (
                         is_adv,
                         _hide,
