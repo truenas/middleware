@@ -27,7 +27,7 @@
 import logging
 import re
 
-from tastypie.authentication import Authentication
+from tastypie.authentication import Authentication, MultiAuthentication
 from tastypie.paginator import Paginator
 from tastypie.resources import ModelResource, Resource
 
@@ -122,3 +122,8 @@ class DojoResource(Resource):
 
     def alter_list_data_to_serialize(self, request, data):
         return data['objects']
+
+
+APIAuthentication = MultiAuthentication(
+    DjangoAuthentication(),
+)
