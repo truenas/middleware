@@ -10,6 +10,8 @@ if [ -e os-base ] ; then
 	chflags -Rv noschg os-base
 fi
 
+if [ -d release_stage ]; then rm -r release_stage; fi
+
 # clean up devfs mounts
 set +e
 for mount_dir in os-base/amd64/_.w/dev os-base/amd64/jails/jail-i386/dev ; do
