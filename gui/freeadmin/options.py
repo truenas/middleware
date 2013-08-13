@@ -155,6 +155,10 @@ class BaseFreeAdmin(object):
             mixins = [DojoModelResource]
             if self.resource_mixin is not None:
                 mixins.insert(0, self.resource_mixin)
+                if hasattr(self.resource_mixin, 'Meta'):
+                    myMeta = type(
+                        'Meta', (self.resource_mixin.Meta, myMeta), {}
+                    )
 
             myres = type(
                 self._model._meta.object_name + 'Resource',
