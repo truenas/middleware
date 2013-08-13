@@ -141,6 +141,7 @@ class BaseFreeAdmin(object):
                     self.module_name,
                 ),
                 include_resource_uri=False,
+                always_return_data=True,
                 paginator_class=DojoPaginator,
                 authentication=APIAuthentication,
                 authorization=APIAuthorization(),
