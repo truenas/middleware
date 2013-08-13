@@ -147,8 +147,8 @@ class BaseFreeAdmin(object):
                 authentication=APIAuthentication,
                 authorization=APIAuthorization(),
             )
-            if not isinstance(navtree._modelforms[self._model], dict):
-                mf = navtree._modelforms[self._model]
+            mf = navtree._modelforms.get(self._model, None)
+            if mf and not isinstance(mf, dict):
                 myArgs['validation'] = FormValidation(form_class=mf)
             myMeta = type('Meta', (object, ), myArgs)
 
