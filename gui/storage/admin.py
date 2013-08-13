@@ -5,7 +5,7 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    DiskResource, ReplicationResourceMixin, ScrubResourceMixin,
+    DiskResourceMixin, ReplicationResourceMixin, ScrubResourceMixin,
     TaskResourceMixin, VolumeResourceMixin, VolumeStatusResource
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
@@ -22,7 +22,7 @@ class DiskFAdmin(BaseFreeAdmin):
         'disk_multipath_member',
         'disk_enabled',
         )
-    resource = DiskResource
+    resource_mixin = DiskResourceMixin
 
     def get_actions(self):
         actions = super(DiskFAdmin, self).get_actions()

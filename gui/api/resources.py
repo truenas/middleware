@@ -72,7 +72,7 @@ def _common_human_fields(bundle):
         bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
 
 
-class DiskResource(DojoModelResource):
+class DiskResourceMixin(object):
 
     class Meta:
         queryset = Disk.objects.filter(
@@ -81,14 +81,10 @@ class DiskResource(DojoModelResource):
         ).exclude(
             Q(disk_name__startswith='multipath') | Q(disk_name='')
         )
-        resource_name = 'storage/disk'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
         allowed_methods = ['get']
 
     def dehydrate(self, bundle):
-        bundle = super(DiskResource, self).dehydrate(bundle)
+        bundle = super(DiskResourceMixin, self).dehydrate(bundle)
         bundle.data['_edit_url'] += '?deletable=false'
         bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
             'devname': bundle.obj.disk_name,
