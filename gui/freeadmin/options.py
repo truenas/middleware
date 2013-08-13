@@ -65,6 +65,7 @@ class BaseFreeAdmin(object):
     fields = ()
     exclude_fields = ('id', )
     resource = None
+    resource_mixin = None
     double_click = True
 
     advanced_fields = []
@@ -151,9 +152,13 @@ class BaseFreeAdmin(object):
                 myArgs['validation'] = FormValidation(form_class=mf)
             myMeta = type('Meta', (object, ), myArgs)
 
+            mixins = [DojoModelResource]
+            if self.resource_mixin is not None:
+                mixins.insert(0, self.resource_mixin)
+
             myres = type(
                 self._model._meta.object_name + 'Resource',
-                (DojoModelResource, ),
+                tuple(mixins),
                 dict(Meta=myMeta)
             )
             res = myres()
