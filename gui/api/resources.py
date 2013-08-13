@@ -52,7 +52,7 @@ from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
 from freenasUI.sharing.models import NFS_Share
 from freenasUI.system.models import CronJob, Rsync, SMARTTest
-from freenasUI.storage.models import Disk, Replication, Scrub, Task, Volume
+from freenasUI.storage.models import Disk, Volume
 from tastypie import fields
 
 log = logging.getLogger('api.resources')
@@ -395,8 +395,8 @@ class VolumeStatusResource(DojoModelResource):
 
                         """
                         Replacing might go south leaving multiple UNAVAIL disks
-                        For that reason replace button should be enable even for disks
-                        already under replacing subtree
+                        For that reason replace button should be enable even
+                        for disks already under replacing subtree
                         """
                         data['_replace_url'] = reverse(
                             'storage_zpool_disk_replace',
@@ -510,10 +510,10 @@ class TaskResourceMixin(object):
             repeat = ''
         bundle.data['when'] = _(
             "From %(begin)s through %(end)s, %(repeat)s") % {
-                'begin': bundle.obj.task_begin,
-                'end': bundle.obj.task_end,
-                'repeat': repeat,
-            }
+            'begin': bundle.obj.task_begin,
+            'end': bundle.obj.task_end,
+            'repeat': repeat,
+        }
         bundle.data['interv'] = "every %s" % (
             bundle.obj.get_task_interval_display(),
         )
@@ -822,16 +822,16 @@ class JailsResource(DojoModelResource):
         bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
             'id': bundle.obj.id
         })
-        bundle.data['_jail_storage_add_url'] = reverse('jail_storage_add', kwargs={
-            'jail_id': bundle.obj.id
-        })
+        bundle.data['_jail_storage_add_url'] = reverse(
+            'jail_storage_add', kwargs={'jail_id': bundle.obj.id}
+        )
         bundle.data['_upload_url'] = reverse('plugins_upload', kwargs={
             'jail_id': bundle.obj.id
         })
         bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
             'id': bundle.obj.id
         })
-        bundle.data['_jail_import_url'] = reverse('jail_import', kwargs={ })
+        bundle.data['_jail_import_url'] = reverse('jail_import', kwargs={})
         bundle.data['_jail_start_url'] = reverse('jail_start', kwargs={
             'id': bundle.obj.id
         })
@@ -902,7 +902,14 @@ class SnapshotResource(DojoResource):
             results.sort(
                 key=lambda item: getattr(item, field),
                 reverse=reverse)
-        paginator = self._meta.paginator_class(request, results, resource_uri=self.get_resource_uri(), limit=self._meta.limit, max_limit=self._meta.max_limit, collection_name=self._meta.collection_name)
+        paginator = self._meta.paginator_class(
+            request,
+            results,
+            resource_uri=self.get_resource_uri(),
+            limit=self._meta.limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
+        )
         to_be_serialized = paginator.page()
         # Dehydrate the bundles in preparation for serialization.
         bundles = []
@@ -913,9 +920,16 @@ class SnapshotResource(DojoResource):
 
         length = len(bundles)
         to_be_serialized[self._meta.collection_name] = bundles
-        to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request,
+            to_be_serialized
+        )
         response = self.create_response(request, to_be_serialized)
-        response['Content-Range'] = 'items %d-%d/%d' % (paginator.offset, paginator.offset+length-1, len(results))
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset+length-1,
+            len(results)
+        )
         return response
 
     def dehydrate(self, bundle):
@@ -972,7 +986,14 @@ class AvailablePluginsResource(DojoResource):
             results.sort(
                 key=lambda item: getattr(item, field),
                 reverse=reverse)
-        paginator = self._meta.paginator_class(request, results, resource_uri=self.get_resource_uri(), limit=self._meta.limit, max_limit=self._meta.max_limit, collection_name=self._meta.collection_name)
+        paginator = self._meta.paginator_class(
+            request,
+            results,
+            resource_uri=self.get_resource_uri(),
+            limit=self._meta.limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
+        )
         to_be_serialized = paginator.page()
         # Dehydrate the bundles in preparation for serialization.
         bundles = []
@@ -983,9 +1004,16 @@ class AvailablePluginsResource(DojoResource):
 
         length = len(bundles)
         to_be_serialized[self._meta.collection_name] = bundles
-        to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request,
+            to_be_serialized
+        )
         response = self.create_response(request, to_be_serialized)
-        response['Content-Range'] = 'items %d-%d/%d' % (paginator.offset, paginator.offset+length-1, len(results))
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset+length-1,
+            len(results)
+        )
         return response
 
     def dehydrate(self, bundle):
