@@ -167,7 +167,7 @@ class BaseFreeAdmin(object):
             )
             res = myres()
             self.resource = myres
-        elif self.resource is False:
+        elif self.resource is False or not self.resource:
             res = None
         elif self.resource:
             res = self.resource()

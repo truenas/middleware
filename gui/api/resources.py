@@ -693,41 +693,25 @@ class BsdGroupResourceMixin(object):
         return bundle
 
 
-class NullMountPointResource(DojoModelResource):
-
-    class Meta:
-        queryset = NullMountPoint.objects.all()
-        resource_name = 'nullmountpoint'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class NullMountPointResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(NullMountPointResource, self).dehydrate(bundle)
+        bundle = super(NullMountPointResourceMixin, self).dehydrate(bundle)
         bundle.data['mounted'] = bundle.obj.mounted
         return bundle
 
 
-class JailsResource(DojoModelResource):
-
-    class Meta:
-        queryset = Jails.objects.all()
-        resource_name = 'jails'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class JailsResourceMixin(object):
 
     def dispatch_list(self, request, **kwargs):
         proc = subprocess.Popen(
             ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         self.__jls = proc.communicate()[0]
-        return super(JailsResource, self).dispatch_list(request, **kwargs)
+        return super(JailsResourceMixin, self).dispatch_list(request, **kwargs)
 
     def dehydrate(self, bundle):
-        bundle = super(JailsResource, self).dehydrate(bundle)
+        bundle = super(JailsResourceMixin, self).dehydrate(bundle)
 
         bundle.data['name'] = bundle.obj.jail_host
         try:
@@ -738,28 +722,29 @@ class JailsResource(DojoModelResource):
             bundle.data['jid'] = int(reg.groups()[0])
         except:
             bundle.data['jid'] = None
-        bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
-            'id': bundle.obj.id
-        })
-        bundle.data['_jail_storage_add_url'] = reverse(
-            'jail_storage_add', kwargs={'jail_id': bundle.obj.id}
-        )
-        bundle.data['_upload_url'] = reverse('plugins_upload', kwargs={
-            'jail_id': bundle.obj.id
-        })
-        bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
-            'id': bundle.obj.id
-        })
-        bundle.data['_jail_import_url'] = reverse('jail_import', kwargs={})
-        bundle.data['_jail_start_url'] = reverse('jail_start', kwargs={
-            'id': bundle.obj.id
-        })
-        bundle.data['_jail_stop_url'] = reverse('jail_stop', kwargs={
-            'id': bundle.obj.id
-        })
-        bundle.data['_jail_delete_url'] = reverse('jail_delete', kwargs={
-            'id': bundle.obj.id
-        })
+        if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
+                'id': bundle.obj.id
+            })
+            bundle.data['_jail_storage_add_url'] = reverse(
+                'jail_storage_add', kwargs={'jail_id': bundle.obj.id}
+            )
+            bundle.data['_upload_url'] = reverse('plugins_upload', kwargs={
+                'jail_id': bundle.obj.id
+            })
+            bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
+                'id': bundle.obj.id
+            })
+            bundle.data['_jail_import_url'] = reverse('jail_import', kwargs={})
+            bundle.data['_jail_start_url'] = reverse('jail_start', kwargs={
+                'id': bundle.obj.id
+            })
+            bundle.data['_jail_stop_url'] = reverse('jail_stop', kwargs={
+                'id': bundle.obj.id
+            })
+            bundle.data['_jail_delete_url'] = reverse('jail_delete', kwargs={
+                'id': bundle.obj.id
+            })
 
         return bundle
 
