@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    CronJobResource, RsyncResource, SMARTTestResource
+    CronJobResourceMixin, RsyncResourceMixin, SMARTTestResourceMixin
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -50,7 +50,7 @@ class CronJobFAdmin(BaseFreeAdmin):
         'cron_minute',
         'cron_month',
     )
-    resource = CronJobResource
+    resource_mixin = CronJobResourceMixin
 
     def get_datagrid_columns(self):
         columns = super(CronJobFAdmin, self).get_datagrid_columns()
@@ -83,7 +83,7 @@ class RsyncFAdmin(BaseFreeAdmin):
         'rsync_preserveattr',
         'rsync_extra',
     )
-    resource = RsyncResource
+    resource_mixin = RsyncResourceMixin
 
     def get_datagrid_columns(self):
         columns = super(RsyncFAdmin, self).get_datagrid_columns()
@@ -105,7 +105,7 @@ class SMARTTestFAdmin(BaseFreeAdmin):
         'smarttest_hour',
         'smarttest_month',
     )
-    resource = SMARTTestResource
+    resource_mixin = SMARTTestResourceMixin
 
     def get_datagrid_columns(self):
         columns = super(SMARTTestFAdmin, self).get_datagrid_columns()

@@ -617,52 +617,31 @@ class LAGGInterfaceMembersResource(DojoModelResource):
         return bundle
 
 
-class CronJobResource(DojoModelResource):
-
-    class Meta:
-        queryset = CronJob.objects.all()
-        resource_name = 'cronjob'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class CronJobResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(CronJobResource, self).dehydrate(bundle)
-        _common_human_fields(bundle)
+        bundle = super(CronJobResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            _common_human_fields(bundle)
         return bundle
 
 
-class RsyncResource(DojoModelResource):
-
-    class Meta:
-        queryset = Rsync.objects.all()
-        resource_name = 'rsync'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class RsyncResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(RsyncResource, self).dehydrate(bundle)
-        _common_human_fields(bundle)
+        bundle = super(RsyncResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            _common_human_fields(bundle)
         return bundle
 
 
-class SMARTTestResource(DojoModelResource):
-
-    class Meta:
-        queryset = SMARTTest.objects.all()
-        resource_name = 'smarttest'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class SMARTTestResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(SMARTTestResource, self).dehydrate(bundle)
-        _common_human_fields(bundle)
-        bundle.data['smarttest_type'] = bundle.obj.get_smarttest_type_display()
+        bundle = super(SMARTTestResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            _common_human_fields(bundle)
+            bundle.data['smarttest_type'] = bundle.obj.get_smarttest_type_display()
         return bundle
 
 
