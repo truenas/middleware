@@ -241,6 +241,7 @@ device		txp		# 3Com 3cR990 (``Typhoon'')
 device		vx		# 3Com 3c590, 3c595 (``Vortex'')
 device		qlxgb		# qlogic 10Gb
 device		oce		# Emulex 10Gbe Ethernet
+device		sfxge		# Solarflare SFC9000 family 10Gb Ethernet adapters
 
 # PCI Ethernet NICs that use the common MII bus controller code.
 # NOTE: Be sure to keep the 'device miibus' line in order to use these NICs!
