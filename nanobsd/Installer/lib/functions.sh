@@ -187,7 +187,7 @@ source_conf()
 		return 1
 	fi
 
-	if ! tmpconf=$(mktemp /tmp/conf.XXXXXX)
+	if ! tmpconf=$(mktemp -t conf.XXXXXX)
 	then
 		return 1
 	fi
