@@ -53,6 +53,12 @@ log = logging.getLogger('freeadmin.navtree')
 
 class ModelFormsDict(dict):
 
+    def get(self, item, default=None):
+        if item in self:
+            return self[item]
+        else:
+            return default
+
     def __getitem__(self, item):
         item = item.__module__ + '.' + item._meta.object_name
         if not item.startswith('freenasUI'):
