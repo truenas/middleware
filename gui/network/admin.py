@@ -1,7 +1,8 @@
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    InterfacesResource, LAGGInterfaceResource, LAGGInterfaceMembersResource
+    InterfacesResourceMixin, LAGGInterfaceResourceMixin,
+    LAGGInterfaceMembersResourceMixin
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -22,7 +23,7 @@ class InterfacesFAdmin(BaseFreeAdmin):
             'prefix': 'alias_set'
         },
     ]
-    resource = InterfacesResource
+    resource_mixin = InterfacesResourceMixin
     exclude_fields = (
         'id',
         'int_ipv4address',
@@ -53,7 +54,7 @@ class LAGGInterfaceFAdmin(BaseFreeAdmin):
     icon_add = u"AddVLANIcon"
     icon_view = u"ViewAllVLANsIcon"
     create_modelform = "LAGGInterfaceForm"
-    resource = LAGGInterfaceResource
+    resource_mixin = LAGGInterfaceResourceMixin
 
     def get_actions(self):
         actions = super(LAGGInterfaceFAdmin, self).get_actions()
@@ -88,9 +89,8 @@ class LAGGInterfaceFAdmin(BaseFreeAdmin):
 
               }
             }""" % {
-                'lagg_members': _('LAGG Members'),
-                },
-        }
+            'lagg_members': _('LAGG Members'),
+        }}
         return actions
 
 
@@ -98,7 +98,7 @@ class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
 
     icon_object = u"LAGGIcon"
     icon_model = u"LAGGIcon"
-    resource = LAGGInterfaceMembersResource
+    resource_mixin = LAGGInterfaceMembersResourceMixin
 
     def get_datagrid_filters(self, request):
         return {

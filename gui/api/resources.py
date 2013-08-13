@@ -42,16 +42,12 @@ from freenasUI.jails.models import (
 )
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware import zfs
-from freenasUI.network.models import (
-    Interfaces, LAGGInterface, LAGGInterfaceMembers
-)
 from freenasUI.services.models import (
     iSCSITargetPortal, iSCSITargetExtent, iSCSITargetToExtent
 )
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
 from freenasUI.sharing.models import NFS_Share
-from freenasUI.system.models import CronJob, Rsync, SMARTTest
 from freenasUI.storage.models import Disk, Volume
 from tastypie import fields
 
@@ -540,69 +536,46 @@ class NFSShareResource(DojoModelResource):
         return bundle
 
 
-class InterfacesResource(DojoModelResource):
-
-    class Meta:
-        queryset = Interfaces.objects.all()
-        resource_name = 'interfaces'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class InterfacesResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(InterfacesResource, self).dehydrate(bundle)
+        bundle = super(InterfacesResourceMixin, self).dehydrate(bundle)
         bundle.data['ipv4_addresses'] = bundle.obj.get_ipv4_addresses()
         bundle.data['ipv6_addresses'] = bundle.obj.get_ipv6_addresses()
         return bundle
 
 
-class LAGGInterfaceResource(DojoModelResource):
-
-    class Meta:
-        queryset = LAGGInterface.objects.all()
-        resource_name = 'lagginterface'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class LAGGInterfaceResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(LAGGInterfaceResource, self).dehydrate(bundle)
+        bundle = super(LAGGInterfaceResourceMixin, self).dehydrate(bundle)
         bundle.data['lagg_interface'] = unicode(bundle.obj)
         bundle.data['int_interface'] = bundle.obj.lagg_interface.int_interface
         bundle.data['int_name'] = bundle.obj.lagg_interface.int_name
-        bundle.data['_edit_url'] = reverse(
-            'freeadmin_network_interfaces_edit',
-            kwargs={
-                'oid': bundle.obj.lagg_interface.id,
-            }) + '?deletable=false'
-        bundle.data['_delete_url'] = reverse(
-            'freeadmin_network_interfaces_delete',
-            kwargs={
-                'oid': bundle.obj.lagg_interface.id,
-            })
-        bundle.data['_members_url'] = reverse(
-            'freeadmin_network_lagginterfacemembers_datagrid'
-        ) + '?id=%d' % bundle.obj.id
+        if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] = reverse(
+                'freeadmin_network_interfaces_edit',
+                kwargs={
+                    'oid': bundle.obj.lagg_interface.id,
+                }) + '?deletable=false'
+            bundle.data['_delete_url'] = reverse(
+                'freeadmin_network_interfaces_delete',
+                kwargs={
+                    'oid': bundle.obj.lagg_interface.id,
+                })
+            bundle.data['_members_url'] = reverse(
+                'freeadmin_network_lagginterfacemembers_datagrid'
+            ) + '?id=%d' % bundle.obj.id
         return bundle
 
 
-class LAGGInterfaceMembersResource(DojoModelResource):
-
-    class Meta:
-        queryset = LAGGInterfaceMembers.objects.all()
-        resource_name = 'lagginterfacemembers'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class LAGGInterfaceMembersResourceMixin(object):
 
     def build_filters(self, filters=None):
         if filters is None:
             filters = {}
         orm_filters = super(
-            LAGGInterfaceMembersResource,
+            LAGGInterfaceMembersResourceMixin,
             self).build_filters(filters)
         lagggrp = filters.get("lagg_interfacegroup__id")
         if lagggrp:
@@ -610,7 +583,9 @@ class LAGGInterfaceMembersResource(DojoModelResource):
         return orm_filters
 
     def dehydrate(self, bundle):
-        bundle = super(LAGGInterfaceMembersResource, self).dehydrate(bundle)
+        bundle = super(LAGGInterfaceMembersResourceMixin, self).dehydrate(
+            bundle
+        )
         bundle.data['lagg_interfacegroup'] = unicode(
             bundle.obj.lagg_interfacegroup
         )
@@ -641,7 +616,9 @@ class SMARTTestResourceMixin(object):
         bundle = super(SMARTTestResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
             _common_human_fields(bundle)
-            bundle.data['smarttest_type'] = bundle.obj.get_smarttest_type_display()
+            bundle.data['smarttest_type'] = (
+                bundle.obj.get_smarttest_type_display()
+            )
         return bundle
 
 
