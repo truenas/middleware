@@ -81,7 +81,7 @@ class DiskResource(DojoModelResource):
         ).exclude(
             Q(disk_name__startswith='multipath') | Q(disk_name='')
         )
-        resource_name = 'disk'
+        resource_name = 'storage/disk'
         paginator_class = DojoPaginator
         authentication = DjangoAuthentication()
         include_resource_uri = False
@@ -108,15 +108,7 @@ class Uid(object):
         return number
 
 
-class VolumeResource(DojoModelResource):
-
-    class Meta:
-        queryset = Volume.objects.all()
-        resource_name = 'volume'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class VolumeResourceMixin(object):
 
     def _get_datasets(self, vol, datasets, uid):
         children = []
@@ -178,7 +170,7 @@ class VolumeResource(DojoModelResource):
         return children
 
     def dehydrate(self, bundle):
-        bundle = super(VolumeResource, self).dehydrate(bundle)
+        bundle = super(VolumeResourceMixin, self).dehydrate(bundle)
         mp = bundle.obj.mountpoint_set.all()[0]
 
         bundle.data['name'] = bundle.obj.vol_name
@@ -484,53 +476,29 @@ class VolumeStatusResource(DojoModelResource):
         return bundle
 
 
-class ScrubResource(DojoModelResource):
-
-    class Meta:
-        queryset = Scrub.objects.all()
-        resource_name = 'scrub'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class ScrubResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(ScrubResource, self).dehydrate(bundle)
+        bundle = super(ScrubResourceMixin, self).dehydrate(bundle)
         bundle.data['scrub_volume'] = bundle.obj.scrub_volume.vol_name
         _common_human_fields(bundle)
         return bundle
 
 
-class ReplicationResource(DojoModelResource):
-
-    class Meta:
-        queryset = Replication.objects.all()
-        resource_name = 'replication'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class ReplicationResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(ReplicationResource, self).dehydrate(bundle)
+        bundle = super(ReplicationResourceMixin, self).dehydrate(bundle)
         bundle.data['ssh_remote_host'] = (
             bundle.obj.repl_remote.ssh_remote_hostname
         )
         return bundle
 
 
-class TaskResource(DojoModelResource):
-
-    class Meta:
-        queryset = Task.objects.all()
-        resource_name = 'task'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class TaskResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(TaskResource, self).dehydrate(bundle)
+        bundle = super(TaskResourceMixin, self).dehydrate(bundle)
         if bundle.obj.task_repeat_unit == "daily":
             repeat = _('everyday')
         elif bundle.obj.task_repeat_unit == "weekly":

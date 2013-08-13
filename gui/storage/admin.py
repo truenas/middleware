@@ -5,8 +5,8 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    DiskResource, ReplicationResource, ScrubResource, TaskResource,
-    VolumeResource, VolumeStatusResource
+    DiskResource, ReplicationResourceMixin, ScrubResourceMixin,
+    TaskResourceMixin, VolumeResourceMixin, VolumeStatusResource
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -67,7 +67,7 @@ class DiskFAdmin(BaseFreeAdmin):
 
 class VolumeFAdmin(BaseFreeAdmin):
 
-    resource = VolumeResource
+    resource_mixin = VolumeResourceMixin
     double_click = False
     exclude_fields = (
         'id',
@@ -436,7 +436,7 @@ class ScrubFAdmin(BaseFreeAdmin):
     icon_object = u"cronJobIcon"
     icon_add = u"AddcronJobIcon"
     icon_view = u"ViewcronJobIcon"
-    resource = ScrubResource
+    resource_mixin = ScrubResourceMixin
     exclude_fields = (
         'id',
         )
@@ -508,7 +508,7 @@ class TaskFAdmin(BaseFreeAdmin):
     composed_fields = (
         ('Lifetime', ('task_ret_count', 'task_ret_unit')),
         )
-    resource = TaskResource
+    resource_mixin = TaskResourceMixin
     exclude_fields = (
         'id',
         'task_ret_count',
@@ -548,7 +548,7 @@ class ReplicationFAdmin(BaseFreeAdmin):
     icon_add = u"AddReplIcon"
     icon_view = u"ViewAllReplIcon"
     icon_object = u"ReplIcon"
-    resource = ReplicationResource
+    resource_mixin = ReplicationResourceMixin
     exclude_fields = (
         'id',
         'repl_lastsnapshot',
