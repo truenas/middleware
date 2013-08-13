@@ -412,8 +412,8 @@ menu_test()
     local _script
     local _nfs_mount
 
-    _script="$(kenv test.script)"
-    _nfs_mount="$(kenv test.nfs_mount)"
+    _script="$(kenv test.script 2> /dev/null)"
+    _nfs_mount="$(kenv test.nfs_mount 2> /dev/null)"
     if [ -z "$_script" -o -z "$_nfs_mount"  ]; then
         return
     fi
@@ -444,13 +444,13 @@ main()
     local _number
     local _test_option=
 
-    case "$(kenv test.run_tests_on_boot)" in
+    case "$(kenv test.run_tests_on_boot 2> /dev/null)" in
     [Yy][Ee][Ss])
         menu_test
         ;;
     esac
 
-    if [ -n "$(kenv test.script)" ]; then
+    if [ -n "$(kenv test.script 2> /dev/null)" ]; then
         _test_option="5 Test"
     fi
 
