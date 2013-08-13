@@ -47,7 +47,6 @@ from freenasUI.services.models import (
 )
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
-from freenasUI.sharing.models import NFS_Share
 from freenasUI.storage.models import Disk, Volume
 from tastypie import fields
 
@@ -520,18 +519,10 @@ class TaskResourceMixin(object):
         return bundle
 
 
-class NFSShareResource(DojoModelResource):
-
-    class Meta:
-        queryset = NFS_Share.objects.all()
-        resource_name = 'nfs_share'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class NFSShareResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(NFSShareResource, self).dehydrate(bundle)
+        bundle = super(NFSShareResourceMixin, self).dehydrate(bundle)
         bundle.data['nfs_paths'] = bundle.obj.nfs_paths
         return bundle
 
@@ -622,18 +613,10 @@ class SMARTTestResourceMixin(object):
         return bundle
 
 
-class ISCSIPortalResource(DojoModelResource):
-
-    class Meta:
-        queryset = iSCSITargetPortal.objects.all()
-        resource_name = 'iscsitargetportal'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class ISCSIPortalResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(ISCSIPortalResource, self).dehydrate(bundle)
+        bundle = super(ISCSIPortalResourceMixin, self).dehydrate(bundle)
         listen = ["%s:%s" % (
             p.iscsi_target_portalip_ip,
             p.iscsi_target_portalip_port,
@@ -642,35 +625,21 @@ class ISCSIPortalResource(DojoModelResource):
         return bundle
 
 
-class ISCSITargetToExtentResource(DojoModelResource):
-
-    class Meta:
-        queryset = iSCSITargetToExtent.objects.all()
-        resource_name = 'iscsitargettoextent'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class ISCSITargetToExtentResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(ISCSITargetToExtentResource, self).dehydrate(bundle)
+        bundle = super(ISCSITargetToExtentResourceMixin, self).dehydrate(
+            bundle
+        )
         bundle.data['iscsi_target'] = bundle.obj.iscsi_target
         bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
         return bundle
 
 
-class ISCSITargetExtentResource(DojoModelResource):
-
-    class Meta:
-        queryset = iSCSITargetExtent.objects.all()
-        resource_name = 'iscsitargetextent'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
+class ISCSITargetExtentResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(ISCSITargetExtentResource, self).dehydrate(bundle)
+        bundle = super(ISCSITargetExtentResourceMixin, self).dehydrate(bundle)
         if bundle.obj.iscsi_target_extent_type == 'Disk':
             disk = Disk.objects.get(id=bundle.obj.iscsi_target_extent_path)
             bundle.data['iscsi_target_extent_path'] = "/dev/%s" % disk.devname

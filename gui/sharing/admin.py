@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 
-from freenasUI.api.resources import NFSShareResource
+from freenasUI.api.resources import NFSShareResourceMixin
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.sharing import models
@@ -61,7 +61,7 @@ class NFSShareFAdmin(BaseFreeAdmin):
             'prefix': 'path_set'
         },
     ]
-    resource = NFSShareResource
+    resource_mixin = NFSShareResourceMixin
     fields = (
         'nfs_paths',
         'nfs_comment',

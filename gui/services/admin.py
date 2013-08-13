@@ -1,10 +1,8 @@
-from collections import OrderedDict
-
-from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    ISCSIPortalResource, ISCSITargetExtentResource, ISCSITargetToExtentResource
+    ISCSIPortalResourceMixin, ISCSITargetExtentResourceMixin,
+    ISCSITargetToExtentResourceMixin
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -25,7 +23,7 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
         },
     ]
 
-    resource = ISCSIPortalResource
+    resource_mixin = ISCSIPortalResourceMixin
 
     def get_datagrid_columns(self):
         columns = super(ISCSIPortalFAdmin, self).get_datagrid_columns()
@@ -60,7 +58,7 @@ class ISCSITargetToExtentFAdmin(BaseFreeAdmin):
     icon_add = u"AddTargetExtentIcon"
     icon_view = u"ViewAllTargetExtentsIcon"
 
-    resource = ISCSITargetToExtentResource
+    resource_mixin = ISCSITargetToExtentResourceMixin
 
 
 class ISCSITargetExtentFAdmin(BaseFreeAdmin):
@@ -73,12 +71,12 @@ class ISCSITargetExtentFAdmin(BaseFreeAdmin):
     icon_add = u"AddExtentIcon"
     icon_view = u"ViewAllExtentsIcon"
 
-    resource = ISCSITargetExtentResource
+    resource_mixin = ISCSITargetExtentResourceMixin
 
     exclude_fields = (
         'id',
         'iscsi_target_extent_filesize',
-        )
+    )
 
 
 site.register(models.iSCSITargetPortal, ISCSIPortalFAdmin)
