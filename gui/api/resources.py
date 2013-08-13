@@ -650,52 +650,46 @@ class ISCSITargetExtentResourceMixin(object):
         return bundle
 
 
-class BsdUserResource(DojoModelResource):
+class BsdUserResourceMixin(object):
 
     class Meta:
         queryset = bsdUsers.objects.all().order_by(
             'bsdusr_builtin',
             'bsdusr_uid')
-        resource_name = 'bsdusers'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
 
     def dehydrate(self, bundle):
-        bundle = super(BsdUserResource, self).dehydrate(bundle)
+        bundle = super(BsdUserResourceMixin, self).dehydrate(bundle)
         bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
-        if bundle.obj.bsdusr_builtin:
-            bundle.data['_edit_url'] += '?deletable=false'
-        bundle.data['_passwd_url'] = (
-            "%sbsdUserPasswordForm?deletable=false" % (
-                bundle.obj.get_edit_url(),
+        if self.is_webclient(bundle.request):
+            if bundle.obj.bsdusr_builtin:
+                bundle.data['_edit_url'] += '?deletable=false'
+            bundle.data['_passwd_url'] = (
+                "%sbsdUserPasswordForm?deletable=false" % (
+                    bundle.obj.get_edit_url(),
+                )
             )
-        )
-        bundle.data['_email_url'] = "%sbsdUserEmailForm?deletable=false" % (
-            bundle.obj.get_edit_url(),
-        )
-        bundle.data['_auxiliary_url'] = reverse(
-            'account_bsduser_groups',
-            kwargs={'object_id': bundle.obj.id})
+            bundle.data['_email_url'] = (
+                "%sbsdUserEmailForm?deletable=false" % (
+                    bundle.obj.get_edit_url(),
+                )
+            )
+            bundle.data['_auxiliary_url'] = reverse(
+                'account_bsduser_groups',
+                kwargs={'object_id': bundle.obj.id})
         return bundle
 
 
-class BsdGroupResource(DojoModelResource):
+class BsdGroupResourceMixin(object):
 
     class Meta:
         queryset = bsdGroups.objects.order_by('bsdgrp_builtin', 'bsdgrp_gid')
-        resource_name = 'bsdgroups'
-        paginator_class = DojoPaginator
-        authentication = DjangoAuthentication()
-        include_resource_uri = False
-        allowed_methods = ['get']
 
     def dehydrate(self, bundle):
-        bundle = super(BsdGroupResource, self).dehydrate(bundle)
-        bundle.data['_members_url'] = reverse(
-            'account_bsdgroup_members',
-            kwargs={'object_id': bundle.obj.id})
+        bundle = super(BsdGroupResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            bundle.data['_members_url'] = reverse(
+                'account_bsdgroup_members',
+                kwargs={'object_id': bundle.obj.id})
         return bundle
 
 

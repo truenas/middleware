@@ -1,10 +1,11 @@
 from collections import OrderedDict
 
-from django.conf import settings
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from freenasUI.api.resources import BsdUserResource, BsdGroupResource
+from freenasUI.api.resources import (
+    BsdUserResourceMixin, BsdGroupResourceMixin
+)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.account import models
@@ -23,7 +24,7 @@ class BsdUserFAdmin(BaseFreeAdmin):
     icon_add = u"AddUserIcon"
     icon_view = u"ViewAllUsersIcon"
 
-    resource = BsdUserResource
+    resource_mixin = BsdUserResourceMixin
     exclude_fields = (
         'id',
         'bsdusr_unixhash',
@@ -47,10 +48,10 @@ class BsdUserFAdmin(BaseFreeAdmin):
                 for(var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
                     if((%(hide)s)) {
-                        query(".grid" + actionName).forEach(function(item, idx) {
-                            domStyle.set(item, "display", "none");
-                        });
-                        break;
+                      query(".grid" + actionName).forEach(function(item, idx) {
+                          domStyle.set(item, "display", "none");
+                      });
+                      break;
                     }
                 }
             }""" % {
@@ -64,10 +65,10 @@ class BsdUserFAdmin(BaseFreeAdmin):
                     %(func)s('%(label)s', data.%(url)s, [mybtn,]);
                 }
             }""" % {
-                'func': func,
-                'label': escapejs(label),
-                'url': url,
-                }
+            'func': func,
+            'label': escapejs(label),
+            'url': url,
+        }
 
         data = {
             'button_name': label,
@@ -80,23 +81,28 @@ class BsdUserFAdmin(BaseFreeAdmin):
     def get_actions(self):
 
         actions = OrderedDict()
-        actions['Changewd'] = self._action_builder("passwd",
+        actions['Changewd'] = self._action_builder(
+            "passwd",
             label=_('Change Password'),
-            )
-        actions['Edit'] = self._action_builder("edit",
+        )
+        actions['Edit'] = self._action_builder(
+            "edit",
             label=_('Modify User'),
-            )
-        actions['Remove'] = self._action_builder("delete",
+        )
+        actions['Remove'] = self._action_builder(
+            "delete",
             label=_('Remove User'),
             builtin=False,
-            )
-        actions['Auxiliary'] = self._action_builder("auxiliary",
+        )
+        actions['Auxiliary'] = self._action_builder(
+            "auxiliary",
             label=_('Auxiliary Groups'),
-            )
-        actions['E-mail'] = self._action_builder("email",
+        )
+        actions['E-mail'] = self._action_builder(
+            "email",
             label=_('Change E-mail'),
             builtin=True,
-            )
+        )
         return actions
 
 
@@ -111,7 +117,7 @@ class BsdGroupFAdmin(BaseFreeAdmin):
     icon_add = u"AddGroupIcon"
     icon_view = u"ViewAllGroupsIcon"
 
-    resource = BsdGroupResource
+    resource_mixin = BsdGroupResourceMixin
 
     def _action_builder(self, name, label=None, url=None, builtin=None):
         func = "editObject"
@@ -130,10 +136,10 @@ class BsdGroupFAdmin(BaseFreeAdmin):
                 for(var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
                     if((%(hide)s)) {
-                        query(".grid" + actionName).forEach(function(item, idx) {
-                            domStyle.set(item, "display", "none");
-                        });
-                        break;
+                      query(".grid" + actionName).forEach(function(item, idx) {
+                          domStyle.set(item, "display", "none");
+                      });
+                      break;
                     }
                 }
             }""" % {
@@ -147,10 +153,10 @@ class BsdGroupFAdmin(BaseFreeAdmin):
                     %(func)s('%(label)s', data.%(url)s, [mybtn,]);
                 }
             }""" % {
-                'func': func,
-                'label': escapejs(label),
-                'url': url,
-                }
+            'func': func,
+            'label': escapejs(label),
+            'url': url,
+        }
 
         data = {
             'button_name': label,
@@ -163,17 +169,20 @@ class BsdGroupFAdmin(BaseFreeAdmin):
     def get_actions(self):
 
         actions = OrderedDict()
-        actions['Members'] = self._action_builder("members",
+        actions['Members'] = self._action_builder(
+            "members",
             label=_('Members'),
-            )
-        actions['Modify'] = self._action_builder("edit",
+        )
+        actions['Modify'] = self._action_builder(
+            "edit",
             label=_('Modify Group'),
             builtin=False,
-            )
-        actions['Remove'] = self._action_builder("delete",
+        )
+        actions['Remove'] = self._action_builder(
+            "delete",
             label=_('Delete Group'),
             builtin=False,
-            )
+        )
         return actions
 
 
