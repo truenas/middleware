@@ -197,6 +197,8 @@ FORCE_SCRIPT_NAME = ''
 #      Maybe offer as an option in the GUI
 ALLOWED_HOSTS = ['*']
 
+SOUTH_TESTS_MIGRATE = False
+
 FILE_UPLOAD_MAX_MEMORY_SIZE = 33554432
 FILE_UPLOAD_TEMP_DIR = "/var/tmp/firmware/"
 
