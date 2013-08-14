@@ -120,12 +120,22 @@ NANO_MODULES="ctl cxgb cxgbe cxgbe/firmware cyclic dtrace ext2fs geom ipmi iscsi
 SW_FEATURES="DEBUG REPORTING"
 
 # The GEOM label to use.
-NANO_LABEL="FreeNAS"
+#NANO_LABEL="FreeNAS"
 
 # Version of the software to use. This should be 8.2-BETA1, 9.0-PRERELEASE,
 # etc.
-VERSION="9.2.0-ALPHA"
-export VERSION
+#VERSION="9.2.0-ALPHA"
+#export VERSION
+
+if [ -z "$NANO_LABEL" ] ; then
+	echo "build/nano_env: NANO_LABEL unset, should be 'FreeNAS'"
+	exit 1
+fi
+
+if [ -z "$VERSION" ] ; then
+	echo "build/nano_env: VERSION unset, should be '9.2.0-ALPHA'"
+	exit 1
+fi
 
 # FreeBSD release we are using for this release
 : ${FREEBSD_RELEASE_VERSION:="9.1-RELEASE"}

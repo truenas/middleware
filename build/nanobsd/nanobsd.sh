@@ -143,7 +143,7 @@ PPLEVEL=3
 # Root partition will be ${NANO_LABEL}s{1,2}
 # /cfg partition will be ${NANO_LABEL}s3
 # /data partition will be ${NANO_LABEL}s4
-NANO_LABEL=""
+: ${NANO_LABEL=""}
 
 #######################################################################
 # Architecture to build.  Corresponds to TARGET:TARGET_ARCH in
