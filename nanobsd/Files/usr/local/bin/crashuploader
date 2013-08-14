@@ -19,4 +19,7 @@ if os.path.isfile("/etc/hostid"):
     data = { 'hostid': hostid }
 
 r = requests.post(url, data=data, files=files)
-#print r.text
+#if r.status_code != 200:
+#    print "Bad upload, status code: %s" % r.status_code
+#    print "Response data:"
+#    print r.text
