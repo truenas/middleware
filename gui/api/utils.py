@@ -230,6 +230,28 @@ class DojoModelResource(ResourceMixin, ModelResource):
         response['Content-Range'] = 'items %d-%d/%d' % (paginator.offset, paginator.offset+length-1, len(sorted_objects))
         return response
 
+    def save(self, bundle, skip_errors=False):
+        form = self._meta.validation.form_class(bundle.data)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, bundle.errors)
+            )
+
+        # Check if they're authorized.
+        if bundle.obj.pk:
+            self.authorized_update_detail(self.get_object_list(bundle.request), bundle)
+        else:
+            self.authorized_create_detail(self.get_object_list(bundle.request), bundle)
+
+        bundle.obj = form.save()
+        bundle.objects_saved.add(self.create_identifier(bundle.obj))
+
+        # Now pick up the M2M bits.
+        m2m_bundle = self.hydrate_m2m(bundle)
+        self.save_m2m(m2m_bundle)
+
+        return bundle
+
     def alter_list_data_to_serialize(self, request, data):
         return data['objects']
 
