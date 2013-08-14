@@ -32,7 +32,7 @@ redirect_output_to_logger()
 	# Try to redirect everything to logger(1)
 	FIFO_DIR=`mktemp -d -t instfifo`
 	if [ $? != 0 ] ; then
-	    echo "mktemp for fifo failed, logging to logger disabled."
+	    warn "mktemp for fifo failed, logging to logger disabled."
 	    return 1
 	fi
 
@@ -43,7 +43,7 @@ redirect_output_to_logger()
 	    if [ ! -x /usr/bin/tee ] ; then
 		return 1
 	    fi
-	    echo "mkfifo/logger not available, using logfile"
+	    warn "mkfifo/logger not available, using logfile"
 	    export INSTALLER_REDIRECTING=TRUE
 	    $0 ${1+"$@"} 2>&1 | tee $FIFO_DIR/install.log
 	    exit $?
@@ -52,19 +52,19 @@ redirect_output_to_logger()
 	FIFO="$FIFO_DIR/logger_fifo"
 	mkfifo $FIFO
 	if [ $? != 0 ] ; then
-	    echo "mkfifo failed, logging to logger disabled."
+	    warn "mkfifo failed, logging to logger disabled."
 	    return 1
 	fi
-	logger < $FIFO &
-	exec 3>&1 4>&2 >$FIFO 2>&1
+	cat $FIFO | tee $FIFO_DIR/install.log | logger &
+	exec >$FIFO 2>&1
 	return 0
 }
 
-redirect_output_to_logger
+redirect_output_to_logger ${1+"$@"}
 
 usage()
 {
-	cat <<EOF
+	cat <<EOF >&4
 usage: ${0##*/} [-D dir] [-f expr] [-m dir] stage
 ===============================================================================
 -D dir		: destdir to compare against. Defaults to "/".
