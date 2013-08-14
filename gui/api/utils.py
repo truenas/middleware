@@ -31,7 +31,7 @@ import oauth2
 from tastypie.authentication import Authentication, MultiAuthentication
 from tastypie.authorization import Authorization
 from tastypie.paginator import Paginator
-from tastypie.resources import ModelResource, Resource
+from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
 from freenasUI.api.models import APIClient
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
@@ -138,6 +138,12 @@ class OAuth2Authentication(Authentication):
         return True
 
 
+APIAuthentication = MultiAuthentication(
+    DjangoAuthentication(),
+    OAuth2Authentication(),
+)
+
+
 class APIAuthorization(Authorization):
     pass
 
@@ -152,6 +158,23 @@ class DojoPaginator(Paginator):
             self.offset = int(r[0])
             if r[1]:
                 self.limit = int(r[1]) + 1 - self.offset
+
+
+class DjangoDeclarativeMetaclass(DeclarativeMetaclass):
+
+    def __new__(cls, name, bases, attrs):
+        defaultMeta = type('Meta', (), dict(
+            include_resource_uri=False,
+            always_return_data=True,
+            paginator_class=DojoPaginator,
+            authentication=APIAuthentication,
+            authorization=APIAuthorization(),
+        ))
+        meta = attrs.get('Meta', None)
+        if not meta:
+            meta = type('Meta')
+        attrs['Meta'] = type('Meta', (meta, defaultMeta), {})
+        return DeclarativeMetaclass.__new__(cls, name, bases, attrs)
 
 
 class ResourceMixin(object):
@@ -219,6 +242,8 @@ class DojoModelResource(ResourceMixin, ModelResource):
 
 class DojoResource(ResourceMixin, Resource):
 
+    __metaclass__ = DjangoDeclarativeMetaclass
+
     def _apply_sorting(self, options=None):
         """
         Dojo aware filtering
@@ -233,9 +258,3 @@ class DojoResource(ResourceMixin, Resource):
 
     def alter_list_data_to_serialize(self, request, data):
         return data['objects']
-
-
-APIAuthentication = MultiAuthentication(
-    DjangoAuthentication(),
-    OAuth2Authentication(),
-)
