@@ -51,7 +51,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': DATABASE_PATH,
-        'TEST_NAME': os.path.join(HERE, "test.db"),
+        'TEST_NAME': ':memory:',
     }
 }
 
