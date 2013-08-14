@@ -48,8 +48,10 @@ from freenasUI.services.models import (
 )
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
+from freenasUI.storage.forms import VolumeManagerForm
 from freenasUI.storage.models import Disk, Volume
 from tastypie import fields
+from tastypie.validation import FormValidation
 
 log = logging.getLogger('api.resources')
 
@@ -101,6 +103,9 @@ class Uid(object):
 
 
 class VolumeResourceMixin(object):
+
+    class Meta:
+        validation = FormValidation(form_class=VolumeManagerForm)
 
     def _get_datasets(self, vol, datasets, uid):
         children = []
@@ -160,6 +165,22 @@ class VolumeResourceMixin(object):
 
             children.append(data)
         return children
+
+    def hydrate(self, bundle):
+        bundle = super(VolumeResourceMixin, self).hydrate(bundle)
+        if 'layout' not in bundle.data:
+            return bundle
+        layout = bundle.data.pop('layout')
+        for i, item in enumerate(layout):
+            disks = item.get("disks")
+            vtype = item.get("vdevtype")
+            bundle.data['layout-%d-disks' % i] = '[%s]' % (
+                ', '.join(['"%s"' % d for d in disks])
+            )
+            bundle.data['layout-%d-vdevtype' % i] = vtype
+        bundle.data['layout-INITIAL_FORMS'] = 0
+        bundle.data['layout-TOTAL_FORMS'] = i + 1
+        return bundle
 
     def dehydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).dehydrate(bundle)
