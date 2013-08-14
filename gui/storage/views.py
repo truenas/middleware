@@ -34,7 +34,6 @@ import subprocess
 
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import simplejson
@@ -131,15 +130,10 @@ def volumemanager(request):
 
     if request.method == "POST":
         form = forms.VolumeManagerForm(request.POST)
-        VdevFormSet = formset_factory(
-            forms.VolumeVdevForm,
-            formset=forms.VdevFormSet)
-        formset = VdevFormSet(request.POST, prefix='layout')
-        formset.form = form
-        if form.is_valid() and formset.is_valid() and form.done(formset):
+        if form.is_valid() and form.save():
             return JsonResp(request, message=_("Volume successfully added."))
         else:
-            return JsonResp(request, form=form, formsets={'layout': formset})
+            return JsonResp(request, form=form, formsets={'layout': form._formset})
     disks = []
 
     # Grab disk list

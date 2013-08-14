@@ -39,7 +39,7 @@ from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 from django.forms import FileField
-from django.forms.formsets import BaseFormSet
+from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse, QueryDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
@@ -354,6 +354,16 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
         required=False,
     )
 
+    def is_valid(self):
+        valid = super(VolumeManagerForm, self).is_valid()
+        vdevFormSet = formset_factory(
+            VolumeVdevForm,
+            formset=VdevFormSet,
+        )
+        self._formset = vdevFormSet(self.data, prefix='layout')
+        self._formset.form = self
+        return valid and self._formset.is_valid()
+
     def clean(self):
         vname = (
             self.cleaned_data.get("volume_name") or
@@ -368,7 +378,8 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
             self.cleaned_data["volume_name"] = vname
         return self.cleaned_data
 
-    def done(self, formset):
+    def save(self):
+        formset = self._formset
         volume_name = self.cleaned_data.get("volume_name")
         init_rand = self.cleaned_data.get("encryption_inirand", False)
         if self.cleaned_data.get("encryption", False):
@@ -441,7 +452,7 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
         if volume.vol_fstype == 'ZFS':
             notifier().restart("cron")
 
-        return True
+        return volume
 
 
 class VolumeVdevForm(forms.Form):
