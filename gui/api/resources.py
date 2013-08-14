@@ -914,8 +914,9 @@ class AvailablePluginsResource(DojoResource):
         return response
 
     def dehydrate(self, bundle):
-        bundle.data['_install_url'] = reverse(
-            'plugins_install_available',
-            kwargs={'oid': bundle.obj.id},
-        )
+        if self.is_webclient(bundle.request):
+            bundle.data['_install_url'] = reverse(
+                'plugins_install_available',
+                kwargs={'oid': bundle.obj.id},
+            )
         return bundle
