@@ -1621,10 +1621,8 @@ class notifier:
 
     def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
-        c = self.__open_db()
-        c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
-        swapsize=c.fetchone()[0]
-        c.close()
+        from freenasUI.system.models import Advanced
+        swapsize = Advanced.objects.latest('id').adv_swapondrive
 
         assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
         if volume.vol_fstype == 'ZFS':
