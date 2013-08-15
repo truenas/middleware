@@ -87,7 +87,11 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/conf/default/var
 
 	mkdir -p ${INSTALLUFSDIR}/usr/local/pre-install
-	cp -p ${AVATAR_ROOT}/build/files/0005.verify_media_size.sh ${INSTALLUFSDIR}/usr/local/pre-install/0005.verify_media_size.sh
+
+    echo "IMG_SIZE=\"${IMG_SIZE}\"" > \
+        ${INSTALLUFSDIR}/etc/avatar_img_size.conf
+    cp -p ${AVATAR_ROOT}/build/files/0005.verify_media_size.sh \
+        "${INSTALLUFSDIR}/usr/local/pre-install/0005.verify_media_size.sh"
 
 	# XXX: tied too much to the host system to be of value in the
 	# installer code.
