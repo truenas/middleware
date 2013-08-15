@@ -232,7 +232,7 @@ def jail_auto_configure():
 
     volume = Volume.objects.filter(vol_fstype='ZFS')
     if not volume.exists():
-        raise MiddlewareError(_("You need to create a Volume to proceed!"))
+        raise MiddlewareError(_("You need to create a ZFS volume to proceed!"))
     volume = volume[0]
     basename = "%s/jails" % volume.vol_name
     name = basename
