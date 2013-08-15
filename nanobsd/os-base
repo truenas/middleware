@@ -246,6 +246,9 @@ add_port misc/gnomehier
 add_port www/py-httplib2
 add_port net/py-oauth2
 add_port sysutils/jailme
+add_port lang/perl5.14 # needed by debootstrap
+add_port sysutils/debootstrap
+
 
 if [ "${REPORTING}" = 1 ]; then
 	add_port graphics/png

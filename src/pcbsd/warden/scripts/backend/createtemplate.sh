@@ -68,7 +68,7 @@ download_template_files() {
        show_progress
      done
   fi
-}
+};
 
 create_template()
 {
@@ -118,6 +118,14 @@ create_template()
       cat ${oldStr}.?? | tar --unlink -xpzf - -C ${TDIR} 2>/dev/null
       cd ${JDIR}
 
+    elif [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
+      "${LINUX_JAIL_SCRIPT}" template_install "${TDIR}"
+      if [ $? -ne 0 ] ; then
+          zfs destroy -fr "${tank}${zfsp}"
+          rm -rf "${tdir}" >/dev/null 2>&1
+          warden_exit "Failed running ${LINUX_JAIL_SCRIPT}"
+      fi
+
     else
       # Extract the dist files
       for f in $DFILES
@@ -154,19 +162,25 @@ create_template()
 
   else
 
+    if [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
+      TDIR="${JDIR}/.${TNICK}"
+    else
+      TDIR="${JDIR}/.templatedir"
+    fi
+
     clean_exit()
     {
-       find ${JDIR}/.templatedir |xargs chflags noschg
-       rm -rf ${JDIR}/.templatedir
+       find ${TDIR} |xargs chflags noschg
+       rm -rf ${TDIR}
        warden_exit "Failed to create UFS template directory"
     }
 
     trap clean_exit INT QUIT ABRT KILL TERM EXIT
 
     # Sigh, still on UFS??
-    if [ -d "${JDIR}/.templatedir" ]; then
-       find ${JDIR}/.templatedir |xargs chflags noschg
-       rm -rf ${JDIR}/.templatedir
+    if [ -d "${TDIR}" ]; then
+       find ${TDIR} |xargs chflags noschg
+       rm -rf ${TDIR}
     fi
 
     if [ -n "$FBSDTAR" ] ; then
@@ -174,48 +188,56 @@ create_template()
       cp $FBSDTAR ${TDIR}
 
     elif [ "$oldFBSD" = "YES" ] ; then
-      mkdir -p ${JDIR}/.templatedir
+      mkdir -p ${TDIR}
       cd ${JDIR}/.download/
       warden_print "Extrating FreeBSD..."
-      cat ${oldStr}.?? | tar --unlink -xpzf - -C ${JDIR}/.templatedir 2>/dev/null
+      cat ${oldStr}.?? | tar --unlink -xpzf - -C ${TDIR} 2>/dev/null
       cd ${JDIR}
 
-      cp /etc/resolv.conf ${JDIR}/.templatedir/etc/resolv.conf
+      cp /etc/resolv.conf ${TDIR}/etc/resolv.conf
 
       # Creating a plugin jail?
       if [ "$TPLUGJAIL" = "YES" ] ; then
-        bootstrap_pkgng "${JDIR}/.templatedir/" "pluginjail"
+        bootstrap_pkgng "${TDIR}/" "pluginjail"
       fi
 
       warden_print "Creating template archive..."
-      tar cvjf ${TDIR} -C ${JDIR}/.templatedir 2>/dev/null
-      rm -rf ${JDIR}/.templatedir
+      tar cvjf ${TDIR} -C ${TDIR} 2>/dev/null
+      rm -rf ${TDIR}
+
+    elif [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
+      "${LINUX_JAIL_SCRIPT}" install "${TDIR}"
+      if [ $? -ne 0 ] ; then
+         find ${TDIR}|xargs chflags noschg
+         rm -rf ${TDIR}
+         warden_exit "Failed extracting UFS template environment"
+      fi
 
     else
       # Extract the dist files
-      mkdir -p ${JDIR}/.templatedir
+      mkdir -p ${TDIR}
       for f in $DFILES
       do
-        tar xvpf ${DISTFILESDIR}/$f -C ${JDIR}/.templatedir 2>/dev/null
+        tar xvpf ${DISTFILESDIR}/$f -C ${TDIR} 2>/dev/null
         if [ $? -ne 0 ] ; then 
-           find ${JDIR}/.templatedir |xargs chflags noschg
-           rm -rf ${JDIR}/.templatedir
+           find ${TDIR}|xargs chflags noschg
+           rm -rf ${TDIR}
            warden_exit "Failed extracting UFS template environment"
         fi
         rm -f ${JDIR}/.download/${f}
       done
 
-      cp /etc/resolv.conf ${JDIR}/.templatedir/etc/resolv.conf
+      cp /etc/resolv.conf ${TDIR}/etc/resolv.conf
 
       # Creating a plugin jail?
       if [ "$TPLUGJAIL" = "YES" ] ; then
-        bootstrap_pkgng "${JDIR}/.templatedir/" "pluginjail"
+        bootstrap_pkgng "${TDIR}/" "pluginjail"
       fi
 
       warden_print "Creating template archive..."
-      tar -cvjf - -C ${JDIR}/.templatedir . > ${TDIR} 2>/dev/null
-      find ${JDIR}/.templatedir |xargs chflags noschg
-      rm -rf ${JDIR}/.templatedir
+      tar -cvjf - -C ${TDIR} > ${TDIR} 2>/dev/null
+      find ${TDIR}|xargs chflags noschg
+      rm -rf ${TDIR}
     fi
   fi
 
@@ -253,6 +275,9 @@ while [ $# -gt 0 ]; do
 	   ;;
  -pluginjail) shift
            TPLUGJAIL="YES"
+	   ;;
+  -linuxjail) shift
+           TLINUXJAIL="YES"
 	   ;;
 	*) warden_exit "Invalid option: $1" ;;
    esac
@@ -363,7 +388,10 @@ if [ -n "$FBSDVER" ] ; then
 fi
 
 # If not using a tarball, lets download our files
-if [ -z "$FBSDTAR" ] ; then
+if [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
+  "${LINUX_JAIL_SCRIPT}" get_distfiles "${TDIR}"
+
+elif [ -z "$FBSDTAR" ] ; then
   download_template_files
 fi
 

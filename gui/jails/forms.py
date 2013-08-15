@@ -125,7 +125,7 @@ class JailCreateForm(ModelForm):
             (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
             (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
             (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
-            #(WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
+            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
         ),
         initial=WARDEN_TYPE_STANDARD,
     )
@@ -183,25 +183,25 @@ class JailCreateForm(ModelForm):
 #        required=False
 #    )
 
-    advanced_fields = [
-        'jail_type',
-        'jail_autostart',
-        'jail_32bit',
+#    advanced_fields = [
+#        'jail_type',
+#        'jail_autostart',
+#        'jail_32bit',
 #        'jail_source',
 #        'jail_ports',
-        'jail_vanilla',
+#        'jail_vanilla',
 #        'jail_archive',
-        'jail_ipv4',
-        'jail_bridge_ipv4',
-        'jail_defaultrouter_ipv4',
-        'jail_ipv6',
-        'jail_bridge_ipv6',
-        'jail_defaultrouter_ipv6',
-        'jail_mac',
-        'jail_script',
-        'jail_vnet',
-        'jail_nat'
-    ]
+#        'jail_ipv4',
+#        'jail_bridge_ipv4',
+#        'jail_defaultrouter_ipv4',
+#        'jail_ipv6',
+#        'jail_bridge_ipv6',
+#        'jail_defaultrouter_ipv6',
+#        'jail_mac',
+#        'jail_script',
+#        'jail_vnet',
+#        'jail_nat'
+#    ]
 
     class Meta:
         model = Jails

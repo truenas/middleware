@@ -67,6 +67,8 @@ touch /etc/mtab
   chroot ${JAILDIR} /.fixSH
   rm ${JAILDIR}/.fixSH
 
+  "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}"
+
   # If we are auto-starting the jail, do it now
   if [ "$AUTOSTART" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
@@ -93,7 +95,10 @@ if [ -z "$TEMPLATE" -a -z "$ARCHIVEFILE" ] ; then
 
   # If on a plugin jail, lets change the nickname
   if [ "${PLUGINJAIL}" = "YES"  ] ; then
-    DEFTEMPLATE="${DEFTEMPLATE}-pluginjail"
+     DEFTEMPLATE="${DEFTEMPLATE}-pluginjail"
+
+  elif [ "${LINUXJAIL}" = "YES" ]; then
+     DEFTEMPLATE="$(basename "${LINUX_JAIL_SCRIPT}")"
   fi
 
   # See if we need to create a new template for this system
@@ -116,6 +121,9 @@ if [ -z "$TEMPLATE" -a -z "$ARCHIVEFILE" ] ; then
 
       if [ "${PLUGINJAIL}" = "YES" ] ; then
          FLAGS="$FLAGS -pluginjail"
+
+      elif [ "${LINUXJAIL}" = "YES" ] ; then
+         FLAGS="$FLAGS -linuxjail"
       fi
 
       ${PROGDIR}/scripts/backend/createtemplate.sh ${FLAGS}
@@ -192,11 +200,19 @@ if [ "$LINUXJAIL" = "YES" ] ; then
      if [ -z "$tank" ] ; then
        warden_exit "Failed getting ZFS dataset for $JDIR..";
      fi
+     zfsp=`getZFSRelativePath "${WORLDCHROOT}"`
      jailp=`getZFSRelativePath "${JAILDIR}"`
-     zfs create -o mountpoint=/${tank}${jailp} -p ${tank}${jailp}
-     if [ $? -ne 0 ] ; then warden_exit "Failed creating ZFS dataset"; fi
+     warden_print zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
+     zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
+     if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base clone"; fi
    else
      mkdir -p "${JAILDIR}"
+      "${LINUX_JAIL_SCRIPT}" install "${JAILDIR}"
+      if [ $? -ne 0 ] ; then
+         find ${JAILDIR}|xargs chflags noschg
+         rm -rf ${JAILDIR}
+         warden_exit "Failed extracting UFS jail environment"
+      fi
    fi
    setup_linux_jail
 
