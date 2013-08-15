@@ -41,7 +41,9 @@ from freenasUI.common.warden import (
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
     WARDEN_TYPE_PORTJAIL,
-    WARDEN_TYPE_LINUXJAIL,
+    WARDEN_TYPE_GENTOO_LINUX,
+    WARDEN_TYPE_DEBIAN_LINUX,
+    WARDEN_TYPE_CENTOS_LINUX
 )
 
 log = logging.getLogger('jails.nav')
@@ -97,7 +99,8 @@ def init(tree_roots, nav, request):
             icon = 'BeastieIcon'
         elif jail.jail_type == WARDEN_TYPE_PORTJAIL:
             icon = 'BobbleIcon'
-        elif jail.jail_type == WARDEN_TYPE_LINUXJAIL:
+        elif jail.jail_type in (WARDEN_TYPE_GENTOO_LINUX,
+            WARDEN_TYPE_DEBIAN_LINUX, WARDEN_TYPE_CENTOS_LINUX):
             icon = 'TuxIcon'
         jail_node = self.new_jail_node(jail, icon)
         nav.append_child(jail_node)

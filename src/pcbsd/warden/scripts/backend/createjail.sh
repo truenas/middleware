@@ -26,6 +26,11 @@ setup_linux_jail()
     touch "${JMETADIR}/autostart"
   fi
   touch "${JMETADIR}/jail-linux"
+  case "${JAILTYPE}" in
+    gentoo-linux) echo "${JAILTYPE}" > "${JMETADIR}/jail-linux" ;;
+    debian-linux) echo "${JAILTYPE}" > "${JMETADIR}/jail-linux" ;;
+    centos-linux) echo "${JAILTYPE}" > "${JMETADIR}/jail-linux" ;;
+  esac
 
   if [ -n "$LINUXARCHIVE_FILE" ] ; then
     warden_print "Extracting ${LINUXARCHIVE_FILE}..."
@@ -85,6 +90,9 @@ case "${JAILTYPE}" in
   portjail) PORTJAIL="YES" ;;
   pluginjail) PLUGINJAIL="YES" ;;
   linuxjail) LINUXJAIL="YES" ;;
+  gentoo-linux) LINUXJAIL="YES" ;;
+  debian-linux) LINUXJAIL="YES" ;;
+  centos-linux) LINUXJAIL="YES" ;;
   standard) ;;
 esac
 

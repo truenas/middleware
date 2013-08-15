@@ -77,7 +77,12 @@ from freenasUI.common.warden import (
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
     WARDEN_TYPE_PORTJAIL,
-    WARDEN_TYPE_LINUXJAIL,
+    WARDEN_TYPE_GENTOO_LINUX,
+    WARDEN_TYPE_DEBIAN_LINUX,
+    WARDEN_TYPE_CENTOS_LINUX,
+    WARDEN_GENTOO_LINUXSCRIPT,
+    WARDEN_DEBIAN_LINUXSCRIPT,
+    WARDEN_CENTOS_LINUXSCRIPT,
     WARDEN_KEY_HOST,
     WARDEN_KEY_STATUS,
     WARDEN_STATUS_RUNNING
@@ -86,11 +91,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.system.forms import clean_path_execbit
 
-
-LINUXSCRIPT = "/usr/local/share/warden/linux-installs/gentoo-stage3-i486"
-
 log = logging.getLogger('jails.forms')
-
 
 def setflags(keys):
     flags = WARDEN_FLAGS_NONE
@@ -125,7 +126,9 @@ class JailCreateForm(ModelForm):
             (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
             (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
             (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
-            (WARDEN_TYPE_LINUXJAIL, WARDEN_TYPE_LINUXJAIL)
+            (WARDEN_TYPE_GENTOO_LINUX, WARDEN_TYPE_GENTOO_LINUX),
+            (WARDEN_TYPE_DEBIAN_LINUX, WARDEN_TYPE_DEBIAN_LINUX),
+            (WARDEN_TYPE_CENTOS_LINUX, WARDEN_TYPE_CENTOS_LINUX)
         ),
         initial=WARDEN_TYPE_STANDARD,
     )
@@ -280,9 +283,15 @@ class JailCreateForm(ModelForm):
             jail_flags |= WARDEN_CREATE_FLAGS_PORTJAIL
         elif self.cleaned_data['jail_type'] == WARDEN_TYPE_PLUGINJAIL:
             jail_flags |= WARDEN_CREATE_FLAGS_PLUGINJAIL
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_LINUXJAIL:
-            jail_flags |= WARDEN_CREATE_FLAGS_LINUXJAIL
-            jail_create_args['script'] = LINUXSCRIPT
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_GENTOO_LINUX:
+            jail_flags |= WARDEN_CREATE_FLAGS_GENTOO_LINUX
+            jail_create_args['script'] = WARDEN_GENTOO_LINUXSCRIPT
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_DEBIAN_LINUX:
+            jail_flags |= WARDEN_CREATE_FLAGS_DEBIAN_LINUX
+            jail_create_args['script'] = WARDEN_DEBIAN_LINUXSCRIPT
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_CENTOS_LINUX:
+            jail_flags |= WARDEN_CREATE_FLAGS_CENTOS_LINUX
+            jail_create_args['script'] = WARDEN_CENTOS_LINUXSCRIPT
 
 #        if self.cleaned_data['jail_archive']:
 #            if jail_flags & WARDEN_CREATE_FLAGS_LINUXJAIL:
@@ -379,7 +388,11 @@ class JailCreateForm(ModelForm):
         jail_flags = WARDEN_FLAGS_NONE
         if jail_vnet:
             if (
-                self.cleaned_data['jail_type'] != WARDEN_TYPE_LINUXJAIL
+                self.cleaned_data['jail_type'] != WARDEN_TYPE_GENTOO_LINUX
+                and
+                self.cleaned_data['jail_type'] != WARDEN_TYPE_DEBIAN_LINUX
+                and
+                self.cleaned_data['jail_type'] != WARDEN_TYPE_CENTOS_LINUX
                 and
                 not self.cleaned_data['jail_32bit']
             ):

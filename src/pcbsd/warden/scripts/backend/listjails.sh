@@ -144,7 +144,10 @@ do
   elif [ -e "${i}/jail-pluginjail" ] ; then
     TYPE="pluginjail"
   elif [ -e "${i}/jail-linux" ] ; then
-    TYPE="linuxjail"
+    TYPE="$(cat "${i}/jail-linux")"
+    if [ -z "${TYPE}" ] ; then
+      TYPE="linuxjail"
+    fi
   else
     TYPE="standard"
   fi
