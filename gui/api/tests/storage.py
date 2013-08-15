@@ -1,18 +1,17 @@
 from .utils import APITestCase
-from freenasUI.api.models import APIClient
 
 
 class VolumeResourceTest(APITestCase):
 
     def setUp(self):
         super(VolumeResourceTest, self).setUp()
+        self._create_zpool()
 
-    #def test_get_list_unauthorzied(self):
-    #    self.assertHttpUnauthorized(
-    #        self.api_client.get('/api/v1.0/storage/volume/', format='json')
-    #    )
+    def tearDown(self):
+        super(VolumeResourceTest, self).tearDown()
+        self._delete_zpool()
 
-    def test_create_zpool(self):
+    def _create_zpool(self):
         resp = self.api_client.post(
             '/api/v1.0/storage/volume/',
             format='json',
@@ -37,7 +36,14 @@ class VolumeResourceTest(APITestCase):
         self.assertEqual(data['vol_encrypt'], 0)
         self.assertEqual(data['mountpoint'], '/mnt/tankpool')
 
+    def _delete_zpool(self):
         resp = self.api_client.delete(
             '/api/v1.0/storage/volume/1/',
         )
         self.assertHttpAccepted(resp)
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get('/api/v1.0/storage/volume/', format='json')
+        )
+
