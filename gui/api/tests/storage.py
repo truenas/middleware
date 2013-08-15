@@ -29,6 +29,14 @@ class VolumeResourceTest(APITestCase):
         self.assertHttpCreated(resp)
         self.assertValidJSON(resp.content)
 
+        data = self.deserialize(resp)
+        self.assertEqual(data['children'], [])
+        self.assertEqual(data['status'], "HEALTHY")
+        self.assertEqual(data['vol_name'], "tankpool")
+        self.assertEqual(data['vol_fstype'], "ZFS")
+        self.assertEqual(data['vol_encrypt'], 0)
+        self.assertEqual(data['mountpoint'], '/mnt/tankpool')
+
         resp = self.api_client.delete(
             '/api/v1.0/storage/volume/1/',
         )
