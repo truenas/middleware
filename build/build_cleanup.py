@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, signal, sys, time
+import argparse, os, sys, time
 
 def main(starting_path):
     """Clean up a build environment.  Inspired by a shell
@@ -54,22 +54,15 @@ def main(starting_path):
     os.chdir(starting_path)
 
 if __name__ == "__main__":
-    # I'm not sure about this directory detection logic,
-    # so print out the directory we are going to use
-    # and give the user a chance to bail out before
-    # we start doing destructive things.
     starting_path = os.getcwd()
-    os.chdir(os.path.dirname(sys.argv[0]))
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
     os.chdir("..")
-    print "\nOperating in directory %s" % os.getcwd()
-
-    def handler(signum, frame):
-        print "\nHere we go"
-        time.sleep(1)
-        main(starting_path)
-
-    signal.signal(signal.SIGALRM, handler)
-    signal.alarm(7)
-    raw_input("Press enter in 7 seconds to abort")
+    parser = argparse.ArgumentParser(description='Cleanup a build environment.')
+    parser.add_argument('-n', action='store_true',
+                        help="Print out the path to be cleaned up and exit")
+    args = parser.parse_args()
+    if args.n:
+        print "\nDirectory to clean: %s" % os.getcwd()
+        sys.exit()
+    main(starting_path)
     os.chdir(starting_path)
-    sys.exit()
