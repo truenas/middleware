@@ -83,8 +83,8 @@ wait_keypress()
 
 get_physical_disks_list()
 {
-
-    VAL=`sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' | sort -n`
+    VAL=`sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
+        | sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '`
     export VAL
 }
 
