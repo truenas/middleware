@@ -63,12 +63,12 @@ main()
 	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
-	rm -rf ${INSTALLUFSDIR}/bin ${INSTALLUFSDIR}/sbin ${INSTALLUFSDIR}/usr/local
-	rm -rf ${INSTALLUFSDIR}/usr/bin ${INSTALLUFSDIR}/usr/sbin
-	ln -s ../../rescue ${INSTALLUFSDIR}/usr/bin
-	ln -s ../../rescue ${INSTALLUFSDIR}/usr/sbin
-	ln -s ../rescue ${INSTALLUFSDIR}/bin
-	ln -s ../rescue ${INSTALLUFSDIR}/sbin
+	rm -rf ${INSTALLUFSDIR}/usr/local
+	rm -rf ${INSTALLUFSDIR}/usr/include
+	rm -f ${INSTALLUFSDIR}/bin/* ${INSTALLUFSDIR}/sbin/*
+	rm -f ${INSTALLUFSDIR}/usr/bin/* ${INSTALLUFSDIR}/usr/sbin/*
+
+
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
 	cp -p ${AVATAR_ROOT}/build/files/rc ${INSTALLUFSDIR}/etc
 
@@ -96,12 +96,32 @@ main()
 	rm -f $INSTALLUFSDIR/etc/fstab
 	rm -f $INSTALLUFSDIR/conf/default/etc/remount
 
-	# NOTE: only glabel and gpart work statically when hardlinked as
-	# geom(8).
-	#
-	# Look for "nvalid class name" in sbin/geom/core/geom.c for more
-	# details.
-	tar -cf - -C${NANO_OBJ}/_.w/sbin gmirror graid | tar -xpf - -C ${INSTALLUFSDIR}/rescue/
+	cp -p ${NANO_OBJ}/_.w/bin/cat ${INSTALLUFSDIR}/bin/cat
+	cp -p ${NANO_OBJ}/_.w/bin/chmod ${INSTALLUFSDIR}/bin/chmod
+	cp -p ${NANO_OBJ}/_.w/bin/mv ${INSTALLUFSDIR}/bin/mv
+	cp -p ${NANO_OBJ}/_.w/bin/rm ${INSTALLUFSDIR}/bin/rm
+	cp -p ${NANO_OBJ}/_.w/sbin/ifconfig ${INSTALLUFSDIR}/sbin/ifconfig
+	cp -p ${NANO_OBJ}/_.w/sbin/mdconfig ${INSTALLUFSDIR}/sbin/mdconfig
+	cp -p ${NANO_OBJ}/_.w/sbin/mdmfs ${INSTALLUFSDIR}/sbin/mdmfs
+	cp -p ${NANO_OBJ}/_.w/sbin/sysctl ${INSTALLUFSDIR}/sbin/sysctl
+	cp -p ${NANO_OBJ}/_.w/bin/sh ${INSTALLUFSDIR}/bin/sh
+	cp -p ${NANO_OBJ}/_.w/sbin/gmirror ${INSTALLUFSDIR}/sbin/gmirror
+	cp -p ${NANO_OBJ}/_.w/sbin/graid ${INSTALLUFSDIR}/sbin/graid
+	cp -p ${NANO_OBJ}/_.w/sbin/mount ${INSTALLUFSDIR}/sbin/mount
+	cp -p ${NANO_OBJ}/_.w/sbin/mount_cd9660 ${INSTALLUFSDIR}/sbin/mount_cd9660
+	cp -p ${NANO_OBJ}/_.w/sbin/mount_msdosfs ${INSTALLUFSDIR}/sbin/mount_msdosfs
+	cp -p ${NANO_OBJ}/_.w/sbin/mount_nfs ${INSTALLUFSDIR}/sbin/mount_nfs
+	cp -p ${NANO_OBJ}/_.w/sbin/mount_nullfs ${INSTALLUFSDIR}/sbin/mount_nullfs
+	cp -p ${NANO_OBJ}/_.w/sbin/mount_udf ${INSTALLUFSDIR}/sbin/mount_udf
+	cp -p ${NANO_OBJ}/_.w/sbin/mount_unionfs ${INSTALLUFSDIR}/sbin/mount_unionfs
+	cp -p ${NANO_OBJ}/_.w/sbin/newfs ${INSTALLUFSDIR}/sbin/newfs
+	cp -p ${NANO_OBJ}/_.w/sbin/zfs ${INSTALLUFSDIR}/sbin/zfs
+	cp -p ${NANO_OBJ}/_.w/sbin/zpool ${INSTALLUFSDIR}/sbin/zpool
+	cp -p ${NANO_OBJ}/_.w/usr/bin/awk ${INSTALLUFSDIR}/usr/bin/awk
+	cp -p ${NANO_OBJ}/_.w/usr/bin/dialog ${INSTALLUFSDIR}/usr/bin/dialog
+	cp -p ${NANO_OBJ}/_.w/usr/bin/grep ${INSTALLUFSDIR}/usr/bin/grep
+	cp -p ${NANO_OBJ}/_.w/usr/bin/sed ${INSTALLUFSDIR}/usr/bin/sed
+	cp -p ${NANO_OBJ}/_.w/usr/sbin/chown ${INSTALLUFSDIR}/usr/sbin/chown
 
 	# The presence of /etc/diskless will trigger /etc/rc to run /etc/rc.initdiskless.
 	touch ${INSTALLUFSDIR}/etc/diskless
