@@ -20,7 +20,6 @@ main()
 	AVATAR_CONF="$NANO_OBJ/_.w/etc/avatar.conf"
 
 	# Various mount points needed to build the CD, adjust to taste
-	STAGEDIR="${NANO_OBJ}/_.stage" # Scratch location for making filesystem image
 	ISODIR="${NANO_OBJ}/_.isodir" # Directory ISO is rolled from
 	INSTALLUFSDIR="${NANO_OBJ}/_.instufs" # Scratch mountpoint where the image will be dissected
 
@@ -48,8 +47,6 @@ main()
 
 	cd "$AVATAR_ROOT"
 
-	mkdir -p ${STAGEDIR}/dev
-	mkdir -p ${STAGEDIR}/.mount
 
 	mkdir -p ${ISODIR}/data
 	mkdir -p ${ISODIR}/dev
@@ -62,7 +59,6 @@ main()
 	tar -cf - -C ${NANO_OBJ}/_.w --exclude local . | tar -xf - -C ${INSTALLUFSDIR}
 
 	# copy /rescue and /boot from the image to the iso
-	tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
 	tar -cf - -C ${INSTALLUFSDIR} boot --exclude boot/kernel-debug | tar -xf - -C ${ISODIR}
 	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
@@ -129,7 +125,7 @@ main()
 cleanup()
 {
 	# Clean up directories used to create the liveCD
-	rm -Rf "$STAGEDIR" "$ISODIR" "$INSTALLUFSDIR"
+	rm -Rf "$ISODIR" "$INSTALLUFSDIR"
 }
 
 main
