@@ -382,12 +382,13 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
 
     def clean_bsdusr_home(self):
         home = self.cleaned_data['bsdusr_home']
-        if ':' in home:
-            raise forms.ValidationError(
-                _("Home directory cannot contain colons")
-            )
-        if home.startswith(u'/mnt/') or home == u'/nonexistent':
-            return home
+        if home is not None:
+            if ':' in home:
+                raise forms.ValidationError(
+                    _("Home directory cannot contain colons")
+                )
+            if home.startswith(u'/mnt/') or home == u'/nonexistent':
+                return home
         raise forms.ValidationError(
             _('Home directory has to start with /mnt/ or be /nonexistent')
         )
