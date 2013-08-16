@@ -251,7 +251,10 @@ class DojoModelResource(ResourceMixin, ModelResource):
         return obj_list
 
     def save(self, bundle, skip_errors=False):
-        form = self._meta.validation.form_class(bundle.data)
+        form = self._meta.validation.form_class(
+            bundle.data,
+            instance=bundle.obj,
+        )
         if not form.is_valid():
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, form._errors)

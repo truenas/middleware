@@ -354,6 +354,14 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
         required=False,
     )
 
+    def __init__(self, *args, **kwargs):
+        """
+        Compatibility layer required for our API framework
+        """
+        if 'instance' in kwargs:
+            kwargs.pop('instance')
+        super(VolumeManagerForm, self).__init__(*args, **kwargs)
+
     def is_valid(self):
         valid = super(VolumeManagerForm, self).is_valid()
         vdevFormSet = formset_factory(
@@ -451,6 +459,9 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
         # For scrub cronjob
         if volume.vol_fstype == 'ZFS':
             notifier().restart("cron")
+
+        # ModelForm compatibility layer for API framework
+        self.instance = volume
 
         return volume
 
