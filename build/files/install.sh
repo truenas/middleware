@@ -224,6 +224,8 @@ menu_install()
     local _i
     local _do_upgrade
     local _menuheight
+    local _msg
+    local _dlv
 
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
@@ -350,8 +352,15 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
     set +e
 
     trap - EXIT
-    dialog --msgbox "The $AVATAR_PROJECT $_action on ${_disk} succeeded!
-Please remove the CDROM and reboot." 6 74
+
+    _msg="The $AVATAR_PROJECT $_action on ${_disk} succeeded!\n"
+    _dlv=`/sbin/sysctl -n vfs.nfs.diskless_valid 2> /dev/null`
+    if [ ${_dlv:=0} -ne 0 ]; then
+        _msg="${_msg}Please reboot, and change BIOS boot order to *not* boot over network."
+    else
+        _msg="${_msg}Please remove the CDROM and reboot."
+    fi
+    dialog --msgbox "$_msg" 6 74
 
     return 0
 }
