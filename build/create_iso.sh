@@ -81,6 +81,7 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/conf/default/etc
 	mkdir -p ${INSTALLUFSDIR}/conf/default/tmp
 	mkdir -p ${INSTALLUFSDIR}/conf/default/var
+	mkdir -p ${INSTALLUFSDIR}/tank
 
 	mkdir -p ${INSTALLUFSDIR}/usr/local/pre-install
 
