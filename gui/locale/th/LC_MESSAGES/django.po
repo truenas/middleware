@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2012-05-05 13:00+0200\n"
-"Last-Translator: rsuwat <rsuwat17@gmail.com>\n"
+"PO-Revision-Date: 2013-08-15 16:19+0200\n"
+"Last-Translator: foxnew <tang.tom.tam@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: th\n"
 "MIME-Version: 1.0\n"
@@ -1010,7 +1010,7 @@ msgstr ""
 
 #: network/models.py:46
 msgid "Domain"
-msgstr ""
+msgstr "โดเมน"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
@@ -1737,11 +1737,11 @@ msgstr ""
 
 #: services/models.py:111
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Time Server for Domain"
 
 #: services/models.py:116 services/models.py:214
 msgid "Guest account"
-msgstr ""
+msgstr "ผู้ใช้ทั่วไป"
 
 #: services/models.py:117 services/models.py:215
 msgid ""
@@ -5249,7 +5249,7 @@ msgstr ""
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "ติดตั้งปลั๊กอิน"
 
 #: templates/plugins/index.html:31
 #, fuzzy
@@ -5258,11 +5258,11 @@ msgstr "ปกติ"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
-msgstr ""
+msgstr "ข้อมูลปลั๊กอิน"
 
 #: templates/plugins/index.html:39
 msgid "Edit Plugin"
-msgstr ""
+msgstr "แก้ไขปลั๊กอิน"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
@@ -5545,15 +5545,15 @@ msgstr ""
 
 #: templates/services/plugins.html:31
 msgid "Version"
-msgstr ""
+msgstr "เวอร์ชั่น"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
 msgid "Service status"
-msgstr ""
+msgstr "สถานะ Service"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
@@ -5561,7 +5561,7 @@ msgstr ""
 
 #: templates/services/plugins.html:56
 msgid "Update plugin"
-msgstr ""
+msgstr "อัพเดทปลั๊กอิน"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
