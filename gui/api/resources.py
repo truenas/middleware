@@ -33,6 +33,7 @@ from django.db.models import Q
 from django.utils.translation import ugettext as _
 
 from freenasUI import choices
+from freenasUI.account.forms import bsdUserCreationForm
 from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.api.utils import (
     DojoResource, DojoModelResource
@@ -701,6 +702,7 @@ class BsdUserResourceMixin(object):
         queryset = bsdUsers.objects.all().order_by(
             'bsdusr_builtin',
             'bsdusr_uid')
+        validation = FormValidation(form_class=bsdUserCreationForm)
 
     def dehydrate(self, bundle):
         bundle = super(BsdUserResourceMixin, self).dehydrate(bundle)
