@@ -121,6 +121,7 @@ main()
 	cp -p ${NANO_OBJ}/_.w/usr/bin/dialog ${INSTALLUFSDIR}/usr/bin/dialog
 	cp -p ${NANO_OBJ}/_.w/usr/bin/grep ${INSTALLUFSDIR}/usr/bin/grep
 	cp -p ${NANO_OBJ}/_.w/usr/bin/sed ${INSTALLUFSDIR}/usr/bin/sed
+	cp -p ${NANO_OBJ}/_.w/usr/bin/xargs ${INSTALLUFSDIR}/usr/bin/xargs
 	cp -p ${NANO_OBJ}/_.w/usr/sbin/chown ${INSTALLUFSDIR}/usr/sbin/chown
 
 	# The presence of /etc/diskless will trigger /etc/rc to run /etc/rc.initdiskless.
