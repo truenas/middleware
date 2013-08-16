@@ -72,7 +72,7 @@
     }
 
     var objectStore = new JsonRest({
-      target: "{% url "api_dispatch_list" api_name="v1.0" resource_name="snapshot" %}"
+      target: "{% url "api_dispatch_list" api_name="v1.0" resource_name="storage/snapshot" %}"
     });
     var store = new ObjectStore({objectStore: objectStore});
 
