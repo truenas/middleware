@@ -838,12 +838,12 @@ require([
                 } else {
                     pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
                 }
+
                 if (obj.state != 'done') {
                     setTimeout(function() {
                         checkJailProgress(pbar, pdisplay, pdiv, url, uuid, iter + 1);
                         }, 1000);
                 }
-
                 pdiv.set("content", obj.eta + " ETA");
             });
     };

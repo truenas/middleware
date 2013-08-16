@@ -229,9 +229,7 @@ def jail_progress(request):
         'percent': 0
     }
 
-    jc = models.JailsConfiguration.objects.order_by("-id")[0]
-    logfile = '%s/warden.log' % jc.jc_path
-
+    logfile = '/var/tmp/warden.log'
     if os.path.exists(logfile):
         f = open(logfile, "r")
         buf = f.readlines()

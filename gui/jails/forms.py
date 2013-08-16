@@ -222,6 +222,11 @@ class JailCreateForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(JailCreateForm, self).__init__(*args, **kwargs)
+        logfile = "/var/tmp/warden.log"
+        try:
+            os.unlink(logfile) 
+        except:
+            pass
 
         self.fields['jail_type'].widget.attrs['onChange'] = (
             "jail_type_toggle();"
@@ -310,9 +315,8 @@ class JailCreateForm(ModelForm):
         jail_flags |= WARDEN_CREATE_FLAGS_LOGFILE
         jail_flags |= WARDEN_CREATE_FLAGS_SYSLOG
 
-        logfile = "%s/warden.log" % jc.jc_path
+        logfile = "/var/tmp/warden.log"
         jail_create_args['logfile'] = logfile
-
         jail_create_args['flags'] = jail_flags
 
         createfile = "/var/tmp/.jailcreate"
