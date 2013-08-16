@@ -216,7 +216,6 @@ jail_progress_estimated_time = 600
 jail_progress_start_time = 0
 jail_progress_percent = 0
 
-
 def jail_progress(request):
     global jail_progress_estimated_time
     global jail_progress_start_time

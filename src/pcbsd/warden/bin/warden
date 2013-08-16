@@ -1186,17 +1186,17 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 			     warden_exit "--linuxjail and --linuxarchive are mutually exclusive!"
 			  fi
 			  ;;
-             --gentoo) JAILTYPE="gentoo-linux" ; shift
+             --gentoo) JAILTYPE="gentoo-linux"
                      LINUX_JAIL_SCRIPT="${PROGDIR}/linux-installs/gentoo-stage3-i486"
                      export LINUX_JAIL_SCRIPT
                      ;;
 
-             --debian) JAILTYPE="debian-linux" ; shift
+             --debian) JAILTYPE="debian-linux" 
                      LINUX_JAIL_SCRIPT="${PROGDIR}/linux-installs/debian-6-squeeze"
                      export LINUX_JAIL_SCRIPT
                      ;;
 
-             --centos) JAILTYPE="centos-linux" ; shift
+             --centos) JAILTYPE="centos-linux"
                      LINUX_JAIL_SCRIPT="${PROGDIR}/linux-installs/centos-5-i386"
                      export LINUX_JAIL_SCRIPT
                      ;;

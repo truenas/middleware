@@ -833,7 +833,11 @@ require([
                     pdisplay.domNode.scrollTop = pdisplay.domNode.scrollHeight;
                 }
 
-                pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
+                if (obj.percent == 0 || obj.percent == 100) {
+                    pbar.update({'indeterminate': true});
+                } else {
+                    pbar.update({maximum: 100, progress: obj.percent, indeterminate: false});
+                }
                 if (obj.state != 'done') {
                     setTimeout(function() {
                         checkJailProgress(pbar, pdisplay, pdiv, url, uuid, iter + 1);

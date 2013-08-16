@@ -119,11 +119,13 @@ create_template()
       cd ${JDIR}
 
     elif [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
-      "${LINUX_JAIL_SCRIPT}" template_install "${TDIR}"
+      warden_print sh "${LINUX_JAIL_SCRIPT}" template_install "${TDIR}"
+      sh "${LINUX_JAIL_SCRIPT}" template_install "${TDIR}" 2>&1 | warden_pipe
+      sh "${LINUX_JAIL_SCRIPT}" error
       if [ $? -ne 0 ] ; then
-          zfs destroy -fr "${tank}${zfsp}"
-          rm -rf "${tdir}" >/dev/null 2>&1
-          warden_exit "Failed running ${LINUX_JAIL_SCRIPT}"
+         zfs destroy -fr "${tank}${zfsp}"
+         rm -rf "${tdir}" >/dev/null 2>&1
+         warden_exit "Failed running ${LINUX_JAIL_SCRIPT}"
       fi
 
     else
@@ -206,7 +208,9 @@ create_template()
       rm -rf ${TDIR}
 
     elif [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
-      "${LINUX_JAIL_SCRIPT}" install "${TDIR}"
+      warden_print sh "${LINUX_JAIL_SCRIPT}" template_install "${TDIR}"
+      sh "${LINUX_JAIL_SCRIPT}" template_install "${TDIR}" 2>&1 | warden_pipe
+      sh "${LINUX_JAIL_SCRIPT}" error
       if [ $? -ne 0 ] ; then
          find ${TDIR}|xargs chflags noschg
          rm -rf ${TDIR}
@@ -389,7 +393,8 @@ fi
 
 # If not using a tarball, lets download our files
 if [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
-  "${LINUX_JAIL_SCRIPT}" get_distfiles "${TDIR}"
+  warden_print sh "${LINUX_JAIL_SCRIPT}" get_distfiles "${TDIR}"
+  sh "${LINUX_JAIL_SCRIPT}" get_distfiles "${TDIR}" 2>&1 | warden_pipe
 
 elif [ -z "$FBSDTAR" ] ; then
   download_template_files

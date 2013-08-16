@@ -40,13 +40,14 @@ setup_linux_jail()
        warden delete --confirm ${JAILNAME} 2>/dev/null
        exit 1
     fi
-  else
-    sh ${LINUX_JAIL_SCRIPT} "${JAILDIR}" "${IP}" "${JMETADIR}"
-    if [ $? -ne 0 ] ; then
-       warden_error "Failed running ${LINUX_JAIL_SCRIPT}"
-       warden delete --confirm ${JAILNAME} 2>/dev/null
-       exit 1
-    fi
+#  else
+#    sh ${LINUX_JAIL_SCRIPT} "${JAILDIR}" "${IP}" "${JMETADIR}" 2>&1 | warden_pipe
+#    sh ${LINUX_JAIL_SCRIPT} error
+#    if [ $? -ne 0 ] ; then
+#       warden_error "Failed running ${LINUX_JAIL_SCRIPT}"
+#       warden delete --confirm ${JAILNAME} 2>/dev/null
+#       exit 1
+#    fi
   fi
   
   # Create the master.passwd
@@ -72,7 +73,8 @@ touch /etc/mtab
   chroot ${JAILDIR} /.fixSH
   rm ${JAILDIR}/.fixSH
 
-  "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}"
+  warden_print sh "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}"
+  sh "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}" 2>&1 | warden_pipe
 
   # If we are auto-starting the jail, do it now
   if [ "$AUTOSTART" = "YES" ] ; then warden start ${JAILNAME} ; fi
@@ -215,12 +217,14 @@ if [ "$LINUXJAIL" = "YES" ] ; then
      if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base clone"; fi
    else
      mkdir -p "${JAILDIR}"
-      "${LINUX_JAIL_SCRIPT}" install "${JAILDIR}"
-      if [ $? -ne 0 ] ; then
-         find ${JAILDIR}|xargs chflags noschg
-         rm -rf ${JAILDIR}
-         warden_exit "Failed extracting UFS jail environment"
-      fi
+     warden_print sh "${LINUX_JAIL_SCRIPT}" template_install "${JAILDIR}"
+     sh "${LINUX_JAIL_SCRIPT}" template_install "${JAILDIR}" 2>&1 | warden_pipe
+     sh "${LINUX_JAIL_SCRIPT}" error
+     if [ $? -ne 0 ] ; then
+        find ${JAILDIR}|xargs chflags noschg
+        rm -rf ${JAILDIR}
+        warden_exit "Failed extracting UFS jail environment"
+     fi
    fi
    setup_linux_jail
 
