@@ -438,6 +438,15 @@ class ZFSList(SortedDict):
             self.pools[new.pool] = [new]
         self[new.name] = new
 
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            zlist = []
+            for datasets in self.pools.values():
+                zlist.extend(datasets)
+            return zlist.__getitem__(item)
+        else:
+            return super(ZFSList, self).__getitem__(item)
+
     def __delitem__(self, item):
         self.pools[item.pool].remove(item)
         super(ZFSList, self).__delitem__(item)
@@ -455,13 +464,14 @@ class ZFSDataset(object):
     parent = None
     children = None
 
-    def __init__(self, path, used, avail, refer, mountpoint):
+    def __init__(self, path=None, used=None, avail=None, refer=None, mountpoint=None):
         self.path = path
-        if '/' in path:
-            self.pool, self.name = path.split('/', 1)
-        else:
-            self.pool = ''
-            self.name = path
+        if path:
+            if '/' in path:
+                self.pool, self.name = path.split('/', 1)
+            else:
+                self.pool = ''
+                self.name = path
         self.used = used
         self.avail = avail
         self.refer = refer
