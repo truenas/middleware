@@ -139,12 +139,15 @@ WARDEN_CREATE_FLAGS_STARTAUTO		= warden_arg(0x00000040, "--startauto")
 WARDEN_CREATE_FLAGS_PORTJAIL		= warden_arg(0x00000080, "--portjail")
 WARDEN_CREATE_FLAGS_PLUGINJAIL		= warden_arg(0x00000100, "--pluginjail")
 WARDEN_CREATE_FLAGS_LINUXJAIL		= warden_arg(0x00000200, "--linuxjail", True, "script")
-WARDEN_CREATE_FLAGS_ARCHIVE		= warden_arg(0x00000400, "--archive", True, "archive")
-WARDEN_CREATE_FLAGS_LINUXARCHIVE	= warden_arg(0x00000800, "--linuxarchive", True, "linuxarchive")
-WARDEN_CREATE_FLAGS_VERSION		= warden_arg(0x00001000, "--version", True, "version")
-WARDEN_CREATE_FLAGS_TEMPLATE 		= warden_arg(0x00002000, "--template", True, "template")
-WARDEN_CREATE_FLAGS_SYSLOG		= warden_arg(0x00004000, "--syslog")
-WARDEN_CREATE_FLAGS_LOGFILE		= warden_arg(0x00008000, "--logfile", True, "logfile")
+WARDEN_CREATE_FLAGS_GENTOO_LINUX	= warden_arg(0x00000400, "--gentoo")
+WARDEN_CREATE_FLAGS_DEBIAN_LINUX	= warden_arg(0x00000800, "--debian")
+WARDEN_CREATE_FLAGS_CENTOS_LINUX	= warden_arg(0x00001000, "--centos")
+WARDEN_CREATE_FLAGS_ARCHIVE		= warden_arg(0x00002000, "--archive", True, "archive")
+WARDEN_CREATE_FLAGS_LINUXARCHIVE	= warden_arg(0x00004000, "--linuxarchive", True, "linuxarchive")
+WARDEN_CREATE_FLAGS_VERSION		= warden_arg(0x00008000, "--version", True, "version")
+WARDEN_CREATE_FLAGS_TEMPLATE 		= warden_arg(0x00010000, "--template", True, "template")
+WARDEN_CREATE_FLAGS_SYSLOG		= warden_arg(0x00020000, "--syslog")
+WARDEN_CREATE_FLAGS_LOGFILE		= warden_arg(0x00040000, "--logfile", True, "logfile")
 WARDEN_CREATE_FLAGS = [
     WARDEN_CREATE_FLAGS_32BIT,
     WARDEN_CREATE_FLAGS_IPV4,
@@ -156,6 +159,9 @@ WARDEN_CREATE_FLAGS = [
     WARDEN_CREATE_FLAGS_PORTJAIL,
     WARDEN_CREATE_FLAGS_PLUGINJAIL,
     WARDEN_CREATE_FLAGS_LINUXJAIL,
+    WARDEN_CREATE_FLAGS_GENTOO_LINUX,
+    WARDEN_CREATE_FLAGS_DEBIAN_LINUX,
+    WARDEN_CREATE_FLAGS_CENTOS_LINUX,
     WARDEN_CREATE_FLAGS_ARCHIVE,
     WARDEN_CREATE_FLAGS_LINUXARCHIVE,
     WARDEN_CREATE_FLAGS_VERSION,
