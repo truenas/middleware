@@ -34,7 +34,9 @@ from django.template.loader import add_to_builtins
 
 from freenasUI import freeadmin
 from freenasUI.api import v1_api
-from freenasUI.api.resources import SnapshotResource
+from freenasUI.api.resources import (
+    DatasetResource, SnapshotResource
+)
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.navtree import navtree
@@ -42,6 +44,7 @@ from freenasUI.freeadmin.navtree import navtree
 handler500 = 'freenasUI.freeadmin.views.server_error'
 handler404 = 'freenasUI.freeadmin.views.page_not_found'
 
+v1_api.register(DatasetResource())
 v1_api.register(SnapshotResource())
 
 navtree.prepare_modelforms()

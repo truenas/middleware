@@ -102,6 +102,25 @@ class Uid(object):
         return number
 
 
+class DatasetResource(DojoResource):
+
+    name = fields.CharField(attribute='name')
+    pool = fields.CharField(attribute='pool')
+    used = fields.CharField(attribute='used')
+    avail = fields.CharField(attribute='avail')
+    refer = fields.CharField(attribute='refer')
+    mountpoint = fields.CharField(attribute='mountpoint')
+
+    class Meta:
+        allowed_methods = ['get']
+        object_class = zfs.ZFSDataset
+        resource_name = 'storage/dataset'
+
+    def obj_get_list(self, request=None, **kwargs):
+        zfslist = zfs.list_datasets()
+        return zfslist
+
+
 class VolumeResourceMixin(object):
 
     class Meta:
