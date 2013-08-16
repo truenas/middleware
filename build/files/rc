@@ -47,7 +47,7 @@ trap : 2
 trap "echo 'Boot interrupted'; exit 1" 3
 
 HOME=/
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/rescue
 export HOME PATH
 
 dlv=`/sbin/sysctl -n vfs.nfs.diskless_valid 2> /dev/null`

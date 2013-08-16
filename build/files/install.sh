@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Setup a semi-sane environment
-PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/rescue
 export PATH
 HOME=/root
 export HOME
