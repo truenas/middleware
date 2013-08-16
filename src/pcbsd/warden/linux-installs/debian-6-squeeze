@@ -2,36 +2,83 @@
 # Script to install debian 6 "squeeze" release into a jail
 # Author: Kris Moore <kris@pcbsd.org>
 
-# Jail / chroot dir
-jDIR="$1"
+SELF="debian-6-squeeze"
+SELFDIR="${JDIR}/.${SELF}"
+ERRORFILE="/tmp/.${SELF}.error"
 
-# Target jail IP address
-jIP="$2"
+get_distfiles()
+{
+    rm -f "${ERRORFILE}"
 
-# Jail meta-directory
-jMETA="$3"
+    if [ ! -d "${SELFDIR}" ] ; then
+      mkdir -p "${SELFDIR}"
+    fi
+}
 
-if [ ! -e "${jDIR}" ] ; then
-  mkdir -p "${jDIR}"
-fi
+template_install()
+{
+    rm -f "${ERRORFILE}"
 
-debootstrap squeeze ${jDIR}
-err=$?
+    local TDIR="${1}"
+    if [ -z "${TDIR}" ] ; then 
+      echo "TDIR is not defined"
+      touch "${ERRORFILE}"      
+      exit 1
+    fi
 
-umount -f ${jDIR}/dev/fd >/dev/null 2>/dev/null
-umount -f ${jDIR}/dev >/dev/null 2>/dev/null
-umount -f ${jDIR}/sys >/dev/null 2>/dev/null
-umount -f ${jDIR}/proc >/dev/null 2>/dev/null
+    debootstrap squeeze ${TDIR}
 
-# Fix log file
-sed -i '' 's|/dev/xconsole|/var/log/xconsole|g' ${jDIR}/etc/rsyslog.conf
+    umount -f ${TDIR}/dev/fd >/dev/null 2>/dev/null
+    umount -f ${TDIR}/dev >/dev/null 2>/dev/null
+    umount -f ${TDIR}/sys >/dev/null 2>/dev/null
+    umount -f ${TDIR}/proc >/dev/null 2>/dev/null
 
-# Get rid of umount
-mv ${jDIR}/sbin/umount ${jDIR}/sbin/umount.prev
-ln -s /bin/true ${jDIR}/sbin/umount
+    # Fix log file
+    sed -i '' 's|/dev/xconsole|/var/log/xconsole|g' ${TDIR}/etc/rsyslog.conf
 
-# Setup some custom start / stop stuff
-echo "/etc/init.d/rc 3" > ${jMETA}/jail-start
-echo "/etc/init.d/rc 0" > ${jMETA}/jail-stop
+    # Get rid of umount
+    mv ${TDIR}/sbin/umount ${TDIR}/sbin/umount.prev
+    ln -s /bin/true ${TDIR}/sbin/umount
+}
 
-exit $err
+jail_configure()
+{
+    rm -f "${ERRORFILE}"
+
+    local JMETADIR="${1}"
+    if [ -z "${JMETADIR}" ] ; then 
+      echo "JMETADIR is not defined"
+      exit 1
+    fi
+
+    # Setup some custom start / stop stuff
+    echo "/etc/init.d/rc 3" > ${JMETADIR}/jail-start
+    echo "/etc/init.d/rc 0" > ${JMETADIR}/jail-stop
+}
+
+error()
+{
+    if [ -f "${ERRORFILE}" ] ; then
+        rm -f "${ERRORFILE}"
+        return 1
+    fi
+
+    return 0
+}
+
+main()
+{
+    case "${1}" in
+      get_distfiles) shift; get_distfiles "$@" ;; 
+      template_install) shift; template_install "$@" ;;
+      jail_configure) shift; jail_configure "$@" ;;
+      error) shift; error "$@" ;;
+    esac
+
+    if [ "$?" != "0" ] ; then
+      touch "${ERRORFILE}"
+    fi
+}
+
+
+main "$@"
