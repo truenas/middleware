@@ -195,8 +195,8 @@ class PathField(forms.CharField):
         super(PathField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
-        value = value.strip()
         if value not in ('', None):
+            value = value.strip()
             absv = os.path.abspath(value)
             valid = False
             for mp in MountPoint.objects.all().values_list('mp_path',):
