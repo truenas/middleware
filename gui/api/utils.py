@@ -190,23 +190,6 @@ class ResourceMixin(object):
     def is_webclient(self, request):
         return getattr(request, 'oauth2', None) != True
 
-
-class DojoModelResource(ResourceMixin, ModelResource):
-
-    def apply_sorting(self, obj_list, options=None):
-        """
-        Dojo aware filtering
-        """
-        fields = []
-        for key in options.keys():
-            if RE_SORT.match(key):
-                fields = RE_SORT.search(key).group(1)
-                fields = [f.strip() for f in fields.split(',')]
-                break
-        if fields:
-            obj_list = obj_list.order_by(",".join(fields))
-        return obj_list
-
     def get_list(self, request, **kwargs):
         """
         XXXXXX
@@ -229,6 +212,23 @@ class DojoModelResource(ResourceMixin, ModelResource):
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (paginator.offset, paginator.offset+length-1, len(sorted_objects))
         return response
+
+
+class DojoModelResource(ResourceMixin, ModelResource):
+
+    def apply_sorting(self, obj_list, options=None):
+        """
+        Dojo aware filtering
+        """
+        fields = []
+        for key in options.keys():
+            if RE_SORT.match(key):
+                fields = RE_SORT.search(key).group(1)
+                fields = [f.strip() for f in fields.split(',')]
+                break
+        if fields:
+            obj_list = obj_list.order_by(",".join(fields))
+        return obj_list
 
     def save(self, bundle, skip_errors=False):
         form = self._meta.validation.form_class(bundle.data)
