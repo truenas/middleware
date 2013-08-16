@@ -83,23 +83,8 @@ wait_keypress()
 
 get_physical_disks_list()
 {
-    local _disks
-    local _list
-    local _d
 
-    _list=""
-    _disks=`sysctl -n kern.disks`
-    for _d in ${_disks}; do
-        case "${_d}" in
-        cd*)
-            ;;
-        *)
-            _list="${_list}${_d} "
-	    ;;
-        esac
-    done
-
-    VAL="${_list}"
+    VAL=`sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' | sort -n`
     export VAL
 }
 
