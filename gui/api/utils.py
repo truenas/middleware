@@ -30,6 +30,7 @@ import re
 import oauth2
 from tastypie.authentication import Authentication, MultiAuthentication
 from tastypie.authorization import Authorization
+from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.paginator import Paginator
 from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
 from freenasUI.api.models import APIClient
@@ -185,10 +186,13 @@ class ResourceMixin(object):
         """
         if request.user.is_authenticated():
             allowed = ['get']
-        return super(ResourceMixin, self).method_check(request, allowed=allowed)
+        return super(ResourceMixin, self).method_check(
+            request,
+            allowed=allowed
+        )
 
     def is_webclient(self, request):
-        return getattr(request, 'oauth2', None) != True
+        return getattr(request, 'oauth2', None) is not True
 
     def get_list(self, request, **kwargs):
         """
@@ -199,18 +203,34 @@ class ResourceMixin(object):
         XXXXXX
         """
         base_bundle = self.build_bundle(request=request)
-        objects = self.obj_get_list(bundle=base_bundle, **self.remove_api_resource_names(kwargs))
+        objects = self.obj_get_list(
+            bundle=base_bundle, **self.remove_api_resource_names(kwargs)
+        )
         sorted_objects = self.apply_sorting(objects, options=request.GET)
 
-        paginator = self._meta.paginator_class(request, sorted_objects, resource_uri=self.get_resource_uri(), limit=self._meta.limit)
+        paginator = self._meta.paginator_class(
+            request,
+            sorted_objects,
+            resource_uri=self.get_resource_uri(),
+            limit=self._meta.limit
+        )
         to_be_serialized = paginator.page()
 
-        bundles = [self.build_bundle(obj=obj, request=request) for obj in to_be_serialized['objects']]
-        to_be_serialized['objects'] = [self.full_dehydrate(bundle) for bundle in bundles]
+        bundles = [
+            self.build_bundle(obj=obj, request=request)
+            for obj in to_be_serialized['objects']
+        ]
+        to_be_serialized['objects'] = [
+            self.full_dehydrate(bundle) for bundle in bundles
+        ]
         length = len(to_be_serialized['objects'])
-        to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request, to_be_serialized
+        )
         response = self.create_response(request, to_be_serialized)
-        response['Content-Range'] = 'items %d-%d/%d' % (paginator.offset, paginator.offset+length-1, len(sorted_objects))
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset, paginator.offset+length-1, len(sorted_objects)
+        )
         return response
 
 
@@ -234,16 +254,21 @@ class DojoModelResource(ResourceMixin, ModelResource):
         form = self._meta.validation.form_class(bundle.data)
         if not form.is_valid():
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, bundle.errors)
+                response=self.error_response(bundle.request, form._errors)
             )
 
         # Check if they're authorized.
         if bundle.obj.pk:
-            self.authorized_update_detail(self.get_object_list(bundle.request), bundle)
+            self.authorized_update_detail(
+                self.get_object_list(bundle.request), bundle
+            )
         else:
-            self.authorized_create_detail(self.get_object_list(bundle.request), bundle)
+            self.authorized_create_detail(
+                self.get_object_list(bundle.request), bundle
+            )
 
-        bundle.obj = form.save()
+        form.save()
+        bundle.obj = form.instance
         bundle.objects_saved.add(self.create_identifier(bundle.obj))
 
         # Now pick up the M2M bits.
