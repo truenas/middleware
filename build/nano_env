@@ -59,6 +59,9 @@ NANO_CFG_BASE=$AVATAR_ROOT/nanobsd
 # Where the FreeBSD ports tree lives.
 NANO_PORTS="$AVATAR_ROOT/FreeBSD/ports"
 
+# Where our private ports tree lives.
+NAS_PORTS="$AVATAR_ROOT/nas_ports"
+
 # Where the FreeBSD source tree lives.
 NANO_SRC="$AVATAR_ROOT/FreeBSD/src"
 
