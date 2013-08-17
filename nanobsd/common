@@ -197,6 +197,9 @@ do_add_pkg ()
 # Build a port (with the side effect of creating a package)
 do_add_port ()
 {
+	local port_repo
+	port_repo=$1
+	shift
 	local port_path
 	local fetch_list
 	port_path=$1
@@ -211,13 +214,13 @@ do_add_port ()
 	# Need to create ${NANO_OBJ}/ports in this add_port_${port} function
 	mkdir -p ${NANO_OBJ}/ports/distfiles
 	mkdir -p ${NANO_OBJ}/ports/packages
-	mkdir -p ${NANO_PORTS}/packages
-	mkdir -p ${NANO_PORTS}/distfiles
+	mkdir -p ${port_repo}/packages
+	mkdir -p ${port_repo}/distfiles
 	mkdir -p ${NANO_WORLDDIR}/usr/src
 	mkdir -p ${NANO_WORLDDIR}/usr/ports
 	set +e
-     	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
-	mount -t nullfs -o noatime ${NANO_PORTS} ${NANO_WORLDDIR}/usr/ports
+      	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
+	mount -t nullfs -o noatime ${port_repo} ${NANO_WORLDDIR}/usr/ports
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
     		${NANO_WORLDDIR}/usr/ports/packages
 	if [ -n "${DISTCACHE}" ]; then
@@ -253,9 +256,11 @@ do_add_port ()
 
 # Need to check if this function works with cross-compiling architecture!!!!
 # Recursive complex function: Generate one function for each ports
-add_port ()
+add_port_generic()
 {
     local _add_pkg PKG_NAME
+    local repo_path=$1
+    shift
     local port_path=$1
     local port=`echo $1 | sed -e 's/\//_/'`
     shift
@@ -263,11 +268,11 @@ add_port ()
     # Need to:
     # 1. check ARCH of this package!
     # 2. Add a trap
-    cd ${NANO_PORTS}/${port_path}
+    cd ${repo_path}/${port_path}
     # __MAKE_CONF -> ${NANO_MAKE_CONF_BUILD} -- can't plug this in because of a
     # sourcing chicken and egg problem.
     set +e
-    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_OBJ}/make.conf.install OPTIONSFILE=/nonexistent package-name $*`
+    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${repo_path} __MAKE_CONF=${NANO_OBJ}/make.conf.install OPTIONSFILE=/nonexistent package-name $*`
     if [ $? -ne 0 ]; then
         echo "failed to determine the package name for $port_path"
         exit 1
@@ -309,11 +314,17 @@ add_port ()
             customize_cmd add_pkg_${port}
             "
     else
-	NANO_FETCH_PORTS_BG="${NANO_FETCH_PORTS_BG} ${port_path}"
+	# We don't support background fetch for other ports trees
+	# than the FreeBSD one for now because I don't have time to
+	# abstract background fetches for multiple ports repos right now.
+	if [ "$repo_path" = "${NANO_PORTS}" ] ; then
+	    NANO_FETCH_PORTS_BG="${NANO_FETCH_PORTS_BG} ${port_path}"
+	fi
+
 	echo "Package is not yet built: $port"
         eval "
             add_port_${port} () {
-	        do_add_port ${port_path} $*
+	        do_add_port ${repo_path} ${port_path} $*
 	    }
 	    customize_cmd add_port_${port}
 	"
@@ -362,6 +373,21 @@ fetch_background ()
 	do_fetch_background ${fetch_list} &
 }
 customize_cmd fetch_background
+
+# Add a port from the basic NANO_PORTS directory
+add_port ()
+{
+
+   add_port_generic ${NANO_PORTS} $*
+}
+
+# Add a port from a specific repo!
+add_port_with_repo ()
+{
+    local port_repo=$1
+    shift
+    add_port_generic $port_repo $*
+}
 
 # Fill in stub functions for non-base OS images.
 if [ $AVATAR_COMPONENT != "os-base" ]
