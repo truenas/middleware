@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2013-08-11 08:28+0200\n"
+"PO-Revision-Date: 2013-08-17 13:38+0200\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -2407,7 +2407,7 @@ msgstr "Mască reţea IP pentru jail"
 
 #: services/models.py:829
 msgid "Plugins archive path"
-msgstr ""
+msgstr "Cale arhivă pluginuri"
 
 #: services/models.py:852
 msgid "Location"
@@ -2861,18 +2861,16 @@ msgid "NetBIOS Name"
 msgstr "NetBIOS Name"
 
 #: services/models.py:1250
-#, fuzzy
 msgid "System hostname"
-msgstr "Nume în format vechi, de ex. EXEMPLU"
+msgstr "Nume sistem"
 
 #: services/models.py:1254
 msgid "Workgroup Name"
 msgstr "Nume grup de lucru"
 
 #: services/models.py:1255
-#, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr "Nume Workgroup în format vechi"
+msgstr "Nume grup sau domeniu în formatul vechi, de ex. WORKGROUP"
 
 #: services/models.py:1259
 #, fuzzy
@@ -2999,9 +2997,8 @@ msgstr ""
 "când sunt adăugate în registrul LDAP, de ex. ou=Calculatoare"
 
 #: services/models.py:1341
-#, fuzzy
 msgid "Encryption Mode"
-msgstr "Model autentificare"
+msgstr "Model criptare"
 
 #: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -3136,55 +3133,55 @@ msgid "Rsync Modules"
 msgstr "Module Rsync"
 
 #: services/models.py:1459
-#, fuzzy
 msgid "Check interval"
-msgstr "Interval"
+msgstr "Interval verificare"
 
 #: services/models.py:1460
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
+"Stabileşte intervalul între două verificări ale discului la N minute. "
+"Implicit timpul este de 30 de minute"
 
 #: services/models.py:1466
-#, fuzzy
 msgid "Power mode"
-msgstr "Mod oprire"
+msgstr "Mod energetic"
 
 #: services/models.py:1470
 msgid "Difference"
-msgstr ""
+msgstr "Diferenţă"
 
 #: services/models.py:1471
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
+"Raportează dacă temperatura s-a modificat cu cel puţin N grade Celsius de la "
+"ultima verificare. Introduceţi valoarea 0 entru dezactivare"
 
 #: services/models.py:1475
-#, fuzzy
 msgid "Informal"
-msgstr "Normal"
+msgstr "Informal"
 
 #: services/models.py:1476 services/models.py:1481
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
+"Raportează dacă temperatura este mai mare sau egală cu N grade Celsius. 0 "
+"pentru dezactivare"
 
 #: services/models.py:1480
 msgid "Critical"
-msgstr ""
+msgstr "Critic"
 
 #: services/models.py:1484
 msgid "Email to report"
-msgstr ""
+msgstr "Email pentru raport"
 
 #: services/models.py:1487
-#, fuzzy
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr ""
-"Adresa email de destinaţie. Adresele multiple trebuie despărţite de punct şi "
-"virgulă"
+msgstr "Adresa email de destinaţie. Separaţi adresele multiple prin virgulă"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3252,14 +3249,12 @@ msgid "Management"
 msgstr "Management iSCSI"
 
 #: services/views.py:326
-#, fuzzy
 msgid "The service could not be stopped."
-msgstr "Cache-ul nu poate fi refăcut"
+msgstr "Serviciul nu poate fi oprit."
 
 #: services/views.py:333
-#, fuzzy
 msgid "The service could not be started."
-msgstr "Cache-ul nu poate fi refăcut"
+msgstr "Serviciul nu poate fi pornit."
 
 #: sharing/forms.py:81
 #, fuzzy
@@ -3608,6 +3603,9 @@ msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Folosiţi întotdeaua 0 pentru numărul dispozitivului, ajută în cazurile în "
+"care numărul dispozitivului nu este constant după o repornire, în cluster, "
+"..."
 
 #: sharing/models.py:200
 msgid "Disable File ID"
@@ -3615,11 +3613,11 @@ msgstr "Dezactivare ID fişier"
 
 #: sharing/models.py:201
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "Dezactivare anunţuri cereri createfileid, resolveid, deleteid."
 
 #: sharing/models.py:204
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "Dezactivare :nume hexa"
 
 #: sharing/models.py:205
 msgid ""
@@ -3633,25 +3631,27 @@ msgstr "ProDOS"
 
 #: sharing/models.py:209
 msgid "Provide compatibility with Apple II clients."
-msgstr "Asigură compatibilitate cu clienţi Apple II."
+msgstr "Asigură compatibilitatea cu clienţii Apple II."
 
 #: sharing/models.py:212
 msgid "No Stat"
-msgstr ""
+msgstr "Nicio informaţie"
 
 #: sharing/models.py:213
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"Fără afişarea căii volumului la afişarea listei volumelor, util pentru "
+"automontare sau pentru volumele create printr-un script iniţial."
 
 #: sharing/models.py:216
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "Privilegii Unix AFP3"
 
 #: sharing/models.py:217
 msgid "Use AFP3 unix privileges."
-msgstr "Utilizare privilegiile unix AFP3"
+msgstr "Utilizare privilegii unix AFP3"
 
 #: sharing/models.py:222
 #, fuzzy
@@ -3704,7 +3704,7 @@ msgstr ""
 
 #: sharing/models.py:277
 msgid "Read Only"
-msgstr "Doar în citire"
+msgstr "Doar citire"
 
 #: sharing/models.py:278
 #, fuzzy
@@ -3727,7 +3727,7 @@ msgstr "Utilizator Maproot"
 
 #: sharing/models.py:289
 msgid "User to map root to"
-msgstr ""
+msgstr "Utilizator de mapat ca root"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
@@ -3735,7 +3735,7 @@ msgstr "Grup Maproot"
 
 #: sharing/models.py:296
 msgid "Group to map root to"
-msgstr ""
+msgstr "Grup de mapat ca root"
 
 #: sharing/models.py:299
 msgid "Mapall User"
