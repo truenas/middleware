@@ -54,17 +54,18 @@ main()
 	mkdir -p ${ISODIR}/mnt
 	mkdir -p ${ISODIR}/tmp
 
-	# Create a quick and dirty nano image from the world tree
+	# Create the install ISO based on contents from the installworld tree
 	mkdir -p ${INSTALLUFSDIR}
 	tar -cf - -C ${NANO_OBJ}/_.w --exclude local . | tar -xf - -C ${INSTALLUFSDIR}
 
 	# copy /rescue and /boot from the image to the iso
-	tar -cf - -C ${INSTALLUFSDIR} boot --exclude boot/kernel-debug | tar -xf - -C ${ISODIR}
+	tar -c -f - -C ${NANO_OBJ}/_.w --exclude boot/kernel-debug boot | tar -x -f - -C ${ISODIR}
 	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
 	rm -rf ${INSTALLUFSDIR}/usr/local
 	rm -rf ${INSTALLUFSDIR}/usr/include
+	rm -rf ${INSTALLUFSDIR}/boot
 	rm -f ${INSTALLUFSDIR}/bin/* ${INSTALLUFSDIR}/sbin/*
 	rm -f ${INSTALLUFSDIR}/usr/bin/* ${INSTALLUFSDIR}/usr/sbin/*
 
@@ -255,6 +256,7 @@ main()
 	# Create additional symlinks
 	ln -s /bin/pgrep ${INSTALLUFSDIR}/usr/bin/pgrep
 	ln -s /bin/pkill ${INSTALLUFSDIR}/usr/bin/pkill
+	ln -s /.mount/boot ${INSTALLUFSDIR}/boot
 
 	# Copy in binaries needed on install CD-ROM
 	cp -p ${NANO_OBJ}/_.w/usr/bin/dialog ${INSTALLUFSDIR}/usr/bin/dialog
