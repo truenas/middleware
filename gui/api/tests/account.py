@@ -36,7 +36,7 @@ class bsdUsersResourceTest(APITestCase):
         self.assertEqual(data['bsdusr_shell'], '/usr/local/bin/bash')
         self.assertEqual(data['bsdusr_builtin'], False)
 
-    def test_Retrieve_sysctl(self):
+    def test_Retrieve(self):
         obj = models.bsdUsers.objects.create(
             bsdusr_uid=1100,
             bsdusr_group=models.bsdGroups.objects.create(
@@ -71,7 +71,7 @@ class bsdUsersResourceTest(APITestCase):
             }
         ])
 
-    def test_Update_sysctl(self):
+    def test_Update(self):
         obj = models.bsdUsers.objects.create(
             bsdusr_uid=1100,
             bsdusr_group=models.bsdGroups.objects.create(
@@ -93,7 +93,7 @@ class bsdUsersResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
 
-    def test_Delete_sysctl(self):
+    def test_Delete(self):
         obj = models.bsdUsers.objects.create(
             bsdusr_uid=1100,
             bsdusr_group=models.bsdGroups.objects.create(

@@ -67,7 +67,6 @@ class SysctlResourceTest(APITestCase):
             '%s%d/' % (self.get_api_url(), sysctl.id),
             format='json',
             data={
-                'sysctl_mib': 'kern.coredump',
                 'sysctl_value': '2',
             }
         )

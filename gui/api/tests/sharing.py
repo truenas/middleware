@@ -93,16 +93,15 @@ class CIFS_ShareResourceTest(CommonMixin, APITestCase):
         obj = models.CIFS_Share.objects.create(
             cifs_name='test share',
             cifs_comment='comment',
-            cifs_path='/mnt/',
+            cifs_path='/mnt/tank',
             cifs_guestok=True,
+            cifs_guestonly=False,
         )
         resp = self.api_client.put(
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
             data={
                 u'cifs_guestonly': True,
-                u'cifs_name': u'test share',
-                u'cifs_path': u'/mnt/tank',
             }
         )
         self.assertHttpAccepted(resp)
