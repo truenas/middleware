@@ -54,7 +54,22 @@ class OAuth2APIClient(TestApiClient):
         self.client._consumer = consumer
 
 
+class TestCaseMeta(type):
+
+    def __new__(cls, name, bases, attrs):
+        new_class = type.__new__(cls, name, bases, attrs)
+        if name.endswith('ResourceTest'):
+            rsname = name.replace('ResourceTest', '').lower()
+            app = new_class.__module__.rsplit('.', 1)[-1]
+            new_class.resource_name = "%s/%s" % (app, rsname)
+        return new_class
+
+
 class APITestCase(ResourceTestCase):
+
+    __metaclass__ = TestCaseMeta
+
+    resource_name = None
 
     def setUp(self):
         super(APITestCase, self).setUp()
@@ -62,3 +77,9 @@ class APITestCase(ResourceTestCase):
         self.api_client = OAuth2APIClient(consumer=self.api)
         Settings.objects.create()
         Advanced.objects.create()
+
+    def get_resource_name(self):
+        return self.resource_name
+
+    def get_api_url(self):
+        return '/api/v1.0/%s/' % self.get_resource_name()
