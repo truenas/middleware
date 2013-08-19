@@ -251,23 +251,27 @@ class DojoModelResource(ResourceMixin, ModelResource):
         return obj_list
 
     def save(self, bundle, skip_errors=False):
-        form = self._meta.validation.form_class(
-            bundle.data,
-            instance=bundle.obj,
-        )
-        if not form.is_valid():
-            raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, form._errors)
-            )
 
         # Check if they're authorized.
         if bundle.obj.pk:
             self.authorized_update_detail(
                 self.get_object_list(bundle.request), bundle
             )
+            data = bundle.obj.__dict__
+            data.update(bundle.data)
         else:
             self.authorized_create_detail(
                 self.get_object_list(bundle.request), bundle
+            )
+            data = bundle.data
+
+        form = self._meta.validation.form_class(
+            data,
+            instance=bundle.obj,
+        )
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, form._errors)
             )
 
         form.save()
