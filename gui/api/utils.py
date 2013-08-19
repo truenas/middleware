@@ -257,13 +257,13 @@ class DojoModelResource(ResourceMixin, ModelResource):
             self.authorized_update_detail(
                 self.get_object_list(bundle.request), bundle
             )
-            data = bundle.obj.__dict__
-            data.update(bundle.data)
         else:
             self.authorized_create_detail(
                 self.get_object_list(bundle.request), bundle
             )
-            data = bundle.data
+
+        data = bundle.obj.__dict__
+        data.update(bundle.data)
 
         form = self._meta.validation.form_class(
             data,
