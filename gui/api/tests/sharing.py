@@ -142,7 +142,6 @@ class AFP_ShareResourceTest(CommonMixin, APITestCase):
                 u'afp_discoverymode': u'default',
             }
         )
-        print resp.content
         self.assertHttpCreated(resp)
         self.assertValidJSON(resp.content)
 
@@ -233,8 +232,93 @@ class AFP_ShareResourceTest(CommonMixin, APITestCase):
         self.assertEqual(data['afp_upriv'], False)
 
     def test_Delete(self):
-        obj = models.AFP_Share.objects.create(
+        obj = models.AFP_Share.objects.create()
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
         )
+        self.assertHttpAccepted(resp)
+
+
+class NFS_ShareResourceTest(CommonMixin, APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                u'nfs_comment': u'test share',
+                u'nfs_paths': [u'/mnt/tank'],
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'nfs_comment': u'test share',
+            u'nfs_hosts': u'',
+            u'nfs_mapall_group': u'',
+            u'nfs_mapall_user': u'',
+            u'nfs_maproot_group': u'',
+            u'nfs_maproot_user': u'',
+            u'nfs_network': u'',
+            u'nfs_paths': [u'/mnt/tank'],
+            u'nfs_alldirs': False,
+            u'nfs_quiet': False,
+            u'nfs_ro': False
+        })
+
+    def test_Retrieve(self):
+        obj = models.NFS_Share.objects.create(
+            nfs_comment='test share',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'nfs_alldirs': False,
+            u'nfs_comment': u'test share',
+            u'nfs_hosts': u'',
+            u'nfs_mapall_group': u'',
+            u'nfs_mapall_user': u'',
+            u'nfs_maproot_group': u'',
+            u'nfs_maproot_user': u'',
+            u'nfs_network': u'',
+            u'nfs_paths': [],
+            u'nfs_quiet': False,
+            u'nfs_ro': False
+        }])
+
+    def test_Update(self):
+        obj = models.NFS_Share.objects.create(
+            nfs_comment='test share',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                u'nfs_ro': True,
+                u'nfs_paths': [u'/mnt/tank'],  #FIXME: nfs paths validation
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['nfs_ro'], True)
+
+    def test_Delete(self):
+        obj = models.NFS_Share.objects.create()
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',

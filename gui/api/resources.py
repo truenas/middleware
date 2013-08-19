@@ -30,6 +30,7 @@ import subprocess
 
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.forms.models import inlineformset_factory
 from django.utils.translation import ugettext as _
 
 from freenasUI import choices
@@ -48,6 +49,8 @@ from freenasUI.services.models import (
 )
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
+from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
+from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import VolumeManagerForm
 from freenasUI.storage.models import Disk, Volume
 from tastypie import fields
@@ -573,7 +576,61 @@ class NFSShareResourceMixin(object):
             bundle.data['nfs_paths'] = u"%s" % ', '.join(bundle.obj.nfs_paths)
         else:
             bundle.data['nfs_paths'] = bundle.obj.nfs_paths
+
+        for key in bundle.data.keys():
+            if key.startswith('path_set'):
+                del bundle.data[key]
         return bundle
+
+    def hydrate(self, bundle):
+        bundle = super(NFSShareResourceMixin, self).hydrate(bundle)
+        if 'nfs_paths' not in bundle.data:
+            return bundle
+        nfs_paths = bundle.data.get('nfs_paths')
+        for i, item in enumerate(nfs_paths):
+            bundle.data['path_set-%d-path' % i] = item
+            bundle.data['path_set-%d-id' % i] = ''
+            bundle.data['path_set-%d-share' % i] = ''
+        bundle.data['path_set-INITIAL_FORMS'] = 0
+        bundle.data['path_set-TOTAL_FORMS'] = i + 1
+        return bundle
+
+    def is_form_valid(self, bundle, form):
+        fset = inlineformset_factory(
+            NFS_Share,
+            NFS_Share_Path,
+            form=NFS_SharePathForm,
+            extra=0,
+        )
+        formset = fset(bundle.data, instance=bundle.obj, prefix="path_set")
+        valid = formset.is_valid()
+        errors = {}
+        if not valid:
+            #if formset._errors:
+            #    errors.update(formset._errors)
+            for form in formset:
+                errors.update(form._errors)
+        valid &= form.is_valid({'formset_nfs_share_path': formset})
+        if errors:
+            form._errors.update(errors)
+        return valid
+
+    def save_m2m(self, m2m_bundle):
+        paths = []
+        for path in m2m_bundle.obj.paths.all():
+            if path.path not in m2m_bundle.data.get("nfs_paths", []):
+                path.delete()
+            else:
+                paths.append(path.path)
+
+        for path in m2m_bundle.data.get("nfs_paths", []):
+            if path in paths:
+                continue
+            sp = NFS_Share_Path()
+            sp.share = m2m_bundle.obj
+            sp.path = path
+            sp.save()
+        return m2m_bundle
 
 
 class InterfacesResourceMixin(object):
