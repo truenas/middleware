@@ -6835,6 +6835,19 @@ chroot_make_cleanup() {
 # Function which extracts the clean chroot environment for the PBI
 chroot_extract() {
 
+	#
+	# If ${PBI_WORLDCHROOT} already exists and is a dataset and not mounted,
+	# go ahead and mount it so we can use it.
+	#
+	rp=`getZFSRelativePath ${PBI_WORLDCHROOT}`
+	ds=`zfs list|awk -v path="${rp}" '$5 == path { print $1 }'`                              
+	if [ -n "${ds}" ] && isDirZFS "${rp}" ; then                                             
+		mount -p|awk '{ print $2 }'|grep -q "${rp}"                                    
+		if [ "$?" != "0" ] ; then
+			zfs mount "${ds}"
+		fi
+	fi
+
 	# If no freebsd base exists, make it first
 	PBI_WORLDCHROOT="${PBI_APPDIR}/.pbi-world-$ARCH"
 	export PBI_WORLDCHROOT
