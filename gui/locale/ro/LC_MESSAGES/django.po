@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2013-08-17 13:38+0200\n"
+"PO-Revision-Date: 2013-08-18 12:26+0200\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -2637,15 +2637,14 @@ msgid "Masquerade address"
 msgstr "Adresă mascaradă"
 
 #: services/models.py:1036
-#, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified "
 "address to the client, on the assumption that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
-"Serverul va afişa date despre reţeaua specifică adresei IP,  plecând de la "
-"premiza că adresa IP sau DNS acţionează ca gateway NAT sau port forwarder "
-"pentru server"
+"Serverul va afişa date despre reţeaua corespunzătoare adresei IP "
+"specificate,  plecând de la premiza că sistemul cu adresa IP sau numele DNS "
+"indicat acţionează ca un gateway NAT sau port forwarder pentru server."
 
 #: services/models.py:1043
 msgid "Minimum passive port"
@@ -2873,18 +2872,16 @@ msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Nume grup sau domeniu în formatul vechi, de ex. WORKGROUP"
 
 #: services/models.py:1259
-#, fuzzy
 msgid "Allow Trusted Domains"
-msgstr "Permite GIDs repetate"
+msgstr "Permite domenii de încredere"
 
 #: services/models.py:1263
 msgid "Administrator Name"
 msgstr "Nume administrator"
 
 #: services/models.py:1264
-#, fuzzy
 msgid "Domain Administrator account name"
-msgstr "Parolă cont administrator domeniu."
+msgstr "Nume cont administrator domeniu."
 
 #: services/models.py:1268
 msgid "Administrator Password"
@@ -3037,7 +3034,7 @@ msgstr ""
 
 #: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
-msgstr ""
+msgstr "Configurare Rsyncd"
 
 #: services/models.py:1390
 msgid "Module name"
@@ -3185,9 +3182,8 @@ msgstr "Adresa email de destinaţie. Separaţi adresele multiple prin virgulă"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
-#, fuzzy
 msgid "S.M.A.R.T."
-msgstr "Activare S.M.A.R.T."
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:15
 msgid "Control Services"
@@ -3207,19 +3203,17 @@ msgid "View Device Extents"
 msgstr "Vizualizare toate rutele statice"
 
 #: services/nav.py:92
-#, fuzzy
 msgid "File Extents"
-msgstr "Vizualizare toţi utilizatorii"
+msgstr "Extensii fişier"
 
 #: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add File Extent"
-msgstr ""
+msgstr "Adăugare extensie fişier"
 
 #: services/nav.py:118
-#, fuzzy
 msgid "View File Extents"
-msgstr "Vizualizare toţi utilizatorii"
+msgstr "Vizualizare extensii fişier"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -3236,7 +3230,7 @@ msgstr ""
 
 #: services/nav.py:159
 msgid "View Rsync Modules"
-msgstr ""
+msgstr "Vizualizare module Rsync"
 
 #: services/nav.py:168 system/models.py:84 system/nav.py:28
 #: templates/system/settings.html:2
@@ -3244,9 +3238,8 @@ msgid "Settings"
 msgstr "Setări"
 
 #: services/nav.py:186
-#, fuzzy
 msgid "Management"
-msgstr "Management iSCSI"
+msgstr "Management"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3257,9 +3250,8 @@ msgid "The service could not be started."
 msgstr "Serviciul nu poate fi pornit."
 
 #: sharing/forms.py:81
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "Parolă partajare"
+msgstr "Confirmare parolă partajare"
 
 #: sharing/forms.py:139
 #, fuzzy, python-format
@@ -3511,27 +3503,27 @@ msgid "Disk discovery mode"
 msgstr "Modalitate descoperire disc."
 
 #: sharing/models.py:168
-#, fuzzy
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
-"Atenţie! Selectarea opţiunii 'Time Machine' pentru mai multe partajări poate "
-"avea consecinţe neprevazute pentru sistemul de operare MacOS"
+"Atenţie! Selectarea opţiunii de backup 'Time Machine' pentru partajări "
+"multiple poate avea consecinţe neprevazute în funcţionarea MacOS. Modul "
+"implicit exportă volumele ca volume de date pentru utilizatori."
 
 #: sharing/models.py:172
 msgid "Database Path"
 msgstr "Cale bază de date"
 
 #: sharing/models.py:174
-#, fuzzy
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
-"Informaţia despre baza de date este stocată în cale. Trebuie să specificaţi "
-"o locaţie ce poate fi scrisă chiar dacă volumul poate doar citit."
+"Determină includerea de informaţii despre baza de date în cale. Va trebui să "
+"specificaţi o locaţie cu permisiuni de scriere, chiar dacă volumul are doar "
+"permisiuni de citire."
 
 #: sharing/models.py:177
 msgid "Cache CNID"
@@ -3624,6 +3616,8 @@ msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
+"Dezactivare translare fişiere :hex cu excepţia fişierelor ascunse. Această "
+"opţiune face caracterul '/' ilegal."
 
 #: sharing/models.py:208
 msgid "ProDOS"
@@ -3694,12 +3688,11 @@ msgid "All Directories"
 msgstr "Toate directoarele"
 
 #: sharing/models.py:274
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
-"Permite montarea oricărui director în acest punct dacă este selectat.  "
+"Permite montarea oricărui subdirector în acest punct dacă este selectat.  "
 "Altfel, doar directorul cu cea mai mare ierarhie poate fi montat."
 
 #: sharing/models.py:277
@@ -3743,7 +3736,7 @@ msgstr "Utilizator Mapall"
 
 #: sharing/models.py:303
 msgid "User to map all users to"
-msgstr ""
+msgstr "Utilizatorul mapat pentru toţi utilizatorii"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
@@ -3751,7 +3744,7 @@ msgstr "Grup Mapall"
 
 #: sharing/models.py:310
 msgid "Group to map all users to"
-msgstr ""
+msgstr "Grupul mapat pentru toţi utilizatorii"
 
 #: sharing/models.py:321
 #, fuzzy
@@ -3839,7 +3832,7 @@ msgstr ""
 
 #: storage/forms.py:276
 msgid "You must select a filesystem"
-msgstr ""
+msgstr "Selectaţi un tip de fişiere sistem"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
@@ -3883,7 +3876,7 @@ msgstr "Volum"
 
 #: storage/forms.py:570
 msgid "You must select a volume."
-msgstr ""
+msgstr "Selectaţi un volum."
 
 #: storage/forms.py:636
 #, python-format
@@ -3906,7 +3899,7 @@ msgstr "Nivel compresie"
 
 #: storage/forms.py:687 storage/forms.py:748 storage/forms.py:803
 msgid "Enable atime"
-msgstr ""
+msgstr "Activare atime"
 
 #: storage/forms.py:691 storage/forms.py:752
 msgid "Quota for this dataset"
@@ -4035,7 +4028,7 @@ msgstr "Clona trebuie să fie în acelaşi volum"
 
 #: storage/forms.py:1125 storage/models.py:631
 msgid "Remote hostname"
-msgstr ""
+msgstr "Nume sistem remote"
 
 #: storage/forms.py:1126 storage/models.py:635
 #, fuzzy
@@ -4044,7 +4037,7 @@ msgstr "Monitor de la distanță"
 
 #: storage/forms.py:1128 storage/models.py:639
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Cheie sistem remote"
 
 #: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
@@ -4225,7 +4218,7 @@ msgstr "Intrare disc (HDD) în stare de veghe"
 
 #: storage/models.py:371 storage/views.py:251
 msgid "Advanced Power Management"
-msgstr "Management energie avansat"
+msgstr "Management avansat energie"
 
 #: storage/models.py:377 storage/views.py:252
 msgid "Acoustic Level"
@@ -4261,7 +4254,7 @@ msgstr ""
 
 #: storage/models.py:644
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Sistem replicare remote"
 
 #: storage/models.py:657 storage/models.py:718
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
@@ -4272,11 +4265,13 @@ msgstr "Tip sistem fişiere"
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Ultimul punct de restaurare trimis părţii remote (lăsaţi cîmpul necompletat "
+"pentru o replicare completă)"
 
 #: storage/models.py:666 system/models.py:458
 #: templates/storage/replications.html:22
 msgid "Remote Host"
-msgstr ""
+msgstr "Sistem remote"
 
 #: storage/models.py:669
 msgid "Remote ZFS filesystem name"
@@ -4306,15 +4301,15 @@ msgstr ""
 
 #: storage/models.py:692
 msgid "Replication Task"
-msgstr ""
+msgstr "Activitate replicare"
 
 #: storage/models.py:693
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Activităţi replicare"
 
 #: storage/models.py:722 system/models.py:526 templates/storage/tasks.html:22
 msgid "Recursive"
-msgstr ""
+msgstr "Recursiv"
 
 #: storage/models.py:726
 msgid "Snapshot lifetime value"
@@ -6099,7 +6094,7 @@ msgstr "Ultimul punct restaurare"
 
 #: templates/storage/replications.html:23
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "SIstem de fişiere sistem ZFS remote"
 
 #: templates/storage/replications.html:37
 #: templates/storage/replications.html:41
@@ -6630,7 +6625,7 @@ msgid "Only allow guest access"
 msgstr "Permite numai acces vizitatori"
 
 msgid "Invalid prefix"
-msgstr "Terminaţie invalidă"
+msgstr "Prefix invalid"
 
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
@@ -6770,13 +6765,11 @@ msgstr ""
 "oricărei conexiuni la serviciul vizitator. Acest utilizator trebuie să "
 "existe in fișierul de parole, dar nu necesită o autentificare validă."
 
-#, fuzzy
 msgid "CIFS Share"
-msgstr "Partajare UNIX"
+msgstr "Partajare CIFS"
 
-#, fuzzy
 msgid "CIFS Shares"
-msgstr "Partajare UNIX"
+msgstr "Partajări CIFS"
 
 #, fuzzy
 msgid "NFS Share"
@@ -6929,9 +6922,8 @@ msgstr ""
 "utilizator trebuie să existe în fişierul de parole, dar nu este necesară "
 "o logare validă."
 
-#, fuzzy
 msgid "ZVol Name"
-msgstr "Nume complet"
+msgstr "Nume ZVol"
 
 msgid "Dataset"
 msgstr "Set date"
