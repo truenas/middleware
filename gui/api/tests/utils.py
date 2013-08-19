@@ -37,7 +37,6 @@ class OAuth2Client(Client):
         req.sign_request(oauth2.SignatureMethod_HMAC_SHA1(), self._consumer, None)
 
         request['HTTP_AUTHORIZATION'] = req.to_header()['Authorization']
-        print request
 
         return super(OAuth2Client, self).request(**request)
 
