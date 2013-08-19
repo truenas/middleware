@@ -5,6 +5,8 @@ from freenasUI.storage.models import MountPoint, Volume
 
 class CommonMixin(object):
 
+    maxDiff = None
+
     def setUp(self):
         super(CommonMixin, self).setUp()
         v = Volume.objects.create(
@@ -53,7 +55,7 @@ class CIFS_ShareResourceTest(CommonMixin, APITestCase):
             u'cifs_ro': False,
             u'cifs_showhiddenfiles': False,
             u'cifs_auxsmbconf': u'',
-            u'cifs_browsable': False,
+            u'cifs_browsable': True,
         })
 
     def test_Retrieve(self):
@@ -115,6 +117,123 @@ class CIFS_ShareResourceTest(CommonMixin, APITestCase):
             cifs_comment='comment',
             cifs_path='/mnt/',
             cifs_guestok=True,
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
+
+
+class AFP_ShareResourceTest(CommonMixin, APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                u'afp_name': u'test share',
+                u'afp_path': u'/mnt/tank',
+                u'afp_discoverymode': u'default',
+            }
+        )
+        print resp.content
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'afp_adouble': True,
+            u'afp_allow': u'',
+            u'afp_cachecnid': False,
+            u'afp_comment': u'',
+            u'afp_crlf': False,
+            u'afp_dbpath': u'',
+            u'afp_deny': u'',
+            u'afp_discoverymode': u'default',
+            u'afp_diskdiscovery': False,
+            u'afp_dperm': u'644',
+            u'afp_fperm': u'755',
+            u'afp_mswindows': False,
+            u'afp_name': u'test share',
+            u'afp_nodev': False,
+            u'afp_nofileid': False,
+            u'afp_nohex': False,
+            u'afp_nostat': False,
+            u'afp_path': u'/mnt/tank',
+            u'afp_prodos': False,
+            u'afp_ro': u'',
+            u'afp_rw': u'',
+            u'afp_sharecharset': u'',
+            u'afp_sharepw': u'',
+            u'afp_upriv': True,
+        })
+
+    def test_Retrieve(self):
+        obj = models.AFP_Share.objects.create(
+            afp_name='test share',
+            afp_path='/mnt/tank',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'afp_adouble': True,
+            u'afp_allow': u'',
+            u'afp_cachecnid': False,
+            u'afp_comment': u'',
+            u'afp_crlf': False,
+            u'afp_dbpath': u'',
+            u'afp_deny': u'',
+            u'afp_discoverymode': u'default',
+            u'afp_diskdiscovery': False,
+            u'afp_dperm': u'644',
+            u'afp_fperm': u'755',
+            u'afp_mswindows': False,
+            u'afp_name': u'test share',
+            u'afp_nodev': False,
+            u'afp_nofileid': False,
+            u'afp_nohex': False,
+            u'afp_nostat': False,
+            u'afp_path': u'/mnt/tank',
+            u'afp_prodos': False,
+            u'afp_ro': u'',
+            u'afp_rw': u'',
+            u'afp_sharecharset': u'',
+            u'afp_sharepw': u'',
+            u'afp_upriv': True,
+        }])
+
+    def test_Update(self):
+        obj = models.AFP_Share.objects.create(
+            afp_name='test share',
+            afp_path='/mnt/tank',
+            afp_upriv=True,
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                u'afp_upriv': False,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['afp_upriv'], False)
+
+    def test_Delete(self):
+        obj = models.AFP_Share.objects.create(
         )
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
