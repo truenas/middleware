@@ -569,7 +569,10 @@ class NFSShareResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(NFSShareResourceMixin, self).dehydrate(bundle)
-        bundle.data['nfs_paths'] = bundle.obj.nfs_paths
+        if self.is_webclient(bundle.request):
+            bundle.data['nfs_paths'] = u"%s" % ', '.join(bundle.obj.nfs_paths)
+        else:
+            bundle.data['nfs_paths'] = bundle.obj.nfs_paths
         return bundle
 
 

@@ -309,7 +309,7 @@ class NFS_Share(Model):
 
     @property
     def nfs_paths(self):
-        return u"%s" % ', '.join([p.path for p in self.paths.all()])
+        return [p.path for p in self.paths.all()]
 
     class Meta:
         verbose_name = _("Unix (NFS) Share")
