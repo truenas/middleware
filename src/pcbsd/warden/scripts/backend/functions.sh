@@ -1220,11 +1220,20 @@ bootstrap_pkgng()
     rpath="/freenas/${release}/${arch}"
   else
     mirror="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"
+    mirrorfile="/usr/local/share/pcbsd/conf/pkg-mirror"
     rpath=""
 
     local tmp="$(mktemp /tmp/.mirXXXXXX)"
     echo "${mirror}" > "${tmp}"
+
+    #
+    # XXX ugly! but for now, necessary! XXX
+    #
+
+    mount -uw /
     mv "${tmp}" "${mirrorfile}-i386"
+    mount -ur /
+
     chmod 644 "${mirrorfile}"
   fi
 
