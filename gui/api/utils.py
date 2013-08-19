@@ -27,13 +27,15 @@
 import logging
 import re
 
-import oauth2
+from django.db import transaction
+
 from tastypie.authentication import Authentication, MultiAuthentication
 from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.paginator import Paginator
 from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
 from freenasUI.api.models import APIClient
+import oauth2
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
 log = logging.getLogger('api.resources')
@@ -250,6 +252,9 @@ class DojoModelResource(ResourceMixin, ModelResource):
             obj_list = obj_list.order_by(",".join(fields))
         return obj_list
 
+    def is_form_valid(self, bundle, form):
+        return form.is_valid()
+
     def save(self, bundle, skip_errors=False):
 
         # Check if they're authorized.
@@ -262,25 +267,28 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 self.get_object_list(bundle.request), bundle
             )
 
-        data = bundle.obj.__dict__
+        data = dict(bundle.obj.__dict__)
+        data.pop('_state', None)
         data.update(bundle.data)
+        bundle.data = data
 
         form = self._meta.validation.form_class(
             data,
             instance=bundle.obj,
         )
-        if not form.is_valid():
+        if not self.is_form_valid(bundle, form):
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, form._errors)
             )
 
-        form.save()
-        bundle.obj = form.instance
-        bundle.objects_saved.add(self.create_identifier(bundle.obj))
+        with transaction.commit_on_success():
+            form.save()
+            bundle.obj = form.instance
+            bundle.objects_saved.add(self.create_identifier(bundle.obj))
 
-        # Now pick up the M2M bits.
-        m2m_bundle = self.hydrate_m2m(bundle)
-        self.save_m2m(m2m_bundle)
+            # Now pick up the M2M bits.
+            m2m_bundle = self.hydrate_m2m(bundle)
+            self.save_m2m(m2m_bundle)
 
         return bundle
 
