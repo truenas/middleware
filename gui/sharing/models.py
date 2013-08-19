@@ -152,7 +152,7 @@ class AFP_Share(Model):
     afp_discoverymode = models.CharField(
             max_length=120,
             choices=choices.DISKDISCOVERY_CHOICES,
-            default='Default',
+            default='default',
             verbose_name=_("Disk discovery mode"),
             help_text=_("Note! Selecting 'Time Machine' on multiple shares may cause unpredictable behavior in MacOS. Default mode exports the volume as a data volume for users.")
             )
