@@ -2,16 +2,16 @@ from .utils import APITestCase
 from freenasUI.account import models
 
 
-class UserResourceTest(APITestCase):
+class bsdUsersResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(
-            self.client.get('/api/v1.0/account/bsdusers/', format='json')
+            self.client.get(self.get_api_url(), format='json')
         )
 
     def test_Create(self):
         resp = self.api_client.post(
-            '/api/v1.0/account/bsdusers/',
+            self.get_api_url(),
             format='json',
             data={
                 'bsdusr_uid': '1100',
@@ -48,7 +48,7 @@ class UserResourceTest(APITestCase):
             bsdusr_full_name='Juca Xunda',
         )
         resp = self.api_client.get(
-            '/api/v1.0/account/bsdusers/',
+            self.get_api_url(),
             format='json',
         )
         self.assertHttpOK(resp)
@@ -83,7 +83,7 @@ class UserResourceTest(APITestCase):
             bsdusr_full_name='Juca Xunda',
         )
         resp = self.api_client.put(
-            '/api/v1.0/account/bsdusers/%d/' % obj.id,
+            '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
             data={
                 'bsdusr_full_name': 'Juca Xunda Junior',
@@ -105,7 +105,7 @@ class UserResourceTest(APITestCase):
             bsdusr_full_name='Juca Xunda',
         )
         resp = self.api_client.delete(
-            '/api/v1.0/account/bsdusers/%d/' % obj.id,
+            '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
         )
         self.assertHttpAccepted(resp)

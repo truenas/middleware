@@ -12,12 +12,12 @@ class SysctlResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(
-            self.client.get('/api/v1.0/system/sysctl/', format='json')
+            self.client.get(self.get_api_url(), format='json')
         )
 
     def test_Create_sysctl(self):
         resp = self.api_client.post(
-            '/api/v1.0/system/sysctl/',
+            self.get_api_url(),
             format='json',
             data={
                 'sysctl_mib': 'kern.coredump',
@@ -43,7 +43,7 @@ class SysctlResourceTest(APITestCase):
             sysctl_value='2',
         )
         resp = self.api_client.get(
-            '/api/v1.0/system/sysctl/',
+            self.get_api_url(),
             format='json',
         )
         self.assertHttpOK(resp)
@@ -64,7 +64,7 @@ class SysctlResourceTest(APITestCase):
             sysctl_value='1',
         )
         resp = self.api_client.put(
-            '/api/v1.0/system/sysctl/%d/' % sysctl.id,
+            '%s%d/' % (self.get_api_url(), sysctl.id),
             format='json',
             data={
                 'sysctl_mib': 'kern.coredump',
@@ -82,7 +82,7 @@ class SysctlResourceTest(APITestCase):
             sysctl_value='1',
         )
         resp = self.api_client.delete(
-            '/api/v1.0/system/sysctl/%d/' % sysctl.id,
+            '%s%d/' % (self.get_api_url(), sysctl.id),
             format='json',
         )
         self.assertHttpAccepted(resp)

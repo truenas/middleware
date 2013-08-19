@@ -13,7 +13,7 @@ class VolumeResourceTest(APITestCase):
 
     def _create_zpool(self):
         resp = self.api_client.post(
-            '/api/v1.0/storage/volume/',
+            self.get_api_url(),
             format='json',
             data={
                 'volume_name': 'tankpool',
@@ -38,12 +38,12 @@ class VolumeResourceTest(APITestCase):
 
     def _delete_zpool(self):
         resp = self.api_client.delete(
-            '/api/v1.0/storage/volume/1/',
+            '%s1/' % self.get_api_url(),
         )
         self.assertHttpAccepted(resp)
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(
-            self.client.get('/api/v1.0/storage/volume/', format='json')
+            self.client.get(self.get_api_url(), format='json')
         )
 
