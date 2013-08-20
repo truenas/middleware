@@ -1486,6 +1486,10 @@ class PeriodicSnapForm(ModelForm):
             notifier().list_zfs_fsvols().items())
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 
+    def clean_task_byweekday(self):
+        bwd = self.data.getlist('task_byweekday')
+        return ','.join(bwd)
+
     def clean(self):
         cdata = self.cleaned_data
         if cdata['task_repeat_unit'] == 'weekly' and \

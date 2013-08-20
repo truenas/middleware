@@ -97,7 +97,7 @@ def isMatchingTime(task, snaptime):
 
     if repeat_type == 'weekly':
         cur_weekday = snaptime.weekday() + 1
-        if ('%d' % cur_weekday) in eval(task.task_byweekday):
+        if ('%d' % cur_weekday) in task.task_byweekday.split(','):
             return True
 
     return False

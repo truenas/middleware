@@ -538,6 +538,8 @@ class TaskResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(TaskResourceMixin, self).dehydrate(bundle)
+        if not self.is_webclient(bundle.request):
+            return bundle
         if bundle.obj.task_repeat_unit == "daily":
             repeat = _('everyday')
         elif bundle.obj.task_repeat_unit == "weekly":
