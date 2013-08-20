@@ -48,7 +48,7 @@ from dojango import forms
 from dojango.forms import CheckboxSelectMultiple
 from freenasUI import choices
 from freenasUI.common import humanize_number_si
-from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.forms import ModelForm, Form, mchoicefield
 from freenasUI.common.system import mount, umount
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect
@@ -1895,29 +1895,23 @@ class ScrubForm(ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        if 'instance' in kwargs:
-            ins = kwargs.get('instance')
-            if ins.scrub_month == '*':
-                ins.scrub_month = "1,2,3,4,5,6,7,8,9,a,b,c"
-            else:
-                ins.scrub_month = ins.scrub_month.replace("10", "a").replace(
-                    "11", "b").replace("12", "c")
-            if ins.scrub_dayweek == '*':
-                ins.scrub_dayweek = "1,2,3,4,5,6,7"
-        else:
-            self.base_fields['scrub_month'].initial = "1,2,3,4,5,6,7,8,9,a,b,c"
         super(ScrubForm, self).__init__(*args, **kwargs)
+        mchoicefield(self, 'scrub_month', [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+        ])
+        mchoicefield(self, 'scrub_dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
 
     def clean_scrub_month(self):
-        m = eval(self.cleaned_data.get("scrub_month"))
+        m = self.data.getlist("scrub_month")
         if len(m) == 12:
             return '*'
         m = ",".join(m)
-        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
         return m
 
     def clean_scrub_dayweek(self):
-        w = eval(self.cleaned_data.get("scrub_dayweek"))
+        w = self.data.getlist("scrub_dayweek")
         if len(w) == 7:
             return '*'
         w = ",".join(w)
