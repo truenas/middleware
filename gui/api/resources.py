@@ -82,15 +82,16 @@ class DiskResourceMixin(object):
         ).exclude(
             Q(disk_name__startswith='multipath') | Q(disk_name='')
         )
-        allowed_methods = ['get']
+        allowed_methods = ['get', 'put']
 
     def dehydrate(self, bundle):
         bundle = super(DiskResourceMixin, self).dehydrate(bundle)
-        bundle.data['_edit_url'] += '?deletable=false'
-        bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
-            'devname': bundle.obj.disk_name,
-        })
-        bundle.data['_editbulk_url'] = reverse('storage_disk_editbulk')
+        if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] += '?deletable=false'
+            bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
+                'devname': bundle.obj.disk_name,
+            })
+            bundle.data['_editbulk_url'] = reverse('storage_disk_editbulk')
         return bundle
 
 
