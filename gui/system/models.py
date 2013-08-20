@@ -404,12 +404,12 @@ class CronJob(Model):
             )
     cron_month = models.CharField(
             max_length=100,
-            default='1,2,3,4,5,6,7,8,9,a,b,c',
+            default='*',
             verbose_name=_("Month"),
             )
     cron_dayweek = models.CharField(
             max_length=100,
-            default="1,2,3,4,5,6,7",
+            default="*",
             verbose_name=_("Day of week"),
             )
     cron_stdout = models.BooleanField(

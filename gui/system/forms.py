@@ -89,6 +89,17 @@ def clean_path_locked(mp):
             )
 
 
+def mchoicefield(form, field, default):
+    if field in form.initial:
+        cm = form.initial[field]
+    else:
+        cm = form.fields[field].initial
+    if cm == '*':
+        form.initial[field] = default
+    elif ',' in cm:
+        form.initial[field] = cm.split(',')
+
+
 class FileWizard(SessionWizardView):
 
     file_storage = FileSystemStorage(location='/var/tmp/firmware')
@@ -799,15 +810,13 @@ class CronJobForm(ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        if 'instance' in kwargs:
-            ins = kwargs.get('instance')
-            if ins.cron_month == '*':
-                ins.cron_month = "1,2,3,4,5,6,7,8,9,a,b,c"
-            else:
-                ins.cron_month = ins.cron_month.replace("10", "a").replace("11", "b").replace("12", "c")
-            if ins.cron_dayweek == '*':
-                ins.cron_dayweek = "1,2,3,4,5,6,7"
         super(CronJobForm, self).__init__(*args, **kwargs)
+        mchoicefield(self, 'cron_month', [
+                1, 2, 3, 4, 5, 6, 7 ,8 ,9, 10, 11, 12
+        ])
+        mchoicefield(self, 'cron_dayweek', [
+                1, 2, 3, 4, 5, 6, 7
+        ])
 
     def clean_cron_user(self):
         user = self.cleaned_data.get("cron_user")
@@ -823,15 +832,16 @@ class CronJobForm(ModelForm):
         return user
 
     def clean_cron_month(self):
-        m = eval(self.cleaned_data.get("cron_month"))
+        m = self.data.getlist("cron_month")
         if len(m) == 12:
             return '*'
         m = ",".join(m)
-        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
         return m
 
     def clean_cron_dayweek(self):
-        w = eval(self.cleaned_data.get("cron_dayweek"))
+        w = self.data.getlist('cron_dayweek')
+        if w == '*':
+            return w
         if len(w) == 7:
             return '*'
         w = ",".join(w)
