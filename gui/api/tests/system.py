@@ -104,6 +104,83 @@ class CronJobResourceTest(APITestCase):
         self.assertHttpAccepted(resp)
 
 
+class NTPServerResourceTest(APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'ntp_address': '0.freebsd.pool.ntp.org',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'ntp_address': u'0.freebsd.pool.ntp.org',
+            u'ntp_burst': False,
+            u'ntp_iburst': True,
+            u'ntp_maxpoll': 10,
+            u'ntp_minpoll': 6,
+            u'ntp_prefer': False
+        })
+
+    def test_Retrieve(self):
+        obj = models.NTPServer.objects.create(
+            ntp_address='0.freebsd.pool.ntp.org',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'ntp_address': u'0.freebsd.pool.ntp.org',
+            u'ntp_burst': False,
+            u'ntp_iburst': True,
+            u'ntp_maxpoll': 10,
+            u'ntp_minpoll': 6,
+            u'ntp_prefer': False
+        }])
+
+    def test_Update(self):
+        obj = models.NTPServer.objects.create(
+            ntp_address='0.freebsd.pool.ntp.org',
+            ntp_prefer=False,
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'ntp_prefer': True,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['ntp_prefer'], True)
+
+    def test_Delete(self):
+        obj = models.NTPServer.objects.create(
+            ntp_address='0.freebsd.pool.ntp.org',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
+
+
 class RsyncResourceTest(APITestCase):
 
     def setUp(self):
