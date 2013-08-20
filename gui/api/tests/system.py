@@ -2,6 +2,107 @@ from .utils import APITestCase
 from freenasUI.system import models
 
 
+class CronJobResourceTest(APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'cron_user': 'root',
+                'cron_command': 'ls /',
+                'cron_minute': '*/20',
+                'cron_hour': '*',
+                'cron_daymonth': '*',
+                'cron_month': '*',
+                'cron_dayweek': '*',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'cron_command': u'ls /',
+            u'cron_daymonth': u'*',
+            u'cron_dayweek': u'*',
+            u'cron_description': u'',
+            u'cron_enabled': True,
+            u'cron_hour': u'*',
+            u'cron_minute': u'*/20',
+            u'cron_month': u'*',
+            u'cron_stderr': False,
+            u'cron_stdout': True,
+            u'cron_user': u'root',
+        })
+
+    def test_Retrieve(self):
+        sysctl = models.CronJob.objects.create(
+            cron_user='root',
+            cron_command='ls /',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': sysctl.id,
+            u'cron_command': u'ls /',
+            u'cron_daymonth': u'*',
+            u'cron_dayweek': u'*',
+            u'cron_description': u'',
+            u'cron_enabled': True,
+            u'cron_hour': u'*',
+            u'cron_minute': u'00',
+            u'cron_month': u'*',
+            u'cron_stderr': False,
+            u'cron_stdout': True,
+            u'cron_user': u'root',
+        }])
+
+    def test_Update(self):
+        obj = models.CronJob.objects.create(
+            cron_user='root',
+            cron_command='ls /',
+            cron_dayweek='*',
+            cron_stdout=True,
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'cron_dayweek': '1,2',
+                'cron_stdout': False,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['cron_dayweek'], '1,2')
+        self.assertEqual(data['cron_stdout'], False)
+
+    def test_Delete(self):
+        obj = models.CronJob.objects.create(
+            cron_user='root',
+            cron_command='ls /',
+            cron_dayweek='*',
+            cron_stdout=True,
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
+
+
 class SysctlResourceTest(APITestCase):
 
     def setUp(self):
