@@ -26,8 +26,10 @@
 #####################################################################
 import logging
 import re
+import urllib
 
 from django.db import transaction
+from django.http import QueryDict
 
 from tastypie.authentication import Authentication, MultiAuthentication
 from tastypie.authorization import Authorization
@@ -273,7 +275,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
         bundle.data = data
 
         form = self._meta.validation.form_class(
-            data,
+            QueryDict(urllib.urlencode(data)),
             instance=bundle.obj,
         )
         if not self.is_form_valid(bundle, form):
