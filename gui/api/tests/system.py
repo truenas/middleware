@@ -1,5 +1,5 @@
 from .utils import APITestCase
-from freenasUI.storage.models import MountPoint, Volume
+from freenasUI.storage.models import Disk, MountPoint, Volume
 from freenasUI.system import models
 
 
@@ -44,7 +44,7 @@ class CronJobResourceTest(APITestCase):
         })
 
     def test_Retrieve(self):
-        sysctl = models.CronJob.objects.create(
+        obj = models.CronJob.objects.create(
             cron_user='root',
             cron_command='ls /',
         )
@@ -55,7 +55,7 @@ class CronJobResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': sysctl.id,
+            u'id': obj.id,
             u'cron_command': u'ls /',
             u'cron_daymonth': u'*',
             u'cron_dayweek': u'*',
@@ -236,6 +236,105 @@ class RsyncResourceTest(APITestCase):
             rsync_path='/mnt/tank',
             rsync_user='root',
         )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
+
+
+class SMARTTestResourceTest(APITestCase):
+
+    def setUp(self):
+        super(SMARTTestResourceTest, self).setUp()
+        self._disk1 = Disk.objects.create(
+            disk_name='ada1',
+        )
+        self._disk2 = Disk.objects.create(
+            disk_name='ada2',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'smarttest_disks': [self._disk1.id, self._disk2.id],
+                'smarttest_type': 'L',
+                'smarttest_hour': '*',
+                'smarttest_daymonth': '*',
+                'smarttest_month': '*',
+                'smarttest_dayweek': '*',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'smarttest_daymonth': u'*',
+            u'smarttest_dayweek': u'*',
+            u'smarttest_desc': u'',
+            u'smarttest_disks': [1, 2],
+            u'smarttest_hour': u'*',
+            u'smarttest_month': u'*',
+            u'smarttest_type': u'L'
+        })
+
+    def test_Retrieve(self):
+        obj = models.SMARTTest.objects.create(
+            smarttest_type='L',
+        )
+        obj.smarttest_disks.add(self._disk1)
+        obj.smarttest_disks.add(self._disk2)
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'smarttest_daymonth': u'*',
+            u'smarttest_dayweek': u'*',
+            u'smarttest_desc': u'',
+            u'smarttest_disks': [1, 2],
+            u'smarttest_hour': u'*',
+            u'smarttest_month': u'*',
+            u'smarttest_type': u'L'
+        }])
+
+    def test_Update(self):
+        obj = models.SMARTTest.objects.create(
+            smarttest_type='L',
+        )
+        obj.smarttest_disks.add(self._disk1)
+        obj.smarttest_disks.add(self._disk2)
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'smarttest_type': 'S',
+                'smarttest_disks': [self._disk1.id, self._disk2.id],  #FIXME
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['smarttest_type'], 'S')
+
+    def test_Delete(self):
+        obj = models.SMARTTest.objects.create(
+            smarttest_type='L',
+        )
+        obj.smarttest_disks.add(self._disk1)
+        obj.smarttest_disks.add(self._disk2)
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',

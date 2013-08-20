@@ -671,6 +671,12 @@ class SMARTTestForm(ModelForm):
         super(SMARTTestForm, self).__init__(*args, **kwargs)
         self.fields.keyOrder.remove('smarttest_disks')
         self.fields.keyOrder.insert(0, 'smarttest_disks')
+        mchoicefield(self, 'smarttest_month', [
+            1, 2, 3, 4, 5, 6, 7, 8 ,9, 10, 11, 12
+        ])
+        mchoicefield(self, 'smarttest_dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
 
     def save(self):
         super(SMARTTestForm, self).save()
