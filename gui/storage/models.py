@@ -506,7 +506,7 @@ class Disk(Model):
         if self.id and self._original_state.get("disk_togglesmart", None) != \
                 self.__dict__.get("disk_togglesmart"):
             notifier().restart("smartd")
-        super(Disk, self).save(args, kwargs)
+        super(Disk, self).save(*args, **kwargs)
 
     def delete(self):
         from freenasUI.services.models import iSCSITargetExtent
