@@ -568,12 +568,12 @@ class Rsync(Model):
             )
     rsync_month = models.CharField(
             max_length=100,
-            default='1,2,3,4,5,6,7,8,9,a,b,c',
+            default='*',
             verbose_name=_("Month"),
             )
     rsync_dayweek = models.CharField(
             max_length=100,
-            default="1,2,3,4,5,6,7",
+            default="*",
             verbose_name=_("Day of week"),
             )
     rsync_user = UserField(
