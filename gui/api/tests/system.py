@@ -326,3 +326,80 @@ class SysctlResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpAccepted(resp)
+
+
+class TunableResourceTest(APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'tun_var': 'xhci_load',
+                'tun_value': 'YES',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'tun_comment': u'',
+            u'tun_enabled': True,
+            u'tun_value': u'YES',
+            u'tun_var': u'xhci_load'
+        })
+
+    def test_Retrieve(self):
+        obj = models.Tunable.objects.create(
+            tun_var='xhci_load',
+            tun_value='YES',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'tun_comment': u'',
+            u'tun_enabled': True,
+            u'tun_value': u'YES',
+            u'tun_var': u'xhci_load'
+        }])
+
+    def test_Update(self):
+        obj = models.Tunable.objects.create(
+            tun_var='xhci_load',
+            tun_value='YES',
+            tun_enabled=True
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'tun_enabled': False,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['tun_enabled'], False)
+
+    def test_Delete(self):
+        obj = models.Tunable.objects.create(
+            tun_var='xhci_load',
+            tun_value='YES',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
