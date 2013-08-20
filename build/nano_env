@@ -120,7 +120,7 @@ NANO_LABEL="FreeNAS"
 
 # Version of the software to use. This should be 8.2-BETA1, 9.0-PRERELEASE,
 # etc.
-VERSION="9.1.1-RC1"
+VERSION="9.1.1-RC2"
 
 # Set the tag to use for this release.
 #  for FreeBSD/src
