@@ -877,15 +877,13 @@ class RsyncForm(ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        if 'instance' in kwargs:
-            ins = kwargs.get('instance')
-            if ins.rsync_month == '*':
-                ins.rsync_month = "1,2,3,4,5,6,7,8,9,a,b,c"
-            else:
-                ins.rsync_month = ins.rsync_month.replace("10", "a").replace("11", "b").replace("12", "c")
-            if ins.rsync_dayweek == '*':
-                ins.rsync_dayweek = "1,2,3,4,5,6,7"
         super(RsyncForm, self).__init__(*args, **kwargs)
+        mchoicefield(self, 'rsync_month', [
+                1, 2, 3, 4, 5, 6, 7 ,8 ,9, 10, 11, 12
+        ])
+        mchoicefield(self, 'rsync_dayweek', [
+                1, 2, 3, 4, 5, 6, 7
+        ])
         self.fields['rsync_mode'].widget.attrs['onChange'] = (
             "rsyncModeToggle();"
         )
@@ -918,15 +916,14 @@ class RsyncForm(ModelForm):
         return val
 
     def clean_rsync_month(self):
-        m = eval(self.cleaned_data.get("rsync_month"))
+        m = self.data.getlist("rsync_month")
         if len(m) == 12:
             return '*'
         m = ",".join(m)
-        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
         return m
 
     def clean_rsync_dayweek(self):
-        w = eval(self.cleaned_data.get("rsync_dayweek"))
+        w = self.data.getlist("rsync_dayweek")
         if len(w) == 7:
             return '*'
         w = ",".join(w)
