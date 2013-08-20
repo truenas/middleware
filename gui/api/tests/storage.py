@@ -2,6 +2,69 @@ from .utils import APITestCase
 from freenasUI.storage import models
 
 
+class DiskResourceTest(APITestCase):
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.Disk.objects.create(
+            disk_name='ada1',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'disk_acousticlevel': u'Disabled',
+            u'disk_advpowermgmt': u'Disabled',
+            u'disk_description': u'',
+            u'disk_enabled': True,
+            u'disk_hddstandby': u'Always On',
+            u'disk_identifier': u'',
+            u'disk_multipath_member': u'',
+            u'disk_multipath_name': u'',
+            u'disk_name': u'ada1',
+            u'disk_serial': u'',
+            u'disk_smartoptions': u'',
+            u'disk_togglesmart': True,
+            u'disk_transfermode': u'Auto',
+            u'id': obj.id,
+        }])
+
+    def test_Update(self):
+        obj = models.Disk.objects.create(
+            disk_name='ada1',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'disk_description': 'test',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['disk_description'], 'test')
+
+    def test_Delete(self):
+        obj = models.Disk.objects.create(
+            disk_name='ada1',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class VolumeResourceTest(APITestCase):
 
     def setUp(self):
