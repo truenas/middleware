@@ -521,7 +521,8 @@ class ScrubResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(ScrubResourceMixin, self).dehydrate(bundle)
         bundle.data['scrub_volume'] = bundle.obj.scrub_volume.vol_name
-        _common_human_fields(bundle)
+        if self.is_webclient(bundle.request):
+            _common_human_fields(bundle)
         return bundle
 
 
