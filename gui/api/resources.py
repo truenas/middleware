@@ -199,9 +199,7 @@ class VolumeResourceMixin(object):
         for i, item in enumerate(layout):
             disks = item.get("disks")
             vtype = item.get("vdevtype")
-            bundle.data['layout-%d-disks' % i] = '[%s]' % (
-                ', '.join(['"%s"' % d for d in disks])
-            )
+            bundle.data['layout-%d-disks' % i] = disks
             bundle.data['layout-%d-vdevtype' % i] = vtype
         bundle.data['layout-INITIAL_FORMS'] = 0
         bundle.data['layout-TOTAL_FORMS'] = i + 1

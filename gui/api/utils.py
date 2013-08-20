@@ -275,7 +275,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
         bundle.data = data
 
         form = self._meta.validation.form_class(
-            QueryDict(urllib.urlencode(data)),
+            QueryDict(urllib.urlencode(data, doseq=True)),
             instance=bundle.obj,
         )
         if not self.is_form_valid(bundle, form):
