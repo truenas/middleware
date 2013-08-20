@@ -28,6 +28,20 @@ from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
 
 
+def mchoicefield(form, field, default):
+    """
+    Utility method to convert comma delimited field
+    """
+    if field in form.initial:
+        cm = form.initial[field]
+    else:
+        cm = form.fields[field].initial
+    if cm == '*':
+        form.initial[field] = default
+    elif ',' in cm:
+        form.initial[field] = cm.split(',')
+
+
 class AdvMixin(object):
 
     def __init__(self, *args, **kwargs):

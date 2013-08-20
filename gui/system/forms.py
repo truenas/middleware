@@ -45,7 +45,7 @@ from django.utils import simplejson
 
 from dojango import forms
 from freenasUI import choices
-from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.forms import ModelForm, Form, mchoicefield
 from freenasUI.freeadmin.forms import CronMultiple
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -87,17 +87,6 @@ def clean_path_locked(mp):
                     obj.mp_volume.vol_name,
                 )
             )
-
-
-def mchoicefield(form, field, default):
-    if field in form.initial:
-        cm = form.initial[field]
-    else:
-        cm = form.fields[field].initial
-    if cm == '*':
-        form.initial[field] = default
-    elif ',' in cm:
-        form.initial[field] = cm.split(',')
 
 
 class FileWizard(SessionWizardView):
