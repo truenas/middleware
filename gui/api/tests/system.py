@@ -104,6 +104,86 @@ class CronJobResourceTest(APITestCase):
         self.assertHttpAccepted(resp)
 
 
+class InitShutdownResourceTest(APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'ini_type': 'command',
+                'ini_command': 'echo "init" > /tmp/init',
+                'ini_when': 'postinit',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'ini_command': u'echo "init" > /tmp/init',
+            u'ini_script': None,
+            u'ini_type': u'command',
+            u'ini_when': u'postinit'
+        })
+
+    def test_Retrieve(self):
+        obj = models.InitShutdown.objects.create(
+            ini_type='command',
+            ini_command='echo "init" > /tmp/init',
+            ini_when='postinit',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'ini_command': u'echo "init" > /tmp/init',
+            u'ini_script': None,
+            u'ini_type': u'command',
+            u'ini_when': u'postinit'
+        }])
+
+    def test_Update(self):
+        obj = models.InitShutdown.objects.create(
+            ini_type='command',
+            ini_command='echo "init" > /tmp/init',
+            ini_when='postinit',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'ini_when': 'preinit',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['ini_when'], 'preinit')
+
+    def test_Delete(self):
+        obj = models.InitShutdown.objects.create(
+            ini_type='command',
+            ini_command='echo "init" > /tmp/init',
+            ini_when='postinit',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
+
+
 class NTPServerResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
