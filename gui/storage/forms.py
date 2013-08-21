@@ -1708,22 +1708,22 @@ class UFSDiskReplacementForm(DiskReplacementForm):
 
 
 class ReplicationForm(ModelForm):
-    remote_hostname = forms.CharField(label=_("Remote hostname"))
-    remote_port = forms.IntegerField(
+    repl_remote_hostname = forms.CharField(label=_("Remote hostname"))
+    repl_remote_port = forms.IntegerField(
         label=_("Remote port"),
         initial=22,
         required=False,
     )
-    remote_dedicateduser_enabled = forms.BooleanField(
+    repl_remote_dedicateduser_enabled = forms.BooleanField(
         label=_("Dedicated User Enabled"),
         help_text=_("If disabled then root will be used for replication."),
         required=False,
     )
-    remote_dedicateduser = UserField(
+    repl_remote_dedicateduser = UserField(
         label=_("Dedicated User"),
         required=False,
     )
-    remote_fast_cipher = forms.BooleanField(
+    repl_remote_fast_cipher = forms.BooleanField(
         label=_("Enable High Speed Ciphers"),
         initial=False,
         required=False,
@@ -1733,7 +1733,7 @@ class ReplicationForm(ModelForm):
             " algorithms than the defaults, which makes it less desirable on "
             "untrusted networks."),
     )
-    remote_hostkey = forms.CharField(
+    repl_remote_hostkey = forms.CharField(
         label=_("Remote hostkey"),
         widget=forms.Textarea(),
     )
@@ -1778,41 +1778,45 @@ class ReplicationForm(ModelForm):
         ]))
         self.fields['repl_filesystem'].choices = fs
 
-        self.fields['remote_dedicateduser_enabled'].widget.attrs['onClick'] = (
-            'toggleGeneric("id_remote_dedicateduser_enabled", '
-            '["id_remote_dedicateduser"], true);')
+        self.fields['repl_remote_dedicateduser_enabled'].widget.attrs[
+            'onClick'
+        ] = (
+            'toggleGeneric("id_repl_remote_dedicateduser_enabled", '
+            '["id_repl_remote_dedicateduser"], true);')
 
         if repl and repl.id:
-            self.fields['remote_hostname'].initial = (
+            self.fields['repl_remote_hostname'].initial = (
                 repl.repl_remote.ssh_remote_hostname)
-            self.fields['remote_port'].initial = (
+            self.fields['repl_remote_hostname'].required = False
+            self.fields['repl_remote_port'].initial = (
                 repl.repl_remote.ssh_remote_port)
-            self.fields['remote_dedicateduser_enabled'].initial = (
+            self.fields['repl_remote_dedicateduser_enabled'].initial = (
                 repl.repl_remote.ssh_remote_dedicateduser_enabled)
-            self.fields['remote_dedicateduser'].initial = (
+            self.fields['repl_remote_dedicateduser'].initial = (
                 repl.repl_remote.ssh_remote_dedicateduser)
-            self.fields['remote_fast_cipher'].initial = (
+            self.fields['repl_remote_fast_cipher'].initial = (
                 repl.repl_remote.ssh_fast_cipher)
-            self.fields['remote_hostkey'].initial = (
+            self.fields['repl_remote_hostkey'].initial = (
                 repl.repl_remote.ssh_remote_hostkey)
+            self.fields['repl_remote_hostkey'].required = False
             if not repl.repl_remote.ssh_remote_dedicateduser_enabled:
-                self.fields['remote_dedicateduser'].widget.attrs[
+                self.fields['repl_remote_dedicateduser'].widget.attrs[
                     'disabled'] = 'disabled'
 
         else:
-            if not self.data.get("remote_dedicateduser_enabled", False):
-                self.fields['remote_dedicateduser'].widget.attrs[
+            if not self.data.get("repl_remote_dedicateduser_enabled", False):
+                self.fields['repl_remote_dedicateduser'].widget.attrs[
                     'disabled'] = 'disabled'
 
-    def clean_remote_port(self):
-        port = self.cleaned_data.get('remote_port')
+    def clean_repl_remote_port(self):
+        port = self.cleaned_data.get('repl_remote_port')
         if not port:
             return 22
         return port
 
-    def clean_remote_dedicateduser(self):
-        en = self.cleaned_data.get("remote_dedicateduser_enabled")
-        user = self.cleaned_data.get("remote_dedicateduser")
+    def clean_repl_remote_dedicateduser(self):
+        en = self.cleaned_data.get("repl_remote_dedicateduser_enabled")
+        user = self.cleaned_data.get("repl_remote_dedicateduser")
         if en and user is None:
             raise forms.ValidationError("You must select a valid user")
         return user
@@ -1822,14 +1826,14 @@ class ReplicationForm(ModelForm):
             r = models.ReplRemote()
         else:
             r = self.instance.repl_remote
-        r.ssh_remote_hostname = self.cleaned_data.get("remote_hostname")
-        r.ssh_remote_hostkey = self.cleaned_data.get("remote_hostkey")
+        r.ssh_remote_hostname = self.cleaned_data.get("repl_remote_hostname")
+        r.ssh_remote_hostkey = self.cleaned_data.get("repl_remote_hostkey")
         r.ssh_remote_dedicateduser_enabled = self.cleaned_data.get(
-            "remote_dedicateduser_enabled")
+            "repl_remote_dedicateduser_enabled")
         r.ssh_remote_dedicateduser = self.cleaned_data.get(
-            "remote_dedicateduser")
-        r.ssh_remote_port = self.cleaned_data.get("remote_port")
-        r.ssh_fast_cipher = self.cleaned_data.get("remote_fast_cipher")
+            "repl_remote_dedicateduser")
+        r.ssh_remote_port = self.cleaned_data.get("repl_remote_port")
+        r.ssh_fast_cipher = self.cleaned_data.get("repl_remote_fast_cipher")
         r.save()
         notifier().reload("ssh")
         self.instance.repl_remote = r
