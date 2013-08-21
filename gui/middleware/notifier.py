@@ -400,10 +400,11 @@ class notifier:
         self.__system("/usr/sbin/service ix-sysctl reload")
 
     def _start_network(self):
-        c = self.__open_db()
-        c.execute("SELECT COUNT(n.id) FROM network_interfaces n LEFT JOIN network_alias a ON a.alias_interface_id=n.id WHERE int_ipv6auto = 1 OR int_ipv6address != '' OR alias_v6address != ''")
-        ipv6_interfaces = c.fetchone()[0]
-        if ipv6_interfaces > 0:
+        from freenasUI.network.models import Alias, Interfaces
+        qs = Interfaces.objects.filter(int_ipv6auto=True).exists()
+        qs2 = Interfaces.objects.exclude(int_ipv6address='').exists()
+        qs3 = Alias.objects.exclude(alias_v6address='').exists()
+        if qs or qs2 or qs3:
             try:
                 auto_linklocal = self.sysctl("net.inet6.ip6.auto_linklocal")
             except AssertionError:
