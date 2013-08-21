@@ -269,8 +269,11 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 self.get_object_list(bundle.request), bundle
             )
 
+        # Remove all "private" attributes
         data = dict(bundle.obj.__dict__)
-        data.pop('_state', None)
+        for key, val in data.items():
+            if key.startswith('_'):
+                del data[key]
         data.update(bundle.data)
         bundle.data = data
 
