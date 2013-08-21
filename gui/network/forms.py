@@ -82,6 +82,27 @@ class InterfacesForm(ModelForm):
             self.fields['int_v6netmaskbit'].widget.attrs['disabled'] = (
                 'disabled')
 
+        if self.instance.id:
+            self.fields['int_interface'] = \
+                forms.CharField(
+                    label=self.fields['int_interface'].label,
+                    initial=self.instance.int_interface,
+                    widget=forms.TextInput(
+                        attrs={
+                            'readonly': True,
+                            'class': (
+                                'dijitDisabled dijitTextBoxDisabled'
+                                ' dijitValidationTextBoxDisabled'
+                            ),
+                        },
+                    )
+                )
+
+    def clean_int_interface(self):
+        if self.instance.id:
+            return self.instance.int_interface
+        return self.cleaned_data.get('int_interface')
+
     def clean_int_ipv4address(self):
         ip = self.cleaned_data.get("int_ipv4address")
         if ip:
@@ -424,38 +445,6 @@ class LAGGInterfaceMemberForm(ModelForm):
             self.fields['lagg_physnic'].choices = list(
                 choices.NICChoices(nolagg=True, novlan=True)
             )
-
-
-class InterfaceEditForm(InterfacesForm):
-
-    def __init__(self, *args, **kwargs):
-        super(InterfaceEditForm, self).__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance and instance.id:
-            self.fields['int_interface'] = \
-                forms.CharField(
-                    label=self.fields['int_interface'].label,
-                    initial=instance.int_interface,
-                    widget=forms.TextInput(
-                        attrs={
-                            'readonly': True,
-                            'class': (
-                                'dijitDisabled dijitTextBoxDisabled'
-                                ' dijitValidationTextBoxDisabled'
-                            ),
-                        },
-                    )
-                )
-
-    def clean(self):
-        super(InterfaceEditForm, self).clean()
-        if 'int_interface' in self._errors:
-            del self._errors['int_interface']
-        self.cleaned_data['int_interface'] = self.instance.int_interface
-        return self.cleaned_data
-
-    def clean_int_interface(self):
-        return self.instance.int_interface
 
 
 class StaticRouteForm(ModelForm):
