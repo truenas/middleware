@@ -1709,9 +1709,11 @@ class UFSDiskReplacementForm(DiskReplacementForm):
 
 class ReplicationForm(ModelForm):
     remote_hostname = forms.CharField(label=_("Remote hostname"))
-    remote_port = forms.CharField(
+    remote_port = forms.IntegerField(
         label=_("Remote port"),
-        initial=22)
+        initial=22,
+        required=False,
+    )
     remote_dedicateduser_enabled = forms.BooleanField(
         label=_("Dedicated User Enabled"),
         help_text=_("If disabled then root will be used for replication."),
@@ -1801,6 +1803,12 @@ class ReplicationForm(ModelForm):
             if not self.data.get("remote_dedicateduser_enabled", False):
                 self.fields['remote_dedicateduser'].widget.attrs[
                     'disabled'] = 'disabled'
+
+    def clean_remote_port(self):
+        port = self.cleaned_data.get('remote_port')
+        if not port:
+            return 22
+        return port
 
     def clean_remote_dedicateduser(self):
         en = self.cleaned_data.get("remote_dedicateduser_enabled")
