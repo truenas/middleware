@@ -109,3 +109,77 @@ class bsdUsersResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpAccepted(resp)
+
+
+class bsdGroupsResourceTest(APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'bsdgrp_gid': 1100,
+                'bsdgrp_group': 'testgroup',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            'id': 1,
+            u'bsdgrp_builtin': False,
+            u'bsdgrp_gid': 1100,
+            u'bsdgrp_group': u'testgroup',
+        })
+
+    def test_Retrieve(self):
+        obj = models.bsdGroups.objects.create(
+            bsdgrp_gid=1100,
+            bsdgrp_group='testgroup',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'bsdgrp_builtin': False,
+            u'bsdgrp_gid': 1100,
+            u'bsdgrp_group': u'testgroup',
+        }])
+
+    def test_Update(self):
+        obj = models.bsdGroups.objects.create(
+            bsdgrp_gid=1100,
+            bsdgrp_group='testgroup',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'bsdgrp_group': 'testgroup2',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['bsdgrp_group'], 'testgroup2')
+
+    def test_Delete(self):
+        obj = models.bsdGroups.objects.create(
+            bsdgrp_gid=1100,
+            bsdgrp_group='testgroup',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
