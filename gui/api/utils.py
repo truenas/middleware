@@ -274,8 +274,17 @@ class DojoModelResource(ResourceMixin, ModelResource):
         data.update(bundle.data)
         bundle.data = data
 
+        """
+        Get rid of None values, it means they were not
+        passed to the API and will faill serialization
+        """
+        querydict = data.copy()
+        for key, val in querydict.items():
+            if val is None:
+                del querydict[key]
+        querydict = QueryDict(urllib.urlencode(querydict, doseq=True))
         form = self._meta.validation.form_class(
-            QueryDict(urllib.urlencode(data, doseq=True)),
+            querydict,
             instance=bundle.obj,
         )
         if not self.is_form_valid(bundle, form):
