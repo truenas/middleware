@@ -529,9 +529,26 @@ class ReplicationResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(ReplicationResourceMixin, self).dehydrate(bundle)
-        bundle.data['ssh_remote_host'] = (
+        bundle.data['repl_remote_hostname'] = (
             bundle.obj.repl_remote.ssh_remote_hostname
         )
+        bundle.data['repl_remote_hostkey'] = (
+            bundle.obj.repl_remote.ssh_remote_hostkey
+        )
+        bundle.data['repl_remote_port'] = (
+            bundle.obj.repl_remote.ssh_remote_port
+        )
+        bundle.data['repl_remote_dedicateduser_enabled'] = (
+            bundle.obj.repl_remote.ssh_remote_dedicateduser_enabled
+        )
+        bundle.data['repl_remote_dedicateduser'] = (
+            bundle.obj.repl_remote.ssh_remote_dedicateduser
+        )
+        bundle.data['repl_remote_fast_cipher'] = (
+            bundle.obj.repl_remote.ssh_fast_cipher
+        )
+        if 'repl_remote_id' in bundle.data:
+            del bundle.data['repl_remote_id']
         return bundle
 
 
