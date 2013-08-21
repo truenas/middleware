@@ -273,7 +273,7 @@ class TaskResourceTest(APITestCase):
         self.assertEqual(data, [{
             u'id': obj.id,
             u'task_begin': u'09:00:00',
-            u'task_byweekday': u'1,2,3,4,5',
+            u'task_byweekday': u'1,2,3,4,5',  #FIXME: array
             u'task_enabled': True,
             u'task_end': u'18:00:00',
             u'task_filesystem': u'tank',
@@ -304,6 +304,137 @@ class TaskResourceTest(APITestCase):
     def test_Delete(self):
         obj = models.Task.objects.create(
             task_filesystem='tank',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
+
+
+class ReplicationResourceTest(APITestCase):
+
+    def setUp(self):
+        super(ReplicationResourceTest, self).setUp()
+        self._vol = models.Volume.objects.create(
+            vol_name='tank',
+            vol_fstype='ZFS',
+        )
+        models.MountPoint.objects.create(
+            mp_path='/mnt/tank',
+            mp_volume=self._vol,
+        )
+        self._task = models.Task.objects.create(
+            task_filesystem='tank',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'repl_filesystem': 'tank',
+                'repl_zfs': 'tank',
+                'repl_remote_hostname': 'testhost',
+                'repl_remote_hostkey': 'AAAA',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'repl_begin': u'00:00:00',
+            u'repl_enabled': True,
+            u'repl_end': u'23:59:00',
+            u'repl_filesystem': u'tank',
+            u'repl_lastsnapshot': u'',
+            u'repl_limit': 0,
+            u'repl_resetonce': False,
+            u'repl_userepl': False,
+            u'repl_zfs': u'tank',
+            u'repl_remote_dedicateduser': None,
+            u'repl_remote_dedicateduser_enabled': False,
+            u'repl_remote_fast_cipher': False,
+            u'repl_remote_hostkey': u'AAAA',
+            u'repl_remote_hostname': u'testhost',
+            u'repl_remote_port': 22,
+        })
+
+    def test_Retrieve(self):
+        remote = models.ReplRemote.objects.create(
+            ssh_remote_hostname='testhost',
+            ssh_remote_hostkey='AAAA',
+            ssh_remote_dedicateduser=None,
+        )
+        obj = models.Replication.objects.create(
+            repl_filesystem='tank',
+            repl_zfs='tank',
+            repl_remote=remote,
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'repl_begin': u'00:00:00',
+            u'repl_enabled': True,
+            u'repl_end': u'23:59:00',
+            u'repl_filesystem': u'tank',
+            u'repl_lastsnapshot': u'',
+            u'repl_limit': 0,
+            u'repl_resetonce': False,
+            u'repl_userepl': False,
+            u'repl_zfs': u'tank',
+            u'repl_remote_dedicateduser': None,
+            u'repl_remote_dedicateduser_enabled': False,
+            u'repl_remote_fast_cipher': False,
+            u'repl_remote_hostkey': u'AAAA',
+            u'repl_remote_hostname': u'testhost',
+            u'repl_remote_port': 22,
+        }])
+
+    def test_Update(self):
+        remote = models.ReplRemote.objects.create(
+            ssh_remote_hostname='testhost',
+            ssh_remote_hostkey='AAAA',
+        )
+        obj = models.Replication.objects.create(
+            repl_filesystem='tank',
+            repl_zfs='tank',
+            repl_userepl=False,
+            repl_remote=remote,
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'repl_userepl': True,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['repl_userepl'], True)
+
+    def test_Delete(self):
+        remote = models.ReplRemote.objects.create(
+            ssh_remote_hostname='testhost',
+            ssh_remote_hostkey='AAAA',
+        )
+        obj = models.Replication.objects.create(
+            repl_filesystem='tank',
+            repl_zfs='tank',
+            repl_remote=remote,
         )
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
