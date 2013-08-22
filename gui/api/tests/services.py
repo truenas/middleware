@@ -365,6 +365,62 @@ class NFSResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class RsyncdResourceTest(APITestCase):
+
+    def setUp(self):
+        super(RsyncdResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='rsync',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.Rsyncd.objects.create()
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'rsyncd_auxiliary': u'',
+            u'rsyncd_port': 873
+        }])
+
+    def test_Update(self):
+        obj = models.Rsyncd.objects.create()
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'rsyncd_port': 874,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['rsyncd_port'], 874)
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class SNMPResourceTest(APITestCase):
 
     def setUp(self):
