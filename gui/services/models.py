@@ -71,6 +71,7 @@ class CIFS(Model):
     cifs_srv_authmodel = models.CharField(
             max_length=10,
             choices=choices.CIFSAUTH_CHOICES,
+            default='user',
             verbose_name=_("Authentication Model"),
             help_text=_("Using Active Directory or LDAP authentication will "
                 "supersede this option"),
