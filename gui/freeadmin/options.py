@@ -150,6 +150,13 @@ class BaseFreeAdmin(object):
             mf = navtree._modelforms.get(self._model, None)
             if mf and not isinstance(mf, dict):
                 myArgs['validation'] = FormValidation(form_class=mf)
+
+            """
+            For models that represent a single object do not allow create
+            neither delete, only get and update.
+            """
+            if self._model._admin.deletable is False:
+                myArgs['allowed_methods'] = ['get', 'put']
             myMeta = type('Meta', (object, ), myArgs)
 
             mixins = [DojoModelResource]
