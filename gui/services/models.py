@@ -1198,23 +1198,6 @@ class FTP(Model):
         verbose_name = _("FTP")
         verbose_name_plural = _("FTP")
 
-    class FreeAdmin:
-        deletable = False
-        icon_model = "FTPIcon"
-        advanced_fields = (
-            'ftp_filemask',
-            'ftp_dirmask',
-            'ftp_fxp',
-            'ftp_ident',
-            'ftp_passiveportsmin',
-            'ftp_passiveportsmax',
-            'ftp_localuserbw',
-            'ftp_localuserdlbw',
-            'ftp_anonuserbw',
-            'ftp_anonuserdlbw',
-            'ftp_options',
-            )
-
 
 class TFTP(Model):
     tftp_directory = PathField(

@@ -9,6 +9,26 @@ from freenasUI.freeadmin.site import site
 from freenasUI.services import models
 
 
+class FTPFAdmin(BaseFreeAdmin):
+
+    deletable = False
+    icon_model = "FTPIcon"
+    advanced_fields = (
+        'ftp_filemask',
+        'ftp_dirmask',
+        'ftp_fxp',
+        'ftp_ident',
+        'ftp_passiveportsmin',
+        'ftp_passiveportsmax',
+        'ftp_localuserbw',
+        'ftp_localuserdlbw',
+        'ftp_anonuserbw',
+        'ftp_anonuserdlbw',
+        'ftp_options',
+    )
+
+
+
 class ISCSIPortalFAdmin(BaseFreeAdmin):
 
     menu_child_of = "services.ISCSI"
@@ -79,6 +99,7 @@ class ISCSITargetExtentFAdmin(BaseFreeAdmin):
     )
 
 
+site.register(models.FTP, FTPFAdmin)
 site.register(models.iSCSITargetPortal, ISCSIPortalFAdmin)
 site.register(models.iSCSITargetAuthCredential, ISCSIAuthCredentialFAdmin)
 site.register(models.iSCSITargetToExtent, ISCSITargetToExtentFAdmin)
