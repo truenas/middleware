@@ -1,5 +1,6 @@
 from .utils import APITestCase
 from freenasUI.services import models
+from freenasUI.storage.models import MountPoint, Volume
 
 
 class FTPResourceTest(APITestCase):
@@ -140,6 +141,76 @@ class NFSResourceTest(APITestCase):
 
     def test_Delete(self):
         obj = models.NFS.objects.create()
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
+class TFTPResourceTest(APITestCase):
+
+    def setUp(self):
+        super(TFTPResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='tftp',
+        )
+        v = Volume.objects.create(
+            vol_name='tank',
+            vol_fstype='ZFS',
+        )
+        MountPoint.objects.create(
+            mp_path='/mnt/tank',
+            mp_volume=v,
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.TFTP.objects.create()
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'tftp_directory': u'',
+            u'tftp_newfiles': False,
+            u'tftp_options': u'',
+            u'tftp_port': 69,
+            u'tftp_umask': u'022',
+            u'tftp_username': u'nobody'
+        }])
+
+    def test_Update(self):
+        obj = models.TFTP.objects.create()
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'tftp_directory': '/mnt/tank',
+                'tftp_newfiles': True,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['tftp_newfiles'], True)
+
+    def test_Delete(self):
+        obj = models.TFTP.objects.create()
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
