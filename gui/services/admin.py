@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    ISCSIPortalResourceMixin, ISCSITargetExtentResourceMixin,
+    FTPResourceMixin, ISCSIPortalResourceMixin, ISCSITargetExtentResourceMixin,
     ISCSITargetToExtentResourceMixin
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
@@ -11,6 +11,7 @@ from freenasUI.services import models
 
 class FTPFAdmin(BaseFreeAdmin):
 
+    resource_mixin = FTPResourceMixin
     deletable = False
     icon_model = "FTPIcon"
     advanced_fields = (
