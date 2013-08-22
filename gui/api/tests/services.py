@@ -520,6 +520,66 @@ class RsyncModResourceTest(APITestCase):
         self.assertHttpAccepted(resp)
 
 
+class SMARTResourceTest(APITestCase):
+
+    def setUp(self):
+        super(SMARTResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='smartd',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.SMART.objects.create()
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'smart_critical': 0,
+            u'smart_difference': 0,
+            u'smart_email': u'',
+            u'smart_informational': 0,
+            u'smart_interval': 30,
+            u'smart_powermode': u'never'
+        }])
+
+    def test_Update(self):
+        obj = models.SMART.objects.create()
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'smart_interval': 40,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['smart_interval'], 40)
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class SNMPResourceTest(APITestCase):
 
     def setUp(self):
