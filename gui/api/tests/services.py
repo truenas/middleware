@@ -159,6 +159,69 @@ class CIFSResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class DynamicDNSResourceTest(APITestCase):
+
+    def setUp(self):
+        super(DynamicDNSResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='dynamicdns',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.DynamicDNS.objects.create()
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'ddns_domain': u'',
+            u'ddns_fupdateperiod': u'',
+            u'ddns_options': u'',
+            u'ddns_password': u'',
+            u'ddns_provider': u'dyndns@dyndns.org',
+            u'ddns_updateperiod': u'',
+            u'ddns_username': u'',
+        }])
+
+    def test_Update(self):
+        obj = models.DynamicDNS.objects.create()
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'ddns_username': 'testuser',
+                'ddns_password': 'mypass',
+                'ddns_password2': 'mypass',  #FIXME: only 1 password
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['ddns_username'], 'testuser')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class FTPResourceTest(APITestCase):
 
     def setUp(self):
