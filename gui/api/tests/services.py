@@ -4,8 +4,6 @@ from freenasUI.services import models
 
 class FTPResourceTest(APITestCase):
 
-    maxDiff = None
-
     def setUp(self):
         super(FTPResourceTest, self).setUp()
         models.services.objects.create(
@@ -81,6 +79,67 @@ class FTPResourceTest(APITestCase):
 
     def test_Delete(self):
         obj = models.FTP.objects.create()
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
+class NFSResourceTest(APITestCase):
+
+    def setUp(self):
+        super(NFSResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='nfs',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.NFS.objects.create()
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'nfs_srv_allow_nonroot': False,
+            u'nfs_srv_bindip': u'',
+            u'nfs_srv_mountd_port': None,
+            u'nfs_srv_rpclockd_port': None,
+            u'nfs_srv_rpcstatd_port': None,
+            u'nfs_srv_servers': 4
+        }])
+
+    def test_Update(self):
+        obj = models.NFS.objects.create()
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'nfs_srv_servers': 10,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['nfs_srv_servers'], 10)
+
+    def test_Delete(self):
+        obj = models.NFS.objects.create()
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
