@@ -3,6 +3,72 @@ from freenasUI.services import models
 from freenasUI.storage.models import MountPoint, Volume
 
 
+class AFPResourceTest(APITestCase):
+
+    def setUp(self):
+        super(AFPResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='afp',
+        )
+        v = Volume.objects.create(
+            vol_name='tank',
+            vol_fstype='ZFS',
+        )
+        MountPoint.objects.create(
+            mp_path='/mnt/tank',
+            mp_volume=v,
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.AFP.objects.create()
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'afp_srv_connections_limit': 50,
+            u'afp_srv_guest': False,
+            u'afp_srv_guest_user': u'nobody',
+            u'afp_srv_name': u''
+        }])
+
+    def test_Update(self):
+        obj = models.AFP.objects.create()
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'afp_srv_name': 'freenas',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['afp_srv_name'], 'freenas')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class CIFSResourceTest(APITestCase):
 
     def setUp(self):
@@ -87,7 +153,7 @@ class CIFSResourceTest(APITestCase):
 
     def test_Delete(self):
         resp = self.api_client.delete(
-            '%s%d/' % (self.get_api_url(), obj.id),
+            '%s%d/' % (self.get_api_url(), 1),
             format='json',
         )
         self.assertHttpMethodNotAllowed(resp)
@@ -170,7 +236,7 @@ class FTPResourceTest(APITestCase):
 
     def test_Delete(self):
         resp = self.api_client.delete(
-            '%s%d/' % (self.get_api_url(), obj.id),
+            '%s%d/' % (self.get_api_url(), 1),
             format='json',
         )
         self.assertHttpMethodNotAllowed(resp)
@@ -230,7 +296,7 @@ class NFSResourceTest(APITestCase):
 
     def test_Delete(self):
         resp = self.api_client.delete(
-            '%s%d/' % (self.get_api_url(), obj.id),
+            '%s%d/' % (self.get_api_url(), 1),
             format='json',
         )
         self.assertHttpMethodNotAllowed(resp)
@@ -299,7 +365,7 @@ class TFTPResourceTest(APITestCase):
 
     def test_Delete(self):
         resp = self.api_client.delete(
-            '%s%d/' % (self.get_api_url(), obj.id),
+            '%s%d/' % (self.get_api_url(), 1),
             format='json',
         )
         self.assertHttpMethodNotAllowed(resp)
