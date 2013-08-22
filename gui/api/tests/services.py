@@ -426,6 +426,77 @@ class SNMPResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class SSHResourceTest(APITestCase):
+
+    def setUp(self):
+        super(SSHResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='ssh',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.SSH.objects.create()
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'ssh_compression': False,
+            u'ssh_host_dsa_key': u'',
+            u'ssh_host_dsa_key_pub': u'',
+            u'ssh_host_ecdsa_key': u'',
+            u'ssh_host_ecdsa_key_pub': u'',
+            u'ssh_host_key': u'',
+            u'ssh_host_key_pub': u'',
+            u'ssh_host_rsa_key': u'',
+            u'ssh_host_rsa_key_pub': u'',
+            u'ssh_options': u'',
+            u'ssh_passwordauth': False,
+            u'ssh_privatekey': u'',
+            u'ssh_rootlogin': False,
+            u'ssh_sftp_log_facility': u'',
+            u'ssh_sftp_log_level': u'',
+            u'ssh_tcpfwd': False,
+            u'ssh_tcpport': 22
+        }])
+
+    def test_Update(self):
+        obj = models.SSH.objects.create()
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'ssh_tcpfwd': True,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['ssh_tcpfwd'], True)
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class TFTPResourceTest(APITestCase):
 
     def setUp(self):
