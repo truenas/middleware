@@ -916,10 +916,11 @@ class SNMP(Model):
                 "'admin@email.address'.")
             )
     snmp_community = models.CharField(
-            max_length=120,
-            verbose_name=_("Community"),
-            help_text=_("In most cases, 'public' is used here.")
-            )
+        max_length=120,
+        default='public',
+        verbose_name=_("Community"),
+        help_text=_("In most cases, 'public' is used here.")
+    )
     #FIXME: Implement trap
     snmp_traps = models.BooleanField(
         verbose_name=_("Send SNMP Traps"),
