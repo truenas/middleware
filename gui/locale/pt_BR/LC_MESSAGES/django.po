@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2013-02-01 15:41+0200\n"
-"Last-Translator: wreuel <wreuel@gmail.com>\n"
+"PO-Revision-Date: 2013-08-21 06:29+0200\n"
+"Last-Translator: rafaelff1 <rafael.f.f1@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -931,9 +931,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "Placa de Rede no LAGG"
 
 #: network/forms.py:286
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "Placa de Rede - NIC"
+msgstr "Placa de Rede LAGG"
 
 #: network/forms.py:360
 #, python-format
@@ -1198,18 +1197,16 @@ msgid "The full jail path cannot exceed 76 characters"
 msgstr "O tamanho não pode exceder 76 caracteres"
 
 #: plugins/forms.py:200
-#, fuzzy
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr ""
-"O caminho dos plugins não podem ser o mesmo ou estar dentro do diretório do "
-"jail."
+"O caminho da cadeira de plugins jail não pode ser um subconjunto do caminho "
+"de arquivos dos plugins."
 
 #: plugins/forms.py:205 services/forms.py:148
-#, fuzzy
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr ""
-"O caminho dos plugins não podem ser o mesmo ou estar dentro do diretório do "
-"jail."
+"O caminho doo arquivo de plugins não pode ser um subconjunto do caminho de "
+"plugins jail"
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
