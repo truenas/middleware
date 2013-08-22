@@ -365,6 +365,67 @@ class NFSResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class SNMPResourceTest(APITestCase):
+
+    def setUp(self):
+        super(SNMPResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='snmp',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.SNMP.objects.create()
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'snmp_community': u'public',
+            u'snmp_contact': u'',
+            u'snmp_location': u'',
+            u'snmp_options': u'',
+            u'snmp_traps': False
+        }])
+
+    def test_Update(self):
+        obj = models.SNMP.objects.create()
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'snmp_contact': 'snmp@localhost.localdomain',
+                'snmp_location': 'My Room',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['snmp_contact'], 'snmp@localhost.localdomain')
+        self.assertEqual(data['snmp_location'], 'My Room')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class TFTPResourceTest(APITestCase):
 
     def setUp(self):
