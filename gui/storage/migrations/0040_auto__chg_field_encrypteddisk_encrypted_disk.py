@@ -67,7 +67,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'ReplRemote'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ssh_fast_cipher': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'ssh_remote_dedicateduser': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'ssh_remote_dedicateduser': ('freenasUI.freeadmin.models.fields.UserField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
             'ssh_remote_dedicateduser_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ssh_remote_hostkey': ('django.db.models.fields.CharField', [], {'max_length': '2048'}),
             'ssh_remote_hostname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),

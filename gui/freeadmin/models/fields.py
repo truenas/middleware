@@ -30,16 +30,7 @@ from django.db import models
 
 from south.modelsinspector import add_introspection_rules
 
-add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.UserField"])
-add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.GroupField"])
-add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.PathField"])
-add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.MACField"])
-add_introspection_rules(
-    [], ["^(freenasUI\.)?freeadmin\.models\.Network4Field"]
-)
-add_introspection_rules(
-    [], ["^(freenasUI\.)?freeadmin\.models\.Network6Field"]
-)
+add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.fields\..*"])
 
 
 class UserField(models.CharField):

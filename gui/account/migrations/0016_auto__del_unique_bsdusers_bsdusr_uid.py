@@ -37,7 +37,7 @@ class Migration(SchemaMigration):
             'bsdusr_email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
             'bsdusr_full_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'bsdusr_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['account.bsdGroups']"}),
-            'bsdusr_home': ('freenasUI.freeadmin.models.PathField', [], {'default': "'/nonexistent'", 'max_length': '255'}),
+            'bsdusr_home': ('freenasUI.freeadmin.models.fields.PathField', [], {'default': "'/nonexistent'", 'max_length': '255'}),
             'bsdusr_locked': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'bsdusr_password_disabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'bsdusr_shell': ('django.db.models.fields.CharField', [], {'default': "'/bin/csh'", 'max_length': '120'}),

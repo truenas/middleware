@@ -105,7 +105,7 @@ class Migration(SchemaMigration):
             'cron_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,a,b,c'", 'max_length': '100'}),
             'cron_stderr': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cron_stdout': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'cron_user': ('freenasUI.freeadmin.models.UserField', [], {'max_length': '60'}),
+            'cron_user': ('freenasUI.freeadmin.models.fields.UserField', [], {'max_length': '60'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'system.email': {
@@ -123,7 +123,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'InitShutdown'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ini_command': ('django.db.models.fields.CharField', [], {'max_length': '300', 'blank': 'True'}),
-            'ini_script': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'ini_script': ('freenasUI.freeadmin.models.fields.PathField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'ini_type': ('django.db.models.fields.CharField', [], {'default': "'command'", 'max_length': '15'}),
             'ini_when': ('django.db.models.fields.CharField', [], {'max_length': '15'})
         },
@@ -168,7 +168,7 @@ class Migration(SchemaMigration):
             'rsync_minute': ('django.db.models.fields.CharField', [], {'default': "'00'", 'max_length': '100'}),
             'rsync_mode': ('django.db.models.fields.CharField', [], {'default': "'module'", 'max_length': '20'}),
             'rsync_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,a,b,c'", 'max_length': '100'}),
-            'rsync_path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
+            'rsync_path': ('freenasUI.freeadmin.models.fields.PathField', [], {'max_length': '255'}),
             'rsync_preserveattr': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'rsync_preserveperm': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'rsync_quiet': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -178,7 +178,7 @@ class Migration(SchemaMigration):
             'rsync_remotepath': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'rsync_remoteport': ('django.db.models.fields.SmallIntegerField', [], {'default': '22'}),
             'rsync_times': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_user': ('freenasUI.freeadmin.models.UserField', [], {'max_length': '60'})
+            'rsync_user': ('freenasUI.freeadmin.models.fields.UserField', [], {'max_length': '60'})
         },
         u'system.settings': {
             'Meta': {'object_name': 'Settings'},
