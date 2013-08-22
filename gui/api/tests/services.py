@@ -86,7 +86,6 @@ class CIFSResourceTest(APITestCase):
         self.assertEqual(data['cifs_srv_workgroup'], 'MYGROUP')
 
     def test_Delete(self):
-        obj = models.TFTP.objects.create()
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
@@ -170,7 +169,6 @@ class FTPResourceTest(APITestCase):
         self.assertEqual(data['ftp_dirmask'], '067')
 
     def test_Delete(self):
-        obj = models.FTP.objects.create()
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
@@ -231,7 +229,6 @@ class NFSResourceTest(APITestCase):
         self.assertEqual(data['nfs_srv_servers'], 10)
 
     def test_Delete(self):
-        obj = models.NFS.objects.create()
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
@@ -301,7 +298,6 @@ class TFTPResourceTest(APITestCase):
         self.assertEqual(data['tftp_newfiles'], True)
 
     def test_Delete(self):
-        obj = models.TFTP.objects.create()
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
