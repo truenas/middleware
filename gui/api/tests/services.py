@@ -3,6 +3,97 @@ from freenasUI.services import models
 from freenasUI.storage.models import MountPoint, Volume
 
 
+class CIFSResourceTest(APITestCase):
+
+    def setUp(self):
+        super(CIFSResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='cifs',
+        )
+        v = Volume.objects.create(
+            vol_name='tank',
+            vol_fstype='ZFS',
+        )
+        MountPoint.objects.create(
+            mp_path='/mnt/tank',
+            mp_volume=v,
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        obj = models.CIFS.objects.create()
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'cifs_srv_aio_enable': False,
+            u'cifs_srv_aio_rs': 4096,
+            u'cifs_srv_aio_ws': 4096,
+            u'cifs_srv_authmodel': u'user',
+            u'cifs_srv_description': u'',
+            u'cifs_srv_dirmask': u'',
+            u'cifs_srv_dosattr': False,
+            u'cifs_srv_doscharset': u'CP437',
+            u'cifs_srv_easupport': False,
+            u'cifs_srv_filemask': u'',
+            u'cifs_srv_guest': u'nobody',
+            u'cifs_srv_homedir': None,
+            u'cifs_srv_homedir_aux': u'',
+            u'cifs_srv_homedir_browseable_enable': False,
+            u'cifs_srv_homedir_enable': False,
+            u'cifs_srv_hostlookup': True,
+            u'cifs_srv_localmaster': False,
+            u'cifs_srv_loglevel': u'1',
+            u'cifs_srv_netbiosname': u'',
+            u'cifs_srv_nullpw': False,
+            u'cifs_srv_smb_options': u'',
+            u'cifs_srv_timeserver': False,
+            u'cifs_srv_unixcharset': u'UTF-8',
+            u'cifs_srv_unixext': True,
+            u'cifs_srv_workgroup': u'',
+            u'cifs_srv_zeroconf': True
+        }])
+
+    def test_Update(self):
+        obj = models.CIFS.objects.create()
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'cifs_srv_netbiosname': 'MYTEST',
+                'cifs_srv_workgroup': 'MYGROUP',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['cifs_srv_netbiosname'], 'MYTEST')
+        self.assertEqual(data['cifs_srv_workgroup'], 'MYGROUP')
+
+    def test_Delete(self):
+        obj = models.TFTP.objects.create()
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class FTPResourceTest(APITestCase):
 
     def setUp(self):
