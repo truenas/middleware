@@ -1225,6 +1225,7 @@ class TFTP(Model):
     tftp_umask = models.CharField(
             max_length=120,
             verbose_name=_("umask"),
+            default='022',
             help_text=_("Set the umask for newly created files to the "
                 "specified value. The default is 022 (everyone can read, "
                 "nobody can write).")
