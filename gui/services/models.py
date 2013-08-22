@@ -1211,6 +1211,7 @@ class TFTP(Model):
     tftp_port = models.PositiveIntegerField(
             verbose_name=_("Port"),
             validators=[MinValueValidator(1), MaxValueValidator(65535)],
+            default=69,
             help_text=_("The port to listen to. The default is to listen to "
                 "the tftp port specified in /etc/services.")
             )
