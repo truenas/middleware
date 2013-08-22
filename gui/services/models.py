@@ -852,7 +852,7 @@ class DynamicDNS(Model):
     ddns_provider = models.CharField(
             max_length=120,
             choices=choices.DYNDNSPROVIDER_CHOICES,
-            default='dyndns',
+            default=choices.DYNDNSPROVIDER_CHOICES[0][0],
             blank=True,
             verbose_name=_("Provider")
             )

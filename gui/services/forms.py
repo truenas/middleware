@@ -377,7 +377,7 @@ class RsyncModForm(ModelForm):
 
 
 class DynamicDNSForm(ModelForm):
-    pw2 = forms.CharField(
+    ddns_password2 = forms.CharField(
         max_length=50,
         label=_("Confirm Password"),
         widget=forms.widgets.PasswordInput(),
@@ -394,7 +394,7 @@ class DynamicDNSForm(ModelForm):
             'ddns_domain',
             'ddns_username',
             'ddns_password',
-            'pw2',
+            'ddns_password2',
             'ddns_updateperiod',
             'ddns_fupdateperiod',
             'ddns_options')
@@ -404,9 +404,9 @@ class DynamicDNSForm(ModelForm):
         if self.instance.ddns_password:
             self.fields['ddns_password'].required = False
 
-    def clean_pw2(self):
+    def clean_ddns_password2(self):
         password1 = self.cleaned_data.get("ddns_password")
-        password2 = self.cleaned_data.get("pw2")
+        password2 = self.cleaned_data.get("ddns_password2")
         if password1 != password2:
             raise forms.ValidationError(
                 _("The two password fields didn't match.")
