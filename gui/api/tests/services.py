@@ -421,6 +421,105 @@ class RsyncdResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class RsyncModResourceTest(APITestCase):
+
+    def setUp(self):
+        super(RsyncModResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='rsync',
+        )
+        v = Volume.objects.create(
+            vol_name='tank',
+            vol_fstype='ZFS',
+        )
+        MountPoint.objects.create(
+            mp_path='/mnt/tank',
+            mp_volume=v,
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'rsyncmod_name': 'testmod',
+                'rsyncmod_path': '/mnt/tank',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'rsyncmod_auxiliary': u'',
+            u'rsyncmod_comment': u'',
+            u'rsyncmod_group': u'nobody',
+            u'rsyncmod_hostsallow': u'',
+            u'rsyncmod_hostsdeny': u'',
+            u'rsyncmod_maxconn': 0,
+            u'rsyncmod_mode': u'rw',
+            u'rsyncmod_name': u'testmod',
+            u'rsyncmod_path': u'/mnt/tank',
+            u'rsyncmod_user': u'nobody'
+        })
+
+    def test_Retrieve(self):
+        obj = models.RsyncMod.objects.create(
+            rsyncmod_name='testmod',
+            rsyncmod_path='/mnt/tank',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'rsyncmod_auxiliary': u'',
+            u'rsyncmod_comment': u'',
+            u'rsyncmod_group': u'nobody',
+            u'rsyncmod_hostsallow': u'',
+            u'rsyncmod_hostsdeny': u'',
+            u'rsyncmod_maxconn': 0,
+            u'rsyncmod_mode': u'rw',
+            u'rsyncmod_name': u'testmod',
+            u'rsyncmod_path': u'/mnt/tank',
+            u'rsyncmod_user': u'nobody'
+        }])
+
+    def test_Update(self):
+        obj = models.RsyncMod.objects.create(
+            rsyncmod_name='testmod',
+            rsyncmod_path='/mnt/tank',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'rsyncd_port': 874,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['rsyncd_port'], 874)
+
+    def test_Delete(self):
+        obj = models.RsyncMod.objects.create()
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
+
+
 class SNMPResourceTest(APITestCase):
 
     def setUp(self):
