@@ -1251,6 +1251,7 @@ class TFTP(Model):
 class SSH(Model):
     ssh_tcpport = models.PositiveIntegerField(
             verbose_name=_("TCP Port"),
+            default=22,
             validators=[MinValueValidator(1), MaxValueValidator(65535)],
             help_text=_("Alternate TCP port. Default is 22"),
             )
