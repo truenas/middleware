@@ -295,14 +295,20 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 response=self.error_response(bundle.request, form._errors)
             )
 
-        with transaction.commit_on_success():
-            form.save()
-            bundle.obj = form.instance
-            bundle.objects_saved.add(self.create_identifier(bundle.obj))
+        """
+        FIXME
+        Saving the objects under a transaction won't work very well
+        because some rc.d scripts and rc.conf will not be able to visualize
+        the changes until the transaction is committed.
+        # with transaction.commit_on_success():
+        """
+        form.save()
+        bundle.obj = form.instance
+        bundle.objects_saved.add(self.create_identifier(bundle.obj))
 
-            # Now pick up the M2M bits.
-            m2m_bundle = self.hydrate_m2m(bundle)
-            self.save_m2m(m2m_bundle)
+        # Now pick up the M2M bits.
+        m2m_bundle = self.hydrate_m2m(bundle)
+        self.save_m2m(m2m_bundle)
 
         return bundle
 
