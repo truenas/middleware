@@ -23,7 +23,7 @@ do_preinit()
 			eval ${ini_command}
 		else
 			if [ -e "${ini_script}" ]; then
-				. ${ini_script}
+				sh -c "exec ${ini_script}"
 			fi
 		fi
 	done
