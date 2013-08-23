@@ -520,6 +520,62 @@ class RsyncModResourceTest(APITestCase):
         self.assertHttpAccepted(resp)
 
 
+class servicesResourceTest(APITestCase):
+
+    def setUp(self):
+        super(servicesResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='ftp',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'srv_service': 'test',
+            }
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [
+            {
+                u'srv_service': u'ftp', u'srv_enable': False, u'id': 1,
+            },
+        ])
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+            data={
+                'srv_enable': True,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['srv_enable'], True)
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class SMARTResourceTest(APITestCase):
 
     def setUp(self):
