@@ -27,6 +27,8 @@
 import hashlib
 import hmac
 import logging
+import random
+import time
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -56,7 +58,11 @@ class APIClient(Model):
         if not self.secret:
             log.debug('Generating new secret for %s', self.name)
             h = hmac.HMAC(
-                key=self.name.encode('utf8'),
+                key="%s:%s:%s" % (
+                    self.name.encode('utf8'),
+                    random.random(),
+                    time.time(),
+                ),
                 digestmod=hashlib.sha512
             )
             self.secret = str(h.hexdigest())
