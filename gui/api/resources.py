@@ -1081,3 +1081,17 @@ class FTPResourceMixin(object):
             except:
                 pass
         return bundle
+
+
+class ServicesResourceMixin(object):
+
+    class Meta:
+        allowed_methods = ['get', 'put']
+
+    def hydrate(self, bundle):
+        bundle = super(ServicesResourceMixin, self).hydrate(bundle)
+        return bundle
+
+    def dehydrate(self, bundle):
+        bundle = super(ServicesResourceMixin, self).hydrate(bundle)
+        return bundle
