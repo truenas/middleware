@@ -877,8 +877,10 @@ define([
             var mod2 = this.initialDisks.length % 2;
 
             for(var i=0,len=this.initialDisks.length - mod2;i<len;i++) {
-              this.initialDisks[0].addToRow(this, ath.floor(i / div2), i % div2);
+              this.initialDisks[0].addToRow(this, Math.floor(i / div2), i % div2);
             }
+
+            this.rows = div2;
 
             // Remaining disks are spare
             if(this.initialDisks.length > 0) {
