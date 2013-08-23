@@ -46,6 +46,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.services import models
+from freenasUI.services.directoryservice import DirectoryService
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, MountPoint, Disk
 from freenasUI.storage.widgets import UnixPermissionField
@@ -59,6 +60,64 @@ log = logging.getLogger('services.form')
 class servicesForm(ModelForm):
     class Meta:
         model = models.services
+
+    def save(self, *args, **kwargs):
+        obj = super(servicesForm, self).save(*args, **kwargs)
+        _notifier = notifier()
+
+        self.enabled_svcs = []
+        self.disabled_svcs = []
+        directory_services = ['activedirectory', 'ldap', 'nt4', 'nis']
+        if obj.srv_service == "directoryservice":
+            directoryservice = DirectoryService.objects.order_by("-id")[0]
+            for ds in directory_services:
+                if ds != directoryservice.svc:
+                    method = getattr(_notifier, "_started_%s" % ds)
+                    started = method()
+                    if started:
+                        _notifier.stop(ds)
+
+            if obj.srv_enable:
+                started = _notifier.start(directoryservice.svc)
+                if models.services.objects.get(srv_service='cifs').srv_enable:
+                    self.enabled_svcs.append('cifs')
+            else:
+                started = _notifier.stop(directoryservice.svc)
+                if not models.services.objects.get(srv_service='cifs').srv_enable:
+                    self.disabled_svcs.append('cifs')
+
+        else:
+            """
+            Using rc.d restart verb and depend on rc_var service_enable
+            does not see the best way to handle service start/stop process
+
+            For now lets handle it properly just for ssh and snmp that seems
+            to be the most affected for randomly not starting
+            """
+            if obj.srv_service in ('snmp', 'ssh'):
+                if obj.srv_enable:
+                    started = _notifier.start(obj.srv_service)
+                else:
+                    started = _notifier.stop(obj.srv_service)
+            else:
+                started = _notifier.restart(obj.srv_service)
+
+        self.started = started
+        if started is True:
+            if not obj.srv_enable:
+                obj.srv_enable = True
+                obj.save()
+
+        elif started is False:
+            if obj.srv_enable:
+                obj.srv_enable = False
+                obj.save()
+                if obj.srv_service == 'directoryservice':
+                    _notifier.stop(directoryservice.svc)
+                elif obj.srv_service == 'ups':
+                    _notifier.stop(obj.srv_service)
+
+        return obj
 
 
 class CIFSForm(ModelForm):

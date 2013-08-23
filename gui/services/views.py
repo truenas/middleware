@@ -31,9 +31,9 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.directoryservice import DirectoryService
+from freenasUI.services.forms import servicesForm
 
 log = logging.getLogger("services.views")
 
@@ -159,78 +159,33 @@ def servicesToggleView(request, formname):
     if changing_service == "":
         raise "Unknown service - Invalid request?"
 
-    enabled_svcs = []
-    disabled_svcs = []
-    _notifier = notifier()
-
     svc_entry = models.services.objects.get(srv_service=changing_service)
     if svc_entry.srv_enable:
         svc_entry.srv_enable = False
     else:
         svc_entry.srv_enable = True
-
-    if changing_service != 'directoryservice':
-        svc_entry.save()
-
-    directory_services = ['activedirectory', 'ldap', 'nt4', 'nis']
-    if changing_service == "directoryservice":
-        directoryservice = DirectoryService.objects.order_by("-id")[0]
-        for ds in directory_services:
-            if ds != directoryservice.svc:
-                method = getattr(_notifier, "_started_%s" % ds)
-                started = method()
-                if started:
-                    _notifier.stop(ds)
-
-        if svc_entry.srv_enable:
-            svc_entry.save()
-            started = _notifier.start(directoryservice.svc)
-            if models.services.objects.get(srv_service='cifs').srv_enable:
-                enabled_svcs.append('cifs')
-        else:
-            started = _notifier.stop(directoryservice.svc)
-            svc_entry.save()
-            if not models.services.objects.get(srv_service='cifs').srv_enable:
-                disabled_svcs.append('cifs')
-
-    if changing_service != 'directoryservice':
-        """
-        Using rc.d restart verb and depend on rc_var service_enable
-        does not see the best way to handle service start/stop process
-
-        For now lets handle it properly just for ssh and snmp that seems
-        to be the most affected for randomly not starting
-        """
-        if changing_service in ('snmp', 'ssh'):
-            if svc_entry.srv_enable:
-                started = _notifier.start(changing_service)
-            else:
-                started = _notifier.stop(changing_service)
-        else:
-            started = _notifier.restart(changing_service)
+    original_srv = svc_entry.srv_enable
+    mf = servicesForm(instance=svc_entry, data={
+        'srv_enable': svc_entry.srv_enable,
+        'srv_service': changing_service,
+    })
+    if not mf.is_valid():
+        return
+    svc_entry = mf.save()
 
     error = False
     message = False
-    if started is True:
+    if mf.started is True:
         status = 'on'
-        if not svc_entry.srv_enable:
+        if not original_srv:
             error = True
             message = _("The service could not be stopped.")
-            svc_entry.srv_enable = True
-            svc_entry.save()
 
-    elif started is False:
+    elif mf.started is False:
         status = 'off'
-        if svc_entry.srv_enable:
+        if original_srv:
             error = True
             message = _("The service could not be started.")
-            svc_entry.srv_enable = False
-            svc_entry.save()
-            if changing_service in ('ups', 'directoryservice'):
-                if changing_service == 'directoryservice':
-                    _notifier.stop(directoryservice.svc)
-                else:
-                    _notifier.stop(changing_service)
     else:
         if svc_entry.srv_enable:
             status = 'on'
@@ -242,8 +197,8 @@ def servicesToggleView(request, formname):
         'status': status,
         'error': error,
         'message': message,
-        'enabled_svcs': enabled_svcs,
-        'disabled_svcs': disabled_svcs,
+        'enabled_svcs': mf.enabled_svcs,
+        'disabled_svcs': mf.disabled_svcs,
     }
 
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
