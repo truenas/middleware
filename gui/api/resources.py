@@ -1095,3 +1095,8 @@ class ServicesResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(ServicesResourceMixin, self).hydrate(bundle)
         return bundle
+
+    def obj_get(self, bundle, **kwargs):
+        if 'pk' in kwargs and not kwargs['pk'].isdigit():
+            kwargs['srv_service'] = kwargs.pop('pk')
+        return super(ServicesResourceMixin, self).obj_get(bundle, **kwargs)
