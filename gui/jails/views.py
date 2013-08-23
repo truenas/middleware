@@ -43,6 +43,7 @@ from freenasUI.common.warden import (
     WARDEN_EXPORT_FLAGS_DIR
 )
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger("jails.views")
 
@@ -142,6 +143,7 @@ def jail_start(request, id):
 
     if request.method == 'POST':
         try:
+            notifier().reload("http")  # Jail IP reflects nginx plugins.conf
             Warden().start(jail=jail.jail_host)
             return JsonResp(
                 request,
@@ -155,8 +157,6 @@ def jail_start(request, id):
         return render(request, "jails/start.html", {
             'name': jail.jail_host
         })
-
-        Warden().start(jail=jail.jail_host)
 
 
 def jail_stop(request, id):
