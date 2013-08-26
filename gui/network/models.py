@@ -399,8 +399,8 @@ class LAGGInterfaceMembers(Model):
         super(LAGGInterfaceMembers, self).delete()
 
     class Meta:
-        verbose_name = _("Link Aggregation")
-        verbose_name_plural = _("Link Aggregations")
+        verbose_name = _("Link Aggregation Member")
+        verbose_name_plural = _("Link Aggregation Members")
         ordering = ["lagg_interfacegroup"]
 
 
