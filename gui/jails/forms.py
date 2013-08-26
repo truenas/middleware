@@ -232,8 +232,8 @@ class JailCreateForm(ModelForm):
 
         addrs = guess_adresses()
 
-        if addrs['high_ipv6']:
-            self.fields['jail_ipv6'].initial = addrs['high_ipv6']
+        #if addrs['high_ipv6']:
+        #    self.fields['jail_ipv6'].initial = addrs['high_ipv6']
 
         if addrs['high_ipv4']:
             self.fields['jail_ipv4'].initial = addrs['high_ipv4']
@@ -241,8 +241,8 @@ class JailCreateForm(ModelForm):
         if addrs['bridge_ipv4']:
             self.fields['jail_bridge_ipv4'].initial = addrs['bridge_ipv4']
 
-        if addrs['bridge_ipv6']:
-            self.fields['jail_bridge_ipv6'].initial = addrs['bridge_ipv6']
+        #if addrs['bridge_ipv6']:
+        #    self.fields['jail_bridge_ipv6'].initial = addrs['bridge_ipv6']
 
     def save(self):
         try:
@@ -259,7 +259,7 @@ class JailCreateForm(ModelForm):
 
         jail_host = self.cleaned_data.get('jail_host')
         jail_ipv4 = self.cleaned_data.get('jail_ipv4')
-        jail_ipv6 = self.cleaned_data.get('jail_ipv6')
+        #jail_ipv6 = self.cleaned_data.get('jail_ipv6')
 
         jail_flags = WARDEN_FLAGS_NONE
         jail_create_args = {}
@@ -294,9 +294,9 @@ class JailCreateForm(ModelForm):
             jail_flags |= WARDEN_CREATE_FLAGS_IPV4
             jail_create_args['ipv4'] = jail_ipv4
 
-        if jail_ipv6:
-            jail_flags |= WARDEN_CREATE_FLAGS_IPV6
-            jail_create_args['ipv6'] = jail_ipv6
+        #if jail_ipv6:
+        #    jail_flags |= WARDEN_CREATE_FLAGS_IPV6
+        #    jail_create_args['ipv6'] = jail_ipv6
 
         jail_flags |= WARDEN_CREATE_FLAGS_LOGFILE
         jail_flags |= WARDEN_CREATE_FLAGS_SYSLOG
@@ -410,11 +410,11 @@ class JailCreateForm(ModelForm):
 
 class JailsConfigurationForm(ModelForm):
 
-    advanced_fields = [
-        'jc_ipv6_network',
-        'jc_ipv6_network_start',
-        'jc_ipv6_network_end'
-    ]
+    #advanced_fields = [
+    #    'jc_ipv6_network',
+    #    'jc_ipv6_network_start',
+    #    'jc_ipv6_network_end'
+    #]
 
     class Meta:
         model = JailsConfiguration

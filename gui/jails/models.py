@@ -102,31 +102,36 @@ class Jails(Model):
             max_length=120,
             blank=True,
             null=True,
-            verbose_name=_("IPv6 address")
+            verbose_name=_("IPv6 address"),
+            editable=False,
             )
     jail_alias_ipv6 = models.CharField(
             max_length=120,
             blank=True,
             null=True,
-            verbose_name=_("IPv6 aliases")
+            verbose_name=_("IPv6 aliases"),
+            editable=False,
             )
     jail_bridge_ipv6 = models.CharField(
             max_length=120,
             blank=True,
             null=True,
-            verbose_name=_("IPv6 bridge address")
+            verbose_name=_("IPv6 bridge address"),
+            editable=False,
             )
     jail_alias_bridge_ipv6 = models.CharField(
             max_length=120,
             blank=True,
             null=True,
-            verbose_name=_("IPv6 bridge aliases")
+            verbose_name=_("IPv6 bridge aliases"),
+            editable=False,
             )
-    jail_defaultrouter_ipv6 = models.CharField( 
+    jail_defaultrouter_ipv6 = models.CharField(
             max_length=120,
             blank=True,
             null=True,
-            verbose_name=_("IPv6 default gateway")
+            verbose_name=_("IPv6 default gateway"),
+            editable=False,
             )
     jail_mac = models.CharField(
             max_length=120,
@@ -223,16 +228,19 @@ class JailsConfiguration(Model):
     jc_ipv6_network = Network6Field(
         blank=True,
         verbose_name=_("IPv6 Network"),
+        editable=False,
         help_text=_("IPv6 network range for jails and plugins")
     )
     jc_ipv6_network_start = Network6Field(
         blank=True,
         verbose_name=_("IPv6 Network Start Address"),
+        editable=False,
         help_text=_("IPv6 network start address for jails and plugins")
     )
     jc_ipv6_network_end = Network6Field(
         blank=True,
         verbose_name=_("IPv6 Network End Address"),
+        editable=False,
         help_text=_("IPv6 network end address for jails and plugins")
     )
 
