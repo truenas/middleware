@@ -778,3 +778,62 @@ class AdvancedResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpMethodNotAllowed(resp)
+
+
+class EmailResourceTest(APITestCase):
+
+    def setUp(self):
+        super(EmailResourceTest, self).setUp()
+        self._obj = models.Email.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': self._obj.id,
+            u'em_fromemail': u'',
+            u'em_outgoingserver': u'',
+            u'em_pass': None,
+            u'em_port': 25,
+            u'em_security': u'plain',
+            u'em_smtp': False,
+            u'em_user': None,
+        }])
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                'em_fromemail': 'dev@ixsystems.com',
+                'em_outgoingserver': 'mail.ixsystems.com',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._advanced.id)
+        self.assertEqual(data['em_fromemail'], 'dev@ixsystems.com')
+        self.assertEqual(data['em_outgoingserver'], 'mail.ixsystems.com')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
