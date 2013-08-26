@@ -420,6 +420,7 @@ class LAGGInterfaceForm(ModelForm):
                 )
                 lagg_member_entry.save()
                 order = order + 1
+        self.instance = lagg_interfacegroup
         return lagg_interfacegroup
 
 
