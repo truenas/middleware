@@ -32,6 +32,8 @@ from django.utils.translation import ugettext as _
 from eventlet.green import urllib2
 from freenasUI.middleware.notifier import notifier
 
+from ipaddr import IPv6Address
+
 log = logging.getLogger('plugins.utils')
 
 
@@ -40,6 +42,11 @@ def get_base_url(request=None):
     addr = request.META.get("SERVER_ADDR")
     if not addr:
         addr = request.get_host()
+        try:
+            IPv6Address(addr)
+            addr = "[%s]" % addr
+        except:
+            pass
     else:
         port = int(request.META.get("SERVER_PORT", 80))
         if (
