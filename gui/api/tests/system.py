@@ -663,9 +663,6 @@ class TunableResourceTest(APITestCase):
 
 class SettingsResourceTest(APITestCase):
 
-    def setUp(self):
-        super(SettingsResourceTest, self).setUp()
-
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(
             self.client.get(self.get_api_url(), format='json')
@@ -711,7 +708,70 @@ class SettingsResourceTest(APITestCase):
         self.assertEqual(data['id'], self._settings.id)
         self.assertEqual(data['stg_timezone'], 'America/Sao_Paulo')
 
-    maxDiff = None
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
+class AdvancedResourceTest(APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': self._advanced.id,
+            u'adv_advancedmode': False,
+            u'adv_anonstats': True,
+            u'adv_anonstats_token': u'',
+            u'adv_autotune': False,
+            u'adv_consolemenu': False,
+            u'adv_consolemsg': True,
+            u'adv_consolescreensaver': False,
+            u'adv_debugkernel': False,
+            u'adv_firmwarevc': False,
+            u'adv_motd': u'Welcome',
+            u'adv_powerdaemon': False,
+            u'adv_serialconsole': False,
+            u'adv_serialspeed': u'9600',
+            u'adv_swapondrive': 2,
+            u'adv_systembeep': False,
+            u'adv_traceback': True,
+            u'adv_tuning': False,
+            u'adv_zeroconfbonjour': False,
+        }])
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._advanced.id),
+            format='json',
+            data={
+                'adv_powerdaemon': True,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._advanced.id)
+        self.assertEqual(data['adv_powerdaemon'], True)
+
     def test_Delete(self):
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), 1),

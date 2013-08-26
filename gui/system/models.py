@@ -232,9 +232,10 @@ class Advanced(Model):
     #        verbose_name = _("Encrypt swap space"),
     #        default=False)
     adv_motd = models.TextField(
-            max_length=1024,
-            verbose_name=_("MOTD banner"),
-            )
+        max_length=1024,
+        verbose_name=_("MOTD banner"),
+        default='Welcome',
+    )
 
     class Meta:
         verbose_name = _("Advanced")
