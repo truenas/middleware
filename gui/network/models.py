@@ -39,11 +39,13 @@ from freenasUI.middleware.notifier import notifier
 class GlobalConfiguration(Model):
     gc_hostname = models.CharField(
         max_length=120,
-        verbose_name=_("Hostname")
+        verbose_name=_("Hostname"),
+        default='nas',
         )
     gc_domain = models.CharField(
         max_length=120,
-        verbose_name=_("Domain")
+        verbose_name=_("Domain"),
+        default='local',
         )
     gc_ipv4gateway = IP4AddressField(
         blank=True,
