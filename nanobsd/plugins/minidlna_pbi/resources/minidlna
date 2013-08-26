@@ -13,7 +13,7 @@
 . /etc/rc.subr
 
 name=minidlna
-rcvar=`set_rcvar`
+rcvar="minidlna_enable"
 #command=/usr/pbi/minidlna-$(uname -m)/sbin/minidlna
 command=/usr/local/sbin/minidlna
 

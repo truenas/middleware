@@ -14,7 +14,7 @@
 : ${pbid_enable="NO"}
 
 name=pbid
-rcvar=`set_rcvar`
+rcvar="pbid_enable"
 pidfile="/var/run/${name}.pid"
 
 command=/usr/local/sbin/pbid

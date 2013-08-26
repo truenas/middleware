@@ -34,7 +34,7 @@
 . /etc/rc.subr
 
 name="django"
-rcvar=`set_rcvar`
+rcvar="django_enable"
 
 load_rc_config $name
 
