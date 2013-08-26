@@ -404,10 +404,11 @@ EOF
 			echo "    log level = ${loglevel}"
 		fi
 
-		if [ "${cifs_aio_enable}" = "1" ]; then
-			echo "    aio read size = ${cifs_aio_rs}"
-			echo "    aio write size = ${cifs_aio_ws}"
-		fi
+		# AIO has problems, see #3079
+		#if [ "${cifs_aio_enable}" = "1" ]; then
+		#	echo "    aio read size = ${cifs_aio_rs}"
+		#	echo "    aio write size = ${cifs_aio_ws}"
+		#fi
 
 	    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	    SELECT
