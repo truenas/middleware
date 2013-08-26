@@ -2,7 +2,6 @@ from .utils import APITestCase
 from freenasUI.network import models
 
 
-"""
 class InterfacesResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
@@ -262,7 +261,6 @@ class VLANResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpAccepted(resp)
-"""
 
 
 class GlobalConfigurationResourceTest(APITestCase):
@@ -323,3 +321,90 @@ class GlobalConfigurationResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpMethodNotAllowed(resp)
+
+
+class LAGGInterfaceResourceTest(APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'lagg_interfaces': ['em1'],
+                'lagg_protocol': 'roundrobin',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'lagg_interface': u'lagg0',
+            u'lagg_protocol': u'roundrobin'
+        })
+
+    def test_Retrieve(self):
+        iface = models.Interfaces.objects.create(
+            int_interface='lagg0',
+            int_name='lan',
+            int_dhcp=False,
+            int_ipv4address='192.168.50.5',
+            int_v4netmaskbit='24',
+        )
+        obj = models.LAGGInterface.objects.create(
+            lagg_interface=iface,
+            lagg_protocol='roundrobin',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'lagg_interface': u'lagg0',
+            u'lagg_protocol': u'roundrobin'
+        }])
+
+    def test_Update(self):
+        iface = models.Interfaces.objects.create(
+            int_interface='em1',
+            int_name='lan',
+            int_dhcp=False,
+            int_ipv4address='192.168.50.5',
+            int_v4netmaskbit='24',
+        )
+        obj = models.LAGGInterface.objects.create(
+            lagg_interface=iface,
+            lagg_protocol='roundrobin',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Delete(self):
+        iface = models.Interfaces.objects.create(
+            int_interface='em1',
+            int_name='lan',
+            int_dhcp=False,
+            int_ipv4address='192.168.50.5',
+            int_v4netmaskbit='24',
+        )
+        obj = models.LAGGInterface.objects.create(
+            lagg_interface=iface,
+            lagg_protocol='roundrobin',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)

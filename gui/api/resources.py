@@ -669,6 +669,10 @@ class LAGGInterfaceResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(LAGGInterfaceResourceMixin, self).dehydrate(bundle)
         bundle.data['lagg_interface'] = bundle.obj.lagg_interface.int_interface
+        if 'lagg_interfaces' in bundle.data:
+            del bundle.data['lagg_interfaces']
+        if 'lagg_interface_id' in bundle.data:
+            del bundle.data['lagg_interface_id']
         if self.is_webclient(bundle.request):
             bundle.data['lagg_interface'] = unicode(bundle.obj)
             bundle.data['_edit_url'] = reverse(
