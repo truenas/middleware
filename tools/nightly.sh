@@ -10,7 +10,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 set -x
 
 FREENAS_GIT="file:///freenas-build/freenas.git"
-FREENAS_BRANCH="releng/9.1.0"
+FREENAS_BRANCH="master"
 GIT_REPO="file:///freenas-build/trueos.git"
 GIT_PORTS_REPO="file:///freenas-build/ports.git"
 MASTER_SITE_OVERRIDE='http://localhost/freenas/ports-distfiles/${DIST_SUBDIR}/'
@@ -36,6 +36,8 @@ LOGPATH=home/${RE}/nightly_logs
 ZLOGPATH=${ZPREFIX}/${LOGPATH}/${TONIGHT}
 BUILDPATH=build/nightlies
 ZBUILDPATH=${ZPREFIX}/${BUILDPATH}/${TONIGHT}
+NANO_LABEL=FreeNAS
+VERSION=9.2.0-ALPHA
 
 SHARE=/freenas
 ARCHIVE=${SHARE}/BSD/releng/FreeNAS/nightlies
@@ -73,7 +75,8 @@ done
 cd ${ZBUILDPATH} || exit
 /usr/bin/env \
 	GIT_REPO=${GIT_REPO} GIT_PORTS_REPO=${GIT_PORTS_REPO} \
-	MASTER_SITE_OVERRID=${MASTER_SITE_OVERRIDE} \
+	MASTER_SITE_OVERRIDE=${MASTER_SITE_OVERRIDE} \
+	NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} \
 	/bin/sh build/do_build.sh -B 2>&1 >> \
 	${ZLOGPATH}/checkout.log || exit
 
@@ -85,42 +88,49 @@ cd ${ZBUILDPATH} || exit
 # Begin building targets
 /usr/bin/env \
 	GIT_REPO=${GIT_REPO} GIT_PORTS_REPO=${GIT_PORTS_REPO} \
-	MASTER_SITE_OVERRID=${MASTER_SITE_OVERRIDE} \
+	MASTER_SITE_OVERRIDE=${MASTER_SITE_OVERRIDE} \
 	FREENAS_ARCH=amd64 \
+	NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} \
 	/bin/sh build/do_build.sh \
 	-t os-base -z 2>&1 > ${ZLOGPATH}/amd64.log
 /usr/bin/env \
 	GIT_REPO=${GIT_REPO} GIT_PORTS_REPO=${GIT_PORTS_REPO} \
-	MASTER_SITE_OVERRID=${MASTER_SITE_OVERRIDE} \
+	MASTER_SITE_OVERRIDE=${MASTER_SITE_OVERRIDE} \
 	FREENAS_ARCH=amd64 \
+	NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} \
 	/bin/sh build/do_build.sh \
-	-a -J 2>&1 > ${ZLOGPATH}/amd64.log
+	-a 2>&1 > ${ZLOGPATH}/amd64.log
 /usr/bin/env FREENAS_ARCH=amd64 /bin/sh build/create_iso.sh \
 	2>&1 >> ${ZLOGPATH}/amd64.log || exit
 
 /usr/bin/env \
 	GIT_REPO=${GIT_REPO} GIT_PORTS_REPO=${GIT_PORTS_REPO} \
-	MASTER_SITE_OVERRID=${MASTER_SITE_OVERRIDE} \
+	MASTER_SITE_OVERRIDE=${MASTER_SITE_OVERRIDE} \
 	FREENAS_ARCH=i386 \
+	NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} \
 	/bin/sh build/do_build.sh \
 	-t os-base -z 2>&1 > ${ZLOGPATH}/i386.log
 /usr/bin/env \
 	GIT_REPO=${GIT_REPO} GIT_PORTS_REPO=${GIT_PORTS_REPO} \
-	MASTER_SITE_OVERRID=${MASTER_SITE_OVERRIDE} \
+	MASTER_SITE_OVERRIDE=${MASTER_SITE_OVERRIDE} \
 	FREENAS_ARCH=i386 \
+	NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} \
 	/bin/sh build/do_build.sh \
-	-a -J 2>&1 > ${ZLOGPATH}/i386.log
+	-a 2>&1 > ${ZLOGPATH}/i386.log
 /usr/bin/env FREENAS_ARCH=i386 /bin/sh build/create_iso.sh \
 	2>&1 >> ${ZLOGPATH}/i386.log || exit
+
+set -x
 
 # If we made it this far, start boxing the finished product
 /bin/mkdir -p ${ZBUILDPATH}/sandbox/x64/plugins
 /bin/cp ${ZBUILDPATH}/os-base/amd64/FreeNAS* ${ZBUILDPATH}/sandbox/x64
-/bin/cp ${ZBUILDPATH}/{transmission,minidlna,firefly}/amd64/*.pbi ${ZBUILDPATH}/sandbox/x64/plugins
 /bin/mkdir -p ${ZBUILDPATH}/sandbox/x86/plugins
 /bin/cp ${ZBUILDPATH}/os-base/i386/FreeNAS* ${ZBUILDPATH}/sandbox/x86
-/bin/cp ${ZBUILDPATH}/{transmission,minidlna,firefly}/i386/*.pbi ${ZBUILDPATH}/sandbox/x86/plugins
-
+for i in transmission minidlna firefly; do
+	/bin/cp ${ZBUILDPATH}/${i}/amd64/*.pbi ${ZBUILDPATH}/sandbox/x64/plugins/
+	/bin/cp ${ZBUILDPATH}/${i}/i386/*.pbi ${ZBUILDPATH}/sandbox/x86/plugins/
+done
 
 # Generate checksums for our build
 for dist in `/usr/bin/find ${ZBUILDPATH}/sandbox -type f`; do
