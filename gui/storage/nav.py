@@ -47,7 +47,7 @@ class AddVolume(TreeNode):
 class AddVolumeUFS(TreeNode):
 
     gname = 'Add'
-    name = _(u'UFS Volume Manager')
+    name = _(u'UFS Volume Manager (legacy)')
     view = 'storage_volumemanager_ufs'
     type = 'volumewizard'
     icon = u'AddVolumeIcon'
