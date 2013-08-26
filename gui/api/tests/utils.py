@@ -74,8 +74,8 @@ class APITestCase(ResourceTestCase):
         super(APITestCase, self).setUp()
         self.api = APIClient.objects.create(name='test')
         self.api_client = OAuth2APIClient(consumer=self.api)
-        Settings.objects.create()
-        Advanced.objects.create()
+        self._settings = Settings.objects.create()
+        self._advanced = Advanced.objects.create()
 
     def get_resource_name(self):
         return self.resource_name
