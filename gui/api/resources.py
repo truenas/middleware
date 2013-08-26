@@ -663,12 +663,14 @@ class InterfacesResourceMixin(object):
 
 class LAGGInterfaceResourceMixin(object):
 
+    class Meta:
+        allowed_methods = ['get', 'post', 'delete']
+
     def dehydrate(self, bundle):
         bundle = super(LAGGInterfaceResourceMixin, self).dehydrate(bundle)
-        bundle.data['lagg_interface'] = unicode(bundle.obj)
-        bundle.data['int_interface'] = bundle.obj.lagg_interface.int_interface
-        bundle.data['int_name'] = bundle.obj.lagg_interface.int_name
+        bundle.data['lagg_interface'] = bundle.obj.lagg_interface.int_interface
         if self.is_webclient(bundle.request):
+            bundle.data['lagg_interface'] = unicode(bundle.obj)
             bundle.data['_edit_url'] = reverse(
                 'freeadmin_network_interfaces_edit',
                 kwargs={
