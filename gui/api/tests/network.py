@@ -181,3 +181,83 @@ class StaticRouteResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpAccepted(resp)
+
+
+class VLANResourceTest(APITestCase):
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'vlan_vint': 'vlan0',
+                'vlan_pint': 'em1',
+                'vlan_tag': 0,
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'vlan_description': u'',
+            u'vlan_pint': u'em1',
+            u'vlan_tag': 0,
+            u'vlan_vint': u'vlan0'
+        })
+
+    def test_Retrieve(self):
+        obj = models.VLAN.objects.create(
+            vlan_vint='vlan0',
+            vlan_pint='em1',
+            vlan_tag=0,
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'vlan_description': u'',
+            u'vlan_pint': u'em1',
+            u'vlan_tag': 0,
+            u'vlan_vint': u'vlan0'
+        }])
+
+    def test_Update(self):
+        obj = models.VLAN.objects.create(
+            vlan_vint='vlan0',
+            vlan_pint='em1',
+            vlan_tag=0,
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'vlan_tag': 1,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['vlan_tag'], 1)
+
+    def test_Delete(self):
+        obj = models.VLAN.objects.create(
+            vlan_vint='vlan0',
+            vlan_pint='em1',
+            vlan_tag=0,
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
