@@ -463,7 +463,7 @@ class iSCSITargetGlobalConfiguration(Model):
     iscsi_luc_authmethod = models.CharField(
             max_length=120,
             choices=choices.AUTHMETHOD_CHOICES,
-            default="chap",
+            default='CHAP',
             verbose_name=_("Controller Auth Method"),
             help_text=_("The method can be accepted in the controller."),
             blank=True,

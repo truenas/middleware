@@ -958,6 +958,8 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
     def clean_iscsi_discoveryauthgroup(self):
         discoverymethod = self.cleaned_data['iscsi_discoveryauthmethod']
         discoverygroup = self.cleaned_data['iscsi_discoveryauthgroup']
+        if discoverygroup in ('', None):
+            return None
         if discoverymethod in ('CHAP', 'CHAP Mutual'):
             if int(discoverygroup) == -1:
                 raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutual."))
@@ -1004,8 +1006,10 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         return None
 
     def clean_iscsi_luc_authgroup(self):
-        lucmethod = self.cleaned_data['iscsi_luc_authmethod']
-        lucgroup = self.cleaned_data['iscsi_luc_authgroup']
+        lucmethod = self.cleaned_data.get('iscsi_luc_authmethod')
+        lucgroup = self.cleaned_data.get('iscsi_luc_authgroup')
+        if lucgroup in ('', None):
+            return None
         if lucmethod in ('CHAP', 'CHAP Mutual'):
             if lucgroup != '' and int(lucgroup) == -1:
                 raise forms.ValidationError(_("This field is required whether CHAP or Mutual CHAP are set for Controller Auth Method."))
