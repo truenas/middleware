@@ -55,6 +55,7 @@ from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import VolumeManagerForm
 from freenasUI.storage.models import Disk, Volume
 from tastypie import fields
+from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.utils import trailing_slash
 from tastypie.validation import FormValidation
 
@@ -118,9 +119,24 @@ class DatasetResource(DojoResource):
     mountpoint = fields.CharField(attribute='mountpoint')
 
     class Meta:
-        allowed_methods = ['get']
+        allowed_methods = ['get', 'post', 'delete']
         object_class = zfs.ZFSDataset
         resource_name = 'storage/dataset'
+
+    def obj_create(self, bundle, **kwargs):
+        bundle = self.full_hydrate(bundle)
+        err, msg = notifier().create_zfs_dataset(path='%s/%s' % (
+            kwargs.get('parent').vol_name,
+            bundle.data.get('name'),
+        ))
+        if err:
+            bundle.errors['__all__'] = msg
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, bundle.errors)
+            )
+        # FIXME: authorization
+        bundle.obj = self.obj_get(bundle, pk=bundle.data.get('name'), **kwargs)
+        return bundle
 
     def obj_get_list(self, request=None, **kwargs):
         dsargs = {'recursive': True}
@@ -135,6 +151,19 @@ class DatasetResource(DojoResource):
             kwargs.get('pk'),
         ))
         return zfslist[kwargs.get('pk')]
+
+    def obj_delete(self, bundle, **kwargs):
+        retval = notifier().destroy_zfs_dataset(path="%s/%s" % (
+            kwargs.get('parent').vol_name,
+            kwargs.get('pk'),
+        ))
+        if retval:
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, retval)
+            )
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {}
 
 
 class VolumeResourceMixin(object):
