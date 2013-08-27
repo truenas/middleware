@@ -44,7 +44,6 @@ from freenasUI.freeadmin.navtree import navtree
 handler500 = 'freenasUI.freeadmin.views.server_error'
 handler404 = 'freenasUI.freeadmin.views.page_not_found'
 
-v1_api.register(DatasetResource())
 v1_api.register(SnapshotResource())
 
 navtree.prepare_modelforms()
