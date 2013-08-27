@@ -510,7 +510,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
 
 class bsdUserPasswordForm(ModelForm):
     bsdusr_username2 = forms.CharField(label=_("Username"), required=False)
-    bsdusr_password1 = forms.CharField(
+    bsdusr_password = forms.CharField(
         label=_("Password"),
         widget=forms.PasswordInput,
     )
@@ -528,16 +528,19 @@ class bsdUserPasswordForm(ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self._confirm = kwargs.pop('confirm', True)
         super(bsdUserPasswordForm, self).__init__(*args, **kwargs)
         self.fields['bsdusr_username'].widget.attrs['readonly'] = True
         self.fields['bsdusr_username2'].widget.attrs['disabled'] = 'disabled'
         self.fields['bsdusr_username2'].initial = self.instance.bsdusr_username
+        if self._confirm is False:
+            del self.fields['bsdusr_password2']
 
     def clean_bsdusr_username(self):
         return self.instance.bsdusr_username
 
     def clean_bsdusr_password2(self):
-        bsdusr_password1 = self.cleaned_data.get("bsdusr_password1", "")
+        bsdusr_password1 = self.cleaned_data.get("bsdusr_password", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
         if bsdusr_password1 != bsdusr_password2:
             raise forms.ValidationError(
@@ -550,7 +553,7 @@ class bsdUserPasswordForm(ModelForm):
             _notifier = notifier()
             unixhash, smbhash = _notifier.user_changepassword(
                 username=str(self.instance.bsdusr_username),
-                password=str(self.cleaned_data['bsdusr_password2']),
+                password=str(self.cleaned_data['bsdusr_password']),
             )
             self.instance.bsdusr_unixhash = unixhash
             self.instance.bsdusr_smbhash = smbhash
