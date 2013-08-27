@@ -110,6 +110,28 @@ class bsdUsersResourceTest(APITestCase):
         )
         self.assertHttpAccepted(resp)
 
+    def test_Password(self):
+        obj = models.bsdUsers.objects.create(
+            bsdusr_uid=1100,
+            bsdusr_group=models.bsdGroups.objects.create(
+                bsdgrp_gid=1101,
+                bsdgrp_group='juca'
+            ),
+            bsdusr_username='juca',
+            bsdusr_shell='/usr/local/bin/bash',
+            bsdusr_full_name='Juca Xunda',
+        )
+        resp = self.api_client.post(
+            '%s%d/password/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'bsdusr_password': 'testpw',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+
 
 class bsdGroupsResourceTest(APITestCase):
 
