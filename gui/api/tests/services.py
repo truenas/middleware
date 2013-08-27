@@ -835,3 +835,78 @@ class TFTPResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpMethodNotAllowed(resp)
+
+
+class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
+
+    def setUp(self):
+        super(iSCSITargetGlobalConfigurationResourceTest, self).setUp()
+        self._obj = models.iSCSITargetGlobalConfiguration.objects.create(
+            iscsi_basename='iqn.2011-03.org.example.istgt',
+        )
+        models.services.objects.create(
+            srv_service='iscsitarget',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': self._obj.id,
+            u'iscsi_basename': u'iqn.2011-03.org.example.istgt',
+            u'iscsi_defaultt2r': 60,
+            u'iscsi_defaultt2w': 2,
+            u'iscsi_discoveryauthgroup': None,
+            u'iscsi_discoveryauthmethod': u'Auto',
+            u'iscsi_firstburst': 65536,
+            u'iscsi_iotimeout': 30,
+            u'iscsi_luc_authgroup': None,
+            u'iscsi_luc_authmethod': u'CHAP',
+            u'iscsi_luc_authnetwork': u'127.0.0.0/8',
+            u'iscsi_lucip': u'127.0.0.1',
+            u'iscsi_lucport': 3261,
+            u'iscsi_maxburst': 262144,
+            u'iscsi_maxconnect': 8,
+            u'iscsi_maxoutstandingr2t': 16,
+            u'iscsi_maxrecdata': 262144,
+            u'iscsi_maxsesh': 16,
+            u'iscsi_nopinint': 20,
+            u'iscsi_r2t': 32,
+            u'iscsi_toggleluc': False
+        }])
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                'iscsi_r2t': 64,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['iscsi_r2t'], 64)
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
