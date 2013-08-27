@@ -144,12 +144,12 @@ class VolumeResourceMixin(object):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/datasets%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('get_datasets'), name="api_volume_datasets"),
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/datasets/(?P<pk2>\w[\w/-]*)%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('get_datasets_detail'), name="api_volume_datasets_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/datasets%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('datasets_list'), name="api_volume_datasets"),
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/datasets/(?P<pk2>\w[\w/-]*)%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('datasets_detail'), name="api_volume_datasets_detail"),
         ]
 
 
-    def get_datasets(self, request, **kwargs):
+    def datasets_list(self, request, **kwargs):
         try:
             bundle = self.build_bundle(data={'pk': kwargs['pk']}, request=request)
             obj = self.cached_obj_get(bundle=bundle, **self.remove_api_resource_names(kwargs))
@@ -159,10 +159,10 @@ class VolumeResourceMixin(object):
             return HttpMultipleChoices("More than one resource is found at this URI.")
 
         child_resource = DatasetResource()
-        return child_resource.get_list(request, parent=obj)
+        return child_resource.dispatch_list(request, parent=obj)
 
 
-    def get_datasets_detail(self, request, **kwargs):
+    def datasets_detail(self, request, **kwargs):
         pk = kwargs.pop('pk2')
         try:
             bundle = self.build_bundle(data={'pk': kwargs['pk']}, request=request)
@@ -173,7 +173,7 @@ class VolumeResourceMixin(object):
             return HttpMultipleChoices("More than one resource is found at this URI.")
 
         child_resource = DatasetResource()
-        return child_resource.get_detail(request, pk=pk, parent=obj)
+        return child_resource.dispatch_detail(request, pk=pk, parent=obj)
 
     def _get_datasets(self, bundle, vol, datasets, uid):
         children = []
