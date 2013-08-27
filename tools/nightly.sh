@@ -101,6 +101,7 @@ cd ${ZBUILDPATH} || exit
 	/bin/sh build/do_build.sh \
 	-a 2>&1 > ${ZLOGPATH}/amd64.log
 /usr/bin/env FREENAS_ARCH=amd64 /bin/sh build/create_iso.sh \
+	NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} \
 	2>&1 >> ${ZLOGPATH}/amd64.log || exit
 
 /usr/bin/env \
@@ -118,6 +119,7 @@ cd ${ZBUILDPATH} || exit
 	/bin/sh build/do_build.sh \
 	-a 2>&1 > ${ZLOGPATH}/i386.log
 /usr/bin/env FREENAS_ARCH=i386 /bin/sh build/create_iso.sh \
+	NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} \
 	2>&1 >> ${ZLOGPATH}/i386.log || exit
 
 set -x
