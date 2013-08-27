@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2013-08-18 12:26+0200\n"
+"PO-Revision-Date: 2013-08-26 18:11+0200\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -2888,7 +2888,6 @@ msgid "Administrator Password"
 msgstr "Parolă administrator"
 
 #: services/models.py:1269
-#, fuzzy
 msgid "Domain Administrator account password."
 msgstr "Parolă cont administrator domeniu."
 
@@ -3198,9 +3197,8 @@ msgid "Add Device Extent"
 msgstr "Adăugare extensie dispozitiv"
 
 #: services/nav.py:79
-#, fuzzy
 msgid "View Device Extents"
-msgstr "Vizualizare toate rutele statice"
+msgstr "Vizualizare extensii dispozitiv"
 
 #: services/nav.py:92
 msgid "File Extents"
@@ -3254,9 +3252,9 @@ msgid "Confirm Share Password"
 msgstr "Confirmare parolă partajare"
 
 #: sharing/forms.py:139
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s does not exist"
-msgstr "Path to the extent"
+msgstr "Calea %s nu există"
 
 #: sharing/forms.py:157
 msgid "The field is a not a valid IP address or network"
@@ -3296,9 +3294,8 @@ msgid "Browsable to Network Clients"
 msgstr "Navigabil pentru clienţii din reţea"
 
 #: sharing/models.py:53
-#, fuzzy
 msgid "Inherit Owner"
-msgstr "Moştenire"
+msgstr "Proprietar moştenit"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
@@ -3321,6 +3318,8 @@ msgid ""
 "If true then no password is required to connect to the share. Privileges "
 "will be those of the guest account."
 msgstr ""
+"Dacă opţiunea este activă atunci nu se va solicita nicio parolă pentru "
+"conectare. Privilegiile vor fi cele ale contului guest."
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
@@ -3331,6 +3330,9 @@ msgid ""
 "If true then only guest connections to the share are permitted. This "
 "parameter will have no effect if Allow Guest Access is not set for the share."
 msgstr ""
+"Dacă opţiunea este activă doar conexiunile prin contul guest vor fi permise "
+"(nu are niciun efect dacă opţiunea Permisiune Guest Acces nu este definită "
+"pentru partajare)."
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
@@ -3374,17 +3376,14 @@ msgstr ""
 "Aceşti parametri sunt adaugaţi la secţiunea [Share] a fişierului smb.conf"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows (CIFS) Share"
-msgstr "Partajare Windows"
+msgstr "Partajare Windows (CIFS)"
 
 #: sharing/models.py:95
-#, fuzzy
 msgid "Windows (CIFS) Shares"
-msgstr "Partajare Windows"
+msgstr "Partajare Windows (CIFS)"
 
 #: sharing/models.py:114
-#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser of the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -3394,15 +3393,14 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
-"Numele volumului apare clientului în fereastra de dialog 'conect to server / "
-"conectare la server' pe computerul Macintosh pentru a reprezenta partajarea "
-"respectivă. Dacă nu e specificat nici un nume, este folosită ultima parte a "
-"căii către partajarea respectivă. Două volume nu pot avea același nume. "
-"Numele nu poate conţine caracterul ':' . Numele volumului este trunchiat "
-"dacă este foarte lung. Codarea denumirilor volumelor în sistemul Mac este "
-"limitată la 27 de caractere. Numele volumului UTF8-MAC este limitat la "
-"parametrul 'Lungimea numelui volumului' din secţiunea Servicii: Partajare "
-"Apple"
+"Numele volumului apare clientului în fereastra de dialog 'conectare la "
+"server' pe computerul Macintosh pentru a reprezenta partajarea respectivă. "
+"Dacă nu este specificat niciun nume, este folosită ultima parte a căii către "
+"partajarea respectivă. Două volume nu pot avea același nume. Numele nu "
+"poate conţine caracterul ':' . Numele volumului este trunchiat dacă este "
+"foarte lung. Codarea denumirilor volumelor în sistemul Mac este limitată la "
+"27 de caractere. Numele volumului UTF8-MAC este limitat la parametrul "
+"'Lungimea numelui volumului' din secţiunea Servicii: Partajare Apple"
 
 #: sharing/models.py:118
 msgid "Share Comment"
@@ -3478,7 +3476,6 @@ msgid "Read-write Access"
 msgstr "Acces citire-scriere"
 
 #: sharing/models.py:157
-#, fuzzy
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
@@ -3572,19 +3569,16 @@ msgstr ""
 "calculatoarele Mac."
 
 #: sharing/models.py:189
-#, fuzzy
 msgid "Enable .AppleDouble"
-msgstr "Fără .AppleDouble"
+msgstr "Activare .AppleDouble"
 
 #: sharing/models.py:190
-#, fuzzy
 msgid ""
 "This will enable automatic creation of the .AppleDouble directories. This "
 "option should be used if files are accessed by Mac computers."
 msgstr ""
-"Permite ca directorul .AppleDouble să fie creat doar dacă este absolut "
-"necesar. Această opţiune nu trebuie folosită dacă fişierele sunt accesate în "
-"principal de computere Mac. Bifarea acestei opţiuni opreşte crearea lor."
+"Permite crearea automată a folderelor .AppleDouble. Această opţiune trebuie "
+"folosită dacă fişierele sunt accesate de sisteme Mac"
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3658,21 +3652,18 @@ msgid "Default directory permission"
 msgstr "Permisiuni director"
 
 #: sharing/models.py:238
-#, fuzzy
 msgid "Apple (AFP) Share"
-msgstr "Partajare Apple"
+msgstr "Partajare Apple (AFP)"
 
 #: sharing/models.py:239
-#, fuzzy
 msgid "Apple (AFP) Shares"
-msgstr "Partajare Apple"
+msgstr "Partajări Apple (AFP)"
 
 #: sharing/models.py:268
 msgid "Authorized network or IP addresses"
 msgstr "Reţele sau adrese IP autorizate"
 
 #: sharing/models.py:269
-#, fuzzy
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
@@ -3700,16 +3691,14 @@ msgid "Read Only"
 msgstr "Doar citire"
 
 #: sharing/models.py:278
-#, fuzzy
 msgid "Export the share read only. Writes are not permitted."
-msgstr "Setarea partajării doar în citire.  Scrierile nu sunt permise."
+msgstr "Exportă partajărea doar pentru citire. Scrierea nu este permisă."
 
 #: sharing/models.py:281 system/models.py:552
 msgid "Quiet"
 msgstr "Silenţios"
 
 #: sharing/models.py:282
-#, fuzzy
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr "Inhibă avertismentele syslog dacă sunt probleme cu această partajare."
@@ -3761,14 +3750,13 @@ msgid "Sharing"
 msgstr "Partajare"
 
 #: storage/forms.py:105
-#, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
 msgstr "Introduceţi un număr pozitiv (opţional cu terminaţia M, G, T) sau 0"
 
 #: storage/forms.py:120
-#, fuzzy, python-format
+#, python-format
 msgid "%s is not a valid number"
-msgstr "Utilizatorul %s este invalid"
+msgstr "Numărul %s este invalid"
 
 #: storage/forms.py:129 storage/forms.py:426 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3786,7 +3774,7 @@ msgstr "Mărime sector 4096 byte obligatorie"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
-msgstr ""
+msgstr "Definire cale personalizată"
 
 #: storage/forms.py:163
 msgid "Volume add"
@@ -3796,15 +3784,16 @@ msgstr "Adăugare volum"
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
+"Dacă lăsaţi cîmpul necompletat calea implicită pentru volum va fi "
+"/mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:233
-#, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"Numele volumului trebuie să înceapă cu litere şi poate include numere, \"-"
-"\", \"_\"."
+"Numele volumului trebuie să înceapă cu litere şi poate include numere şi "
+"caracterele \"-\", \"_\" şi \".\" ."
 
 #: storage/forms.py:236
 #, fuzzy
@@ -3812,13 +3801,12 @@ msgid "A volume with that name already exists."
 msgstr "Un grup cu acelaşi nume există deja."
 
 #: storage/forms.py:252
-#, fuzzy
 msgid "Path does not exist."
-msgstr "Path to the extent"
+msgstr "Calea nu există."
 
 #: storage/forms.py:255
 msgid "Path is not a directory."
-msgstr ""
+msgstr "Calea nu este un folder."
 
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
@@ -3847,13 +3835,12 @@ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "Numele volumului nu poate începe cu c[0-9], mirror, raidz sau spare"
 
 #: storage/forms.py:311
-#, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr "Your Group ID cannot be higher than %d"
+msgstr "Numele volumului UFS nu poate avea mai mult de 9 caractere"
 
 #: storage/forms.py:315
 msgid "UFS volume names can only contain alphanumeric characters"
-msgstr ""
+msgstr "Numele volumului UFS poate conţine doar caractere alfanumerice"
 
 #: storage/forms.py:429 storage/forms.py:1050
 msgid "Member disk"
@@ -3883,6 +3870,8 @@ msgstr "Selectaţi un volum."
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
+"Volumul \"%s\" nu a putut fi importat, pentu detalii consultaţi starea "
+"structurii"
 
 #: storage/forms.py:673
 msgid "The SMART service failed to restart."
@@ -3928,50 +3917,43 @@ msgid "Reserved space for this dataset and all children"
 msgstr "Spaţiu rezervat pentru acest set de date şi descendenţilor săi"
 
 #: storage/forms.py:716
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
 "Numele setului de date trebuie să înceapă cu caractere alfanumerice şi poate "
-"conţine doar (-), (_), (:) şi (.)."
+"conţine doar caracterele (-), (_), (:) şi (.)."
 
 #: storage/forms.py:729 storage/forms.py:870
 msgid "You already have a dataset with the same name"
 msgstr "Există deja un set de date cu acelaşi nume"
 
 #: storage/forms.py:807
-#, fuzzy
 msgid "Quota for this volume"
-msgstr "Cotă alocată acestui set de date"
+msgstr "Cotă alocată acestui volum"
 
 #: storage/forms.py:812
-#, fuzzy
 msgid "Reserved space for this volume"
-msgstr "Spaţiu rezervat pentru acest set de date"
+msgstr "Spaţiu rezervat pentru acest volum"
 
 #: storage/forms.py:842
-#, fuzzy
 msgid "ZFS Volume Name"
-msgstr "Volum ZFS"
+msgstr "Nume volum ZFS"
 
 #: storage/forms.py:845
-#, fuzzy
 msgid "Size for this ZFS Volume"
-msgstr "Modificare volum ZFS"
+msgstr "Dimensiunea acestui volum ZFS"
 
 #: storage/forms.py:846
-#, fuzzy
 msgid "Example: 1g"
-msgstr "0=Nimic; de ex. 1g"
+msgstr "Exemplu: 1g"
 
 #: storage/forms.py:859
-#, fuzzy
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
-"Numele setului de date trebuie să înceapă cu caractere alfanumerice şi poate "
+"Numele volumului ZFS trebuie să înceapă cu caractere alfanumerice şi poate "
 "conţine doar (-), (_), (:) şi (.)."
 
 #: storage/forms.py:882
@@ -3988,7 +3970,7 @@ msgstr "Mod"
 
 #: storage/forms.py:885
 msgid "Type of ACL"
-msgstr ""
+msgstr "Tip ACL"
 
 #: storage/forms.py:891
 msgid "Set permission recursively"
@@ -4048,19 +4030,18 @@ msgid "Delete all shares related to this volume"
 msgstr ""
 
 #: storage/forms.py:1218 system/forms.py:567 system/forms.py:631
-#, fuzzy
 msgid "minute"
-msgstr "minute,"
+msgstr "minute"
 
 #: storage/forms.py:1221 system/forms.py:413 system/forms.py:570
 #: system/forms.py:634
 msgid "hour"
-msgstr ""
+msgstr "oră"
 
 #: storage/forms.py:1226 system/forms.py:416 system/forms.py:573
 #: system/forms.py:637
 msgid "day of month"
-msgstr ""
+msgstr "ziua din lună"
 
 #: storage/forms.py:1269
 #, fuzzy
@@ -4250,7 +4231,7 @@ msgstr "Introduceţi aici opţiunile punctului de montare"
 
 #: storage/models.py:643
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Sistem de replicare remote"
 
 #: storage/models.py:644
 msgid "Remote Replication Hosts"
@@ -4438,9 +4419,8 @@ msgid "Change Permissions"
 msgstr "Modificare permisiuni"
 
 #: storage/views.py:175 storage/views.py:204 storage/views.py:227
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s adăugat cu succes."
+msgstr "Volumul %s a fost adăugat cu succes."
 
 #: storage/views.py:254
 #, fuzzy
@@ -4448,28 +4428,24 @@ msgid "S.M.A.R.T. Extra Options"
 msgstr "Opţiuni suplimentare S.M.A.R.T"
 
 #: storage/views.py:371
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "%s a fost şters."
+msgstr "Setul de date a fost adăugat cu succes."
 
 #: storage/views.py:418
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "%s a fost şters."
+msgstr "Setul de date a fost editat cu succes."
 
 #: storage/views.py:448
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "%s a fost şters."
+msgstr "Volumul ZFS a fost adăugat cu succes."
 
 #: storage/views.py:470
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr ""
 
 #: storage/views.py:475
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s a fost şters."
+msgstr "Volumul ZFS a fost distrus cu succes."
 
 #: storage/views.py:524
 #, fuzzy
@@ -4477,19 +4453,16 @@ msgid "Native dataset successfully edited."
 msgstr "%s a fost şters."
 
 #: storage/views.py:544
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%s actualizat cu succes."
+msgstr "Permisiunile puncului de montare au fost actualizate cu succes."
 
 #: storage/views.py:564
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%s a fost şters."
+msgstr "Setul de date a fost distrus cu succes."
 
 #: storage/views.py:583
-#, fuzzy
 msgid "Snapshot successfully deleted."
-msgstr "Punct de restaurare clonat cu succes"
+msgstr "Punctul de restaurare a fost şters cu succes."
 
 #: storage/views.py:604
 #, fuzzy
@@ -4498,7 +4471,7 @@ msgstr "Punct de restaurare clonat cu succes"
 
 #: storage/views.py:616
 msgid "Rollback successful."
-msgstr ""
+msgstr "Revenire cu succes la starea anterioară."
 
 #: storage/views.py:634
 #, fuzzy
@@ -4552,7 +4525,7 @@ msgstr "%s adăugat cu succes"
 
 #: system/forms.py:201
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "Limba (implică reîncărcarea IU)"
 
 #: system/forms.py:214
 #, fuzzy
@@ -4583,7 +4556,7 @@ msgstr ""
 
 #: system/forms.py:507
 msgid "Place to temporarily place firmware file"
-msgstr ""
+msgstr "Locaţie temporară pentru firmware"
 
 #: system/forms.py:508
 msgid ""
@@ -4810,10 +4783,12 @@ msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
+"Un nume sau o adresă IP a sistemului care va accepta emailurile nostre, spre "
+"ex. mail.example.org, sau 192.168.1.1"
 
 #: system/models.py:224
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "Un intreg în intervalul 1 - 65535, în general 25, 465 sau 587"
 
 #: system/models.py:226
 msgid "Port to connect to"
@@ -4869,7 +4844,7 @@ msgstr "Localitate"
 
 #: system/models.py:288
 msgid "Locality Name (eg, city)"
-msgstr "Numele localităţii"
+msgstr "Numele localităţii (ex. Iaşi)"
 
 #: system/models.py:294
 msgid "State"
@@ -4877,7 +4852,7 @@ msgstr "Stat"
 
 #: system/models.py:295
 msgid "State or Province Name (full name)"
-msgstr "Nume stat sau provincie (nume complet)"
+msgstr "Stat sau provincie (nume complet)"
 
 #: system/models.py:301
 msgid "Country"
@@ -4885,15 +4860,15 @@ msgstr "Țara"
 
 #: system/models.py:302
 msgid "Country Name (2 letter code)"
-msgstr "Nume ţară (cod 2 litere)"
+msgstr "Nume ţară (cod de 2 litere)"
 
 #: system/models.py:308
 msgid "Common Name"
-msgstr "Nume"
+msgstr "Nume comun"
 
 #: system/models.py:309
 msgid "Common Name (eg, YOUR name)"
-msgstr "Nume (de ex. numele d-voastră)"
+msgstr "Numele dumneavoastră"
 
 #: system/models.py:314
 msgid "SSL Certificate"
@@ -4902,9 +4877,7 @@ msgstr "Certificat SSL"
 #: system/models.py:315
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
-msgstr ""
-"Aici copiaţi şi lipiţi conţinutul fişierului cu certificatul privat şi "
-"public."
+msgstr "Copiaţi aici conţinutul fişierelor cu certificatele private şi publice."
 
 #: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
@@ -5107,7 +5080,7 @@ msgstr "Sistem"
 
 #: system/nav.py:12 templates/system/reporting.html:1
 msgid "Reporting"
-msgstr "Rapoarte"
+msgstr "Raportare"
 
 #: system/nav.py:20
 msgid "System Information"
@@ -5183,11 +5156,11 @@ msgstr "Membri"
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
 #: templates/storage/tasks.html.py:134
 msgid "Modify"
-msgstr "Modificare"
+msgstr "Modifică"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr "Eliminare"
+msgstr "Elimină"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
@@ -5199,7 +5172,7 @@ msgstr "Ştergere grup"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
-msgstr "Nu există grupuri cu utilizatori definiţi."
+msgstr "Nu există grupuri de utilizatori definite."
 
 #: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
 msgid "Add New Group"
@@ -6480,7 +6453,7 @@ msgstr "Sistemul <strong>SE VA OPRI</strong>, sunteţi sigur?"
 
 #: templates/system/smarttest.html:16
 msgid "Unknown"
-msgstr ""
+msgstr "Necunoscut"
 
 #: templates/system/smarttest.html:38
 #, fuzzy
@@ -6634,7 +6607,7 @@ msgstr ""
 "punct de restaurare."
 
 msgid "An error occurred when setting the options"
-msgstr "Au apărut erori la setarea opţiunilor"
+msgstr "A apărut o eroare la setarea opţiunilor"
 
 msgid "Service Pack image to be installed"
 msgstr "Imaginea service pack-ului de instalat"
@@ -6745,7 +6718,6 @@ msgstr "Timp în milisecunde"
 msgid "Username of Domain Administrator Account"
 msgstr "Nume utilizator al contului administratorului domeniului"
 
-#, fuzzy
 msgid "ISCSI"
 msgstr "iSCSI"
 
@@ -6771,9 +6743,8 @@ msgstr "Partajare CIFS"
 msgid "CIFS Shares"
 msgstr "Partajări CIFS"
 
-#, fuzzy
 msgid "NFS Share"
-msgstr "Modificare partajare NFS"
+msgstr "Partajare NFS"
 
 msgid "When in a day should we start making snapshots, e.g. 8:00"
 msgstr "Când începe crearea punctelor de restaurare, de ex. ora 8:00"
@@ -6824,9 +6795,8 @@ msgstr "Adăugare încărcător"
 msgid "Volume from which this dataset will be created on"
 msgstr "Volum de la care se va crea setul de date"
 
-#, fuzzy
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Volum de la care se va crea setul de date"
+msgstr "Volum de la care va fi creat acest volum ZFS"
 
 msgid "Volume this group belongs to"
 msgstr "Volumul de care aparţine acest grup"
