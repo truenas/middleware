@@ -35,7 +35,7 @@ from django.forms.models import inlineformset_factory
 from django.utils.translation import ugettext as _
 
 from freenasUI import choices
-from freenasUI.account.forms import bsdUserCreationForm
+from freenasUI.account.forms import bsdUserCreationForm, bsdUserPasswordForm
 from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.api.utils import (
     DojoResource, DojoModelResource
@@ -55,6 +55,7 @@ from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import VolumeManagerForm
 from freenasUI.storage.models import Disk, Volume
 from tastypie import fields
+from tastypie.http import HttpMethodNotAllowed
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.utils import trailing_slash
 from tastypie.validation import FormValidation
@@ -865,6 +866,42 @@ class BsdUserResourceMixin(object):
             'bsdusr_builtin',
             'bsdusr_uid')
         validation = FormValidation(form_class=bsdUserCreationForm)
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/password%s$" % (self._meta.resource_name, trailing_slash()), self.wrap_view('change_password')),
+        ]
+
+    def change_password(self, request, **kwargs):
+        if request.method != 'POST':
+            response = HttpMethodNotAllowed('POST')
+            response['Allow'] = 'POST'
+            raise ImmediateHttpResponse(response=response)
+
+        try:
+            bundle = self.build_bundle(data={'pk': kwargs['pk']}, request=request)
+            obj = self.cached_obj_get(bundle=bundle, **self.remove_api_resource_names(kwargs))
+        except ObjectDoesNotExist:
+            return HttpGone()
+        except MultipleObjectsReturned:
+            return HttpMultipleChoices("More than one resource is found at this URI.")
+
+        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        form = bsdUserPasswordForm(
+            instance=obj,
+            data={
+                'bsdusr_username': obj.bsdusr_username,
+                'bsdusr_password': deserialized.get('bsdusr_password'),
+            },
+            confirm=False,
+        )
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return self.get_detail(request, **kwargs)
 
     def dehydrate(self, bundle):
         bundle = super(BsdUserResourceMixin, self).dehydrate(bundle)
