@@ -1124,10 +1124,8 @@ class iSCSITargetAuthCredentialResourceTest(APITestCase):
                 'iscsi_target_auth_tag': 1,
                 'iscsi_target_auth_user': 'user',
                 'iscsi_target_auth_secret': 'secret',
-                'iscsi_target_auth_secret2': 'secret',  # FIXME: only 1 pwd
                 'iscsi_target_auth_peeruser': 'peeruser',
                 'iscsi_target_auth_peersecret': 'peersecret',
-                'iscsi_target_auth_peersecret2': 'peersecret',
             }
         )
         self.assertHttpCreated(resp)
@@ -1137,10 +1135,8 @@ class iSCSITargetAuthCredentialResourceTest(APITestCase):
         self.assertEqual(data, {
             u'id': 1,
             u'iscsi_target_auth_peersecret': u'peersecret',
-            u'iscsi_target_auth_peersecret2': u'peersecret',
             u'iscsi_target_auth_peeruser': u'peeruser',
             u'iscsi_target_auth_secret': u'secret',
-            u'iscsi_target_auth_secret2': u'secret',
             u'iscsi_target_auth_tag': 1,
             u'iscsi_target_auth_user': u'user'
         })
@@ -1179,8 +1175,6 @@ class iSCSITargetAuthCredentialResourceTest(APITestCase):
             format='json',
             data={
                 'iscsi_target_auth_user': 'user2',
-                'iscsi_target_auth_peersecret2': u'peersecret',  # FIXME
-                'iscsi_target_auth_secret2': u'secret',  # FIXME
             }
         )
         self.assertHttpAccepted(resp)

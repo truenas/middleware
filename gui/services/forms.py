@@ -794,22 +794,26 @@ class iSCSITargetAuthCredentialForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetAuthCredentialForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder = [
-            'iscsi_target_auth_tag',
-            'iscsi_target_auth_user',
-            'iscsi_target_auth_secret',
-            'iscsi_target_auth_secret2',
-            'iscsi_target_auth_peeruser',
-            'iscsi_target_auth_peersecret',
-            'iscsi_target_auth_peersecret2'
-        ]
+        if self._api:
+            del self.fields['iscsi_target_auth_secret2']
+            del self.fields['iscsi_target_auth_peersecret2']
+        else:
+            self.fields.keyOrder = [
+                'iscsi_target_auth_tag',
+                'iscsi_target_auth_user',
+                'iscsi_target_auth_secret',
+                'iscsi_target_auth_secret2',
+                'iscsi_target_auth_peeruser',
+                'iscsi_target_auth_peersecret',
+                'iscsi_target_auth_peersecret2'
+            ]
 
-        ins = kwargs.get("instance", None)
-        if ins:
-            self.fields['iscsi_target_auth_secret2'].initial = (
-                self.instance.iscsi_target_auth_secret)
-            self.fields['iscsi_target_auth_peersecret2'].initial = (
-                self.instance.iscsi_target_auth_peersecret)
+            ins = kwargs.get("instance", None)
+            if ins:
+                self.fields['iscsi_target_auth_secret2'].initial = (
+                    self.instance.iscsi_target_auth_secret)
+                self.fields['iscsi_target_auth_peersecret2'].initial = (
+                    self.instance.iscsi_target_auth_peersecret)
 
     def _clean_secret_common(self, secretprefix):
         secret1 = self.cleaned_data.get(secretprefix, "")
