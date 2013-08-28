@@ -604,6 +604,7 @@ class iSCSITargetPortalIP(Model):
     iscsi_target_portalip_portal = models.ForeignKey(
             iSCSITargetPortal,
             verbose_name=_("Portal"),
+            related_name='ips',
             )
     iscsi_target_portalip_ip = models.IPAddressField(
             verbose_name=_("IP Address"),

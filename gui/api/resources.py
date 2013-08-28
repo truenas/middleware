@@ -51,6 +51,8 @@ from freenasUI.services.models import (
 )
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
+from freenasUI.services.forms import iSCSITargetPortalIPForm
+from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import VolumeManagerForm
@@ -733,6 +735,7 @@ class NFSShareResourceMixin(object):
         valid &= form.is_valid({'formset_nfs_share_path': formset})
         if errors:
             form._errors.update(errors)
+        bundle.errors = dict(form._errors)
         return valid
 
     def save_m2m(self, m2m_bundle):
@@ -862,9 +865,83 @@ class ISCSIPortalResourceMixin(object):
         listen = ["%s:%s" % (
             p.iscsi_target_portalip_ip,
             p.iscsi_target_portalip_port,
-        ) for p in bundle.obj.iscsitargetportalip_set.all()]
-        bundle.data['iscsi_target_portalip_ips'] = listen
+        ) for p in bundle.obj.ips.all()]
+        bundle.data['iscsi_target_portal_ips'] = listen
+        for key in filter(
+            lambda y: y.startswith('portalip_set'), bundle.data.keys()
+        ):
+            del bundle.data[key]
         return bundle
+
+    def hydrate(self, bundle):
+        bundle = super(ISCSIPortalResourceMixin, self).hydrate(bundle)
+        newips = bundle.data.get('iscsi_target_portal_ips', [])
+        for i, item in enumerate(bundle.obj.ips.all()):
+            bundle.data[
+                'portalip_set-%d-iscsi_target_portalip_ip' % i
+            ] = item.iscsi_target_portalip_ip
+            bundle.data[
+                'portalip_set-%d-iscsi_target_portalip_port' % i
+            ] = item.iscsi_target_portalip_port
+            bundle.data['portalip_set-%d-id' % i] = item.id
+            listen = '%s:%s' % (
+                item.iscsi_target_portalip_ip,
+                item.iscsi_target_portalip_port,
+            )
+        initial = i + 1
+        for i, item in enumerate(newips, i + 1):
+            ip, prt = item.rsplit(':', 1)
+            bundle.data['portalip_set-%d-iscsi_target_portalip_ip' % i] = ip
+            bundle.data['portalip_set-%d-iscsi_target_portalip_port' % i] = prt
+            bundle.data['portalip_set-%d-id' % i] = ''
+        bundle.data['iscsi_target_portal_ips'] = newips
+        bundle.data['portalip_set-INITIAL_FORMS'] = initial
+        bundle.data['portalip_set-TOTAL_FORMS'] = i + 1
+        return bundle
+
+    def is_form_valid(self, bundle, form):
+        fset = inlineformset_factory(
+            iSCSITargetPortal,
+            iSCSITargetPortalIP,
+            form=iSCSITargetPortalIPForm,
+            extra=0,
+        )
+        formset = fset(bundle.data, instance=bundle.obj, prefix='portalip_set')
+        valid = formset.is_valid()
+        errors = {}
+        if not valid:
+            for form in formset:
+                errors.update(form._errors)
+        valid &= form.is_valid()
+        if errors:
+            form._errors.update(errors)
+        bundle.errors = dict(form._errors)
+        return valid
+
+    def save_m2m(self, m2m_bundle):
+        ips = []
+        for ip in m2m_bundle.obj.ips.all():
+            ipport = '%s:%s' % (
+                ip.iscsi_target_portalip_ip,
+                ip.iscsi_target_portalip_port,
+            )
+            if ipport not in m2m_bundle.data.get(
+                "iscsi_target_portal_ips", []
+            ):
+                ip.delete()
+            else:
+                ips.append(ipport)
+
+        for ip in m2m_bundle.data.get("iscsi_target_portal_ips", []):
+            if ip in ips:
+                continue
+            ip, port = ip.rsplit(':', 1)
+            portalip = iSCSITargetPortalIP()
+            portalip.iscsi_target_portalip_portal = m2m_bundle.obj
+            portalip.iscsi_target_portalip_ip = ip
+            portalip.iscsi_target_portalip_port = port
+            portalip.save()
+        return m2m_bundle
 
 
 class ISCSITargetToExtentResourceMixin(object):

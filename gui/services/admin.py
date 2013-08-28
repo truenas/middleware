@@ -65,7 +65,7 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
     def get_datagrid_columns(self):
         columns = super(ISCSIPortalFAdmin, self).get_datagrid_columns()
         columns.insert(1, {
-            'name': 'iscsi_target_portalip_ips',
+            'name': 'iscsi_target_portal_ips',
             'label': _('Listen'),
             'sortable': False,
         })
