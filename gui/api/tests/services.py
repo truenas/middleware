@@ -206,7 +206,7 @@ class DynamicDNSResourceTest(APITestCase):
             data={
                 'ddns_username': 'testuser',
                 'ddns_password': 'mypass',
-                'ddns_password2': 'mypass',  #FIXME: only 1 password
+                'ddns_password2': 'mypass',  # FIXME: only 1 password
             }
         )
         self.assertHttpAccepted(resp)
@@ -1004,6 +1004,97 @@ class iSCSITargetExtentResourceTest(APITestCase):
             iscsi_target_extent_type='File',
             iscsi_target_extent_path='/mnt/tank/iscsi',
             iscsi_target_extent_filesize='10MB',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
+
+
+class iSCSITargetAuthorizedInitiatorResourceTest(APITestCase):
+
+    def setUp(self):
+        super(iSCSITargetAuthorizedInitiatorResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='iscsitarget',
+        )
+        v = Volume.objects.create(
+            vol_name='tank',
+            vol_fstype='ZFS',
+        )
+        MountPoint.objects.create(
+            mp_path='/mnt/tank',
+            mp_volume=v,
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'iscsi_target_initiator_initiators': 'ALL',
+                'iscsi_target_initiator_auth_network': 'ALL',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'iscsi_target_initiator_auth_network': u'ALL',
+            u'iscsi_target_initiator_comment': u'',
+            u'iscsi_target_initiator_initiators': u'ALL',
+            u'iscsi_target_initiator_tag': 1
+        })
+
+    def test_Retrieve(self):
+        obj = models.iSCSITargetAuthorizedInitiator.objects.create(
+            iscsi_target_initiator_initiators='ALL',
+            iscsi_target_initiator_auth_network='ALL',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'iscsi_target_initiator_auth_network': u'ALL',
+            u'iscsi_target_initiator_comment': u'',
+            u'iscsi_target_initiator_initiators': u'ALL',
+            u'iscsi_target_initiator_tag': 1
+        }])
+
+    def test_Update(self):
+        obj = models.iSCSITargetAuthorizedInitiator.objects.create(
+            iscsi_target_initiator_initiators='ALL',
+            iscsi_target_initiator_auth_network='ALL',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'iscsi_target_initiator_auth_network': '192.168.0.0/16',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['iscsi_target_initiator_auth_network'],
+                         '192.168.0.0/16')
+
+    def test_Delete(self):
+        obj = models.iSCSITargetAuthorizedInitiator.objects.create(
+            iscsi_target_initiator_initiators='ALL',
+            iscsi_target_initiator_auth_network='ALL',
         )
         resp = self.api_client.delete(
             '%s%d/' % (self.get_api_url(), obj.id),
