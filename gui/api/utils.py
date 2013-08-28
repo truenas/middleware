@@ -29,6 +29,7 @@ import re
 import urllib
 
 from django.db import transaction
+from django.db.models.fields.related import ForeignKey
 from django.http import QueryDict
 
 from tastypie.authentication import Authentication, MultiAuthentication
@@ -274,6 +275,16 @@ class DojoModelResource(ResourceMixin, ModelResource):
         for key, val in data.items():
             if key.startswith('_'):
                 del data[key]
+                continue
+            # Add the pk of the foreign key in the mix
+            if key.endswith('_id'):
+                noid = key[:-3]
+                field = getattr(bundle.obj.__class__, noid)
+                if not field:
+                    continue
+                if field and isinstance(field.field, ForeignKey):
+                    data[noid] = val
+                    del data[key]
         data.update(bundle.data)
         bundle.data = data
 
