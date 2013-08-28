@@ -1460,7 +1460,9 @@ class iSCSITargetForm(ModelForm):
 
     def clean_iscsi_target_authgroup(self):
         method = self.cleaned_data['iscsi_target_authtype']
-        group = self.cleaned_data['iscsi_target_authgroup']
+        group = self.cleaned_data.get('iscsi_target_authgroup')
+        if group in ('', None):
+            return None
         if method in ('CHAP', 'CHAP Mutual'):
             if group != '' and int(group) == -1:
                 raise forms.ValidationError(_("This field is required."))
