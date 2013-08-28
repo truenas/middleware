@@ -1194,3 +1194,107 @@ class iSCSITargetAuthCredentialResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpAccepted(resp)
+
+
+class iSCSITargetResourceTest(APITestCase):
+
+    maxDiff = None
+    def setUp(self):
+        super(iSCSITargetResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='iscsitarget',
+        )
+        self._portal = models.iSCSITargetPortal.objects.create()
+        self._initiator = models.iSCSITargetAuthorizedInitiator.objects.create(
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'iscsi_target_name': 'target',
+                'iscsi_target_portalgroup': self._portal.id,
+                'iscsi_target_initiatorgroup': self._initiator.id,
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'iscsi_target_alias': None,
+            u'iscsi_target_authgroup': None,
+            u'iscsi_target_authtype': u'Auto',
+            u'iscsi_target_flags': u'rw',
+            u'iscsi_target_initialdigest': u'Auto',
+            u'iscsi_target_initiatorgroup': 1,
+            u'iscsi_target_logical_blocksize': 512,
+            u'iscsi_target_name': u'target',
+            u'iscsi_target_portalgroup': 1,
+            u'iscsi_target_queue_depth': 32,
+            u'iscsi_target_serial': u'10000001',
+            u'iscsi_target_type': u'Disk'
+        })
+
+    def test_Retrieve(self):
+        obj = models.iSCSITarget.objects.create(
+            iscsi_target_name='target',
+            iscsi_target_portalgroup=self._portal,
+            iscsi_target_initiatorgroup=self._initiator,
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'iscsi_target_alias': None,
+            u'iscsi_target_authgroup': None,
+            u'iscsi_target_authtype': u'Auto',
+            u'iscsi_target_flags': u'rw',
+            u'iscsi_target_initialdigest': u'Auto',
+            u'iscsi_target_logical_blocksize': 512,
+            u'iscsi_target_name': u'target',
+            u'iscsi_target_queue_depth': 32,
+            u'iscsi_target_serial': u'10000001',
+            u'iscsi_target_type': u'Disk'
+        }])
+
+    def test_Update(self):
+        obj = models.iSCSITarget.objects.create(
+            iscsi_target_name='target',
+            iscsi_target_portalgroup=self._portal,
+            iscsi_target_initiatorgroup=self._initiator,
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'iscsi_target_queue_depth': 64,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['iscsi_target_queue_depth'], 64)
+
+    def test_Delete(self):
+        obj = models.iSCSITarget.objects.create(
+            iscsi_target_name='target',
+            iscsi_target_portalgroup=self._portal,
+            iscsi_target_initiatorgroup=self._initiator,
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
