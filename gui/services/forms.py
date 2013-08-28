@@ -1145,10 +1145,13 @@ class iSCSITargetExtentForm(ModelForm):
             diskchoices[name] = "%s (%s)" % (name, capacity)
 
         # HAST Devices through GEOM GATE
-        gate_pipe = os.popen(
+        gate_pipe = subprocess.Popen(
             """/usr/sbin/diskinfo `/sbin/geom gate status -s"""
-            """| /usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3""")
-        gate_diskinfo = gate_pipe.read().strip().split('\n')
+            """| /usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3""",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        gate_diskinfo = gate_pipe.communicate()[0].strip().split('\n')
         for disk in gate_diskinfo:
             if disk:
                 devname, capacity = disk.split('\t')
