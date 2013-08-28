@@ -1061,14 +1061,14 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
 class iSCSITargetExtentForm(ModelForm):
 
-    iscsi_extent_type = forms.ChoiceField(
+    iscsi_target_extent_type = forms.ChoiceField(
         choices=(
-            ('file', _('File')),
-            ('disk', _('Device')),
+            ('File', _('File')),
+            ('Disk', _('Device')),
         ),
         label=_("Extent Type"),
     )
-    iscsi_extent_disk = forms.ChoiceField(
+    iscsi_target_extent_disk = forms.ChoiceField(
         choices=(),
         widget=forms.Select(attrs={'maxHeight': 200}),
         label=_('Device'),
@@ -1077,7 +1077,6 @@ class iSCSITargetExtentForm(ModelForm):
 
     class Meta:
         model = models.iSCSITargetExtent
-        exclude = ('iscsi_target_extent_type')
         widgets = {
             'iscsi_target_extent_path': DirectoryBrowser(dirsonly=False),
         }
@@ -1086,20 +1085,20 @@ class iSCSITargetExtentForm(ModelForm):
         super(iSCSITargetExtentForm, self).__init__(*args, **kwargs)
         if self.instance.id:
             if self.instance.iscsi_target_extent_type == 'File':
-                self.fields['iscsi_extent_type'].initial = 'file'
+                self.fields['iscsi_target_extent_type'].initial = 'File'
             else:
-                self.fields['iscsi_extent_type'].initial = 'disk'
-            self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
+                self.fields['iscsi_target_extent_type'].initial = 'Disk'
+            self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
             if self.instance.iscsi_target_extent_type == 'ZVOL':
-                self.fields['iscsi_extent_disk'].initial = self.instance.iscsi_target_extent_path
+                self.fields['iscsi_target_extent_disk'].initial = self.instance.iscsi_target_extent_path
             else:
-                self.fields['iscsi_extent_disk'].initial = self.instance.get_device()[5:]
+                self.fields['iscsi_target_extent_disk'].initial = self.instance.get_device()[5:]
             self._path = self.instance.iscsi_target_extent_path
             self._name = self.instance.iscsi_target_extent_name
         else:
-            self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices()
-        self.fields['iscsi_extent_disk'].choices.sort()
-        self.fields['iscsi_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();"
+            self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices()
+        self.fields['iscsi_target_extent_disk'].choices.sort()
+        self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();"
         self.fields['iscsi_target_extent_path'].required = False
 
     def _populate_disk_choices(self, exclude=None):
@@ -1158,9 +1157,9 @@ class iSCSITargetExtentForm(ModelForm):
 
         return diskchoices.items()
 
-    def clean_iscsi_extent_disk(self):
-        _type = self.cleaned_data.get("iscsi_extent_type")
-        disk = self.cleaned_data.get("iscsi_extent_disk")
+    def clean_iscsi_target_extent_disk(self):
+        _type = self.cleaned_data.get('iscsi_target_extent_type')
+        disk = self.cleaned_data.get('iscsi_target_extent_disk')
         if _type == 'disk' and not disk:
             raise forms.ValidationError(
                 _("This field is required")
@@ -1168,8 +1167,8 @@ class iSCSITargetExtentForm(ModelForm):
         return disk
 
     def clean_iscsi_target_extent_path(self):
-        _type = self.cleaned_data["iscsi_extent_type"]
-        if _type == 'disk':
+        _type = self.cleaned_data['iscsi_target_extent_type']
+        if _type == 'Disk':
             return ''
         path = self.cleaned_data["iscsi_target_extent_path"]
         if not path:
@@ -1204,7 +1203,7 @@ class iSCSITargetExtentForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        _type = cdata.get("iscsi_extent_type")
+        _type = cdata.get('iscsi_target_extent_type')
         path = cdata.get("iscsi_target_extent_path")
         if (
             cdata.get("iscsi_target_extent_filesize") == "0"
@@ -1233,19 +1232,19 @@ class iSCSITargetExtentForm(ModelForm):
 
     def save(self, commit=True):
         oExtent = super(iSCSITargetExtentForm, self).save(commit=False)
-        if commit and self.cleaned_data["iscsi_extent_type"] == 'disk':
-            if self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
-                oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_extent_disk"]
+        if commit and self.cleaned_data["iscsi_target_extent_type"] == 'Disk':
+            if self.cleaned_data["iscsi_target_extent_disk"].startswith("zvol"):
+                oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_target_extent_disk"]
                 oExtent.iscsi_target_extent_type = 'ZVOL'
-            elif self.cleaned_data["iscsi_extent_disk"].startswith("multipath"):
-                notifier().unlabel_disk(str(self.cleaned_data["iscsi_extent_disk"]))
-                notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
-                mp_name = self.cleaned_data["iscsi_extent_disk"].split("/")[-1]
+            elif self.cleaned_data["iscsi_target_extent_disk"].startswith("multipath"):
+                notifier().unlabel_disk(str(self.cleaned_data["iscsi_target_extent_disk"]))
+                notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_target_extent_disk"], self.cleaned_data["iscsi_target_extent_disk"])
+                mp_name = self.cleaned_data["iscsi_target_extent_disk"].split("/")[-1]
                 diskobj = models.Disk.objects.get(disk_multipath_name=mp_name)
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = str(diskobj.id)
             else:
-                diskobj = models.Disk.objects.get(disk_name=self.cleaned_data["iscsi_extent_disk"])
+                diskobj = models.Disk.objects.get(disk_name=self.cleaned_data["iscsi_target_extent_disk"])
                 # label it only if it is a real disk
                 if (
                     diskobj.disk_identifier.startswith("{devicename}")
@@ -1253,24 +1252,24 @@ class iSCSITargetExtentForm(ModelForm):
                     diskobj.disk_identifier.startswith("{uuid}")
                 ):
                     success, msg = notifier().label_disk(
-                        "extent_%s" % self.cleaned_data["iscsi_extent_disk"],
-                        self.cleaned_data["iscsi_extent_disk"]
+                        "extent_%s" % self.cleaned_data["iscsi_target_extent_disk"],
+                        self.cleaned_data["iscsi_target_extent_disk"]
                     )
                     if success is False:
                         raise MiddlewareError(_(
                             "Serial not found and glabel failed for "
                             "%(disk)s: %(error)s" % {
-                                'disk': self.cleaned_data["iscsi_extent_disk"],
+                                'disk': self.cleaned_data["iscsi_target_extent_disk"],
                                 'error': msg,
                             })
                         )
-                    notifier().sync_disk(self.cleaned_data["iscsi_extent_disk"])
+                    notifier().sync_disk(self.cleaned_data["iscsi_target_extent_disk"])
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = str(diskobj.id)
             oExtent.iscsi_target_extent_filesize = 0
             oExtent.save()
 
-        elif commit and self.cleaned_data["iscsi_extent_type"] == 'file':
+        elif commit and self.cleaned_data['iscsi_target_extent_type'] == 'File':
             oExtent.iscsi_target_extent_type = 'File'
             oExtent.save()
 
@@ -1286,10 +1285,8 @@ class iSCSITargetExtentForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
         return oExtent
-iSCSITargetExtentForm.base_fields.keyOrder.remove('iscsi_extent_type')
-iSCSITargetExtentForm.base_fields.keyOrder.insert(1, 'iscsi_extent_type')
-iSCSITargetExtentForm.base_fields.keyOrder.remove('iscsi_extent_disk')
-iSCSITargetExtentForm.base_fields.keyOrder.insert(2, 'iscsi_extent_disk')
+iSCSITargetExtentForm.base_fields.keyOrder.remove('iscsi_target_extent_disk')
+iSCSITargetExtentForm.base_fields.keyOrder.insert(2, 'iscsi_target_extent_disk')
 
 
 class iSCSITargetPortalForm(ModelForm):
