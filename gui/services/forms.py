@@ -791,6 +791,12 @@ class iSCSITargetAuthCredentialForm(ModelForm):
 
     class Meta:
         model = models.iSCSITargetAuthCredential
+        widgets = {
+            'iscsi_target_auth_secret': forms.PasswordInput(render_value=True),
+            'iscsi_target_auth_peersecret': forms.PasswordInput(
+                render_value=True
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetAuthCredentialForm, self).__init__(*args, **kwargs)
