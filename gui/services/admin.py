@@ -1,8 +1,9 @@
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    FTPResourceMixin, ISCSIPortalResourceMixin, ISCSITargetExtentResourceMixin,
-    ISCSITargetToExtentResourceMixin, ServicesResourceMixin
+    FTPResourceMixin, ISCSIPortalResourceMixin, ISCSITargetResourceMixin,
+    ISCSITargetExtentResourceMixin, ISCSITargetToExtentResourceMixin,
+    ServicesResourceMixin
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -33,6 +34,16 @@ class FTPFAdmin(BaseFreeAdmin):
         'ftp_options',
     )
 
+
+class ISCSITargetFAdmin(BaseFreeAdmin):
+
+    menu_child_of = "services.ISCSI"
+    icon_object = u"TargetIcon"
+    icon_model = u"TargetIcon"
+    icon_add = u"AddTargetIcon"
+    icon_view = u"ViewAllTargetsIcon"
+
+    resource_mixin = ISCSITargetResourceMixin
 
 
 class ISCSIPortalFAdmin(BaseFreeAdmin):
@@ -106,6 +117,7 @@ class ISCSITargetExtentFAdmin(BaseFreeAdmin):
 
 
 site.register(models.FTP, FTPFAdmin)
+site.register(models.iSCSITarget, ISCSITargetFAdmin)
 site.register(models.iSCSITargetPortal, ISCSIPortalFAdmin)
 site.register(models.iSCSITargetAuthCredential, ISCSIAuthCredentialFAdmin)
 site.register(models.iSCSITargetToExtent, ISCSITargetToExtentFAdmin)

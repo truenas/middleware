@@ -804,13 +804,6 @@ class iSCSITarget(Model):
     class Meta:
         verbose_name = _("Target")
 
-    class FreeAdmin:
-        menu_child_of = "services.ISCSI"
-        icon_object = u"TargetIcon"
-        icon_model = u"TargetIcon"
-        icon_add = u"AddTargetIcon"
-        icon_view = u"ViewAllTargetsIcon"
-
     def __unicode__(self):
         return self.iscsi_target_name
 

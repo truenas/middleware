@@ -848,6 +848,13 @@ class SMARTTestResourceMixin(object):
         return bundle
 
 
+class ISCSITargetResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(ISCSITargetResourceMixin, self).dehydrate(bundle)
+        return bundle
+
+
 class ISCSIPortalResourceMixin(object):
 
     def dehydrate(self, bundle):
