@@ -910,3 +910,103 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpMethodNotAllowed(resp)
+
+
+class iSCSITargetExtentResourceTest(APITestCase):
+
+    def setUp(self):
+        super(iSCSITargetExtentResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='iscsitarget',
+        )
+        v = Volume.objects.create(
+            vol_name='tank',
+            vol_fstype='ZFS',
+        )
+        MountPoint.objects.create(
+            mp_path='/mnt/tank',
+            mp_volume=v,
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'iscsi_target_extent_name': 'extent',
+                'iscsi_target_extent_type': 'File',
+                'iscsi_target_extent_path': '/mnt/tank/iscsi',
+                'iscsi_target_extent_filesize': '10MB',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'iscsi_target_extent_comment': u'',
+            u'iscsi_target_extent_filesize': u'10MB',
+            u'iscsi_target_extent_name': u'extent',
+            u'iscsi_target_extent_path': u'/mnt/tank/iscsi',
+            u'iscsi_target_extent_type': u'File'
+        })
+
+    def test_Retrieve(self):
+        obj = models.iSCSITargetExtent.objects.create(
+            iscsi_target_extent_name='extent',
+            iscsi_target_extent_type='File',
+            iscsi_target_extent_path='/mnt/tank/iscsi',
+            iscsi_target_extent_filesize='10MB',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'iscsi_target_extent_comment': u'',
+            u'iscsi_target_extent_filesize': u'10MB',
+            u'iscsi_target_extent_name': u'extent',
+            u'iscsi_target_extent_path': u'/mnt/tank/iscsi',
+            u'iscsi_target_extent_type': u'File'
+        }])
+
+    def test_Update(self):
+        obj = models.iSCSITargetExtent.objects.create(
+            iscsi_target_extent_name='extent',
+            iscsi_target_extent_type='File',
+            iscsi_target_extent_path='/mnt/tank/iscsi',
+            iscsi_target_extent_filesize='10MB',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'iscsi_target_extent_filesize': '20MB',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['iscsi_target_extent_filesize'], '20MB')
+
+    def test_Delete(self):
+        obj = models.iSCSITargetExtent.objects.create(
+            iscsi_target_extent_name='extent',
+            iscsi_target_extent_type='File',
+            iscsi_target_extent_path='/mnt/tank/iscsi',
+            iscsi_target_extent_filesize='10MB',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
