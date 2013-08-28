@@ -1298,3 +1298,92 @@ class iSCSITargetResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpAccepted(resp)
+
+
+class iSCSITargetToExtentResourceTest(APITestCase):
+
+    maxDiff = None
+    def setUp(self):
+        super(iSCSITargetToExtentResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='iscsitarget',
+        )
+        self._portal = models.iSCSITargetPortal.objects.create()
+        self._initiator = models.iSCSITargetAuthorizedInitiator.objects.create(
+        )
+        self._target = models.iSCSITarget.objects.create(
+            iscsi_target_name='target',
+            iscsi_target_portalgroup=self._portal,
+            iscsi_target_initiatorgroup=self._initiator,
+        )
+        self._extent = models.iSCSITargetExtent.objects.create(
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'iscsi_target': self._target.id,
+                'iscsi_extent': self._extent.id,
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'iscsi_extent': 1,
+            u'iscsi_target': 1,
+        })
+
+    def test_Retrieve(self):
+        obj = models.iSCSITargetToExtent.objects.create(
+            iscsi_target=self._target,
+            iscsi_extent=self._extent,
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'iscsi_extent': 1,
+            u'iscsi_target': 1,
+        }])
+
+    def test_Update(self):
+        obj = models.iSCSITargetToExtent.objects.create(
+            iscsi_target=self._target,
+            iscsi_extent=self._extent,
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'iscsi_target_queue_depth': 64,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['iscsi_target_queue_depth'], 64)
+
+    def test_Delete(self):
+        obj = models.iSCSITargetToExtent.objects.create(
+            iscsi_target=self._target,
+            iscsi_extent=self._extent,
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
