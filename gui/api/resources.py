@@ -873,8 +873,12 @@ class ISCSITargetToExtentResourceMixin(object):
         bundle = super(ISCSITargetToExtentResourceMixin, self).dehydrate(
             bundle
         )
-        bundle.data['iscsi_target'] = bundle.obj.iscsi_target
-        bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
+        if self.is_webclient(bundle.request):
+            bundle.data['iscsi_target'] = bundle.obj.iscsi_target
+            bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
+        else:
+            bundle.data['iscsi_target'] = bundle.obj.pk
+            bundle.data['iscsi_extent'] = bundle.obj.pk
         return bundle
 
 
