@@ -25,8 +25,9 @@ main()
 
 	OUTPUT="${NANO_OBJ}/$NANO_NAME.iso" # Output file of mkisofs
 
+	CDROM_LABEL=${NANO_LABEL}_INSTALL
 	MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
-			 -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
+			 -allow-multidot -hide boot.catalog -V ${CDROM_LABEL} -o ${OUTPUT} -no-emul-boot \
 			 -b boot/cdboot ${ISODIR}"
 
 	if ! command -v mkisofs >/dev/null 2>&1; then
@@ -275,6 +276,7 @@ main()
 	mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
 
 	cp -p ${AVATAR_ROOT}/build/files/loader.conf.cdrom ${ISODIR}/boot/loader.conf
+	sed -i "" 's/%CDROM_LABEL%/'${CDROM_LABEL}'/'  ${ISODIR}/boot/loader.conf
 	cp -p ${AVATAR_ROOT}/build/files/mount.conf.cdrom ${ISODIR}/.mount.conf
 
 	eval ${MKISOFS_CMD}

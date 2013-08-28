@@ -5,3 +5,4 @@ autoboot_delay="2"
 #loader_logo="freenas"
 
 boot_cdrom="YES"
+vfs.root.mountfrom="cd9660:iso9660/%CDROM_LABEL%"
