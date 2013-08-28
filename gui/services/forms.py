@@ -777,21 +777,10 @@ class LDAPForm(ModelForm):
 
 
 class iSCSITargetAuthCredentialForm(ModelForm):
-    iscsi_target_auth_secret1 = forms.CharField(
-        label=_("Secret"),
-        widget=forms.PasswordInput(render_value=True),
-        help_text=_("Target side secret.")
-    )
     iscsi_target_auth_secret2 = forms.CharField(
         label=_("Secret (Confirm)"),
         widget=forms.PasswordInput(render_value=True),
         help_text=_("Enter the same secret above for verification.")
-    )
-    iscsi_target_auth_peersecret1 = forms.CharField(
-        label=_("Initiator Secret"),
-        widget=forms.PasswordInput(render_value=True),
-        help_text=_("Initiator side secret. (for mutual CHAP authentication)"),
-        required=False,
     )
     iscsi_target_auth_peersecret2 = forms.CharField(
         label=_("Initiator Secret (Confirm)"),
@@ -802,32 +791,28 @@ class iSCSITargetAuthCredentialForm(ModelForm):
 
     class Meta:
         model = models.iSCSITargetAuthCredential
-        exclude = ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret',)
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetAuthCredentialForm, self).__init__(*args, **kwargs)
         self.fields.keyOrder = [
             'iscsi_target_auth_tag',
             'iscsi_target_auth_user',
-            'iscsi_target_auth_secret1',
+            'iscsi_target_auth_secret',
             'iscsi_target_auth_secret2',
             'iscsi_target_auth_peeruser',
-            'iscsi_target_auth_peersecret1',
-            'iscsi_target_auth_peersecret2']
+            'iscsi_target_auth_peersecret',
+            'iscsi_target_auth_peersecret2'
+        ]
 
         ins = kwargs.get("instance", None)
         if ins:
-            self.fields['iscsi_target_auth_secret1'].initial = (
-                self.instance.iscsi_target_auth_secret)
             self.fields['iscsi_target_auth_secret2'].initial = (
                 self.instance.iscsi_target_auth_secret)
-            self.fields['iscsi_target_auth_peersecret1'].initial = (
-                self.instance.iscsi_target_auth_peersecret)
             self.fields['iscsi_target_auth_peersecret2'].initial = (
                 self.instance.iscsi_target_auth_peersecret)
 
     def _clean_secret_common(self, secretprefix):
-        secret1 = self.cleaned_data.get(("%s1" % secretprefix), "")
+        secret1 = self.cleaned_data.get(secretprefix, "")
         secret2 = self.cleaned_data[("%s2" % secretprefix)]
         if secret1 != secret2:
             raise forms.ValidationError(_("Secret does not match"))
@@ -843,33 +828,63 @@ class iSCSITargetAuthCredentialForm(ModelForm):
         cdata = self.cleaned_data
 
         if len(cdata.get('iscsi_target_auth_peeruser', '')) > 0:
-            if len(cdata.get('iscsi_target_auth_peersecret1', '')) == 0:
-                del cdata['iscsi_target_auth_peersecret1']
-                self._errors['iscsi_target_auth_peersecret1'] = self.error_class([_("The peer secret is required if you set a peer user.")])
-                self._errors['iscsi_target_auth_peersecret2'] = self.error_class([_("The peer secret is required if you set a peer user.")])
-            elif cdata.get('iscsi_target_auth_peersecret1', '') == cdata.get('iscsi_target_auth_secret1', ''):
-                del cdata['iscsi_target_auth_peersecret1']
-                self._errors['iscsi_target_auth_peersecret1'] = self.error_class([_("The peer secret cannot be the same as user secret.")])
+            if len(cdata.get('iscsi_target_auth_peersecret', '')) == 0:
+                del cdata['iscsi_target_auth_peersecret']
+                self._errors['iscsi_target_auth_peersecret'] = (
+                    self.error_class([_(
+                        "The peer secret is required if you set a peer user."
+                    )])
+                )
+                self._errors['iscsi_target_auth_peersecret2'] = (
+                    self.error_class([_(
+                        "The peer secret is required if you set a peer user."
+                    )])
+                )
+            elif cdata.get('iscsi_target_auth_peersecret', '') == cdata.get(
+                'iscsi_target_auth_secret', ''
+            ):
+                del cdata['iscsi_target_auth_peersecret']
+                self._errors['iscsi_target_auth_peersecret'] = (
+                    self.error_class([_(
+                        "The peer secret cannot be the same as user secret."
+                    )])
+                )
         else:
-            if len(cdata.get('iscsi_target_auth_peersecret1', '')) > 0:
-                self._errors['iscsi_target_auth_peersecret1'] = self.error_class([_("The peer user is required if you set a peer secret.")])
-                del cdata['iscsi_target_auth_peersecret1']
+            if len(cdata.get('iscsi_target_auth_peersecret', '')) > 0:
+                self._errors['iscsi_target_auth_peersecret'] = (
+                    self.error_class([_(
+                        "The peer user is required if you set a peer secret."
+                    )])
+                )
+                del cdata['iscsi_target_auth_peersecret']
             if len(cdata.get('iscsi_target_auth_peersecret2', '')) > 0:
-                self._errors['iscsi_target_auth_peersecret2'] = self.error_class([_("The peer user is required if you set a peer secret.")])
+                self._errors['iscsi_target_auth_peersecret2'] = (
+                    self.error_class([_(
+                        "The peer user is required if you set a peer secret."
+                    )])
+                )
                 del cdata['iscsi_target_auth_peersecret2']
 
         return cdata
 
     def save(self, commit=True):
-        oAuthCredential = super(iSCSITargetAuthCredentialForm, self).save(commit=False)
-        oAuthCredential.iscsi_target_auth_secret = self.cleaned_data["iscsi_target_auth_secret1"]
-        oAuthCredential.iscsi_target_auth_peersecret = self.cleaned_data["iscsi_target_auth_peersecret1"]
+        obj = super(iSCSITargetAuthCredentialForm, self).save(commit=False)
+        obj.iscsi_target_auth_secret = self.cleaned_data.get(
+            'iscsi_target_auth_secret'
+        )
+        obj.iscsi_target_auth_peersecret = self.cleaned_data.get(
+            'iscsi_target_auth_peersecret'
+        )
         if commit:
-            oAuthCredential.save()
+            obj.save()
         started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
-        return oAuthCredential
+        if started is False and models.services.objects.get(
+            srv_service='iscsitarget'
+        ).srv_enable:
+            raise ServiceFailed(
+                "iscsitarget", _("The iSCSI service failed to reload.")
+            )
+        return obj
 
 
 class iSCSITargetToExtentForm(ModelForm):
