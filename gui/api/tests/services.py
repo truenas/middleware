@@ -1101,3 +1101,102 @@ class iSCSITargetAuthorizedInitiatorResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpAccepted(resp)
+
+
+class iSCSITargetAuthCredentialResourceTest(APITestCase):
+
+    def setUp(self):
+        super(iSCSITargetAuthCredentialResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='iscsitarget',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'iscsi_target_auth_tag': 1,
+                'iscsi_target_auth_user': 'user',
+                'iscsi_target_auth_secret': 'secret',
+                'iscsi_target_auth_secret2': 'secret',  # FIXME: only 1 pwd
+                'iscsi_target_auth_peeruser': 'peeruser',
+                'iscsi_target_auth_peersecret': 'peersecret',
+                'iscsi_target_auth_peersecret2': 'peersecret',
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'iscsi_target_auth_peersecret': u'peersecret',
+            u'iscsi_target_auth_peersecret2': u'peersecret',
+            u'iscsi_target_auth_peeruser': u'peeruser',
+            u'iscsi_target_auth_secret': u'secret',
+            u'iscsi_target_auth_secret2': u'secret',
+            u'iscsi_target_auth_tag': 1,
+            u'iscsi_target_auth_user': u'user'
+        })
+
+    def test_Retrieve(self):
+        obj = models.iSCSITargetAuthCredential.objects.create(
+            iscsi_target_auth_user='user',
+            iscsi_target_auth_secret='secret',
+            iscsi_target_auth_peeruser='peeruser',
+            iscsi_target_auth_peersecret='peersecret',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'iscsi_target_auth_peersecret': u'peersecret',
+            u'iscsi_target_auth_peeruser': u'peeruser',
+            u'iscsi_target_auth_secret': u'secret',
+            u'iscsi_target_auth_tag': 1,
+            u'iscsi_target_auth_user': u'user'
+        }])
+
+    def test_Update(self):
+        obj = models.iSCSITargetAuthCredential.objects.create(
+            iscsi_target_auth_user='user',
+            iscsi_target_auth_secret='secret',
+            iscsi_target_auth_peeruser='peeruser',
+            iscsi_target_auth_peersecret='peersecret',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'iscsi_target_auth_user': 'user2',
+                'iscsi_target_auth_peersecret2': u'peersecret',  # FIXME
+                'iscsi_target_auth_secret2': u'secret',  # FIXME
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['iscsi_target_auth_user'], 'user2')
+
+    def test_Delete(self):
+        obj = models.iSCSITargetAuthCredential.objects.create(
+            iscsi_target_auth_user='user',
+            iscsi_target_auth_secret='secret',
+            iscsi_target_auth_peeruser='peeruser',
+            iscsi_target_auth_peersecret='peersecret',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
