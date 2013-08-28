@@ -102,7 +102,6 @@ main()
 	#
 	ln -s /rescue/[ ${INSTALLUFSDIR}/bin/[
 	ln -s /rescue/atacontrol ${INSTALLUFSDIR}/sbin/atacontrol
-	ln -s /rescue/awk ${INSTALLUFSDIR}/usr/bin/awk
 	ln -s /rescue/badsect ${INSTALLUFSDIR}/sbin/badsect
 	ln -s /rescue/bsdlabel ${INSTALLUFSDIR}/sbin/bsdlabel
 	ln -s /rescue/bunzip2 ${INSTALLUFSDIR}/usr/bin/bunzip2
@@ -118,18 +117,14 @@ main()
 	ln -s /rescue/chown ${INSTALLUFSDIR}/usr/sbin/chown
 	ln -s /rescue/chroot ${INSTALLUFSDIR}/usr/sbin/chroot
 	ln -s /rescue/clri ${INSTALLUFSDIR}/sbin/clri
-	ln -s /rescue/cmp ${INSTALLUFSDIR}/usr/bin/cmp
 	ln -s /rescue/cp ${INSTALLUFSDIR}/bin/cp
 	ln -s /rescue/csh ${INSTALLUFSDIR}/bin/csh
-	ln -s /rescue/cut ${INSTALLUFSDIR}/usr/bin/cut
 	ln -s /rescue/date ${INSTALLUFSDIR}/bin/date
 	ln -s /rescue/dd ${INSTALLUFSDIR}/bin/dd
 	ln -s /rescue/devfs ${INSTALLUFSDIR}/sbin/devfs
 	ln -s /rescue/df ${INSTALLUFSDIR}/bin/df
 	ln -s /rescue/dhclient ${INSTALLUFSDIR}/sbin/dhclient
 	ln -s /rescue/dhclient-script ${INSTALLUFSDIR}/sbin/dhclient-script
-	ln -s /rescue/dirname ${INSTALLUFSDIR}/usr/bin/dirname
-	ln -s /rescue/diskinfo ${INSTALLUFSDIR}/usr/sbin/diskinfo
 	ln -s /rescue/disklabel ${INSTALLUFSDIR}/sbin/disklabel
 	ln -s /rescue/dmesg ${INSTALLUFSDIR}/sbin/dmesg
 	ln -s /rescue/dump ${INSTALLUFSDIR}/sbin/dump
@@ -142,7 +137,6 @@ main()
 	ln -s /rescue/fastboot ${INSTALLUFSDIR}/sbin/fastboot
 	ln -s /rescue/fasthalt ${INSTALLUFSDIR}/sbin/fasthalt
 	ln -s /rescue/fdisk ${INSTALLUFSDIR}/sbin/fdisk
-	ln -s /rescue/find ${INSTALLUFSDIR}/usr/bin/find
 	ln -s /rescue/fsck ${INSTALLUFSDIR}/sbin/fsck
 	ln -s /rescue/fsck_4.2bsd ${INSTALLUFSDIR}/sbin/fsck_4.2bsd
 	ln -s /rescue/fsck_ffs ${INSTALLUFSDIR}/sbin/fsck_ffs
@@ -155,7 +149,6 @@ main()
 	ln -s /rescue/getfacl ${INSTALLUFSDIR}/bin/getfacl
 	ln -s /rescue/glabel ${INSTALLUFSDIR}/sbin/glabel
 	ln -s /rescue/gpart ${INSTALLUFSDIR}/sbin/gpart
-	ln -s /rescue/grep ${INSTALLUFSDIR}/usr/bin/grep
 	ln -s /rescue/groups ${INSTALLUFSDIR}/usr/bin/groups
 	ln -s /rescue/gunzip ${INSTALLUFSDIR}/usr/bin/gunzip
 	ln -s /rescue/gzcat ${INSTALLUFSDIR}/usr/bin/gzcat
@@ -184,7 +177,6 @@ main()
 	ln -s /rescue/mdmfs ${INSTALLUFSDIR}/sbin/mdmfs
 	ln -s /rescue/mkdir ${INSTALLUFSDIR}/bin/mkdir
 	ln -s /rescue/mknod ${INSTALLUFSDIR}/sbin/mknod
-	ln -s /rescue/mktemp ${INSTALLUFSDIR}/usr/bin/mktemp
 	ln -s /rescue/more ${INSTALLUFSDIR}/usr/bin/more
 	ln -s /rescue/mount ${INSTALLUFSDIR}/sbin/mount
 	ln -s /rescue/mount_cd9660 ${INSTALLUFSDIR}/sbin/mount_cd9660
@@ -221,11 +213,8 @@ main()
 	ln -s /rescue/rtquery ${INSTALLUFSDIR}/sbin/rtquery
 	ln -s /rescue/rtsol ${INSTALLUFSDIR}/sbin/rtsol
 	ln -s /rescue/savecore ${INSTALLUFSDIR}/sbin/savecore
-	ln -s /rescue/sed ${INSTALLUFSDIR}/usr/bin/sed
 	ln -s /rescue/setfacl ${INSTALLUFSDIR}/bin/setfacl
 	ln -s /rescue/sh ${INSTALLUFSDIR}/bin/sh
-	ln -s /rescue/sleep ${INSTALLUFSDIR}/bin/sleep
-	ln -s /rescue/sort ${INSTALLUFSDIR}/usr/bin/sort
 	ln -s /rescue/spppcontrol ${INSTALLUFSDIR}/sbin/spppcontrol
 	ln -s /rescue/stty ${INSTALLUFSDIR}/bin/stty
 	ln -s /rescue/swapon ${INSTALLUFSDIR}/sbin/swapon
@@ -236,17 +225,13 @@ main()
 	ln -s /rescue/tcsh ${INSTALLUFSDIR}/bin/tcsh
 	ln -s /rescue/tee ${INSTALLUFSDIR}/usr/bin/tee
 	ln -s /rescue/test ${INSTALLUFSDIR}/bin/test
-	ln -s /rescue/tr ${INSTALLUFSDIR}/usr/bin/tr
 	ln -s /rescue/tunefs ${INSTALLUFSDIR}/sbin/tunefs
 	ln -s /rescue/umount ${INSTALLUFSDIR}/sbin/umount
-	ln -s /rescue/uname ${INSTALLUFSDIR}/usr/bin/uname
 	ln -s /rescue/unlink ${INSTALLUFSDIR}/bin/unlink
 	ln -s /rescue/unlzma ${INSTALLUFSDIR}/usr/bin/unlzma
 	ln -s /rescue/unxz ${INSTALLUFSDIR}/usr/bin/unxz
 	ln -s /rescue/vi ${INSTALLUFSDIR}/usr/bin/vi
-	ln -s /rescue/vidcontrol ${INSTALLUFSDIR}/usr/sbin/vidcontrol
 	ln -s /rescue/whoami ${INSTALLUFSDIR}/usr/bin/whoami
-	ln -s /rescue/xargs ${INSTALLUFSDIR}/usr/bin/xargs
 	ln -s /rescue/xz ${INSTALLUFSDIR}/usr/bin/xz
 	ln -s /rescue/xzcat ${INSTALLUFSDIR}/usr/bin/xzcat
 	ln -s /rescue/zcat ${INSTALLUFSDIR}/usr/bin/zcat
@@ -259,7 +244,22 @@ main()
 	ln -s /.mount/boot ${INSTALLUFSDIR}/boot
 
 	# Copy in binaries needed on install CD-ROM
+	cp -p ${NANO_OBJ}/_.w/bin/sleep ${INSTALLUFSDIR}/bin/sleep
 	cp -p ${NANO_OBJ}/_.w/usr/bin/dialog ${INSTALLUFSDIR}/usr/bin/dialog
+	cp -p ${NANO_OBJ}/_.w/usr/bin/dirname ${INSTALLUFSDIR}/usr/bin/dirname
+	cp -p ${NANO_OBJ}/_.w/usr/bin/awk ${INSTALLUFSDIR}/usr/bin/awk
+	cp -p ${NANO_OBJ}/_.w/usr/bin/cut ${INSTALLUFSDIR}/usr/bin/cut
+	cp -p ${NANO_OBJ}/_.w/usr/bin/cmp ${INSTALLUFSDIR}/usr/bin/cmp
+	cp -p ${NANO_OBJ}/_.w/usr/bin/find ${INSTALLUFSDIR}/usr/bin/find
+	cp -p ${NANO_OBJ}/_.w/usr/bin/grep ${INSTALLUFSDIR}/usr/bin/grep
+	cp -p ${NANO_OBJ}/_.w/usr/bin/mktemp ${INSTALLUFSDIR}/usr/bin/mktemp
+	cp -p ${NANO_OBJ}/_.w/usr/bin/sed ${INSTALLUFSDIR}/usr/bin/sed
+	cp -p ${NANO_OBJ}/_.w/usr/bin/sort ${INSTALLUFSDIR}/usr/bin/sort
+	cp -p ${NANO_OBJ}/_.w/usr/bin/tr ${INSTALLUFSDIR}/usr/bin/tr
+	cp -p ${NANO_OBJ}/_.w/usr/bin/uname ${INSTALLUFSDIR}/usr/bin/uname
+	cp -p ${NANO_OBJ}/_.w/usr/bin/xargs ${INSTALLUFSDIR}/usr/bin/xargs
+	cp -p ${NANO_OBJ}/_.w/usr/sbin/diskinfo ${INSTALLUFSDIR}/usr/sbin/diskinfo
+	cp -p ${NANO_OBJ}/_.w/usr/sbin/vidcontrol ${INSTALLUFSDIR}/usr/sbin/vidcontrol
 
 	# The presence of /etc/diskless will trigger /etc/rc to run /etc/rc.initdiskless.
 	touch ${INSTALLUFSDIR}/etc/diskless
