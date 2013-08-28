@@ -1387,3 +1387,89 @@ class iSCSITargetToExtentResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpAccepted(resp)
+
+
+class iSCSITargetPortalResourceTest(APITestCase):
+
+    maxDiff = None
+    def setUp(self):
+        super(iSCSITargetPortalResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='iscsitarget',
+        )
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+            data={
+                'iscsi_target_portal_comment': 'comment',
+                'iscsi_target_portal_ips': ['0.0.0.0:3260'],
+            }
+        )
+        self.assertHttpCreated(resp)
+        self.assertValidJSON(resp.content)
+
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': 1,
+            u'iscsi_target_portal_comment': u'comment',
+            u'iscsi_target_portal_ips': [u'0.0.0.0:3260'],
+            u'iscsi_target_portal_tag': 1
+        })
+
+    def test_Retrieve(self):
+        obj = models.iSCSITargetPortal.objects.create()
+        ip = models.iSCSITargetPortalIP.objects.create(
+            iscsi_target_portalip_portal=obj,
+            iscsi_target_portalip_ip='0.0.0.0',
+        )
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': obj.id,
+            u'iscsi_target_portal_comment': u'',
+            u'iscsi_target_portal_ips': [u'0.0.0.0:3260'],
+            u'iscsi_target_portal_tag': 1
+        }])
+
+    def test_Update(self):
+        obj = models.iSCSITargetPortal.objects.create()
+        ip = models.iSCSITargetPortalIP.objects.create(
+            iscsi_target_portalip_portal=obj,
+            iscsi_target_portalip_ip='0.0.0.0',
+        )
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+            data={
+                'iscsi_target_portal_comment': 'comment2',
+                'iscsi_target_portal_ips': ['0.0.0.0:3261'],
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], obj.id)
+        self.assertEqual(data['iscsi_target_portal_comment'], 'comment2')
+        self.assertEqual(data['iscsi_target_portal_ips'], ['0.0.0.0:3261'])
+
+    def test_Delete(self):
+        obj = models.iSCSITargetPortal.objects.create()
+        ip = models.iSCSITargetPortalIP.objects.create(
+            iscsi_target_portalip_portal=obj,
+            iscsi_target_portalip_ip='0.0.0.0',
+        )
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpAccepted(resp)
