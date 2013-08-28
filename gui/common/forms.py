@@ -61,6 +61,7 @@ class ModelForm(AdvMixin, MF):
     """
     def __init__(self, *args, **kwargs):
         self._fserrors = {}
+        self._api = kwargs.pop('api_validation', False)
         super(ModelForm, self).__init__(*args, **kwargs)
         for name, field in self.fields.items():
             if hasattr(field, "_reroll"):

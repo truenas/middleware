@@ -289,6 +289,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
         form = self._meta.validation.form_class(
             querydict,
             instance=bundle.obj,
+            api_validation=True,
         )
         if not self.is_form_valid(bundle, form):
             raise ImmediateHttpResponse(
