@@ -304,7 +304,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
         )
         if not self.is_form_valid(bundle, form):
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, form._errors)
+                response=self.error_response(bundle.request, bundle.errors)
             )
 
         """
