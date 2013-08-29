@@ -156,7 +156,7 @@ class JailsQuerySet(QuerySet):
     def filter(self, *args, **kwargs):
         models = []
         results = []
-        for wj in self.__wlist:
+        for wj in list(self.__wlist):
 
             found = 0
             count = len(kwargs)
@@ -167,10 +167,7 @@ class JailsQuerySet(QuerySet):
                 if key in wj and str(wj[key]) == str(kwargs[k]):
                     found += 1
 
-            if found == count:
-                results.append(wj)
+            if found != count:
+                self.__wlist.remove(wj)
 
-        for r in results:
-            models.append(self.model(**r))
-
-        return models
+        return self
