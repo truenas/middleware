@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-07-10 21:43+0200\n"
+"PO-Revision-Date: 2013-08-28 20:21+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -4487,7 +4487,7 @@ msgstr "Uklanjanje diska je uspešno urađeno."
 
 #: storage/views.py:723
 msgid "Disk offline operation has been issued."
-msgstr ""
+msgstr "Izdata je operacija da je disk nedostupan"
 
 #: storage/views.py:740
 msgid "Disk has been removed."
@@ -4520,7 +4520,7 @@ msgstr "Broj je obavezan."
 
 #: system/forms.py:245
 msgid "Force"
-msgstr ""
+msgstr "Forsiraj"
 
 #: system/forms.py:268
 msgid "Max Poll should be higher than Min Poll"
@@ -4529,6 +4529,8 @@ msgstr "Max Poll bi trebalo da bude veći nego Min Poll"
 #: system/forms.py:274
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
 msgstr ""
+"Server nije dostupan. Čekiraj \"Forsirati\" da bi se nastavilo bez obzira na "
+"sve."
 
 #: system/forms.py:496
 #, python-format
@@ -4621,6 +4623,9 @@ msgid ""
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
 msgstr ""
+"Kada je server dostupan, poslati interval od osam paketa umesto jednog "
+"uobičajenog. Ovo je dizajnirano kako bi se unapredilo kvalitet čuvanja "
+"vremena sa serverskom komandom i s adresama."
 
 #: system/models.py:104
 msgid "IBurst"
@@ -4632,6 +4637,9 @@ msgid ""
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
 msgstr ""
+"Kada je server nedostupan, poslati interval od osam paketa umesto jednog "
+"uobičajenog. Ovo je dizajnirano kako bi se ubrzala početna sinhronizacije "
+"dobijanja serverske komande i s adrese."
 
 #: system/models.py:112 templates/system/ntpserver.html:8
 msgid "Prefer"
@@ -4986,7 +4994,7 @@ msgstr "Obrisati datoteke na prijemnoj strani koje ne postoje kod pošiljaoca"
 
 #: system/models.py:553
 msgid "Suppress non-error messages"
-msgstr ""
+msgstr "Ne prikazuj poruke koje nisu greške"
 
 #: system/models.py:557
 msgid "Preserve permissions"
@@ -5305,7 +5313,7 @@ msgstr "IRC(ćaskanje)"
 
 #: templates/freeadmin/index.html:66
 msgid "#freenas on freenode"
-msgstr ""
+msgstr "#freenas na freenode-u"
 
 #: templates/freeadmin/index.html:70
 msgid "Mailing Lists"
@@ -5552,7 +5560,7 @@ msgstr "Otpremiti Jail PBI"
 #: templates/storage/zvol_confirm_delete.html:13
 #: templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr ""
+msgstr "Sačekajte..."
 
 #: templates/plugins/mountpoints.html:19
 msgid "Edit Mount Point"
@@ -5956,7 +5964,7 @@ msgstr "Dodaj skup podataka"
 #: templates/storage/disk_detach.html:7
 #: templates/storage/volume_detach.html:20
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "Da li ste sigurni da želite da odvojite?"
 
 #: templates/storage/disk_offline.html:3
 msgid "Are you sure you want to offline?"

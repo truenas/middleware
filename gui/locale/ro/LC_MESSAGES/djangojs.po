@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-06-14 08:23+0200\n"
-"Last-Translator: liviu <vasies.liviu@gmail.com>\n"
+"PO-Revision-Date: 2013-08-28 16:36+0200\n"
+"Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
-msgstr "Raportării"
+msgstr "Raportare"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -54,15 +54,15 @@ msgstr "Au apărut unele erori!"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
-msgstr "Modificare"
+msgstr "Editare"
 
 #: freeadmin/static/lib/js/freeadmin.js:542
 msgid "Edit Disk"
-msgstr "Modificare disc"
+msgstr "Editare disc"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr "șterge"
+msgstr "Ştergere"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
 msgid "Wipe Disk"
@@ -70,7 +70,7 @@ msgstr "Ștergere disc"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr "Aştepta-ți vă rog..."
+msgstr "Vă rugăm aşteptaţi..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -85,22 +85,22 @@ msgid "Every N"
 msgstr "Fiecare N"
 
 msgid "Plugins"
-msgstr "plugin-uri"
+msgstr "Plugin-uri"
 
 msgid "CronJobs"
 msgstr "Sarcinii programate"
 
 msgid "Replace"
-msgstr "Reînlocuire"
+msgstr "Înlocuire"
 
 msgid "Disk Replacement"
-msgstr "Reînlocuire disc"
+msgstr "Înlocuire disc"
 
 msgid "Detach"
-msgstr "Desprindere"
+msgstr "Detaşare"
 
 msgid "Disk Detach"
-msgstr "Desprindere disc"
+msgstr "Detaşare disc"
 
 msgid "Every"
 msgstr "Fiecare"
