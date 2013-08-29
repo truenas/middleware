@@ -1078,117 +1078,10 @@ class DiskEditBulkForm(Form):
         return self._disks
 
 
-class ZFSDataset_CreateForm(Form):
+class ZFSDataset(Form):
     dataset_name = forms.CharField(
         max_length=128,
         label=_('Dataset Name'))
-    dataset_compression = forms.ChoiceField(
-        choices=choices.ZFS_CompressionChoices,
-        widget=forms.Select(attrs=attrs_dict),
-        label=_('Compression level'))
-    dataset_atime = forms.ChoiceField(
-        choices=choices.ZFS_AtimeChoices,
-        widget=forms.RadioSelect(attrs=attrs_dict),
-        label=_('Enable atime'))
-    dataset_refquota = forms.CharField(
-        max_length=128,
-        initial=0,
-        label=_('Quota for this dataset'),
-        help_text=_('0=Unlimited; example: 1g'))
-    dataset_quota = forms.CharField(
-        max_length=128,
-        initial=0,
-        label=_('Quota for this dataset and all children'),
-        help_text=_('0=Unlimited; example: 1g'))
-    dataset_refreserv = forms.CharField(
-        max_length=128,
-        initial=0,
-        label=_('Reserved space for this dataset'),
-        help_text=_('0=None; example: 1g'))
-    dataset_reserv = forms.CharField(
-        max_length=128,
-        initial=0,
-        label=_('Reserved space for this dataset and all children'),
-        help_text=_('0=None; example: 1g'))
-    dataset_dedup = forms.ChoiceField(
-        label=_('ZFS Deduplication'),
-        choices=choices.ZFS_DEDUP_INHERIT,
-        widget=WarningSelect(text=DEDUP_WARNING),
-        initial="inherit",
-    )
-    dataset_recordsize = forms.CharField(
-        label=_('Record Size'),
-        initial="",
-        required=False,
-        help_text=_(
-            "Specifies a suggested block size for files in the file system. "
-            "This property is designed solely for use with database workloads "
-            "that access files in fixed-size records.  ZFS automatically tunes"
-            " block sizes according to internal algorithms optimized for "
-            "typical access patterns."
-        )
-    )
-
-    advanced_fields = (
-        'dataset_refquota',
-        'dataset_quota',
-        'dataset_refreserv',
-        'dataset_reserv',
-        'dataset_recordsize'
-    )
-
-    def __init__(self, *args, **kwargs):
-        self.fs = kwargs.pop('fs')
-        super(ZFSDataset_CreateForm, self).__init__(*args, **kwargs)
-
-    def clean_dataset_name(self):
-        name = self.cleaned_data["dataset_name"]
-        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
-            raise forms.ValidationError(_(
-                "Dataset names must begin with an "
-                "alphanumeric character and may only contain "
-                "\"-\", \"_\", \":\" and \".\"."))
-        return name
-
-    def clean_dataset_recordsize(self):
-        rs = self.cleaned_data.get("dataset_recordsize")
-        if not rs:
-            return rs
-        if not re.search(r'^[0-9]+K?', rs, re.I):
-            raise forms.ValidationError(_("This is not a valid record size"))
-        if rs[-1].lower() == 'k':
-            rs = int(rs[:-1]) * 1024
-        else:
-            rs = int(rs)
-        poftwo = pow(rs, 0.5)
-        if (rs < 512 or rs > 131072) or poftwo != int(poftwo):
-            raise forms.ValidationError(_(
-                "The size specified must be a power of two greater than or "
-                "equal to 512 and less than or equal to 128 Kbytes."
-            ))
-        return rs
-
-    def clean(self):
-        cleaned_data = _clean_quota_fields(
-            self,
-            ('refquota', 'quota', 'reserv', 'refreserv'),
-            "dataset_")
-        full_dataset_name = "%s/%s" % (
-            self.fs,
-            cleaned_data.get("dataset_name"))
-        if len(zfs.list_datasets(path=full_dataset_name)) > 0:
-            msg = _(u"You already have a dataset with the same name")
-            self._errors["dataset_name"] = self.error_class([msg])
-            del cleaned_data["dataset_name"]
-        return cleaned_data
-
-    def set_error(self, msg):
-        msg = u"%s" % msg
-        self._errors['__all__'] = self.error_class([msg])
-        del self.cleaned_data
-
-
-class ZFSDataset_EditForm(Form):
     dataset_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
@@ -1221,7 +1114,19 @@ class ZFSDataset_EditForm(Form):
         label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
         widget=WarningSelect(text=DEDUP_WARNING),
-        initial="off",
+        initial="inherit",
+    )
+    dataset_recordsize = forms.CharField(
+        label=_('Record Size'),
+        initial="",
+        required=False,
+        help_text=_(
+            "Specifies a suggested block size for files in the file system. "
+            "This property is designed solely for use with database workloads "
+            "that access files in fixed-size records.  ZFS automatically tunes"
+            " block sizes according to internal algorithms optimized for "
+            "typical access patterns."
+        )
     )
 
     advanced_fields = (
@@ -1229,34 +1134,75 @@ class ZFSDataset_EditForm(Form):
         'dataset_quota',
         'dataset_refreservation',
         'dataset_reservation',
+        'dataset_recordsize'
     )
 
     def __init__(self, *args, **kwargs):
-        self._fs = kwargs.pop("fs", None)
-        super(ZFSDataset_EditForm, self).__init__(*args, **kwargs)
-        data = notifier().zfs_get_options(self._fs)
-        self.fields['dataset_compression'].initial = data['compression']
-        self.fields['dataset_atime'].initial = data['atime']
+        self._fs = kwargs.pop('fs')
+        self._create = kwargs.pop('create', True)
+        super(ZFSDataset, self).__init__(*args, **kwargs)
+        if self._create is False:
+            del self.fields['dataset_name']
+            del self.fields['dataset_recordsize']
+            data = notifier().zfs_get_options(self._fs)
+            self.fields['dataset_compression'].initial = data['compression']
+            self.fields['dataset_atime'].initial = data['atime']
 
-        for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
-            formfield = 'dataset_%s' % (attr)
-            if data[attr] == 'none':
-                self.fields[formfield].initial = 0
+            for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
+                formfield = 'dataset_%s' % (attr)
+                if data[attr] == 'none':
+                    self.fields[formfield].initial = 0
+                else:
+                    self.fields[formfield].initial = data[attr]
+
+            if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
+                self.fields['dataset_dedup'].initial = data['dedup']
+            elif data['dedup'] == 'sha256,verify':
+                self.fields['dataset_dedup'].initial = 'verify'
             else:
-                self.fields[formfield].initial = data[attr]
+                self.fields['dataset_dedup'].initial = 'off'
 
-        if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
-            self.fields['dataset_dedup'].initial = data['dedup']
-        elif data['dedup'] == 'sha256,verify':
-            self.fields['dataset_dedup'].initial = 'verify'
+    def clean_dataset_name(self):
+        name = self.cleaned_data["dataset_name"]
+        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
+            raise forms.ValidationError(_(
+                "Dataset names must begin with an "
+                "alphanumeric character and may only contain "
+                "\"-\", \"_\", \":\" and \".\"."))
+        return name
+
+    def clean_dataset_recordsize(self):
+        rs = self.cleaned_data.get("dataset_recordsize")
+        if not rs:
+            return rs
+        if not re.search(r'^[0-9]+K?', rs, re.I):
+            raise forms.ValidationError(_("This is not a valid record size"))
+        if rs[-1].lower() == 'k':
+            rs = int(rs[:-1]) * 1024
         else:
-            self.fields['dataset_dedup'].initial = 'off'
+            rs = int(rs)
+        poftwo = pow(rs, 0.5)
+        if (rs < 512 or rs > 131072) or poftwo != int(poftwo):
+            raise forms.ValidationError(_(
+                "The size specified must be a power of two greater than or "
+                "equal to 512 and less than or equal to 128 Kbytes."
+            ))
+        return rs
 
     def clean(self):
-        return _clean_quota_fields(
+        cleaned_data = _clean_quota_fields(
             self,
             ('refquota', 'quota', 'reservation', 'refreservation'),
             "dataset_")
+        if self._create is True:
+            full_dataset_name = "%s/%s" % (
+                self._fs,
+                cleaned_data.get("dataset_name"))
+            if len(zfs.list_datasets(path=full_dataset_name)) > 0:
+                msg = _(u"You already have a dataset with the same name")
+                self._errors["dataset_name"] = self.error_class([msg])
+                del cleaned_data["dataset_name"]
+        return cleaned_data
 
     def set_error(self, msg):
         msg = u"%s" % msg

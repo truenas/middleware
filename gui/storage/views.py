@@ -255,7 +255,7 @@ def volimport(request):
 def dataset_create(request, fs):
     defaults = {'dataset_compression': 'inherit', 'dataset_atime': 'inherit'}
     if request.method == 'POST':
-        dataset_form = forms.ZFSDataset_CreateForm(request.POST, fs=fs)
+        dataset_form = forms.ZFSDataset(request.POST, fs=fs)
         if dataset_form.is_valid():
             props = {}
             cleaned_data = dataset_form.cleaned_data
@@ -270,10 +270,10 @@ def dataset_create(request, fs):
             quota = cleaned_data.get('dataset_quota')
             if quota != '0':
                 props['quota'] = quota.__str__()
-            refreservation = cleaned_data.get('dataset_refreserv')
+            refreservation = cleaned_data.get('dataset_refreservation')
             if refreservation != '0':
                 props['refreservation'] = refreservation.__str__()
-            refreservation = cleaned_data.get('dataset_reserv')
+            refreservation = cleaned_data.get('dataset_reservation')
             if refreservation != '0':
                 props['refreservation'] = refreservation.__str__()
             dedup = cleaned_data.get('dataset_dedup')
@@ -282,6 +282,7 @@ def dataset_create(request, fs):
             recordsize = cleaned_data.get('dataset_recordsize')
             if recordsize:
                 props['recordsize'] = recordsize
+            log.error("props %r", props)
             errno, errmsg = notifier().create_zfs_dataset(
                 path=str(dataset_name),
                 props=props)
@@ -295,7 +296,7 @@ def dataset_create(request, fs):
         else:
             return JsonResp(request, form=dataset_form)
     else:
-        dataset_form = forms.ZFSDataset_CreateForm(initial=defaults, fs=fs)
+        dataset_form = forms.ZFSDataset(initial=defaults, fs=fs)
     return render(request, 'storage/datasets.html', {
         'form': dataset_form,
         'fs': fs,
@@ -304,7 +305,9 @@ def dataset_create(request, fs):
 
 def dataset_edit(request, dataset_name):
     if request.method == 'POST':
-        dataset_form = forms.ZFSDataset_EditForm(request.POST, fs=dataset_name)
+        dataset_form = forms.ZFSDataset(
+            request.POST, fs=dataset_name, create=False
+        )
         if dataset_form.is_valid():
             if dataset_form.cleaned_data["dataset_quota"] == "0":
                 dataset_form.cleaned_data["dataset_quota"] = "none"
@@ -350,7 +353,7 @@ def dataset_edit(request, dataset_name):
         else:
             return JsonResp(request, form=dataset_form)
     else:
-        dataset_form = forms.ZFSDataset_EditForm(fs=dataset_name)
+        dataset_form = forms.ZFSDataset(fs=dataset_name, create=False)
     return render(request, 'storage/dataset_edit.html', {
         'dataset_name': dataset_name,
         'form': dataset_form
