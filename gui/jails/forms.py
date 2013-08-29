@@ -201,14 +201,10 @@ class JailCreateForm(ModelForm):
         try:
             jc = JailsConfiguration.objects.order_by("-id")[0]
         except Exception as e:
-            self.errors['__all__'] = self.error_class([_(e.message)])
-            return
+            raise MiddlewareError(e.message)
 
         if not jc.jc_path:
-            self.errors['__all__'] = self.error_class(
-                ["No jail root configured."]
-            )
-            return
+            raise MiddlewareError(_("No jail root configured."))
 
         jail_host = self.cleaned_data.get('jail_host')
         jail_ipv4 = self.cleaned_data.get('jail_ipv4')
