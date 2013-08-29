@@ -25,8 +25,6 @@
 #
 #####################################################################
 import logging
-import string
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -67,88 +65,84 @@ class Jails(Model):
     objects = JailsManager()
 
     jail_host = models.CharField(
-            max_length=120,
-            verbose_name=_("Jail Name"),
-            )
-    jail_type = models.CharField(
-            max_length=120,
-            verbose_name=_("Type")
-            )
+        max_length=120,
+        verbose_name=_("Jail Name"),
+    )
     jail_ipv4 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv4 address")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv4 address")
+    )
     jail_alias_ipv4 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv4 aliases")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv4 aliases")
+    )
     jail_bridge_ipv4 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv4 bridge address")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv4 bridge address")
+    )
     jail_alias_bridge_ipv4 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv4 bridge aliases")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv4 bridge aliases")
+    )
     jail_defaultrouter_ipv4 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv4 default gateway")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv4 default gateway")
+    )
     jail_ipv6 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv6 address")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv6 address")
+    )
     jail_alias_ipv6 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv6 aliases")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv6 aliases")
+    )
     jail_bridge_ipv6 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv6 bridge address")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv6 bridge address")
+    )
     jail_alias_bridge_ipv6 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv6 bridge aliases")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv6 bridge aliases")
+    )
     jail_defaultrouter_ipv6 = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("IPv6 default gateway")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("IPv6 default gateway")
+    )
     jail_mac = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("MAC")
-            )
+        max_length=120,
+        blank=True,
+        null=True,
+        verbose_name=_("MAC")
+    )
     jail_autostart = models.BooleanField(
         max_length=120,
         default=True,
         verbose_name=_("Autostart")
     )
     jail_status = models.CharField(
-            max_length=120,
-            verbose_name=_("Status")
-            )
+        max_length=120,
+        verbose_name=_("Status")
+    )
     jail_vnet = models.BooleanField(
         max_length=120,
         default=True,
