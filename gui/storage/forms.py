@@ -150,7 +150,7 @@ class VolumeMixin(object):
         return vname
 
 
-class VolumeManagerUFSForm(forms.Form, VolumeMixin):
+class VolumeManagerUFSForm(Form, VolumeMixin):
     volume_name = forms.CharField(
         max_length=30,
         label=_('Volume name'),
@@ -333,7 +333,7 @@ class VolumeManagerUFSForm(forms.Form, VolumeMixin):
         notifier().reload("disk")
 
 
-class VolumeManagerForm(VolumeMixin, forms.Form):
+class VolumeManagerForm(VolumeMixin, Form):
     volume_name = forms.CharField(
         max_length=30,
         required=False)
@@ -466,7 +466,7 @@ class VolumeManagerForm(VolumeMixin, forms.Form):
         return volume
 
 
-class VolumeVdevForm(forms.Form):
+class VolumeVdevForm(Form):
     vdevtype = forms.CharField(
         max_length=20,
     )
@@ -526,7 +526,7 @@ class VdevFormSet(BaseFormSet):
                 raise forms.ValidationError(_("You need a data disk group"))
 
 
-class VolumeImportForm(forms.Form):
+class VolumeImportForm(Form):
 
     volume_name = forms.CharField(max_length=30, label=_('Volume name'))
     volume_disks = forms.ChoiceField(
@@ -761,7 +761,7 @@ class AutoImportWizard(SessionWizardView):
         return JsonResp(self.request, message=unicode(_("Volume imported")))
 
 
-class AutoImportChoiceForm(forms.Form):
+class AutoImportChoiceForm(Form):
     step = forms.ChoiceField(
         choices=(
             ('import', _("No: Skip to import")),
@@ -780,7 +780,7 @@ class AutoImportChoiceForm(forms.Form):
             _notifier.geli_detach(dev)
 
 
-class AutoImportDecryptForm(forms.Form):
+class AutoImportDecryptForm(Form):
     disks = forms.MultipleChoiceField(
         choices=(),
     )
@@ -843,7 +843,7 @@ class AutoImportDecryptForm(forms.Form):
         return self.cleaned_data
 
 
-class VolumeAutoImportForm(forms.Form):
+class VolumeAutoImportForm(Form):
 
     volume_disks = forms.ChoiceField(
         choices=(),
@@ -1580,7 +1580,7 @@ class CloneSnapshotForm(Form):
         return retval
 
 
-class DiskReplacementForm(forms.Form):
+class DiskReplacementForm(Form):
 
     volume_disks = forms.ChoiceField(
         choices=(),
@@ -1938,7 +1938,7 @@ class ScrubForm(ModelForm):
         notifier().restart("cron")
 
 
-class DiskWipeForm(forms.Form):
+class DiskWipeForm(Form):
 
     method = forms.ChoiceField(
         label=_("Method"),
@@ -1951,7 +1951,7 @@ class DiskWipeForm(forms.Form):
     )
 
 
-class CreatePassphraseForm(forms.Form):
+class CreatePassphraseForm(Form):
 
     passphrase = forms.CharField(
         label=_("Passphrase"),
@@ -1987,7 +1987,7 @@ class CreatePassphraseForm(forms.Form):
         volume.save()
 
 
-class ChangePassphraseForm(forms.Form):
+class ChangePassphraseForm(Form):
 
     adminpw = forms.CharField(
         label=_("Admin password"),
@@ -2067,7 +2067,7 @@ class ChangePassphraseForm(forms.Form):
         volume.save()
 
 
-class UnlockPassphraseForm(forms.Form):
+class UnlockPassphraseForm(Form):
 
     passphrase = forms.CharField(
         label=_("Passphrase"),
@@ -2140,7 +2140,7 @@ class UnlockPassphraseForm(forms.Form):
             _notifier.restart(svc)
 
 
-class KeyForm(forms.Form):
+class KeyForm(Form):
 
     adminpw = forms.CharField(
         label=_("Admin password"),
