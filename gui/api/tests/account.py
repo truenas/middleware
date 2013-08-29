@@ -19,8 +19,7 @@ class bsdUsersResourceTest(APITestCase):
                 'bsdusr_home': '/nonexistent',
                 'bsdusr_mode': '755',
                 'bsdusr_creategroup': 'on',
-                'bsdusr_password1': '12345',
-                'bsdusr_password2': '12345',  #FIXME: Only one pwd
+                'bsdusr_password': '12345',
                 'bsdusr_shell': '/usr/local/bin/bash',
                 'bsdusr_full_name': 'Juca Xunda',
                 'bsdusr_email': 'juca@xunda.com',
