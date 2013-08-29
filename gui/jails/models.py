@@ -68,7 +68,8 @@ class Jails(Model):
 
     jail_host = models.CharField(
             max_length=120,
-            verbose_name=_("Jail Name")
+            verbose_name=_("Jail Name"),
+            primary_key=True,
             )
     jail_type = models.CharField(
             max_length=120,
@@ -128,7 +129,7 @@ class Jails(Model):
             null=True,
             verbose_name=_("IPv6 bridge aliases")
             )
-    jail_defaultrouter_ipv6 = models.CharField( 
+    jail_defaultrouter_ipv6 = models.CharField(
             max_length=120,
             blank=True,
             null=True,
@@ -140,28 +141,24 @@ class Jails(Model):
             null=True,
             verbose_name=_("MAC")
             )
-    jail_autostart = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("Autostart")
-            )
+    jail_autostart = models.BooleanField(
+        max_length=120,
+        default=True,
+        verbose_name=_("Autostart")
+    )
     jail_status = models.CharField(
             max_length=120,
             verbose_name=_("Status")
             )
-    jail_vnet = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("VIMAGE")
-            )
-    jail_nat = models.CharField(
-            max_length=120,
-            blank=True,
-            null=True,
-            verbose_name=_("NAT")
-            )
+    jail_vnet = models.BooleanField(
+        max_length=120,
+        default=True,
+        verbose_name=_("VIMAGE")
+    )
+    jail_nat = models.BooleanField(
+        default=False,
+        verbose_name=_("NAT")
+    )
 
     def __str__(self):
         return str(self.jail_host)
