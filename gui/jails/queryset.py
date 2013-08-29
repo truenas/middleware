@@ -150,12 +150,18 @@ class JailsQuerySet(QuerySet):
             )
         return self.model(**results[0])
 
+    def _clone(self, klass=None, setup=False, **kwargs):
+        c = super(JailsQuerySet, self)._clone(
+            klass=None, setup=False, **kwargs
+        )
+        c.__wlist_cache = self.__wlist_cache
+        c.__wcount_cache = self.__wcount_cache
+        return c
+
     #
     # Minimal filter() implementation....
     #
     def filter(self, *args, **kwargs):
-        models = []
-        results = []
         for wj in list(self.__wlist):
 
             found = 0
@@ -168,6 +174,6 @@ class JailsQuerySet(QuerySet):
                     found += 1
 
             if found != count:
-                self.__wlist.remove(wj)
+                self.__wlist_cache.remove(wj)
 
         return self
