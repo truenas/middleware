@@ -204,7 +204,7 @@ class JailsFAdmin(BaseFreeAdmin):
     require(["freeadmin/WebShell"], function(WebShell) {
         for (var i in grid.selection) {
             var data = grid.row(i).data;
-            new WebShell({jid: data.jid, shell: "/bin/csh"});
+            new WebShell({jid: data.jail_jid, shell: "/bin/csh"});
         }
     });
 }"""
