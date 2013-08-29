@@ -876,6 +876,7 @@ class ISCSIPortalResourceMixin(object):
     def hydrate(self, bundle):
         bundle = super(ISCSIPortalResourceMixin, self).hydrate(bundle)
         newips = bundle.data.get('iscsi_target_portal_ips', [])
+        i = -1
         for i, item in enumerate(bundle.obj.ips.all()):
             bundle.data[
                 'portalip_set-%d-iscsi_target_portalip_ip' % i
