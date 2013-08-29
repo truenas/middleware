@@ -256,7 +256,10 @@ class DojoModelResource(ResourceMixin, ModelResource):
         return obj_list
 
     def is_form_valid(self, bundle, form):
-        return form.is_valid()
+        valid = form.is_valid()
+        if not valid:
+            bundle.errors = form._errors
+        return valid
 
     def save(self, bundle, skip_errors=False):
 
