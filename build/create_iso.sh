@@ -146,10 +146,7 @@ main()
 	ln -s /rescue/fsdb ${INSTALLUFSDIR}/sbin/fsdb
 	ln -s /rescue/fsirand ${INSTALLUFSDIR}/sbin/fsirand
 	ln -s /rescue/gbde ${INSTALLUFSDIR}/sbin/gbde
-	ln -s /rescue/geom ${INSTALLUFSDIR}/sbin/geom
 	ln -s /rescue/getfacl ${INSTALLUFSDIR}/bin/getfacl
-	ln -s /rescue/glabel ${INSTALLUFSDIR}/sbin/glabel
-	ln -s /rescue/gpart ${INSTALLUFSDIR}/sbin/gpart
 	ln -s /rescue/groups ${INSTALLUFSDIR}/usr/bin/groups
 	ln -s /rescue/gunzip ${INSTALLUFSDIR}/usr/bin/gunzip
 	ln -s /rescue/gzcat ${INSTALLUFSDIR}/usr/bin/gzcat
@@ -261,6 +258,23 @@ main()
 	cp -p ${NANO_OBJ}/_.w/usr/bin/xargs ${INSTALLUFSDIR}/usr/bin/xargs
 	cp -p ${NANO_OBJ}/_.w/usr/sbin/diskinfo ${INSTALLUFSDIR}/usr/sbin/diskinfo
 	cp -p ${NANO_OBJ}/_.w/usr/sbin/vidcontrol ${INSTALLUFSDIR}/usr/sbin/vidcontrol
+	cp -p ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/geom
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gcache
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gconcat
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/geli
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gjournal
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/glabel
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gmirror
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gmountver
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gmultipath
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gnop
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gpart
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/graid
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/graid3
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gsched
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gshsec
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gstripe
+	ln ${NANO_OBJ}/_.w/sbin/geom ${INSTALLUFSDIR}/sbin/gvirstor
 
 	# The presence of /etc/diskless will trigger /etc/rc to run /etc/rc.initdiskless.
 	touch ${INSTALLUFSDIR}/etc/diskless
