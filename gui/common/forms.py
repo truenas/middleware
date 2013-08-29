@@ -108,6 +108,7 @@ class Form(AdvMixin, F):
     on every form instantiation
     """
     def __init__(self, *args, **kwargs):
+        self._api = kwargs.pop('api_validation', False)
         super(Form, self).__init__(*args, **kwargs)
         for name, field in self.fields.items():
             if hasattr(field, "_reroll"):
