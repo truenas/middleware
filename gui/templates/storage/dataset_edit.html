@@ -1,2 +1,8 @@
 {% extends "freeadmin/generic_form.html" %}
+{% block form %}
+<tr>
+  <td colspan="2">{% trans "Dataset" %}: {{ dataset_name }}</td>
+</tr>
+{{ block.super }}
+{% endblock %}
 {% block oklabel %}{% trans "Edit Dataset" %}{% endblock %}
