@@ -258,7 +258,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     bsdusr_username = forms.CharField(
         label=_("Username"),
         max_length=16)
-    bsdusr_password1 = forms.CharField(
+    bsdusr_password = forms.CharField(
         label=_("Password"),
         widget=forms.PasswordInput,
         required=False)
@@ -286,7 +286,8 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         required=False)
     bsdusr_mode = UnixPermissionField(
         label=_('Home Directory Mode'),
-        initial='755')
+        initial='755',
+        required=False)
     bsdusr_to_group = FilteredSelectField(
         label=_('Auxiliary groups'),
         choices=(),
@@ -301,19 +302,19 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         exclude = (
             'bsdusr_unixhash',
             'bsdusr_smbhash',
-            'bsdusr_group',
         )
         fields = (
             'bsdusr_uid',
             'bsdusr_username',
             'bsdusr_creategroup',
+            'bsdusr_group',
             'bsdusr_group2',
             'bsdusr_home',
             'bsdusr_mode',
             'bsdusr_shell',
             'bsdusr_full_name',
             'bsdusr_email',
-            'bsdusr_password1',
+            'bsdusr_password',
             'bsdusr_password2',
             'bsdusr_password_disabled',
             'bsdusr_locked',
@@ -329,17 +330,10 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 new['bsdusr_group2'] = ''
             args = (new,) + args[1:]
         super(bsdUserCreationForm, self).__init__(*args, **kwargs)
+        if self._api is True:
+            del self.fields['bsdusr_password2']
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
-        self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
-        self.fields['bsdusr_creategroup'].widget.attrs['onChange'] = (
-            'javascript:toggleGeneric("id_bsdusr_creategroup", '
-            '["id_bsdusr_group2"], false);')
-        self.fields['bsdusr_group2'].widget.attrs['maxHeight'] = 200
-        self.fields['bsdusr_group2'].widget.attrs['disabled'] = 'disabled'
-        self.fields['bsdusr_group2'].choices = (('-----', '-----'),) + tuple(
-            [x for x in self.fields['bsdusr_group2'].choices][1:])
-        self.fields['bsdusr_group2'].required = False
         self.fields['bsdusr_to_group'].choices = [
             (x.id, x.bsdgrp_group) for x in models.bsdGroups.objects.all()
         ]
@@ -349,6 +343,55 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         self.fields['bsdusr_locked'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_bsdusr_locked", '
             '["id_bsdusr_password_disabled"], false);')
+
+        if not self.instance.id:
+            del self.fields['bsdusr_group']
+            self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
+            self.fields['bsdusr_creategroup'].widget.attrs['onChange'] = (
+                'javascript:toggleGeneric("id_bsdusr_creategroup", '
+                '["id_bsdusr_group2"], false);')
+            self.fields['bsdusr_group2'].widget.attrs['maxHeight'] = 200
+            self.fields['bsdusr_group2'].widget.attrs['disabled'] = 'disabled'
+            self.fields['bsdusr_group2'].choices = (('-----', '-----'),) + tuple(
+                [x for x in self.fields['bsdusr_group2'].choices][1:])
+            self.fields['bsdusr_group2'].required = False
+
+        elif self.instance.id:
+            del self.fields['bsdusr_to_group']
+            del self.fields['bsdusr_password']
+            if self._api is False:
+                del self.fields['bsdusr_password2']
+            del self.fields['bsdusr_creategroup']
+            del self.fields['bsdusr_group2']
+            self.advanced_fields = []
+            self.fields.keyOrder.remove('bsdusr_mode')
+            self.fields.keyOrder.insert(
+                len(self.fields.keyOrder) - 1,
+                'bsdusr_mode',
+            )
+            self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+            self.fields['bsdusr_username'].widget.attrs['class'] = (
+                'dijitDisabled dijitTextBoxDisabled '
+                'dijitValidationTextBoxDisabled')
+            if os.path.exists(self.instance.bsdusr_home):
+                mode = os.stat(self.instance.bsdusr_home).st_mode & 0o777
+                self.fields['bsdusr_mode'].initial = oct(mode)
+            if self.instance.bsdusr_builtin:
+                self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
+                self.fields['bsdusr_uid'].widget.attrs['class'] = (
+                    'dijitDisabled dijitTextBoxDisabled '
+                    'dijitValidationTextBoxDisabled'
+                )
+                self.fields['bsdusr_group'].widget.attrs['readonly'] = True
+                self.fields['bsdusr_group'].widget.attrs['class'] = (
+                    'dijitDisabled dijitSelectDisabled')
+                self.fields['bsdusr_home'].widget.attrs['readonly'] = True
+                self.fields['bsdusr_home'].widget.attrs['class'] = (
+                    'dijitDisabled dijitTextBoxDisabled '
+                    'dijitValidationTextBoxDisabled'
+                )
+                self.fields['bsdusr_mode'].widget.attrs['disabled'] = True
+                self.fields['bsdusr_mode'].required = False
 
     def clean_bsdusr_username(self):
         if self.instance.id is None:
@@ -364,6 +407,24 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         else:
             return self.instance.bsdusr_username
 
+    def clean_bsdusr_uid(self):
+        if self.instance.id and self.instance.bsdusr_builtin:
+            return self.instance.bsdusr_uid
+        else:
+            return self.cleaned_data.get("bsdusr_uid")
+
+    def clean_bsdusr_group(self):
+        if self.instance.id and self.instance.bsdusr_builtin:
+            return self.instance.bsdusr_group
+        else:
+            return self.cleaned_data.get("bsdusr_group")
+
+    def clean_bsdusr_username(self):
+        if self.instance.id:
+            return self.instance.bsdusr_username
+        else:
+            return self.cleaned_data.get('bsdusr_username')
+
     def clean_bsdusr_group2(self):
         create = self.cleaned_data.get("bsdusr_creategroup")
         group = self.cleaned_data.get("bsdusr_group2")
@@ -372,9 +433,9 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         return group
 
     def clean_bsdusr_password2(self):
-        bsdusr_password1 = self.cleaned_data.get("bsdusr_password1", "")
+        bsdusr_password = self.cleaned_data.get("bsdusr_password", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
-        if bsdusr_password1 != bsdusr_password2:
+        if bsdusr_password != bsdusr_password2:
             raise forms.ValidationError(
                 _("The two password fields didn't match.")
             )
@@ -423,7 +484,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             self._errors['bsdusr_sshpubkey'] = self.error_class([
                 _("Home directory is not writable, leave this blank")])
         if self.instance.id is None:
-            FIELDS = ['bsdusr_password1', 'bsdusr_password2']
+            FIELDS = ['bsdusr_password', 'bsdusr_password2']
             if password_disable:
                 for field in FIELDS:
                     if field in cleaned_data and cleaned_data.get(field) != '':
@@ -440,8 +501,8 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         return cleaned_data
 
     def save(self, commit=True):
-        if commit:
-            _notifier = notifier()
+        _notifier = notifier()
+        if self.instance.id is None:
             group = self.cleaned_data['bsdusr_group2']
             if group is None:
                 try:
@@ -457,7 +518,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 fullname=self.cleaned_data['bsdusr_full_name'].encode(
                     'utf8', 'ignore'
                 ).replace(':', ''),
-                password=self.cleaned_data['bsdusr_password2'].encode(
+                password=self.cleaned_data['bsdusr_password'].encode(
                     'utf8', 'ignore'
                 ),
                 uid=self.cleaned_data['bsdusr_uid'],
@@ -496,15 +557,16 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                     bsdgrpmember_group=group,
                     bsdgrpmember_user=bsduser)
                 m.save()
-
-            _notifier.reload("user")
-            bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
-            if bsdusr_sshpubkey:
-                _notifier.save_pubkey(
-                    bsduser.bsdusr_home,
-                    bsdusr_sshpubkey,
-                    bsduser.bsdusr_username,
-                    bsduser.bsdusr_group.bsdgrp_group)
+        else:
+            bsduser = super(bsdUserCreationForm, self).save(commit=False)
+        _notifier.reload("user")
+        bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
+        if bsdusr_sshpubkey:
+            _notifier.save_pubkey(
+                bsduser.bsdusr_home,
+                bsdusr_sshpubkey,
+                bsduser.bsdusr_username,
+                bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
 
 
@@ -540,9 +602,9 @@ class bsdUserPasswordForm(ModelForm):
         return self.instance.bsdusr_username
 
     def clean_bsdusr_password2(self):
-        bsdusr_password1 = self.cleaned_data.get("bsdusr_password", "")
+        bsdusr_password = self.cleaned_data.get("bsdusr_password", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
-        if bsdusr_password1 != bsdusr_password2:
+        if bsdusr_password != bsdusr_password2:
             raise forms.ValidationError(
                 _("The two password fields didn't match.")
             )
@@ -560,172 +622,6 @@ class bsdUserPasswordForm(ModelForm):
             self.instance.save()
             _notifier.reload("user")
         return self.instance
-
-
-class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
-    bsdusr_mode = UnixPermissionField(
-        label=_('Home Directory Mode'),
-        initial='755',
-    )
-    bsdusr_shell = forms.ChoiceField(
-        label=_("Shell"),
-        initial=u'/bin/csh',
-        choices=(),
-    )
-    bsdusr_sshpubkey = forms.CharField(
-        label=_("SSH Public Key"),
-        widget=forms.Textarea,
-        max_length=8192,
-        required=False,
-    )
-
-    class Meta:
-        model = models.bsdUsers
-        exclude = ('bsdusr_unixhash', 'bsdusr_smbhash')
-        widgets = {
-            'bsdusr_uid': forms.widgets.ValidationTextInput(),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(bsdUserChangeForm, self).__init__(*args, **kwargs)
-        self.oldhome = self.instance.bsdusr_home
-        if self.instance.id:
-            self.fields['bsdusr_username'].widget.attrs['readonly'] = True
-            self.fields['bsdusr_username'].widget.attrs['class'] = (
-                'dijitDisabled dijitTextBoxDisabled '
-                'dijitValidationTextBoxDisabled')
-        if os.path.exists(self.instance.bsdusr_home):
-            mode = os.stat(self.instance.bsdusr_home).st_mode & 0o777
-            self.fields['bsdusr_mode'].initial = oct(mode)
-        if self.instance.bsdusr_builtin:
-            self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
-            self.fields['bsdusr_uid'].widget.attrs['class'] = (
-                'dijitDisabled dijitTextBoxDisabled '
-                'dijitValidationTextBoxDisabled'
-            )
-            self.fields['bsdusr_group'].widget.attrs['readonly'] = True
-            self.fields['bsdusr_group'].widget.attrs['class'] = (
-                'dijitDisabled dijitSelectDisabled')
-            self.fields['bsdusr_home'].widget.attrs['readonly'] = True
-            self.fields['bsdusr_home'].widget.attrs['class'] = (
-                'dijitDisabled dijitTextBoxDisabled '
-                'dijitValidationTextBoxDisabled'
-            )
-            self.fields['bsdusr_mode'].widget.attrs['disabled'] = True
-            self.fields['bsdusr_mode'].required = False
-        try:
-            self.fields['bsdusr_sshpubkey'].initial = open(
-                '%s/.ssh/authorized_keys' % (
-                    self.instance.bsdusr_home,
-                )
-            ).read()
-        except:
-            self.fields['bsdusr_sshpubkey'].initial = ''
-        self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
-        self.fields['bsdusr_shell'].choices.sort()
-        self.fields['bsdusr_group'].widget.attrs['maxHeight'] = 200
-        self.fields['bsdusr_password_disabled'].widget.attrs['onChange'] = (
-            'javascript:toggleGeneric("id_bsdusr_password_disabled", '
-            '["id_bsdusr_locked"], false);')
-        self.fields['bsdusr_locked'].widget.attrs['onChange'] = (
-            'javascript:toggleGeneric("id_bsdusr_locked", '
-            '["id_bsdusr_password_disabled"], false);')
-
-    def clean_bsdusr_uid(self):
-        if self.instance.bsdusr_builtin:
-            return self.instance.bsdusr_uid
-        else:
-            return self.cleaned_data.get("bsdusr_uid")
-
-    def clean_bsdusr_group(self):
-        if self.instance.bsdusr_builtin:
-            return self.instance.bsdusr_group
-        else:
-            return self.cleaned_data.get("bsdusr_group")
-
-    def clean_bsdusr_username(self):
-        return self.instance.bsdusr_username
-
-    def clean_bsdusr_home(self):
-        if self.instance.bsdusr_builtin:
-            return self.instance.bsdusr_home
-        if (
-            self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
-            self.cleaned_data['bsdusr_home'] == u'/nonexistent'
-        ):
-            return self.cleaned_data['bsdusr_home']
-        raise forms.ValidationError(_('Home directory has to start with /mnt '
-                                      'or be /nonexistent'))
-
-    def clean_bsdusr_full_name(self):
-        name = self.cleaned_data["bsdusr_full_name"]
-        self.pw_checkfullname(name)
-        return name
-
-    def clean_bsdusr_password_disabled(self):
-        return self.cleaned_data.get("bsdusr_password_disabled", False)
-
-    def clean_bsdusr_locked(self):
-        return self.cleaned_data.get("bsdusr_locked", False)
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        bsdusr_home = self.cleaned_data.get('bsdusr_home', '')
-        if (
-            bsdusr_home and cleaned_data.get('bsdusr_sshpubkey') and
-            not (bsdusr_home.startswith(u'/mnt/') or bsdusr_home == '/root')
-        ):
-            del cleaned_data['bsdusr_sshpubkey']
-            self._errors['bsdusr_sshpubkey'] = self.error_class([
-                _("Home directory is not writable, leave this blank"),
-            ])
-        return cleaned_data
-
-    def save(self):
-        bsduser = super(bsdUserChangeForm, self).save(commit=False)
-        bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
-        _notifier = notifier()
-        bsduser.bsduser_shell = self.cleaned_data['bsdusr_shell']
-        if (
-            os.path.exists(self.cleaned_data['bsdusr_home']) and
-            self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') and
-            self.cleaned_data.get('bsdusr_mode', '')
-        ):
-            try:
-                os.chmod(
-                    self.cleaned_data['bsdusr_home'],
-                    int(self.cleaned_data['bsdusr_mode'], 8)
-                )
-            except OSError, e:
-                log.info(
-                    "Failed to set permission in home dir %s: %s",
-                    self.cleaned_data['bsdusr_home'],
-                    e,
-                )
-        bsduser.save()
-        _notifier.reload("user")
-        if (
-            self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
-            self.cleaned_data['bsdusr_home'] == '/root'
-        ):
-            if bsdusr_sshpubkey:
-                _notifier.save_pubkey(
-                    bsduser.bsdusr_home,
-                    bsdusr_sshpubkey,
-                    bsduser.bsdusr_username,
-                    bsduser.bsdusr_group.bsdgrp_group)
-        try:
-            if self.cleaned_data['bsdusr_home'] not in (
-                '/nonexistent', self.oldhome
-            ):
-                os.chown(
-                    self.cleaned_data['bsdusr_home'],
-                    self.instance.bsdusr_uid,
-                    self.instance.bsdusr_group.bsdgrp_gid
-                )
-        except:
-            log.warn("Failed to chown home dir %s", homedir)
-        return bsduser
 
 
 class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):

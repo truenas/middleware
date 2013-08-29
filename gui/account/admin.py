@@ -13,9 +13,6 @@ from freenasUI.account import models
 
 class BsdUserFAdmin(BaseFreeAdmin):
 
-    create_modelform = "bsdUserCreationForm"
-    edit_modelform = "bsdUserChangeForm"
-
     object_filters = {'bsdusr_builtin__exact': False}
     object_num = -1
 
