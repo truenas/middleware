@@ -100,46 +100,16 @@ class JailCreateForm(ModelForm):
         label=_("type"),
     )
 
-    jail_autostart = forms.BooleanField(
-        label=_("autostart"),
-        required=False,
-        initial=True
-    )
-
     jail_32bit = forms.BooleanField(
         label=_("32 bit"),
         required=False,
         initial=False
     )
 
-#    jail_source = forms.BooleanField(
-#        label=_("source"),
-#        required=False,
-#        initial=False
-#    )
-#
-#    jail_ports = forms.BooleanField(
-#        label=_("ports"),
-#        required=False,
-#        initial=False
-#    )
-
     jail_vanilla = forms.BooleanField(
         label=_("vanilla"),
         required=False,
         initial=True
-    )
-
-    jail_vnet = forms.BooleanField(
-        label=_("VIMAGE"),
-        required=False,
-        initial=True
-    )
-
-    jail_nat = forms.BooleanField(
-        label=_("NAT"),
-        required=False,
-        initial=False
     )
 
     class Meta:
