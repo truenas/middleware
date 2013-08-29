@@ -158,7 +158,6 @@ class ScrubResourceTest(APITestCase):
             u'scrub_month': u'*',
             u'scrub_threshold': 35,
             u'scrub_volume': u'tank',
-            u'scrub_volume_id': None,
         })
 
     def test_Retrieve(self):
