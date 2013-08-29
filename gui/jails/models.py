@@ -34,9 +34,9 @@ from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.system import is_mounted, mount, umount
 from freenasUI.common.warden import (
     Warden,
-    WARDEN_AUTOSTART_ENABLED,
-    WARDEN_VNET_ENABLED,
-    WARDEN_NAT_ENABLED,
+    WARDEN_AUTOSTART_ENABLED, WARDEN_AUTOSTART_DISABLED,
+    WARDEN_VNET_ENABLED, WARDEN_VNET_DISABLED,
+    WARDEN_NAT_ENABLED, WARDEN_NAT_DISABLED,
     WARDEN_DELETE_FLAGS_CONFIRM,
     WARDEN_TEMPLATE_FLAGS_LIST,
     WARDEN_TEMPLATE_FLAGS_DELETE
@@ -69,7 +69,6 @@ class Jails(Model):
     jail_host = models.CharField(
             max_length=120,
             verbose_name=_("Jail Name"),
-            primary_key=True,
             )
     jail_type = models.CharField(
             max_length=120,
@@ -170,15 +169,17 @@ class Jails(Model):
         super(Jails, self).__init__(*args, **kwargs)
         if self.jail_autostart == WARDEN_AUTOSTART_ENABLED:
             self.jail_autostart = True
-        else:
+        elif self.jail_autostart == WARDEN_AUTOSTART_DISABLED:
             self.jail_autostart = False
+
         if self.jail_vnet == WARDEN_VNET_ENABLED:
             self.jail_vnet = True
-        else:
+        elif self.jail_vnet == WARDEN_VNET_DISABLED:
             self.jail_vnet = False
+
         if self.jail_nat == WARDEN_NAT_ENABLED:
             self.jail_nat = True
-        else:
+        elif self.jail_nat == WARDEN_NAT_DISABLED:
             self.jail_nat = False
 
     def delete(self, force=False):
