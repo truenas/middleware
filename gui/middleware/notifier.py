@@ -1634,9 +1634,8 @@ class notifier:
     def zfs_replace_disk(self, volume, from_label, to_disk, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
         from freenasUI.storage.models import Disk, EncryptedDisk
-        c = self.__open_db()
-        c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
-        swapsize = c.fetchone()[0]
+        from freenasUI.system.models import Advanced
+        swapsize = Advanced.objects.latest('id').adv_swapondrive
 
         assert volume.vol_fstype == 'ZFS'
 
