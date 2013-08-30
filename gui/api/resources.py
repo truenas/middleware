@@ -177,6 +177,11 @@ class VolumeResourceMixin(object):
     class Meta:
         validation = FormValidation(form_class=VolumeManagerForm)
 
+    def obj_get(self, bundle, **kwargs):
+        if 'pk' in kwargs and not kwargs['pk'].isdigit():
+            kwargs['vol_name'] = kwargs.pop('pk')
+        return super(VolumeResourceMixin, self).obj_get(bundle, **kwargs)
+
     def prepend_urls(self):
         return [
             url(
