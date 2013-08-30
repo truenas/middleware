@@ -1,4 +1,5 @@
 from .utils import APITestCase
+from freenasUI.middleware.notifier import notifier
 from freenasUI.storage import models
 
 
@@ -110,6 +111,49 @@ class VolumeResourceTest(APITestCase):
         self.assertHttpUnauthorized(
             self.client.get(self.get_api_url(), format='json')
         )
+
+    def test_Replace_Disk(self):
+
+        pool = notifier().zpool_parse('tankpool')
+        devs = pool.get_devs()
+
+        resp = self.api_client.post(
+            '%s1/replace/' % self.get_api_url(),
+            format='json',
+            data={
+                'label': devs[0].name,
+                'replace_disk': 'ada6',
+            }
+        )
+        self.assertHttpAccepted(resp)
+
+    def test_Offline_Disk(self):
+
+        pool = notifier().zpool_parse('tankpool')
+        devs = pool.get_devs()
+
+        resp = self.api_client.post(
+            '%s1/offline/' % self.get_api_url(),
+            format='json',
+            data={
+                'label': devs[0].name,
+            }
+        )
+        self.assertHttpAccepted(resp)
+
+    def test_Detach_Disk(self):
+
+        pool = notifier().zpool_parse('tankpool')
+        devs = pool.get_devs()
+
+        resp = self.api_client.post(
+            '%s1/detach/' % self.get_api_url(),
+            format='json',
+            data={
+                'label': devs[0].name,
+            }
+        )
+        self.assertHttpAccepted(resp)
 
 
 class ScrubResourceTest(APITestCase):
