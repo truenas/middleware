@@ -950,8 +950,10 @@ class UPS(Model):
     ups_identifier = models.CharField(
         max_length=120,
         verbose_name=_("Identifier"),
-        help_text=_("This name is used to uniquely identify your UPS on "
-            "this system.")
+        default='ups',
+        help_text=_(
+            "This name is used to uniquely identify your UPS on this system."
+        ),
     )
     ups_remotehost = models.CharField(
         max_length=50,
