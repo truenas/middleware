@@ -202,12 +202,7 @@ class VolumeResourceMixin(object):
             ),
         ]
 
-    def replace_disk(self, request, **kwargs):
-        if request.method != 'POST':
-            response = HttpMethodNotAllowed('POST')
-            response['Allow'] = 'POST'
-            raise ImmediateHttpResponse(response=response)
-
+    def _get_parent(self, request, kwargs):
         try:
             bundle = self.build_bundle(
                 data={'pk': kwargs['pk']}, request=request
@@ -216,11 +211,20 @@ class VolumeResourceMixin(object):
                 bundle=bundle, **self.remove_api_resource_names(kwargs)
             )
         except ObjectDoesNotExist:
-            return HttpNotFound()
+            raise ImmediateHttpResponse(response=HttpNotFound())
         except MultipleObjectsReturned:
-            return HttpMultipleChoices(
+            raise ImmediateHttpResponse(response=HttpMultipleChoices(
                 "More than one resource is found at this URI."
-            )
+            ))
+        return bundle, obj
+
+    def replace_disk(self, request, **kwargs):
+        if request.method != 'POST':
+            response = HttpMethodNotAllowed('POST')
+            response['Allow'] = 'POST'
+            raise ImmediateHttpResponse(response=response)
+
+        bundle, obj = self._get_parent(request, kwargs)
 
         deserialized = self.deserialize(
             request,
@@ -244,38 +248,14 @@ class VolumeResourceMixin(object):
         return HttpResponse('Disk replacement started.')
 
     def datasets_list(self, request, **kwargs):
-        try:
-            bundle = self.build_bundle(
-                data={'pk': kwargs['pk']}, request=request
-            )
-            obj = self.cached_obj_get(
-                bundle=bundle, **self.remove_api_resource_names(kwargs)
-            )
-        except ObjectDoesNotExist:
-            return HttpNotFound()
-        except MultipleObjectsReturned:
-            return HttpMultipleChoices(
-                "More than one resource is found at this URI."
-            )
+        bundle, obj = self._get_parent(request, kwargs)
 
         child_resource = DatasetResource()
         return child_resource.dispatch_list(request, parent=obj)
 
     def datasets_detail(self, request, **kwargs):
         pk = kwargs.pop('pk2')
-        try:
-            bundle = self.build_bundle(
-                data={'pk': kwargs['pk']}, request=request
-            )
-            obj = self.cached_obj_get(
-                bundle=bundle, **self.remove_api_resource_names(kwargs)
-            )
-        except ObjectDoesNotExist:
-            return HttpNotFound()
-        except MultipleObjectsReturned:
-            return HttpMultipleChoices(
-                "More than one resource is found at this URI."
-            )
+        bundle, obj = self._get_parent(request, kwargs)
 
         child_resource = DatasetResource()
         return child_resource.dispatch_detail(request, pk=pk, parent=obj)
