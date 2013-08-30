@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-08-28 16:36+0200\n"
+"PO-Revision-Date: 2013-08-29 12:03+0200\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
-msgstr "Raportare"
+msgstr "Rapoarte"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -88,7 +88,7 @@ msgid "Plugins"
 msgstr "Plugin-uri"
 
 msgid "CronJobs"
-msgstr "Sarcinii programate"
+msgstr "Acțiuni programate"
 
 msgid "Replace"
 msgstr "Înlocuire"

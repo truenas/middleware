@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2013-08-28 17:19+0200\n"
+"PO-Revision-Date: 2013-08-29 12:06+0200\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -503,7 +503,7 @@ msgstr "Nume utilizator"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Necesar. 16 caractere sau mai puţine. Numai litere, cifre şi ./-/_ ."
+msgstr "Maxim 16 caractere. Numai litere, cifre şi caracterele ./-/_ ."
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
@@ -552,7 +552,7 @@ msgstr "Cheie Publică SSH"
 
 #: account/forms.py:284 account/forms.py:549
 msgid "Home Directory Mode"
-msgstr "Mod folder Acasă"
+msgstr "Mod folder Home"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -588,7 +588,7 @@ msgstr "Un utilizator nu poate aparţine de mai mult de 64 de grupuri auxiliare"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
-msgstr "Directorul Acasă nu poate fi scris, lasă gol"
+msgstr "Directorul Home nu poate fi scris, lasa'i c]mpul necompletat"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
@@ -725,7 +725,7 @@ msgstr "Cont"
 
 #: account/nav.py:13 templates/account/index.html:2
 msgid "Admin Account"
-msgstr "Cont Admin"
+msgstr "Contul Admin"
 
 #: account/nav.py:19 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
@@ -736,7 +736,7 @@ msgstr "Schimbare parolă"
 #: account/nav.py:24 templates/account/changeform.html:2
 #: templates/account/index.html:3
 msgid "Change Admin User"
-msgstr "Schimbare utilizator Admin"
+msgstr "Schimbare Admin"
 
 #: account/views.py:95
 msgid "Password successfully updated."
@@ -2484,15 +2484,15 @@ msgstr "Mod oprire"
 
 #: services/models.py:927
 msgid "Shutdown timer"
-msgstr "Temporizare oprire"
+msgstr "Temporizator oprire"
 
 #: services/models.py:928
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
-"Timpul în secunde până la iniţierea opririi. Dacă UPS-ul îşi revine înainte "
-"de a expira acest interval, oprirea este anulată."
+"Timpul în secunde până la iniţierea opririi sistemului. Dacă alimentarea "
+"UPS-ului revine înainte de a expira acest interval, oprirea este anulată."
 
 #: services/models.py:933
 msgid "UPS Master User Password"
@@ -4886,7 +4886,7 @@ msgstr "Acțiune cron"
 
 #: system/models.py:375
 msgid "Cron Jobs"
-msgstr "Acțiuni cron"
+msgstr "Acțiuni programate"
 
 #: system/models.py:459
 msgid "IP Address or hostname"
@@ -5063,7 +5063,7 @@ msgstr "Sistem"
 
 #: system/nav.py:12 templates/system/reporting.html:1
 msgid "Reporting"
-msgstr "Raportare"
+msgstr "Rapoarte"
 
 #: system/nav.py:20
 msgid "System Information"
@@ -6292,7 +6292,7 @@ msgstr "Sigur doriţi să reveniţi la setările iniţiale?"
 
 #: templates/system/cronjob.html:41
 msgid "No cron jobs defined."
-msgstr "Nicio activitate cron definită"
+msgstr "Nicio activitate programată nu a fost definită."
 
 #: templates/system/cronjob.html:47
 msgid "Add a cron job"
@@ -6651,7 +6651,7 @@ msgid "Time in milliseconds"
 msgstr "Timp în milisecunde"
 
 msgid "Username of Domain Administrator Account"
-msgstr "Nume utilizator al contului administratorului domeniului"
+msgstr "Numele de utilizator al administratorului domeniului"
 
 msgid "ISCSI"
 msgstr "iSCSI"
