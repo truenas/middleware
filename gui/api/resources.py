@@ -913,10 +913,6 @@ class ISCSIPortalResourceMixin(object):
                 'portalip_set-%d-iscsi_target_portalip_port' % i
             ] = item.iscsi_target_portalip_port
             bundle.data['portalip_set-%d-id' % i] = item.id
-            listen = '%s:%s' % (
-                item.iscsi_target_portalip_ip,
-                item.iscsi_target_portalip_port,
-            )
         initial = i + 1
         for i, item in enumerate(newips, i + 1):
             ip, prt = item.rsplit(':', 1)
