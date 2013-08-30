@@ -33,12 +33,13 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
+from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 
 from freenasUI import choices
 from freenasUI.account.forms import bsdUserCreationForm, bsdUserPasswordForm
 from freenasUI.account.models import bsdUsers, bsdGroups
-from freenasUI.api.utils import DojoResource, DojoModelResource
+from freenasUI.api.utils import DojoPaginator, DojoResource, DojoModelResource
 from freenasUI.jails.forms import JailCreateForm
 from freenasUI.jails.models import (
     Jails, JailTemplate, NullMountPoint
@@ -193,7 +194,54 @@ class VolumeResourceMixin(object):
                 self.wrap_view('datasets_detail'),
                 name="api_volume_datasets_detail"
             ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/replace%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('replace_disk')
+            ),
         ]
+
+    def replace_disk(self, request, **kwargs):
+        if request.method != 'POST':
+            response = HttpMethodNotAllowed('POST')
+            response['Allow'] = 'POST'
+            raise ImmediateHttpResponse(response=response)
+
+        try:
+            bundle = self.build_bundle(
+                data={'pk': kwargs['pk']}, request=request
+            )
+            obj = self.cached_obj_get(
+                bundle=bundle, **self.remove_api_resource_names(kwargs)
+            )
+        except ObjectDoesNotExist:
+            return HttpNotFound()
+        except MultipleObjectsReturned:
+            return HttpMultipleChoices(
+                "More than one resource is found at this URI."
+            )
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        from freenasUI.storage.forms import ZFSDiskReplacementForm
+        form = ZFSDiskReplacementForm(
+            volume=obj,
+            label=deserialized.get('label'),
+            data={
+                'replace_disk': deserialized.get('replace_disk'),
+            },
+        )
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.done()
+        return HttpResponse('Disk replacement started.')
 
     def datasets_list(self, request, **kwargs):
         try:
@@ -450,6 +498,7 @@ class VolumeStatusResource(DojoModelResource):
         }
         queryset = Volume.objects.all()
         resource_name = 'storage/volumestatus'
+        paginator_class = DojoPaginator
 
     def dehydrate(self, bundle):
         bundle = super(VolumeStatusResource, self).dehydrate(bundle)
