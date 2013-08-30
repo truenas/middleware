@@ -55,7 +55,7 @@ from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
-from freenasUI.storage.forms import VolumeManagerForm
+from freenasUI.storage.forms import VolumeManagerForm, ZFSDiskReplacementForm
 from freenasUI.storage.models import Disk, Volume
 from tastypie import fields
 from tastypie.http import (
@@ -200,6 +200,12 @@ class VolumeResourceMixin(object):
                 ),
                 self.wrap_view('replace_disk')
             ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/offline%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('offline_disk')
+            ),
         ]
 
     def _get_parent(self, request, kwargs):
@@ -231,7 +237,6 @@ class VolumeResourceMixin(object):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
-        from freenasUI.storage.forms import ZFSDiskReplacementForm
         form = ZFSDiskReplacementForm(
             volume=obj,
             label=deserialized.get('label'),
@@ -246,6 +251,22 @@ class VolumeResourceMixin(object):
         else:
             form.done()
         return HttpResponse('Disk replacement started.')
+
+    def offline_disk(self, request, **kwargs):
+        if request.method != 'POST':
+            response = HttpMethodNotAllowed('POST')
+            response['Allow'] = 'POST'
+            raise ImmediateHttpResponse(response=response)
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        notifier().zfs_offline_disk(obj, deserialized.get('label'))
+        return HttpResponse('Disk offline\'d.')
 
     def datasets_list(self, request, **kwargs):
         bundle, obj = self._get_parent(request, kwargs)
