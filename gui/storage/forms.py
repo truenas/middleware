@@ -1578,6 +1578,11 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
 
     def __init__(self, *args, **kwargs):
         self.volume = kwargs.pop('volume')
+        self.label = kwargs.pop('label')
+        disk = notifier().label_to_disk(self.label)
+        if disk is None:
+            disk = self.label
+        kwargs['disk'] = disk
         super(ZFSDiskReplacementForm, self).__init__(*args, **kwargs)
         if self.volume.vol_encrypt == 2:
             self.fields['pass'] = forms.CharField(
@@ -1607,7 +1612,7 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
         os.unlink(passfile)
         return passphrase
 
-    def done(self, fromdisk, label):
+    def done(self):
         devname = self.cleaned_data['volume_disks']
         passphrase = self.cleaned_data.get("pass")
         if passphrase is not None:
@@ -1619,18 +1624,18 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
             passfile = None
 
         with transaction.commit_on_success():
-            if devname != fromdisk:
+            if devname != self.disk:
                 rv = notifier().zfs_replace_disk(
                     self.volume,
-                    label,
+                    self.label,
                     devname,
                     passphrase=passfile
                 )
             else:
                 rv = notifier().zfs_replace_disk(
                     self.volume,
-                    label,
-                    fromdisk,
+                    self.label,
+                    self.disk,
                     passphrase=passfile
                 )
         if rv == 0:

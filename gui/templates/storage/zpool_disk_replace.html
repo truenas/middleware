@@ -3,7 +3,7 @@
 {% block form %}
     <tr>
     <td colspan="2">
-    {% trans "Replacing disk" %} <strong>{{ disk }}</strong><br />
+    {% trans "Replacing disk" %} <strong>{{ form.disk }}</strong><br />
     {% if encrypted %}
     <span style="color: red;">{% trans "WARNING: The recovery key of your volume will be invalidated!" %}</span>
     {% endif %}

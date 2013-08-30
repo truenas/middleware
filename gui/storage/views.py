@@ -730,18 +730,15 @@ def zpool_scrub(request, vid):
 
 def zpool_disk_replace(request, vname, label):
 
-    disk = notifier().label_to_disk(label)
-    if disk is None:
-        disk = label
     volume = models.Volume.objects.get(vol_name=vname)
     if request.method == "POST":
         form = forms.ZFSDiskReplacementForm(
             request.POST,
             volume=volume,
-            disk=disk
+            label=label,
         )
         if form.is_valid():
-            if form.done(disk, label):
+            if form.done():
                 return JsonResp(
                     request,
                     message=_("Disk replacement has been initiated."))
@@ -752,13 +749,12 @@ def zpool_disk_replace(request, vname, label):
                     message=_("An error occurred."))
 
     else:
-        form = forms.ZFSDiskReplacementForm(volume=volume, disk=disk)
+        form = forms.ZFSDiskReplacementForm(volume=volume, label=label)
     return render(request, 'storage/zpool_disk_replace.html', {
         'form': form,
         'vname': vname,
         'encrypted': volume.vol_encrypt > 0,
         'label': label,
-        'disk': disk,
     })
 
 
