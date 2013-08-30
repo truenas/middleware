@@ -1528,7 +1528,7 @@ class CloneSnapshotForm(Form):
 
 class DiskReplacementForm(Form):
 
-    volume_disks = forms.ChoiceField(
+    replace_disk = forms.ChoiceField(
         choices=(),
         widget=forms.Select(attrs=attrs_dict),
         label=_('Member disk'))
@@ -1536,8 +1536,8 @@ class DiskReplacementForm(Form):
     def __init__(self, *args, **kwargs):
         self.disk = kwargs.pop('disk', None)
         super(DiskReplacementForm, self).__init__(*args, **kwargs)
-        self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort(
+        self.fields['replace_disk'].choices = self._populate_disk_choices()
+        self.fields['replace_disk'].choices.sort(
             key=lambda a: float(
                 re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
             ))
@@ -1613,7 +1613,7 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
         return passphrase
 
     def done(self):
-        devname = self.cleaned_data['volume_disks']
+        devname = self.cleaned_data['replace_disk']
         passphrase = self.cleaned_data.get("pass")
         if passphrase is not None:
             passfile = tempfile.mktemp(dir='/tmp/')
@@ -1650,7 +1650,7 @@ class UFSDiskReplacementForm(DiskReplacementForm):
         super(UFSDiskReplacementForm, self).__init__(*args, **kwargs)
 
     def done(self, volume):
-        devname = self.cleaned_data['volume_disks']
+        devname = self.cleaned_data['replace_disk']
         rv = notifier().geom_disk_replace(volume, devname)
         if rv == 0:
             return True
