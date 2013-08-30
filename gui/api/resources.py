@@ -258,7 +258,7 @@ class VolumeResourceMixin(object):
             )
         else:
             form.done()
-        return HttpResponse('Disk replacement started.')
+        return HttpResponse('Disk replacement started.', status=202)
 
     def offline_disk(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -271,7 +271,7 @@ class VolumeResourceMixin(object):
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
         notifier().zfs_offline_disk(obj, deserialized.get('label'))
-        return HttpResponse('Disk offline\'d.')
+        return HttpResponse('Disk offline\'d.', status=202)
 
     def detach_disk(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -284,7 +284,7 @@ class VolumeResourceMixin(object):
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
         notifier().zfs_detach_disk(obj, deserialized.get('label'))
-        return HttpResponse('Disk detached.')
+        return HttpResponse('Disk detached.', status=202)
 
     def datasets_list(self, request, **kwargs):
         bundle, obj = self._get_parent(request, kwargs)
