@@ -2045,7 +2045,6 @@ class UnlockPassphraseForm(Form):
     def clean(self):
         passphrase = self.cleaned_data.get("passphrase")
         key = self.cleaned_data.get("key")
-        log.error("%r", key)
         if not passphrase and key is None:
             self._errors['__all__'] = self.error_class([
                 _("You need either a passphrase or a recovery key to unlock")
