@@ -220,6 +220,12 @@ class VolumeResourceMixin(object):
                 self.wrap_view('detach_disk')
             ),
             url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/scrub%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('scrub')
+            ),
+            url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/status%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -312,6 +318,18 @@ class VolumeResourceMixin(object):
         )
         notifier().zfs_detach_disk(obj, deserialized.get('label'))
         return HttpResponse('Disk detached.', status=202)
+
+    def scrub(self, request, **kwargs):
+        self.method_check(request, allowed=['post', 'delete'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        if request.method == 'POST':
+            notifier().zfs_scrub(str(obj.vol_name))
+            return HttpResponse('Volume scrub started.', status=202)
+        elif request.method == 'DELETE':
+            notifier().zfs_scrub(str(obj.vol_name), stop=True)
+            return HttpResponse('Volume scrub stopped.', status=202)
 
     def unlock(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
