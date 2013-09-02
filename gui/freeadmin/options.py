@@ -728,6 +728,12 @@ grid.on(".dgrid-row:dblclick", function(evt) {
         }
         return func
 
+    def get_resource_url(self, request):
+        return reverse('api_dispatch_list', kwargs={
+            'api_name': 'v1.0',
+            'resource_name': self.resource._meta.resource_name,
+        })
+
     def datagrid(self, request):
 
         m = self._model
@@ -744,7 +750,7 @@ grid.on(".dgrid-row:dblclick", function(evt) {
             'model': m,
             'datagrid_filters': filters,
             'verbose_name': self.verbose_name,
-            'resource_name': self.resource._meta.resource_name,
+            'resource_url': self.get_resource_url(request),
             'structure_url': reverse('freeadmin_%s_%s_structure' % info),
             'actions_url': reverse('freeadmin_%s_%s_actions' % info),
         }

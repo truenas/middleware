@@ -140,7 +140,7 @@ require([
     });
 
     var store = new JsonRest({
-        target: "{% url "api_dispatch_list" api_name="v1.0" resource_name=resource_name %}{{ datagrid_filters|escapejs }}",
+        target: "{{ resource_url }}{{ datagrid_filters|escapejs }}",
         getChildren: function(parent, options){
             return parent.children;
         },
