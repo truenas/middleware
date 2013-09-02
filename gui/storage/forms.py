@@ -2103,7 +2103,7 @@ class KeyForm(Form):
         user = User.objects.filter(
             is_superuser=True,
             password=UNUSABLE_PASSWORD)
-        if user.exists():
+        if user.exists() or self._api is True:
             del self.fields['adminpw']
 
     def clean_adminpw(self):
