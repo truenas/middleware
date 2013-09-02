@@ -460,7 +460,9 @@ class VolumeResourceMixin(object):
                 })
                 bundle.data['children'].append(i)
         bundle = self.alter_detail_data_to_serialize(request, bundle)
-        return self.create_response(request, bundle)
+        response = self.create_response(request, [bundle.data])
+        response['Content-Range'] = 'items 0-0/1'
+        return response
 
     def datasets_list(self, request, **kwargs):
         bundle, obj = self._get_parent(request, kwargs)
