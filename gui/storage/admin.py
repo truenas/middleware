@@ -1,12 +1,13 @@
 from collections import OrderedDict
 
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
     DiskResourceMixin, ReplicationResourceMixin, ScrubResourceMixin,
-    TaskResourceMixin, VolumeResourceMixin, VolumeStatusResource
+    TaskResourceMixin, VolumeResourceMixin
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -317,12 +318,16 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
     app_label = "storage"
     module_name = "volumestatus"
     verbose_name = "Volume Status"
-    resource = VolumeStatusResource
+    resource = False
 
-    def get_datagrid_filters(self, request):
-        return {
-            "id": request.GET.get("id"),
-            }
+    def get_resource_url(self, request):
+        return "%s%s/status/" % (
+            reverse('api_dispatch_list', kwargs={
+                'api_name': 'v1.0',
+                'resource_name': 'storage/volume',
+            }),
+            request.GET.get('id'),
+        )
 
     def get_datagrid_columns(self):
 
