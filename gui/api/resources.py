@@ -231,6 +231,12 @@ class VolumeResourceMixin(object):
                 ),
                 self.wrap_view('unlock')
             ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/recoverykey%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('recoverykey')
+            ),
         ]
 
     def _get_parent(self, request, kwargs):
@@ -320,6 +326,18 @@ class VolumeResourceMixin(object):
         else:
             form.done(obj)
         return HttpResponse('Volume has been unlocked.', status=202)
+
+    def recoverykey(self, request, **kwargs):
+        self.method_check(request, allowed=['post', 'delete'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        if request.method == 'POST':
+            notifier().geli_recoverykey_add(obj)
+            return HttpResponse('New recovery key has been added.', status=202)
+        elif request.method == 'DELETE':
+            notifier().geli_delkey(obj)
+            return HttpResponse('Recovery key has been removed.', status=202)
 
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
