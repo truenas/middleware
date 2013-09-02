@@ -42,25 +42,26 @@ class DiskFAdmin(BaseFreeAdmin):
         actions['EditBulk'] = {
             'button_name': _('Edit In Bulk'),
             'on_click': """function() {
-                var mybtn = this;
-                var ids = [];
-                for (var i in grid.selection) {
-                    var data = grid.row(i).data;
-                    ids.push(data.id);
-                }
-                editObject('Edit In Bulk', data._editbulk_url + '?ids=' + ids.join(","), [mybtn,]);
-            }""",
+    var mybtn = this;
+    var ids = [];
+    for (var i in grid.selection) {
+        var data = grid.row(i).data;
+        ids.push(data.id);
+    }
+    editObject('Edit In Bulk', data._editbulk_url + '?ids=' + ids.join(","),
+        [mybtn,]);
+}""",
             'on_select_after': """function(evt, actionName, action) {
-                if(evt.rows.length <= 1) {
-                    query(".grid" + actionName).forEach(function(item, idx) {
-                        domStyle.set(item, "display", "none");
-                    });
-                } else {
-                    query(".grid" + actionName).forEach(function(item, idx) {
-                        domStyle.set(item, "display", "block");
-                    });
-                }
-            }"""
+    if(evt.rows.length <= 1) {
+        query(".grid" + actionName).forEach(function(item, idx) {
+            domStyle.set(item, "display", "none");
+        });
+    } else {
+        query(".grid" + actionName).forEach(function(item, idx) {
+            domStyle.set(item, "display", "block");
+        });
+    }
+}"""
         }
 
         return actions
@@ -123,9 +124,10 @@ class VolumeFAdmin(BaseFreeAdmin):
         })
         return columns
 
-    def _action_builder(self, name, label=None, url=None, func="editObject",
-        icon=None, show=None, fstype="ZFS", decrypted=True, has_enc=False,
-        enc_level=None):
+    def _action_builder(
+        self, name, label=None, url=None, func="editObject", icon=None,
+        show=None, fstype="ZFS", decrypted=True, has_enc=False, enc_level=None
+    ):
 
         if url is None:
             url = "_%s_url" % (name, )
@@ -136,7 +138,9 @@ class VolumeFAdmin(BaseFreeAdmin):
         if show == "ALL":
             hide_cond = "false"
         elif show == "+DATASET":
-            hide_cond = "row.data.type != 'dataset' && row.data.type !== undefined"
+            hide_cond = (
+                "row.data.type != 'dataset' && row.data.type !== undefined"
+            )
         elif show == "DATASET":
             hide_cond = "row.data.type != 'dataset'"
         elif show == "ZVOL":
@@ -145,12 +149,18 @@ class VolumeFAdmin(BaseFreeAdmin):
             hide_cond = "row.data.type !== undefined"
 
         if fstype == "ZFS":
-            hide_fs = "row.data.vol_fstype !== undefined && row.data.vol_fstype != 'ZFS'"
+            hide_fs = (
+                "row.data.vol_fstype !== undefined && "
+                "row.data.vol_fstype != 'ZFS'"
+            )
         else:
             hide_fs = "false"
 
         if decrypted is True:
-            hide_enc = "row.data.vol_fstype !== undefined && row.data.is_decrypted == false"
+            hide_enc = (
+                "row.data.vol_fstype !== undefined && "
+                "row.data.is_decrypted == false"
+            )
         elif decrypted is False:
             hide_enc = "row.data.is_decrypted == true"
         elif decrypted is None:
@@ -165,16 +175,16 @@ class VolumeFAdmin(BaseFreeAdmin):
             hide_hasenc = "false"
 
         on_select_after = """function(evt, actionName, action) {
-                for(var i=0;i < evt.rows.length;i++) {
-                    var row = evt.rows[i];
-                    if((%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s)) {
-                        query(".grid" + actionName).forEach(function(item, idx) {
-                            domStyle.set(item, "display", "none");
-                        });
-                        break;
-                    }
-                }
-            }""" % {
+  for(var i=0;i < evt.rows.length;i++) {
+    var row = evt.rows[i];
+    if((%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s)) {
+      query(".grid" + actionName).forEach(function(item, idx) {
+        domStyle.set(item, "display", "none");
+      });
+      break;
+    }
+  }
+}""" % {
             'hide': hide_cond,
             'hide_fs': hide_fs,
             'hide_enc': hide_enc,
@@ -182,22 +192,25 @@ class VolumeFAdmin(BaseFreeAdmin):
             }
 
         on_click = """function() {
-                var mybtn = this;
-                for (var i in grid.selection) {
-                    var data = grid.row(i).data;
-                    %(func)s('%(label)s', data.%(url)s, [mybtn,]);
-                }
-            }""" % {
-                'func': func,
-                'label': escapejs(label),
-                'url': url,
-                }
+  var mybtn = this;
+  for (var i in grid.selection) {
+    var data = grid.row(i).data;
+    %(func)s('%(label)s', data.%(url)s, [mybtn,]);
+  }
+}""" % {
+            'func': func,
+            'label': escapejs(label),
+            'url': url,
+        }
 
         data = {
-            'button_name': '<img src="%simages/ui/buttons/%s.png" width="18px" height="18px">' % (
-                settings.STATIC_URL,
-                icon,
-                ),
+            'button_name': (
+                '<img src="%simages/ui/buttons/%s.png" width="18px" '
+                'height="18px">' % (
+                    settings.STATIC_URL,
+                    icon,
+                )
+            ),
             'tooltip': label,
             'on_select_after': on_select_after,
             'on_click': on_click,
@@ -208,107 +221,129 @@ class VolumeFAdmin(BaseFreeAdmin):
     def get_actions(self):
 
         actions = OrderedDict()
-        actions['Detach'] = self._action_builder("detach",
+        actions['Detach'] = self._action_builder(
+            'detach',
             label=_('Detach Volume'),
             func="editScaryObject",
             icon="remove_volume",
             fstype="ALL",
             decrypted=None,
             )
-        actions['Scrub'] = self._action_builder("scrub", label=_('Scrub Volume'))
-        actions['Options'] = self._action_builder("options",
+        actions['Scrub'] = self._action_builder(
+            'scrub', label=_('Scrub Volume')
+        )
+        actions['Options'] = self._action_builder(
+            'options',
             label=_('Edit ZFS Options'),
-            icon="settings")
-        actions['NewDataset'] = self._action_builder("add_dataset",
+            icon="settings",
+        )
+        actions['NewDataset'] = self._action_builder(
+            'add_dataset',
             label=_('Create ZFS Dataset'),
-            )
-        actions['NewVolume'] = self._action_builder("add_zfs_volume",
+        )
+        actions['NewVolume'] = self._action_builder(
+            'add_zfs_volume',
             label=_('Create zvol'),
-            )
-        actions['ChangePerm'] = self._action_builder("permissions",
+        )
+        actions['ChangePerm'] = self._action_builder(
+            'permissions',
             label=_('Change Permissions'),
             show="+DATASET",
             fstype="ALL",
             )
-        actions['ManualSnapshot'] = self._action_builder("manual_snapshot",
+        actions['ManualSnapshot'] = self._action_builder(
+            "manual_snapshot",
             label=_('Create Snapshot'),
             icon="create_snapshot",
             show="ALL",
-            )
-        actions['VolStatus'] = self._action_builder("status",
+        )
+        actions['VolStatus'] = self._action_builder(
+            "status",
             label=_('Volume Status'),
             func="viewModel",
             icon="zpool_status",
             fstype="ALL",
-            )
+        )
 
-        actions['VolCreatePass'] = self._action_builder("create_passphrase",
+        actions['VolCreatePass'] = self._action_builder(
+            "create_passphrase",
             label=_('Create Passphrase'),
             icon="key_change",
             has_enc=True,
             enc_level=1,
-            )
-        actions['VolChangePass'] = self._action_builder("change_passphrase",
+        )
+        actions['VolChangePass'] = self._action_builder(
+            "change_passphrase",
             label=_('Change Passphrase'),
             icon="key_change",
             has_enc=True,
             enc_level=2,
-            )
-        actions['VolDownloadKey'] = self._action_builder("download_key",
+        )
+        actions['VolDownloadKey'] = self._action_builder(
+            "download_key",
             label=_('Download Key'),
             icon="key_download",
             has_enc=True,
-            )
-        actions['VolReKey'] = self._action_builder("rekey",
+        )
+        actions['VolReKey'] = self._action_builder(
+            "rekey",
             label=_('Encryption Re-key'),
             icon="key_rekey",
             has_enc=True,
-            )
-        actions['VolAddRecKey'] = self._action_builder("add_reckey",
+        )
+        actions['VolAddRecKey'] = self._action_builder(
+            "add_reckey",
             label=_('Add recovery key'),
             icon="key_addrecovery",
             has_enc=True,
-            )
-        actions['VolRemRecKey'] = self._action_builder("rem_reckey",
+        )
+        actions['VolRemRecKey'] = self._action_builder(
+            "rem_reckey",
             label=_('Remove recovery key'),
             icon="key_removerecovery",
             has_enc=True,
-            )
-        actions['VolUnlock'] = self._action_builder("unlock",
+        )
+        actions['VolUnlock'] = self._action_builder(
+            "unlock",
             label=_('Unlock'),
             icon="key_unlock",
             decrypted=False,
-            )
+        )
 
         # Dataset actions
-        actions['DatasetDelete'] = self._action_builder("dataset_delete",
+        actions['DatasetDelete'] = self._action_builder(
+            "dataset_delete",
             label=_('Destroy Dataset'),
             func="editScaryObject",
             icon="remove_dataset",
             show="DATASET",
-            )
-        actions['DatasetEdit'] = self._action_builder("dataset_edit",
+        )
+        actions['DatasetEdit'] = self._action_builder(
+            "dataset_edit",
             label=_('Edit ZFS Options'),
             icon="settings",
             show="DATASET",
-            )
-        actions['DatasetCreate'] = self._action_builder("dataset_create",
+        )
+        actions['DatasetCreate'] = self._action_builder(
+            "dataset_create",
             label=_('Create ZFS Dataset'),
             icon="add_dataset",
             show="DATASET",
-            )
-        actions['NewDsVolume'] = self._action_builder("add_zfs_volume",
+        )
+        actions['NewDsVolume'] = self._action_builder(
+            "add_zfs_volume",
             label=_('Create zvol'),
             show="DATASET",
-            )
+        )
 
         # ZVol actions
-        actions['ZVolDelete'] = self._action_builder("zvol_delete",
+        actions['ZVolDelete'] = self._action_builder(
+            "zvol_delete",
             label=_('Destroy zvol'),
             func="editScaryObject",
             icon="remove_volume",
             show="ZVOL",
-            )
+        )
 
         return actions
 
@@ -366,8 +401,9 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
         })
         return columns
 
-    def _action_builder(self, name, label=None, url=None, func="editObject",
-        show=None):
+    def _action_builder(
+        self, name, label=None, url=None, func="editObject", show=None
+    ):
 
         if url is None:
             url = "_%s_url" % (name, )
@@ -375,30 +411,30 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
         hide = "row.data.%s === undefined" % url
 
         on_select_after = """function(evt, actionName, action) {
-                for(var i=0;i < evt.rows.length;i++) {
-                    var row = evt.rows[i];
-                    if((%(hide)s)) {
-                        query(".grid" + actionName).forEach(function(item, idx) {
-                            domStyle.set(item, "display", "none");
-                        });
-                        break;
-                    }
-                }
-            }""" % {
+  for(var i=0;i < evt.rows.length;i++) {
+    var row = evt.rows[i];
+    if((%(hide)s)) {
+      query(".grid" + actionName).forEach(function(item, idx) {
+        domStyle.set(item, "display", "none");
+      });
+      break;
+    }
+  }
+}""" % {
             'hide': hide,
-            }
+        }
 
         on_click = """function() {
-                var mybtn = this;
-                for (var i in grid.selection) {
-                    var data = grid.row(i).data;
-                    %(func)s('%(label)s', data.%(url)s, [mybtn,]);
-                }
-            }""" % {
-                'func': func,
-                'label': escapejs(label),
-                'url': url,
-                }
+  var mybtn = this;
+  for (var i in grid.selection) {
+    var data = grid.row(i).data;
+    %(func)s('%(label)s', data.%(url)s, [mybtn,]);
+  }
+}""" % {
+            'func': func,
+            'label': escapejs(label),
+            'url': url,
+        }
 
         data = {
             'button_name': label,
@@ -412,25 +448,19 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
 
         actions = OrderedDict()
 
-        actions['Disk'] = self._action_builder("disk",
-            label=_('Edit Disk'),
-            )
+        actions['Disk'] = self._action_builder("disk", label=_('Edit Disk'))
 
-        actions['Offline'] = self._action_builder("offline",
-            label=_('Offline'),
-            )
+        actions['Offline'] = self._action_builder(
+            'offline', label=_('Offline'),
+        )
 
-        actions['Detach'] = self._action_builder("detach",
-            label=_('Detach'),
-            )
+        actions['Detach'] = self._action_builder("detach", label=_('Detach'))
 
-        actions['Replace'] = self._action_builder("replace",
-            label=_('Replace'),
-            )
+        actions['Replace'] = self._action_builder(
+            'replace', label=_('Replace'),
+        )
 
-        actions['Remove'] = self._action_builder("remove",
-            label=_('Remove'),
-            )
+        actions['Remove'] = self._action_builder("remove", label=_('Remove'))
 
         return actions
 
