@@ -55,7 +55,9 @@ from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
-from freenasUI.storage.forms import VolumeManagerForm, ZFSDiskReplacementForm
+from freenasUI.storage.forms import (
+    UnlockPassphraseForm, VolumeManagerForm, ZFSDiskReplacementForm
+)
 from freenasUI.storage.models import Disk
 from tastypie import fields
 from tastypie.http import (
@@ -223,6 +225,12 @@ class VolumeResourceMixin(object):
                 ),
                 self.wrap_view('status')
             ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/unlock%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('unlock')
+            ),
         ]
 
     def _get_parent(self, request, kwargs):
@@ -291,6 +299,27 @@ class VolumeResourceMixin(object):
         )
         notifier().zfs_detach_disk(obj, deserialized.get('label'))
         return HttpResponse('Disk detached.', status=202)
+
+    def unlock(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        form = UnlockPassphraseForm(
+            data=deserialized,
+        )
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.done(obj)
+        return HttpResponse('Volume has been unlocked.', status=202)
 
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
