@@ -270,6 +270,13 @@ class Alias(Model):
                 self.alias_interface.int_name,
                 self.alias_v6address)
 
+    @property
+    def alias_network(self):
+        if self.alias_v4address:
+            return '%s/%s' % (self.alias_v4address, self.alias_v4netmaskbit)
+        else:
+            return '%s/%s' % (self.alias_v6address, self.alias_v6netmaskbit)
+
     def delete(self):
         super(Alias, self).delete()
         notifier().stop("netif")
