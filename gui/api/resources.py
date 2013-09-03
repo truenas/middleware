@@ -46,9 +46,8 @@ from freenasUI.jails.models import (
 )
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware import zfs
-from freenasUI.services.models import (
-    iSCSITargetPortal, iSCSITargetExtent, iSCSITargetToExtent
-)
+from freenasUI.network.forms import AliasForm
+from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
 from freenasUI.services.forms import iSCSITargetPortalIPForm
@@ -921,7 +920,89 @@ class InterfacesResourceMixin(object):
         bundle = super(InterfacesResourceMixin, self).dehydrate(bundle)
         bundle.data['ipv4_addresses'] = bundle.obj.get_ipv4_addresses()
         bundle.data['ipv6_addresses'] = bundle.obj.get_ipv6_addresses()
+        bundle.data['int_aliases'] = [
+            a.alias_network for a in bundle.obj.alias_set.all()
+        ]
         return bundle
+
+    def hydrate(self, bundle):
+        bundle = super(InterfacesResourceMixin, self).hydrate(bundle)
+        newips = bundle.data.get('int_aliases', [])
+        i = -1
+        for i, item in enumerate(bundle.obj.alias_set.all()):
+            bundle.data[
+                'alias_set-%d-alias_v4address' % i
+            ] = item.alias_v4address
+            bundle.data[
+                'alias_set-%d-alias_v4netmaskbit' % i
+            ] = item.alias_v4netmaskbit
+            bundle.data[
+                'alias_set-%d-alias_v6address' % i
+            ] = item.alias_v6address
+            bundle.data[
+                'alias_set-%d-alias_v6netmaskbit' % i
+            ] = item.alias_v6netmaskbit
+            bundle.data['alias_set-%d-id' % i] = item.id
+        initial = i + 1
+        for i, item in enumerate(newips, i + 1):
+            ip, nm = item.rsplit('/', 1)
+            if ':' in ip:
+                bundle.data['alias_set-%d-alias_v6address' % i] = ip
+                bundle.data['alias_set-%d-alias_v6netmaskbit' % i] = nm
+            else:
+                bundle.data['alias_set-%d-alias_v4address' % i] = ip
+                bundle.data['alias_set-%d-alias_v4netmaskbit' % i] = nm
+            bundle.data['alias_set-%d-id' % i] = ''
+        bundle.data['int_aliases'] = newips
+        bundle.data['alias_set-INITIAL_FORMS'] = initial
+        bundle.data['alias_set-TOTAL_FORMS'] = i + 1
+        return bundle
+
+    def is_form_valid(self, bundle, form):
+        fset = inlineformset_factory(
+            Interfaces,
+            Alias,
+            form=AliasForm,
+            extra=0,
+        )
+        formset = fset(bundle.data, instance=bundle.obj, prefix='alias_set')
+        for frm in formset.forms:
+            frm.parent = form
+        valid = formset.is_valid()
+        errors = {}
+        if not valid:
+            for form in formset:
+                errors.update(form._errors)
+        valid &= form.is_valid()
+        if errors:
+            form._errors.update(errors)
+        bundle.errors = dict(form._errors)
+        return valid
+
+    def save_m2m(self, m2m_bundle):
+        aliases = []
+        for alias in m2m_bundle.obj.alias_set.all():
+            if alias.alias_network not in m2m_bundle.data.get(
+                "int_aliases", []
+            ):
+                alias.delete()
+            else:
+                aliases.append(alias.alias_network)
+
+        for alias in m2m_bundle.data.get("int_aliases", []):
+            if alias in aliases:
+                continue
+            ip, netm = alias.rsplit('/', 1)
+            al = Alias()
+            if ':' in ip:
+                al.alias_v6address = ip
+                al.alias_v6netmaskbit = netm
+            else:
+                al.alias_v4address = ip
+                al.alias_v4netmaskbit = netm
+            al.alias_interface = m2m_bundle.obj
+            al.save()
+        return m2m_bundle
 
 
 class LAGGInterfaceResourceMixin(object):
