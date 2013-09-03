@@ -750,6 +750,7 @@ grid.on(".dgrid-row:dblclick", function(evt) {
             'model': m,
             'datagrid_filters': filters,
             'verbose_name': self.verbose_name,
+            'module_name': self.module_name,
             'resource_url': self.get_resource_url(request),
             'structure_url': reverse('freeadmin_%s_%s_structure' % info),
             'actions_url': reverse('freeadmin_%s_%s_actions' % info),

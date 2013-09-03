@@ -4,7 +4,7 @@
     {% block actions_static_buttons %}
     {% if add_url %}
     <div class="gridAdd left">
-      <button id="datagridBtn_{{ verbose_name }}_Add" data-dojo-type="dijit.form.Button" type="button">
+      <button id="datagridBtn_{{ module_name }}_Add" data-dojo-type="dijit.form.Button" type="button">
           {% blocktrans with name=verbose_name %}Add {{ name }}{% endblocktrans %}
       <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
           editObject('{% trans "Add"|escapejs %} {{ verbose_name }}', '{{ add_url }}', [this,]);
@@ -16,7 +16,7 @@
     <span class="clear"></span>
   </div>
   {% endblock %}
-  <div class="gridDiv" id="dgrid_{{ verbose_name }}" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'"></div>
+  <div class="gridDiv" id="dgrid_{{ module_name }}" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'center'"></div>
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom', splitter: false" style="border: 1px solid #ddd;background-color: white;height: 40px;display: none;" doLayout="false">
 
       <div class="actionsPane" data-dojo-type="dijit.layout.ContentPane" style="background-color: white;" doLayout="false">
@@ -121,7 +121,7 @@ require([
             domStyle.set(n, "display", "none");
 
             var but = new Button({
-                'id': "datagridActionBtn_{{ verbose_name }}" + key,
+                'id': "datagridActionBtn_{{ module_name }}" + key,
                 'label': actions[key]['button_name'],
                 'onClick': actions[key]['on_click']
             });
