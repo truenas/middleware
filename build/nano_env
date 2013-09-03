@@ -179,13 +179,13 @@ else
 fi
 export NANO_XZ
 
-DISTCACHE=${FREENAS_DISTCACHE="/freenas-build/freenas-distfiles"}
-export DISTCACHE
-
-FREEBSD_DISTCACHE=${FREEBSD_DISTCACHE="/freenas-build/freebsd-distfiles"}
-FREEBSD_PKGCACHE=${FREEBSD_PKGCACHE="/freenas-build/freebsd-packages"}
-FREEBSD_PKGCACHE_32=${FREEBSD_PKGCACHE_32="/freenas-build/freebsd-packages-32"}
+FREEBSD_DISTCACHE=${FREEBSD_DISTCACHE:="/freenas-build/freebsd-distfiles"}
+FREEBSD_PKGCACHE=${FREEBSD_PKGCACHE:="/freenas-build/freebsd-packages"}
+FREEBSD_PKGCACHE_32=${FREEBSD_PKGCACHE_32:="/freenas-build/freebsd-packages-32"}
 export FREEBSD_DISTCACHE FREEBSD_PKGCACHE FREEBSD_PKGCACHE_32
+
+DISTCACHE=${FREENAS_DISTCACHE}
+export DISTCACHE
 
 : ${FREENAS_PLUGINCACHE:="/freenas-build/freenas-plugins"}
 export FREENAS_PLUGINCACHE
