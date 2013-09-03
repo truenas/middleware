@@ -563,6 +563,21 @@ do_pbi_wrapper_hack()
 	export NANO_LOCAL_DIRS
 }
 
+do_extract_tarball_hack()
+{
+	local _src="${AVATAR_ROOT}/src/extract-tarball"
+	local _dst="${AVATAR_ROOT}/FreeBSD/src/extract-tarball"
+
+	if [ ! -d "${_dst}" ]
+	then
+		mkdir -p "${_dst}"
+	fi
+	cp ${_src}/* ${_dst}
+
+	NANO_LOCAL_DIRS="${NANO_LOCAL_DIRS} extract-tarball"
+	export NANO_LOCAL_DIRS
+}
+
 main()
 {
 	parse_cmdline "$@"
@@ -625,6 +640,11 @@ main()
 	# pbiwrapper hacks
 	#
 	do_pbi_wrapper_hack
+
+	#
+	# compile extract-tarball during FreeBSD world build
+	#
+	do_extract_tarball_hack
 
 	#
 	# Now let's build the targets
