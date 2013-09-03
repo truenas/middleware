@@ -45,7 +45,7 @@ class APIClient(Model):
         max_length=100,
         unique=True,
     )
-    secret = models.CharField(max_length=1024, editable=False)
+    secret = models.CharField(max_length=1024)
 
     class Meta:
         verbose_name = _("API Client")

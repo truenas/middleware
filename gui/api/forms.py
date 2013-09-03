@@ -32,3 +32,17 @@ class APIClientForm(ModelForm):
 
     class Meta:
         model = models.APIClient
+
+    def __init__(self, *args, **kwargs):
+        super(APIClientForm, self).__init__(*args, **kwargs)
+        if self.instance.id is None:
+            del self.fields['secret']
+        else:
+            self.fields['secret'].widget.attrs['readonly'] = True
+            self.fields['secret'].widget.attrs['class'] = (
+                'dijitDisabled dijitTextBoxReadOnly '
+                'dijitValidationTextBoxDisabled'
+            )
+
+    def clean_secret(self):
+        return self.instance.secret
