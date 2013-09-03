@@ -1523,3 +1523,14 @@ class RebootResource(DojoResource):
     def post_list(self, request, **kwargs):
         notifier().restart("system")
         return HttpResponse('Reboot process started.', status=202)
+
+
+class ShutdownResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['post']
+        resource_name = 'system/shutdown'
+
+    def post_list(self, request, **kwargs):
+        notifier().stop("system")
+        return HttpResponse('Shutdown process started.', status=202)
