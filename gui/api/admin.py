@@ -29,8 +29,8 @@ from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 
 
-class APICLientFAdmin(BaseFreeAdmin):
+class APIClientFAdmin(BaseFreeAdmin):
     menu_child_of = "system"
 
 
-site.register(models.APIClient, APICLientFAdmin)
+site.register(models.APIClient, APIClientFAdmin)
