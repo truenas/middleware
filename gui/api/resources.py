@@ -647,6 +647,10 @@ class VolumeResourceMixin(object):
         bundle = super(VolumeResourceMixin, self).dehydrate(bundle)
         mp = bundle.obj.mountpoint_set.all()[0]
 
+        for key in bundle.data.keys():
+            if key.startswith('layout-'):
+                del bundle.data[key]
+
         bundle.data['name'] = bundle.obj.vol_name
 
         is_decrypted = bundle.obj.is_decrypted()
