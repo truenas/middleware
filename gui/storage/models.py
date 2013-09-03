@@ -945,6 +945,20 @@ class Task(Model):
             self.task_ret_unit,
         )
 
+    def save(self, *args, **kwargs):
+        super(Task, self).save(args, kwargs)
+        try:
+            notifier().restart("cron")
+        except:
+            pass
+
+    def delete(self, *args, **kwargs):
+        super(Task, self).delete(args, kwargs)
+        try:
+            notifier().restart("cron")
+        except:
+            pass
+
     class Meta:
         verbose_name = _(u"Periodic Snapshot Task")
         verbose_name_plural = _(u"Periodic Snapshot Tasks")

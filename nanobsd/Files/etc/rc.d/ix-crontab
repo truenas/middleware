@@ -109,6 +109,12 @@ generate_crontab()
 		# history for more details.
 		echo "${scrub_minute}	${scrub_hour}	${scrub_daymonth}	${scrub_month}	${scrub_dayweek}	root	PATH=\"$cron_PATH\" /usr/local/sbin/scrub -t ${scrub_threshold} ${vol_name}" >> /etc/crontab
 	done
+
+	# For periodic snapshot.
+	snaptasks=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM storage_task WHERE task_enabled = 1;"`
+	if [ ${snaptasks} -gt 0 ]; then
+		echo "*       *       *       *       *       root    /usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
+	fi
 }
 
 original_crontab()
