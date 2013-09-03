@@ -1329,3 +1329,6 @@ table.layoutTable > tr:first-child > td {
 .dgrid-column-nfs_mapall_user, .dgrid-column-nfs_mapall_group {
     width: 105px;
 }
+#dgrid_apiclient .dgrid-column-name {
+    width: 140px;
+}
