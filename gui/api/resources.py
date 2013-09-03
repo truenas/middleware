@@ -1512,3 +1512,14 @@ class ServicesResourceMixin(object):
         if 'pk' in kwargs and not kwargs['pk'].isdigit():
             kwargs['srv_service'] = kwargs.pop('pk')
         return super(ServicesResourceMixin, self).obj_get(bundle, **kwargs)
+
+
+class RebootResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['post']
+        resource_name = 'system/reboot'
+
+    def post_list(self, request, **kwargs):
+        notifier().restart("system")
+        return HttpResponse('Reboot process started.', status=202)
