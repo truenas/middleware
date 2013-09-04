@@ -59,16 +59,8 @@ def password_change(request):
     if request.method == 'POST':
         passform = password_change_form(user=request.user, data=request.POST)
         if passform.is_valid():
-            if passform.cleaned_data['change_root']:
-                root = models.bsdUsers.objects.get(bsdusr_username='root')
-                new_password = passform.cleaned_data.get('new_password1')
-                bsdpasswdform = forms.bsdUserPasswordForm(instance=root)
-                bsdpasswdform.cleaned_data = {}
-                bsdpasswdform.cleaned_data['bsdusr_password1'] = new_password
-                bsdpasswdform.cleaned_data['bsdusr_password2'] = new_password
-                bsdpasswdform.save()
-            usable = request.user.has_usable_password()
             passform.save()
+            usable = request.user.has_usable_password()
             events = []
             if not usable:
                 from freenasUI.tools.alert import Alert

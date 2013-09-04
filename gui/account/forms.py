@@ -27,6 +27,7 @@
 import logging
 import os
 
+from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as __, ugettext_lazy as _
 from django.contrib.auth.models import User as django_User
@@ -784,12 +785,12 @@ class bsdUserToGroupForm(Form):
         notifier().reload("user")
 
 
-class SetPasswordForm(forms.Form):
+class SetPasswordForm(Form):
     """
     A form that lets a user change set his/her password without
     entering the old password
     """
-    new_password1 = forms.CharField(
+    new_password = forms.CharField(
         label=_("New password"),
         widget=forms.PasswordInput,
     )
@@ -803,7 +804,7 @@ class SetPasswordForm(forms.Form):
         super(SetPasswordForm, self).__init__(*args, **kwargs)
 
     def clean_new_password2(self):
-        password1 = self.cleaned_data.get('new_password1')
+        password1 = self.cleaned_data.get('new_password')
         password2 = self.cleaned_data.get('new_password2')
         if password1 and password2:
             if password1 != password2:
@@ -813,7 +814,7 @@ class SetPasswordForm(forms.Form):
         return password2
 
     def save(self, commit=True):
-        self.user.set_password(self.cleaned_data['new_password1'])
+        self.user.set_password(self.cleaned_data['new_password'])
         if commit:
             self.user.save()
         return self.user
@@ -838,12 +839,14 @@ class PasswordChangeForm(SetPasswordForm):
                 widget=forms.PasswordInput,
             )
             self.fields.keyOrder = [
-                'old_password', 'new_password1', 'new_password2', 'change_root'
+                'old_password', 'new_password', 'new_password2', 'change_root'
             ]
         else:
             self.fields.keyOrder = [
-                'new_password1', 'new_password2', 'change_root'
+                'new_password', 'new_password2', 'change_root'
             ]
+        if self._api is True:
+            del self.fields['new_password2']
 
     def clean_old_password(self):
         """
@@ -858,6 +861,18 @@ class PasswordChangeForm(SetPasswordForm):
                 "again."
             ))
         return old_password
+
+    def save(self, *args, **kwargs):
+        with transaction.commit_on_success():
+            if self.cleaned_data.get('change_root'):
+                root = models.bsdUsers.objects.get(bsdusr_username='root')
+                new_password = self.cleaned_data.get('new_password')
+                bsdpasswdform = bsdUserPasswordForm(instance=root)
+                bsdpasswdform.cleaned_data = {}
+                bsdpasswdform.cleaned_data['bsdusr_password'] = new_password
+                bsdpasswdform.cleaned_data['bsdusr_password2'] = new_password
+                bsdpasswdform.save()
+            return super(PasswordChangeForm, self).save(*args, **kwargs)
 
 
 class DeleteGroupForm(forms.Form):
