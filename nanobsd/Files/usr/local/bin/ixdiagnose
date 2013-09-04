@@ -59,7 +59,7 @@ if [ -t 1 ] && ! $boot_time && ! $force_upload ; then
 	cat <<END_TEXT
 Welcome to ixdiagnose.
 
-ixdiagnos sends iXsystems the debugging information of your
+ixdiagnose sends iXsystems the debugging information of your
 computer.  In this mode we will send your logs and the
 contents of your diagnostics to iXsystems.
 
