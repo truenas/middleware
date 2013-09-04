@@ -32,4 +32,11 @@ PROG=	extract-tarball
 BINDIR=	/usr/local/bin
 LDADD=	-lfetch
 
+all: makedir
+
+makedir:
+.if !exists(${BINDIR})
+	mkdir -p ${BINDIR}
+.endif
+
 .include <bsd.prog.mk>
