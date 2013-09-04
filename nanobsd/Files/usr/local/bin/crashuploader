@@ -11,12 +11,18 @@ if len(sys.argv) < 2:
 url = 'https://ext-data.ixsystems.com/uploader/list/'
 files = {'docfile': open(sys.argv[1], 'rb')}
 
-data = None
+data = {}
 if os.path.isfile("/etc/hostid"):
     f = open("/etc/hostid")
     hostid = f.read().strip()
     f.close() 
     data = { 'hostid': hostid }
+
+if os.path.isfile("/etc/version"):
+    f = open("/etc/version")
+    version = f.read().strip()
+    f.close()
+    data['version'] = version
 
 r = requests.post(url, data=data, files=files)
 #print r.text
