@@ -27,17 +27,19 @@
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response, render
+from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.contrib.auth.views import login
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
 
-from freenasUI.account import forms, models
+from freenasUI.account import forms
 from freenasUI.common.freenasldap import FLAGS_DBINIT
-from freenasUI.common.freenascache import (FLAGS_CACHE_READ_USER,
-    FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP)
+from freenasUI.common.freenascache import (
+    FLAGS_CACHE_READ_USER, FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP,
+    FLAGS_CACHE_WRITE_GROUP
+)
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_Groups
 from freenasUI.common.system import get_sw_login_version, get_sw_name
 from freenasUI.freeadmin.views import JsonResp
@@ -70,9 +72,11 @@ def password_change(request):
                 del alert
                 events.append("loadalert()")
 
-            return JsonResp(request,
+            return JsonResp(
+                request,
                 message=_("Password successfully updated."),
-                events=events)
+                events=events,
+            )
 
     extra_context.update({
         'form': passform,
@@ -87,13 +91,16 @@ def user_change(request):
     changeform = forms.UserChangeForm(instance=request.user)
 
     if request.method == 'POST':
-        changeform = forms.UserChangeForm(instance=request.user,
-            data=request.POST)
+        changeform = forms.UserChangeForm(
+            instance=request.user,
+            data=request.POST,
+        )
         if changeform.is_valid():
             changeform.save()
-            return JsonResp(request,
+            return JsonResp(
+                request,
                 message=_("Admin user successfully updated.")
-                )
+            )
 
     extra_context.update({
         'form': changeform,
@@ -111,8 +118,10 @@ def group2user_update(request, object_id):
     else:
         f = forms.bsdGroupToUserForm(groupid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {
-        'url': reverse('account_bsdgroup_members',
-            kwargs={'object_id': object_id}),
+        'url': reverse(
+            'account_bsdgroup_members',
+            kwargs={'object_id': object_id}
+        ),
         'form': f,
     })
 
@@ -126,8 +135,10 @@ def user2group_update(request, object_id):
     else:
         f = forms.bsdUserToGroupForm(userid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {
-        'url': reverse('account_bsduser_groups',
-            kwargs={'object_id': object_id}),
+        'url': reverse(
+            'account_bsduser_groups',
+            kwargs={'object_id': object_id}
+        ),
         'form': f,
     })
 
@@ -147,12 +158,15 @@ def json_users(request, exclude=None):
     else:
         exclude = []
     idx = 1
-    for user in FreeNAS_Users(flags=FLAGS_DBINIT |
-            FLAGS_CACHE_READ_USER | FLAGS_CACHE_WRITE_USER):
+    for user in FreeNAS_Users(
+        flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER | FLAGS_CACHE_WRITE_USER
+    ):
         if idx > 50:
             break
-        if (query == None or user.pw_name.startswith(query)) and \
-          user.pw_name not in exclude:
+        if (
+            (query is None or user.pw_name.startswith(query)) and
+            user.pw_name not in exclude
+        ):
             json['items'].append({
                 'id': user.pw_name,
                 'name': user.pw_name,
@@ -173,11 +187,12 @@ def json_groups(request):
     }
 
     idx = 1
-    for grp in FreeNAS_Groups(flags=FLAGS_DBINIT |
-            FLAGS_CACHE_READ_GROUP | FLAGS_CACHE_WRITE_GROUP):
+    for grp in FreeNAS_Groups(
+        flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP | FLAGS_CACHE_WRITE_GROUP
+    ):
         if idx > 50:
             break
-        if query == None or grp.gr_name.startswith(query):
+        if query is None or grp.gr_name.startswith(query):
             json['items'].append({
                 'id': grp.gr_name,
                 'name': grp.gr_name,
@@ -187,10 +202,13 @@ def json_groups(request):
     return HttpResponse(simplejson.dumps(json, indent=3))
 
 
-def login_wrapper(request, template_name='registration/login.html',
-          redirect_field_name=REDIRECT_FIELD_NAME,
-          authentication_form=AuthenticationForm,
-          current_app=None, extra_context={}):
+def login_wrapper(
+    request,
+    template_name='registration/login.html',
+    redirect_field_name=REDIRECT_FIELD_NAME,
+    authentication_form=AuthenticationForm,
+    current_app=None, extra_context={}
+):
     """
     Wrapper to login to do not allow login and redirect to
     shutdown, reboot or logout pages,
@@ -200,14 +218,21 @@ def login_wrapper(request, template_name='registration/login.html',
         'sw_login_version': get_sw_login_version(),
         'sw_name': get_sw_name(),
     })
-    response = login(request, template_name='registration/login.html',
-          redirect_field_name=redirect_field_name,
-          authentication_form=authentication_form,
-          current_app=current_app, extra_context=extra_context)
-    if response.status_code in (301, 302) and response._headers.get('location',
-            ('', ''))[1] in (reverse('system_reboot'),
-                reverse('system_shutdown'), reverse('account_logout'),
-            ):
+    response = login(
+        request,
+        template_name='registration/login.html',
+        redirect_field_name=redirect_field_name,
+        authentication_form=authentication_form,
+        current_app=current_app,
+        extra_context=extra_context,
+    )
+    if response.status_code in (301, 302) and response._headers.get(
+        'location', ('', '')
+    )[1] in (
+        reverse('system_reboot'),
+        reverse('system_shutdown'),
+        reverse('account_logout'),
+    ):
         response._headers['location'] = ('Location', '/')
     elif request.user.is_authenticated():
         return HttpResponseRedirect('/')
