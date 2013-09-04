@@ -1652,9 +1652,18 @@ class AdminPasswordResource(DojoResource):
 
 class AdminUserResource(DojoResource):
 
+    username = fields.CharField(default='admin')
+    first_name = fields.CharField()
+    last_name = fields.CharField()
+
     class Meta:
         allowed_methods = ['get', 'post']
         resource_name = 'system/adminuser'
+        object_class = object
+
+    def get_object_list(self, request):
+        user = User.objects.all()[0]
+        return user
 
     def get_list(self, request, **kwargs):
 
