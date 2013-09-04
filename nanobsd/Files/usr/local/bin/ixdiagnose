@@ -95,8 +95,9 @@ if ! dumpfile_to_submit_exists $dumpdir ; then
 		exit 2
 	fi
 else
-	cp $dumpdir/textdump.tar.last "$dir"
-	cp $dumpdir/info.last "$dir"
+	mkdir "$dir/textdump"
+	tar -xvf $dumpdir/textdump.tar.last -C "$dir/textdump"
+	cp $dumpdir/info.last "$dir/textdump"
 fi
 
 if $has_ticket_info ; then
@@ -106,6 +107,10 @@ fi
 
 if [ -f /etc/hostid ] ; then
 	cp /etc/hostid "$dir/hostid"
+fi
+
+if [ -f /etc/version ] ; then
+	cp /etc/version "$dir/version"
 fi
 
 if [ -f /usr/local/etc/registration ] ; then
