@@ -1,6 +1,51 @@
+from django.contrib.auth.models import User
+
 from .utils import APITestCase
 from freenasUI.storage.models import Disk, MountPoint, Volume
 from freenasUI.system import models
+
+
+class AdminPasswordResourceTest(APITestCase):
+
+    def setUp(self):
+        super(AdminPasswordResourceTest, self).setUp()
+        self._obj = User.objects.create(
+            username='admin',
+            password='xxxxx',
+            is_superuser=True,
+            is_staff=True,
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            self.get_api_url(),
+            format='json',
+            data={
+                'new_password': 'freenas',
+            }
+        )
+        self.assertHttpAccepted(resp)
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
 
 
 class CronJobResourceTest(APITestCase):
