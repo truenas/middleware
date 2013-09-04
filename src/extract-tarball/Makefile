@@ -29,14 +29,7 @@ NO_MAN=
 .include <bsd.own.mk>
 
 PROG=	extract-tarball
-BINDIR=	/usr/local/bin
+BINDIR=	/usr/bin
 LDADD=	-lfetch
-
-all: makedir
-
-makedir:
-.if !exists(${BINDIR})
-	mkdir -p ${BINDIR}
-.endif
 
 .include <bsd.prog.mk>

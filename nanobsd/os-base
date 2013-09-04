@@ -898,6 +898,13 @@ get_jail_packages32()
 }
 customize_cmd get_jail_packages32
 
+install_extract_tarball()
+{
+	mkdir -p ${NANO_WORLDDIR}/usr/local/bin
+	mv ${NANO_WORLDDIR}/usr/bin/extract-tarball \
+		${NANO_WORLDDIR}/usr/local/bin/extract-tarball
+}
+customize_cmd install_extract_tarball
 
 # Move the $world/data to the /data partion
 move_data()
