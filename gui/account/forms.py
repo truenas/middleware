@@ -107,7 +107,8 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
             name, value, attrs, choices
         )
         ret = ret.split("</select>")
-        ret = "".join(ret[:-1]) + """ <script type="dojo/method" event="onChange" args="e">
+        ret = "".join(ret[:-1]) + """
+        <script type="dojo/method" event="onChange" args="e">
         var sel = dijit.byId("%s");
         var t = sel.get('displayedValue');
         var store = sel.store;
@@ -115,7 +116,9 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
         store.close();
         store.fetch();
         </script>""" % (attrs['id']) + "</select>" + ret[-1]
-        ret = """<div dojoType="dojo.data.ItemFileReadStore" jsId="%s" clearOnClose="true" url="%s"></div>""" % (store, self.url) + ret
+        ret = """
+        <div dojoType="dojo.data.ItemFileReadStore" jsId="%s"
+        clearOnClose="true" url="%s"></div>""" % (store, self.url) + ret
         return ret
 
 
@@ -178,13 +181,31 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             <br />
             <br />
             <br />
-            <a href="#" onClick="var s=dijit.byId('%s'); var s2=dijit.byId('select_from'); s.getSelected().forEach(function(i){ var c = dojo.doc.createElement('option');c.innerHTML = i.text;c.value = i.value; s2.domNode.appendChild(c); i.parentNode.removeChild(i); }); ">
+            <a href="#" onClick="
+            var s=dijit.byId('%s');
+            var s2=dijit.byId('select_from');
+            s.getSelected().forEach(function(i){
+                var c = dojo.doc.createElement('option');
+                c.innerHTML = i.text;
+                c.value = i.value;
+                s2.domNode.appendChild(c);
+                i.parentNode.removeChild(i);
+            }); ">
                 &lt;&lt;
             </a>
             <br />
             <br />
             <br />
-            <a href="#" onClick=" var s2=dijit.byId('%s'); var s=dijit.byId('select_from'); s.getSelected().forEach(function(i){ var c = dojo.doc.createElement('option');c.innerHTML = i.text;c.value = i.value; s2.domNode.appendChild(c); i.parentNode.removeChild(i); }); ">
+            <a href="#" onClick="
+            var s2=dijit.byId('%s');
+            var s=dijit.byId('select_from');
+            s.getSelected().forEach(function(i){
+                var c = dojo.doc.createElement('option');
+                c.innerHTML = i.text;
+                c.value = i.value;
+                s2.domNode.appendChild(c);
+                i.parentNode.removeChild(i);
+            }); ">
                 &gt;&gt;
             </a>
             </div>
@@ -353,8 +374,11 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 '["id_bsdusr_group2"], false);')
             self.fields['bsdusr_group2'].widget.attrs['maxHeight'] = 200
             self.fields['bsdusr_group2'].widget.attrs['disabled'] = 'disabled'
-            self.fields['bsdusr_group2'].choices = (('-----', '-----'),) + tuple(
-                [x for x in self.fields['bsdusr_group2'].choices][1:])
+            self.fields['bsdusr_group2'].choices = (
+                ('-----', '-----'),
+            ) + tuple(
+                [x for x in self.fields['bsdusr_group2'].choices][1:]
+            )
             self.fields['bsdusr_group2'].required = False
 
         elif self.instance.id:
@@ -419,12 +443,6 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             return self.instance.bsdusr_group
         else:
             return self.cleaned_data.get("bsdusr_group")
-
-    def clean_bsdusr_username(self):
-        if self.instance.id:
-            return self.instance.bsdusr_username
-        else:
-            return self.cleaned_data.get('bsdusr_username')
 
     def clean_bsdusr_group2(self):
         create = self.cleaned_data.get("bsdusr_creategroup")
