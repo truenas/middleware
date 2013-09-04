@@ -29,6 +29,7 @@ import re
 import subprocess
 
 from django.conf.urls import url
+from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -37,7 +38,9 @@ from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 
 from freenasUI import choices
-from freenasUI.account.forms import bsdUserCreationForm, bsdUserPasswordForm
+from freenasUI.account.forms import (
+    PasswordChangeForm, bsdUserCreationForm, bsdUserPasswordForm
+)
 from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.api.utils import DojoResource
 from freenasUI.jails.forms import JailCreateForm
@@ -1619,3 +1622,28 @@ class ShutdownResource(DojoResource):
     def post_list(self, request, **kwargs):
         notifier().stop("system")
         return HttpResponse('Shutdown process started.', status=202)
+
+
+class AdminPasswordResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['post']
+        resource_name = 'system/adminpassword'
+
+    def post_list(self, request, **kwargs):
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        user = User.objects.all()[0]
+        form = PasswordChangeForm(
+            user=user, data=deserialized, api_validation=True
+        )
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Admin password changed.', status=202)
