@@ -70,6 +70,14 @@ WARDEN_KEY_STATUS         = "status"
 WARDEN_KEY_TYPE           = "type"
 
 #
+# Warden template dict keys
+#
+WARDEN_TKEY_NICK          = "nick"
+WARDEN_TKEY_TYPE          = "type"
+WARDEN_TKEY_VERSION       = "version"
+WARDEN_TKEY_ARCH          = "arch"
+
+#
 # Warden jail status 
 #
 WARDEN_STATUS_RUNNING = "Running"
@@ -314,19 +322,24 @@ WARDEN_TEMPLATE_CREATE_FLAGS_TRUEOS	= warden_arg(0x00000020, "-trueos", True, "t
 WARDEN_TEMPLATE_CREATE_FLAGS_ARCH	= warden_arg(0x00000040, "-arch", True, "arch")
 WARDEN_TEMPLATE_CREATE_FLAGS_TAR	= warden_arg(0x00000080, "-tar", True, "tar")
 WARDEN_TEMPLATE_CREATE_FLAGS_NICK	= warden_arg(0x00000100, "-nick", True, "nick")
+WARDEN_TEMPLATE_CREATE_FLAGS_LINUX	= warden_arg(0x00000200, "-linuxjail", False)
 WARDEN_TEMPLATE_CREATE_FLAGS = [
     WARDEN_TEMPLATE_CREATE_FLAGS_FBSD,
     WARDEN_TEMPLATE_CREATE_FLAGS_TRUEOS,
     WARDEN_TEMPLATE_CREATE_FLAGS_ARCH,
     WARDEN_TEMPLATE_CREATE_FLAGS_TAR,
-    WARDEN_TEMPLATE_CREATE_FLAGS_NICK
+    WARDEN_TEMPLATE_CREATE_FLAGS_NICK,
+    WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
 ]
 
 WARDEN_TEMPLATE_DELETE= "delete"
 WARDEN_TEMPLATE_DELETE_FLAGS = [ ]
 
 WARDEN_TEMPLATE_LIST = "list"
-WARDEN_TEMPLATE_LIST_FLAGS = [ ]
+WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE      = warden_arg(0x00000001, "-v", False)
+WARDEN_TEMPLATE_LIST_FLAGS = [
+    WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE
+]
 
 WARDEN_ZFSMKSNAP = "zfsmksnap"
 WARDEN_ZFSMKSNAP_FLAGS = []
@@ -373,6 +386,14 @@ class WardenJail(object):
         self.mac = kwargs.get(WARDEN_KEY_MAC)
         self.status = kwargs.get(WARDEN_KEY_STATUS)
         self.type = kwargs.get(WARDEN_KEY_TYPE)
+
+
+class WardenTemplate(object):
+    def __init__(self, **kwargs):
+        self.nick = kwargs.get(WARDEN_TKEY_NICK)
+        self.type = kwargs.get(WARDEN_TKEY_TYPE)
+        self.version = kwargs.get(WARDEN_TKEY_VERSION)
+        self.arch = kwargs.get(WARDEN_TKEY_ARCH)
 
 
 class warden_base(object):
@@ -428,6 +449,7 @@ class warden_base(object):
         if jail == True and jid > 0:
             cmd = "%s %d %s" % (JEXEC_PATH, jid, cmd.strip())
 
+        print cmd
         log.debug("warden_base.cmd = %s", cmd)
         pobj = warden_pipe(cmd, self.pipe_func)
         self.error = pobj.error
@@ -795,7 +817,35 @@ class warden_template(warden_base):
 
         cmd = "%s %s" % (WARDEN_TEMPLATE, type)
         super(warden_template, self).__init__(cmd,
-            tflags, flags, **kwargs)
+            tflags, flags | WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE, **kwargs)
+
+    def ass(self, key, val):
+        return "%s %s" % (key, val)
+
+    def parse(self, thestuff):
+        themap = {
+            'nick': WARDEN_TKEY_NICK,
+            'type': WARDEN_TKEY_TYPE,
+            'version': WARDEN_TKEY_VERSION,
+            'arch': WARDEN_TKEY_ARCH
+        } 
+
+        lines = thestuff[1].splitlines()
+
+        template = {}
+        templates = []
+        for line in lines:
+            for k in themap:
+                if line.startswith(k + ':'):
+                    parts = line.split(':')
+                    val = None
+                    parts = line.split()
+                    if len(parts) > 1:
+                        val = parts[1].strip()
+                    template[themap[k]] = val
+        if template:
+            templates.append(template) 
+        return templates
 
 
 class warden_zfsmksnap(warden_base):

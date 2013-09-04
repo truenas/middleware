@@ -2,11 +2,27 @@
 {% block post_form %}
 
 <script type="dojo/on" data-dojo-event="submit" data-dojo-args="e">
+
+    /* 
+     * XXX HACK XXX
+     *
+     * This is terrible! One day we will rejoice and have a universal
+     * progress mechanism! Until then, crazy hacks!
+     *
+     * XXX HACK XXX
+     */
+    var progressurl = '/jails/progress/';
+    var jail_type = get_jail_type();
+    var parts = jail_type.split("-");
+    if (parts.length > 1 && parts[1] == 'linux') {
+        progressurl = '/jails/linuxprogress/';
+    }
+
     doSubmit({
        form: this,
        event: e,
        url: '{{ request.path }}',
-       progressurl: '/jails/progress/',
+       progressurl: progressurl,
        progresstype: 'jail'
     });
 </script>

@@ -56,6 +56,10 @@ def jails_home(request):
     except IndexError:
         jailsconf = models.JailsConfiguration.objects.create()
 
+    if not jailsconf.jc_collectionurl:
+        jailsconf.jc_collectionurl = models.JAILS_INDEX 
+        jailsconf.save()
+
     return render(request, 'jails/index.html', {
         'focus_form': request.GET.get('tab', 'jails.View'),
         'jailsconf': jailsconf
@@ -290,6 +294,90 @@ def jail_progress(request):
             jail_progress_estimated_time = 600
             jail_progress_start_time = 0
             jail_progress_percent = 0
+
+    return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+
+linux_jail_progress_estimated_time = 600
+linux_jail_progress_start_time = 0
+linux_jail_progress_percent = 0
+
+#
+# XXX HACK XXX
+#
+# This is just another progress view! We need a univeral means to do this!
+#
+# XXX HACK XXX
+#
+def jail_linuxprogress(request):
+    global linux_jail_progress_estimated_time
+    global linux_jail_progress_start_time
+    global linux_jail_progress_percent
+
+    data = {
+        'size': 0,
+        'data': '',
+        'state': 'running',
+        'eta': 0,
+        'percent': 0
+    }
+
+    if os.path.exists("/var/tmp/.templatecreate"):
+        f = open("/var/tmp/.extract", "r")
+        buf = f.read()
+        f.close()
+
+        percent = 0
+        parts = buf.split()
+        size = len(parts)
+        if size > 2:
+            nbytes = float(parts[1])
+            total = float(parts[2])
+            try:  
+                percent = int((nbytes / total) * 100)
+            except:
+                percent = 0
+            
+        if not percent:
+            percent = 0
+
+        elapsed = 1
+        curtime = int(time.time())
+
+        if linux_jail_progress_start_time == 0:
+            linux_jail_progress_start_time = curtime
+            eta = linux_jail_progress_estimated_time
+
+        else:
+            elapsed = curtime - linux_jail_progress_start_time
+            eta = linux_jail_progress_estimated_time - elapsed
+
+        if percent > 0 and linux_jail_progress_percent != percent:
+            p = float(percent) / 100
+            #t = float(p) * linux_jail_progress_estimated_time
+
+            estimated_time = elapsed / p
+            eta = estimated_time - elapsed
+
+            linux_jail_progress_estimated_time = estimated_time
+
+        if eta > 3600:
+            data['eta'] = "%02d:%02d:%02d" % (eta / 3600, eta / 60, eta % 60)
+        elif eta > 0:
+            data['eta'] = "%02d:%02d" % (eta / 60, eta % 60)
+        else:
+            data['eta'] = "00:00"
+
+        data['percent'] = percent
+        data['size'] = size
+        data['data'] = buf
+
+        linux_jail_progress_percent = percent
+
+        if not os.path.exists("/var/tmp/.templatecreate"):
+            data['state'] = 'done'
+            linux_jail_progress_estimated_time = 600
+            linux_jail_progress_start_time = 0
+            linux_jail_progress_percent = 0
 
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
 

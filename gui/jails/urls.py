@@ -38,5 +38,6 @@ urlpatterns = patterns('freenasUI.jails.views',
     url(r'^start/(?P<id>\d+)$', 'jail_start', name="jail_start"),
     url(r'^stop/(?P<id>\d+)$', 'jail_stop', name="jail_stop"),
     url(r'^progress/$', 'jail_progress', name="jail_progress"),
+    url(r'^linuxprogress/$', 'jail_linuxprogress', name="jail_linuxprogress"),
     )
 

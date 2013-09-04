@@ -749,7 +749,7 @@ details) JAILNAME="${2}"
          case $OPT in
            create) shift ; shift; ${PROGDIR}/scripts/backend/createtemplate.sh $* ;;
            delete) delete_template $3 ;;
-             list) list_templates ;;
+             list) shift ; shift; list_templates $* ;;
                 *) help_template ; exit 1 ;;
         esac
          ;;

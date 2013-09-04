@@ -570,6 +570,12 @@ require([
             bridge_ipv6.set("disabled", true);
         }
     }
+
+    get_jail_type = function() {
+        var type = registry.byId("id_jail_type");
+        var jail_type = type.get("value");
+        return (jail_type);
+    }
    
     mpAclChange = function(acl) {
       var mode = registry.byId("id_mp_mode");

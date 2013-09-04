@@ -37,13 +37,21 @@ from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.jails.models import (
     JailsConfiguration,
     Jails,
-    NullMountPoint
+    NullMountPoint,
+    JAILS_INDEX
 )
 from freenasUI.jails.utils import guess_adresses
 from freenasUI.common.warden import (
     Warden,
     WardenJail,
+    WardenTemplate,
     WARDEN_FLAGS_NONE,
+    WARDEN_TEMPLATE_FLAGS_CREATE,
+    WARDEN_TEMPLATE_FLAGS_LIST,
+    WARDEN_TEMPLATE_CREATE_FLAGS_TAR,
+    WARDEN_TEMPLATE_CREATE_FLAGS_NICK,
+    WARDEN_TEMPLATE_CREATE_FLAGS_LINUX,
+    WARDEN_CREATE_FLAGS_TEMPLATE,
     WARDEN_CREATE_FLAGS_32BIT,
     WARDEN_CREATE_FLAGS_SRC,
     WARDEN_CREATE_FLAGS_PORTS,
@@ -130,8 +138,8 @@ class JailCreateForm(ModelForm):
             (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
             (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
             (WARDEN_TYPE_GENTOO_LINUX, WARDEN_TYPE_GENTOO_LINUX),
-            (WARDEN_TYPE_DEBIAN_LINUX, WARDEN_TYPE_DEBIAN_LINUX)
-#            (WARDEN_TYPE_CENTOS_LINUX, WARDEN_TYPE_CENTOS_LINUX)
+            (WARDEN_TYPE_DEBIAN_LINUX, WARDEN_TYPE_DEBIAN_LINUX),
+            (WARDEN_TYPE_CENTOS_LINUX, WARDEN_TYPE_CENTOS_LINUX)
         ),
         initial=WARDEN_TYPE_STANDARD,
     )
@@ -287,16 +295,70 @@ class JailCreateForm(ModelForm):
         if self.cleaned_data['jail_vanilla']:
             jail_flags |= WARDEN_CREATE_FLAGS_VANILLA
 
+        template_flags = 0
+        template_create_args = {}
+
         if self.cleaned_data['jail_type'] == WARDEN_TYPE_PORTJAIL:
             jail_flags |= WARDEN_CREATE_FLAGS_PORTJAIL
+
         elif self.cleaned_data['jail_type'] == WARDEN_TYPE_PLUGINJAIL:
             jail_flags |= WARDEN_CREATE_FLAGS_PLUGINJAIL
+
         elif self.cleaned_data['jail_type'] == WARDEN_TYPE_GENTOO_LINUX:
             jail_flags |= WARDEN_CREATE_FLAGS_GENTOO_LINUX
+            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
+            template_create_args['flags'] = template_flags
+            template_create_args['nick'] = "linux-gentoo"
+            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-gentoo.tgz" % JAILS_INDEX
+            
         elif self.cleaned_data['jail_type'] == WARDEN_TYPE_DEBIAN_LINUX:
             jail_flags |= WARDEN_CREATE_FLAGS_DEBIAN_LINUX
+            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
+            template_create_args['flags'] = template_flags
+            template_create_args['nick'] = "linux-debian"
+            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-debian.tgz" % JAILS_INDEX
+
         elif self.cleaned_data['jail_type'] == WARDEN_TYPE_CENTOS_LINUX:
             jail_flags |= WARDEN_CREATE_FLAGS_CENTOS_LINUX
+            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
+            template_create_args['flags'] = template_flags
+            template_create_args['nick'] = "linux-centos"
+            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-centos.tgz" % JAILS_INDEX
+
+        if template_flags > 0:
+            template_exists = False
+            template_list_flags = {}
+            template_list_flags['flags'] = WARDEN_TEMPLATE_FLAGS_LIST 
+            templates = w.template(**template_list_flags)
+            for template in templates:
+                if template['nick'] == template_create_args['nick']:
+                    template_exists = True 
+                    break
+
+            createfile = "/var/tmp/.templatecreate"
+            if not template_exists:
+                try:
+                    cf = open(createfile, "a+")
+                    cf.close()
+                    w.template(**template_create_args)
+
+                except Exception as e:
+                    self.errors['__all__'] = self.error_class([_(e.message)])
+                    if os.path.exists(createfile):
+                        os.unlink(createfile)
+                    return
+
+            jail_flags |= WARDEN_CREATE_FLAGS_TEMPLATE
+            jail_create_args['template'] = template_create_args['nick']
 
 #        if self.cleaned_data['jail_archive']:
 #            if jail_flags & WARDEN_CREATE_FLAGS_LINUXJAIL:
@@ -430,7 +492,8 @@ class JailsConfigurationForm(ModelForm):
     advanced_fields = [
         'jc_ipv6_network',
         'jc_ipv6_network_start',
-        'jc_ipv6_network_end'
+        'jc_ipv6_network_end',
+        'jc_collectionurl'
     ]
 
     class Meta:
@@ -495,6 +558,16 @@ class JailsConfigurationForm(ModelForm):
 
         return cdata
 
+    def clean_jc_collectionurl(self):
+        jc_collectionurl = self.cleaned_data.get("jc_collectionurl")
+        if jc_collectionurl and not jc_collectionurl.lower().startswith("http") \
+            and not jc_collectionurl.lower().startswith("ftp"):
+            if not os.path.exists(jc_collection_url):
+                raise forms.ValidationError(
+                    _("Path does not exist!")
+                )
+
+        return jc_collectionurl
 
 class JailsEditForm(ModelForm):
 

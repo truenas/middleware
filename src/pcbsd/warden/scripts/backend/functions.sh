@@ -63,6 +63,9 @@ NULLFS_MOUNTS="/tmp /media /usr/home"
 # Clone directory
 CDIR="${JDIR}/clones"
 
+# Tarball extract program
+EXTRACT_TARBALL=/usr/local/bin/extract-tarball
+
 warden_log() {
   if [ -n "${WARDEN_USESYSLOG}" ] ; then
     logger -t warden $*
@@ -1470,8 +1473,16 @@ get_ipfw_nat_priority()
 
 list_templates()
 {
-   warden_print "Jail Templates:"
-   warden_print "------------------------------"
+   local verbose="0"
+   case "${1}" in 
+     -v) verbose="1"
+   esac
+
+   if [ "${verbose}" = "0" ] ; then
+     warden_print "Jail Templates:"
+     warden_print "------------------------------"
+   fi
+
    isDirZFS "${JDIR}"
    if [ $? -eq 0 ] ; then
      for i in `ls -d ${JDIR}/.warden-template* 2>/dev/null`
@@ -1485,12 +1496,33 @@ list_templates()
            ARCH="i386"
         fi
         VER=`file "$i/bin/sh" | cut -d ',' -f 5 | awk '{print $3}'`
+        OS=`file "$i/bin/ls" | cut -d ',' -f 5 | awk '{print $2}'`
         if [ -e "$i/etc/rc.delay" ] ; then
            TYPE="TrueOS"
+        elif echo "${OS}"|egrep -q Linux ; then
+           TYPE="Linux"
         else
            TYPE="FreeBSD"
         fi
-        warden_print "${NICK} - $TYPE $VER ($ARCH)"
+        
+        if [ "${verbose}" = "0" ] ; then
+          warden_print "${NICK} - $TYPE $VER ($ARCH)"
+
+        else
+          if [ "${verbose}" = "1" ] ; then
+            out="$(mktemp  /tmp/.wjvXXXXXX)"
+            cat<<__EOF__ >"${out}"
+
+nick: ${NICK}
+type: ${TYPE}
+version: ${VER}
+arch: ${ARCH}
+
+__EOF__
+            warden_cat "${out}"
+            rm -f "${out}"
+          fi
+       fi
      done
    else
      # UFS, no details for U!

@@ -44,6 +44,8 @@ from freenasUI.jails.queryset import JailsQuerySet
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 
+JAILS_INDEX = "http://cdn.freenas.org"
+
 log = logging.getLogger('jails.models')
 
 
@@ -234,6 +236,12 @@ class JailsConfiguration(Model):
         blank=True,
         verbose_name=_("IPv6 Network End Address"),
         help_text=_("IPv6 network end address for jails and plugins")
+    )
+    jc_collectionurl = models.CharField(
+        verbose_name=_("Collection URL"),
+        max_length=255,
+        help_text=_("URL for the jails index"),
+        blank=True,
     )
 
     def save(self, *args, **kwargs):

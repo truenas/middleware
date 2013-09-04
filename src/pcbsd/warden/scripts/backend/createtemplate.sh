@@ -88,6 +88,7 @@ create_template()
        cd /
        zfs destroy -fr "${tank}${zfsp}"
        rm -rf "${tdir}" >/dev/null 2>&1
+       rm -rf /var/tmp/.extract
        warden_exit "Failed to create ZFS base dataset"
     }
 
@@ -106,12 +107,14 @@ create_template()
 
     # Using a supplied tar file?
     if [ -n "$FBSDTAR" ] ; then
-      tar xvpf $FBSDTAR -C ${TDIR} 2>/dev/null
+      "${EXTRACT_TARBALL}" -u "${FBSDTAR}" -d "${TDIR}" -s /var/tmp/.extract
       if [ $? -ne 0 ] ; then
         zfs destroy -fr "${tank}${zfsp}"
         rm -rf "${tdir}" >/dev/null 2>&1
+        rm -rf /var/tmp/.extract
         warden_exit "Failed extracting: $FBSDTAR"
-      fi
+      fi 
+      rm -rf /var/tmp/.extract
 
     elif [ "$oldFBSD" = "YES" ] ; then
       cd ${JDIR}/.download/
@@ -270,7 +273,10 @@ while [ $# -gt 0 ]; do
            ;;
     -tar) shift
            if [ -z "$1" ] ; then warden_exit "No tar file specified"; fi
-           if [ ! -e "$1" ] ; then warden_exit "Could not find tar file: $1"; fi
+           if [ ! -e "$1" ] ; then
+              echo "$1" | egrep -iq '^(http|https|ftp)://'
+              if [ "$?" != "0" ] ; then warden_exit "Could not find tar file: $1"; fi
+           fi
            FBSDTAR="${1}"
            ;;
     -nick) shift
@@ -391,11 +397,17 @@ if [ -n "$FBSDVER" ] ; then
   fi
 fi
 
-# If not using a tarball, lets download our files
-if [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
+# This is a Linux jail and a tar file has been specified
+if [ "${TLINUXJAIL}" = "YES" -a -z "${LINUX_JAIL_SCRIPT}" -a -n "${FBSDTAR}" ] ; then
+  # Do nothing?
+  :
+
+# This is a Linux jail with no tar file
+elif [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
   warden_print sh "${LINUX_JAIL_SCRIPT}" get_distfiles "${TDIR}"
   sh "${LINUX_JAIL_SCRIPT}" get_distfiles "${TDIR}" 2>&1 | warden_pipe
 
+# If not using a tarball, lets download our files
 elif [ -z "$FBSDTAR" ] ; then
   download_template_files
 fi
