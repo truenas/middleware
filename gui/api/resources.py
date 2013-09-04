@@ -39,7 +39,8 @@ from django.utils.translation import ugettext as _
 
 from freenasUI import choices
 from freenasUI.account.forms import (
-    PasswordChangeForm, bsdUserCreationForm, bsdUserPasswordForm
+    bsdUserCreationForm, bsdUserPasswordForm, UserChangeForm,
+    PasswordChangeForm
 )
 from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.api.utils import DojoResource
@@ -1647,3 +1648,40 @@ class AdminPasswordResource(DojoResource):
         else:
             form.save()
         return HttpResponse('Admin password changed.', status=202)
+
+
+class AdminUserResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['get', 'post']
+        resource_name = 'system/adminuser'
+
+    def get_list(self, request, **kwargs):
+
+        user = User.objects.all()[0]
+        to_be_serialized = {
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+        }
+        response = self.create_response(request, to_be_serialized)
+        return response
+
+    def post_list(self, request, **kwargs):
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        user = User.objects.all()[0]
+        form = UserChangeForm(
+            instance=user, data=deserialized, api_validation=True
+        )
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+
+        return self.get_list(request, **kwargs)
