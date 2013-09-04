@@ -2,7 +2,10 @@
 
 #
 # Script to capture debug for system crash reporting.
-#
+# This script will make a temp directory and copy diagnostic information
+# to it.
+# When invoked with -b, it will assume you want to ONLY send textdumps
+# that are in 'dumpdir' set by /etc/rc.conf.
 #
 
 mydir=`dirname $0`
@@ -73,13 +76,18 @@ if $boot_time ; then
 	fi
 fi
 
+# Make our staging directory.
+# We will then make a directory called ixdiagnose under it
+# so that the tarball extracts nicely.
 set -x
 topdir=`mktemp -d -t ixdiagnose`
 if [ $? -gt 0 ] ; then
 	echo "can't make temp directory"
 	exit 1
 fi
+# Remove the temp directory on exit.
 trap "rm -rf $topdir" EXIT
+
 dir=$topdir/ixdiagnose
 
 set -e
