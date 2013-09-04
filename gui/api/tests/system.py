@@ -48,6 +48,61 @@ class AdminPasswordResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class AdminUserResourceTest(APITestCase):
+
+    def setUp(self):
+        super(AdminUserResourceTest, self).setUp()
+        self._obj = User.objects.create(
+            username='admin',
+            password='xxxxx',
+            is_superuser=True,
+            is_staff=True,
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'first_name': u'',
+            u'last_name': u'',
+            u'username': u'admin',
+        })
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            self.get_api_url(),
+            format='json',
+            data={
+                'first_name': 'First',
+                'last_name': 'Last',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'first_name': u'First',
+            u'last_name': u'Last',
+            u'username': u'admin',
+        })
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class CronJobResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
