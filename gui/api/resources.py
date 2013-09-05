@@ -89,6 +89,26 @@ def _common_human_fields(bundle):
         bundle.data[human] = getattr(bundle.obj, "get_%s" % human)()
 
 
+class NestedMixin(object):
+
+    def _get_parent(self, request, kwargs):
+        self.is_authenticated(request)
+        try:
+            bundle = self.build_bundle(
+                data={'pk': kwargs['pk']}, request=request
+            )
+            obj = self.cached_obj_get(
+                bundle=bundle, **self.remove_api_resource_names(kwargs)
+            )
+        except ObjectDoesNotExist:
+            raise ImmediateHttpResponse(response=HttpNotFound())
+        except MultipleObjectsReturned:
+            raise ImmediateHttpResponse(response=HttpMultipleChoices(
+                "More than one resource is found at this URI."
+            ))
+        return bundle, obj
+
+
 class DiskResourceMixin(object):
 
     class Meta:
@@ -179,7 +199,7 @@ class DatasetResource(DojoResource):
         return {}
 
 
-class VolumeResourceMixin(object):
+class VolumeResourceMixin(NestedMixin):
 
     class Meta:
         validation = FormValidation(form_class=VolumeManagerForm)
@@ -255,23 +275,6 @@ class VolumeResourceMixin(object):
                 self.wrap_view('rekey')
             ),
         ]
-
-    def _get_parent(self, request, kwargs):
-        self.is_authenticated(request)
-        try:
-            bundle = self.build_bundle(
-                data={'pk': kwargs['pk']}, request=request
-            )
-            obj = self.cached_obj_get(
-                bundle=bundle, **self.remove_api_resource_names(kwargs)
-            )
-        except ObjectDoesNotExist:
-            raise ImmediateHttpResponse(response=HttpNotFound())
-        except MultipleObjectsReturned:
-            raise ImmediateHttpResponse(response=HttpMultipleChoices(
-                "More than one resource is found at this URI."
-            ))
-        return bundle, obj
 
     def replace_disk(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -1220,7 +1223,7 @@ class ISCSITargetExtentResourceMixin(object):
         return bundle
 
 
-class BsdUserResourceMixin(object):
+class BsdUserResourceMixin(NestedMixin):
 
     class Meta:
         queryset = bsdUsers.objects.all().order_by(
@@ -1243,24 +1246,6 @@ class BsdUserResourceMixin(object):
                 self.wrap_view('change_password')
             ),
         ]
-
-    def _get_parent(self, request, kwargs):
-        #FIXME: duplicated code
-        self.is_authenticated(request)
-        try:
-            bundle = self.build_bundle(
-                data={'pk': kwargs['pk']}, request=request
-            )
-            obj = self.cached_obj_get(
-                bundle=bundle, **self.remove_api_resource_names(kwargs)
-            )
-        except ObjectDoesNotExist:
-            raise ImmediateHttpResponse(response=HttpNotFound())
-        except MultipleObjectsReturned:
-            raise ImmediateHttpResponse(response=HttpMultipleChoices(
-                "More than one resource is found at this URI."
-            ))
-        return bundle, obj
 
     def groups(self, request, **kwargs):
         if request.method.lower() not in ('post', 'get'):
