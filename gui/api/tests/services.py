@@ -3,6 +3,84 @@ from freenasUI.services import models
 from freenasUI.storage.models import MountPoint, Volume
 
 
+class ActiveDirectoryResourceTest(APITestCase):
+
+    def setUp(self):
+        super(ActiveDirectoryResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='directoryservice',
+        )
+        models.services.objects.create(
+            srv_service='activedirectory',
+        )
+        self._obj = models.ActiveDirectory.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': self._obj.id,
+            u'ad_adminname': u'',
+            u'ad_adminpw': u'',
+            u'ad_allow_trusted_doms': False,
+            u'ad_dcname': u'',
+            u'ad_dns_timeout': 10,
+            u'ad_domainname': u'',
+            u'ad_gcname': u'',
+            u'ad_kpwdname': u'',
+            u'ad_krbname': u'',
+            u'ad_netbiosname': u'',
+            u'ad_timeout': 10,
+            u'ad_unix_extensions': False,
+            u'ad_use_default_domain': True,
+            u'ad_verbose_logging': False,
+            u'ad_workgroup': u'',
+        }])
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                'ad_netbiosname': 'mynas',
+                'ad_domainname': 'mydomain',
+                'ad_workgroup': 'WORKGROUP',
+                'ad_adminname': 'admin',
+                'ad_adminpw': 'mypw',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['ad_netbiosname'], 'mynas')
+        self.assertEqual(data['ad_domainname'], 'mydomain')
+        self.assertEqual(data['ad_workgroup'], 'WORKGROUP')
+        self.assertEqual(data['ad_adminname'], 'admin')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class AFPResourceTest(APITestCase):
 
     def setUp(self):

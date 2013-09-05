@@ -730,6 +730,8 @@ class ActiveDirectoryForm(ModelForm):
         super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
         if self.instance.ad_adminpw:
             self.fields['ad_adminpw'].required = False
+        if self._api is True:
+            del self.fields['ad_adminpw2']
         self.__original_save()
 
     def clean_ad_adminpw2(self):
