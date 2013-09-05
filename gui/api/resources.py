@@ -1293,7 +1293,9 @@ class BsdUserResourceMixin(NestedMixin):
         else:
             form.save()
 
-        return self.groups_get_detail(request, **kwargs)
+        response = self.groups_get_detail(request, **kwargs)
+        response.status_code = 202
+        return response
 
     def change_password(self, request, **kwargs):
         if request.method != 'POST':
