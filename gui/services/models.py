@@ -1579,11 +1579,12 @@ class LDAP(Model):
             help_text=_("The credentials with which to bind.")
             )
     ldap_pwencryption = models.CharField(
-            max_length=120,
-            choices=choices.PWEncryptionChoices,
-            verbose_name=_("Password Encryption"),
-            help_text=_("The password change protocol to use.")
-            )
+        max_length=120,
+        choices=choices.PWEncryptionChoices,
+        default='clear',
+        verbose_name=_("Password Encryption"),
+        help_text=_("The password change protocol to use.")
+    )
     ldap_usersuffix = models.CharField(
             max_length=120,
             blank=True,
@@ -1617,12 +1618,15 @@ class LDAP(Model):
                 "ou=Computers")
             )
     ldap_ssl = models.CharField(
-            choices=choices.LDAP_SSL_CHOICES,
-            max_length=120,
-            verbose_name=_("Encryption Mode"),
-            help_text=_("This parameter specifies whether to use SSL/TLS, e.g."
-                " on/off/start_tls")
-            )
+        choices=choices.LDAP_SSL_CHOICES,
+        default='off',
+        max_length=120,
+        verbose_name=_("Encryption Mode"),
+        help_text=_(
+            "This parameter specifies whether to use SSL/TLS, e.g."
+            " on/off/start_tls"
+        )
+    )
     ldap_tls_cacertfile = models.TextField(
             verbose_name=_("Self signed certificate"),
             blank=True,
