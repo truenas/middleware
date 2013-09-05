@@ -98,3 +98,60 @@ class JailsResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpAccepted(resp)
+
+
+class JailsConfigurationResourceTest(APITestCase):
+
+    def setUp(self):
+        super(JailsConfigurationResourceTest, self).setUp()
+        self._obj = models.JailsConfiguration.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': self._obj.id,
+            u'jc_ipv4_network': u'192.168.3.0/24',
+            u'jc_ipv4_network_end': u'192.168.3.254',
+            u'jc_ipv4_network_start': u'192.168.3.67',
+            u'jc_ipv6_network': u'',
+            u'jc_ipv6_network_end': u'',
+            u'jc_ipv6_network_start': u'',
+            u'jc_path': u''
+        }])
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                'jc_path': '/mnt/tank/jails',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['jc_path'], '/mnt/tank/jails')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
