@@ -13,8 +13,8 @@ rm -rf FreeBSD os-base pbi release_stage
 rm -rf firefly/ minidlna/ transmission/
 
 
-sh $mydir/do_build.sh -Ja
-env FREENAS_ARCH=i386 sh $mydir/do_build.sh -Ja
+sh $mydir/do_build.sh -a
+env FREENAS_ARCH=i386 sh $mydir/do_build.sh -a
 for arch in amd64   i386 ; do 
 	(
 	cd os-base/$arch ;
