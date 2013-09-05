@@ -383,6 +383,77 @@ class FTPResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class LDAPResourceTest(APITestCase):
+
+    def setUp(self):
+        super(LDAPResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='directoryservice',
+        )
+        models.services.objects.create(
+            srv_service='ldap',
+        )
+        self._obj = models.LDAP.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': self._obj.id,
+            u'ldap_anonbind': False,
+            u'ldap_basedn': u'',
+            u'ldap_groupsuffix': u'',
+            u'ldap_hostname': u'',
+            u'ldap_machinesuffix': u'',
+            u'ldap_options': u'',
+            u'ldap_passwordsuffix': u'',
+            u'ldap_pwencryption': u'clear',
+            u'ldap_rootbasedn': u'',
+            u'ldap_rootbindpw': u'',
+            u'ldap_ssl': u'off',
+            u'ldap_tls_cacertfile': u'',
+            u'ldap_usersuffix': u''
+        }])
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                'ldap_hostname': 'ldaphostname',
+                'ldap_basedn': 'dc=test,dc=org',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['ldap_hostname'], 'ldaphostname')
+        self.assertEqual(data['ldap_basedn'], 'dc=test,dc=org')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class NFSResourceTest(APITestCase):
 
     def setUp(self):
