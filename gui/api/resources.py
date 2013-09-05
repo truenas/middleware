@@ -27,6 +27,7 @@
 import logging
 import re
 import subprocess
+import urllib
 
 from django.conf.urls import url
 from django.contrib.auth.models import User
@@ -34,7 +35,7 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
-from django.http import HttpResponse
+from django.http import HttpResponse, QueryDict
 from django.utils.translation import ugettext as _
 
 from freenasUI import choices
@@ -42,7 +43,8 @@ from freenasUI.account.forms import (
     bsdUserCreationForm, bsdUserPasswordForm, UserChangeForm,
     PasswordChangeForm
 )
-from freenasUI.account.models import bsdUsers, bsdGroups
+from freenasUI.account.forms import bsdUserToGroupForm
+from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.jails.forms import JailCreateForm
 from freenasUI.jails.models import (
@@ -1229,12 +1231,84 @@ class BsdUserResourceMixin(object):
     def prepend_urls(self):
         return [
             url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/groups%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('groups')
+            ),
+            url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/password%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('change_password')
             ),
         ]
+
+    def _get_parent(self, request, kwargs):
+        #FIXME: duplicated code
+        self.is_authenticated(request)
+        try:
+            bundle = self.build_bundle(
+                data={'pk': kwargs['pk']}, request=request
+            )
+            obj = self.cached_obj_get(
+                bundle=bundle, **self.remove_api_resource_names(kwargs)
+            )
+        except ObjectDoesNotExist:
+            raise ImmediateHttpResponse(response=HttpNotFound())
+        except MultipleObjectsReturned:
+            raise ImmediateHttpResponse(response=HttpMultipleChoices(
+                "More than one resource is found at this URI."
+            ))
+        return bundle, obj
+
+    def groups(self, request, **kwargs):
+        if request.method.lower() not in ('post', 'get'):
+            response = HttpMethodNotAllowed(request.method)
+            response['Allow'] = 'POST,GET'
+            raise ImmediateHttpResponse(response=response)
+        if request.method.lower() == 'get':
+            return self.groups_get_detail(request, **kwargs)
+        else:
+            return self.groups_post_detail(request, **kwargs)
+
+    def groups_get_detail(self, request, **kwargs):
+        bundle, obj = self._get_parent(request, kwargs)
+
+        objects = bsdGroupMembership.objects.filter(bsdgrpmember_user=obj)
+
+        bundles = []
+        for obj in objects:
+            bundles.append(obj.bsdgrpmember_group.bsdgrp_group)
+
+        return self.create_response(request, bundles)
+
+    def groups_post_detail(self, request, **kwargs):
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        ids = [o.id for o in bsdGroups.objects.filter(
+            bsdgrp_group__in=deserialized
+        )]
+
+        data = QueryDict(urllib.urlencode(dict(
+            map(lambda x, y: (x, y), ['bsduser_to_group'] * len(ids), ids)
+        ), doseq=True))
+
+        form = bsdUserToGroupForm(userid=obj.id, data=data)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+
+        return self.groups_get_detail(request, **kwargs)
 
     def change_password(self, request, **kwargs):
         if request.method != 'POST':
