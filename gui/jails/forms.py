@@ -60,9 +60,12 @@ from freenasUI.common.warden import (
     WARDEN_CREATE_FLAGS_PORTJAIL,
     WARDEN_CREATE_FLAGS_PLUGINJAIL,
     #WARDEN_CREATE_FLAGS_LINUXJAIL,
-    WARDEN_CREATE_FLAGS_GENTOO_LINUX,
-    WARDEN_CREATE_FLAGS_DEBIAN_LINUX,
     WARDEN_CREATE_FLAGS_CENTOS_LINUX,
+    WARDEN_CREATE_FLAGS_DEBIAN_LINUX,
+    WARDEN_CREATE_FLAGS_FEDORA_LINUX,
+    WARDEN_CREATE_FLAGS_GENTOO_LINUX,
+    WARDEN_CREATE_FLAGS_SUSE_LINUX,
+    WARDEN_CREATE_FLAGS_UBUNTU_LINUX,
     #WARDEN_CREATE_FLAGS_ARCHIVE,
     #WARDEN_CREATE_FLAGS_LINUXARCHIVE,
     WARDEN_CREATE_FLAGS_IPV4,
@@ -88,12 +91,12 @@ from freenasUI.common.warden import (
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
     WARDEN_TYPE_PORTJAIL,
-    WARDEN_TYPE_GENTOO_LINUX,
-    WARDEN_TYPE_DEBIAN_LINUX,
     WARDEN_TYPE_CENTOS_LINUX,
-    WARDEN_GENTOO_LINUXSCRIPT,
-    WARDEN_DEBIAN_LINUXSCRIPT,
-    WARDEN_CENTOS_LINUXSCRIPT,
+    WARDEN_TYPE_DEBIAN_LINUX,
+    WARDEN_TYPE_FEDORA_LINUX,
+    WARDEN_TYPE_GENTOO_LINUX,
+    WARDEN_TYPE_SUSE_LINUX,
+    WARDEN_TYPE_UBUNTU_LINUX,
     WARDEN_KEY_HOST,
     WARDEN_KEY_STATUS,
     WARDEN_STATUS_RUNNING
@@ -137,9 +140,12 @@ class JailCreateForm(ModelForm):
             (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
             (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
             (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
-            (WARDEN_TYPE_GENTOO_LINUX, WARDEN_TYPE_GENTOO_LINUX),
+            (WARDEN_TYPE_CENTOS_LINUX, WARDEN_TYPE_CENTOS_LINUX),
             (WARDEN_TYPE_DEBIAN_LINUX, WARDEN_TYPE_DEBIAN_LINUX),
-            (WARDEN_TYPE_CENTOS_LINUX, WARDEN_TYPE_CENTOS_LINUX)
+            (WARDEN_TYPE_FEDORA_LINUX, WARDEN_TYPE_FEDORA_LINUX),
+            (WARDEN_TYPE_GENTOO_LINUX, WARDEN_TYPE_GENTOO_LINUX),
+            (WARDEN_TYPE_SUSE_LINUX, WARDEN_TYPE_SUSE_LINUX),
+            (WARDEN_TYPE_UBUNTU_LINUX, WARDEN_TYPE_UBUNTU_LINUX)
         ),
         initial=WARDEN_TYPE_STANDARD,
     )
@@ -304,15 +310,15 @@ class JailCreateForm(ModelForm):
         elif self.cleaned_data['jail_type'] == WARDEN_TYPE_PLUGINJAIL:
             jail_flags |= WARDEN_CREATE_FLAGS_PLUGINJAIL
 
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_GENTOO_LINUX:
-            jail_flags |= WARDEN_CREATE_FLAGS_GENTOO_LINUX
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_CENTOS_LINUX:
+            jail_flags |= WARDEN_CREATE_FLAGS_CENTOS_LINUX
             template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
                 WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
                 WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
                 WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
             template_create_args['flags'] = template_flags
-            template_create_args['nick'] = "linux-gentoo"
-            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-gentoo.tgz" % JAILS_INDEX
+            template_create_args['nick'] = "linux-centos"
+            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-centos.tgz" % JAILS_INDEX
             
         elif self.cleaned_data['jail_type'] == WARDEN_TYPE_DEBIAN_LINUX:
             jail_flags |= WARDEN_CREATE_FLAGS_DEBIAN_LINUX
@@ -323,16 +329,43 @@ class JailCreateForm(ModelForm):
             template_create_args['flags'] = template_flags
             template_create_args['nick'] = "linux-debian"
             template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-debian.tgz" % JAILS_INDEX
-
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_CENTOS_LINUX:
-            jail_flags |= WARDEN_CREATE_FLAGS_CENTOS_LINUX
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_FEDORA_LINUX:
+            jail_flags |= WARDEN_CREATE_FLAGS_FEDORA_LINUX
             template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
                 WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
                 WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
                 WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
             template_create_args['flags'] = template_flags
-            template_create_args['nick'] = "linux-centos"
-            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-centos.tgz" % JAILS_INDEX
+            template_create_args['nick'] = "linux-fedora"
+            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-fedora.tgz" % JAILS_INDEX
+
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_GENTOO_LINUX:
+            jail_flags |= WARDEN_CREATE_FLAGS_GENTOO_LINUX
+            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
+            template_create_args['flags'] = template_flags
+            template_create_args['nick'] = "linux-gentoo"
+            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-gentoo.tgz" % JAILS_INDEX
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_SUSE_LINUX:
+            jail_flags |= WARDEN_CREATE_FLAGS_SUSE_LINUX
+            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
+            template_create_args['flags'] = template_flags
+            template_create_args['nick'] = "linux-suse"
+            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-suse.tgz" % JAILS_INDEX
+        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_UBUNTU_LINUX:
+            jail_flags |= WARDEN_CREATE_FLAGS_UBUNTU_LINUX
+            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
+            template_create_args['flags'] = template_flags
+            template_create_args['nick'] = "linux-ubuntu"
+            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-ubuntu.tgz" % JAILS_INDEX
 
         if template_flags > 0:
             template_exists = False
@@ -357,8 +390,8 @@ class JailCreateForm(ModelForm):
                         os.unlink(createfile)
                     return
 
-            jail_flags |= WARDEN_CREATE_FLAGS_TEMPLATE
-            jail_create_args['template'] = template_create_args['nick']
+#            jail_flags |= WARDEN_CREATE_FLAGS_TEMPLATE
+#            jail_create_args['template'] = template_create_args['nick']
 
 #        if self.cleaned_data['jail_archive']:
 #            if jail_flags & WARDEN_CREATE_FLAGS_LINUXJAIL:
@@ -454,11 +487,17 @@ class JailCreateForm(ModelForm):
         jail_flags = WARDEN_FLAGS_NONE
         if jail_vnet:
             if (
-                self.cleaned_data['jail_type'] != WARDEN_TYPE_GENTOO_LINUX
+                self.cleaned_data['jail_type'] != WARDEN_TYPE_CENTOS_LINUX
                 and
                 self.cleaned_data['jail_type'] != WARDEN_TYPE_DEBIAN_LINUX
                 and
-                self.cleaned_data['jail_type'] != WARDEN_TYPE_CENTOS_LINUX
+                self.cleaned_data['jail_type'] != WARDEN_TYPE_FEDORA_LINUX
+                and
+                self.cleaned_data['jail_type'] != WARDEN_TYPE_GENTOO_LINUX
+                and
+                self.cleaned_data['jail_type'] != WARDEN_TYPE_SUSE_LINUX
+                and
+                self.cleaned_data['jail_type'] != WARDEN_TYPE_UBUNTU_LINUX
                 and
                 not self.cleaned_data['jail_32bit']
             ):

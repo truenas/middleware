@@ -330,9 +330,9 @@ def jail_linuxprogress(request):
         parts = buf.split()
         size = len(parts)
         if size > 2:
-            nbytes = float(parts[1])
-            total = float(parts[2])
             try:  
+                nbytes = float(parts[1])
+                total = float(parts[2])
                 percent = int((nbytes / total) * 100)
             except:
                 percent = 0

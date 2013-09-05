@@ -649,10 +649,7 @@ Available Flags:
   --startauto                  (Start this jail at system boot)
   --portjail                   (Make this a portjail)
   --pluginjail                 (Make this a pluginjail)
-  --linuxjail <script>         (Make this a linux jail and use supplied script for installation)
-  --gentoo                     (Make a gentoo linux jail)
-  --debian                     (Make a debian linux jail) 
-  --centos                     (Make a centos linux jail)
+  --linuxjail [script]         (Make this a linux jail and use supplied script for installation)
   --archive <tar>              (Use specified tar file for BSD jail creation)
   --linuxarchive <tar>         (Use specified tar file for Linux jail creation)
   --version <string>           (Use this instead of /etc/version)
@@ -1180,33 +1177,24 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
              --portjail) JAILTYPE="portjail" ;;
              --pluginjail) JAILTYPE="pluginjail" ; VANILLA="YES" ;; 
              --linuxjail) JAILTYPE="linuxjail" ; shift
-			  if [ -z "$1" ] ; then warden_exit "No linux setup script specified!"; fi
+			  #if [ -z "$1" ] ; then warden_exit "No linux setup script specified!"; fi
 			  LINUX_JAIL_SCRIPT="$1" ; export LINUX_JAIL_SCRIPT
 			  if [ -n "$LINUXARCHIVE_FILE" ] ; then 
 			     warden_exit "--linuxjail and --linuxarchive are mutually exclusive!"
 			  fi
 			  ;;
-             --gentoo) JAILTYPE="gentoo-linux"
-                     LINUX_JAIL_SCRIPT="${PROGDIR}/linux-installs/gentoo-stage3-i486"
-                     export LINUX_JAIL_SCRIPT
-                     ;;
-
-             --debian) JAILTYPE="debian-linux" 
-                     LINUX_JAIL_SCRIPT="${PROGDIR}/linux-installs/debian-6-squeeze"
-                     export LINUX_JAIL_SCRIPT
-                     ;;
-
-             --centos) JAILTYPE="centos-linux"
-                     LINUX_JAIL_SCRIPT="${PROGDIR}/linux-installs/centos-5-i386"
-                     export LINUX_JAIL_SCRIPT
-                     ;;
 	             -32) if [ "$REALARCH" != "amd64" ] ; then
                                 warden_exit "-32 can only be used on amd64 host"
                           fi
                           ARCH=i386
 			  export ARCH
                           ;;
-
+             --centos) JAILTYPE="linux-centos" ;;
+             --debian) JAILTYPE="linux-debian" ;; 
+             --fedora) JAILTYPE="linux-fedora" ;;
+             --gentoo) JAILTYPE="linux-gentoo" ;;
+             --suse)   JAILTYPE="linux-suse"   ;;
+             --ubuntu) JAILTYPE="linux-ubuntu" ;;
              --archive) shift
 			  if [ -z "$1" ] ; then warden_exit "No archive file specified!"; fi
 			  ARCHIVE_FILE="$1" ; export ARCHIVE_FILE

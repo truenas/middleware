@@ -1495,8 +1495,8 @@ list_templates()
         else
            ARCH="i386"
         fi
-        VER=`file "$i/bin/sh" | cut -d ',' -f 5 | awk '{print $3}'`
-        OS=`file "$i/bin/ls" | cut -d ',' -f 5 | awk '{print $2}'`
+        VER=`file "$i/sbin/sysctl" | cut -d ',' -f 5 | awk '{print $3}'`
+        OS=`file "$i/sbin/sysctl" | cut -d ',' -f 5 | awk '{print $2}'`
         if [ -e "$i/etc/rc.delay" ] ; then
            TYPE="TrueOS"
         elif echo "${OS}"|egrep -q Linux ; then

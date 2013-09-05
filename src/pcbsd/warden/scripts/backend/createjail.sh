@@ -25,11 +25,40 @@ setup_linux_jail()
   if [ "$AUTOSTART" = "YES" ] ; then
     touch "${JMETADIR}/autostart"
   fi
+
   touch "${JMETADIR}/jail-linux"
   case "${JAILTYPE}" in
-    gentoo-linux) echo "${JAILTYPE}" > "${JMETADIR}/jail-linux" ;;
-    debian-linux) echo "${JAILTYPE}" > "${JMETADIR}/jail-linux" ;;
-    centos-linux) echo "${JAILTYPE}" > "${JMETADIR}/jail-linux" ;;
+    linux-centos)
+      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
+      ;;  
+
+    linux-debian)
+      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
+
+      # Setup some custom start / stop stuff
+#      echo "/etc/init.d/rc 3" > ${JMETADIR}/jail-start
+#      echo "/etc/init.d/rc 0" > ${JMETADIR}/jail-stop
+      ;;  
+
+    linux-fedora)
+      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
+      ;;  
+
+    linux-gentoo)
+      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
+
+      # Setup some custom start / stop stuff
+#      echo "/sbin/rc default" > ${JMETADIR}/jail-start
+#      echo "/sbin/rc shutdown" > ${JMETADIR}/jail-stop
+      ;;  
+
+    linux-suse)
+      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
+      ;;  
+
+    linux-ubuntu)
+      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
+      ;;  
   esac
 
   if [ -n "$LINUXARCHIVE_FILE" ] ; then
@@ -73,8 +102,8 @@ touch /etc/mtab
   chroot ${JAILDIR} /.fixSH
   rm ${JAILDIR}/.fixSH
 
-  warden_print sh "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}"
-  sh "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}" 2>&1 | warden_pipe
+#  warden_print sh "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}"
+#  sh "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}" 2>&1 | warden_pipe
 
   # If we are auto-starting the jail, do it now
   if [ "$AUTOSTART" = "YES" ] ; then warden start ${JAILNAME} ; fi
@@ -92,9 +121,12 @@ case "${JAILTYPE}" in
   portjail) PORTJAIL="YES" ;;
   pluginjail) PLUGINJAIL="YES" ;;
   linuxjail) LINUXJAIL="YES" ;;
-  gentoo-linux) LINUXJAIL="YES" ;;
-  debian-linux) LINUXJAIL="YES" ;;
-  centos-linux) LINUXJAIL="YES" ;;
+  linux-centos) LINUXJAIL="YES" ;;
+  linux-debian) LINUXJAIL="YES" ;;
+  linux-fedora) LINUXJAIL="YES" ;;
+  linux-gentoo) LINUXJAIL="YES" ;;
+  linux-suse)   LINUXJAIL="YES" ;;
+  linux-ubuntu) LINUXJAIL="YES" ;;
   standard) ;;
 esac
 
@@ -108,7 +140,11 @@ if [ -z "$TEMPLATE" -a -z "$ARCHIVEFILE" ] ; then
      DEFTEMPLATE="${DEFTEMPLATE}-pluginjail"
 
   elif [ "${LINUXJAIL}" = "YES" ]; then
-     DEFTEMPLATE="$(basename "${LINUX_JAIL_SCRIPT}")"
+     if [ "${JAILTYPE}" = "linuxjail" ] ; then
+        DEFTEMPLATE="$(basename "${LINUX_JAIL_SCRIPT}")"
+     else
+        DEFTEMPLATE="${JAILTYPE}"
+     fi
   fi
 
   # See if we need to create a new template for this system
