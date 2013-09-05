@@ -576,6 +576,71 @@ class NISResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class NT4ResourceTest(APITestCase):
+
+    def setUp(self):
+        super(NT4ResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='directoryservice',
+        )
+        self._obj = models.NT4.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': self._obj.id,
+            u'nt4_adminname': u'',
+            u'nt4_adminpw': u'',
+            u'nt4_dcname': u'',
+            u'nt4_netbiosname': u'',
+            u'nt4_workgroup': u''
+        }])
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                'nt4_dcname': 'mydcname',
+                'nt4_netbiosname': 'netbios',
+                'nt4_workgroup': 'WORKGROUP',
+                'nt4_adminname': 'admin',
+                'nt4_adminpw': 'mypw',
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['nt4_dcname'], 'mydcname')
+        self.assertEqual(data['nt4_netbiosname'], 'netbios')
+        self.assertEqual(data['nt4_workgroup'], 'WORKGROUP')
+        self.assertEqual(data['nt4_adminname'], 'admin')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class RsyncdResourceTest(APITestCase):
 
     def setUp(self):

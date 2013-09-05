@@ -656,6 +656,8 @@ class NT4(ModelForm):
         super(NT4, self).__init__(*args, **kwargs)
         if self.instance.nt4_adminpw:
             self.fields['nt4_adminpw'].required = False
+        if self._api is True:
+            del self.fields['nt4_adminpw2']
 
     def clean_nt4_adminpw2(self):
         password1 = self.cleaned_data.get("nt4_adminpw")
