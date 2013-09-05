@@ -514,6 +514,68 @@ class NFSResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class NISResourceTest(APITestCase):
+
+    def setUp(self):
+        super(NISResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='directoryservice',
+        )
+        models.services.objects.create(
+            srv_service='nis',
+        )
+        self._obj = models.NIS.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, [{
+            u'id': self._obj.id,
+            u'nis_domain': u'',
+            u'nis_manycast': False,
+            u'nis_secure_mode': False,
+            u'nis_servers': u''
+        }])
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                'nis_domain': 'nisdomain',
+                'nis_secure_mode': True,
+            }
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['nis_domain'], 'nisdomain')
+        self.assertEqual(data['nis_secure_mode'], True)
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class RsyncdResourceTest(APITestCase):
 
     def setUp(self):
