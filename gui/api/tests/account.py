@@ -131,6 +131,57 @@ class bsdUsersResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
 
+    def test_Groups_retrieve(self):
+        obj = models.bsdUsers.objects.create(
+            bsdusr_uid=1100,
+            bsdusr_group=models.bsdGroups.objects.create(
+                bsdgrp_gid=1101,
+                bsdgrp_group='juca'
+            ),
+            bsdusr_username='juca',
+            bsdusr_shell='/usr/local/bin/bash',
+            bsdusr_full_name='Juca Xunda',
+        )
+        group = models.bsdGroups.objects.create(
+            bsdgrp_gid=100,
+            bsdgrp_group='mail',
+        )
+        models.bsdGroupMembership.objects.create(
+            bsdgrpmember_group=group,
+            bsdgrpmember_user=obj,
+        )
+        resp = self.api_client.get(
+            '%s%d/groups/' % (self.get_api_url(), obj.id),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, ["mail"])
+
+    def test_Groups_update(self):
+        obj = models.bsdUsers.objects.create(
+            bsdusr_uid=1100,
+            bsdusr_group=models.bsdGroups.objects.create(
+                bsdgrp_gid=1101,
+                bsdgrp_group='juca'
+            ),
+            bsdusr_username='juca',
+            bsdusr_shell='/usr/local/bin/bash',
+            bsdusr_full_name='Juca Xunda',
+        )
+        group = models.bsdGroups.objects.create(
+            bsdgrp_gid=100,
+            bsdgrp_group='mail',
+        )
+        resp = self.api_client.post(
+            '%s%d/groups/' % (self.get_api_url(), obj.id),
+            format='json',
+            data=['mail'],
+        )
+        self.assertHttpAccepted(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, ["mail"])
+
 
 class bsdGroupsResourceTest(APITestCase):
 
