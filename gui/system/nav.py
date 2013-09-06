@@ -12,6 +12,7 @@ class Reporting(TreeNode):
     name = _(u'Reporting')
     view = 'system_reporting'
     icon = u"ReportingIcon"
+    type = 'opensystem'
 
 
 class Info(TreeNode):
@@ -20,6 +21,7 @@ class Info(TreeNode):
     name = _(u'System Information')
     view = 'system_info'
     icon = u"InfoIcon"
+    type = 'opensystem'
 
 
 class Settings(TreeNode):
@@ -28,3 +30,4 @@ class Settings(TreeNode):
     name = _(u'Settings')
     view = 'system_settings'
     icon = u"SettingsIcon"
+    type = 'opensystem'

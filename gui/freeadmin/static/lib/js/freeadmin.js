@@ -1394,6 +1394,8 @@ require([
                 } else
                     func(item.name, item.url);
 
+            } else if(item.type == 'opensystem') {
+                Menu.openSystem(item.gname);
             } else if(item.type == 'opennetwork') {
                 Menu.openNetwork(item.gname);
             } else if(item.type == 'en_dis_services') {

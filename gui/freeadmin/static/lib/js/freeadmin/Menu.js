@@ -15,7 +15,7 @@ define([
         constructor: function(/*Object*/ kwArgs){
             lang.mixin(this, kwArgs);
         },
-        openSystem: function() {
+        openSystem: function(gname) {
             var opened = false;
             var opened2 = false;
             var opened3 = false;
@@ -25,16 +25,29 @@ define([
             for(var i=0; i<c.length; i++){
               if(c[i].id == 'systemTab_Reporting'){
                 p.selectChild(c[i]);
-                opened = true;
+                opened = c[i];
               } else if(c[i].id == 'systemTab_Settings'){
                 p.selectChild(c[i]);
-                opened2 = true;
+                opened2 = c[i];
               } else if(c[i].id == 'systemTab_SysInfo'){
                 p.selectChild(c[i]);
-                opened3 = true;
+                opened3 = c[i];
               }
             }
-            if(opened != true) {
+            if(gname == 'system.Reporting') {
+              p.selectChild(opened);
+              opened2 = true;
+              opened3 = true;
+            } else if(gname == 'system.Settings') {
+              p.selectChild(opened2);
+              opened = true;
+              opened3 = true;
+            } else if(gname == 'system.SysInfo') {
+              p.selectChild(opened3);
+              opened = true;
+              opened2 = true;
+            }
+            if(opened == false) {
                 var pane = new ContentPane({
                     id: "systemTab_Reporting",
                     title: gettext('Reporting'),
@@ -45,7 +58,7 @@ define([
                 p.addChild(pane);
             }
 
-            if(opened2 != true) {
+            if(opened2 == false) {
                 var pane2 = new ContentPane({
                     id: 'systemTab_Settings',
                     title: gettext('Settings'),
@@ -55,7 +68,7 @@ define([
                 p.addChild(pane2);
             }
 
-            if(opened3 != true) {
+            if(opened3 == false) {
                 var pane3 = new ContentPane({
                     id: 'systemTab_SysInfo',
                     title: gettext('System Information'),
