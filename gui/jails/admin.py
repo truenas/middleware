@@ -34,7 +34,7 @@ from django.utils.html import escapejs
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.api.resources import (
-    JailsResource, NullMountPointResource
+    JailsResource, JailTemplateResource, NullMountPointResource
 )
 from freenasUI.jails import models
 
@@ -218,6 +218,41 @@ class JailsFAdmin(BaseFreeAdmin):
         return actions
 
 
+class JailTemplateFAdmin(BaseFreeAdmin):
+
+    create_modelform = "JailTemplateCreateForm"
+    edit_modelform = "JailTemplateEditForm"
+    icon_object = u"ServicesIcon"
+    icon_model = u"ServicesIcon"
+    icon_add = u"ServicesIcon"
+    icon_view = u"ServicesIcon"
+
+    resource = JailTemplateResource
+
+    def get_datagrid_columns(self):
+        columns = []
+
+        columns.append({
+            'name': 'jt_name',
+            'label': _('Name'),
+            'sortable': False
+        })
+
+        columns.append({
+            'name': 'jt_url',
+            'label': _('URL'),
+            'sortable': False
+        })
+
+        columns.append({
+            'name': 'jt_instances',
+            'label': _('Instances'),
+            'sortable': False
+        })
+
+        return columns
+
+
 class NullMountPointFAdmin(BaseFreeAdmin):
 
     icon_model = u"MountPointIcon"
@@ -237,4 +272,5 @@ class NullMountPointFAdmin(BaseFreeAdmin):
         return columns
 
 site.register(models.Jails, JailsFAdmin)
+site.register(models.JailTemplate, JailTemplateFAdmin)
 site.register(models.NullMountPoint, NullMountPointFAdmin)

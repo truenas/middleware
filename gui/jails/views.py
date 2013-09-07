@@ -37,6 +37,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails import forms, models
+from freenasUI.jails.utils import get_jails_index
 from freenasUI.common.warden import (
     Warden,
     WARDEN_DELETE_FLAGS_CONFIRM,
@@ -57,7 +58,7 @@ def jails_home(request):
         jailsconf = models.JailsConfiguration.objects.create()
 
     if not jailsconf.jc_collectionurl:
-        jailsconf.jc_collectionurl = models.JAILS_INDEX 
+        jailsconf.jc_collectionurl = get_jails_index()
         jailsconf.save()
 
     return render(request, 'jails/index.html', {
@@ -321,8 +322,9 @@ def jail_linuxprogress(request):
         'percent': 0
     }
 
-    if os.path.exists("/var/tmp/.templatecreate"):
-        f = open("/var/tmp/.extract", "r")
+    statusfile = os.environ['EXTRACT_TARBALL_STATUSFILE']
+    if os.path.exists("/var/tmp/.templatecreate") and os.path.exists(statusfile):
+        f = open(statusfile, "r")
         buf = f.read()
         f.close()
 

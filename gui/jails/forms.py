@@ -37,10 +37,10 @@ from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.jails.models import (
     JailsConfiguration,
     Jails,
-    NullMountPoint,
-    JAILS_INDEX
+    JailTemplate,
+    NullMountPoint
 )
-from freenasUI.jails.utils import guess_adresses
+from freenasUI.jails.utils import guess_adresses, get_jails_index
 from freenasUI.common.warden import (
     Warden,
     WardenJail,
@@ -56,16 +56,9 @@ from freenasUI.common.warden import (
     WARDEN_CREATE_FLAGS_SRC,
     WARDEN_CREATE_FLAGS_PORTS,
     WARDEN_CREATE_FLAGS_VANILLA,
-    #WARDEN_CREATE_FLAGS_STARTAUTO,
-    WARDEN_CREATE_FLAGS_PORTJAIL,
-    WARDEN_CREATE_FLAGS_PLUGINJAIL,
-    #WARDEN_CREATE_FLAGS_LINUXJAIL,
-    WARDEN_CREATE_FLAGS_CENTOS_LINUX,
-    WARDEN_CREATE_FLAGS_DEBIAN_LINUX,
-    WARDEN_CREATE_FLAGS_FEDORA_LINUX,
-    WARDEN_CREATE_FLAGS_GENTOO_LINUX,
-    WARDEN_CREATE_FLAGS_SUSE_LINUX,
-    WARDEN_CREATE_FLAGS_UBUNTU_LINUX,
+    WARDEN_CREATE_FLAGS_STARTAUTO,
+    WARDEN_CREATE_FLAGS_JAILTYPE,
+    WARDEN_CREATE_FLAGS_LINUXJAIL,
     #WARDEN_CREATE_FLAGS_ARCHIVE,
     #WARDEN_CREATE_FLAGS_LINUXARCHIVE,
     WARDEN_CREATE_FLAGS_IPV4,
@@ -91,12 +84,6 @@ from freenasUI.common.warden import (
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
     WARDEN_TYPE_PORTJAIL,
-    WARDEN_TYPE_CENTOS_LINUX,
-    WARDEN_TYPE_DEBIAN_LINUX,
-    WARDEN_TYPE_FEDORA_LINUX,
-    WARDEN_TYPE_GENTOO_LINUX,
-    WARDEN_TYPE_SUSE_LINUX,
-    WARDEN_TYPE_UBUNTU_LINUX,
     WARDEN_KEY_HOST,
     WARDEN_KEY_STATUS,
     WARDEN_STATUS_RUNNING
@@ -107,47 +94,10 @@ from freenasUI.system.forms import clean_path_execbit
 
 log = logging.getLogger('jails.forms')
 
-def setflags(keys):
-    flags = WARDEN_FLAGS_NONE
-    for k in keys:
-        if k == 'jail_ipv4':
-            flags |= WARDEN_SET_FLAGS_IPV4
-        elif k == 'jail_ipv6':
-            flags |= WARDEN_SET_FLAGS_IPV6
-        elif k == 'jail_alias_ipv4':
-            flags |= WARDEN_SET_FLAGS_ALIAS_IPV4
-        elif k == 'jail_alias_ipv6':
-            flags |= WARDEN_SET_FLAGS_ALIAS_IPV6
-        elif k == 'jail_bridge_ipv4':
-            flags |= WARDEN_SET_FLAGS_BRIDGE_IPV4
-        elif k == 'jail_bridge_ipv6':
-            flags |= WARDEN_SET_FLAGS_BRIDGE_IPV6
-        elif k == 'jail_alias_bridge_ipv4':
-            flags |= WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4
-        elif k == 'jail_alias_bridge_ipv6':
-            flags |= WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6
-        elif k == 'jail_defaultrouter_ipv4':
-            flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4
-        elif k == 'jail_defaultrouter_ipv6':
-            flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6
-    return flags
-
 
 class JailCreateForm(ModelForm):
     jail_type = forms.ChoiceField(
         label=_("type"),
-        choices=(
-            (WARDEN_TYPE_STANDARD, WARDEN_TYPE_STANDARD),
-            (WARDEN_TYPE_PLUGINJAIL, WARDEN_TYPE_PLUGINJAIL),
-            (WARDEN_TYPE_PORTJAIL, WARDEN_TYPE_PORTJAIL),
-            (WARDEN_TYPE_CENTOS_LINUX, WARDEN_TYPE_CENTOS_LINUX),
-            (WARDEN_TYPE_DEBIAN_LINUX, WARDEN_TYPE_DEBIAN_LINUX),
-            (WARDEN_TYPE_FEDORA_LINUX, WARDEN_TYPE_FEDORA_LINUX),
-            (WARDEN_TYPE_GENTOO_LINUX, WARDEN_TYPE_GENTOO_LINUX),
-            (WARDEN_TYPE_SUSE_LINUX, WARDEN_TYPE_SUSE_LINUX),
-            (WARDEN_TYPE_UBUNTU_LINUX, WARDEN_TYPE_UBUNTU_LINUX)
-        ),
-        initial=WARDEN_TYPE_STANDARD,
     )
 
     jail_autostart = forms.BooleanField(
@@ -180,12 +130,6 @@ class JailCreateForm(ModelForm):
         initial=True
     )
 
-#    jail_archive = forms.BooleanField(
-#        label=_("archive"),
-#        required=False,
-#        initial=False
-#    )
-
     jail_vnet = forms.BooleanField(
         label=_("VIMAGE"),
         required=False,
@@ -197,31 +141,6 @@ class JailCreateForm(ModelForm):
         required=False,
         initial=False
     )
-
-#    jail_script = forms.CharField(
-#        label=_("script"),
-#        required=False
-#    )
-
-#    advanced_fields = [
-#        'jail_type',
-#        'jail_autostart',
-#        'jail_32bit',
-#        'jail_source',
-#        'jail_ports',
-#        'jail_vanilla',
-#        'jail_archive',
-#        'jail_ipv4',
-#        'jail_bridge_ipv4',
-#        'jail_defaultrouter_ipv4',
-#        'jail_ipv6',
-#        'jail_bridge_ipv6',
-#        'jail_defaultrouter_ipv6',
-#        'jail_mac',
-#        'jail_script',
-#        'jail_vnet',
-#        'jail_nat'
-#    ]
 
     class Meta:
         model = Jails
@@ -236,12 +155,21 @@ class JailCreateForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(JailCreateForm, self).__init__(*args, **kwargs)
-        logfile = "/var/tmp/warden.log"
+        self.logfile = "/var/tmp/warden.log"
+        self.statusfile = "/var/tmp/status"
         try:
-            os.unlink(logfile) 
+            os.unlink(self.logfile) 
+        except:
+            pass
+        try:
+            os.unlink(self.statusfile) 
         except:
             pass
 
+        os.environ['EXTRACT_TARBALL_STATUSFILE'] = self.statusfile
+        types = ((jt.jt_name, jt.jt_name) for jt in JailTemplate.objects.all())
+
+        self.fields['jail_type'].choices = types
         self.fields['jail_type'].widget.attrs['onChange'] = (
             "jail_type_toggle();"
         )
@@ -304,100 +232,55 @@ class JailCreateForm(ModelForm):
         template_flags = 0
         template_create_args = {}
 
-        if self.cleaned_data['jail_type'] == WARDEN_TYPE_PORTJAIL:
-            jail_flags |= WARDEN_CREATE_FLAGS_PORTJAIL
+        jail_type = self.cleaned_data['jail_type']  
+        template = JailTemplate.objects.get(jt_name=jail_type)
+        template_create_args['nick'] = template.jt_name
+        template_create_args['tar'] = template.jt_url
+        template_create_args['flags'] = WARDEN_TEMPLATE_FLAGS_CREATE | \
+            WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
+            WARDEN_TEMPLATE_CREATE_FLAGS_TAR 
 
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_PLUGINJAIL:
-            jail_flags |= WARDEN_CREATE_FLAGS_PLUGINJAIL
+        template = None
+        template_list_flags = {}
+        template_list_flags['flags'] = WARDEN_TEMPLATE_FLAGS_LIST 
+        templates = w.template(**template_list_flags)
+        for t in templates:
+            if t['nick'] == template_create_args['nick']:
+                template = t
+                break
 
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_CENTOS_LINUX:
-            jail_flags |= WARDEN_CREATE_FLAGS_CENTOS_LINUX
-            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
-            template_create_args['flags'] = template_flags
-            template_create_args['nick'] = "linux-centos"
-            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-centos.tgz" % JAILS_INDEX
-            
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_DEBIAN_LINUX:
-            jail_flags |= WARDEN_CREATE_FLAGS_DEBIAN_LINUX
-            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
-            template_create_args['flags'] = template_flags
-            template_create_args['nick'] = "linux-debian"
-            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-debian.tgz" % JAILS_INDEX
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_FEDORA_LINUX:
-            jail_flags |= WARDEN_CREATE_FLAGS_FEDORA_LINUX
-            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
-            template_create_args['flags'] = template_flags
-            template_create_args['nick'] = "linux-fedora"
-            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-fedora.tgz" % JAILS_INDEX
+        createfile = "/var/tmp/.templatecreate"
+        if not template:
+            try:
+                cf = open(createfile, "a+")
+                cf.close()
+                w.template(**template_create_args)
 
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_GENTOO_LINUX:
-            jail_flags |= WARDEN_CREATE_FLAGS_GENTOO_LINUX
-            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
-            template_create_args['flags'] = template_flags
-            template_create_args['nick'] = "linux-gentoo"
-            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-gentoo.tgz" % JAILS_INDEX
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_SUSE_LINUX:
-            jail_flags |= WARDEN_CREATE_FLAGS_SUSE_LINUX
-            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
-            template_create_args['flags'] = template_flags
-            template_create_args['nick'] = "linux-suse"
-            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-suse.tgz" % JAILS_INDEX
-        elif self.cleaned_data['jail_type'] == WARDEN_TYPE_UBUNTU_LINUX:
-            jail_flags |= WARDEN_CREATE_FLAGS_UBUNTU_LINUX
-            template_flags |= WARDEN_TEMPLATE_FLAGS_CREATE | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_TAR | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
-                WARDEN_TEMPLATE_CREATE_FLAGS_LINUX
-            template_create_args['flags'] = template_flags
-            template_create_args['nick'] = "linux-ubuntu"
-            template_create_args['tar'] = "%s/latest/RELEASE/x64/jails/linux-ubuntu.tgz" % JAILS_INDEX
+            except Exception as e:
+                self.errors['__all__'] = self.error_class([_(e.message)])
+                if os.path.exists(createfile):
+                    os.unlink(createfile)
+                return
 
-        if template_flags > 0:
-            template_exists = False
             template_list_flags = {}
             template_list_flags['flags'] = WARDEN_TEMPLATE_FLAGS_LIST 
             templates = w.template(**template_list_flags)
-            for template in templates:
-                if template['nick'] == template_create_args['nick']:
-                    template_exists = True 
+            for t in templates:
+                if t['nick'] == template_create_args['nick']:
+                    template = t
                     break
 
-            createfile = "/var/tmp/.templatecreate"
-            if not template_exists:
-                try:
-                    cf = open(createfile, "a+")
-                    cf.close()
-                    w.template(**template_create_args)
+        if not template:  
+            self.errors['__all__'] = self.error_class([_('Unable to find template!')])
+            return
 
-                except Exception as e:
-                    self.errors['__all__'] = self.error_class([_(e.message)])
-                    if os.path.exists(createfile):
-                        os.unlink(createfile)
-                    return
+        if template['type'] == 'Linux':
+            jail_flags |= WARDEN_CREATE_FLAGS_LINUXJAIL
+        if template['arch'] == 'i386':
+            jail_flags |= WARDEN_CREATE_FLAGS_32BIT
 
-#            jail_flags |= WARDEN_CREATE_FLAGS_TEMPLATE
-#            jail_create_args['template'] = template_create_args['nick']
-
-#        if self.cleaned_data['jail_archive']:
-#            if jail_flags & WARDEN_CREATE_FLAGS_LINUXJAIL:
-#                jail_flags |= WARDEN_CREATE_FLAGS_LINUXARCHIVE
-#            else:
-#                jail_flags |= WARDEN_CREATE_FLAGS_ARCHIVE
+        jail_flags |= WARDEN_CREATE_FLAGS_TEMPLATE
+        jail_create_args['template'] = template_create_args['nick']
 
         if jail_ipv4:
             jail_flags |= WARDEN_CREATE_FLAGS_IPV4
@@ -410,8 +293,7 @@ class JailCreateForm(ModelForm):
         jail_flags |= WARDEN_CREATE_FLAGS_LOGFILE
         jail_flags |= WARDEN_CREATE_FLAGS_SYSLOG
 
-        logfile = "/var/tmp/warden.log"
-        jail_create_args['logfile'] = logfile
+        jail_create_args['logfile'] = self.logfile
         jail_create_args['flags'] = jail_flags
 
         createfile = "/var/tmp/.jailcreate"
@@ -486,19 +368,8 @@ class JailCreateForm(ModelForm):
         jail_set_args['jail'] = jail_host
         jail_flags = WARDEN_FLAGS_NONE
         if jail_vnet:
+            # XXXX if NOT LINUX XXXX (revisit this)
             if (
-                self.cleaned_data['jail_type'] != WARDEN_TYPE_CENTOS_LINUX
-                and
-                self.cleaned_data['jail_type'] != WARDEN_TYPE_DEBIAN_LINUX
-                and
-                self.cleaned_data['jail_type'] != WARDEN_TYPE_FEDORA_LINUX
-                and
-                self.cleaned_data['jail_type'] != WARDEN_TYPE_GENTOO_LINUX
-                and
-                self.cleaned_data['jail_type'] != WARDEN_TYPE_SUSE_LINUX
-                and
-                self.cleaned_data['jail_type'] != WARDEN_TYPE_UBUNTU_LINUX
-                and
                 not self.cleaned_data['jail_32bit']
             ):
                 jail_flags |= WARDEN_SET_FLAGS_VNET_ENABLE
@@ -760,6 +631,16 @@ class JailsEditForm(ModelForm):
                 args['flags'] = flags
 
                 Warden().set(**args)
+
+
+class JailTemplateCreateForm(ModelForm):
+    class Meta:
+        model = JailTemplate
+
+
+class JailTemplateEditForm(ModelForm):
+    class Meta:
+        model = JailTemplate
 
 
 class NullMountPointForm(ModelForm):

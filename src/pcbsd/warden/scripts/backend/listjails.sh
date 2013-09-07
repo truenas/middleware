@@ -140,16 +140,24 @@ do
  
   # Figure out the type of jail
   if [ -e "${i}/jail-portjail" ] ; then
-    TYPE="portjail"
+    echo portjail > "${i}/jailtype"
+    rm -f "${i}/jail-portjail"
   elif [ -e "${i}/jail-pluginjail" ] ; then
-    TYPE="pluginjail"
+    echo pluginjail > "${i}/jailtype"
+    rm -f "${i}/jail-pluginjail"
   elif [ -e "${i}/jail-linux" ] ; then
     TYPE="$(cat "${i}/jail-linux")"
     if [ -z "${TYPE}" ] ; then
       TYPE="linuxjail"
     fi
-  else
+    echo "${TYPE}" > "${i}/jailtype"
+    rm -f "${i}/jail-linux"
+  fi
+
+  TYPE="$(cat "${i}/jailtype")"
+  if [ -z "${TYPE}" ] ; then 
     TYPE="standard"
+    echo "${TYPE}" > "${i}/jailtype"
   fi
 
   JAILNAME=`echo ${i}|sed 's|.meta$||'|sed 's|^.||'`

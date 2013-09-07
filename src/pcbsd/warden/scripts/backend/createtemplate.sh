@@ -88,7 +88,7 @@ create_template()
        cd /
        zfs destroy -fr "${tank}${zfsp}"
        rm -rf "${tdir}" >/dev/null 2>&1
-       rm -rf /var/tmp/.extract
+       rm -rf "${EXTRACT_TARBALL_STATUSFILE}"
        warden_exit "Failed to create ZFS base dataset"
     }
 
@@ -107,7 +107,7 @@ create_template()
 
     # Using a supplied tar file?
     if [ -n "$FBSDTAR" ] ; then
-      "${EXTRACT_TARBALL}" -u "${FBSDTAR}" -d "${TDIR}" -s /var/tmp/.extract
+      "${EXTRACT_TARBALL}" -u "${FBSDTAR}" -d "${TDIR}" -s "${EXTRACT_TARBALL_STATUSFILE}"
       if [ $? -ne 0 ] ; then
         zfs destroy -fr "${tank}${zfsp}"
         rm -rf "${tdir}" >/dev/null 2>&1

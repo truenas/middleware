@@ -65,6 +65,7 @@ CDIR="${JDIR}/clones"
 
 # Tarball extract program
 EXTRACT_TARBALL=/usr/local/bin/extract-tarball
+: ${EXTRACT_TARBALL_STATUSFILE:="/var/tmp/.extract"}
 
 warden_log() {
   if [ -n "${WARDEN_USESYSLOG}" ] ; then
@@ -353,7 +354,7 @@ mkportjail() {
   # Make sure we remove our cleartmp rc.d script, causes issues
   [ -e "${1}/etc/rc.d/cleartmp" ] && rm ${1}/etc/rc.d/cleartmp
   # Flag this type
-  touch ${JMETADIR}/jail-portjail
+  echo portjail > ${JMETADIR}/jailtype
 }
 
 mkpluginjail() {
@@ -370,7 +371,7 @@ mkpluginjail() {
   # Make sure we remove our cleartmp rc.d script, causes issues
   [ -e "${1}/etc/rc.d/cleartmp" ] && rm ${1}/etc/rc.d/cleartmp
   # Flag this type
-  touch ${JMETADIR}/jail-pluginjail
+  echo pluginjail > ${JMETADIR}/jailtype
 }
 
 mkZFSSnap() {
@@ -1471,6 +1472,110 @@ get_ipfw_nat_priority()
    return ${res}
 }
 
+get_template_path()
+{
+   local template="${1}"
+   if [ -z "${template}" ] ; then
+     return 1
+   fi
+
+   local tpath="${JDIR}/.warden-template-${template}"
+   if [ ! -d "${tpath}" ] ; then
+     return 1
+   fi
+
+   echo "${tpath}"
+   return 0
+}
+
+get_template_os()
+{
+   local template="${1}"
+   if [ -z "${template}" ] ; then
+     return 1
+   fi
+
+   local tpath="${JDIR}/.warden-template-${template}"
+   if [ ! -d "${tpath}" ] ; then
+     return 1
+   fi
+   
+   file "${tpath}/sbin/sysctl" | cut -d ',' -f 5 | awk '{ print $2 }' | cut -f2 -d'/'
+   return 0
+}
+
+get_template_version()
+{
+   local template="${1}"
+   if [ -z "${template}" ] ; then
+     return 1
+   fi
+
+   local tpath="${JDIR}/.warden-template-${template}"
+   if [ ! -d "${tpath}" ] ; then
+     return 1
+   fi
+
+   file "${tpath}/sbin/sysctl" | cut -d ',' -f 5 | awk '{ print $3 }'
+   return 0
+}
+
+get_template_arch()
+{
+   local template="${1}"
+   if [ -z "${template}" ] ; then
+     return 1
+   fi
+
+   local tpath="${JDIR}/.warden-template-${template}"
+   if [ ! -d "${tpath}" ] ; then
+     return 1
+   fi
+
+   local arch="$(file "${tpath}/sbin/sysctl" | awk '{ print $3 }')"
+   if [ "${arch}" = "64-bit" ] ; then
+     arch="amd64"
+   else
+     arch="i386"
+   fi
+
+   echo "${arch}"
+   return 0
+}
+
+get_template_instances()
+{
+   local template="${1}"
+   if [ -z "${template}" ] ; then
+     return 1
+   fi
+
+   local tpath="${JDIR}/.warden-template-${template}"
+   if [ ! -d "${tpath}" ] ; then
+     return 1
+   fi
+
+   tank="$(getZFSTank "${tpath}")"
+   rp="$(getZFSRelativePath "${tpath}")"
+   td="${tank}${rp}"
+
+   count=0
+   for i in $(ls -d ${JDIR}/.*.meta) ; do
+     jail="$(basename "${i}"|sed -E 's/(^\.|\.meta)//g')"
+     tank="$(getZFSTank "${JDIR}")"
+     rp="$(getZFSRelativePath "${JDIR}")"
+     jd="${tank}${rp}/${jail}"
+
+     origin="$(zfs get -H origin "${jd}"|awk '{ print $3 }'|cut -f1 -d'@')"
+     if [ "${origin}" = "${td}" ] ; then
+       : $(( count += 1 ))
+     fi
+   done
+
+   echo "${count}"
+   return 0
+}
+
 list_templates()
 {
    local verbose="0"
@@ -1489,7 +1594,8 @@ list_templates()
      do
         if [ ! -e "$i/bin/sh" ] ; then continue ; fi
         NICK=`echo "$i" | sed "s|${JDIR}/.warden-template-||g"`
-        file "$i/bin/sh" 2>/dev/null | grep -q "64-bit"
+
+        file "$i/sbin/sysctl" 2>/dev/null | grep -q "64-bit"
         if [ $? -eq 0 ] ; then
            ARCH="amd64"
         else
@@ -1510,6 +1616,8 @@ list_templates()
 
         else
           if [ "${verbose}" = "1" ] ; then
+            INSTANCES="$(get_template_instances "${NICK}")" 
+
             out="$(mktemp  /tmp/.wjvXXXXXX)"
             cat<<__EOF__ >"${out}"
 
@@ -1517,6 +1625,7 @@ nick: ${NICK}
 type: ${TYPE}
 version: ${VER}
 arch: ${ARCH}
+instances: ${INSTANCES}
 
 __EOF__
             warden_cat "${out}"

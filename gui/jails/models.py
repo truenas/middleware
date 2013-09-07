@@ -37,14 +37,13 @@ from freenasUI.common.warden import (
     WARDEN_AUTOSTART_ENABLED,
     WARDEN_VNET_ENABLED,
     WARDEN_NAT_ENABLED,
-    WARDEN_DELETE_FLAGS_CONFIRM
+    WARDEN_DELETE_FLAGS_CONFIRM,
+    WARDEN_TEMPLATE_FLAGS_LIST
 )
 from freenasUI.freeadmin.models import Model, Network4Field, Network6Field
 from freenasUI.jails.queryset import JailsQuerySet
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-
-JAILS_INDEX = "http://cdn.freenas.org"
 
 log = logging.getLogger('jails.models')
 
@@ -285,6 +284,46 @@ class JailsConfiguration(Model):
         else:
             parts = self.jc_ipv4_network_end.split('/')
             self.jc_ipv4_network_end = parts[0]
+
+
+class JailTemplate(Model):
+
+    jt_name = models.CharField(
+        max_length=120,
+        verbose_name=_("Name")
+        )
+
+    jt_url = models.CharField(
+        max_length=255,
+        verbose_name=_("URL")
+    )
+
+    @property
+    def jt_instances(self):
+        instances = 0
+
+        w = Warden()
+
+        template = None
+        template_list_flags = {}
+        template_list_flags['flags'] = WARDEN_TEMPLATE_FLAGS_LIST
+        templates = w.template(**template_list_flags)
+        for t in templates:
+            if t['nick'] == self.jt_name:
+                template = t
+                break
+
+        if template:
+            instances = t['instances']
+
+        return instances
+
+    class Meta:
+        verbose_name = _("Jail Templates")
+        verbose_name_plural = _("Jail Templates")
+
+    class FreeAdmin:
+        deletable = False
 
 
 class NullMountPoint(Model):

@@ -40,10 +40,7 @@ from freenasUI.jails.utils import jail_path_configured
 from freenasUI.common.warden import (
     WARDEN_TYPE_STANDARD,
     WARDEN_TYPE_PLUGINJAIL,
-    WARDEN_TYPE_PORTJAIL,
-    WARDEN_TYPE_GENTOO_LINUX,
-    WARDEN_TYPE_DEBIAN_LINUX,
-    WARDEN_TYPE_CENTOS_LINUX
+    WARDEN_TYPE_PORTJAIL
 )
 
 log = logging.getLogger('jails.nav')
@@ -54,6 +51,7 @@ BLACKLIST = [
     'JailsManager',
     'JailsQuerySet',
     'Jails',
+    'JailTemplate',
     'NullMountPoint'
 ]
 
@@ -93,15 +91,23 @@ def init(tree_roots, nav, request):
     jails = Jails.objects.all()
 
     for jail in jails:
+
+        #
+        # XXX Revist this... for jail types that don't
+        # XXX match a given type, check the template
+        # XXX type, otherwise, check OS
+        #
         if jail.jail_type == WARDEN_TYPE_PLUGINJAIL:
             icon = 'JailPluginIcon'
         elif jail.jail_type == WARDEN_TYPE_STANDARD:
             icon = 'BeastieIcon'
         elif jail.jail_type == WARDEN_TYPE_PORTJAIL:
             icon = 'BobbleIcon'
-        elif jail.jail_type in (WARDEN_TYPE_GENTOO_LINUX,
-            WARDEN_TYPE_DEBIAN_LINUX, WARDEN_TYPE_CENTOS_LINUX):
+        elif jail.jail_type == WARDEN_TYPE_LINUXJAIL:
             icon = 'TuxIcon'
+        else:
+            icon = 'BeastieIcon'
+
         jail_node = self.new_jail_node(jail, icon)
         nav.append_child(jail_node)
 

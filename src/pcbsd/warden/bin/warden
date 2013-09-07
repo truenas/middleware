@@ -388,9 +388,9 @@ help_type()
 
 Lets you set the type of jail to these options:
 
-portjail: Jail with access to your home directories and Xorg
+portjail:   Jail with access to your home directories and Xorg
 pluginjail: Jail that can be used to install FreeNAS plugins
-standard: Normal FreeBSD secure jail environment
+standard:   Normal FreeBSD secure jail environment
 
 The flag status can be checked with 'warden list'. 
 
@@ -647,8 +647,7 @@ Available Flags:
   --ports                      (Includes the ports tree)
   --vanilla                    (Don't install PC-BSD pkgng repo and utilities)
   --startauto                  (Start this jail at system boot)
-  --portjail                   (Make this a portjail)
-  --pluginjail                 (Make this a pluginjail)
+  --jailtype <type>            (Make this a jail of type (standard|pluginjail|portjail|...))  
   --linuxjail [script]         (Make this a linux jail and use supplied script for installation)
   --archive <tar>              (Use specified tar file for BSD jail creation)
   --linuxarchive <tar>         (Use specified tar file for Linux jail creation)
@@ -1174,9 +1173,11 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
              --ports) PORTS="YES" ;;
              --startauto) AUTOSTART="YES" ;;
              --vanilla) VANILLA="YES" ;;
-             --portjail) JAILTYPE="portjail" ;;
-             --pluginjail) JAILTYPE="pluginjail" ; VANILLA="YES" ;; 
-             --linuxjail) JAILTYPE="linuxjail" ; shift
+             --jailtype) shift 
+			  if [ -z "$1" ] ; then warden_exit "No jail type specified!"; fi
+                          JAILTYPE="${1}"
+                          ;;
+             --linuxjail) LINUXJAIL="YES" ; VANILLA="YES" ; shift
 			  #if [ -z "$1" ] ; then warden_exit "No linux setup script specified!"; fi
 			  LINUX_JAIL_SCRIPT="$1" ; export LINUX_JAIL_SCRIPT
 			  if [ -n "$LINUXARCHIVE_FILE" ] ; then 
@@ -1189,12 +1190,6 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
                           ARCH=i386
 			  export ARCH
                           ;;
-             --centos) JAILTYPE="linux-centos" ;;
-             --debian) JAILTYPE="linux-debian" ;; 
-             --fedora) JAILTYPE="linux-fedora" ;;
-             --gentoo) JAILTYPE="linux-gentoo" ;;
-             --suse)   JAILTYPE="linux-suse"   ;;
-             --ubuntu) JAILTYPE="linux-ubuntu" ;;
              --archive) shift
 			  if [ -z "$1" ] ; then warden_exit "No archive file specified!"; fi
 			  ARCHIVE_FILE="$1" ; export ARCHIVE_FILE
@@ -1202,7 +1197,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 			     warden_exit "No such file: $ARCHIVE_FILE"
 			  fi
 			  ;;
-             --linuxarchive) JAILTYPE="linuxjail" ; shift
+             --linuxarchive) LINUXJAIL="YES" ; VANILLA="YES" ; shift
 			  if [ -z "$1" ] ; then warden_exit "No archive file specified!"; fi
 			  LINUXARCHIVE_FILE="$1" ; export LINUXARCHIVE_FILE
 			  if [ ! -e "$LINUXARCHIVE_FILE" ] ; then
@@ -1258,6 +1253,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           export VERSION
           export VANILLA
           export TEMPLATE
+          export LINUXJAIL
 
           # Passed all tests, create the jail now
           lockf "/var/tmp/.${JAILNAME}" \

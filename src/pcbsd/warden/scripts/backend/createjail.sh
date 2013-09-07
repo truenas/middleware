@@ -12,7 +12,7 @@ setup_linux_jail()
 {
   warden_print "Setting up linux jail..."
 
-  mkdir -p ${JMETADIR}
+  mkdir -p ${JMETADIR} >/dev/null 2>&1
   echo "${HOST}" > ${JMETADIR}/host
 
   if [ "${IP4}" != "OFF" ] ; then
@@ -25,41 +25,6 @@ setup_linux_jail()
   if [ "$AUTOSTART" = "YES" ] ; then
     touch "${JMETADIR}/autostart"
   fi
-
-  touch "${JMETADIR}/jail-linux"
-  case "${JAILTYPE}" in
-    linux-centos)
-      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
-      ;;  
-
-    linux-debian)
-      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
-
-      # Setup some custom start / stop stuff
-#      echo "/etc/init.d/rc 3" > ${JMETADIR}/jail-start
-#      echo "/etc/init.d/rc 0" > ${JMETADIR}/jail-stop
-      ;;  
-
-    linux-fedora)
-      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
-      ;;  
-
-    linux-gentoo)
-      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
-
-      # Setup some custom start / stop stuff
-#      echo "/sbin/rc default" > ${JMETADIR}/jail-start
-#      echo "/sbin/rc shutdown" > ${JMETADIR}/jail-stop
-      ;;  
-
-    linux-suse)
-      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
-      ;;  
-
-    linux-ubuntu)
-      echo "${JAILTYPE}" > "${JMETADIR}/jail-linux"
-      ;;  
-  esac
 
   if [ -n "$LINUXARCHIVE_FILE" ] ; then
     warden_print "Extracting ${LINUXARCHIVE_FILE}..."
@@ -102,9 +67,6 @@ touch /etc/mtab
   chroot ${JAILDIR} /.fixSH
   rm ${JAILDIR}/.fixSH
 
-#  warden_print sh "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}"
-#  sh "${LINUX_JAIL_SCRIPT}" jail_configure "${JMETADIR}" 2>&1 | warden_pipe
-
   # If we are auto-starting the jail, do it now
   if [ "$AUTOSTART" = "YES" ] ; then warden start ${JAILNAME} ; fi
 
@@ -121,13 +83,8 @@ case "${JAILTYPE}" in
   portjail) PORTJAIL="YES" ;;
   pluginjail) PLUGINJAIL="YES" ;;
   linuxjail) LINUXJAIL="YES" ;;
-  linux-centos) LINUXJAIL="YES" ;;
-  linux-debian) LINUXJAIL="YES" ;;
-  linux-fedora) LINUXJAIL="YES" ;;
-  linux-gentoo) LINUXJAIL="YES" ;;
-  linux-suse)   LINUXJAIL="YES" ;;
-  linux-ubuntu) LINUXJAIL="YES" ;;
   standard) ;;
+  *) ;;
 esac
 
 # See if we need to create a default template
@@ -140,11 +97,7 @@ if [ -z "$TEMPLATE" -a -z "$ARCHIVEFILE" ] ; then
      DEFTEMPLATE="${DEFTEMPLATE}-pluginjail"
 
   elif [ "${LINUXJAIL}" = "YES" ]; then
-     if [ "${JAILTYPE}" = "linuxjail" ] ; then
-        DEFTEMPLATE="$(basename "${LINUX_JAIL_SCRIPT}")"
-     else
-        DEFTEMPLATE="${JAILTYPE}"
-     fi
+     DEFTEMPLATE="${JAILTYPE}"
   fi
 
   # See if we need to create a new template for this system
@@ -189,11 +142,22 @@ elif [ -z "$ARCHIVEFILE" ] ; then
     WORLDCHROOT="${WORLDCHROOT}.tbz"
   fi
 
+  JAILTYPE="${TEMPLATE}"
+  ARCH="$(get_template_arch "${TEMPLATE}")"
+  if [ "$(get_template_os "${TEMPLATE}")" = "Linux" ] ; then
+    LINUXJAIL="YES"
+  fi
+
+  export LINUXJAIL
+  export JAILTYPE
+  export ARCH
+
 else
 
    # See if we are overriding the default archive file
    WORLDCHROOT="$ARCHIVEFILE"
 fi
+
 
 if [ "${IP4}" != "OFF" ] ; then
   get_ip_and_netmask "${IP4}"
@@ -236,6 +200,9 @@ done
 # Get next unique ID
 META_ID="$(get_next_id "${JDIR}")"
 
+# Set the jailtype
+mkdir -p "${JMETADIR}" >/dev/null 2>&1
+echo "${JAILTYPE}" > "${JMETADIR}/jailtype"
 
 # If we are setting up a linux jail, lets do it now
 if [ "$LINUXJAIL" = "YES" ] ; then
@@ -254,8 +221,6 @@ if [ "$LINUXJAIL" = "YES" ] ; then
    else
      mkdir -p "${JAILDIR}"
      warden_print sh "${LINUX_JAIL_SCRIPT}" template_install "${JAILDIR}"
-     sh "${LINUX_JAIL_SCRIPT}" template_install "${JAILDIR}" 2>&1 | warden_pipe
-     sh "${LINUX_JAIL_SCRIPT}" error
      if [ $? -ne 0 ] ; then
         find ${JAILDIR}|xargs chflags noschg
         rm -rf ${JAILDIR}

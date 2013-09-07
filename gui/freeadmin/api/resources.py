@@ -37,7 +37,9 @@ from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.freeadmin.api.utils import (
     DojoResource, DojoModelResource, DjangoAuthentication, DojoPaginator
 )
-from freenasUI.jails.models import Jails
+from freenasUI.jails.models import (
+    Jails, JailTemplate, NullMountPoint
+)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware import zfs
 from freenasUI.network.models import (
@@ -46,7 +48,6 @@ from freenasUI.network.models import (
 from freenasUI.services.models import (
     iSCSITargetPortal, iSCSITargetExtent, iSCSITargetToExtent
 )
-from freenasUI.jails.models import NullMountPoint
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
 from freenasUI.sharing.models import NFS_Share
@@ -877,6 +878,21 @@ class JailsResource(DojoModelResource):
             'id': bundle.obj.id
         })
 
+        return bundle
+
+class JailTemplateResource(DojoModelResource):
+
+    class Meta:
+        queryset = JailTemplate.objects.all()
+        resource_name = 'jailtemplate'
+        paginator_class = DojoPaginator
+        authentication = DjangoAuthentication()
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def dehydrate(self, bundle):
+        bundle = super(JailTemplateResource, self).dehydrate(bundle)
+        bundle.data['jt_instances'] = bundle.obj.jt_instances
         return bundle
 
 

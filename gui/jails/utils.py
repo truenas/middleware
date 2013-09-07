@@ -1,11 +1,14 @@
 import logging
 import os
+import platform
 
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common import warden
-from freenasUI.jails.models import Jails, JailsConfiguration
+from freenasUI.jails.models import (
+    Jails, JailsConfiguration, JailTemplate
+)
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import list_datasets
@@ -13,6 +16,26 @@ from freenasUI.storage.models import Volume
 
 log = logging.getLogger('jails.utils')
 
+JAILS_INDEX = "http://cdn.freenas.org"
+
+def get_jails_index(release=None, arch=None):
+    global JAILS_INDEX
+
+    if arch is None:
+        arch = platform.architecture()
+        if arch[0] == '64bit':
+            arch = 'x64'
+        else:
+            arch = 'x32'
+
+    if release is None:
+        release = "latest"
+
+    index = "%s/%s/RELEASE/%s/jails" % (
+        JAILS_INDEX, release, arch
+    )
+
+    return index
 
 def guess_adresses():
     high_ipv4 = None
@@ -186,10 +209,11 @@ def new_default_plugin_jail(basename):
             ipv4=addrs['high_ipv4'],
             flags=(
                 warden.WARDEN_CREATE_FLAGS_LOGFILE |
-                warden.WARDEN_CREATE_FLAGS_PLUGINJAIL |
+                warden.WARDEN_CREATE_FLAGS_JAILTYPE |
                 warden.WARDEN_CREATE_FLAGS_SYSLOG |
                 warden.WARDEN_CREATE_FLAGS_IPV4
             ),
+            jailtype='pluginjail',
             logfile=logfile,
         )
     except Exception, e:
