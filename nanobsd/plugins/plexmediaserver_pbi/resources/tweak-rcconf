@@ -1,0 +1,8 @@
+#!/bin/sh
+
+plexmediaserver_path=/usr/pbi/plexmediaserver-$(uname -m)
+tmpfile=$(mktemp /tmp/.XXXXXX)
+
+grep -v 'plexmediaserver_' /etc/rc.conf > ${tmpfile}
+cat ${plexmediaserver_path}/etc/rc.conf >> ${tmpfile}
+mv ${tmpfile} /etc/rc.conf

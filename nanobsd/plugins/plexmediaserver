@@ -1,0 +1,276 @@
+#
+# plexmediaserver - nanobsd build script for plexmediaserver
+#
+
+#
+# NanoBSD stuff
+#
+CONF_BUILD=""
+CONF_INSTALL="${CONF_BUILD}"
+
+. ${NANO_CFG_BASE}/common
+
+#
+# PBI chroot build flags
+#
+PBI_BUILDFLAGS="-j ${MAKE_JOBS}"
+export PBI_BUILDFLAGS
+
+
+#
+# Name of this plugin
+#
+PLUGIN="plexmediaserver"
+
+#
+# Path to pbi_makeport 
+#
+PBIMAKEPORT=$(which pbi_makeport)
+if [ ! -f "${PBIMAKEPORT}" ]
+then
+	echo "${PLUGIN}: ${PBIMAKEPORT} does not exist!"
+	exit 1
+fi
+export PBIMAKEPORT
+
+#
+# Path to ports collection
+#
+PLUGINPORTSDIR="${AVATAR_ROOT}/FreeBSD/ports"
+if [ ! -d "${PLUGINPORTSDIR}" ]
+then
+	echo "${PLUGIN}: ${PLUGINSPORTDIR} does not exist!"
+	exit 1
+fi
+export PLUGINPORTSDIR
+
+#
+# Path to port directory
+#
+PLUGINPORT="${PLUGINPORTSDIR}/multimedia/plexmediaserver"
+if [ ! -d "${PLUGINPORT}" ]
+then
+	echo "${PLUGIN}: ${PLUGINPORT} does not exist!"
+	exit 1
+fi
+export PLUGINPORT
+
+#
+# Filesystem cache for null mounts
+#
+PLUGINPKGCACHEDIR="${FREENAS_PLUGINCACHE}/${VERSION}/${PLUGIN}/${NANO_ARCH}/packages"
+mkdir -p "${PLUGINPKGCACHEDIR}"
+if [ "$?" != "0" ]
+then
+	echo "${PLUGIN}: unable to create ${PLUGINPKGCACHEDIR}!"
+	exit 1
+fi
+export PLUGINPKGCACHEDIR
+
+# 
+# Where to cache packages
+# 
+PLUGINPKGDIR="${NANO_OBJ}/packages"
+mkdir -p "${PLUGINPKGDIR}"
+if [ "$?" != "0" ]
+then
+	echo "${PLUGIN}: unable to create ${PLUGINPKGDIR}!"
+	exit 1
+fi
+export PLUGINPKGDIR
+
+#
+# Filesystem cache for PBI's
+#
+PLUGINPBICACHEDIR="${FREENAS_PLUGINCACHE}/${VERSION}/${PLUGIN}/${NANO_ARCH}/pbi"
+mkdir -p "${PLUGINPBICACHEDIR}"
+if [ "$?" != "0" ]
+then
+	echo "${PLUGIN}: unable to create ${PLUGINPBICACHEDIR}!"
+	exit 1
+fi
+export PLUGINPBICACHEDIR
+
+#
+# Where to put the PBI
+#
+PLUGINOUT="${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}/pbi"
+mkdir -p "${PLUGINOUT}"
+if [ "$?" != "0" ]
+then
+	echo "${PLUGIN}: unable to create ${PLUGINOUT}!"
+	exit 1
+fi
+export PLUGINOUT
+
+#
+# Where plugin directories are located
+#
+PLUGINSDIR="${AVATAR_ROOT}/nanobsd/plugins"
+if [ ! -d "${PLUGINSDIR}" ]
+then
+	echo "${PLUGIN}: ${PLUGINSDIR} does not exist!"
+	exit 1
+fi
+export PLUGINSDIR
+
+#
+# Where the configuration for this plugin is located
+#
+PLUGINCONFDIR="${PLUGINSDIR}/${PLUGIN}_pbi"
+if [ ! -d "${PLUGINCONFDIR}" ]
+then
+	echo "${PLUGIN}: ${PLUGINCONFDIR} does not exist!"
+	exit 1
+fi
+export PLUGINCONFDIR
+
+#
+# pbi.conf for this plugin
+#
+PLUGINCONF="${PLUGINCONFDIR}/pbi.conf"
+if [ ! -f "${PLUGINCONF}" ]
+then
+	echo "${PLUGIN}: ${PLUGINCONF} does not exist!"
+	exit 1
+fi
+export PLUGINCONF
+
+#
+# logfile for build
+#
+PLUGINLOG="${NANO_OBJ}/${PLUGIN}.log"
+export PLUGINLOG
+
+#
+# Trick NanoBSD
+#
+clean_build()
+{
+	:
+}
+build_world()
+{
+	:
+}
+build_kernel()
+{
+	:
+}
+clean_world()
+{
+	:
+}
+make_conf_install()
+{
+	:
+}
+install_world()
+{
+	:
+}
+install_etc()
+{
+	:
+}
+install_kernel()
+{
+	:
+}
+
+#
+# This is enough into trickying NanoBSD to not build anything
+#
+mkdir -p "${AVATAR_ROOT}/${PLUGIN}/${NANO_ARCH}/_.w"
+mtree -deU -f ${AVATAR_ROOT}/os-base/${NANO_ARCH}/_.w/etc/mtree/BSD.root.dist \
+	-p ${AVATAR_ROOT}/${PLUGIN}/${NANO_ARCH}/_.w >/dev/null
+
+
+. ${PLUGINCONF}
+
+#
+# Ripped out of pbi-maanger to determine PBI name
+#
+if [ -z "${PBI_PROGVERSION}" ]
+then
+	PORTVER="$(make -C ${PLUGINPORT} -V DISTVERSION 2>/dev/null)"
+	PORTREV="$(make -C ${PLUGINPORT} -V PORTREVISION 2>/dev/null)"
+	if [ ! -z "${PORTREV}" -a "${PORTREV}" != "0" ]
+	then
+		PORTVER="${PORTVER}_${PORTREV}"
+	fi
+	PBI_PROGVERSION="${PORTVER}"
+fi
+
+if [ -z "${PBI_PROGVERSION}" ]
+then
+	echo "${PLUGIN}: unable to determine program version!"
+	exit 1
+fi
+
+if [ ! -z "${PBI_PROGREVISION}" ]
+then
+	PBI_PROGVERSION="${PBI_PROGVERSION}_${PBI_PROGREVISION}"
+fi
+
+PBIFILE="${PLUGIN}-${PBI_PROGVERSION}-${NANO_ARCH}.pbi"
+
+NANO_NAME="${PBIFILE}"
+NANO_IMGNAME="${NANO_NAME}"
+export NANO_NAME NANO_IMGNAME
+
+last_orders()
+{
+	local ret=0
+
+	if [ "${plexmediaserver_FORCE}" = "1" -o ! -f "${PLUGINOUT}/${PBIFILE}" ]
+	then
+		pprint 2 "Creating PBI"
+		pprint 3 "log: ${PLUGINLOG}"
+
+		PBI_ARCH_FLAGS=""
+		if [ "${NANO_ARCH}" = "i386" ]
+		then
+			PBI_ARCH_FLAGS="-32"
+		fi
+
+		local portsdir="${AVATAR_ROOT}/FreeBSD/ports"
+
+		mkdir -p "${NANO_OBJ}/ports"
+		mount_nullfs "${portsdir}" "${NANO_OBJ}/ports"
+		mkdir -p "${NANO_OBJ}/ports/distfiles"
+
+		if [ -n "${DISTCACHE}" -a -d "${DISTCACHE}" ]
+		then
+			mount_nullfs "${DISTCACHE}" "${NANO_OBJ}/ports/distfiles"
+		fi
+
+		if [ -n "${PLUGINPKGCACHEDIR}" -a -d "${PLUGINPKGCACHEDIR}" ]
+		then
+			mount_nullfs "${PLUGINPKGCACHEDIR}" "${PLUGINPKGDIR}"
+		fi
+
+		#if [ -n "${PLUGINPBICACHEDIR}" -a -d "${PLUGINPBICACHEDIR}" ]
+		#then
+		#	mount_nullfs "${PLUGINPBICACHEDIR}" "${PLUGINOUT}"
+		#fi
+
+		${PBIMAKEPORT} -d "${NANO_OBJ}/ports" \
+			-c "${PLUGINCONFDIR}" \
+			-o "${PLUGINOUT}" \
+			--pkgdir "${PLUGINPKGDIR}" \
+			--tmpfs "${PBI_ARCH_FLAGS}" > "${PLUGINLOG}" 2>&1
+		if [ "$?" != "0" ]
+		then
+			echo "${PLUGIN}: failed to build PBI!"
+			ret=1
+		fi
+
+		#umount -f "${PLUGINOUT}"
+		umount -f "${PLUGINPKGDIR}"
+		umount -f "${NANO_OBJ}/ports/distfiles"
+		umount -f "${NANO_OBJ}/ports"
+	fi
+
+	exit ${ret}
+}
