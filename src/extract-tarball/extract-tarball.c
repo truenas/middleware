@@ -267,6 +267,9 @@ main(int argc, char **argv)
 	if (pclose(fp) < 0)
 		warn("pclose");
 
+	if (unlink(sfile) < 0)
+		warn("unlink");
+
 	free(url);
 	free(dir);
 	free(sfile);
