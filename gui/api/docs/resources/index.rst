@@ -1,0 +1,8 @@
+=========
+Resources
+=========
+
+.. toctree::
+   :glob:
+
+   account
