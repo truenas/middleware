@@ -541,12 +541,14 @@ require([
             vnet.set("value", false);
         }
 
+        /*
         if (!jail_vnet) {
             jail_networking_save();
             jail_networking_clear(); 
         } else {
             jail_networking_restore();
         }
+        */
     }
 
     jail_nat_toggle = function() {
