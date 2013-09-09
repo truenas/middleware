@@ -40,7 +40,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI import choices
 from freenasUI.account.forms import (
-    bsdUserCreationForm, bsdUserPasswordForm, UserChangeForm,
+    bsdUsersForm, bsdUserPasswordForm, UserChangeForm,
     PasswordChangeForm
 )
 from freenasUI.account.forms import bsdUserToGroupForm
@@ -1229,7 +1229,7 @@ class BsdUserResourceMixin(NestedMixin):
         queryset = bsdUsers.objects.all().order_by(
             'bsdusr_builtin',
             'bsdusr_uid')
-        validation = FormValidation(form_class=bsdUserCreationForm)
+        validation = FormValidation(form_class=bsdUsersForm)
 
     def prepend_urls(self):
         return [

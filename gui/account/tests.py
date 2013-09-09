@@ -63,7 +63,7 @@ class UrlsTest(TestCase):
             status_code=302, target_status_code=200)
 
     def test_createuser(self):
-        response = self.client.post(reverse('freeadmin_model_add', kwargs={'app':'account', 'model':'bsdUsers', 'mf': 'bsdUserCreationForm'}), {
+        response = self.client.post(reverse('freeadmin_model_add', kwargs={'app':'account', 'model':'bsdUsers', 'mf': 'bsdUsersForm'}), {
             'bsdusr_uid': '2000',
             'bsdusr_username': 'djangotest',
             'bsdusr_password1': 'mytest',

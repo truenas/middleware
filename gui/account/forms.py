@@ -271,7 +271,7 @@ class UserChangeForm(ModelForm):
         return obj
 
 
-class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
+class bsdUsersForm(ModelForm, bsdUserGroupMixin):
     """
     # Yanked from django/contrib/auth/
     A form that creates a user, with no privileges,
@@ -350,7 +350,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             if new.get('bsdusr_group', None) == '-----':
                 new['bsdusr_group'] = ''
             args = (new,) + args[1:]
-        super(bsdUserCreationForm, self).__init__(*args, **kwargs)
+        super(bsdUsersForm, self).__init__(*args, **kwargs)
         self.fields.keyOrder.remove('bsdusr_group')
         self.fields.keyOrder.insert(3, 'bsdusr_group')
         if self._api is True:
@@ -555,7 +555,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                     'bsdusr_password_disabled', False
                 ),
             )
-            bsduser = super(bsdUserCreationForm, self).save(commit=False)
+            bsduser = super(bsdUsersForm, self).save(commit=False)
             try:
                 grp = models.bsdGroups.objects.get(bsdgrp_gid=gid)
             except models.bsdGroups.DoesNotExist:
@@ -583,7 +583,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                     bsdgrpmember_user=bsduser)
                 m.save()
         else:
-            bsduser = super(bsdUserCreationForm, self).save(commit=False)
+            bsduser = super(bsdUsersForm, self).save(commit=False)
         _notifier.reload("user")
         bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
         if bsdusr_sshpubkey:
