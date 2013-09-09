@@ -1303,6 +1303,7 @@ class BsdUserResourceMixin(NestedMixin):
             response['Allow'] = 'POST'
             raise ImmediateHttpResponse(response=response)
 
+        self.is_authenticated(request)
         try:
             bundle = self.build_bundle(
                 data={'pk': kwargs['pk']}, request=request
