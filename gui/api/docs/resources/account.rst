@@ -9,21 +9,6 @@ bsdUsers
 
 The bsdUsers resource represents all unix users.
 
-========================  ===============
-Property                  Description
-========================  ===============
-id                        The unique identifier by which to identify the service
-bsdusr_uid                User ID
-bsdusr_username           Username
-bsdusr_home               Home Directory Default /nonexistent
-bsdusr_shell              Shell
-bsdusr_full_name          Full Name
-bsdusr_builtin            Built-in User
-bsdusr_email              E-mail
-bsdusr_password_disabled  Disable password login
-bsdusr_locked             Lock user
-========================  ===============
-
 List resource
 +++++++++++++
 
@@ -84,6 +69,14 @@ Create resource
       POST /api/v1.0/account/bsdusers/ HTTP/1.1
       Accept: application/json, text/javascript
 
+        {
+                'bsdusr_username': 'myuser',
+                'bsdusr_creategroup': True,
+                'bsdusr_full_name': 'haha',
+                'bsdusr_password': 'aa',
+                'bsdusr_uid': 1111
+        }
+
    **Example response**:
 
    .. sourcecode:: http
@@ -115,6 +108,9 @@ Create resource
    :json string bsdusr_password: password for the user
    :json integer bsdusr_uid: unique user id
    :json integer bsdusr_group: id of the group object
+   :json boolean bsdusr_creategroup: create a group for the user
+   :json string bsdusr_mode: unix mode to set the homedir
+   :json string bsdusr_shell: shell for the user login
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -161,6 +157,10 @@ Change password
       POST /api/v1.0/account/bsdusers/25/password/ HTTP/1.1
       Accept: application/json, text/javascript
 
+        {
+                "bsdusr_password": "newpasswd"
+        }
+
    **Example response**:
 
    .. sourcecode:: http
@@ -185,6 +185,7 @@ Change password
                 'id': 25
         }
 
+   :json string bsdusr_password: new password
    :statuscode 200: no error
 
 
