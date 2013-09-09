@@ -38,7 +38,8 @@ from freenasUI.common.warden import (
     WARDEN_VNET_ENABLED,
     WARDEN_NAT_ENABLED,
     WARDEN_DELETE_FLAGS_CONFIRM,
-    WARDEN_TEMPLATE_FLAGS_LIST
+    WARDEN_TEMPLATE_FLAGS_LIST,
+    WARDEN_TEMPLATE_FLAGS_DELETE
 )
 from freenasUI.freeadmin.models import Model, Network4Field, Network6Field
 from freenasUI.jails.queryset import JailsQuerySet
@@ -305,9 +306,9 @@ class JailTemplate(Model):
         w = Warden()
 
         template = None
-        template_list_flags = {}
-        template_list_flags['flags'] = WARDEN_TEMPLATE_FLAGS_LIST
-        templates = w.template(**template_list_flags)
+        template_list_args = {}
+        template_list_args['flags'] = WARDEN_TEMPLATE_FLAGS_LIST
+        templates = w.template(**template_list_args)
         for t in templates:
             if t['nick'] == self.jt_name:
                 template = t
@@ -317,6 +318,25 @@ class JailTemplate(Model):
             instances = t['instances']
 
         return instances
+
+    def delete(self, force=False):
+        ninstances = self.jt_instances
+        if ninstances != 0: 
+            raise MiddlewareError(
+                _("Template must have 0 instances!")
+            )
+
+        try:
+            w = Warden()
+            template_delete_args = {}
+            template_delete_args['flags'] = WARDEN_TEMPLATE_FLAGS_DELETE
+            template_delete_args['template'] = self.jt_name  
+            w.template(**template_delete_args)
+            super(JailTemplate, self).delete()
+
+        except Except as e:
+            raise MiddlewareError(_(e))
+
 
     class Meta:
         verbose_name = _("Jail Templates")

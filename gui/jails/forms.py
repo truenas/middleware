@@ -642,6 +642,17 @@ class JailTemplateEditForm(ModelForm):
     class Meta:
         model = JailTemplate
 
+    def __init__(self, *args, **kwargs):
+        super(JailTemplateEditForm, self).__init__(*args, **kwargs)
+
+        obj = self.save(commit=False)
+        ninstances = int(obj.jt_instances)
+        if ninstances > 0:
+            self.fields['jt_name'].widget.attrs['readonly'] = True
+            self.fields['jt_name'].widget.attrs['class'] = (
+                'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+            )
+
 
 class NullMountPointForm(ModelForm):
 

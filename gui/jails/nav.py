@@ -209,6 +209,19 @@ class AddJail(TreeNode):
         self.skip = not jail_path_configured()
 
 
+class AddJailTemplate(TreeNode):
+
+    gname = 'JailTemplate.Add'
+    name = _(u'Add Jail Templates')
+    icon = u'JailAddIcon'
+    type = 'object'
+    view = 'freeadmin_jails_jailtemplate_add'
+
+    def __init__(self, *args, **kwargs):
+        super(AddJailTemplate, self).__init__(*args, **kwargs)
+        self.skip = not jail_path_configured()
+
+
 class ViewJailsConfiguration(TreeNode):
 
     gname = 'JailsConfiguration'
@@ -227,4 +240,16 @@ class ViewJails(TreeNode):
 
     def __init__(self, *args, **kwargs):
         super(ViewJails, self).__init__(*args, **kwargs)
+        self.skip = not jail_path_configured()
+
+
+class ViewJailTemplate(TreeNode):
+
+    gname = 'JailTemplate.View'
+    name = _(u'View Jail Templates')
+    icon = 'JailIcon'
+    type = 'openjails'
+
+    def __init__(self, *args, **kwargs):
+        super(ViewJailTemplate, self).__init__(*args, **kwargs)
         self.skip = not jail_path_configured()

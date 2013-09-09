@@ -893,6 +893,9 @@ class JailTemplateResource(DojoModelResource):
     def dehydrate(self, bundle):
         bundle = super(JailTemplateResource, self).dehydrate(bundle)
         bundle.data['jt_instances'] = bundle.obj.jt_instances
+        bundle.data['_edit_url'] = reverse('jail_template_edit', kwargs={
+            'id': bundle.obj.id
+        })
         return bundle
 
 

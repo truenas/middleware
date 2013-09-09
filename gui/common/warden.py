@@ -433,7 +433,6 @@ class warden_base(object):
         if jail == True and jid > 0:
             cmd = "%s %d %s" % (JEXEC_PATH, jid, cmd.strip())
 
-        print cmd
         log.debug("warden_base.cmd = %s", cmd)
         pobj = warden_pipe(cmd, self.pipe_func)
         self.error = pobj.error
@@ -798,6 +797,9 @@ class warden_template(warden_base):
         elif flags & WARDEN_TEMPLATE_FLAGS_LIST:
             type = WARDEN_TEMPLATE_LIST
             tflags = WARDEN_TEMPLATE_LIST_FLAGS
+
+        if kwargs.has_key("template") and kwargs["template"] is not None:
+            self.args += " %s" % kwargs['template']
 
         cmd = "%s %s" % (WARDEN_TEMPLATE, type)
         super(warden_template, self).__init__(cmd,
