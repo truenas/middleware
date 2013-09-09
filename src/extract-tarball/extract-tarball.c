@@ -242,8 +242,13 @@ main(int argc, char **argv)
 	}
 	free(cmd);
 
+	
+	if ((sfp = fopen(sfile, "w")) == NULL)
+		warnx("Couldn't create status file!");
+
 	nbytes = 0;
 	while (!feof(rfp)) {
+
 		bzero(&buf, sizeof(buf));
 
 		rbytes = read_it(buf, sizeof(buf), rfp);
@@ -254,19 +259,16 @@ main(int argc, char **argv)
 			continue;
 		}
 
-		if ((sfp = fopen(sfile, "w")) != NULL) {
-			fprintf(sfp, "%s\t%ld\t%ld", basename(url), nbytes, total_bytes);
-			fclose(sfp);
-
-		} else
-			warnx("Couldn't create status file!");
+		fprintf(sfp, "%s\t%ld\t%ld\n", basename(url), nbytes, total_bytes);
+		fflush(sfp);
 
 		nbytes += wbytes;
 	}
 
 	if (pclose(fp) < 0)
 		warn("pclose");
-
+	if (fclose(sfp) < 0)
+		warn("fclose");
 	if (unlink(sfile) < 0)
 		warn("unlink");
 
