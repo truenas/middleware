@@ -34,6 +34,7 @@ from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 
 import eventlet
+from freenasUI.common.warden import WARDEN_EXTRACT_STATUS_FILE
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails.models import Jails, JailsConfiguration
@@ -79,7 +80,6 @@ def plugins(request):
 
     pool = eventlet.GreenPool(20)
     for plugin, _json, jail_status in pool.imap(get_plugin_status, args):
-
         if not _json:
             _json = {}
             _json['status'] = None
@@ -185,6 +185,8 @@ def install_available(request, oid):
     logfile = '%s/warden.log' % jc.jc_path
     if os.path.exists(logfile):
         os.unlink(logfile)
+    if os.path.exists(WARDEN_EXTRACT_STATUS_FILE):
+        os.unlink(WARDEN_EXTRACT_STATUS_FILE)
     if os.path.exists("/tmp/.plugin_upload_install"):
         os.unlink("/tmp/.plugin_upload_install")
     if os.path.exists("/tmp/.jailcreate"):
@@ -238,11 +240,11 @@ def install_available(request, oid):
 
 
 def install_progress(request):
-
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = '%s/warden.log' % jc.jc_path
     data = {}
     if os.path.exists(PROGRESS_FILE):
+        log.debug("XXX: step 1: %s", PROGRESS_FILE)
         data = {'step': 1}
         with open(PROGRESS_FILE, 'r') as f:
             try:
@@ -251,8 +253,24 @@ def install_progress(request):
                 pass
         data['percent'] = current
 
-    if os.path.exists(logfile):
+    if os.path.exists(WARDEN_EXTRACT_STATUS_FILE):
         data = {'step': 2}
+        percent = 0
+        with open(WARDEN_EXTRACT_STATUS_FILE, 'r') as f:
+            try:  
+                buf = f.readlines()[-1].strip()
+                parts = buf.split()
+                size = len(parts)
+                if size > 2:
+                    nbytes = float(parts[1])
+                    total = float(parts[2])
+                    percent = int((nbytes / total) * 100)
+            except Exception as e:
+                pass
+        data['percent'] = percent
+
+    if os.path.exists(logfile):
+        data = {'step': 3}
         percent = 0
         with open(logfile, 'r') as f:
             for line in f.xreadlines():
@@ -269,7 +287,7 @@ def install_progress(request):
         data['percent'] = percent
 
     if os.path.exists("/tmp/.plugin_upload_install"):
-        data = {'step': 3}
+        data = {'step': 4}
 
     content = json.dumps(data)
     return HttpResponse(content, mimetype='application/json')
@@ -308,6 +326,8 @@ def upload(request, jail_id=-1):
         logfile = '%s/warden.log' % jc.jc_path
         if os.path.exists(logfile):
             os.unlink(logfile)
+        if os.path.exists(WARDEN_EXTRACT_STATUS_FILE):
+            os.unlink(WARDEN_EXTRACT_STATUS_FILE)
         if os.path.exists("/tmp/.plugin_upload_install"):
             os.unlink("/tmp/.plugin_upload_install")
         if os.path.exists("/tmp/.jailcreate"):

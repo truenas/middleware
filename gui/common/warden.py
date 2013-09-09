@@ -110,6 +110,11 @@ WARDEN_VNET_DISABLED = "Disabled"
 WARDEN_NAT_ENABLED  = "Enabled"
 WARDEN_NAT_DISABLED = "Disabled"
 
+# 
+# extract-tarball status file
+# 
+WARDEN_EXTRACT_STATUS_FILE = "/var/tmp/status"
+
 
 WARDEN_FLAGS_NONE = warden_arg(0x00000000, None)
 

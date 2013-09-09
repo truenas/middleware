@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common import warden
 from freenasUI.jails.models import (
-    Jails, JailsConfiguration, JailTemplate
+    Jails,JailsConfiguration, JailTemplate
 )
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -17,6 +17,7 @@ from freenasUI.storage.models import Volume
 log = logging.getLogger('jails.utils')
 
 JAILS_INDEX = "http://cdn.freenas.org"
+EXTRACT_TARBALL_STATUS_FILE = "/var/tmp/status"
 
 def get_jails_index(release=None, arch=None):
     global JAILS_INDEX
@@ -203,17 +204,63 @@ def new_default_plugin_jail(basename):
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = "%s/warden.log" % jc.jc_path
 
+    template_flags = 0
+    template_create_args = {}
+
+    template = JailTemplate.objects.get(jt_name='pluginjail')
+    template_create_args['nick'] = template.jt_name
+    template_create_args['tar'] = template.jt_url
+    template_create_args['flags'] = warden.WARDEN_TEMPLATE_FLAGS_CREATE | \
+        warden.WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
+        warden.WARDEN_TEMPLATE_CREATE_FLAGS_TAR
+
+    template = None
+    template_list_flags = {}
+    template_list_flags['flags'] = warden.WARDEN_TEMPLATE_FLAGS_LIST
+    templates = w.template(**template_list_flags)
+    for t in templates:
+        if t['nick'] == template_create_args['nick']:
+            template = t
+            break
+
+    os.environ['EXTRACT_TARBALL_STATUSFILE'] = warden.WARDEN_EXTRACT_STATUS_FILE
+    createfile = "/var/tmp/.templatecreate"
+    if not template:
+        try:
+            cf = open(createfile, "a+")
+            cf.close()
+            w.template(**template_create_args)
+
+        except Exception as e:
+            self.errors['__all__'] = self.error_class([_(e.message)])
+            if os.path.exists(createfile):
+                os.unlink(createfile)
+            return
+
+        template_list_flags = {}
+        template_list_flags['flags'] = warden.WARDEN_TEMPLATE_FLAGS_LIST
+        templates = w.template(**template_list_flags)
+        for t in templates:
+            if t['nick'] == template_create_args['nick']:
+                template = t
+                break
+
+    if not template: 
+        self.errors['__all__'] = self.error_class([_('Unable to find template!')])
+        return
+
     try:
         w.create(
             jail=jailname,
             ipv4=addrs['high_ipv4'],
             flags=(
                 warden.WARDEN_CREATE_FLAGS_LOGFILE |
-                warden.WARDEN_CREATE_FLAGS_JAILTYPE |
+                warden.WARDEN_CREATE_FLAGS_TEMPLATE |
+                warden.WARDEN_CREATE_FLAGS_VANILLA |
                 warden.WARDEN_CREATE_FLAGS_SYSLOG |
                 warden.WARDEN_CREATE_FLAGS_IPV4
             ),
-            jailtype='pluginjail',
+            template='pluginjail',
             logfile=logfile,
         )
     except Exception, e:

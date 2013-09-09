@@ -324,20 +324,21 @@ def jail_linuxprogress(request):
 
     statusfile = os.environ['EXTRACT_TARBALL_STATUSFILE']
     if os.path.exists("/var/tmp/.templatecreate") and os.path.exists(statusfile):
-        f = open(statusfile, "r")
-        buf = f.read()
-        f.close()
-
         percent = 0
-        parts = buf.split()
-        size = len(parts)
-        if size > 2:
-            try:  
+
+        try:
+            f = open(statusfile, "r")
+            buf = f.readlines()[-1].strip()
+            f.close()
+
+            parts = buf.split()
+            size = len(parts)
+            if size > 2:
                 nbytes = float(parts[1])
                 total = float(parts[2])
                 percent = int((nbytes / total) * 100)
-            except:
-                percent = 0
+        except:
+            pass
             
         if not percent:
             percent = 0
