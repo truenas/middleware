@@ -5,4 +5,4 @@ Resources
 .. toctree::
    :glob:
 
-   account
+   *
