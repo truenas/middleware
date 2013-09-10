@@ -1343,6 +1343,7 @@ class BsdUserResourceMixin(NestedMixin):
         bundle = super(BsdUserResourceMixin, self).dehydrate(bundle)
         bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
         if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] += 'bsdUsersForm'
             if bundle.obj.bsdusr_builtin:
                 bundle.data['_edit_url'] += '?deletable=false'
             bundle.data['_passwd_url'] = (
