@@ -535,3 +535,261 @@ Delete resource
       Content-Type: application/json
 
    :statuscode 204: no error
+
+
+Rsync
+----------
+
+The Rsync resource represents rsync(1) to execute scheduled commands.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/system/rsync/
+
+   Returns a list of all rsyncs.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/rsync/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+                "rsync_user": "root",
+                "rsync_minute": "*/20",
+                "rsync_enabled": true,
+                "rsync_daymonth": "*",
+                "rsync_path": "/mnt/tank",
+                "rsync_delete": false,
+                "rsync_hour": "*",
+                "id": 1,
+                "rsync_extra": "",
+                "rsync_archive": false,
+                "rsync_compress": true,
+                "rsync_dayweek": "*",
+                "rsync_desc": "",
+                "rsync_direction": "push",
+                "rsync_times": true,
+                "rsync_preserveattr": false,
+                "rsync_remotehost": "testhost",
+                "rsync_mode": "module",
+                "rsync_remotemodule": "testmodule",
+                "rsync_remotepath": "",
+                "rsync_quiet": false,
+                "rsync_recursive": true,
+                "rsync_month": "*",
+                "rsync_preserveperm": false,
+                "rsync_remoteport": 22
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/system/rsync/
+
+   Creates a new rsync and returns the new rsync object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/rsync/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "rsync_path": "/mnt/tank",
+                "rsync_user": "root",
+                "rsync_mode": "module",
+                "rsync_remotemodule": "testmodule",
+                "rsync_remotehost": "testhost",
+                "rsync_direction": "push",
+                "rsync_minute": "*/20",
+                "rsync_hour": "*",
+                "rsync_daymonth": "*",
+                "rsync_month": "*",
+                "rsync_dayweek": "*",
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "rsync_user": "root",
+                "rsync_minute": "*/20",
+                "rsync_enabled": true,
+                "rsync_daymonth": "*",
+                "rsync_path": "/mnt/tank",
+                "rsync_delete": false,
+                "rsync_hour": "*",
+                "id": 1,
+                "rsync_extra": "",
+                "rsync_archive": false,
+                "rsync_compress": true,
+                "rsync_dayweek": "*",
+                "rsync_desc": "",
+                "rsync_direction": "push",
+                "rsync_times": true,
+                "rsync_preserveattr": false,
+                "rsync_remotehost": "testhost",
+                "rsync_mode": "module",
+                "rsync_remotemodule": "testmodule",
+                "rsync_remotepath": "",
+                "rsync_quiet": false,
+                "rsync_recursive": true,
+                "rsync_month": "*",
+                "rsync_preserveperm": false,
+                "rsync_remoteport": 22
+        }
+
+   :json string rsync_path: path to rsync
+   :json string rsync_user: user to run rsync(1)
+   :json string rsync_mode: module, ssh
+   :json string rsync_remotemodule: module of remote side
+   :json string rsync_remotehost: host of remote side
+   :json string rsync_remoteport: port of remote side
+   :json string rsync_remotepath: path of remote side
+   :json string rsync_direction: push, pull
+   :json string rsync_minute: minutes to run
+   :json string rsync_hour: hours to run
+   :json string rsync_daymonth: days of month to run
+   :json string rsync_month: months to run
+   :json string rsync_dayweek: days of week to run
+   :json boolean rsync_archive: archive mode
+   :json boolean rsync_compress: compress the stream
+   :json boolean rsync_times: preserve times
+   :json boolean rsync_preserveattr: preserve file attributes
+   :json boolean rsync_quiet: run quietly
+   :json boolean rsync_recursive: recursive
+   :json boolean rsync_preserveperm: preserve permissions
+   :json string extra: extra arguments to rsync(1)
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/system/rsync/(int:id)/
+
+   Update rsync `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/system/rsync/1/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "rsync_archive": true
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "rsync_user": "root",
+                "rsync_minute": "*/20",
+                "rsync_enabled": true,
+                "rsync_daymonth": "*",
+                "rsync_path": "/mnt/tank",
+                "rsync_delete": false,
+                "rsync_hour": "*",
+                "id": 1,
+                "rsync_extra": "",
+                "rsync_archive": true,
+                "rsync_compress": true,
+                "rsync_dayweek": "*",
+                "rsync_desc": "",
+                "rsync_direction": "push",
+                "rsync_times": true,
+                "rsync_preserveattr": false,
+                "rsync_remotehost": "testhost",
+                "rsync_mode": "module",
+                "rsync_remotemodule": "testmodule",
+                "rsync_remotepath": "",
+                "rsync_quiet": false,
+                "rsync_recursive": true,
+                "rsync_month": "*",
+                "rsync_preserveperm": false,
+                "rsync_remoteport": 22
+        }
+
+   :json string rsync_path: path to rsync
+   :json string rsync_user: user to run rsync(1)
+   :json string rsync_mode: module, ssh
+   :json string rsync_remotemodule: module of remote side
+   :json string rsync_remotehost: host of remote side
+   :json string rsync_remoteport: port of remote side
+   :json string rsync_remotepath: path of remote side
+   :json string rsync_direction: push, pull
+   :json string rsync_minute: minutes to run
+   :json string rsync_hour: hours to run
+   :json string rsync_daymonth: days of month to run
+   :json string rsync_month: months to run
+   :json string rsync_dayweek: days of week to run
+   :json boolean rsync_archive: archive mode
+   :json boolean rsync_compress: compress the stream
+   :json boolean rsync_times: preserve times
+   :json boolean rsync_preserveattr: preserve file attributes
+   :json boolean rsync_quiet: run quietly
+   :json boolean rsync_recursive: recursive
+   :json boolean rsync_preserveperm: preserve permissions
+   :json string extra: extra arguments to rsync(1)
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/system/rsync/(int:id)/
+
+   Delete rsync `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/system/rsync/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
