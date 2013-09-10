@@ -21,7 +21,7 @@ List resource
    .. sourcecode:: http
 
       GET /api/v1.0/account/bsdusers/ HTTP/1.1
-      Accept: application/json, text/javascript
+      Content-Type: application/json
 
    **Example response**:
 
@@ -29,7 +29,7 @@ List resource
 
       HTTP/1.1 200 OK
       Vary: Accept
-      Content-Type: text/javascript
+      Content-Type: application/json
 
       [
         {
@@ -67,7 +67,7 @@ Create resource
    .. sourcecode:: http
 
       POST /api/v1.0/account/bsdusers/ HTTP/1.1
-      Accept: application/json, text/javascript
+      Content-Type: application/json
 
         {
                 'bsdusr_username': 'myuser',
@@ -83,7 +83,7 @@ Create resource
 
       HTTP/1.1 201 Created
       Vary: Accept
-      Content-Type: text/javascript
+      Content-Type: application/json
 
       [
         {
@@ -96,7 +96,7 @@ Create resource
                 'bsdusr_password_disabled': false,
                 'bsdusr_shell': '/bin/csh',
                 'bsdusr_smbhash': 'myuser:0:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:E6FCEFB62A365065CE5B5F04AB12B455:[U          ]:LCT-52272D9E:',
-                'bsdusr_uid': 0,
+                'bsdusr_uid': 1111,
                 'bsdusr_unixhash': '$6$d8doVGxjhDhL4feI$YpTtmlhCmbc6BJ4MQcBsPvZA0Ge4SMnAyZn9CfZLpkuP71g8bPq6DkKJBmcN61z2oQSj0K8RtaqmKltc9HsMg0',
                 'bsdusr_username': 'myuser',
                 'id': 25
@@ -111,25 +111,84 @@ Create resource
    :json boolean bsdusr_creategroup: create a group for the user
    :json string bsdusr_mode: unix mode to set the homedir
    :json string bsdusr_shell: shell for the user login
+   :json string bsdusr_password_disabled: disabled password login
+   :json string bsdusr_locked: lock user login
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
 
 
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/account/bsdusers/(int:id)/
+
+   Creates a new user and returns the new user object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/account/bsdusers/(int:id)/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                'bsdusr_full_name': 'My Name',
+                'bsdusr_shell': '/bin/bash',
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+                'bsdusr_builtin': false,
+                'bsdusr_email': '',
+                'bsdusr_full_name': 'My Name',
+                'bsdusr_group': 0,
+                'bsdusr_home': '/nonexistent',
+                'bsdusr_locked': false,
+                'bsdusr_password_disabled': false,
+                'bsdusr_shell': '/bin/bash',
+                'bsdusr_smbhash': 'myuser:0:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:E6FCEFB62A365065CE5B5F04AB12B455:[U          ]:LCT-52272D9E:',
+                'bsdusr_uid': 1111,
+                'bsdusr_unixhash': '$6$d8doVGxjhDhL4feI$YpTtmlhCmbc6BJ4MQcBsPvZA0Ge4SMnAyZn9CfZLpkuP71g8bPq6DkKJBmcN61z2oQSj0K8RtaqmKltc9HsMg0',
+                'bsdusr_username': 'myuser',
+                'id': 25
+        }
+      ]
+
+   :json string bsdusr_full_name: name of the user
+   :json string bsdusr_password: password for the user
+   :json integer bsdusr_uid: unique user id
+   :json integer bsdusr_group: id of the group object
+   :json string bsdusr_mode: unix mode to set the homedir
+   :json string bsdusr_shell: shell for the user login
+   :json string bsdusr_password_disabled: disabled password login
+   :json string bsdusr_locked: lock user login
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
 Delete resource
 +++++++++++++++
 
-
 .. http:delete:: /api/v1.0/account/bsdusers/(int:id)/
 
-   Delete a user of `id`.
+   Delete user `id`.
 
    **Example request**:
 
    .. sourcecode:: http
 
       DELETE /api/v1.0/account/bsdusers/25/ HTTP/1.1
-      Accept: application/json, text/javascript
+      Content-Type: application/json
 
    **Example response**:
 
@@ -137,7 +196,7 @@ Delete resource
 
       HTTP/1.1 204 No Response
       Vary: Accept
-      Content-Type: text/javascript
+      Content-Type: application/json
 
    :statuscode 204: no error
 
@@ -155,7 +214,7 @@ Change password
    .. sourcecode:: http
 
       POST /api/v1.0/account/bsdusers/25/password/ HTTP/1.1
-      Accept: application/json, text/javascript
+      Content-Type: application/json
 
         {
                 "bsdusr_password": "newpasswd"
@@ -167,7 +226,8 @@ Change password
 
       HTTP/1.1 200 OK
       Vary: Accept
-      Content-Type: text/javascript
+      Content-Type: application/json
+
 
         {
                 'bsdusr_builtin': false,
