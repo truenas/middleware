@@ -936,6 +936,9 @@ class InterfacesResourceMixin(object):
         bundle.data['int_aliases'] = [
             a.alias_network for a in bundle.obj.alias_set.all()
         ]
+        for key in bundle.data.keys():
+            if key.startswith('alias_set'):
+                del bundle.data[key]
         return bundle
 
     def hydrate(self, bundle):
