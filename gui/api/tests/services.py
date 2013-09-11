@@ -1115,6 +1115,8 @@ class TFTPResourceTest(APITestCase):
 
 class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
 
+    resource_name = 'services/iscsi/globalconfiguration'
+
     def setUp(self):
         super(iSCSITargetGlobalConfigurationResourceTest, self).setUp()
         self._obj = models.iSCSITargetGlobalConfiguration.objects.create(
@@ -1189,6 +1191,8 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
 
 
 class iSCSITargetExtentResourceTest(APITestCase):
+
+    resource_name = 'services/iscsi/extent'
 
     def setUp(self):
         super(iSCSITargetExtentResourceTest, self).setUp()
@@ -1290,6 +1294,8 @@ class iSCSITargetExtentResourceTest(APITestCase):
 
 class iSCSITargetAuthorizedInitiatorResourceTest(APITestCase):
 
+    resource_name = 'services/iscsi/authorizedinitiator'
+
     def setUp(self):
         super(iSCSITargetAuthorizedInitiatorResourceTest, self).setUp()
         models.services.objects.create(
@@ -1380,6 +1386,8 @@ class iSCSITargetAuthorizedInitiatorResourceTest(APITestCase):
 
 
 class iSCSITargetAuthCredentialResourceTest(APITestCase):
+
+    resource_name = 'services/iscsi/authcredential'
 
     def setUp(self):
         super(iSCSITargetAuthCredentialResourceTest, self).setUp()
@@ -1474,7 +1482,8 @@ class iSCSITargetAuthCredentialResourceTest(APITestCase):
 
 class iSCSITargetResourceTest(APITestCase):
 
-    maxDiff = None
+    resource_name = 'services/iscsi/target'
+
     def setUp(self):
         super(iSCSITargetResourceTest, self).setUp()
         models.services.objects.create(
@@ -1578,7 +1587,8 @@ class iSCSITargetResourceTest(APITestCase):
 
 class iSCSITargetToExtentResourceTest(APITestCase):
 
-    maxDiff = None
+    resource_name = 'services/iscsi/targettoextent'
+
     def setUp(self):
         super(iSCSITargetToExtentResourceTest, self).setUp()
         models.services.objects.create(
@@ -1667,7 +1677,8 @@ class iSCSITargetToExtentResourceTest(APITestCase):
 
 class iSCSITargetPortalResourceTest(APITestCase):
 
-    maxDiff = None
+    resource_name = 'services/iscsi/portal'
+
     def setUp(self):
         super(iSCSITargetPortalResourceTest, self).setUp()
         models.services.objects.create(

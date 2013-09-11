@@ -60,7 +60,8 @@ class TestCaseMeta(type):
         if name.endswith('ResourceTest'):
             rsname = name.replace('ResourceTest', '').lower()
             app = new_class.__module__.rsplit('.', 1)[-1]
-            new_class.resource_name = "%s/%s" % (app, rsname)
+            if new_class.resource_name is None:
+                new_class.resource_name = "%s/%s" % (app, rsname)
         return new_class
 
 

@@ -1112,12 +1112,18 @@ class SMARTTestResourceMixin(object):
 
 class ISCSITargetResourceMixin(object):
 
+    class Meta:
+        resource_name = 'services/iscsi/target'
+
     def dehydrate(self, bundle):
         bundle = super(ISCSITargetResourceMixin, self).dehydrate(bundle)
         return bundle
 
 
 class ISCSIPortalResourceMixin(object):
+
+    class Meta:
+        resource_name = 'services/iscsi/portal'
 
     def dehydrate(self, bundle):
         bundle = super(ISCSIPortalResourceMixin, self).dehydrate(bundle)
@@ -1202,6 +1208,9 @@ class ISCSIPortalResourceMixin(object):
 
 class ISCSITargetToExtentResourceMixin(object):
 
+    class Meta:
+        resource_name = 'services/iscsi/targettoextent'
+
     def dehydrate(self, bundle):
         bundle = super(ISCSITargetToExtentResourceMixin, self).dehydrate(
             bundle
@@ -1216,6 +1225,9 @@ class ISCSITargetToExtentResourceMixin(object):
 
 
 class ISCSITargetExtentResourceMixin(object):
+
+    class Meta:
+        resource_name = 'services/iscsi/extent'
 
     def dehydrate(self, bundle):
         bundle = super(ISCSITargetExtentResourceMixin, self).dehydrate(bundle)

@@ -86,6 +86,8 @@ class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
         'iscsi_target_auth_peersecret',
         )
 
+    resource_name = 'services/iscsi/authcredential'
+
 
 class ISCSITargetToExtentFAdmin(BaseFreeAdmin):
 

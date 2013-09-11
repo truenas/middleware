@@ -486,6 +486,7 @@ class iSCSITargetGlobalConfiguration(Model):
         menu_child_of = "services.ISCSI"
         icon_model = u"SettingsIcon"
         nav_extra = {'type': 'iscsi'}
+        resource_name = 'services/iscsi/globalconfiguration'
 
 
 class iSCSITargetExtent(Model):
@@ -664,6 +665,7 @@ class iSCSITargetAuthorizedInitiator(Model):
         icon_model = u"InitiatorIcon"
         icon_add = u"AddInitiatorIcon"
         icon_view = u"ViewAllInitiatorsIcon"
+        resource_name = 'services/iscsi/authorizedinitiator'
 
     def __unicode__(self):
         if self.iscsi_target_initiator_comment != "":
