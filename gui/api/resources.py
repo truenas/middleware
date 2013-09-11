@@ -863,6 +863,9 @@ class TaskResourceMixin(object):
 
 class NFSShareResourceMixin(object):
 
+    class Meta:
+        resource_name = 'sharing/nfs'
+
     def dehydrate(self, bundle):
         bundle = super(NFSShareResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):

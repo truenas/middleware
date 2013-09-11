@@ -19,7 +19,7 @@ class CommonMixin(object):
         )
 
 
-class CIFS_ShareResourceTest(CommonMixin, APITestCase):
+class CIFSResourceTest(CommonMixin, APITestCase):
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(
@@ -125,7 +125,7 @@ class CIFS_ShareResourceTest(CommonMixin, APITestCase):
         self.assertHttpAccepted(resp)
 
 
-class AFP_ShareResourceTest(CommonMixin, APITestCase):
+class AFPResourceTest(CommonMixin, APITestCase):
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(
@@ -240,7 +240,7 @@ class AFP_ShareResourceTest(CommonMixin, APITestCase):
         self.assertHttpAccepted(resp)
 
 
-class NFS_ShareResourceTest(CommonMixin, APITestCase):
+class NFSResourceTest(CommonMixin, APITestCase):
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(

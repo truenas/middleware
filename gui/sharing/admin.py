@@ -26,6 +26,7 @@ class AFPShareFAdmin(BaseFreeAdmin):
         'afp_comment',
         'afp_path',
     )
+    resource_name = 'sharing/afp'
 
 
 class CIFSShareFAdmin(BaseFreeAdmin):
@@ -47,6 +48,7 @@ class CIFSShareFAdmin(BaseFreeAdmin):
         'cifs_browsable',
         'cifs_guestok',
     )
+    resource_name = 'sharing/cifs'
 
 
 class NFSShareFAdmin(BaseFreeAdmin):
