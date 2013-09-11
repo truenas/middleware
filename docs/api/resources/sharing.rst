@@ -4,15 +4,15 @@ Sharing
 
 Resources related to sharing.
 
-CIFS_Share
+CIFS
 ----------
 
-The CIFS_Share resource represents CIFS shares using samba.
+The CIFS resource represents CIFS shares using samba.
 
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/sharing/cifs_share/
+.. http:get:: /api/v1.0/sharing/cifs/
 
    Returns a list of all CIFS shares.
 
@@ -20,7 +20,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/sharing/cifs_share/ HTTP/1.1
+      GET /api/v1.0/sharing/cifs/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -60,7 +60,7 @@ List resource
 Create resource
 +++++++++++++++
 
-.. http:post:: /api/v1.0/sharing/cifs_share/
+.. http:post:: /api/v1.0/sharing/cifs/
 
    Creates a new CIFS share and returns the new CIFS share object.
 
@@ -68,7 +68,7 @@ Create resource
 
    .. sourcecode:: http
 
-      POST /api/v1.0/sharing/cifs_share/ HTTP/1.1
+      POST /api/v1.0/sharing/cifs/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -122,7 +122,7 @@ Create resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/sharing/cifs_share/(int:id)/
+.. http:put:: /api/v1.0/sharing/cifs/(int:id)/
 
    Update CIFS share `id`.
 
@@ -130,7 +130,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/sharing/cifs_share/2/ HTTP/1.1
+      PUT /api/v1.0/sharing/cifs/1/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -183,7 +183,7 @@ Update resource
 Delete resource
 +++++++++++++++
 
-.. http:delete:: /api/v1.0/sharing/cifs_share/(int:id)/
+.. http:delete:: /api/v1.0/sharing/cifs/(int:id)/
 
    Delete CIFS share `id`.
 
@@ -191,7 +191,7 @@ Delete resource
 
    .. sourcecode:: http
 
-      DELETE /api/v1.0/sharing/cifs_share/2/ HTTP/1.1
+      DELETE /api/v1.0/sharing/cifs/1/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
