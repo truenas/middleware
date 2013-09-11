@@ -66,6 +66,7 @@ class BaseFreeAdmin(object):
     exclude_fields = ('id', )
     resource = None
     resource_mixin = None
+    resource_name = None
     double_click = True
 
     advanced_fields = []
@@ -135,12 +136,17 @@ class BaseFreeAdmin(object):
         )
         from freenasUI.freeadmin.navtree import navtree
         if self.resource is None and self._model:
-            myArgs = dict(
-                queryset=self._model.objects.all(),
-                resource_name="%s/%s" % (
+            if self.resource_name is not None:
+                resource_name=self.resource_name
+            else:
+                resource_name='%s/%s' % (
                     self.app_label,
                     self.module_name,
                 ),
+
+            myArgs = dict(
+                queryset=self._model.objects.all(),
+                resource_name=resource_name,
                 include_resource_uri=False,
                 always_return_data=True,
                 paginator_class=DojoPaginator,
