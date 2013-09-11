@@ -142,7 +142,7 @@ class BaseFreeAdmin(object):
                 resource_name='%s/%s' % (
                     self.app_label,
                     self.module_name,
-                ),
+                )
 
             myArgs = dict(
                 queryset=self._model.objects.all(),
