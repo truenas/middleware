@@ -62,7 +62,7 @@ Create resource
 
 .. http:post:: /api/v1.0/network/interfaces/
 
-   Creates a new cronjob and returns the new cronjob object.
+   Creates a new Interface and returns the new Interface object.
 
    **Example request**:
 
@@ -124,7 +124,7 @@ Update resource
 
 .. http:put:: /api/v1.0/network/interfaces/(int:id)/
 
-   Update cronjob `id`.
+   Update Interface `id`.
 
    **Example request**:
 
@@ -190,6 +190,162 @@ Delete resource
    .. sourcecode:: http
 
       DELETE /api/v1.0/network/interfaces/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
+
+
+VLAN
+----------
+
+The VLAN resource represents network vlan configuration.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/network/vlan/
+
+   Returns a list of all VLANs.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/network/vlan/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+                "vlan_description": "",
+                "vlan_pint": "em1",
+                "vlan_tag": 0,
+                "vlan_vint": "vlan0",
+                "id": 1
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/network/vlan/
+
+   Creates a new VLAN and returns the new VLAN object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/network/vlan/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "vlan_vint": "vlan0",
+                "vlan_pint": "em1",
+                "vlan_tag": 0,
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "vlan_description": "",
+                "vlan_pint": "em1",
+                "vlan_tag": 0,
+                "vlan_vint": "vlan0",
+                "id": 1
+        }
+
+   :json string vlan_pint: physical interface
+   :json string vlan_vint: virtual interface name, vlanX
+   :json string vlan_description: user description
+   :json integer vlan_tag: vlan tag number
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/network/vlan/(int:id)/
+
+   Update VLAN `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/network/vlan/1/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "vlan_tag": 1
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "vlan_description": "",
+                "vlan_pint": "em1",
+                "vlan_tag": 1,
+                "vlan_vint": "vlan0",
+                "id": 1
+        }
+
+   :json string vlan_pint: physical interface
+   :json string vlan_vint: virtual interface name, vlanX
+   :json string vlan_description: user description
+   :json integer vlan_tag: vlan tag number
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/network/vlan/(int:id)/
+
+   Delete VLAN `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/network/vlan/1/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
