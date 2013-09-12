@@ -1030,6 +1030,7 @@ class InterfacesResourceMixin(object):
 class LAGGInterfaceResourceMixin(object):
 
     class Meta:
+        resource_name = 'network/lagg'
         allowed_methods = ['get', 'post', 'delete']
 
     def dehydrate(self, bundle):

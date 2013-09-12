@@ -323,7 +323,7 @@ class GlobalConfigurationResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
-class LAGGInterfaceResourceTest(APITestCase):
+class LAGGResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(
