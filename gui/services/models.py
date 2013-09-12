@@ -1113,12 +1113,14 @@ class FTP(Model):
                 "(077 by default).")
             )
     ftp_dirmask = models.CharField(
-            max_length=3,
-            default="077",
-            verbose_name=_("Directory mask"),
-            help_text=_("Use this option to override the file creation mask "
-                "(077 by default).")
-            )
+        max_length=3,
+        default="077",
+        verbose_name=_("Directory mask"),
+        help_text=_(
+            "Use this option to override the directory creation mask "
+            "(077 by default)."
+        ),
+    )
     ftp_fxp = models.BooleanField(
             verbose_name=_("Enable FXP"))
     ftp_resume = models.BooleanField(
