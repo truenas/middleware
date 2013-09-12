@@ -331,3 +331,198 @@ Delete resource
       Content-Type: application/json
 
    :statuscode 204: no error
+
+
+Replication
+-----------
+
+The Replication resource represents ZFS Replication tasks.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/storage/replication/
+
+   Returns a list of all replications.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/storage/replication/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/storage/replication/
+
+   Creates a new Replication and returns the new Replication object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/replication/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "repl_filesystem": "tank",
+                "repl_zfs": "tank",
+                "repl_remote_hostname": "testhost",
+                "repl_remote_hostkey": "AAAA"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "repl_end": "23:59:00",
+                "repl_remote_dedicateduser": null,
+                "repl_userepl": false,
+                "repl_limit": 0,
+                "repl_remote_port": 22,
+                "repl_remote_dedicateduser_enabled": false,
+                "repl_begin": "00:00:00",
+                "repl_filesystem": "tank",
+                "repl_remote_fast_cipher": false,
+                "repl_remote_hostkey": "AAAA",
+                "repl_enabled": true,
+                "repl_resetonce": false,
+                "repl_remote_hostname": "testhost",
+                "repl_lastsnapshot": "",
+                "id": 1,
+                "repl_zfs": "tank"
+        }
+
+   :json boolean repl_enabled: enable replication
+   :json string repl_filesystem: filesystem to replicate
+   :json string repl_lastsnapshot: last snapshot sent to remote side
+   :json string repl_remote_hostname: remote hostname
+   :json integer repl_remote_port: remote ssh port
+   :json string repl_remote_hostkey: remote ssh publick key
+   :json boolean repl_remote_fast_cipher: use fast cipher
+   :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
+   :json string repl_remote_dedicateduser: dedicated user to replicate
+   :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
+   :json boolean repl_resetonce: initialize remote side for once
+   :json integer repl_limit: limit the replication speed in KB/s
+   :json string repl_begin: do not start replication before
+   :json string repl_end: do not start replication after
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/storage/replication/(int:id)/
+
+   Update Replication `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/storage/replication/1/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "repl_enabled": false
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "repl_end": "23:59:00",
+                "repl_remote_dedicateduser": null,
+                "repl_userepl": false,
+                "repl_limit": 0,
+                "repl_remote_port": 22,
+                "repl_remote_dedicateduser_enabled": false,
+                "repl_begin": "00:00:00",
+                "repl_filesystem": "tank",
+                "repl_remote_fast_cipher": false,
+                "repl_remote_hostkey": "AAAA",
+                "repl_enabled": false,
+                "repl_resetonce": false,
+                "repl_remote_hostname": "testhost",
+                "repl_lastsnapshot": "",
+                "id": 1,
+                "repl_zfs": "tank"
+        }
+
+   :json boolean repl_enabled: enable replication
+   :json string repl_filesystem: filesystem to replicate
+   :json string repl_lastsnapshot: last snapshot sent to remote side
+   :json string repl_remote_hostname: remote hostname
+   :json integer repl_remote_port: remote ssh port
+   :json string repl_remote_hostkey: remote ssh publick key
+   :json boolean repl_remote_fast_cipher: use fast cipher
+   :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
+   :json string repl_remote_dedicateduser: dedicated user to replicate
+   :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
+   :json boolean repl_resetonce: initialize remote side for once
+   :json integer repl_limit: limit the replication speed in KB/s
+   :json string repl_begin: do not start replication before
+   :json string repl_end: do not start replication after
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/storage/replication/(int:id)/
+
+   Delete Replication `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/storage/replication/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
