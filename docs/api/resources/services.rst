@@ -450,3 +450,96 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+DynamicDNS
+----------
+
+The DynamicDNS resource represents the configuration settings for DynamicDNS.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/dynamicdns/
+
+   Returns the DynamicDNS settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/dynamicdns/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "ddns_options": "",
+                "ddns_password": "freenas",
+                "id": 1,
+                "ddns_username": "admin",
+                "ddns_provider": "dyndns@dyndns.org",
+                "ddns_fupdateperiod": "",
+                "ddns_domain": "",
+                "ddns_updateperiod": ""
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/dynamicdns/
+
+   Update DynamicDNS.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/dynamicdns/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "ddns_provider": "default@no-ip.com"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "ddns_options": "",
+                "ddns_password": "freenas",
+                "id": 1,
+                "ddns_username": "admin",
+                "ddns_provider": "default@no-ip.com",
+                "ddns_fupdateperiod": "",
+                "ddns_domain": "",
+                "ddns_updateperiod": ""
+        }
+
+   :json string ddns_provider: dyndns@dyndns.org, default@freedns.afraid.org, default@zoneedit.com, default@no-ip.com, default@easydns.com, dyndns@3322.org, default@sitelutions.com, default@dnsomatic.com, ipv6tb@he.net, default@tzo.com, default@dynsip.org, default@dhis.org, default@majimoto.net, default@zerigo.com
+   :json string ddns_domain: host name alias
+   :json string ddns_username: username
+   :json string ddns_password: password
+   :json string ddns_updateperiod: time in seconds
+   :json string ddns_fupdateperiod: forced update period
+   :json string ddns_options: auxiliary parameters to global settings in inadyn-mt.conf
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
