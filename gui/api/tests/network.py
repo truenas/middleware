@@ -2,7 +2,7 @@ from .utils import APITestCase
 from freenasUI.network import models
 
 
-class InterfacesResourceTest(APITestCase):
+class InterfaceResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(

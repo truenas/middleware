@@ -932,6 +932,9 @@ class NFSShareResourceMixin(object):
 
 class InterfacesResourceMixin(object):
 
+    class Meta:
+        resource_name = 'network/interface'
+
     def dehydrate(self, bundle):
         bundle = super(InterfacesResourceMixin, self).dehydrate(bundle)
         bundle.data['ipv4_addresses'] = bundle.obj.get_ipv4_addresses()
