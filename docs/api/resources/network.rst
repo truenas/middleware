@@ -6,7 +6,7 @@ Resources related to network.
 
 
 Global Configuration
-----------
+--------------------
 
 The GlobalConfiguration resource represents network general settings like
 default gateway, nameservers, hostname, etc.
@@ -570,7 +570,7 @@ Delete resource
 
 
 Static Route
-----------
+------------
 
 The StaticRoute resource represents network routing tables route(8).
 
