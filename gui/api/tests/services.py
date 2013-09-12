@@ -34,7 +34,7 @@ class ActiveDirectoryResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._obj.id,
             u'ad_adminname': u'',
             u'ad_adminpw': u'',
@@ -51,7 +51,7 @@ class ActiveDirectoryResourceTest(APITestCase):
             u'ad_use_default_domain': True,
             u'ad_verbose_logging': False,
             u'ad_workgroup': u'',
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(
@@ -117,13 +117,13 @@ class AFPResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'afp_srv_connections_limit': 50,
             u'afp_srv_guest': False,
             u'afp_srv_guest_user': u'nobody',
             u'afp_srv_name': u''
-        }])
+        })
 
     def test_Update(self):
         obj = models.AFP.objects.create()
@@ -183,7 +183,7 @@ class CIFSResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'cifs_srv_aio_enable': False,
             u'cifs_srv_aio_rs': 4096,
@@ -211,7 +211,7 @@ class CIFSResourceTest(APITestCase):
             u'cifs_srv_unixext': True,
             u'cifs_srv_workgroup': u'',
             u'cifs_srv_zeroconf': True
-        }])
+        })
 
     def test_Update(self):
         obj = models.CIFS.objects.create()
@@ -265,7 +265,7 @@ class DynamicDNSResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'ddns_domain': u'',
             u'ddns_fupdateperiod': u'',
@@ -274,7 +274,7 @@ class DynamicDNSResourceTest(APITestCase):
             u'ddns_provider': u'dyndns@dyndns.org',
             u'ddns_updateperiod': u'',
             u'ddns_username': u'',
-        }])
+        })
 
     def test_Update(self):
         obj = models.DynamicDNS.objects.create()
@@ -328,7 +328,7 @@ class FTPResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'ftp_anonpath': None,
             u'ftp_anonuserbw': 0,
@@ -357,7 +357,7 @@ class FTPResourceTest(APITestCase):
             u'ftp_ssltls_certfile': u'',
             u'ftp_timeout': 120,
             u'ftp_tls': False,
-        }])
+        })
 
     def test_Update(self):
         obj = models.FTP.objects.create()
@@ -414,7 +414,7 @@ class LDAPResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._obj.id,
             u'ldap_anonbind': False,
             u'ldap_basedn': u'',
@@ -429,7 +429,7 @@ class LDAPResourceTest(APITestCase):
             u'ldap_ssl': u'off',
             u'ldap_tls_cacertfile': u'',
             u'ldap_usersuffix': u''
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(
@@ -482,7 +482,7 @@ class NFSResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'nfs_srv_allow_nonroot': False,
             u'nfs_srv_bindip': u'',
@@ -490,7 +490,7 @@ class NFSResourceTest(APITestCase):
             u'nfs_srv_rpclockd_port': None,
             u'nfs_srv_rpcstatd_port': None,
             u'nfs_srv_servers': 4
-        }])
+        })
 
     def test_Update(self):
         obj = models.NFS.objects.create()
@@ -545,13 +545,13 @@ class NISResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._obj.id,
             u'nis_domain': u'',
             u'nis_manycast': False,
             u'nis_secure_mode': False,
             u'nis_servers': u''
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(
@@ -604,14 +604,14 @@ class NT4ResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._obj.id,
             u'nt4_adminname': u'',
             u'nt4_adminpw': u'',
             u'nt4_dcname': u'',
             u'nt4_netbiosname': u'',
             u'nt4_workgroup': u''
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(
@@ -669,11 +669,11 @@ class RsyncdResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'rsyncd_auxiliary': u'',
             u'rsyncd_port': 873
-        }])
+        })
 
     def test_Update(self):
         obj = models.Rsyncd.objects.create()
@@ -826,11 +826,9 @@ class servicesResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [
-            {
-                u'srv_service': u'ftp', u'srv_enable': False, u'id': 1,
-            },
-        ])
+        self.assertEqual(data, [{
+            u'srv_service': u'ftp', u'srv_enable': False, u'id': 1,
+        }])
 
     def test_Update(self):
         resp = self.api_client.put(
@@ -880,7 +878,7 @@ class SMARTResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'smart_critical': 0,
             u'smart_difference': 0,
@@ -888,7 +886,7 @@ class SMARTResourceTest(APITestCase):
             u'smart_informational': 0,
             u'smart_interval': 30,
             u'smart_powermode': u'never'
-        }])
+        })
 
     def test_Update(self):
         obj = models.SMART.objects.create()
@@ -940,14 +938,14 @@ class SNMPResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'snmp_community': u'public',
             u'snmp_contact': u'',
             u'snmp_location': u'',
             u'snmp_options': u'',
             u'snmp_traps': False
-        }])
+        })
 
     def test_Update(self):
         obj = models.SNMP.objects.create()
@@ -1001,7 +999,7 @@ class SSHResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'ssh_compression': False,
             u'ssh_host_dsa_key': u'',
@@ -1020,7 +1018,7 @@ class SSHResourceTest(APITestCase):
             u'ssh_sftp_log_level': u'',
             u'ssh_tcpfwd': False,
             u'ssh_tcpport': 22
-        }])
+        })
 
     def test_Update(self):
         obj = models.SSH.objects.create()
@@ -1080,7 +1078,7 @@ class TFTPResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': obj.id,
             u'tftp_directory': u'',
             u'tftp_newfiles': False,
@@ -1088,7 +1086,7 @@ class TFTPResourceTest(APITestCase):
             u'tftp_port': 69,
             u'tftp_umask': u'022',
             u'tftp_username': u'nobody'
-        }])
+        })
 
     def test_Update(self):
         obj = models.TFTP.objects.create()
@@ -1145,7 +1143,7 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._obj.id,
             u'iscsi_basename': u'iqn.2011-03.org.example.istgt',
             u'iscsi_defaultt2r': 60,
@@ -1167,7 +1165,7 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
             u'iscsi_nopinint': 20,
             u'iscsi_r2t': 32,
             u'iscsi_toggleluc': False
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(
@@ -1790,7 +1788,7 @@ class UPSResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._obj.id,
             u'ups_description': u'',
             u'ups_driver': u'',
@@ -1809,7 +1807,7 @@ class UPSResourceTest(APITestCase):
             u'ups_shutdowntimer': 30,
             u'ups_subject': u'UPS report generated by %h',
             u'ups_toemail': u''
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(

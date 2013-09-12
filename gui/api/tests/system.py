@@ -782,7 +782,7 @@ class SettingsResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._settings.id,
             u'stg_directoryservice': u'',
             u'stg_guiaddress': u'0.0.0.0',
@@ -793,7 +793,7 @@ class SettingsResourceTest(APITestCase):
             u'stg_language': u'en',
             u'stg_syslogserver': u'',
             u'stg_timezone': u'America/Los_Angeles'
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(
@@ -837,7 +837,7 @@ class AdvancedResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._advanced.id,
             u'adv_advancedmode': False,
             u'adv_anonstats': True,
@@ -857,7 +857,7 @@ class AdvancedResourceTest(APITestCase):
             u'adv_traceback': True,
             u'adv_tuning': False,
             u'adv_zeroconfbonjour': False,
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(

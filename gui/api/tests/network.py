@@ -288,7 +288,7 @@ class GlobalConfigurationResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._gc.id,
             u'gc_domain': u'local',
             u'gc_hostname': u'nas',
@@ -300,7 +300,7 @@ class GlobalConfigurationResourceTest(APITestCase):
             u'gc_nameserver3': u'',
             u'gc_netwait_enabled': False,
             u'gc_netwait_ip': u'',
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(
