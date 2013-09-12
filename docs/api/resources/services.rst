@@ -214,3 +214,88 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+AFP
+----
+
+The AFP resource represents the configuration settings for Apple Filing
+Protocol (AFP).
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/afp/
+
+   Returns the AFP settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/afp/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "afp_srv_guest_user": "nobody",
+                "afp_srv_guest": false,
+                "id": 1,
+                "afp_srv_connections_limit": 50,
+                "afp_srv_name": "freenas"
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/afp/
+
+   Update AFP.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/afp/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "afp_srv_guest": true
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "afp_srv_guest_user": "nobody",
+                "afp_srv_guest": true,
+                "id": 1,
+                "afp_srv_connections_limit": 50,
+                "afp_srv_name": "freenas"
+        }
+
+   :json string afp_srv_name: name of the server
+   :json string afp_srv_guest_user: guest account
+   :json boolean afp_srv_guest: allow guest access
+   :json integer afp_srv_connections_limit: maximum number of connections permitted
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
