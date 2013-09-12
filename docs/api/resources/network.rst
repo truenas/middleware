@@ -4,6 +4,110 @@ Network
 
 Resources related to network.
 
+
+Global Configuration
+----------
+
+The GlobalConfiguration resource represents network general settings like
+default gateway, nameservers, hostname, etc.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/network/globalconfiguration/
+
+   Returns the global configuration dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/network/globalconfiguration/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "gc_domain": "local",
+                "gc_ipv4gateway": "192.168.3.1",
+                "gc_hostname": "freenas",
+                "gc_netwait_enabled": false,
+                "gc_hosts": "",
+                "gc_ipv6gateway": "",
+                "gc_netwait_ip": "",
+                "gc_nameserver1": "192.168.3.1",
+                "gc_nameserver3": "",
+                "gc_nameserver2": "",
+                "id": 1
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/network/globalconfiguration/
+
+   Update global configuration `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/network/globalconfiguration/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "gc_hosts": "192.168.3.56 myownhost"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "gc_domain": "local",
+                "gc_ipv4gateway": "192.168.3.1",
+                "gc_hostname": "freenas",
+                "gc_netwait_enabled": false,
+                "gc_hosts": "192.168.3.56 myownhost",
+                "gc_ipv6gateway": "",
+                "gc_netwait_ip": "",
+                "gc_nameserver1": "192.168.3.1",
+                "gc_nameserver3": "",
+                "gc_nameserver2": "",
+                "id": 1
+        }
+
+   :json string gc_domain: domain
+   :json string gc_hostname: hostname
+   :json string gc_ipv4gateway: ipv4 address of the gateway
+   :json string gc_ipv6gateway: ipv6 address of the gateway
+   :json string gc_nameserver1: nameserver address #1
+   :json string gc_nameserver2: nameserver address #2
+   :json string gc_nameserver3: nameserver address #3
+   :json boolean gc_netwait_enabled: enable netwait feature
+   :json string gc_netwait_ip: list of IPs to wait before proceed the boot
+   :json string gc_hosts: entries to append to /etc/hosts
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
 Interface
 ----------
 
