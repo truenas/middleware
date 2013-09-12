@@ -284,7 +284,6 @@ class DynamicDNSResourceTest(APITestCase):
             data={
                 'ddns_username': 'testuser',
                 'ddns_password': 'mypass',
-                'ddns_password2': 'mypass',  # FIXME: only 1 password
             }
         )
         self.assertHttpAccepted(resp)

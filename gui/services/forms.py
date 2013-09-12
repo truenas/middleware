@@ -462,6 +462,8 @@ class DynamicDNSForm(ModelForm):
         super(DynamicDNSForm, self).__init__(*args, **kwargs)
         if self.instance.ddns_password:
             self.fields['ddns_password'].required = False
+        if self._api is True:
+            del self.fields['ddns_password2']
 
     def clean_ddns_password2(self):
         password1 = self.cleaned_data.get("ddns_password")
