@@ -4,15 +4,15 @@ Network
 
 Resources related to network.
 
-Interfaces
+Interface
 ----------
 
-The Interfaces resource represents network interfaces configuration.
+The Interface resource represents network interfaces configuration.
 
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/network/interfaces/
+.. http:get:: /api/v1.0/network/interface/
 
    Returns a list of all interfaces.
 
@@ -20,7 +20,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/network/interfaces/ HTTP/1.1
+      GET /api/v1.0/network/interface/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -60,7 +60,7 @@ List resource
 Create resource
 +++++++++++++++
 
-.. http:post:: /api/v1.0/network/interfaces/
+.. http:post:: /api/v1.0/network/interface/
 
    Creates a new Interface and returns the new Interface object.
 
@@ -68,7 +68,7 @@ Create resource
 
    .. sourcecode:: http
 
-      POST /api/v1.0/network/interfaces/ HTTP/1.1
+      POST /api/v1.0/network/interface/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -122,7 +122,7 @@ Create resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/network/interfaces/(int:id)/
+.. http:put:: /api/v1.0/network/interface/(int:id)/
 
    Update Interface `id`.
 
@@ -130,7 +130,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/network/interfaces/1/ HTTP/1.1
+      PUT /api/v1.0/network/interface/1/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -181,7 +181,7 @@ Update resource
 Delete resource
 +++++++++++++++
 
-.. http:delete:: /api/v1.0/network/interfaces/(int:id)/
+.. http:delete:: /api/v1.0/network/interface/(int:id)/
 
    Delete cronjob `id`.
 
@@ -189,7 +189,7 @@ Delete resource
 
    .. sourcecode:: http
 
-      DELETE /api/v1.0/network/interfaces/1/ HTTP/1.1
+      DELETE /api/v1.0/network/interface/1/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
