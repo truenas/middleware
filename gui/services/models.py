@@ -880,11 +880,13 @@ class DynamicDNS(Model):
             blank=True
             )
     ddns_options = models.TextField(
-            verbose_name=_("Auxiliary parameters"),
-            blank=True,
-            help_text=_("These parameters will be added to global settings in"
-                " inadyn.conf.")
-            )
+        verbose_name=_("Auxiliary parameters"),
+        blank=True,
+        help_text=_(
+            "These parameters will be added to global settings in "
+            "inadyn-mt.conf."
+        ),
+    )
 
     class Meta:
         verbose_name = _("Dynamic DNS")
