@@ -261,6 +261,18 @@ class DojoModelResource(ResourceMixin, ModelResource):
             bundle.errors = form._errors
         return valid
 
+    def get_list(self, request, **kwargs):
+        # Treat models that represent a single object as such
+        if self._meta.queryset.model._admin.deletable is False:
+            return self.get_detail(request, **kwargs)
+        return super(DojoModelResource, self).get_list(request, **kwargs)
+
+    def put_list(self, request, **kwargs):
+        # Treat models that represent a single object as such
+        if self._meta.queryset.model._admin.deletable is False:
+            return self.put_detail(request, **kwargs)
+        return super(DojoModelResource, self).put_list(request, **kwargs)
+
     def save(self, bundle, skip_errors=False):
 
         # Check if they're authorized.
