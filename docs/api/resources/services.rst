@@ -299,3 +299,154 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+CIFS
+----
+
+The CIFS resource represents the configuration settings for Apple Filing
+Protocol (CIFS).
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/cifs/
+
+   Returns the CIFS settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/cifs/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "cifs_srv_dirmask": "",
+                "cifs_srv_description": "FreeNAS Server",
+                "cifs_srv_loglevel": "1",
+                "cifs_srv_guest": "nobody",
+                "cifs_srv_filemask": "",
+                "cifs_srv_easupport": false,
+                "cifs_srv_smb_options": "",
+                "id": 1,
+                "cifs_srv_aio_ws": 4096,
+                "cifs_srv_unixext": true,
+                "cifs_srv_homedir": null,
+                "cifs_srv_dosattr": true,
+                "cifs_srv_homedir_browseable_enable": false,
+                "cifs_srv_homedir_enable": false,
+                "cifs_srv_aio_enable": false,
+                "cifs_srv_homedir_aux": "",
+                "cifs_srv_aio_rs": 4096,
+                "cifs_srv_localmaster": true,
+                "cifs_srv_timeserver": true,
+                "cifs_srv_workgroup": "WORKGROUP",
+                "cifs_srv_doscharset": "CP437",
+                "cifs_srv_hostlookup": true,
+                "cifs_srv_netbiosname": "freenas",
+                "cifs_srv_nullpw": false,
+                "cifs_srv_zeroconf": true,
+                "cifs_srv_authmodel": "user",
+                "cifs_srv_unixcharset": "UTF-8"
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/cifs/
+
+   Update CIFS.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/cifs/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "cifs_srv_dosattr": false
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "cifs_srv_dirmask": "",
+                "cifs_srv_description": "FreeNAS Server",
+                "cifs_srv_loglevel": "1",
+                "cifs_srv_guest": "nobody",
+                "cifs_srv_filemask": "",
+                "cifs_srv_easupport": false,
+                "cifs_srv_smb_options": "",
+                "id": 1,
+                "cifs_srv_aio_ws": 4096,
+                "cifs_srv_unixext": true,
+                "cifs_srv_homedir": null,
+                "cifs_srv_dosattr": false,
+                "cifs_srv_homedir_browseable_enable": false,
+                "cifs_srv_homedir_enable": false,
+                "cifs_srv_aio_enable": false,
+                "cifs_srv_homedir_aux": "",
+                "cifs_srv_aio_rs": 4096,
+                "cifs_srv_localmaster": true,
+                "cifs_srv_timeserver": true,
+                "cifs_srv_workgroup": "WORKGROUP",
+                "cifs_srv_doscharset": "CP437",
+                "cifs_srv_hostlookup": true,
+                "cifs_srv_netbiosname": "freenas",
+                "cifs_srv_nullpw": false,
+                "cifs_srv_zeroconf": true,
+                "cifs_srv_authmodel": "user",
+                "cifs_srv_unixcharset": "UTF-8"
+        }
+
+   :json string cifs_srv_authmodel: user, share
+   :json string cifs_srv_netbiosname: netbios name
+   :json string cifs_srv_workgroup: workgroup
+   :json string cifs_srv_description: server description
+   :json string cifs_srv_doscharset: CP437, CP850, CP852, CP866, CP932, CP949, CP950, CP1026, CP1251, ASCII
+   :json string cifs_srv_unixcharset: UTF-8, iso-8859-1, iso-8859-15, gb2312, EUC-JP, ASCII
+   :json string cifs_srv_loglevel: 1, 2, 3, 10
+   :json boolean cifs_srv_localmaster: local master
+   :json boolean cifs_srv_timeserver: time server for domain
+   :json string cifs_srv_guest: guest account
+   :json string cifs_srv_filemask: file mask
+   :json string cifs_srv_dirmask: directory mask
+   :json boolean cifs_srv_easupport: ea support
+   :json boolean cifs_srv_dosattr: support dos file attributes
+   :json boolean cifs_srv_nullpw: allow empty password
+   :json string cifs_srv_smb_options: auxiliary parameters added to [global] section
+   :json boolean cifs_srv_homedir_enable: enable home directory
+   :json boolean cifs_srv_homedir_browseable_enable: enable home directory browsing
+   :json string cifs_srv_homedir: home directories path
+   :json string cifs_srv_homedir_aux: homes auxiliary parameters
+   :json boolean cifs_srv_unixext: unix extensions
+   :json boolean cifs_srv_aio_enable: enable aio
+   :json integer cifs_srv_aio_rs: minimum aio read size
+   :json integer cifs_srv_aio_ws: minimum aio write size
+   :json boolean cifs_srv_zeroconf: zeroconf share discovery
+   :json boolean cifs_srv_hostlookup: hostname lookups
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
