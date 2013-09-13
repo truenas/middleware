@@ -543,3 +543,156 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+FTP
+----------
+
+The FTP resource represents the configuration settings for FTP service.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/ftp/
+
+   Returns the FTP settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/ftp/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "ftp_anonuserbw": 0,
+                "ftp_ident": false,
+                "ftp_timeout": 600,
+                "ftp_resume": false,
+                "ftp_options": "",
+                "ftp_masqaddress": "",
+                "ftp_rootlogin": false,
+                "id": 1,
+                "ftp_passiveportsmax": 0,
+                "ftp_ipconnections": 2,
+                "ftp_defaultroot": true,
+                "ftp_dirmask": "022",
+                "ftp_passiveportsmin": 0,
+                "ftp_onlylocal": false,
+                "ftp_loginattempt": 1,
+                "ftp_localuserbw": 0,
+                "ftp_port": 21,
+                "ftp_onlyanonymous": false,
+                "ftp_reversedns": false,
+                "ftp_anonuserdlbw": 0,
+                "ftp_clients": 5,
+                "ftp_tls": false,
+                "ftp_fxp": false,
+                "ftp_filemask": "077",
+                "ftp_localuserdlbw": 0,
+                "ftp_banner": "",
+                "ftp_ssltls_certfile": "",
+                "ftp_anonpath": null
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/ftp/
+
+   Update FTP.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/ftp/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "ftp_clients": 10
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "ftp_anonuserbw": 0,
+                "ftp_ident": false,
+                "ftp_timeout": 600,
+                "ftp_resume": false,
+                "ftp_options": "",
+                "ftp_masqaddress": "",
+                "ftp_rootlogin": false,
+                "id": 1,
+                "ftp_passiveportsmax": 0,
+                "ftp_ipconnections": 2,
+                "ftp_defaultroot": true,
+                "ftp_dirmask": "022",
+                "ftp_passiveportsmin": 0,
+                "ftp_onlylocal": false,
+                "ftp_loginattempt": 1,
+                "ftp_localuserbw": 0,
+                "ftp_port": 21,
+                "ftp_onlyanonymous": false,
+                "ftp_reversedns": false,
+                "ftp_anonuserdlbw": 0,
+                "ftp_clients": 5,
+                "ftp_tls": false,
+                "ftp_fxp": false,
+                "ftp_filemask": "077",
+                "ftp_localuserdlbw": 0,
+                "ftp_banner": "",
+                "ftp_ssltls_certfile": "",
+                "ftp_anonpath": null
+        }
+
+   :json integer ftp_port: port to bind FTP server
+   :json integer ftp_clients: maximum number of simultaneous clients
+   :json integer ftp_ipconnections: maximum number of connections per IP address
+   :json integer ftp_loginattempt: maximum number of allowed password attempts before disconnection
+   :json integer ftp_timeout: maximum idle time in seconds
+   :json boolean ftp_rootlogin: allow root login
+   :json boolean ftp_onlyanonymous: allow anonymous login
+   :json string ftp_anonpath: path for anonymous login
+   :json boolean ftp_onlylocal: allow only local user login
+   :json string ftp_banner: message which will be displayed to the user when they initially login
+   :json string ftp_filemask: file creation mask
+   :json string ftp_dirmask: directory creation mask
+   :json boolean ftp_fxp: enable fxp
+   :json boolean ftp_resume: allow transfer resumption
+   :json boolean ftp_defaultroot: only allow access to user home unless member of wheel
+   :json boolean ftp_ident: require IDENT authentication
+   :json boolean ftp_reversedns: perform reverse dns lookup
+   :json string ftp_masqaddress: causes the server to display the network information for the specified address to the client
+   :json integer ftp_passiveportsmin: the minimum port to allocate for PASV style data connections
+   :json integer ftp_passiveportsmax: the maximum port to allocate for PASV style data connections
+   :json integer ftp_localuserbw: local user upload bandwidth in KB/s
+   :json integer ftp_localuserdlbw: local user download bandwidth in KB/s
+   :json integer ftp_anonuserbw: anonymous user upload bandwidth in KB/s
+   :json integer ftp_anonuserdlbw: anonymous user download bandwidth in KB/s
+   :json boolean ftp_tls: enable TLS
+   :json string ftp_ssltls_certfile: certificate and private key
+   :json string ftp_options: these parameters are added to proftpd.conf
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
