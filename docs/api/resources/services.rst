@@ -1429,3 +1429,93 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+TFTP
+----------
+
+The TFTP resource represents the configuration settings for TFTP service.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/tftp/
+
+   Returns the TFTP settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/tftp/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "tftp_umask": "022",
+                "tftp_username": "nobody",
+                "tftp_directory": "/tftproot",
+                "tftp_port": 69,
+                "tftp_options": "",
+                "id": 1,
+                "tftp_newfiles": false
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/tftp/
+
+   Update TFTP.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/tftp/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "tftp_contact": "admin@freenas.org"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "tftp_umask": "022",
+                "tftp_username": "nobody",
+                "tftp_directory": "/tftproot",
+                "tftp_port": 69,
+                "tftp_options": "",
+                "id": 1,
+                "tftp_newfiles": false
+        }
+
+   :json string tftp_directory: the directory containing the files you want to publish
+   :json boolean tftp_newfiles: Allow New Files
+   :json integer tftp_port: port to listen to
+   :json string tftp_username: username which the service will run as
+   :json string tftp_umask: umask for newly created files
+   :json string tftp_options: extra command line options
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
