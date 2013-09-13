@@ -1383,20 +1383,9 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
 
     class Meta:
         model = models.iSCSITargetAuthorizedInitiator
-        widgets = {
-            'iscsi_target_initiator_tag': forms.widgets.HiddenInput(),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetAuthorizedInitiatorForm, self).__init__(*args, **kwargs)
-        self.fields["iscsi_target_initiator_tag"].initial = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
-
-    def clean_iscsi_target_initiator_tag(self):
-        tag = self.cleaned_data["iscsi_target_initiator_tag"]
-        higher = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
-        if tag > higher:
-            raise forms.ValidationError(_("Your Group ID cannot be higher than %d") % higher)
-        return tag
+        exclude = (
+            'iscsi_target_initiator_tag',
+        )
 
     def clean_iscsi_target_initiator_auth_network(self):
         field = self.cleaned_data.get(
@@ -1422,10 +1411,18 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
         return '\n'.join(nets)
 
     def save(self):
-        super(iSCSITargetAuthorizedInitiatorForm, self).save()
+        o = super(iSCSITargetAuthorizedInitiatorForm, self).save(commit=False)
+        o.iscsi_target_initiator_tag = (
+            models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
+        )
+        o.save()
         started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+        if started is False and models.services.objects.get(
+            srv_service='iscsitarget'
+        ).srv_enable:
+            raise ServiceFailed(
+                "iscsitarget", _("The iSCSI service failed to reload.")
+            )
 
 
 class iSCSITargetForm(ModelForm):
