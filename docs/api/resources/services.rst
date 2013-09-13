@@ -1227,3 +1227,90 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+SNMP
+----------
+
+The SNMP resource represents the configuration settings for SNMP service.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/snmp/
+
+   Returns the SNMP settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/snmp/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "snmp_options": "",
+                "snmp_community": "public",
+                "snmp_traps": false,
+                "snmp_contact": "",
+                "snmp_location": "",
+                "id": 1
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/snmp/
+
+   Update SNMP.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/snmp/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "snmp_contact": "admin@freenas.org"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "snmp_options": "",
+                "snmp_community": "public",
+                "snmp_traps": false,
+                "snmp_contact": "admin@freenas.org",
+                "snmp_location": "",
+                "id": 1
+        }
+
+   :json string snmp_location: location information, e.g. physical location of this system
+   :json string snmp_contact: contact information
+   :json string snmp_community: in most cases, 'public' is used here
+   :json string snmp_traps: send SNMP traps
+   :json string snmp_options: parameters will be added to /etc/snmpd.config
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
