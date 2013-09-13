@@ -884,3 +884,87 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+NIS
+----------
+
+The NIS resource represents the configuration settings for NIS service.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/nis/
+
+   Returns the NIS settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/nis/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "nis_servers": "",
+                "nis_secure_mode": false,
+                "nis_manycast": false,
+                "id": 1,
+                "nis_domain": ""
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/nis/
+
+   Update NIS.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/nis/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "nis_domain": "nisdomain"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "nis_servers": "",
+                "nis_secure_mode": false,
+                "nis_manycast": false,
+                "id": 1,
+                "nis_domain": "nisdomain"
+        }
+
+   :json string nis_domain: nis domain name
+   :json string nis_servers: comma delimited list of NIS servers
+   :json boolean nis_secure_mode: cause ypbind to run in secure mode
+   :json boolean nis_manycast: cause ypbind to use 'many-cast' instead of broadcast
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
