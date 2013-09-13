@@ -1137,3 +1137,93 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+SMART
+----------
+
+The SMART resource represents the configuration settings for SMART service.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/smart/
+
+   Returns the SMART settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/smart/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "smart_critical": 0,
+                "smart_interval": 30,
+                "smart_powermode": "never",
+                "smart_informational": 0,
+                "smart_email": "",
+                "smart_difference": 0,
+                "id": 1
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/smart/
+
+   Update SMART.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/smart/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "smart_interval": 60,
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "smart_critical": 0,
+                "smart_interval": 60,
+                "smart_powermode": "never",
+                "smart_informational": 0,
+                "smart_email": "",
+                "smart_difference": 0,
+                "id": 1
+        }
+
+   :json integer smart_interval: interval between disk checks in minutes
+   :json string smart_powermode: never, sleep, standby, idle
+   :json integer smart_difference: report if the temperature had changed by at least N degrees Celsius since last report
+   :json integer smart_informational: report as informational if the temperature had changed by at least N degrees Celsius since last report
+   :json integer smart_critical: report as critical if the temperature had changed by at least N degrees Celsius since last report
+   :json string smart_email: destination email address
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
