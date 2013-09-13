@@ -794,3 +794,93 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+NFS
+----------
+
+The NFS resource represents the configuration settings for NFS service.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/nfs/
+
+   Returns the NFS settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/nfs/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "nfs_srv_bindip": "",
+                "nfs_srv_mountd_port": null,
+                "nfs_srv_allow_nonroot": false,
+                "nfs_srv_servers": 4,
+                "nfs_srv_rpcstatd_port": null,
+                "nfs_srv_rpclockd_port": null,
+                "id": 1
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/nfs/
+
+   Update NFS.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/nfs/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "nfs_srv_servers": 10
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "nfs_srv_bindip": "",
+                "nfs_srv_mountd_port": null,
+                "nfs_srv_allow_nonroot": false,
+                "nfs_srv_servers": 10,
+                "nfs_srv_rpcstatd_port": null,
+                "nfs_srv_rpclockd_port": null,
+                "id": 1
+        }
+
+   :json string nfs_srv_servers: how many servers to create
+   :json boolean nfs_srv_allow_nonroot: allow non-root mount requests to be served.
+   :json string nfs_srv_bindip: IP addresses (separated by commas) to bind to for TCP and UDP requests
+   :json integer nfs_srv_mountd_port: force mountd to bind to the specified port
+   :json integer nfs_srv_rpcstatd_port: forces the rpc.statd daemon to bind to the specified port
+   :json integer nfs_srv_rpclockd_port: forces rpc.lockd the daemon to bind to the specified port
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
