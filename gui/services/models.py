@@ -925,11 +925,10 @@ class SNMP(Model):
         editable=False,
     )
     snmp_options = models.TextField(
-            verbose_name=_("Auxiliary parameters"),
-            blank=True,
-            help_text=_("These parameters will be added to global settings "
-                "in inadyn.conf.")
-            )
+        verbose_name=_("Auxiliary parameters"),
+        blank=True,
+        help_text=_("These parameters will be added to /etc/snmpd.config.")
+    )
 
     class Meta:
         verbose_name = _("SNMP")
