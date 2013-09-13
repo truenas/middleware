@@ -698,6 +698,15 @@ Update resource
    :statuscode 202: no error
 
 
+iSCSI
+-----
+
+.. toctree::
+   :glob:
+
+   iscsi/*
+
+
 LDAP
 ----------
 
