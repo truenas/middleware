@@ -696,3 +696,101 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+LDAP
+----------
+
+The LDAP resource represents the configuration settings for LDAP service.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/ldap/
+
+   Returns the LDAP settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/ldap/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/ldap/
+
+   Update LDAP.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/ldap/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "ldap_hostname": "ldaphostname",
+                "ldap_basedn": "dc=test,dc=org"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "ldap_hostname": "ldaphostname",
+                "ldap_tls_cacertfile": "",
+                "ldap_groupsuffix": "",
+                "ldap_rootbindpw": "",
+                "ldap_options": "ldap_version 3\ntimelimit 30\nbind_timelimit 30\nbind_policy soft\npam_ldap_attribute uid",
+                "ldap_pwencryption": "clear",
+                "ldap_passwordsuffix": "",
+                "ldap_anonbind": false,
+                "ldap_ssl": "off",
+                "ldap_machinesuffix": "",
+                "ldap_basedn": "dc=test,dc=org",
+                "ldap_usersuffix": "",
+                "ldap_rootbasedn": "",
+                "id": 1
+        }
+
+   :json string ldap_hostname: name or IP address of the LDAP server
+   :json string ldap_basedn: default base Distinguished Name (DN) to use for searches
+   :json boolean ldap_anonbind: allow anonymous binding
+   :json string ldap_rootbasedn: distinguished name with which to bind to the directory server
+   :json string ldap_rootbindpw: credentials with which to bind
+   :json string ldap_pwencryption: clear, crypt, md5, nds, racf, ad, exop
+   :json string ldap_usersuffix: suffix that is used for users
+   :json string ldap_groupsuffix: suffix that is used for groups
+   :json string ldap_passwordsuffix: suffix that is used for password
+   :json string ldap_machinesuffix: suffix that is used for machines
+   :json string ldap_ssl: off, on, start_tls
+   :json string ldap_tls_cacertfile: contents of your self signed certificate
+   :json string ldap_options: parameters are added to ldap.conf
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
