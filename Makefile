@@ -5,7 +5,7 @@ VERSION?=9.2.0-ALPHA
 ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} 
 
 all:
-	@[ `id -u` -ne 0 ] && echo "Sorry, you must be running as root to build this."; exit 1
+	[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
 	${ENV_SETUP} build/do_build.sh
 
 clean:
