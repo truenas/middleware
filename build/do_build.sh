@@ -203,6 +203,7 @@ build_target()
 			# The base OS distro requires a kernel build.
 			#
 			_required_logs="_.ik _.iw"
+		fi
 
 		for _required_log in ${_required_logs}
 		do
