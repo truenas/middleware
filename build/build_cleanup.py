@@ -24,33 +24,6 @@ def main(starting_path):
         if os.path.isdir(dir):
             os.system("umount %s" % dir)
 
-    if os.path.isdir("pbi"):
-        # TODO: Perhaps there's a more elegent way to get a zfs
-        # dataset from a path.
-        zfs = False
-        zfs_list = os.popen("zfs get -H mountpoint").readlines()
-        for line in zfs_list:
-            try:
-                path = line.split("\t")[0]
-                dataset = line.split("\t")[2]
-            except IndexError:
-                continue
-
-                if path == os.path.realpath("pbi"):
-                    zfs = True
-                    try:
-                        os.system("zfs destroy -r %s" % dataset)
-                    except OSError as err:
-                        os.chdir(starting_path)
-                        sys.exit("Cleanup failed", err)
-
-        if not zfs or os.path.isdir("pbi"):
-            try:
-                os.system("rm -rf pbi")
-            except OSError as err:
-                os.chdir(starting_path)
-                sys.exit("Cleanup failed", err)
-
     os.chdir(starting_path)
 
 if __name__ == "__main__":

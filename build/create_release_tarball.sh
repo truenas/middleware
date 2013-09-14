@@ -9,11 +9,8 @@ TOP="$(pwd)"
 
 . build/nano_env
 . build/functions.sh
-. build/pbi_env
 
 IMG_PREFIX=$NANO_LABEL-$VERSION
-
-PLUGINS="transmission firefly minidlna"
 
 map_x86=i386
 map_x64=amd64
@@ -32,12 +29,6 @@ for arch in x64 x86 ; do
 	for ext in img.xz GUI_Upgrade.txz iso ; do
 		ln ${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext} .
 		ln ${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext}.sha256.txt .
-	done
-	mkdir plugins
-	cd plugins
-	for plugin in $PLUGINS ; do
-		# XXX: wildcard here... is there a way to derive the version of the port?
-		ln ${TOP}/$plugin/$mapped_arch/${plugin}-*-${mapped_arch}.pbi .
 	done
 done
 cd ${TOP}

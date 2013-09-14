@@ -8,7 +8,6 @@ TOP="$(pwd)"
 
 . build/nano_env
 . build/functions.sh
-. build/pbi_env
 
 : ${SKIP_SOURCE_PATCHES="yes"}
 : ${SKIP_PORTS_PATCHES="yes"}
@@ -30,16 +29,7 @@ fi
 export MAKE_JOBS
 
 # Available targets to build
-BUILD_TARGETS="\
-os-base \
-plugins/transmission \
-plugins/firefly \
-plugins/minidlna \
-"
-
-# Build with jails
-WITH_JAILS=0
-export WITH_JAILS
+BUILD_TARGETS="os-base"
 
 # Targets to build (os-base, plugins/<plugin>).
 TARGETS=""
@@ -118,7 +108,7 @@ show_build_targets()
 
 parse_cmdline()
 {
-	while getopts 'aBfJj:st:uxz' _optch
+	while getopts 'aBfj:st:uxz' _optch
 	do
 		case "${_optch}" in
 		a)
@@ -136,9 +126,6 @@ parse_cmdline()
 				usage
 			fi
 			MAKE_JOBS=${OPTARG}
-			;;
-		J)	WITH_JAILS=1
-			export WITH_JAILS
 			;;
 		s)	
 			show_build_targets
@@ -185,57 +172,6 @@ expand_targets()
 	fi
 }
 
-is_plugin()
-{
-	local _res=1
-	local _target="${1}"
-
-	if echo "${_target}" | grep -E "^${NANO_CFG_BASE}\/plugins\/" >/dev/null 2>&1	
-	then
-		_res=0
-	fi
-
-	return ${_res}
-}
-
-install_pbi_manager()
-{
-	local src="${TOP}/src/pcbsd/pbi-manager"
-
-	if [ -f "${PBI_BINDIR}/pbi_create" ]
-	then
-		rm -rf "${PBI_BINDIR}"
-	fi
-
-	mkdir -p "${PBI_BINDIR}"
-	cp ${src}/pbi-manager ${PBI_BINDIR}/pbi_create
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_add
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_addrepo
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_browser
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_autobuild
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_delete
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_deleterepo
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_icon
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_info
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_indextool
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_listrepo
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_makepatch
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_makeport
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_makerepo
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_metatool
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_patch
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_update
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi_update_hashdir
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbid
-	ln -f ${PBI_BINDIR}/pbi_create ${PBI_BINDIR}/pbi-crashhandler
-	rm -f ${PBI_BINDIR}/pbi-manager
-
-	cp ${TOP}/src/pcbsd/libsh/functions.sh ${PBI_BINDIR}/functions.sh
-
-	PATH="${PBI_BINDIR}:${PATH}"
-	export PATH
-}
-
 build_target()
 {
 	local _target="${1}"
@@ -267,15 +203,6 @@ build_target()
 			# The base OS distro requires a kernel build.
 			#
 			_required_logs="_.ik _.iw"
-
-		#
-		# For plugins, we don't need to build a NanoBSD image, however, the PBI
-		# tools will build a chroot and use it in the future for all plugin builds.
-		#
-		elif is_plugin "${_target}"
-		then
-			_required_logs=""
-		fi
 
 		for _required_log in ${_required_logs}
 		do
@@ -598,11 +525,6 @@ main()
 	then
 		requires_root
 	fi
-
-	#
-	# Install pbi-manager to a known location
-	#
-	install_pbi_manager
 
 	#
 	# Expand targets to their full path in the file system

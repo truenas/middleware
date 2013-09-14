@@ -1,6 +1,0 @@
-language: php
-script: php include.php
-php:
-  - 5.2
-  - 5.3
-  - 5.4
