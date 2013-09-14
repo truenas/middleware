@@ -47,12 +47,12 @@ TRACE=""
 # NanoBSD flags
 NANO_ARGS=""
 
-GIT_CACHE="file:///freenas-build/trueos.git"
-if [ -z "${GIT_REPO}" -a -e "${GIT_CACHE##file://}" ] ; then
-        GIT_REPO="${GIT_CACHE}"
+GIT_FREEBSD_CACHE="file:///freenas-build/trueos.git"
+if [ -z "${GIT_FREEBSD_REPO}" -a -e "${GIT_FREEBSD_CACHE##file://}" ] ; then
+        GIT_FREEBSD_REPO="${GIT_FREEBSD_CACHE}"
 fi
-if [ -e "${GIT_REPO##file://}" ]; then
-        echo "Using local mirror in $GIT_REPO"
+if [ -e "${GIT_FREEBSD_REPO##file://}" ]; then
+        echo "Using local mirror in $GIT_FREEBSD_REPO"
 else
         echo "no local mirror, to speed up builds we suggest doing"
         echo "'git clone --mirror https://github.com/trueos/trueos.git into ${HOME}/freenas/git/trueos.git"
@@ -293,17 +293,17 @@ freebsd_checkout_git()
 	# the tags.  If GIT_DEEP is set, then we don't want a shallow
 	# copy because we need to tag for a release or otherwise work
 	# on the repo we are cloning.
-	if [ "x${GIT_DEEP}" != "x" ] ; then
+	if [ "x${GIT_DEEP}" != "x" -o "x${GIT_FREEBSD_DEEP}" != "x" ] ; then
 		_depth_arg=""
 	fi
-	: ${GIT_BRANCH=freenas-9-stable}
-	: ${GIT_REPO=https://github.com/trueos/trueos.git}
+	: ${GIT_FREEBSD_BRANCH=freenas-9-stable}
+	: ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos.git}
 	cd "$AVATAR_ROOT/FreeBSD"
 	if [ -d src/.git ] ; then
 		cd src
-		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${GIT_BRANCH}" ]; then
+		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${GIT_FREEBSD_BRANCH}" ]; then
 
-			git checkout ${GIT_BRANCH}
+			git checkout ${GIT_FREEBSD_BRANCH}
 		fi
 		git pull $_depth_arg
 		cd ..
@@ -312,12 +312,12 @@ freebsd_checkout_git()
 		local spl
 
         spl="$-";set -x
-        if [ "x${GIT_TAG}" != "x" ] ; then
-            branch="${GIT_TAG}"
+        if [ "x${GIT_FREEBSD_TAG}" != "x" ] ; then
+            branch="${GIT_FREEBSD_TAG}"
         else
-            branch=${GIT_BRANCH}
+            branch=${GIT_FREEBSD_BRANCH}
         fi
-		git clone -b "$branch" ${GIT_REPO} $_depth_arg src
+		git clone -b "$branch" ${GIT_FREEBSD_REPO} $_depth_arg src
 		echo $spl | grep -q x || set +x
 	fi
 	)
@@ -376,7 +376,7 @@ ports_checkout_git()
 {
 	(
 	local _depth_arg="--depth 1"
-	if [ "x${GIT_DEEP}" != "x" ] ; then
+	if [ "x${GIT_DEEP}" != "x" -o "x${GIT_PORTS_DEEP}" != "x"] ; then
 		_depth_arg=""
 	fi
 	cd "$AVATAR_ROOT/FreeBSD"
