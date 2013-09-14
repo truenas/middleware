@@ -43,21 +43,16 @@ TRACE=""
 # NanoBSD flags
 NANO_ARGS=""
 
-GIT_FREEBSD_CACHE="file:///freenas-build/trueos.git"
-if [ -z "${GIT_FREEBSD_REPO}" -a -e "${GIT_FREEBSD_CACHE##file://}" ] ; then
-        GIT_FREEBSD_REPO="${GIT_FREEBSD_CACHE}"
-fi
-if [ -e "${GIT_FREEBSD_REPO##file://}" ]; then
-        echo "Using local mirror in $GIT_FREEBSD_REPO"
+: ${GIT_FREEBSD_CACHE="file:///freenas-build/trueos.git"}
+if [ -e "${GIT_FREEBSD_CACHE##file://}" ]; then
+        echo "Using local mirror in $GIT_FREEBSD_CACHE"
 else
         echo "no local mirror, to speed up builds we suggest doing"
-        echo "'git clone --mirror https://github.com/trueos/trueos.git into ${HOME}/freenas/git/trueos.git"
+        echo "'git clone --mirror ${GIT_FREEBSD_REPO} into ${GIT_FREEBSD_CACHE}"
 fi
-GIT_PORTS_CACHE="file:///freenas-build/ports.git"
-if [ -z "${GIT_PORTS_REPO}" -a -e "${GIT_PORTS_CACHE##file://}" ] ;then
-    GIT_PORTS_REPO="$GIT_PORTS_CACHE" 
-fi
-if [ -e "${GIT_PORTS_REPO##file://}" ]; then
+
+: ${GIT_PORTS_CACHE="file:///freenas-build/ports.git"}
+if [ -e "${GIT_PORTS_CACHE##file://}" ]; then
     echo "Using local git ports mirror in $GIT_PORTS_REPO"
 else
     echo "no local mirror, to speed up builds we suggest doing"
@@ -259,25 +254,32 @@ build_targets()
 	done
 }
 
-freebsd_checkout_git()
+generic_checkout_git()
 {
+    local repo_name=$1
+    local checkout_path=$2
+    local checkout_name=$3
+    eval local my_deep=\${GIT_${repo_name}_DEEP}
+    eval local my_repo=\${GIT_${repo_name}_REPO}
+    eval local my_cache=\${GIT_${repo_name}_CACHE}
+    eval local my_branch=\${GIT_${repo_name}_BRANCH}
+    eval local my_tag=\${GIT_${repo_name}_TAG}
 	(
+    mkdir -p "$checkout_path"
 	local _depth_arg="--depth 1"
 	# If tags are set, then it appears we need a full checkout to get
 	# the tags.  If GIT_DEEP is set, then we don't want a shallow
 	# copy because we need to tag for a release or otherwise work
 	# on the repo we are cloning.
-	if [ "x${GIT_DEEP}" != "x" -o "x${GIT_FREEBSD_DEEP}" != "x" ] ; then
+	if [ "x${GIT_DEEP}" != "x" -o "x${my_deep}" != "x" ] ; then
 		_depth_arg=""
 	fi
-	: ${GIT_FREEBSD_BRANCH=freenas-9-stable}
-	: ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos.git}
-	cd "$AVATAR_ROOT/FreeBSD"
-	if [ -d src/.git ] ; then
-		cd src
-		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${GIT_FREEBSD_BRANCH}" ]; then
+	cd "${checkout_path}"
+	if [ -d ${checkout_name}/.git ] ; then
+		cd ${checkout_name}
+		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${my_branch}" ]; then
 
-			git checkout ${GIT_FREEBSD_BRANCH}
+			git checkout ${my_branch}
 		fi
 		git pull $_depth_arg
 		cd ..
@@ -286,15 +288,29 @@ freebsd_checkout_git()
 		local spl
 
         spl="$-";set -x
-        if [ "x${GIT_FREEBSD_TAG}" != "x" ] ; then
-            branch="${GIT_FREEBSD_TAG}"
+        if [ "x${my_tag}" != "x" ] ; then
+            branch="${my_tag}"
         else
-            branch=${GIT_FREEBSD_BRANCH}
+            branch=${my_branch}
         fi
-		git clone -b "$branch" ${GIT_FREEBSD_REPO} $_depth_arg src
+        if [ -e "${my_cache##file://}" ]; then
+            git clone ${my_cache} ${checkout_name}
+            cd ${checkout_name}
+            git remote set-url origin "${my_repo}"
+            git checkout "$branch"
+        else
+		    git clone -b "$branch" ${my_repo} $_depth_arg ${checkout_name}
+        fi
 		echo $spl | grep -q x || set +x
 	fi
 	)
+}
+
+freebsd_checkout_git()
+{
+	: ${GIT_FREEBSD_BRANCH=freenas-9-stable}
+	: ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos.git}
+    generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
 }
 
 checkout_freebsd_source()
@@ -315,46 +331,15 @@ checkout_freebsd_source()
 			awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
 
 			# Checkout git ports
-			ports_checkout_git
-
+		    : ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
+		    : ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
+            generic_checkout_git PORTS "${AVATAR_ROOT}/FreeBSD" ports
 
 		#
 		# Force a repatch.
 		#
-		: > ${AVATAR_ROOT}/FreeBSD/src-patches
-		: > ${AVATAR_ROOT}/FreeBSD/ports-patches
 		: > ${AVATAR_ROOT}/FreeBSD/.pulled
 	fi
-}
-
-ports_checkout_git()
-{
-	(
-	local _depth_arg="--depth 1"
-	if [ "x${GIT_DEEP}" != "x" -o "x${GIT_PORTS_DEEP}" != "x"] ; then
-		_depth_arg=""
-	fi
-	cd "$AVATAR_ROOT/FreeBSD"
-	if [ -d ports/.git ] ; then
-		cd ports
-		git pull $_depth_arg
-		cd ..
-	else
-        local branch
-        local spl
-
-		: ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
-		: ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
-		spl="$-";set -x
-        if [ "x${GIT_PORTS_TAG}" != "x" ] ; then
-            branch="${GIT_PORTS_TAG}"
-        else
-            branch=${GIT_PORTS_BRANCH}
-        fi
-		git clone -b "$branch" ${GIT_PORTS_REPO} $_depth_arg ports
-		echo $spl | grep -q x || set +x
-	fi
-	)
 }
 
 do_pbi_wrapper_hack()
