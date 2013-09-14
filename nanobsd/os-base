@@ -296,8 +296,12 @@ add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port devel/libevent
+add_port devel/libevent2
 add_port sysutils/tmux
-add_port net/netatalk WITH_PAM=y WITHOUT_APPLETALK=y
+add_port devel/py-dbus
+add_port net/netatalk3 OPTIONS_FILE_SET+=PAM \
+	OPTIONS_FILE_SET+=SENDFILE \
+	OPTIONS_FILE_SET+=LDAP
 add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
