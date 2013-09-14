@@ -1,0 +1,127 @@
+#!/usr/bin/env python
+
+import sys
+from subprocess import call
+
+import argparse
+import os
+
+def my_check_call(*args, **kwargs):
+    print "args: %s | %s" % (args, dict(**kwargs))
+    subprocess.check_call(*args, **kwargs)
+
+def add_second_options(parser):
+    parser.add_argument('--avatar-project',
+        dest='avatar_project',
+        help='specify product (FreeNAS/TrueNAS)',
+        default='freenas')
+
+    parser.add_argument('--sandbox-name', help='checkout name')
+
+    parser.add_argument('--build-repo',
+    help='specify the build repo (ex: https://github.com/freenas/freenas',
+        default='https://github.com/freenas/freenas')
+
+    parser.add_argument('--build-repo-cache',
+        help='specify a local cache to speed up initial checkout')
+    parser.add_argument('--build-branch',
+        help='specify the build branch',
+        default='master')
+
+# Since we derive the "avatar_project" from the command line which THEN
+# sets defaults for some common arguments we then need to parse the arguments
+# twice, because it seems like defaults are set at the time of the actual
+# argparse not based defaults in the backing parser object.
+
+
+# Make our first parser to get the "avatar_project"
+avatar_parser = argparse.ArgumentParser(description='Checkout a sandbox.')
+add_second_options(avatar_parser)
+avatar_arg = avatar_parser.parse_args()
+avatar_project = avatar_arg.avatar_project
+
+# OK, now make a second that we will set defaults and other thigns via
+# the module we load for that avatar
+parser = argparse.ArgumentParser(description='Checkout a sandbox.')
+add_second_options(parser)
+
+# our default is FreeNAS, but if an alternate avatar project is specified then
+# bring in those defaults instead.
+'''
+if True:
+    args = parser.parse_args()
+    avatar_project=args.avatar_project.lower()
+else:
+    args= argparse.Namespace()
+    avatar_project='freenas'
+'''
+import sys
+import importlib
+avatar_conf = importlib.import_module('avatar.%s' % avatar_project) #, 'avatar')
+avatar_conf.setup_arg_parser(parser)
+
+args = parser.parse_args()
+
+print "parser.get_default('build_repo_cache'): %s" % parser.get_default('build_repo_cache')
+
+import subprocess
+
+build_clone_url = args.build_repo_cache
+print "args.build_repo_cache: %s" % args.build_repo_cache
+print "args: %s" % args
+if build_clone_url is None:
+    build_clone_url = args.build_repo
+
+# Workflow is:
+# Clone from cache if it exists.  If no cache, then just use the actual repo.
+# Update the remote 'origin' to point to the actual repo.
+# Git pull any refs to get up to date in case the cache is out of date in respect to
+#   the actual repo.
+# Checkout the branch.
+#
+# If we use a cache we do not do a -b branch to checkout initially because the specified
+# branch may not be in the cache.  For now we actually never '-b branch' to save time 
+# writing this script!  XXX: someone fix that?
+
+# do the initial clone
+sandbox_name = args.sandbox_name
+if sandbox_name is None:
+    sandbox_name = avatar_project
+
+os.mkdir(sandbox_name)
+os.chdir(sandbox_name)
+
+my_check_call("git clone %s %s" % (build_clone_url, avatar_project), shell=True)
+
+# update the origin to point to actual repo
+os.chdir(avatar_project)
+if build_clone_url != args.build_repo:
+    my_check_call("git remote set-url origin %s" % args.build_repo, shell=True)
+
+# get any missing tags or branches from the repo
+my_check_call("git fetch --all", shell=True)
+# get the branch
+my_check_call("git checkout %s" % args.build_branch, shell=True)
+
+# go back to sandbox level
+os.chdir("..")
+f = open(".sb-vars", "w")
+
+def write_sb_var(f, var, val):
+    if val is None:
+        f.write("#%s= unset" % var)
+        return
+    f.write("%s='%s'\n" % (var, val))
+
+write_sb_var(f, "GIT_FREEBSD_REPO", args.freebsd_repo)
+write_sb_var(f, "GIT_FREEBSD_CACHE", args.freebsd_repo_cache)
+write_sb_var(f, "GIT_PORTS_REPO", args.ports_repo)
+write_sb_var(f, "GIT_PORTS_CACHE", args.ports_repo_cache)
+write_sb_var(f, "SB_BUILD_DIR", avatar_project)
+
+f.close()
+
+print "========================================"
+print "->>> Now run: workon %s" % sandbox_name
+print "========================================"
+
