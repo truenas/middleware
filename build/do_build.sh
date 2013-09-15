@@ -12,6 +12,9 @@ TOP="$(pwd)"
 # Should we build?
 BUILD=true
 
+# only checkout sources
+CHECKOUT_ONLY=false
+
 # 0 - build only what's required (src, ports, diskimage, etc).
 # 1 - force src build.
 # 2 - nuke the obj directories (os-base.*, etc) and build from scratch.
@@ -66,6 +69,7 @@ usage: ${0##*/} [-aBfJsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-
 -a		- Build all targets
 -B		- don't build. Will pull the sources and show you the
 		  nanobsd.sh invocation string instead. 
+-c		- Only checkout the source code don't do anything else.
 -f  		- if not specified, will pass either -b (if prebuilt) to
 		  nanobsd.sh, or nothing if not prebuilt. If specified once,
 		  force a buildworld / buildkernel (passes -n to nanobsd). If
@@ -99,7 +103,7 @@ show_build_targets()
 
 parse_cmdline()
 {
-	while getopts 'aBfj:st:uxz' _optch
+	while getopts 'aBcfj:st:uxz' _optch
 	do
 		case "${_optch}" in
 		a)
@@ -108,6 +112,8 @@ parse_cmdline()
 		B)
 			BUILD=false
 			;;
+        c)  CHECKOUT_ONLY=true
+            ;;
 		f)
 			: $(( FORCE_BUILD += 1 ))
 			;;
@@ -375,6 +381,12 @@ do_extract_tarball_hack()
 main()
 {
 	parse_cmdline "$@"
+
+    if $CHECKOUT_ONLY ; then
+        set -e
+        checkout_freebsd_source
+        exit 0
+    fi
 
 	#
 	# Assume os-base if no targets are specified
