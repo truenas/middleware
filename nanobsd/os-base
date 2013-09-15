@@ -568,16 +568,19 @@ customize_cmd add_pcbsd_xtrafiles
 add_pbi_wrapper()
 {
 	local _pm 
+	local _ad
+	local _bd
+
 	_pm="${NANO_WORLDDIR}/usr/pbi/.pbiwrapper-${NANO_ARCH}"
+	_ad="${AVATAR_ROOT}/pbi"
+	_bd="${_ad}/${NANO_ARCH}"
 
 	pprint 2 "Adding PBI wrapper"
 
-	mkdir -p "${PBI_APPDIR}"
-	mkdir -p "${PBI_BUILDDIR}"
-
-	if [ ! -s "${PBI_BUILDDIR}/.pbiwrapper" ]
+	mkdir -p "${_bd}"
+	if [ ! -s "${_bd}/.pbiwrapper" ]
 	then
-		cp "${_pm}" "${PBI_APPDIR}/.pbiwrapper-${NANO_ARCH}"
+		cp "${_pm}" "${_ad}/.pbiwrapper-${NANO_ARCH}"
 	fi
 }
 customize_cmd add_pbi_wrapper
