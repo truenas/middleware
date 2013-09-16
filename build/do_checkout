@@ -140,6 +140,7 @@ write_sb_var(f, "SB_BUILD_DIR", avatar_project)
 
 f.close()
 
+print ""
 print "========================================"
 print "->>> Now run: workon %s" % sandbox_name
 print "========================================"
