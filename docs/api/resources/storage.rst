@@ -453,21 +453,17 @@ List resource
 
       [
         {
-                "cifs_inheritperms": false,
-                "cifs_hostsallow": "",
-                "cifs_name": "My Test Share",
-                "cifs_guestok": false,
-                "cifs_showhiddenfiles": false,
-                "cifs_hostsdeny": "",
-                "cifs_recyclebin": false,
-                "cifs_auxsmbconf": "",
-                "cifs_comment": "",
-                "cifs_path": "/mnt/tank/MyShare",
-                "cifs_ro": false,
-                "cifs_inheritowner": false,
-                "cifs_guestonly": true,
+                "task_ret_count": 2,
+                "task_repeat_unit": "weekly",
+                "task_enabled": true,
+                "task_recursive": false,
+                "task_end": "18:00:00",
+                "task_interval": 60,
+                "task_byweekday": "1,2,3,4,5",
+                "task_begin": "09:00:00",
+                "task_filesystem": "tank",
                 "id": 1,
-                "cifs_browsable": true
+                "task_ret_unit": "week"
         }
       ]
 
@@ -644,7 +640,22 @@ List resource
 
       [
         {
-
+                "repl_end": "23:59:00",
+                "repl_remote_dedicateduser": null,
+                "repl_userepl": false,
+                "repl_limit": 0,
+                "repl_remote_port": 22,
+                "repl_remote_dedicateduser_enabled": false,
+                "repl_begin": "00:00:00",
+                "repl_filesystem": "tank",
+                "repl_remote_fast_cipher": false,
+                "repl_remote_hostkey": "AAAA",
+                "repl_enabled": true,
+                "repl_resetonce": false,
+                "repl_remote_hostname": "testhost",
+                "repl_lastsnapshot": "",
+                "id": 1,
+                "repl_zfs": "tank"
         }
       ]
 
