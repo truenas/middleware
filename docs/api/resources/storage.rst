@@ -294,6 +294,59 @@ Unlock
    :statuscode 200: no error
 
 
+Recovery Key
+++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/recoverykey/
+
+   Add a recovery key for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/recoverykey/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "message": "New recovery key has been added.",
+                "content": "YWRhc2RzYWRhc2RzYWQ="
+        }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+.. http:delete:: /api/v1.0/storage/volume/(int:id|string:name)/recoverykey/
+
+   Remove a recovery key for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/storage/volume/tank/recoverykey/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :resheader Content-Type: content type of the response
+   :statuscode 204: no error
+
+
 Task
 ----------
 
