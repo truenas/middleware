@@ -24,9 +24,28 @@ def add_second_options(parser):
 
     parser.add_argument('--build-repo-cache',
         help='specify a local cache to speed up initial checkout')
+
     parser.add_argument('--build-branch',
         help='specify the build branch',
         default='master')
+
+    # XXX: this should be inside the per-avatar modules.
+    # we can fix this later by forcing --avatar-project first.
+
+    parser.add_argument('--freebsd-branch',
+	help='specify branch of freebsd to pull')
+    parser.add_argument('--freebsd-repo',
+	help='specify path to freebsd repo')
+    parser.add_argument('--freebsd-repo-cache',
+	help='specify path to freebsd repo cache')
+
+    parser.add_argument('--ports-branch',
+	help='specify branch of freebsd to pull')
+    parser.add_argument('--ports-repo',
+	help='specify path to ports repo')
+    parser.add_argument('--ports-repo-cache',
+	help='specify path to ports repo')
+
 
 # Since we derive the "avatar_project" from the command line which THEN
 # sets defaults for some common arguments we then need to parse the arguments
