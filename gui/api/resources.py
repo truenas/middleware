@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import base64
+import json
 import logging
 import re
 import subprocess
@@ -366,11 +368,17 @@ class VolumeResourceMixin(NestedMixin):
         bundle, obj = self._get_parent(request, kwargs)
 
         if request.method == 'POST':
-            notifier().geli_recoverykey_add(obj)
-            return HttpResponse('New recovery key has been added.', status=202)
+            reckey = notifier().geli_recoverykey_add(obj)
+            with open(reckey, 'rb') as f:
+                data = f.read()
+            data = base64.b64encode(data)
+            return HttpResponse(json.dumps({
+                'message': 'New recovery key has been added.',
+                'content': data,
+            }), status=202)
         elif request.method == 'DELETE':
             notifier().geli_delkey(obj)
-            return HttpResponse('Recovery key has been removed.', status=202)
+            return HttpResponse('Recovery key has been removed.', status=204)
 
     def rekey(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
