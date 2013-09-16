@@ -457,61 +457,65 @@ class VolumeResourceMixin(NestedMixin):
                             'cksum': current.cksum,
                             'children': [],
                         }
-                        try:
-                            disk = Disk.objects.order_by(
-                                'disk_enabled'
-                            ).filter(disk_name=current.disk)[0]
-                            data['_disk_url'] = "%s?deletable=false" % (
-                                disk.get_edit_url(),
-                            )
-                        except IndexError:
-                            disk = None
-                        if current.status == 'ONLINE':
-                            data['_offline_url'] = reverse(
-                                'storage_disk_offline',
-                                kwargs={
-                                    'vname': pool.name,
-                                    'label': current.name,
-                                })
+                        if self.is_webclient(bundle.request):
+                            try:
+                                disk = Disk.objects.order_by(
+                                    'disk_enabled'
+                                ).filter(disk_name=current.disk)[0]
+                                data['_disk_url'] = "%s?deletable=false" % (
+                                    disk.get_edit_url(),
+                                )
+                            except IndexError:
+                                disk = None
+                            if current.status == 'ONLINE':
+                                data['_offline_url'] = reverse(
+                                    'storage_disk_offline',
+                                    kwargs={
+                                        'vname': pool.name,
+                                        'label': current.name,
+                                    })
 
-                        if current.replacing:
-                            data['_detach_url'] = reverse(
-                                'storage_disk_detach',
-                                kwargs={
-                                    'vname': pool.name,
-                                    'label': current.name,
-                                })
-
-                        """
-                        Replacing might go south leaving multiple UNAVAIL disks
-                        For that reason replace button should be enable even
-                        for disks already under replacing subtree
-                        """
-                        data['_replace_url'] = reverse(
-                            'storage_zpool_disk_replace',
-                            kwargs={
-                                'vname': pool.name,
-                                'label': current.name,
-                            })
-                        if current.parent.parent.name in (
-                            'spares',
-                            'cache',
-                            'logs',
-                        ):
-                            if not current.parent.name.startswith("stripe"):
+                            if current.replacing:
                                 data['_detach_url'] = reverse(
                                     'storage_disk_detach',
                                     kwargs={
                                         'vname': pool.name,
                                         'label': current.name,
                                     })
-                            else:
-                                data['_remove_url'] = reverse(
-                                    'storage_zpool_disk_remove',
-                                    kwargs={
-                                        'vname': pool.name,
-                                        'label': current.name,
-                                    })
+
+                            """
+                            Replacing might go south leaving multiple UNAVAIL
+                            disks, for that reason replace button should be
+                            enable even for disks already under replacing
+                            subtree
+                            """
+                            data['_replace_url'] = reverse(
+                                'storage_zpool_disk_replace',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                })
+                            if current.parent.parent.name in (
+                                'spares',
+                                'cache',
+                                'logs',
+                            ):
+                                if not current.parent.name.startswith(
+                                    "stripe"
+                                ):
+                                    data['_detach_url'] = reverse(
+                                        'storage_disk_detach',
+                                        kwargs={
+                                            'vname': pool.name,
+                                            'label': current.name,
+                                        })
+                                else:
+                                    data['_remove_url'] = reverse(
+                                        'storage_zpool_disk_remove',
+                                        kwargs={
+                                            'vname': pool.name,
+                                            'label': current.name,
+                                        })
 
                     else:
                         raise ValueError("Invalid node")
