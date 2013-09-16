@@ -134,3 +134,166 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
+
+
+
+Extent
+----------
+
+The Extent resource represents extents for the iSCSI targets.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/iscsi/extent/
+
+   Returns a list of all extents.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/iscsi/extent/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+                "iscsi_target_extent_comment": "",
+                "iscsi_target_extent_type": "File",
+                "iscsi_target_extent_name": "extent",
+                "iscsi_target_extent_filesize": "10MB",
+                "id": 1,
+                "iscsi_target_extent_path": "/mnt/tank/iscsi"
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/services/iscsi/extent/
+
+   Creates a new extent and returns the new extent object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/services/iscsi/extent/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "iscsi_target_extent_type": "File",
+                "iscsi_target_extent_name": "extent",
+                "iscsi_target_extent_filesize": "10MB",
+                "iscsi_target_extent_path": "/mnt/tank/iscsi"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "iscsi_target_extent_comment": "",
+                "iscsi_target_extent_type": "File",
+                "iscsi_target_extent_name": "extent",
+                "iscsi_target_extent_filesize": "10MB",
+                "id": 1,
+                "iscsi_target_extent_path": "/mnt/tank/iscsi"
+        }
+
+   :json string iscsi_target_extent_name: identifier of the extent
+   :json string iscsi_target_extent_type: File, Device, ZFS Volume
+   :json string iscsi_target_extent_path: path to the extent
+   :json string iscsi_target_extent_filesize: size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, TB for convenience
+   :json string iscsi_target_extent_comment: user description
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/iscsi/extent/(int:id)/
+
+   Update extent `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/iscsi/extent/1/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "iscsi_target_extent_filesize": "20MB"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "iscsi_target_extent_comment": "",
+                "iscsi_target_extent_type": "File",
+                "iscsi_target_extent_name": "extent",
+                "iscsi_target_extent_filesize": "20MB",
+                "id": 1,
+                "iscsi_target_extent_path": "/mnt/tank/iscsi"
+        }
+
+   :json string iscsi_target_extent_name: identifier of the extent
+   :json string iscsi_target_extent_type: File, Device, ZFS Volume
+   :json string iscsi_target_extent_path: path to the extent
+   :json string iscsi_target_extent_filesize: size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, TB for convenience
+   :json string iscsi_target_extent_comment: user description
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/services/iscsi/extent/(int:id)/
+
+   Delete extent `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/services/iscsi/extent/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
