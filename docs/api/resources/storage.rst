@@ -141,6 +141,58 @@ Delete resource
    :statuscode 204: no error
 
 
+Scrub
++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/scrub/
+
+   Start scrub for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/scrub/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Volume scrub started.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+.. http:delete:: /api/v1.0/storage/volume/(int:id|string:name)/scrub/
+
+   Stop scrub for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/storage/volume/tank/scrub/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Volume scrub stopped.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
 Replace disk
 +++++++++++++
 
