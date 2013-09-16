@@ -132,8 +132,10 @@ def write_sb_var(f, var, val):
         return
     f.write("%s='%s'\n" % (var, val))
 
+write_sb_var(f, "GIT_FREEBSD_BRANCH", args.freebsd_branch)
 write_sb_var(f, "GIT_FREEBSD_REPO", args.freebsd_repo)
 write_sb_var(f, "GIT_FREEBSD_CACHE", args.freebsd_repo_cache)
+write_sb_var(f, "GIT_PORTS_BRANCH", args.ports_branch)
 write_sb_var(f, "GIT_PORTS_REPO", args.ports_repo)
 write_sb_var(f, "GIT_PORTS_CACHE", args.ports_repo_cache)
 write_sb_var(f, "SB_BUILD_DIR", avatar_project)
