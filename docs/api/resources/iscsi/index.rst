@@ -297,3 +297,156 @@ Delete resource
       Content-Type: application/json
 
    :statuscode 204: no error
+
+
+Authorized Initiator
+--------------------
+
+The Authorized Initiator resource represents network authorized to access to the iSCSI target.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/iscsi/authorizedinitiator/
+
+   Returns a list of all authorized initiators.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/iscsi/authorizedinitiator/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+                "iscsi_target_initiator_initiators": "ALL",
+                "iscsi_target_initiator_comment": "",
+                "iscsi_target_initiator_auth_network": "ALL",
+                "id": 1,
+                "iscsi_target_initiator_tag": 1
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/services/iscsi/authorizedinitiator/
+
+   Creates a new authorized initiator and returns the new object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/services/iscsi/authorizedinitiator/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "iscsi_target_initiator_initiators": "ALL",
+                "iscsi_target_initiator_auth_network": "ALL",
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "iscsi_target_initiator_initiators": "ALL",
+                "iscsi_target_initiator_comment": "",
+                "iscsi_target_initiator_auth_network": "ALL",
+                "id": 1,
+                "iscsi_target_initiator_tag": 1
+        }
+
+   :json string iscsi_target_initiator_initiators: initiator authorized to access to the iSCSI target
+   :json string iscsi_target_initiator_auth_network: network authorized to access to the iSCSI target, it takes IP or CIDR addresses or 'ALL' for any IPs
+   :json string scsi_target_initiator_comment: description for your reference
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/iscsi/authorizedinitiator/(int:id)/
+
+   Update authorized initiator `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/iscsi/authorizedinitiator/1/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "iscsi_target_initiator_auth_network": "192.168.3.0/24"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "iscsi_target_initiator_initiators": "ALL",
+                "iscsi_target_initiator_comment": "",
+                "iscsi_target_initiator_auth_network": "192.168.3.0/24",
+                "id": 1,
+                "iscsi_target_initiator_tag": 1
+        }
+
+   :json string iscsi_target_initiator_initiators: initiator authorized to access to the iSCSI target
+   :json string iscsi_target_initiator_auth_network: network authorized to access to the iSCSI target, it takes IP or CIDR addresses or 'ALL' for any IPs
+   :json string scsi_target_initiator_comment: description for your reference
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/services/iscsi/authorizedinitiator/(int:id)/
+
+   Delete authorized initiator `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/services/iscsi/authorizedinitiator/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
