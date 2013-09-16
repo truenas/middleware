@@ -81,13 +81,13 @@ avatar_conf.setup_arg_parser(parser)
 
 args = parser.parse_args()
 
-print "parser.get_default('build_repo_cache'): %s" % parser.get_default('build_repo_cache')
+#print "parser.get_default('build_repo_cache'): %s" % parser.get_default('build_repo_cache')
 
 import subprocess
 
 build_clone_url = args.build_repo_cache
-print "args.build_repo_cache: %s" % args.build_repo_cache
-print "args: %s" % args
+#print "args.build_repo_cache: %s" % args.build_repo_cache
+#print "args: %s" % args
 if build_clone_url is None:
     build_clone_url = args.build_repo
 
