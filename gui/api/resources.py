@@ -464,7 +464,6 @@ class VolumeResourceMixin(NestedMixin):
                             'read': current.read,
                             'write': current.write,
                             'cksum': current.cksum,
-                            'children': [],
                         }
                         if self.is_webclient(bundle.request):
                             try:
