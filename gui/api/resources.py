@@ -450,6 +450,7 @@ class VolumeResourceMixin(NestedMixin):
                     elif isinstance(current, zfs.Dev):
                         data = {
                             'name': current.devname,
+                            'label': current.name,
                             'type': 'dev',
                             'status': current.status,
                             'read': current.read,
