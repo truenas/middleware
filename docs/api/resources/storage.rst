@@ -1003,3 +1003,109 @@ Delete resource
       Content-Type: application/json
 
    :statuscode 204: no error
+
+
+Disk
+----------
+
+The Disk resource represents available disks in the system.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/storage/disk/
+
+   Returns a list of all disks.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/storage/disk/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+                "disk_acousticlevel": "Disabled",
+                "disk_advpowermgmt": "Disabled",
+                "disk_serial": "VBad9d9bb7-3d1d3bce",
+                "disk_multipath_name": "",
+                "disk_identifier": "{serial}VBad9d9bb7-3d1d3bce",
+                "disk_togglesmart": true,
+                "id": 8,
+                "disk_hddstandby": "Always On",
+                "disk_transfermode": "Auto",
+                "disk_multipath_member": "",
+                "disk_description": "",
+                "disk_smartoptions": "",
+                "disk_enabled": true,
+                "disk_name": "ada7"
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/storage/disk/(int:id)/
+
+   Update Disk `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/storage/disk/1/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "disk_togglesmart": false
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "disk_acousticlevel": "Disabled",
+                "disk_advpowermgmt": "Disabled",
+                "disk_serial": "VBad9d9bb7-3d1d3bce",
+                "disk_multipath_name": "",
+                "disk_identifier": "{serial}VBad9d9bb7-3d1d3bce",
+                "disk_togglesmart": false,
+                "id": 8,
+                "disk_hddstandby": "Always On",
+                "disk_transfermode": "Auto",
+                "disk_multipath_member": "",
+                "disk_description": "",
+                "disk_smartoptions": "",
+                "disk_enabled": true,
+                "disk_name": "ada7"
+        }
+
+   :json string disk_description: user description
+   :json string disk_hddstandby: Always On, 5, 10, 20, 30, 60, 120, 180, 240, 300, 330
+   :json string disk_advpowermgmt: Disabled, 1, 64, 127, 128. 192, 254
+   :json string disk_acousticlevel: Disabled, Minimum, Medium, Maximum
+   :json boolean disk_togglesmart: Enable S.M.A.R.T.
+   :json string disk_smartoptions: S.M.A.R.T. extra options
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
