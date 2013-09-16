@@ -704,12 +704,11 @@ class iSCSITargetAuthCredential(Model):
             help_text=_("Target side secret."),
             )
     iscsi_target_auth_peeruser = models.CharField(
-            max_length=120,
-            blank=True,
-            verbose_name=_("Peer User"),
-            help_text=_("Initiator side secret. (for mutual CHAP "
-                "authentication)"),
-            )
+        max_length=120,
+        blank=True,
+        verbose_name=_("Peer User"),
+        help_text=_("Initiator side user name."),
+    )
     iscsi_target_auth_peersecret = models.CharField(
             max_length=120,
             verbose_name=_("Peer Secret"),
