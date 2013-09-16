@@ -141,6 +141,41 @@ Delete resource
    :statuscode 204: no error
 
 
+Replace disk
++++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/replace/
+
+   Replace a disk of volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/replace/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "label": "gptid/7c4dd4f1-1a1f-11e3-9786-080027c5e4f4",
+                "replace_disk": "ada4"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Disk replacement started.
+
+   :json string label: zfs label of the device
+   :json string replace_disk: name of the new disk
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
 
 Task
 ----------
