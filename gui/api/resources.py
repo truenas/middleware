@@ -1468,7 +1468,13 @@ class JailsResourceMixin(object):
 
         return bundle
 
-<<<<<<< HEAD
+    def hydrate(self, bundle):
+        bundle = super(JailsResourceMixin, self).hydrate(bundle)
+        if 'id' not in bundle.data:
+            bundle.data['id'] = 1
+        return bundle
+
+
 class JailTemplateResource(DojoModelResource):
 
     class Meta:
@@ -1485,13 +1491,6 @@ class JailTemplateResource(DojoModelResource):
         bundle.data['_edit_url'] = reverse('jail_template_edit', kwargs={
             'id': bundle.obj.id
         })
-=======
-    def hydrate(self, bundle):
-        bundle = super(JailsResourceMixin, self).hydrate(bundle)
-        if 'id' not in bundle.data:
-            bundle.data['id'] = 1
->>>>>>> d075847... Rename fields in jails resource for consistency
-        return bundle
 
 
 class SnapshotResource(DojoResource):
