@@ -5,7 +5,7 @@ System
 Resources related to system.
 
 Admin Password
-----------
+--------------
 
 The Admin Password resource represents password change form to access the WebGUI.
 
@@ -40,6 +40,81 @@ Change Password
 
    :json string old_password: old password
    :json string new_password: new password
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
+Admin User
+----------
+
+The Admin User resource represents WebGUI account information.
+
+List resource
++++++++++++++++
+
+.. http:get:: /api/v1.0/system/adminuser/
+
+   Get user settings.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/adminuser/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "username": "admin",
+                "first_name": "",
+                "last_name": ""
+        }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/system/adminuser/
+
+   Change user settings.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/system/adminuser/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "username": "myadmin"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "username": "myadmin",
+                "first_name": "",
+                "last_name": ""
+        }
+
+   :json string username: webgui username
+   :json string first_name: first name
+   :json string last_name: last name
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
 
