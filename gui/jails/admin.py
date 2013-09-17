@@ -32,7 +32,7 @@ from django.utils.translation import ugettext as _
 from django.utils.html import escapejs
 
 from freenasUI.api.resources import (
-    JailsResourceMixin, JailTemplateResource, NullMountPointResourceMixin
+    JailsResourceMixin, JailTemplateResourceMixin, NullMountPointResourceMixin
 )
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.options import BaseFreeAdmin
@@ -227,7 +227,7 @@ class JailTemplateFAdmin(BaseFreeAdmin):
     icon_add = u"ServicesIcon"
     icon_view = u"ServicesIcon"
 
-    resource = JailTemplateResource
+    resource_mixin = JailTemplateResourceMixin
 
     def get_datagrid_columns(self):
         columns = []
