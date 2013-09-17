@@ -189,16 +189,8 @@ class Advanced(Model):
             )
     adv_consolescreensaver = models.BooleanField(
             verbose_name=_("Enable screen saver"))
-    adv_firmwarevc = models.BooleanField(
-            verbose_name=_("Automatically Check for New Firmware"))
-    adv_systembeep = models.BooleanField(
-            verbose_name=_("Beep on boot"))
-    adv_tuning = models.BooleanField(
-            verbose_name=_("Enable Special System Tuning"))
     adv_powerdaemon = models.BooleanField(
             verbose_name=_("Enable powerd (Power Saving Daemon)"))
-    adv_zeroconfbonjour = models.BooleanField(
-            verbose_name=_("Enable Zeroconf/Bonjour"))
     adv_swapondrive = models.IntegerField(
             validators=[MinValueValidator(0)],
             verbose_name=_("Swap size on each drive in GiB, affects new disks "

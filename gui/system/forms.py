@@ -330,12 +330,6 @@ class NTPForm(ModelForm):
 class AdvancedForm(ModelForm):
 
     class Meta:
-        exclude = (
-            'adv_zeroconfbonjour',
-            'adv_tuning',
-            'adv_firmwarevc',
-            'adv_systembeep',
-        )
         model = models.Advanced
 
     def __init__(self, *args, **kwargs):
