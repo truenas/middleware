@@ -119,6 +119,116 @@ Update resource
    :statuscode 202: no error
 
 
+Advanced
+--------
+
+The Advanced resource represents the advanced settings.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/advanced/
+
+   Returns the advanced dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/advanced/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "adv_serialconsole": false,
+                "adv_traceback": true,
+                "adv_consolescreensaver": false,
+                "adv_debugkernel": false,
+                "adv_advancedmode": false,
+                "adv_consolemsg": false,
+                "adv_anonstats": true,
+                "adv_autotune": false,
+                "adv_powerdaemon": false,
+                "adv_swapondrive": 2,
+                "adv_anonstats_token": "",
+                "adv_motd": "Welcome to FreeNAS",
+                "adv_consolemenu": true,
+                "id": 1,
+                "adv_serialspeed": "9600"
+        }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/advanced/
+
+   Update advanced.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/advanced/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "adv_powerdaemon": true
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "adv_serialconsole": false,
+                "adv_traceback": true,
+                "adv_consolescreensaver": false,
+                "adv_debugkernel": false,
+                "adv_advancedmode": false,
+                "adv_consolemsg": false,
+                "adv_anonstats": true,
+                "adv_autotune": false,
+                "adv_powerdaemon": true,
+                "adv_swapondrive": 2,
+                "adv_anonstats_token": "",
+                "adv_motd": "Welcome to FreeNAS",
+                "adv_consolemenu": true,
+                "id": 1,
+                "adv_serialspeed": "9600"
+        }
+
+   :json boolean adv_consolemenu: Enable Console Menu
+   :json boolean adv_serialconsole: Use Serial Console
+   :json string adv_serialspeed: 9600, 19200, 38400, 57600, 115200
+   :json boolean adv_consolescreensaver: Enable screen saver
+   :json boolean adv_powerdaemon: Enable powerd (Power Saving Daemon)
+   :json string adv_swapondrive: Swap size on each drive in GiB, affects new disks only
+   :json boolean adv_consolemsg: Show console messages in the footer
+   :json boolean adv_traceback: Show tracebacks in case of fatal errors
+   :json boolean adv_advancedmode: Show advanced fields by default
+   :json boolean adv_autotune: Enable autotune
+   :json boolean adv_debugkernel: Enable debug kernel
+   :json string adv_motd: MOTD banner
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
 CronJob
 ----------
 
@@ -913,7 +1023,7 @@ Delete resource
 Settings
 --------
 
-The Settings resource represents the ssytem settings.
+The Settings resource represents the system settings.
 
 List resource
 +++++++++++++
