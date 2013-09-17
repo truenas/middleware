@@ -847,16 +847,12 @@ class AdvancedResourceTest(APITestCase):
             u'adv_consolemsg': True,
             u'adv_consolescreensaver': False,
             u'adv_debugkernel': False,
-            u'adv_firmwarevc': False,
             u'adv_motd': u'Welcome',
             u'adv_powerdaemon': False,
             u'adv_serialconsole': False,
             u'adv_serialspeed': u'9600',
             u'adv_swapondrive': 2,
-            u'adv_systembeep': False,
             u'adv_traceback': True,
-            u'adv_tuning': False,
-            u'adv_zeroconfbonjour': False,
         })
 
     def test_Update(self):
