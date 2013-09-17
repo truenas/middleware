@@ -4,6 +4,46 @@ System
 
 Resources related to system.
 
+Admin Password
+----------
+
+The Admin Password resource represents password change form to access the WebGUI.
+
+Change Password
++++++++++++++++
+
+.. http:put:: /api/v1.0/system/adminpassword/
+
+   Change password to access WebGUI.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/system/adminpassword/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "old_password": "freenas",
+                "new_password": "freenas2"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Admin password changed.
+
+   :json string old_password: old password
+   :json string new_password: new password
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 CronJob
 ----------
 
