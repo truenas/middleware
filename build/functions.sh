@@ -21,3 +21,9 @@ requires_root() {
 		error "You must be root when running $0"
 	fi
 }
+
+# Are we doing a TrueNAS build?
+is_truenas() {
+    test "$NANO_LABEL" = "TrueNAS" -o ! -z "$TESTING_TRUENAS"
+    return $?
+}

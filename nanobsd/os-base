@@ -161,7 +161,7 @@ WITHOUT_SHAREDOCS=true
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
-if [ "$NANO_LABEL" = "TrueNAS" ] ; then
+if is_truenas ; then
 	add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
 fi
 

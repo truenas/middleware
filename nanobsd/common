@@ -53,7 +53,7 @@ PKGNAME_HACK=PYTHON_CMD=/bin/true
 # this to go into nanobsd.sh
 NANO_PORTS=${NANO_PORTS:-/usr/ports}
 
-if [ "$NANO_LABEL" = "TrueNAS" ] ; then
+if is_truenas ; then
 	: ${MASTER_SITE_OVERRIDE='http://gitserver/truenas/distfiles/${DIST_SUBDIR}/'}
 	export MASTER_SITE_OVERRIDE
 fi
