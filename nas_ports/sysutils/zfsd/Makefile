@@ -36,14 +36,14 @@ FREEBSD_SRCTOP=/usr/src
 
 
 EXPORT_TAG=v${PORTVERSION}
-GIT_REPO_URL=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git
+GIT_ZFS_REPO?=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git
 
 #EXPORT_TAG=master
 
 # Make a tarball from git for ourselves.
 git-export:
 	git archive \
-		--remote=${GIT_REPO_URL} \
+		--remote=${GIT_ZFS_REPO} \
 		--prefix=${PORTNAME}-${PORTVERSION}/ \
 		${EXPORT_TAG} | \
 			xz > ${PORTNAME}-${PORTVERSION}.tar.xz
