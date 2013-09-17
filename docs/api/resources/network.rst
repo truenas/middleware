@@ -47,8 +47,6 @@ List resource
                 "id": 1
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 

@@ -142,8 +142,6 @@ List resource
                 "ad_netbiosname": ""
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -252,8 +250,6 @@ List resource
                 "afp_srv_name": "freenas"
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -359,8 +355,6 @@ List resource
                 "cifs_srv_unixcharset": "UTF-8"
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -490,8 +484,6 @@ List resource
                 "ddns_updateperiod": ""
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -603,8 +595,6 @@ List resource
                 "ftp_anonpath": null
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -737,8 +727,6 @@ List resource
         {
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -842,8 +830,6 @@ List resource
                 "id": 1
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -930,8 +916,6 @@ List resource
                 "nis_domain": ""
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -1015,8 +999,6 @@ List resource
                 "id": 1
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -1103,8 +1085,6 @@ List resource
                 "rsyncd_port": 873
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -1364,8 +1344,6 @@ List resource
                 "id": 1
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -1453,8 +1431,6 @@ List resource
                 "id": 1
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -1552,8 +1528,6 @@ List resource
                 "ssh_rootlogin": false
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -1656,8 +1630,6 @@ List resource
                 "tftp_newfiles": false
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -1757,8 +1729,6 @@ List resource
                 "ups_monuser": "upsmon"
         }
 
-   :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
