@@ -335,6 +335,14 @@ add_port www/py-requests
 add_port sysutils/smp_utils
 add_port devel/py-sysctl
 
+# We use git to pull in our sources
+add_port devel/git OPTIONS_FILE_UNSET+=SVN \
+		OPTIONS_FILE_UNSET+=CVS \
+		OPTIONS_FILE_UNSET+=P4 \
+		OPTIONS_FILE_UNSET+=PERL \
+		OPTIONS_FILE_UNSET+=CONTRIB \
+		OPTIONS_FILE_UNSET+=NLS
+
 if [ "${DEBUG}" = 1 ]; then
 
 	add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
@@ -342,12 +350,6 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
 	add_port devel/ipython OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=ZMQ
-	add_port devel/git OPTIONS_FILE_UNSET+=SVN \
-			OPTIONS_FILE_UNSET+=CVS \
-			OPTIONS_FILE_UNSET+=P4 \
-			OPTIONS_FILE_UNSET+=PERL \
-			OPTIONS_FILE_UNSET+=CONTRIB \
-			OPTIONS_FILE_UNSET+=NLS
 	add_port devel/ctags
 fi
 
