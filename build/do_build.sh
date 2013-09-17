@@ -260,6 +260,29 @@ build_targets()
 	done
 }
 
+#
+# Checkout a module, expects the following parameters:
+#  $1 - repo_name, (example: FREEBSD, PORTS, ZFSD) this variable will be
+#       expanded for globals below.  "${GIT_${repo_name}_REPO}" to get the
+#       rest of the information for branch, repo, cache, etc.
+#  $2 - checkout_path where to checkout the code under the build dir.
+#       You probably want to prefix with ${AVATAR_ROOT}
+#       (example "${AVATAR_ROOT}/FreeBSD")
+#  $3 - Actual name the git checkout should be done under.
+# Globals:
+#  ${GIT_${repo_name}_REPO} - authoritive repo path
+#  ${GIT_${repo_name}_CACHE} - (optional) mirror location that is faster
+#                              to clone from
+#  ${GIT_${repo_name}_BRANCH} - which branch to pull
+#  ${GIT_${repo_name}_TAG} - which tag to pull, superscedes "branch"
+#  ${GIT_${repo_name}_DEEP} - set to non-empty string to do a full checkout
+#                            this is on by default right now.
+# example:
+#
+#    generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
+# This will checkout into the top level the repo under $GIT_FREEBSD_REPO
+# into the directory FreeBSD/src under your build directory.
+#
 generic_checkout_git()
 {
     local repo_name=$1
