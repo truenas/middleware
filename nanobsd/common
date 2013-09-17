@@ -224,11 +224,11 @@ do_add_port ()
 	mkdir -p ${NANO_WORLDDIR}/usr/src
 	# we always mount NANO_PORTS to /usr/ports for Mk files.
 	mkdir -p ${NANO_WORLDDIR}/usr/ports
-	mkdir -p ${NANO_WORLDDIR}/usr/ports_dir
+	mkdir -p ${NANO_WORLDDIR}/usr/ports/truenas
 	set +e
       	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
 	mount -t nullfs -o noatime ${NANO_PORTS} ${NANO_WORLDDIR}/usr/ports
-	mount -t nullfs -o noatime ${port_repo} ${NANO_WORLDDIR}/usr/ports_dir
+	mount -t nullfs -o noatime ${port_repo} ${NANO_WORLDDIR}/usr/ports/truenas
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
     		${NANO_WORLDDIR}/usr/ports/packages
 	if [ -n "${DISTCACHE}" ]; then
@@ -250,7 +250,7 @@ do_add_port ()
 	    make \
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    SRC_BASE=/usr/src \
-	    WRKDIRPREFIX=/usr/workdir -C /usr/ports_dir/$port_path \
+	    WRKDIRPREFIX=/usr/workdir -C /usr/ports/truenas/$port_path \
 	    clean package BATCH=yes -DUSE_PACKAGE_DEPENDS \
 	    $* clean -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
@@ -258,7 +258,7 @@ do_add_port ()
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
 	umount -f ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount -f ${NANO_WORLDDIR}/usr/ports/packages
-	umount -f ${NANO_WORLDDIR}/usr/ports_dir
+	umount -f ${NANO_WORLDDIR}/usr/ports/truenas
 	umount -f ${NANO_WORLDDIR}/usr/ports
 	umount -f ${NANO_WORLDDIR}/usr/src
 }
