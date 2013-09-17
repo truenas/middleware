@@ -281,7 +281,9 @@ add_port_generic()
     # __MAKE_CONF -> ${NANO_MAKE_CONF_BUILD} -- can't plug this in because of a
     # sourcing chicken and egg problem.
     set +e
-    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${repo_path} __MAKE_CONF=${NANO_OBJ}/make.conf.install OPTIONSFILE=/nonexistent package-name $*`
+    #PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${repo_path} __MAKE_CONF=${NANO_OBJ}/make.conf.install OPTIONSFILE=/nonexistent package-name $*`
+    # XXX: use NANO_PORTS here for ${NANO_PORTS}/Mk/*.mk
+    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_OBJ}/make.conf.install OPTIONSFILE=/nonexistent package-name $*`
     if [ $? -ne 0 ]; then
         echo "failed to determine the package name for $port_path"
         exit 1
