@@ -910,6 +910,103 @@ Delete resource
    :statuscode 204: no error
 
 
+Settings
+--------
+
+The Settings resource represents the ssytem settings.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/settings/
+
+   Returns the settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/settings/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "stg_timezone": "America/Los_Angeles",
+                "stg_guiport": "",
+                "stg_guiprotocol": "http",
+                "stg_guiv6address": "::",
+                "stg_syslogserver": "",
+                "stg_language": "en",
+                "stg_directoryservice": "",
+                "stg_guiaddress": "0.0.0.0",
+                "stg_kbdmap": "",
+                "id": 1
+        }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/settings/
+
+   Update settings.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/settings/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "stg_timezone": "America/Sao_Paulo"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "stg_timezone": "America/Sao_Paulo",
+                "stg_guiport": "",
+                "stg_guiprotocol": "http",
+                "stg_guiv6address": "::",
+                "stg_syslogserver": "",
+                "stg_language": "en",
+                "stg_directoryservice": "",
+                "stg_guiaddress": "0.0.0.0",
+                "stg_kbdmap": "",
+                "id": 1
+        }
+
+   :json string stg_guiprotocol: http, https
+   :json string stg_guiaddress: WebGUI IPv4 Address
+   :json string stg_guiv6address: WebGUI IPv6 Address
+   :json string stg_guiport: WebGUI Port
+   :json string stg_language: webguil language
+   :json string stg_kbdmap: see /usr/share/syscons/keymaps/INDEX.keymaps
+   :json string stg_timezone: see /usr/share/zoneinfo
+   :json string stg_syslogserver: Syslog server
+   :json string stg_directoryservice: activedirectory, ldap, nt4, nis
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
 SMARTTest
 ----------
 
