@@ -30,6 +30,16 @@ export MAKE_JOBS
 # Available targets to build
 BUILD_TARGETS="os-base"
 
+ADDL_REPOS=""
+
+if is_truenas ; then
+    GIT_DEEP=yes  # shallow checkouts cause too many problems right now.
+    # Additional repos to checkout for build
+    ADDL_REPOS="$ADDL_REPOS ZFSD"
+
+    : ${GIT_ZFSD_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git}
+fi
+
 # Targets to build (os-base, plugins/<plugin>).
 TARGETS=""
 
@@ -113,6 +123,7 @@ parse_cmdline()
 			BUILD=false
 			;;
         c)  CHECKOUT_ONLY=true
+            UPDATE=true # force update
             ;;
 		f)
 			: $(( FORCE_BUILD += 1 ))
@@ -293,6 +304,7 @@ generic_checkout_git()
     eval local my_cache=\${GIT_${repo_name}_CACHE}
     eval local my_branch=\${GIT_${repo_name}_BRANCH}
     eval local my_tag=\${GIT_${repo_name}_TAG}
+    echo "Checkout: $repo_name -> $my_repo"
 	(
     mkdir -p "$checkout_path"
 	local _depth_arg="--depth 1"
@@ -321,6 +333,9 @@ generic_checkout_git()
             branch="${my_tag}"
         else
             branch=${my_branch}
+        fi
+        if [ -z "$branch" ] ; then
+            branch=master
         fi
         if [ -e "${my_cache##file://}" ]; then
             git clone ${my_cache} ${checkout_name}
@@ -363,6 +378,11 @@ checkout_freebsd_source()
 		    : ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
 		    : ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
             generic_checkout_git PORTS "${AVATAR_ROOT}/FreeBSD" ports
+
+            for proj in $ADDL_REPOS ; do
+                generic_checkout_git "$proj" "${AVATAR_ROOT}/nas_source" \
+                    `echo $proj | tr 'A-Z' 'a-z'`
+            done
 
 		#
 		# Force a repatch.

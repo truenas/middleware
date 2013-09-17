@@ -54,7 +54,7 @@ git-export:
 # then what we do is use the checked out copy of ZFSD.
 .if defined(NAS_PORTS_DIRECT) ||defined(NAS_PORTS_DIRECT_SYSUTILS_ZFSD)
 
-WRKSRC=/usr/ports/nas_source/zfsd
+WRKSRC=/usr/nas_source/zfsd
 #WRKSRC=/home/alfred/tn/zfsd
 
 # no checksum, we just used git!

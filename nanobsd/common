@@ -229,6 +229,8 @@ do_add_port ()
       	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
 	mount -t nullfs -o noatime ${NANO_PORTS} ${NANO_WORLDDIR}/usr/ports
 	mount -t nullfs -o noatime ${port_repo} ${NANO_WORLDDIR}/usr/ports_dir
+	mount -t nullfs -o noatime $AVATAR_ROOT/nas_source \
+		${NANO_WORLDDIR}/usr/nas_source
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
     		${NANO_WORLDDIR}/usr/ports/packages
 	if [ -n "${DISTCACHE}" ]; then
@@ -256,6 +258,7 @@ do_add_port ()
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	rm -rf ${NANO_WORLDDIR}/usr/obj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
+	umount -f ${NANO_WORLDDIR}/usr/nas_source
 	umount -f ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount -f ${NANO_WORLDDIR}/usr/ports/packages
 	umount -f ${NANO_WORLDDIR}/usr/ports_dir
