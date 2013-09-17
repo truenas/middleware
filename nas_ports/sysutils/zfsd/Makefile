@@ -34,21 +34,13 @@ USE_XZ=		yes
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
 
+
+EXPORT_TAG=v${PORTVERSION}
 GIT_REPO_URL=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git
 
-#fetch:
-#		echo not needed
-
-#
-# Uncomment to test using git to pull sources instead of tarball
-# EXTRACT_DEPENDS= ${LOCALBASE}/bin/git:${PORTSDIR}/devel/git
-#extract:
-#		mkdir -p ${WRKDIR}
-#		git clone /truenas-build/git-repo/zfsd.git ${WRKSRC}
-
 #EXPORT_TAG=master
-EXPORT_TAG=v${PORTVERSION}
 
+# Make a tarball from git for ourselves.
 git-export:
 	git archive \
 		--remote=${GIT_REPO_URL} \
@@ -58,9 +50,29 @@ git-export:
 
 #/truenas-build/ports-distfiles/zfsd-${PORTVERSION}.tar.xz
 
+# if NAS_PORTS_DIRECT or NAS_PORTS_DIRECT_SYSUTILS_ZFSD is set
+# then what we do is use the checked out copy of ZFSD.
+.if defined(NAS_PORTS_DIRECT) ||defined(NAS_PORTS_DIRECT_SYSUTILS_ZFSD)
+
+WRKSRC=/usr/ports/nas_source/zfsd
+#WRKSRC=/home/alfred/tn/zfsd
+
 # no checksum, we just used git!
-checksum:
-		echo no checksum needed
+checksum fetch extract:
+	echo ${.TARGET} not needed because building direct
+
+pre-clean:
+	@cd ${WRKSRC} && ${MAKE} clean cleandepend
+
+.endif
+
+#
+# Uncomment to test using git to pull sources instead of tarball
+# EXTRACT_DEPENDS= ${LOCALBASE}/bin/git:${PORTSDIR}/devel/git
+#extract:
+#		mkdir -p ${WRKDIR}
+#		git clone -b /truenas-build/git-repo/zfsd.git ${WRKSRC}
+
 
 .include <bsd.port.mk>
 
