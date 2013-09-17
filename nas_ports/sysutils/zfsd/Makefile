@@ -39,6 +39,9 @@ GIT_REPO_URL=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.
 #fetch:
 #		echo not needed
 
+#
+# Uncomment to test using git to pull sources instead of tarball
+# EXTRACT_DEPENDS= ${LOCALBASE}/bin/git:${PORTSDIR}/devel/git
 #extract:
 #		mkdir -p ${WRKDIR}
 #		git clone /truenas-build/git-repo/zfsd.git ${WRKSRC}
