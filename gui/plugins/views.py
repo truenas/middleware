@@ -30,7 +30,7 @@ import logging
 import os
 
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.utils.translation import ugettext as _
 
 import eventlet
@@ -393,38 +393,31 @@ def upload_progress(request):
 
 
 @public
-def plugin_fcgi_client(request, name, path):
-    log.debug("XXX: plugin_fcgi_client: reqest = %s", request)
-    log.debug("XXX: plugin_fcgi_client: name = %s", name)
-    log.debug("XXX: plugin_fcgi_client: path = %s", path)
-#    """
-#    This is a view that works as a FCGI client
-#    It is used for development server (no nginx) for easier development
-#
-#    XXX
-#    XXX - This will no longer work with multiple jail model
-#    XXX
-#    """
-#    qs = models.Plugins.objects.filter(plugin_name=name)
-#    if not qs.exists():
-#        raise Http404
-#
-#    plugin = qs[0]
-#    jail_ip = PluginsJail.objects.order_by('-id')[0].jail_ipv4address
-#
-#    app = FCGIApp(host=str(jail_ip), port=plugin.plugin_port)
-#    env = request.META.copy()
-#    env.pop('wsgi.file_wrapper', None)
-#    env.pop('wsgi.version', None)
-#    env.pop('wsgi.input', None)
-#    env.pop('wsgi.errors', None)
-#    env.pop('wsgi.multiprocess', None)
-#    env.pop('wsgi.run_once', None)
-#    env['SCRIPT_NAME'] = env['PATH_INFO']
-#    args = request.POST if request.method == "POST" else request.GET
-#    status, headers, body, raw = app(env, args=args)
-#
-#    resp = HttpResponse(body)
-#    for header, value in headers:
-#        resp[header] = value
-#    return resp
+def plugin_fcgi_client(request, name, oid, path):
+    """
+    This is a view that works as a FCGI client
+    It is used for development server (no nginx) for easier development
+    """
+    qs = models.Plugins.objects.filter(id=oid, plugin_name=name)
+    if not qs.exists():
+        raise Http404
+
+    plugin = qs[0]
+    jail_ip = PluginsJail.objects.order_by('-id')[0].jail_ipv4address
+
+    app = FCGIApp(host=str(jail_ip), port=plugin.plugin_port)
+    env = request.META.copy()
+    env.pop('wsgi.file_wrapper', None)
+    env.pop('wsgi.version', None)
+    env.pop('wsgi.input', None)
+    env.pop('wsgi.errors', None)
+    env.pop('wsgi.multiprocess', None)
+    env.pop('wsgi.run_once', None)
+    env['SCRIPT_NAME'] = env['PATH_INFO']
+    args = request.POST if request.method == "POST" else request.GET
+    status, headers, body, raw = app(env, args=args)
+
+    resp = HttpResponse(body)
+    for header, value in headers:
+        resp[header] = value
+    return resp
