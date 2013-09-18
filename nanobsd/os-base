@@ -138,13 +138,13 @@ WITH_BDB_VER=46
 ${DEBUG_INSTALL}
 "
 # The following would help...
-# WITHOUT_TOOLCHAIN=true		can't build ports
 # WITHOUT_INSTALLLIB=true		libgcc.a
 #
 # from the build
 # WITHOUT_INFO=true			makeinfo
 # WITHOUT_RCS=true
 PKG_ONLY_MAKE_CONF="
+WITHOUT_TOOLCHAIN=true
 WITHOUT_BINUTILS=true
 WITHOUT_CLANG=true
 WITHOUT_CLANG_IS_CC=true
