@@ -232,10 +232,9 @@ def new_default_plugin_jail(basename):
             w.template(**template_create_args)
 
         except Exception as e:
-            self.errors['__all__'] = self.error_class([_(e.message)])
             if os.path.exists(createfile):
                 os.unlink(createfile)
-            return
+            raise MiddlewareError(e.message)
 
         template_list_flags = {}
         template_list_flags['flags'] = warden.WARDEN_TEMPLATE_FLAGS_LIST
@@ -245,9 +244,8 @@ def new_default_plugin_jail(basename):
                 template = t
                 break
 
-    if not template: 
-        self.errors['__all__'] = self.error_class([_('Unable to find template!')])
-        return
+    if not template:
+        raise MiddlewareError(_('Unable to find template!'))
 
     try:
         w.create(
