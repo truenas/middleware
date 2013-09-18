@@ -198,7 +198,7 @@ make_conf_build ( ) (
 
 build_world ( ) (
 	pprint 2 "run buildworld"
-	pprint 3 "log: ${MAKEOBJDIRPREFIX}/_.bw"
+	log_file "${MAKEOBJDIRPREFIX}/_.bw"
 
 	cd ${NANO_SRC}
 	env \
@@ -212,7 +212,7 @@ build_world ( ) (
 
 build_kernel ( ) (
 	pprint 2 "build kernel ($NANO_KERNEL)"
-	pprint 3 "log: ${MAKEOBJDIRPREFIX}/_.bk"
+	log_file "${MAKEOBJDIRPREFIX}/_.bk"
 
 	(
 	if [ -f ${NANO_KERNEL} ] ; then
@@ -270,7 +270,7 @@ make_conf_install ( ) (
 
 install_world ( ) (
 	pprint 2 "installworld"
-	pprint 3 "log: ${NANO_OBJ}/_.iw"
+	log_file "${NANO_OBJ}/_.iw"
 
 	cd ${NANO_SRC}
 	env \
@@ -288,7 +288,7 @@ install_world ( ) (
 install_etc ( ) (
 
 	pprint 2 "install /etc"
-	pprint 3 "log: ${NANO_OBJ}/_.etc"
+	log_file "${NANO_OBJ}/_.etc"
 
 	cd ${NANO_SRC}
 	env \
@@ -307,7 +307,7 @@ install_etc ( ) (
 
 install_kernel ( ) (
 	pprint 2 "install kernel ($NANO_KERNEL)"
-	pprint 3 "log: ${NANO_OBJ}/_.ik"
+	log_file "${NANO_OBJ}/_.ik"
 
 	(
 	if [ -f ${NANO_KERNEL} ] ; then
@@ -343,7 +343,7 @@ run_customize() (
 	do
 		c=$1
 		pprint 2 "[$i/$num_steps] customize \"$c\""
-		pprint 3 "log: ${NANO_OBJ}/_.cust.$c"
+		log_file "${NANO_OBJ}/_.cust.$c"
 		pprint 4 "`type $c`"
 		( set -x ; $c ) > ${NANO_OBJ}/_.cust.$c 2>&1
 		shift
@@ -361,7 +361,7 @@ run_late_customize() (
 	do
 		c=$1
 		pprint 2 "[$i/$num_steps] late customize \"$c\""
-		pprint 3 "log: ${NANO_OBJ}/_.late_cust.$c"
+		log_file "${NANO_OBJ}/_.late_cust.$c"
 		pprint 4 "`type $c`"
 		( set -x ; $c ) > ${NANO_OBJ}/_.late_cust.$c 2>&1
 		shift
@@ -371,7 +371,7 @@ run_late_customize() (
 
 setup_nanobsd ( ) (
 	pprint 2 "configure nanobsd setup"
-	pprint 3 "log: ${NANO_OBJ}/_.dl"
+	log_file "${NANO_OBJ}/_.dl"
 
 	(
 	cd ${NANO_WORLDDIR}
@@ -481,7 +481,7 @@ populate_data_slice ( ) (
 
 create_i386_diskimage ( ) (
 	pprint 2 "build diskimage"
-	pprint 3 "log: ${NANO_OBJ}/_.di"
+	log_file "${NANO_OBJ}/_.di"
 
 	(
 	echo $NANO_MEDIASIZE $NANO_IMAGES \
@@ -815,6 +815,29 @@ pprint() {
 	fi
 }
 
+log_file()
+{
+	pprint 3 "log: $1"
+	echo "$1" > "${MAKEOBJDIRPREFIX}/last_log_file"
+}
+
+on_exit()
+{
+	last_error=$?
+	log_file=
+	if [ $last_error -ne 0 ]; then
+		if [ -e "${MAKEOBJDIRPREFIX}/last_log_file" ]; then
+			log_file=`cat ${MAKEOBJDIRPREFIX}/last_log_file`
+			if [ -e "${log_file}" ]; then
+				echo "ERROR: build FAILED; displaying contents of $log_file"
+				echo "==================================================================="
+				cat "$log_file"
+				echo "==================================================================="
+			fi
+		fi
+	fi
+}
+
 usage () {
 	cat >&2 <<EOF
 usage: ${0##*/} [-biknqvw] [-c config_file]
@@ -977,6 +1000,8 @@ exec 3>&1
 
 NANO_STARTTIME=`date +%s`
 pprint 1 "NanoBSD image ${NANO_NAME} build starting"
+
+trap on_exit EXIT
 
 if $do_world ; then
 	if $do_clean ; then

@@ -841,7 +841,7 @@ last_orders() {
 	if $do_copyout_partition; then
 
 		pprint 2 "Compressing GUI upgrade image"
-		pprint 3 "log: ${gui_image_log}"
+		log_file "${gui_image_log}"
 
 		(
 		set -x
@@ -872,7 +872,7 @@ last_orders() {
 	fi
 
 	pprint 2 "Compressing full disk image"
-	pprint 3 "log: ${full_image_log}"
+	log_file "${full_image_log}"
 
 	(
 	set -x
@@ -887,7 +887,7 @@ last_orders() {
 	) > "${full_image_log}" 2>&1
 
 	pprint 2 "Creating ISO image"
-	pprint 3 "log: ${cd_image_log}"
+	log_file "${cd_image_log}"
 
 	(
 	set -x
@@ -908,7 +908,7 @@ build_kernel2 ( ) (
 	local _logfile="${MAKEOBJDIRPREFIX}/_.bk_$(basename ${_kernel})"
 
 	pprint 2 "build kernel ($_kernel)"
-	pprint 3 "log: ${_logfile}"
+	log_file "${_logfile}"
 
 	(
 	if [ -f ${_kernel} ] ; then
@@ -951,7 +951,7 @@ install_kernel2 ( ) (
 
 	local _logfile="${NANO_OBJ}/_.ik_$(basename ${_kernel})"
 	pprint 2 "install kernel ($_kernel)"
-	pprint 3 "log: ${_logfile}"
+	log_file "${_logfile}"
 
 	(
 	if [ -f ${_kernel} ] ; then
