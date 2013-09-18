@@ -68,6 +68,10 @@ class Jails(Model):
         max_length=120,
         verbose_name=_("Jail Name"),
     )
+    jail_type = models.CharField(
+        max_length=120,
+        verbose_name=_("Type")
+    )
     jail_ipv4 = models.CharField(
         max_length=120,
         blank=True,
