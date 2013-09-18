@@ -250,6 +250,8 @@ main()
 	cp -p ${NANO_OBJ}/_.w/usr/bin/cmp ${INSTALLUFSDIR}/usr/bin/cmp
 	cp -p ${NANO_OBJ}/_.w/usr/bin/find ${INSTALLUFSDIR}/usr/bin/find
 	cp -p ${NANO_OBJ}/_.w/usr/bin/grep ${INSTALLUFSDIR}/usr/bin/grep
+	cp -p ${NANO_OBJ}/_.w/usr/bin/logger ${INSTALLUFSDIR}/usr/bin/logger
+	cp -p ${NANO_OBJ}/_.w/usr/bin/mkfifo ${INSTALLUFSDIR}/usr/bin/mkfifo
 	cp -p ${NANO_OBJ}/_.w/usr/bin/mktemp ${INSTALLUFSDIR}/usr/bin/mktemp
 	cp -p ${NANO_OBJ}/_.w/usr/bin/sed ${INSTALLUFSDIR}/usr/bin/sed
 	cp -p ${NANO_OBJ}/_.w/usr/bin/sort ${INSTALLUFSDIR}/usr/bin/sort
