@@ -225,9 +225,13 @@ do_add_port ()
 	# we always mount NANO_PORTS to /usr/ports for Mk files.
 	mkdir -p ${NANO_WORLDDIR}/usr/ports
 	mkdir -p ${NANO_WORLDDIR}/usr/ports_dir
+	mkdir -p ${NANO_WORLDDIR}/usr/nas_source
 	set +e
+	# we need a copy of the source tree
       	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
+	# we need a copy of the ports tree but ONLY for ports/Mk/*.mk
 	mount -t nullfs -o noatime ${NANO_PORTS} ${NANO_WORLDDIR}/usr/ports
+	# we need a copy of the actual ports tree the port is located in
 	mount -t nullfs -o noatime ${port_repo} ${NANO_WORLDDIR}/usr/ports_dir
 	mount -t nullfs -o noatime $AVATAR_ROOT/nas_source \
 		${NANO_WORLDDIR}/usr/nas_source
