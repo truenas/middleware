@@ -47,7 +47,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
 from freenasUI.plugins.plugin import PROGRESS_FILE
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
-#from freenasUI.plugins.utils.fcgi_client import FCGIApp
+from freenasUI.plugins.utils.fcgi_client import FCGIApp
 
 import freenasUI.plugins.api_calls
 
@@ -403,7 +403,7 @@ def plugin_fcgi_client(request, name, oid, path):
         raise Http404
 
     plugin = qs[0]
-    jail_ip = PluginsJail.objects.order_by('-id')[0].jail_ipv4address
+    jail_ip = Jails.objects.filter(jail_host=plugin.plugin_jail)[0].jail_ipv4
 
     app = FCGIApp(host=str(jail_ip), port=plugin.plugin_port)
     env = request.META.copy()
