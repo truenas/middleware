@@ -12,9 +12,10 @@ set +a
 export SB_ROOT=$(realpath .)
 #export PATH=$PATH:$(realpath ${SB_BUILD_DIR}/bin)
 
-echo "==========================================="
-echo "-->> Now run: build/do_build.sh checkout"
-echo "==========================================="
+cd $SB_BUILD_DIR
+echo "======================================================="
+echo "-->> Now run:    make checkout all"
+echo "======================================================="
 
 if [ $# -gt 0 ] ; then
 	exec "$SHELL" -c "${@}"
