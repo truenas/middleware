@@ -70,6 +70,10 @@ checksum fetch:
 pre-clean:
 	@cd ${WRKSRC} && ${MAKE} clean cleandepend
 
+ALL_TARGET=obj all
+
+MAKE_JOBS_UNSAFE=yes
+
 .endif
 
 #
