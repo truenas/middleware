@@ -4,7 +4,6 @@ sb=$1
 shift
 sbrc=".sb-vars"
 
-set -x
 cd $sb
 # put all vars from the sb file into the environment
 set -a
