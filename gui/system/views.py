@@ -651,7 +651,6 @@ def terminal(request):
             alive = multiplex.proc_keepalive(sid, jid, shell, w, h)
             break
         except Exception, e:
-            log.debug("proc_keepalive - %r: %s", e)
             notifier().restart("webshell")
             time.sleep(0.5)
 
