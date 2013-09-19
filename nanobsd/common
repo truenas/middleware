@@ -267,6 +267,16 @@ do_add_port ()
 		envargs="$envargs NAS_PORTS_DIRECT=1"
 	fi
 
+	# XXX: Hack Alert
+	# We only set MAKEOBJDIRPREFIX for our ports, not sure if
+	# this should be actually just be for all ports, but for now
+	# only do it for "nas_ports"
+	if [ "$port_repo" = "${NAS_PORTS}" ] ; then
+		local makeobjdirprefix="/usr/nas_ports_workdir/$port_repo/$port_path"
+		mkdir -p "${NANO_WORLDDIR}${makeobjdirprefix}"
+		envargs="$envargs MAKEOBJDIRPREFIX=$makeobjdirprefix"
+	fi
+
 	# Improvement: Don't know why package-recursive don't works here
 	CR "env \
 	    TARGET=${NANO_ARCH} \
