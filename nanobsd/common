@@ -287,10 +287,13 @@ do_add_port ()
 	    SRC_BASE=/usr/src \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports_dir/$port_path \
 	    clean package BATCH=yes -DUSE_PACKAGE_DEPENDS \
-	    $* clean -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
+	    $* -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
+	# XXX: this is removing needed artifacts for saved build environments
+	# can we remove the following 2 rm-rfs?
 	rm -rf ${NANO_WORLDDIR}/usr/obj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
+
 	umount -f ${NANO_WORLDDIR}/usr/nas_source
 	umount -f ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount -f ${NANO_WORLDDIR}/usr/ports/packages
