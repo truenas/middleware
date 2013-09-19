@@ -21,6 +21,12 @@ import_zpools()
 	if [ ! -d "/data/zfs" ]; then
 		mkdir /data/zfs || true
 	else
+		if [ -e /data/zfs/killcache ]; then
+			rm -f /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
+		else
+			touch /data/zfs/killcache
+			fsync /data/zfs/killcache
+		fi
 		if [ -s /data/zfs/zpool.cache ]; then
 			if ([ ! -e /data/zfs/zpool.cache.saved ] || [ /data/zfs/zpool.cache -nt /data/zfs/zpool.cache.saved ]); then
 				cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
@@ -40,6 +46,7 @@ import_zpools()
 		# Fixup mountpoints
 		[ -d /mnt/mnt ] && /sbin/zfs inherit -r mountpoint ${vol_name}
 	done
+	rm -f /data/zfs/killcache
 	cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved 2> /dev/null
 }
 
