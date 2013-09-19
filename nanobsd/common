@@ -238,6 +238,7 @@ do_add_port ()
 	mkdir -p ${NANO_WORLDDIR}/usr/ports
 	mkdir -p ${NANO_WORLDDIR}/usr/ports_dir
 	mkdir -p ${NANO_WORLDDIR}/usr/nas_source
+	mkdir -p $AVATAR_ROOT/nas_source
 	set +e
 	# we need a copy of the source tree
       	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
