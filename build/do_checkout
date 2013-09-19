@@ -128,7 +128,7 @@ f = open(".sb-vars", "w")
 
 def write_sb_var(f, var, val):
     if val is None:
-        f.write("#%s= unset" % var)
+        f.write("#%s= unset\n" % var)
         return
     f.write("%s='%s'\n" % (var, val))
 
