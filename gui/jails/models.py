@@ -96,10 +96,11 @@ class Jails(Model):
         null=True,
         verbose_name=_("IPv4 bridge aliases")
     )
-    jail_defaultrouter_ipv4 = models.CharField(
+    jail_defaultrouter_ipv4 = models.GenericIPAddressField(
         max_length=120,
         blank=True,
         null=True,
+        protocol='IPv4',
         verbose_name=_("IPv4 default gateway")
     )
     jail_ipv6 = models.CharField(
@@ -126,10 +127,11 @@ class Jails(Model):
         null=True,
         verbose_name=_("IPv6 bridge aliases")
     )
-    jail_defaultrouter_ipv6 = models.CharField(
+    jail_defaultrouter_ipv6 = models.GenericIPAddressField(
         max_length=120,
         blank=True,
         null=True,
+        protocol='IPv6',
         verbose_name=_("IPv6 default gateway")
     )
     jail_mac = models.CharField(

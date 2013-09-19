@@ -457,6 +457,11 @@ class JailsEditForm(ModelForm):
             'jail_status',
             'jail_type',
         )
+        #FIXME: translate in dojango
+        widgets = {
+            'jail_defaultrouter_ipv4': forms.widgets.TextInput(),
+            'jail_defaultrouter_ipv6': forms.widgets.TextInput(),
+        }
 
     def __set_ro(self, instance, key):
         self.fields[key].widget.attrs['readonly'] = True
