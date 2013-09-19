@@ -249,10 +249,29 @@ do_add_port ()
 	mkdir -p ${NANO_WORLDDIR}/usr/workdir
 	set -e
 	cp /etc/resolv.conf ${NANO_WORLDDIR}/etc/resolv.conf
-# Improvement: Don't know why package-recursive don't works here
+
+	# we need to pass on the environment variables for
+	# NAS_PORTS_DIRECT (if set) and NAS_PORTS_DIRECT_SYSUTILS_ZFSD (if set)
+	# convert the port path from sysutils/zfsd to SYSUTILS_ZFSD
+	#
+	# so we will look in the environment and build up 'envargs'
+	# to set NAS_PORTS_DIRECT/NAS_PORTS_DIRECT_CATAGORY_PORT
+	set -x
+	local port_path_caps=`echo $port_path|tr 'a-z' 'A-Z' | tr '/' '_'`
+	eval local exact_set=\${NAS_PORTS_DIRECT_$port_path_caps}
+	local envargs;
+	if [ ! -z "$exact_set" ] ; then
+		envargs="NAS_PORTS_DIRECT_${port_path_caps}=1"
+	fi
+	if [ ! -z "$NAS_PORTS_DIRECT" ] ; then
+		envargs="$envargs NAS_PORTS_DIRECT=1"
+	fi
+
+	# Improvement: Don't know why package-recursive don't works here
 	CR "env \
 	    TARGET=${NANO_ARCH} \
 	    TARGET_ARCH=${NANO_ARCH} \
+	    $envargs \
 	    make \
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    SRC_BASE=/usr/src \
