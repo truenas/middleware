@@ -16,20 +16,17 @@ map_x86=i386
 map_x64=amd64
 
 TARBALL="$TOP/$IMG_PREFIX-release.tar"
-rm -rf release_stage
+rm -rf "${TOP}/release_stage"
 set -x
 set -e
-mkdir -p release_stage
+mkdir -p "${TOP}/release_stage"
 for arch in x64 x86 ; do 
-	cd ${TOP}/release_stage
 	eval mapped_arch=\$map_$arch
 	echo $arch = $mapped_arch
 	mkdir $arch
-	cd $arch
 	for ext in img.xz GUI_Upgrade.txz iso ; do
-		ln ${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext} .
-		ln ${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext}.sha256.txt .
+		ln "${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext}" "${TOP}/release_stage/${arch}"
+		ln "${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext}.sha256.txt" "${TOP}/release_stage/${arch}"
 	done
 done
-cd ${TOP}
 tar -czvf $TARBALL -H release_stage
