@@ -929,7 +929,7 @@ build_kernel2 ( ) (
 		TARGET=${NANO_ARCH%:*} \
 		TARGET_ARCH=${NANO_ARCH##*:} \
 		${NANO_PMAKE} \
-		buildkernel \
+		buildkernel -DNO_KERNELCLEAN \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf} \
 		MODULES_OVERRIDE="${NANO_MODULES}" \
