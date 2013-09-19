@@ -342,7 +342,7 @@ def upload(request, jail_id=-1):
                 events=['reloadHttpd()'],
             )
         else:
-            resp = render(request, "plugins/plugin_install.html", {
+            resp = render(request, "plugins/upload.html", {
                 'form': form,
             })
             resp.content = (
