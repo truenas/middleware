@@ -319,7 +319,7 @@ class JailTemplate(Model):
 
     def delete(self, force=False):
         ninstances = self.jt_instances
-        if ninstances != 0: 
+        if ninstances != 0:
             raise MiddlewareError(
                 _("Template must have 0 instances!")
             )
@@ -328,13 +328,12 @@ class JailTemplate(Model):
             w = Warden()
             template_delete_args = {}
             template_delete_args['flags'] = WARDEN_TEMPLATE_FLAGS_DELETE
-            template_delete_args['template'] = self.jt_name  
+            template_delete_args['template'] = self.jt_name
             w.template(**template_delete_args)
             super(JailTemplate, self).delete()
 
-        except Except as e:
+        except Exception as e:
             raise MiddlewareError(_(e))
-
 
     class Meta:
         verbose_name = _("Jail Templates")
