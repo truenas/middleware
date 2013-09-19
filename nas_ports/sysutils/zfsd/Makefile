@@ -50,15 +50,21 @@ git-export:
 
 #/truenas-build/ports-distfiles/zfsd-${PORTVERSION}.tar.xz
 
+
+
+#NAS_PORTS_DIRECT=YES
+
 # if NAS_PORTS_DIRECT or NAS_PORTS_DIRECT_SYSUTILS_ZFSD is set
 # then what we do is use the checked out copy of ZFSD.
 .if defined(NAS_PORTS_DIRECT) ||defined(NAS_PORTS_DIRECT_SYSUTILS_ZFSD)
 
+EXTRACT_ONLY=
 WRKSRC=/usr/nas_source/zfsd
 #WRKSRC=/home/alfred/tn/zfsd
 
 # no checksum, we just used git!
-checksum fetch extract:
+ #extract:
+checksum fetch:
 	echo ${.TARGET} not needed because building direct
 
 pre-clean:
