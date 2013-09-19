@@ -58,6 +58,18 @@ if is_truenas ; then
 	export MASTER_SITE_OVERRIDE
 fi
 
+# for ixsystems use our local cache, other collaborators are encouraged
+# to discuss making this more generic for other sites.
+if test -z "$MASTER_SITE_OVERRIDE" -a -z "$DISABLE_IX_DISTFILE_CACHE" && \
+	hostname | grep -q 'ixsystems.com$' ; then
+	: ${MASTER_SITE_OVERRIDE='http://gitserver/freenas/distfiles/${DIST_SUBDIR}/'}
+	export MASTER_SITE_OVERRIDE
+	echo "set MASTER_SITE_OVERRIDE, value: '$MASTER_SITE_OVERRIDE'"
+else
+	echo "Not setting MASTER_SITE_OVERRIDE, value: '$MASTER_SITE_OVERRIDE'"
+fi
+
+
 NANO_FETCH_PORTS_BG=""
 
 clean_packages()
