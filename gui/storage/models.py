@@ -128,6 +128,8 @@ class Volume(Model):
 
     def get_geli_keyfile(self):
         from freenasUI.middleware.notifier import GELI_KEYPATH
+        if not os.path.exists(GELI_KEYPATH):
+            os.mkdir(GELI_KEYPATH)
         return "%s/%s.key" % (GELI_KEYPATH, self.vol_encryptkey, )
 
     def is_decrypted(self):
