@@ -408,6 +408,10 @@ do_fetch (){
 
 }
 
+# Iterate through all the ports specified in $NANO_FETCH_PORTS_BG
+# and get the distfiles.
+# Maintain a list of pending ports to fetch in the file $1
+#     (right now this is ${NANO_OBJ}/_.fetch_list)
 do_fetch_background () {
 
 	local fetch_list=$1
@@ -426,6 +430,9 @@ do_fetch_background () {
 	set -e
 }
 
+# Every port added via add_port will add to NANO_FETCH_PORTS_BG
+# we will turn that into a list and fork off a background process
+# to "make fetch" each port.
 fetch_background ()
 {
 	local fetch_list
