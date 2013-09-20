@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2013-03-12 19:00+0200\n"
-"Last-Translator: andrea <andr.rubi@gmail.com>\n"
+"PO-Revision-Date: 2013-09-19 20:33+0200\n"
+"Last-Translator: mrbenza <superstage@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -4093,7 +4093,7 @@ msgstr "Metodo di Autenticazione"
 
 #: storage/forms.py:1271
 msgid "Quick"
-msgstr ""
+msgstr "Veloce"
 
 #: storage/forms.py:1272
 msgid "Full with zeros"
