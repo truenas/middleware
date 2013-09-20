@@ -299,6 +299,29 @@ def os_arch(request):
         return arch
 
 
+@jsonrpc_method("os.kldload")
+def os_arch(request, module):
+    """
+    Load a kernel module
+
+    Returns: boolean
+    """
+    pipe = Popen([
+        "/sbin/kldstat",
+        "-n", module,
+    ], stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+    pipe.communicate()
+    if pipe.returncode == 0:
+        return True
+
+    pipe = Popen([
+        "/sbin/kldload",
+         module,
+    ], stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+    pipe.communicate()
+    return pipe.returncode == 0
+
+
 #
 #    Debug/Test/Null methods
 #
