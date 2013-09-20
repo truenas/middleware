@@ -1484,6 +1484,8 @@ class JailTemplateResourceMixin(object):
             'id': bundle.obj.id
         })
 
+        return bundle
+
 
 class SnapshotResource(DojoResource):
 
