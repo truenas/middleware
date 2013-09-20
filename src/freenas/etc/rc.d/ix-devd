@@ -61,6 +61,11 @@ HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
 
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
+    echo "set block-policy drop" > /etc/pf.conf.block
+    echo "pass in quick proto tcp on \${SUBSYSTEM} from any to any port {22, 80, 443} " >> /etc/pf.conf.block
+    echo "block drop in quick proto tcp on \${SUBSYSTEM} from any to any " >> /etc/pf.conf.block
+    echo "block drop in quick proto udp on \${SUBSYSTEM} from any to any " >> /etc/pf.conf.block
+    pfctl -f /etc/pf.conf.block
     pkill -f fenced
 
     # Was the other peer UP in the last minute?
@@ -153,6 +158,12 @@ if [ \${EVENT} = "LINK_UP" ]; then
     /usr/sbin/service ix-istgt quietstart
     /usr/sbin/service istgt forcestop
     /usr/sbin/service istgt restart
+    /usr/sbin/service ix-samba quietstart
+    /usr/sbin/service samba forcestop
+    /usr/sbin/service samba restart
+    /usr/sbin/service ix-afpd quietstart
+    /usr/sbin/service netatalk forcestop
+    /usr/sbin/service netatalk restart
 #
 # There appears to be a small lag if we allow NFS traffic right away.  During
 # this time, we fail NFS requests with ESTALE to the remote system.  This
@@ -176,12 +187,9 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     pkill -f fenced
     ifconfig \${SUBSYSTEM} advskew 100
     echo "set block-policy drop" > /etc/pf.conf.block
-    echo "block drop in quick proto tcp from any to any port 860" >> /etc/pf.conf.block
-    echo "block drop in quick proto udp from any to any port 860" >> /etc/pf.conf.block
-    echo "block drop in quick proto tcp from any to any port 2049" >> /etc/pf.conf.block
-    echo "block drop in quick proto udp from any to any port 2049" >> /etc/pf.conf.block
-    echo "block drop in quick proto tcp from any to any port 3260" >> /etc/pf.conf.block
-    echo "block drop in quick proto udp from any to any port 3260" >> /etc/pf.conf.block
+    echo "pass in quick proto tcp on \${SUBSYSTEM} from any to any port {22, 80, 443} " >> /etc/pf.conf.block
+    echo "block drop in quick proto tcp on \${SUBSYSTEM} from any to any " >> /etc/pf.conf.block
+    echo "block drop in quick proto udp on \${SUBSYSTEM} from any to any " >> /etc/pf.conf.block
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
     /etc/rc.d/watchdogd stop
