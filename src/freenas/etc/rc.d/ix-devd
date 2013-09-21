@@ -47,6 +47,8 @@ if [ \${SUBSYSTEM} != "carp0" ]; then
 	exit
 fi
 
+IP=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select carp_v4address from network_carp where id = 1;")
+
 touch -t \`date -v -1M +%Y%m%d%H%M.%S\` /tmp/heartbeat_barrier
 
 # Has the user indicated we should take over?
@@ -62,9 +64,9 @@ HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
     echo "set block-policy drop" > /etc/pf.conf.block
-    echo "pass in quick proto tcp on \${SUBSYSTEM} from any to any port {22, 80, 443} " >> /etc/pf.conf.block
-    echo "block drop in quick proto tcp on \${SUBSYSTEM} from any to any " >> /etc/pf.conf.block
-    echo "block drop in quick proto udp on \${SUBSYSTEM} from any to any " >> /etc/pf.conf.block
+    echo "pass in quick proto tcp from any to \${IP} port {22, 80, 443} " >> /etc/pf.conf.block
+    echo "block drop in quick proto tcp from any to \${IP} " >> /etc/pf.conf.block
+    echo "block drop in quick proto udp from any to \${IP} " >> /etc/pf.conf.block
     pfctl -f /etc/pf.conf.block
     pkill -f fenced
 
@@ -171,7 +173,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
 # downstream effect of that, instead we take a chill pill for 2 seconds.
 #
     sleep 1
-    echo "pass quick on \${SUBSYSTEM} keep state" > /etc/pf.conf
+    echo "pass quick from any to \${IP} keep state" > /etc/pf.conf
     pfctl -f /etc/pf.conf
     echo "\$(date), \$(hostname), assume master" | mail -s "Failover" root
 
@@ -187,9 +189,9 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     pkill -f fenced
     ifconfig \${SUBSYSTEM} advskew 100
     echo "set block-policy drop" > /etc/pf.conf.block
-    echo "pass in quick proto tcp on \${SUBSYSTEM} from any to any port {22, 80, 443} " >> /etc/pf.conf.block
-    echo "block drop in quick proto tcp on \${SUBSYSTEM} from any to any " >> /etc/pf.conf.block
-    echo "block drop in quick proto udp on \${SUBSYSTEM} from any to any " >> /etc/pf.conf.block
+    echo "pass in quick proto tcp from any to \${IP} port {22, 80, 443} " >> /etc/pf.conf.block
+    echo "block drop in quick proto tcp from any to \${IP} " >> /etc/pf.conf.block
+    echo "block drop in quick proto udp from any to \${IP} " >> /etc/pf.conf.block
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
     /etc/rc.d/watchdogd stop
