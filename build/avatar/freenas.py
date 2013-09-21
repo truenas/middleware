@@ -11,10 +11,10 @@ def setup_arg_parser(parser):
         else:
             print "No cache for missing cache for %s -> %s" % (opt, path)
     parser.set_defaults(**{'build_repo':
-        'https://github.com/freenas/freenas'})
+        'git@gitserver:/git/repos/freenas-build/freenas.git'})
     parser.set_defaults(**{'freebsd_repo':
-        'https://github.com/trueos/trueos'})
+        'git@gitserver:/git/repos/freenas-build/trueos.git'})
     parser.set_defaults(**{'ports_repo':
-        'https://github.com/freenas/ports'})
+        'git@gitserver:/git/repos/freenas-build/ports.git'})
 
 

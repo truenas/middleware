@@ -353,7 +353,7 @@ generic_checkout_git()
 freebsd_checkout_git()
 {
 	: ${GIT_FREEBSD_BRANCH=freenas-9-stable}
-	: ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos.git}
+	: ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
     generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
 }
 
@@ -376,7 +376,7 @@ checkout_freebsd_source()
 
 			# Checkout git ports
 		    : ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
-		    : ${GIT_PORTS_REPO=git://github.com/freenas/ports.git}
+		    : ${GIT_PORTS_REPO=git@gitserver:/git/repos/freenas-build/ports.git}
             generic_checkout_git PORTS "${AVATAR_ROOT}/FreeBSD" ports
 
             for proj in $ADDL_REPOS ; do

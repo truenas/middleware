@@ -20,7 +20,7 @@ def add_second_options(parser):
 
     parser.add_argument('--build-repo',
     help='specify the build repo (ex: https://github.com/freenas/freenas',
-        default='https://github.com/freenas/freenas')
+        default='git@gitserver:/git/repos/freenas-build/freenas.git')
 
     parser.add_argument('--build-repo-cache',
         help='specify a local cache to speed up initial checkout')
