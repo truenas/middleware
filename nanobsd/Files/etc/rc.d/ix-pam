@@ -83,7 +83,7 @@ pam_activedirectory_file()
 	local temp="/tmp/.tmp.${service}"
 	local file="${PAM_DIR}/${service}"
 
-	awk -v winbind="${winbind}" -v krb5="${krb5}" '{
+	awk -v winbind="${winbind}" -v krb5="${krb5}" -v ldap="${ldap}" '{
 		if (/^#.*@@LDAP@@/ && ldap) {
 			gsub("^#.*@@LDAP@@[^a-zA-Z0-9]+", "");
 			print $0;
