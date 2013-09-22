@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2013-01-02 16:20+0200\n"
+"PO-Revision-Date: 2013-09-21 19:47+0200\n"
 "Last-Translator: CyberSoft <cybersoft@cybersoft.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -489,7 +489,7 @@ msgstr "Nazwa użytkownika zawiera nieprawidłowe znaki (%s)."
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr "Pełna nazwa zawiera niedozwolonie znaki (%s)."
+msgstr "Pełna nazwa zawiera niedozwolone znaki (%s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -529,7 +529,7 @@ msgstr "Powłoka"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
-msgstr "Wyłącz możliwość logowania hasłem"
+msgstr "Wyłącz możliwość logowania z użyciem hasła"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -666,7 +666,7 @@ msgstr "Grupy"
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Grupa %s jest grupą wbudowaną (systemową) i nie może być usunięta!"
+msgstr "Grupa %s jest grupą systemową i nie może być usunięta!"
 
 #: account/models.py:82
 msgid "User ID"
@@ -712,9 +712,9 @@ msgid "Users"
 msgstr "Użytkownicy"
 
 #: account/models.py:151
-#, python-format
+#, fuzzy, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "Użytkownik %s jest wbudowany (systemowy) i nie może być usunięty!"
+msgstr "Użytkownik %s jest użytkownikiem systemowym i nie może być usunięty!"
 
 #: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
