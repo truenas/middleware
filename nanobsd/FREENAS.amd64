@@ -98,6 +98,7 @@ options		GEOM_UZIP
 options		GEOM_MIRROR
 options		GEOM_RAID
 options		GEOM_ELI
+options		GEOM_GATE
 device		aesni
 options		NULLFS
 options		UNIONFS
@@ -105,6 +106,7 @@ options		VFS_AIO
 options		VIMAGE
 device		carp
 device		snp
+device		ctl
 
 # Make an SMP-capable kernel by default
 options 	SMP			# Symmetric MultiProcessor Kernel
