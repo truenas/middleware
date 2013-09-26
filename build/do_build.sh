@@ -35,9 +35,10 @@ ADDL_REPOS=""
 if is_truenas ; then
     GIT_DEEP=yes  # shallow checkouts cause too many problems right now.
     # Additional repos to checkout for build
-    ADDL_REPOS="$ADDL_REPOS ZFSD"
+    ADDL_REPOS="$ADDL_REPOS ZFSD TRUENAS-FILES"
 
     : ${GIT_ZFSD_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git}
+    : ${GIT_FILES_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/files.git}
 fi
 
 # Targets to build (os-base, plugins/<plugin>).
@@ -380,7 +381,9 @@ checkout_freebsd_source()
             generic_checkout_git PORTS "${AVATAR_ROOT}/FreeBSD" ports
 
             for proj in $ADDL_REPOS ; do
-                generic_checkout_git "$proj" "${AVATAR_ROOT}/nas_source" \
+                generic_checkout_git \
+                    "`echo $proj|tr '-' '_'`" \
+                    "${AVATAR_ROOT}/nas_source" \
                     `echo $proj | tr 'A-Z' 'a-z'`
             done
 
