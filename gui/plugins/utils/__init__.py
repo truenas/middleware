@@ -79,7 +79,69 @@ def get_plugin_status(args):
             ))
         ]
         #TODO: Increase timeout based on number of plugins
-        response = opener.open(url, None, 5).read()
+        response = opener.open(url, None).read()
+        json = simplejson.loads(response)
+    except Exception, e:
+        log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+            'url': url,
+            'error': e,
+        })
+    return plugin, json, jail_status
+
+
+def get_plugin_start(args):
+
+    plugin, host, request = args
+    url = "%s/plugins/%s/%d/_s/start" % (
+        host,
+        plugin.plugin_name,
+        plugin.id)
+    json = None
+
+    jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
+    if not jail_status:
+        return plugin, json, jail_status
+
+    try:
+        opener = urllib2.build_opener()
+        opener.addheaders = [
+            ('Cookie', 'sessionid=%s' % (
+                request.COOKIES.get("sessionid", ''),
+            ))
+        ]
+        #TODO: Increase timeout based on number of plugins
+        response = opener.open(url, None).read()
+        json = simplejson.loads(response)
+    except Exception, e:
+        log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
+            'url': url,
+            'error': e,
+        })
+    return plugin, json, jail_status
+
+
+def get_plugin_stop(args):
+
+    plugin, host, request = args
+    url = "%s/plugins/%s/%d/_s/stop" % (
+        host,
+        plugin.plugin_name,
+        plugin.id)
+    json = None
+
+    jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
+    if not jail_status:
+        return plugin, json, jail_status
+
+    try:
+        opener = urllib2.build_opener()
+        opener.addheaders = [
+            ('Cookie', 'sessionid=%s' % (
+                request.COOKIES.get("sessionid", ''),
+            ))
+        ]
+        #TODO: Increase timeout based on number of plugins
+        response = opener.open(url, None).read()
         json = simplejson.loads(response)
     except Exception, e:
         log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {

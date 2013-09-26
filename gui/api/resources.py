@@ -1483,7 +1483,6 @@ class JailTemplateResourceMixin(object):
         bundle.data['_edit_url'] = reverse('jail_template_edit', kwargs={
             'id': bundle.obj.id
         })
-
         return bundle
 
 
@@ -1639,6 +1638,10 @@ class AvailablePluginsResource(DojoResource):
         if self.is_webclient(bundle.request):
             bundle.data['_install_url'] = reverse(
                 'plugins_install_available',
+                kwargs={'oid': bundle.obj.id},
+            )
+            bundle.data['_update_url'] = reverse(
+                'plugin_update',
                 kwargs={'oid': bundle.obj.id},
             )
         return bundle

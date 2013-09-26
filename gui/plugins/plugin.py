@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 import platform
+import re
 import urllib2
 
 from django.utils.translation import ugettext as _
@@ -190,5 +191,114 @@ class Available(object):
 
     def all(self):
         return self.get_local()
+
+
+def get_available_plugins():
+    from freenasUI.plugins import models, availablePlugins
+
+    conf = models.Configuration.objects.latest('id')
+    if conf and conf.collectionurl:
+        url = conf.collectionurl
+    else:
+        url = models.PLUGINS_INDEX
+
+    return availablePlugins.get_remote(url=url, cache=True)
+
+
+def get_remote_plugin_by_oid(oid):
+    from freenasUI.plugins import models, availablePlugins
+
+    plugin = None
+    for p in get_available_plugins(): 
+        if p.id == int(oid):
+            plugin = p
+            break
+
+    return plugin
+
+
+def get_remote_plugin_pbiname_by_oid(oid):
+    plugin = get_remote_plugin_by_oid(oid)
+    if not plugin:
+        return None
+
+    pbiname = None
+    for url in plugin.urls:
+        parts = url.split('/')
+        nparts = len(parts)
+        pbiname = parts[0]
+        if nparts > 0:
+            pbiname = parts[nparts - 1]
+        break
+
+    if pbiname:
+        pbiname = re.sub('\.pbi$', '', pbiname, flags=re.I)
+
+    return pbiname
+
+
+def get_remote_plugin_by_installed_oid(oid):
+    from freenasUI.plugins import models
+
+    rplugin = None
+    iplugin = models.Plugins.objects.filter(id=oid)
+    if iplugin: 
+        iplugin = iplugin[0]
+
+        for rp in get_available_plugins():
+            pbiname = get_remote_plugin_pbiname_by_oid(rp.id)
+            if not pbiname:
+                continue
+
+            if iplugin.plugin_arch.lower() == rp.arch.lower() and \
+                iplugin.plugin_pbiname.lower() == pbiname.lower():
+                rplugin = rp  
+                break  
+
+    return rplugin
+
+
+def get_installed_plugin_update_status(oid):
+    from freenasUI.plugins import models
+    status = False
+
+    iplugin = models.Plugins.objects.filter(id=oid)
+    if iplugin: 
+        iplugin = iplugin[0]
+
+    rplugin = get_remote_plugin_by_installed_oid(oid)
+    if rplugin and iplugin:
+        if str(iplugin.plugin_version).lower() != str(rplugin.version).lower():
+            status = True
+
+    return status
+
+
+def get_installed_plugins_by_remote_oid(oid):
+    from freenasUI.plugins import models, availablePlugins
+    iplugins = []
+
+    pbiname = get_remote_plugin_pbiname_by_oid(oid)
+    if not pbiname:
+        return iplugins
+
+    if pbiname:
+        plugins = models.Plugins.objects.filter(
+            plugin_arch=plugin.arch,
+            plugin_pbiname=pbiname
+        )
+
+    return plugins
+
+
+def get_installed_plugins_count_by_remote_oid(oid):
+    icount = 0
+
+    iplugins = get_installed_plugins_by_remote_oid(oid)
+    if iplugins:
+        icount = len(iplugins)
+
+    return icount
+
 
 availablePlugins = Available()
