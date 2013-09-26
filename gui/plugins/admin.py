@@ -69,6 +69,19 @@ class AvailableFAdmin(BaseFreeAdmin):
                 }
             }""",
         }
+        actions["Update"] = {
+            'button_name': _("Update"),
+            'on_select': """function(evt, actionName, action) {
+                show_plugin_update_button(evt, actionName, action);
+            }""",
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Update plugin', data._update_url, [mybtn,]);
+                }
+            }""",
+        }
         return actions
 
 

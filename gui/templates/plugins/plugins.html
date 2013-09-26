@@ -1,3 +1,5 @@
+
+{% comment %}
 <div data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="gutters: true, splitter:true">
 
 <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region:'top', href: '{% url "freeadmin_plugins_available_datagrid" %}'" style="height: 50%">
@@ -8,6 +10,7 @@
 <div style="background-color: #eee; padding: 3px; border-bottom: 1px solid #ccc;">
 {% trans "Installed" %}
 </div>
+{% endcomment %}
 
 <table class="grid">
     <thead class="header">
@@ -43,16 +46,15 @@
                 <img src="{{ STATIC_URL }}images/ui/buttons/{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}.png" onClick="togglePluginService(this, '{{ p.plugin_name|escapejs }}', {{ p.id|escapejs }})" status="{% if p.service.status == "RUNNING" %}on{% else %}off{% endif %}" style="cursor: pointer;">
            </td>
            <td>
-                {% if p.service.jail_status %}
-                {% comment %}
-                <button data-dojo-type="dijit.form.Button" type="button">
+		{% if p.update_available %}
+                <button id="btn_Plugins_{{ p.id }}_Update" data-dojo-type="dijit.form.Button" type="button" >
                   {% trans "Update" %}
-                  <script id="btn_Plugins_{{ p.id }}_Update" type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                      editObject('{% trans "Update plugin"|force_escape|force_escape %}', '{% url "plugin_update" plugin_id=p.id %}', [this,]);
+                  <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                      editObject('{% trans "Update plugin"|force_escape|force_escape %}', '{% url "plugin_update" oid=p.id %}', [this,]);
                   </script>
                 </button>
-                {% endcomment %}
-                {% endif %}
+		{% endif %}
+
                 <button id="btn_Plugins_{{ p.id }}_Delete" data-dojo-type="dijit.form.Button" type="button">
                   {% trans "Delete" %}
                   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">

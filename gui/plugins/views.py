@@ -25,9 +25,11 @@
 #
 #####################################################################
 from collections import namedtuple
+
 import json
 import logging
 import os
+import re
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponse
@@ -45,8 +47,17 @@ from freenasUI.jails.utils import (
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
-from freenasUI.plugins.plugin import PROGRESS_FILE
-from freenasUI.plugins.utils import get_base_url, get_plugin_status
+from freenasUI.plugins.plugin import (
+    PROGRESS_FILE,
+    get_installed_plugin_update_status,
+    get_remote_plugin_by_installed_oid
+)
+from freenasUI.plugins.utils import (
+    get_base_url,
+    get_plugin_status,
+    get_plugin_start,
+    get_plugin_stop
+)
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
 
 import freenasUI.plugins.api_calls
@@ -100,6 +111,8 @@ def plugins(request):
             jail_status=jail_status,
         )
 
+        plugin.update_available = get_installed_plugin_update_status(plugin.id)
+
     return render(request, "plugins/plugins.html", {
         'plugins': plugins,
     })
@@ -132,37 +145,71 @@ def plugin_info(request, plugin_id):
     })
 
 
-def plugin_update(request, plugin_id):
-    plugin_id = int(plugin_id)
-    plugin = models.Plugins.objects.get(id=plugin_id)
+def plugin_installed(request, oid):
+    data = {
+        'installed': get_installed_plugins_count_by_remote_oid(oid)
+    }
 
-    plugin_upload_path = notifier().get_plugin_upload_path()
-    notifier().change_upload_location(plugin_upload_path)
+    return HttpResponse(json.dumps(data), mimetype='application/json')
+
+
+def plugin_update(request, oid):
+    host = get_base_url(request)
+
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+    if os.path.exists(logfile):
+        os.unlink(logfile)
+    if os.path.exists(WARDEN_EXTRACT_STATUS_FILE):
+        os.unlink(WARDEN_EXTRACT_STATUS_FILE)
+    if os.path.exists("/tmp/.plugin_upload_install"):
+        os.unlink("/tmp/.plugin_upload_install")
+    if os.path.exists("/tmp/.jailcreate"):
+        os.unlink("/tmp/.jailcreate")
+    if os.path.exists(PROGRESS_FILE):
+        os.unlink(PROGRESS_FILE)
+
+    iplugin = models.Plugins.objects.filter(id=oid)
+    if not iplugin:
+        raise MiddlewareError(_("Plugin not installed"))
+    iplugin = iplugin[0]
+
+    rplugin = get_remote_plugin_by_installed_oid(oid)
+    if not rplugin:
+        raise MiddlewareError(_("Invalid plugin"))
+
+    (p, js, jail_status) = get_plugin_status([iplugin, host, request])
+    if js and js['status'] == 'RUNNING':
+        (p, js, jail_status) = get_plugin_stop([iplugin, host, request])
 
     if request.method == "POST":
-        form = forms.PBIUpdateForm(request.POST, request.FILES, plugin=plugin)
-        if form.is_valid():
-            form.done()
-            return JsonResp(
-                request,
-                message=_('Plugin successfully updated'),
-                events=['reloadHttpd()'],
+        plugin_upload_path = notifier().get_plugin_upload_path()
+        notifier().change_upload_location(plugin_upload_path)
+
+        if not rplugin.download("/var/tmp/firmware/pbifile.pbi"):
+            raise MiddlewareError(_("Failed to download plugin"))
+
+        jail = Jails.objects.filter(jail_host=iplugin.plugin_jail)
+        if not jail: 
+            raise MiddlewareError(_("Jail does not exist"))
+
+        if notifier().update_pbi(plugin=iplugin):
+            notifier()._restart_plugins(
+                iplugin.plugin_jail,
+                iplugin.plugin_name,
             )
+
         else:
-            resp = render(request, "plugins/plugin_update.html", {
-                'form': form,
-            })
-            resp.content = (
-                "<html><body><textarea>"
-                + resp.content +
-                "</textarea></boby></html>"
-            )
-            return resp
-    else:
-        form = forms.PBIUpdateForm(plugin=plugin)
+            raise MiddlewareError(_("Failed to update plugin"))
+
+        return JsonResp(
+            request,
+            message=_("Plugin successfully updated"),
+            events=['reloadHttpd()'],
+        )
 
     return render(request, "plugins/plugin_update.html", {
-        'form': form,
+        'plugin': rplugin,
     })
 
 
@@ -181,16 +228,8 @@ def install_available(request, oid):
             'error': e.value,
         })
 
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = '%s/warden.log' % jc.jc_path
-    if os.path.exists(logfile):
-        os.unlink(logfile)
-    if os.path.exists(WARDEN_EXTRACT_STATUS_FILE):
-        os.unlink(WARDEN_EXTRACT_STATUS_FILE)
-    if os.path.exists("/tmp/.plugin_upload_install"):
-        os.unlink("/tmp/.plugin_upload_install")
-    if os.path.exists("/tmp/.jailcreate"):
-        os.unlink("/tmp/.jailcreate")
+    if os.path.exists("/tmp/.plugin_upload_update"):
+        os.unlink("/tmp/.plugin_upload_update")
     if os.path.exists(PROGRESS_FILE):
         os.unlink(PROGRESS_FILE)
 
@@ -244,7 +283,6 @@ def install_progress(request):
     logfile = '%s/warden.log' % jc.jc_path
     data = {}
     if os.path.exists(PROGRESS_FILE):
-        log.debug("XXX: step 1: %s", PROGRESS_FILE)
         data = {'step': 1}
         with open(PROGRESS_FILE, 'r') as f:
             try:
@@ -288,6 +326,27 @@ def install_progress(request):
 
     if os.path.exists("/tmp/.plugin_upload_install"):
         data = {'step': 4}
+
+    content = json.dumps(data)
+    return HttpResponse(content, mimetype='application/json')
+
+
+def update_progress(request):
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+    data = {}
+
+    if os.path.exists(PROGRESS_FILE):
+        data = {'step': 1}
+        with open(PROGRESS_FILE, 'r') as f:
+            try:
+                current = int(f.readlines()[-1].strip())
+            except:
+                pass
+        data['percent'] = current
+
+    if os.path.exists("/tmp/.plugin_upload_update"):
+        data = {'step': 2}
 
     content = json.dumps(data)
     return HttpResponse(content, mimetype='application/json')

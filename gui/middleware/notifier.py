@@ -2655,6 +2655,8 @@ class notifier:
         from freenasUI.jails.models import JailsConfiguration
         ret = False
 
+        open('/tmp/.plugin_upload_update', 'w+').close()
+
         if not plugin:
             raise MiddlewareError("plugin is NULL")
 
@@ -2762,8 +2764,8 @@ class notifier:
             plugin.save()
             ret = True
 
-        except Exception:
-            ret = False
+        except Exception as e:
+            raise MiddlewareError(_(e))
 
         return ret
 

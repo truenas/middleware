@@ -213,6 +213,48 @@ require([
 
     }
 
+    get_selected_plugin = function() {
+        var plugin = null;
+        var grid = dom.byId("dgrid_available").grid;
+        for (var i in grid.selection) {
+            plugin = grid.row(i).data;
+            break;
+        }
+
+        if (!plugin) {
+            console.log("Something is wrong here, now plugin found!");
+            return null;
+        }
+
+        return plugin;
+    }
+
+    show_plugin_update_button = function(evt, actionName, action) {
+        var plugin = get_selected_plugin();
+        if (!plugin) {
+            console.log("Something is wrong here, no plugin found!");
+            return;
+        }
+
+        xhr.get('/plugins/plugin/installed/' + plugin.id + '/', {
+            sync: true
+        }).then(function(data) {
+            var obj = JSON.parse(data)
+            if (obj.installed > 0) {
+                query(".grid" + actionName).forEach(function(item, idx) {
+                    domStyle.set(item, "display", "block");
+                });
+            } else {
+                query(".grid" + actionName).forEach(function(item, idx) {
+                    domStyle.set(item, "display", "none");
+                });
+            }
+            if (action.on_select_after !== undefined) {
+                action.on_select_after(evt, actionName, action);
+            }
+        });
+    }
+
     ask_service = function(srv) {
 
         dialog = new Dialog({

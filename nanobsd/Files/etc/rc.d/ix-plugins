@@ -152,7 +152,7 @@ plugins_stop()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
 	while read name jail path enabled 
 	do
-		if [ "${enabled}" != "0" ]
+		if [ "${enabled}" != "1" ]
 		then
 			continue
 		fi

@@ -1,8 +1,10 @@
 {% extends "freeadmin/generic_model_datagrid.html" %}
 {% block actions_static_pane %}
+{% comment %}
 <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'top'" style="background-color: #eee; border-bottom: 1px solid #ccc; height: 21px;">
 <div style="padding: 4px;">{% trans "Available" %}</div>
 </div>
+{% endcomment %}
 {{ block.super }}
 {% endblock %}
 {% block actions_static_buttons %}
