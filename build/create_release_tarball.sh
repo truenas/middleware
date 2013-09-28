@@ -25,8 +25,8 @@ for arch in x64 x86 ; do
 	echo $arch = $mapped_arch
 	mkdir $arch
 	for ext in img.xz GUI_Upgrade.txz iso ; do
-		ln "${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext}" "${TOP}/release_stage/${arch}"
-		ln "${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-${arch}.${ext}.sha256.txt" "${TOP}/release_stage/${arch}"
+		ln "${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-*-${arch}.${ext}" "${TOP}/release_stage/${arch}"
+		ln "${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-*-${arch}.${ext}.sha256.txt" "${TOP}/release_stage/${arch}"
 	done
 done
 tar -czvf $TARBALL -H release_stage
