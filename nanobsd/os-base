@@ -906,12 +906,6 @@ add_data_to_fstab ( )
 }
 customize_cmd add_data_to_fstab
 
-afpd_conf_symlink ( )
-{
-	ln -sfh /etc/afpd.conf ${NANO_WORLDDIR}/usr/local/etc/afpd.conf
-}
-customize_cmd afpd_conf_symlink
-
 select_httpd ( )
 {
 	echo 'nginx_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
