@@ -202,10 +202,6 @@ LOGLEVEL_CHOICES = (
         ('10', _('Debug')),
         )
 
-DISKDISCOVERY_CHOICES = (
-        ('default', _('Default')),
-        ('time-machine', _('Time Machine')),
-        )
 CASEFOLDING_CHOICES = (
         ('none',            _('No case folding')),
         ('lowercaseboth',   _('Lowercase names in both directions')),
