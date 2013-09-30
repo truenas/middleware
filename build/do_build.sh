@@ -38,7 +38,7 @@ if is_truenas ; then
     ADDL_REPOS="$ADDL_REPOS ZFSD TRUENAS-FILES"
 
     : ${GIT_ZFSD_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git}
-    : ${GIT_FILES_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/files.git}
+    : ${GIT_TRUENAS_FILES_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/truenas-files.git}
 fi
 
 # Targets to build (os-base, plugins/<plugin>).
