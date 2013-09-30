@@ -38,7 +38,7 @@ git-export:
 
 # if NAS_PORTS_DIRECT or NAS_PORTS_DIRECT_SYSUTILS_ZFSD is set
 # then what we do is use the checked out copy of ZFSD.
-.if defined(NAS_PORTS_DIRECT) ||defined(NAS_PORTS_DIRECT_SYSUTILS_ZFSD)
+.if defined(NAS_PORTS_DIRECT) ||defined(NAS_PORTS_DIRECT_MISC_TRUENAS_FILES)
 
 EXTRACT_ONLY=
 WRKSRC=/usr/nas_source/${PORTNAME}
