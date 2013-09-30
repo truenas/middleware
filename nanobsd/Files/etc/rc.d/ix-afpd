@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-afpd
 # REQUIRE: FILESYSTEMS
-# BEFORE: afpd
+# BEFORE: netatalk
 
 . /etc/rc.subr
 
