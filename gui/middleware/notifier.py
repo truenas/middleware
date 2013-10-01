@@ -422,9 +422,11 @@ class notifier:
             Warden().stop(jail=jail.jail_host)
 
     def _start_jails(self):
+        self.__system("/usr/sbin/service ix-warden start")
         from freenasUI.jails.models import Jails
         for jail in Jails.objects.all():
             Warden().start(jail=jail.jail_host)
+        self.__system("/usr/sbin/service ix-plugins start")
 
     def _restart_jails(self):
         self._stop_jails()
