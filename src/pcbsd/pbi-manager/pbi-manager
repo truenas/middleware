@@ -5408,9 +5408,17 @@ pbi_add_fetch_remote() {
 
 	# If we are only fetching, finish up now
 	if [ "$PBI_REMOTEFETCHONLY" = "YES" ] ; then
-		mv $PBI_FILENAME ./`basename ${PBI_UPFILE}`
-		echo "PBI saved to ./`basename ${PBI_UPFILE}`"
-		exit_trap
+            local dst="./`basename ${PBI_UPFILE}`"
+            if [ -n "${PBI_ALTEXTRACT_PATH}" ] ; then 
+                dst="${PBI_ALTEXTRACT_PATH}"
+
+            elif [ -n "${PBI_ALTEXTRACT_DIR}" ] ; then
+                dst="${PBI_ALTEXTRACT_DIR}/`basename ${PBI_UPFILE}`"
+            fi
+
+            mv $PBI_FILENAME "${dst}"
+            echo "PBI saved to ${dst}"
+            exit_trap
 	fi
 
 }
@@ -5525,9 +5533,9 @@ pbi_update_dl() {
 
 	_tPatch=$1
 	local _CKSUM="$2"
-	
+
 	# Set local download location
-	_dl_loc="${PBI_APPDIR}/.`basename $PBI_UPFILE`"
+	_dl_loc="/var/tmp/.`basename $PBI_UPFILE`"
 
 	# Have a patch file to download instead, make that the active file to try
 	if [ -n "$_tPatch" ] ; then
@@ -5538,6 +5546,7 @@ pbi_update_dl() {
 	fi
 
 	_mirrorList=`echo $PBI_UPMIRROR | sed 's|\n| |g'`
+echo "MIRRORLIST = $_mirrorList"
 
 	# Start download from repos mirror(s) in order
 	for _cMirror in $_mirrorList

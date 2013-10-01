@@ -2,13 +2,26 @@ import hashlib
 import logging
 import os
 import platform
+import requests
 import re
+import string
 import urllib2
 
 from django.utils.translation import ugettext as _
+
+from freenasUI.common import pbi
+from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.exceptions import MiddlewareError
 
-import requests
+import platform as p
+if p.machine() == 'amd64':
+    __arch = 'x64'
+else:
+    __arch = 'x32'
+
+PLUGINS_INDEX = 'http://www.freenas.org/downloads/plugins/9/%s' % __arch
+PLUGINS_META = '%s/pbi-meta' % PLUGINS_INDEX
+PLUGINS_REPO = '%s/pbi-repo.rpo' % PLUGINS_META
 
 PROGRESS_FILE = "/tmp/.plugininstall_progess"
 log = logging.getLogger("plugins.plugin")
@@ -16,43 +29,81 @@ log = logging.getLogger("plugins.plugin")
 
 class Plugin(object):
 
-    id = None
-    arch = None
-    name = None
-    description = None
+    repo_id = None
+    application = None
     version = None
+    category = None
+    created = None
+    rootinstall = None
+    arch = None
+    author = None
+    url = None
+    license = None
+    type = None
+    keywords = None
+    icon = None
+    description = None
+    sha256 = None
+    file = None
     hash = None
     urls = None
+    size = None
 
-    def __init__(self, id, name, description, arch, version, hash, urls=None):
-        self.id = id
-        self.arch = arch
-        self.name = name
-        self.description = description
+    def __init__(self, repo_id, application, version, category, created,
+        rootinstall, arch, author, url, license, type, keywords, icon,
+        description, sha256, file, hash, urls, size):
+
+        self.repo_id = repo_id
+        self.application = application
         self.version = version
+        self.category = category
+        self.created = created
+        self.rootinstall = rootinstall
+        self.arch = arch
+        self.author = author
+        self.url = url
+        self.license = license
+        self.type = type
+        self.keywords = keywords
+        self.icon = icon
+        self.description = description
+        self.sha256 = sha256
+        self.file = file
         self.hash = hash
         self.urls = urls
+        self.size = size
 
-    def __setattr__(self, name, value):
-        if not hasattr(self, name):
-            raise ValueError(name)
-        object.__setattr__(self, name, value)
+    def __setattr__(self, application, value):
+        if not hasattr(self, application):
+            raise ValueError(application)
+        object.__setattr__(self, application, value)
 
     def __repr__(self):
-        return '<Plugin: %s>' % self.name
+        return '<Plugin: %s>' % self.application
+
+    @property
+    def id(self):
+        return self.hash
+
+    @property
+    def name(self):
+        return self.application
 
     @property
     def unixname(self):
-        return self.name.split(' ')[0].lower()
+        return self.application.split(' ')[0].lower()
 
     def download(self, path):
-        if not self.urls:
+        if not self.repo_id:
             raise ValueError("Not downloadable")
+        if not self.urls:
+            raise ValueError("No mirrors available")
 
         rv = False
         for url in self.urls:
+            rpath = "%s/%s" % (url, self.file)
             try:
-                rv = self.__download(url, path)
+                rv = self.__download(rpath, path)
                 if rv:
                     break
             except Exception, e:
@@ -133,172 +184,243 @@ class Plugin(object):
 class Available(object):
 
     __cache = None
+    __repo_id = None
+    __repo_desc = None
 
-    def __init__(self):
+    def __init__(self, repo_id=None):
         self.__cache = dict()
+        repo = self.get_repo(repo_id=repo_id, create=True)
+        if repo:
+            self.__repo_id = repo[0]
+            self.__repo_desc = repo[1]
+
+    def create_repo(self):
+        url = PLUGINS_REPO
+        rpath = "/var/tmp/pbi-repo.rpo"
+
+        r = requests.get(url, timeout=8)
+        if r.status_code != requests.codes.ok:
+            return False
+
+        with open(rpath, "w") as f:
+            for byte in r:
+                f.write(byte)
+            f.close()
+
+        p = pbi.PBI()
+
+        out = p.addrepo(repofile=rpath)
+        if not out:
+            return False
+
+        notifier().restart("pbid")
+        return True
+
+    def get_repo(self, repo_id=None, create=False):
+        p = pbi.PBI()
+
+        if repo_id:
+            repos = p.listrepo(repoid=repo_id)
+        else:
+            repos = p.listrepo()
+
+        if not repos and create == False:
+            return None
+
+        elif not repos and create == True:
+            if not self.create_repo():
+                return None
+            repos = p.listrepo()
+
+        elif repos and repo_id is not None:
+            for repo in repos:
+                return repo
+
+        for repo in repos:
+            repoid = repo[0]
+            description = repo[1]
+            if re.match('Official FreeNAS Repository', description, re.I):
+                return repo
+
+        if create == True:
+            if not self.create_repo():
+                return None
+
+            repos = p.listrepo()
+            if not repos:
+                return None
+
+        for repo in repos:
+            repoid = repo[0]
+            description = repo[1]
+            if re.match('Official FreeNAS Repository', description, re.I):
+                return repo
+
+        return None
+
+    def get_mirror_urls(self, repo_id):
+        reposdir = "/var/db/pbi/repos"
+        mirrorsdir = "/var/db/pbi/mirrors"
+
+        if not repo_id:
+            repod_id = self.__repo_id
+            if not repod_id:
+                return None
+
+        urls = []
+        for f in os.listdir(reposdir):
+            parts = f.split('.')
+            if not parts:
+                continue
+            id = parts[0]
+            if id == repo_id:
+                fp = "%s/%s" % (mirrorsdir, parts[1]) 
+                with open(fp, "r") as mirrors:
+                    for line in mirrors:
+                        mirror = line.strip()
+                        urls.append(mirror)
+                    mirrors.close() 
+
+        return urls
+
+
+    def get_index_entry(self, repo_id=None, application=None, arch=None, version=None):
+        reposdir = "/var/db/pbi/repos"
+        indexdir = "/var/db/pbi/index"
+
+        if not application or not version:
+            return None
+
+        if not repo_id:
+            repod_id = self.__repo_id
+            if not repod_id:
+                return None
+
+        sha256 = None
+        for f in os.listdir(reposdir):
+            parts = f.split('.')
+            if not parts:
+                continue
+            id = parts[0]
+            if id == repo_id:
+                sha256 = parts[1]
+                break
+
+        if sha256:
+            try:
+                indexfile = "%s/%s-index" % (indexdir, sha256)
+                with open(indexfile, "r") as f:
+                    for line in f:
+                        parts = line.split(':')
+                        if parts[0] == application.lower() and \
+                            parts[1] == arch.lower() and \
+                            parts[2] == version.lower():
+                            return parts  
+                    f.close()
+
+            except Exception as e:
+                log.debug("Unable to open up repo with sha256: %s", sha256)
+                return None
+
+        return None
+
+    def get_update_status(self, oid):
+        from freenasUI.plugins import models
+        status = False
+
+        iplugin = models.Plugins.objects.filter(id=oid)
+        if iplugin:
+            iplugin = iplugin[0]
+
+        rplugin = None
+        for rp in self.get_remote(cache=True):
+            if rp.name == iplugin.plugin_name:
+                rplugin = rp
+                break
+ 
+        if rplugin and iplugin:
+            if str(iplugin.plugin_version).lower() != str(rplugin.version).lower():
+                status = True
+
+        return status
 
     def get_local(self):
         results = []
 
         return results
 
-    def get_remote(self, url, cache=False):
+    def get_remote(self, repo_id=None, cache=False):
+        if not repo_id: 
+            repo_id = self.__repo_id
+        if cache and repo_id in self.__cache:
+            log.debug("Using cached results for %s", repo_id)
+            return self.__cache.get(repo_id)
 
-        if cache and url in self.__cache:
-            log.debug("Using cached results for %s", url)
-            return self.__cache.get(url)
+        log.debug("Retrieving available plugins from repo %s", repo_id)
 
-        results = []
-
-        log.debug("Retrieving available plugins from %s", url)
-        r = requests.get(url, timeout=8)
-
-        if r.status_code != requests.codes.ok:
+        p = pbi.PBI()
+        results = p.browser(repo_id=repo_id, flags=pbi.PBI_BROWSER_FLAGS_VIEWALL)
+        if not results:
             log.debug(
-                "HTTP request to %s did not return OK (%d)", url, r.status_code
+                "No results returned for repo %s", repo_id
             )
             return results
-
-        data = r.json()
-
-        for p in data:
+       
+        plugins = []
+        for p in results:
             try:
-                item = self._get_remote_item(p)
-                if item is False:
+                index_entry = self.get_index_entry(repo_id,
+                    application=p['Application'],
+                    arch=p['Arch'],
+                    version=p['Version']
+                )
+                if not index_entry:
+                    log.debug("not index entry found for %s", p['Application'])
                     continue
-                results.append(item)
-            except Exception, e:
+
+                urls = self.get_mirror_urls(repo_id)
+
+                item = self._get_remote_item(repo_id, p, index_entry, urls)
+                if item is False:
+                    log.debug("unable to create plugin for %s", p['Application'])
+                    continue
+
+                plugins.append(item)
+            except Exception as e:
                 log.debug("Failed to get remote item: %s", e)
 
-        self.__cache[url] = results
+        self.__cache[repo_id] = plugins
+        return plugins
 
-        return results
-
-    def _get_remote_item(self, p):
-        status = p['Status']
-        if status['architecture'] != platform.machine():
+    def _get_remote_item(self, repo_id, p, ie, urls):
+        arch = p['Arch']
+        if arch != platform.machine():
             return False
 
         return Plugin(
-            id=int(p['Pbi']['id']),
-            name=p['Pbi']['title'],
-            description=p['Pbi'].get("description", "Not implemented"),
-            version=status['pbi_version'],
-            arch=status['architecture'],
-            hash=status.get('hash', None),
-            urls=[status['location']],
+            repo_id=repo_id,
+            application=p['Application'],
+            version=p['Version'],
+            category=p['Category'],
+            created=p['Created'],
+            rootinstall=p['RootInstall'],
+            arch=p['Arch'],
+            author=p['Author'],
+            url=p['URL'],
+            license=p['License'],
+            type=p['Type'],
+            keywords=p['Keywords'],
+            icon=p['Icon'],
+            description=p['Description'],
+            sha256=ie[3],
+            file=ie[5],
+            hash=ie[3],
+            urls=urls,
+            size=(long(ie[9])*1024)
         )
 
     def all(self):
         return self.get_local()
-
-
-def get_available_plugins():
-    from freenasUI.plugins import models, availablePlugins
-
-    conf = models.Configuration.objects.latest('id')
-    if conf and conf.collectionurl:
-        url = conf.collectionurl
-    else:
-        url = models.PLUGINS_INDEX
-
-    return availablePlugins.get_remote(url=url, cache=True)
-
-
-def get_remote_plugin_by_oid(oid):
-    from freenasUI.plugins import models, availablePlugins
-
-    plugin = None
-    for p in get_available_plugins(): 
-        if p.id == int(oid):
-            plugin = p
-            break
-
-    return plugin
-
-
-def get_remote_plugin_pbiname_by_oid(oid):
-    plugin = get_remote_plugin_by_oid(oid)
-    if not plugin:
-        return None
-
-    pbiname = None
-    for url in plugin.urls:
-        parts = url.split('/')
-        nparts = len(parts)
-        pbiname = parts[0]
-        if nparts > 0:
-            pbiname = parts[nparts - 1]
-        break
-
-    if pbiname:
-        pbiname = re.sub('\.pbi$', '', pbiname, flags=re.I)
-
-    return pbiname
-
-
-def get_remote_plugin_by_installed_oid(oid):
-    from freenasUI.plugins import models
-
-    rplugin = None
-    iplugin = models.Plugins.objects.filter(id=oid)
-    if iplugin: 
-        iplugin = iplugin[0]
-
-        for rp in get_available_plugins():
-            pbiname = get_remote_plugin_pbiname_by_oid(rp.id)
-            if not pbiname:
-                continue
-
-            if iplugin.plugin_arch.lower() == rp.arch.lower() and \
-                iplugin.plugin_pbiname.lower() == pbiname.lower():
-                rplugin = rp  
-                break  
-
-    return rplugin
-
-
-def get_installed_plugin_update_status(oid):
-    from freenasUI.plugins import models
-    status = False
-
-    iplugin = models.Plugins.objects.filter(id=oid)
-    if iplugin: 
-        iplugin = iplugin[0]
-
-    rplugin = get_remote_plugin_by_installed_oid(oid)
-    if rplugin and iplugin:
-        if str(iplugin.plugin_version).lower() != str(rplugin.version).lower():
-            status = True
-
-    return status
-
-
-def get_installed_plugins_by_remote_oid(oid):
-    from freenasUI.plugins import models, availablePlugins
-    iplugins = []
-
-    pbiname = get_remote_plugin_pbiname_by_oid(oid)
-    if not pbiname:
-        return iplugins
-
-    if pbiname:
-        plugins = models.Plugins.objects.filter(
-            plugin_arch=plugin.arch,
-            plugin_pbiname=pbiname
-        )
-
-    return plugins
-
-
-def get_installed_plugins_count_by_remote_oid(oid):
-    icount = 0
-
-    iplugins = get_installed_plugins_by_remote_oid(oid)
-    if iplugins:
-        icount = len(iplugins)
-
-    return icount
 
 
 availablePlugins = Available()

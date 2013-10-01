@@ -41,17 +41,15 @@ from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails.models import Jails, JailsConfiguration
 from freenasUI.jails.utils import (
-    jail_path_configured, jail_auto_configure, guess_adresses,
+    jail_path_configured,
+    jail_auto_configure,
+    guess_adresses,
     new_default_plugin_jail
 )
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins import models, forms, availablePlugins
-from freenasUI.plugins.plugin import (
-    PROGRESS_FILE,
-    get_installed_plugin_update_status,
-    get_remote_plugin_by_installed_oid
-)
+from freenasUI.plugins.plugin import PROGRESS_FILE
 from freenasUI.plugins.utils import (
     get_base_url,
     get_plugin_status,
@@ -111,7 +109,7 @@ def plugins(request):
             jail_status=jail_status,
         )
 
-        plugin.update_available = get_installed_plugin_update_status(plugin.id)
+        plugin.update_available = availablePlugins.get_update_status(plugin.id)
 
     return render(request, "plugins/plugins.html", {
         'plugins': plugins,
@@ -174,7 +172,12 @@ def plugin_update(request, oid):
         raise MiddlewareError(_("Plugin not installed"))
     iplugin = iplugin[0]
 
-    rplugin = get_remote_plugin_by_installed_oid(oid)
+    rplugin = None
+    for rp in availablePlugins.get_remote(cache=True):
+        if rp.name == iplugin.plugin_name:
+            rplugin = rp
+            break
+
     if not rplugin:
         raise MiddlewareError(_("Invalid plugin"))
 
@@ -214,7 +217,6 @@ def plugin_update(request, oid):
 
 
 def install_available(request, oid):
-
     try:
         if not jail_path_configured():
             jail_auto_configure()
@@ -234,13 +236,8 @@ def install_available(request, oid):
         os.unlink(PROGRESS_FILE)
 
     plugin = None
-    conf = models.Configuration.objects.latest('id')
-    if conf and conf.collectionurl:
-        url = conf.collectionurl
-    else:
-        url = models.PLUGINS_INDEX
-    for p in availablePlugins.get_remote(url=url, cache=True):
-        if p.id == int(oid):
+    for p in availablePlugins.get_remote(cache=True):
+        if p.id == oid:
             plugin = p
             break
 
