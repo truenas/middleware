@@ -186,13 +186,20 @@ class Available(object):
     __cache = None
     __repo_id = None
     __repo_desc = None
+    __def_repo = None
 
     def __init__(self, repo_id=None):
         self.__cache = dict()
+
+    def _def_repo_id(self, repo_id=None):
+        if self.__def_repo is not None:
+            return self.__repo_id
+        self.__def_repo = True
         repo = self.get_repo(repo_id=repo_id, create=True)
         if repo:
             self.__repo_id = repo[0]
             self.__repo_desc = repo[1]
+        return self.__repo_id
 
     def create_repo(self):
         url = PLUGINS_REPO
@@ -263,7 +270,7 @@ class Available(object):
         mirrorsdir = "/var/db/pbi/mirrors"
 
         if not repo_id:
-            repod_id = self.__repo_id
+            repod_id = self._def_repo_id()
             if not repod_id:
                 return None
 
@@ -292,7 +299,7 @@ class Available(object):
             return None
 
         if not repo_id:
-            repod_id = self.__repo_id
+            repod_id = self._def_repo_id()
             if not repod_id:
                 return None
 
@@ -350,8 +357,8 @@ class Available(object):
         return results
 
     def get_remote(self, repo_id=None, cache=False):
-        if not repo_id: 
-            repo_id = self.__repo_id
+        if not repo_id:
+            repo_id = self._def_repo_id()
         if cache and repo_id in self.__cache:
             log.debug("Using cached results for %s", repo_id)
             return self.__cache.get(repo_id)
