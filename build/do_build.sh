@@ -3,6 +3,7 @@
 # See README for up to date usage examples.
 #
 
+umask 022
 cd "$(dirname "$0")/.."
 TOP="$(pwd)"
 
