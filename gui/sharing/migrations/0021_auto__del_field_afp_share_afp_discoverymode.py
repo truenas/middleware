@@ -31,7 +31,7 @@ class Migration(SchemaMigration):
             'afp_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'afp_nodev': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_nostat': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'afp_path': ('freenasUI.freeadmin.models.fields.PathField', [], {'max_length': '255'}),
+            'afp_path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
             'afp_ro': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'afp_rw': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'afp_sharepw': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
@@ -51,7 +51,7 @@ class Migration(SchemaMigration):
             'cifs_inheritowner': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_inheritperms': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'cifs_path': ('freenasUI.freeadmin.models.fields.PathField', [], {'max_length': '255'}),
+            'cifs_path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
             'cifs_recyclebin': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_ro': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_showhiddenfiles': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -63,10 +63,10 @@ class Migration(SchemaMigration):
             'nfs_alldirs': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nfs_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'nfs_hosts': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'nfs_mapall_group': ('freenasUI.freeadmin.models.fields.GroupField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'nfs_mapall_user': ('freenasUI.freeadmin.models.fields.UserField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'nfs_maproot_group': ('freenasUI.freeadmin.models.fields.GroupField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'nfs_maproot_user': ('freenasUI.freeadmin.models.fields.UserField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'nfs_mapall_group': ('freenasUI.freeadmin.models.GroupField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'nfs_mapall_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'nfs_maproot_group': ('freenasUI.freeadmin.models.GroupField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'nfs_maproot_user': ('freenasUI.freeadmin.models.UserField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
             'nfs_network': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'nfs_quiet': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nfs_ro': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
@@ -74,7 +74,7 @@ class Migration(SchemaMigration):
         u'sharing.nfs_share_path': {
             'Meta': {'object_name': 'NFS_Share_Path'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'path': ('freenasUI.freeadmin.models.fields.PathField', [], {'max_length': '255'}),
+            'path': ('freenasUI.freeadmin.models.PathField', [], {'max_length': '255'}),
             'share': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'paths'", 'to': u"orm['sharing.NFS_Share']"})
         }
     }
