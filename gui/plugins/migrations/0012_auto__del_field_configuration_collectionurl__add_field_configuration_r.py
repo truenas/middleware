@@ -3,7 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
-from freenasUI.plugins.models import PLUGINS_REPO
+from freenasUI.plugins.plugin import PLUGINS_REPO
 
 
 class Migration(SchemaMigration):
