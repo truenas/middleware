@@ -15,12 +15,14 @@ stop_cmd=":"
 
 ldpbiconfig_start()
 {
-	while read dir
-	do
-		hintmod="`echo $dir | sed 's|/|%|g'`"
-		ldpbiconfig_init "$dir" "%${hintmod}"
+	if [ -s ${ldpbiconfig_dirlist} ]; then
+		while read dir
+		do
+			hintmod="`echo $dir | sed 's|/|%|g'`"
+			ldpbiconfig_init "$dir" "%${hintmod}"
 
-	done < $ldpbiconfig_dirlist
+		done < $ldpbiconfig_dirlist
+	fi
 }
 
 # Enable a PBI's ldconfig hints file
