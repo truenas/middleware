@@ -2663,6 +2663,7 @@ class notifier:
 
     def update_pbi(self, plugin=None):
         from freenasUI.jails.models import JailsConfiguration
+        from freenasUI.services.models import RPCToken
         ret = False
 
         log.debug("XXX: update_pbi: starting")
@@ -2804,6 +2805,22 @@ class notifier:
 
         except Exception as e:
             raise MiddlewareError(_(e))
+
+        rpctoken = RPCToken.objects.filter(pk=plugin.id)
+        if not rpctoken:
+            raise MiddlewareError(_("No RPC Token!"))
+        rpctoken = rpctoken[0]
+
+        plugin_path = "%s/%s" % (jail_path, plugin.plugin_path)
+        oauth_file = "%s/%s" % (plugin_path, ".oauth")
+
+        log.debug("update_pbi: plugin_path = %s, oauth_file = %s",
+            plugin_path, oauth_file)
+
+        fd = os.open(oauth_file, os.O_WRONLY|os.O_CREAT, 0600)
+        os.write(fd,"key = %s\n" % rpctoken.key)
+        os.write(fd,"secret = %s\n" % rpctoken.secret)
+        os.close(fd)
 
         log.debug("XXX: update_pbi: returning %s", ret)
         return ret

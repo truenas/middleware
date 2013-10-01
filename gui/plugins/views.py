@@ -197,9 +197,9 @@ def plugin_update(request, oid):
             raise MiddlewareError(_("Jail does not exist"))
 
         if notifier().update_pbi(plugin=iplugin):
-            notifier()._restart_plugins(
-                iplugin.plugin_jail,
-                iplugin.plugin_name,
+            notifier()._start_plugins(
+                jail=iplugin.plugin_jail,
+                plugin=iplugin.plugin_name,
             )
 
         else:
