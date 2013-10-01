@@ -270,7 +270,7 @@ do_add_port ()
 	# so we will look in the environment and build up 'envargs'
 	# to set NAS_PORTS_DIRECT/NAS_PORTS_DIRECT_CATAGORY_PORT
 	set -x
-	local port_path_caps=`echo $port_path|tr 'a-z' 'A-Z' | tr '/' '_'`
+	local port_path_caps=`echo $port_path|tr 'a-z' 'A-Z' | tr '/.' '_'`
 	eval local exact_set=\${NAS_PORTS_DIRECT_$port_path_caps}
 	local envargs;
 	if [ ! -z "$exact_set" ] ; then
