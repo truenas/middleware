@@ -833,6 +833,7 @@ on_exit()
 				echo "==================================================================="
 				cat "$log_file"
 				echo "==================================================================="
+				echo "ERROR: build FAILED; see above or log file here: $log_file"
 			fi
 		fi
 	fi
