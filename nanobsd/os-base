@@ -390,6 +390,39 @@ hack_nsswitch_conf ( )
 }
 customize_cmd hack_nsswitch_conf
 
+add_pbi_manager()
+{
+	local pm dst
+	pm=${AVATAR_ROOT}/src/pcbsd/pbi-manager
+	dst=${NANO_WORLDDIR}/usr/local
+
+	pprint 2 "Adding pbi-manager"
+
+	mkdir -p ${dst}/sbin >/dev/null 2>/dev/null
+	cp ${pm}/pbi-manager ${dst}/sbin/pbi_create
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_add
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_addrepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_browser
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_autobuild
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_delete
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_deleterepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_icon
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_info
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_indextool
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_listrepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makepatch
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makeport
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makerepo
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_metatool
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_patch
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update_hashdir
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
+	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
+	rm -f ${dst}/pbi-manager
+}
+customize_cmd add_pbi_manager
+
 add_gui()
 {
 	local gui dst dstCR
@@ -431,39 +464,6 @@ arch_specific_ko()
 	cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${FREENAS_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
 }
 customize_cmd arch_specific_ko
-
-add_pbi_manager()
-{
-	local pm dst
-	pm=${AVATAR_ROOT}/src/pcbsd/pbi-manager
-	dst=${NANO_WORLDDIR}/usr/local
-
-	pprint 2 "Adding pbi-manager"
-
-	mkdir -p ${dst}/sbin >/dev/null 2>/dev/null
-	cp ${pm}/pbi-manager ${dst}/sbin/pbi_create
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_add
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_addrepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_browser
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_autobuild
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_delete
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_deleterepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_icon
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_info
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_indextool
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_listrepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makepatch
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makeport
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makerepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_metatool
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_patch
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update_hashdir
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
-	rm -f ${dst}/pbi-manager
-}
-customize_cmd add_pbi_manager
 
 add_pc_extractoverlay()
 {
