@@ -115,12 +115,6 @@ class AFP_Share(Model):
             blank=True,
             help_text=_("This option allows you to set a volume password, which can be a maximum of 8 characters long (using ASCII strongly recommended at the time of this writing).")
         )
-    afp_sharecharset = models.CharField(
-            max_length=120,
-            verbose_name=_("Share Character Set"),
-            blank=True,
-            help_text=_("Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, etc.")
-            )
     afp_allow = models.CharField(
             max_length=120,
             verbose_name=_("Allow List"),
@@ -145,16 +139,9 @@ class AFP_Share(Model):
             blank=True,
             help_text=_("Allows certain users and groups to have read/write access to a share. This follows the allow option format.")
             )
-    afp_diskdiscovery = models.BooleanField(
-            verbose_name=_("Disk Discovery"),
-            help_text=_("Allow other systems to discover this share as a disk for data, as a Time Machine backup volume or not at all.")
-            )
-    afp_discoverymode = models.CharField(
-            max_length=120,
-            choices=choices.DISKDISCOVERY_CHOICES,
-            default='default',
-            verbose_name=_("Disk discovery mode"),
-            help_text=_("Note! Selecting 'Time Machine' on multiple shares may cause unpredictable behavior in MacOS. Default mode exports the volume as a data volume for users.")
+    afp_timemachine = models.BooleanField(
+            verbose_name=_("Time Machine"),
+            help_text=_("Check this to enable Time Machine backups on this share.")
             )
     afp_dbpath = models.CharField(
             max_length=120,
@@ -162,40 +149,9 @@ class AFP_Share(Model):
             blank=True,
             help_text=_("Sets the database information to be stored in path. You have to specify a writable location, even if the volume is read only.")
             )
-    afp_cachecnid = models.BooleanField(
-            verbose_name=_("Cache CNID"),
-            help_text=_("If set afpd uses the ID information stored in AppleDouble V2 header files to reduce database load. Don't set this option if the volume is modified by non AFP clients (NFS/SMB/local).")
-            )
-    afp_crlf = models.BooleanField(
-            verbose_name=_("Translate CR/LF"),
-            help_text=_("Enables crlf translation for TEXT files, automatically converting macintosh line breaks into Unix ones. Use of this option might be dangerous since some older programs store binary data files as type 'TEXT' when saving and switch the filetype in a second step. Afpd will potentially destroy such files when 'erroneously' changing bytes in order to do line break translation.")
-            )
-    afp_mswindows = models.BooleanField(
-            verbose_name=_("Windows File Names"),
-            help_text=_("This forces filenames to be restricted to the character set used by Windows. This is not recommended for shares used principally by Mac computers.")
-            )
-    afp_adouble = models.BooleanField(
-            verbose_name=_("Enable .AppleDouble"),
-            help_text=_("This will enable automatic creation of the "
-                ".AppleDouble directories. This option should be used if "
-                "files are accessed by Mac computers."),
-            default=True,
-            )
     afp_nodev = models.BooleanField(
             verbose_name=_("Zero Device Numbers"),
             help_text=_("Always use 0 for device number, helps when the device number is not constant across a reboot, cluster, ...")
-            )
-    afp_nofileid = models.BooleanField(
-            verbose_name=_("Disable File ID"),
-            help_text=_("Don't advertise createfileid, resolveid, deleteid calls.")
-            )
-    afp_nohex = models.BooleanField(
-            verbose_name=_("Disable :hex Names"),
-            help_text=_("Disable :hex translations for anything except dot files. This option makes the '/' character illegal.")
-            )
-    afp_prodos = models.BooleanField(
-            verbose_name=_("ProDOS"),
-            help_text=_("Provide compatibility with Apple II clients.")
             )
     afp_nostat = models.BooleanField(
             verbose_name=_("No Stat"),
@@ -215,6 +171,11 @@ class AFP_Share(Model):
             max_length=3,
             default="644",
             verbose_name=_("Default directory permission"),
+            )
+    afp_umask = models.CharField(
+            max_length=3,
+            default="000",
+            verbose_name=_("Default umask"),
             )
 
     def __unicode__(self):
