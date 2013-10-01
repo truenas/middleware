@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# BEFORE: pbid
+
+. /etc/rc.freenas
+
+pbi_start()
+{
+	local repo="/var/tmp/pbi-repo.rpo"
+
+	rm -f "${repo}"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+			repourl
+	FROM
+		plugins_configuration
+	ORDER BY
+		-id
+	LIMIT
+		1
+	" | \
+	while read -r repourl
+	do
+		fetch -q -o "${repo}" "${repourl}" 
+		if [ "$?" = "0" -a -f "${repo}" ]
+		then
+			/usr/local/sbin/pbi_addrepo "${repo}"
+			if [ "$?" = "0" ]
+			then
+				return 0
+			fi
+		fi
+		return 1
+	done
+
+	return 0
+}
+
+name="ix-pbi"
+start_cmd='pbi_start'
+stop_cmd=':'
+status_cmd=':'
+            
+load_rc_config $name
+run_rc_command $*

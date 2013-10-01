@@ -2032,12 +2032,13 @@ class UnlockPassphraseForm(Form):
     services = forms.MultipleChoiceField(
         label=_("Restart services"),
         widget=forms.widgets.CheckboxSelectMultiple(),
-        initial=['cifs', 'afp', 'nfs', 'iscsitarget'],
+        initial=['cifs', 'afp', 'nfs', 'iscsitarget', 'jails'],
         choices=(
             ('afp', _('AFP')),
             ('cifs', _('CIFS')),
             ('iscsitarget', _('iSCSI')),
-            ('nfs', _('NFS'))
+            ('nfs', _('NFS')),
+            ('jails', _('Jails/Plugins')),
         ),
         required=False,
     )

@@ -39,10 +39,6 @@ from freenasUI.common.warden import (
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
-from freenasUI.plugins.plugin import (
-    get_installed_plugins_by_remote_oid,
-    get_installed_plugins_count_by_remote_oid
-)
 from freenasUI.system.forms import (
     clean_path_execbit
 )

@@ -19,3 +19,7 @@ save-build-env:
 
 release:
 	${ENV_SETUP} build/build_release.sh
+
+# Build truenas using all sources 
+truenas-all-direct:
+	${ENV_SETUP} TESTING_TRUENAS=1 NAS_PORTS_DIRECT=1 $(MAKE) all

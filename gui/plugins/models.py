@@ -32,8 +32,6 @@ from freenasUI.freeadmin.models import Model
 from freenasUI.jails.models import Jails
 from freenasUI.middleware.notifier import notifier
 
-PLUGINS_INDEX = 'http://www.appcafe.org/freenas/json'
-
 
 class Plugins(Model):
     plugin_name = models.CharField(
@@ -146,10 +144,10 @@ class Available(models.Model):
 
 class Configuration(Model):
 
-    collectionurl = models.CharField(
-        verbose_name=_("Collection URL"),
+    repourl = models.CharField(
+        verbose_name=_("Repository URL"),
         max_length=255,
-        help_text=_("URL for the plugins index"),
+        help_text=_("URL for the plugins repository"),
         blank=True,
     )
 

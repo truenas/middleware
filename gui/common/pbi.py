@@ -27,6 +27,7 @@
 #####################################################################
 import logging
 import os
+import string
 
 log = logging.getLogger('common.pbi')
 
@@ -53,15 +54,16 @@ PBI_ADD_FLAGS_LICENSE       = pbi_arg(0x00000010, "-l")
 PBI_ADD_FLAGS_OUTDIR        = pbi_arg(0x00000020, "-o", True, "outdir")
 PBI_ADD_FLAGS_OUTPATH       = pbi_arg(0x00000040, "-p", True, "outpath")
 PBI_ADD_FLAGS_FETCH         = pbi_arg(0x00000080, "-r")
-PBI_ADD_FLAGS_VERBOSE       = pbi_arg(0x00000100, "-v")
-PBI_ADD_FLAGS_CHECKSCRIPT   = pbi_arg(0x00000200, "--checkscript")
-PBI_ADD_FLAGS_LICENSE_AGREE = pbi_arg(0x00000400, "--licagree")
-PBI_ADD_FLAGS_NOCHECKSUM    = pbi_arg(0x00000800, "--no-checksum")
-PBI_ADD_FLAGS_NOCHECKSIG    = pbi_arg(0x00001000, "--no-checksig")
-PBI_ADD_FLAGS_NOHASH        = pbi_arg(0x00002000, "--no-hash")
-PBI_ADD_FLAGS_ARCH          = pbi_arg(0x00004000, "--rArch", True, "arch")
-PBI_ADD_FLAGS_VERSION       = pbi_arg(0x00008000, "--rVer", True, "ver")
-PBI_ADD_FLAGS_REPOID        = pbi_arg(0x00010000, "--repoid", True, "repoid")
+PBI_ADD_FLAGS_FETCHONLY     = pbi_arg(0x00000100, "-R")
+PBI_ADD_FLAGS_VERBOSE       = pbi_arg(0x00000200, "-v")
+PBI_ADD_FLAGS_CHECKSCRIPT   = pbi_arg(0x00000400, "--checkscript")
+PBI_ADD_FLAGS_LICENSE_AGREE = pbi_arg(0x00000800, "--licagree")
+PBI_ADD_FLAGS_NOCHECKSUM    = pbi_arg(0x00001000, "--no-checksum")
+PBI_ADD_FLAGS_NOCHECKSIG    = pbi_arg(0x00002000, "--no-checksig")
+PBI_ADD_FLAGS_NOHASH        = pbi_arg(0x00004000, "--no-hash")
+PBI_ADD_FLAGS_ARCH          = pbi_arg(0x00008000, "--rArch", True, "arch")
+PBI_ADD_FLAGS_VERSION       = pbi_arg(0x00010000, "--rVer", True, "ver")
+PBI_ADD_FLAGS_REPOID        = pbi_arg(0x00020000, "--repo", True, "repoid")
 PBI_ADD_FLAGS = [
     PBI_ADD_FLAGS_EXTRACT_ONLY,
     PBI_ADD_FLAGS_FORCE,
@@ -71,6 +73,7 @@ PBI_ADD_FLAGS = [
     PBI_ADD_FLAGS_OUTDIR,
     PBI_ADD_FLAGS_OUTPATH,
     PBI_ADD_FLAGS_FETCH,
+    PBI_ADD_FLAGS_FETCHONLY,
     PBI_ADD_FLAGS_VERBOSE,
     PBI_ADD_FLAGS_CHECKSCRIPT,
     PBI_ADD_FLAGS_LICENSE_AGREE,
@@ -111,7 +114,16 @@ PBI_AUTOBUILD_FLAGS = [
 
 
 PBI_BROWSER = os.path.join(PBI_PATH, "pbi_browser")
-# no flags...
+PBI_BROWSER_FLAGS_VIEWALL   = pbi_arg(0x00000001, "--viewall")
+PBI_BROWSER_FLAGS_LISTCATS  = pbi_arg(0x00000002, "--listcats")
+PBI_BROWSER_FLAGS_CATSEARCH = pbi_arg(0x00000004, "-c", True, "category")
+PBI_BROWSER_FLAGS_SEARCH    = pbi_arg(0x00000008, "-s", True, "key")
+PBI_BROWSER_FLAGS = [
+    PBI_BROWSER_FLAGS_VIEWALL,
+    PBI_BROWSER_FLAGS_LISTCATS,
+    PBI_BROWSER_FLAGS_CATSEARCH,
+    PBI_BROWSER_FLAGS_SEARCH
+]
 
 
 PBI_CREATE = os.path.join(PBI_PATH, "pbi_create")
@@ -390,9 +402,52 @@ class pbi_browser(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
         log.debug("pbi_browser.__init__: enter")
 
-        super(pbi_browser, self).__init__(PBI_BROWSER, None, flags, **kwargs)
+        super(pbi_browser, self).__init__(PBI_BROWSER, PBI_BROWSER_FLAGS, flags, **kwargs)
+
+        self.repo_id = None
+        if kwargs.has_key("repo_id") and kwargs["repo_id"] is not None:
+            self.repo_id = kwargs["repo_id"]
+            self.args += " %s" % self.repo_id
 
         log.debug("pbi_browser.__init__: leave")
+
+    def parse_apps(self, thestuff):
+        apps = []
+        app = {}
+  
+        lines = thestuff[1].splitlines()
+        for line in lines:
+            line = line.strip()
+            parts = line.split(':')
+            if len(parts) > 1:
+                app[parts[0].strip()] = string.join(parts[1:]).strip()
+            if line.startswith("Description"):
+                apps.append(app)
+                app = {}
+
+        return apps
+
+    def parse_categories(self, thestuff):
+        categories = []
+        category = {}
+  
+        lines = thestuff[1].splitlines()
+        for line in lines:
+            line = line.strip()
+            parts = line.split(':')
+            if len(parts) > 1:
+                category[parts[0].strip()] = string.join(parts[1:]).strip()
+            if line.startswith("Description"):
+                categories.append(category)
+                category = {}
+
+        return categories
+
+    def parse(self, thestuff):
+        if self.flags & PBI_BROWSER_FLAGS_VIEWALL:
+            return self.parse_apps(thestuff)
+        elif self.flags & PBI_BROWSER_FLAGS_LISTCATS:
+            return self.parse_categories(thestuff)
 
 
 class pbi_create(pbi_base):
@@ -499,6 +554,20 @@ class pbi_listrepo(pbi_base):
         log.debug("pbi_listrepo.__init__: repoid = %s", self.repoid)
         log.debug("pbi_listrepo.__init__: leave")
 
+    def parse(self, thestuff):
+        repos = []
+
+        lines = thestuff[1].splitlines()
+        for line in lines:
+            line = line.strip()
+            if line.startswith("[ID]") or line.startswith("----"):
+                continue
+                 
+            parts = line.split()
+            repos.append((parts[0].strip(), string.join(parts[1:]).strip()))
+
+        return repos
+        
 
 class pbi_makepatch(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
@@ -624,6 +693,8 @@ class PBI(object):
         if obj is not None:
             tmp = obj.run()
             if tmp is not None and len(tmp) > 1:
+                if hasattr(obj, "parse"):
+                    return obj.parse(tmp)
                 self.obj = obj
                 self.returncode = tmp[0]
                 self.out = tmp[1]

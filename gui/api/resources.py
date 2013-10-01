@@ -57,7 +57,7 @@ from freenasUI.middleware import zfs
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
-from freenasUI.plugins.models import PLUGINS_INDEX, Configuration as PluginConf
+from freenasUI.plugins.models import Configuration as PluginConf
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
@@ -1584,16 +1584,8 @@ class AvailablePluginsResource(DojoResource):
         resource_name = 'plugins/available'
 
     def get_list(self, request, **kwargs):
-        conf = PluginConf.objects.latest('id')
-        if conf and conf.collectionurl:
-            url = conf.collectionurl
-        else:
-            url = PLUGINS_INDEX
-        try:
-            results = availablePlugins.get_remote(url=url)
-        except Exception, e:
-            log.debug("Failed to fetch remote: %s", e)
-            results = []
+        results = availablePlugins.get_remote()
+
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
                 field = sfield[1:]

@@ -270,7 +270,7 @@ do_add_port ()
 	# so we will look in the environment and build up 'envargs'
 	# to set NAS_PORTS_DIRECT/NAS_PORTS_DIRECT_CATAGORY_PORT
 	set -x
-	local port_path_caps=`echo $port_path|tr 'a-z' 'A-Z' | tr '/' '_'`
+	local port_path_caps=`echo $port_path|tr 'a-z' 'A-Z' | tr '/.' '_'`
 	eval local exact_set=\${NAS_PORTS_DIRECT_$port_path_caps}
 	local envargs;
 	if [ ! -z "$exact_set" ] ; then
@@ -304,8 +304,8 @@ do_add_port ()
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	# XXX: this is removing needed artifacts for saved build environments
 	# can we remove the following 2 rm-rfs?
-	rm -rf ${NANO_WORLDDIR}/usr/obj
-	rm -rf ${NANO_WORLDDIR}/usr/workdir
+	#rm -rf ${NANO_WORLDDIR}/usr/obj
+	#rm -rf ${NANO_WORLDDIR}/usr/workdir
 
 	umount -f ${NANO_WORLDDIR}/usr/nas_source
 	umount -f ${NANO_WORLDDIR}/usr/ports/distfiles

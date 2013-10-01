@@ -3,6 +3,7 @@
 # See README for up to date usage examples.
 #
 
+umask 022
 cd "$(dirname "$0")/.."
 TOP="$(pwd)"
 
@@ -35,9 +36,10 @@ ADDL_REPOS=""
 if is_truenas ; then
     GIT_DEEP=yes  # shallow checkouts cause too many problems right now.
     # Additional repos to checkout for build
-    ADDL_REPOS="$ADDL_REPOS ZFSD"
+    ADDL_REPOS="$ADDL_REPOS ZFSD TRUENAS-FILES"
 
     : ${GIT_ZFSD_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git}
+    : ${GIT_TRUENAS_FILES_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/truenas-files.git}
 fi
 
 # Targets to build (os-base, plugins/<plugin>).
@@ -306,6 +308,8 @@ generic_checkout_git()
     eval local my_tag=\${GIT_${repo_name}_TAG}
     echo "Checkout: $repo_name -> $my_repo"
 	(
+	local spl
+    spl="$-";set -x
     mkdir -p "$checkout_path"
 	local _depth_arg="--depth 1"
 	# If tags are set, then it appears we need a full checkout to get
@@ -326,9 +330,7 @@ generic_checkout_git()
 		cd ..
 	else
         local branch
-		local spl
 
-        spl="$-";set -x
         if [ "x${my_tag}" != "x" ] ; then
             branch="${my_tag}"
         else
@@ -345,8 +347,8 @@ generic_checkout_git()
         else
 		    git clone -b "$branch" ${my_repo} $_depth_arg ${checkout_name}
         fi
-		echo $spl | grep -q x || set +x
 	fi
+	echo $spl | grep -q x || set +x
 	)
 }
 
@@ -380,7 +382,9 @@ checkout_freebsd_source()
             generic_checkout_git PORTS "${AVATAR_ROOT}/FreeBSD" ports
 
             for proj in $ADDL_REPOS ; do
-                generic_checkout_git "$proj" "${AVATAR_ROOT}/nas_source" \
+                generic_checkout_git \
+                    "`echo $proj|tr '-' '_'`" \
+                    "${AVATAR_ROOT}/nas_source" \
                     `echo $proj | tr 'A-Z' 'a-z'`
             done
 

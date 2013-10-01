@@ -77,15 +77,16 @@ from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.jail import Jls, Jexec
 from freenasUI.common.locks import mntlock
-from freenasUI.common.pbi import (pbi_add, pbi_delete,
-    pbi_info, pbi_create, pbi_makepatch, pbi_patch,
+from freenasUI.common.pbi import (
+    pbi_add, pbi_delete, pbi_info, pbi_create, pbi_makepatch, pbi_patch,
     PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO,
     PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR,
     PBI_ADD_FLAGS_OUTPATH, PBI_ADD_FLAGS_FORCE,
     PBI_INFO_FLAGS_VERBOSE, PBI_CREATE_FLAGS_OUTDIR,
-    PBI_CREATE_FLAGS_BACKUP, PBI_MAKEPATCH_FLAGS_OUTDIR,
-    PBI_MAKEPATCH_FLAGS_NOCHECKSIG, PBI_PATCH_FLAGS_OUTDIR,
-    PBI_PATCH_FLAGS_NOCHECKSIG)
+    PBI_CREATE_FLAGS_BACKUP, PBI_CREATE_FLAGS_NAME,
+    PBI_MAKEPATCH_FLAGS_OUTDIR, PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
+    PBI_PATCH_FLAGS_OUTDIR, PBI_PATCH_FLAGS_NOCHECKSIG
+)
 from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
 from freenasUI.common.warden import (Warden, WardenJail,
     WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
@@ -224,7 +225,7 @@ class notifier:
             'ssh': ('sshd', '/var/run/sshd.pid'),
             'rsync': ('rsync', '/var/run/rsyncd.pid'),
             'nfs': ('nfsd', None),
-            'afp': ('afpd', None),
+            'afp': ('netatalk', None),
             'cifs': ('smbd', '/var/run/samba/smbd.pid'),
             'dynamicdns': ('inadyn-mt', None),
             'snmp': ('bsnmpd', '/var/run/snmpd.pid'),
@@ -421,13 +422,24 @@ class notifier:
             Warden().stop(jail=jail.jail_host)
 
     def _start_jails(self):
+        self.__system("/usr/sbin/service ix-warden start")
         from freenasUI.jails.models import Jails
         for jail in Jails.objects.all():
             Warden().start(jail=jail.jail_host)
+        self.__system("/usr/sbin/service ix-plugins start")
 
     def _restart_jails(self):
         self._stop_jails()
         self._start_jails()
+
+    def _stop_pbid(self):
+        self.__system_nolog("/usr/sbin/service pbid stop")
+
+    def _start_pbid(self):
+        self.__system_nolog("/usr/sbin/service pbid start")
+
+    def _restart_pbid(self):
+        self.__system_nolog("/usr/sbin/service pbid restart")
 
     def ifconfig_alias(self, iface, oldip=None, newip=None, oldnetmask=None, newnetmask=None):
         if not iface:
@@ -730,10 +742,6 @@ class notifier:
 
     def _stop_afp(self):
         self.__system("/usr/sbin/service netatalk forcestop")
-        #FIXME: fix rc.d/netatalk to honor the force verbs properly.
-        self.__system("killall afpd")
-        self.__system("killall cnid_metad")
-        self.__system("killall cnid_dbd")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service dbus forcestop")
 
@@ -743,8 +751,7 @@ class notifier:
 
     def _reload_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
-        self.__system("killall -1 avahi-daemon")
-        self.__system("killall -1 afpd")
+        self.__system("killall -1 netatalk")
 
     def _reload_nfs(self):
         self.__system("/usr/sbin/service ix-nfsd quietstart")
@@ -2653,7 +2660,10 @@ class notifier:
 
     def update_pbi(self, plugin=None):
         from freenasUI.jails.models import JailsConfiguration
+        from freenasUI.services.models import RPCToken
         ret = False
+
+        log.debug("XXX: update_pbi: starting")
 
         open('/tmp/.plugin_upload_update', 'w+').close()
 
@@ -2688,17 +2698,31 @@ class notifier:
         newpbi, newpbiname, newprefix, newname, newversion, newarch = self._get_pbi_info(
             "/var/tmp/firmware/pbifile.pbi")
 
+        log.debug("XXX: newpbi = %s", newpbi)
+        log.debug("XXX: newpbiname = %s", newpbiname)
+        log.debug("XXX: newprefix = %s", newprefix)
+        log.debug("XXX: newname = %s", newname)
+        log.debug("XXX: newversion = %s", newversion)
+        log.debug("XXX: newarch = %s", newarch)
+
         plugin = self._get_plugin_info(newname)
 
         pbitemp = "/var/tmp/pbi"
+        oldpbitemp = "%s/old" % pbitemp
+        newpbitemp = "%s/new" % pbitemp
+
         newpbifile = "%s/%s" % (plugins_path, newpbi)
         oldpbifile = "%s/%s.pbi" % (plugins_path, plugin.plugin_pbiname)
+
+        log.debug("XXX: oldpbifile = %s", oldpbifile)
+        log.debug("XXX: newpbifile = %s", newpbifile)
 
         # Rename PBI to it's actual name
         self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s" % newpbifile)
 
         # Create a temporary directory to place old, new, and PBI patch files
-        out = Jexec(jid=jail.jid, command="/bin/mkdir %s" % pbitemp).run()
+        out = Jexec(jid=jail.jid, command="/bin/mkdir -p %s" % oldpbitemp).run()
+        out = Jexec(jid=jail.jid, command="/bin/mkdir -p %s" % newpbitemp).run()
         out = Jexec(jid=jail.jid, command="/bin/rm -f %s/*" % pbitemp).run()
         if out[0] != 0:
             raise MiddlewareError("There was a problem cleaning up the "
@@ -2708,27 +2732,33 @@ class notifier:
         oldpbiname = "%s.pbi" % plugin.plugin_pbiname
         newpbiname = "%s.pbi" % newpbiname
 
+        log.debug("XXX: oldpbiname = %s", oldpbiname)
+        log.debug("XXX: newpbiname = %s", newpbiname)
+
         self.__umount_filesystems_within("%s%s" % (jail_path, newprefix))
 
         # Create a PBI from the installed version
         p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP|PBI_CREATE_FLAGS_OUTDIR,
-            outdir=pbitemp, pbidir=plugin.plugin_pbiname)
+            outdir=oldpbitemp, pbidir=plugin.plugin_pbiname)
         out = p.run(True, jail.jid)
         if out[0] != 0:
             raise MiddlewareError("There was a problem creating the PBI")
 
         # Copy the old PBI over to our temporary PBI workspace
-        out = Jexec(jid=jail.jid, command="/bin/cp %s/%s %s" % (
-            pbitemp, oldpbiname, "/.plugins/")).run()
+        out = Jexec(jid=jail.jid, command="/bin/cp %s/%s /.plugins/old.%s" % (
+            oldpbitemp, oldpbiname, oldpbiname)).run()
         if out[0] != 0:
             raise MiddlewareError("Unable to copy old PBI file to plugins directory")
 
-        oldpbifile = "%s/%s" % (pbitemp, oldpbiname)
-        newpbifile = "%s/%s" % (pbitemp, newpbiname)
+        oldpbifile = "%s/%s" % (oldpbitemp, oldpbiname)
+        newpbifile = "%s/%s" % (newpbitemp, newpbiname)
+
+        log.debug("XXX: oldpbifile = %s", oldpbifile)
+        log.debug("XXX: newpbifile = %s", newpbifile)
 
         # Copy the new PBI over to our temporary PBI workspace
         out = Jexec(jid=jail.jid, command="/bin/cp /.plugins/%s %s/" % (
-            newpbiname, pbitemp)).run()
+            newpbiname, newpbitemp)).run()
         if out[0] != 0:
             raise MiddlewareError("Unable to copy new PBI file to plugins directory")
 
@@ -2742,7 +2772,11 @@ class notifier:
         pbpfile = "%s-%s_to_%s-%s.pbp" % (plugin.plugin_name,
             plugin.plugin_version, newversion, plugin.plugin_arch)
 
+        log.debug("XXX: pbpfile = %s", pbpfile)
+
         fullpbppath = "%s/%s/%s" % (jail_path, pbitemp, pbpfile)
+        log.debug("XXX: fullpbppath = %s", fullpbppath)
+
         if not os.access(fullpbppath, os.F_OK):
             raise MiddlewareError("Unable to create PBP file")
 
@@ -2761,12 +2795,31 @@ class notifier:
         plugin.plugin_pbiname = pbiname
 
         try:
+            log.debug("XXX: plugin.save()")
             plugin.save()
             ret = True
+            log.debug("XXX: plugin.save(), WE ARE GOOD.")
 
         except Exception as e:
             raise MiddlewareError(_(e))
 
+        rpctoken = RPCToken.objects.filter(pk=plugin.id)
+        if not rpctoken:
+            raise MiddlewareError(_("No RPC Token!"))
+        rpctoken = rpctoken[0]
+
+        plugin_path = "%s/%s" % (jail_path, plugin.plugin_path)
+        oauth_file = "%s/%s" % (plugin_path, ".oauth")
+
+        log.debug("update_pbi: plugin_path = %s, oauth_file = %s",
+            plugin_path, oauth_file)
+
+        fd = os.open(oauth_file, os.O_WRONLY|os.O_CREAT, 0600)
+        os.write(fd,"key = %s\n" % rpctoken.key)
+        os.write(fd,"secret = %s\n" % rpctoken.secret)
+        os.close(fd)
+
+        log.debug("XXX: update_pbi: returning %s", ret)
         return ret
 
     def delete_pbi(self, plugin):

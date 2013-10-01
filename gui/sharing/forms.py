@@ -99,7 +99,7 @@ class AFP_ShareForm(ModelForm):
         super(AFP_ShareForm, self).__init__(*args, **kwargs)
         self.fields['afp_upriv'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_afp_upriv", ["id_afp_fperm", '
-            '"id_afp_dperm"], true);')
+            '"id_afp_dperm", "id_afp_umask"], true);')
         self.fields['afp_fperm'] = UnixPermissionField(
             label=self.fields['afp_fperm'].label,
             initial=self.fields['afp_fperm'].initial,
@@ -123,9 +123,11 @@ class AFP_ShareForm(ModelForm):
             if not self.instance.afp_upriv:
                 self.fields['afp_fperm'].widget.attrs['disabled'] = 'true'
                 self.fields['afp_dperm'].widget.attrs['disabled'] = 'true'
+                self.fields['afp_umask'].widget.attrs['disabled'] = 'true'
             else:
                 self.fields['afp_fperm'].widget.attrs['disabled'] = 'false'
                 self.fields['afp_dperm'].widget.attrs['disabled'] = 'false'
+                self.fields['afp_umask'].widget.attrs['disabled'] = 'false'
 
     def clean_afp_sharepw2(self):
         password1 = self.cleaned_data.get("afp_sharepw")
@@ -135,6 +137,22 @@ class AFP_ShareForm(ModelForm):
                 _("The two password fields didn't match.")
             )
         return password2
+
+    def clean_afp_umask(self):
+        umask = self.cleaned_data.get("afp_umask")
+        try:
+            int(umask)
+        except:
+            raise forms.ValidationError(
+                _("The umask must be between 000 and 777.")
+            )
+        for i in xrange(len(umask)):
+            if int(umask[i]) > 7 or int(umask[i]) < 0:
+                raise forms.ValidationError(
+                    _("The umask must be between 000 and 777.")
+                )
+        return umask
+
 
     def clean(self):
         cdata = self.cleaned_data

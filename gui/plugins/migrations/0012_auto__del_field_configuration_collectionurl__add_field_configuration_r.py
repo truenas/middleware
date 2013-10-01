@@ -1,36 +1,38 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
-from freenasUI.plugins.plugin import PLUGINS_INDEX
+from freenasUI.plugins.plugin import PLUGINS_REPO
 
 
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'Configuration'
-        db.create_table(u'plugins_configuration', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('collectionurl', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-        ))
-        db.send_create_signal(u'plugins', ['Configuration'])
+        # Deleting field 'Configuration.collectionurl'
+        db.delete_column(u'plugins_configuration', 'collectionurl')
 
-        conf = orm.Configuration()
-        conf.collectionurl = PLUGINS_INDEX
-        conf.save()
+        # Adding field 'Configuration.repourl'
+        db.add_column(u'plugins_configuration', 'repourl',
+                      self.gf('django.db.models.fields.CharField')(default=PLUGINS_REPO, max_length=255, blank=True),
+                      keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting model 'Configuration'
-        db.delete_table(u'plugins_configuration')
+        # Adding field 'Configuration.collectionurl'
+        db.add_column(u'plugins_configuration', 'collectionurl',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
+                      keep_default=False)
+
+        # Deleting field 'Configuration.repourl'
+        db.delete_column(u'plugins_configuration', 'repourl')
 
 
     models = {
         u'plugins.configuration': {
             'Meta': {'object_name': 'Configuration'},
-            'collectionurl': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'repourl': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
         },
         u'plugins.plugins': {
             'Meta': {'object_name': 'Plugins'},

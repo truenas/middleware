@@ -32,6 +32,8 @@ import tempfile
 
 import rrdtool
 
+from freenasUI.common.pipesubr import pipeopen
+
 log = logging.getLogger('reporting.rrd')
 
 name2plugin = dict()
@@ -492,14 +494,25 @@ class DFPlugin(RRDBase):
 
     vertical_label = "Bytes"
 
+    def _get_mountpoints(self):
+        mps = []
+        proc = pipeopen("/bin/df -l", important=False, logger=log)
+        for line in proc.communicate()[0].strip().split('\n'):
+            mps.append(re.split(r'\s{2,}', line)[-1].replace('/', '-'))
+        return mps
+
     def get_title(self):
         title = self.identifier.replace("mnt-", "")
         return 'Diskspace (%s)' % title
 
     def get_identifiers(self):
+
+        mps = self._get_mountpoints()
         ids = []
         for entry in glob.glob('%s/df-*' % self._base_path):
             ident = entry.split('-', 1)[-1]
+            if '-%s' % ident not in mps:
+                continue
             if not ident.startswith("mnt"):
                 continue
             if os.path.exists(os.path.join(entry, 'df_complex-free.rrd')):
