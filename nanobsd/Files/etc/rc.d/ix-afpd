@@ -5,153 +5,32 @@
 
 # PROVIDE: ix-afpd
 # REQUIRE: FILESYSTEMS
-# BEFORE: afpd
+# BEFORE: netatalk
 
 . /etc/rc.subr
 
-# Defaults
-afpd_enable=${afpd_enable:-"NO"}
-afpd_config=${afpd_config:-"/etc/afpd.conf"}
-afpd_avdefault=${afpd_avdefault:-"/usr/local/etc/AppleVolumes.default"}
-afpd_avsystem=${afpd_avsystem:-"/usr/local/etc/AppleVolumes.system"}
-# XXX: make netatalk_conf tunable..
-netatalk_conf=/usr/local/etc/netatalk.conf
-AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
-: ${avahi_afpd_service=$AVAHI_SERVICES_DIR/afp.service}
-
-# If $1 == 1, return $2, otherwise return nothing
-bool_on()
+check_service()
 {
-    if [ $1 -gt 0 ]; then
-	echo -n $2
-    fi
-}
-
-generate_afpd_config()
-{
-    local IFS="|"
-    local f="afp_srv_name afp_srv_guest afp_srv_guest_user"
-    eval local $f
-    local sf=$(echo $f | sed -e 's/ /, /g')
-
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT $sf FROM services_afp ORDER BY -id LIMIT 1" | \
-    while eval read -r $f; do
-	: ${afp_srv_name:=-}
-	cat <<EOF
-"${afp_srv_name}" -noddp -nosavepassword \\
--defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \\
--uservol -uampath /usr/local/libexec/netatalk-uams \\
-EOF
-	if [ ${afp_srv_guest} -eq 1 ]; then
-		echo "-guestname ${afp_srv_guest_user} \\"
-	else
-		echo "-noguest \\"
+	ison=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'afp'")
+	if [ $? -ne 0 ]; then
+		# Something has gone horribly awry.  Pull the ejection handle now
+		exit
 	fi
-
-	echo -n "-uamlist "
-	if [ ${afp_srv_guest} -eq 1 ]; then
-	    echo -n "uams_guest.so,"
+	if [ ${ison} -eq 0 ]; then
+		# The django ORM is expensive.  The service isn't on so bail out
+		# now without generating a config file.  This speeds up boot times
+		# when AFP isn't enabled.
+		exit
 	fi
-	echo "uams_dhx2.so,uams_dhx.so"
-    done
-}
-
-generate_av_default()
-{
-    local IFS="|"
-    local f="afp_name afp_comment afp_sharepw afp_sharecharset afp_allow afp_deny afp_ro afp_rw afp_diskdiscovery afp_discoverymode afp_dbpath afp_cachecnid afp_crlf afp_mswindows afp_adouble afp_nodev afp_nofileid afp_nohex afp_prodos afp_nostat afp_upriv afp_fperm afp_dperm"
-    eval local $f
-    local sf=$(var_to_sf $f)
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT ${sf}, afp_path FROM sharing_afp_share AS aps ORDER BY aps.id DESC" | \
-    while eval read -r $f mountpoint; do
-	if [ -d "${mountpoint}" ]; then
-		echo "# ${afp_comment}"
-		echo -n "\"${mountpoint}\" \"${afp_name}\""
-		echo -n "${afp_sharepw:+ password:${afp_sharepw}}"
-#		echo -n "${casefold:+ casefold:${casefold}}"
-		echo -n "${afp_sharecharsets:+ sharecharsets:${sharecharsets}}"
-		echo -n " options:usedots"
-		for _i in cachecnid crlf mswindows nodev nofileid nohex prodos nostat upriv; do
-			bool_on $(eval echo \$afp_${_i}) ",${_i}"
-		done
-		if [ ${afp_adouble} -eq 0 ]; then
-			echo -n ",noadouble"
-		fi
-		if [ ${afp_diskdiscovery} -eq 1 -a ${afp_discoverymode} = "time-machine" ]; then
-			echo -n ",tm"
-		fi
-		if [ ${afp_upriv} -eq 1 ]; then
-			echo -n " dperm:0${afp_dperm} fperm:0${afp_fperm}"
-		fi
-		echo -n " ea:ad" # Extended attributes: .AppleDouble dirs. See #1738
-		echo -n "${afp_allow:+ allow:${afp_allow}}"
-		echo -n "${afp_deny:+ deny:${afp_deny}}"
-		echo -n "${afp_ro:+ rolist:${afp_ro}}"
-		echo -n "${afp_rw:+ rwlist:${afp_rw}}"
-		echo -n "${afp_dbpath:+ dbpath:\"${afp_dbpath}\"}"
-#			-i "string-length(cnidscheme) > 0" -v "concat('cnidscheme:',cnidscheme,' ')" -b \
-		echo ""
-	fi
-    done
-}
-
-generate_avahi_afpd_service()
-{
-	local srv_name
-
-	if srv_enabled afp; then
-		cat > "$avahi_afpd_service" <<EOF
-<?xml version="1.0" standalone="no"?>
-<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-<service-group>
-  <name replace-wildcards="yes">%h</name>
-  <service>
-    <type>_afpovertcp._tcp</type>
-    <port>548</port>
-  </service>
-  <service>
-    <type>_device-info._tcp</type>
-    <port>0</port>
-    <txt-record>model=RackMac</txt-record>
-  </service>
-</service-group>
-EOF
-	else
-		rm -f "$avahi_afpd_service"
-	fi
-}
-
-generate_netatalk_conf()
-{
-	local IFS="|"
-	local f="afp_srv_connections_limit afp_srv_guest_user"
-	eval local $f
-	local sf=$(var_to_sf $f)
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-		"SELECT ${sf} FROM services_afp ORDER BY -id LIMIT 1" | \
-	while eval read -r $f; do
-		if [ -n "$afp_srv_guest_user" ]; then
-			echo "AFPD_GUEST='$afp_srv_guest_user'"
-		fi
-		if [ -n "$afp_srv_connections_limit" -a $afp_srv_connections_limit -gt 0 ]; then
-			echo "AFPD_MAX_CLIENTS='$afp_srv_connections_limit'"
-		fi
-	done
 }
 
 generate_afpd()
 {
-    generate_afpd_config > ${afpd_config} 
-    generate_av_default > ${afpd_avdefault}
-    generate_avahi_afpd_service
-    (awk 'NF > 0 && $0 !~ /^#/' ${netatalk_conf}.dist
-     generate_netatalk_conf) > ${netatalk_conf}
+	/usr/local/libexec/nas/generate_afpd_conf.py
 }
 
 name="ix-afpd"
+start_precmd='check_service'
 start_cmd='generate_afpd'
 stop_cmd=':'
 

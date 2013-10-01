@@ -225,7 +225,7 @@ class notifier:
             'ssh': ('sshd', '/var/run/sshd.pid'),
             'rsync': ('rsync', '/var/run/rsyncd.pid'),
             'nfs': ('nfsd', None),
-            'afp': ('afpd', None),
+            'afp': ('netatalk', None),
             'cifs': ('smbd', '/var/run/samba/smbd.pid'),
             'dynamicdns': ('inadyn-mt', None),
             'snmp': ('bsnmpd', '/var/run/snmpd.pid'),
@@ -740,10 +740,6 @@ class notifier:
 
     def _stop_afp(self):
         self.__system("/usr/sbin/service netatalk forcestop")
-        #FIXME: fix rc.d/netatalk to honor the force verbs properly.
-        self.__system("killall afpd")
-        self.__system("killall cnid_metad")
-        self.__system("killall cnid_dbd")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
         self.__system("/usr/sbin/service dbus forcestop")
 
@@ -753,8 +749,7 @@ class notifier:
 
     def _reload_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
-        self.__system("killall -1 avahi-daemon")
-        self.__system("killall -1 afpd")
+        self.__system("killall -1 netatalk")
 
     def _reload_nfs(self):
         self.__system("/usr/sbin/service ix-nfsd quietstart")
