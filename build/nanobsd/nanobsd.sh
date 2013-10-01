@@ -455,18 +455,28 @@ newfs_part ( ) (
 	mount -o async ${dev} ${mnt}
 )
 
+# filter to filter out "workdir" from the disk image
+workdir_filter ( ) (
+	grep -v '^./usr/workdir/' | grep -v '^./usr/obj/'
+)
+
 populate_slice ( ) (
-	local dev dir mnt lbl
+	local dev dir mnt lbl filter_func filter_arg
 	dev=$1
 	dir=$2
 	mnt=$3
 	lbl=$4
+	filter_func="$5"
+	filter_arg="$6"
+	[ -z "$filter_func" ] && filter_func="cat"
 	test -z $2 && dir=${NANO_WORLDDIR}/var/empty
 	test -d $dir || dir=${NANO_WORLDDIR}/var/empty
 	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
 	newfs_part $dev $mnt $lbl
 	cd ${dir}
-	find . | egrep -v "$NANO_IGNORE_FILES_EXPR" | cpio -dumpv ${mnt}
+	find . | egrep -v "$NANO_IGNORE_FILES_EXPR" | \
+		$filter_func $filter_arg | \
+		cpio -dumpv ${mnt}
 	df -i ${mnt}
 	umount ${mnt}
 )
@@ -578,7 +588,7 @@ create_i386_diskimage ( ) (
 	bsdlabel ${MD}s1
 
 	# Create first image
-	populate_slice /dev/${MD}s1a ${NANO_WORLDDIR} ${MNT} "s1a"
+	populate_slice /dev/${MD}s1a ${NANO_WORLDDIR} ${MNT} "s1a" workdir_filter
 	mount /dev/${MD}s1a ${MNT}
 	echo "Generating mtree..."
 	( cd ${MNT} && mtree -c ) > ${NANO_OBJ}/_.mtree

@@ -304,8 +304,8 @@ do_add_port ()
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	# XXX: this is removing needed artifacts for saved build environments
 	# can we remove the following 2 rm-rfs?
-	rm -rf ${NANO_WORLDDIR}/usr/obj
-	rm -rf ${NANO_WORLDDIR}/usr/workdir
+	#rm -rf ${NANO_WORLDDIR}/usr/obj
+	#rm -rf ${NANO_WORLDDIR}/usr/workdir
 
 	umount -f ${NANO_WORLDDIR}/usr/nas_source
 	umount -f ${NANO_WORLDDIR}/usr/ports/distfiles
