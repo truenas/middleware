@@ -427,6 +427,7 @@ class notifier:
         for jail in Jails.objects.all():
             Warden().start(jail=jail.jail_host)
         self.__system("/usr/sbin/service ix-plugins start")
+        self.reload("http")
 
     def _restart_jails(self):
         self._stop_jails()
