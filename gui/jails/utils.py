@@ -269,7 +269,7 @@ def get_available_ipv4(ipv4_initial):
 
     mask = 0
     try:
-        mask = int(str(addr).split('/')[0])
+        mask = int(str(addr).split('/')[1])
         if not mask:  
             mask = 24
      
@@ -297,7 +297,7 @@ def get_available_ipv6(ipv6_initial):
 
     mask = 0
     try:
-        mask = int(str(addr).split('/')[0])
+        mask = int(str(addr).split('/')[1])
         if not mask:  
             mask = 64
      
