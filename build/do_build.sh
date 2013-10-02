@@ -320,9 +320,15 @@ generic_checkout_git()
 		_depth_arg=""
 	fi
 	cd "${checkout_path}"
+
+	# XXX: there are a few git fetch commands below.
+	#  can we optimize by using
+	#  git remote add -t remote-branch remote-name remote-url  ?
+	#  instead of a fetch of all of origin?
 	if [ -d ${checkout_name}/.git ] ; then
 		cd ${checkout_name}
 		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${my_branch}" ]; then
+			git fetch origin
 
 			git checkout ${my_branch}
 		fi
@@ -343,6 +349,7 @@ generic_checkout_git()
             git clone ${my_cache} ${checkout_name}
             cd ${checkout_name}
             git remote set-url origin "${my_repo}"
+            git fetch origin
             git checkout "$branch"
         else
 		    git clone -b "$branch" ${my_repo} $_depth_arg ${checkout_name}
