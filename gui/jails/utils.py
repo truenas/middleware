@@ -1,13 +1,17 @@
 import logging
 import os
 import platform
+import signal
 
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.sipcalc import sipcalc_type
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common import warden
 from freenasUI.jails.models import (
-    Jails,JailsConfiguration, JailTemplate
+    Jails,
+    JailsConfiguration,
+    JailTemplate
 )
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -38,18 +42,14 @@ def get_jails_index(release=None, arch=None):
 
     return index
 
-def guess_adresses():
+def guess_ipv4_addresses():
     high_ipv4 = None
-    high_ipv6 = None
-
     st_ipv4_network = None
-    st_ipv6_network = None
 
     jc = None
     try:
         jc = JailsConfiguration.objects.order_by("-id")[0]
         st_ipv4_network = sipcalc_type(jc.jc_ipv4_network)
-        st_ipv6_network = sipcalc_type(jc.jc_ipv6_network)
     except Exception as e:
         log.debug("Exception caught: %s", e)
 
@@ -61,11 +61,6 @@ def guess_adresses():
         high_ipv4 = sipcalc_type("%s/%d" % (
             jc.jc_ipv4_network_start,
             st_ipv4_network.network_mask_bits
-        ))
-    if st_ipv6_network:
-        high_ipv6 = sipcalc_type("%s/%d" % (
-            jc.jc_ipv6_network_start,
-            st_ipv6_network.prefix_length
         ))
 
     #
@@ -100,13 +95,6 @@ def guess_adresses():
         ))
         high_ipv4 += 25
 
-    if not high_ipv6 and st_ipv6_network:
-        high_ipv6 = sipcalc_type("%s/%d" % (
-            st_ipv6_network.network_range[0],
-            st_ipv6_network.prefix_length,
-        ))
-        high_ipv6 += 25
-
     try:
         wlist = warden.Warden().list()
     except:
@@ -114,9 +102,7 @@ def guess_adresses():
 
     for wj in wlist:
         wo = warden.WardenJail(**wj)
-
         st_ipv4 = None
-        st_ipv6 = None
 
         #
         # This figures out the highest IP address currently in use
@@ -124,18 +110,11 @@ def guess_adresses():
 
         if wo.ipv4:
             st_ipv4 = sipcalc_type(wo.ipv4)
-        if wo.ipv6:
-            st_ipv6 = sipcalc_type(wo.ipv6)
 
         if st_ipv4 and st_ipv4_network is not None:
             if st_ipv4_network.in_network(st_ipv4):
                 if st_ipv4 > high_ipv4:
                     high_ipv4 = st_ipv4
-
-        if st_ipv6 and st_ipv6_network is not None:
-            if st_ipv6_network.in_network(st_ipv6):
-                if st_ipv6 > high_ipv6:
-                    high_ipv6 = st_ipv6
 
     if high_ipv4 is None and st_ipv4_network is not None:
         high_ipv4 = sipcalc_type("%s/%d" % (
@@ -147,6 +126,93 @@ def guess_adresses():
         high_ipv4 += 1
         if not st_ipv4_network.in_network(high_ipv4):
             high_ipv4 = None
+
+    #
+    # If a network is configured for jails, and it is NOT on
+    # the same network as the host, setup a bridge address.
+    # (This will be the default gateway of the jail).
+    #
+    bridge_ipv4 = None
+    if st_ipv4_network is not None and not st_host_ipv4_network:
+        bridge_ipv4 = sipcalc_type("%s/%d" % (
+            st_ipv4_network.usable_range[0],
+            st_ipv4_network.network_mask_bits,
+        ))
+
+    return {
+        'high_ipv4': high_ipv4,
+        'bridge_ipv4': bridge_ipv4
+    }
+
+def guess_ipv6_addresses():
+    high_ipv6 = None
+    st_ipv6_network = None
+
+    jc = None
+    try:
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+        st_ipv6_network = sipcalc_type(jc.jc_ipv6_network)
+    except Exception as e:
+        log.debug("Exception caught: %s", e)
+
+    #
+    # If a jails configuration exists (as it should),
+    # create sipcalc objects
+    #
+    if st_ipv6_network:
+        high_ipv6 = sipcalc_type("%s/%d" % (
+            jc.jc_ipv6_network_start,
+            st_ipv6_network.prefix_length
+        ))
+
+    if not high_ipv6 and st_ipv6_network:
+        high_ipv6 = sipcalc_type("%s/%d" % (
+            st_ipv6_network.network_range[0],
+            st_ipv6_network.prefix_length,
+        ))
+        high_ipv6 += 25
+
+    #
+    # Attempt to determine the primary interface network.
+    # This is done so that we don't set a bridge address
+    # (we leave it blank, in which case the Warden will
+    # figure out the default gateway and set that up inside
+    # the jail if on the same network as the host).
+    #
+    st_host_ipv6_network = None
+    try:
+        iface = notifier().guess_default_interface()
+        st_ha = sipcalc_type(iface=iface)
+        if not st_ha.is_ipv6():
+            st_host_ipv6_network = None
+        else:
+            st_host_ipv6_network = sipcalc_type("%s/%d" % (
+                st_ha.network_range[0],
+                st_ha.prefix_length,
+            ))
+    except Exception as e:
+        log.debug("Exception caught: %s", e)
+
+    try:
+        wlist = warden.Warden().list()
+    except:
+        wlist = []
+
+    for wj in wlist:
+        wo = warden.WardenJail(**wj)
+        st_ipv6 = None
+
+        #
+        # This figures out the highest IP address currently in use
+        #
+
+        if wo.ipv6:
+            st_ipv6 = sipcalc_type(wo.ipv6)
+
+        if st_ipv6 and st_ipv6_network is not None:
+            if st_ipv6_network.in_network(st_ipv6):
+                if st_ipv6 > high_ipv6:
+                    high_ipv6 = st_ipv6
 
     if high_ipv6 is None and st_ipv6_network is not None:
         high_ipv6 = sipcalc_type("%s/%d" % (
@@ -164,13 +230,6 @@ def guess_adresses():
     # the same network as the host, setup a bridge address.
     # (This will be the default gateway of the jail).
     #
-    bridge_ipv4 = None
-    if st_ipv4_network is not None and not st_host_ipv4_network:
-        bridge_ipv4 = sipcalc_type("%s/%d" % (
-            st_ipv4_network.usable_range[0],
-            st_ipv4_network.network_mask_bits,
-        ))
-
     bridge_ipv6 = None
     if st_ipv6_network is not None:
         bridge_ipv6 = sipcalc_type("%s/%d" % (
@@ -179,15 +238,146 @@ def guess_adresses():
         ))
 
     return {
-        'high_ipv4': high_ipv4,
         'high_ipv6': high_ipv6,
-        'bridge_ipv4': bridge_ipv4,
-        'bridge_ipv6': bridge_ipv6,
+        'bridge_ipv6': bridge_ipv6
     }
+
+def ping_host(host, ping6=False):
+    cmd = "/sbin/ping -q -o %s" % host
+    if ping6:
+        cmd = "/sbin/ping6 -q -o %s" % host
+
+    class Alarm:
+        pass
+
+    def ping_sigalarm(sig, frame):
+        raise Alarm
+
+    p = pipeopen(cmd)
+    signal.signal(signal.SIGALRM, ping_sigalarm)
+    signal.alarm(5)
+
+    try:
+        p.communicate()
+        signal.alarm(0)
+
+    except Alarm:
+        try:
+            os.kill(p.pid, signal.SIGKILL)  
+
+        except OSError:
+            pass
+
+        return False
+
+    if p.returncode != 0:
+        return False
+
+    return True
+
+def get_available_ipv4(ipv4_initial):
+    addr = ipv4_initial
+
+    mask = 0
+    try:
+        mask = int(str(addr).split('/')[0])
+        if not mask:  
+            mask = 24
+     
+    except:
+        mask = 24
+
+    i = 0
+    naddrs = 2**mask
+
+    while i <= naddrs:
+        if not addr:
+            break
+
+        if ping_host(str(addr).split('/')[0]):
+            addr += 1
+        else:
+            break
+
+        i += 1
+
+    return addr
+
+def get_available_ipv6(ipv6_initial):
+    addr = ipv6_initial
+
+    mask = 0
+    try:
+        mask = int(str(addr).split('/')[0])
+        if not mask:  
+            mask = 64
+     
+    except:
+        mask = 64
+
+    i = 0
+    naddrs = 2**mask
+
+    while i <= naddrs:
+        if not addr:
+            break
+
+        if ping6_host(str(addr).split('/')[0]):
+            addr += 1
+        else:
+            break
+
+        i += 1
+
+    return addr
+
+def guess_addresses():
+    addresses = {
+        'high_ipv4': None,
+        'high_ipv6': None,
+        'bridge_ipv4': None,
+        'bridge_ipv6': None
+    }
+
+    ipv4_addresses = guess_ipv4_addresses()
+    high_ipv4 = ipv4_addresses['high_ipv4']
+    bridge_ipv4 = ipv4_addresses['bridge_ipv4']
+
+    ipv4_initial = None
+    if high_ipv4:
+        ipv4_initial = high_ipv4
+    elif bridge_ipv4:
+        ipv4_initial = bridge_ipv4
+
+    if ipv4_initial:
+        ipv4_addr = get_available_ipv4(ipv4_initial)
+        if high_ipv4:
+            addresses['high_ipv4'] = ipv4_addr
+        elif bridge_ipv4:
+            addresses['bridge_ipv4'] = ipv4_addr
+
+    ipv6_addresses = guess_ipv6_addresses()
+    high_ipv6 = ipv6_addresses['high_ipv6']
+    bridge_ipv6 = ipv6_addresses['bridge_ipv6']
+
+    ipv6_initial = None
+    if high_ipv6:
+        ipv6_initial = high_ipv6
+    elif bridge_ipv6:
+        ipv4_initial = bridge_ipv6
+
+    if ipv6_initial:
+        ipv6_addr = get_available_ipv6(ipv6_initial)
+        if high_ipv6:
+            addresses['high_ipv6'] = ipv6_addr
+        elif bridge_ipv6:
+            addresses['bridge_ipv6'] = ipv6_addr
+
+    return addresses
 
 
 def new_default_plugin_jail(basename):
-    addrs = guess_adresses()
+    addrs = guess_addresses()
     if not addrs['high_ipv4']:
         raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
 

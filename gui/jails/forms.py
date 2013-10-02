@@ -39,7 +39,7 @@ from freenasUI.jails.models import (
     JailTemplate,
     NullMountPoint
 )
-from freenasUI.jails.utils import guess_adresses
+from freenasUI.jails.utils import guess_addresses
 from freenasUI.common.warden import (
     Warden,
     WARDEN_FLAGS_NONE,
@@ -141,7 +141,7 @@ class JailCreateForm(ModelForm):
             "jail_nat_toggle();"
         )
 
-        addrs = guess_adresses()
+        addrs = guess_addresses()
 
         if addrs['high_ipv6']:
             self.fields['jail_ipv6'].initial = addrs['high_ipv6']

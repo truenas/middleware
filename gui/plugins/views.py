@@ -43,7 +43,7 @@ from freenasUI.jails.models import Jails, JailsConfiguration
 from freenasUI.jails.utils import (
     jail_path_configured,
     jail_auto_configure,
-    guess_adresses,
+    guess_addresses,
     new_default_plugin_jail
 )
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -220,7 +220,7 @@ def install_available(request, oid):
     try:
         if not jail_path_configured():
             jail_auto_configure()
-        addrs = guess_adresses()
+        addrs = guess_addresses()
         if not addrs['high_ipv4']:
             raise MiddlewareError(_(
                 "You must configure your network interface and a default "
@@ -355,7 +355,7 @@ def upload(request, jail_id=-1):
     try:
         if not jail_path_configured():
             jail_auto_configure()
-        addrs = guess_adresses()
+        addrs = guess_addresses()
         if not addrs['high_ipv4']:
             raise MiddlewareError(_(
                 "You must configure your network interface and a default "
