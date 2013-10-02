@@ -267,7 +267,6 @@ def ping_host(host, ping6=False):
 def get_available_ipv4(ipv4_initial):
     addr = ipv4_initial
 
-    addr = sipcalc_type("10.2.0.1/24")
     mask = 0
     try:
         mask = int(str(addr).split('/')[0])
