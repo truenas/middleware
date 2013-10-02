@@ -1,7 +1,7 @@
 import logging
 import os
 import platform
-import signal
+import time
 
 from django.utils.translation import ugettext as _
 
@@ -247,28 +247,17 @@ def ping_host(host, ping6=False):
     if ping6:
         cmd = "/sbin/ping6 -q -o %s" % host
 
-    class Alarm:
-        pass
-
-    def ping_sigalarm(sig, frame):
-        raise Alarm
-
     p = pipeopen(cmd)
-    signal.signal(signal.SIGALRM, ping_sigalarm)
-    signal.alarm(5)
 
-    try:
-        p.communicate()
-        signal.alarm(0)
+    t = time.time()
+    timeout = t + 5
 
-    except Alarm:
-        try:
-            os.kill(p.pid, signal.SIGKILL)  
+    while t <= timeout:
+        if p.poll() == 0:
+            break
 
-        except OSError:
-            pass
-
-        return False
+        time.sleep(1)
+        t = time.time()
 
     if p.returncode != 0:
         return False
@@ -278,6 +267,7 @@ def ping_host(host, ping6=False):
 def get_available_ipv4(ipv4_initial):
     addr = ipv4_initial
 
+    addr = sipcalc_type("10.2.0.1/24")
     mask = 0
     try:
         mask = int(str(addr).split('/')[0])
@@ -322,7 +312,7 @@ def get_available_ipv6(ipv6_initial):
         if not addr:
             break
 
-        if ping6_host(str(addr).split('/')[0]):
+        if ping_host(str(addr).split('/')[0], ping6=True):
             addr += 1
         else:
             break
