@@ -189,10 +189,20 @@ class Available(object):
     __repo_desc = None
     __def_repo = None
 
-    def __init__(self, repo_id=None):
+    def __init__(self):
         self.__cache = dict()
 
     def _def_repo_id(self, repo_id=None):
+        """
+        Make sure the call to get_repo is retarded as much as possible.
+
+        Available is a class that is instantiated on the very beginning
+        of django bootstrap process, so we want to avoid unnecessary calls
+        for all the tools involved (autorepl, autosnap, syncdisks, webshell).
+
+        The method get_repo will result in a unix process fork for pbi_listrepo
+        that won't be available in a complete install.
+        """
         if self.__def_repo is not None:
             return self.__repo_id
         self.__def_repo = True
