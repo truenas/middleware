@@ -645,7 +645,7 @@ jail_pre_start()
 	" | \
 	while read -r source destination
 	do
-		echo "${source} ${jail_path}/${destination} nullfs rw 0 0" >> "${jail_metadir}/fstab"
+		echo "$(echo ${source} | sed 's/ /\\040/g') $(echo ${jail_path}/${destination} | sed 's/ /\\040/g') nullfs rw 0 0" >> "${jail_metadir}/fstab"
 	done
 }
 
