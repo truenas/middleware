@@ -348,16 +348,19 @@ class NullMountPoint(Model):
     jail = models.CharField(
         max_length=120,
         verbose_name=_("Jail"),
-        )
+    )
     source = models.CharField(
         max_length=300,
         verbose_name=_("Source"),
-        )
-
+    )
     destination = models.CharField(
         max_length=300,
         verbose_name=_("Destination"),
-        )
+    )
+    readonly = models.BooleanField(
+        default=False,
+        verbose_name=_("Read-Only"),
+    )
 
     class Meta:
         verbose_name = _(u"Storage")
@@ -381,7 +384,15 @@ class NullMountPoint(Model):
         return u"%s/%s%s" % (jc.jc_path, self.jail, self.destination)
 
     def mount(self):
-        mount(self.source, self.destination_jail, fstype="nullfs")
+        mntopts = None
+        if self.readonly:
+            mntopts = 'ro'
+        mount(
+            self.source,
+            self.destination_jail,
+            fstype="nullfs",
+            mntopts=mntopts,
+        )
         return self.mounted
 
     def umount(self):
