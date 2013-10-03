@@ -76,6 +76,12 @@ require([
             if(typeof columns[key] == 'string') {
                 columns[key] = eval('(' + columns[key] + ')')
             }
+	    var funcs = {'formatter': 1};
+            for(var func in funcs) {
+                if(typeof columns[key][func] == 'string') {
+                    columns[key][func] = eval('(' + columns[key][func] + ')')
+                }
+            }
             if(columns[key].shouldExpand !== undefined){
                 columns[key].shouldExpand = function() { return true };
             }
