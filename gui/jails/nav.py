@@ -55,6 +55,81 @@ BLACKLIST = [
     'NullMountPoint'
 ]
 
+O_ADDJAIL = 0
+O_ADDJAILTEMPLATE = 1
+O_VIEWJAIL = 2
+O_VIEWJAILTEMPLATE = 3
+O_JAILSCONFIGURATION = 4
+O_INDEX = 5
+
+class AddJail(TreeNode):
+    global O_ADDJAIL
+
+    gname = 'Jails.Add'
+    name = _(u'Add Jails')
+    icon = u'JailAddIcon'
+    type = 'object'
+    view = 'freeadmin_jails_jails_add'
+    order = O_ADDJAIL
+
+    def __init__(self, *args, **kwargs):
+        super(AddJail, self).__init__(*args, **kwargs)
+        self.skip = not jail_path_configured()
+
+
+class AddJailTemplate(TreeNode):
+    global O_ADDJAILTEMPLATE
+
+    gname = 'JailTemplate.Add'
+    name = _(u'Add Jail Templates')
+    icon = u'JailAddIcon'
+    type = 'object'
+    view = 'freeadmin_jails_jailtemplate_add'
+    order = O_ADDJAILTEMPLATE
+
+    def __init__(self, *args, **kwargs):
+        super(AddJailTemplate, self).__init__(*args, **kwargs)
+        self.skip = not jail_path_configured()
+
+
+class ViewJails(TreeNode):
+    global O_VIEWJAIL
+
+    gname = 'Jails.View'
+    name = _(u'View Jails')
+    icon = 'JailIcon'
+    type = 'openjails'
+    order = O_VIEWJAIL
+
+    def __init__(self, *args, **kwargs):
+        super(ViewJails, self).__init__(*args, **kwargs)
+        self.skip = not jail_path_configured()
+
+
+class ViewJailTemplate(TreeNode):
+    global O_VIEWJAILTEMPLATE
+
+    gname = 'JailTemplate.View'
+    name = _(u'View Jail Templates')
+    icon = 'JailIcon'
+    type = 'openjails'
+    order = O_VIEWJAILTEMPLATE
+
+    def __init__(self, *args, **kwargs):
+        super(ViewJailTemplate, self).__init__(*args, **kwargs)
+        self.skip = not jail_path_configured()
+
+
+class ViewJailsConfiguration(TreeNode):
+    global O_JAILSCONFIGURATION
+
+    gname = 'JailsConfiguration'
+    append_to = 'jails'
+    name = _(u'Configuration')
+    icon = u'SettingsIcon'
+    type = 'openjails'
+    order = O_JAILSCONFIGURATION
+
 
 def plugin_fetch(args):
     plugin, host, request = args
@@ -87,6 +162,7 @@ def plugin_fetch(args):
 
 
 def init(tree_roots, nav, request):
+    global O_INDEX
     self = Base()
     jails = Jails.objects.all()
 
@@ -109,6 +185,8 @@ def init(tree_roots, nav, request):
             icon = 'BeastieIcon'
 
         jail_node = self.new_jail_node(jail, icon)
+        jail_node.order = O_INDEX
+        O_INDEX += 1
         nav.append_child(jail_node)
 
         jail_node_view = self.new_jail_node_view(jail)
@@ -133,7 +211,6 @@ def init(tree_roots, nav, request):
 
 
 class Base(object):
-
     def new_jail_node(self, jail, icon=u'JailIcon'):
         jail_node = TreeNode()
 
@@ -195,61 +272,3 @@ class Base(object):
         return storage_node_add
 
 
-class AddJail(TreeNode):
-
-    gname = 'Jails.Add'
-    name = _(u'Add Jails')
-    icon = u'JailAddIcon'
-    type = 'object'
-    view = 'freeadmin_jails_jails_add'
-    order = -1
-
-    def __init__(self, *args, **kwargs):
-        super(AddJail, self).__init__(*args, **kwargs)
-        self.skip = not jail_path_configured()
-
-
-class AddJailTemplate(TreeNode):
-
-    gname = 'JailTemplate.Add'
-    name = _(u'Add Jail Templates')
-    icon = u'JailAddIcon'
-    type = 'object'
-    view = 'freeadmin_jails_jailtemplate_add'
-
-    def __init__(self, *args, **kwargs):
-        super(AddJailTemplate, self).__init__(*args, **kwargs)
-        self.skip = not jail_path_configured()
-
-
-class ViewJailsConfiguration(TreeNode):
-
-    gname = 'JailsConfiguration'
-    append_to = 'jails'
-    name = _(u'Configuration')
-    icon = u'SettingsIcon'
-    type = 'openjails'
-
-
-class ViewJails(TreeNode):
-
-    gname = 'Jails.View'
-    name = _(u'View Jails')
-    icon = 'JailIcon'
-    type = 'openjails'
-
-    def __init__(self, *args, **kwargs):
-        super(ViewJails, self).__init__(*args, **kwargs)
-        self.skip = not jail_path_configured()
-
-
-class ViewJailTemplate(TreeNode):
-
-    gname = 'JailTemplate.View'
-    name = _(u'View Jail Templates')
-    icon = 'JailIcon'
-    type = 'openjails'
-
-    def __init__(self, *args, **kwargs):
-        super(ViewJailTemplate, self).__init__(*args, **kwargs)
-        self.skip = not jail_path_configured()
