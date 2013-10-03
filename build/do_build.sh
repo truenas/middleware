@@ -361,7 +361,7 @@ generic_checkout_git()
 
 freebsd_checkout_git()
 {
-	: ${GIT_FREEBSD_BRANCH=freenas-9-stable}
+	: ${GIT_FREEBSD_BRANCH=feature/unified_freebsd}
 	: ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
     generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
 }
