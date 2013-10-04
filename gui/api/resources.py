@@ -1636,6 +1636,7 @@ class AvailablePluginsResource(DojoResource):
                 'plugin_update',
                 kwargs={'oid': bundle.obj.id},
             )
+        bundle.data['icon'] = bundle.obj.icon
         return bundle
 
 

@@ -448,6 +448,22 @@ def upload_progress(request):
     return HttpResponse(content, mimetype='application/json')
 
 
+def plugin_available_icon(request, oid):
+    default = "/usr/local/www/freenasUI/freeadmin/static/images/ui/menu/plugins.png"
+
+    icon = availablePlugins.get_icon(None, oid)
+    if not icon:
+        try:
+            icon_path = default
+            with open(icon_path, "r") as f:
+                icon = f.read()
+                f.close()
+        except:  
+            icon = None 
+
+    return HttpResponse(icon, mimetype="image/png");
+
+
 @public
 def plugin_fcgi_client(request, name, oid, path):
     """

@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
 from collections import OrderedDict
 
 from django.conf.urls import patterns, url
@@ -35,6 +37,7 @@ from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.plugins import models
 
+log = logging.getLogger('plugins.admin')
 
 class PluginsFAdmin(BaseFreeAdmin):
 
@@ -84,6 +87,12 @@ class AvailableFAdmin(BaseFreeAdmin):
         }
         return actions
 
+    def get_column_name_extra(self):                                            
+        return {
+            'formatter': """function(value, obj) {
+                return '<img src="/plugins/plugin/available/icon/' + obj['id'] + '/" height="16" width="16"/> &nbsp; ' + value;
+            }"""
+        }
 
 site.register(models.Plugins, PluginsFAdmin)
 site.register(models.Available, AvailableFAdmin)

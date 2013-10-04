@@ -45,6 +45,7 @@ class Plugin(object):
     description = None
     sha256 = None
     file = None
+    icon = None
     hash = None
     urls = None
     size = None
@@ -188,20 +189,10 @@ class Available(object):
     __repo_desc = None
     __def_repo = None
 
-    def __init__(self):
+    def __init__(self, repo_id=None):
         self.__cache = dict()
 
     def _def_repo_id(self, repo_id=None):
-        """
-        Make sure the call to get_repo is retarded as much as possible.
-
-        Available is a class that is instantiated on the very beginning
-        of django bootstrap process, so we want to avoid unnecessary calls
-        for all the tools involved (autorepl, autosnap, syncdisks, webshell).
-
-        The method get_repo will result in a unix process fork for pbi_listrepo
-        that won't be available in a complete install.
-        """
         if self.__def_repo is not None:
             return self.__repo_id
         self.__def_repo = True
@@ -280,8 +271,8 @@ class Available(object):
         mirrorsdir = "/var/db/pbi/mirrors"
 
         if not repo_id:
-            repod_id = self._def_repo_id()
-            if not repod_id:
+            repo_id = self._def_repo_id()
+            if not repo_id:
                 return None
 
         urls = []
@@ -300,7 +291,6 @@ class Available(object):
 
         return urls
 
-
     def get_index_entry(self, repo_id=None, application=None, arch=None, version=None):
         reposdir = "/var/db/pbi/repos"
         indexdir = "/var/db/pbi/index"
@@ -309,8 +299,8 @@ class Available(object):
             return None
 
         if not repo_id:
-            repod_id = self._def_repo_id()
-            if not repod_id:
+            repo_id = self._def_repo_id()
+            if not repo_id:
                 return None
 
         sha256 = None
@@ -332,7 +322,7 @@ class Available(object):
                         if parts[0] == application.lower() and \
                             parts[1] == arch.lower() and \
                             parts[2] == version.lower():
-                            return parts  
+                            return parts 
                     f.close()
 
             except Exception as e:
@@ -340,6 +330,28 @@ class Available(object):
                 return None
 
         return None
+
+    def get_icon(self, repo_id=None, oid=None):
+        
+        icon_path = None
+        available = self.get_remote(repo_id=None, cache=True)
+        for p in available:
+            if p.id == oid:
+                icon_path = p.icon
+                break
+
+        icon = None
+        if icon_path:
+            try:
+                with open(icon_path, 'r') as f:
+                    icon = f.read()
+                    f.close()
+
+            except:
+                log.debug("Unable to open icon %s", icon_path) 
+                icon = None
+
+        return icon
 
     def get_update_status(self, oid):
         from freenasUI.plugins import models
