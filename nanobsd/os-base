@@ -864,6 +864,11 @@ last_orders() {
 				${firmware_img##*/} \
 			| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
 		) > "${gui_image_log}" 2>&1
+		(
+		cd $NANO_DISKIMGDIR
+		sha256_signature=`sha256 ${gui_upgrade_bname}.txz`
+		echo "${sha256_signature}" > ${gui_upgrade_bname}.txz.sha256.txt
+		)
 	fi
 
 	pprint 2 "Compressing full disk image"
@@ -880,6 +885,11 @@ last_orders() {
 	time ${NANO_XZ} --verbose -9 -f "$full_image"
 
 	) > "${full_image_log}" 2>&1
+	(
+	cd $NANO_DISKIMGDIR
+	sha256_signature=`sha256 ${NANO_IMGNAME}.img.xz`
+	echo "${sha256_signature}" > ${NANO_IMGNAME}.img.xz.sha256.txt
+	)
 
 	pprint 2 "Creating ISO image"
 	log_file "${cd_image_log}"

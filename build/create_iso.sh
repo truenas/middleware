@@ -296,6 +296,11 @@ main()
 	cp -p ${AVATAR_ROOT}/build/files/mount.conf.cdrom ${ISODIR}/.mount.conf
 
 	eval ${MKISOFS_CMD}
+        ( cd $NANO_OBJ
+          sha256_signature=`sha256 ${NANO_NAME}.iso`
+          echo "${sha256_signature}" > ${NANO_NAME}.iso.sha256.txt
+        )
+
 	echo "Created ${OUTPUT}"
 }
 
