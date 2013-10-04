@@ -330,7 +330,7 @@ generic_checkout_git()
 		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${my_branch}" ]; then
 			git fetch origin
 
-			git checkout ${my_branch}
+			git checkout -b ${my_branch} origin/${my_branch}
 		fi
 		git pull $_depth_arg
 		cd ..
@@ -350,7 +350,7 @@ generic_checkout_git()
             cd ${checkout_name}
             git remote set-url origin "${my_repo}"
             git fetch origin
-            git checkout "$branch"
+			git checkout -b ${branch} origin/${branch}
         else
 		    git clone -b "$branch" ${my_repo} $_depth_arg ${checkout_name}
         fi
