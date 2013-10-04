@@ -31,7 +31,7 @@ main()
 			 -b boot/cdboot ${ISODIR}"
 
 	if ! command -v mkisofs >/dev/null 2>&1; then
-		make -C /usr/ports/sysutils/cdrtools clean install
+		error "mkisofs not available.  Please install the sysutils/cdrtools port."
 	fi
 
 	if [ ! -f "${IMGFILE}" ]; then
