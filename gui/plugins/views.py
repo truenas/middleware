@@ -29,7 +29,6 @@ from collections import namedtuple
 import json
 import logging
 import os
-import re
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponse
@@ -53,7 +52,6 @@ from freenasUI.plugins.plugin import PROGRESS_FILE
 from freenasUI.plugins.utils import (
     get_base_url,
     get_plugin_status,
-    get_plugin_start,
     get_plugin_stop
 )
 from freenasUI.plugins.utils.fcgi_client import FCGIApp
@@ -143,14 +141,6 @@ def plugin_info(request, plugin_id):
     })
 
 
-def plugin_installed(request, oid):
-    data = {
-        'installed': get_installed_plugins_count_by_remote_oid(oid)
-    }
-
-    return HttpResponse(json.dumps(data), mimetype='application/json')
-
-
 def plugin_update(request, oid):
     host = get_base_url(request)
 
@@ -193,7 +183,7 @@ def plugin_update(request, oid):
             raise MiddlewareError(_("Failed to download plugin"))
 
         jail = Jails.objects.filter(jail_host=iplugin.plugin_jail)
-        if not jail: 
+        if not jail:
             raise MiddlewareError(_("Jail does not exist"))
 
         if notifier().update_pbi(plugin=iplugin):
@@ -292,7 +282,7 @@ def install_progress(request):
         data = {'step': 2}
         percent = 0
         with open(WARDEN_EXTRACT_STATUS_FILE, 'r') as f:
-            try:  
+            try:
                 buf = f.readlines()[-1].strip()
                 parts = buf.split()
                 size = len(parts)
@@ -300,7 +290,7 @@ def install_progress(request):
                     nbytes = float(parts[1])
                     total = float(parts[2])
                     percent = int((nbytes / total) * 100)
-            except Exception as e:
+            except Exception:
                 pass
         data['percent'] = percent
 
@@ -329,8 +319,6 @@ def install_progress(request):
 
 
 def update_progress(request):
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = '%s/warden.log' % jc.jc_path
     data = {}
 
     if os.path.exists(PROGRESS_FILE):
@@ -449,7 +437,9 @@ def upload_progress(request):
 
 
 def plugin_available_icon(request, oid):
-    default = "/usr/local/www/freenasUI/freeadmin/static/images/ui/menu/plugins.png"
+    default = (
+        "/usr/local/www/freenasUI/freeadmin/static/images/ui/menu/plugins.png"
+    )
 
     icon = availablePlugins.get_icon(None, oid)
     if not icon:
@@ -458,10 +448,10 @@ def plugin_available_icon(request, oid):
             with open(icon_path, "r") as f:
                 icon = f.read()
                 f.close()
-        except:  
-            icon = None 
+        except:
+            icon = None
 
-    return HttpResponse(icon, mimetype="image/png");
+    return HttpResponse(icon, mimetype="image/png")
 
 
 @public

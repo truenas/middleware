@@ -28,8 +28,6 @@ import logging
 
 from collections import OrderedDict
 
-from django.conf.urls import patterns, url
-from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import AvailablePluginsResource
@@ -38,6 +36,7 @@ from freenasUI.freeadmin.site import site
 from freenasUI.plugins import models
 
 log = logging.getLogger('plugins.admin')
+
 
 class PluginsFAdmin(BaseFreeAdmin):
 
@@ -72,22 +71,9 @@ class AvailableFAdmin(BaseFreeAdmin):
                 }
             }""",
         }
-        actions["Update"] = {
-            'button_name': _("Update"),
-            'on_select': """function(evt, actionName, action) {
-                show_plugin_update_button(evt, actionName, action);
-            }""",
-            'on_click': """function() {
-                var mybtn = this;
-                for (var i in grid.selection) {
-                    var data = grid.row(i).data;
-                    editObject('Update plugin', data._update_url, [mybtn,]);
-                }
-            }""",
-        }
         return actions
 
-    def get_column_name_extra(self):                                            
+    def get_column_name_extra(self):
         return {
             'formatter': """function(value, obj) {
                 return '<img src="/plugins/plugin/available/icon/' + obj['id'] + '/" height="16" width="16"/> &nbsp; ' + value;
