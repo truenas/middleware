@@ -328,6 +328,11 @@ generic_checkout_git()
 	if [ -d ${checkout_name}/.git ] ; then
 		cd ${checkout_name}
 		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${my_branch}" ]; then
+			git config --unset remote.origin.fetch \
+				"\+refs/heads/${my_branch}:refs/remotes/origin/${my_branch}"
+			git config --add remote.origin.fetch \
+				"+refs/heads/${my_branch}:refs/remotes/origin/${my_branch}"
+
 			git fetch origin
 
 			git checkout -b ${my_branch} origin/${my_branch}
