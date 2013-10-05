@@ -179,7 +179,7 @@ def init(tree_roots, nav, request):
             icon = 'BeastieIcon'
         elif jail.jail_type == WARDEN_TYPE_PORTJAIL:
             icon = 'BobbleIcon'
-        elif jail.jail_type == WARDEN_TYPE_LINUXJAIL:
+        elif jail.is_linux_jail():
             icon = 'TuxIcon'
         else:
             icon = 'BeastieIcon'

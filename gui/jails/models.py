@@ -25,9 +25,12 @@
 #
 #####################################################################
 import logging
+import re
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.system import is_mounted, mount, umount
 from freenasUI.common.warden import (
@@ -159,6 +162,32 @@ class Jails(Model):
         verbose_name=_("NAT")
     )
 
+    @property
+    def jail_path(self):
+        if self.__jail_path:
+            return self.__jail_path
+        else:
+            try:
+                jc = JailsConfiguration.objects.order_by("-id")[0] 
+                self.__jail_path = "%s/%s" % (jc.jc_path, self.jail_host)
+            except:
+                pass
+
+        return self.__jail_path
+
+    @property
+    def jail_meta_path(self):
+        if self.__jail_meta_path:
+            return self.__jail_meta_path
+        else:
+            try:
+                jc = JailsConfiguration.objects.order_by("-id")[0] 
+                self.__jail_meta_path = "%s/.%s.meta" % (jc.jc_path, self.jail_host)
+            except:
+                pass
+
+        return self.__jail_meta_path
+
     def __str__(self):
         return str(self.jail_host)
 
@@ -167,6 +196,9 @@ class Jails(Model):
 
     def __init__(self, *args, **kwargs):
         super(Jails, self).__init__(*args, **kwargs)
+        self.__jail_path = None
+        self.__jail_meta_path = None
+
         if self.jail_autostart == WARDEN_AUTOSTART_ENABLED:
             self.jail_autostart = True
         elif self.jail_autostart == WARDEN_AUTOSTART_DISABLED:
@@ -192,6 +224,29 @@ class Jails(Model):
                     _("This jail is required by %d plugin(s)") % qs.count()
                 )
         Warden().delete(jail=self.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
+
+    def is_linux_jail(self):
+        is_linux = False
+
+        sysctl_path = "%s/sbin/sysctl" % (self.jail_path)
+        p = pipeopen("file %s" % sysctl_path)
+        out = p.communicate()
+        if p.returncode != 0:
+            return is_linux
+
+        try:
+            out = out[0]
+            parts = out.split(',')
+            line = parts[4]
+            parts = line.split()
+            line = parts[1] 
+            if re.match('(.+)?linux(.+)?', line, flags=re.I):
+                is_linux = True
+
+        except:
+            is_linux = False 
+
+        return is_linux
 
     class Meta:
         verbose_name = _("Jails")
