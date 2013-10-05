@@ -1744,3 +1744,18 @@ get_freebsd_file()
 
    return $?
 }
+
+
+is_linux_jail()
+{
+   file "${JAILDIR}/sbin/sysctl" | \
+      cut -d ',' -f 5 | \
+      awk '{ print $2 }' | \
+      cut -f2 -d'/' | \
+      grep -iq Linux >/dev/null 2>&1
+   if [ "$?" = "0" ] ; then
+      return 0
+   fi
+
+   return 1
+}

@@ -323,6 +323,16 @@ start_jail_standard()
   JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
 }
 
+load_linux_modules()
+{
+   kldload linux >/dev/null 2>&1
+   kldload linprocfs >/dev/null 2>&1
+   kldload linsysfs >/dev/null 2>&1
+   kldload lindev >/dev/null 2>&1
+
+   sysctl compat.linux.osrelease=3.9.9
+}
+
 JAILNAME="${1}"
 export JAILNAME
 
@@ -426,7 +436,7 @@ fi
 
 set_warden_metadir
 
-if [ -e "${JMETADIR}/jail-linux" ] ; then
+if is_linux_jail ; then
    LINUXJAIL="YES"
 fi
 
@@ -439,7 +449,10 @@ else
 fi
 
 if [ "$LINUXJAIL" = "YES" ] ; then
+
   # Linux Jail
+  load_linux_modules
+
   if is_symlinked_mountpoint ${JAILDIR}/proc; then
      warden_print "${JAILDIR}/proc has symlink as parent, not mounting"
   else
