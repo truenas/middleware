@@ -17,12 +17,32 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'jails', ['JailTemplate'])
 
+        #
+        # The standard jail types
+        #
         db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
             "values ('pluginjail', '%s/freenas-pluginjail.tgz')" % get_jails_index())
         db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
             "values ('portjail', '%s/freenas-portjail.tgz')" % get_jails_index())
         db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
             "values ('standard', '%s/freenas-standard.tgz')" % get_jails_index())
+
+        #
+        # And... some Linux jail templates
+        #
+        db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
+            "values ('debian-7.1.0', '%s/linux-debian-7.1.0.tgz')" % get_jails_index())
+        db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
+            "values ('gentoo-20130820', '%s/linux-gentoo-20130820.tgz')" % get_jails_index())
+        db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
+            "values ('ubuntu-13.04', '%s/linux-ubuntu-13.04.tgz')" % get_jails_index())
+        db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
+            "values ('centos-6.4', '%s/linux-centos-6.4.tgz')" % get_jails_index())
+        db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
+            "values ('fedora-19', '%s/linux-fedora-19.tgz')" % get_jails_index())
+        db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
+            "values ('suse-12.3', '%s/linux-suse-12.3.tgz')" % get_jails_index())
+
 
     def backwards(self, orm):
         # Deleting model 'JailTemplate'
