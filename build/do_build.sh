@@ -334,28 +334,30 @@ generic_checkout_git()
 				"+refs/heads/${my_branch}:refs/remotes/origin/${my_branch}"
 
 			git fetch origin
-
-			git checkout -b ${my_branch} origin/${my_branch}
+			if [ ! -z "$my_tag" ] ; then
+				git checkout "$my_tag"
+			else
+				git checkout -b ${my_branch} origin/${my_branch}
+			fi
 		fi
 		git pull $_depth_arg
 		cd ..
 	else
         local branch
 
-        if [ "x${my_tag}" != "x" ] ; then
-            branch="${my_tag}"
-        else
-            branch=${my_branch}
-        fi
-        if [ -z "$branch" ] ; then
-            branch=master
+        if [ -z "$my_branch" -a -z "$my_tag" ] ; then
+            my_branch=master
         fi
         if [ -e "${my_cache##file://}" ]; then
             git clone ${my_cache} ${checkout_name}
             cd ${checkout_name}
             git remote set-url origin "${my_repo}"
             git fetch origin
-			git checkout -b ${branch} origin/${branch}
+			if [ ! -z "$my_tag" ] ; then
+				git checkout "$my_tag"
+			else
+				git checkout -b ${my_branch} origin/${my_branch}
+			fi
         else
 		    git clone -b "$branch" ${my_repo} $_depth_arg ${checkout_name}
         fi
