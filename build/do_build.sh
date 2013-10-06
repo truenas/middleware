@@ -347,7 +347,6 @@ generic_checkout_git()
 		git pull $_depth_arg
 		cd ..
 	else
-        local branch
 
         if [ -z "$my_branch" -a -z "$my_tag" ] ; then
             my_branch=master
@@ -363,7 +362,7 @@ generic_checkout_git()
                 git checkout -b ${my_branch} origin/${my_branch}
             fi
         else
-            git clone -b "$branch" ${my_repo} $_depth_arg ${checkout_name}
+            git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_name}
         fi
 	fi
 	echo $spl | grep -q x || set +x
