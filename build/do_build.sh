@@ -302,6 +302,7 @@ generic_checkout_git()
     local checkout_path=$2
     local checkout_name=$3
     eval local my_deep=\${GIT_${repo_name}_DEEP}
+    eval local my_deep=\${GIT_${repo_name}_SHALLOW}
     eval local my_repo=\${GIT_${repo_name}_REPO}
     eval local my_cache=\${GIT_${repo_name}_CACHE}
     eval local my_branch=\${GIT_${repo_name}_BRANCH}
@@ -311,7 +312,10 @@ generic_checkout_git()
 	local spl
     spl="$-";set -x
     mkdir -p "$checkout_path"
-	local _depth_arg="--depth 1"
+	local _depth_arg=""
+	if [ "x${GIT_SHALLOW}" = "xYES" -o "x${my_shallow}" != "xYES"] ; then
+	    _depth_arg="--depth 1"
+	fi
 	# If tags are set, then it appears we need a full checkout to get
 	# the tags.  If GIT_DEEP is set, then we don't want a shallow
 	# copy because we need to tag for a release or otherwise work
