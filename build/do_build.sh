@@ -357,13 +357,13 @@ generic_checkout_git()
             cd ${checkout_name}
             git remote set-url origin "${my_repo}"
             git fetch origin
-			if [ ! -z "$my_tag" ] ; then
-				git checkout "$my_tag"
-			else
-				git checkout -b ${my_branch} origin/${my_branch}
-			fi
+            if [ ! -z "$my_tag" ] ; then
+                git checkout "$my_tag"
+            else
+                git checkout -b ${my_branch} origin/${my_branch}
+            fi
         else
-		    git clone -b "$branch" ${my_repo} $_depth_arg ${checkout_name}
+            git clone -b "$branch" ${my_repo} $_depth_arg ${checkout_name}
         fi
 	fi
 	echo $spl | grep -q x || set +x
