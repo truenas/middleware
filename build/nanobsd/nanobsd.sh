@@ -844,6 +844,12 @@ on_exit()
 				cat "$log_file"
 				echo "==================================================================="
 				echo "ERROR: build FAILED; see above or log file here: $log_file"
+				# if the user is running under a "script" session
+				# (where all is logged) then encourage them to submit a
+				# build break via "make build-bug-report"
+				if [ ! -z "$SCRIPT" ] ; then
+					echo "to submit a build error type 'make build-bug-report [email]' "
+				fi
 			fi
 		fi
 	fi
