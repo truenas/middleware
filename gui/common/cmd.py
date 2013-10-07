@@ -195,7 +195,7 @@ class cmd_pipe(object):
         from freenasUI.common.pipesubr import pipeopen
 
         self.error = None
-        self.__pipe = pipeopen(cmd, allowfork=True)
+        self.__pipe = pipeopen(cmd, allowfork=True, important=False)
 
         self.__stdin = self.__pipe.stdin
         self.__stdout = self.__pipe.stdout
