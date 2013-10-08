@@ -317,7 +317,7 @@ generic_checkout_git()
     spl="$-";set -x
     mkdir -p "$checkout_path"
 	local _depth_arg=""
-	if [ "x${GIT_SHALLOW}" = "xYES" -o "x${my_shallow}" != "xYES"] ; then
+	if [ "x${GIT_SHALLOW}" = "xYES" -o "x${my_shallow}" != "xYES" ] ; then
 	    _depth_arg="--depth 1"
 	fi
 	# If tags are set, then it appears we need a full checkout to get
