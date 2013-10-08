@@ -10,6 +10,15 @@ main()
 	. "$AVATAR_ROOT/build/nano_env"
 	. "$AVATAR_ROOT/build/functions.sh"
 
+	if [ -z "NANO_LABEL" ] ; then
+		echo NANO_LABEL unset
+		exit 2
+	fi
+	if [ -z "VERSION" ] ; then
+		echo VERSION unset
+		exit 2
+	fi
+
 	requires_root
 
 	# Keep in sync with os-base and nano_env.
