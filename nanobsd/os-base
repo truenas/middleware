@@ -866,8 +866,8 @@ last_orders() {
 		) > "${gui_image_log}" 2>&1
 		(
 		cd $NANO_DISKIMGDIR
-		sha256_signature=`sha256 ${gui_upgrade_bname}.txz`
-		echo "${sha256_signature}" > ${gui_upgrade_bname}.txz.sha256.txt
+		sha256_signature=`sha256 ${NANO_IMGNAME}.GUI_Upgrade.txz`
+		echo "${sha256_signature}" > ${NANO_IMGNAME}.GUI_Upgrade.txz.sha256.txt
 		)
 	fi
 
