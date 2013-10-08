@@ -10,6 +10,8 @@
 # The FreeNAS source and build tree is rooted here.
 : ${AVATAR_ROOT=$(pwd)}
 
+: ${TRUENAS_COMPONENTS_ROOT=${AVATAR_ROOT}/nas_source/truenas-components}
+
 # The website for this avatar project.
 : ${AVATAR_PROJECT_SITE=http://www.freenas.org}
 
