@@ -36,10 +36,11 @@ ADDL_REPOS=""
 if is_truenas ; then
     GIT_DEEP=yes  # shallow checkouts cause too many problems right now.
     # Additional repos to checkout for build
-    ADDL_REPOS="$ADDL_REPOS ZFSD TRUENAS-FILES"
+    ADDL_REPOS="$ADDL_REPOS ZFSD TRUENAS-FILES TRUENAS-COMPONENTS"
 
     : ${GIT_ZFSD_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git}
     : ${GIT_TRUENAS_FILES_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/truenas-files.git}
+    : ${GIT_TRUENAS_COMPONENTS_REPO=git@gitserver:/git/repos/truenas-build/truenas.git}
     : ${GIT_PORTS_BRANCH=truenas-9.1-a}
     : ${GIT_PORTS_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/ports.git}
 
