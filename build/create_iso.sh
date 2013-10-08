@@ -72,6 +72,10 @@ main()
 
 
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
+	if is_truenas ; then
+		cp -p ${TRUENAS_COMPONENTS_ROOT}/build/files/install_sata_dom.sh \
+			${INSTALLUFSDIR}/etc
+	fi
 	cp -p ${AVATAR_ROOT}/build/files/rc ${INSTALLUFSDIR}/etc
 
 	cp "$AVATAR_CONF" ${INSTALLUFSDIR}/etc/
