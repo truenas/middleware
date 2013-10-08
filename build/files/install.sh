@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# vim: noexpandtab ts=8 sw=4 softtabstop=4
+
 # Setup a semi-sane environment
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/rescue
 export PATH
@@ -9,6 +11,23 @@ TERM=${TERM:-cons25}
 export TERM
 
 . /etc/avatar.conf
+
+is_truenas()
+{
+
+    test "$AVATAR_PROJECT" = "TrueNAS"
+    return $?
+}
+
+do_sata_dom()
+{
+
+    if ! is_truenas ; then
+	return 1
+    fi
+    install_sata_dom_prompt
+    return $?
+}
 
 get_product_path()
 {
@@ -179,7 +198,7 @@ disk_is_freenas()
     if [ -f /tmp/data_old/freenas-v1.db ]; then
         _rv=0
     fi
-    cp -pR /tmp/data_old /tmp/data_preserved
+    cp -pR /tmp/data_old/. /tmp/data_preserved
     umount /tmp/data_old
     if [ $_rv -eq 0 ]; then
 	mount /dev/${_disk}s1a /tmp/data_old
@@ -187,7 +206,7 @@ disk_is_freenas()
         # bug
         ls /tmp/data_old > /dev/null
 	if [ -f /tmp/data_old/conf/base/etc/hostid ]; then
-            cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
+	    cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
 	fi
         if [ -d /tmp/data_old/root/.ssh ]; then
             cp -pR /tmp/data_old/root/.ssh /tmp/
@@ -259,7 +278,7 @@ menu_install()
 
     # Debugging seatbelts
     if disk_is_mounted "${_disk}" ; then
-        dialog --msgbox "The destination drive is already in use!" 4 74
+        dialog --msgbox "The destination drive is already in use!" 6 74
         exit 1
     fi
 
@@ -315,7 +334,7 @@ menu_install()
     # Hack #2
     ls $(get_product_path) > /dev/null
     /rescue/pc-sysinstall -c ${_config_file}
-    if [ ${_do_upgrade} -eq 1 ]; then
+    if [ ${_do_upgrade} -ne 0 ]; then
         # Mount: /data
         mkdir -p /tmp/data
         mount /dev/${_disk}s4 /tmp/data
@@ -342,10 +361,38 @@ menu_install()
         if [ -d /tmp/fusionio ]; then
             cp -pR /tmp/fusionio /tmp/data/usr/local/
         fi
+
+        if is_truenas ; then
+            install_worker.sh -D /tmp/data -m / install
+        fi
+
         umount /tmp/data
         rmdir /tmp/data
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
+    fi
+
+    if is_truenas ; then
+        # Put a swap partition on newly created installation image
+        if [ -e /dev/${_disk}s3 ]; then
+            gpart delete -i 3 ${_disk}
+            gpart add -t freebsd ${_disk}
+            echo "/dev/${_disk}s3.eli		none			swap		sw		0	0" > /tmp/fstab.swap
+        fi
+
+        mkdir -p /tmp/data
+        mount /dev/${_disk}s4 /tmp/data
+        ls /tmp/data > /dev/null
+        mv /tmp/fstab.swap /tmp/data/
+        umount /tmp/data
+        rmdir /tmp/data
+
+        # Remove all existing swap partitions.  Note that we deal with ONLY partitons
+        # that is created by GUI, that is, with type of freebsd-swap and begin at
+        # sector 128.
+        #
+        # This is a hack and should be revisited when the installer gets rewritten.
+        gpart show -p | grep freebsd-swap | grep ' 128 ' | awk '{ print $3 }' | grep p1\$ | sed -e 's/^/gpart delete -i 1 /g' -e 's/p1$//g' | sh -x
     fi
 
     # End critical section.
@@ -467,4 +514,9 @@ main()
         esac
     done
 }
+
+if is_truenas ; then
+    . "$(dirname "$0")/install_sata_dom.sh"
+fi
+
 main
