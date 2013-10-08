@@ -26,6 +26,7 @@
 {% for p in plugins %}
       <tr>
            <td>
+               <img src="/plugins/{{ p.plugin_name }}/{{ p.id }}/treemenu-icon" width="16" heigth="16" /> &nbsp;
                {{ p.plugin_name|capfirst }}
            </td>
            <td>
