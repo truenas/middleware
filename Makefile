@@ -27,6 +27,9 @@ do-release:
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} build/build_release.sh
 
+cdrom:
+	${ENV_SETUP} sh -x build/create_iso.sh
+
 # Build truenas using all sources 
 truenas-all-direct:
 	${ENV_SETUP} TESTING_TRUENAS=1 NAS_PORTS_DIRECT=1 $(MAKE) all
