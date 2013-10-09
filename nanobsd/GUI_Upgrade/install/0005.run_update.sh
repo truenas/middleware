@@ -25,6 +25,28 @@
 # SUCH DAMAGE.
 #
 
+#
+# Run the nanobsd updater with the fixed partition image.
+#
+# Garrett Cooper, March 2012
+#
+# Run the old updater if we're not absolutely certain we're FreeNAS.
+
+if [ ! \( "$OLD_AVATAR_PROJECT" = "FreeNAS" -a \
+    "$NEW_AVATAR_PROJECT" = "FreeNAS" \) ] ; then
+
+    echo "Doing old upgrade" > /data/0005.run_update.sh.log
+    date >> /data/0005.run_update.sh.log
+
+    if [ "$VERBOSE" != "" -a "$VERBOSE" != "0" ] ; then
+        sh -x $SCRIPTDIR/bin/update $SCRIPTDIR/firmware.img
+    else
+        sh $SCRIPTDIR/bin/update $SCRIPTDIR/firmware.img
+    fi
+else
+    echo "Doing NEW upgrade" > /data/0005.run_update.sh.log
+    date >> /data/0005.run_update.sh.log
+
 . /etc/nanobsd.conf
 . /etc/rc.freenas
 
@@ -200,4 +222,6 @@ EOF
 else
 	warn "Can not determine root device"
 	exit 1
+fi
+
 fi
