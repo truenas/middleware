@@ -721,8 +721,8 @@ def _arc_efficiency(Kstat):
     sys.stdout.write("\tCACHE HITS BY CACHE LIST:\n")
     if 'cache_hits_by_cache_list' in arc:
         sys.stdout.write("\t  Anonymously Used:\t\t%s\t%s\n" % (
-            arc['cache_hits_by_cache_list']['per'],
-            arc['cache_hits_by_cache_list']['num'],
+            arc['cache_hits_by_cache_list']['anonymously_used']['per'],
+            arc['cache_hits_by_cache_list']['anonymously_used']['num'],
             )
         )
     sys.stdout.write("\t  Most Recently Used:\t\t%s\t%s\n" % (
