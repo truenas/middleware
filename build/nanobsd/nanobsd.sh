@@ -141,7 +141,8 @@ PPLEVEL=3
 # Set NANO_LABEL to non-blank to form the basis for using /dev/ufs/label
 # in preference to /dev/${NANO_DRIVE}
 # Root partition will be ${NANO_LABEL}s{1,2}
-# /cfg partition will be ${NANO_LABEL}s3
+# FreeNAS ${NANO_LABEL}s3 is 'cfg partition'.
+# TrueNAS ${NANO_LABEL}s3 is swap
 # /data partition will be ${NANO_LABEL}s4
 : ${NANO_LABEL=""}
 
