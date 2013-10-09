@@ -194,6 +194,26 @@ CR()
 	umount $NANO_WORLDDIR/dev
 }
 
+# Run a host tool.
+# for now it seems we really only need the geli(8) tool,
+# so this is pretty basic.
+HT()
+{
+    (
+    set -e
+    # XXX:  we only have /sbin in hosttools for geli for now.
+    if [ -e "/truenas-build/host-tools" ] ; then
+	export PATH="/truenas-build/host-tools/sbin:$PATH"
+	export LD_LIBRARY_PATH="/truenas-build/host-tools/lib:$LD_LIBRARY_PATH"
+	export GEOM_LIBRARY_PATH="/truenas-build/host-tools/lib/geom"
+    fi
+    /bin/sh -exc "$@"
+    )
+	
+
+
+}
+
 # install a package from a pre-built binary
 do_add_pkg ()
 {
