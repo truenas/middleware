@@ -503,6 +503,9 @@ add_gui()
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "ln -sf /etc/local_settings.py ${dstCR}/local_settings.py"
 	CR "chown -R www:www ${dstCR} data"
+	if is_truenas ; then
+		add_gui_encrypted "$gui" "$dst" "$dstCR"
+	fi
 	else
 		pprint 2 "GUI OMITTED from image"
 	fi
