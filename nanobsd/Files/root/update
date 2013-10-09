@@ -30,6 +30,7 @@
 #	ssh somewhere cat image.s1 | sh update
 #
 
+set -e
 
 . /etc/nanobsd.conf
 
