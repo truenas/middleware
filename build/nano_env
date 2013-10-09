@@ -120,14 +120,6 @@ NANO_MODULES="ctl cxgb cxgbe cxgbe/t4_firmware cxgbe/t5_firmware cyclic dtrace e
 # Feature sets to enable as part of the build.
 SW_FEATURES="DEBUG REPORTING"
 
-# The GEOM label to use.
-#NANO_LABEL="FreeNAS"
-
-# Version of the software to use. This should be 8.2-BETA1, 9.0-PRERELEASE,
-# etc.
-#VERSION="9.2.0-ALPHA"
-#export VERSION
-
 if [ -z "$NANO_LABEL" ] ; then
 	echo "build/nano_env: NANO_LABEL unset, should be 'FreeNAS'"
 	exit 1
@@ -137,6 +129,9 @@ if [ -z "$VERSION" ] ; then
 	echo "build/nano_env: VERSION unset, should be '9.2.0-ALPHA'"
 	exit 1
 fi
+
+NANO_LABEL_LOWER=`echo $NANO_LABEL | tr 'A-Z' 'a-z'`
+
 
 # FreeBSD release we are using for this release
 : ${FREEBSD_RELEASE_VERSION:="9.1-RELEASE"}
