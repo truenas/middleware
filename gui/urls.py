@@ -70,19 +70,16 @@ urlpatterns = patterns('',
     (r'^dojango/dojo-media/release/[^/]+/(?P<path>.*)$',
         public(serve),
         {'document_root': '/usr/local/www/dojo'}),
-    (r'^account/', include('freenasUI.account.urls')),
     (r'^admin/', include(site.urls)),
     url(r'^api/', include(v1_api.urls)),
-    (r'^jails/', include('freenasUI.jails.urls')),
     (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
-    (r'^network/', include('freenasUI.network.urls')),
-    (r'^plugins/', include('freenasUI.plugins.urls')),
-    (r'^reporting/', include('freenasUI.reporting.urls')),
-    (r'^services/', include('freenasUI.services.urls')),
-    (r'^sharing/', include('freenasUI.sharing.urls')),
-    (r'^storage/', include('freenasUI.storage.urls')),
-    (r'^support/', include('freenasUI.support.urls')),
-    (r'^system/', include('freenasUI.system.urls')),
 )
+
+for app in settings.APP_MODULES:
+    urlpatterns += patterns(
+        '',
+        url(r'^%s/' % app.rsplit('.')[-1], include('%s.urls' % app)),
+    )
+
 
 urlpatterns += staticfiles_urlpatterns()

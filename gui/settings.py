@@ -160,26 +160,36 @@ LOCALE_PATHS = (
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 
+DIR_BLACKLIST = [
+    'templates',
+    'fnstatic',
+    'middleware',
+    'contrib',
+    'common',
+    'locale',
+    'dojango',
+    'tools',
+    'api',
+    'freeadmin',
+]
+APP_MODULES = []
+
+for entry in os.listdir(HERE):
+    if entry in DIR_BLACKLIST:
+        continue
+    if os.path.isdir(os.path.join(HERE, entry)):
+        APP_MODULES.append('freenasUI.%s' % entry)
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'freenasUI.freeadmin',
     'south',
     'dojango',
-    'freenasUI.account',
     'freenasUI.api',
-    'freenasUI.system',
-    'freenasUI.network',
-    'freenasUI.storage',
-    'freenasUI.sharing',
-    'freenasUI.services',
-    'freenasUI.support',
-    'freenasUI.plugins',
-    'freenasUI.jails',
-)
-
+    'freenasUI.freeadmin',
+) + tuple(APP_MODULES)
 
 BLACKLIST_NAV = (
     'django.contrib.auth',
