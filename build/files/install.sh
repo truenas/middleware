@@ -198,6 +198,7 @@ disk_is_freenas()
     if [ -f /tmp/data_old/freenas-v1.db ]; then
         _rv=0
     fi
+    # XXX side effect, shouldn't be here!
     cp -pR /tmp/data_old/. /tmp/data_preserved
     umount /tmp/data_old
     if [ $_rv -eq 0 ]; then
@@ -236,10 +237,12 @@ menu_install()
     local _cdlist
     local _items
     local _disk
+    local _disk_old
     local _config_file
     local _desc
     local _list
     local _msg
+    local _satadom
     local _i
     local _do_upgrade
     local _menuheight
@@ -249,30 +252,41 @@ menu_install()
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
 
-    get_physical_disks_list
-    _disklist="${VAL}"
-
-    _list=""
-    _items=0
-    for _disk in ${_disklist}; do
-        get_media_description "${_disk}"
-        _desc="${VAL}"
-        _list="${_list} ${_disk} '${_desc}'"
-        _items=$((${_items} + 1))
-    done
-
     _tmpfile="/tmp/answer"
-    if [ ${_items} -ge 10 ]; then
-        _items=10
-        _menuheight=20
+    TMPFILE=$_tmpfile
+
+    if do_sata_dom
+    then
+	_satadom="YES"
     else
-        _menuheight=8
-        _menuheight=$((${_menuheight} + ${_items}))
-    fi
-    eval "dialog --title 'Choose destination media' \
-          --menu 'Select the drive where $AVATAR_PROJECT should be installed.' \
-          ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
-    [ $? -eq 0 ] || exit 1
+	_satadom=""
+	get_physical_disks_list
+	_disklist="${VAL}"
+    
+	_list=""
+	_items=0
+	for _disk in ${_disklist}; do
+	    get_media_description "${_disk}"
+	    _desc="${VAL}"
+	    _list="${_list} ${_disk} '${_desc}'"
+	    _items=$((${_items} + 1))
+	done
+    
+	_tmpfile="/tmp/answer"
+	if [ ${_items} -ge 10 ]; then
+	    _items=10
+	    _menuheight=20
+	else
+	    _menuheight=8
+	    _menuheight=$((${_menuheight} + ${_items}))
+	fi
+	eval "dialog --title 'Choose destination media' \
+	      --menu 'Select the drive where $AVATAR_PROJECT should be installed.' \
+	      ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
+	[ $? -eq 0 ] || exit 1
+    
+    fi # ! do_sata_dom
+
     _disk=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
 
@@ -289,12 +303,22 @@ menu_install()
             _do_upgrade=1
             _action="upgrade"
         fi
+    elif [ ${_satadom} -a -c /dev/ufs/TrueNASs4 ]; then
+	# Special hack for USB -> DOM upgrades
+	_disk_old=`glabel status | grep ' ufs/TrueNASs4 ' | awk '{ print $3 }' | sed -e 's,s4$,,g'`
+	if disk_is_freenas ${_disk_old} ; then
+	    if ask_upgrade ${_disk_old} ; then
+		_do_upgrade=2
+		_action="upgrade"
+	    fi
+	fi
     fi
     new_install_verify "$_action" ${_disk}
     _config_file="/tmp/pc-sysinstall.cfg"
 
     # Start critical section.
     trap "set +x; read -p \"The $AVATAR_PROJECT $_action on $_disk has failed. Press any key to continue.. \" junk" EXIT
+    set -ex
 
     #  _disk, _image, _config_file
     # we can now build a config file for pc-sysinstall
@@ -305,7 +329,7 @@ menu_install()
     if [ ${_do_upgrade} -eq 1 ]
     then
         /etc/rc.d/dmesg start
-        mkdir /tmp/data
+        mkdir -p /tmp/data
         mount /dev/${_disk}s1a /tmp/data
 	# XXX need to find out why
 	ls /tmp/data > /dev/null
@@ -317,6 +341,8 @@ menu_install()
 		    /etc/avatar.conf \
 		    /tmp/data/conf/base/etc/avatar.conf
         fi
+
+	# This needs to be rewritten.
         install_worker.sh -D /tmp/data -m / pre-install
         umount /tmp/data
         rmdir /tmp/data
@@ -339,9 +365,17 @@ menu_install()
         mkdir -p /tmp/data
         mount /dev/${_disk}s4 /tmp/data
         ls /tmp/data > /dev/null
+
         cp -pR /tmp/data_preserved/ /tmp/data
         : > /tmp/$NEED_UPDATE_SENTINEL
         : > /tmp/$CD_UPGRADE_SENTINEL
+
+
+	if [ -c /dev/${_disk_old} ]; then
+		gpart backup ${_disk_old} > /tmp/data/${_disk_old}.part
+		gpart destroy -F ${_disk_old}
+	fi
+
         umount /tmp/data
         # Mount: /
         mount /dev/${_disk}s1a /tmp/data
@@ -352,6 +386,8 @@ menu_install()
         if [ -d /tmp/.ssh ]; then
             cp -pR /tmp/.ssh /tmp/data/root/
         fi
+
+	# TODO: this needs to be revisited.
         if [ -d /tmp/modules ]; then
             for i in `ls /tmp/modules`
             do
