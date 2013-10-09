@@ -3088,6 +3088,7 @@ class notifier:
             # These should probably be options that are configurable from the GUI
             self.__system("zfs set aclmode=passthrough %s" % name)
             self.__system("zfs set aclinherit=passthrough %s" % name)
+            self.restart("collectd")
             return True
         else:
             log.error("Importing %s [%s] failed with: %s",
