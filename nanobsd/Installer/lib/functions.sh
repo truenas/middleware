@@ -66,55 +66,62 @@ compare_project()
 	return 1
 }
 
-# Phases in a release cycle sorted in chronological order.
+# Extract just the version fields from the version.
+# We convert string "9.0.7-RELEASE-DEBUG-p4-r8863" -> "9.0.7-4-8863"
+# so that we can sort on it.
 #
-# See rewrite_release_phases for more details.
-readonly RELEASE_PHASES="
-STABLE
-ALPHA
-BETA
-RC
-PRERELEASE
-RELEASE
-"
-
-# In order for sort(1) to do the right thing with release versions below, we
-# need to remap the "release phases" (ALPHA, BETA, RC, PRERELEASE, RELEASE) to
-# their respective numeric stages in the release cycle so the numeric sort will
-# succeed.
+# Note there are many versions we expect:
 #
-# This function also sanity checks that the version string matches the expected
-# release phase format.
+# 9.0.7-RELEASE-DEBUG-p4-r8863
+# 9.0.7-RELEASE-p4-r8863
+# 9.0.7-RELEASE-r8863
+# 9.0.7-RELEASE-r8863M
+# 9.0.7-RELEASE-DEBUG-p4-r8863/fgfg34
+# etc
 #
-# Parameters:
-# 1 - version string to rewrite
-rewrite_release_phases()
+# we will normalize it to:
+#  major-patchlevel
+#
+# note, if there is no patchlevel, example: 9.0.7-RELEASE-r8863, we emit
+# a normalized string with a zero in it: 9.0.7-0-8863.
+get_ver_fields()
 {
-	local i
-	local version_string
-	local version_string_old
+    local _VER
 
-	version_string=$1
-	version_string_old=$1
+    read _VER
 
-	i=0
-	set -- $RELEASE_PHASES
-	while [ $# -gt 0 ]
-	do
-		version_string=$(echo "$version_string" | sed -e "s/$1/$i./")
-		shift
-		: $(( i += 1 ))
-	done
+    # check for -p[0-9] (patchlevel)
+    echo "$_VER" | grep -Eq -- '-p[0-9]*-'
+    # if there is no substring of -p0- then insert one.
+    if [ $? -eq 1 ] ; then
+        # emit all the fields except insert '-p0-' before the last one
+        _VER=`echo "$_VER" | awk 'BEGIN{FS="-";}{for(i = 1; i < NF;i++){printf("%s-",$i)};printf("p0-%s",$NF)}'`
+        #echo "VER: $_VER " >/dev/stderr
+    fi
 
-	# Sanity check
-	if [ $version_string = $version_string_old ]
-	then
-		error "version string was unexpected ($version_string).
+    # Now do some regex to normalize.
+    #  The first sed invocation does the following actions
+    #   1. remove -DEBUG- if it exists.
+    #   2. replace the patchlevel -pN- with just -N-
+    #  The second sed invocation normalizes the svnrev and possible
+    #   git hash to just the svnrev removing any "M" noting that the
+    #   the working copy has been modified.
+    #  Note: we discard the svnrev, this is just kept for now in case
+    #  we need it later
+    # Finally select the fields we are after using cut(1).
+    echo "$_VER" | sed -e 's,-DEBUG,,' \
+        -e 's,-p\([0-9]\)*-,-\1-,g' \
+        | sed -E -e 's,-r([0-9]*)M?(/[a-z0-9]*)?,-\1,' \
+        | cut -f 1,3 -d-
+}
 
-It must contain one of the following strings:
-$RELEASE_PHASES"
-	fi
-	echo $version_string
+# use a stable sort to maintain proper ordering.
+# This function is used to sort the normalized output of two version
+# strings
+sort_ver_fields()
+{
+    sort -n -s -k $1 -f '-'
+
 }
 
 # Compare two arbitrary versions to return whether or not one is newer than
@@ -124,47 +131,60 @@ $RELEASE_PHASES"
 # 1 - version1
 # 2 - version2
 #
+# The expected format is:
+#    9.0.7-RELEASE-p4-r8865/abfg34
+#    9.0.7-RELEASE-r8865/abfg34
+#
+# Note: we only compare the major version and patchlevel, so the significant
+# parts are "9.0.7" and "p4"
+#
+# We used to compare the svnrevision but do not anymore because it is not
+# useful in TrueNAS and can hurt us doing development and hot fixes for
+# clients.
+
+#
 # Returns:
 # 0 - version1 == version2
 # 1 - version1 < version2
 # 2 - version1 > version2
 compare_version()
 {
-	local version1 version2 unsorted sorted
-	# X.X.X-PHASE
-	# FIXME: patchsets (-p1, -p2, etc)
-	version1=$1
-	version2=$2
+    local version1=`echo $1 | get_ver_fields`
+    local version2=`echo $2 | get_ver_fields`
 
-	if [ -z "$version2" ]
-	then
-		error "malformed upgrade version specified (is NIL)"
-	fi
+    #echo "v1: $version1"
+    #echo "v2: $version2"
 
-	# Consider empty version as smaller.
-	if [ -z "$version1" ]
-	then
-		return 1
-	fi
+     if [ -z "$version2" ]
+     then
+         error "malformed upgrade version specified (is NIL)"
+     fi
 
-	if [ "$version1" = "$version2" ]
-	then
-		return 0
-	fi
+     # Consider empty version as smaller.
+     if [ -z "$version1" ]
+     then
+         return 1
+     fi
 
-	version1=$(rewrite_release_phases $version1)
-	version2=$(rewrite_release_phases $version2)
+     if [ "$version1" = "$version2" ]
+     then
+         return 0
+     fi
 
-	unsorted="$version1 $version2"
-	# Magic sort fu required for 9.0.0 vs 10.0.0, etc.
-	sorted=$(echo -n $unsorted | tr ' ' '\n' | sort -k 1 -f '-' -n | tr '\n' ' ')
+     unsorted="$version1 $version2"
+     # Sort on the keys in this order:
+     #  patchlevel, release number
+     sorted=$(echo $unsorted | tr ' ' '\n' | sort_ver_fields 2 | sort_ver_fields 1 | tr '\n' ' ')
 
-	# NOTE: sort adds on a '\n' at EOL.
-	if [ "$sorted" = "$unsorted " ]
-	then
-		return 1
-	fi
-	return 2
+     #echo "unsorted: $unsorted"
+     #echo "sorted: $sorted"
+
+     # NOTE: sort adds on a '\n' at EOL.
+     if [ "$sorted" = "$unsorted " ]
+     then
+         return 1
+     fi
+     return 2
 }
 
 # Source an avatar configuration file
