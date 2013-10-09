@@ -100,6 +100,11 @@ cust_install_machine_files()
 	echo "cd ${NANO_CFG_BASE}/Files"
 	cd ${NANO_CFG_BASE}/Files
 	find . -print | grep -Ev '/(CVS|\.git|\.svn)' | cpio -R root:wheel -dumpv ${NANO_WORLDDIR}
+
+	if is_truenas ; then
+		cd ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Files
+		find . -print | grep -Ev '/(CVS|\.git|\.svn)' | cpio -R root:wheel -dumpv ${NANO_WORLDDIR}
+	fi
 }
 customize_cmd cust_install_files
 customize_cmd cust_install_machine_files 
