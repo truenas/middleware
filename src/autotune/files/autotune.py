@@ -133,13 +133,6 @@ def guess_kern_ipc_maxsockbuf():
 
 # kern.ipc.maxsockets
 
-def guess_kern_ipc_nmbjumbo9():
-    """9k jumbo frame mbuf IPC cluster pool count
-    """
-    # XXX: could be dynamic depending on the number and type of NICs.
-    return 25600
-
-
 # kern.ipc.somaxconn
 
 
