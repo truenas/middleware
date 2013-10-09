@@ -7,6 +7,12 @@
 # Environment variables that drive the nanobsd build and a few of the
 # other build / image generation scripts.
 
+# Are we doing a TrueNAS build?
+is_truenas() {
+    test "$NANO_LABEL" = "TrueNAS" -o ! -z "$TESTING_TRUENAS"
+    return $?
+}
+
 # The FreeNAS source and build tree is rooted here.
 : ${AVATAR_ROOT=$(pwd)}
 
