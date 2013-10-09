@@ -56,8 +56,8 @@ sysctl_n()
 # 1 - project1 != project2
 compare_project()
 {
-	project1=$1
-	project2=$2
+	local project1=$1
+	local project2=$2
 
 	if [ -z "$project1" -o "$project1" = "$project2" ]
 	then
