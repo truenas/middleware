@@ -2,7 +2,7 @@
 # Boot loader file for $NANO_LABEL.  This relies on a hacked beastie.4th.
 #
 autoboot_delay="2"
-#loader_logo="freenas"
+loader_logo="%NANO_LABEL_LOWER%"
 
 vfs.root.mountfrom="cd9660:iso9660/%CDROM_LABEL%"
 
