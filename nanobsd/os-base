@@ -44,7 +44,7 @@ done
 
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 
-# /var -> ~150MB (look through rc.initdiskless for the formula of how this
+# /var -> ~300MB (look through rc.initdiskless for the formula of how this
 # number is calculated out).
 # This is needed for samba as it drops a lot of files in /var/db/samba for
 # locking purposes when transferring large collections of data (~100MB for
@@ -53,9 +53,14 @@ NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 # SIGABRTing and crashing, and this causes other applications to get unhappy
 # (vi and friends ;(..).
 #
-# Set to a lower default for lower footprints with home usecases in FreeNAS.
-NANO_RAM_TMPVARSIZE=327680
-
+# Do NOT move this over to FreeNAS because of the lower memory constraints in
+# the project, and because this limit is in effect at boot. This is for better
+# built out systems. A lower default will be provided in FreeNAS instead.
+if is_truenas ; then
+	NANO_RAM_TMPVARSIZE=655360
+else
+	NANO_RAM_TMPVARSIZE=327680
+fi
 
 NANO_IMAGES=2
 # Remove .orig and .rej too
@@ -107,6 +112,9 @@ WITHOUT_NDIS=true
 WITHOUT_NLS=true
 WITHOUT_NS_CACHING=true
 WITHOUT_OBJC=true
+if is_truenas ; then
+	WITH_OFED=true
+fi
 WITHOUT_PORTSNAP=true
 WITHOUT_PPP=true
 WITHOUT_PROFILE=true
@@ -121,6 +129,10 @@ WITHOUT_SYSINSTALL=true
 #WITHOUT_TELNET=true
 WITHOUT_WIRELESS=true
 WITHOUT_WPA_SUPPLICANT_EAPOL=true
+if is_truenas ; then
+	BOOT_COMCONSOLE_PORT=0x2f8
+	BOOT_COMCONSOLE_SPEED=115200
+fi
 PYTHON_DEFAULT_VERSION=python2.7
 
 NOPORTDOCS=true
@@ -137,14 +149,14 @@ WITH_BDB_VER=46
 ${DEBUG_INSTALL}
 "
 # The following would help...
+# WITHOUT_TOOLCHAIN=true		can't build ports
 # WITHOUT_INSTALLLIB=true		libgcc.a
 #
 # from the build
 # WITHOUT_INFO=true			makeinfo
 # WITHOUT_RCS=true
 PKG_ONLY_MAKE_CONF="
-WITHOUT_TOOLCHAIN=true
-WITHOUT_BINUTILS=true
+
 WITHOUT_CLANG=true
 WITHOUT_CLANG_IS_CC=true
 WITHOUT_GCC=true
@@ -154,16 +166,18 @@ WITHOUT_RCS=true
 WITHOUT_SHAREDOCS=true
 "
 
+if ! is_truenas ; then
+	PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF}
+WITHOUT_TOOLCHAIN=true
+WITHOUT_BINUTILS=true
+"
+fi
+
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common
 
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
-
-if is_truenas ; then
-	add_port_with_repo "${NAS_PORTS}" misc/truenas-files LOCALBASE=/
-	add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
-fi
 
 add_port textproc/libxml2
 add_port devel/libffi
@@ -172,6 +186,9 @@ add_port www/aria2 OPTIONS_FILE_UNSET+=SQLITE
 add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
+if is_truenas ; then
+	add_port lang/perl5.14
+fi
 add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
 add_port devel/pkgconf
@@ -181,12 +198,17 @@ add_port dns/inadyn-mt
 add_port devel/pcre
 add_port editors/nano
 add_port ftp/proftpd
+if is_truenas ; then
+	add_port misc/cpuid
+fi
 add_port net-mgmt/bsnmp-ucd
 add_port net-mgmt/bsnmptools
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
 add_port net/istgt
-add_port net/vblade
+if ! is_truenas ; then
+	add_port net/vblade
+fi
 add_port security/libgpg-error
 add_port security/libgcrypt
 add_port databases/db46
@@ -223,10 +245,14 @@ add_port sysutils/smartmontools
 add_port devel/glib20
 add_port net/libdnet
 add_port emulators/open-vm-tools-nox11 WITHOUT_ICU=y
+if is_truenas ; then
+	add_port emulators/qemu WITHOUT_ADD_AUDIO=y WITHOUT_ALL_TARGETS=y WITHOUT_CDROM_DMA=y WITHOUT_CURL=y WITHOUT_GNS3=y WITHOUT_GNUTLS=y WITHOUT_KQEMU=y WITHOUT_BPF=y WITHOUT_RTL8139_TIMER=y WITHOUT_SAMBA=y WITHOUT_SDL=y
+fi
 add_port databases/sqlite3
 add_port databases/py-sqlite3
 add_port databases/py-bsddb3
 add_port devel/py-distribute
+add_port devel/py-sysctl
 add_port www/py-flup
 add_port www/py-django OPTIONS_FILE_SET+=FASTCGI
 add_port www/py-dojango
@@ -246,10 +272,18 @@ add_port textproc/expat2
 add_port devel/gamin
 add_port devel/gio-fam-backend
 add_port devel/m4
+if is_truenas ; then
+	add_port devel/bison
+	add_port devel/libffi
+fi
 add_port misc/gnomehier
 add_port www/py-httplib2
 add_port net/py-oauth2
 add_port sysutils/jailme
+if is_truenas ; then
+	add_port lang/perl5.14 # needed by debootstrap
+	add_port sysutils/debootstrap
+fi
 
 
 if [ "${REPORTING}" = 1 ]; then
@@ -291,7 +325,9 @@ add_port emulators/mtools OPTIONS_FILE_UNSET+=X11
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
 add_port sysutils/megacli
-add_port sysutils/areca-cli
+if ! is_truenas ; then
+	add_port sysutils/areca-cli
+fi
 add_port net/py-ldap2 OPTIONS_FILE_SET+=SASL
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
@@ -306,12 +342,22 @@ add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port devel/libevent
-add_port devel/libevent2
+if ! is_truenas ; then
+	add_port devel/libevent2
+fi
 add_port sysutils/tmux
-add_port devel/py-dbus
-add_port net/netatalk3 OPTIONS_FILE_SET+=PAM \
-	OPTIONS_FILE_SET+=SENDFILE \
-	OPTIONS_FILE_SET+=LDAP
+if is_truenas ; then
+	add_port net/netatalk OPTIONS_FILE_SET+=PAM \
+		OPTIONS_FILE_SET+=ZEROCONF \
+		OPTIONS_FILE_SET+=LDAP \
+		OPTIONS_FILE_UNSET+=APPLETALK
+else
+	add_port devel/py-dbus
+	add_port net/netatalk3 OPTIONS_FILE_SET+=PAM \
+		OPTIONS_FILE_SET+=SENDFILE \
+		OPTIONS_FILE_SET+=LDAP
+fi
+
 add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
@@ -331,22 +377,18 @@ add_port devel/py-daemon
 add_port devel/py-polib
 add_port devel/py-ujson
 add_port devel/py-simplejson
-add_port sysutils/bsdstats
+if ! is_truenas ; then
+	add_port sysutils/bsdstats
+fi
 add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
+if ! is_truenas ; then
+	add_port sysutils/sg3_utils
+fi
 add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
-add_port devel/py-sysctl
-
-# We use git to pull in our sources
-add_port devel/git OPTIONS_FILE_UNSET+=SVN \
-		OPTIONS_FILE_UNSET+=CVS \
-		OPTIONS_FILE_UNSET+=P4 \
-		OPTIONS_FILE_UNSET+=PERL \
-		OPTIONS_FILE_UNSET+=CONTRIB \
-		OPTIONS_FILE_UNSET+=NLS
 
 if [ "${DEBUG}" = 1 ]; then
 
@@ -355,6 +397,12 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
 	add_port devel/ipython OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=ZMQ
+	add_port devel/git OPTIONS_FILE_UNSET+=SVN \
+			OPTIONS_FILE_UNSET+=CVS \
+			OPTIONS_FILE_UNSET+=P4 \
+			OPTIONS_FILE_UNSET+=PERL \
+			OPTIONS_FILE_UNSET+=CONTRIB \
+			OPTIONS_FILE_UNSET+=NLS
 	add_port devel/ctags
 fi
 
