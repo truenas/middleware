@@ -113,15 +113,40 @@ fi
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
 : ${REVISION=$(echo ${svn}${git})}
 
-NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
+if is_truenas ; then
+	NANO_KERNEL="$TRUENAS_COMPONENTS_ROOT/nanobsd/TRUENAS.$NANO_ARCH"
+else
+	NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
+fi
 
 # Local directories to install via buildworld and installworld respectively;
 # see LOCAL_DIRS in Makefile.inc1, e.g. tools/regression/netinet6/ip6_sockets .
-: ${NANO_LOCAL_DIRS=""}
+if is_truenas ; then
+	: ${NANO_LOCAL_DIRS=share/examples/ses}
+else
+	: ${NANO_LOCAL_DIRS=""}
+fi
 
-# Modules to build with the kernel.
-NANO_MODULES="ctl cxgb cxgbe cxgbe/t4_firmware cxgbe/t5_firmware cyclic dtrace ext2fs geom ipmi iscsi nfsclient krpc nfs_common nfslock tmpfs fdescfs lindev linprocfs linsysfs linux pf pflog smbfs libiconv libmchain syscons udf zfs opensolaris usb/xhci"
+add_nano_modules()
+{
 
+	NANO_MODULES="${NANO_MODULES} $*"
+}
+
+add_nano_modules cxgb cxgbe cyclic
+add_nano_modules dtrace ext2fs fdescfs geom ipmi krpc
+add_nano_modules libiconv libmchain lindev linprocfs linsysfs linux
+add_nano_modules nfs_common nfsclient nfslock
+add_nano_modules opensolaris
+add_nano_modules pf pflog smbfs tmpfs
+add_nano_modules udf usb/xhci zfs
+
+if is_truenas ; then
+	add_nano_modules hwpmc ipdivert ipfw ispfw linprocfs syscons/blank
+else
+	add_nano_modules ctl cxgbe/t4_firmware cxgbe/t5_firmware
+	add_nano_modules iscsi syscons
+fi
 
 # Feature sets to enable as part of the build.
 SW_FEATURES="DEBUG REPORTING"
