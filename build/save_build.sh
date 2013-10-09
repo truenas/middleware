@@ -2,19 +2,25 @@
 
 # 
 # Script to capture the build
-#   This will save a copy of your built FreeNAS image
+#   This will save a copy of your built image
 #   to SAVED_BUILD_ENV_ROOT  (XXX: move to nano_env?)
 #
 # We do this so developers can analyze crashdumps against
 # the shipped image.
 #
 
-: ${SAVED_BUILD_ENV_ROOT="/freenas/BSD/releng/FreeNAS/build_env/"}
-
 myname=`basename "$0"`
 mydir=`dirname "$0"`
 
 . $mydir/nano_env
+
+if [ -z "$NANO_LABEL" ] ; then
+    echo "NANO_LABEL unset, please run this from the top level via:"
+    echo "  make save-build-env"
+    exit 1
+fi
+
+: ${SAVED_BUILD_ENV_ROOT="/freenas/BSD/releng/${NANO_LABEL}/build_env/"}
 
 : ${SAVED_VERSION_NAME=${VERSION}}
 
