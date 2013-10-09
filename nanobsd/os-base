@@ -487,7 +487,11 @@ customize_cmd add_pbi_manager
 add_gui()
 {
 	local gui dst dstCR
-	gui=${AVATAR_ROOT}/gui
+	if is_truenas ; then
+	    gui=${TRUENAS_COMPONENTS_ROOT}/gui
+	else
+	    gui=${AVATAR_ROOT}/gui
+	fi
 	dstCR=/usr/local/www/freenasUI
 	dst=${NANO_WORLDDIR}${dstCR}
 	if [ -d ${gui} ]; then
