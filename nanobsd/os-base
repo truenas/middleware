@@ -37,10 +37,23 @@
 # Helpful functions.
 . "$AVATAR_ROOT/build/functions.sh"
 
+if is_truenas ; then
+	. ${TRUENAS_COMPONENTS_ROOT}/nanobsd/os-base.truenas
+fi
+
 # DEBUG=1, etc.
 for feature in $SW_FEATURES; do
 	eval "$(echo "$feature")=1"
 done
+
+customize_cmd_truenas()
+{
+	if is_truenas ; then
+		customize_cmd $*
+	else
+		echo "Skipping TrueNAS specific command $*"
+	fi
+}
 
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 
@@ -507,11 +520,15 @@ add_autotune()
 }
 customize_cmd add_autotune
 
+customize_cmd_truenas add_licensor
+
 arch_specific_ko()
 {
 	cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${FREENAS_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
 }
-customize_cmd arch_specific_ko
+if ! is_truenas ; then
+	customize_cmd arch_specific_ko
+fi
 
 add_pc_extractoverlay()
 {
@@ -670,6 +687,8 @@ add_data_to_fstab ( )
 }
 customize_cmd add_data_to_fstab
 
+customize_cmd_truenas afpd_conf_symlink
+
 select_httpd ( )
 {
 	echo 'nginx_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
@@ -722,6 +741,10 @@ unmute_console_logging()
 			"${NANO_WORLDDIR}/etc/syslog.conf"
 }
 customize_cmd unmute_console_logging
+
+else
+
+customize_cmd_truenas remove_perl
 
 fi
 
