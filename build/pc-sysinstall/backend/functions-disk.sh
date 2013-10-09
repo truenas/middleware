@@ -286,7 +286,7 @@ stop_all_zfs()
 # Function which stops all gmirrors before doing any disk manipulation
 stop_all_gmirror()
 {
-  if [ ! -x /sbin/gmirror ]; then
+  if [ ! -e /dev/mirror ]; then
     return;
   fi
   if [ ! -d /dev/mirror ]; then
