@@ -27,10 +27,6 @@ do-release:
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} build/build_release.sh
 
-# Save the build environment
-save-build-env:
-	${ENV_SETUP} build/save_build.sh
-
 cdrom:
 	${ENV_SETUP} sh -x build/create_iso.sh
 
