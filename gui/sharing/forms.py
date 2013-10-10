@@ -78,6 +78,7 @@ class CIFS_ShareForm(ModelForm):
     def done(self, request, events):
         if not services.objects.get(srv_service='cifs').srv_enable:
             events.append('ask_service("cifs")')
+        super(CIFS_ShareForm, self).done(request, events)
 
 
 class AFP_ShareForm(ModelForm):
@@ -168,6 +169,7 @@ class AFP_ShareForm(ModelForm):
     def done(self, request, events):
         if not services.objects.get(srv_service='afp').srv_enable:
             events.append('ask_service("afp")')
+        super(AFP_ShareForm, self).done(request, events)
 
 AFP_ShareForm.base_fields.keyOrder.remove('afp_sharepw2')
 AFP_ShareForm.base_fields.keyOrder.insert(4, 'afp_sharepw2')
@@ -348,6 +350,7 @@ class NFS_ShareForm(ModelForm):
         notifier().reload("nfs")
         if not services.objects.get(srv_service='nfs').srv_enable:
             events.append('ask_service("nfs")')
+        super(NFS_ShareForm, self).done(request, events)
 
 
 class NFS_SharePathForm(ModelForm):
