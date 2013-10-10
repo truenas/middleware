@@ -24,10 +24,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
 from django.conf.urls import patterns, url
+
+from freenasUI.freeadmin.apppool import appPool
+from .hook import ReportingHook
+appPool.register(ReportingHook)
 
 urlpatterns = patterns('freenasUI.reporting.views',
     url(r'^$', 'index', name="reporting_index"),
     url(r'^generate/$', 'generate', name="reporting_generate"),
-    )
+)
