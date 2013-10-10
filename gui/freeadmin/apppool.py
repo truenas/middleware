@@ -30,5 +30,13 @@ class AppPool(object):
     def get_top_menu(self, request):
         return self._get_array("top_menu", request)
 
+    def hook_form_done(self, fname, request, events):
+        rvs = []
+        for i in self:
+            func = getattr(i, 'hook_form_done_%s' % fname, None)
+            if func and callable(func):
+                rvs.append((i.name, func(request, events)))
+        return rvs
+
 
 appPool = AppPool()

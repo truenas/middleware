@@ -27,6 +27,8 @@
 from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
 
+from freenasUI.freeadmin.apppool import appPool
+
 
 def mchoicefield(form, field, default):
     """
@@ -98,7 +100,8 @@ class ModelForm(AdvMixin, MF):
         return valid
 
     def done(self, request, events):
-        pass
+        fname = str(type(self).__name__)
+        appPool.hook_form_done(fname, request, events)
 
 
 class Form(AdvMixin, F):
