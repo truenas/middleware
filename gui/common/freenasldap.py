@@ -2060,7 +2060,7 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
             log.debug("FreeNAS_ActiveDirectory_Group.__get_group: AD group not in cache")
             ad_group = self.get_group(group)
 
-        if not self.trusted and not self.unix:
+        if self.default or self.unix:
             g = ad_group[1]['sAMAccountName'][0] if ad_group else group
         else:
             g = "%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR,
