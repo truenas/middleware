@@ -94,7 +94,7 @@ set -e
 mkdir $dir
 
 if ! $boot_time ; then
-	$mydir/freenas-debug -A > $dir/nas-debug.log
+	$mydir/freenas-debug -A >/dev/null
 	tar -cHf - -C /var log | tar -C $dir -xf -
 fi
 
