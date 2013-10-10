@@ -32,7 +32,7 @@
 #
 # Run the old updater if we're not absolutely certain we're FreeNAS.
 
-if [ ! \( "$OLD_AVATAR_PROJECT" = "FreeNAS" -a \
+if true || [ ! \( "$OLD_AVATAR_PROJECT" = "FreeNAS" -a \
     "$NEW_AVATAR_PROJECT" = "FreeNAS" \) ] ; then
 
     echo "Doing old upgrade" > /data/0005.run_update.sh.log
