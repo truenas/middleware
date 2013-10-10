@@ -29,10 +29,10 @@
 </script>
 
 <script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/dojo.js?cache={{ cache_hash }}">
-{% for js in js_hook %}
-<script type="text/javascript" src="{{ STATIC_URL }}{{ js }}?cache={{ cache_hash }}">
-{% endfor %}
 </script>
+{% for js in js_hook %}
+<script type="text/javascript" src="{{ STATIC_URL }}{{ js }}?cache={{ cache_hash }}"></script>
+{% endfor %}
     <link rel="stylesheet" href="{{ DOJANGO.DIJIT_URL }}/themes/claro/document.css?cache={{ cache_hash }}" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/FileInput.css?cache={{ cache_hash }}" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/CheckedMultiSelect.css?cache={{ cache_hash }}" />
