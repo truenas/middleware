@@ -16,6 +16,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 
 from freenasUI.common.system import get_sw_name, get_sw_version
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
 
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
@@ -213,6 +214,7 @@ class FreeAdminSite(object):
             'sw_name': get_sw_name(),
             'sw_version': sw_version,
             'cache_hash': hashlib.md5(sw_version).hexdigest(),
+            'js_hook': appPool.get_base_js(request),
         })
 
     @never_cache
