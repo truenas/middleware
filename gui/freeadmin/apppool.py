@@ -27,5 +27,8 @@ class AppPool(object):
     def get_base_js(self, request):
         return self._get_array("base_js", request)
 
+    def get_top_menu(self, request):
+        return self._get_array("top_menu", request)
+
 
 appPool = AppPool()

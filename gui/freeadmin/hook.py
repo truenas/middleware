@@ -10,3 +10,6 @@ class AppHook(object):
 
     def base_js(self, request):
         return []
+
+    def top_menu(self, request):
+        return []
