@@ -23,61 +23,42 @@ define([
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-              if(c[i].id == 'systemTab_Reporting'){
+              if(c[i].id == 'systemTab_Settings'){
                 p.selectChild(c[i]);
                 opened = c[i];
-              } else if(c[i].id == 'systemTab_Settings'){
-                p.selectChild(c[i]);
-                opened2 = c[i];
               } else if(c[i].id == 'systemTab_SysInfo'){
                 p.selectChild(c[i]);
-                opened3 = c[i];
+                opened2 = c[i];
               }
             }
-            if(gname == 'system.Reporting') {
+            if(gname == 'system.Settings') {
               p.selectChild(opened);
               opened2 = true;
-              opened3 = true;
-            } else if(gname == 'system.Settings') {
+            } else if(gname == 'system.SysInfo') {
               p.selectChild(opened2);
               opened = true;
-              opened3 = true;
-            } else if(gname == 'system.SysInfo') {
-              p.selectChild(opened3);
-              opened = true;
-              opened2 = true;
             }
+
             if(opened == false) {
                 var pane = new ContentPane({
-                    id: "systemTab_Reporting",
-                    title: gettext('Reporting'),
-                    refreshOnShow: true,
+                    id: 'systemTab_Settings',
+                    title: gettext('Settings'),
                     closable: true,
-                    href: this.urlReporting,
+                    href: this.urlSettings,
                 });
                 p.addChild(pane);
             }
 
             if(opened2 == false) {
                 var pane2 = new ContentPane({
-                    id: 'systemTab_Settings',
-                    title: gettext('Settings'),
-                    closable: true,
-                    href: this.urlSettings,
-                });
-                p.addChild(pane2);
-            }
-
-            if(opened3 == false) {
-                var pane3 = new ContentPane({
                     id: 'systemTab_SysInfo',
                     title: gettext('System Information'),
                     refreshOnShow: true,
                     closable: true,
                     href: this.urlInfo,
                 });
-                p.addChild(pane3);
-                p.selectChild(pane3);
+                p.addChild(pane2);
+                p.selectChild(pane2);
             }
 
         },

@@ -6,15 +6,6 @@ NAME = _('System')
 ICON = u'SystemIcon'
 
 
-class Reporting(TreeNode):
-
-    gname = 'Reporting'
-    name = _(u'Reporting')
-    view = 'system_reporting'
-    icon = u"ReportingIcon"
-    type = 'opensystem'
-
-
 class Info(TreeNode):
 
     gname = 'SysInfo'
