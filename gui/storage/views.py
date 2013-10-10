@@ -282,7 +282,6 @@ def dataset_create(request, fs):
             recordsize = cleaned_data.get('dataset_recordsize')
             if recordsize:
                 props['recordsize'] = recordsize
-            log.error("props %r", props)
             errno, errmsg = notifier().create_zfs_dataset(
                 path=str(dataset_name),
                 props=props)
