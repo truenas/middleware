@@ -11,7 +11,7 @@
             <button id="btn_{% cls_name form %}_Debug" data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Save Debug" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-                    addObject('{% trans "Save Debug"|force_escape|force_escape %}', '{% url "system_debug" %}');
+                    window.location='{% url "system_debug" %}';
                 </script>
             </button>
             <button id="btn_{% cls_name form %}_FwUpdate" data-dojo-type="dijit.form.Button" type="button">

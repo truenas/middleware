@@ -60,7 +60,6 @@ from freenasUI.system import forms, models
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
-DEBUG_TEMP = '/tmp/debug.txt'
 PGFILE = '/tmp/.extract_progress'
 DDFILE = '/tmp/.upgrade_dd'
 RE_DD = re.compile(r"^(\d+) bytes", re.M | re.S)
@@ -528,36 +527,31 @@ def reload_httpd(request):
 
 
 def debug(request):
-    """Save freenas-debug output to DEBUG_TEMP"""
-    if request.method == "POST":
-        form = forms.DebugForm(request.POST)
-        if form.is_valid():
-            opts = ["/usr/local/bin/freenas-debug"]
-            opts += form.get_options()
-            p1 = pipeopen(string.join(opts, ' '), allowfork=True)
-            debug = p1.communicate()[0]
-            with open(DEBUG_TEMP, 'w') as f:
-                f.write(debug)
-            return render(request, 'system/debug.html')
-    else:
-        form = forms.DebugForm()
-
-    return render(request, 'system/debug_form.html', {
-        'form': form,
-    })
-
-
-def debug_save(request):
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
-    wrapper = FileWrapper(file(DEBUG_TEMP))
+    dir = "/var/tmp/ixdiagnose"
+    dump = "%s/ixdiagnose.tgz" % dir
 
+    opts = ["/usr/local/bin/ixdiagnose", "-d", dir, "-s", "-F"]
+    p1 = pipeopen(string.join(opts, ' '), allowfork=True)
+    debug = p1.communicate()[0]
+    p1.wait()
+
+    with open(dump, "r") as f:
+        freenas_dump = f.read().strip()
+        f.close()  
+
+    wrapper = FileWrapper(file(dump))
     response = HttpResponse(wrapper, content_type='application/octet-stream')
-    response['Content-Length'] = os.path.getsize(DEBUG_TEMP)
+    response['Content-Length'] = os.path.getsize(dump)
     response['Content-Disposition'] = \
-        'attachment; filename=debug-%s-%s.txt' % (
+        'attachment; filename=debug-%s-%s.tgz' % (
             hostname.encode('utf-8'),
-            time.strftime('%Y%m%d%H%M%S'),
-        )
+            time.strftime('%Y%m%d%H%M%S'))
+
+    opts = ["/bin/rm", "-r", "-f", dir]
+    p1 = pipeopen(string.join(opts, ' '), allowfork=True)
+    p1.wait()
+
     return response
 
 
