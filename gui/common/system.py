@@ -127,7 +127,7 @@ def send_mail(subject=None,
         to = [bsdUsers.objects.get(bsdusr_username='root').bsdusr_email]
     if attachments:
         msg = MIMEMultipart()
-        msg.preamble = MIMEText(text, _charset='utf-8')
+        msg.preamble = text
         map(lambda attachment: msg.attach(attachment), attachments)
     else:
         msg = MIMEText(text, _charset='utf-8')
