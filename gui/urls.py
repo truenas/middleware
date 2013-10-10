@@ -58,12 +58,6 @@ add_to_builtins('django.templatetags.i18n')
 
 urlpatterns = patterns('',
     url('^$', site.adminInterface, name="index"),
-    (r'^reporting/graphs/(?P<path>.*)',
-        public(serve),
-        {'document_root': '/var/db/graphs/'}),
-    (r'^media/(?P<path>.*)',
-        public(serve),
-        {'document_root': settings.MEDIA_ROOT}),
     (r'^static/(?P<path>.*)',
         public(serve),
         {'document_root': os.path.join(settings.HERE, "freeadmin/static")}),
