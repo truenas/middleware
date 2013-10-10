@@ -29,7 +29,7 @@ import logging
 import re
 
 from django.conf import settings
-from django.core.urlresolvers import NoReverseMatch, resolve
+from django.core.urlresolvers import NoReverseMatch, resolve, reverse
 from django.db import models
 from django.forms import ModelForm
 from django.utils.translation import ugettext_lazy as _
@@ -302,6 +302,9 @@ class NavTree(object):
 
         if hasattr(modnav, 'TYPE'):
             nav.type = modnav.TYPE
+
+        if hasattr(modnav, 'URL'):
+            nav.url = reverse(modnav.URL)
 
         if modnav:
             modname = "%s.nav" % app
