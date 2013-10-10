@@ -5,6 +5,8 @@ log = logging.getLogger('freeadmin.hook')
 
 class AppHook(object):
 
+    name = None
+
     def base_css(self, request):
         return []
 
@@ -13,3 +15,8 @@ class AppHook(object):
 
     def top_menu(self, request):
         return []
+
+    """
+    def hook_form_done_<FormName>(self, request, events):
+        passs
+    """
