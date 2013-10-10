@@ -29,6 +29,7 @@
 
 cache_opt() { echo c; }
 cache_help() { echo "Dump (AD|LDAP) Cache"; }
+cache_directory() { echo "DirectoryCache"; }
 cache_func()
 {
 	local cachetype="${1}"

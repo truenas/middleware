@@ -73,6 +73,14 @@ send_email()
 {
 	local email="${1}"
 	local body="${2}"
+	local dn
+	local bn
+
+	dn="$(dirname "${FREENAS_DEBUG_DIRECTORY}")"
+	bn="$(basename "${FREENAS_DEBUG_DIRECTORY}")"
+
+	cd "${dn}"
+	tar -czvf "${FREENAS_DEBUG_FILE}" "${dn}"
 
 	if [ -n "${email}" -a -n "${body}" -a -f "${FREENAS_DEBUG_FILE}" ]
 	then
@@ -80,6 +88,8 @@ send_email()
 		afile=$(basename ${FREENAS_DEBUG_FILE})
 		boundary="@@@_beer_@@@"
 
+		encoded="$(base64 -e "${afile}")"
+			
 		cat<<-EOF>"${mfile}"
 		Content-Transfer-Encoding: 7bit
 		Content-Type: multipart/mixed; boundary="${boundary}"
@@ -95,16 +105,17 @@ send_email()
 		${body}
 
 		--${boundary}
-		Content-Type: text/plain
+		Content-Type: application/x-gtar-compressed
 		Content-Disposition: attachment; filename=${afile};
 		Content-Description: output of $(basename $0)
+		Content-Transfer-Encoding: base64
 
-		$(cat ${FREENAS_DEBUG_FILE})
+		${encoded}
 
 		--${boundary}--
 EOF
 		sendmail -t < "${mfile}"
-		rm "${mfile}"
+		#rm "${mfile}"
 	fi
 }
 
@@ -153,19 +164,10 @@ get_module_options()
 
 		export "$(echo module_func_${opt})=${m}_func"
 		export "$(echo module_help_${opt})=${m}_help"
+		export "$(echo module_directory_${opt})=${m}_directory"
 		opts="${opts}${opt}"
-        opts_spaced="$opts_spaced ${opt}"
+		opts_spaced="$opts_spaced ${opt}"
 	done
-
-	#local i=1
-	#local len=${#opts}
-	#local tmp=""
-
-	#while [ "${i}" -le "${len}" ]
-	#do
-		#local opt=$(echo "${opts}"|cut -b "${i}")
-		#tmp="${tmp} ${opt}"
-	#done
 
 	VAL="${opts}"
 	export VAL
@@ -180,7 +182,7 @@ main()
 	local cmd="$0 $*"
 	local func
 	local var
-    local all_debug=false
+	local all_debug=false
 
 	load_modules
 	get_module_options
@@ -213,27 +215,52 @@ main()
 	fi
 
 	OPTIND=1
-	: > ${FREENAS_DEBUG_FILE}
+	if [ -d "${FREENAS_DEBUG_DIRECTORY}" ]
+	then
+		rm -rf "${FREENAS_DEBUG_DIRECTORY}"
+	fi
+	mkdir -p "${FREENAS_DEBUG_DIRECTORY}"
 
-	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
-    if $all_debug; then
-        for opt in ${opts_spaced} ; do
+	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_DIRECTORY}/osinfo.txt"
+
+	if $all_debug; then
+		for opt in ${opts_spaced} ; do
 			var=\$$(echo "module_func_${opt}")
 			func=$(eval "echo ${var}")
 
-			eval "${func}" 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
-        done
-    else
-    while getopts "${aopts}" opt
-	do
-		if [ "${opt}" != "${email_opt}" ]; then
-			var=\$$(echo "module_func_${opt}")
-			func=$(eval "echo ${var}")
+			var=\$$(echo "module_directory_${opt}")
+			dirfunc=$(eval "echo ${var}")
 
-			eval "${func}" 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
-		fi
-	done
-    fi
+			directory=$(eval "${dirfunc}")
+			if [ -n "${directory}" ]
+			then
+				fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
+				mkdir -p "${fp}"
+
+				eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
+			fi
+		done
+	else
+		while getopts "${aopts}" opt
+		do
+			if [ "${opt}" != "${email_opt}" ]; then
+				var=\$$(echo "module_func_${opt}")
+				func=$(eval "echo ${var}")
+
+				var=\$$(echo "module_directory_${opt}")
+				dirfunc=$(eval "echo ${var}")
+
+				directory=$(eval "${dirfunc}")
+				if [ -n "${directory}" ]
+				then
+					fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
+					mkdir -p "${fp}"
+	
+					eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
+				fi
+			fi
+		done
+	fi
 
 	if [ -n "$email" ]; then
 		send_email "${email}" \

@@ -29,6 +29,7 @@
 
 system_opt() { echo t; }
 system_help() { echo "Dump System Information"; }
+system_directory() { echo "System"; }
 system_func()
 {
 	section_header "uptime"
@@ -63,12 +64,15 @@ system_func()
 	kldstat
 	section_footer
 
-	section_header "dmesg"
-	dmesg
+	section_header "dmesg -a"
+	dmesg -a
 	section_footer
 
 	section_header "procstat -akk"
 	procstat -akk
 	section_footer
 
+	section_header "vmstat -i"
+	vmstat -i
+	section_footer
 }

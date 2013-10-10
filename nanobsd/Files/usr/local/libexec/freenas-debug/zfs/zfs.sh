@@ -29,6 +29,7 @@
 
 zfs_opt() { echo z; }
 zfs_help() { echo "Dump ZFS configuration"; }
+zfs_directory() { echo "ZFS"; }
 zfs_func()
 {
 	section_header "ZFS Pools"

@@ -29,6 +29,7 @@
 
 active_directory_opt() { echo a; }
 active_directory_help() { echo "Dump Active Directory Configuration"; }
+active_directory_directory() { echo "ActiveDirectory"; }
 active_directory_func()
 {
 	local workgroup
@@ -40,11 +41,6 @@ active_directory_func()
 	local onoff
 	local enabled="DISABLED"
 
-
-	#
-	#	Turn on debug.log in syslog
-	#
-	syslog_debug_on
 
 	#
 	#	First, check if the Active Directory service is enabled.
@@ -72,14 +68,16 @@ active_directory_func()
 	#	Next, dump Active Directory configuration
 	#
 	local IFS="|"
-	read workgroup netbiosname adminname domainname dcname <<-__AD__
+	read workgroup netbiosname adminname domainname dcname unix trusted <<-__AD__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ad_workgroup,
 		ad_netbiosname,
 		ad_adminname,
 		ad_domainname,
-		ad_dcname
+		ad_dcname,
+		ad_unix_extensions,
+		ad_allow_trusted_doms
 
 	FROM
 		services_activedirectory
@@ -96,11 +94,13 @@ __AD__
 
 	section_header "Active Directory Settings"
 	cat<<-__EOF__
-	WORKGROUP:              ${workgroup}
-	NETBIOS NAME:           ${netbiosname}
-	ADMINNAME:              ${adminname}
-	DOMAIN NAME:            ${domainname}
-	DCNAME:                 ${dcname}
+	Workgroup:              ${workgroup}
+	Netbios name:           ${netbiosname}
+	Administrator:          ${adminname}
+	Domain name:            ${domainname}
+	Domain controller:      ${dcname}
+	UNIX extensions:        ${unix}
+        Trusted domains:        ${trusted}
 __EOF__
 	section_footer
 
@@ -108,33 +108,21 @@ __EOF__
 	#	Dump kerberos configuration
 	#
 	section_header "${PATH_KRB5_CONFIG}"
-	cat "${PATH_KRB5_CONFIG}" 2>/dev/null
+	sc "${PATH_KRB5_CONFIG}" 2>/dev/null
 	section_footer
 
 	#
 	#	Dump nsswitch.conf
 	#
 	section_header "${PATH_NS_CONF}"
-	cat "${PATH_NS_CONF}"
-	section_footer
-
-	#
-	#	Dump pam configuration
-	#
-	section_header "${PAM_DIR}"
-	for pf in $(ls "${PAM_DIR}"|grep -v README)
-	do
-		section_header "${PAM_DIR}/${pf}"
-		cat "${PAM_DIR}/${pf}"
-		section_footer
-	done
+	sc "${PATH_NS_CONF}"
 	section_footer
 
 	#
 	#	Dump samba configuration
 	#
 	section_header "${SMB_CONF}"
-	cat "${SMB_CONF}"
+	sc "${SMB_CONF}"
 	section_footer
 
 	#
@@ -148,7 +136,7 @@ __EOF__
 	#	Dump Active Directory NSS configuration
 	#
 	section_header "${NSS_LDAP_CONF}"
-	cat "${NSS_LDAP_CONF}"
+	sc "${NSS_LDAP_CONF}"
 	section_footer
 
 	#
@@ -210,16 +198,4 @@ __EOF__
 	#	Dump cache info
 	#
 	cache_func "AD"
-
-	#
-	#	Include LDAP debugging
-	#
-	section_header "/var/log/debug.log"
-	cat /var/log/debug.log
-	section_footer
-
-	#
-	#	Turn off debug.log in syslog
-	#
-	syslog_debug_off
 }

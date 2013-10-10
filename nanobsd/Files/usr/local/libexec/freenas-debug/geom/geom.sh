@@ -29,6 +29,7 @@
 
 geom_opt() { echo g; }
 geom_help() { echo "Dump GEOM configuration"; }
+geom_directory() { echo "Geom"; }
 geom_func()
 {
 	geom_inode=$(ls -i /sbin/geom|awk '{ print $1 }')

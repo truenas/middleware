@@ -29,6 +29,7 @@
 
 hardware_opt() { echo h; }
 hardware_help() { echo "Dump Hardware Configuration"; }
+hardware_directory() { echo "Hardware"; }
 hardware_func()
 {
 	section_header "Hardware"

@@ -29,14 +29,10 @@
 
 ldap_opt() { echo l; }
 ldap_help() { echo "Dump LDAP Configuration"; }
+ldap_directory() { echo "LDAP"; }
 ldap_func()
 {
 	local onoff
-
-	#
-	#	Turn on debug.log in syslog
-	#
-	syslog_debug_on
 
 	#
 	#	First, check if the LDAP service is enabled.
@@ -50,7 +46,7 @@ ldap_func()
 		srv_service = 'ldap'
 	")
 
-    enabled="DISABLED"
+	enabled="DISABLED"
 	if [ "${onoff}" = "1" ]
 	then
 		enabled="ENABLED"
@@ -94,16 +90,16 @@ __LDAP__
 
 	section_header "LDAP Settings"
 	cat<<-__EOF__
-	HOSTNAME:               ${hostname}
-	BASEDN:                 ${basedn}
-	PWENCRYPTION:           ${pwencryption}
-	ANONBIND:               ${anonbind}
+	Hostname:               ${hostname}
+	Base DN:                ${basedn}
+	Password encryption:    ${pwencryption}
+	Anonymous bind:         ${anonbind}
 	SSL:                    ${ssl}
-	MACHINESUFFIX:          ${machinesuffix}
-	GROUPSUFFIX:            ${groupsuffix}
-	USERSUFFIX:             ${usersuffix}
-	PASSWORDSUFFIX:         ${passwordsuffix}
-	ROOTBASEDN:             ${rootbasedn}
+	Machine Suffix:         ${machinesuffix}
+	Group Suffix:           ${groupsuffix}
+	User Suffix:            ${usersuffix}
+	Password Suffix:        ${passwordsuffix}
+	Root Base DN:           ${rootbasedn}
 __EOF__
 	section_footer
 
@@ -111,40 +107,28 @@ __EOF__
 	#	Dump nsswitch.conf
 	#
 	section_header "${PATH_NS_CONF}"
-	cat "${PATH_NS_CONF}"
-	section_footer
-
-	#
-	#	Dump pam configuration
-	#
-	section_header "${PAM_DIR}"
-	for pf in $(ls "${PAM_DIR}"|grep -v README)
-	do
-		section_header "${PAM_DIR}/${pf}"
-		cat "${PAM_DIR}/${pf}"
-		section_footer
-	done
+	sc "${PATH_NS_CONF}"
 	section_footer
 
 	#
 	#	Dump samba configuration
 	#
 	section_header "${SMB_CONF}"
-	cat "${SMB_CONF}"
+	sc "${SMB_CONF}"
 	section_footer
 
 	#
 	#	Dump LDAP configuration
 	#
 	section_header "${LDAP_CONF}"
-	cat "${LDAP_CONF}"
+	sc "${LDAP_CONF}"
 	section_footer
 
 	#
 	#	Dump NSS configuration
 	#
 	section_header "${NSS_LDAP_CONF}"
-	cat "${NSS_LDAP_CONF}"
+	sc "${NSS_LDAP_CONF}"
 	section_footer
 
 	#
@@ -161,16 +145,4 @@ __EOF__
 	#	Dump cache info
 	#
 	cache_func "LDAP"
-
-	#
-	#	Include LDAP debugging
-	#
-	section_header "/var/log/debug.log"
-	cat /var/log/debug.log
-	section_footer
-
-	#
-	#	Turn off debug.log in syslog
-	#
-	syslog_debug_off
 }

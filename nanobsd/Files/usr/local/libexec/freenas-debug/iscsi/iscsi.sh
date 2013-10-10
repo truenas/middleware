@@ -1,6 +1,6 @@
 #!/bin/sh
 #+
-# Copyright 2011 iXsystems, Inc.
+# Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,16 +27,12 @@
 #####################################################################
 
 
-loader_opt() { echo T; }
-loader_help() { echo "Loader Configuration Information"; }
-loader_directory() { echo "Loader"; }
-loader_func()
+iscsi_opt() { echo i; }
+iscsi_help() { echo "Dump iSCSI Configuration"; }
+iscsi_directory() { echo "iSCSI"; }
+iscsi_func()
 {
-	section_header "/boot/loader.conf"
-	sc /boot/loader.conf
-	section_footer
-
-	section_header "kenv"
-	kenv
+	section_header "/usr/local/etc/istgt/istgt.conf"
+	sc "/usr/local/etc/istgt/istgt.conf"
 	section_footer
 }

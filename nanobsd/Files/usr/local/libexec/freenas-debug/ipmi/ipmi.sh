@@ -1,6 +1,6 @@
 #!/bin/sh
 #+
-# Copyright 2011 iXsystems, Inc.
+# Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,16 +27,20 @@
 #####################################################################
 
 
-loader_opt() { echo T; }
-loader_help() { echo "Loader Configuration Information"; }
-loader_directory() { echo "Loader"; }
-loader_func()
+ipmi_opt() { echo I; }
+ipmi_help() { echo "Dump IPMI Configuration"; }
+ipmi_directory() { echo "IPMI"; }
+ipmi_func()
 {
-	section_header "/boot/loader.conf"
-	sc /boot/loader.conf
+	section_header "ipmitool -I open sel list"
+	ipmitool -I open sel list
 	section_footer
 
-	section_header "kenv"
-	kenv
+	section_header "ipmitool sdr list | grep Temp"
+	ipmitool sdr list | grep Temp
+	section_footer
+
+	section_header "ipmitool sensor"
+	ipmitool sensor
 	section_footer
 }

@@ -29,6 +29,7 @@
 
 ssl_opt() { echo s; }
 ssl_help() { echo "Dump SSL Configuration"; }
+ssl_directory() { echo "SSL"; }
 ssl_func()
 {
 	ssldir="/etc/ssl"
@@ -60,10 +61,10 @@ ssl_func()
 	section_footer
 
 	section_header "${sslconf}"
-	cat ${sslconf}
+	sc ${sslconf}
 	section_footer
 
 	section_header "${httpdpem}"
-	cat ${httpdpem}
+	sc ${httpdpem}
 	section_footer
 }

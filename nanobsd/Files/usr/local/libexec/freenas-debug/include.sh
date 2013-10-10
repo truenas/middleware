@@ -29,7 +29,8 @@
 test -e /etc/rc.freenas && . /etc/rc.freenas
 test -e /etc/rc.conf.local && . /etc/rc.conf.local
 
-: ${FREENAS_DEBUG_FILE:="/var/tmp/freenas-debug.txt"}
+: ${FREENAS_DEBUG_DIRECTORY:="/var/tmp/fndebug"}
+: ${FREENAS_DEBUG_FILE:="/var/tmp/fndebug.tgz"}
 : ${FREENAS_DEBUG_MODULEDIR:="/usr/local/libexec/freenas-debug"}
 : ${FREENAS_DEBUG_MODULES:=""}
 
@@ -53,6 +54,16 @@ syslog_debug_off()
 	then
 		mv /etc/syslog.conf.bak /etc/syslog.conf
 		/etc/rc.d/syslogd onereload >/dev/null 2>&1
+	fi
+}
+
+sc()
+{
+	local file="${1}" 
+
+	if [ -s "${file}" ]
+	then
+		 egrep -v '^(( )+)?#' "${file}"
 	fi
 }
 
@@ -101,10 +112,10 @@ section_footer()
 freenas_header()
 {
 	if [ -e "$VERSION_FILE" ] ; then
-        section_header "$(cat $VERSION_FILE)"
-    else
-        section_header "no version file found"
-    fi
+		section_header "$(cat $VERSION_FILE)"
+	else
+		section_header "no version file found"
+	fi
 
 	desc=$(sysctl -nd kern.ostype)
 	out=$(sysctl -n kern.ostype)

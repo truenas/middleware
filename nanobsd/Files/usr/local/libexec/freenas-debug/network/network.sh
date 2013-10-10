@@ -29,6 +29,7 @@
 
 network_opt() { echo n; }
 network_help() { echo "Dump Network Configuration"; }
+network_directory() { echo "Network"; }
 network_func()
 {
 	section_header "Hostname"
@@ -39,14 +40,14 @@ network_func()
 	#	Dump hosts configuration
 	#
 	section_header "Hosts File (/etc/hosts)"
-	cat "/etc/hosts"
+	sc "/etc/hosts"
 	section_footer
 
 	#
 	#	Dump resolver information
 	#
 	section_header "/etc/resolv.conf"
-	cat /etc/resolv.conf 2>/dev/null
+	sc /etc/resolv.conf 2>/dev/null
 	section_footer
 
 	section_header "Interfaces"

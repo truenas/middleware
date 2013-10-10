@@ -1,6 +1,6 @@
 #!/bin/sh
 #+
-# Copyright 2011 iXsystems, Inc.
+# Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,16 +27,56 @@
 #####################################################################
 
 
-loader_opt() { echo T; }
-loader_help() { echo "Loader Configuration Information"; }
-loader_directory() { echo "Loader"; }
-loader_func()
+nfs_opt() { echo N; }
+nfs_help() { echo "Dump NFS Configuration"; }
+nfs_directory() { echo "NFS"; }
+nfs_func()
 {
-	section_header "/boot/loader.conf"
-	sc /boot/loader.conf
+	section_header "/etc/version"
+	sc "/etc/version"
 	section_footer
 
-	section_header "kenv"
-	kenv
+	section_header "/etc/resolv.conf"
+	sc "/etc/resolv.conf"
+	section_footer
+
+	section_header "/etc/hosts"
+	sc "/etc/hosts"
+	section_footer
+
+	section_header "/etc/exports"
+	sc /etc/exports
+	section_footer
+	
+	section_header "showmount -e"
+	showmount -e
+	section_footer
+
+	section_header "nfsstat"
+	nfsstat
+	section_footer
+
+	section_header "nfsstat -c"
+	nfsstat -c
+	section_footer
+
+	section_header "nfsstat -s"
+	nfsstat -s
+	section_footer
+
+	section_header "netstat -m"
+	netstat -m
+	section_footer
+
+	section_header "netstat -s -p udp"
+	netstat -s -p udp
+	section_footer
+
+	section_header "getent passwd"
+	getent passwd
+	section_footer
+
+	section_header "getent group"
+	getent group
 	section_footer
 }
