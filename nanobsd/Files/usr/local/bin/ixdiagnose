@@ -39,8 +39,9 @@ test -e /etc/rc.conf && . /etc/rc.conf
 boot_time=false
 force_upload=false
 has_ticket_info=false
+dont_delete=false
 
-while getopts "bFt:" opt ; do
+while getopts "bFt:d:s" opt ; do
 	case "${opt}" in
 	b)
 		boot_time=true
@@ -49,6 +50,10 @@ while getopts "bFt:" opt ; do
 		;;
 	t)	has_ticket_info=true
 		ticket_info=$OPTARG
+		;;
+	d)	topdir=$OPTARG
+		;;
+	s)	dont_delete=true
 		;;
 	\?)	exit 2
 		;;
@@ -80,22 +85,34 @@ fi
 # We will then make a directory called ixdiagnose under it
 # so that the tarball extracts nicely.
 set -x
-topdir=`mktemp -d -t ixdiagnose`
+if [ -z "${topdir}" ] ; then
+	topdir=`mktemp -d -t ixdiagnose`
+else
+	mkdir -p "${topdir}"
+fi
 if [ $? -gt 0 ] ; then
 	echo "can't make temp directory"
 	exit 1
 fi
-# Remove the temp directory on exit.
-trap "rm -rf $topdir" EXIT
+
+# Remove the temp directory on exit if dont_delete is false
+if ! $dont_delete ; then
+	trap "rm -rf $topdir" EXIT
+fi
 
 dir=$topdir/ixdiagnose
 
 set -e
-mkdir $dir
+mkdir -p $dir
+if [ $? -gt 0 ] ; then
+	echo "can't make ixdiagnose directory"
+	exit 1
+fi
 
 if ! $boot_time ; then
 	$mydir/freenas-debug -A >/dev/null
 	tar -cHf - -C /var log | tar -C $dir -xf -
+	tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
 fi
 
 if ! dumpfile_to_submit_exists $dumpdir ; then
