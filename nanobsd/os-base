@@ -936,8 +936,6 @@ last_orders() {
 				. \
 			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
 				. \
-			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
-				. \
 			-C "$NANO_DISKIMGDIR" \
 				${firmware_img##*/} \
 			| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
