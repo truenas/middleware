@@ -82,6 +82,8 @@ class ModelForm(AdvMixin, MF):
 
     def delete(self, request=None, events=None):
         self.instance.delete()
+        fname = str(type(self).__name__)
+        appPool.hook_form_delete(fname, self, request, events)
 
     def is_valid(self, formsets=None):
         valid = super(ModelForm, self).is_valid()

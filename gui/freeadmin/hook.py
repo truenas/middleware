@@ -20,3 +20,8 @@ class AppHook(object):
     def hook_form_done_<FormName>(self, request, events):
         passs
     """
+
+    """
+    def hook_form_delete_<FormName>(self, form, request, events):
+        passs
+    """
