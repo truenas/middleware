@@ -86,7 +86,7 @@ send_email()
 	# Tar up all the things
 	#
 	cd "${dn}"
-	tar -czvf "${FREENAS_DEBUG_FILE}" "${dn}"
+	tar -czvf "${FREENAS_DEBUG_FILE}" "${bn}"
 
 	if [ -n "${email}" -a -n "${body}" -a -f "${FREENAS_DEBUG_FILE}" ]
 	then
@@ -116,8 +116,7 @@ send_email()
 
 		--${boundary}
 		Content-Type: application/x-gtar-compressed
-		Content-Disposition: attachment; filename=${afile};
-		Content-Description: output of $(basename $0)
+		Content-Disposition: attachment; filename="${afile}";
 		Content-Transfer-Encoding: base64
 
 		${encoded}
