@@ -29,9 +29,24 @@
 test -e /etc/rc.freenas && . /etc/rc.freenas
 test -e /etc/rc.conf.local && . /etc/rc.conf.local
 
+#
+# This is the directory where we save things
+#
 : ${FREENAS_DEBUG_DIRECTORY:="/var/tmp/fndebug"}
+
+#
+# This is the filename of the tarball we create if sending an email
+#
 : ${FREENAS_DEBUG_FILE:="/var/tmp/fndebug.tgz"}
+
+#
+# This is where all freenas-debug modules are located
+#
 : ${FREENAS_DEBUG_MODULEDIR:="/usr/local/libexec/freenas-debug"}
+
+#
+# The modules that get loaded based on command line options
+#
 : ${FREENAS_DEBUG_MODULES:=""}
 
 VERSION_FILE=$(ls /etc/version*)

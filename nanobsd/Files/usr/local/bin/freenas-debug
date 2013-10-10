@@ -50,8 +50,7 @@ usage()
 	cat<<-__EOF__
 	usage: $0 <options>
 	Where options is:
-    -$email_opt		A list of comma delimited list of email
-		addresses to email the debug log to.
+	    -$email_opt		A list of comma delimited list of email addresses to email the debug log to.
 __EOF__
 
 	local i=1
@@ -66,6 +65,10 @@ __EOF__
 		i=$((${i} + 1))
 	done
 
+	echo
+	echo "Output will be saved to ${FREENAS_DEBUG_DIRECTORY}"
+	echo
+
 	return 0
 }
 
@@ -79,6 +82,9 @@ send_email()
 	dn="$(dirname "${FREENAS_DEBUG_DIRECTORY}")"
 	bn="$(basename "${FREENAS_DEBUG_DIRECTORY}")"
 
+	#
+	# Tar up all the things
+	#
 	cd "${dn}"
 	tar -czvf "${FREENAS_DEBUG_FILE}" "${dn}"
 
@@ -88,6 +94,10 @@ send_email()
 		afile=$(basename ${FREENAS_DEBUG_FILE})
 		boundary="@@@_beer_@@@"
 
+		#
+		# This is a tarball we are working with, so let's base64
+		# encode it, and attach it with the proper mime type
+		#
 		encoded="$(base64 -e "${afile}")"
 			
 		cat<<-EOF>"${mfile}"
@@ -162,6 +172,11 @@ get_module_options()
 			done
 		fi
 
+		#
+		# Export each module into our environment with its option
+		# so that we can map it to the options specified on the 
+		# command line
+		#
 		export "$(echo module_func_${opt})=${m}_func"
 		export "$(echo module_help_${opt})=${m}_help"
 		export "$(echo module_directory_${opt})=${m}_directory"
@@ -225,12 +240,17 @@ main()
 
 	if $all_debug; then
 		for opt in ${opts_spaced} ; do
+
 			var=\$$(echo "module_func_${opt}")
 			func=$(eval "echo ${var}")
 
 			var=\$$(echo "module_directory_${opt}")
 			dirfunc=$(eval "echo ${var}")
 
+			#
+			# Create individual directories for each module and write
+			# its output to a file called "dump.txt" in the directory.
+			#
 			directory=$(eval "${dirfunc}")
 			if [ -n "${directory}" ]
 			then
@@ -250,6 +270,10 @@ main()
 				var=\$$(echo "module_directory_${opt}")
 				dirfunc=$(eval "echo ${var}")
 
+				#
+				# Create individual directories for each module and write
+				# its output to a file called "dump.txt" in the directory.
+				#
 				directory=$(eval "${dirfunc}")
 				if [ -n "${directory}" ]
 				then
