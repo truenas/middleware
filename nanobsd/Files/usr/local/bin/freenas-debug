@@ -190,6 +190,28 @@ get_module_options()
 	export VAL_SPACED
 }
 
+#
+# Freenas-debug uses "modules" that are located in /usr/local/libexec/freenas-debug.
+# Every module must have 4 functions implemented in them.
+#
+# module_opt()
+#
+#   This function supplies the command line option to run this module. If the option
+#   already exists, then one will be supplied to it.
+#
+# module_help()
+#
+#   This function is what gets displayed when the command line options are shown when
+#   usage() is called. 
+#
+# module_directory()
+#
+#   This function supplies the name of the directory to be created under /var/tmp/fndebug.
+#
+# module_func()
+#
+#   This function is what gets run when the command line option is specified. 
+#
 main()
 {
 	local has_debug_command=false
