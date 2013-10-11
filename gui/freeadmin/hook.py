@@ -71,6 +71,14 @@ class AppHook(object):
     """
 
     """
+    def hook_model_new_<Model>(self, bases, attrs):
+        '''
+        Hook called on model meta class before __new__
+        '''
+        pass
+    """
+
+    """
     def hook_nav_init_<app>(self, app, tree_roots, nav, request):
         '''
         Hook called on bundle method of the REST resource

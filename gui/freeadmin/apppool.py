@@ -54,6 +54,12 @@ class AppPool(object):
             _method=list.append
         )
 
+    def hook_model_new(self, name, bases, attrs):
+        return self._get_array(
+            'hook_model_new_%s' % name, bases, attrs,
+            _method=list.append
+        )
+
     def hook_nav_init(self, app, tree_roots, nav, request):
         return self._get_array(
             'hook_nav_init_%s' % app, tree_roots, nav, request,

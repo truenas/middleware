@@ -27,6 +27,8 @@
 from django.db import models
 from django.db.models.base import ModelBase
 
+from freenasUI.freeadmin.apppool import appPool
+
 #FIXME: Backward compatible
 from .fields import (
     UserField, GroupField, PathField, MACField, Network4Field, Network6Field
@@ -37,7 +39,9 @@ class FreeModelBase(ModelBase):
     def __new__(cls, name, bases, attrs):
         from freenasUI.freeadmin.site import site
 
-        new_class = ModelBase.__new__(cls, name, bases, attrs)
+        bases = list(bases)
+        appPool.hook_model_new(name, bases, attrs)
+        new_class = ModelBase.__new__(cls, name, tuple(bases), attrs)
         if new_class._meta.abstract:
             pass
         elif hasattr(new_class, 'FreeAdmin'):
