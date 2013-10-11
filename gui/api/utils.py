@@ -32,6 +32,8 @@ from django.db import transaction
 from django.db.models.fields.related import ForeignKey
 from django.http import QueryDict
 
+from freenasUI.freeadmin.apppool import appPool
+
 from tastypie.authentication import Authentication, MultiAuthentication
 from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse
@@ -238,6 +240,12 @@ class ResourceMixin(object):
         )
         return response
 
+    def dehydrate(self, bundle):
+        bundle = super(ResourceMixin, self).dehydrate(bundle)
+        name = str(type(self).__name__)
+        appPool.hook_resource_bundle(name, self, bundle)
+        return bundle
+
 
 class DojoModelResource(ResourceMixin, ModelResource):
 
@@ -343,6 +351,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
         return data['objects']
 
     def dehydrate(self, bundle):
+        bundle = super(DojoModelResource, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
             bundle.data['_edit_url'] = bundle.obj.get_edit_url()
             bundle.data['_delete_url'] = bundle.obj.get_delete_url()

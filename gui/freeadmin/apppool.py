@@ -48,5 +48,11 @@ class AppPool(object):
             _method=list.append
         )
 
+    def hook_resource_bundle(self, rname, resource, bundle):
+        return self._get_array(
+            'hook_resource_bundle_%s' % rname, resource, bundle,
+            _method=list.append
+        )
+
 
 appPool = AppPool()
