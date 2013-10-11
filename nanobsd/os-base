@@ -456,6 +456,7 @@ add_pbi_manager()
 	local pm dst
 	pm=${AVATAR_ROOT}/src/pcbsd/pbi-manager
 	dst=${NANO_WORLDDIR}/usr/local
+	df="${dst}/share/pcbsd/distfiles/"
 
 	pprint 2 "Adding pbi-manager"
 
@@ -481,6 +482,9 @@ add_pbi_manager()
 	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
 	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
 	rm -f ${dst}/pbi-manager
+
+	mkdir -p ${df} >/dev/null 2>/dev/null
+	cp ${pm}/repo/pcbsd.rpo ${df}/pcbsd.rpo
 }
 customize_cmd add_pbi_manager
 
