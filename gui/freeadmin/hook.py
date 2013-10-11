@@ -45,10 +45,15 @@ class AppHook(object):
 
     """
     def hook_form_done_<FormName>(self, request, events):
-        passs
+        pass
     """
 
     """
     def hook_form_delete_<FormName>(self, form, request, events):
-        passs
+        pass
+    """
+
+    """
+    def hook_resource_bundle_<ResourceName>(self, resource, bundle):
+        pass
     """
