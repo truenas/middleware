@@ -317,6 +317,17 @@ require([
                     img.src = '/static/images/ui/buttons/off.png';
                 }
                 if(onSuccess) onSuccess();
+
+                if(data.events) {
+                    for(i=0;i<data.events.length;i++){
+                        try {
+                            eval(data.events[i]);
+                        } catch(e) {
+                            console.log(e);
+                        }
+                    }
+                }
+
             },
             function(error) {
                 //alert
