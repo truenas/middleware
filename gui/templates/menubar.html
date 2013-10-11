@@ -47,9 +47,13 @@
 
   {% for menu in menu_hook %}
 
-  <div id="menuBar_{{ menu.name }}{{ forloop.counter }}" data-dojo-type="dijit.MenuBarItem" onClick="{{ menu.onclick|safe }}" class="menu_icon">
-    <img src="{{ STATIC_URL }}{{ menu.icon }}" />
-    <br />
+  <div id="{% if menu.id %}{{ menu.id }}{% else %}menuBar_{{ forloop.counter }}{% endif %}" data-dojo-type="dijit.MenuBarItem" onClick="{{ menu.onclick }}" class="menu_icon{% if menu.align %} {{ menu.align }}{% endif %}">
+    {% if menu.img %}
+      {{ menu.img|safe }}
+    {% else %}
+      <img src="{{ STATIC_URL }}{{ menu.icon }}" />
+      <br />
+    {% endif %}
     <span>{{ menu.name|safe }}</span>
   </div>
 

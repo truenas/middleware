@@ -26,10 +26,13 @@ class AppHook(object):
         Items to be placed in the top menu bar
 
         Returns: list(dict)
+          - id - id of the DOM node
           - name - name to be displayed
           - icon - path to the icon, within STATIC_URL
           - onclick - javascript code to run on mouse click
           - weight - order of the menu
+          - align - "left, right" (optional)
+          - img - content to be placed above the name
         """
         return []
 
