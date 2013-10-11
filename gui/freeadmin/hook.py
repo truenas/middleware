@@ -71,6 +71,14 @@ class AppHook(object):
     """
 
     """
+    def hook_nav_init_<app>(self, app, tree_roots, nav, request):
+        '''
+        Hook called on bundle method of the REST resource
+        '''
+        pass
+    """
+
+    """
     def hook_resource_bundle_<ResourceName>(self, resource, bundle):
         '''
         Hook called on bundle method of the REST resource

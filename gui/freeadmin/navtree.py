@@ -40,6 +40,7 @@ from freenasUI.common.log import log_traceback
 from freenasUI.common.warden import (
     WARDEN_STATUS_RUNNING, WARDEN_TYPE_PLUGINJAIL
 )
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.tree import (
     tree_roots, TreeRoot, TreeNode, unserialize_tree
 )
@@ -327,6 +328,7 @@ class NavTree(object):
             tree_roots.register(nav)  # We register it to the tree root
             if hasattr(modnav, 'init'):
                 modnav.init(tree_roots, nav, request)
+            appPool.hook_nav_init(nav.gname, tree_roots, nav, request)
 
         else:
             log.debug("App %s has no nav.py module, skipping", app)
