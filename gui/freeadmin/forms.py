@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 import os
 import re
 
@@ -50,6 +51,7 @@ import ipaddr
 
 MAC_RE = re.compile(r'^[0-9A-F]{12}$')
 
+log = logging.getLogger('freeadmin.forms')
 
 class CronMultiple(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.form.Cron'

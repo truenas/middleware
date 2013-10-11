@@ -338,6 +338,12 @@ copypbiscripts() {
   # Copy libsh
   mkdir -p ${1}/usr/local/share/pcbsd/scripts >/dev/null 2>/dev/null
   cp /usr/local/share/pcbsd/scripts/functions.sh ${1}/usr/local/share/pcbsd/scripts/functions.sh
+
+  # Install PC-BSD PBI repo
+  cp /usr/local/share/pcbsd/distfiles/pcbsd.rpo ${1}/var/tmp/pcbsd.rpo
+  chroot "${1}" /usr/local/sbin/pbi_addrepo /var/tmp/pcbsd.rpo
+  chroot "${1}" chmod 755 /var/db/pbi/keys
+  chroot "${1}" /usr/local/sbin/pbi_info >/dev/null 2>&1
 }
 
 mkportjail() {
