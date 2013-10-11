@@ -7,10 +7,10 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        user = orm.bsdusers()
+        user = orm.bsdUsers()
         user.bsdusr_builtin = True
         user.bsdusr_full_name = "Auditdistd unprivileged user"
-	user.bsdusr_group = orm.bsdGroups.objects.get(bsdgrp_group='audit')
+        user.bsdusr_group = orm.bsdGroups.objects.get(bsdgrp_group='audit')
         user.bsdusr_home = "/var/empty"
         user.bsdusr_shell = "/usr/sbin/nologin"
         user.bsdusr_smbhash = "*"
