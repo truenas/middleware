@@ -223,6 +223,10 @@ class TreeType(object):
     def pre_dehydrate(self):
         pass
 
+    def pre_build_options(self):
+        pass
+
+
 class TreeNode(TreeType):
     pass
 

@@ -559,6 +559,11 @@ class NavTree(object):
             except:
                 pass
 
+            try:
+                option.pre_build_options()
+            except Exception:
+                continue
+
             if not option.perm:
                 try:
                     url = option.get_absolute_url()
