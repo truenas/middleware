@@ -109,6 +109,35 @@ EOF
 	exit 1
 }
 
+check_build_sanity()
+{
+    # The build will fail if we make directories too long due to
+    # using nullfs.  This is because nullfs can not handle long
+    # directory names for mounts.
+    # Catch this early so we don't spend a lot of time doing stuff
+    # just to get a build error.
+    local mypwd=`pwd`
+    local mypwdlen=`pwd | wc -c | awk '{print $1}'`  # use awk to cleanup wc output
+    local pwdmaxlen="42"
+    if [ $mypwdlen -ge $pwdmaxlen ] ; then
+        cat <<PWD_ERROR
+=================================================================
+FATAL:
+current path (pwd) too long ($mypwdlen) for nullfs mounts during
+build.
+=================================================================
+WHY:
+Building ports will very likely fail when doing nullfs.
+=================================================================
+TO FIX:
+please rename/move your build directory to a place with a shorter
+less than $pwdmaxlen characters)
+current pwd: '$mypwd'
+PWD_ERROR
+        exit 1
+    fi
+}
+
 show_build_targets()
 {
 	for _target in ${BUILD_TARGETS}
@@ -473,6 +502,11 @@ main()
 	then
 		requires_root
 	fi
+
+    #
+    # Do extra checks to make sure the build will succeed.
+    #
+    check_build_sanity
 
 	#
 	# Expand targets to their full path in the file system
