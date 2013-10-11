@@ -3,8 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-
-SW_NAME = 'FreeNAS'
+from freenasUI.common import get_sw_name
 
 class Migration(DataMigration):
 
@@ -65,8 +64,8 @@ class Migration(DataMigration):
         db.send_create_signal('network', ['StaticRoute'])
 
         gc = orm.GlobalConfiguration()
-        gc.gc_hostname=SW_NAME.lower()
-        gc.gc_domain='local'
+        gc.gc_hostname = get_sw_name().lower()
+        gc.gc_domain = 'local'
         gc.save()
 
     def backwards(self, orm):
