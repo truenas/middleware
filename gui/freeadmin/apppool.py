@@ -16,9 +16,12 @@ class AppPool(object):
         self._registered[hook.name] = hook()
 
     def _get_array(self, fname, *args, **kwargs):
+        method = kwargs.pop('_method', list.extend)
         arr = []
         for i in self:
-            arr.extend(getattr(i, fname)(*args, **kwargs))
+            func = getattr(i, fname, None)
+            if func and callable(func):
+                method(arr, func(*args, **kwargs))
         return arr
 
     def get_base_css(self, request):
@@ -31,20 +34,16 @@ class AppPool(object):
         return self._get_array("top_menu", request)
 
     def hook_form_delete(self, fname, form, request, events):
-        rvs = []
-        for i in self:
-            func = getattr(i, 'hook_form_delete_%s' % fname, None)
-            if func and callable(func):
-                rvs.append((i.name, func(form, request, events)))
-        return rvs
+        return self._get_array(
+            'hook_form_delete_%s' % fname, form, request, events,
+            _method=list.append
+        )
 
     def hook_form_done(self, fname, request, events):
-        rvs = []
-        for i in self:
-            func = getattr(i, 'hook_form_done_%s' % fname, None)
-            if func and callable(func):
-                rvs.append((i.name, func(request, events)))
-        return rvs
+        return self._get_array(
+            'hook_form_done_%s' % fname, request, events,
+            _method=list.append
+        )
 
 
 appPool = AppPool()
