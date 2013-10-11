@@ -43,6 +43,9 @@
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/layout/resources/ResizeHandle.css?cache={{ cache_hash }}" type="text/css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/widget/Toaster/Toaster.css?cache={{ cache_hash }}" type="text/css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}css/template.css?cache={{ cache_hash }}" type="text/css" />
+{% for css in css_hook %}
+    <link rel="stylesheet" href="{{ STATIC_URL }}{{ css }}?cache={{ cache_hash }}" type="text/css" />
+{% endfor %}
     <link href="{{ STATIC_URL }}favicon.ico" rel="shortcut icon" type="image/x-icon" />
 {% block dojango_header_extra %}{% endblock %}
 </head>
