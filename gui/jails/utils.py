@@ -243,7 +243,7 @@ def guess_ipv6_addresses():
     }
 
 def ping_host(host, ping6=False):
-    cmd = "/sbin/ping -q -o %s" % host
+    cmd = "/sbin/ping -q -t 5 -o %s" % host
     if ping6:
         cmd = "/sbin/ping6 -q -o %s" % host
 
