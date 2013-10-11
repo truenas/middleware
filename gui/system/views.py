@@ -52,6 +52,7 @@ from django.views.decorators.cache import never_cache
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
@@ -108,6 +109,7 @@ def _system_info(request=None):
 
 def system_info(request):
     sysinfo = _system_info(request)
+    sysinfo['info_hook'] = appPool.get_system_info(request)
     return render(request, 'system/system_info.html', sysinfo)
 
 

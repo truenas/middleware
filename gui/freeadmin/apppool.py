@@ -33,6 +33,9 @@ class AppPool(object):
     def get_top_menu(self, request):
         return self._get_array("top_menu", request)
 
+    def get_system_info(self, request):
+        return self._get_array("system_info", request)
+
     def hook_form_delete(self, fname, form, request, events):
         return self._get_array(
             'hook_form_delete_%s' % fname, form, request, events,

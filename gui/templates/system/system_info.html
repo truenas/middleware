@@ -34,4 +34,10 @@
         <td class="descr">{{ host }}</td>
     </tr>
     {% endif %}
+    {% for info in info_hook %}
+    <tr>
+        <th>{{ info.name|safe }}</th>
+        <td class="descr">{{ info.value|safe }}</td>
+    </tr>
+    {% endfor %}
 </table>
