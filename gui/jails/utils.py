@@ -260,6 +260,7 @@ def ping_host(host, ping6=False):
         t = time.time()
 
     if p.returncode != 0:
+        p.terminate()
         return False
 
     return True
