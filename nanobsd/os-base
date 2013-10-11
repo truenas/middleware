@@ -1070,7 +1070,7 @@ build_debug_kernel ( )
 
 	(
 	cd ${_kernconfdir}
-	cat $_kernconf DEBUG > ${NANO_OBJ}/${_kernconf}-DEBUG
+	cat $_kernconf $NANO_CFG_BASE/DEBUG > ${NANO_OBJ}/${_kernconf}-DEBUG
 	)
 
 	build_kernel2 ${NANO_OBJ}/${_kernconf}-DEBUG /boot/kernel-debug
