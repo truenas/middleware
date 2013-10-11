@@ -42,6 +42,7 @@ from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
 from freenasUI.api import v1_api
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 from tastypie.validation import FormValidation
@@ -860,6 +861,9 @@ grid.on(".dgrid-row:dblclick", function(evt) {
                 }
             }""",
         }
+
+        name = str(type(self).__name__)
+        appPool.hook_datagrid_actions(name, self, actions)
 
         return actions
 

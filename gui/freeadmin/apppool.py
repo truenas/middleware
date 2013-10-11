@@ -36,6 +36,12 @@ class AppPool(object):
     def get_system_info(self, request):
         return self._get_array("system_info", request)
 
+    def hook_datagrid_actions(self, rname, admin, actions):
+        return self._get_array(
+            'hook_datagrid_actions_%s' % rname, admin, actions,
+            _method=list.append
+        )
+
     def hook_form_delete(self, fname, form, request, events):
         return self._get_array(
             'hook_form_delete_%s' % fname, form, request, events,

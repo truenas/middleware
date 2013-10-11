@@ -44,16 +44,33 @@ class AppHook(object):
         return []
 
     """
+    def hook_datagrid_actions_<AdminName>(self, admin, actions):
+        '''
+        Hook called on generation of action buttons (bottom) for the datagrid
+        '''
+        pass
+    """
+
+    """
     def hook_form_done_<FormName>(self, request, events):
+        '''
+        Hook called on form done method, after save and validation
+        '''
         pass
     """
 
     """
     def hook_form_delete_<FormName>(self, form, request, events):
+        '''
+        Hook called on form delete method
+        '''
         pass
     """
 
     """
     def hook_resource_bundle_<ResourceName>(self, resource, bundle):
+        '''
+        Hook called on bundle method of the REST resource
+        '''
         pass
     """
