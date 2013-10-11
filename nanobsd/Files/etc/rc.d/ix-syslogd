@@ -84,32 +84,36 @@ ix_syslogd_start()
 				#
 				#	Pick up any new directories and sync them
 				#
-				for dir in $(find /var/log/ -type d)
-				do
-					local dst="${mp}/log/${dir#/var/log/}"
+				if [ ! -L /var/log ]; then
+					for dir in $(find /var/log/ -type d)
+					do
+						local dst="${mp}/log/${dir#/var/log/}"
 
-					if [ ! -d "${dst}" ]
-					then
-						/usr/local/bin/rsync -avz ${dir}/* ${dst}/ >/dev/null 2>&1
-					fi
-				done
+						if [ ! -d "${dst}" ]
+						then
+							/usr/local/bin/rsync -avz ${dir}/* ${dst}/ >/dev/null 2>&1
+						fi
+					done
+				fi
 
 				#
 				#	Find all files that are not a directory and see if
 				#	they exist. If the file exists already, append to
 				#	it, otherwise, copy it over.
 				#
-				for file in $(find /var/log/ ! -type d)
-				do
-					local dst="${mp}/log/${file#/var/log/}"
+				if [ ! -L /var/log ]; then
+					for file in $(find /var/log/ ! -type d)
+					do
+						local dst="${mp}/log/${file#/var/log/}"
 
-					if [ ! -f "${dst}" ]
-					then
-						cp -p ${file} ${dst}
-					else
-						cat ${file} >> ${dst}
-					fi
-				done
+						if [ ! -f "${dst}" ]
+						then
+							cp -p ${file} ${dst}
+						else
+							cat ${file} >> ${dst}
+						fi
+					done
+				fi
 
 
 			#
