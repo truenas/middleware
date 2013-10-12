@@ -36,6 +36,12 @@ class AppPool(object):
     def get_system_info(self, request):
         return self._get_array("system_info", request)
 
+    def hook_class_new(self, name, bases, attrs):
+        return self._get_array(
+            'hook_class_new_%s' % name, bases, attrs,
+            _method=list.append
+        )
+
     def hook_datagrid_actions(self, rname, admin, actions):
         return self._get_array(
             'hook_datagrid_actions_%s' % rname, admin, actions,

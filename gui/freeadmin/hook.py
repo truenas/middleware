@@ -1,6 +1,17 @@
 import logging
 
+from freenasUI.freeadmin.apppool import appPool
+
 log = logging.getLogger('freeadmin.hook')
+
+
+class HookMetaclass(type):
+
+    def __new__(cls, name, bases, attrs):
+        bases = list(bases)
+        appPool.hook_class_new(name, bases, attrs)
+        new_class = type.__new__(cls, name, tuple(bases), attrs)
+        return new_class
 
 
 class AppHook(object):
