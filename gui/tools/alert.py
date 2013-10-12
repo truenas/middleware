@@ -42,6 +42,10 @@ from freenasUI import settings
 from django.core.management import setup_environ
 setup_environ(settings)
 
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
+
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.utils.translation import ugettext_lazy as _
 

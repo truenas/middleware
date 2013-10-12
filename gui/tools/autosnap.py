@@ -37,6 +37,10 @@ from freenasUI import settings
 from django.core.management import setup_environ
 setup_environ(settings)
 
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
+
 from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
 
