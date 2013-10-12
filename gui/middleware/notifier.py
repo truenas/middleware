@@ -1183,7 +1183,7 @@ class notifier(object):
                 raise MiddlewareError("Unable to remove key: %s" % (err, ))
 
     def geli_is_decrypted(self, dev):
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         geom = doc.xpathEval("//class[name = 'ELI']/geom[name = '%s.eli']" % (
             dev,
             )
@@ -1292,7 +1292,7 @@ class notifier(object):
         (GELI on UFS not supported yet)
         """
         providers = []
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         disks = self.get_disks()
         for disk in disks:
             parts = [node.content for node in doc.xpathEval("//class[name = 'PART']/geom[name = '%s']/provider/config[type = 'freebsd-zfs']/../name" % disk)]
@@ -1316,7 +1316,7 @@ class notifier(object):
                                  devname = disk,
                                  swapsize=swapsize)
 
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         for disk in disks:
             devname = self.part_type_from_device('zfs', disk)
             if encrypt:
@@ -1684,7 +1684,7 @@ class notifier(object):
         if to_label == '':
             raise MiddlewareError('freebsd-zfs partition could not be found')
 
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         uuid = doc.xpathEval("//class[name = 'PART']"
             "/geom//provider[name = '%s']/config/rawuuid" % (to_label, )
             )
@@ -2285,7 +2285,7 @@ class notifier(object):
 
         sw_name = get_sw_name()
         label = "%smdu" % (sw_name, )
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
 
         pref = doc.xpathEval("//class[name = 'LABEL']/geom/"
             "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, ))
@@ -2324,7 +2324,7 @@ class notifier(object):
 
         sw_name = get_sw_name()
         label = "%smdu" % (sw_name, )
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
 
         pref = doc.xpathEval("//class[name = 'LABEL']/geom/"
             "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, ))
@@ -3034,7 +3034,7 @@ class notifier(object):
         """
 
         volumes = []
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         # Detect GEOM mirror, stripe and raid3
         for geom in ('mirror', 'stripe', 'raid3'):
             search = doc.xpathEval("//class[name = '%s']/geom/config" % (geom.upper(),))
@@ -3458,7 +3458,7 @@ class notifier(object):
         self.__diskserial = {}
         self.__twcli = {}
 
-    def __geom_confxml(self):
+    def _geom_confxml(self):
         if self.__confxml is None:
             self.__confxml = libxml2.parseDoc(self.sysctl('kern.geom.confxml'))
         return self.__confxml
@@ -3537,7 +3537,7 @@ class notifier(object):
         Given a label go through the geom tree to find out the disk name
         label = a geom label or a disk partition
         """
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
 
         # try to find the provider from GEOM_LABEL
         search = doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % name)
@@ -3558,7 +3558,7 @@ class notifier(object):
 
     def device_to_identifier(self, name):
         name = str(name)
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
 
         serial = self.serial_from_device(name)
         if serial:
@@ -3586,7 +3586,7 @@ class notifier(object):
         if not ident:
             return None
 
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
 
         search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
         if not search:
@@ -3629,7 +3629,7 @@ class notifier(object):
         Given a partition a type and a disk name (adaX)
         get the first partition that matches the type
         """
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         #TODO get from MBR as well?
         search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-%s']/../name" % (device, name))
         if len(search) > 0:
@@ -3652,7 +3652,7 @@ class notifier(object):
         Returns:
             The provider xmlnode if found, None otherwise
         """
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         xpath = doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % "%s/%s" % (geom, name))
         if not xpath:
             return None
@@ -3679,7 +3679,7 @@ class notifier(object):
         if geomname in ('DISK', 'PART'):
             disks.append(provider.xpathEval("../name")[0].content)
         elif geomname in ('STRIPE', 'MIRROR', 'RAID3'):
-            doc = self.__geom_confxml()
+            doc = self._geom_confxml()
             for prov in provider.xpathEval("../consumer/provider/@ref"):
                 prov2 = doc.xpathEval("//provider[@id = '%s']" % prov.content)[0]
                 disks.append(prov2.xpathEval("../name")[0].content)
@@ -3689,7 +3689,7 @@ class notifier(object):
         return disks
 
     def zpool_parse(self, name):
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         p1 = self.__pipeopen("zpool status %s" % name)
         res = p1.communicate()[0]
         parse = zfs.parse_status(name, doc, res)
@@ -3893,7 +3893,7 @@ class notifier(object):
                 statepath = "./config/State"
                 ncomponents = int(provider.xpathEval("../config/Components")[0].content)
             consumers = provider.xpathEval("../consumer")
-            doc = self.__geom_confxml()
+            doc = self._geom_confxml()
             for consumer in consumers:
                 provid = consumer.xpathEval("./provider/@ref")[0].content
                 status = consumer.xpathEval(statepath)[0].content
@@ -3927,7 +3927,7 @@ class notifier(object):
         Returns:
             A list of Multipath objects
         """
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         return [Multipath(doc=doc, xmlnode=geom) \
                 for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom")
             ]
@@ -3979,7 +3979,7 @@ class notifier(object):
         """
         from freenasUI.storage.models import Volume, Disk
 
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
 
         mp_disks = []
         for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom"):
@@ -4021,7 +4021,7 @@ class notifier(object):
             self.multipath_create(name, disks)
 
         # Grab confxml again to take new multipaths into account
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         mp_ids = []
         for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom"):
             _disks = []
@@ -4064,7 +4064,7 @@ class notifier(object):
         """
 
         sw_name = get_sw_name()
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
 
         for pref in doc.xpathEval("//class[name = 'LABEL']/geom/provider[" \
                 "starts-with(name, 'ufs/%ss')]/../consumer/provider/@ref" \
@@ -4122,7 +4122,7 @@ class notifier(object):
             A dict describing the gmirror
         """
 
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         for geom in doc.xpathEval("//class[name = 'MIRROR']/geom[name = '%s']" % name):
             consumers = []
             gname = geom.xpathEval("./name")[0].content
@@ -4209,7 +4209,7 @@ class notifier(object):
         """
         Get _ALL_ geom nodes that depends on a given provider
         """
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         geoms = []
         for c in doc.xpathEval("//consumer/provider[@ref = '%s']" % (prvid, )):
             geom = c.parent.parent
@@ -4222,7 +4222,7 @@ class notifier(object):
         return geoms
 
     def disk_get_consumers(self, devname):
-        doc = self.__geom_confxml()
+        doc = self._geom_confxml()
         geom = doc.xpathEval("//class[name = 'DISK']/geom[name = '%s']" % (
             devname,
             ))
@@ -4253,7 +4253,7 @@ class notifier(object):
 
     def disk_wipe(self, devname, mode='quick'):
         if mode == 'quick':
-            doc = self.__geom_confxml()
+            doc = self._geom_confxml()
             parts = [node.content for node in doc.xpathEval("//class[name = 'PART']/geom[name = '%s']/provider/name" % devname)]
             """
             Wipe beginning and the end of every partition
