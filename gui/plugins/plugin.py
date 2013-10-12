@@ -48,9 +48,11 @@ class Plugin(object):
     urls = None
     size = None
 
-    def __init__(self, repo_id, application, version, category, created,
+    def __init__(
+        self, repo_id, application, version, category, created,
         rootinstall, arch, author, url, license, type, keywords, icon,
-        description, sha256, file, hash, urls, size):
+        description, sha256, file, hash, urls, size
+    ):
 
         self.repo_id = repo_id
         self.application = application
@@ -241,10 +243,10 @@ class Available(object):
         else:
             repos = p.listrepo()
 
-        if not repos and create == False:
+        if not repos and create is False:
             return None
 
-        elif not repos and create == True:
+        elif not repos and create is True:
             if not self.create_repo():
                 return None
             repos = p.listrepo()
@@ -254,12 +256,12 @@ class Available(object):
                 return repo
 
         for repo in repos:
-            repoid = repo[0]
+            #repoid = repo[0]
             description = repo[1]
             if re.match('Official FreeNAS Repository', description, re.I):
                 return repo
 
-        if create == True:
+        if create is True:
             if not self.create_repo():
                 return None
 
@@ -268,7 +270,7 @@ class Available(object):
                 return None
 
         for repo in repos:
-            repoid = repo[0]
+            #repoid = repo[0]
             description = repo[1]
             if re.match('Official FreeNAS Repository', description, re.I):
                 return repo
@@ -291,16 +293,18 @@ class Available(object):
                 continue
             id = parts[0]
             if id == repo_id:
-                fp = "%s/%s" % (mirrorsdir, parts[1]) 
+                fp = "%s/%s" % (mirrorsdir, parts[1])
                 with open(fp, "r") as mirrors:
                     for line in mirrors:
                         mirror = line.strip()
                         urls.append(mirror)
-                    mirrors.close() 
+                    mirrors.close()
 
         return urls
 
-    def get_index_entry(self, repo_id=None, application=None, arch=None, version=None):
+    def get_index_entry(
+        self, repo_id=None, application=None, arch=None, version=None
+    ):
         reposdir = "/var/db/pbi/repos"
         indexdir = "/var/db/pbi/index"
 
@@ -328,20 +332,22 @@ class Available(object):
                 with open(indexfile, "r") as f:
                     for line in f:
                         parts = line.split(':')
-                        if parts[0] == application.lower() and \
-                            parts[1] == arch.lower() and \
-                            parts[2] == version.lower():
-                            return parts 
+                        if (
+                            parts[0] == application.lower() and
+                            parts[1] == arch.lower() and
+                            parts[2] == version.lower()
+                        ):
+                            return parts
                     f.close()
 
-            except Exception as e:
+            except Exception:
                 log.debug("Unable to open up repo with sha256: %s", sha256)
                 return None
 
         return None
 
     def get_icon(self, repo_id=None, oid=None):
-        
+
         icon_path = None
         available = self.get_remote(repo_id=None, cache=True)
         for p in available:
@@ -357,7 +363,7 @@ class Available(object):
                     f.close()
 
             except:
-                log.debug("Unable to open icon %s", icon_path) 
+                log.debug("Unable to open icon %s", icon_path)
                 icon = None
 
         return icon
@@ -375,7 +381,7 @@ class Available(object):
             if rp.name == iplugin.plugin_name:
                 rplugin = rp
                 break
- 
+
         if rplugin and iplugin:
             if str(iplugin.plugin_version).lower() != str(rplugin.version).lower():
                 status = True
@@ -403,11 +409,12 @@ class Available(object):
                 "No results returned for repo %s", repo_id
             )
             return results
-       
+
         plugins = []
         for p in results:
             try:
-                index_entry = self.get_index_entry(repo_id,
+                index_entry = self.get_index_entry(
+                    repo_id,
                     application=p['Application'],
                     arch=p['Arch'],
                     version=p['Version']
