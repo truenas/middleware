@@ -73,6 +73,11 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 from django.db import models
 from django.db.models import Q
 
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
+
+
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.jail import Jls, Jexec
@@ -91,6 +96,7 @@ from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
 from freenasUI.common.warden import (Warden, WardenJail,
     WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
     WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING)
+from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -160,7 +166,10 @@ class StartNotify(threading.Thread):
         os.close(fd)
 
 
-class notifier:
+class notifier(object):
+
+    __metaclass__ = HookMetaclass
+
     from os import system as ___system
     from pwd import getpwnam as ___getpwnam
     IDENTIFIER = 'notifier'
