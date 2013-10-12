@@ -46,6 +46,7 @@ from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.system import send_mail
+from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.freeadmin.utils import set_language
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
@@ -73,6 +74,8 @@ class Message(object):
 
 
 class Alert(object):
+
+    __metaclass__ = HookMetaclass
 
     LOG_OK = "OK"
     LOG_CRIT = "CRIT"
@@ -197,6 +200,7 @@ class Alert(object):
         self.httpd_bindaddr()
         self.iscsi_portal_ips()
         self.multipaths_status()
+        super(Alert, self).perform()
 
     def write(self):
         with open(ALERT_FILE, 'w') as f:
