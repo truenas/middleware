@@ -170,10 +170,10 @@ class notifier(object):
 
     __metaclass__ = HookMetaclass
 
-    from os import system as ___system
+    from os import system as __system
     from pwd import getpwnam as ___getpwnam
     IDENTIFIER = 'notifier'
-    def __system(self, command):
+    def _system(self, command):
         log.debug("Executing: %s", command)
         # TODO: python's signal class should be taught about sigprocmask(2)
         # This is hacky hack to work around this issue.
@@ -184,13 +184,13 @@ class notifier(object):
         pomask = ctypes.pointer(omask)
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
-            self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s"
+            self.__system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s"
                            % (self.IDENTIFIER, ))
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
         log.debug("Executed: %s", command)
 
-    def __system_nolog(self, command):
+    def _system_nolog(self, command):
         log.debug("Executing: %s", command)
         # TODO: python's signal class should be taught about sigprocmask(2)
         # This is hacky hack to work around this issue.
@@ -201,14 +201,14 @@ class notifier(object):
         pomask = ctypes.pointer(omask)
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
-            retval = self.___system("(" + command + ") >/dev/null 2>&1")
+            retval = self.__system("(" + command + ") >/dev/null 2>&1")
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
         retval >>= 8
         log.debug("Executed: %s; returned %d", command, retval)
         return retval
 
-    def __pipeopen(self, command):
+    def _pipeopen(self, command):
         log.debug("Popen()ing: %s", command)
         return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
 
@@ -222,8 +222,8 @@ class notifier(object):
             # Provide generic start/stop/restart verbs for rc.d scripts
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
-                    self.__system("/usr/sbin/service " + what + " forcestop ")
-                self.__system("/usr/sbin/service " + what + " " + action)
+                    self._system("/usr/sbin/service " + what + " forcestop ")
+                self._system("/usr/sbin/service " + what + " " + action)
                 f = self._do_nada
             else:
                 raise ValueError("Internal error: Unknown command")
@@ -282,9 +282,9 @@ class notifier(object):
 
             if pidfile:
                 procname = " " + procname if procname else ""
-                retval = self.__pipeopen("/bin/pgrep -F %s%s" % (pidfile, procname)).wait()
+                retval = self._pipeopen("/bin/pgrep -F %s%s" % (pidfile, procname)).wait()
             else:
-                retval = self.__pipeopen("/bin/pgrep %s" % (procname,)).wait()
+                retval = self._pipeopen("/bin/pgrep %s" % (procname,)).wait()
 
             if retval == 0:
                 return True
@@ -369,7 +369,7 @@ class notifier(object):
             self.start(what)
 
     def _start_webshell(self):
-        self.__system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
+        self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     def _restart_webshell(self):
         try:
@@ -379,35 +379,35 @@ class notifier(object):
                 time.sleep(0.2)
         except:
             pass
-        self.__system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
+        self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     def _restart_iscsitarget(self):
-        self.__system("/usr/sbin/service ix-istgt quietstart")
-        self.__system("/usr/sbin/service istgt forcestop")
-        self.__system("/usr/sbin/service istgt restart")
+        self._system("/usr/sbin/service ix-istgt quietstart")
+        self._system("/usr/sbin/service istgt forcestop")
+        self._system("/usr/sbin/service istgt restart")
 
     def _restart_collectd(self):
-        self.__system("/usr/sbin/service ix-collectd quietstart")
-        self.__system("/usr/sbin/service collectd restart")
+        self._system("/usr/sbin/service ix-collectd quietstart")
+        self._system("/usr/sbin/service collectd restart")
 
     def _start_iscsitarget(self):
-        self.__system("/usr/sbin/service ix-istgt quietstart")
-        self.__system("/usr/sbin/service istgt restart")
+        self._system("/usr/sbin/service ix-istgt quietstart")
+        self._system("/usr/sbin/service istgt restart")
 
     def _stop_iscsitarget(self):
-        self.__system("/usr/sbin/service istgt forcestop")
+        self._system("/usr/sbin/service istgt forcestop")
 
     def _reload_iscsitarget(self):
-        self.__system("/usr/sbin/service ix-istgt quietstart")
-        self.__system("/usr/sbin/service istgt reload")
+        self._system("/usr/sbin/service ix-istgt quietstart")
+        self._system("/usr/sbin/service istgt reload")
 
     def _start_sysctl(self):
-        self.__system("/usr/sbin/service sysctl start")
-        self.__system("/usr/sbin/service ix-sysctl quietstart")
+        self._system("/usr/sbin/service sysctl start")
+        self._system("/usr/sbin/service ix-sysctl quietstart")
 
     def _reload_sysctl(self):
-        self.__system("/usr/sbin/service sysctl start")
-        self.__system("/usr/sbin/service ix-sysctl reload")
+        self._system("/usr/sbin/service sysctl start")
+        self._system("/usr/sbin/service ix-sysctl reload")
 
     def _start_network(self):
         from freenasUI.network.models import Alias, Interfaces
@@ -420,10 +420,10 @@ class notifier(object):
             except AssertionError:
                 auto_linklocal = 0
             if auto_linklocal == 0:
-                self.__system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
-                self.__system("/usr/sbin/service autolink auto_linklocal quietstart")
-                self.__system("/usr/sbin/service netif stop")
-        self.__system("/etc/netstart")
+                self._system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
+                self._system("/usr/sbin/service autolink auto_linklocal quietstart")
+                self._system("/usr/sbin/service netif stop")
+        self._system("/etc/netstart")
 
     def _stop_jails(self):
         from freenasUI.jails.models import Jails
@@ -431,11 +431,11 @@ class notifier(object):
             Warden().stop(jail=jail.jail_host)
 
     def _start_jails(self):
-        self.__system("/usr/sbin/service ix-warden start")
+        self._system("/usr/sbin/service ix-warden start")
         from freenasUI.jails.models import Jails
         for jail in Jails.objects.all():
             Warden().start(jail=jail.jail_host)
-        self.__system("/usr/sbin/service ix-plugins start")
+        self._system("/usr/sbin/service ix-plugins start")
         self.reload("http")
 
     def _restart_jails(self):
@@ -443,13 +443,13 @@ class notifier(object):
         self._start_jails()
 
     def _stop_pbid(self):
-        self.__system_nolog("/usr/sbin/service pbid stop")
+        self._system_nolog("/usr/sbin/service pbid stop")
 
     def _start_pbid(self):
-        self.__system_nolog("/usr/sbin/service pbid start")
+        self._system_nolog("/usr/sbin/service pbid start")
 
     def _restart_pbid(self):
-        self.__system_nolog("/usr/sbin/service pbid restart")
+        self._system_nolog("/usr/sbin/service pbid restart")
 
     def ifconfig_alias(self, iface, oldip=None, newip=None, oldnetmask=None, newnetmask=None):
         if not iface:
@@ -466,14 +466,14 @@ class notifier(object):
             cmd = None
 
         if cmd:
-            p = self.__pipeopen(cmd)
+            p = self._pipeopen(cmd)
             if p.wait() != 0:
                 return False
 
         cmd = "/sbin/ifconfig %s" % iface
         if newip:
             cmd += " -alias %s" % oldip
-            p = self.__pipeopen(cmd)
+            p = self._pipeopen(cmd)
             if p.wait() != 0:
                 return False
 
@@ -484,59 +484,59 @@ class notifier(object):
             cmd = None
 
         if cmd:
-            p = self.__pipeopen(cmd)
+            p = self._pipeopen(cmd)
             if p.wait() != 0:
                 return False
 
         return True
 
     def _reload_named(self):
-        self.__system("/usr/sbin/service named reload")
+        self._system("/usr/sbin/service named reload")
 
     def _reload_networkgeneral(self):
-        self.__system('/bin/hostname ""')
-        self.__system("/usr/sbin/service ix-hostname quietstart")
-        self.__system("/usr/sbin/service hostname quietstart")
-        self.__system("/usr/sbin/service routing restart")
+        self._system('/bin/hostname ""')
+        self._system("/usr/sbin/service ix-hostname quietstart")
+        self._system("/usr/sbin/service hostname quietstart")
+        self._system("/usr/sbin/service routing restart")
 
     def _reload_timeservices(self):
-        self.__system("/usr/sbin/service ix-localtime quietstart")
-        self.__system("/usr/sbin/service ix-ntpd quietstart")
-        self.__system("/usr/sbin/service ntpd restart")
+        self._system("/usr/sbin/service ix-localtime quietstart")
+        self._system("/usr/sbin/service ix-ntpd quietstart")
+        self._system("/usr/sbin/service ntpd restart")
         c = self.__open_db()
         c.execute("SELECT stg_timezone FROM system_settings ORDER BY -id LIMIT 1")
         os.environ['TZ'] = c.fetchone()[0]
         time.tzset()
 
     def _restart_smartd(self):
-        self.__system("/usr/sbin/service ix-smartd quietstart")
-        self.__system("/usr/sbin/service smartd forcestop")
-        self.__system("/usr/sbin/service smartd restart")
+        self._system("/usr/sbin/service ix-smartd quietstart")
+        self._system("/usr/sbin/service smartd forcestop")
+        self._system("/usr/sbin/service smartd restart")
 
     def _reload_ssh(self):
-        self.__system("/usr/sbin/service ix-sshd quietstart")
-        self.__system("/usr/sbin/service sshd reload")
+        self._system("/usr/sbin/service ix-sshd quietstart")
+        self._system("/usr/sbin/service sshd reload")
 
     def _start_ssh(self):
-        self.__system("/usr/sbin/service ix-sshd quietstart")
-        self.__system("/usr/sbin/service sshd start")
+        self._system("/usr/sbin/service ix-sshd quietstart")
+        self._system("/usr/sbin/service sshd start")
 
     def _stop_ssh(self):
-        self.__system("/usr/sbin/service sshd forcestop")
+        self._system("/usr/sbin/service sshd forcestop")
 
     def _restart_ssh(self):
-        self.__system("/usr/sbin/service ix-sshd quietstart")
-        self.__system("/usr/sbin/service sshd forcestop")
-        self.__system("/usr/sbin/service sshd restart")
+        self._system("/usr/sbin/service ix-sshd quietstart")
+        self._system("/usr/sbin/service sshd forcestop")
+        self._system("/usr/sbin/service sshd restart")
 
     def _reload_rsync(self):
-        self.__system("/usr/sbin/service ix-rsyncd quietstart")
-        self.__system("/usr/sbin/service rsyncd restart")
+        self._system("/usr/sbin/service ix-rsyncd quietstart")
+        self._system("/usr/sbin/service rsyncd restart")
 
     def _restart_rsync(self):
-        self.__system("/usr/sbin/service ix-rsyncd quietstart")
-        self.__system("/usr/sbin/service rsyncd forcestop")
-        self.__system("/usr/sbin/service rsyncd restart")
+        self._system("/usr/sbin/service ix-rsyncd quietstart")
+        self._system("/usr/sbin/service rsyncd forcestop")
+        self._system("/usr/sbin/service rsyncd restart")
 
     def _get_stg_directoryservice(self):
         from freenasUI.system.models import Settings
@@ -545,25 +545,25 @@ class notifier(object):
     def _started_nis(self):
         res = False
         if self._get_stg_directoryservice() == 'nis':
-            res = self.__system_nolog("/etc/directoryservice/NIS/ctl status")
+            res = self._system_nolog("/etc/directoryservice/NIS/ctl status")
         return (True if res == 0 else False)
 
     def _start_nis(self):
         res = False
         if self._get_stg_directoryservice() == 'nis':
-            res = self.__system_nolog("/etc/directoryservice/NIS/ctl start")
+            res = self._system_nolog("/etc/directoryservice/NIS/ctl start")
         return (True if res == 0 else False)
 
     def _restart_nis(self):
         res = False
         if self._get_stg_directoryservice() == 'nis':
-            res = self.__system_nolog("/etc/directoryservice/NIS/ctl restart")
+            res = self._system_nolog("/etc/directoryservice/NIS/ctl restart")
         return (True if res == 0 else False)
 
     def _stop_nis(self):
         res = False
         if self._get_stg_directoryservice() == 'nis':
-            res = self.__system_nolog("/etc/directoryservice/NIS/ctl stop")
+            res = self._system_nolog("/etc/directoryservice/NIS/ctl stop")
         return (True if res == 0 else False)
 
     def _started_ldap(self):
@@ -585,46 +585,46 @@ class notifier(object):
     def _start_ldap(self):
         res = False
         if self._get_stg_directoryservice() == 'ldap':
-            res = self.__system_nolog("/etc/directoryservice/LDAP/ctl start")
+            res = self._system_nolog("/etc/directoryservice/LDAP/ctl start")
         return (True if res == 0 else False)
 
     def _stop_ldap(self):
         res = False
         if self._get_stg_directoryservice() == 'ldap':
-            res = self.__system_nolog("/etc/directoryservice/LDAP/ctl stop")
+            res = self._system_nolog("/etc/directoryservice/LDAP/ctl stop")
         return (True if res == 0 else False)
 
     def _restart_ldap(self):
         res = False
         if self._get_stg_directoryservice() == 'ldap':
-            res = self.__system_nolog("/etc/directoryservice/LDAP/ctl restart")
+            res = self._system_nolog("/etc/directoryservice/LDAP/ctl restart")
         return (True if res == 0 else False)
 
     def _clear_activedirectory_config(self):
-        self.__system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
+        self._system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
 
     def _started_nt4(self):
         res = False
         if self._get_stg_directoryservice() == 'nt4':
-            res = self.__system_nolog("/etc/rc.d/ix-nt4 status")
+            res = self._system_nolog("/etc/rc.d/ix-nt4 status")
         return (True if res == 0 else False)
 
     def _start_nt4(self):
         res = False
         if self._get_stg_directoryservice() == 'nt4':
-            res = self.__system_nolog("/etc/directoryservice/NT4/ctl start")
+            res = self._system_nolog("/etc/directoryservice/NT4/ctl start")
         return (True if res == 0 else False)
 
     def _restart_nt4(self):
         res = False
         if self._get_stg_directoryservice() == 'nt4':
-            res = self.__system_nolog("/etc/directoryservice/NT4/ctl restart")
+            res = self._system_nolog("/etc/directoryservice/NT4/ctl restart")
         return (True if res == 0 else False)
 
     def _stop_nt4(self):
         res = False
         if self._get_stg_directoryservice() == 'nt4':
-            res = self.__system_nolog("/etc/directoryservice/NT4/ctl stop")
+            res = self._system_nolog("/etc/directoryservice/NT4/ctl stop")
         return (True if res == 0 else False)
 
     def _started_activedirectory(self):
@@ -632,7 +632,7 @@ class notifier(object):
         from freenasUI.common.system import activedirectory_enabled
 
         for srv in ('kinit', 'activedirectory', ):
-            if (self.__system_nolog('/usr/sbin/service ix-%s status' % (srv, ))
+            if (self._system_nolog('/usr/sbin/service ix-%s status' % (srv, ))
                 != 0):
                 return False
 
@@ -651,82 +651,82 @@ class notifier(object):
     def _start_activedirectory(self):
         res = False
         if self._get_stg_directoryservice() == 'activedirectory':
-            res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
+            res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
         return (True if res == 0 else False)
 
     def _stop_activedirectory(self):
         res = False
         if self._get_stg_directoryservice() == 'activedirectory':
-            res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
+            res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
         return (True if res == 0 else False)
 
     def _restart_activedirectory(self):
         res = False
         if self._get_stg_directoryservice() == 'activedirectory':
-            res = self.__system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
+            res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
         return (True if res == 0 else False)
 
     def _restart_syslogd(self):
-        self.__system("/usr/sbin/service ix-syslogd quietstart")
-        self.__system("/usr/sbin/service syslogd restart")
+        self._system("/usr/sbin/service ix-syslogd quietstart")
+        self._system("/usr/sbin/service syslogd restart")
 
     def _start_syslogd(self):
-        self.__system("/usr/sbin/service ix-syslogd quietstart")
-        self.__system("/usr/sbin/service syslogd start")
+        self._system("/usr/sbin/service ix-syslogd quietstart")
+        self._system("/usr/sbin/service syslogd start")
 
     def _reload_tftp(self):
-        self.__system("/usr/sbin/service ix-inetd quietstart")
-        self.__system("/usr/sbin/service inetd forcestop")
-        self.__system("/usr/sbin/service inetd restart")
+        self._system("/usr/sbin/service ix-inetd quietstart")
+        self._system("/usr/sbin/service inetd forcestop")
+        self._system("/usr/sbin/service inetd restart")
 
     def _restart_tftp(self):
-        self.__system("/usr/sbin/service ix-inetd quietstart")
-        self.__system("/usr/sbin/service inetd forcestop")
-        self.__system("/usr/sbin/service inetd restart")
+        self._system("/usr/sbin/service ix-inetd quietstart")
+        self._system("/usr/sbin/service inetd forcestop")
+        self._system("/usr/sbin/service inetd restart")
 
     def _restart_cron(self):
-        self.__system("/usr/sbin/service ix-crontab quietstart")
+        self._system("/usr/sbin/service ix-crontab quietstart")
 
     def _start_motd(self):
-        self.__system("/usr/sbin/service ix-motd quietstart")
-        self.__system("/usr/sbin/service motd quietstart")
+        self._system("/usr/sbin/service ix-motd quietstart")
+        self._system("/usr/sbin/service motd quietstart")
 
     def _start_ttys(self):
-        self.__system("/usr/sbin/service ix-ttys quietstart")
+        self._system("/usr/sbin/service ix-ttys quietstart")
 
     def _reload_ftp(self):
-        self.__system("/usr/sbin/service ix-proftpd quietstart")
-        self.__system("/usr/sbin/service proftpd restart")
+        self._system("/usr/sbin/service ix-proftpd quietstart")
+        self._system("/usr/sbin/service proftpd restart")
 
     def _restart_ftp(self):
-        self.__system("/usr/sbin/service ix-proftpd quietstart")
-        self.__system("/usr/sbin/service proftpd forcestop")
-        self.__system("/usr/sbin/service proftpd restart")
-        self.__system("sleep 1")
+        self._system("/usr/sbin/service ix-proftpd quietstart")
+        self._system("/usr/sbin/service proftpd forcestop")
+        self._system("/usr/sbin/service proftpd restart")
+        self._system("sleep 1")
 
     def _start_ftp(self):
-        self.__system("/usr/sbin/service ix-proftpd quietstart")
-        self.__system("/usr/sbin/service proftpd start")
+        self._system("/usr/sbin/service ix-proftpd quietstart")
+        self._system("/usr/sbin/service proftpd start")
 
     def _start_ups(self):
-        self.__system("/usr/sbin/service ix-ups quietstart")
-        self.__system("/usr/sbin/service nut start")
-        self.__system("/usr/sbin/service nut_upsmon start")
-        self.__system("/usr/sbin/service nut_upslog start")
+        self._system("/usr/sbin/service ix-ups quietstart")
+        self._system("/usr/sbin/service nut start")
+        self._system("/usr/sbin/service nut_upsmon start")
+        self._system("/usr/sbin/service nut_upslog start")
 
     def _stop_ups(self):
-        self.__system("/usr/sbin/service nut_upslog forcestop")
-        self.__system("/usr/sbin/service nut_upsmon forcestop")
-        self.__system("/usr/sbin/service nut forcestop")
+        self._system("/usr/sbin/service nut_upslog forcestop")
+        self._system("/usr/sbin/service nut_upsmon forcestop")
+        self._system("/usr/sbin/service nut forcestop")
 
     def _restart_ups(self):
-        self.__system("/usr/sbin/service ix-ups quietstart")
-        self.__system("/usr/sbin/service nut forcestop")
-        self.__system("/usr/sbin/service nut_upsmon forcestop")
-        self.__system("/usr/sbin/service nut_upslog forcestop")
-        self.__system("/usr/sbin/service nut restart")
-        self.__system("/usr/sbin/service nut_upsmon restart")
-        self.__system("/usr/sbin/service nut_upslog restart")
+        self._system("/usr/sbin/service ix-ups quietstart")
+        self._system("/usr/sbin/service nut forcestop")
+        self._system("/usr/sbin/service nut_upsmon forcestop")
+        self._system("/usr/sbin/service nut_upslog forcestop")
+        self._system("/usr/sbin/service nut restart")
+        self._system("/usr/sbin/service nut_upsmon restart")
+        self._system("/usr/sbin/service nut_upslog restart")
 
     def _started_ups(self):
         from freenasUI.services.models import UPS
@@ -739,72 +739,72 @@ class notifier(object):
         return self._started(svc, sn)
 
     def _load_afp(self):
-        self.__system("/usr/sbin/service ix-afpd quietstart")
-        self.__system("/usr/sbin/service dbus quietstart")
-        self.__system("/usr/sbin/service avahi-daemon quietstart")
-        self.__system("/usr/sbin/service netatalk quietstart")
+        self._system("/usr/sbin/service ix-afpd quietstart")
+        self._system("/usr/sbin/service dbus quietstart")
+        self._system("/usr/sbin/service avahi-daemon quietstart")
+        self._system("/usr/sbin/service netatalk quietstart")
 
     def _start_afp(self):
-        self.__system("/usr/sbin/service ix-afpd start")
-        self.__system("/usr/sbin/service dbus start")
-        self.__system("/usr/sbin/service avahi-daemon start")
-        self.__system("/usr/sbin/service netatalk start")
+        self._system("/usr/sbin/service ix-afpd start")
+        self._system("/usr/sbin/service dbus start")
+        self._system("/usr/sbin/service avahi-daemon start")
+        self._system("/usr/sbin/service netatalk start")
 
     def _stop_afp(self):
-        self.__system("/usr/sbin/service netatalk forcestop")
-        self.__system("/usr/sbin/service avahi-daemon forcestop")
-        self.__system("/usr/sbin/service dbus forcestop")
+        self._system("/usr/sbin/service netatalk forcestop")
+        self._system("/usr/sbin/service avahi-daemon forcestop")
+        self._system("/usr/sbin/service dbus forcestop")
 
     def _restart_afp(self):
         self._stop_afp()
         self._start_afp()
 
     def _reload_afp(self):
-        self.__system("/usr/sbin/service ix-afpd quietstart")
-        self.__system("killall -1 netatalk")
+        self._system("/usr/sbin/service ix-afpd quietstart")
+        self._system("killall -1 netatalk")
 
     def _reload_nfs(self):
-        self.__system("/usr/sbin/service ix-nfsd quietstart")
-        self.__system("/usr/sbin/service mountd reload")
+        self._system("/usr/sbin/service ix-nfsd quietstart")
+        self._system("/usr/sbin/service mountd reload")
 
     def _restart_nfs(self):
-        self.__system("/usr/sbin/service lockd forcestop")
-        self.__system("/usr/sbin/service statd forcestop")
-        self.__system("/usr/sbin/service mountd forcestop")
-        self.__system("/usr/sbin/service nfsd forcestop")
-        self.__system("/usr/sbin/service ix-nfsd quietstart")
-        self.__system("/usr/sbin/service mountd quietstart")
-        self.__system("/usr/sbin/service nfsd quietstart")
-        self.__system("/usr/sbin/service statd quietstart")
-        self.__system("/usr/sbin/service lockd quietstart")
+        self._system("/usr/sbin/service lockd forcestop")
+        self._system("/usr/sbin/service statd forcestop")
+        self._system("/usr/sbin/service mountd forcestop")
+        self._system("/usr/sbin/service nfsd forcestop")
+        self._system("/usr/sbin/service ix-nfsd quietstart")
+        self._system("/usr/sbin/service mountd quietstart")
+        self._system("/usr/sbin/service nfsd quietstart")
+        self._system("/usr/sbin/service statd quietstart")
+        self._system("/usr/sbin/service lockd quietstart")
 
     def _stop_nfs(self):
-        self.__system("/usr/sbin/service lockd forcestop")
-        self.__system("/usr/sbin/service statd forcestop")
-        self.__system("/usr/sbin/service mountd forcestop")
-        self.__system("/usr/sbin/service nfsd forcestop")
+        self._system("/usr/sbin/service lockd forcestop")
+        self._system("/usr/sbin/service statd forcestop")
+        self._system("/usr/sbin/service mountd forcestop")
+        self._system("/usr/sbin/service nfsd forcestop")
 
     def _start_nfs(self):
-        self.__system("/usr/sbin/service ix-nfsd quietstart")
-        self.__system("/usr/sbin/service mountd quietstart")
-        self.__system("/usr/sbin/service nfsd quietstart")
-        self.__system("/usr/sbin/service statd quietstart")
-        self.__system("/usr/sbin/service lockd quietstart")
+        self._system("/usr/sbin/service ix-nfsd quietstart")
+        self._system("/usr/sbin/service mountd quietstart")
+        self._system("/usr/sbin/service nfsd quietstart")
+        self._system("/usr/sbin/service statd quietstart")
+        self._system("/usr/sbin/service lockd quietstart")
 
     def _force_stop_jail(self):
-        self.__system("/usr/sbin/service jail forcestop")
+        self._system("/usr/sbin/service jail forcestop")
 
     def _start_plugins(self, jail=None, plugin=None):
         if jail and plugin:
-            self.__system_nolog("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
+            self._system_nolog("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
         else:
-            self.__system_nolog("/usr/sbin/service ix-plugins forcestart")
+            self._system_nolog("/usr/sbin/service ix-plugins forcestart")
 
     def _stop_plugins(self, jail=None, plugin=None):
         if jail and plugin:
-            self.__system_nolog("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
+            self._system_nolog("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
         else:
-            self.__system_nolog("/usr/sbin/service ix-plugins forcestop")
+            self._system_nolog("/usr/sbin/service ix-plugins forcestop")
 
     def _restart_plugins(self, jail=None, plugin=None):
         self._stop_plugins(jail, plugin)
@@ -813,10 +813,10 @@ class notifier(object):
     def _started_plugins(self, jail=None, plugin=None):
         res = False
         if jail and plugin:
-            if self.__system_nolog("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
+            if self._system_nolog("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
                 res = True 
         else: 
-            if self.__system_nolog("/usr/sbin/service ix-plugins status") == 0:
+            if self._system_nolog("/usr/sbin/service ix-plugins status") == 0:
                 res = True 
         return res
 
@@ -844,79 +844,79 @@ class notifier(object):
 
     def start_ataidle(self, what=None):
         if what is not None:
-            self.__system("/usr/sbin/service ix-ataidle quietstart %s" % what)
+            self._system("/usr/sbin/service ix-ataidle quietstart %s" % what)
         else:
-            self.__system("/usr/sbin/service ix-ataidle quietstart")
+            self._system("/usr/sbin/service ix-ataidle quietstart")
 
     def start_ssl(self, what=None):
         if what is not None:
-            self.__system("/usr/sbin/service ix-ssl quietstart %s" % what)
+            self._system("/usr/sbin/service ix-ssl quietstart %s" % what)
         else:
-            self.__system("/usr/sbin/service ix-ssl quietstart")
+            self._system("/usr/sbin/service ix-ssl quietstart")
 
     def _restart_dynamicdns(self):
-        self.__system("/usr/sbin/service ix-inadyn quietstart")
-        self.__system("/usr/sbin/service inadyn-mt forcestop")
-        self.__system("/usr/sbin/service inadyn-mt restart")
+        self._system("/usr/sbin/service ix-inadyn quietstart")
+        self._system("/usr/sbin/service inadyn-mt forcestop")
+        self._system("/usr/sbin/service inadyn-mt restart")
 
     def _restart_system(self):
-        self.__system("/bin/sleep 3 && /sbin/shutdown -r now &")
+        self._system("/bin/sleep 3 && /sbin/shutdown -r now &")
 
     def _stop_system(self):
-        self.__system("/sbin/shutdown -p now")
+        self._system("/sbin/shutdown -p now")
 
     def _reload_cifs(self):
-        self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("killall -1 avahi-daemon")
-        self.__system("/usr/sbin/service samba forcereload")
+        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("killall -1 avahi-daemon")
+        self._system("/usr/sbin/service samba forcereload")
 
     def _restart_cifs(self):
-        self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("/usr/sbin/service dbus forcestop")
-        self.__system("/usr/sbin/service dbus restart")
-        self.__system("/usr/sbin/service avahi-daemon forcestop")
-        self.__system("/usr/sbin/service avahi-daemon restart")
-        self.__system("/usr/sbin/service samba forcestop")
-        self.__system("/usr/sbin/service samba quietrestart")
+        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service dbus forcestop")
+        self._system("/usr/sbin/service dbus restart")
+        self._system("/usr/sbin/service avahi-daemon forcestop")
+        self._system("/usr/sbin/service avahi-daemon restart")
+        self._system("/usr/sbin/service samba forcestop")
+        self._system("/usr/sbin/service samba quietrestart")
 
     def _start_cifs(self):
-        self.__system("/usr/sbin/service ix-samba quietstart")
-        self.__system("/usr/sbin/service dbus quietstart")
-        self.__system("/usr/sbin/service avahi-daemon quietstart")
-        self.__system("/usr/sbin/service samba quietstart")
+        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service dbus quietstart")
+        self._system("/usr/sbin/service avahi-daemon quietstart")
+        self._system("/usr/sbin/service samba quietstart")
 
     def _stop_cifs(self):
-        self.__system("/usr/sbin/service dbus forcestop")
-        self.__system("/usr/sbin/service dbus restart")
-        self.__system("/usr/sbin/service avahi-daemon forcestop")
-        self.__system("/usr/sbin/service avahi-daemon restart")
-        self.__system("/usr/sbin/service samba forcestop")
+        self._system("/usr/sbin/service dbus forcestop")
+        self._system("/usr/sbin/service dbus restart")
+        self._system("/usr/sbin/service avahi-daemon forcestop")
+        self._system("/usr/sbin/service avahi-daemon restart")
+        self._system("/usr/sbin/service samba forcestop")
 
     def _start_snmp(self):
-        self.__system("/usr/sbin/service ix-bsnmpd quietstart")
-        self.__system("/usr/sbin/service bsnmpd quietstart")
+        self._system("/usr/sbin/service ix-bsnmpd quietstart")
+        self._system("/usr/sbin/service bsnmpd quietstart")
 
     def _stop_snmp(self):
-        self.__system("/usr/sbin/service bsnmpd quietstop")
+        self._system("/usr/sbin/service bsnmpd quietstop")
 
     def _restart_snmp(self):
-        self.__system("/usr/sbin/service ix-bsnmpd quietstart")
-        self.__system("/usr/sbin/service bsnmpd forcestop")
-        self.__system("/usr/sbin/service bsnmpd quietstart")
+        self._system("/usr/sbin/service ix-bsnmpd quietstart")
+        self._system("/usr/sbin/service bsnmpd forcestop")
+        self._system("/usr/sbin/service bsnmpd quietstart")
 
     def _restart_http(self):
-        self.__system("/usr/sbin/service ix-nginx quietstart")
-        self.__system("/usr/sbin/service nginx restart")
+        self._system("/usr/sbin/service ix-nginx quietstart")
+        self._system("/usr/sbin/service nginx restart")
 
     def _reload_http(self):
-        self.__system("/usr/sbin/service ix-nginx quietstart")
-        self.__system("/usr/sbin/service nginx reload")
+        self._system("/usr/sbin/service ix-nginx quietstart")
+        self._system("/usr/sbin/service nginx reload")
 
     def _reload_loader(self):
-        self.__system("/usr/sbin/service ix-loader reload")
+        self._system("/usr/sbin/service ix-loader reload")
 
     def _start_loader(self):
-        self.__system("/usr/sbin/service ix-loader quietstart")
+        self._system("/usr/sbin/service ix-loader quietstart")
 
     def __saver_loaded(self):
         pipe = os.popen("kldstat|grep daemon_saver")
@@ -926,11 +926,11 @@ class notifier(object):
 
     def _start_saver(self):
         if not self.__saver_loaded():
-            self.__system("kldload daemon_saver")
+            self._system("kldload daemon_saver")
 
     def _stop_saver(self):
         if self.__saver_loaded():
-            self.__system("kldunload daemon_saver")
+            self._system("kldunload daemon_saver")
 
     def _restart_saver(self):
         self._stop_saver()
@@ -960,9 +960,9 @@ class notifier(object):
         # so next partition starts at mutiple of 128.
         swapsize = ((swapsize+127)/128)*128
         # To be safe, wipe out the disk, both ends... before we start
-        self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
         try:
-            p1 = self.__pipeopen("diskinfo %s" % (devname, ))
+            p1 = self._pipeopen("diskinfo %s" % (devname, ))
             size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
         except:
             log.error("Unable to determine size of %s", devname)
@@ -972,7 +972,7 @@ class notifier(object):
                 raise MiddlewareError('Your disk size must be higher than %dGB' % (swapgb, ))
             # HACK: force the wipe at the end of the disk to always succeed. This
             # is a lame workaround.
-            self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
+            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
                 size / 1024 - 4,
                 ))
@@ -990,7 +990,7 @@ class notifier(object):
         commands.append("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (devname))
 
         for command in commands:
-            proc = self.__pipeopen(command)
+            proc = self._pipeopen(command)
             proc.wait()
             if proc.returncode != 0:
                 raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
@@ -1004,13 +1004,13 @@ class notifier(object):
         """Unlabel the disk"""
         swapdev = self.part_type_from_device('swap', devname)
         if swapdev != '':
-            self.__system("swapoff /dev/%s.eli" % swapdev)
-            self.__system("geli detach /dev/%s" % swapdev)
-        self.__system("gpart destroy -F /dev/%s" % devname)
+            self._system("swapoff /dev/%s.eli" % swapdev)
+            self._system("geli detach /dev/%s" % swapdev)
+        self._system("gpart destroy -F /dev/%s" % devname)
 
         # Wipe out the partition table by doing an additional iterate of create/destroy
-        self.__system("gpart create -s gpt /dev/%s" % devname)
-        self.__system("gpart destroy -F /dev/%s" % devname)
+        self._system("gpart create -s gpt /dev/%s" % devname)
+        self._system("gpart destroy -F /dev/%s" % devname)
 
         # We might need to sync with reality (e.g. uuid -> devname)
         # Invalidating confxml is required or changes wont be seen
@@ -1027,8 +1027,8 @@ class notifier(object):
         geli_keyfile = volume.get_geli_keyfile()
         if not os.path.exists(geli_keyfile):
             if not os.path.exists(GELI_KEYPATH):
-                self.__system("mkdir -p %s" % (GELI_KEYPATH, ))
-            self.__system("dd if=/dev/random of=%s bs=64 count=1" % (geli_keyfile, ))
+                self._system("mkdir -p %s" % (GELI_KEYPATH, ))
+            self._system("dd if=/dev/random of=%s bs=64 count=1" % (geli_keyfile, ))
 
         if passphrase is not None:
             _passphrase = " -J %s" % passphrase
@@ -1037,8 +1037,8 @@ class notifier(object):
             _passphrase = "-P"
             _passphrase2 = "-p"
 
-        self.__system("geli init -s 4096 -B none %s -K %s /dev/%s" % (_passphrase, geli_keyfile, devname))
-        self.__system("geli attach %s -k %s /dev/%s" % (_passphrase2, geli_keyfile, devname))
+        self._system("geli init -s 4096 -B none %s -K %s /dev/%s" % (_passphrase, geli_keyfile, devname))
+        self._system("geli attach %s -k %s /dev/%s" % (_passphrase2, geli_keyfile, devname))
         # TODO: initialize the provider in background (wipe with random data)
 
         ident = self.device_to_identifier(diskname)
@@ -1058,7 +1058,7 @@ class notifier(object):
         else:
             command.append("-P")
         command.extend(["-K", key, dev])
-        proc = self.__pipeopen(' '.join(command))
+        proc = self._pipeopen(' '.join(command))
         err = proc.communicate()[1]
         if proc.returncode != 0:
             raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
@@ -1082,9 +1082,9 @@ class notifier(object):
             A new passphrase cannot be set without destroying the recovery key
             """
             if rmrecovery is True:
-                proc = self.__pipeopen("geli delkey -n 1 %s" % (dev, ))
+                proc = self._pipeopen("geli delkey -n 1 %s" % (dev, ))
                 proc.communicate()
-            proc = self.__pipeopen("geli setkey -n 0 %s -K %s %s" % (
+            proc = self._pipeopen("geli setkey -n 0 %s -K %s %s" % (
                 _passphrase,
                 geli_keyfile,
                 dev,
@@ -1105,7 +1105,7 @@ class notifier(object):
         geli_keyfile = volume.get_geli_keyfile()
 
         # Generate new key as .tmp
-        self.__system("dd if=/dev/random of=%s.tmp bs=64 count=1" % (geli_keyfile, ))
+        self._system("dd if=/dev/random of=%s.tmp bs=64 count=1" % (geli_keyfile, ))
         error = False
         applied = []
         if passphrase:
@@ -1114,7 +1114,7 @@ class notifier(object):
             _passphrase = "-P"
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            proc = self.__pipeopen("geli setkey %s -n %d -K %s.tmp %s" % (
+            proc = self._pipeopen("geli setkey %s -n %d -K %s.tmp %s" % (
                 _passphrase,
                 slot,
                 geli_keyfile,
@@ -1131,7 +1131,7 @@ class notifier(object):
         # If rekey failed for one of the devs, revert for the ones already applied
         if error:
             for dev in applied:
-                proc = self.__pipeopen("geli setkey %s -n %d -k %s.tmp -K %s %s" % (
+                proc = self._pipeopen("geli setkey %s -n %d -k %s.tmp -K %s %s" % (
                     _passphrase,
                     slot,
                     geli_keyfile,
@@ -1142,24 +1142,24 @@ class notifier(object):
                 proc.communicate()
             raise MiddlewareError("Unable to set key: %s" % (err, ))
         else:
-            self.__system("mv %s.tmp %s" % (geli_keyfile, geli_keyfile))
+            self._system("mv %s.tmp %s" % (geli_keyfile, geli_keyfile))
 
     def geli_recoverykey_add(self, volume, passphrase=None):
 
         reckey_file = tempfile.mktemp(dir='/tmp/')
-        self.__system("dd if=/dev/random of=%s bs=64 count=1" % (reckey_file, ))
+        self._system("dd if=/dev/random of=%s bs=64 count=1" % (reckey_file, ))
 
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
             if passphrase is not None:
-                proc = self.__pipeopen("geli setkey -n 1 -K %s -J %s %s" % (
+                proc = self._pipeopen("geli setkey -n 1 -K %s -J %s %s" % (
                     reckey_file,
                     passphrase,
                     dev,
                     )
                     )
             else:
-                proc = self.__pipeopen("geli setkey -n 1 -K %s -P %s" % (
+                proc = self._pipeopen("geli setkey -n 1 -K %s -P %s" % (
                     reckey_file,
                     dev,
                     )
@@ -1173,7 +1173,7 @@ class notifier(object):
 
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            proc = self.__pipeopen("geli delkey -n %d %s" % (
+            proc = self._pipeopen("geli delkey -n %d %s" % (
                 slot,
                 dev,
                 ))
@@ -1197,7 +1197,7 @@ class notifier(object):
             _passphrase = "-p"
         else:
             _passphrase = "-j %s" % passphrase
-        proc = self.__pipeopen("geli attach %s -k %s %s" % (
+        proc = self._pipeopen("geli attach %s -k %s %s" % (
             _passphrase,
             key,
             prov,
@@ -1224,7 +1224,7 @@ class notifier(object):
             _passphrase = "-j %s" % passphrase
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            proc = self.__pipeopen("geli attach %s -k %s %s" % (
+            proc = self._pipeopen("geli attach %s -k %s %s" % (
                 _passphrase,
                 geli_keyfile,
                 dev,
@@ -1257,7 +1257,7 @@ class notifier(object):
         for dev in zpool.get_devs():
             if not dev.name.endswith(".eli"):
                 continue
-            proc = self.__pipeopen("geli attach %s -k %s %s" % (
+            proc = self._pipeopen("geli attach %s -k %s %s" % (
                _passphrase,
                geli_keyfile,
                dev.name.replace(".eli", ""),
@@ -1274,7 +1274,7 @@ class notifier(object):
         Returns false if a device suffixed with .eli exists at the end of
         the operation and true otherwise
         """
-        proc = self.__pipeopen("geli detach %s" % (
+        proc = self._pipeopen("geli detach %s" % (
             dev,
             ))
         err = proc.communicate()[1]
@@ -1299,7 +1299,7 @@ class notifier(object):
             if not parts:
                 parts = [disk]
             for part in parts:
-                proc = self.__pipeopen("geli dump %s" % part)
+                proc = self._pipeopen("geli dump %s" % part)
                 proc.communicate()
                 if proc.returncode == 0:
                     gptid = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']/provider/name" % part)
@@ -1347,7 +1347,7 @@ class notifier(object):
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
         # Grab all disk groups' id matching the volume ID
-        self.__system("swapoff -a")
+        self._system("swapoff -a")
         device_list = []
 
         """
@@ -1392,7 +1392,7 @@ class notifier(object):
 
         altroot = 'none' if path else '/mnt'
         mountpoint = path if path else ('/%s' % (z_name, ))
-        p1 = self.__pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
+        p1 = self._pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
                       "-o failmode=continue "
                       "-o autoexpand=on "
                       "-O aclmode=passthrough -O aclinherit=passthrough "
@@ -1402,7 +1402,7 @@ class notifier(object):
             raise MiddlewareError('Unable to create the pool: %s' % error)
 
         #We've our pool, lets retrieve the GUID
-        p1 = self.__pipeopen("zpool get guid %s" % z_name)
+        p1 = self._pipeopen("zpool get guid %s" % z_name)
         if p1.wait() == 0:
             line = p1.communicate()[0].split('\n')[1].strip()
             volume.vol_guid = re.sub('\s+', ' ', line).split(' ')[2]
@@ -1412,7 +1412,7 @@ class notifier(object):
 
         self.zfs_inherit_option(z_name, 'mountpoint')
 
-        self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
+        self._system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
         #TODO: geli detach -l
 
     def zfs_volume_attach_group(self, volume, group, encrypt=False):
@@ -1432,7 +1432,7 @@ class notifier(object):
         encrypt = (volume.vol_encrypt >= 1)
 
         # FIXME swapoff -a is overkill
-        self.__system("swapoff -a")
+        self._system("swapoff -a")
         if vgrp_type != 'stripe':
             z_vdev += " " + vgrp_type
 
@@ -1441,7 +1441,7 @@ class notifier(object):
         z_vdev += " ".join([''] + vdevs)
 
         # Finally, attach new groups to the zpool.
-        self.__system("zpool add -f %s %s" % (z_name, z_vdev))
+        self._system("zpool add -f %s %s" % (z_name, z_vdev))
         #TODO: geli detach -l
         self._reload_disk()
 
@@ -1456,7 +1456,7 @@ class notifier(object):
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
-        zfsproc = self.__pipeopen("/sbin/zfs create %s -V %s %s" % (options, size, name))
+        zfsproc = self._pipeopen("/sbin/zfs create %s -V %s %s" % (options, size, name))
         zfs_err = zfsproc.communicate()[1]
         zfs_error = zfsproc.wait()
         return zfs_error, zfs_err
@@ -1469,7 +1469,7 @@ class notifier(object):
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
-        zfsproc = self.__pipeopen("/sbin/zfs create %s %s" % (options, path))
+        zfsproc = self._pipeopen("/sbin/zfs create %s %s" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
         if zfs_error == 0:
@@ -1478,7 +1478,7 @@ class notifier(object):
 
     def list_zfs_vols(self, volname):
         """Return a dictionary that contains all ZFS volumes list"""
-        zfsproc = self.__pipeopen("/sbin/zfs list -H -o name,volsize,used,avail,refer -t volume -r %s" % (str(volname),))
+        zfsproc = self._pipeopen("/sbin/zfs list -H -o name,volsize,used,avail,refer -t volume -r %s" % (str(volname),))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_output = zfs_output.split('\n')
         retval = {}
@@ -1495,7 +1495,7 @@ class notifier(object):
         return retval
 
     def list_zfs_fsvols(self):
-        proc = self.__pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
+        proc = self._pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
         out, err = proc.communicate()
         out = out.split('\n')
         retval = OrderedDict()
@@ -1511,7 +1511,7 @@ class notifier(object):
         Check if a given snapshot is being hold by the replication system
         DISCLAIMER: mntlock has to be acquired before this call
         """
-        zfsproc = self.__pipeopen("zfs get -H freenas:state %s" % (name))
+        zfsproc = self._pipeopen("zfs get -H freenas:state %s" % (name))
         output = zfsproc.communicate()[0]
         if output != '':
             fsname, attrname, value, source = output.split('\n')[0].split('\t')
@@ -1531,7 +1531,7 @@ class notifier(object):
         elif recursive:
             try:
                 with mntlock(blocking=False):
-                    zfsproc = self.__pipeopen("/sbin/zfs list -Hr -t snapshot -o name %s" % (path))
+                    zfsproc = self._pipeopen("/sbin/zfs list -Hr -t snapshot -o name %s" % (path))
                     snaps = zfsproc.communicate()[0]
                     for snap in filter(None, snaps.splitlines()):
                         if self.__snapshot_hold(snap):
@@ -1541,9 +1541,9 @@ class notifier(object):
                 retval = 'Try again later.'
         if retval is None:
             if recursive:
-                zfsproc = self.__pipeopen("zfs destroy -r %s" % (path))
+                zfsproc = self._pipeopen("zfs destroy -r %s" % (path))
             else:
-                zfsproc = self.__pipeopen("zfs destroy %s" % (path))
+                zfsproc = self._pipeopen("zfs destroy %s" % (path))
             retval = zfsproc.communicate()[1]
             if zfsproc.returncode == 0:
                 from freenasUI.storage.models import Task, Replication
@@ -1558,7 +1558,7 @@ class notifier(object):
         return retval
 
     def destroy_zfs_vol(self, name):
-        zfsproc = self.__pipeopen("zfs destroy %s" % (str(name),))
+        zfsproc = self._pipeopen("zfs destroy %s" % (str(name),))
         retval = zfsproc.communicate()[1]
         return retval
 
@@ -1567,7 +1567,7 @@ class notifier(object):
         vol_name = str(volume.vol_name)
         # First, destroy the zpool.
         disks = volume.get_disks()
-        self.__system("zpool destroy -f %s" % (vol_name, ))
+        self._system("zpool destroy -f %s" % (vol_name, ))
 
         # Clear out disks associated with the volume
         for disk in disks:
@@ -1586,7 +1586,7 @@ class notifier(object):
             devname = self.part_type_from_device('ufs', disk)
             # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
             # generated automatically
-            p1 = self.__pipeopen("newfs -U -L %s /dev/%s" % (u_name, devname))
+            p1 = self._pipeopen("newfs -U -L %s /dev/%s" % (u_name, devname))
             stderr = p1.communicate()[1]
             if p1.returncode != 0:
                 error = ", ".join(stderr.split('\n'))
@@ -1595,19 +1595,19 @@ class notifier(object):
             # Grab all disks from the group
             for disk in group['disks']:
                 # FIXME: turn into a function
-                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
-                self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
+                self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
+                self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
                 geom_vdev += " /dev/" + disk
                 #TODO gpt label disks
-            self.__system("geom %s load" % (geom_type))
-            p1 = self.__pipeopen("geom %s label %s %s" % (geom_type, volume.vol_name, geom_vdev))
+            self._system("geom %s load" % (geom_type))
+            p1 = self._pipeopen("geom %s label %s %s" % (geom_type, volume.vol_name, geom_vdev))
             stdout, stderr = p1.communicate()
             if p1.returncode != 0:
                 error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Volume creation failed: "%s"' % error)
             ufs_device = "/dev/%s/%s" % (geom_type, volume.vol_name)
-            self.__system("newfs -U -L %s %s" % (u_name, ufs_device))
+            self._system("newfs -U -L %s %s" % (u_name, ufs_device))
 
     def __destroy_ufs_volume(self, volume):
         """Internal procedure to destroy a UFS volume identified by volume id"""
@@ -1622,18 +1622,18 @@ class notifier(object):
         if geom_type not in ('mirror', 'stripe', 'raid3'):
             # Grab disk from the group
             disk = disks[0]
-            self.__system("umount -f /dev/ufs/" + u_name)
+            self._system("umount -f /dev/ufs/" + u_name)
             self.__gpt_unlabeldisk(devname = disk)
         else:
             g_name = provider.xpathEval("../name")[0].content
-            self.__system("swapoff -a")
-            self.__system("umount -f /dev/ufs/" + u_name)
-            self.__system("geom %s stop %s" % (geom_type, g_name))
+            self._system("swapoff -a")
+            self._system("umount -f /dev/ufs/" + u_name)
+            self._system("geom %s stop %s" % (geom_type, g_name))
             # Grab all disks from the group
             for disk in disks:
-                self.__system("geom %s clear %s" % (geom_type, disk))
-                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
-                self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
+                self._system("geom %s clear %s" % (geom_type, disk))
+                self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
+                self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
 
     def _init_volume(self, volume, *args, **kwargs):
@@ -1661,18 +1661,18 @@ class notifier(object):
         encrypt = (volume.vol_encrypt >= 1)
 
         if from_swap != '':
-            self.__system('/sbin/swapoff /dev/%s.eli' % (from_swap, ))
-            self.__system('/sbin/geli detach /dev/%s' % (from_swap, ))
+            self._system('/sbin/swapoff /dev/%s.eli' % (from_swap, ))
+            self._system('/sbin/geli detach /dev/%s' % (from_swap, ))
 
         # to_disk _might_ have swap on, offline it before gpt label
         to_swap = self.part_type_from_device('swap', to_disk)
         if to_swap != '':
-            self.__system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
-            self.__system('/sbin/geli detach /dev/%s' % (to_swap, ))
+            self._system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
+            self._system('/sbin/geli detach /dev/%s' % (to_swap, ))
 
         # Replace in-place
         if from_disk == to_disk:
-            self.__system('/sbin/zpool offline %s %s' % (volume.vol_name, from_label))
+            self._system('/sbin/zpool offline %s %s' % (volume.vol_name, from_label))
 
         self.__gpt_labeldisk(type="freebsd-zfs", devname=to_disk, swapsize=swapsize)
 
@@ -1705,30 +1705,30 @@ class notifier(object):
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume, passphrase=passphrase)
 
         if from_disk == to_disk:
-            self.__system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
-            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume.vol_name, to_label))
+            self._system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
+            ret = self._system_nolog('/sbin/zpool replace %s %s' % (volume.vol_name, to_label))
             if ret == 256:
-                ret = self.__system_nolog('/sbin/zpool scrub %s' % (volume.vol_name))
+                ret = self._system_nolog('/sbin/zpool scrub %s' % (volume.vol_name))
         else:
-            p1 = self.__pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, from_label, devname))
+            p1 = self._pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, from_label, devname))
             stdout, stderr = p1.communicate()
             ret = p1.returncode
             if ret != 0:
                 if from_swap != '':
-                    self.__system('/sbin/geli onetime /dev/%s' % (from_swap))
-                    self.__system('/sbin/swapon /dev/%s.eli' % (from_swap))
+                    self._system('/sbin/geli onetime /dev/%s' % (from_swap))
+                    self._system('/sbin/swapon /dev/%s.eli' % (from_swap))
                 error = ", ".join(stderr.split('\n'))
                 if to_swap != '':
-                    self.__system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
-                    self.__system('/sbin/geli detach /dev/%s' % (to_swap, ))
+                    self._system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
+                    self._system('/sbin/geli detach /dev/%s' % (to_swap, ))
                 if encrypt:
-                    self.__system('/sbin/geli detach %s' % (devname, ))
+                    self._system('/sbin/geli detach %s' % (devname, ))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
             #TODO: geli detach -l
 
         if to_swap:
-            self.__system('/sbin/geli onetime /dev/%s' % (to_swap))
-            self.__system('/sbin/swapon /dev/%s.eli' % (to_swap))
+            self._system('/sbin/geli onetime /dev/%s' % (to_swap))
+            self._system('/sbin/swapon /dev/%s.eli' % (to_swap))
 
         return ret
 
@@ -1742,17 +1742,17 @@ class notifier(object):
         swap = self.part_type_from_device('swap', disk)
 
         if swap != '':
-            self.__system('/sbin/swapoff /dev/%s.eli' % (swap, ))
-            self.__system('/sbin/geli detach /dev/%s' % (swap, ))
+            self._system('/sbin/swapoff /dev/%s.eli' % (swap, ))
+            self._system('/sbin/geli detach /dev/%s' % (swap, ))
 
         # Replace in-place
-        p1 = self.__pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
+        p1 = self._pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
         if p1.returncode != 0:
             error = ", ".join(stderr.split('\n'))
             raise MiddlewareError('Disk offline failed: "%s"' % error)
         if label.endswith(".eli"):
-            self.__system("/sbin/geli detach /dev/%s" % label)
+            self._system("/sbin/geli detach /dev/%s" % label)
             EncryptedDisk.objects.filter(
                 encrypted_volume=volume,
                 encrypted_provider=label[:-4]
@@ -1775,10 +1775,10 @@ class notifier(object):
             # Remove the swap partition for another time to be sure.
             # TODO: swap partition should be trashed instead.
             if from_swap != '':
-                self.__system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
-                self.__system('/sbin/geli detach /dev/%s' % (from_swap,))
+                self._system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
+                self._system('/sbin/geli detach /dev/%s' % (from_swap,))
 
-        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, label))
+        ret = self._system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, label))
         if from_disk:
             # TODO: This operation will cause damage to disk data which should be limited
             self.__gpt_unlabeldisk(from_disk)
@@ -1796,10 +1796,10 @@ class notifier(object):
         from_swap = self.part_type_from_device('swap', from_disk)
 
         if from_swap != '':
-            self.__system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
-            self.__system('/sbin/geli detach /dev/%s' % (from_swap,))
+            self._system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
+            self._system('/sbin/geli detach /dev/%s' % (from_swap,))
 
-        p1 = self.__pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
+        p1 = self._pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
         if p1.returncode != 0:
             error = ", ".join(stderr.split('\n'))
@@ -1815,8 +1815,8 @@ class notifier(object):
         for disk in disks:
             swapdev = self.part_type_from_device('swap', disk)
             if swapdev != '':
-                self.__system("swapoff /dev/%s.eli" % swapdev)
-                self.__system("geli detach /dev/%s" % swapdev)
+                self._system("swapoff /dev/%s.eli" % swapdev)
+                self._system("geli detach /dev/%s" % swapdev)
 
     def __get_mountpath(self, name, fstype, mountpoint_root='/mnt'):
         """Determine the mountpoint for a volume or ZFS dataset
@@ -1844,12 +1844,12 @@ class notifier(object):
             the absolute path for the volume on the system.
         """
         if fstype == 'ZFS':
-            p1 = self.__pipeopen('zfs list -H -o mountpoint %s' % (name, ))
+            p1 = self._pipeopen('zfs list -H -o mountpoint %s' % (name, ))
             stdout = p1.communicate()[0]
             if not p1.returncode:
                 return stdout.strip()
         elif fstype == 'UFS':
-            p1 = self.__pipeopen('mount -p')
+            p1 = self._pipeopen('mount -p')
             stdout = p1.communicate()[0]
             if not p1.returncode:
                 flines = filter(lambda x: x and x.split()[0] == \
@@ -1910,16 +1910,16 @@ class notifier(object):
         self.__rmdir_mountpoint(vol_mountpath)
 
     def _reload_disk(self):
-        self.__system("/usr/sbin/service ix-fstab quietstart")
-        self.__system("/usr/sbin/service encswap quietstart")
-        self.__system("/usr/sbin/service swap1 quietstart")
-        self.__system("/usr/sbin/service mountlate quietstart")
+        self._system("/usr/sbin/service ix-fstab quietstart")
+        self._system("/usr/sbin/service encswap quietstart")
+        self._system("/usr/sbin/service swap1 quietstart")
+        self._system("/usr/sbin/service mountlate quietstart")
         self.restart("collectd")
         self.__confxml = None
 
     # Create a user in system then samba
     def __pw_with_password(self, command, password):
-        pw = self.__pipeopen(command)
+        pw = self._pipeopen(command)
         msg = pw.communicate("%s\n" % password)[1]
         if pw.returncode != 0:
             raise MiddlewareError("Operation could not be performed. %s" % msg)
@@ -1936,7 +1936,7 @@ class notifier(object):
             True whether the user has been successfully added and False otherwise
         """
         command = '/usr/local/bin/smbpasswd -D 0 -s -a "%s"' % (username)
-        smbpasswd = self.__pipeopen(command)
+        smbpasswd = self._pipeopen(command)
         smbpasswd.communicate("%s\n%s\n" % (password, password))
         return smbpasswd.returncode == 0
 
@@ -2064,7 +2064,7 @@ class notifier(object):
             if CIFS debug level is anything different than 'Minimum'
             """
             smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
-            smb_cmd = self.__pipeopen(smb_command)
+            smb_cmd = self._pipeopen(smb_command)
             smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         except:
             if new_homedir:
@@ -2077,13 +2077,13 @@ class notifier(object):
         return (user.pw_uid, user.pw_gid, user.pw_passwd, smb_hash)
 
     def user_lock(self, username):
-        self.__system('/usr/local/bin/smbpasswd -d "%s"' % (username))
-        self.__system('/usr/sbin/pw lock "%s"' % (username))
+        self._system('/usr/local/bin/smbpasswd -d "%s"' % (username))
+        self._system('/usr/sbin/pw lock "%s"' % (username))
         return self.user_gethashedpassword(username)
 
     def user_unlock(self, username):
-        self.__system('/usr/local/bin/smbpasswd -e "%s"' % (username))
-        self.__system('/usr/sbin/pw unlock "%s"' % (username))
+        self._system('/usr/local/bin/smbpasswd -e "%s"' % (username))
+        self._system('/usr/sbin/pw unlock "%s"' % (username))
         return self.user_gethashedpassword(username)
 
     def user_changepassword(self, username, password):
@@ -2105,7 +2105,7 @@ class notifier(object):
         if CIFS debug level is anything different than 'Minimum'
         """
         smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
-        smb_cmd = self.__pipeopen(smb_command)
+        smb_cmd = self._pipeopen(smb_command)
         smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         user = self.___getpwnam(username)
         return (user.pw_passwd, smb_hash)
@@ -2117,7 +2117,7 @@ class notifier(object):
         Returns:
             bool
         """
-        pipe = self.__pipeopen('/usr/sbin/pw userdel "%s"' % (username, ))
+        pipe = self._pipeopen('/usr/sbin/pw userdel "%s"' % (username, ))
         err = pipe.communicate()[1]
         if pipe.returncode != 0:
             log.warn("Failed to delete user %s: %s", username, err)
@@ -2131,7 +2131,7 @@ class notifier(object):
         Returns:
             bool
         """
-        pipe = self.__pipeopen('/usr/sbin/pw groupdel "%s"' % (groupname, ))
+        pipe = self._pipeopen('/usr/sbin/pw groupdel "%s"' % (groupname, ))
         err = pipe.communicate()[1]
         if pipe.returncode != 0:
             log.warn("Failed to delete group %s: %s", groupname, err)
@@ -2140,7 +2140,7 @@ class notifier(object):
 
     def user_getnextuid(self):
         command = "/usr/sbin/pw usernext"
-        pw = self.__pipeopen(command)
+        pw = self._pipeopen(command)
         uid = pw.communicate()[0]
         if pw.returncode != 0:
             raise ValueError("Could not retrieve usernext")
@@ -2149,7 +2149,7 @@ class notifier(object):
 
     def user_getnextgid(self):
         command = "/usr/sbin/pw groupnext"
-        pw = self.__pipeopen(command)
+        pw = self._pipeopen(command)
         gid = pw.communicate()[0]
         if pw.returncode != 0:
             raise ValueError("Could not retrieve groupnext")
@@ -2170,7 +2170,7 @@ class notifier(object):
             pass
 
         if homedir == '/root':
-            self.__system("/sbin/mount -uw -o noatime /")
+            self._system("/sbin/mount -uw -o noatime /")
         saved_umask = os.umask(077)
         if not os.path.isdir(sshpath):
             os.makedirs(sshpath)
@@ -2182,14 +2182,14 @@ class notifier(object):
             fd = open(keypath, 'w')
             fd.write(pubkey)
             fd.close()
-            self.__system("/usr/sbin/chown -R %s:%s %s" % (username, groupname, sshpath))
+            self._system("/usr/sbin/chown -R %s:%s %s" % (username, groupname, sshpath))
         if homedir == '/root':
-            self.__system("/sbin/mount -ur /")
+            self._system("/sbin/mount -ur /")
         os.umask(saved_umask)
 
     def _reload_user(self):
-        self.__system("/usr/sbin/service ix-passwd quietstart")
-        self.__system("/usr/sbin/service ix-aliases quietstart")
+        self._system("/usr/sbin/service ix-passwd quietstart")
+        self._system("/usr/sbin/service ix-aliases quietstart")
         self.reload("cifs")
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
@@ -2223,14 +2223,14 @@ class notifier(object):
                 args += " -r "
             args += " -p %s" % path
             cmd = "%s %s" % (script, args)
-            self.__system(cmd)
+            self._system(cmd)
 
         else:
             flags = ""
             if recursive:
                 flags = "-R"
-            self.__system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, path))
-            self.__system("/bin/chmod %s %s '%s'" % (flags, mode, path))
+            self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, path))
+            self._system("/bin/chmod %s %s '%s'" % (flags, mode, path))
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
@@ -2268,11 +2268,11 @@ class notifier(object):
     def change_upload_location(self, path):
         vardir = "/var/tmp/firmware"
 
-        self.__system("/bin/rm -rf %s" % vardir)
-        self.__system("/bin/mkdir -p %s/.freenas" % path)
-        self.__system("/usr/sbin/chown www:www %s/.freenas" % path)
-        self.__system("/bin/chmod 755 %s/.freenas" % path)
-        self.__system("/bin/ln -s %s/.freenas %s" % (path, vardir))
+        self._system("/bin/rm -rf %s" % vardir)
+        self._system("/bin/mkdir -p %s/.freenas" % path)
+        self._system("/usr/sbin/chown www:www %s/.freenas" % path)
+        self._system("/bin/chmod 755 %s/.freenas" % path)
+        self._system("/bin/ln -s %s/.freenas %s" % (path, vardir))
 
     def create_upload_location(self):
         """
@@ -2291,24 +2291,24 @@ class notifier(object):
             "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, ))
         #prov = doc.xpathEval("//provider[@id = '%s']" % pref[0].content)
         if not pref:
-            proc = self.__pipeopen("/sbin/mdconfig -a -t swap -s 2800m")
+            proc = self._pipeopen("/sbin/mdconfig -a -t swap -s 2800m")
             mddev, err = proc.communicate()
             if proc.returncode != 0:
                 raise MiddlewareError("Could not create memory device: %s" % err)
 
-            proc = self.__pipeopen("newfs -L %s /dev/%s" % (label, mddev))
+            proc = self._pipeopen("newfs -L %s /dev/%s" % (label, mddev))
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 raise MiddlewareError("Could not create temporary filesystem: %s" % err)
 
-            self.__system("/bin/mkdir -p /var/tmp/firmware")
-            proc = self.__pipeopen("mount /dev/ufs/%s /var/tmp/firmware" % (label, ))
+            self._system("/bin/mkdir -p /var/tmp/firmware")
+            proc = self._pipeopen("mount /dev/ufs/%s /var/tmp/firmware" % (label, ))
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
 
-        self.__system("/usr/sbin/chown www:www /var/tmp/firmware")
-        self.__system("/bin/chmod 755 /var/tmp/firmware")
+        self._system("/usr/sbin/chown www:www /var/tmp/firmware")
+        self._system("/bin/chmod 755 /var/tmp/firmware")
 
     def destroy_upload_location(self):
         """
@@ -2336,8 +2336,8 @@ class notifier(object):
 
         mddev = prov[0].content
 
-        self.__system("umount /dev/ufs/%s" % (label, ))
-        proc = self.__pipeopen("mdconfig -d -u %s" % (mddev, ))
+        self._system("umount /dev/ufs/%s" % (label, ))
+        proc = self._pipeopen("mdconfig -d -u %s" % (mddev, ))
         err = proc.communicate()[1]
         if proc.returncode != 0:
             raise MiddlewareError("Could not destroy memory device: %s" % err)
@@ -2350,7 +2350,7 @@ class notifier(object):
         os.chdir(os.path.dirname(path))
 
         # XXX: ugly
-        self.__system("rm -rf */")
+        self._system("rm -rf */")
 
         percent = 0
         with open('/tmp/.extract_progress', 'w') as fp:
@@ -2438,9 +2438,9 @@ class notifier(object):
         plugin_upload_path = "%s/%s" % (jc.jc_path, ".plugins")
 
         if not os.path.exists(plugin_upload_path):
-            self.__system("/bin/mkdir -p %s" % plugin_upload_path)
-            self.__system("/usr/sbin/chown www:www %s" % plugin_upload_path)
-            self.__system("/bin/chmod 755 %s" % plugin_upload_path)
+            self._system("/bin/mkdir -p %s" % plugin_upload_path)
+            self._system("/usr/sbin/chown www:www %s" % plugin_upload_path)
+            self._system("/bin/chmod 755 %s" % plugin_upload_path)
 
         return plugin_upload_path
 
@@ -2537,7 +2537,7 @@ class notifier(object):
                 pass
 
         if pbifile == "/var/tmp/firmware/pbifile.pbi":
-            self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
+            self._system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
         p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE, pbi="%s/%s" %
             ("/.plugins", pbi))
@@ -2728,7 +2728,7 @@ class notifier(object):
         log.debug("XXX: newpbifile = %s", newpbifile)
 
         # Rename PBI to it's actual name
-        self.__system("/bin/mv /var/tmp/firmware/pbifile.pbi %s" % newpbifile)
+        self._system("/bin/mv /var/tmp/firmware/pbifile.pbi %s" % newpbifile)
 
         # Create a temporary directory to place old, new, and PBI patch files
         out = Jexec(jid=jail.jid, command="/bin/mkdir -p %s" % oldpbitemp).run()
@@ -2884,7 +2884,7 @@ class notifier(object):
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
         if fs == 'ZFS':
-            p1 = self.__pipeopen('zpool list -H -o health %s' % str(name))
+            p1 = self._pipeopen('zpool list -H -o health %s' % str(name))
             if p1.wait() == 0:
                 status = p1.communicate()[0].strip('\n')
         elif fs == 'UFS':
@@ -2901,7 +2901,7 @@ class notifier(object):
                     status = search[0].content
 
             else:
-                p1 = self.__pipeopen('mount|grep "/dev/ufs/%s"' % (name, ))
+                p1 = self._pipeopen('mount|grep "/dev/ufs/%s"' % (name, ))
                 p1.communicate()
                 if p1.returncode == 0:
                     status = 'HEALTHY'
@@ -2916,7 +2916,7 @@ class notifier(object):
         algorithm2map = {
             'sha256' : '/sbin/sha256 -q',
         }
-        hasher = self.__pipeopen('%s %s' % (algorithm2map[algorithm], path))
+        hasher = self._pipeopen('%s %s' % (algorithm2map[algorithm], path))
         sum = hasher.communicate()[0].split('\n')[0]
         return sum
 
@@ -2945,7 +2945,7 @@ class notifier(object):
             disks.append(mp.devname)
 
         for disk in disks:
-            info = self.__pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
+            info = self._pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
             if len(info) > 3:
                 disksd.update({
                     disk: {
@@ -2983,19 +2983,19 @@ class notifier(object):
     def precheck_partition(self, dev, fstype):
 
         if fstype == 'UFS':
-            p1 = self.__pipeopen("/sbin/fsck_ufs -p %s" % dev)
+            p1 = self._pipeopen("/sbin/fsck_ufs -p %s" % dev)
             p1.communicate()
             if p1.returncode == 0:
                 return True
         elif fstype == 'NTFS':
             return True
         elif fstype == 'MSDOSFS':
-            p1 = self.__pipeopen("/sbin/fsck_msdosfs -p %s" % dev)
+            p1 = self._pipeopen("/sbin/fsck_msdosfs -p %s" % dev)
             p1.communicate()
             if p1.returncode == 0:
                 return True
         elif fstype == 'EXT2FS':
-            p1 = self.__pipeopen("/sbin/fsck_ext2fs -p %s" % dev)
+            p1 = self._pipeopen("/sbin/fsck_ext2fs -p %s" % dev)
             p1.communicate()
             if p1.returncode == 0:
                 return True
@@ -3061,7 +3061,7 @@ class notifier(object):
                     })
 
         pool_name = re.compile(r'pool: (?P<name>%s).*?id: (?P<id>\d+)' % (zfs.ZPOOL_NAME_RE, ), re.I|re.M|re.S)
-        p1 = self.__pipeopen("zpool import")
+        p1 = self._pipeopen("zpool import")
         res = p1.communicate()[0]
 
         for pool, zid in pool_name.findall(res):
@@ -3085,18 +3085,18 @@ class notifier(object):
 
     def zfs_import(self, name, id=None):
         if id is not None:
-            imp = self.__pipeopen('zpool import -f -R /mnt %s' % id)
+            imp = self._pipeopen('zpool import -f -R /mnt %s' % id)
         else:
-            imp = self.__pipeopen('zpool import -f -R /mnt %s' % name)
+            imp = self._pipeopen('zpool import -f -R /mnt %s' % name)
         stdout, stderr = imp.communicate()
         if imp.returncode == 0:
             # Reset all mountpoints in the zpool
             self.zfs_inherit_option(name, 'mountpoint', True)
             # Remember the pool cache
-            self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (name))
+            self._system("zpool set cachefile=/data/zfs/zpool.cache %s" % (name))
             # These should probably be options that are configurable from the GUI
-            self.__system("zfs set aclmode=passthrough %s" % name)
-            self.__system("zfs set aclinherit=passthrough %s" % name)
+            self._system("zfs set aclmode=passthrough %s" % name)
+            self._system("zfs set aclinherit=passthrough %s" % name)
             self.restart("collectd")
             return True
         else:
@@ -3146,7 +3146,7 @@ class notifier(object):
             cmds = [ 'umount %s' % (vol_mountpath, ) ]
 
         for cmd in cmds:
-            p1 = self.__pipeopen(cmd)
+            p1 = self._pipeopen(cmd)
             stdout, stderr = p1.communicate()
             if p1.returncode:
                 raise MiddlewareError('Failed to detach %s with "%s" (exited '
@@ -3192,9 +3192,9 @@ class notifier(object):
 
     def zfs_scrub(self, name, stop=False):
         if stop:
-            imp = self.__pipeopen('zpool scrub -s %s' % str(name))
+            imp = self._pipeopen('zpool scrub -s %s' % str(name))
         else:
-            imp = self.__pipeopen('zpool scrub %s' % str(name))
+            imp = self._pipeopen('zpool scrub %s' % str(name))
         stdout, stderr = imp.communicate()
         if imp.returncode != 0:
             raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
@@ -3203,13 +3203,13 @@ class notifier(object):
     def zfs_snapshot_list(self, path=None):
         fsinfo = dict()
 
-        zfsproc = self.__pipeopen("/sbin/zfs list -t volume -o name -H")
+        zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name -H")
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
 
         if path:
-            zfsproc = self.__pipeopen("/sbin/zfs list -r -t snapshot -H -S creation %s" % path)
+            zfsproc = self._pipeopen("/sbin/zfs list -r -t snapshot -H -S creation %s" % path)
         else:
-            zfsproc = self.__pipeopen("/sbin/zfs list -t snapshot -H -S creation")
+            zfsproc = self._pipeopen("/sbin/zfs list -t snapshot -H -S creation")
         lines = zfsproc.communicate()[0].split('\n')
         for line in lines:
             if line != '':
@@ -3238,21 +3238,21 @@ class notifier(object):
 
     def zfs_mksnap(self, path, name, recursive):
         if recursive:
-            p1 = self.__pipeopen("/sbin/zfs snapshot -r %s@%s" % (path, name))
+            p1 = self._pipeopen("/sbin/zfs snapshot -r %s@%s" % (path, name))
         else:
-            p1 = self.__pipeopen("/sbin/zfs snapshot %s@%s" % (path, name))
+            p1 = self._pipeopen("/sbin/zfs snapshot %s@%s" % (path, name))
         if p1.wait() != 0:
             err = p1.communicate()[1]
             raise MiddlewareError("Snapshot could not be taken: %s" % err)
         return True
 
     def zfs_clonesnap(self, snapshot, dataset):
-        zfsproc = self.__pipeopen('zfs clone %s %s' % (snapshot, dataset))
+        zfsproc = self._pipeopen('zfs clone %s %s' % (snapshot, dataset))
         retval = zfsproc.communicate()[1]
         return retval
 
     def rollback_zfs_snapshot(self, snapshot):
-        zfsproc = self.__pipeopen('zfs rollback %s' % (snapshot))
+        zfsproc = self._pipeopen('zfs rollback %s' % (snapshot))
         retval = zfsproc.communicate()[1]
         return retval
 
@@ -3260,8 +3260,8 @@ class notifier(object):
         os.unlink("/data/freenas-v1.db")
         save_path = os.getcwd()
         os.chdir(FREENAS_PATH)
-        self.__system("/usr/local/bin/python manage.py syncdb --noinput --migrate")
-        self.__system("/usr/local/bin/python manage.py createadmin")
+        self._system("/usr/local/bin/python manage.py syncdb --noinput --migrate")
+        self._system("/usr/local/bin/python manage.py createadmin")
         os.chdir(save_path)
 
     def config_upload(self, uploaded_file_fd):
@@ -3293,7 +3293,7 @@ class notifier(object):
         noinherit_fields = ['quota', 'refquota', 'reservation', 'refreservation']
         zfsname = str(name)
 
-        zfsproc = self.__pipeopen("/sbin/zfs get -H -o property,value,source all %s" % (zfsname))
+        zfsproc = self._pipeopen("/sbin/zfs get -H -o property,value,source all %s" % (zfsname))
         zfs_output = zfsproc.communicate()[0]
         zfs_output = zfs_output.split('\n')
         retval = {}
@@ -3318,7 +3318,7 @@ class notifier(object):
         name = str(name)
         item = str(item)
         value = str(value)
-        zfsproc = self.__pipeopen('zfs set %s=%s "%s"' % (item, value, name))
+        zfsproc = self._pipeopen('zfs set %s=%s "%s"' % (item, value, name))
         err = zfsproc.communicate()[1]
         if zfsproc.returncode == 0:
             return True, None
@@ -3339,7 +3339,7 @@ class notifier(object):
             zfscmd = 'zfs inherit -r %s %s' % (item, name)
         else:
             zfscmd = 'zfs inherit %s %s' % (item, name)
-        zfsproc = self.__pipeopen(zfscmd)
+        zfsproc = self._pipeopen(zfscmd)
         err = zfsproc.communicate()[1]
         if zfsproc.returncode == 0:
             return True, None
@@ -3354,7 +3354,7 @@ class notifier(object):
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
         try:
             with mntlock(blocking=False) as MNTLOCK:
-                zfsproc = self.__pipeopen(zfscmd)
+                zfsproc = self._pipeopen(zfscmd)
                 output = zfsproc.communicate()[0]
                 if output != '':
                     snapshots_list = output.splitlines()
@@ -3376,7 +3376,7 @@ class notifier(object):
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
         try:
             with mntlock(blocking=False):
-                zfsproc = self.__pipeopen(zfscmd)
+                zfsproc = self._pipeopen(zfscmd)
                 output = zfsproc.communicate()[0]
                 if output != '':
                     snapshots_list = output.splitlines()
@@ -3407,10 +3407,10 @@ class notifier(object):
         geom_name = provider.xpathEval("../name")[0].content
 
         if class_name == "MIRROR":
-            rv = self.__system_nolog("geom mirror forget %s" % (geom_name,))
+            rv = self._system_nolog("geom mirror forget %s" % (geom_name,))
             if rv != 0:
                 return rv
-            p1 = self.__pipeopen("geom mirror insert %s /dev/%s" % (str(geom_name), str(to_disk),))
+            p1 = self._pipeopen("geom mirror insert %s /dev/%s" % (str(geom_name), str(to_disk),))
             stdout, stderr = p1.communicate()
             if p1.returncode != 0:
                 error = ", ".join(stderr.split('\n'))
@@ -3422,7 +3422,7 @@ class notifier(object):
             ncomponents =int( provider.xpathEval("../config/Components")[0].content)
             numbers = [int(node.content) for node in numbers]
             lacking = [x for x in xrange(ncomponents) if x not in numbers][0]
-            p1 = self.__pipeopen("geom raid3 insert -n %d %s %s" % \
+            p1 = self._pipeopen("geom raid3 insert -n %d %s %s" % \
                                         (lacking, str(geom_name), str(to_disk),))
             stdout, stderr = p1.communicate()
             if p1.returncode != 0:
@@ -3433,13 +3433,13 @@ class notifier(object):
         return 1
 
     def iface_destroy(self, name):
-        self.__system("ifconfig %s destroy" % name)
+        self._system("ifconfig %s destroy" % name)
 
     def interface_mtu(self, iface, mtu):
-        self.__system("ifconfig %s mtu %s" % (iface, mtu))
+        self._system("ifconfig %s mtu %s" % (iface, mtu))
 
     def guess_default_interface(self):
-        p1 = self.__pipeopen("netstat -nr|egrep '^default'|awk '{ print $6}'")
+        p1 = self._pipeopen("netstat -nr|egrep '^default'|awk '{ print $6}'")
         iface = p1.communicate()
         if p1.returncode != 0:
             iface = None
@@ -3450,7 +3450,7 @@ class notifier(object):
         return iface
 
     def lagg_remove_port(self, lagg, iface):
-        return self.__system_nolog("ifconfig %s -laggport %s" % (lagg, iface))
+        return self._system_nolog("ifconfig %s -laggport %s" % (lagg, iface))
 
     def __init__(self):
         self.__confxml = None
@@ -3468,7 +3468,7 @@ class notifier(object):
             return self.__twcli[controller]
 
         re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S|re.M)
-        proc = self.__pipeopen("/usr/local/sbin/tw_cli /c%d show" % (controller, ))
+        proc = self._pipeopen("/usr/local/sbin/tw_cli /c%d show" % (controller, ))
         output = proc.communicate()[0]
 
         units = {}
@@ -3690,7 +3690,7 @@ class notifier(object):
 
     def zpool_parse(self, name):
         doc = self._geom_confxml()
-        p1 = self.__pipeopen("zpool status %s" % name)
+        p1 = self._pipeopen("zpool status %s" % name)
         res = p1.communicate()[0]
         parse = zfs.parse_status(name, doc, res)
         return parse
@@ -3725,7 +3725,7 @@ class notifier(object):
         re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S|re.M)
         drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
 
-        proc = self.__pipeopen("camcontrol devlist -v")
+        proc = self._pipeopen("camcontrol devlist -v")
         for line in proc.communicate()[0].splitlines():
             if not line.startswith('<'):
                 reg = re_drv_cid.search(line)
@@ -3992,7 +3992,7 @@ class notifier(object):
                 disk = prov.xpathEval("../name")[0].content
                 mp_disks.append(disk)
 
-        reserved = [self.__find_root_dev()]
+        reserved = [self._find_root_dev()]
 
         # disks already in use count as reserved as well
         for vol in Volume.objects.all():
@@ -4049,7 +4049,7 @@ class notifier(object):
         Disk.objects.exclude(id__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
 
 
-    def __find_root_dev(self):
+    def _find_root_dev(self):
         """Find the root device.
 
         The original algorithm was adapted from /root/updatep*, but this
@@ -4091,7 +4091,7 @@ class notifier(object):
         disks = self.sysctl('kern.disks').split()
         disks.reverse()
 
-        root_dev = self.__find_root_dev()
+        root_dev = self._find_root_dev()
         if root_dev.startswith('mirror/'):
             mirror = self.gmirror_status(root_dev.split('/')[1])
             blacklist_devs = [c.get("name") for c in mirror.get("consumers")]
@@ -4154,7 +4154,7 @@ class notifier(object):
             A boolean to denote whether or not the module was found.
         """
 
-        pipe = self.__pipeopen('/sbin/kldstat -v')
+        pipe = self._pipeopen('/sbin/kldstat -v')
 
         return 0 < pipe.communicate()[0].find(module + '.ko')
 
@@ -4177,7 +4177,7 @@ class notifier(object):
         import ipaddr
         netmask = ipaddr.IPNetwork(sr.sr_destination)
         masked = netmask.masked().compressed
-        p1 = self.__pipeopen("/sbin/route delete %s" % masked)
+        p1 = self._pipeopen("/sbin/route delete %s" % masked)
         if p1.wait() != 0:
             raise MiddlewareError("Failed to remove the route %s" % sr.sr_destination)
 
@@ -4197,7 +4197,7 @@ class notifier(object):
         if not prov:
             return False
 
-        proc = self.__pipeopen("mount /dev/%s/%s" % (
+        proc = self._pipeopen("mount /dev/%s/%s" % (
             volume.vol_fstype.lower(),
             volume.vol_name,
             ))
@@ -4233,19 +4233,19 @@ class notifier(object):
         return self.__get_geoms_recursive(provid)
 
     def _do_disk_wipe_quick(self, devname):
-        pipe = self.__pipeopen("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+        pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
         err = pipe.communicate()[1]
         if pipe.returncode != 0:
             raise MiddlewareError(
                 "Failed to wipe %s: %s" % (devname, err)
             )
         try:
-            p1 = self.__pipeopen("diskinfo %s" % (devname, ))
+            p1 = self._pipeopen("diskinfo %s" % (devname, ))
             size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
         except:
             log.error("Unable to determine size of %s", devname)
         else:
-            pipe = self.__pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
+            pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
                 size / 1024 - 4,
             ))
