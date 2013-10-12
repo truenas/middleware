@@ -8,9 +8,10 @@ log = logging.getLogger('freeadmin.hook')
 class HookMetaclass(type):
 
     def __new__(cls, name, bases, attrs):
-        bases = list(bases)
+        base = type(name, (object, ), attrs)
+        bases = list(bases) + [base]
         appPool.hook_class_new(name, bases, attrs)
-        new_class = type.__new__(cls, name, tuple(bases), attrs)
+        new_class = type(name, tuple(bases), {})
         return new_class
 
 
