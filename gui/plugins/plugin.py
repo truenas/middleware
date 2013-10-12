@@ -4,13 +4,11 @@ import os
 import platform
 import requests
 import re
-import string
 import urllib2
 
 from django.utils.translation import ugettext as _
 
 from freenasUI.common import pbi
-from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.exceptions import MiddlewareError
 
 import platform as p
@@ -213,6 +211,7 @@ class Available(object):
         return self.__repo_id
 
     def create_repo(self):
+        from freenasUI.middleware.notifier import notifier
         url = PLUGINS_REPO
         rpath = "/var/tmp/pbi-repo.rpo"
 
