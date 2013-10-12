@@ -103,6 +103,7 @@ options		NULLFS
 options		UNIONFS
 options		VFS_AIO
 options		VIMAGE
+options		NETGRAPH
 device		carp
 device		snp
 device		ctl
