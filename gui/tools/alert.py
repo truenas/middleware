@@ -107,7 +107,7 @@ class Alert(object):
                 continue
             status = vol.status
             message = ""
-            if  vol.vol_fstype == 'ZFS':
+            if vol.vol_fstype == 'ZFS':
                 p1 = subprocess.Popen(["zpool", "status", "-x", vol.vol_name],
                         stdout=subprocess.PIPE)
                 stdout = p1.communicate()[0]
@@ -138,23 +138,30 @@ class Alert(object):
                 self.log(self.LOG_OK,
                          _('The volume %s status is HEALTHY') % (vol, ))
             elif status == 'DEGRADED':
-                self.log(self.LOG_CRIT,
-                         _('The volume %s status is DEGRADED') % (vol, ))
+                self.on_volume_status_degraded(vol, status, message)
             else:
-                if message:
-                    self.log(self.LOG_WARN,
-                             _('The volume %(volume)s status is %(status)s:'
-                                ' %(message)s') % {
-                                    'volume': vol,
-                                    'status': status,
-                                    'message': message,
-                                    })
-                else:
-                    self.log(self.LOG_WARN,
-                        _('The volume %(volume)s status is %(status)s') % {
+                self.on_volume_status_not_healthy(vol, status, message)
+
+    def on_volume_status_not_healthy(self, vol, status, message):
+        super(Alert, self).on_volume_status_not_healthy(vol, message)
+        if message:
+            self.log(self.LOG_WARN,
+                     _('The volume %(volume)s status is %(status)s:'
+                        ' %(message)s') % {
                             'volume': vol,
                             'status': status,
+                            'message': message,
                             })
+        else:
+            self.log(self.LOG_WARN,
+                _('The volume %(volume)s status is %(status)s') % {
+                    'volume': vol,
+                    'status': status,
+                    })
+
+    def on_volume_status_degraded(self, vol, status, message):
+        super(Alert, self).on_volume_status_degraded(vol, message)
+        self.log(self.LOG_CRIT, _('The volume %s status is DEGRADED') % vol)
 
     def admin_password(self):
         user = User.objects.filter(password=UNUSABLE_PASSWORD)
