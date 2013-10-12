@@ -166,7 +166,7 @@ class StartNotify(threading.Thread):
         os.close(fd)
 
 
-class notifier(object):
+class notifier:
 
     __metaclass__ = HookMetaclass
 

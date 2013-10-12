@@ -77,7 +77,7 @@ class Message(object):
         return self._message.decode('utf8')
 
 
-class Alert(object):
+class Alert:
 
     __metaclass__ = HookMetaclass
 
@@ -101,7 +101,12 @@ class Alert(object):
         self.__logs[level].append(msg)
         self.__s.write('%s[%s]: %s\n' % (level, msgid, msg, ))
 
+    def volumes_status_enabled(self):
+        return True
+
     def volumes_status(self):
+        if not self.volumes_status_enabled():
+            return
         for vol in Volume.objects.filter(vol_fstype__in=['ZFS', 'UFS']):
             if not vol.is_decrypted():
                 continue
@@ -143,7 +148,6 @@ class Alert(object):
                 self.on_volume_status_not_healthy(vol, status, message)
 
     def on_volume_status_not_healthy(self, vol, status, message):
-        super(Alert, self).on_volume_status_not_healthy(vol, message)
         if message:
             self.log(self.LOG_WARN,
                      _('The volume %(volume)s status is %(status)s:'
@@ -160,7 +164,6 @@ class Alert(object):
                     })
 
     def on_volume_status_degraded(self, vol, status, message):
-        super(Alert, self).on_volume_status_degraded(vol, message)
         self.log(self.LOG_CRIT, _('The volume %s status is DEGRADED') % vol)
 
     def admin_password(self):
@@ -211,7 +214,6 @@ class Alert(object):
         self.httpd_bindaddr()
         self.iscsi_portal_ips()
         self.multipaths_status()
-        super(Alert, self).perform()
 
     def write(self):
         with open(ALERT_FILE, 'w') as f:
