@@ -55,6 +55,14 @@ class AppHook(object):
     """
 
     """
+    def hook_form_init_<FormName>(self, form, *args, **kwargs):
+        '''
+        Hook called on form __init__ method, after django.forms.Form
+        '''
+        pass
+    """
+
+    """
     def hook_form_done_<FormName>(self, request, events):
         '''
         Hook called on form done method, after save and validation

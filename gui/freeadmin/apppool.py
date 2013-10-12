@@ -42,6 +42,12 @@ class AppPool(object):
             _method=list.append
         )
 
+    def hook_form_init(self, fname, form, *args, **kwargs):
+        kwargs['_method'] = list.append
+        return self._get_array(
+            'hook_form_init_%s' % fname, form, *args, **kwargs
+        )
+
     def hook_form_delete(self, fname, form, request, events):
         return self._get_array(
             'hook_form_delete_%s' % fname, form, request, events,
