@@ -3783,6 +3783,9 @@ class notifier:
             disk.disk_serial = self.serial_from_device(devname) or ''
         disk.save()
 
+    def sync_disk_extra(self, disk, add=False):
+        return
+
     def sync_disks(self):
         from freenasUI.storage.models import Disk
 
@@ -3809,6 +3812,8 @@ class notifier:
             if disk.disk_serial:
                 serials.append(disk.disk_serial)
 
+            self.sync_disk_extra(disk, add=False)
+
             if dskname not in disks:
                 disk.disk_enabled = False
                 if disk._original_state.get("disk_enabled"):
@@ -3832,6 +3837,7 @@ class notifier:
                         continue
                     else:
                         serials.append(d.disk_serial)
+                self.sync_disk_extra(d, add=True)
                 d.save()
 
     def sync_encrypted(self, volume=None):
