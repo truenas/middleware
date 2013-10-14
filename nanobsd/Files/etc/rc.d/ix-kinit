@@ -29,7 +29,7 @@ kerberos_start()
 			domainname=$(echo "${domainname}" | tr a-z A-Z)
 
 			pwfile=$(mktemp /tmp/tmp.XXXXXXXX)
-			echo -n "${adminpw}" > ${pwfile}
+			printf "${adminpw}" > ${pwfile}
 
 			AD_log "kerberos_start: kinit --password-file=${pwfile} " \
 			    "${adminname}@${domainname}"
