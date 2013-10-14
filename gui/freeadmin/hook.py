@@ -59,6 +59,14 @@ class AppHook(object):
         return []
 
     """
+    def hook_app_tabs_<app>(self, request):
+        '''
+        Hook called to get a list of additional tabs for an app
+        '''
+        pass
+    """
+
+    """
     def hook_datagrid_actions_<AdminName>(self, admin, actions):
         '''
         Hook called on generation of action buttons (bottom) for the datagrid

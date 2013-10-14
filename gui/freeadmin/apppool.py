@@ -36,6 +36,9 @@ class AppPool(object):
     def get_system_info(self, request):
         return self._get_array("system_info", request)
 
+    def hook_app_tabs(self, name, request):
+        return self._get_array('hook_app_tabs_%s' % name, request)
+
     def hook_class_new(self, name, bases, attrs):
         return self._get_array(
             'hook_class_new_%s' % name, bases, attrs,
