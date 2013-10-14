@@ -1415,6 +1415,11 @@ class notifier:
         self._system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
         #TODO: geli detach -l
 
+    def get_swapsize(self):
+        from freenasUI.system.models import Advanced
+        swapsize = Advanced.objects.latest('id').adv_swapondrive
+        return swapsize
+
     def zfs_volume_attach_group(self, volume, group, encrypt=False):
         """Attach a disk group to a zfs volume"""
 
@@ -1422,9 +1427,7 @@ class notifier:
         if vgrp_type in ('log', 'cache'):
             swapsize = 0
         else:
-            c = self.__open_db()
-            c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
-            swapsize = c.fetchone()[0]
+            swapsize = self.get_swapsize()
 
         assert volume.vol_fstype == 'ZFS'
         z_name = volume.vol_name
@@ -1638,8 +1641,7 @@ class notifier:
 
     def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
-        from freenasUI.system.models import Advanced
-        swapsize = Advanced.objects.latest('id').adv_swapondrive
+        swapsize = self.get_swapsize()
 
         assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
         if volume.vol_fstype == 'ZFS':
@@ -1650,8 +1652,7 @@ class notifier:
     def zfs_replace_disk(self, volume, from_label, to_disk, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
         from freenasUI.storage.models import Disk, EncryptedDisk
-        from freenasUI.system.models import Advanced
-        swapsize = Advanced.objects.latest('id').adv_swapondrive
+        swapsize = self.get_swapsize()
 
         assert volume.vol_fstype == 'ZFS'
 
