@@ -1465,6 +1465,8 @@ class JailsResourceMixin(object):
             bundle.data['_jail_delete_url'] = reverse('jail_delete', kwargs={
                 'id': bundle.obj.id
             })
+            if bundle.obj.jail_ipv4:
+                bundle.data['jail_ipv4'] = bundle.obj.jail_ipv4.split('/')[0]
 
         return bundle
 

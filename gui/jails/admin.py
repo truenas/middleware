@@ -77,6 +77,16 @@ class JailsFAdmin(BaseFreeAdmin):
         })
 
         columns.append({
+            'name': 'jail_ipv4',
+            'label': _('IPv4 Address'),
+            'sortable': False,
+        })
+
+        #
+        # XXX Add IPv6 address when IPv6 works ;-)
+        #
+
+        columns.append({
             'name': 'jail_autostart',
             'label': _('Autostart'),
             'sortable': False,
