@@ -29,6 +29,7 @@ from subprocess import Popen, PIPE
 
 from django.shortcuts import render
 
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.network import models
 
 
@@ -38,9 +39,12 @@ def network(request):
         globalconf = models.GlobalConfiguration.objects.order_by("-id")[0].id
     except IndexError:
         globalconf = models.GlobalConfiguration.objects.create().id
+
+    tabs = appPool.hook_app_tabs('network', request)
     return render(request, 'network/index.html', {
         'focus_form': request.GET.get('tab', 'network'),
         'globalconf': globalconf,
+        'hook_tabs': tabs,
     })
 
 

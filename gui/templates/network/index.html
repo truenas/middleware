@@ -30,4 +30,11 @@
   href: '{% url "freeadmin_network_vlan_datagrid" %}',
   refreshOnShow: true" class="objrefresh data_network_VLAN" tab="network.VLAN.View" id="tab_VLAN">
   </div>
+{% for tab in hook_tabs %}
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{{ tab.name|escapejs }}'
+  {% if focus_form == tab.focus %}, selected: true{% endif %},
+  href: '{{ tab.url }}',
+  refreshOnShow: true" class="objrefresh data_network_{{ tab.name }}" tab="{{ tab.focus }}" id="tab_{{ tab.name }}">
+  </div>
+{% endfor %}
 </div>
