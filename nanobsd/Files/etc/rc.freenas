@@ -125,7 +125,7 @@ __escape()
 
 	if [ -n "${val}" -a -z "${delim}" ]
 	then
-		printf "${val}" | sed -Ee 's|\\|\\\\|g' -Ee 's|[^a-zA-Z0-9]|\\&|g'
+		echo -n "${val}" | sed -Ee 's|\\|\\\\|g' -Ee 's|[^a-zA-Z0-9]|\\&|g'
 
 	elif [ -n "${val}" -a -n "${delim}" ]
 	then
@@ -159,7 +159,7 @@ __unescape()
 
 	if [ -n "${val}" -a -z "${delim}" ]
 	then
-		printf "${1}" | sed -Ee 's|\\([^a-zA-Z0-9])|\1|g' -Ee 's|\\\\|\\|g'
+		echo -n "${1}" | sed -Ee 's|\\([^a-zA-Z0-9])|\1|g' -Ee 's|\\\\|\\|g'
 
 	elif [ -n "${val}" -a -n "${delim}" ]
 	then
@@ -632,8 +632,7 @@ jail_pre_start()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 		SELECT
 			source,
-			destination,
-			readonly
+			destination
 
 		FROM
 			jails_nullmountpoint
@@ -644,13 +643,9 @@ jail_pre_start()
 		ORDER BY
 			-id
 	" | \
-	while read -r source destination ro
+	while read -r source destination
 	do
-		local mntopts="rw"
-		if [ "${ro}" = "1" ]; then
-			mntopts="ro"
-		fi
-		echo "$(echo ${source} | sed 's/ /\\040/g') $(echo ${jail_path}/${destination} | sed 's/ /\\040/g') nullfs ${mntopts} 0 0" >> "${jail_metadir}/fstab"
+		echo "${source} ${jail_path}/${destination} nullfs rw 0 0" >> "${jail_metadir}/fstab"
 	done
 }
 
