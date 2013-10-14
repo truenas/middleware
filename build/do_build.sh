@@ -341,6 +341,9 @@ generic_checkout_git()
     eval local my_branch=\${GIT_${repo_name}_BRANCH}
     eval local my_tag=\${GIT_${repo_name}_TAG}
     echo "Checkout: $repo_name -> $my_repo"
+    if [ -z "$my_branch" -a -z "$my_tag" ] ; then
+        my_branch=master
+    fi
 	(
 	local spl
     spl="$-";set -x
@@ -381,9 +384,6 @@ generic_checkout_git()
 		cd ..
 	else
 
-        if [ -z "$my_branch" -a -z "$my_tag" ] ; then
-            my_branch=master
-        fi
         if [ -e "${my_cache##file://}" ]; then
             git clone ${my_cache} ${checkout_name}
             cd ${checkout_name}
