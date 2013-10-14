@@ -4081,8 +4081,7 @@ class notifier:
             prov = doc.xpathEval("//provider[@id = '%s']" % pid)[0]
             name = prov.xpathEval("../name")[0].content
             return name
-        raise AssertionError('Root device not found (!)')
-
+        log.warn("Root device not found!")
 
     def __get_disks(self):
         """Return a list of available storage disks.
