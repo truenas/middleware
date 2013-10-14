@@ -367,11 +367,30 @@ generic_checkout_git()
 	#  instead of a fetch of all of origin?
 	if [ -d ${checkout_name}/.git ] ; then
 		cd ${checkout_name}
-		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${my_branch}" ]; then
-			git config --unset remote.origin.fetch \
-				"\+refs/heads/${my_branch}:refs/remotes/origin/${my_branch}"
-			git config --add remote.origin.fetch \
+        local old_branch=`git rev-parse --abbrev-ref HEAD`
+		if [ "x${old_branch}" != "x${my_branch}" ]; then
+
+            # Some forms of checkout set a specific fetch spec for only
+            # the specific branch head.  Basically this means that we are
+            # only going to fetch that one branch.
+            #
+            # Detect this scenario and remove the more specific fetch specification
+            # and set our own fetch specification.
+            #
+            # This is somewhat ugly and I'm tempted to just set:
+            #     +refs/heads/*:refs/remotes/origin/*
+			if ! git config --unset remote.origin.fetch \
+              "\\+refs/heads/${old_branch}:refs/remotes/origin/${old_branch}" ; then
+              echo "Unable to clear old specific origin."
+              echo "clearing all origins."
+              git config --unset remote.origin.fetch '.*'
+              git config --add remote.origin.fetch \
+                "+refs/heads/*:refs/remotes/origin/*"
+            else
+              git config --unset remote.origin.fetch '.*'
+            git config --add remote.origin.fetch \
 				"+refs/heads/${my_branch}:refs/remotes/origin/${my_branch}"
+            fi
 
 			git fetch origin
 			if [ ! -z "$my_tag" ] ; then
