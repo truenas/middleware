@@ -117,7 +117,7 @@ check_build_sanity()
     # just to get a build error.
     local mypwd=`pwd`
     local mypwdlen=`pwd | wc -c | awk '{print $1}'`  # use awk to cleanup wc output
-    local pwdmaxlen="42"
+    local pwdmaxlen="45"
     if [ $mypwdlen -ge $pwdmaxlen ] ; then
         cat <<PWD_ERROR
 =================================================================
@@ -341,6 +341,9 @@ generic_checkout_git()
     eval local my_branch=\${GIT_${repo_name}_BRANCH}
     eval local my_tag=\${GIT_${repo_name}_TAG}
     echo "Checkout: $repo_name -> $my_repo"
+    if [ -z "$my_branch" -a -z "$my_tag" ] ; then
+        my_branch=master
+    fi
 	(
 	local spl
     spl="$-";set -x
@@ -364,11 +367,30 @@ generic_checkout_git()
 	#  instead of a fetch of all of origin?
 	if [ -d ${checkout_name}/.git ] ; then
 		cd ${checkout_name}
-		if [ "x`git rev-parse --abbrev-ref HEAD`" != "x${my_branch}" ]; then
-			git config --unset remote.origin.fetch \
-				"\+refs/heads/${my_branch}:refs/remotes/origin/${my_branch}"
-			git config --add remote.origin.fetch \
+        local old_branch=`git rev-parse --abbrev-ref HEAD`
+		if [ "x${old_branch}" != "x${my_branch}" ]; then
+
+            # Some forms of checkout set a specific fetch spec for only
+            # the specific branch head.  Basically this means that we are
+            # only going to fetch that one branch.
+            #
+            # Detect this scenario and remove the more specific fetch specification
+            # and set our own fetch specification.
+            #
+            # This is somewhat ugly and I'm tempted to just set:
+            #     +refs/heads/*:refs/remotes/origin/*
+			if ! git config --unset remote.origin.fetch \
+              "\\+refs/heads/${old_branch}:refs/remotes/origin/${old_branch}" ; then
+              echo "Unable to clear old specific origin."
+              echo "clearing all origins."
+              git config --unset remote.origin.fetch '.*'
+              git config --add remote.origin.fetch \
+                "+refs/heads/*:refs/remotes/origin/*"
+            else
+              git config --unset remote.origin.fetch '.*'
+            git config --add remote.origin.fetch \
 				"+refs/heads/${my_branch}:refs/remotes/origin/${my_branch}"
+            fi
 
 			git fetch origin
 			if [ ! -z "$my_tag" ] ; then
@@ -381,9 +403,6 @@ generic_checkout_git()
 		cd ..
 	else
 
-        if [ -z "$my_branch" -a -z "$my_tag" ] ; then
-            my_branch=master
-        fi
         if [ -e "${my_cache##file://}" ]; then
             git clone ${my_cache} ${checkout_name}
             cd ${checkout_name}
