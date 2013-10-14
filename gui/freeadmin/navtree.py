@@ -147,6 +147,20 @@ class NavTree(object):
                     parent.append_child(opt)
                     break
 
+            """
+            If not node has been found to be replace then we can
+            append the node instead of replace
+            """
+            if find is not False:
+                continue
+
+            for nav in root:
+                if '.' not in gname:
+                    continue
+                parent = nav.find_gname(gname.rsplit('.', 1)[0])
+                if parent is not False:
+                    parent.append_child(opt)
+
     def titlecase(self, s):
         return re.sub(
             r"[A-Za-z]+('[A-Za-z]+)?",
