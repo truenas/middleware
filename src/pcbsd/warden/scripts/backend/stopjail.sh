@@ -76,9 +76,6 @@ JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
 
 warden_printf "%s" "."
 
-# Check if we need umount x mnts
-if [ -e "${JMETADIR}/jail-portjail" ] ; then umountjailxfs ${JAILNAME} ; fi
-
 if [ "$VIMAGEENABLE" = "YES" ] ; then
   jail_interfaces_down "${JID}"
 
@@ -230,7 +227,7 @@ if [ "$?" = "0" ]; then
 fi
 
 if [ -e "${JMETADIR}/jail-portjail" ] ; then
-  umountjailxfs
+  umountjailxfs "${JAILNAME}"
 fi
 
 fi # End of FAST check
