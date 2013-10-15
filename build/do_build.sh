@@ -46,6 +46,11 @@ if is_truenas ; then
 
 fi
 
+if [ ! -z "$EXTERNAL_BUILD" ] ; then
+    : ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos}
+    : ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
+fi
+
 : ${GIT_FREEBSD_CACHE="file:///freenas-build/trueos.git"}
 : ${GIT_FREEBSD_BRANCH=feature/unified_freebsd}
 : ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
