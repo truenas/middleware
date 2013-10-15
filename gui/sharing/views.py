@@ -27,10 +27,16 @@
 
 from django.shortcuts import render
 
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.sharing import models
 
 
 def home(request):
+
+    view = appPool.hook_app_index('sharing', request)
+    if view:
+        return view[0]
+
     return render(request, 'sharing/index.html', {
         'focus_form': request.GET.get('tab', ''),
     })
