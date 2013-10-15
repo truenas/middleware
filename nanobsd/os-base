@@ -507,6 +507,7 @@ add_gui()
 	mkdir ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate)"
 	CR "(cd ${dstCR}; python manage.py createadmin --email root@${NANO_LABEL_LOWER}.local)"
+	CR "(cd ${dstCR}; python manage.py collectstatic --noinput)"
 	CR "(cd ${dstCR}; python tools/compilemsgs.py)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "ln -sf /etc/local_settings.py ${dstCR}/local_settings.py"
