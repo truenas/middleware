@@ -39,11 +39,9 @@ class FreeModelBase(ModelBase):
     def __new__(cls, name, bases, attrs):
         from freenasUI.freeadmin.site import site
 
-        base = type(name, (object, ), attrs)
-        nbases = [base]
-        appPool.hook_model_new(name, nbases, attrs)
-
-        new_class = ModelBase.__new__(cls, name, tuple(nbases) + bases, attrs)
+        bases = list(bases)
+        appPool.hook_model_new(name, bases, attrs)
+        new_class = ModelBase.__new__(cls, name, tuple(bases), attrs)
         if new_class._meta.abstract:
             pass
         elif hasattr(new_class, 'FreeAdmin'):
