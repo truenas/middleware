@@ -99,7 +99,7 @@ class AppHook(object):
     """
 
     """
-    def hook_form_done_<FormName>(self, request, events):
+    def hook_form_done_<FormName>(self, form, request, events):
         '''
         Hook called on form done method, after save and validation
         '''

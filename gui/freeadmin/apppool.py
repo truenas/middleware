@@ -74,9 +74,9 @@ class AppPool(object):
             _method=list.append
         )
 
-    def hook_form_done(self, fname, request, events):
+    def hook_form_done(self, fname, form, request, events):
         return self._get_array(
-            'hook_form_done_%s' % fname, request, events,
+            'hook_form_done_%s' % fname, form, request, events,
             _method=list.append
         )
 
