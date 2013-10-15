@@ -41,6 +41,7 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.common import humanize_size
 from freenasUI.common.system import is_mounted
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -66,8 +67,10 @@ def _diskcmp(a, b):
 
 
 def home(request):
+    tabs = appPool.hook_app_tabs('storage', request)
     return render(request, 'storage/index.html', {
         'focused_tab': request.GET.get("tab", None),
+        'hook_tabs': tabs,
     })
 
 

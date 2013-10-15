@@ -28,4 +28,11 @@
   refreshOnShow: true" class="objrefresh data_storage_Replication" tab="storage.Replication.View" id="tab_Replication">
   </div>
 
+{% for tab in hook_tabs %}
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{{ tab.name|escapejs }}'
+  {% if focus_form == tab.focus %}, selected: true{% endif %},
+  href: '{{ tab.url }}',
+  refreshOnShow: true" class="objrefresh data_storage_{{ tab.name }}" tab="{{ tab.focus }}" id="tab_{{ tab.name }}">
+  </div>
+{% endfor %}
 </div>
