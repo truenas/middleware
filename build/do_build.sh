@@ -46,6 +46,15 @@ if is_truenas ; then
 
 fi
 
+: ${GIT_FREEBSD_CACHE="file:///freenas-build/trueos.git"}
+: ${GIT_FREEBSD_BRANCH=feature/unified_freebsd}
+: ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
+
+: ${GIT_PORTS_CACHE="file:///freenas-build/ports.git"}
+: ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
+: ${GIT_PORTS_REPO=git@gitserver:/git/repos/freenas-build/ports.git}
+
+
 # Targets to build (os-base, plugins/<plugin>).
 TARGETS=""
 
@@ -62,7 +71,6 @@ TRACE=""
 # NanoBSD flags
 NANO_ARGS=""
 
-: ${GIT_FREEBSD_CACHE="file:///freenas-build/trueos.git"}
 if [ -e "${GIT_FREEBSD_CACHE##file://}" ]; then
         echo "Using local mirror in $GIT_FREEBSD_CACHE"
 else
@@ -70,7 +78,6 @@ else
         echo "'git clone --mirror ${GIT_FREEBSD_REPO} into ${GIT_FREEBSD_CACHE}"
 fi
 
-: ${GIT_PORTS_CACHE="file:///freenas-build/ports.git"}
 if [ -e "${GIT_PORTS_CACHE##file://}" ]; then
     echo "Using local git ports mirror in $GIT_PORTS_REPO"
 else
@@ -423,8 +430,6 @@ generic_checkout_git()
 
 freebsd_checkout_git()
 {
-	: ${GIT_FREEBSD_BRANCH=feature/unified_freebsd}
-	: ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
     generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
 }
 
@@ -446,8 +451,6 @@ checkout_freebsd_source()
 			awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
 
 			# Checkout git ports
-		    : ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
-		    : ${GIT_PORTS_REPO=git@gitserver:/git/repos/freenas-build/ports.git}
             generic_checkout_git PORTS "${AVATAR_ROOT}/FreeBSD" ports
 
             for proj in $ADDL_REPOS ; do
