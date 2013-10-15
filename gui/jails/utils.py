@@ -52,19 +52,21 @@ def get_jails_index(release=None, arch=None):
 #
 # ping_host()
 #
-# Check if a host is alive. For IPv4, we timeout after 5 seconds.
-# IPv6 ping does not have the timeout option, so we poll for 5
-# seconds, then kill the process if a reply is not received.
+# Check if a host is alive. For IPv4, we timeout after tseconds.
+# IPv6 ping does not have the timeout option, so we poll for tseconds,
+# then kill the process if a reply is not received.
 #
 def ping_host(host, ping6=False):
-    cmd = "/sbin/ping -q -t 5 -o %s" % host
+    tseconds = 10
+
+    cmd = "/sbin/ping -q -t %d -o %s" % (tseconds, host)
     if ping6:
         cmd = "/sbin/ping6 -q -o %s" % host
 
     p = pipeopen(cmd)
 
     t = time.time()
-    timeout = t + 5
+    timeout = t + tseconds
 
     while t <= timeout:
         if p.poll() == 0:
@@ -88,6 +90,7 @@ def ping_host(host, ping6=False):
 # to probe. If not netmask is provided, assume /24.
 #
 def get_available_ipv4(ipv4_start, ipv4_end=None):
+    available_ipv4 = None
     addr = ipv4_start
 
     if not ipv4_end:
@@ -106,18 +109,20 @@ def get_available_ipv4(ipv4_start, ipv4_end=None):
         naddrs = int(ipv4_end) - int(ipv4_start)
 
     i = 0
-    while i <= naddrs:
+    while i < naddrs:
         if not addr:
             break
 
         if ping_host(str(addr).split('/')[0]):
             addr += 1
+
         else:
+            available_ipv4 = addr
             break
 
         i += 1
 
-    return addr
+    return available_ipv4
 
 
 #
@@ -128,6 +133,7 @@ def get_available_ipv4(ipv4_start, ipv4_end=None):
 # to probe. If not prefix is provided, assume /64.
 #
 def get_available_ipv6(ipv6_start, ipv6_end=None):
+    available_ipv6 = None
     addr = ipv6_start
 
     if not ipv6_end:
@@ -152,12 +158,14 @@ def get_available_ipv6(ipv6_start, ipv6_end=None):
 
         if ping_host(str(addr).split('/')[0], ping6=True):
             addr += 1
+
         else:
+            available_ipv6 = addr
             break
 
         i += 1
 
-    return addr
+    return available_ipv6
 
 
 def get_jail_ipv4_network():
