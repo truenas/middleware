@@ -109,7 +109,7 @@ def get_available_ipv4(ipv4_start, ipv4_end=None):
         naddrs = int(ipv4_end) - int(ipv4_start)
 
     i = 0
-    while i < naddrs:
+    while i <= naddrs:
         if not addr:
             break
 
