@@ -75,6 +75,14 @@ class AppHook(object):
     """
 
     """
+    def hook_datagrid_buttons_<AdminName>(self, admin):
+        '''
+        Hook called on generation of static buttons (top) for the datagrid
+        '''
+        pass
+    """
+
+    """
     def hook_form_init_<FormName>(self, form, *args, **kwargs):
         '''
         Hook called on form __init__ method, after django.forms.Form

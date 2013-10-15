@@ -51,6 +51,11 @@ class AppPool(object):
             _method=list.append
         )
 
+    def hook_datagrid_buttons(self, rname, admin):
+        return self._get_array(
+            'hook_datagrid_buttons_%s' % rname, admin,
+        )
+
     def hook_form_init(self, fname, form, *args, **kwargs):
         kwargs['_method'] = list.append
         return self._get_array(

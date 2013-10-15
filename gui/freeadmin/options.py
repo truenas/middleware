@@ -752,6 +752,9 @@ grid.on(".dgrid-row:dblclick", function(evt) {
         else:
             filters = ''
 
+        rname = str(type(self).__name__)
+        hook_buttons = appPool.hook_datagrid_buttons(rname, self)
+
         context = {
             'double_click': self.get_datagrid_dblclick(request=request),
             'model': m,
@@ -761,6 +764,7 @@ grid.on(".dgrid-row:dblclick", function(evt) {
             'resource_url': self.get_resource_url(request),
             'structure_url': reverse('freeadmin_%s_%s_structure' % info),
             'actions_url': reverse('freeadmin_%s_%s_actions' % info),
+            'hook_buttons': hook_buttons,
         }
 
         if self._model:
