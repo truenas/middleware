@@ -261,7 +261,7 @@ class TreeRoots(object):
             self._roots[tnode.tree_root] = []
 
         if tnode not in self._roots[tnode.tree_root]:
-            self._roots[tnode.tree_root].append(tnode)
+            bisect.insort(self._roots[tnode.tree_root], tnode)
 
     def unregister(self, tnode):
         if tnode in self._roots[tnode.tree_root]:

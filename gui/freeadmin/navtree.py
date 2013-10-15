@@ -247,14 +247,18 @@ class NavTree(object):
             'display',
             name=_('Display System Processes'),
             action='displayprocs',
-            icon='TopIcon')
+            icon='TopIcon',
+            order=997,
+        )
         tree_roots.register(nav)
 
         nav = TreeRoot(
             'shell',
             name=_('Shell'),
             icon='ShellIcon',
-            action='shell')
+            action='shell',
+            order=998,
+        )
         tree_roots.register(nav)
 
         nav = TreeRoot(
@@ -263,7 +267,9 @@ class NavTree(object):
             action='reboot',
             icon='RebootIcon',
             type='scary_dialog',
-            view='system_reboot_dialog')
+            view='system_reboot_dialog',
+            order=999,
+        )
         tree_roots.register(nav)
 
         nav = TreeRoot(
@@ -271,7 +277,9 @@ class NavTree(object):
             name=_('Shutdown'),
             icon='ShutdownIcon',
             type='scary_dialog',
-            view='system_shutdown_dialog')
+            view='system_shutdown_dialog',
+            order=1000,
+        )
         tree_roots.register(nav)
 
         for opt, model in childs_of:
