@@ -33,6 +33,33 @@ dumpfile_to_submit_exists ()
 	return 0
 }
 
+truncate_files ()
+{
+	local limit=$1
+	local IFS=$'\n'
+
+	for file in $(find $dir -type f -a \
+		! -name '*.tar' -a \
+		! -name '*.tar.gz' -a \
+		! -name '*.tgz' -a \
+		! -name '*.gz' -a \
+		! -name '*.zip' -a \
+		! -name '*.zip' -a \
+		! -name '*.gzip' -a \
+		! -name '*.bzip' -a \
+		! -name '*.bzip2' -a \
+		! -name '*.bz2' -a \
+		! -name '*.compressed' -print) ; do
+		tmpfile="$(mktemp /tmp/XXXXXX)"
+		tail -n $limit "$file" > "$tmpfile" 2>/dev/null
+		if [ $? = 0 ] ; then
+			mv "$tmpfile" "$file"
+		else
+			rm "$tmpfile"
+		fi
+	done
+}
+
 test -e /etc/rc.conf && . /etc/rc.conf
 [ "$dumpdir" = "" ] && dumpdir="$dumpdir"
 
@@ -40,8 +67,9 @@ boot_time=false
 force_upload=false
 has_ticket_info=false
 dont_delete=false
+limit=0
 
-while getopts "bFt:d:s" opt ; do
+while getopts "bFt:d:sl:" opt ; do
 	case "${opt}" in
 	b)
 		boot_time=true
@@ -54,6 +82,8 @@ while getopts "bFt:d:s" opt ; do
 	d)	topdir=$OPTARG
 		;;
 	s)	dont_delete=true
+		;;
+	l)	limit=$OPTARG
 		;;
 	\?)	exit 2
 		;;
@@ -113,6 +143,9 @@ if ! $boot_time ; then
 	$mydir/freenas-debug -A >/dev/null
 	tar -cHf - -C /var log | tar -C $dir -xf -
 	tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
+	if [ "${limit}" != "0" ] ; then
+		truncate_files "${limit}"
+	fi
 fi
 
 if ! dumpfile_to_submit_exists $dumpdir ; then
