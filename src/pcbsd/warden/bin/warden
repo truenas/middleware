@@ -782,20 +782,8 @@ defaultrouter-ipv6) cat "${JMETADIR}/defaultrouter-ipv6" 2>/dev/null | sed 's| |
 	 set_warden_metadir
 
 	 case $OPT in
-             ipv4) IP4="${4}"
-             get_ip_and_netmask "${IP4}"
-             IP4="${JIP}"
-             MASK4="${JMASK}"
-             if [ -z "$MASK4" ] ; then MASK4="24"; fi
-             echo "$IP4/$MASK4" > "${JMETADIR}/ipv4"
-                 ;;
-             ipv6) IP6="${4}"
-             get_ip_and_netmask "${IP6}"
-             IP6="${JIP}"
-             MASK6="${JMASK}"
-             if [ -z "$MASK6" ] ; then MASK4="64"; fi
-             echo "$IP6/$MASK6" > "${JMETADIR}/ipv6"
-                 ;;
+             ipv4) warden_set_ipv4 "${4}" ;;
+             ipv6) warden_set_ipv6 "${4}" ;;
        alias-ipv4) EXTRAIPS="${4}"
 	         IPS=`echo $EXTRAIPS | sed 's|,| |g'`
 	         rm "${JMETADIR}/alias-ipv4" >/dev/null 2>/dev/null

@@ -1765,3 +1765,83 @@ is_linux_jail()
 
    return 1
 }
+
+warden_set_ipv4()
+{
+   local newip="${1}"
+   local oldip="$(cat ${JMETADIR}/ipv4)"
+   local jaildir="${JDIR}/${JAILNAME}"
+   local hosts="${jaildir}/etc/hosts"
+   local tmp="$(mktemp /tmp/.wipXXXXXX)"
+   
+   get_ip_and_netmask "${newip}"  
+   newip="${JIP}"
+   newmask="${JMASK}"
+
+   if [ -z "${newmask}" ] ; then
+      newmask="24"
+   fi
+
+   if [ -n "${oldip}" -a -s "${hosts}" ] ; then 
+      awk -v oldip="${oldip}" -v newip="${newip}" '
+      BEGIN { sub("/.+$", "", oldip); sub("/.+$", "", newip); }
+      {
+         if ($0 ~ oldip) {
+            split($0, parts);
+            if (parts[1] == oldip) {
+               gsub(oldip, newip);
+            }
+         }
+
+         print $0;
+      }
+      ' < "${hosts}" > "${tmp}"
+      if [ "$?" = "0" ] ; then
+         mv "${tmp}" "${hosts}"
+         chmod 644 "${hosts}"
+      fi
+      rm -f "${tmp}"
+   fi
+
+   echo "${newip}/${newmask}" > "${JMETADIR}/ipv4"
+}
+
+warden_set_ipv6()
+{
+   local newip="${1}"
+   local oldip="$(cat ${JMETADIR}/ipv6)"
+   local jaildir="${JDIR}/${JAILNAME}"
+   local hosts="${jaildir}/etc/hosts"
+   local tmp="$(mktemp /tmp/.wipXXXXXX)"
+   
+   get_ip_and_netmask "${newip}"  
+   newip="${JIP}"
+   newmask="${JMASK}"
+
+   if [ -z "${newmask}" ] ; then
+      newmask="64"
+   fi
+
+   if [ -n "${oldip}" -a -s "${hosts}" ] ; then 
+      awk -v oldip="${oldip}" -v newip="${newip}" '
+      BEGIN { sub("/.+$", "", oldip); sub("/.+$", "", newip); }
+      {
+         if ($0 ~ oldip) {
+            split($0, parts);
+            if (parts[1] == oldip) {
+               gsub(oldip, newip);
+            }
+         }
+
+         print $0;
+      }
+      ' < "${hosts}" > "${tmp}"
+      if [ "$?" = "0" ] ; then
+         mv "${tmp}" "${hosts}"
+         chmod 644 "${hosts}"
+      fi
+      rm -f "${tmp}"
+   fi
+
+   echo "${newip}/${newmask}" > "${JMETADIR}/ipv6"
+}
