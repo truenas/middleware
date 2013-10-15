@@ -59,6 +59,14 @@ class AppHook(object):
         return []
 
     """
+    def hook_app_index_<app>(self, request):
+        '''
+        Hook called to get a view to run instead of the default index
+        '''
+        pass
+    """
+
+    """
     def hook_app_tabs_<app>(self, request):
         '''
         Hook called to get a list of additional tabs for an app

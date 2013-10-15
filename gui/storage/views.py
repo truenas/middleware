@@ -67,6 +67,11 @@ def _diskcmp(a, b):
 
 
 def home(request):
+
+    view = appPool.hook_app_index('storage', request)
+    if view:
+        return view[0]
+
     tabs = appPool.hook_app_tabs('storage', request)
     return render(request, 'storage/index.html', {
         'focused_tab': request.GET.get("tab", None),
