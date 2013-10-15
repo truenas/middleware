@@ -212,9 +212,7 @@ def install_available(request, oid):
             jail_auto_configure()
         addrs = guess_addresses()
         if not addrs['high_ipv4']:
-            raise MiddlewareError(_(
-                "You must configure your network interface and a default "
-                "gateway"))
+            raise MiddlewareError(_("No available IP addresses"))
     except MiddlewareError, e:
         return render(request, "plugins/install_error.html", {
             'error': e.value,
@@ -345,9 +343,7 @@ def upload(request, jail_id=-1):
             jail_auto_configure()
         addrs = guess_addresses()
         if not addrs['high_ipv4']:
-            raise MiddlewareError(_(
-                "You must configure your network interface and a default "
-                "gateway"))
+            raise MiddlewareError(_("No available IP addresses"))
     except MiddlewareError, e:
         return render(request, "plugins/install_error.html", {
             'error': e.value,
