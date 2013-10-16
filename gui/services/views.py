@@ -178,6 +178,8 @@ def servicesToggleView(request, formname):
     if not mf.is_valid():
         return
     svc_entry = mf.save()
+    events = []
+    mf.done(request, events)
 
     error = False
     message = False
@@ -205,6 +207,7 @@ def servicesToggleView(request, formname):
         'message': message,
         'enabled_svcs': mf.enabled_svcs,
         'disabled_svcs': mf.disabled_svcs,
+        'events': events,
     }
 
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
