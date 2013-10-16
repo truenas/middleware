@@ -203,7 +203,7 @@ __EOF__
         }
 
         location /static {
-            alias /usr/local/www/freenasUI/freeadmin/static;
+            alias /usr/local/www/freenasUI/static;
         }
 
         location /reporting/graphs {
