@@ -43,6 +43,7 @@ setup_environ(settings)
 from django.db.models.loading import cache
 cache.get_apps()
 
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.storage.models import Replication
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.pipesubr import pipeopen, system
@@ -72,6 +73,8 @@ def exit_if_running(pid):
         sys.exit(0)
     except OSError:
         log.debug("Process %d gone" % (pid, ))
+
+appPool.hook_tool_run('autorepl')
 
 MNTLOCK = mntlock()
 
