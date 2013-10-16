@@ -103,5 +103,11 @@ class AppPool(object):
             _method=list.append
         )
 
+    def hook_tool_run(self, name):
+        return self._get_array(
+            'hook_tool_run_%s' % name,
+            _method=list.append
+        )
+
 
 appPool = AppPool()

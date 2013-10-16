@@ -145,3 +145,11 @@ class AppHook(object):
         '''
         pass
     """
+
+    """
+    def hook_tool_run_<toolname>(self):
+        '''
+        Hook called when a tool is ran
+        '''
+        pass
+    """
