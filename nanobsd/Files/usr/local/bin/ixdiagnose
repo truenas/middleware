@@ -67,7 +67,7 @@ boot_time=false
 force_upload=false
 has_ticket_info=false
 dont_delete=false
-limit=0
+limit=10000
 
 while getopts "bFt:d:sl:" opt ; do
 	case "${opt}" in
@@ -143,7 +143,7 @@ if ! $boot_time ; then
 	$mydir/freenas-debug -A >/dev/null
 	tar -cHf - -C /var log | tar -C $dir -xf -
 	tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
-	if [ "${limit}" != "0" ] ; then
+	if [ "${limit}" != "-1" ] ; then
 		truncate_files "${limit}"
 	fi
 fi
