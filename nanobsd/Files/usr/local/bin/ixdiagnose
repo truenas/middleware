@@ -10,19 +10,36 @@
 
 mydir=`dirname $0`
 
+# get the textdump file. On some systems this is a gzipped 
+# tarball, so we we check for that here.
+get_textdump ()
+{
+	local textdump
+
+	if [ -e $dumpdir/textdump.tar.last ] ; then
+		textdump="$dumpdir/textdump.tar.last"
+	elif [ -e $dumpdir/textdump.tar.last.gz ] ; then
+		textdump="$dumpdir/textdump.tar.last.gz"
+	fi
+
+	echo $textdump
+}
+
 # there is a dumpfile in /var/crash
 # sets "$actualdump" -> to $dumpdir/textdump.tar.N
 dumpfile_to_submit_exists ()
 {
 	local dumpdir=$1
+	local textdump=$(get_textdump)
 
 	# no crashdump at all
-	if [ ! -e $dumpdir/textdump.tar.last ] ; then
+	if [ ! -e $textdump ] ; then
 		return 1
 	fi
-	actualdump=$(realpath $dumpdir/textdump.tar.last)
+
+	actualdump=$(realpath $textdump)
 	if [ $? -gt 0 ] ; then
-		echo "can not realpath $dumpdir/textdump.tar.last" >&2
+		echo "can not realpath $textdump" >&2
 		return 2
 	fi
 
@@ -68,6 +85,7 @@ force_upload=false
 has_ticket_info=false
 dont_delete=false
 limit=10000
+textdump=$(get_textdump)
 
 while getopts "bFt:d:sl:" opt ; do
 	case "${opt}" in
@@ -154,7 +172,7 @@ if ! dumpfile_to_submit_exists $dumpdir ; then
 	fi
 else
 	mkdir "$dir/textdump"
-	tar -xvf $dumpdir/textdump.tar.last -C "$dir/textdump"
+	tar -xvf $textdump -C "$dir/textdump"
 	cp $dumpdir/info.last "$dir/textdump"
 fi
 
