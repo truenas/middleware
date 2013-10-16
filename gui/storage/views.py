@@ -69,6 +69,7 @@ def _diskcmp(a, b):
 def home(request):
 
     view = appPool.hook_app_index('storage', request)
+    view = filter(None, view)
     if view:
         return view[0]
 

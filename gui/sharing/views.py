@@ -34,6 +34,7 @@ from freenasUI.sharing import models
 def home(request):
 
     view = appPool.hook_app_index('sharing', request)
+    view = filter(None, view)
     if view:
         return view[0]
 
