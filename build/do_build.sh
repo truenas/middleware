@@ -33,8 +33,25 @@ BUILD_TARGETS="os-base"
 
 ADDL_REPOS=""
 
+# Using shallow "--depth 1" git checkouts is problematic, so we default
+# it to off.
+#  https://github.com/phinze/homebrew-cask/issues/1003
+#
+# @phinze I think the only solution is for homebrew to not use --depth
+# 1 in git clone. I experienced many issues with that option, and
+# cloned repo practically not useable, if you want to commit something
+# / browse history. Maybe it's not exactly issue with "fatal: git
+# fetch-pack: expected shallow list", but generally --depth 1 causes
+# lot of problems.
+#
+# Internally we were having trouble with not being able to incrementally
+# update repos checked out with --depth1 so turn this off until we have
+# a better understanding of what is going on.
+if [ "x$GIT_SHALLOW" != "xyes" ] ; then
+    GIT_DEEP=yes
+fi
+
 if is_truenas ; then
-    GIT_DEEP=yes  # shallow checkouts cause too many problems right now.
     # Additional repos to checkout for build
     ADDL_REPOS="$ADDL_REPOS ZFSD TRUENAS-FILES TRUENAS-COMPONENTS"
 
