@@ -31,6 +31,7 @@ from django.shortcuts import render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.services import models
 from freenasUI.services.directoryservice import DirectoryService
 from freenasUI.services.forms import servicesForm
@@ -39,6 +40,11 @@ log = logging.getLogger("services.views")
 
 
 def index(request):
+
+    view = appPool.hook_app_index('sharing', request)
+    if view:
+        return view[0]
+
     return render(request, 'services/index.html', {
         'toggleCore': request.GET.get('toggleCore'),
     })
