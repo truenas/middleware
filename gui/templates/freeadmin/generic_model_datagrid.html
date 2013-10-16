@@ -14,14 +14,15 @@
     {% endif %}
     {% endblock %}
     {% for btn in hook_buttons %}
-    <div class="grid{{ btn.name }} left">
       <button id="datagridBtn_{{ module_name }}_{{ btn.name }}" data-dojo-type="dijit.form.Button" type="button">
-          {{ btn.verbose_name }}
+          {% if btn.icon %}
+	  <img src="{{ STATIC_URL }}{{ btn.icon }}">
+	  {% endif %}
+          <p>{{ btn.verbose_name }}</p>
       <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
           {{ btn.onclick|safe }}
       </script>
       </button>
-    </div>
     {% endfor %}
     <span class="clear"></span>
   </div>
