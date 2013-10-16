@@ -62,10 +62,9 @@ class AppPool(object):
             'hook_datagrid_buttons_%s' % rname, admin,
         )
 
-    def hook_form_init(self, fname, form, *args, **kwargs):
-        kwargs['_method'] = list.append
+    def hook_form_buttons(self, fname, form, action, *args, **kwargs):
         return self._get_array(
-            'hook_form_init_%s' % fname, form, *args, **kwargs
+            'hook_form_buttons_%s' % fname, form, action, *args, **kwargs
         )
 
     def hook_form_delete(self, fname, form, request, events):
@@ -78,6 +77,12 @@ class AppPool(object):
         return self._get_array(
             'hook_form_done_%s' % fname, form, request, events,
             _method=list.append
+        )
+
+    def hook_form_init(self, fname, form, *args, **kwargs):
+        kwargs['_method'] = list.append
+        return self._get_array(
+            'hook_form_init_%s' % fname, form, *args, **kwargs
         )
 
     def hook_model_new(self, name, bases, attrs):

@@ -91,9 +91,9 @@ class AppHook(object):
     """
 
     """
-    def hook_form_init_<FormName>(self, form, *args, **kwargs):
+    def hook_form_buttons_<FormName>(self, form, *args, **kwargs):
         '''
-        Hook called on form __init__ method, after django.forms.Form
+        Hook called to get extra buttons to be placed at the end of the form
         '''
         pass
     """
@@ -110,6 +110,14 @@ class AppHook(object):
     def hook_form_delete_<FormName>(self, form, request, events):
         '''
         Hook called on form delete method
+        '''
+        pass
+    """
+
+    """
+    def hook_form_init_<FormName>(self, form, *args, **kwargs):
+        '''
+        Hook called on form __init__ method, after django.forms.Form
         '''
         pass
     """

@@ -561,6 +561,11 @@ class BaseFreeAdmin(object):
             ), kwargs={
                 'oid': instance.id,
             }),
+            'hook_buttons': appPool.hook_form_buttons(
+                str(type(mf).__name__),
+                mf,
+                'edit',
+            ),
         })
 
         template = "%s/%s_edit.html" % (

@@ -101,6 +101,14 @@
             {% endwith %}
             {% block buttons_extra %}
             {% endblock %}
+            {% for btn in hook_buttons %}
+              <button id="btn_{{ verbose_name}}_{{ btn.name }}" data-dojo-type="dijit.form.Button" type="button">
+                  {{ btn.verbose_name }}
+              <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                  {{ btn.onclick|safe }}
+              </script>
+              </button>
+            {% endfor %}
         </td>
     </tr>
     {% endblock %}
