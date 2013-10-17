@@ -8,7 +8,10 @@ if len(sys.argv) < 2:
 	print "Usage: %s file" % sys.argv[0]
 	sys.exit(1)
 
-url = 'https://ext-data.ixsystems.com/uploader/list/'
+if 'CRASHSERVER_URL' in os.environ:
+    url = os.environ['CRASHSERVER_URL']
+else:
+    url = 'https://ext-data.ixsystems.com/uploader/list/'
 files = {'docfile': open(sys.argv[1], 'rb')}
 
 data = {}
