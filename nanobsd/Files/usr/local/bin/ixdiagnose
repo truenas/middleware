@@ -121,9 +121,19 @@ END_TEXT
 	read dummy
 fi
 
+# If this file doesn't exist then we are booting
+# the first time and we should execute as if sending
+# textdump but instead send the hardware config.
+if [ ! -e '/data/.hwconfig_sent' ] ; then
+	hwsent=false
+else
+	hwsent=true
+fi
+
 # during boot ix-diagnose will call us with --boot
-# if there is no crashdump, then just exit
-if $boot_time ; then
+# if there is no crashdump, AND we've already sent
+# the hardware profile then just exit.
+if $hwsent && $boot_time ; then
 	if ! dumpfile_to_submit_exists $dumpdir ; then
 		exit 0
 	fi
@@ -157,6 +167,14 @@ if [ $? -gt 0 ] ; then
 	exit 1
 fi
 
+#
+# We can send some more detailed information here if
+# the user has opted in by running it from the command
+# line.
+#
+# We ONLY send this more detailed information if the
+# user specifically requests that we do.
+#
 if ! $boot_time ; then
 	$mydir/freenas-debug -A >/dev/null
 	tar -cHf - -C /var log | tar -C $dir -xf -
@@ -181,6 +199,12 @@ if $has_ticket_info ; then
 	cp $ticket_info "$dir/ticket_info.json"
 fi
 
+set +e
+dmidecode > "$dir/dmidecode"
+sysctl hw > "$dir/sysctl_hw"
+cpuid > "$dir/cpuid"
+set -e
+
 if [ -f /etc/hostid ] ; then
 	cp /etc/hostid "$dir/hostid"
 fi
@@ -197,4 +221,7 @@ tar -C $dir/.. -cHzf $dir/../ixdiagnose.tgz ixdiagnose
 $mydir/crashuploader $topdir/ixdiagnose.tgz
 if [ "$actualdump" != "" ] ; then
 	touch $actualdump.submitted
+fi
+if ! $hwsent ; then
+    touch "/data/.hwconfig_sent"
 fi
