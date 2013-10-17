@@ -198,6 +198,12 @@ class FreeAdminSite(object):
     def adminInterface(self, request):
         from freenasUI.network.models import GlobalConfiguration
         from freenasUI.system.models import Advanced
+
+        view = appPool.hook_app_index('freeadmin', request)
+        view = filter(None, view)
+        if view:
+            return view[0]
+
         try:
             console = Advanced.objects.all().order_by('-id')[0].adv_consolemsg
         except:
