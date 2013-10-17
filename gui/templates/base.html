@@ -13,16 +13,16 @@
         has: {
           "dojo-undef-api": true
         },
-        isDebug:true,
-        parseOnLoad:true,
-        baseUrl:"{{ DOJANGO.DOJO_URL }}",
+        isDebug: true,
+        parseOnLoad: true,
+        baseUrl: "{{ DOJANGO.DOJO_URL }}",
         async: true,
         cacheBust: '{{ cache_hash }}',
         packages: [
-        {name: "freeadmin", location: "../../../../../static/lib/js/freeadmin"},
-        {name: "dgrid", location: "../../../../../static/lib/js/dgrid"},
-        {name: "xstyle", location: "../../../../../static/lib/js/xstyle"},
-        {name: "put-selector", location: "../../../../../static/lib/js/put-selector"}
+        {name: "freeadmin", location: "{{ STATIC_URL }}lib/js/freeadmin"},
+        {name: "dgrid", location: "{{ STATIC_URL }}lib/js/dgrid"},
+        {name: "xstyle", location: "{{ STATIC_URL }}lib/js/xstyle"},
+        {name: "put-selector", location: "{{ STATIC_URL }}lib/js/put-selector"}
         ]
     };
     var CSRFToken = '{{ csrf_token }}';
