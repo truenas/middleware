@@ -24,11 +24,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
 import logging
 
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.apppool import appPool
@@ -211,7 +211,7 @@ def servicesToggleView(request, formname):
         'events': events,
     }
 
-    return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+    return HttpResponse(json.dumps(data), mimetype="application/json")
 
 
 def enable(request, svc):
