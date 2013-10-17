@@ -210,20 +210,13 @@ def volumemanager_ufs(request):
                 disks = request.POST.getlist('volume_disks')
             else:
                 disks = None
-            zpoolfields = re.compile(r'zpool_(.+)')
-            zfsextra = [
-                (zpoolfields.search(i).group(1), i, request.POST.get(i))
-                for i in request.POST.keys() if zpoolfields.match(i)]
 
     else:
         form = forms.VolumeManagerUFSForm()
         disks = []
-        zfsextra = None
     return render(request, 'storage/wizard.html', {
         'form': form,
         'disks': disks,
-        'zfsextra': zfsextra,
-        'dedup_warning': forms.DEDUP_WARNING,
     })
 
 
