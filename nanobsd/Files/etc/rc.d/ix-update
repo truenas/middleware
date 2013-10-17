@@ -15,7 +15,7 @@ db_update_real()
 	echo "Applying database schema changes"
 
 	yes | /usr/local/bin/python \
-	    /usr/local/www/freenasUI/manage.py migrate --merge > \
+	    /usr/local/www/freenasUI/manage.py migrate --merge --delete-ghost-migrations > \
 		$UPDATE_FAILED_LOG 2>&1
 	if [ $? -ne 0 ]; then
 		echo "manage.py migrate failed"
