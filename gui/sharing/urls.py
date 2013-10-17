@@ -24,12 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
 from django.conf.urls import patterns, url
 
 urlpatterns = patterns('freenasUI.sharing.views',
     url(r'^home/$', 'home', name="sharing_home"),
-    url(r'^windows/$', 'windows', name="sharing_windows"),
-    url(r'^apple/$', 'apple', name="sharing_apple"),
-    url(r'^unix/$', 'unix', name="sharing_unix"),
-    )
+)

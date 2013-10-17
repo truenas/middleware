@@ -41,27 +41,3 @@ def home(request):
     return render(request, 'sharing/index.html', {
         'focus_form': request.GET.get('tab', ''),
     })
-
-
-def windows(request):
-    cifs_share_list = models.CIFS_Share.objects.select_related().all()
-    return render(request, 'sharing/windows.html', {
-        'cifs_share_list': cifs_share_list,
-        'model': models.CIFS_Share,
-    })
-
-
-def apple(request):
-    afp_share_list = models.AFP_Share.objects.order_by("-id").all()
-    return render(request, 'sharing/apple.html', {
-        'afp_share_list': afp_share_list,
-        'model': models.AFP_Share,
-    })
-
-
-def unix(request):
-    nfs_share_list = models.NFS_Share.objects.select_related().all()
-    return render(request, 'sharing/unix.html', {
-        'nfs_share_list': nfs_share_list,
-        'model': models.NFS_Share,
-    })
