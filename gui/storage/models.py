@@ -269,6 +269,10 @@ class Volume(Model):
         # Refresh the fstab
         n.reload("disk")
 
+        # Django signal could have been used instead
+        # Do it this way to make sure its ran in the time we want
+        self.post_delete(self)
+
         if self.vol_encryptkey:
             keyfile = self.get_geli_keyfile()
             if os.path.exists(keyfile):
@@ -280,6 +284,9 @@ class Volume(Model):
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
                 n.start(svc)
+
+    def post_delete(self):
+        pass
 
     def save(self, *args, **kwargs):
         if not self.vol_encryptkey and self.vol_encrypt > 0:
