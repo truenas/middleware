@@ -44,9 +44,6 @@ setgroup()
 #
 generate_exports()
 {
-	if [ -f /etc/exports ]; then
-		rm /etc/exports
-	fi
 	local IFS="|"
 	local f="id nfs_network nfs_hosts nfs_alldirs nfs_ro nfs_quiet nfs_maproot_user nfs_maproot_group nfs_mapall_user nfs_mapall_group"
 	eval local $f
