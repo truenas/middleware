@@ -1,6 +1,7 @@
 #!/bin/sh
 #
 # See README for up to date usage examples.
+# vim: syntax=sh noexpandtab
 #
 
 umask 022
