@@ -308,6 +308,31 @@ class JailsConfiguration(Model):
     class FreeAdmin:
         deletable = False
 
+    def __init__(self, *args, **kwargs):
+        super(JailsConfiguration, self).__init__(*args, **kwargs)
+        iface = notifier().guess_default_interface()
+        if not iface:
+            return
+
+        st = sipcalc_type(iface=iface)
+        if not st:
+            return
+
+        if not st.is_ipv4():
+            return
+
+        if not self.jc_ipv4_network:
+            self.jc_ipv4_network = "%s/%d" % (
+                st.network_address, st.network_mask_bits
+            )
+
+        if not self.jc_ipv4_network_start:
+            self.jc_ipv4_network_start = st.usable_range[0]
+
+        if not self.jc_ipv4_network_end:
+            self.jc_ipv4_network_end = st.usable_range[1]
+
+
 
 class JailTemplate(Model):
 
