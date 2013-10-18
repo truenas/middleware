@@ -199,9 +199,6 @@ add_port www/aria2 OPTIONS_FILE_UNSET+=SQLITE
 add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
-if is_truenas ; then
-	add_port lang/perl5.14
-fi
 add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
 add_port devel/pkgconf
@@ -293,10 +290,6 @@ add_port misc/gnomehier
 add_port www/py-httplib2
 add_port net/py-oauth2
 add_port sysutils/jailme
-if is_truenas ; then
-	add_port lang/perl5.14 # needed by debootstrap
-	add_port sysutils/debootstrap
-fi
 
 
 if [ "${REPORTING}" = 1 ]; then
