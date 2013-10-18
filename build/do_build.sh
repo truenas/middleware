@@ -480,31 +480,31 @@ checkout_freebsd_source()
 		return
 	fi
 
-		mkdir -p ${AVATAR_ROOT}/FreeBSD
+	mkdir -p ${AVATAR_ROOT}/FreeBSD
 
-			echo "Use git set!"
-			freebsd_checkout_git
+	echo "Use git set!"
+	freebsd_checkout_git
 
-			# Nuke newly created files to avoid build errors.
-			git_status_ok="$AVATAR_ROOT/FreeBSD/.git_status_ok"
-			rm -rf "$git_status_ok"
-			(
-			  cd $AVATAR_ROOT/FreeBSD/src && git status --porcelain
-			) | tee "$git_status_ok"
-			awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
+# Nuke newly created files to avoid build errors.
+	git_status_ok="$AVATAR_ROOT/FreeBSD/.git_status_ok"
+	rm -rf "$git_status_ok"
+	(
+	 cd $AVATAR_ROOT/FreeBSD/src && git status --porcelain
+	) | tee "$git_status_ok"
+	awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
 
-			# Checkout git ports
-            generic_checkout_git PORTS "${AVATAR_ROOT}/FreeBSD" ports
+# Checkout git ports
+	generic_checkout_git PORTS "${AVATAR_ROOT}/FreeBSD" ports
 
-            for proj in $ADDL_REPOS ; do
-                generic_checkout_git \
-                    "`echo $proj|tr '-' '_'`" \
-                    "${AVATAR_ROOT}/nas_source" \
-                    `echo $proj | tr 'A-Z' 'a-z'`
-            done
+	for proj in $ADDL_REPOS ; do
+		generic_checkout_git \
+			"`echo $proj|tr '-' '_'`" \
+			"${AVATAR_ROOT}/nas_source" \
+                   `echo $proj | tr 'A-Z' 'a-z'`
+	done
 
-		# Mark git clone/pull as being done already.
-        echo "$NANO_LABEL" > ${AVATAR_ROOT}/FreeBSD/.pulled
+	# Mark git clone/pull as being done already.
+	echo "$NANO_LABEL" > ${AVATAR_ROOT}/FreeBSD/.pulled
 }
 
 do_pbi_wrapper_hack()
