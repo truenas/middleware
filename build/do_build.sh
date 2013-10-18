@@ -83,10 +83,7 @@ TARGETS=""
 
 # Should we update src + ports?
 UPDATE=true
-if [ -f ${AVATAR_ROOT}/FreeBSD/.pulled ]
-then
-	UPDATE=false
-fi
+FORCE_UPDATE=false
 
 # Trace flags
 TRACE=""
@@ -189,6 +186,7 @@ parse_cmdline()
 			;;
         c)  CHECKOUT_ONLY=true
             UPDATE=true # force update
+			FORCE_UPDATE=true # force update
             ;;
 		f)
 			: $(( FORCE_BUILD += 1 ))
@@ -208,6 +206,7 @@ parse_cmdline()
 			;;
 		u)
 			UPDATE=true
+			FORCE_UPDATE=true
 			;;
 		x)
 			TRACE="-x"
@@ -458,8 +457,29 @@ freebsd_checkout_git()
 
 checkout_freebsd_source()
 {
-	if ${UPDATE}
+	if  ! ${UPDATE} ; then
+		return
+	fi
+
+	# Don't update unless forced to or if we are building a different
+	# project.
+	# The file ${AVATAR_ROOT}/FreeBSD/.pulled should contain our
+	# NANO_LABEL, otherwise we need to pull sources.
+	if ! $FORCE_UPDATE && [ -f ${AVATAR_ROOT}/FreeBSD/.pulled ]
 	then
+		if [ "`cat ${AVATAR_ROOT}/FreeBSD/.pulled`" = "$NANO_LABEL" ]
+		then
+			echo "skipping source update because  (${AVATAR_ROOT}/FreeBSD/.pulled = NANO_LABEL($NANO_LABEL))"
+			return
+		else
+			echo "updating because (${AVATAR_ROOT}/FreeBSD/.pulled != NANO_LABEL($NANO_LABEL))"
+		fi
+	fi
+
+	if  ! ${UPDATE} ; then
+		return
+	fi
+
 		mkdir -p ${AVATAR_ROOT}/FreeBSD
 
 			echo "Use git set!"
@@ -483,11 +503,8 @@ checkout_freebsd_source()
                     `echo $proj | tr 'A-Z' 'a-z'`
             done
 
-		#
-		# Force a repatch.
-		#
-		: > ${AVATAR_ROOT}/FreeBSD/.pulled
-	fi
+		# Mark git clone/pull as being done already.
+        echo "$NANO_LABEL" > ${AVATAR_ROOT}/FreeBSD/.pulled
 }
 
 do_pbi_wrapper_hack()
