@@ -3,7 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from freenasUI.common import get_sw_name
+from freenasUI.common.system import get_sw_name
 
 class Migration(DataMigration):
 
