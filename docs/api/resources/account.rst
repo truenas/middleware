@@ -71,7 +71,7 @@ Create resource
 
         {
                 "bsdusr_username": "myuser",
-                "bsdusr_creategroup": True,
+                "bsdusr_creategroup": true,
                 "bsdusr_full_name": "haha",
                 "bsdusr_password": "aa",
                 "bsdusr_uid": 1111
@@ -109,8 +109,8 @@ Create resource
    :json boolean bsdusr_creategroup: create a group for the user
    :json string bsdusr_mode: unix mode to set the homedir
    :json string bsdusr_shell: shell for the user login
-   :json string bsdusr_password_disabled: disabled password login
-   :json string bsdusr_locked: lock user login
+   :json boolean bsdusr_password_disabled: disabled password login
+   :json boolean bsdusr_locked: lock user login
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -165,8 +165,8 @@ Update resource
    :json integer bsdusr_group: id of the group object
    :json string bsdusr_mode: unix mode to set the homedir
    :json string bsdusr_shell: shell for the user login
-   :json string bsdusr_password_disabled: disabled password login
-   :json string bsdusr_locked: lock user login
+   :json boolean bsdusr_password_disabled: disabled password login
+   :json boolean bsdusr_locked: lock user login
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
