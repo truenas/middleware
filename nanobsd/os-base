@@ -515,11 +515,7 @@ customize_cmd add_pbi_manager
 add_gui()
 {
 	local gui dst dstCR
-	if is_truenas ; then
-	    gui=${TRUENAS_COMPONENTS_ROOT}/gui
-	else
-	    gui=${AVATAR_ROOT}/gui
-	fi
+	gui=${AVATAR_ROOT}/gui
 	dstCR=/usr/local/www/freenasUI
 	dst=${NANO_WORLDDIR}${dstCR}
 	if [ -d ${gui} ]; then
@@ -527,6 +523,12 @@ add_gui()
 	mkdir ${dst}
 	( cd ${gui}
 	  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
+	if is_truenas ; then
+		# Reporting is replaced by ana
+		rm -rf ${dst}/reporting
+		( cd ${TRUENAS_COMPONENTS_ROOT}/gui
+		  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
+	fi
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate)"
