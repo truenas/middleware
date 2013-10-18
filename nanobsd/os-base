@@ -403,6 +403,24 @@ add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
 
+#
+# These are all for SSSD
+# 
+add_port textproc/xmlcatmgr
+add_port textproc/libxslt
+add_port dns/c-ares
+add_port lang/perl5.14
+add_port databases/ldb
+add_port devel/libunistring
+add_port devel/ding-libs
+add_port devel/autoconf-wrapper
+add_port devel/automake-wrapper
+add_port devel/autoconf
+add_port devel/automake
+add_port devel/nspr
+add_port security/nss
+add_port security/sssd
+
 if [ "${DEBUG}" = 1 ]; then
 
 	add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
