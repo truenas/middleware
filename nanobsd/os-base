@@ -451,6 +451,17 @@ hack_nsswitch_conf ( )
 }
 customize_cmd hack_nsswitch_conf
 
+save_build ( )
+{
+	VERSION_FILE=${NANO_WORLDDIR}/etc/version
+	if [ "${SVNREVISION}" = "${REVISION}" ]; then
+		echo "${NANO_NAME}" > "${VERSION_FILE}"
+	else
+		echo "${NANO_NAME} (${SVNREVISION})" > "${VERSION_FILE}"
+	fi
+}
+customize_cmd save_build
+
 add_pbi_manager()
 {
 	local pm dst
@@ -731,17 +742,6 @@ shrink_md_fbsize()
 		${NANO_WORLDDIR}/etc/rc.initdiskless
 }
 customize_cmd shrink_md_fbsize
-
-save_build ( )
-{
-	VERSION_FILE=${NANO_WORLDDIR}/etc/version
-	if [ "${SVNREVISION}" = "${REVISION}" ]; then
-		echo "${NANO_NAME}" > "${VERSION_FILE}"
-	else
-		echo "${NANO_NAME} (${SVNREVISION})" > "${VERSION_FILE}"
-	fi
-}
-customize_cmd save_build
 
 if [ "${DEBUG}" = 1 ]; then
 
