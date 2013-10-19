@@ -409,14 +409,9 @@ add_port sysutils/smp_utils
 add_port textproc/xmlcatmgr
 add_port textproc/libxslt
 add_port dns/c-ares
-add_port lang/perl5.14
 add_port databases/ldb
 add_port devel/libunistring
 add_port devel/ding-libs
-add_port devel/autoconf-wrapper
-add_port devel/automake-wrapper
-add_port devel/autoconf
-add_port devel/automake
 add_port devel/nspr
 add_port security/nss
 add_port security/sssd
