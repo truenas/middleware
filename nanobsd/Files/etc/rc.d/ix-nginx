@@ -232,7 +232,7 @@ __EOF__
     server {
 	listen ${addr}:80;
 	server_name localhost;
-	rewrite ^ https://\$server_addr:${port}\$request_uri? permanent;
+	rewrite ^(.*) https://\$host\$1 permanent;
     }
 __EOF__
 	fi
