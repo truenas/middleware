@@ -762,10 +762,6 @@ unmute_console_logging()
 }
 customize_cmd unmute_console_logging
 
-else
-
-customize_cmd_truenas remove_perl
-
 fi
 
 remove_var_db_pkg()
