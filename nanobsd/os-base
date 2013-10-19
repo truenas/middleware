@@ -827,8 +827,8 @@ freenas_custom()
 	compress_ko geom_raid3.ko
 	compress_ko geom_gate.ko
 
-	# nuke .pyc files (saves ~25MB on a fresh install)
-	find ${NANO_WORLDDIR}/usr/local -name '*.pyc' | xargs rm -f
+	# nuke .pyo files
+	find ${NANO_WORLDDIR}/usr/local -name '*.pyo' | xargs rm -f
 
 	# kill includes (saves 14MB)
 	find ${NANO_WORLDDIR}/usr/local/include \! -name 'pyconfig.h' -type f | xargs rm -f
