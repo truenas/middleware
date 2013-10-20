@@ -1005,10 +1005,10 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         return self._clean_number_range("iscsi_nopinint", 0, 300)
 
     def clean_iscsi_maxsesh(self):
-        return self._clean_number_range("iscsi_maxsesh", 1, 64)
+        return self._clean_number_range("iscsi_maxsesh", 1, 65536)
 
     def clean_iscsi_maxconnect(self):
-        return self._clean_number_range("iscsi_maxconnect", 1, 64)
+        return self._clean_number_range("iscsi_maxconnect", 1, 65536)
 
     def clean_iscsi_r2t(self):
         return self._clean_number_range("iscsi_r2t", 1, 255)
