@@ -901,8 +901,11 @@ freenas_custom()
 	mkdir ${NANO_WORLDDIR}/data/zfs
 	ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
 	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
+
+	# This is wrong.  Needs a way to tell kernel how to find the mount utility
+	# instead.
 	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
-	ln -s /usr/sbin/mount_ntfs-fuse ${NANO_WORLDDIR}/sbin/mount_ntfs
+	ln -s /usr/local/bin/ntfs-3g ${NANO_WORLDDIR}/sbin/mount_ntfs
 	AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
 	mkdir -m 0755 -p ${NANO_WORLDDIR}/$AVAHI_SERVICES_DIR
 
