@@ -378,6 +378,12 @@ device		sbp		# SCSI over FireWire (Requires scbus and da)
 # Needed for ipmi(4)
 device		smbus
 
+# Watchdog support
+device		ichwd
+device		amdsbwd
+device		viawd
+device		wbwd
+
 # VirtIO
 device		virtio
 device		virtio_pci
