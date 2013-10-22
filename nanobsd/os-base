@@ -81,9 +81,15 @@ NANO_IMAGES=2
 NANO_IGNORE_FILES_EXPR=$(echo "$NANO_IGNORE_FILES_EXPR" | sed -e 's/)/|\.orig$|\.rej$)/')
 FlashDevice generic 2g
 
-DEBUG_INSTALL="
+if [ "$DEBUG" = 1 ]; then
+	DEBUG_BUILD="
+DEBUG_FLAGS=		-g
+"
+else
+	DEBUG_INSTALL="
 INSTALL_NODEBUG=	t
 "
+fi
 
 # NB: leave c++ enabled so devd can be built
 CONF_BUILD="
@@ -138,6 +144,8 @@ PYTHON_DEFAULT_VERSION=python2.7
 NOPORTDOCS=true
 
 LOCAL_DIRS=${NANO_LOCAL_DIRS}
+
+${DEBUG_BUILD}
 "
 if is_truenas ; then
 	CONF_BUILD="$CONF_BUILD
@@ -408,12 +416,21 @@ add_port devel/nspr
 add_port security/nss
 add_port security/sssd
 
-add_port devel/git OPTIONS_FILE_UNSET+=SVN \
-	OPTIONS_FILE_UNSET+=CVS \
-	OPTIONS_FILE_UNSET+=P4 \
-	OPTIONS_FILE_UNSET+=PERL \
-	OPTIONS_FILE_UNSET+=CONTRIB \
-	OPTIONS_FILE_UNSET+=NLS
+if [ "${DEBUG}" = 1 ]; then
+
+	add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
+	add_port ftp/curl
+	add_port editors/vim-lite
+	add_port misc/py-pexpect
+	add_port devel/ipython OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=ZMQ
+	add_port devel/git OPTIONS_FILE_UNSET+=SVN \
+			OPTIONS_FILE_UNSET+=CVS \
+			OPTIONS_FILE_UNSET+=P4 \
+			OPTIONS_FILE_UNSET+=PERL \
+			OPTIONS_FILE_UNSET+=CONTRIB \
+			OPTIONS_FILE_UNSET+=NLS
+	add_port devel/ctags
+fi
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
  	CONF_INSTALL="${CONF_INSTALL}
@@ -739,7 +756,22 @@ shrink_md_fbsize()
 }
 customize_cmd shrink_md_fbsize
 
+if [ "${DEBUG}" = 1 ]; then
+
+unmute_console_logging()
+{
+	# /var is small. Don't fill it up with messages from console.log
+	# because it's a chatty log.
+	sed -i '' -e 's/#console.info/console.info/' \
+			"${NANO_WORLDDIR}/etc/syslog.conf"
+}
+customize_cmd unmute_console_logging
+
+else
+
 customize_cmd_truenas remove_perl
+
+fi
 
 remove_var_db_pkg()
 {
@@ -838,17 +870,19 @@ freenas_custom()
 	rm -f ${NANO_WORLDDIR}/usr/share/misc/magic.mgc
 
 	# strip binaries (saves spaces on non-debug images).
-	pprint 4 "Stripping binaries and libraries"
-	for dir in $(find ${NANO_WORLDDIR}/usr/local -name '*bin' -or -name 'libexec' -maxdepth 3); do
-		for f in $(find $dir -type f); do
+	if [ "${DEBUG}" != 1 ]; then
+		pprint 4 "Stripping binaries and libraries"
+		for dir in $(find ${NANO_WORLDDIR}/usr/local -name '*bin' -or -name 'libexec' -maxdepth 3); do
+			for f in $(find $dir -type f); do
+				strip 2>/dev/null $f || :
+			done
+		done
+		# .so's are the only thing that need to be stripped. The rest
+		# should remain untouched.
+		for f in $(find ${NANO_WORLDDIR}/usr/local/lib -name '*.so' -or -name '*.so.*' -maxdepth 3); do
 			strip 2>/dev/null $f || :
 		done
-	done
-	# .so's are the only thing that need to be stripped. The rest
-	# should remain untouched.
-	for f in $(find ${NANO_WORLDDIR}/usr/local/lib -name '*.so' -or -name '*.so.*' -maxdepth 3); do
-		strip 2>/dev/null $f || :
-	done
+	fi
 
 	# We dont need proftpd blacklist.dat.sample, takes up too much space in /etc
 	rm -f ${NANO_WORLDDIR}/conf/base/etc/local/proftpd/blacklist.dat.sample
