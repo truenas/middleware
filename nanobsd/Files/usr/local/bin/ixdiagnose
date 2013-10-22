@@ -33,7 +33,7 @@ dumpfile_to_submit_exists ()
 	local textdump=$(get_textdump)
 
 	# no crashdump at all
-	if [ ! -e $textdump ] ; then
+	if [ -z "$textdump" -o ! -e "$textdump" ] ; then
 		return 1
 	fi
 
