@@ -149,7 +149,7 @@ else
 fi
 
 # Feature sets to enable as part of the build.
-SW_FEATURES="DEBUG REPORTING"
+SW_FEATURES="REPORTING"
 
 if [ -z "$NANO_LABEL" ] ; then
 	echo "build/nano_env: NANO_LABEL unset, should be 'FreeNAS'"
