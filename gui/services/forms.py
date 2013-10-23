@@ -1014,7 +1014,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         return self._clean_number_range("iscsi_r2t", 1, 255)
 
     def clean_iscsi_maxoutstandingr2t(self):
-        return self._clean_number_range("iscsi_maxoutstandingr2t", 1, 255)
+        return self._clean_number_range("iscsi_maxoutstandingr2t", 1, 65536)
 
     def clean_iscsi_firstburst(self):
         return self._clean_number_range("iscsi_firstburst", 1, pow(2, 32))
