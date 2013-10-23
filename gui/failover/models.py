@@ -50,6 +50,7 @@ class CARP(Model):
         icon_model = u"CARPIcon"
         icon_add = u"AddCARPIcon"
         icon_view = u"ViewAllCARPsIcon"
+        menu_child_of = 'network'
 
 
 class Failover(Model):
