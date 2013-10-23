@@ -326,6 +326,9 @@ class NavTree(object):
         if hasattr(modnav, 'TYPE'):
             nav.type = modnav.TYPE
 
+        if hasattr(modnav, 'HIDE'):
+            nav.skip = modnav.HIDE
+
         if hasattr(modnav, 'URL'):
             nav.url = reverse(modnav.URL)
 
@@ -572,6 +575,8 @@ class NavTree(object):
         for nav in tree_roots['main']:
             nav.option_list = self.build_options(nav, user)
             nav.get_absolute_url()
+            if nav.skip is True:
+                continue
             navs.append(nav)
         return navs
 
