@@ -4093,7 +4093,7 @@ class notifier:
         disks.reverse()
 
         root_dev = self._find_root_dev()
-        if root_dev.startswith('mirror/'):
+        if root_dev and root_dev.startswith('mirror/'):
             mirror = self.gmirror_status(root_dev.split('/')[1])
             blacklist_devs = [c.get("name") for c in mirror.get("consumers")]
         else:
