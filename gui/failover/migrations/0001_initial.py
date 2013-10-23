@@ -7,6 +7,11 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ('network', '0014_auto__add_field_globalconfiguration_gc_netwait_enabled__add_field_glob'),
+        ('system', '0056_auto__del_field_advanced_adv_systembeep__del_field_advanced_adv_zeroco'),
+    )
+
     def forwards(self, orm):
         # Adding model 'CARP'
 
