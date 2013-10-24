@@ -3990,6 +3990,11 @@ class notifier:
                 class_name = prov.xpathEval("../../name")[0].content
                 #For now just DISK is allowed
                 if class_name != 'DISK':
+                    log.warn(
+                        "A consumer that is not a disk (%s) is part of a "
+                        "MULTIPATH, currently unsupported by middleware",
+                        class_name
+                    )
                     continue
                 disk = prov.xpathEval("../name")[0].content
                 mp_disks.append(disk)
