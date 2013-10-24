@@ -99,6 +99,7 @@ options		GEOM_MIRROR
 options		GEOM_RAID
 options		GEOM_ELI
 device		aesni
+device  	padlock
 options		NULLFS
 options		UNIONFS
 options		VFS_AIO
