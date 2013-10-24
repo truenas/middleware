@@ -4000,7 +4000,6 @@ class notifier:
         for vol in Volume.objects.all():
             reserved.extend(vol.get_disks())
 
-        disks = []
         serials = defaultdict(list)
         RE_CD = re.compile('^cd[0-9]')
         for geom in doc.xpathEval("//class[name = 'DISK']/geom"):
@@ -4008,13 +4007,10 @@ class notifier:
             if RE_CD.match(name) or name in reserved or name in mp_disks:
                 continue
             serial = self.serial_from_device(name)
-            size = geom.xpathEval("./provider/mediasize")[0].content
             if not serial:
-                disks.append(name)
-            else:
-                serials[(serial, size)].append(name)
-
-        disks = sorted(disks)
+                continue
+            size = geom.xpathEval("./provider/mediasize")[0].content
+            serials[(serial, size)].append(name)
 
         for disks in serials.values():
             if not len(disks) > 1:
