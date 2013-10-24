@@ -4011,7 +4011,12 @@ class notifier:
             name = geom.xpathEval("./name")[0].content
             if RE_CD.match(name) or name in reserved or name in mp_disks:
                 continue
-            serial = self.serial_from_device(name)
+            serial = self.serial_from_device(name) or ''
+            try:
+                lunid = geom.xpathEval("./provider/config/lunid")[0].content
+            except:
+                lunid = ''
+            serial = serial + lunid
             if not serial:
                 continue
             size = geom.xpathEval("./provider/mediasize")[0].content
