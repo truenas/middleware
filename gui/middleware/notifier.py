@@ -3934,7 +3934,7 @@ class notifier:
                 for geom in doc.xpathEval("//class[name = 'MULTIPATH']/geom")
             ]
 
-    def multipath_create(self, name, consumers, mode=None):
+    def multipath_create(self, name, consumers, actives=None, mode=None):
         """
         Create an Active/Passive GEOM_MULTIPATH provider
         with name ``name`` using ``consumers`` as the consumers for it
@@ -3980,6 +3980,9 @@ class notifier:
             raise ValueError('Could not find multipaths')
         return "disk%d" % number
 
+    def _multipath_is_active(self, name, geom):
+        return False
+
     def multipath_sync(self):
         """Synchronize multipath disks
 
@@ -4016,11 +4019,14 @@ class notifier:
             reserved.extend(vol.get_disks())
 
         serials = defaultdict(list)
+        active_active = []
         RE_CD = re.compile('^cd[0-9]')
         for geom in doc.xpathEval("//class[name = 'DISK']/geom"):
             name = geom.xpathEval("./name")[0].content
             if RE_CD.match(name) or name in reserved or name in mp_disks:
                 continue
+            if self._multipath_is_active(name, geom):
+                active_active.append(name)
             serial = self.serial_from_device(name) or ''
             try:
                 lunid = geom.xpathEval("./provider/config/lunid")[0].content
@@ -4036,7 +4042,7 @@ class notifier:
             if not len(disks) > 1:
                 continue
             name = self.multipath_next()
-            self.multipath_create(name, disks)
+            self.multipath_create(name, disks, active_active)
 
         # Grab confxml again to take new multipaths into account
         doc = self._geom_confxml()
