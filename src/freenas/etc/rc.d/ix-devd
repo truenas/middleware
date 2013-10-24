@@ -7,9 +7,9 @@
 # REQUIRE: ix-zfs
 # BEFORE: devd pf
 
-# Copyright (c) 2010 iXsystems, Inc.  All rights reserved.
+# Copyright (C) iXsystems 2010
 # This file is a part of TrueNAS
-# and may not be copied and/or distributed
+# and may be copied and/or distributed
 # without the express permission of iXsystems.
 
 . /etc/rc.subr
@@ -36,6 +36,14 @@ notify 100 {
 };
 E*O*F
 
+ELECTING_FILE="/tmp/.failover_electing"
+IMPORTING_FILE="/tmp/.failover_importing"
+FAILED_FILE="/tmp/.failover_failed"
+FAILOVER_MTX="/tmp/.failover_mtx"
+FAILOVER_STATE="/tmp/.failover_state"
+FAILOVER_RES_TMPL="/tmp/.failover_result.XXXXXXXX"
+FAILOVER_ASSUMED_MASTER="/tmp/.failover_master"
+
 		# Failover script
 		cat > /etc/carp-state-change-hook << E*O*F
 #!/bin/sh
@@ -43,11 +51,20 @@ E*O*F
 SUBSYSTEM=\$1
 EVENT=\$2
 
-if [ \${SUBSYSTEM} != "carp0" ]; then
+# TODO: for now, these two special carp interfaces for interconnection are hardcoded.
+if [ \${SUBSYSTEM} = "carp1" -o \${SUBSYSTEM} = "carp2" ]; then
 	exit
 fi
 
-IP=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select carp_v4address from network_carp where id = 1;")
+if [ \${EVENT} = "LINK_UP" ]; then
+	FLAGFILE=\`mktemp ${FAILOVER_RES_TMPL}\`
+	lockf -k ${FAILOVER_MTX} sh -c "[ ! -e ${FAILOVER_STATE}\${EVENT} ] && touch ${FAILOVER_STATE}\${EVENT} || rm \${FLAGFILE}"
+	if [ ! -e \${FLAGFILE} ]; then
+		exit
+	else
+		rm \${FLAGFILE}
+	fi
+fi
 
 touch -t \`date -v -1M +%Y%m%d%H%M.%S\` /tmp/heartbeat_barrier
 
@@ -58,17 +75,30 @@ else
     USER_OVERRIDE=0
 fi
 
+IPS=\`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select carp_v4address from network_carp;"\`
+
 # Do we have a force seal?
 HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
 
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
-    echo "set block-policy drop" > /etc/pf.conf.block
-    echo "pass in quick proto tcp from any to \${IP} port {22, 80, 443} " >> /etc/pf.conf.block
-    echo "block drop in quick proto tcp from any to \${IP} " >> /etc/pf.conf.block
-    echo "block drop in quick proto udp from any to \${IP} " >> /etc/pf.conf.block
-    pfctl -f /etc/pf.conf.block
+
+    # We are already master, do nothing.
+    if [ -e ${FAILOVER_ASSUMED_MASTER} ]; then
+	rm -f ${FAILOVER_STATE}\${EVENT}
+	exit 0
+    fi
+
     pkill -f fenced
+
+    echo "set block-policy drop" > /etc/pf.conf.block
+    echo \${IPS} | xargs -n 1 -J % echo pass in quick proto tcp from any to % port {22, 80, 443} >> /etc/pf.conf.block
+    echo \${IPS} | xargs -n 1 -J % echo block drop in quick proto tcp from any to % >> /etc/pf.conf.block
+    echo \${IPS} | xargs -n 1 -J % echo block drop in quick proto udp from any to % >> /etc/pf.conf.block
+    pfctl -f /etc/pf.conf.block
+
+    rm -f ${FAILED_FILE} ${IMPORTING_FILE}
+    touch ${ELECTING_FILE}
 
     # Was the other peer UP in the last minute?
     WASCONNECTED=\`find /tmp/heartbeat_state -mnewer /tmp/heartbeat_barrier | wc -l\`
@@ -87,6 +117,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
 	    echo "Promoted then demoted, quitting." | logger
 	    # Just in case.  Demote ourselves.
 	    ifconfig \${SUBSYSTEM} advskew 202
+	    rm -f ${ELECTING_FILE} ${FAILOVER_STATE}\${EVENT}
 	    exit
 	fi
 
@@ -103,40 +134,53 @@ if [ \${EVENT} = "LINK_UP" ]; then
     # Start fenced.
     # If not forced, start a normal one, otherwise, mark as such.
     RETVAL=Undefined
+    /sbin/camcontrol rescan all
     if [ \${USER_OVERRIDE} -eq 0 -a \${FASTTRACK} -eq 0 ] ; then
-        /usr/local/bin/python /usr/local/sbin/fenced
-        RETVAL=\$?
+	/usr/local/bin/python /usr/local/sbin/fenced
+	RETVAL=\$?
     else
-        /usr/local/bin/python /usr/local/sbin/fenced force
-        RETVAL=\$?
+	/usr/local/bin/python /usr/local/sbin/fenced force
+	RETVAL=\$?
     fi
 
     if [ \${RETVAL} -ne 0 ]; then
 	case \${RETVAL} in
 	1)
-		echo "Can not register keys on disks!" | logger
+		echo "Can not register keys on disks!" | tee ${FAILED_FILE} | logger
 		ifconfig \${SUBSYSTEM} advskew 201
 		;;
 	2)
-		echo "Remote fenced is running!" | logger
+		echo "Remote fenced is running!" | tee ${FAILED_FILE} | logger
 		ifconfig \${SUBSYSTEM} advskew 202
 		;;
 	3)
-		echo "Can not reserve all disks!" | logger
+		echo "Can not reserve all disks!" | tee ${FAILED_FILE} | logger
 		ifconfig \${SUBSYSTEM} advskew 203
 		;;
-        *)
-		echo "This should never happen: \${RETVAL}" | logger
+	*)
+		echo "This should never happen: \${RETVAL}" | tee ${FAILED_FILE} | logger
 		ifconfig \${SUBSYSTEM} advskew 204
 		;;
 	esac
+	rm -f ${ELECTING_FILE} ${FAILOVER_STATE}\${EVENT}
 	exit 1
     fi
 
-    # If we reached here, fenced is daemonized and have all drives reserved.
-    ifconfig \${SUBSYSTEM} advskew 1
+    # If we reached here, fenced is daemonized and have all drives reserved.  Bring up all carps we own.
+    ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 1
 
-    echo "Start volume import" | logger
+    touch ${IMPORTING_FILE}
+    rm ${ELECTING_FILE}
+
+    # Open every disk for writing once.
+    sysctl -n kern.disks | tr \  \\\\n | grep ^da | xargs -n 1 echo "false >" | sh
+
+    if [ -e /data/zfs/killcache ]; then
+	rm -f /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
+    else
+	touch /data/zfs/killcache
+	fsync /data/zfs/killcache
+    fi
     if [ -s /data/zfs/zpool.cache ]; then
 	if ([ ! -e /data/zfs/zpool.cache.saved ] || [ /data/zfs/zpool.cache -nt /data/zfs/zpool.cache.saved ]); then
 	    cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
@@ -145,12 +189,17 @@ if [ \${EVENT} = "LINK_UP" ]; then
 
     for volumename in ${volumenames}; do
 	[ -e /data/zfs/zpool.cache.saved ] && /sbin/zpool import -c /data/zfs/zpool.cache.saved -o cachefile=none -R /mnt -f \${volumename} || /sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
+	RETVAL=\$?
+	if [ \${RETVAL} -ne 0 ]; then
+		touch ${FAILED_FILE}
+	fi
 	/sbin/zpool set cachefile=/data/zfs/zpool.cache \${volumename}
     done
+    touch ${FAILOVER_ASSUMED_MASTER}
+    rm -f /data/zfs/killcache
 
-    cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
-
-    echo "End volume import" | logger
+    [ ! -e ${FAILED_FILE} ] && cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
+    rm ${IMPORTING_FILE}
 
     #mount -uw /
     /etc/rc.d/statd restart
@@ -173,25 +222,40 @@ if [ \${EVENT} = "LINK_UP" ]; then
 # downstream effect of that, instead we take a chill pill for 2 seconds.
 #
     sleep 1
-    echo "pass quick from any to \${IP} keep state" > /etc/pf.conf
+    truncate -s 0 /etc/pf.conf
+    echo \${IPS} | xargs -n 1 -J % echo pass quick from any to % keep state >> /etc/pf.conf
     pfctl -f /etc/pf.conf
     echo "\$(date), \$(hostname), assume master" | mail -s "Failover" root
 
     if  [ -f /tmp/failover_override ] ; then
-        rm /tmp/failover_override
+	rm /tmp/failover_override
     fi
     /usr/sbin/service ix-crontab quietstart
+    rm -f ${FAILOVER_STATE}\${EVENT}
+
+    echo "Syncing enclosure" | logger
+    /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py zpool_enclosure_sync
+
     echo "Failover event complete." | logger
 fi
 
 if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "Entering DOWN!" | logger
+
+    MASTERS=\`ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 ifconfig | grep "carp: MASTER" | wc -l \`
+    if [ \${MASTERS} -gt 0 ]; then
+	echo "Ignoring DOWN state on \${SUBSYSTEM} because we still have interfaces that are UP." | logger
+	rm -f ${FAILOVER_STATE}\${EVENT}
+	exit 1
+    fi
+
     pkill -f fenced
-    ifconfig \${SUBSYSTEM} advskew 100
+
+    ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 100
     echo "set block-policy drop" > /etc/pf.conf.block
-    echo "pass in quick proto tcp from any to \${IP} port {22, 80, 443} " >> /etc/pf.conf.block
-    echo "block drop in quick proto tcp from any to \${IP} " >> /etc/pf.conf.block
-    echo "block drop in quick proto udp from any to \${IP} " >> /etc/pf.conf.block
+    echo \${IPS} | xargs -n 1 -J % echo pass in quick proto tcp from any to % port {22, 80, 443} >> /etc/pf.conf.block
+    echo \${IPS} | xargs -n 1 -J % echo block drop in quick proto tcp from any to % >> /etc/pf.conf.block
+    echo \${IPS} | xargs -n 1 -J % echo block drop in quick proto udp from any to % >> /etc/pf.conf.block
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
     /etc/rc.d/watchdogd stop
@@ -202,9 +266,14 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
 	echo "Exported \${volumename}!" | logger
     done
     watchdog -t 0
+    rm -f ${FAILOVER_ASSUMED_MASTER}
+
     /etc/rc.d/watchdogd start
     /usr/sbin/service ix-crontab quietstart
     echo "\$(date), \$(hostname), assume backup" | mail -s "Failover" root
+
+    echo "Syncing enclosure" | logger
+    /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py zpool_enclosure_sync
 fi
 
 E*O*F
