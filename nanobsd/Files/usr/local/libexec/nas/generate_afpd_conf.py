@@ -11,6 +11,10 @@ from freenasUI import settings
 from django.core.management import setup_environ
 setup_environ(settings)
 
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
+
 def main():
     """Use the django ORM to generate a config file.  We'll build the
     config file as a series of lines, and once that is done write it
