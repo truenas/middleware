@@ -25,6 +25,7 @@ BaseDir "/var/db/collectd"
 PIDFile "/var/run/collectd.pid"
 PluginDir "/usr/local/lib/collectd"
 
+LoadPlugin aggregation
 LoadPlugin cpu
 LoadPlugin df
 LoadPlugin interface
@@ -35,6 +36,16 @@ LoadPlugin processes
 LoadPlugin rrdtool
 LoadPlugin swap
 LoadPlugin uptime
+
+<Plugin "aggregation">
+    <Aggregation>
+        Plugin "cpu"
+        Type "cpu"
+        GroupBy "Host"
+        GroupBy "TypeInstance"
+        CalculateSum true
+    </Aggregation>
+</Plugin>
 
 <Plugin "interface">
     Interface "lo0"
