@@ -335,6 +335,25 @@ build_targets()
 	done
 }
 
+do_git_update()
+{
+	local my_branch=$1
+	local my_tag=$2
+
+        git fetch origin
+	if [ ! -z "$my_tag" ] ; then
+		git checkout "$my_tag"
+	else
+	# if "my branch doesn't exist" then create it.
+		if ! git rev-parse "${my_branch}" ; then
+			git checkout -b ${my_branch} origin/${my_branch}
+		else
+			git checkout "${my_branch}"
+			git pull --rebase
+		fi
+	fi
+}
+
 #
 # Checkout a module, expects the following parameters:
 #  $1 - repo_name, (example: FREEBSD, PORTS, ZFSD) this variable will be
@@ -422,11 +441,7 @@ generic_checkout_git()
             fi
 
 			git fetch origin
-			if [ ! -z "$my_tag" ] ; then
-				git checkout "$my_tag"
-			else
-				git checkout -b ${my_branch} origin/${my_branch}
-			fi
+			do_git_update "${my_branch}" "${my_tag}"
 		fi
 		git pull $_depth_arg
 		cd ..
@@ -436,12 +451,7 @@ generic_checkout_git()
             git clone ${my_cache} ${checkout_name}
             cd ${checkout_name}
             git remote set-url origin "${my_repo}"
-            git fetch origin
-            if [ ! -z "$my_tag" ] ; then
-                git checkout "$my_tag"
-            else
-                git checkout -b ${my_branch} origin/${my_branch}
-            fi
+	    do_git_update "${my_branch}" "${my_tag}"
         else
             git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_name}
         fi
