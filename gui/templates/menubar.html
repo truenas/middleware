@@ -33,7 +33,6 @@
   </div>
 
   {% for menu in menu_hook %}
-
   <div id="{% if menu.id %}{{ menu.id }}{% else %}menuBar_{{ forloop.counter }}{% endif %}" data-dojo-type="dijit.MenuBarItem" onClick="{{ menu.onclick }}" class="menu_icon{% if menu.align %} {{ menu.align }}{% endif %}">
     {% if menu.img %}
       {{ menu.img|safe }}
@@ -43,17 +42,7 @@
     {% endif %}
     <span>{{ menu.name|safe }}</span>
   </div>
-
   {% endfor %}
-
-  <!--
-  <div id="menuBar_Support" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openSupport();" class="menu_icon">
-    <img src="{{ STATIC_URL }}images/ui/menu/support.png" />
-    <br />
-    <span>{% trans "Support" %}</span>
-  </div>
-  -->
-
 
   <div id="meuBar_Alert" data-dojo-type="dijit.MenuBarItem" class="menu_icon right" onClick="alert_open();">
     <div data-dojo-type="dijit.layout.ContentPane" id="alert_status" class="alert_ok"></div>
