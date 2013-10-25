@@ -50,6 +50,7 @@ from freenasUI import choices
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
 from freenasUI.common.system import mount, umount
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect
 )
@@ -2033,15 +2034,23 @@ class UnlockPassphraseForm(Form):
         label=_("Restart services"),
         widget=forms.widgets.CheckboxSelectMultiple(),
         initial=['cifs', 'afp', 'nfs', 'iscsitarget', 'jails'],
-        choices=(
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(UnlockPassphraseForm, self).__init__(*args, **kwargs)
+        app = appPool.get_app('plugins')
+        choices = [
             ('afp', _('AFP')),
             ('cifs', _('CIFS')),
             ('iscsitarget', _('iSCSI')),
             ('nfs', _('NFS')),
-            ('jails', _('Jails/Plugins')),
-        ),
-        required=False,
-    )
+        ]
+        if getattr(app, 'unlock_restart', False):
+            choices.append(
+                ('jails', _('Jails/Plugins')),
+            )
+        self.fields['services'].choices = choices
 
     def clean(self):
         passphrase = self.cleaned_data.get("passphrase")

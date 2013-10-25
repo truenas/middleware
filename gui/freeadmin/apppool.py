@@ -15,6 +15,9 @@ class AppPool(object):
     def register(self, hook):
         self._registered[hook.name] = hook()
 
+    def get_app(self, name):
+        return self._registered[name]
+
     def _get_array(self, fname, *args, **kwargs):
         method = kwargs.pop('_method', list.extend)
         arr = []

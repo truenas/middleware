@@ -6,6 +6,7 @@ from freenasUI.freeadmin.hook import AppHook
 class PluginsHook(AppHook):
 
     name = 'plugins'
+    unlock_restart = True
 
     def top_menu(self, request):
         return [
