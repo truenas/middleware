@@ -34,7 +34,9 @@ class AppPool(object):
         return self._get_array("base_js", request)
 
     def get_top_menu(self, request):
-        return self._get_array("top_menu", request)
+        arr = self._get_array("top_menu", request)
+        arr = sorted(arr, key=lambda x: x.get('weight'))
+        return arr
 
     def get_system_info(self, request):
         return self._get_array("system_info", request)

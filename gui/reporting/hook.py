@@ -18,6 +18,6 @@ class ReportingHook(AppHook):
                     escapejs(_('Reporting')),
                     reverse('reporting_index'),
                 ),
-                'weight': 0,
+                'weight': 10,
             },
         ]
