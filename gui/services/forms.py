@@ -1005,16 +1005,16 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         return self._clean_number_range("iscsi_nopinint", 0, 300)
 
     def clean_iscsi_maxsesh(self):
-        return self._clean_number_range("iscsi_maxsesh", 1, 65536)
+        return self._clean_number_range("iscsi_maxsesh", 1, 65535)
 
     def clean_iscsi_maxconnect(self):
-        return self._clean_number_range("iscsi_maxconnect", 1, 65536)
+        return self._clean_number_range("iscsi_maxconnect", 1, 65535)
 
     def clean_iscsi_r2t(self):
-        return self._clean_number_range("iscsi_r2t", 1, 255)
+        return self._clean_number_range("iscsi_r2t", 0, 256)
 
     def clean_iscsi_maxoutstandingr2t(self):
-        return self._clean_number_range("iscsi_maxoutstandingr2t", 1, 65536)
+        return self._clean_number_range("iscsi_maxoutstandingr2t", 1, 65535)
 
     def clean_iscsi_firstburst(self):
         return self._clean_number_range("iscsi_firstburst", 1, pow(2, 32))
@@ -1026,10 +1026,10 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         return self._clean_number_range("iscsi_maxrecdata", 1, pow(2, 32))
 
     def clean_iscsi_defaultt2w(self):
-        return self._clean_number_range("iscsi_defaultt2w", 1, 300)
+        return self._clean_number_range("iscsi_defaultt2w", 1, 3600)
 
     def clean_iscsi_defaultt2r(self):
-        return self._clean_number_range("iscsi_defaultt2r", 1, 300)
+        return self._clean_number_range("iscsi_defaultt2r", 1, 3600)
 
     def clean_iscsi_lucport(self):
         if self.cleaned_data.get('iscsi_toggleluc', False):
