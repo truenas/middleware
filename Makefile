@@ -30,6 +30,9 @@ do-release: git-verify
 cdrom:
 	${ENV_SETUP} sh -x build/create_iso.sh
 
+force: git-verify
+	${ENV_SETUP} build/do_build.sh -fu
+
 # Build truenas using all sources 
 truenas-all-direct:
 	${ENV_SETUP} TESTING_TRUENAS=1 NAS_PORTS_DIRECT=1 $(MAKE) all
