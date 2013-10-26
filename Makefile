@@ -2,15 +2,15 @@
 NANO_LABEL?=FreeNAS
 VERSION?=9.2.0-ALPHA
 
-ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} 
-
 RELEASE_LOGFILE=release.build.log
+GIT_REPO_SETTING=.git-repo-setting
+ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=`cat ${GIT_REPO_SETTING}`
 
-all:
-	[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
+all: git-verify
+	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
 	${ENV_SETUP} build/do_build.sh
 
-checkout:
+checkout: git-verify
 	${ENV_SETUP} build/do_build.sh -c
 
 clean:
@@ -22,7 +22,7 @@ save-build-env:
 release:
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} do-release
 
-do-release:
+do-release: git-verify
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} build/build_release.sh
@@ -42,3 +42,18 @@ BUILD_BUG_EMAIL?=${BUILD_BUG_USER}@${BUILD_BUG_DOMAIN}
 build-bug-report:
 	mail -s "build fail for $${SUDO_USER:-$$USER}" ${BUILD_BUG_EMAIL} < \
 		${RELEASE_LOGFILE}
+
+git-verify:
+	@if [ ! -f ${GIT_REPO_SETTING} ]; then \
+		echo "No git repo choice is set.  Please use \"make git-external\" to build as an"; \
+		echo "external developer or \"make git-internal\" to build as an iXsystems"; \
+		echo "internal developer.  You only need to do this once."; \
+		exit 1; \
+	fi
+	@echo "NOTICE: You are building from the `cat ${GIT_REPO_SETTING}` git repo."
+
+git-internal:
+	@echo "INTERNAL" > ${GIT_REPO_SETTING}
+
+git-external:
+	@echo "EXTERNAL" > ${GIT_REPO_SETTING}
