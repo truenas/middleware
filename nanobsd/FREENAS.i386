@@ -106,6 +106,7 @@ options		NETGRAPH
 device		carp
 device		snp
 device		ctl
+device		iscsi
 
 options		KVA_PAGES=512
 
