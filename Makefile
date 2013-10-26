@@ -4,7 +4,8 @@ VERSION?=9.2.0-ALPHA
 
 RELEASE_LOGFILE=release.build.log
 GIT_REPO_SETTING=.git-repo-setting
-ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=`cat ${GIT_REPO_SETTING}`
+GIT_LOCATION!=cat ${GIT_REPO_SETTING}
+ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION}
 
 all: git-verify
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
