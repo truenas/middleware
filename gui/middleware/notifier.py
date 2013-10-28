@@ -3777,7 +3777,7 @@ class notifier:
             disk.disk_identifier = ident
             disk.disk_enabled = True
             disk.disk_serial = self.serial_from_device(devname) or ''
-        reg = RE_DSKNAME.search(dskname)
+        reg = RE_DSKNAME.search(devname)
         if reg:
             disk.disk_subsystem = reg.group(1)
             disk.disk_number = int(reg.group(2))
