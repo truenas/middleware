@@ -421,6 +421,15 @@ class Disk(Model):
         max_length=120,
         verbose_name=_("Name")
     )
+    disk_subsystem = models.CharField(
+        default='',
+        max_length=10,
+        editable=False,
+    )
+    disk_number = models.IntegerField(
+        editable=False,
+        default=1,
+    )
     disk_identifier = models.CharField(
         max_length=42,
         verbose_name=_("Identifier"),
@@ -540,7 +549,7 @@ class Disk(Model):
     class Meta:
         verbose_name = _("Disk")
         verbose_name_plural = _("Disks")
-        ordering = ["disk_name"]
+        ordering = ["disk_subsystem", "disk_number"]
 
     def __unicode__(self):
         return unicode(self.disk_name)

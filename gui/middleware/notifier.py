@@ -103,6 +103,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
 import sysctl
 
+RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 log = logging.getLogger('middleware.notifier')
 
 
@@ -3776,6 +3777,10 @@ class notifier:
             disk.disk_identifier = ident
             disk.disk_enabled = True
             disk.disk_serial = self.serial_from_device(devname) or ''
+        reg = RE_DSKNAME.search(dskname)
+        if reg:
+            disk.disk_subsystem = reg.group(1)
+            disk.disk_number = int(reg.group(2))
         disk.save()
 
     def sync_disk_extra(self, disk, add=False):
@@ -3803,6 +3808,11 @@ class notifier:
                 disk.disk_enabled = True
                 if dskname != disk.disk_name:
                     disk.disk_name = dskname
+
+            reg = RE_DSKNAME.search(dskname)
+            if reg:
+                disk.disk_subsystem = reg.group(1)
+                disk.disk_number = int(reg.group(2))
 
             if disk.disk_serial:
                 serials.append(disk.disk_serial)
@@ -3832,6 +3842,10 @@ class notifier:
                         continue
                     else:
                         serials.append(d.disk_serial)
+                reg = RE_DSKNAME.search(disk)
+                if reg:
+                    d.disk_subsystem = reg.group(1)
+                    d.disk_number = int(reg.group(2))
                 self.sync_disk_extra(d, add=True)
                 d.save()
 
