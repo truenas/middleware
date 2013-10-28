@@ -185,7 +185,7 @@ __EOF__
             fastcgi_pass 127.0.0.1:9042;
             fastcgi_pass_header Authorization;
             fastcgi_intercept_errors off;
-            fastcgi_read_timeout 60m;
+            fastcgi_read_timeout 600m;
             #fastcgi_temp_path /var/tmp/firmware;
 
             # track uploads in the 'proxied' zone
