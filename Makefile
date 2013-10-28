@@ -16,6 +16,7 @@ checkout: git-verify
 
 clean:
 	${ENV_SETUP} build/build_cleanup.py
+	rm -rf FreeBSD os-base release_stage ${NANO_LABEL}-${VERSION}-release.tar release.build.log
 
 save-build-env:
 	${ENV_SETUP} build/save_build.sh
