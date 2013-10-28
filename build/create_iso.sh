@@ -108,6 +108,7 @@ main()
 	# XXX: tied too much to the host system to be of value in the
 	# installer code.
 	rm -f "$INSTALLUFSDIR/etc/rc.conf.local"
+	rm -f "$INSTALLUFSDIR/conf/base/etc/rc.conf.local"
 	rm -f $INSTALLUFSDIR/etc/fstab
 	rm -f $INSTALLUFSDIR/conf/default/etc/remount
 
