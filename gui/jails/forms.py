@@ -639,6 +639,13 @@ class JailTemplateEditForm(ModelForm):
 
 class NullMountPointForm(ModelForm):
 
+    create = forms.BooleanField(
+        label=('Create directory'),
+        required=False,
+        initial=True,
+        help_text=_('Create destination directory if it does not exist'),
+    )
+
     mounted = forms.BooleanField(
         label=_("Mounted?"),
         required=False,
@@ -667,6 +674,7 @@ class NullMountPointForm(ModelForm):
         return src
 
     def clean_destination(self):
+        create = self.cleaned_data.get("create")
         dest = self.cleaned_data.get("destination")
         dest = os.path.abspath(dest.strip().replace("..", ""))
 
@@ -686,6 +694,10 @@ class NullMountPointForm(ModelForm):
             raise forms.ValidationError(
                 _("The full path cannot exceed 88 characters")
             )
+
+        if not os.path.exists(full):
+            os.makedirs(full)
+
         return dest
 
     def __init__(self, *args, **kwargs):
