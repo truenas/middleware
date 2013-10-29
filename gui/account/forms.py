@@ -26,6 +26,7 @@
 #####################################################################
 import logging
 import os
+import re
 
 from django.db import transaction
 from django.core.urlresolvers import reverse
@@ -485,7 +486,17 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         return mode
 
     def clean_bsdusr_sshpubkey(self):
-        return self.cleaned_data.get('bsdusr_sshpubkey', '')
+        ssh = self.cleaned_data.get('bsdusr_sshpubkey', '')
+        ssh = ssh.strip(' ').strip('\n')
+        ssh = re.sub(r'[ ]{2,}', ' ', ssh, re.M)
+        ssh = re.sub(r'\n{2,}', '\n', ssh, re.M)
+        old = ssh
+        while True:
+            ssh = re.sub(r'(\S{10,})\n(\S{10,})', '\\1\\2', ssh, re.M)
+            if ssh == old:
+                break
+            old = ssh
+        return ssh
 
     def clean_bsdusr_full_name(self):
         name = self.cleaned_data["bsdusr_full_name"]
