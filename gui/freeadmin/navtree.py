@@ -454,6 +454,10 @@ class NavTree(object):
                             subopt.kwargs = {
                                 'oid': e.id,
                             }
+                            if model._admin.edit_modelform:
+                                subopt.kwargs['mf'] = (
+                                    model._admin.edit_modelform
+                                )
                             subopt.gname = e.id
                             try:
                                 subopt.name = unicode(e)
