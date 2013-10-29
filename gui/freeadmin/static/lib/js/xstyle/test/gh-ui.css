@@ -28,7 +28,7 @@ h1 {
 	.title {
 		font-size: 1.2em;
 		font-weight: 100; 
-	}
+	};
 }
 .button {
 	float: left;

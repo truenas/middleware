@@ -1,4 +1,4 @@
-define(['dbind/bind', 'xstyle/util/createStyleSheet', 'xstyle/main'], function(bind, createStyleSheet, xstyle){
+define(['dbind/bind', 'xstyle/util/createStyleSheet', 'xstyle/core/elemental'], function(bind, createStyleSheet, elemental){
 	var model = {
 		data: '{\n  "first": "Web",\n  "last": "Developer",\n  "favorites": [\n    "Data Bindings", "CSS Extensions"\n  ]\n}', 
 		ui: "#target {\n => h2 (data/first+' '+data/last),\n    ul (data/favorites) {\n      color: #060;\n    };\n  background-color: #ccc;\n  width: 200px;\n  padding: 10px;\n}", 
@@ -20,7 +20,7 @@ define(['dbind/bind', 'xstyle/util/createStyleSheet', 'xstyle/main'], function(b
 			if(lastStyleSheet){
 				// remove the last stylesheet
 				document.head.removeChild(lastStyleSheet);
-				xstyle.clearRenderers();
+				elemental.clearRenderers();
 				var target = document.getElementById("target");
 				if(target){
 					target.innerHTML = "";

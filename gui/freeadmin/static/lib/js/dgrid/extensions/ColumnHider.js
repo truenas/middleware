@@ -1,5 +1,5 @@
-define(["dojo/_base/declare", "dojo/has", "dojo/on", "../util/misc", "put-selector/put", "xstyle/css!../css/extensions/ColumnHider.css"],
-function(declare, has, listen, miscUtil, put){
+define(["dojo/_base/declare", "dojo/has", "dojo/on", "../util/misc", "put-selector/put", "dojo/i18n!./nls/columnHider", "xstyle/css!../css/extensions/ColumnHider.css"],
+function(declare, has, listen, miscUtil, put, i18n){
 /*
  *	Column Hider plugin for dgrid
  *	Originally contributed by TRT 2011-09-28
@@ -41,6 +41,11 @@ function(declare, has, listen, miscUtil, put){
 		//		The node for the toggler to open the menu.
 		hiderToggleNode: null,
 		
+		// i18nColumnHider: Object
+		//		This object contains all of the internationalized strings for
+		//		the ColumnHider extension as key/value pairs.
+		i18nColumnHider: i18n,
+		
 		// _hiderMenuOpened: Boolean
 		//		Records the current open/closed state of the menu.
 		_hiderMenuOpened: false,
@@ -59,11 +64,19 @@ function(declare, has, listen, miscUtil, put){
 			//		column hider menu.
 			
 			var subRows = this.subRows,
-				srLength, cLength, sr, c;
+				first = true,
+				srLength, cLength, sr, c, checkbox;
+			
+			delete this._columnHiderFirstCheckbox;
 			
 			for(sr = 0, srLength = subRows.length; sr < srLength; sr++){
 				for(c = 0, cLength = subRows[sr].length; c < cLength; c++){
 					this._renderHiderMenuEntry(subRows[sr][c]);
+					if(first){
+						first = false;
+						this._columnHiderFirstCheckbox =
+							this._columnHiderCheckboxes[subRows[sr][c].id];
+					}
 				}
 			}
 		},
@@ -104,13 +117,17 @@ function(declare, has, listen, miscUtil, put){
 				hiderToggleNode = this.hiderToggleNode,
 				id;
 			
+			function stopPropagation(event){
+				event.stopPropagation();
+			}
+			
 			this.inherited(arguments);
 			
 			if(!hiderMenuNode){ // first run
 				// Assume that if this plugin is used, then columns are hidable.
 				// Create the toggle node.
 				hiderToggleNode = this.hiderToggleNode =
-					put(this.headerScrollNode, "div.ui-icon.dgrid-hider-toggle");
+					put(this.headerScrollNode, "button.ui-icon.dgrid-hider-toggle[type=button]");
 				
 				this._listeners.push(listen(hiderToggleNode, "click", function(e){
 					grid._toggleColumnHiderMenu(e);
@@ -118,7 +135,16 @@ function(declare, has, listen, miscUtil, put){
 	
 				// Create the column list, with checkboxes.
 				hiderMenuNode = this.hiderMenuNode =
-					put("div#dgrid-hider-menu-" + this.id + ".dgrid-hider-menu");
+					put("div#dgrid-hider-menu-" + this.id +
+						".dgrid-hider-menu[role=dialog][aria-label=" + this.i18nColumnHider.popupLabel + "]");
+
+				this._listeners.push(listen(hiderMenuNode, "keyup", function (e) {
+					var charOrCode = e.charCode || e.keyCode;
+					if(charOrCode === /*ESCAPE*/ 27){
+						grid._toggleColumnHiderMenu(e);
+						hiderToggleNode.focus();
+					}
+				}));
 				
 				// Make sure our menu is initially hidden, then attach to the document.
 				hiderMenuNode.style.display = "none";
@@ -132,11 +158,14 @@ function(declare, has, listen, miscUtil, put){
 							getColumnIdFromCheckbox(e.target, grid), !e.target.checked);
 					}
 				));
-				this._listeners.push(listen(hiderMenuNode, "mousedown", function(e){
-					// Stop click events from propagating here, so that we can simply
-					// track body clicks for hide without having to drill-up to check.
-					e.stopPropagation();
-				}));
+				
+				// Stop click events from propagating from menu or trigger nodes,
+				// so that we can simply track body clicks for hide without
+				// having to drill-up to check.
+				this._listeners.push(
+					listen(hiderMenuNode, "mousedown", stopPropagation),
+					listen(hiderToggleNode, "mousedown", stopPropagation)
+				);
 				
 				// Hook up top-level mousedown listener if it hasn't been yet.
 				if(!bodyListener){
@@ -179,7 +208,8 @@ function(declare, has, listen, miscUtil, put){
 		_toggleColumnHiderMenu: function(){
 			var hidden = this._hiderMenuOpened, // reflects hidden state after toggle
 				hiderMenuNode = this.hiderMenuNode,
-				domNode = this.domNode;
+				domNode = this.domNode,
+				firstCheckbox;
 
 			// Show or hide the hider menu
 			hiderMenuNode.style.display = (hidden ? "none" : "");
@@ -198,6 +228,8 @@ function(declare, has, listen, miscUtil, put){
 				if (hiderMenuNode.offsetHeight > domNode.offsetHeight - 12) {
 					hiderMenuNode.style.height = (domNode.offsetHeight - 12) + "px";
 				}
+				// focus on the first checkbox
+				(firstCheckbox = this._columnHiderFirstCheckbox) && firstCheckbox.focus();
 			}
 
 			// Pause or resume the listener for clicks outside the menu

@@ -46,8 +46,15 @@
 			data-dojo-config="async: true"></script>
 		<script>
 		
-			require(["dgrid/OnDemandGrid","dgrid/Selection", "dgrid/Keyboard", "dgrid/tree", "dgrid/editor", "dojo/_base/lang", "dojo/_base/declare", "dojo/on", "dojo/data/ObjectStore", "dijit/form/CheckBox", "dijit/form/TimeTextBox",  "dijit/form/Select", "dijit/form/FilteringSelect", "dgrid/test/data/base", "dojo/domReady!", "xstyle/css!../css/dgrid_rtl.css"], 
-				function(Grid, Selection, Keyboard, tree, editor, lang, declare, on, ObjectStore, CheckBox, TimeTextBox, Select, FilteringSelect, testStore){
+			require(["dgrid/Grid", "dgrid/OnDemandGrid","dgrid/Selection", "dgrid/Keyboard",
+					"dgrid/tree", "dgrid/editor", "dojo/_base/lang",
+					"dojo/_base/declare", "dojo/on", "dojo/data/ObjectStore",
+					"dijit/form/CheckBox", "dijit/form/TimeTextBox",
+					"dijit/form/Select", "dijit/form/FilteringSelect",
+					"dgrid/extensions/Pagination", "dgrid/test/data/base", "dojo/domReady!", "xstyle/css!../css/dgrid_rtl.css"], 
+				function(Grid, OnDemandGrid, Selection, Keyboard, tree, editor, lang, declare,
+						 on, ObjectStore, CheckBox, TimeTextBox, Select,
+						 FilteringSelect, Pagination, testStore){
 					var columns = [
 						{label: 'Column 1', field: 'col1'},
 						{label: 'Column 2', field: 'col2', sortable: false},
@@ -55,7 +62,7 @@
 						{label: 'Column 4', field: 'col4'},
 						{label: 'Column 5', field: 'col5'}
 					];
-					var StandardGrid = declare([Grid, Selection, Keyboard]);
+					var StandardGrid = declare([OnDemandGrid, Selection, Keyboard]);
 
 					window.grid = new StandardGrid({
 						store: testStore,
@@ -77,7 +84,6 @@
 					
 					window.tree = new StandardGrid({
 						store: testCountryStore,
-						query: {type: "continent"},
 						columns: columnsTree
 					}, "tree");
 					
@@ -143,6 +149,11 @@
 						columns: columnsEditor,
 						selectionMode: "none"
 					}, "moreeditors");
+
+					window.paginationGrid = new declare([Grid, Selection, Keyboard, Pagination])({
+						store: testStore,
+						columns: lang.clone(columns)
+					}, 'pagination');
 					
 				});
 		</script>
@@ -164,5 +175,8 @@
 		<h2>Grid with editors</h2>
 		<div id="moreeditors"></div>
 		<button type="button" id="save" onclick="moreeditors.save()">Save</button>
+
+		<h2>A basic grid with Pagination</h2>
+		<div id="pagination"></div>
 	</body>
 </html>

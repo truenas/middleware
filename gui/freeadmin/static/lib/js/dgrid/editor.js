@@ -12,8 +12,9 @@ define([
 	"dojo/_base/sniff"
 ], function(kernel, lang, arrayUtil, Deferred, on, aspect, has, query, Grid, put){
 
-// Variables to track info for cell currently being edited (editOn only).
-var activeCell, activeValue, activeOptions;
+// Variables to track info for cell currently being edited
+// (active* variables are for editOn editors only)
+var activeCell, activeValue, activeOptions, focusedCell;
 
 function updateInputValue(input, value){
 	// common code for updating value of a standard input
@@ -78,6 +79,9 @@ function setProperty(grid, cellElement, oldValue, value, triggerEvent){
 					// perform auto-save (if applicable) in next tick to avoid
 					// unintentional mishaps due to order of handler execution
 					column.autoSave && setTimeout(function(){ grid._trackError("save"); }, 0);
+				}else{
+					// update store-less grid
+					row.data[column.field] = value;
 				}
 			}else{
 				// Otherwise keep the value the same
@@ -127,6 +131,9 @@ function setPropertyFromEditor(grid, column, cmp, triggerEvent) {
 					radioBtn._dgridLastValue = false;
 					if(grid.updateDirty){
 						grid.updateDirty(row.id, column.field, false);
+					}else{
+						// update store-less grid
+						row.data[column.field] = false;
 					}
 				}
 			});
@@ -204,10 +211,6 @@ function createEditor(column){
 		}
 	}
 	
-	// XXX: stop mousedown propagation to prevent confusing Keyboard mixin logic
-	// with certain widgets; perhaps revising KB's `handledEvent` would be better.
-	on(node, "mousedown", function(evt){ evt.stopPropagation(); });
-	
 	return cmp;
 }
 
@@ -229,6 +232,21 @@ function createSharedEditor(column, originalRenderCell){
 			},
 		keyHandle;
 	
+	function blur(){
+		var element = activeCell;
+		focusNode.blur();
+		
+		if(typeof grid.focus === "function"){
+			// Dijit form widgets don't end up dismissed until the next turn,
+			// so wait before calling focus (otherwise Keyboard will focus the
+			// input again).  IE<9 needs to wait longer, otherwise the cell loses
+			// focus after we've set it.
+			setTimeout(function(){
+				grid.focus(element);
+			}, isWidget && has("ie") < 9 ? 15 : 0);
+		}
+	}
+	
 	function onblur(){
 		var parentNode = node.parentNode,
 			i = parentNode.children.length - 1,
@@ -244,6 +262,7 @@ function createSharedEditor(column, originalRenderCell){
 			bubbles: true,
 			cancelable: false
 		});
+		column._editorBlurHandle.pause();
 		// Remove the editor from the cell, to be reused later.
 		parentNode.removeChild(node);
 		
@@ -255,9 +274,10 @@ function createSharedEditor(column, originalRenderCell){
 			column.grid.row(parentNode).data, activeValue, parentNode,
 			activeOptions ? lang.delegate(options, activeOptions) : options));
 		
-		// reset state now that editor is deactivated
-		activeCell = activeValue = activeOptions = null;
-		column._editorBlurHandle.pause();
+		// Reset state now that editor is deactivated;
+		// reset focusedCell as well since some browsers will not trigger the
+		// focusout event handler in this case
+		activeCell = activeValue = activeOptions = focusedCell = null;
 	}
 	
 	function dismissOnKey(evt){
@@ -268,10 +288,10 @@ function createSharedEditor(column, originalRenderCell){
 		if(key == 27){ // escape: revert + dismiss
 			reset();
 			activeValue = cmp._dgridLastValue;
-			focusNode.blur();
+			blur();
 		}else if(key == 13 && column.dismissOnEnter !== false){ // enter: dismiss
 			// FIXME: Opera is "reverting" even in this case
-			focusNode.blur();
+			blur();
 		}
 	}
 	
@@ -393,6 +413,48 @@ return function(column, editor, editOn){
 		listeners = [],
 		isWidget;
 	
+	function commonInit(column) {
+		// Common initialization logic for both editOn and always-on editors
+		var grid = column.grid,
+			focusoutHandle;
+		if(!grid.edit){
+			// Only perform this logic once on a given grid
+			grid.edit = edit;
+			
+			listeners.push(on(grid.domNode, '.dgrid-input:focusin', function () {
+				focusedCell = grid.cell(this);
+			}));
+			focusoutHandle = grid._editorFocusoutHandle =
+				on.pausable(grid.domNode, '.dgrid-input:focusout', function () {
+					focusedCell = null;
+				});
+			listeners.push(focusoutHandle);
+			
+			listeners.push(aspect.before(grid, 'removeRow', function (row) {
+				row = grid.row(row);
+				if (focusedCell && focusedCell.row.id === row.id) {
+					// Pause the focusout handler until after this row has had
+					// time to re-render, if this removal is part of an update.
+					// A setTimeout is used here instead of resuming in the
+					// insertRow aspect below, since if a row were actually
+					// removed (not updated) while editing, the handler would
+					// not be properly hooked up again for future occurrences.
+					focusoutHandle.pause();
+					setTimeout(function () {
+						focusoutHandle.resume();
+					}, 0);
+				}
+			}));
+			listeners.push(aspect.after(grid, 'insertRow', function (rowElement) {
+				var row = grid.row(rowElement);
+				if (focusedCell && focusedCell.row.id === row.id) {
+					grid.edit(grid.cell(row, focusedCell.column.id));
+				}
+				return rowElement;
+			}));
+		}
+	}
+
 	if(!column){ column = {}; }
 	
 	// accept arguments as parameters to editor function, or from column def,
@@ -410,22 +472,24 @@ return function(column, editor, editOn){
 	}
 	
 	aspect.after(column, "init", editOn ? function(){
-		var grid = column.grid;
-		if(!grid.edit){ grid.edit = edit; }
-		
+		commonInit(column);
 		// Create one shared widget/input to be swapped into the active cell.
 		column.editorInstance = createSharedEditor(column, originalRenderCell);
 	} : function(){
 		var grid = column.grid;
-		if(!grid.edit){ grid.edit = edit; }
+		commonInit(column);
 		
 		if(isWidget){
 			// add advice for cleaning up widgets in this column
 			listeners.push(aspect.before(grid, "removeRow", function(rowElement){
-				// destroy our widget during the row removal operation
+				// destroy our widget during the row removal operation,
+				// but don't trip over loading nodes from incomplete requests
 				var cellElement = grid.cell(rowElement, column.id).element,
-					widget = (cellElement.contents || cellElement).widget;
-				if(widget){ widget.destroyRecursive(); }
+					widget = cellElement && (cellElement.contents || cellElement).widget;
+				if(widget){
+					grid._editorFocusoutHandle.pause();
+					widget.destroyRecursive();
+				}
 			}));
 		}
 	});
@@ -435,6 +499,10 @@ return function(column, editor, editOn){
 		if(column._editorBlurHandle){ column._editorBlurHandle.remove(); }
 		
 		if(editOn && isWidget){ column.editorInstance.destroyRecursive(); }
+		
+		// Remove the edit function, so that it (and other one-time listeners)
+		// will be re-added if editor columns are re-initialized
+		column.grid.edit = null;
 	});
 	
 	column.renderCell = editOn ? function(object, value, cell, options){

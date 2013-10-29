@@ -1,0 +1,72 @@
+test-variable=var: 163px;
+test-expression=var: test;
+
+@xstyle start;
+
+test-component = section {
+	=>
+		h1 (label) { color: red},
+		p (content) {
+			color: green;
+			width: var(test-variable);
+		},
+		div (test-expression);
+	main-color=var: #00f;
+	label=var: Label;
+	content=var: cont asdfkadskf anskldf naskldfn adsklnf dsklanfl kadsnent;
+	background-color: #ddd;
+	display: block;
+	width: 200px;
+	height: 200px;
+	color: var(main-color);
+	border: 4px solid var(main-color);
+};
+
+.with-content {
+	test-component: #aaa, test;
+	background-color: yellow;
+	label: Should not show up;
+	transition: background-color 0.5s;
+}
+.with-content:hover {
+	background-color: green;
+}
+pink-background = {
+	background-color: #faa;
+}
+hello-world = test-component {
+	pink-background: defaults;
+	label: Hello world;
+	main-color: #888;
+}
+
+/*@media -sass-debug-info{filename{font-family:style\.scss}line{font-family:\0000336}}*/
+body {
+	padding:20px;
+	=>
+	test-component {
+		label: Hi there;
+		content: some content;
+	},
+	hello-world, 
+	.with-content
+	div.parent
+		div.middle1
+			div.child1 { color: red;},
+			div.child2 
+		div.middle2
+		    div.child3 
+		    div.child4
+		div.middle3#one-child
+}
+
+@xstyle end;
+#one-child {
+	=>
+		test-component;
+}
+@xstyle end;
+body {
+	=>
+		div "shouldn't do anything because the parser is off";
+}

@@ -73,7 +73,7 @@
 						store: testStore,
 						selectionMode: "none",
 						columns: {
-							col1: selector({ label: "Select" }),
+							col1: selector({ label: "" }), // Test blank label
 							id: "ID",
 							col2: {label: 'Column 2', sortable: false},
 							col3: {label: 'Column 3'}
@@ -149,7 +149,7 @@
 				Set selection mode to "single" (to test sync)</button>
 		</div>
 		<div id="grid-radio"></div>
-		<h2>A grid with checkbox selectors, with select-all disabled</h2>
+		<h2>A grid with checkbox selectors, with select-all disabled, blank label in selector column</h2>
 		<div id="grid2"></div>
 		<h2>A grid, initially without a selector column</h2>
 		<div id="gridNoSelector"></div>

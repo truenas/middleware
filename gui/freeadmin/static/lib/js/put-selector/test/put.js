@@ -93,4 +93,4 @@ var svg = put(document.body, "svg|svg#svg-test");
 put(svg, "!");
 console.assert(document.getElementById("svg-test") == null);
 
-put(body, "div", {innerHTML: "finised tests, check console for errors"});
+put(body, "div", {innerHTML: "finished tests, check console for errors"});

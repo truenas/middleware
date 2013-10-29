@@ -1,0 +1,44 @@
+contacts = module('xstyle/test/contacts');
+body {
+	=>
+		h1 'Hello, world of my contacts',
+		ul.contacts-list (contacts/list) {
+			each: li (item/firstName + ' ' + item/lastName) {
+				on-click: contacts/select(item);
+			};
+			border-right: 1px solid #aaa;
+			float: left;
+			width: 150px;
+			height: 220px;
+		},
+		div {
+			selected = contacts/selected;
+			=>
+				h2 (selected/firstName + ' ' + selected/lastName),
+				label.start-row 'First Name:',
+				input[type=text] (selected/firstName),
+				span.error (selected/firstName/error)
+				label.start-row 'Last Name:',
+				input[type=text] (selected/lastName),
+				label.start-row 'Email:',
+				input[type=email] (selected/email),
+				button.start-row 'New Contact' {
+					on-click: contacts/create();
+				},
+				button.start-row 'Save' {
+					on-click: contacts/save(selected);
+				};
+			float: left;
+			margin: 20px;
+		};
+	font-family: "Segoe UI", "Segoe WP", "Helvetica Neue", Roboto, sans-serif;
+}
+.start-row {
+	display: block;
+}
+h2 {
+	margin-top: 0;
+}
+.error {
+	color: red;
+}

@@ -1,7 +1,7 @@
-define(["../_StoreMixin", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Deferred",
+define(["../_StoreMixin", "dojo/_base/declare", "dojo/_base/array", "dojo/_base/lang", "dojo/_base/Deferred",
 	"dojo/on", "dojo/query", "dojo/string", "dojo/has", "put-selector/put", "dojo/i18n!./nls/pagination",
 	"dojo/_base/sniff", "xstyle/css!../css/extensions/Pagination.css"],
-function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n){
+function(_StoreMixin, declare, arrayUtil, lang, Deferred, on, query, string, has, put, i18n){
 	function cleanupContent(grid){
 		// Remove any currently-rendered rows, or noDataMessage
 		if(grid.noDataNode){
@@ -26,6 +26,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 			// Also remove the observer from the previous page, if there is one
 			if(grid._oldPageObserver){
 				grid._oldPageObserver.cancel();
+				grid._numObservers--;
 				delete grid._oldPageObserver;
 			}
 		}
@@ -57,7 +58,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 		// pageSizeOptions: Array[Number]
 		//		This provides options for different page sizes in a drop-down.
 		//		If it is empty (default), no page size drop-down will be displayed.
-		pageSizeOptions: [],
+		pageSizeOptions: null,
 		
 		// showLoadingMessage: Boolean
 		//		If true, clears previous data and displays loading node when requesting
@@ -83,26 +84,16 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 					put(this.footerNode, "div.dgrid-pagination"),
 				statusNode = this.paginationStatusNode =
 					put(paginationNode, "div.dgrid-status"),
-				pageSizeOptions = this.pageSizeOptions,
 				i18n = this.i18nPagination,
-				navigationNode, node;
+				navigationNode,
+				node,
+				i;
 			
 			statusNode.tabIndex = 0;
 			
-			if(pageSizeOptions.length){
-				var sizeSelect = put(paginationNode, 'select.dgrid-page-size'),
-					i;
-				for(i = 0; i < pageSizeOptions.length; i++){
-					put(sizeSelect, 'option', pageSizeOptions[i], {
-						value: pageSizeOptions[i],
-						selected: this.rowsPerPage === pageSizeOptions[i]
-					});
-				}
-				this._listeners.push(on(sizeSelect, "change", function(){
-					grid.rowsPerPage = +sizeSelect.value;
-					grid.gotoPage(1);
-				}));
-			}
+			// Initialize UI based on pageSizeOptions and rowsPerPage
+			this._updatePaginationSizeSelect();
+			this._updateRowsPerPageOption();
 			
 			// initialize some content into paginationStatusNode, to ensure
 			// accurate results on initial resize call
@@ -180,7 +171,80 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 				this._pagingTextBoxHandle.remove();
 			}
 		},
+
+		_updatePaginationSizeSelect: function(){
+			// summary:
+			//		Creates or repopulates the pagination size selector based on
+			//		the values in pageSizeOptions. Called from buildRendering
+			//		and _setPageSizeOptions.
+			
+			var pageSizeOptions = this.pageSizeOptions,
+				paginationSizeSelect = this.paginationSizeSelect,
+				handle;
+			
+			if(pageSizeOptions && pageSizeOptions.length){
+				if(!paginationSizeSelect){
+					// First time setting page options; create the select
+					paginationSizeSelect = this.paginationSizeSelect =
+						put(this.paginationNode, "select.dgrid-page-size");
+					
+					handle = this._paginationSizeChangeHandle =
+						on(paginationSizeSelect, "change", lang.hitch(this, function(){
+							this.set("rowsPerPage", +this.paginationSizeSelect.value);
+						}));
+					this._listeners.push(handle);
+				}
+				
+				// Repopulate options
+				paginationSizeSelect.options.length = 0;
+				for(i = 0; i < pageSizeOptions.length; i++){
+					put(paginationSizeSelect, "option", pageSizeOptions[i], {
+						value: pageSizeOptions[i],
+						selected: this.rowsPerPage === pageSizeOptions[i]
+					});
+				}
+				// Ensure current rowsPerPage value is in options
+				this._updateRowsPerPageOption();
+			}else if(!(pageSizeOptions && pageSizeOptions.length) && paginationSizeSelect){
+				// pageSizeOptions was removed; remove/unhook the drop-down
+				put(paginationSizeSelect, "!");
+				this.paginationSizeSelect = null;
+				this._paginationSizeChangeHandle.remove();
+			}
+		},
+
+		_setPageSizeOptions: function(pageSizeOptions){
+			this.pageSizeOptions = pageSizeOptions && pageSizeOptions.sort(function(a, b){
+				return a - b;
+			});
+			this._updatePaginationSizeSelect();
+		},
+
+		_updateRowsPerPageOption: function(){
+			// summary:
+			//		Ensures that an option for rowsPerPage's value exists in the
+			//		paginationSizeSelect drop-down (if one is rendered).
+			//		Called from buildRendering and _setRowsPerPage.
+			
+			var rowsPerPage = this.rowsPerPage,
+				pageSizeOptions = this.pageSizeOptions,
+				paginationSizeSelect = this.paginationSizeSelect;
+			
+			if(paginationSizeSelect){
+				if(arrayUtil.indexOf(pageSizeOptions, rowsPerPage) < 0){
+					this._setPageSizeOptions(pageSizeOptions.concat([rowsPerPage])); 
+				}else{
+					paginationSizeSelect.value = "" + rowsPerPage;
+				}
+			}
+		},
 		
+		_setRowsPerPage: function(rowsPerPage){
+			this.rowsPerPage = rowsPerPage;
+			this._updateRowsPerPageOption();
+			this.gotoPage(1);
+		},
+
 		_updateNavigation: function(focusLink){
 			// summary:
 			//		Update status and navigation controls based on total count from query
@@ -194,7 +258,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 				end = Math.ceil(this._total / this.rowsPerPage),
 				pagingTextBoxHandle = this._pagingTextBoxHandle;
 			
-			function pageLink(page){
+			function pageLink(page, addSpace){
 				var link;
 				if(grid.pagingTextBox && page == currentPage && end > 1){
 					// use a paging text box if enabled instead of just a number
@@ -210,7 +274,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 					// normal link
 					link = put(linksNode,
 						'span' + (page == currentPage ? '.dgrid-page-disabled' : '') + '.dgrid-page-link',
-						page);
+						page + (addSpace ? " " : ""));
 					link.setAttribute("aria-label", i18n.gotoPage);
 					link.tabIndex = 0;
 				}
@@ -231,7 +295,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 			
 			if(pagingLinks && end > 0){
 				// always include the first page (back to the beginning)
-				pageLink(1);
+				pageLink(1, true);
 				var start = currentPage - pagingLinks;
 				if(start > 2) {
 					// visual indication of skipped page links
@@ -241,7 +305,7 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 				}
 				// now iterate through all the page links we should show
 				for(var i = start; i < Math.min(currentPage + pagingLinks + 1, end); i++){
-					pageLink(i);
+					pageLink(i, true);
 				}
 				if(currentPage + pagingLinks + 1 < end){
 					put(linksNode, "span.dgrid-page-skip", "...");
@@ -290,11 +354,32 @@ function(_StoreMixin, declare, lang, Deferred, on, query, string, has, put, i18n
 			}
 		},
 		
-		renderArray: function(){
-			var rows = this.inherited(arguments);
+		renderArray: function(results, beforeNode){
+			var grid = this,
+				rows = this.inherited(arguments);
 			
 			// Make sure _lastCollection is cleared (due to logic in List)
 			this._lastCollection = null;
+			
+			if(!beforeNode){
+				if(this._topLevelRequest){
+					// Cancel previous async request that didn't finish
+					this._topLevelRequest.cancel();
+					delete this._topLevelRequest;
+				}
+				
+				if (typeof results.cancel === "function") {
+					// Store reference to new async request in progress
+					this._topLevelRequest = results;
+				}
+				
+				Deferred.when(results, function(){
+					if(grid._topLevelRequest){
+						// Remove reference to request now that it's finished
+						delete grid._topLevelRequest;
+					}
+				});
+			}
 			
 			return rows;
 		},

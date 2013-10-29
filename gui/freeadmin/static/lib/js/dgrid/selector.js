@@ -69,10 +69,6 @@ function(kernel, arrayUtil, on, aspect, has, put){
 				var row = grid.row(event),
 					lastRow = grid._lastSelected && grid.row(grid._lastSelected);
 
-				if (!grid.allowSelect(row)) {
-					return;
-				}
-
 				grid._selectionTriggerEvent = event;
 				
 				if(type == "radio"){
@@ -182,7 +178,8 @@ function(kernel, arrayUtil, on, aspect, has, put){
 			renderInput(value, cell, object);
 		};
 		column.renderHeaderCell = function(th){
-			var label = column.label || column.field || "";
+			var label = "label" in column ? column.label :
+				column.field || "";
 			
 			if(type == "radio" || !grid.allowSelectAll){
 				th.appendChild(document.createTextNode(label));

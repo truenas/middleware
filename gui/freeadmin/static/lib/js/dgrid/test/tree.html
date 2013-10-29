@@ -49,7 +49,6 @@
 					
 					var treeGrid = window.treeGrid = new StandardGrid({
 						store: testCountryStore,
-						query: {type: "continent"},
 						columns: [
 							tree({label: "Name", field:"name", sortable: false}),
 							editor({label: "Visited", field: "bool", sortable: false}, "checkbox"),
@@ -58,6 +57,13 @@
 							{label:"Timezone", field:"timezone"}
 						]
 					}, "treeGrid");
+					
+					on(byId("filter"), "click", function(){
+						treeGrid.set("query", { name: /a$/ });
+					});
+					on(byId("clearFilter"), "click", function(){
+						treeGrid.set("query", {});
+					});
 					
 					on(byId("save"), "click", function(){
 						treeGrid.save();
@@ -112,7 +118,6 @@
 					
 					window.treeSelector = new StandardGrid({
 						store: testCountryStore,
-						query: {type: "continent"},
 						selectionMode: "none",
 						allowSelectAll: true,
 						columns: getTreeSelectorColumns()
@@ -124,9 +129,17 @@
 						treeSelector.set("columns", getTreeSelectorColumns());
 					});
 					
+					window.treeTopHeavy = new StandardGrid({
+						store: testTopHeavyStore,
+						query: { parent: undefined },
+						columns: {
+							abbreviation: tree({ label: "Abbreviation", field: "abbreviation" }),
+							name: "Name"
+						}
+					}, "treeTopHeavy");
+					
 					window.treeSubRows = new StandardGrid({
 						store: testCountryStore,
-						query: {type: "continent"},
 						subRows: [[
 							tree({label:"Name", field:"name", sortable: false}),
 							{label:"Type", field:"type", sortable: false}
@@ -138,7 +151,6 @@
 					
 					window.treeColumnSets = new (declare([Grid, Keyboard, Selection, ColumnSet]))({
 						store: testCountryStore,
-						query: {type: "continent"},
 						columnSets: [[
 							[ tree({label:"Name", field:"name", sortable: false}) ],
 							[ {label:"Type", field:"type", sortable: false} ]
@@ -157,18 +169,26 @@
 	<body class="claro">
 		<h2>Lazy-loading tree grid, with store functionality</h2>
 		<div id="treeGrid"></div>
-		<button id="save">Save</button>
-		<button id="revert">Revert</button>
-		<button id="add-continent">Add Continent</button>
-		<button id="add-country">Add Greece To Europe</button>
-		<button id="remove-country">Remove Greece</button>
-		<button id="delete">Delete Selected</button>
-		<button id="edit-continent">Edit Europe</button>
-		<button id="move-rome-na">Move Rome to North America</button>
+		<div>
+			<button id="filter">Show only entries ending in "a"</button>
+			<button id="clearFilter">Show all</button>
+		</div>
+		<div>
+			<button id="save">Save</button>
+			<button id="revert">Revert</button>
+			<button id="add-continent">Add Continent</button>
+			<button id="add-country">Add Greece To Europe</button>
+			<button id="remove-country">Remove Greece</button>
+			<button id="delete">Delete Selected</button>
+			<button id="edit-continent">Edit Europe</button>
+			<button id="move-rome-na">Move Rome to North America</button>
+		</div>
 		
 		<h2>Tree grid with formatter on tree column, and a checkbox selector to test select-all on children</h2>
 		<div id="treeSelector"></div>
 		<button id="resetColumns">Reset Columns</button> (to test column.init/destroy)
+		<h2>Tree grid with more children than parents</h2>
+		<div id="treeTopHeavy"></div>
 		<h2>Tree grid with subRows</h2>
 		<div id="treeSubRows"></div>
 		<h2>Tree grid with columnSets</h2>

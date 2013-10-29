@@ -34,10 +34,10 @@
 			var getColumns, getAltColumns, createGrid, destroyGrid;
 			
 			require(["dojo/_base/lang", "dojo/_base/declare",
-				"dgrid/OnDemandGrid", "dgrid/Selection",
+				"dgrid/OnDemandGrid", "dgrid/Keyboard", "dgrid/Selection",
 				"dgrid/extensions/ColumnHider", "dgrid/extensions/ColumnResizer", "dgrid/extensions/ColumnReorder",
 				"put-selector/put", "dgrid/test/data/base", "dojo/domReady!"],
-			function(lang, declare, Grid, Selection, ColumnHider, ColumnResizer, ColumnReorder, put, testStore){
+			function(lang, declare, Grid, Keyboard, Selection, ColumnHider, ColumnResizer, ColumnReorder, put, testStore){
 				var columns = {
 						col1: "Column 1Column1Column 1 Column 1",
 						col2: { label: "Column2 (unhidable)", sortable: false, unhidable: true },
@@ -73,7 +73,7 @@
 						grid.destroy();
 						document.body.insertBefore(put("div#grid"), next);
 					}
-					grid = window.grid = new (declare([Grid, Selection, ColumnHider]))({
+					grid = window.grid = new (declare([Grid, Keyboard, Selection, ColumnHider]))({
 						store: testStore,
 						columns: getColumns()
 					}, "grid");

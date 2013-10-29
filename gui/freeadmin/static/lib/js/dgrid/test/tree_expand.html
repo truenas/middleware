@@ -53,7 +53,6 @@
 					}], function(info){
 						var grid = window[info.id] = new StandardGrid({
 							store: info.store,
-							query: {type: "continent"},
 							columns: [
 								tree({label: "Name", field:"name", sortable: false, shouldExpand: function(){ return true; }}),
 								editor({label: "Visited", field: "bool", sortable: false}, "checkbox"),

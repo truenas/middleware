@@ -1,7 +1,7 @@
 {
   "name": "xstyle",
   "author": "Kris Zyp",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "CSS framework providing polyfills, extensions, dynamic loading, and selector based DOM manipulation",
   "licenses": [
      {
@@ -19,5 +19,11 @@
   },
   "main": "./main",
   "icon": "http://packages.dojofoundation.org/images/xstyle.jpg",
-  "dojoBuild": "package.js"
+  "dependencies": {
+    "put-selector": "0.3.2"
+  },
+  "dojoBuild": "package.js",
+  "volo": {
+    "type": "directory"
+  }
 }

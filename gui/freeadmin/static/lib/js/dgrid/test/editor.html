@@ -35,11 +35,12 @@
 			var grid, // stores global reference to grid instance
 				editFirst; // function defined within require callback
 			
-			require(["dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/Keyboard", "dgrid/editor",
+			require(["dgrid/OnDemandGrid", "dgrid/Selection", "dgrid/Keyboard", "dgrid/editor", "put-selector/put",
 					"dojo/_base/lang", "dojo/_base/declare", "dojo/on", "dojo/dom-construct",
-					"dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore", "dojo/domReady!"],
-				function(Grid, Selection, Keyboard, editor,
-						lang, declare, on, domConstruct, Memory, Observable, ObjectStore){
+					"dojo/store/Memory", "dojo/store/Observable", "dojo/data/ObjectStore",
+					"dgrid/test/data/DeferredWrapper", "dojo/domReady!"],
+				function(Grid, Selection, Keyboard, editor, put,
+						lang, declare, on, domConstruct, Memory, Observable, ObjectStore, DeferredWrapper){
 					var today = new Date(),
 						form = document.getElementById("editorForm"),
 						typesArea = document.getElementById("editorComponentTypes"),
@@ -105,7 +106,13 @@
 								generate: generateNumber,
 								column: { editorArgs: { constraints: { min: 0 } } }
 							},
-							{ label: "dijit/form/DateTextBox", generate: generateDate },
+							{
+								label: "dijit/form/DateTextBox",
+								generate: generateDate,
+								renderCell: function(object, value){
+									return put("div", value ? value.toString() : "No Date");
+								}
+							},
 							{
 								label: "dijit/form/HorizontalSlider",
 								generate: generateNumber,
@@ -218,21 +225,34 @@
 							editOn = getSelected(form.elements.editOn),
 							deps = editorType.indexOf("/") > -1 ? [editorType] : [],
 							data = [],
+							async = form.elements.async.checked,
+							store,
 							i;
 						
-						for (i = 0; i < 100; i++){
+						for (i = 0; i < 200; i++){
 							data.push(lang.mixin(options.generate(i), { id: i }));
 						}
+						
+						store = new TestStore({ data: data });
+						if(async){
+							store = new DeferredWrapper(store, 100);
+						}
+						store = Observable(store);
 						
 						require(deps, function(ctor){
 							var columnArgs = {
 								autoSave: form.elements.autoSave.checked,
 								editor: ctor || editorType
 							};
+							
 							if(editOn){ columnArgs.editOn = editOn; }
+							
 							if(form.elements.customRenderCell.checked){
 								columnArgs.renderCell = customRenderCell;
+							}else if(options.renderCell){
+								columnArgs.renderCell = options.renderCell;
 							}
+							
 							if(form.elements.customFormatter.checked){
 								columnArgs.formatter = customFormatter;
 							}
@@ -240,10 +260,11 @@
 							
 							if(!grid){
 								grid = new CustomGrid({
-									store: Observable(new TestStore({ data: data })),
+									store: store,
 									columns: {
 										"editor": editor(lang.mixin({}, options.column, columnArgs))
-									}
+									},
+									farOffRemoval: async ? 400 : Infinity
 								}, "grid");
 							}else{
 								// instead of destroying/recreating, just reset store + columns
@@ -251,7 +272,7 @@
 								grid.set("columns", {
 									"editor": editor(lang.mixin({}, options.column, columnArgs))
 								});
-								grid.set("store", Observable(new TestStore({ data: data })));
+								grid.set("store", store);
 							}
 						});
 						
@@ -307,6 +328,7 @@
 			<p><label><input type="checkbox" name="cancelDataChange" value="false"> cancel dgrid-datachange</label></p>
 			<p><label><input type="checkbox" name="customRenderCell" value="true"> use custom renderCell</label></p>
 			<p><label><input type="checkbox" name="customFormatter" value="true"> use custom formatter (note: customRenderCell supersedes this setting)</label></p>
+			<p><label><input type="checkbox" name="async" value="true"> use async store</label></p>
 			<div><button type="submit" id="editorFormSubmit">Recreate Grid</button></div>
 		</form>
 		<div id="grid"></div>

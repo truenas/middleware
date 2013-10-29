@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Keyboard Mixin</title>
+		<script>
+			var dojoConfig = {
+				async: true,
+				baseUrl: "../../../../",
+				packages: [
+					"dojo",
+					"dijit",
+					"dojox",
+					"dgrid",
+					"put-selector",
+					"xstyle"
+				],
+			};
+		</script>
+		<script src="../../../../dojo/dojo.js"></script>
+		<script>
+			var grid, list, rowGrid, ready;
+			require(["dgrid/OnDemandList", "dgrid/List", "dgrid/OnDemandGrid", "dgrid/Grid", "dgrid/Keyboard", "dojo/_base/declare", "dojo/on", "dojo/query", "put-selector/put", "dgrid/test/data/base"],
+			function(OnDemandList, List, OnDemandGrid, Grid, Keyboard, declare, on, query, put){
+				var columns = {
+						col1: "Column 1",
+						col2: "Column 2",
+						col5: "Column 5"
+					},
+					KeyboardGrid = declare([Grid, Keyboard]),
+					KeyboardList = declare([List, Keyboard]),
+					KeyboardOnDemandGrid = declare([OnDemandGrid, Keyboard]),
+					KeyboardOnDemandList = declare([OnDemandList, Keyboard]);
+					
+				// Simple Grid, List, and cell navigation Grid
+				list = new KeyboardList({
+					renderRow: function(item){ return put("div", item.col5); }
+				}, "list");
+				list.renderArray(data.items);
+				grid = new KeyboardGrid({
+					store: testStore,
+					columns: columns
+				}, "grid");
+				grid.renderArray(data.items);
+				rowGrid = new KeyboardGrid({
+					store: testStore,
+					columns: columns,
+					cellNavigation: false
+				}, "rowGrid");
+				rowGrid.renderArray(data.items);
+
+				// OnDemand Grid, List, and cell navigation Grid
+				onDemandList = new KeyboardOnDemandList({
+					store: testStore,
+					renderRow: function(item){ return put("div", item.col5); }
+				}, "list-ondemand");
+				onDemandGrid = new KeyboardOnDemandGrid({
+					store: testStore,
+					columns: columns
+				}, "grid-ondemand");
+				onDemandRowGrid = new KeyboardOnDemandGrid({
+					store: testStore,
+					columns: columns,
+					cellNavigation: false
+				}, "rowGrid-ondemand");
+				ready = true;
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<h2>Keyboard/focus-enabled List and Grids</h2>
+		<div id="list"></div>
+		<div id="grid"></div>
+		<div id="rowGrid"></div>
+		<div id="list-ondemand"></div>
+		<div id="grid-ondemand"></div>
+		<div id="rowGrid-ondemand"></div>
+	</body>
+</html>

@@ -322,3 +322,11 @@ calling the put.forDocument(document) function. For example:
 	put2 = put.forDocument(frames[1].document);
 	put2("div") <- creates a div element that belongs to the document in the second frame.
 	put("div") <- the original put still functions on the main document for this window/context 
+
+# License
+
+put-selector is freely available under *either* the terms of the modified BSD license *or* the
+Academic Free License version 2.1. More details can be found in the [LICENSE](LICENSE).
+The put-selector project follows the IP guidelines of Dojo foundation packages and all contributions require a Dojo CLA. 
+If you feel compelled to make a monetary contribution, consider some of the author's [favorite
+charities](http://thezyps.com/2012-giving-guide/) like [Innovations for Poverty Action](http://www.poverty-action.org/).

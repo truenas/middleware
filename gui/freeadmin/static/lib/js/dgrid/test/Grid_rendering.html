@@ -103,7 +103,7 @@
 					renderCell: testRenderCell
 				},
 				name: {},
-				description: {label: "what to do", sortable: false}
+				description: {label: "", sortable: false} // Test blank label
 			};
 			require(["dgrid/Grid", "dgrid/OnDemandGrid", "dojo/store/Memory", "dojo/store/Observable", "dojo/_base/declare", "dojo/_base/lang", "dojo/parser", "dojo/query", "dgrid/test/data/base", "dojo/domReady!"],
 			function(Grid, OnDemandGrid, Memory, Observable, declare, lang, parser, query){

@@ -1,0 +1,16 @@
+test-component {
+	=>
+		h1 'header' { color: red}
+		p (content)
+};
+body {
+	=>
+		test-component {
+			=>
+				div.nested 'nested'
+		}
+		test-component div.inline 'inline'
+		test-component {
+			content: 'as property';
+		};
+}

@@ -1,0 +1,25 @@
+popup-message = {
+	label = var: 'More information';
+	content: Here is more information;
+	
+	popup-model = module('xstyle/test/popup-model');
+	=>
+		button (label) {
+			on-click: popup-model/toggle();
+		},
+		div (content) {
+			position: absolute;
+			background-color: #aaa;
+		};
+}
+
+body {
+	=>
+		popup-message {
+			label: Another Popup;
+			content: Contents of another popup;
+		}
+		popup-message 
+			span 'Contents with a '
+			a[href=somepage] 'link';
+}

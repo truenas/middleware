@@ -79,15 +79,36 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 		if(this._started){ this.resize(); }
 	};
 	
-	return declare(TouchScroll ? TouchScroll : null, {
+	// Desktop versions of functions, deferred to when there is no touch support,
+	// or when the useTouchScroll instance property is set to false
+	
+	function desktopGetScrollPosition(){
+		return {
+			x: this.bodyNode.scrollLeft,
+			y: this.bodyNode.scrollTop
+		};
+	}
+	
+	function desktopScrollTo(options){
+		if(typeof options.x !== "undefined"){
+			this.bodyNode.scrollLeft = options.x;
+		}
+		if(typeof options.y !== "undefined"){
+			this.bodyNode.scrollTop = options.y;
+		}
+	}
+	
+	return declare(has("touch") ? TouchScroll : null, {
 		tabableHeader: false,
 		// showHeader: Boolean
 		//		Whether to render header (sub)rows.
 		showHeader: false,
+		
 		// showFooter: Boolean
 		//		Whether to render footer area.  Extensions which display content
 		//		in the footer area should set this to true.
 		showFooter: false,
+		
 		// maintainOddEven: Boolean
 		//		Whether to maintain the odd/even classes when new rows are inserted.
 		//		This can be disabled to improve insertion performance if odd/even styling is not employed.
@@ -98,6 +119,21 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 		//		when the list is destroyed.  Note this is effective at the time of
 		//		the call to addCssRule, not at the time of destruction.
 		cleanAddedRules: true,
+		
+		// useTouchScroll: Boolean
+		//		If touch support is available, this determines whether to
+		//		incorporate logic from the TouchScroll module (at the expense of
+		//		normal desktop/mouse or native mobile scrolling functionality).
+		useTouchScroll: true,
+
+		// cleanEmptyObservers: Boolean
+		//		Whether to clean up observers for empty result sets.
+		cleanEmptyObservers: true,
+
+		// highlightDuration: Integer
+		//		The amount of time (in milliseconds) that a row should remain
+		//		highlighted after it has been updated.
+		highlightDuration: 250,
 		
 		postscript: function(params, srcNodeRef){
 			// perform setup and invoke create in postScript to allow descendants to
@@ -143,6 +179,7 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 			
 			// ensure arrays and hashes are initialized
 			this.observers = [];
+			this._numObservers = 0;
 			this._listeners = [];
 			this._rowIdToObject = {};
 			
@@ -156,7 +193,7 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 			this.buildRendering();
 			if(cls){ setClass.call(this, cls); }
 			
-			this.postCreate && this.postCreate();
+			this.postCreate();
 			
 			// remove srcNodeRef instance property post-create
 			delete this.srcNodeRef;
@@ -221,6 +258,13 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 			this._listeners.push(this._resizeHandle = listen(window, "resize",
 				miscUtil.throttleDelayed(winResizeHandler, this)));
 		},
+		
+		postCreate: has("touch") ? function(){
+			if(this.useTouchScroll){
+				this.inherited(arguments);
+			}
+		} : function(){},
+		
 		startup: function(){
 			// summary:
 			//		Called automatically after postCreate if the component is already
@@ -340,6 +384,7 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 				observer && observer.cancel();
 			}
 			this.observers = [];
+			this._numObservers = 0;
 			this.preload = null;
 		},
 		destroy: function(){
@@ -357,6 +402,7 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 			this.cleanup();
 			// destroy DOM
 			put(this.domNode, "!");
+			this.inherited(arguments);
 		},
 		refresh: function(){
 			// summary:
@@ -377,7 +423,7 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 				put(row, ".ui-state-highlight");
 				setTimeout(function(){
 					put(row, "!ui-state-highlight");
-				}, 250);
+				}, this.highlightDuration);
 				return row;
 			}
 		},
@@ -407,15 +453,22 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 			options = options || {};
 			var self = this,
 				start = options.start || 0,
-				row, rows, container;
+				observers = this.observers,
+				rows, container, observerIndex;
 			
 			if(!beforeNode){
 				this._lastCollection = results;
 			}
 			if(results.observe){
 				// observe the results for changes
-				var observerIndex = this.observers.push(results.observe(function(object, from, to){
-					var firstRow, nextNode, parentNode;
+				self._numObservers++;
+				observerIndex = observers.push(results.observe(function(object, from, to){
+					var row, firstRow, nextNode, parentNode;
+					
+					function advanceNext() {
+						nextNode = (nextNode.connected || nextNode).nextSibling;
+					}
+					
 					// a change in the data took place
 					if(from > -1 && rows[from]){
 						// remove from old slot
@@ -438,14 +491,29 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 					if(to > -1){
 						// Add to new slot (either before an existing row, or at the end)
 						// First determine the DOM node that this should be placed before.
-						nextNode = rows[to];
-						if(!nextNode){
-							nextNode = rows[to - 1];
-							if(nextNode){
-								// Make sure to skip connected nodes, so we don't accidentally
-								// insert a row in between a parent and its children.
-								nextNode = (nextNode.connected || nextNode).nextSibling;
+						if(rows.length){
+							nextNode = rows[to];
+							if(!nextNode){
+								nextNode = rows[to - 1];
+								if(nextNode){
+									// Make sure to skip connected nodes, so we don't accidentally
+									// insert a row in between a parent and its children.
+									advanceNext();
+								}
 							}
+						}else{
+							// There are no rows.  Allow for subclasses to insert new rows somewhere other than
+							// at the end of the parent node.
+							nextNode = self._getFirstRowSibling && self._getFirstRowSibling(container);
+						}
+						// Make sure we don't trip over a stale reference to a
+						// node that was removed, or try to place a node before
+						// itself (due to overlapped queries)
+						if(row && nextNode && row.id === nextNode.id){
+							advanceNext();
+						}
+						if(nextNode && !nextNode.parentNode){
+							nextNode = byId(nextNode.id);
 						}
 						parentNode = (beforeNode && beforeNode.parentNode) ||
 							(nextNode && nextNode.parentNode) || self.contentNode;
@@ -468,12 +536,44 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 					self._onNotification(rows, object, from, to);
 				}, true)) - 1;
 			}
-			var rowsFragment = document.createDocumentFragment();
+			var rowsFragment = document.createDocumentFragment(),
+				lastRow;
+			
+			function mapEach(object){
+				lastRow = self.insertRow(object, rowsFragment, null, start++, options);
+				lastRow.observerIndex = observerIndex;
+				return lastRow;
+			}
+			function whenError(error){
+				if(typeof observerIndex !== "undefined"){
+					observers[observerIndex].cancel();
+					observers[observerIndex] = 0;
+					self._numObservers--;
+				}
+				if(error){
+					throw error;
+				}
+			}
+			function whenDone(resolvedRows){
+				container = beforeNode ? beforeNode.parentNode : self.contentNode;
+				if(container && container.parentNode &&
+						(container !== self.contentNode || resolvedRows.length)){
+					container.insertBefore(rowsFragment, beforeNode || null);
+					lastRow = resolvedRows[resolvedRows.length - 1];
+					lastRow && self.adjustRowIndices(lastRow);
+				}else if(observers[observerIndex] && self.cleanEmptyObservers){
+					// Remove the observer and don't bother inserting;
+					// rows are already out of view or there were none to track
+					whenError();
+				}
+				return (rows = resolvedRows);
+			}
+			
 			// now render the results
 			if(results.map){
 				rows = results.map(mapEach, console.error);
 				if(rows.then){
-					return rows.then(whenDone);
+					return rows.then(whenDone, whenError);
 				}
 			}else{
 				rows = [];
@@ -481,21 +581,7 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 					rows[i] = mapEach(results[i]);
 				}
 			}
-			var lastRow;
-			function mapEach(object){
-				lastRow = self.insertRow(object, rowsFragment, null, start++, options);
-				lastRow.observerIndex = observerIndex;
-				return lastRow;
-			}
-			function whenDone(resolvedRows){
-				container = beforeNode ? beforeNode.parentNode : self.contentNode;
-				if(container){
-					container.insertBefore(rowsFragment, beforeNode || null);
-					lastRow = resolvedRows[resolvedRows.length - 1];
-					lastRow && self.adjustRowIndices(lastRow);
-				}
-				return (rows = resolvedRows);
-			}
+			
 			return whenDone(rows);
 		},
 
@@ -523,7 +609,7 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 						this.store.getIdentity(object) : this._autoId++),
 				row = byId(id),
 				previousRow = row && row.previousSibling;
-		
+			
 			if(row){// if it existed elsewhere in the DOM, we will remove it, so we can recreate it
 				this.removeRow(row);
 			}
@@ -673,29 +759,17 @@ function(kernel, declare, listen, has, miscUtil, TouchScroll, hasClass, put){
 			return this.row(this._move(row, steps || 1, "dgrid-row", visible));
 		},
 		
-		scrollTo: has("touch") ? function(){
+		scrollTo: has("touch") ? function(options){
 			// If TouchScroll is the superclass, defer to its implementation.
-			return this.inherited(arguments);
-		} : function(options){
-			// No TouchScroll; simple implementation which sets scrollLeft/Top.
-			if(typeof options.x !== "undefined"){
-				this.bodyNode.scrollLeft = options.x;
-			}
-			if(typeof options.y !== "undefined"){
-				this.bodyNode.scrollTop = options.y;
-			}
-		},
+			return this.useTouchScroll ? this.inherited(arguments) :
+				desktopScrollTo.call(this, options);
+		} : desktopScrollTo,
 		
 		getScrollPosition: has("touch") ? function(){
 			// If TouchScroll is the superclass, defer to its implementation.
-			return this.inherited(arguments);
-		} : function(){
-			// No TouchScroll; return based on scrollLeft/Top.
-			return {
-				x: this.bodyNode.scrollLeft,
-				y: this.bodyNode.scrollTop
-			};
-		},
+			return this.useTouchScroll ? this.inherited(arguments) :
+				desktopGetScrollPosition.call(this);
+		} : desktopGetScrollPosition,
 		
 		get: function(/*String*/ name /*, ... */){
 			// summary:

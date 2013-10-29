@@ -33,3 +33,18 @@
 .dgrid-rtl .ui-icon-triangle-1-se {
 	background-position: -80px -16px;
 }
+
+/* Reverse Pagination */
+
+.dgrid-rtl .dgrid-pagination .dgrid-status {
+	float: right;
+}
+
+.dgrid-rtl .dgrid-pagination .dgrid-page-size {
+	float: right;
+}
+.dgrid-rtl .dgrid-pagination .dgrid-navigation {
+	float: left;
+}
+
+#dgrid-css-dgrid_rtl-loaded { display: none; }

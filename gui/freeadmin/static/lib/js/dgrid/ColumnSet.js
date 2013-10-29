@@ -101,14 +101,14 @@ function(kernel, declare, lang, Deferred, listen, aspect, query, has, miscUtil, 
 			}
 		},
 		columnSets: [],
-		createRowCells: function(tag, each){
+		createRowCells: function(tag, each, subRows, object){
 			var row = put("table.dgrid-row-table");
 			var tr = put(row, "tbody tr");
 			for(var i = 0, l = this.columnSets.length; i < l; i++){
 				// iterate through the columnSets
 				var cell = put(tr, tag + ".dgrid-column-set-cell.dgrid-column-set-" + i +
 					" div.dgrid-column-set[" + colsetidAttr + "=" + i + "]");
-				cell.appendChild(this.inherited(arguments, [tag, each, this.columnSets[i]]));
+				cell.appendChild(this.inherited(arguments, [tag, each, this.columnSets[i], object]));
 			}
 			return row;
 		},
@@ -241,14 +241,24 @@ function(kernel, declare, lang, Deferred, listen, aspect, query, has, miscUtil, 
 
 		_onColumnSetScroll: function (evt){
 			var scrollLeft = evt.target.scrollLeft,
-				colSetId = evt.target.getAttribute(colsetidAttr);
+				colSetId = evt.target.getAttribute(colsetidAttr),
+				newScrollLeft;
 
 			if(this._columnSetScrollLefts[colSetId] != scrollLeft){
-				this._columnSetScrollLefts[colSetId] = scrollLeft;
 				query('.dgrid-column-set[' + colsetidAttr + '="' + colSetId + '"],.dgrid-column-set-scroller[' + colsetidAttr + '="' + colSetId + '"]', this.domNode).
-					forEach(function(element){
+					forEach(function(element, i){
 						element.scrollLeft = scrollLeft;
+						if(!i){
+							// Compute newScrollLeft based on actual resulting
+							// value of scrollLeft, which may be different than
+							// what we assigned under certain circumstances
+							// (e.g. Chrome under 33% / 67% / 90% zoom).
+							// Only need to compute this once, as it will be the
+							// same for every row.
+							newScrollLeft = element.scrollLeft;
+						}
 					});
+				this._columnSetScrollLefts[colSetId] = newScrollLeft;
 			}
 		},
 		

@@ -1,5 +1,7 @@
 .dgrid-hider-toggle {
 	background-position: 0 -192px;
+	background-color: transparent;
+	border: none;
 	cursor: pointer;
 	position: absolute;
 	right: 0;

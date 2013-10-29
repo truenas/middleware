@@ -35,7 +35,6 @@
 					
 					window.grid = new StandardGrid({
 						store: testCountryStore,
-						query: {type: "continent"},
 						columns: [
 							tree(editor({label: "Name", field:"name", sortable: false, editOn: "dblclick"})),
 							editor({label: "Visited", field: "bool", sortable: false}, "checkbox"),

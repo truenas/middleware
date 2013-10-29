@@ -19,7 +19,7 @@ define(["require"], function(moduleRequire){
  	return {
 		load: function(resourceDef, require, callback, config) {
 			var url = require.toUrl(resourceDef);
-			var cachedCss = require.cache['url:' + url];
+			var cachedCss = require.cache && require.cache['url:' + url];
 			if(cachedCss){
 				// we have CSS cached inline in the build
 				if(cachedCss.xCss){
@@ -53,7 +53,7 @@ define(["require"], function(moduleRequire){
 				return checkForParser();
 			}
 			// use dynamic loader
-			moduleRequire(["./load-css"], function(load){
+			moduleRequire(["./core/load-css"], function(load){
 				load(url, checkForParser);
 			});
 		}

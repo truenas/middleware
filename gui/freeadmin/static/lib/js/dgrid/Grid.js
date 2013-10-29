@@ -20,7 +20,7 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 		column: function(target){
 			// summary:
 			//		Get the column object by node, or event, or a columnId
-			if(typeof target == "string"){
+			if(typeof target != "object"){
 				return this.columns[target];
 			}else{
 				return this.cell(target).column;
@@ -55,7 +55,7 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 			}
 			if(!element && typeof columnId != "undefined"){
 				var row = this.row(target),
-					rowElement = row.element;
+					rowElement = row && row.element;
 				if(rowElement){
 					var elements = rowElement.getElementsByTagName("td");
 					for(var i = 0; i < elements.length; i++){
@@ -75,7 +75,7 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 			}
 		},
 		
-		createRowCells: function(tag, each, subRows){
+		createRowCells: function(tag, each, subRows, object){
 			// summary:
 			//		Generates the grid for each row (used by renderHeader and and renderRow)
 			var row = put("table.dgrid-row-table[role=presentation]"),
@@ -84,7 +84,8 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 				tbody = (has("ie") < 9 || has("quirks")) ? put(row, "tbody") : row,
 				tr,
 				si, sl, i, l, // iterators
-				subRow, column, id, extraClassName, cell, innerCell, colSpan, rowSpan; // used inside loops
+				subRow, column, id, extraClasses, className,
+				cell, innerCell, colSpan, rowSpan; // used inside loops
 			
 			// Allow specification of custom/specific subRows, falling back to
 			// those defined on the instance.
@@ -98,16 +99,23 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 				if(subRow.className){
 					put(tr, "." + subRow.className);
 				}
-				
+
 				for(i = 0, l = subRow.length; i < l; i++){
 					// iterate through the columns
 					column = subRow[i];
 					id = column.id;
-					extraClassName = column.className || (column.field && "field-" + column.field);
+
+					extraClasses = column.field ? ".field-" + column.field : "";
+					className = typeof column.className === "function" ?
+						column.className(object) : column.className;
+					if(className){
+						extraClasses += "." + className;
+					}
+
 					cell = put(tag + (
 							".dgrid-cell.dgrid-cell-padding" +
 							(id ? ".dgrid-column-" + id : "") +
-							(extraClassName ? "." + extraClassName : "")
+							extraClasses.replace(/ +/g, ".")
 						).replace(invalidClassChars,"-") +
 						"[role=" + (tag === "th" ? "columnheader" : "gridcell") + "]");
 					cell.columnId = id;
@@ -161,7 +169,7 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 				}else{
 					defaultRenderCell.call(column, object, data, td, options);
 				}
-			}, options && options.subRows);
+			}, options && options.subRows, object);
 			// row gets a wrapper div for a couple reasons:
 			//	1. So that one can set a fixed height on rows (heights can't be set on <table>'s AFAICT)
 			// 2. So that outline style can be set on a row when it is focused, and Safari's outline style is broken on <table>
@@ -196,8 +204,9 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 				// allow for custom header content manipulation
 				if(column.renderHeaderCell){
 					appendIfNode(contentNode, column.renderHeaderCell(contentNode));
-				}else if(column.label || column.field){
-					contentNode.appendChild(document.createTextNode(column.label || column.field));
+				}else if("label" in column || column.field){
+					contentNode.appendChild(document.createTextNode(
+						"label" in column ? column.label : column.field));
 				}
 				if(column.sortable !== false && field && field != "_item"){
 					th.sortable = true;
@@ -372,10 +381,9 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 		_configColumns: function(prefix, rowColumns){
 			// configure the current column
 			var subRow = [],
-				isArray = rowColumns instanceof Array,
-				columnId, column;
-			for(columnId in rowColumns){
-				column = rowColumns[columnId];
+				isArray = rowColumns instanceof Array;
+			
+			function configColumn(column, columnId){
 				if(typeof column == "string"){
 					rowColumns[columnId] = column = {label:column};
 				}
@@ -396,6 +404,8 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 				
 				subRow.push(column); // make sure it can be iterated on
 			}
+			
+			miscUtil.each(rowColumns, configColumn, this);
 			return isArray ? rowColumns : subRow;
 		},
 		
@@ -502,7 +512,7 @@ function(kernel, declare, listen, has, put, List, miscUtil){
 			var formatter = this.formatter,
 				formatterScope = this.grid.formatterScope;
 			td.innerHTML = typeof formatter === "string" && formatterScope ?
-				formatterScope[formatter](data, object) : formatter(data, object);
+				formatterScope[formatter](data, object) : this.formatter(data, object);
 		}else if(data != null){
 			td.appendChild(document.createTextNode(data)); 
 		}

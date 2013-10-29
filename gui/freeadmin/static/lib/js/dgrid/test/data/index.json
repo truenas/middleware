@@ -36,44 +36,15 @@
         "parent": ""
     },
     {
-        "name": "doh",
-        "url": "doh",
-        "parent": ""
-    },
-    {
-        "name": "addCssRule.html",
-        "url": "doh/addCssRule.html",
-        "title": "addCssRule and Related Tests",
-        "parent": "doh"
-    },
-    {
-        "name": "create-destroy.html",
-        "url": "doh/create-destroy.html",
-        "title": "Create/Destroy Tests",
-        "parent": "doh"
-    },
-    {
-        "name": "runTests.html",
-        "url": "doh/runTests.html",
-        "title": "dgrid DOH Test Suite",
-        "parent": "doh"
-    },
-    {
-        "name": "Selection-updates.html",
-        "url": "doh/Selection-updates.html",
-        "title": "Grid row updates with selections",
-        "parent": "doh"
-    },
-    {
-        "name": "stores.html",
-        "url": "doh/stores.html",
-        "title": "OnDemand and Pagination Initial Render Tests",
-        "parent": "doh"
-    },
-    {
         "name": "editor.html",
         "url": "editor.html",
         "title": "Test Cell Editors",
+        "parent": ""
+    },
+    {
+        "name": "editor_autosave.html",
+        "url": "editor_autosave.html",
+        "title": "Test Dijit Cell Editors with autoSave",
         "parent": ""
     },
     {
@@ -214,6 +185,17 @@
         "parent": ""
     },
     {
+        "name": "intern",
+        "url": "intern",
+        "parent": ""
+    },
+    {
+        "name": "runTests.html",
+        "url": "intern/runTests.html",
+        "title": "dgrid Intern suite",
+        "parent": "intern"
+    },
+    {
         "name": "JsonRest.html",
         "url": "JsonRest.html",
         "title": "Test JsonRest store",
@@ -295,12 +277,6 @@
         "name": "selector.html",
         "url": "selector.html",
         "title": "Test Grid Selectors",
-        "parent": ""
-    },
-    {
-        "name": "set_class.html",
-        "url": "set_class.html",
-        "title": "Test Setting Class",
         "parent": ""
     },
     {

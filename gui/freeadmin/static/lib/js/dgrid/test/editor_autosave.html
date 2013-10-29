@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Dijit Cell Editors with autoSave</title>
+		<meta name="viewport" content="width=570">
+		<style>
+			@import "../../dojo/resources/dojo.css";
+			@import "../../dijit/themes/claro/claro.css";
+			@import "../css/skins/claro.css";
+			.heading {
+				font-weight: bold;
+				padding-bottom: 0.25em;
+			}
+			.dgrid {
+				margin: 10px;
+			}
+		</style>
+		<script src="../../dojo/dojo.js" 
+			data-dojo-config="async: true, isDebug: true"></script>
+		<script>
+			require(["dojo/_base/declare", "dojo/_base/array", "dgrid/List", "dgrid/OnDemandGrid", "dgrid/Keyboard",
+					"dgrid/editor", "dijit/form/CheckBox", "dijit/form/DateTextBox",
+					"dijit/form/HorizontalSlider", "dijit/form/NumberSpinner",
+					"dgrid/test/data/base", "dojo/domReady!"],
+				function(declare, arrayUtil, List, Grid, Keyboard, editor, CheckBox, DateTextBox, Slider, NumberSpinner){
+					var getColumns = window.getColumns = function(editOn){
+						return arrayUtil.map([
+							{ label: "Date", field: "date", editor: DateTextBox },
+							{ label: "Slider", field: "floatNum", editor: Slider },
+							{ label: "Number", field: "integer", editor: NumberSpinner },
+							{ label: "Checkbox Widget", field: "bool", editor: CheckBox },
+							{ label: "Text", field: "text", editor: "text" },
+							{ label: "Checkbox", field: "bool", editor: "checkbox" }
+						], function (column) {
+							column.autoSave = true;
+							if(editOn){
+								column.editOn = editOn;
+							}
+							return editor(column);
+						});
+					}
+
+					window.grid = new (declare([Grid, Keyboard]))({
+						store: testTypesStore,
+						columns: getColumns()
+					}, "grid");
+					
+					grid.on("dgrid-datachange", function(evt){
+						console.log("data changed: ", evt.oldValue, " -> ", evt.value);
+						console.log("cell: ", evt.cell.row.id, evt.cell.column.field);
+					});
+					grid.on("dgrid-editor-show", function(evt){
+						console.log("show editOn editor: ", evt);
+					});
+					grid.on("dgrid-editor-hide", function(evt){
+						console.log("hide editOn editor: ", evt);
+					});
+				});
+				
+		</script>
+	</head>
+	<body class="claro">
+		<h2>A grid with autoSave-enabled editors</h2>
+		(This test requires dijit to be installed)	
+		<div id="grid"></div>
+		Editor type:
+		<button type="button" onclick="grid.set('columns', getColumns());">always-on</button>
+		<button type="button" onclick="grid.set('columns', getColumns('dblclick'));">on dblclick</button>
+	</body>
+</html>

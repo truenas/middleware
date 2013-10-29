@@ -114,7 +114,7 @@ function(Grid, declare, put){
 			obj = GridFromHtml.utils.getPropsFromNode(th);
 			
 			// inspect standard attributes, but data attribute takes precedence
-			obj.label = obj.label || th.innerHTML;
+			obj.label = "label" in obj ? obj.label : th.innerHTML;
 			obj.field = obj.field || th.className || th.innerHTML;
 			if(!obj.className && th.className){ obj.className = th.className; }
 			if(!obj.rowSpan && (tmp = getNum(th, "rowspan"))){ obj.rowSpan = tmp; }

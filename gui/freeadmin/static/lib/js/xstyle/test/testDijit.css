@@ -1,29 +1,29 @@
-@import "../../dijit/themes/claro/claro.css";
-@import '../ext.css';
+@import "../../dijit/themes/claro/claro.css?no-xstyle";
 
 body {
 	button {
 		font-weight: bold;
 	}
 }
-content = require(xstyle/test/test-data);
-{}
-validated-content {
-	require(dbind/Validator)
+widget = module('xstyle/ext/widget');
+content = module('xstyle/test/test-data');
+validated-content = module('dbind/Validator') {
 	from: content;
 	name: String;
 	age: {
 		minimum: 0;
 		type: number;
 	}
-}
-button {
+};
+button.dijit {
 	widget: {
 		type: dijit/form/Button;
 		label: Test;
 	};
 	font-weight: bold;
-	onclick: toggle(.highlighted);
+}
+button{
+	on-click: content/save;
 }
 dijit-text {
 	width: 100px;
@@ -39,16 +39,11 @@ red-dijit-text  {
 form.edit-object { 
 	=>
 		label 'Some label',
-		textarea {
-			from: content.price;
+		textarea (content/price) {
 			background-color: green;
 		},
-		input[type=number] {
-			from: content.quantity;
-		},
-		div {
-			from: content.price*content.quantity;
-		},
+		input[type=number] (content/quantity),
+		div (content/price * content/quantity),
 		red-dijit-text 'red-dijit-text';
 	background-color: blue;
 }

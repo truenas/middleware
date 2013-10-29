@@ -16,6 +16,10 @@
 		query methods: the dojo/store/DataStore wrapper for dojo/data stores,
 		and an instance of dojo/store/Memory with a promise returned from query.</p>
 		<h2>Grid w/ ItemFileWriteStore via DataStore</h2>
+		<div>
+			<button onclick="grid.set('query', { name: 'foo' })">Show only items named 'foo'</button>
+			<button onclick="grid.set('query', {})">Reset query</button>
+		</div>
 		<div id="grid"></div>
 		<h2>Grid w/ dojo/store w/ async query results</h2>
 		<div id="grid2"></div>
@@ -37,12 +41,12 @@ function(Grid, Memory, Observable, QueryResults, ItemFileWriteStore, DataStore, 
 	ifws = new ItemFileWriteStore({ data: { identifier: "id", items: lang.clone(items) } });
 	datastore = window.datastore = Observable(new DataStore({store: ifws}));
 	
-	grid = new Grid({
+	var grid = window.grid = new Grid({
 		columns: { id: "id", name: "name" },
 		store: datastore
 	}, "grid");
 	
-	asyncstore = window.asyncstore = Observable(new Memory({
+	var asyncstore = window.asyncstore = Observable(new Memory({
 		data: items,
 		query: function(query, options){
 			var results, def, promisedResults;
@@ -57,7 +61,7 @@ function(Grid, Memory, Observable, QueryResults, ItemFileWriteStore, DataStore, 
 		}
 	}));
 	
-	grid2 = new Grid({
+	var grid2 = window.grid2 = new Grid({
 		columns: { id: "id", name: "name" },
 		store: asyncstore
 	}, "grid2");

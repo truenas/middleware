@@ -1,5 +1,9 @@
-define(["dojo/_base/lang", "dojo/_base/declare", "dgrid/Grid", "put-selector/put", "xstyle/css!../css/extensions/CompoundColumns.css"],
-		function(lang, declare, Grid, put){
+define([
+	"dojo/_base/lang",
+	"dojo/_base/declare",
+	"dgrid/util/misc",
+	"xstyle/css!../css/extensions/CompoundColumns.css"
+], function(lang, declare, miscUtil){
 	return declare(null, {
 		// summary:
 		//		Extension allowing for specification of columns with additional
@@ -30,10 +34,9 @@ define(["dojo/_base/lang", "dojo/_base/declare", "dgrid/Grid", "put-selector/put
 			function processColumns(columns, level, hasLabel){
 				var numColumns = 0,
 					noop = function(){},
-					i, column, children, hasChildLabels;
+					column, children, hasChildLabels;
 				
-				for(i in columns){
-					column = columns[i];
+				function processColumn(column, i){
 					children = column.children;
 					hasChildLabels = column.children && (column.showChildHeaders !== false);
 					if(children){
@@ -54,8 +57,10 @@ define(["dojo/_base/lang", "dojo/_base/declare", "dgrid/Grid", "put-selector/put
 					// add the column to the header rows at the appropriate level
 					if(hasLabel){
 						(headerRows[level] || (headerRows[level] = [])).push(column);
-					}					
+					}
 				}
+				
+				miscUtil.each(columns, processColumn, this);
 				return numColumns;
 			}
 			processColumns(columns, 1, true);

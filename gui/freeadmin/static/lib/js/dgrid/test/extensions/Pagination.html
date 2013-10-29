@@ -103,6 +103,7 @@
 					form.onsubmit = function() {
 						var args = domForm.toObject(form);
 						args.pagingLinks = +args.pagingLinks;
+						args.rowsPerPage = +args.rowsPerPage;
 						if (!args.previousNextArrows) { args.previousNextArrows = false; }
 						if (!args.showLoadingMessage) { args.showLoadingMessage = false; }
 						
@@ -128,6 +129,16 @@
 						rowsPerPage: 15,
 						pageSizeOptions: [10, 15, 25]
 					}, "grid2");
+					
+					var form2 = document.getElementById("configForm2");
+					form2.onsubmit = function() {
+						var args = domForm.toObject(form2);
+						args.rowsPerPage = +args.rowsPerPage;
+						
+						// set the rowsPerPage in the grid
+						window.grid2.set('rowsPerPage', args.rowsPerPage);
+						return false;
+					};
 					
 					// GridFromHtml
 					window.gridfromhtml = new (declare([GridFromHtml, Keyboard, Selection, Pagination]))({
@@ -163,6 +174,10 @@
 				Show "jump-to" textbox</label></div>
 			<div><label><input type="checkbox" name="showLoadingMessage" checked>
 				Show loading message while loading data</label></div>
+			<div>
+				<label><input type="text" name="rowsPerPage" value="10" size="1">
+					Number of rows to show per page</label>
+			</div>
 			<div>
 				<label><input type="text" name="pagingLinks" value="2" size="1">
 					Number of neighboring page numbers to display to each side of current
@@ -202,6 +217,13 @@
 		
 		<h2>An autoheight grid with the Pagination extension,
 			with a rows-per-page drop-down</h2>
+		<form id="configForm2">
+			<div>
+				<label><input type="text" name="rowsPerPage" size="1">
+					Number of rows to show per page</label>
+			</div>
+			<div><button type="submit">Update</button> (The rowsPerPage value will be set without recreating the grid.)</div>
+		</form>
 		<div id="grid2"></div>
 		
 		<h2>A grid with ColumnSets with the Pagination extension</h2>

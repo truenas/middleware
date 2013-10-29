@@ -33,6 +33,8 @@ define(["put-selector/put"], function(put){
 	}
 	
 	var util = {
+		// Throttle/debounce functions
+		
 		defaultDelay: 15,
 		throttle: function(cb, context, delay){
 			// summary:
@@ -80,6 +82,34 @@ define(["put-selector/put"], function(put){
 				}, delay);
 			};
 		},
+		
+		// Iterative functions
+		
+		each: function(arrayOrObject, callback, context){
+			// summary:
+			//		Given an array or object, iterates through its keys.
+			//		Does not use hasOwnProperty (since even Dojo does not
+			//		consistently use it), but will iterate using a for or for-in
+			//		loop as appropriate.
+			
+			var i, len;
+			
+			if(!arrayOrObject){
+				return;
+			}
+			
+			if(typeof arrayOrObject.length === "number"){
+				for(i = 0, len = arrayOrObject.length; i < len; i++){
+					callback.call(context, arrayOrObject[i], i, arrayOrObject);
+				}
+			}else{
+				for(i in arrayOrObject){
+					callback.call(context, arrayOrObject[i], i, arrayOrObject);
+				}
+			}
+		},
+		
+		// CSS-related functions
 		
 		addCssRule: function(selector, css){
 			// summary:

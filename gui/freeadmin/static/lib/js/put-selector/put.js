@@ -37,7 +37,7 @@ define([], forDocument = function(doc, newFragmentFasterHeuristic){
 						// fragment doesn't exist yet, check to see if we really want to create it 
 						(fragment = fragmentFasterHeuristic.test(argument) && doc.createDocumentFragment()))
 							// any of the above fails just use the referenceElement  
-							|| referenceElement).
+							 ? fragment : referenceElement).
 								insertBefore(current, nextSibling || null); // do the actual insertion
 			}
 		}
