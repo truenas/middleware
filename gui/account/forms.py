@@ -417,6 +417,14 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 )
                 self.fields['bsdusr_mode'].widget.attrs['disabled'] = True
                 self.fields['bsdusr_mode'].required = False
+            try:
+                self.fields['bsdusr_sshpubkey'].initial = open(
+                    '%s/.ssh/authorized_keys' % (
+                        self.instance.bsdusr_home,
+                    )
+                ).read()
+            except:
+                self.fields['bsdusr_sshpubkey'].initial = ''
 
     def clean_bsdusr_username(self):
         if self.instance.id is None:
