@@ -1278,7 +1278,10 @@ class iSCSITargetExtentForm(ModelForm):
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = str(diskobj.id)
             else:
-                diskobj = models.Disk.objects.get(disk_name=self.cleaned_data["iscsi_target_extent_disk"])
+                diskobj = models.Disk.objects.filter(
+                    disk_name=self.cleaned_data["iscsi_target_extent_disk"],
+                    disk_enabled=True,
+                ).order_by('-id')[0]
                 # label it only if it is a real disk
                 if (
                     diskobj.disk_identifier.startswith("{devicename}")
