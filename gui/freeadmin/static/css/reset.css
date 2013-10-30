@@ -76,7 +76,6 @@ input[type="text"], input[type="password"] {
 }
 
 textarea, input[type="text"], input[type="password"], select {
-    background: none repeat scroll 0 0 #FFFFFF;
     border: 1px solid #C8C8C8;
 }
 textarea:hover, input[type="text"]:hover, input[type="password"]:hover, select:hover {
