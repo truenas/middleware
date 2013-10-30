@@ -40,6 +40,7 @@ class Migration(DataMigration):
         'account.bsdusers': {
             'Meta': {'object_name': 'bsdUsers'},
             'bsdusr_builtin': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'bsdusr_email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
             'bsdusr_full_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'bsdusr_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['account.bsdGroups']"}),
             'bsdusr_home': ('django.db.models.fields.CharField', [], {'default': "'/nonexistent'", 'max_length': '120'}),
