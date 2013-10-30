@@ -74,7 +74,7 @@ fi
 : ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
 
 : ${GIT_PORTS_CACHE="file:///freenas-build/ports.git"}
-: ${GIT_PORTS_BRANCH=freenas/9.1-stable-a}
+: ${GIT_PORTS_BRANCH=freenas/9.1-stable-b}
 : ${GIT_PORTS_REPO=git@gitserver:/git/repos/freenas-build/ports.git}
 
 
