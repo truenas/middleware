@@ -7,15 +7,16 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-	group = orm.bsdgroups()
+        group = orm.bsdgroups()
         group.bsdgrp_builtin = True
         group.bsdgrp_gid = "845"
         group.bsdgrp_group = "hast"
         group.save()
+
         user = orm.bsdusers()
         user.bsdusr_builtin = True
         user.bsdusr_full_name = "HAST unprivileged user"
-	user.bsdusr_group = group
+        user.bsdusr_group = group
         user.bsdusr_home = "/var/empty"
         user.bsdusr_shell = "/usr/sbin/nologin"
         user.bsdusr_smbhash = "*"
@@ -48,6 +49,8 @@ class Migration(DataMigration):
             'bsdusr_full_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'bsdusr_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['account.bsdGroups']"}),
             'bsdusr_home': ('django.db.models.fields.CharField', [], {'default': "'/nonexistent'", 'max_length': '120'}),
+            'bsdusr_locked': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'bsdusr_password_disabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'bsdusr_shell': ('django.db.models.fields.CharField', [], {'default': "'/bin/csh'", 'max_length': '120'}),
             'bsdusr_smbhash': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '128', 'blank': 'True'}),
             'bsdusr_uid': ('django.db.models.fields.IntegerField', [], {'unique': "'True'", 'max_length': '10'}),

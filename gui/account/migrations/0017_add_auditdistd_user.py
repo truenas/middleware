@@ -43,6 +43,8 @@ class Migration(DataMigration):
             'bsdusr_full_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'bsdusr_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['account.bsdGroups']"}),
             'bsdusr_home': ('django.db.models.fields.CharField', [], {'default': "'/nonexistent'", 'max_length': '120'}),
+            'bsdusr_locked': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'bsdusr_password_disabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'bsdusr_shell': ('django.db.models.fields.CharField', [], {'default': "'/bin/csh'", 'max_length': '120'}),
             'bsdusr_smbhash': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '128', 'blank': 'True'}),
             'bsdusr_uid': ('django.db.models.fields.IntegerField', [], {'unique': "'True'", 'max_length': '10'}),
