@@ -846,6 +846,7 @@ def disk_wipe_progress(request, devname):
 
     try:
         os.kill(int(pid), signal.SIGINFO)
+        received = 0
         with open('/var/tmp/disk_wipe_%s.progress' % (devname, ), 'r') as f:
             data = f.read()
             transf = re.findall(
