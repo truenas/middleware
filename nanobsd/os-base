@@ -229,10 +229,6 @@ add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
 add_port lang/python27
 add_port lang/python2
 add_port lang/python
-add_port devel/icu
-add_port graphics/graphite2
-add_port devel/glib20
-add_port print/harfbuzz
 add_port dns/py-dnspython
 add_port devel/tevent
 add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
@@ -318,6 +314,10 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11/pixman
 	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
 	add_port x11-toolkits/pango OPTIONS_FILE_UNSET+=X11
+	add_port devel/icu
+	add_port graphics/graphite2
+	add_port devel/glib20
+	add_port print/harfbuzz OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
 	add_port databases/rrdtool OPTIONS_FILE_UNSET+=PERL_MODULE \
 				OPTIONS_FILE_SET+=PYTHON_MODULE \
 				OPTIONS_FILE_SET+=JSON
