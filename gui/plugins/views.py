@@ -35,6 +35,7 @@ from django.http import Http404, HttpResponse
 from django.utils.translation import ugettext as _
 
 import eventlet
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.warden import WARDEN_EXTRACT_STATUS_FILE
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
@@ -67,6 +68,12 @@ def home(request):
     return render(request, "plugins/index.html", {
         'conf': conf,
     })
+
+
+def refresh(request):
+    p = pipeopen("/usr/local/sbin/pbid --refresh")
+    p.communicate()
+    return HttpResponse('OK')
 
 
 def plugins(request):

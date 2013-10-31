@@ -13,10 +13,13 @@
   <p>{% trans "Refresh" %}</p>
   <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
     var me = this;
-    require(["dojo/query"], function(query) {
-      var grid = query(".gridDiv", me.domNode.parentNode.parentNode)[0].grid;
-      grid.set("store", grid.store);
+    require(["dojo/query", "dojo/request/xhr"], function(query, xhr) {
+      xhr.get('/plugins/plugin/refresh/', { sync: true }).then(function() {
+          var grid = query(".gridDiv", me.domNode.parentNode.parentNode)[0].grid;
+          grid.set("store", grid.store);
+      });
     });
+
   </script>
 </button>
 
