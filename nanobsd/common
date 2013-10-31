@@ -324,7 +324,7 @@ do_add_port ()
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    SRC_BASE=/usr/src \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports_dir/$port_path \
-	    clean package BATCH=yes -DUSE_PACKAGE_DEPENDS \
+	    clean all install package BATCH=yes -DUSE_PACKAGE_DEPENDS \
 	    $* -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	# XXX: this is removing needed artifacts for saved build environments
