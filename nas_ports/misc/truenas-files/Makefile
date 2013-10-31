@@ -18,6 +18,8 @@ CATEGORIES=     misc
 MAINTAINER=     alfred@FreeBSD.org
 COMMENT=        additional files for truenas
 
+
+NO_STAGE=yes
 USE_XZ=		yes
 
 FREEBSD_SRCTOP=/usr/src

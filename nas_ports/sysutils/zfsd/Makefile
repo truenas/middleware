@@ -18,6 +18,8 @@ CATEGORIES=     sysutils
 MAINTAINER=     alfred@FreeBSD.org
 COMMENT=        zfsd for TrueNAS
 
+NO_STAGE=yes
+
 USE_XZ=		yes
 
 # XXX: do we need this?  WE need it in nanobsd
