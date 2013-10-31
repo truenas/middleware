@@ -192,6 +192,11 @@ fi
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
+if is_truenas ; then
+	add_port_with_repo "${NAS_PORTS}" misc/truenas-files LOCALBASE=/
+	add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
+fi
+
 add_port textproc/libxml2
 add_port devel/libffi
 add_port archivers/lzo2
