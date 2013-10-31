@@ -438,6 +438,7 @@ generic_checkout_git()
 				"+refs/heads/${my_branch}:refs/remotes/origin/${my_branch}"
             fi
 
+            		git remote set-url origin "${my_repo}"
 			git fetch origin
 			do_git_update "${my_branch}" "${my_tag}"
 		fi
@@ -449,6 +450,7 @@ generic_checkout_git()
             git clone ${my_cache} ${checkout_name}
             cd ${checkout_name}
             git remote set-url origin "${my_repo}"
+            git fetch origin
 	    do_git_update "${my_branch}" "${my_tag}"
         else
             git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_name}
