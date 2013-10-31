@@ -52,6 +52,12 @@ def pocompile(src, dest):
         if 'python-format' not in entry.flags:
             continue
 
+        # Make sure the format is the same in the translated str
+        if entry.msgid.count('%') != entry.msgstr.count('%'):
+            if 'fuzzy' not in entry.flags:
+                entry.flags.append('fuzzy')
+            continue
+
         for fmt in RE_FORMAT.findall(entry.msgid):
             if fmt not in translated:
                 if 'fuzzy' not in entry.flags:
