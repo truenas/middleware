@@ -602,7 +602,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                     bsdgrpmember_user=bsduser)
                 m.save()
         else:
-            bsduser = super(bsdUsersForm, self).save(commit=False)
+            bsduser = super(bsdUsersForm, self).save()
         _notifier.reload("user")
         bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
         if bsdusr_sshpubkey:
