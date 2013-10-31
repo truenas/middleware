@@ -183,10 +183,14 @@ def get_jail_ipv4_network():
 
 def get_jail_ipv4_network_start():
     jail_ipv4_network_start = None
+    jail_ipv4_network = get_jail_ipv4_network()
 
     try:
         jc = JailsConfiguration.objects.order_by("-id")[0]
-        jail_ipv4_network_start = sipcalc_type(jc.jc_ipv4_network_start)
+        jail_ipv4_network_start = sipcalc_type("%s/%d" % (
+            jc.jc_ipv4_network_start,
+            jail_ipv4_network.network_mask_bits
+        ))
 
     except:
         jail_ipv4_network_start = None
@@ -196,10 +200,14 @@ def get_jail_ipv4_network_start():
 
 def get_jail_ipv4_network_end():
     jail_ipv4_network_end = None
+    jail_ipv4_network = get_jail_ipv4_network()
 
     try:
         jc = JailsConfiguration.objects.order_by("-id")[0]
-        jail_ipv4_network_end = sipcalc_type(jc.jc_ipv4_network_end)
+        jail_ipv4_network_end = sipcalc_type("%s/%d" % (
+            jc.jc_ipv4_network_end,
+            jail_ipv4_network.network_mask_bits
+        ))
 
     except:
         jail_ipv4_network_end = None
@@ -222,10 +230,14 @@ def get_jail_ipv6_network():
 
 def get_jail_ipv6_network_start():
     jail_ipv6_network_start = None
+    jail_ipv6_network = get_jail_ipv6_network()
 
     try:
         jc = JailsConfiguration.objects.order_by("-id")[0]
-        jail_ipv6_network_start = sipcalc_type(jc.jc_ipv6_network_start)
+        jail_ipv6_network_start = sipcalc_type("%s/%d" % (
+            jc.jc_ipv6_network_start,
+            jail_ipv6_network.prefix_length
+        ))
 
     except:
         jail_ipv6_network_start = None
@@ -235,10 +247,14 @@ def get_jail_ipv6_network_start():
 
 def get_jail_ipv6_network_end():
     jail_ipv6_network_end = None
+    jail_ipv6_network = get_jail_ipv6_network()
 
     try:
         jc = JailsConfiguration.objects.order_by("-id")[0]
-        jail_ipv6_network_end = sipcalc_type(jc.jc_ipv6_network_end)
+        jail_ipv6_network_end = sipcalc_type("%s/%d" % (
+            jc.jc_ipv6_network_end,
+            jail_ipv6_network.prefix_length
+        ))
 
     except:
         jail_ipv6_network_end = None
