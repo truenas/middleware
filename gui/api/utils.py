@@ -39,7 +39,6 @@ from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.paginator import Paginator
 from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
-from freenasUI.api.models import APIClient
 import oauth2
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
