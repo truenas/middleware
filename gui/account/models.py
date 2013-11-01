@@ -173,6 +173,9 @@ class bsdUsers(Model):
         return True
 
     def check_password(self, raw_password):
+        # Only allow uid 0 for now
+        if self.bsdusr_uid != 0:
+            return False
         cryptedpasswd = pwd.getpwnam(self.get_username())[1]
         if cryptedpasswd:
             if cryptedpasswd == 'x' or cryptedpasswd == '*':
