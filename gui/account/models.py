@@ -46,6 +46,11 @@ class bsdGroups(Model):
             verbose_name=_("Built-in Group"),
             )
 
+    bsdgrp_sudo = models.BooleanField(
+            default=False,
+            verbose_name=_("Permit Sudo"),
+            )
+
     class Meta:
         verbose_name = _("Group")
         verbose_name_plural = _("Groups")
@@ -123,6 +128,10 @@ class bsdUsers(Model):
             )
     bsdusr_locked = models.BooleanField(
             verbose_name=_("Lock user"),
+            default=False,
+            )
+    bsdusr_sudo = models.BooleanField(
+            verbose_name=_("Permit Sudo"),
             default=False,
             )
 
