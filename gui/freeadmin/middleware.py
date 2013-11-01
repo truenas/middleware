@@ -43,6 +43,7 @@ from django.utils.translation import ugettext as _
 import oauth2 as oauth
 
 from freenasUI import settings as mysettings
+from freenasUI.account.models import bsdUsers
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
@@ -141,17 +142,16 @@ class RequireLoginMiddleware(object):
         # Bypass this middleware in case URLCONF is different
         # This is required so django tests can run
         if settings.ROOT_URLCONF != mysettings.ROOT_URLCONF:
-                    return None
+            return None
 
-        if not request.user.is_authenticated():
-            user = User.objects.filter(is_superuser=True,
-                password=UNUSABLE_PASSWORD)
-            if user.exists():
-                user = user[0]
-                backend = get_backends()[0]
-                user.backend = "%s.%s" % (backend.__module__,
-                    backend.__class__.__name__)
-                login(request, user)
+        #if not request.user.is_authenticated():
+        #    user = bsdUsers.objects.filter(bsdusr_uid=0)
+        #    if user.exists():
+        #        user = user[0]
+        #        backend = get_backends()[0]
+        #        user.backend = "%s.%s" % (backend.__module__,
+        #            backend.__class__.__name__)
+        #        login(request, user)
 
         if request.path == settings.LOGIN_URL:
             return None
