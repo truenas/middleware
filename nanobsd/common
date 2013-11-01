@@ -256,6 +256,10 @@ do_add_port ()
 	# Need to create ${NANO_OBJ}/ports in this add_port_${port} function
 	mkdir -p ${NANO_OBJ}/ports/distfiles
 	mkdir -p ${NANO_OBJ}/ports/packages
+	mkdir -p ${NANO_WORLDDIR}/ports/distfiles
+	mkdir -p ${NANO_WORLDDIR}/ports/packages
+	mkdir -p ${NANO_PORTS}/packages
+	mkdir -p ${NANO_PORTS}/distfiles
 	mkdir -p ${port_repo}/packages
 	mkdir -p ${port_repo}/distfiles
 	mkdir -p ${NANO_WORLDDIR}/usr/src
