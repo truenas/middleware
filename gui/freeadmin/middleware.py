@@ -143,18 +143,10 @@ class RequireLoginMiddleware(object):
         # This is required so django tests can run
         if settings.ROOT_URLCONF != mysettings.ROOT_URLCONF:
             return None
-
-        #if not request.user.is_authenticated():
-        #    user = bsdUsers.objects.filter(bsdusr_uid=0)
-        #    if user.exists():
-        #        user = user[0]
-        #        backend = get_backends()[0]
-        #        user.backend = "%s.%s" % (backend.__module__,
-        #            backend.__class__.__name__)
-        #        login(request, user)
-
+        # Login url is cleared
         if request.path == settings.LOGIN_URL:
             return None
+        # API use its own authentication method
         if request.path.startswith('/api/'):
             return None
         if hasattr(view_func, '__is_public'):
