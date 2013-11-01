@@ -34,7 +34,9 @@ from django.http import QueryDict
 
 from freenasUI.freeadmin.apppool import appPool
 
-from tastypie.authentication import Authentication, MultiAuthentication
+from tastypie.authentication import (
+    Authentication, BasicAuthentication, MultiAuthentication
+)
 from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.paginator import Paginator
@@ -147,7 +149,7 @@ class OAuth2Authentication(Authentication):
 
 APIAuthentication = MultiAuthentication(
     DjangoAuthentication(),
-    OAuth2Authentication(),
+    BasicAuthentication(),
 )
 
 
