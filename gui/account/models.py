@@ -35,18 +35,18 @@ from freenasUI.middleware.notifier import notifier
 
 class bsdGroups(Model):
     bsdgrp_gid = models.IntegerField(
-            verbose_name=_("Group ID")
-            )
+        verbose_name=_("Group ID")
+    )
     bsdgrp_group = models.CharField(
-            unique=True,
-            max_length=120,
-            verbose_name=_("Group Name")
-            )
+        unique=True,
+        max_length=120,
+        verbose_name=_("Group Name")
+    )
     bsdgrp_builtin = models.BooleanField(
-            default=False,
-            editable=False,
-            verbose_name=_("Built-in Group"),
-            )
+        default=False,
+        editable=False,
+        verbose_name=_("Built-in Group"),
+    )
 
     class Meta:
         verbose_name = _("Group")
@@ -56,9 +56,10 @@ class bsdGroups(Model):
         return self.bsdgrp_group
 
     def delete(self, using=None, reload=True):
-        if self.bsdgrp_builtin == True:
-            raise ValueError(_("Group %s is built-in and can not be "
-                "deleted!") % (self.bsdgrp_group))
+        if self.bsdgrp_builtin is True:
+            raise ValueError(_(
+                "Group %s is built-in and can not be deleted!"
+            ) % (self.bsdgrp_group))
         notifier().user_deletegroup(self.bsdgrp_group.encode('utf-8'))
         super(bsdGroups, self).delete(using)
         if reload:
@@ -80,62 +81,62 @@ class bsdUsers(Model):
     REQUIRED_FIELDS = []
 
     bsdusr_uid = models.IntegerField(
-            verbose_name=_("User ID")
-            )
+        verbose_name=_("User ID")
+    )
     bsdusr_username = models.CharField(
-            max_length=16,
-            unique=True,
-            default=_('User &'),
-            verbose_name=_("Username")
-            )
+        max_length=16,
+        unique=True,
+        default=_('User &'),
+        verbose_name=_("Username")
+    )
     bsdusr_unixhash = models.CharField(
-            max_length=128,
-            blank=True,
-            default='*',
-            verbose_name=_("Hashed UNIX password")
-            )
+        max_length=128,
+        blank=True,
+        default='*',
+        verbose_name=_("Hashed UNIX password")
+    )
     bsdusr_smbhash = models.CharField(
-            max_length=128,
-            blank=True,
-            default='*',
-            verbose_name=_("Hashed SMB password")
-            )
+        max_length=128,
+        blank=True,
+        default='*',
+        verbose_name=_("Hashed SMB password")
+    )
     bsdusr_group = models.ForeignKey(
-            bsdGroups,
-            on_delete=models.SET(get_sentinel_group),
-            verbose_name=_("Primary Group ID")
-            )
+        bsdGroups,
+        on_delete=models.SET(get_sentinel_group),
+        verbose_name=_("Primary Group ID")
+    )
     bsdusr_home = PathField(
-            default="/nonexistent",
-            verbose_name=_("Home Directory"),
-            includes=["/root", "/nonexistent"],
-            )
+        default="/nonexistent",
+        verbose_name=_("Home Directory"),
+        includes=["/root", "/nonexistent"],
+    )
     bsdusr_shell = models.CharField(
-            max_length=120,
-            default='/bin/csh',
-            verbose_name=_("Shell")
-            )
+        max_length=120,
+        default='/bin/csh',
+        verbose_name=_("Shell")
+    )
     bsdusr_full_name = models.CharField(
-            max_length=120,
-            verbose_name=_("Full Name")
-            )
+        max_length=120,
+        verbose_name=_("Full Name")
+    )
     bsdusr_builtin = models.BooleanField(
-            default=False,
-            editable=False,
-            verbose_name=_("Built-in User"),
-            )
+        default=False,
+        editable=False,
+        verbose_name=_("Built-in User"),
+    )
     bsdusr_email = models.EmailField(
-            verbose_name=_("E-mail"),
-            blank=True
-            )
+        verbose_name=_("E-mail"),
+        blank=True
+    )
     bsdusr_password_disabled = models.BooleanField(
-            verbose_name=_("Disable password login"),
-            default=False,
-            )
+        verbose_name=_("Disable password login"),
+        default=False,
+    )
     bsdusr_locked = models.BooleanField(
-            verbose_name=_("Lock user"),
-            default=False,
-            )
+        verbose_name=_("Lock user"),
+        default=False,
+    )
 
     is_active = True
     is_staff = True
@@ -183,9 +184,10 @@ class bsdUsers(Model):
             return crypt.crypt(raw_password, cryptedpasswd) == cryptedpasswd
 
     def delete(self, using=None, reload=True):
-        if self.bsdusr_builtin == True:
-            raise ValueError(_("User %s is built-in and can not be "
-                "deleted!") % (self.bsdusr_username))
+        if self.bsdusr_builtin is True:
+            raise ValueError(_(
+                "User %s is built-in and can not be deleted!"
+            ) % (self.bsdusr_username))
         notifier().user_deleteuser(self.bsdusr_username.encode('utf-8'))
         try:
             gobj = self.bsdusr_group
