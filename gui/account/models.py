@@ -68,6 +68,10 @@ def get_sentinel_group():
 
 
 class bsdUsers(Model):
+
+    USERNAME_FIELD = 'bsdusr_username'
+    REQUIRED_FIELDS = []
+
     bsdusr_uid = models.IntegerField(
             verbose_name=_("User ID")
             )

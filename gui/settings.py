@@ -208,6 +208,8 @@ FORCE_SCRIPT_NAME = ''
 #      Maybe offer as an option in the GUI
 ALLOWED_HOSTS = ['*']
 
+AUTH_USER_MODEL = 'account.bsdUsers'
+
 SOUTH_TESTS_MIGRATE = False
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 33554432
