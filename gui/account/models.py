@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import crypt
+import pwd
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -65,6 +67,11 @@ class bsdGroups(Model):
 
 def get_sentinel_group():
     return bsdGroups.objects.get(bsdgrp_group='nobody')
+
+
+class UserManager(models.Manager):
+    def get_by_natural_key(self, username):
+        return self.get(**{self.model.USERNAME_FIELD: username})
 
 
 class bsdUsers(Model):
@@ -132,6 +139,7 @@ class bsdUsers(Model):
 
     is_active = True
     is_staff = True
+    objects = UserManager()
 
     class Meta:
         verbose_name = _("User")
@@ -139,9 +147,6 @@ class bsdUsers(Model):
 
     def __unicode__(self):
         return self.bsdusr_username
-
-    def is_authenticated(self):
-        return True
 
     def get_username(self):
         "Return the identifying username for this User"
@@ -166,6 +171,13 @@ class bsdUsers(Model):
         authenticated in templates.
         """
         return True
+
+    def check_password(self, raw_password):
+        cryptedpasswd = pwd.getpwnam(self.get_username())[1]
+        if cryptedpasswd:
+            if cryptedpasswd == 'x' or cryptedpasswd == '*':
+                return False
+            return crypt.crypt(raw_password, cryptedpasswd) == cryptedpasswd
 
     def delete(self, using=None, reload=True):
         if self.bsdusr_builtin == True:
