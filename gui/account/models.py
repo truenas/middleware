@@ -130,6 +130,9 @@ class bsdUsers(Model):
             default=False,
             )
 
+    is_active = True
+    is_staff = True
+
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
@@ -138,6 +141,30 @@ class bsdUsers(Model):
         return self.bsdusr_username
 
     def is_authenticated(self):
+        return True
+
+    def get_username(self):
+        "Return the identifying username for this User"
+        return getattr(self, self.USERNAME_FIELD)
+
+    def __str__(self):
+        return self.get_username()
+
+    def natural_key(self):
+        return (self.get_username(),)
+
+    def is_anonymous(self):
+        """
+        Always returns False. This is a way of comparing User objects to
+        anonymous users.
+        """
+        return False
+
+    def is_authenticated(self):
+        """
+        Always return True. This is a way to tell if the user has been
+        authenticated in templates.
+        """
         return True
 
     def delete(self, using=None, reload=True):
