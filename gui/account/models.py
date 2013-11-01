@@ -137,6 +137,9 @@ class bsdUsers(Model):
     def __unicode__(self):
         return self.bsdusr_username
 
+    def is_authenticated(self):
+        return True
+
     def delete(self, using=None, reload=True):
         if self.bsdusr_builtin == True:
             raise ValueError(_("User %s is built-in and can not be "
@@ -155,6 +158,15 @@ class bsdUsers(Model):
         super(bsdUsers, self).delete(using)
         if reload:
             notifier().reload("user")
+
+    def save(self, *args, **kwargs):
+        #TODO: Add last_login field
+        if (
+            'update_fields' in kwargs and
+            'last_login' in kwargs['update_fields']
+        ):
+            kwargs['update_fields'].remove('last_login')
+        super(bsdUsers, self).save(*args, **kwargs)
 
 
 class bsdGroupMembership(Model):
