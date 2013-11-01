@@ -46,7 +46,6 @@ setup_environ(settings)
 from django.db.models.loading import cache
 cache.get_apps()
 
-from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.system import send_mail
@@ -166,13 +165,6 @@ class Alert:
     def on_volume_status_degraded(self, vol, status, message):
         self.log(self.LOG_CRIT, _('The volume %s status is DEGRADED') % vol)
 
-    def admin_password(self):
-        user = User.objects.filter(password=UNUSABLE_PASSWORD)
-        if user.exists():
-            self.log(self.LOG_CRIT, _('You have to change the password for '
-                                      'the admin user (currently no password '
-                                      'is required to login)'))
-
     def httpd_bindaddr(self):
         address = Settings.objects.all().order_by('-id')[0].stg_guiaddress
         with open('/usr/local/etc/nginx/nginx.conf') as f:
@@ -210,7 +202,6 @@ class Alert:
 
     def perform(self):
         self.volumes_status()
-        self.admin_password()
         self.httpd_bindaddr()
         self.iscsi_portal_ips()
         self.multipaths_status()
