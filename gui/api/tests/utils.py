@@ -1,56 +1,27 @@
-from urlparse import parse_qs
 import logging
 
-from django.test.client import Client, FakePayload
+from django.test.client import Client
 
 from tastypie.test import ResourceTestCase, TestApiClient
-from freenasUI.api.models import APIClient
+from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.system.models import Advanced, Settings
-import oauth2
 
 log = logging.getLogger('api.tests.utils')
 
 
-class OAuth2Client(Client):
+class BasicClient(Client):
 
     def request(self, **request):
-
-        is_form_encoded = \
-            request.get('CONTENT_TYPE') == 'application/x-www-form-urlencoded'
-        _input = request.get('wsgi.input')
-        if _input:
-            data = request.get('wsgi.input').read()
-            request['wsgi.input'] = FakePayload(data)
-        else:
-            data = ''
-        method = request.get('REQUEST_METHOD')
-        path = request.get('PATH_INFO')
-
-        if is_form_encoded and data:
-            parameters = parse_qs(data)
-        else:
-            parameters = None
-
-        req = oauth2.Request.from_consumer_and_token(self._consumer,
-            token=None, http_method=method, http_url="http://testserver%s" % path,
-            parameters=parameters, body=data, is_form_encoded=is_form_encoded)
-        req.sign_request(oauth2.SignatureMethod_HMAC_SHA1(), self._consumer, None)
-
-        request['HTTP_AUTHORIZATION'] = req.to_header()['Authorization']
-
-        return super(OAuth2Client, self).request(**request)
+        request['HTTP_AUTHORIZATION'] = self._auth
+        return super(BasicClient, self).request(**request)
 
 
-class OAuth2APIClient(TestApiClient):
+class BasicAPIClient(TestApiClient):
 
-    def __init__(self, consumer=None, *args, **kwargs):
-        super(OAuth2APIClient, self).__init__(*args, **kwargs)
-        self.client = OAuth2Client()
-        consumer = oauth2.Consumer(
-            key=consumer.name,
-            secret=consumer.secret,
-        )
-        self.client._consumer = consumer
+    def __init__(self, auth=None, *args, **kwargs):
+        super(BasicAPIClient, self).__init__(*args, **kwargs)
+        self.client = BasicClient()
+        self.client._auth = auth
 
 
 class TestCaseMeta(type):
@@ -73,9 +44,28 @@ class APITestCase(ResourceTestCase):
 
     def setUp(self):
         super(APITestCase, self).setUp()
-        self.api_client = OAuth2APIClient(consumer=self.api)
         self._settings = Settings.objects.create()
         self._advanced = Advanced.objects.create()
+        username = 'root'
+        password = 'freenas'
+        group = bsdGroups.objects.create(
+            bsdgrp_gid=0,
+            bsdgrp_group='wheel',
+            bsdgrp_builtin=True,
+        )
+        bsdUsers.objects.create(
+            bsdusr_uid=0,
+            bsdusr_username=username,
+            bsdusr_group=group,
+            bsdusr_unixhash=(
+                '$6$un7OYaDmnBK27g4b$HL1d32nikEFQIJyn6w3bpWWJyEnRH74K46r4VoAo'
+                'r27WSbZpbfNm3A4DJGX96XQQNFcgUGLmofLI8uFbr6XbH.'
+            ), # encrypted 'freenas'
+        )
+        self.api_client = BasicAPIClient(auth=self.create_basic(
+            username=username,
+            password=password,
+        ))
 
     def get_resource_name(self):
         return self.resource_name
