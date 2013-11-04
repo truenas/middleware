@@ -200,7 +200,8 @@ class ResourceMixin(object):
         )
 
     def is_webclient(self, request):
-        return getattr(request, 'oauth2', None) is not True
+        if not request.META.get('HTTP_AUTHORIZATION', '').startswith('Basic'):
+            return True
 
     def get_list(self, request, **kwargs):
         """
