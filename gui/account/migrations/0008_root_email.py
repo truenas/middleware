@@ -7,13 +7,8 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-
-        users = orm['auth.User'].objects.order_by('-id')
-        if users.count() > 0:
-            user = users[0]
-            root = orm.bsdUsers.objects.get(bsdusr_username="root")
-            root.bsdusr_email = user.email
-            root.save()
+        # Deprecated migration
+        pass
 
     def backwards(self, orm):
         "Write your backwards methods here."
