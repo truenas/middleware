@@ -73,7 +73,6 @@ class APITestCase(ResourceTestCase):
 
     def setUp(self):
         super(APITestCase, self).setUp()
-        self.api = APIClient.objects.create(name='test')
         self.api_client = OAuth2APIClient(consumer=self.api)
         self._settings = Settings.objects.create()
         self._advanced = Advanced.objects.create()

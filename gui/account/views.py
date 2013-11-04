@@ -52,63 +52,6 @@ def home(request):
     })
 
 
-def password_change(request):
-
-    extra_context = {}
-    password_change_form = forms.PasswordChangeForm
-    passform = password_change_form(user=request.user)
-
-    if request.method == 'POST':
-        passform = password_change_form(user=request.user, data=request.POST)
-        if passform.is_valid():
-            passform.save()
-            usable = request.user.has_usable_password()
-            events = []
-            if not usable:
-                from freenasUI.tools.alert import Alert
-                alert = Alert()
-                alert.perform()
-                alert.write()
-                del alert
-                events.append("loadalert()")
-
-            return JsonResp(
-                request,
-                message=_("Password successfully updated."),
-                events=events,
-            )
-
-    extra_context.update({
-        'form': passform,
-        'inline': True,
-        })
-    return render(request, 'account/passform.html', extra_context)
-
-
-def user_change(request):
-
-    extra_context = {}
-    changeform = forms.UserChangeForm(instance=request.user)
-
-    if request.method == 'POST':
-        changeform = forms.UserChangeForm(
-            instance=request.user,
-            data=request.POST,
-        )
-        if changeform.is_valid():
-            changeform.save()
-            return JsonResp(
-                request,
-                message=_("Admin user successfully updated.")
-            )
-
-    extra_context.update({
-        'form': changeform,
-        'inline': True,
-        })
-    return render(request, 'account/changeform.html', extra_context)
-
-
 def group2user_update(request, object_id):
     if request.method == 'POST':
         f = forms.bsdGroupToUserForm(object_id, request.POST)

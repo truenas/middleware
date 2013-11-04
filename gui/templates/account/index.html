@@ -1,15 +1,5 @@
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="title: '{% trans "Admin Account"|force_escape|force_escape %}', nested: true, doLayout: true" style="width:100%;" id="tab_account">
 
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Change Admin User"|force_escape|force_escape %}'
-  {% if focus_form == "account.AdminAccount.ChangeAdmin" %}, selected: true{% endif %},
-  href: '{% url "account_changeform" %}'" class="objrefresh" tab="account.AdminAccount.ChangeAdmin" id="tab_ChangeAdmin">
-  </div>
-
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Change Password"|force_escape|force_escape %}'
-  {% if focus_form == "account.AdminAccount.ChangePass" %}, selected: true{% endif %},
-  href: '{% url "account_passform" %}'" class="objrefresh" tab="account.AdminAccount.ChangePass" id="tab_ChangePass">
-  </div>
-
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Groups"|force_escape|force_escape %}'
   {% if focus_form == "account.bsdGroups.View" %}, selected: true{% endif %},
   href: '{% url "freeadmin_account_bsdgroups_datagrid" %}',

@@ -30,17 +30,15 @@ from django.contrib.auth.views import logout
 
 from freenasUI.common.system import get_sw_name
 
-# Active FreeNAS URLs
 
-urlpatterns = patterns('freenasUI.account.views',
+urlpatterns = patterns(
+    'freenasUI.account.views',
     url(r'^home/$', 'home', name="account_home"),
     url(r'^bsduser/json/$', 'json_users', name="account_bsduser_json"),
     url(r'^bsduser/json/(?P<exclude>.+)/$', 'json_users', name="account_bsduser_json"),
     url(r'^bsduser/(?P<object_id>\d+)/groups/$', 'user2group_update', name="account_bsduser_groups"),
     url(r'^bsdgroup/json/$', 'json_groups', name="account_bsdgroup_json"),
     url(r'^bsdgroup/(?P<object_id>\d+)/members/$', 'group2user_update', name="account_bsdgroup_members"),
-    url(r'^password_change/$', 'password_change', name="account_passform"),
-    url(r'^user_change/$', 'user_change', name="account_changeform"),
     url(r'^login/$', 'login_wrapper', {'template_name': 'registration/login.html'}, name="account_login"),
     url(r'^logout/$', logout, {'template_name': 'registration/logout.html', 'extra_context': {'sw_name': get_sw_name()}}, name="account_logout"),
-    )
+)
