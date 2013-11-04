@@ -2,41 +2,46 @@ import argparse
 import json
 import sys
 
-import oauth2
+import requests
 
 
 class Startup(object):
 
-    def __init__(self, hostname, name, secret):
+    def __init__(self, hostname, user, secret):
         self._hostname = hostname
-        self._name = name
+        self._user = user
         self._secret = secret
-
-        self._consumer = oauth2.Consumer(key=name, secret=secret)
-        self._client = oauth2.Client(self._consumer)
 
         self._ep = 'http://%s/api/v1.0' % hostname
 
     def request(self, resource, method='GET', data=None):
         if data is None:
             data = ''
-        resp, content = self._client.request(
+        r = requests.request(
+            method,
             '%s/%s/' % (self._ep, resource),
-            method=method,
-            body=json.dumps(data),
-            headers={'Content-Type': "application/json"}
+            data=json.dumps(data),
+            headers={'Content-Type': "application/json"},
+            auth=(self._user, self._secret),
         )
-        return json.loads(content)
+        if r.ok:
+            try:
+                return r.json()
+            except:
+                return r.text
+
+        raise ValueError(r)
 
     def _get_disks(self):
         disks = self.request('storage/disk')
         return [disk['disk_name'] for disk in disks]
 
     def create_pool(self):
+        disks = self._get_disks()
         self.request('storage/volume', method='POST', data={
             'volume_name': 'tank',
             'layout': [
-                {'vdevtype': 'stripe', 'disks': self._get_disks()},
+                {'vdevtype': 'stripe', 'disks': disks},
             ],
         })
 
@@ -46,7 +51,7 @@ class Startup(object):
         })
 
     def create_cifs_share(self):
-        self.request('sharing/cifs_share', method='POST', data={
+        self.request('sharing/cifs', method='POST', data={
             'cifs_name': 'My Test Share',
             'cifs_path': '/mnt/tank/MyShare',
             'cifs_guestonly': True
@@ -67,12 +72,12 @@ class Startup(object):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-H', '--hostname', required=True, type=str)
-    parser.add_argument('-n', '--name', required=True, type=str)
-    parser.add_argument('-s', '--secret', required=True, type=str)
+    parser.add_argument('-u', '--user', required=True, type=str)
+    parser.add_argument('-p', '--passwd', required=True, type=str)
 
     args = parser.parse_args(sys.argv[1:])
 
-    startup = Startup(args.hostname, args.name, args.secret)
+    startup = Startup(args.hostname, args.user, args.passwd)
     startup.run()
 
 if __name__ == '__main__':
