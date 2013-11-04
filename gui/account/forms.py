@@ -28,10 +28,11 @@ import logging
 import os
 import re
 
-from django.db import transaction
-from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext as __, ugettext_lazy as _
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User as django_User
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.utils.translation import ugettext as __, ugettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.http import QueryDict
 
@@ -42,6 +43,54 @@ from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.forms')
+
+
+class NewPasswordForm(Form):
+
+    def __init__(self, request=None, *args, **kwargs):
+        super(NewPasswordForm, self).__init__(*args, **kwargs)
+
+    password = forms.CharField(
+        label=_('New Password'),
+        widget=forms.widgets.PasswordInput(),
+    )
+
+    confirm_password = forms.CharField(
+        label=_('Confirm New Password'),
+        widget=forms.widgets.PasswordInput(),
+    )
+
+    def clean_confirm_password(self):
+        p1 = self.cleaned_data.get('password')
+        p2 = self.cleaned_data.get('confirm_password')
+        if p1 != p2:
+            raise forms.ValidationError(_('Passwords do not match'))
+
+    def get_user(self):
+        return self.user_cache
+
+    def is_valid(self):
+        valid = super(NewPasswordForm, self).is_valid()
+        if valid:
+            qs = models.bsdUsers.objects.filter(bsdusr_uid=0, bsdusr_unixhash='*')
+            if qs.exists():
+                print "hm"
+                user = qs[0]
+                _notifier = notifier()
+                unixhash, smbhash = _notifier.user_changepassword(
+                    username=str(user.bsdusr_username),
+                    password=self.cleaned_data['password'].encode('utf-8'),
+                )
+                user.bsdusr_unixhash = unixhash
+                user.bsdusr_smbhash = smbhash
+                self.user_cache = authenticate(
+                    username=user.bsdusr_username,
+                    password=self.cleaned_data['password'].encode('utf-8'),
+                )
+                user.save()
+                _notifier.reload("user")
+        print "wtf"
+        return valid
 
 
 class bsdUserGroupMixin:

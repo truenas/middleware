@@ -34,7 +34,7 @@ from django.contrib.auth.views import login
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
 
-from freenasUI.account import forms
+from freenasUI.account import forms, models
 from freenasUI.common.freenasldap import FLAGS_DBINIT
 from freenasUI.common.freenascache import (
     FLAGS_CACHE_READ_USER, FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP,
@@ -161,6 +161,11 @@ def login_wrapper(
         'sw_login_version': get_sw_login_version(),
         'sw_name': get_sw_name(),
     })
+    qs = models.bsdUsers.objects.filter(bsdusr_uid=0).exclude(
+        bsdusr_unixhash='*'
+    )
+    if not qs.exists():
+        authentication_form = forms.NewPasswordForm
     response = login(
         request,
         template_name='registration/login.html',

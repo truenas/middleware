@@ -7,6 +7,7 @@
         "dojo/parser",
         "dojo/fx/easing",
         "dijit/_base/manager",
+	"dijit/form/TextBox",
         "dijit/layout/BorderContainer",
         "dijit/layout/ContentPane",
         "dijit/layout/TabContainer",
@@ -44,17 +45,9 @@
 <p>{% blocktrans with user.username as username %}Welcome, {{ username }}. Thanks for logging in.{% endblocktrans %}</p>
 {% else %} 
 <div id="login" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% blocktrans with sw_login_version=sw_login_version sw_name=sw_name %}Welcome to {{ sw_name }}&trade; {{ sw_login_version }}{% endblocktrans %}'">
-    <h3>{% trans "Please log in." %}</h3>
 <form action="." method="post">{% csrf_token %}
 <table>
-<tr>
-    <td>{{ form.username.label_tag }}</td>
-    <td>{{ form.username }}</td>
-</tr>
-<tr>
-    <td>{{ form.password.label_tag }}</td>
-    <td>{{ form.password }}</td>
-</tr>
+ {{ form }}
 </table>
 <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">{% trans "Log In" %}</button>
 <input type="hidden" name="next" value="{{ next }}" />
