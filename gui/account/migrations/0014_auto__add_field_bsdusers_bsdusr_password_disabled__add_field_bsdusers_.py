@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'bsdUsers.bsdusr_password_disabled'
@@ -17,6 +17,12 @@ class Migration(SchemaMigration):
         db.add_column('account_bsdusers', 'bsdusr_locked',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
+
+        # Workaround south bug adding literal False to database
+        orm['account.bsdUsers'].objects.update(
+            bsdusr_password_disabled=False,
+            bsdusr_locked=False,
+        )
 
 
     def backwards(self, orm):
