@@ -1,106 +1,6 @@
-from django.contrib.auth.models import User
-
 from .utils import APITestCase
 from freenasUI.storage.models import Disk, MountPoint, Volume
 from freenasUI.system import models
-
-
-class AdminPasswordResourceTest(APITestCase):
-
-    def setUp(self):
-        super(AdminPasswordResourceTest, self).setUp()
-        self._obj = User.objects.create(
-            username='admin',
-            password='xxxxx',
-            is_superuser=True,
-            is_staff=True,
-        )
-
-    def test_Create(self):
-        resp = self.api_client.post(
-            self.get_api_url(),
-            format='json',
-        )
-        self.assertHttpMethodNotAllowed(resp)
-
-    def test_Retrieve(self):
-        resp = self.api_client.get(
-            self.get_api_url(),
-            format='json',
-        )
-        self.assertHttpMethodNotAllowed(resp)
-
-    def test_Update(self):
-        resp = self.api_client.put(
-            self.get_api_url(),
-            format='json',
-            data={
-                'new_password': 'freenas',
-            }
-        )
-        self.assertHttpAccepted(resp)
-
-    def test_Delete(self):
-        resp = self.api_client.delete(
-            self.get_api_url(),
-            format='json',
-        )
-        self.assertHttpMethodNotAllowed(resp)
-
-
-class AdminUserResourceTest(APITestCase):
-
-    def setUp(self):
-        super(AdminUserResourceTest, self).setUp()
-        self._obj = User.objects.create(
-            username='admin',
-            password='xxxxx',
-            is_superuser=True,
-            is_staff=True,
-        )
-
-    def test_Create(self):
-        resp = self.api_client.post(
-            self.get_api_url(),
-            format='json',
-        )
-        self.assertHttpMethodNotAllowed(resp)
-
-    def test_Retrieve(self):
-        resp = self.api_client.get(
-            self.get_api_url(),
-            format='json',
-        )
-        data = self.deserialize(resp)
-        self.assertEqual(data, {
-            u'first_name': u'',
-            u'last_name': u'',
-            u'username': u'admin',
-        })
-
-    def test_Update(self):
-        resp = self.api_client.put(
-            self.get_api_url(),
-            format='json',
-            data={
-                'first_name': 'First',
-                'last_name': 'Last',
-            }
-        )
-        self.assertHttpAccepted(resp)
-        data = self.deserialize(resp)
-        self.assertEqual(data, {
-            u'first_name': u'First',
-            u'last_name': u'Last',
-            u'username': u'admin',
-        })
-
-    def test_Delete(self):
-        resp = self.api_client.delete(
-            self.get_api_url(),
-            format='json',
-        )
-        self.assertHttpMethodNotAllowed(resp)
 
 
 class CronJobResourceTest(APITestCase):
@@ -184,7 +84,7 @@ class CronJobResourceTest(APITestCase):
                 'cron_stdout': False,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['cron_dayweek'], '1,2')
@@ -266,7 +166,7 @@ class InitShutdownResourceTest(APITestCase):
                 'ini_when': 'preinit',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['ini_when'], 'preinit')
@@ -345,7 +245,7 @@ class NTPServerResourceTest(APITestCase):
                 'ntp_prefer': True,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['ntp_prefer'], True)
@@ -483,7 +383,7 @@ class RsyncResourceTest(APITestCase):
                 'rsync_recursive': False,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['rsync_recursive'], False)
@@ -581,7 +481,7 @@ class SMARTTestResourceTest(APITestCase):
                 'smarttest_disks': [self._disk1.id, self._disk2.id],  #FIXME
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['smarttest_type'], 'S')
@@ -667,7 +567,7 @@ class SysctlResourceTest(APITestCase):
                 'sysctl_value': '2',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], sysctl.id)
         self.assertEqual(data['sysctl_value'], '2')
@@ -744,7 +644,7 @@ class TunableResourceTest(APITestCase):
                 'tun_enabled': False,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['tun_enabled'], False)
@@ -803,7 +703,7 @@ class SettingsResourceTest(APITestCase):
                 'stg_timezone': 'America/Sao_Paulo',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._settings.id)
         self.assertEqual(data['stg_timezone'], 'America/Sao_Paulo')
@@ -863,7 +763,7 @@ class AdvancedResourceTest(APITestCase):
                 'adv_powerdaemon': True,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._advanced.id)
         self.assertEqual(data['adv_powerdaemon'], True)
@@ -901,7 +801,7 @@ class EmailResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertEqual(data, {
             u'id': self._obj.id,
             u'em_fromemail': u'',
             u'em_outgoingserver': u'',
@@ -910,7 +810,7 @@ class EmailResourceTest(APITestCase):
             u'em_security': u'plain',
             u'em_smtp': False,
             u'em_user': None,
-        }])
+        })
 
     def test_Update(self):
         resp = self.api_client.put(
@@ -921,7 +821,7 @@ class EmailResourceTest(APITestCase):
                 'em_outgoingserver': 'mail.ixsystems.com',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._advanced.id)
         self.assertEqual(data['em_fromemail'], 'dev@ixsystems.com')
