@@ -50,7 +50,7 @@ class DiskResourceTest(APITestCase):
                 'disk_description': 'test',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['disk_description'], 'test')
@@ -240,7 +240,7 @@ class ScrubResourceTest(APITestCase):
                 'scrub_volume': obj.id,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['scrub_enabled'], False)
@@ -339,7 +339,7 @@ class TaskResourceTest(APITestCase):
                 'task_enabled': False,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['task_enabled'], False)
@@ -464,7 +464,7 @@ class ReplicationResourceTest(APITestCase):
                 'repl_userepl': True,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['repl_userepl'], True)

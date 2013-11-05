@@ -65,7 +65,7 @@ class ActiveDirectoryResourceTest(APITestCase):
                 'ad_adminpw': 'mypw',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._obj.id)
         self.assertEqual(data['ad_netbiosname'], 'mynas')
@@ -134,7 +134,7 @@ class AFPResourceTest(APITestCase):
                 'afp_srv_name': 'freenas',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['afp_srv_name'], 'freenas')
@@ -223,7 +223,7 @@ class CIFSResourceTest(APITestCase):
                 'cifs_srv_workgroup': 'MYGROUP',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['cifs_srv_netbiosname'], 'MYTEST')
@@ -286,7 +286,7 @@ class DynamicDNSResourceTest(APITestCase):
                 'ddns_password': 'mypass',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['ddns_username'], 'testuser')
@@ -368,7 +368,7 @@ class FTPResourceTest(APITestCase):
                 'ftp_dirmask': '067',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['ftp_filemask'], '066')
@@ -439,7 +439,7 @@ class LDAPResourceTest(APITestCase):
                 'ldap_basedn': 'dc=test,dc=org',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._obj.id)
         self.assertEqual(data['ldap_hostname'], 'ldaphostname')
@@ -500,7 +500,7 @@ class NFSResourceTest(APITestCase):
                 'nfs_srv_servers': 10,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['nfs_srv_servers'], 10)
@@ -561,7 +561,7 @@ class NISResourceTest(APITestCase):
                 'nis_secure_mode': True,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._obj.id)
         self.assertEqual(data['nis_domain'], 'nisdomain')
@@ -624,7 +624,7 @@ class NT4ResourceTest(APITestCase):
                 'nt4_adminpw': 'mypw',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._obj.id)
         self.assertEqual(data['nt4_dcname'], 'mydcname')
@@ -683,7 +683,7 @@ class RsyncdResourceTest(APITestCase):
                 'rsyncd_port': 874,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['rsyncd_port'], 874)
@@ -781,7 +781,7 @@ class RsyncModResourceTest(APITestCase):
                 'rsyncd_port': 874,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['rsyncd_port'], 874)
@@ -837,7 +837,7 @@ class servicesResourceTest(APITestCase):
                 'srv_enable': True,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['srv_enable'], True)
 
@@ -896,7 +896,7 @@ class SMARTResourceTest(APITestCase):
                 'smart_interval': 40,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['smart_interval'], 40)
@@ -956,7 +956,7 @@ class SNMPResourceTest(APITestCase):
                 'snmp_location': 'My Room',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['snmp_contact'], 'snmp@localhost.localdomain')
@@ -1028,7 +1028,7 @@ class SSHResourceTest(APITestCase):
                 'ssh_tcpfwd': True,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['ssh_tcpfwd'], True)
@@ -1097,7 +1097,7 @@ class TFTPResourceTest(APITestCase):
                 'tftp_newfiles': True,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['tftp_newfiles'], True)
@@ -1174,7 +1174,7 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
                 'iscsi_r2t': 64,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._obj.id)
         self.assertEqual(data['iscsi_r2t'], 64)
@@ -1270,7 +1270,7 @@ class iSCSITargetExtentResourceTest(APITestCase):
                 'iscsi_target_extent_filesize': '20MB',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['iscsi_target_extent_filesize'], '20MB')
@@ -1364,7 +1364,7 @@ class iSCSITargetAuthorizedInitiatorResourceTest(APITestCase):
                 'iscsi_target_initiator_auth_network': '192.168.0.0/16',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['iscsi_target_initiator_auth_network'],
@@ -1458,7 +1458,7 @@ class iSCSITargetAuthCredentialResourceTest(APITestCase):
                 'iscsi_target_auth_user': 'user2',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['iscsi_target_auth_user'], 'user2')
@@ -1564,7 +1564,7 @@ class iSCSITargetResourceTest(APITestCase):
                 'iscsi_target_queue_depth': 64,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['iscsi_target_queue_depth'], 64)
@@ -1655,7 +1655,7 @@ class iSCSITargetToExtentResourceTest(APITestCase):
                 'iscsi_target_queue_depth': 64,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['iscsi_target_queue_depth'], 64)
@@ -1740,7 +1740,7 @@ class iSCSITargetPortalResourceTest(APITestCase):
                 'iscsi_target_portal_ips': ['0.0.0.0:3261'],
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['iscsi_target_portal_comment'], 'comment2')
@@ -1817,7 +1817,7 @@ class UPSResourceTest(APITestCase):
                 'ups_port': '/mnt/tank/ups',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._obj.id)
         self.assertEqual(data['ups_rmonitor'], True)

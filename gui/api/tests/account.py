@@ -87,7 +87,7 @@ class bsdUsersResourceTest(APITestCase):
                 'bsdusr_full_name': 'Juca Xunda Junior',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
 
@@ -241,7 +241,7 @@ class bsdGroupsResourceTest(APITestCase):
                 'bsdgrp_group': 'testgroup2',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['bsdgrp_group'], 'testgroup2')

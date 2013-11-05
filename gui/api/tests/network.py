@@ -83,7 +83,7 @@ class InterfaceResourceTest(APITestCase):
                 'int_ipv4address': '192.168.50.6',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['int_ipv4address'], '192.168.50.6')
@@ -164,7 +164,7 @@ class StaticRouteResourceTest(APITestCase):
                 'sr_description': 'test route 2',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['sr_destination'], '192.168.1.112/24')
@@ -245,7 +245,7 @@ class VLANResourceTest(APITestCase):
                 'vlan_tag': 1,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['vlan_tag'], 1)
@@ -310,7 +310,7 @@ class GlobalConfigurationResourceTest(APITestCase):
                 'gc_hostname': 'mynas',
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._gc.id)
         self.assertEqual(data['gc_hostname'], 'mynas')

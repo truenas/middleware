@@ -106,7 +106,7 @@ class CIFSResourceTest(CommonMixin, APITestCase):
                 u'cifs_guestonly': True,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['cifs_guestonly'], True)
@@ -209,7 +209,7 @@ class AFPResourceTest(CommonMixin, APITestCase):
                 u'afp_upriv': False,
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['afp_upriv'], False)
@@ -295,7 +295,7 @@ class NFSResourceTest(CommonMixin, APITestCase):
                 u'nfs_paths': [u'/mnt/tank'],  #FIXME: nfs paths validation
             }
         )
-        self.assertHttpAccepted(resp)
+        self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
         self.assertEqual(data['nfs_ro'], True)
