@@ -52,23 +52,22 @@ class bsdUsersResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [
-            {
-                u'id': obj.id,
-                u'bsdusr_uid': 1100,
-                u'bsdusr_username': u'juca',
-                u'bsdusr_shell': u'/usr/local/bin/bash',
-                u'bsdusr_email': u'',
-                u'bsdusr_group': 1101,
-                u'bsdusr_home': u'/nonexistent',
-                u'bsdusr_full_name': u'Juca Xunda',
-                u'bsdusr_builtin': False,
-                u'bsdusr_unixhash': u'*',
-                u'bsdusr_smbhash': u'*',
-                u'bsdusr_password_disabled': False,
-                u'bsdusr_locked': False,
-            }
-        ])
+        self.assertTrue({
+            u'id': obj.id,
+            u'bsdusr_uid': 1100,
+            u'bsdusr_username': u'juca',
+            u'bsdusr_shell': u'/usr/local/bin/bash',
+            u'bsdusr_email': u'',
+            u'bsdusr_group': 1101,
+            u'bsdusr_home': u'/nonexistent',
+            u'bsdusr_full_name': u'Juca Xunda',
+            u'bsdusr_builtin': False,
+            u'bsdusr_unixhash': u'*',
+            u'bsdusr_smbhash': u'*',
+            u'bsdusr_password_disabled': False,
+            u'bsdusr_locked': False,
+            u'bsdusr_sudo': False,
+        } in data)
 
     def test_Update(self):
         obj = models.bsdUsers.objects.create(
@@ -204,10 +203,11 @@ class bsdGroupsResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            'id': 1,
+            'id': 2,
             u'bsdgrp_builtin': False,
             u'bsdgrp_gid': 1100,
             u'bsdgrp_group': u'testgroup',
+            u'bsdgrp_sudo': False,
         })
 
     def test_Retrieve(self):
@@ -221,12 +221,13 @@ class bsdGroupsResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data, [{
+        self.assertTrue({
             u'id': obj.id,
             u'bsdgrp_builtin': False,
             u'bsdgrp_gid': 1100,
             u'bsdgrp_group': u'testgroup',
-        }])
+            u'bsdgrp_sudo': False,
+        } in data)
 
     def test_Update(self):
         obj = models.bsdGroups.objects.create(
