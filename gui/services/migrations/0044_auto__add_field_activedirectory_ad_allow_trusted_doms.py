@@ -1,22 +1,26 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
         # Adding field 'ActiveDirectory.ad_allow_trusted_doms'
         db.add_column('services_activedirectory', 'ad_allow_trusted_doms', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
 
+        # Workaround south bug
+        orm['services.ActiveDirectory'].objects.update(
+            ad_allow_trusted_doms=False,
+        )
+
 
     def backwards(self, orm):
         
         # Deleting field 'ActiveDirectory.ad_allow_trusted_doms'
         db.delete_column('services_activedirectory', 'ad_allow_trusted_doms')
-
 
     models = {
         'services.activedirectory': {

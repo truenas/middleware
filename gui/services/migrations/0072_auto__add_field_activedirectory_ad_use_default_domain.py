@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'ActiveDirectory.ad_use_default_domain'
         db.add_column('services_activedirectory', 'ad_use_default_domain',
                       self.gf('django.db.models.fields.BooleanField')(default=True),
                       keep_default=False)
+
+        # Workaround south bug
+        orm['services.ActiveDirectory'].objects.update(
+            ad_use_default_domain=False,
+        )
 
 
     def backwards(self, orm):

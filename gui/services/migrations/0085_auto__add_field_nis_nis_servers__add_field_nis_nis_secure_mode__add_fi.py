@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'NIS.nis_servers'
@@ -22,6 +22,12 @@ class Migration(SchemaMigration):
         db.add_column('services_nis', 'nis_manycast',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
+
+        # Worakround south bug
+        orm['services.NIS'].objects.update(
+            nis_secure_mode=False,
+            nis_manycast=False,
+        )
 
 
     def backwards(self, orm):

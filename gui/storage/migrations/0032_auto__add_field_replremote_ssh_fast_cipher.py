@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'ReplRemote.ssh_fast_cipher'
         db.add_column('storage_replremote', 'ssh_fast_cipher',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
+
+        # Workaround south bug
+        orm['storage.ReplRemote'].objects.update(
+            ssh_fast_cipher=False,
+        )
 
 
     def backwards(self, orm):

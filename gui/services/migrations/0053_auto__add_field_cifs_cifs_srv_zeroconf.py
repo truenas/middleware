@@ -1,16 +1,20 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
         # Adding field 'CIFS.cifs_srv_zeroconf'
         db.add_column('services_cifs', 'cifs_srv_zeroconf', self.gf('django.db.models.fields.BooleanField')(default=True), keep_default=False)
 
+        # Workaround south bug
+        orm['services.CIFS'].objects.update(
+            cifs_srv_zeroconf=True,
+        )
 
     def backwards(self, orm):
         

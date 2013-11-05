@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
 
@@ -32,6 +32,11 @@ class Migration(SchemaMigration):
 
         # Changing field 'JailsConfiguration.jc_ipv4_network_end'
         db.alter_column(u'jails_jailsconfiguration', 'jc_ipv4_network_end', self.gf('freenasUI.freeadmin.models.fields.Network4Field')(max_length=18))
+
+        # Workaround south bug
+        orm['jails.NullMountPoint'].objects.update(
+            readonly=False,
+        )
 
     def backwards(self, orm):
 

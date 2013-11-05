@@ -1,15 +1,20 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
         # Adding field 'Advanced.adv_autotune'
         db.add_column('system_advanced', 'adv_autotune', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
+
+        # Workaround south bug
+        orm['system.Advanced'].objects.update(
+            adv_autotune=False,
+        )
 
 
     def backwards(self, orm):

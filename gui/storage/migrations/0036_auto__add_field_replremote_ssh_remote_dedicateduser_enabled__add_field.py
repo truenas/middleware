@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'ReplRemote.ssh_remote_dedicateduser_enabled'
@@ -18,6 +18,10 @@ class Migration(SchemaMigration):
                       self.gf('freenasUI.freeadmin.models.UserField')(default='', max_length=120, null=True, blank=True),
                       keep_default=False)
 
+        # Workaround south bug
+        orm['storage.ReplRemote'].objects.update(
+            ssh_remote_dedicateduser_enabled=False,
+        )
 
     def backwards(self, orm):
         # Deleting field 'ReplRemote.ssh_remote_dedicateduser_enabled'

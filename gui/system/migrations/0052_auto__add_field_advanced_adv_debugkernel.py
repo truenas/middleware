@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'Advanced.adv_debugkernel'
@@ -13,6 +13,8 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
+        # Workaround south bug
+        orm['system.Advanced'].objects.update(adv_debugkernel=False)
 
     def backwards(self, orm):
         # Deleting field 'Advanced.adv_debugkernel'

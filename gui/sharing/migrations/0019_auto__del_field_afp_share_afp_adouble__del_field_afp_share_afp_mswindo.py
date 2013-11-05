@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Deleting field 'AFP_Share.afp_adouble'
@@ -44,6 +44,11 @@ class Migration(SchemaMigration):
         db.add_column(u'sharing_afp_share', 'afp_umask',
                       self.gf('django.db.models.fields.CharField')(default='022', max_length=3),
                       keep_default=False)
+
+        # Workaround south bug
+        orm['sharing.AFP_Share'].objects.update(
+            afp_timemachine=False,
+        )
 
 
     def backwards(self, orm):

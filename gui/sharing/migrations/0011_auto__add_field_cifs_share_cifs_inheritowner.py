@@ -1,15 +1,20 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
         # Adding field 'CIFS_Share.cifs_inheritowner'
         db.add_column('sharing_cifs_share', 'cifs_inheritowner', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
+
+        # Workaround south bug
+        orm['sharing.CIFS_Share'].objects.update(
+            cifs_inheritowner=False,
+        )
 
 
     def backwards(self, orm):

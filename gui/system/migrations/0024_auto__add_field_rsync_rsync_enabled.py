@@ -1,16 +1,18 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
         # Adding field 'Rsync.rsync_enabled'
         db.add_column('system_rsync', 'rsync_enabled', self.gf('django.db.models.fields.BooleanField')(default=1), keep_default=False)
 
+        # Workaround south bug
+        orm['system.Rsync'].objects.update(rsync_enabled=True)
 
     def backwards(self, orm):
         

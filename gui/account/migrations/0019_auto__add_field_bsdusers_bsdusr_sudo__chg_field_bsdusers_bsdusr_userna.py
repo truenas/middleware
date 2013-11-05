@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Removing unique constraint on 'bsdUsers', fields ['bsdusr_uid']
@@ -29,6 +29,10 @@ class Migration(SchemaMigration):
         db.add_column(u'account_bsdgroups', 'bsdgrp_sudo',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
+
+        # Workaround south bug
+        orm['account.bsdUsers'].objects.update(bsdusr_sudo=False)
+        orm['account.bsdGroups'].objects.update(bsdgrp_sudo=False)
 
 
     def backwards(self, orm):

@@ -1,15 +1,20 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
         # Adding field 'CIFS.cifs_srv_homedir_browseable_enable'
         db.add_column('services_cifs', 'cifs_srv_homedir_browseable_enable', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
+
+        # Workaround south bug
+        orm['services.CIFS'].objects.update(
+            cifs_srv_homedir_browseable_enable=False,
+        )
 
 
     def backwards(self, orm):

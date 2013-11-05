@@ -1,10 +1,10 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
@@ -16,6 +16,12 @@ class Migration(SchemaMigration):
 
         # Adding field 'CIFS_Share.cifs_guestonly'
         db.add_column('sharing_cifs_share', 'cifs_guestonly', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
+
+        # Workaround south bug
+        orm['sharing.CIFS_Share'].objects.update(
+            cifs_guestok=False,
+            cifs_guestonly=False,
+        )
 
 
     def backwards(self, orm):

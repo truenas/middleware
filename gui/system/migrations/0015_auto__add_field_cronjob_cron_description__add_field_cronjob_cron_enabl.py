@@ -1,10 +1,10 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
@@ -13,6 +13,9 @@ class Migration(SchemaMigration):
 
         # Adding field 'CronJob.cron_enabled'
         db.add_column('system_cronjob', 'cron_enabled', self.gf('django.db.models.fields.BooleanField')(default=1), keep_default=True)
+
+        # Workaround south bug
+        orm['system.CronJob'].objects.update(cron_enabled=True)
 
 
     def backwards(self, orm):

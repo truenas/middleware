@@ -1,15 +1,20 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
         # Adding field 'Advanced.adv_consolemsg'
         db.add_column('system_advanced', 'adv_consolemsg', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
+
+        # Workaround south bug
+        orm['system.Advanced'].objects.update(
+            adv_consolemsg=False,
+        )
 
 
     def backwards(self, orm):

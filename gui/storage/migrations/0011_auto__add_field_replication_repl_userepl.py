@@ -1,15 +1,20 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
         # Adding field 'Replication.repl_userepl'
         db.add_column('storage_replication', 'repl_userepl', self.gf('django.db.models.fields.BooleanField')(default=0), keep_default=False)
+
+        # Workaround south bug
+        orm['storage.Replication'].objects.update(
+            repl_userepl=False,
+        )
 
 
     def backwards(self, orm):

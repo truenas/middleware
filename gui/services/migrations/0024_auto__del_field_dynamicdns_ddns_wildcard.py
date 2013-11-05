@@ -1,10 +1,10 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
@@ -17,6 +17,8 @@ class Migration(SchemaMigration):
         # Adding field 'DynamicDNS.ddns_wildcard'
         db.add_column('services_dynamicdns', 'ddns_wildcard', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
 
+        # Workaround south bug
+        orm['services.DynamicDNS'].objects.update(ddns_wildcard=False)
 
     models = {
         'services.activedirectory': {

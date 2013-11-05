@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'ActiveDirectory.ad_verbose_logging'
@@ -13,6 +13,10 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
+        # Workaround south
+        orm['services.ActiveDirectory'].objects.update(
+            ad_verbose_logging=False,
+        )
 
     def backwards(self, orm):
         # Deleting field 'ActiveDirectory.ad_verbose_logging'

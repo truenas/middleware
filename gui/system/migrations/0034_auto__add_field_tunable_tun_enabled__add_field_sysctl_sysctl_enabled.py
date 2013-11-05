@@ -1,10 +1,10 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         
@@ -15,6 +15,10 @@ class Migration(SchemaMigration):
         # Adding field 'Sysctl.sysctl_enabled'
         # Use 1 as default due to south+sqlite3 bug
         db.add_column('system_sysctl', 'sysctl_enabled', self.gf('django.db.models.fields.BooleanField')(default=1), keep_default=False)
+
+        # Workaround south bug
+        orm['system.Tunable'].objects.update(tun_enabled=True)
+        orm['system.Sysctl'].objects.update(sysctl_enabled=True)
 
 
     def backwards(self, orm):

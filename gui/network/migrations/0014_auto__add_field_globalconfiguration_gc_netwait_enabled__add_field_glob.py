@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'GlobalConfiguration.gc_netwait_enabled'
@@ -17,6 +17,9 @@ class Migration(SchemaMigration):
         db.add_column('network_globalconfiguration', 'gc_netwait_ip',
                       self.gf('django.db.models.fields.CharField')(default='', max_length=300, blank=True),
                       keep_default=False)
+
+        # Workaround south bug
+        orm['network.GlobalConfiguration'].objects.update(gc_netwait_enabled=False)
 
 
     def backwards(self, orm):
