@@ -11,8 +11,17 @@ class Migration(DataMigration):
     def forwards(self, orm):
         from django.core.management import call_command
 
-        call_command("loaddata", "bsdGroups.json")
-        #call_command("loaddata", "bsdUsers.json")
+        jf = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "fixtures", "bsdGroups.json")
+        with open(jf) as json_fd:
+            json = json_fd.read()
+        groups = simplejson.loads(json)
+        for entry in groups:
+            group = orm.bsdGroups(pk=entry['pk'])
+            for field in entry['fields']:
+                mfield = orm.bsdGroups._meta.get_field(field)
+                setattr(group, field, entry['fields'].get(field))
+            group.save()
+
         jf = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "fixtures", "bsdUsers.json")
         with open(jf) as json_fd:
             json = json_fd.read()

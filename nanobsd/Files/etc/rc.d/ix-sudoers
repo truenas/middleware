@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-sudoers
+# REQUIRE: FILESYSTEMS
+
+. /etc/rc.freenas
+
+SUDOERS_FILE="/usr/local/etc/sudoers"
+
+sudoers_start()
+{
+	local IFS="|"
+
+	cp /conf/base/etc/local/sudoers "${SUDOERS_FILE}"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		bsdusr_username
+	FROM
+		account_bsdusers
+	WHERE
+		bsdusr_sudo = 1
+	" | while read -r username
+	do
+		echo "${username} ALL=(ALL) ALL" >> "${SUDOERS_FILE}"
+	done
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		bsdgrp_group
+	FROM
+		account_bsdgroups
+	WHERE
+		bsdgrp_sudo = 1
+	" | while read -r group
+	do
+		echo "%${group} ALL=(ALL) ALL" >> "${SUDOERS_FILE}"
+	done
+}
+
+name="ix-sudoers"
+start_cmd='sudoers_start'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

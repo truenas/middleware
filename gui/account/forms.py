@@ -389,6 +389,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             'bsdusr_password2',
             'bsdusr_password_disabled',
             'bsdusr_locked',
+            'bsdusr_sudo',
             'bsdusr_sshpubkey',
             'bsdusr_to_group',
         )
