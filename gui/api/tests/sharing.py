@@ -139,7 +139,6 @@ class AFPResourceTest(CommonMixin, APITestCase):
             data={
                 u'afp_name': u'test share',
                 u'afp_path': u'/mnt/tank',
-                u'afp_discoverymode': u'default',
             }
         )
         self.assertHttpCreated(resp)
@@ -148,29 +147,21 @@ class AFPResourceTest(CommonMixin, APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, {
             u'id': 1,
-            u'afp_adouble': True,
             u'afp_allow': u'',
-            u'afp_cachecnid': False,
             u'afp_comment': u'',
-            u'afp_crlf': False,
             u'afp_dbpath': u'',
             u'afp_deny': u'',
-            u'afp_discoverymode': u'default',
-            u'afp_diskdiscovery': False,
             u'afp_dperm': u'644',
             u'afp_fperm': u'755',
-            u'afp_mswindows': False,
             u'afp_name': u'test share',
             u'afp_nodev': False,
-            u'afp_nofileid': False,
-            u'afp_nohex': False,
             u'afp_nostat': False,
             u'afp_path': u'/mnt/tank',
-            u'afp_prodos': False,
             u'afp_ro': u'',
             u'afp_rw': u'',
-            u'afp_sharecharset': u'',
             u'afp_sharepw': u'',
+            u'afp_timemachine': False,
+            u'afp_umask': u'000',
             u'afp_upriv': True,
         })
 
@@ -187,29 +178,21 @@ class AFPResourceTest(CommonMixin, APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, [{
             u'id': obj.id,
-            u'afp_adouble': True,
             u'afp_allow': u'',
-            u'afp_cachecnid': False,
             u'afp_comment': u'',
-            u'afp_crlf': False,
             u'afp_dbpath': u'',
             u'afp_deny': u'',
-            u'afp_discoverymode': u'default',
-            u'afp_diskdiscovery': False,
             u'afp_dperm': u'644',
             u'afp_fperm': u'755',
-            u'afp_mswindows': False,
             u'afp_name': u'test share',
             u'afp_nodev': False,
-            u'afp_nofileid': False,
-            u'afp_nohex': False,
             u'afp_nostat': False,
             u'afp_path': u'/mnt/tank',
-            u'afp_prodos': False,
             u'afp_ro': u'',
             u'afp_rw': u'',
-            u'afp_sharecharset': u'',
             u'afp_sharepw': u'',
+            u'afp_timemachine': False,
+            u'afp_umask': u'000',
             u'afp_upriv': True,
         }])
 
