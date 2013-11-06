@@ -4,6 +4,7 @@ import argparse
 import email
 import email.parser
 import re
+import socket
 import sys
 
 from django.core.management import setup_environ
@@ -18,9 +19,10 @@ setup_environ(settings)
 from django.db.models.loading import cache
 cache.get_apps()
 
-from freenasUI.common.system import send_mail
+from freenasUI.common.system import get_sw_name, send_mail
 
 ALIASES = re.compile(r'^(?P<from>[^#]\S+?):\s*(?P<to>\S+)$')
+
 
 def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
@@ -47,14 +49,21 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
     margs = {}
     margs['extra_headers'] = dict(em)
+    margs['extra_headers'].update({
+        'X-Mailer': get_sw_name(),
+        'X-%s-Host' % get_sw_name(): socket.gethostname(),
+    })
     margs['subject'] = em.get('Subject')
 
     if em.is_multipart():
-        margs['attachments'] = filter(lambda part: part.get_content_maintype() != 'multipart',
-                                      em.walk())
-        margs['text'] = u"%s" % _('This is a MIME formatted message.  If you see '
-                                  'this text it means that your email software '
-                                  'does not support MIME formatted messages.')
+        margs['attachments'] = filter(
+            lambda part: part.get_content_maintype() != 'multipart',
+            em.walk()
+        )
+        margs['text'] = u"%s" % _(
+            'This is a MIME formatted message.  If you see '
+            'this text it means that your email software '
+            'does not support MIME formatted messages.')
     else:
         margs['text'] = ''.join(email.iterators.body_line_iterator(em))
 
@@ -62,6 +71,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
         margs['to'] = to_addrs_repl
 
     send_mail(**margs)
+
 
 def get_aliases():
     with open('/etc/aliases', 'r') as f:
@@ -85,6 +95,7 @@ def get_aliases():
                     doround = True
         return aliases
 
+
 def main():
     parser = argparse.ArgumentParser(description='Process email')
     parser.add_argument('-i', dest='strip_leading_dot', action='store_false',
@@ -92,7 +103,7 @@ def main():
     parser.add_argument('-t', dest='parse_recipients', action='store_true',
                         default=False,
                         help='parse recipients from message')
-    parser.usage  = ' '.join(parser.format_usage().split(' ')[1:-1])
+    parser.usage = ' '.join(parser.format_usage().split(' ')[1:-1])
     parser.usage += ' [email_addr|user] ..'
     args, to = parser.parse_known_args()
     if not to and not args.parse_recipients:
