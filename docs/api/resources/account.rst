@@ -142,7 +142,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -174,7 +174,7 @@ Update resource
    :json boolean bsdusr_sudo: enable sudo for the user
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -435,7 +435,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -451,7 +451,7 @@ Update resource
    :json boolean bsdgrp_sudo: enable sudo for this group
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource

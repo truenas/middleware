@@ -73,7 +73,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -103,7 +103,7 @@ Update resource
    :json string gc_hosts: entries to append to /etc/hosts
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Interface
@@ -243,7 +243,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -277,7 +277,7 @@ Update resource
    :json list(string) int_aliases: list of IP addresses as aliases
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -415,7 +415,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -433,7 +433,7 @@ Update resource
    :json integer vlan_tag: vlan tag number
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -669,7 +669,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -684,7 +684,7 @@ Update resource
    :json string sr_destination: network cidr
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource

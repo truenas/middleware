@@ -553,7 +553,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -583,7 +583,7 @@ Update resource
    :json boolean task_recursive: snapshot all children datasets recursively
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -754,7 +754,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -793,7 +793,7 @@ Update resource
    :json string repl_end: do not start replication after
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -949,7 +949,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -977,7 +977,7 @@ Update resource
    :json boolean scrub_enabled: scrub enabled
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -1079,7 +1079,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -1108,4 +1108,4 @@ Update resource
    :json string disk_smartoptions: S.M.A.R.T. extra options
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error

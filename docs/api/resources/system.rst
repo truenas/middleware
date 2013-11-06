@@ -76,7 +76,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -112,7 +112,7 @@ Update resource
    :json string adv_motd: MOTD banner
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 CronJob
@@ -251,7 +251,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -283,7 +283,7 @@ Update resource
    :json boolean cron_stdout: redirect stdout to /dev/null
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -420,7 +420,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -438,7 +438,7 @@ Update resource
    :json string ini_when: preinit, postinit, shutdown
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -598,7 +598,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -620,7 +620,7 @@ Update resource
    :json string ntp_iburst: send a burst of 8 packets when unreachable
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -823,7 +823,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -878,7 +878,7 @@ Update resource
    :json string extra: extra arguments to rsync(1)
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -972,7 +972,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -1000,7 +1000,7 @@ Update resource
    :json string stg_directoryservice: activedirectory, ldap, nt4, nis
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 SMARTTest
@@ -1132,7 +1132,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -1159,7 +1159,7 @@ Update resource
    :json string smarttest_desc: user description of the test
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -1296,7 +1296,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -1314,7 +1314,7 @@ Update resource
    :json boolean sysctl_enabled: whether the entry is enabled
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -1451,7 +1451,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -1469,7 +1469,7 @@ Update resource
    :json boolean tun_enabled: whether the entry is enabled
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource

@@ -81,7 +81,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -249,7 +249,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -405,7 +405,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -565,7 +565,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -746,7 +746,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -907,7 +907,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -1061,7 +1061,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 

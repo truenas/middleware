@@ -141,7 +141,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -177,7 +177,7 @@ Update resource
    :json boolean cifs_inheritowner: inherit owners
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -340,7 +340,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -374,7 +374,7 @@ Update resource
    :json boolean nfs_quiet: inhibit syslog warnings
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
@@ -547,7 +547,7 @@ Update resource
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
@@ -589,7 +589,7 @@ Update resource
    :json boolean afp_timemachine: enable Time Machine backups on this share
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 
 Delete resource
