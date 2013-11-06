@@ -25,6 +25,7 @@ class BsdUserFAdmin(BaseFreeAdmin):
     icon_view = u"ViewAllUsersIcon"
 
     resource_mixin = BsdUserResourceMixin
+    resource_name = 'account/users'
     exclude_fields = (
         'id',
         'bsdusr_unixhash',
@@ -118,6 +119,7 @@ class BsdGroupFAdmin(BaseFreeAdmin):
     icon_view = u"ViewAllGroupsIcon"
 
     resource_mixin = BsdGroupResourceMixin
+    resource_name = 'account/groups'
 
     def _action_builder(self, name, label=None, url=None, builtin=None):
         func = "editObject"
