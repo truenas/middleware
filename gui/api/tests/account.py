@@ -2,7 +2,7 @@ from .utils import APITestCase
 from freenasUI.account import models
 
 
-class bsdUsersResourceTest(APITestCase):
+class UsersResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(
@@ -182,7 +182,7 @@ class bsdUsersResourceTest(APITestCase):
         self.assertEqual(data, ["mail"])
 
 
-class bsdGroupsResourceTest(APITestCase):
+class GroupsResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
         self.assertHttpUnauthorized(
