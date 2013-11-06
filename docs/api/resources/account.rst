@@ -45,6 +45,7 @@ List resource
                 "bsdusr_uid": 0,
                 "bsdusr_unixhash": "$6$d8doVGxjhDhL4feI$YpTtmlhCmbc6BJ4MQcBsPvZA0Ge4SMnAyZn9CfZLpkuP71g8bPq6DkKJBmcN61z2oQSj0K8RtaqmKltc9HsMg0",
                 "bsdusr_username": "root",
+                "bsdusr_sudo": false,
                 "id": 1
         }
       ]
@@ -98,6 +99,7 @@ Create resource
                 "bsdusr_uid": 1111,
                 "bsdusr_unixhash": "$6$d8doVGxjhDhL4feI$YpTtmlhCmbc6BJ4MQcBsPvZA0Ge4SMnAyZn9CfZLpkuP71g8bPq6DkKJBmcN61z2oQSj0K8RtaqmKltc9HsMg0",
                 "bsdusr_username": "myuser",
+                "bsdusr_sudo": false,
                 "id": 25
         }
 
@@ -111,6 +113,7 @@ Create resource
    :json string bsdusr_shell: shell for the user login
    :json boolean bsdusr_password_disabled: disabled password login
    :json boolean bsdusr_locked: lock user login
+   :json boolean bsdusr_sudo: enable sudo for the user
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -156,6 +159,7 @@ Update resource
                 "bsdusr_uid": 1111,
                 "bsdusr_unixhash": "$6$d8doVGxjhDhL4feI$YpTtmlhCmbc6BJ4MQcBsPvZA0Ge4SMnAyZn9CfZLpkuP71g8bPq6DkKJBmcN61z2oQSj0K8RtaqmKltc9HsMg0",
                 "bsdusr_username": "myuser",
+                "bsdusr_sudo": false,
                 "id": 25
         }
 
@@ -167,6 +171,7 @@ Update resource
    :json string bsdusr_shell: shell for the user login
    :json boolean bsdusr_password_disabled: disabled password login
    :json boolean bsdusr_locked: lock user login
+   :json boolean bsdusr_sudo: enable sudo for the user
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
@@ -238,6 +243,7 @@ Change password
                 "bsdusr_uid": 0,
                 "bsdusr_unixhash": "$6$d8doVGxjhDhL4feI$YpTtmlhCmbc6BJ4MQcBsPvZA0Ge4SMnAyZn9CfZLpkuP71g8bPq6DkKJBmcN61z2oQSj0K8RtaqmKltc9HsMg0",
                 "bsdusr_username": "myuser",
+                "bsdusr_sudo": false,
                 "id": 25
         }
 
@@ -339,18 +345,21 @@ List resource
                 "bsdgrp_builtin": False,
                 "bsdgrp_gid": 1111,
                 "bsdgrp_group": "myuser",
+                "bsdgrp_sudo": false,
                 "id": 33
         },
         {
                 "bsdgrp_builtin": true,
                 "bsdgrp_gid": 0,
                 "bsdgrp_group": "wheel",
+                "bsdgrp_sudo": false,
                 "id": 1
         },
         {
                 "bsdgrp_builtin": true,
                 "bsdgrp_gid": 1,
                 "bsdgrp_group": "daemon",
+                "bsdgrp_sudo": false,
                 "id": 2
         }
       ]
@@ -392,11 +401,13 @@ Create resource
                 "bsdgrp_builtin": false,
                 "bsdgrp_gid": 1200,
                 "bsdgrp_group": "mygroup",
+                "bsdgrp_sudo": false,
                 "id": 34
         }
 
    :json integer bsdgrp_gid: group unique id
    :json string bsdgrp_group: unix name for the group
+   :json boolean bsdgrp_sudo: enable sudo for this group
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -432,10 +443,12 @@ Update resource
                 "bsdgrp_builtin": false,
                 "bsdgrp_gid": 1200,
                 "bsdgrp_group": "newgroup",
+                "bsdgrp_sudo": false,
                 "id": 34
         }
 
    :json string bsdgrp_group: unix name for the group
+   :json boolean bsdgrp_sudo: enable sudo for this group
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
