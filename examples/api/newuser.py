@@ -1,7 +1,7 @@
 import requests
 
 r = requests.post(
-    'https://freenas.mydomain/api/v1.0/account/bsdusers/',
+    'https://freenas.mydomain/api/v1.0/account/users/',
     auth=('root', 'freenas'),
     headers={'Content-Type': 'application/json'},
     data={
