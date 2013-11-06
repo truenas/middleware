@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python2
 
 import argparse
 import email
@@ -13,6 +13,10 @@ sys.path.extend(["/usr/local/www", "/usr/local/www/freenasUI"])
 
 from freenasUI import settings
 setup_environ(settings)
+
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
 
 from freenasUI.common.system import send_mail
 
