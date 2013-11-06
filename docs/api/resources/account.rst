@@ -4,15 +4,15 @@ Account
 
 Resources related to accounts.
 
-bsdUsers
+Users
 ----------
 
-The bsdUsers resource represents all unix users.
+The Users resource represents all unix users.
 
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/account/bsdusers/
+.. http:get:: /api/v1.0/account/users/
 
    Returns a list of all current users.
 
@@ -20,7 +20,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/account/bsdusers/ HTTP/1.1
+      GET /api/v1.0/account/users/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -59,7 +59,7 @@ List resource
 Create resource
 +++++++++++++++
 
-.. http:post:: /api/v1.0/account/bsdusers/
+.. http:post:: /api/v1.0/account/users/
 
    Creates a new user and returns the new user object.
 
@@ -67,7 +67,7 @@ Create resource
 
    .. sourcecode:: http
 
-      POST /api/v1.0/account/bsdusers/ HTTP/1.1
+      POST /api/v1.0/account/users/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -122,7 +122,7 @@ Create resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/account/bsdusers/(int:id)/
+.. http:put:: /api/v1.0/account/users/(int:id)/
 
    Creates a new user and returns the new user object.
 
@@ -130,7 +130,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/account/bsdusers/25/ HTTP/1.1
+      PUT /api/v1.0/account/users/25/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -180,7 +180,7 @@ Update resource
 Delete resource
 +++++++++++++++
 
-.. http:delete:: /api/v1.0/account/bsdusers/(int:id)/
+.. http:delete:: /api/v1.0/account/users/(int:id)/
 
    Delete user `id`.
 
@@ -188,7 +188,7 @@ Delete resource
 
    .. sourcecode:: http
 
-      DELETE /api/v1.0/account/bsdusers/25/ HTTP/1.1
+      DELETE /api/v1.0/account/users/25/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -206,7 +206,7 @@ Change password
 +++++++++++++++
 
 
-.. http:post:: /api/v1.0/account/bsdusers/(int:id)/password/
+.. http:post:: /api/v1.0/account/users/(int:id)/password/
 
    Change password of user `id`.
 
@@ -214,7 +214,7 @@ Change password
 
    .. sourcecode:: http
 
-      POST /api/v1.0/account/bsdusers/25/password/ HTTP/1.1
+      POST /api/v1.0/account/users/25/password/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -254,7 +254,7 @@ Change password
 Get user groups
 ++++++++++++++++
 
-.. http:get:: /api/v1.0/account/bsdusers/(int:id)/groups/
+.. http:get:: /api/v1.0/account/users/(int:id)/groups/
 
    Get a list of groups of user `id`.
 
@@ -262,7 +262,7 @@ Get user groups
 
    .. sourcecode:: http
 
-      GET /api/v1.0/account/bsdusers/25/groups/ HTTP/1.1
+      GET /api/v1.0/account/users/25/groups/ HTTP/1.1
       Accept: application/json, text/javascript
 
    **Example response**:
@@ -281,7 +281,7 @@ Get user groups
 Set user groups
 ++++++++++++++++
 
-.. http:post:: /api/v1.0/account/bsdusers/(int:id)/groups/
+.. http:post:: /api/v1.0/account/users/(int:id)/groups/
 
    Set a list of groups of user `id`.
 
@@ -289,7 +289,7 @@ Set user groups
 
    .. sourcecode:: http
 
-      POST /api/v1.0/account/bsdusers/25/groups/ HTTP/1.1
+      POST /api/v1.0/account/users/25/groups/ HTTP/1.1
       Accept: application/json, text/javascript
 
         [
@@ -313,15 +313,15 @@ Set user groups
    :statuscode 202: no error
 
 
-bsdGroups
+Groups
 ----------
 
-The bsdGroups resource represents all unix groups.
+The Groups resource represents all unix groups.
 
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/account/bsdgroups/
+.. http:get:: /api/v1.0/account/groups/
 
    Returns a list of all current groups.
 
@@ -329,7 +329,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/account/bsdgroups/ HTTP/1.1
+      GET /api/v1.0/account/groups/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -373,7 +373,7 @@ List resource
 Create resource
 +++++++++++++++
 
-.. http:post:: /api/v1.0/account/bsdgroups/
+.. http:post:: /api/v1.0/account/groups/
 
    Creates a new group and returns the new group object.
 
@@ -381,7 +381,7 @@ Create resource
 
    .. sourcecode:: http
 
-      POST /api/v1.0/account/bsdgroups/ HTTP/1.1
+      POST /api/v1.0/account/groups/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -416,7 +416,7 @@ Create resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/account/bsdgroups/(int:id)/
+.. http:put:: /api/v1.0/account/groups/(int:id)/
 
    Update group `id`.
 
@@ -424,7 +424,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/account/bsdgroups/34/ HTTP/1.1
+      PUT /api/v1.0/account/groups/34/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -457,7 +457,7 @@ Update resource
 Delete resource
 +++++++++++++++
 
-.. http:delete:: /api/v1.0/account/bsdgroups/(int:id)/
+.. http:delete:: /api/v1.0/account/groups/(int:id)/
 
    Delete group `id`.
 
@@ -465,7 +465,7 @@ Delete resource
 
    .. sourcecode:: http
 
-      DELETE /api/v1.0/account/bsdgroups/34/ HTTP/1.1
+      DELETE /api/v1.0/account/groups/34/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
