@@ -431,21 +431,23 @@ List resource
 
       [
         {
-                "afp_inheritperms": false,
-                "afp_hostsallow": "",
-                "afp_name": "My Test Share",
-                "afp_guestok": false,
-                "afp_showhiddenfiles": false,
-                "afp_hostsdeny": "",
-                "afp_recyclebin": false,
-                "afp_auxsmbconf": "",
-                "afp_comment": "",
-                "afp_path": "/mnt/tank/MyShare",
-                "afp_ro": false,
-                "afp_inheritowner": false,
-                "afp_guestonly": true,
+                "afp_upriv": true,
                 "id": 1,
-                "afp_browsable": true
+                "afp_comment": "",
+                "afp_fperm": "755",
+                "afp_deny": "",
+                "afp_nostat": false,
+                "afp_name": "test share",
+                "afp_nodev": false,
+                "afp_rw": "",
+                "afp_allow": "",
+                "afp_dperm": "644",
+                "afp_ro": "",
+                "afp_sharepw": "",
+                "afp_dbpath": "",
+                "afp_path": "/mnt/tank",
+                "afp_timemachine": false,
+                "afp_umask": "000",
         }
       ]
 
@@ -483,21 +485,13 @@ Create resource
       Content-Type: application/json
 
         {
-                "afp_adouble": true,
                 "afp_upriv": true,
-                "afp_mswindows": false,
-                "afp_prodos": false,
-                "afp_nofileid": false,
                 "id": 1,
                 "afp_comment": "",
                 "afp_fperm": "755",
                 "afp_deny": "",
-                "afp_diskdiscovery": false,
-                "afp_sharecharset": "",
                 "afp_nostat": false,
                 "afp_name": "test share",
-                "afp_discoverymode": "default",
-                "afp_nohex": false,
                 "afp_nodev": false,
                 "afp_rw": "",
                 "afp_allow": "",
@@ -505,9 +499,9 @@ Create resource
                 "afp_ro": "",
                 "afp_sharepw": "",
                 "afp_dbpath": "",
-                "afp_cachecnid": false,
                 "afp_path": "/mnt/tank",
-                "afp_crlf": false
+                "afp_timemachine": false,
+                "afp_umask": "000",
         }
 
    :json string afp_path: paths to share
@@ -517,23 +511,15 @@ Create resource
    :json string afp_dperm: default file permission
    :json string afp_allow: users and groups allowed to access
    :json string afp_deny: users or groups not allowed to access
-   :json string afp_sharecharset: character set for the share
-   :json string afp_discoverymode: default, time-machine
    :json string afp_rw: users and groups allowed to read and write
    :json string afp_ro: users and groups allowed to read only
    :json string afp_sharepw: password for the share
    :json string afp_dbpath: path to set database information
-   :json boolean afp_adouble: enable automatic creation of .AppleDouble
+   :json string afp_umask: default umask
    :json boolean afp_upriv: use AFP3 unix privileges
-   :json boolean afp_mswindows: restrict filenames to charset used by Windows
-   :json boolean afp_prodos: compatibility with Apple II clients
-   :json boolean afp_nofileid: don't advertise createfileid, resolveid, deleteid calls
-   :json boolean afp_diskdiscovery: allow other systems to discover this share as a disk for data, as a Time Machine backup volume or not at all
    :json boolean afp_nostat: don't stat volume path when enumerating volumes list
-   :json boolean afp_nohex: disable :hex translations for anything except dot files
    :json boolean afp_nodev: always use 0 for device number
-   :json boolean afp_cachecnid:  uses the ID information stored in AppleDouble V2 header files to reduce database load
-   :json boolean afp_crlf: crlf translation for TEXT files
+   :json boolean afp_timemachine: enable Time Machine backups on this share
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -554,7 +540,7 @@ Update resource
       Content-Type: application/json
 
         {
-                "afp_adouble": false
+                "afp_timemachine": true
         }
 
    **Example response**:
@@ -566,21 +552,13 @@ Update resource
       Content-Type: application/json
 
         {
-                "afp_adouble": false,
                 "afp_upriv": true,
-                "afp_mswindows": false,
-                "afp_prodos": false,
-                "afp_nofileid": false,
                 "id": 1,
                 "afp_comment": "",
                 "afp_fperm": "755",
                 "afp_deny": "",
-                "afp_diskdiscovery": false,
-                "afp_sharecharset": "",
                 "afp_nostat": false,
                 "afp_name": "test share",
-                "afp_discoverymode": "default",
-                "afp_nohex": false,
                 "afp_nodev": false,
                 "afp_rw": "",
                 "afp_allow": "",
@@ -588,9 +566,9 @@ Update resource
                 "afp_ro": "",
                 "afp_sharepw": "",
                 "afp_dbpath": "",
-                "afp_cachecnid": false,
                 "afp_path": "/mnt/tank",
-                "afp_crlf": false
+                "afp_timemachine": true,
+                "afp_umask": "000",
         }
 
    :json string afp_path: paths to share
@@ -600,23 +578,15 @@ Update resource
    :json string afp_dperm: default file permission
    :json string afp_allow: users and groups allowed to access
    :json string afp_deny: users or groups not allowed to access
-   :json string afp_sharecharset: character set for the share
-   :json string afp_discoverymode: default, time-machine
    :json string afp_rw: users and groups allowed to read and write
    :json string afp_ro: users and groups allowed to read only
    :json string afp_sharepw: password for the share
    :json string afp_dbpath: path to set database information
-   :json boolean afp_adouble: enable automatic creation of .AppleDouble
+   :json string afp_umask: default umask
    :json boolean afp_upriv: use AFP3 unix privileges
-   :json boolean afp_mswindows: restrict filenames to charset used by Windows
-   :json boolean afp_prodos: compatibility with Apple II clients
-   :json boolean afp_nofileid: don't advertise createfileid, resolveid, deleteid calls
-   :json boolean afp_diskdiscovery: allow other systems to discover this share as a disk for data, as a Time Machine backup volume or not at all
    :json boolean afp_nostat: don't stat volume path when enumerating volumes list
-   :json boolean afp_nohex: disable :hex translations for anything except dot files
    :json boolean afp_nodev: always use 0 for device number
-   :json boolean afp_cachecnid:  uses the ID information stored in AppleDouble V2 header files to reduce database load
-   :json boolean afp_crlf: crlf translation for TEXT files
+   :json boolean afp_timemachine: enable Time Machine backups on this share
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
