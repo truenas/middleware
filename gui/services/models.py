@@ -43,7 +43,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, Disk
 
-log = logging.getLogger("services.forms")
+log = logging.getLogger("services.models")
 
 
 class services(Model):

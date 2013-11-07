@@ -253,6 +253,10 @@ define([
             }
         },
 
+        openDirectoryServices: function(tab) {
+            alert('FOO');
+        },
+
         openAccount: function(tab) {
             var opened = false;
             var p = registry.byId("content");

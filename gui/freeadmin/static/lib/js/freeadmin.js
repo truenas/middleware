@@ -1435,6 +1435,8 @@ require([
                 Menu.openPluginsFcgi(p, item);
             } else if(item.type == 'openaccount') {
                 Menu.openAccount(item.gname);
+            } else if(item.type == 'opendirectoryservices') {
+                Menu.openDirectoryServices(item.gname);
             } else if(item.type == 'iscsi') {
                 Menu.openISCSI(item.gname);
             } else if(item.type == 'logout') {
