@@ -43,9 +43,15 @@
 
 {% if user.is_authenticated %}
 <p>{% blocktrans with user.username as username %}Welcome, {{ username }}. Thanks for logging in.{% endblocktrans %}</p>
-{% else %} 
-<div id="login" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% blocktrans with sw_login_version=sw_login_version sw_name=sw_name %}Welcome to {{ sw_name }}&trade; {{ sw_login_version }}{% endblocktrans %}'">
+{% else %}
+<div id="login" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% blocktrans with sw_login_version=sw_login_version sw_name=sw_name %}Welcome to {{ sw_name }}&trade; {{ sw_login_version }}{% endblocktrans %}'" style="max-width: 400px;">
 <form action="." method="post">{% csrf_token %}
+{% if reset_password %}
+<p>{% trans "The web admin user has been removed in this release in order to unify the web and Unix authentication mechanisms." %}</p>
+<p>{% trans "Administrators should log in to the web UI as root, since the web UI already confers superuser privileges in many areas." %}</p>
+
+<p>{% trans "For security reasons, you must now set a new root password:" %}</p>
+{% endif %}
 <table>
  {{ form }}
 </table>

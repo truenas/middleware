@@ -166,6 +166,9 @@ def login_wrapper(
     )
     if not qs.exists():
         authentication_form = forms.NewPasswordForm
+        extra_context.update({
+            'reset_password': True,
+        })
     response = login(
         request,
         template_name='registration/login.html',
