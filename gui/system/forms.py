@@ -202,6 +202,7 @@ class SettingsForm(ModelForm):
             'stg_timezone': forms.widgets.FilteringSelect(),
             'stg_language': forms.widgets.FilteringSelect(),
             'stg_kbdmap': forms.widgets.FilteringSelect(),
+            'stg_guiport': forms.widgets.TextInput(),
             'stg_guihttpsport': forms.widgets.TextInput(),
         }
 
@@ -232,20 +233,6 @@ class SettingsForm(ModelForm):
         self.fields['stg_guiv6address'].choices = [
             ['::', '::']
         ] + list(choices.IPChoices(ipv4=False))
-
-    def clean_stg_guiport(self):
-        val = self.cleaned_data.get("stg_guiport")
-        if val == '':
-            return val
-        try:
-            val = int(val)
-            if val < 1 or val > 65535:
-                raise forms.ValidationError(_(
-                    "You must specify a number between 1 and 65535, inclusive."
-                ))
-        except ValueError:
-            raise forms.ValidationError(_("Number is required."))
-        return val
 
     def save(self):
         super(SettingsForm, self).save()

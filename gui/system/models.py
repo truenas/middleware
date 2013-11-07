@@ -65,12 +65,12 @@ class Settings(Model):
             default='::',
             verbose_name=_("WebGUI IPv6 Address")
             )
-    stg_guiport = models.CharField(
-            max_length=120,
-            blank=True,
-            default='',
-            verbose_name=_("WebGUI HTTP Port")
-            )
+    stg_guiport = models.IntegerField(
+        verbose_name=_("WebGUI HTTP Port"),
+        validators=[MinValueValidator(1), MaxValueValidator(65535)],
+        blank=True,
+        null=True,
+    )
     stg_guihttpsport = models.IntegerField(
         verbose_name=_("WebGUI HTTPS Port"),
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
