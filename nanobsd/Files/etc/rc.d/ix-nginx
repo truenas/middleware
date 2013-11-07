@@ -108,6 +108,7 @@ generate_nginx_conf()
 	local addr="${2}"
 	local addr6="${3}"
 	local port="${4}"
+	local httpsport="${5}"
 	local working_ssl=false
 	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print settings.DOJANGO_DOJO_VERSION')
 	
@@ -146,7 +147,7 @@ http {
         server_name  localhost;
 __EOF__
 
-	if [ "${proto}" = "https" ]; then
+	if [ "${proto}" = "https" -o "${proto}" = "httphttps" ]; then
 
 		local validcert=0
 		${OPENSSL} x509 -in "${HTTPDCERT}" -noout -text -dates -purpose > /dev/null
@@ -157,8 +158,8 @@ __EOF__
 		if [ ${validcert} -eq 0 ]; then
 			working_ssl=true
 			cat << __EOF__
-        listen       ${addr}:${port} default_server ssl;
-        listen       [${addr6}]:${port} default_server ssl;
+        listen       ${addr}:${httpsport} default_server ssl;
+        listen       [${addr6}]:${httpsport} default_server ssl;
 
         ssl_certificate      ${HTTPDCERT};
         ssl_certificate_key  ${HTTPDKEY};
@@ -169,7 +170,7 @@ __EOF__
 		fi
 	fi
 
-	if ! ${working_ssl}; then
+	if [ ! ${working_ssl} -o "${proto}" = "http" -o "${proto}" = "httphttps" ]; then
 		echo "        listen       ${addr}:${port};"
 		echo "        listen       [${addr6}]:${port};"
 	fi
@@ -232,7 +233,7 @@ __EOF__
     server {
 	listen ${addr}:80;
 	server_name localhost;
-	rewrite ^ https://\$server_addr:${port}\$request_uri? permanent;
+	rewrite ^ https://\$server_addr:${httpsport}\$request_uri? permanent;
     }
 __EOF__
 	fi
@@ -249,7 +250,7 @@ set_stg_guiprotocol()
 	local res=1
 	local proto="${1}"
 
-	if [ "${proto}" = "http" -o "${proto}" = "https" ]
+	if [ "${proto}" = "http" -o "${proto}" = "https" -o "${proto}" = "httphttps" ]
 	then
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 		UPDATE
@@ -331,7 +332,8 @@ get_nginx_settings()
 			stg_guiprotocol,
 			stg_guiaddress,
 			stg_guiv6address,
-			stg_guiport
+			stg_guiport,
+			stg_guihttpsport
 
 		FROM
 			system_settings
@@ -341,9 +343,9 @@ get_nginx_settings()
 
 		LIMIT 1
 		" | \
-		while read -r stg_guiprotocol stg_guiaddress stg_guiv6address stg_guiport
+		while read -r stg_guiprotocol stg_guiaddress stg_guiv6address stg_guiport stg_guihttpsport
 		do
-			echo "${stg_guiprotocol}|${stg_guiaddress}|${stg_guiv6address}|${stg_guiport}"
+			echo "${stg_guiprotocol}|${stg_guiaddress}|${stg_guiv6address}|${stg_guiport}|${stg_guihttpsport}"
 		done
 	)
 
@@ -351,15 +353,17 @@ get_nginx_settings()
 	local addr=$(echo ${settings}|cut -f2 -d"|" -s)
 	local addr6=$(echo ${settings}|cut -f3 -d"|" -s)
 	local port=$(echo ${settings}|cut -f4 -d"|" -s)
+	local httpsport=$(echo ${settings}|cut -f5 -d"|" -s)
 
 	: ${proto:="http"}
 	: ${addr:="0.0.0.0"}
 	: ${addr6:="::"}
 
-	if [ "${proto}" = "https" -a -z "${port}" ]
+	if [ -z "${httpsport}" ]
 	then
-		port="443"
-	elif [ "${proto}" = "http" -a -z "${port}" ]
+		httpsport="443"
+	fi
+	if [ -z "${port}" ]
 	then
 		port="80"
 	fi
@@ -374,7 +378,7 @@ get_nginx_settings()
 		addr6="::"
 	fi
 
-	echo "${proto}|${addr}|${addr6}|${port}"
+	echo "${proto}|${addr}|${addr6}|${port}|${httpsport}"
 }
 
 
@@ -386,6 +390,7 @@ ix_nginx_start()
 	local addr=$(echo "${settings}"|cut -f2 -d"|")
 	local addr6=$(echo "${settings}"|cut -f3 -d"|")
 	local port=$(echo "${settings}"|cut -f4 -d"|")
+	local httpsport=$(echo "${settings}"|cut -f5 -d"|")
 
 	if [ "${proto}" = "https" -a ! -f "${SSLCONF}" ]
 	then
@@ -399,7 +404,7 @@ ix_nginx_start()
 	generate_plugins_conf
 	generate_fastcgi_params
 
-	generate_nginx_conf "${proto}" "${addr}" "${addr6}" "${port}"
+	generate_nginx_conf "${proto}" "${addr}" "${addr6}" "${port}" "${httpsport}"
 
 }
 

@@ -202,6 +202,7 @@ class SettingsForm(ModelForm):
             'stg_timezone': forms.widgets.FilteringSelect(),
             'stg_language': forms.widgets.FilteringSelect(),
             'stg_kbdmap': forms.widgets.FilteringSelect(),
+            'stg_guihttpsport': forms.widgets.TextInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -209,6 +210,7 @@ class SettingsForm(ModelForm):
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
         self.instance._original_stg_guiaddress = self.instance.stg_guiaddress
         self.instance._original_stg_guiport = self.instance.stg_guiport
+        self.instance._original_stg_guihttpsport = self.instance.stg_guihttpsport
         self.instance._original_stg_syslogserver = (
             self.instance.stg_syslogserver
         )
@@ -260,20 +262,30 @@ class SettingsForm(ModelForm):
 
     def done(self, request, events):
         if (
-            self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or
+            (
+                self.instance._original_stg_guiprotocol != 'httphttps' and
+                self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol
+            ) or
             self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or
-            self.instance._original_stg_guiport != self.instance.stg_guiport
+            self.instance._original_stg_guiport != self.instance.stg_guiport or
+            self.instance._original_stg_guihttpsport != self.instance.stg_guihttpsport
         ):
             if self.instance.stg_guiaddress == "0.0.0.0":
                 address = request.META['HTTP_HOST'].split(':')[0]
             else:
                 address = self.instance.stg_guiaddress
+            if self.instance.stg_guiprotocol == 'httphttps':
+                protocol = 'http'
+            else:
+                protocol = self.instance.stg_guiprotocol
             newurl = "%s://%s" % (
-                self.instance.stg_guiprotocol,
+                protocol,
                 address
             )
-            if self.instance.stg_guiport != '':
+            if self.instance.stg_guiport != '' and protocol == 'http':
                 newurl += ":" + self.instance.stg_guiport
+            elif self.instance.stg_guihttpsport and protocol == 'https':
+                newurl += ":" + self.instance.stg_guihttpsport
             if self.instance._original_stg_guiprotocol == 'http':
                 notifier().start_ssl("nginx")
             events.append("restartHttpd('%s')" % newurl)

@@ -47,9 +47,10 @@ SMTPAUTH_CHOICES = (
 
 # GUI protocol choice
 PROTOCOL_CHOICES = (
-        ('http', _('HTTP')),
-        ('https', _('HTTPS')),
-        )
+    ('http', _('HTTP')),
+    ('https', _('HTTPS')),
+    ('httphttps', _('HTTP+HTTPS')),
+)
 
 TRANSFERMODE_CHOICES = (
         ('Auto', _('Auto')),
