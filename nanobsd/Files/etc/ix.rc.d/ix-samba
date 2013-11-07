@@ -11,6 +11,7 @@
 . /etc/rc.freenas
 
 : ${SMB_CONF:="/usr/local/etc/smb.conf"}
+: ${SMB4_CONF:="/usr/local/etc/smb4.conf"}
 : ${LMHOSTS:="/usr/local/etc/lmhosts"}
 
 is_within_zfs() {
@@ -293,6 +294,7 @@ generate_smbconf()
 
 		cat<<-EOF
 		[global]
+		    pid directory = /var/run/samba
 		    encrypt passwords = yes
 		    dns proxy = no
 		    strict locking = no
@@ -301,7 +303,6 @@ generate_smbconf()
 		    oplocks = yes
 		    max xmit = 65535
 		    deadtime = 15
-		    display charset = LOCALE
 		    max log size = 10
 		    syslog only = yes
 		    syslog = 1
@@ -619,6 +620,10 @@ generate_smb_tdb()
 
 generate_smb_config()
 {
+	rm -f "${SMB4_CONF}"
+	touch "${SMB_CONF}"
+	ln -s "${SMB_CONF}" "${SMB4_CONF}"
+
 	mkdir -p /var/etc/private
 	chmod 700 /var/etc/private
 	generate_smb_tdb

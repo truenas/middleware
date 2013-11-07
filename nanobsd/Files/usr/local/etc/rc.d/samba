@@ -1,0 +1,197 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: nmbd smbd
+# PROVIDE: winbindd
+# REQUIRE: NETWORKING SERVERS DAEMON ldconfig resolv
+# BEFORE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+#samba_enable="YES"
+# You can disable/enable any of the Samba daemons by specifying:
+#nmbd_enable="NO"
+#smbd_enable="NO"
+# You need to enable winbindd separately, by adding:
+#winbindd_enable="YES"
+#
+# Configuration file can be set with:
+#samba_config="/usr/local/etc/smb.conf"
+#
+
+. /etc/rc.subr
+
+name="samba"
+rcvar=samba_enable
+# Custom commands
+extra_commands="reload status"
+start_precmd="samba_start_precmd"
+start_cmd="samba_cmd"
+stop_cmd="samba_cmd"
+status_cmd="samba_cmd"
+restart_precmd="samba_checkconfig"
+reload_precmd="samba_checkconfig"
+reload_cmd="samba_reload_cmd"
+rcvar_cmd="samba_rcvar_cmd"
+# Defaults
+samba_config_default="/usr/local/etc/smb.conf"
+testparm_command="/usr/local/bin/testparm"
+smbcontrol_command="/usr/local/bin/smbcontrol"
+samba_parm="${testparm_command} -s -v --parameter-name"
+pid_extra=
+#
+samba_daemons="nmbd smbd"
+samba_daemons="${samba_daemons} winbindd"
+
+samba_checkconfig() {
+    echo -n "Performing sanity check on Samba configuration: "
+    if ${testparm_command} -s ${samba_config:+"${samba_config}"} >/dev/null 2>&1; then #"
+	echo "OK"
+    else
+	echo "FAILED"
+	return 1
+    fi
+    return 0
+}
+
+samba_start_precmd() {
+    # Make sure rundir exists
+    if [ ! -d "/var/run/samba" -a ! -e "/var/run/samba" ]; then
+	install -m 0755 -d "/var/run/samba"
+    fi
+    # XXX: Never delete winbindd_idmap, winbindd_cache and group_mapping
+    if [ -n "${samba_lockdir}" -a -d "${samba_lockdir}" ]; then
+	echo -n "Removing stale Samba tdb files: "
+	for file in brlock.tdb browse.dat connections.tdb gencache.tdb \
+		    locking.tdb messages.tdb namelist.debug sessionid.tdb \
+		    unexpected.tdb
+	do
+	    rm "${samba_lockdir}/${file}" </dev/null 2>/dev/null && echo -n '.'
+	done
+	echo " done"
+    fi
+}
+
+samba_rcvar_cmd() {
+    local name rcvar
+    rcvar=${name}_enable
+    # Prevent recursive calling
+    unset "${rc_arg}_cmd" "${rc_arg}_precmd" "${rc_arg}_postcmd"
+    # Check master variable
+    run_rc_command "${_rc_prefix}${rc_arg}" ${rc_extra_args}
+    # Check dependent variables
+    for name in ${samba_daemons}; do
+	# XXX
+	rcvars=''; v=''
+	rcvar=${name}_enable
+	run_rc_command "${_rc_prefix}${rc_arg}" ${rc_extra_args}
+    done
+}
+
+samba_reload_cmd() {
+    local name rcvar command pidfile force_run
+    # Prevent recursive calling
+    unset "${rc_arg}_cmd" "${rc_arg}_precmd" "${rc_arg}_postcmd"
+    # Ignore rcvar and run command
+    if [ -n "${_rc_prefix}" -a "${_rc_prefix}" = "one" ] || [ -n "${rc_force}" ] || [ -n "${rc_fast}" ]; then
+	force_run=yes
+    fi
+    # Apply to all daemons
+    for name in ${samba_daemons}; do
+	rcvar=${name}_enable
+	command="/usr/local/sbin/${name}"
+	pidfile="/var/run/samba/${name}${pid_extra}.pid"
+	# Daemon should be enabled and running
+	if ( [ -n "${rcvar}" ] && checkyesno "${rcvar}" ) || [ -n "$force_run" ]; then
+	    if [ -n "$(check_pidfile "${pidfile}" "${command}")" ]; then
+		debug "reloading ${name} configuration"
+		echo "Reloading ${name}."
+		# XXX: Hack with pid_extra
+		${smbcontrol_command} "${name}${pid_extra}" 'reload-config' ${command_args} >/dev/null 2>&1
+	    fi
+	fi
+    done
+}
+
+samba_cmd() {
+    local name rcvar rcvars v command pidfile samba_daemons result force_run
+    # Prevent recursive calling
+    unset "${rc_arg}_cmd" "${rc_arg}_precmd" "${rc_arg}_postcmd"
+    # Stop processes in the reverse order
+    if [ "${rc_arg}" = "stop" ] ; then
+	samba_daemons=$(reverse_list ${samba_daemons})
+    fi
+    # Ignore rcvar and run command
+    if [ -n "${_rc_prefix}" -a "${_rc_prefix}" = "one" ] || [ -n "${rc_force}" ] || [ -n "${rc_fast}" ]; then
+	force_run=yes
+    fi
+    # Assume success
+    result=0
+    # Apply to all daemons
+    for name in ${samba_daemons}; do
+	# XXX
+	rcvars=''; v=''
+	rcvar=${name}_enable
+	command="/usr/local/sbin/${name}"
+	pidfile="/var/run/samba/${name}${pid_extra}.pid"
+	# Daemon should be enabled and running
+	if ( [ -n "${rcvar}" ] && checkyesno "${rcvar}" ) || [ -n "$force_run" ]; then
+	    run_rc_command "${_rc_prefix}${rc_arg}" ${rc_extra_args}
+	    # If any of the commands failed, take it as a global result
+	    result=$((${result} || $?))
+	fi
+    done
+    return ${result}
+}
+
+samba_config_init() {
+    local name
+    # Load configuration
+    load_rc_config "${name}"
+    for name in ${samba_daemons}; do
+	load_rc_config "${name}"
+    done
+    # Location of the config
+    samba_config=${samba_config="${samba_config_default}"} #"
+    # XXX: Hack to work around name change of pid file with non-default config
+    if [ -n "${samba_config}" -a "${samba_config}" != "${samba_config_default}" ]; then
+	pid_extra="-$(basename "${samba_config}")"
+    fi
+    # Setup dependent variables
+    if [ -n "${rcvar}" ] && checkyesno "${rcvar}"; then
+	nmbd_enable=${nmbd_enable=YES}
+	smbd_enable=${smbd_enable=YES}
+    fi
+    # Defaults
+    samba_enable=${samba_enable:=NO}
+    nmbd_enable=${nmbd_enable:=NO}
+    smbd_enable=${smbd_enable:=NO}
+    # Winbindd
+    if [ -z "${winbind_enable}" ]; then
+	samba_idmap=$(${samba_parm} 'idmap uid' "${samba_config}" 2>/dev/null)
+	# Check that winbindd is actually configured
+	if [ -n "${samba_idmap}" ]; then
+		winbindd_enable="YES"
+	fi
+	winbindd_enable=${winbindd_enable:=NO}
+    fi
+}
+
+# Load configuration variables
+samba_config_init
+# Where is the lockdir
+samba_lockdir=$(${samba_parm} 'lock directory' "${samba_config}" 2>/dev/null)
+# Common flags
+command_args=${samba_config:+-s "${samba_config}"} #"
+nmbd_flags=${nmbd_flags="-D"}
+smbd_flags=${smbd_flags="-D"}
+winbindd_flags=${winbindd_flags=''}
+# Requirements
+required_files="${samba_config}"
+required_dirs="${samba_lockdir}"
+
+run_rc_command "$1"
