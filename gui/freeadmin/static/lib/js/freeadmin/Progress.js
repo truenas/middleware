@@ -50,12 +50,12 @@ define([
       this._perStep = 100 / this._numSteps;
       this._mainProgress = ProgressBar({
         indeterminate: true,
-        style: {width: "280px"}
+        style: {width: "100%", minWidth: "280px"}
       }, this.dapMainProgress);
 
       this._subProgress = ProgressBar({
         indeterminate: true,
-        style: {width: "280px"}
+        style: {width: "100%", minWidth: "280px"}
       }, this.dapSubProgress);
 
       if(this.mode == "simple") {
