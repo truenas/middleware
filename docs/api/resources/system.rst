@@ -936,6 +936,7 @@ List resource
         {
                 "stg_timezone": "America/Los_Angeles",
                 "stg_guiport": "",
+                "stg_guihttpsport": null,
                 "stg_guiprotocol": "http",
                 "stg_guiv6address": "::",
                 "stg_syslogserver": "",
@@ -979,6 +980,7 @@ Update resource
         {
                 "stg_timezone": "America/Sao_Paulo",
                 "stg_guiport": "",
+                "stg_guihttpsport": null,
                 "stg_guiprotocol": "http",
                 "stg_guiv6address": "::",
                 "stg_syslogserver": "",
@@ -992,7 +994,8 @@ Update resource
    :json string stg_guiprotocol: http, https
    :json string stg_guiaddress: WebGUI IPv4 Address
    :json string stg_guiv6address: WebGUI IPv6 Address
-   :json string stg_guiport: WebGUI Port
+   :json string stg_guiport: WebGUI Port for HTTP
+   :json integer stg_guihttpsport: WebGUI Port for HTTPS
    :json string stg_language: webguil language
    :json string stg_kbdmap: see /usr/share/syscons/keymaps/INDEX.keymaps
    :json string stg_timezone: see /usr/share/zoneinfo
