@@ -241,12 +241,12 @@ add_port devel/libexecinfo
 add_port devel/popt
 add_port databases/tdb MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port sysutils/libsunacl
-add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
-	OPTIONS_FILE_SET+=ADS \
-	OPTIONS_FILE_SET+=AIO_SUPPORT \
-	OPTIONS_FILE_SET+=EXP_MODULES \
-	OPTIONS_FILE_SET+=PAM_SMBPASS \
-	OPTIONS_FILE_SET+=SYSLOG
+#add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
+#	OPTIONS_FILE_SET+=ADS \
+#	OPTIONS_FILE_SET+=AIO_SUPPORT \
+#	OPTIONS_FILE_SET+=EXP_MODULES \
+#	OPTIONS_FILE_SET+=PAM_SMBPASS \
+#	OPTIONS_FILE_SET+=SYSLOG
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash OPTIONS_FILE_UNSET+=NLS
@@ -419,6 +419,47 @@ add_port devel/nspr
 add_port security/nss
 add_port security/krb5
 add_port security/sssd
+
+add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
+add_port ftp/curl
+add_port devel/git OPTIONS_FILE_UNSET+=SVN \
+       OPTIONS_FILE_UNSET+=CVS \
+       OPTIONS_FILE_UNSET+=P4 \
+       OPTIONS_FILE_UNSET+=PERL \
+       OPTIONS_FILE_UNSET+=CONTRIB \
+       OPTIONS_FILE_UNSET+=NLS
+
+add_port math/gmp
+add_port security/libtasn1
+add_port security/p11-kit
+add_port security/nettle
+add_port devel/libinotify
+add_port dns/samba-nsupdate
+add_port security/gnutls
+add_port net/samba4 \
+       OPTIONS_FILE_SET+=ACL_SUPPORT \
+       OPTIONS_FILE_SET+=ADS \
+       OPTIONS_FILE_SET+=AIO_SUPPORT \
+       OPTIONS_FILE_SET+=AVAHI \
+       OPTIONS_FILE_UNSET+=CUPS \
+       OPTIONS_FILE_UNSET+=DEBUG \
+       OPTIONS_FILE_UNSET+=DEVELOPER \
+       OPTIONS_FILE_SET+=DNSUPDATE \
+       OPTIONS_FILE_SET+=EXP_MODULES \
+       OPTIONS_FILE_SET+=FAM_SUPPORT \
+       OPTIONS_FILE_SET+=LDAP \
+       OPTIONS_FILE_SET+=MANPAGES \
+       OPTIONS_FILE_SET+=PAM_SMBPASS \
+       OPTIONS_FILE_SET+=PTHREADPOOL \
+       OPTIONS_FILE_SET+=QUOTAS \
+       OPTIONS_FILE_UNSET+=SWAT \
+       OPTIONS_FILE_SET+=SYSLOG \
+       OPTIONS_FILE_SET+=UTMP \
+       OPTIONS_FILE_SET+=WINBIND \
+       OPTIONS_FILE_SET+=NSUPDATE \
+       OPTIONS_FILE_UNSET+=BIND98 \
+       OPTIONS_FILE_UNSET+=BIND99
+
 
 if [ "${DEBUG}" = 1 ]; then
 
