@@ -121,6 +121,31 @@ class Plugins(Model):
             self.plugin_secret.delete()
 
 
+class Kmod(Model):
+
+    plugin = models.ForeignKey(
+        Plugins,
+        editable=False,
+    )
+    module = models.CharField(
+        max_length=400,
+    )
+    within_pbi = models.BooleanField(
+        default=False,
+    )
+    order = models.IntegerField(
+        default=1,
+    )
+
+    class Meta:
+        verbose_name = _("Kmod")
+
+    def save(self, *args, **kwargs):
+        if self.order is None:
+            self.order = Kmod.objects.filter(plugin=self.plugin).count() + 1
+        super(Kmod, self).save(*args, **kwargs)
+
+
 class Available(models.Model):
 
     name = models.CharField(
