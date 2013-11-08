@@ -35,6 +35,7 @@ from django.http import Http404, HttpResponse
 from django.utils.translation import ugettext as _
 
 import eventlet
+from freenasUI.common import pbi 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.warden import WARDEN_EXTRACT_STATUS_FILE
 from freenasUI.freeadmin.middleware import public
@@ -71,8 +72,11 @@ def home(request):
 
 
 def refresh(request):
-    p = pipeopen("/usr/local/sbin/pbid --refresh")
-    p.communicate()
+
+    p = pbi.PBI()
+    p.set_appdir("/var/pbi")
+    p.pbid(flags=pbi.PBID_FLAGS_REFRESH)
+
     return HttpResponse('OK')
 
 

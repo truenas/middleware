@@ -287,7 +287,10 @@ PBI_UPDATE_HASHDIR = os.path.join(PBI_PATH, "pbi_update_hashdir")
 
 
 PBID = os.path.join(PBI_PATH, "pbid")
-# no flags...
+PBI_FLAGS_REFRESH = pbi_arg(0x00000001, "--refresh")
+PBID_FLAGS = [
+    PBI_FLAGS_REFRESH
+]
 
 
 class pbi_base(object):
@@ -676,7 +679,7 @@ class pbid(pbi_base):
     def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
         log.debug("pbid.__init__: enter")
 
-        super(pbid, self).__init__(PBID, None, flags, **kwargs)
+        super(pbid, self).__init__(PBID, PBID_FLAGS, flags, **kwargs)
 
         log.debug("pbid.__init__: leave")
 
@@ -701,6 +704,9 @@ class PBI(object):
                 return self.out
 
         return None
+
+    def set_appdir(self, dir):  
+        os.environ['PBI_APPDIR'] = dir
 
     def add(self, flags=PBI_FLAGS_NONE, **kwargs):
         return self.__call(pbi_add(flags, **kwargs))
