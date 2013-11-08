@@ -112,7 +112,7 @@ jails_start()
 		plugins_kmod
 
 	ORDER BY
-		plugin_id,order
+		plugin_id,'order'
 	" | \
 	while read -r module
 	do
