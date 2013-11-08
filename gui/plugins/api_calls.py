@@ -35,7 +35,7 @@ from django.contrib import auth
 from django.utils.importlib import import_module
 
 from freenasUI.storage.models import MountPoint
-from freenasUI.plugins.models import Plugins
+from freenasUI.plugins.models import Plugins, Kmod
 from freenasUI.jails.models import Jails, JailsConfiguration
 
 from jsonrpc import jsonrpc_method
@@ -300,12 +300,20 @@ def os_arch(request):
 
 
 @jsonrpc_method("os.kldload")
-def os_arch(request, module):
+def os_arch(request, plugin_id, module):
     """
     Load a kernel module
 
     Returns: boolean
     """
+    plugin = Plugins.objects.filter(pk=plugin_id)
+    if plugin.exists():
+        Kmod.objects.create(
+            plugin=plugin,
+            module=module,
+            order=None,
+        )
+
     pipe = Popen([
         "/sbin/kldstat",
         "-n", module,
