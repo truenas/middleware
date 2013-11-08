@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import copy
 import logging
 import os
 import re
@@ -39,6 +40,7 @@ from django.http import QueryDict
 from dojango import forms
 from freenasUI.account import models
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.middleware.notifier import notifier
 
@@ -431,6 +433,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 [x for x in self.fields['bsdusr_group'].choices][1:]
             )
             self.fields['bsdusr_group'].required = False
+            self.bsdusr_home_saved = u'/nonexistent'
+            self.bsdusr_home_copy = False
 
         elif self.instance.id:
             del self.fields['bsdusr_to_group']
@@ -440,6 +444,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             del self.fields['bsdusr_creategroup']
             self.fields['bsdusr_group'].initial = self.instance.bsdusr_group
             self.advanced_fields = []
+            self.bsdusr_home_saved = self.instance.bsdusr_home
+            self.bsdusr_home_copy = False
             self.fields.keyOrder.remove('bsdusr_mode')
             self.fields.keyOrder.insert(
                 len(self.fields.keyOrder) - 1,
@@ -523,8 +529,35 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 raise forms.ValidationError(
                     _("Home directory cannot contain colons")
                 )
-            if home.startswith(u'/mnt/') or home == u'/nonexistent':
+
+            if home == u'/nonexistent':
                 return home
+
+            if home.startswith(u'/mnt/'):
+                from freenasUI.freeadmin.forms import PathField
+                bsdusr_username = self.cleaned_data['bsdusr_username']
+                saved_home = self.bsdusr_home_saved
+
+                if home.endswith(bsdusr_username):
+                    if home != saved_home:
+                        self.bsdusr_home_copy = True
+                    return home
+
+                if home.endswith('/'):
+                    home = "%s%s" % (home, bsdusr_username)
+                else:
+                    home = "%s/%s" % (home, bsdusr_username)
+
+                if not home.endswith(bsdusr_username):
+                    raise forms.ValidationError(
+                        _('Home directory must end with username')
+                    )
+
+                if home != saved_home:
+                    self.bsdusr_home_copy = True
+
+                return home
+                
         raise forms.ValidationError(
             _('Home directory has to start with /mnt/ or be /nonexistent')
         )
@@ -652,8 +685,17 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                     bsdgrpmember_user=bsduser)
                 m.save()
         else:
-            bsduser = super(bsdUsersForm, self).save()
+            bsduser = super(bsdUsersForm, self).save(commit=True)
+
         _notifier.reload("user")
+        if self.bsdusr_home_copy:
+            p = pipeopen("su - %s -c '/bin/cp -a %s/* %s/'" % (
+                self.cleaned_data['bsdusr_username'],
+                self.bsdusr_home_saved, 
+                self.cleaned_data['bsdusr_home']
+            ))
+            p.communicate()
+
         bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
         if bsdusr_sshpubkey:
             _notifier.save_pubkey(
