@@ -133,7 +133,6 @@ generate_activedirectory_smbconf()
 	    preferred master = no
 
 	    inherit acls = yes
-	    acl compatibility = auto
 	    acl check permissions = true
 	    acl map full control = true
 	    dos filemode = yes
