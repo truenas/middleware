@@ -227,6 +227,7 @@ class Available(object):
             f.close()
 
         p = pbi.PBI()
+        p.set_appdir("/var/pbi")
 
         out = p.addrepo(repofile=rpath)
         if not out:
@@ -237,6 +238,7 @@ class Available(object):
 
     def get_repo(self, repo_id=None, create=False):
         p = pbi.PBI()
+        p.set_appdir("/var/pbi")
 
         if repo_id:
             repos = p.listrepo(repoid=repo_id)
@@ -403,6 +405,8 @@ class Available(object):
         log.debug("Retrieving available plugins from repo %s", repo_id)
 
         p = pbi.PBI()
+        p.set_appdir("/var/pbi")
+
         results = p.browser(repo_id=repo_id, flags=pbi.PBI_BROWSER_FLAGS_VIEWALL)
         if not results:
             log.debug(
