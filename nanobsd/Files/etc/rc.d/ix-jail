@@ -98,8 +98,26 @@
 
 jails_start()
 {
+
+	local IFS="|"
+	local module
 	local jails="$*"
 	local res=0
+
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		module
+	FROM
+		plugins_kmod
+
+	ORDER BY
+		plugin_id,order
+	" | \
+	while read -r module
+	do
+		/sbin/kldload ${module} > /dev/null 2>&1
+	done
 
 	if [ -z "${jails}" ]
 	then
