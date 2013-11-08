@@ -38,7 +38,7 @@ generate_nsswitch_conf()
 				p="${p} winbind"
 				g="${g} winbind"
 			fi
-			hosts="${hosts} wins"
+			hosts="${hosts}"
 
 		elif [ "${ldap}" = "1" ]
 		then

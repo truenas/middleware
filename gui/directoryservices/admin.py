@@ -26,6 +26,8 @@
 #####################################################################
 import logging
 
+from django.utils.translation import ugettext as _
+
 from freenasUI.api.resources import DirectoryServicesResourceMixin
 
 from freenasUI.directoryservices import models
@@ -49,20 +51,20 @@ class DirectoryServicesFAdmin(BaseFreeAdmin):
         columns = []
 
         columns.append({
-            'name': 'ds_type',
-            'label': _('Type'),
-            'sortable': False
-        })
-
-        columns.append({
             'name': 'ds_name',
             'label': _('Name'),
             'sortable': False
         })
 
         columns.append({
+            'name': 'ds_type',
+            'label': _('Type'),
+            'sortable': False
+        })
+
+        columns.append({
             'name': 'ds_enable',
-            'label': _('Enable'),
+            'label': _('Enabled'),
             'sortable': False
         })
 

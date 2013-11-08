@@ -26,8 +26,14 @@
 #####################################################################
 import logging
 
+from django.shortcuts import render
+
+from freenasUI.directoryservices.directoryservice import DirectoryService
+
 log = logging.getLogger("directoryservices.views")
 
-
 def directoryservices_home(request):
-    pass
+    return render(request, 'directoryservices/index.html', {
+        'focus_form': request.GET.get('tab', 'directoryservices.View'),
+    })
+

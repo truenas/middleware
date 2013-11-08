@@ -1491,9 +1491,9 @@ class DirectoryServicesResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(DirectoryServicesResourceMixin, self).dehydrate(bundle)
-        bundle.data['ds_type'] = 'ldap'
-        bundle.data['ds_name'] = 'test'
-        bundle.data['ds_enabled'] = False
+        bundle.data['ds_type'] = bundle.obj.ds_type
+        bundle.data['ds_name'] = bundle.obj.ds_name
+        bundle.data['ds_enable'] = bundle.obj.ds_enable
         return bundle
 
 class SnapshotResource(DojoResource):
