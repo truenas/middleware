@@ -150,9 +150,9 @@ __EOF__
 	if [ "${proto}" = "https" -o "${proto}" = "httphttps" ]; then
 
 		local validcert=0
-		${OPENSSL} x509 -in "${HTTPDCERT}" -noout -text -dates -purpose > /dev/null
+		${OPENSSL} x509 -in "${HTTPDCERT}" -noout -text -dates -purpose > /dev/null 2>&1
 		let "validcert |= $?" > /dev/null
-		${OPENSSL} rsa -in "${HTTPDKEY}" -check -noout > /dev/null
+		${OPENSSL} rsa -in "${HTTPDKEY}" -check -noout > /dev/null 2>&1
 		let "validcert |= $?" > /dev/null
 
 		if [ ${validcert} -eq 0 ]; then
