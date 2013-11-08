@@ -11,6 +11,10 @@ pbi_start()
 {
 	local repo="/var/tmp/pbi-repo.rpo"
 
+	PBI_APPDIR=/var/pbi
+	mkdir -p "${PBI_APPDIR}"
+	export PBI_APPDIR
+
 	rm -f "${repo}"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
