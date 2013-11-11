@@ -249,10 +249,7 @@ class SettingsForm(ModelForm):
 
     def done(self, request, events):
         if (
-            (
-                self.instance._original_stg_guiprotocol != 'httphttps' and
-                self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol
-            ) or
+            self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or
             self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or
             self.instance._original_stg_guiport != self.instance.stg_guiport or
             self.instance._original_stg_guihttpsport != self.instance.stg_guihttpsport
