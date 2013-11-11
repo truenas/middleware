@@ -269,7 +269,7 @@ class SettingsForm(ModelForm):
                 protocol,
                 address
             )
-            if self.instance.stg_guiport != '' and protocol == 'http':
+            if self.instance.stg_guiport and protocol == 'http':
                 newurl += ":" + str(self.instance.stg_guiport)
             elif self.instance.stg_guihttpsport and protocol == 'https':
                 newurl += ":" + str(self.instance.stg_guihttpsport)
