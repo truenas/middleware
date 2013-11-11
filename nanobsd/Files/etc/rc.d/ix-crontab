@@ -113,7 +113,9 @@ generate_crontab()
 	# For periodic snapshot.
 	snaptasks=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM storage_task WHERE task_enabled = 1;"`
 	if [ ${snaptasks} -gt 0 ]; then
-		echo "*       *       *       *       *       root    /usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
+		echo "*		*	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
+	else
+		echo "15	4	*	*	6	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
 	fi
 }
 
