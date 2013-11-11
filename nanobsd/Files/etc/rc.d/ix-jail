@@ -99,12 +99,12 @@
 jails_start()
 {
 
-	local IFS="|"
+	local saved_ifs="${IFS}"
 	local module
 	local jails="$*"
 	local res=0
 
-
+	local IFS="|"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		module
@@ -119,6 +119,7 @@ jails_start()
 		/sbin/kldload ${module} > /dev/null 2>&1
 	done
 
+	IFS="${saved_ifs}"
 	if [ -z "${jails}" ]
 	then
 		jails=$(jail_get|awk '{ print $1 }')
