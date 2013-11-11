@@ -24,10 +24,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
+from dojango import forms
 from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
 
 from freenasUI.freeadmin.apppool import appPool
+
+log = logging.getLogger('common.forms')
 
 
 def mchoicefield(form, field, default):
@@ -81,6 +86,20 @@ class ModelForm(AdvMixin, MF):
             row_ender=u'</td></tr>',
             help_text_html=u'<br />%s',
             errors_on_separate_row=False)
+
+    def clean(self, *args, **kwargs):
+        cdata = self.cleaned_data
+        """
+        Remove leading and trailing spaces from the fields
+        See #3252 for why
+        """
+        for fname, field in self.fields.items():
+            val = cdata.get(fname, None)
+            if val is None:
+                continue
+            if isinstance(field.widget, forms.widgets.ValidationTextInput):
+                cdata[fname] = val.strip()
+        return cdata
 
     def delete(self, request=None, events=None):
         self.instance.delete()
