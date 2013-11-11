@@ -789,7 +789,7 @@ class iSCSITargetAuthCredentialForm(ModelForm):
         help_text=_("Enter the same secret above for verification.")
     )
     iscsi_target_auth_peersecret2 = forms.CharField(
-        label=_("Initiator Secret (Confirm)"),
+        label=_("Peer Secret (Confirm)"),
         widget=forms.PasswordInput(render_value=True),
         help_text=_("Enter the same secret above for verification."),
         required=False,
