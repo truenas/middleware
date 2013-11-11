@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -43,6 +44,8 @@ from freenasUI.common.freenascache import (
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_Groups
 from freenasUI.common.system import get_sw_login_version, get_sw_name
 from freenasUI.freeadmin.views import JsonResp
+
+log = logging.getLogger('account.views')
 
 
 def home(request):
@@ -150,13 +153,15 @@ def login_wrapper(
     template_name='registration/login.html',
     redirect_field_name=REDIRECT_FIELD_NAME,
     authentication_form=AuthenticationForm,
-    current_app=None, extra_context={}
+    current_app=None, extra_context=None,
 ):
     """
     Wrapper to login to do not allow login and redirect to
     shutdown, reboot or logout pages,
     instead redirect to /
     """
+    if extra_context is None:
+        extra_context = {}
     extra_context.update({
         'sw_login_version': get_sw_login_version(),
         'sw_name': get_sw_name(),
@@ -164,6 +169,7 @@ def login_wrapper(
     qs = models.bsdUsers.objects.filter(bsdusr_uid=0).exclude(
         bsdusr_unixhash='*'
     )
+    log.error("hmmm %r", qs.exists())
     if not qs.exists():
         authentication_form = forms.NewPasswordForm
         extra_context.update({
