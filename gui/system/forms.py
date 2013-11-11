@@ -270,9 +270,9 @@ class SettingsForm(ModelForm):
                 address
             )
             if self.instance.stg_guiport != '' and protocol == 'http':
-                newurl += ":" + self.instance.stg_guiport
+                newurl += ":" + str(self.instance.stg_guiport)
             elif self.instance.stg_guihttpsport and protocol == 'https':
-                newurl += ":" + self.instance.stg_guihttpsport
+                newurl += ":" + str(self.instance.stg_guihttpsport)
             if self.instance._original_stg_guiprotocol == 'http':
                 notifier().start_ssl("nginx")
             events.append("restartHttpd('%s')" % newurl)
