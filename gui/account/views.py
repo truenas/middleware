@@ -169,7 +169,6 @@ def login_wrapper(
     qs = models.bsdUsers.objects.filter(bsdusr_uid=0).exclude(
         bsdusr_unixhash='*'
     )
-    log.error("hmmm %r", qs.exists())
     if not qs.exists():
         authentication_form = forms.NewPasswordForm
         extra_context.update({
