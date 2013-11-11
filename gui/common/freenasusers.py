@@ -97,6 +97,8 @@ def bsdUsers_objects(**kwargs):
 
         sql += ")"
 
+    sql += " ORDER BY bsdusr_builtin"
+
     results = c.execute(sql)
 
     objects = []
@@ -131,6 +133,8 @@ def bsdGroups_objects(**kwargs):
                 sql += " AND "
 
         sql += ")"
+
+    sql += " ORDER BY bsdgrp_builtin"
 
     results = c.execute(sql)
 
