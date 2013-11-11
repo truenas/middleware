@@ -97,7 +97,10 @@ class ModelForm(AdvMixin, MF):
             val = cdata.get(fname, None)
             if val is None:
                 continue
-            if isinstance(field.widget, forms.widgets.ValidationTextInput):
+            if (
+                isinstance(field.widget, forms.widgets.ValidationTextInput) and
+                isinstance(val, unicode)
+            ):
                 cdata[fname] = val.strip()
         return cdata
 
