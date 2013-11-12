@@ -271,7 +271,7 @@ class Volume(Model):
 
         # Django signal could have been used instead
         # Do it this way to make sure its ran in the time we want
-        self.post_delete(self)
+        self.post_delete()
 
         if self.vol_encryptkey:
             keyfile = self.get_geli_keyfile()
