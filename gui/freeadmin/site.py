@@ -163,6 +163,9 @@ class FreeAdminSite(object):
             url(r'^$',
                 wrap(self.adminInterface),
                 name='index'),
+            url(r'^help/$',
+                wrap(self.help),
+                name="freeadmin_help"),
             url(r'^menu\.json/$',
                 wrap(self.menu),
                 name="freeadmin_menu"),
@@ -224,6 +227,10 @@ class FreeAdminSite(object):
             'js_hook': appPool.get_base_js(request),
             'menu_hook': appPool.get_top_menu(request),
         })
+
+    @never_cache
+    def help(self, request):
+        return render(request, 'freeadmin/help.html', {})
 
     @never_cache
     def menu(self, request):
