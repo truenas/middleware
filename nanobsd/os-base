@@ -899,6 +899,7 @@ freenas_custom()
 	chown root:wheel ${NANO_WORLDDIR}/usr
 	find ${NANO_WORLDDIR} -type f -name "*~" -delete
 	find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
+	find ${NANO_WORLDDIR} -type f -name "*.service" -delete
 	mkdir ${NANO_WORLDDIR}/data/zfs
 	ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
 	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
@@ -907,8 +908,6 @@ freenas_custom()
 	# instead.
 	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
 	ln -s /usr/local/bin/ntfs-3g ${NANO_WORLDDIR}/sbin/mount_ntfs
-	AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
-	mkdir -m 0755 -p ${NANO_WORLDDIR}/$AVAHI_SERVICES_DIR
 
 	cp ${AVATAR_ROOT}/tools/migrate_pluginjail.sh \
 		${NANO_WORLDDIR}/root/migrate_pluginjail.sh
