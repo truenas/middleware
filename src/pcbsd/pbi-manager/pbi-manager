@@ -6400,8 +6400,8 @@ gen_bsdiffs_dirs() {
 		sha2=`sha256 -q "${2}/${line}"`
 		if [ "$sha1" != "$sha2" ] ; then
 			# These files differ, get a binary patch made of them
-			_tDir="${3}/`dirname $line`"
-			_bName=`basename $line`
+			_tDir="${3}/`dirname "$line"`"
+			_bName="`basename "$line"`"
 			if [ ! -d "$_tDir" ] ; then mkdir -p "$_tDir" ; fi
 			
 			bsdiff "${2}/${line}" "${1}/${line}" "${_tDir}/${_bName}.bsdiff"
