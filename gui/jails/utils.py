@@ -188,7 +188,7 @@ def get_jail_ipv4_network_start():
     try:
         jc = JailsConfiguration.objects.order_by("-id")[0]
         jail_ipv4_network_start = sipcalc_type("%s/%d" % (
-            jc.jc_ipv4_network_start,
+            jc.jc_ipv4_network_start.split('/')[0],
             jail_ipv4_network.network_mask_bits
         ))
 
@@ -205,7 +205,7 @@ def get_jail_ipv4_network_end():
     try:
         jc = JailsConfiguration.objects.order_by("-id")[0]
         jail_ipv4_network_end = sipcalc_type("%s/%d" % (
-            jc.jc_ipv4_network_end,
+            jc.jc_ipv4_network_end.split('/')[0],
             jail_ipv4_network.network_mask_bits
         ))
 
@@ -235,7 +235,7 @@ def get_jail_ipv6_network_start():
     try:
         jc = JailsConfiguration.objects.order_by("-id")[0]
         jail_ipv6_network_start = sipcalc_type("%s/%d" % (
-            jc.jc_ipv6_network_start,
+            jc.jc_ipv6_network_start.split('/')[0],
             jail_ipv6_network.prefix_length
         ))
 
@@ -252,7 +252,7 @@ def get_jail_ipv6_network_end():
     try:
         jc = JailsConfiguration.objects.order_by("-id")[0]
         jail_ipv6_network_end = sipcalc_type("%s/%d" % (
-            jc.jc_ipv6_network_end,
+            jc.jc_ipv6_network_end.split('/')[0],
             jail_ipv6_network.prefix_length
         ))
 
