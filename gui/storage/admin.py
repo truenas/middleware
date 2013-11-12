@@ -11,6 +11,7 @@ from freenasUI.api.resources import (
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
+from freenasUI.middleware.notifier import notifier
 from freenasUI.storage import models
 
 
@@ -80,7 +81,7 @@ class VolumeFAdmin(BaseFreeAdmin):
         'vol_encryptkey',
         )
 
-    def get_datagrid_context(self):
+    def get_datagrid_context(self, request):
         has_multipath = models.Disk.objects.exclude(
             disk_multipath_name='').exists()
         return {
@@ -363,6 +364,13 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
             }),
             request.GET.get('id'),
         )
+
+    def get_datagrid_context(self, request):
+        volume = models.Volume.objects.get(id=request.GET.get('id'))
+        pool = notifier().zpool_parse(volume.vol_name)
+        return {
+            'pool': pool,
+        }
 
     def get_datagrid_columns(self):
 

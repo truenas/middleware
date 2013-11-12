@@ -716,7 +716,7 @@ class BaseFreeAdmin(object):
             return HttpResponse(fsins.empty_form.as_table())
         return HttpResponse()
 
-    def get_datagrid_context(self):
+    def get_datagrid_context(self, request):
         return {}
 
     def get_datagrid_filters(self, request):
@@ -777,7 +777,7 @@ grid.on(".dgrid-row:dblclick", function(evt) {
                 'add_url': reverse('freeadmin_%s_%s_add' % info),
             })
 
-        context.update(self.get_datagrid_context())
+        context.update(self.get_datagrid_context(request=request))
 
         template = "%s/%s_datagrid.html" % info
         try:
