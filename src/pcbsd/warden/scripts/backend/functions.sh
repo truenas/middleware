@@ -308,11 +308,7 @@ umountjailxfs() {
 # Check if PBI scripts are loaded in jail
 checkpbiscripts() {
   if [ -z "${1}" ] ; then return ; fi
-  if [ ! -e "${1}/usr/local/sbin/pbi_info" ] ; then
-    copypbiscripts "${1}"
-  elif [ "`ls -l /usr/local/sbin/pbi_info | awk '{print $5}'`" != "`ls -l ${1}/usr/local/sbin/pbi_info | awk '{print $5}'`" ] ; then 
-    copypbiscripts "${1}"
-  fi
+  copypbiscripts "${1}"
 }
 
 # Copy PBI scripts to jail
@@ -340,10 +336,14 @@ copypbiscripts() {
   cp /usr/local/share/pcbsd/scripts/functions.sh ${1}/usr/local/share/pcbsd/scripts/functions.sh
 
   # Install PC-BSD PBI repo
-  cp /usr/local/share/pcbsd/distfiles/pcbsd.rpo ${1}/var/tmp/pcbsd.rpo
-  chroot "${1}" /usr/local/sbin/pbi_addrepo /var/tmp/pcbsd.rpo
-  chroot "${1}" chmod 755 /var/db/pbi/keys
-  chroot "${1}" /usr/local/sbin/pbi_info >/dev/null 2>&1
+  out="$(chroot "${1}" /usr/local/sbin/pbi_listrepo|tail +3)"
+  if [ -z "${out}" ]  
+  then
+    cp /usr/local/share/pcbsd/distfiles/pcbsd.rpo ${1}/var/tmp/pcbsd.rpo
+    chroot "${1}" /usr/local/sbin/pbi_addrepo /var/tmp/pcbsd.rpo
+    chroot "${1}" chmod 755 /var/db/pbi/keys
+    chroot "${1}" /usr/local/sbin/pbi_info >/dev/null 2>&1
+  fi
 }
 
 mkportjail() {

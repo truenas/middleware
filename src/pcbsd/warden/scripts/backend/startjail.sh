@@ -541,9 +541,11 @@ fi
 
 # Are we using VIMAGE, if so start it up!
 if [ "$VIMAGEENABLE" = "YES" ] ; then
+  checkpbiscripts "${JAILDIR}"
   start_jail_vimage
 else
   # Using a standard jail configuration
+  checkpbiscripts "${JAILDIR}"
   start_jail_standard
 fi
 
