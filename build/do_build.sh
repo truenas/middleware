@@ -549,6 +549,33 @@ do_extract_tarball_hack()
 	export NANO_LOCAL_DIRS
 }
 
+check_for_command_from_port()
+{
+   local COMMAND=$1
+   local PACKAGE=$2
+   local FOUND
+   local MSG
+
+   FOUND="$(command -v $COMMAND || echo '')"
+
+   if [ -z "$FOUND" ]; then
+       MSG="ERROR: $COMMAND not found."
+       if [ -n "$PACKAGE" ]; then
+           MSG="$MSG. Please install $PACKAGE package from ports."
+       fi
+       printf "\n$MSG\n\n"
+       exit 1
+   fi 
+}
+
+check_build_tools()
+{
+	check_for_command_from_port mkisofs devel/cdrutils
+	check_for_command_from_port git devel/git
+	check_for_command_from_port pxz archivers/pxz
+	check_for_command_from_port xz archivers/xz
+}
+
 main()
 {
 	parse_cmdline "$@"
@@ -580,6 +607,8 @@ main()
     # Do extra checks to make sure the build will succeed.
     #
     check_build_sanity
+
+	check_build_tools
 
 	#
 	# Expand targets to their full path in the file system
