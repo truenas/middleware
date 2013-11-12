@@ -1,0 +1,129 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-avahi
+# BEFORE: avahi_daemon
+
+. /etc/rc.subr
+
+multi_service="/usr/local/etc/avahi/services/multi.service"
+
+generate_config()
+{
+
+afp=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'afp'")
+cifs=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'cifs'")
+nfs=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")
+ssh=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'ssh'")
+web=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guiprotocol FROM system_settings ORDER BY -id LIMIT 1")
+http=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guiport FROM system_settings ORDER BY -id LIMIT 1")
+if [ -z ${http} ]; then
+	http="80"
+fi
+
+https=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guihttpsport FROM system_settings ORDER BY -id LIMIT 1")
+if [ -z ${https} ]; then
+	https="443"
+fi
+
+cat > "$multi_service" <<EOF
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">%h</name>
+  <service>
+    <type>_device-info._tcp</type>
+    <port>0</port>
+    <txt-record>model=RackMac</txt-record>
+  </service>
+EOF
+
+if [ $afp -eq 1 ]; then
+    cat >> "$multi_service" <<EOF
+  <service>
+    <type>_afpovertcp._tcp</type>
+    <port>548</port>
+  </service>
+EOF
+fi
+
+if [ $cifs -eq 1 ]; then
+    cat >> "$multi_service" <<EOF
+  <service>
+      <type>_smb._tcp</type>
+      <port>445</port>
+  </service>
+EOF
+fi
+
+if [ $nfs -eq 1 ]; then
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path FROM sharing_nfs_share_path" | \
+        while read -r path; do
+            cat >> "$multi_service" <<EOF
+  <service>
+    <type>_nfs._tcp</type>
+    <port>2049</port>
+    <txt-record>path=${path}</txt-record>
+  </service>
+EOF
+    	done
+fi
+
+if [ $ssh -eq 1 ]; then
+    cat >> "$multi_service" <<EOF
+  <service>
+    <type>_sftp-ssh._tcp</type>
+    <port>22</port>
+  </service>
+  <service>
+    <type>_ssh._tcp</type>
+    <port>22</port>
+  </service>
+EOF
+fi
+
+if [ $web = "http" ]; then
+    cat >> "$multi_service" <<EOF
+  <service>
+    <type>_http._tcp</type>
+    <port>${http}</port>
+  </service>
+EOF
+fi
+
+if [ $web = "https" ]; then
+    cat >> "$multi_service" <<EOF
+  <service>
+    <type>_https._tcp</type>
+    <port>${https}</port>
+  </service>
+EOF
+fi
+
+if [ $web = "httpshttp" ]; then
+    cat >> "$multi_service" <<EOF
+  <service>
+    <type>_http._tcp</type>
+    <port>${http}</port>
+  </service>
+  <service>
+    <type>_https._tcp</type>
+    <port>${https}</port>
+  </service>
+EOF
+fi
+
+cat >> "$multi_service" <<EOF
+</service-group>
+EOF
+
+}
+
+name="ix_avahi"
+start_cmd='generate_config'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
