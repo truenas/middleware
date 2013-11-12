@@ -2,12 +2,12 @@
 {% block form %}
     <tr>
         <td>
-        {% if scrub == 'IN_PROGRESS' %}
+        {% if scrub.status == 'IN_PROGRESS' %}
         {{ volume.vol_name }}: {% trans "Scrub is currently running! Are you sure you want to STOP the scrub process?" %}
         {% else %}
         {{ volume.vol_name }}: {% trans "Are you sure you want to scrub?" %}<br />{% trans "This will increase system overhead while in progress" %}
         {% endif %}
-        <input data-dojo-type="dijit.form.TextBox" data-dojo-props="type: 'hidden', name: 'scrub', value: '{{ scrub|force_escape|force_escape }}'" type="hidden" />
+        <input data-dojo-type="dijit.form.TextBox" data-dojo-props="type: 'hidden', name: 'scrub', value: '{{ scrub.status|escapejs }}'" type="hidden" />
         </td>
     </tr>
 {% endblock %}

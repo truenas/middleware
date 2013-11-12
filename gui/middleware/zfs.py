@@ -589,15 +589,55 @@ class Snapshot(object):
 
 def parse_status(name, doc, data):
 
-    scrub = re.search(r'scrub: (.+)$', data, re.M)
-    if scrub:
-        scrub = scrub.group(1)
-        if scrub.find('in progress') != -1:
-            scrub = 'IN_PROGRESS'
-        elif scrub.find('completed') != -1:
-            scrub = 'COMPLETED'
+    """
+    Parse the scrub statistics from zpool status
+    The scrub is within scan: tag and may have multiple lines
+    """
+    scan = re.search(r'scan: (scrub.+?)\b[a-z]+:', data, re.M|re.S)
+    if scan:
+        scan = scan.group(1)
+        scrub = {}
+        if scan.find('in progress') != -1:
+            scrub.update({
+                'progress': None,
+                'repaired': None,
+                'scanned': None,
+                'total': None,
+                'togo': None,
+            })
+            scrub_status = 'IN_PROGRESS'
+            reg = re.search(r'(\S+)% done', scan)
+            if reg:
+                scrub['progress'] = Decimal(reg.group(1))
+
+            reg = re.search(r'(\S+) repaired,', scan)
+            if reg:
+                scrub['repaired'] = reg.group(1)
+
+            reg = re.search(r'(\S+) scanned out of (\S+),', scan)
+            if reg:
+                scrub['scanned'] = reg.group(1)
+                scrub['total'] = reg.group(2)
+
+            reg = re.search(r'(\S+) to go', scan)
+            if reg:
+                scrub['togo'] = reg.group(1)
+
+        elif scan.find('scrub repaired') != -1:
+            scrub.update({
+                'repaired': None,
+            })
+            scrub_status = 'COMPLETED'
+            reg = re.search(r'repaired (\S+) in', scan)
+            if reg:
+                scrub['repaired'] = reg.group(1)
+
+        elif scan.find('scrub canceled') != -1:
+            scrub_status = 'CANCELED'
+
         else:
-            scrub = 'UNKNOWN'
+            scrub_status = 'UNKNOWN'
+        scrub['status'] = scrub_status
     else:
         scrub = None
 
