@@ -33,7 +33,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.tree import TreeNode
 from freenasUI.jails.models import (
     Jails,
-    JailsConfiguration,
     NullMountPoint
 )
 from freenasUI.jails.utils import jail_path_configured
@@ -54,6 +53,7 @@ BLACKLIST = [
     'JailTemplate',
     'NullMountPoint'
 ]
+ORDER = 70
 
 O_ADDJAIL = 0
 O_ADDJAILTEMPLATE = 1
@@ -61,6 +61,7 @@ O_VIEWJAIL = 2
 O_VIEWJAILTEMPLATE = 3
 O_JAILSCONFIGURATION = 4
 O_INDEX = 5
+
 
 class AddJail(TreeNode):
     global O_ADDJAIL
@@ -270,5 +271,3 @@ class Base(object):
         storage_node_add.app_name = 'jails'
 
         return storage_node_add
-
-

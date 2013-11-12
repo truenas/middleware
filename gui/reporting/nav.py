@@ -4,3 +4,4 @@ NAME = _('Reporting')
 ICON = u'ReportingIcon'
 TYPE = 'viewmodel'
 URL = 'reporting_index'
+ORDER = 80

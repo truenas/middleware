@@ -1,17 +1,11 @@
+import logging
+
 from django.utils.translation import ugettext_lazy as _
 
-from . import models
-from freenasUI.middleware.notifier import notifier
 from freenasUI.freeadmin.tree import TreeNode
-from freenasUI.services.directoryservice import DirectoryService
-from freenasUI.services.models import (
-    ActiveDirectory,
-    NT4,
-    NIS,
-    LDAP
-)
-    
-import logging
+#from freenasUI.services.directoryservice import DirectoryService
+from freenasUI.services.models import ActiveDirectory, NT4, NIS, LDAP
+
 log = logging.getLogger('services.nav')
 
 NAME = _('Services')
@@ -25,6 +19,7 @@ BLACKLIST = [
     'NIS',
     'LDAP'
 ]
+ORDER = 40
 
 
 class EnDisServices(TreeNode):
@@ -113,6 +108,7 @@ class RsyncModView(TreeNode):
     icon = u'ViewAllrsyncModIcon'
     append_to = 'services.Rsync.RsyncMod'
 
+
 class DirectoryServiceView(TreeNode):
 
     gname = 'Directory Services'
@@ -138,7 +134,7 @@ class DirectoryServiceView(TreeNode):
 
         try:
             ad = ActiveDirectory.objects.order_by("-id")[0]
-            ad_node.kwargs = { 'oid': ad.id }
+            ad_node.kwargs = {'oid': ad.id}
             ad_node.type = 'editobject'
             ad_node.view = 'freeadmin_services_activedirectory_edit'
 
@@ -157,7 +153,7 @@ class DirectoryServiceView(TreeNode):
 
         try:
             nt4 = NT4.objects.order_by("-id")[0]
-            nt4_node.kwargs = { 'oid': nt4.id }
+            nt4_node.kwargs = {'oid': nt4.id}
             nt4_node.type = 'editobject'
             nt4_node.view = 'freeadmin_services_nt4_edit'
 
@@ -176,7 +172,7 @@ class DirectoryServiceView(TreeNode):
 
         try:
             nis = NIS.objects.order_by("-id")[0]
-            nis_node.kwargs = { 'oid': nis.id }
+            nis_node.kwargs = {'oid': nis.id}
             nis_node.type = 'editobject'
             nis_node.view = 'freeadmin_services_nis_edit'
 
@@ -195,7 +191,7 @@ class DirectoryServiceView(TreeNode):
 
         try:
             ldap = LDAP.objects.order_by("-id")[0]
-            ldap_node.kwargs = { 'oid': ldap.id }
+            ldap_node.kwargs = {'oid': ldap.id}
             ldap_node.type = 'editobject'
             ldap_node.view = 'freeadmin_services_ldap_edit'
 

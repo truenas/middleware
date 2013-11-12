@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 BLACKLIST = ['Email', 'Advanced', 'Settings', 'SSL', 'Registration']
 NAME = _('System')
 ICON = u'SystemIcon'
+ORDER = 1
 
 
 class Info(TreeNode):

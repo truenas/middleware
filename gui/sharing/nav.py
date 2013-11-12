@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 NAME = _('Sharing')
 BLACKLIST = ['NFS_Share_Path']
 ICON = u'SharingIcon'
+ORDER = 30
 
 
 class ViewUNIX(TreeNode):

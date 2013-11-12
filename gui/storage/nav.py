@@ -5,6 +5,7 @@ import models
 NAME = _('Storage')
 BLACKLIST = ['Disk', 'ReplRemote', 'Volume', 'MountPoint']
 ICON = u'StorageIcon'
+ORDER = 20
 
 
 class ViewRemote(TreeNode):

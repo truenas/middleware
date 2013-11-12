@@ -6,6 +6,7 @@ import models
 NAME = _('Network')
 ICON = u'NetworkIcon'
 BLACKLIST = ['LAGGInterfaceMembers', 'Alias', 'LAGGInterface']
+ORDER = 10
 
 
 class NetSummary(TreeNode):

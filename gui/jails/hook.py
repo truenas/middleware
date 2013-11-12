@@ -13,6 +13,6 @@ class JailsHook(AppHook):
                 'name': _('Jails'),
                 'icon': 'images/ui/menu/jails.png',
                 'onclick': 'Menu.openJails();',
-                'weight': 0,
+                'weight': 5,
             },
         ]

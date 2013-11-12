@@ -34,3 +34,4 @@ BLACKLIST = [
     'Configuration',
 ]
 TYPE = 'openplugins'
+ORDER = 60

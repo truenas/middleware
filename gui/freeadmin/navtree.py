@@ -326,6 +326,9 @@ class NavTree(object):
         if hasattr(modnav, 'TYPE'):
             nav.type = modnav.TYPE
 
+        if hasattr(modnav, 'ORDER'):
+            nav.order = modnav.ORDER
+
         if hasattr(modnav, 'HIDE'):
             nav.skip = modnav.HIDE
 
