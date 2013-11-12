@@ -2461,6 +2461,8 @@ class notifier:
         from freenasUI.jails.models import JailsConfiguration
         ret = False
 
+        sys.path.append('/usr/local/sbin')
+
         open('/tmp/.plugin_upload_install', 'w+').close()
 
         if not pjail:
@@ -2673,6 +2675,8 @@ class notifier:
         from freenasUI.jails.models import JailsConfiguration
         from freenasUI.services.models import RPCToken
         ret = False
+
+        sys.path.append('/usr/local/sbin')
 
         log.debug("XXX: update_pbi: starting")
 
