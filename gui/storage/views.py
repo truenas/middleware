@@ -719,9 +719,10 @@ def zpool_scrub(request, vid):
     if request.method == "POST":
         if request.POST.get("scrub") == 'IN_PROGRESS':
             notifier().zfs_scrub(str(volume.vol_name), stop=True)
+            return JsonResp(request, message=_("The scrub process has stopped"))
         else:
             notifier().zfs_scrub(str(volume.vol_name))
-        return JsonResp(request, message=_("The scrub process has begun"))
+            return JsonResp(request, message=_("The scrub process has begun"))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
