@@ -606,6 +606,7 @@ def parse_status(name, doc, data):
                 'togo': None,
             })
             scrub_status = 'IN_PROGRESS'
+            scrub_statusv = _('In Progress')
             reg = re.search(r'(\S+)% done', scan)
             if reg:
                 scrub['progress'] = Decimal(reg.group(1))
@@ -614,7 +615,7 @@ def parse_status(name, doc, data):
             if reg:
                 scrub['repaired'] = reg.group(1)
 
-            reg = re.search(r'(\S+) scanned out of (\S+),', scan)
+            reg = re.search(r'(\S+) scanned out of (\S+)', scan)
             if reg:
                 scrub['scanned'] = reg.group(1)
                 scrub['total'] = reg.group(2)
@@ -626,20 +627,33 @@ def parse_status(name, doc, data):
         elif scan.find('scrub repaired') != -1:
             scrub.update({
                 'repaired': None,
+                'errors': None,
             })
             scrub_status = 'COMPLETED'
+            scrub_statusv = _('Completed')
+            reg = re.search(r'with (\S+) errors', scan)
+            if reg:
+                scrub['errors'] = reg.group(1)
+
             reg = re.search(r'repaired (\S+) in', scan)
             if reg:
                 scrub['repaired'] = reg.group(1)
 
         elif scan.find('scrub canceled') != -1:
             scrub_status = 'CANCELED'
+            scrub_statusv = _('Canceled')
 
         else:
             scrub_status = 'UNKNOWN'
+            scrub_statusv = _('Unknown')
+
         scrub['status'] = scrub_status
+        scrub['status_verbose'] = scrub_statusv
     else:
-        scrub = None
+        scrub = {
+            'status': 'NONE',
+            'status_verbose': 'None requested',
+        }
 
     status = data.split('config:')[1]
     pid = re.search(r'id: (?P<id>\d+)', data)
