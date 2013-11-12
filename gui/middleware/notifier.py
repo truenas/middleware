@@ -2461,7 +2461,8 @@ class notifier:
         from freenasUI.jails.models import JailsConfiguration
         ret = False
 
-        sys.path.append('/usr/local/sbin')
+        if '/usr/local/sbin' not in sys.path:
+            sys.path.append('/usr/local/sbin')
 
         open('/tmp/.plugin_upload_install', 'w+').close()
 
@@ -2676,7 +2677,8 @@ class notifier:
         from freenasUI.services.models import RPCToken
         ret = False
 
-        sys.path.append('/usr/local/sbin')
+        if '/usr/local/sbin' not in sys.path:
+            sys.path.append('/usr/local/sbin')
 
         log.debug("XXX: update_pbi: starting")
 
