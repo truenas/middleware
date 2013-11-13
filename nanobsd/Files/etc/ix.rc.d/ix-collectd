@@ -28,6 +28,7 @@ PluginDir "/usr/local/lib/collectd"
 LoadPlugin aggregation
 LoadPlugin cpu
 LoadPlugin df
+LoadPlugin disk
 LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
@@ -50,6 +51,12 @@ LoadPlugin uptime
 <Plugin "interface">
     Interface "lo0"
     Interface "plip0"
+    IgnoreSelected true
+</Plugin>
+
+<Plugin "disk">
+    Disk "/^gptid/"
+    Disk "/^md/"
     IgnoreSelected true
 </Plugin>
 
