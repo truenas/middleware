@@ -83,13 +83,140 @@ def ping_host(host, ping6=False):
 
 
 #
+# get_ipv4_exclude_list()
+#
+# Get a dictionary of all IPv4 addresses currently in use by the warden,
+# even if the jail is not running so we can skip over them when probing
+# for an address.
+#
+def get_ipv4_exclude_dict():
+    ipv4_exclude_dict = {}
+
+    w = warden.Warden()
+    jails = w.list()
+    for j in jails:
+        mask = 24
+        if j['ipv4']:
+            print 'foo'
+            parts = j['ipv4'].split('/')
+            if len(parts) == 2:
+                mask = int(parts[1])
+            sc = sipcalc_type("%s/%d" % (
+                parts[0],
+                mask
+            ))
+            ipv4_exclude_dict[str(sc)] = sc
+
+        if j['bridge_ipv4']:
+            parts = j['ipv4'].split('/')
+            if len(parts) == 2:
+                mask = int(parts[1])
+            sc = sipcalc_type("%s/%d" % (
+                parts[0],
+                mask
+            ))
+            ipv4_exclude_dict[str(sc)] = sc
+
+        if j['alias_ipv4']:
+            amask = mask  
+            aliases = j['alias_ipv4'].split(',')
+            for a in aliases:
+                parts = a.split('/')
+                if len(parts) == 2:
+                    amask = int(parts[1])
+                sc = sipcalc_type("%s/%d" % (
+                    parts[0],
+                    amask  
+                ))
+                ipv4_exclude_dict[str(sc)] = sc
+
+        if j['alias_bridge_ipv4']:
+            amask = mask  
+            aliases = j['alias_bridge_ipv4'].split(',')
+            for a in aliases:
+                parts = a.split('/')
+                if len(parts) == 2:
+                    amask = int(parts[1])
+                sc = sipcalc_type("%s/%d" % (
+                    parts[0],
+                    amask  
+                ))
+                ipv4_exclude_dict[str(sc)] = sc
+
+    return ipv4_exclude_dict
+
+
+#
+# get_ipv6_exclude_list()
+#
+# Get a dictionary of all IPv6 addresses currently in use by the warden,
+# even if the jail is not running so we can skip over them when probing
+# for an address.
+#
+def get_ipv6_exclude_dict():
+    ipv6_exclude_dict = {}
+
+    w = warden.Warden()
+    jails = w.list()
+    for j in jails:
+        prefix = 24
+        if j['ipv6']:
+            parts = j['ipv6'].split('/')
+            if len(parts) == 2:
+                prefix = int(parts[1])
+            sc = sipcalc_type("%s/%d" % (
+                parts[0],
+                prefix 
+            ))
+            ipv6_exclude_dict[str(sc)] = sc
+
+        if j['bridge_ipv6']:
+            parts = j['ipv6'].split('/')
+            if len(parts) == 2:
+                prefix = int(parts[1])
+            sc = sipcalc_type("%s/%d" % (
+                parts[0],
+                prefix 
+            ))
+            ipv6_exclude_dict[str(sc)] = sc
+
+        if j['alias_ipv6']:
+            aprefix = prefix
+            aliases = j['alias_ipv6'].split(',')
+            for a in aliases:
+                parts = a.split('/')
+                if len(parts) == 2:
+                    aprefix = int(parts[1])
+                sc = sipcalc_type("%s/%d" % (
+                    parts[0],
+                    aprefix
+                ))
+                ipv6_exclude_dict[str(sc)] = sc
+
+        if j['alias_bridge_ipv6']:
+            aprefix = prefix
+            aliases = j['alias_bridge_ipv6'].split(',')
+            for a in aliases:
+                parts = a.split('/')
+                if len(parts) == 2:
+                    aprefix = int(parts[1])
+                sc = sipcalc_type("%s/%d" % (
+                    parts[0],
+                    aprefix
+                ))
+                ipv6_exclude_dict[str(sc)] = sc
+
+    return ipv6_exclude_dict
+
+
+#
 # get_available_ipv4()
 #
 # Find an IPv4 address in a given range. If no end address
 # is provided, use the netmask to determine how many addresses
 # to probe. If not netmask is provided, assume /24.
 #
-def get_available_ipv4(ipv4_start, ipv4_end=None):
+def get_available_ipv4(ipv4_start, ipv4_end=None, ipv4_exclude_dict=None):
     available_ipv4 = None
     addr = ipv4_start
 
@@ -112,9 +239,14 @@ def get_available_ipv4(ipv4_start, ipv4_end=None):
     while i <= naddrs:
         if not addr:
             break
+ 
+        if ipv4_exclude_dict and str(addr) in ipv4_exclude_dict:
+            addr += 1
+            continue
 
         if ping_host(str(addr).split('/')[0]):
             addr += 1
+            continue
 
         else:
             available_ipv4 = addr
@@ -132,7 +264,7 @@ def get_available_ipv4(ipv4_start, ipv4_end=None):
 # is provided, use the prefix to determine how many addresses
 # to probe. If not prefix is provided, assume /64.
 #
-def get_available_ipv6(ipv6_start, ipv6_end=None):
+def get_available_ipv6(ipv6_start, ipv6_end=None, ipv6_exclude_dict=None):
     available_ipv6 = None
     addr = ipv6_start
 
@@ -156,8 +288,13 @@ def get_available_ipv6(ipv6_start, ipv6_end=None):
         if not addr:
             break
 
+        if ipv6_exclude_dict and str(addr) in ipv6_exclude_dict:
+            addr += 1
+            continue
+
         if ping_host(str(addr).split('/')[0], ping6=True):
             addr += 1
+            continue
 
         else:
             available_ipv6 = addr
@@ -287,7 +424,10 @@ def guess_ipv4_address():
                 st_ipv4_network.network_mask_bits
             ))  
 
-        ipv4_addr = get_available_ipv4(st_ipv4_network_start, st_ipv4_network_end)
+        ipv4_addr = get_available_ipv4(st_ipv4_network_start,
+            st_ipv4_network_end, 
+            get_ipv4_exclude_dict()
+        )
 
     return ipv4_addr
 
@@ -317,8 +457,10 @@ def guess_ipv6_address():
                 st_ipv6_network.prefix_length
             ))  
 
-        ipv6_addr = get_available_ipv6(st_ipv6_network_start, st_ipv6_network_end)
-        addresses['high_ipv6'] = ipv6_addr
+        ipv6_addr = get_available_ipv6(st_ipv6_network_start,
+            st_ipv6_network_end,
+            get_ipv6_exclude_dict()
+        )
 
     return ipv4_addr
 
