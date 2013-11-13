@@ -102,7 +102,7 @@ if [ $web = "https" ]; then
 EOF
 fi
 
-if [ $web = "httpshttp" ]; then
+if [ $web = "httphttps" ]; then
     cat >> "$multi_service" <<EOF
   <service>
     <type>_http._tcp</type>
