@@ -449,7 +449,7 @@ class FreeNAS_NT4_Groups(FreeNAS_NT4):
             else:
                 log.debug("FreeNAS_NT4_Groups.__get_groups: "
                     "NT4 [%s] groups not in cache", d)
-                nt4_groups = self.get_groups()
+                nt4_groups = self.get_groups(domain=d)
 
             for g in nt4_groups:
                 sAMAccountName = g['sAMAccountName']
