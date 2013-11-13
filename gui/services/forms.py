@@ -171,7 +171,7 @@ class CIFSForm(ModelForm):
 
     def save(self):
         super(CIFSForm, self).save()
-        started = notifier().reload("cifs")
+        started = notifier().restart("cifs")
         if (
             started is False
             and
