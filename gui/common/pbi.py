@@ -287,9 +287,9 @@ PBI_UPDATE_HASHDIR = os.path.join(PBI_PATH, "pbi_update_hashdir")
 
 
 PBID = os.path.join(PBI_PATH, "pbid")
-PBI_FLAGS_REFRESH = pbi_arg(0x00000001, "--refresh")
+PBID_FLAGS_REFRESH = pbi_arg(0x00000001, "--refresh")
 PBID_FLAGS = [
-    PBI_FLAGS_REFRESH
+    PBID_FLAGS_REFRESH
 ]
 
 
