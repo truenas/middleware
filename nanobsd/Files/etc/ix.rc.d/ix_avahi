@@ -63,7 +63,7 @@ if [ $nfs -eq 1 ]; then
   <service>
     <type>_nfs._tcp</type>
     <port>2049</port>
-    EOF
+EOF
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path FROM sharing_nfs_share_path" | \
         while read -r path; do
             echo "    <txt-record>path=${path}</txt-record>" >> "$multi_service"
