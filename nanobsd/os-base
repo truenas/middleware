@@ -399,7 +399,7 @@ fi
 add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
-if ! is_truenas ; then
+if is_truenas ; then
 	add_port sysutils/sg3_utils
 fi
 add_port graphics/jpeg
