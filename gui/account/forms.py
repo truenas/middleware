@@ -437,10 +437,18 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             self.bsdusr_home_copy = False
 
         elif self.instance.id:
-            del self.fields['bsdusr_to_group']
-            del self.fields['bsdusr_password']
-            if self._api is False:
-                del self.fields['bsdusr_password2']
+            user = models.bsdUsers.objects.get(id=self.instance.id)
+            self.fields['bsdusr_to_group'].choices = [
+                (x.id, x.bsdgrp_group)
+                for x in models.bsdGroups.objects.all()
+            ]
+            self.fields['bsdusr_to_group'].initial = [
+                x.bsdgrpmember_group.id
+                for x in models.bsdGroupMembership.objects.filter(
+                    bsdgrpmember_user=self.instance.id
+                )
+            ]
+
             del self.fields['bsdusr_creategroup']
             self.fields['bsdusr_group'].initial = self.instance.bsdusr_group
             self.advanced_fields = []
@@ -675,17 +683,36 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             bsduser.bsdusr_builtin = False
             bsduser.save()
 
-            models.bsdGroupMembership.objects.filter(
-                bsdgrpmember_user=bsduser).delete()
-            groupid_list = self.cleaned_data['bsdusr_to_group']
-            for groupid in groupid_list:
-                group = models.bsdGroups.objects.get(id=groupid)
-                m = models.bsdGroupMembership(
-                    bsdgrpmember_group=group,
-                    bsdgrpmember_user=bsduser)
-                m.save()
         else:
             bsduser = super(bsdUsersForm, self).save(commit=True)
+
+            #
+            # Check if updating password
+            #
+            bsdusr_password = self.cleaned_data.get("bsdusr_password", "")
+            bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
+            if bsdusr_password and (bsdusr_password == bsdusr_password2):
+                unixhash, smbhash = _notifier.user_changepassword(
+                    username=str(bsduser.bsdusr_username),
+                    password=str(bsdusr_password),
+                )
+                bsduser.bsdusr_unixhash = unixhash
+                bsduser.bsdusr_smbhash = smbhash
+                bsduser.save()
+
+        #
+        # Check if updating group membership
+        #
+        models.bsdGroupMembership.objects.filter(
+            bsdgrpmember_user=bsduser
+        ).delete()
+        groupid_list = self.cleaned_data['bsdusr_to_group']
+        for groupid in groupid_list:
+            group = models.bsdGroups.objects.get(id=groupid)
+            m = models.bsdGroupMembership(
+                bsdgrpmember_group=group,
+                bsdgrpmember_user=bsduser)
+            m.save()
 
         _notifier.reload("user")
         if self.bsdusr_home_copy:
