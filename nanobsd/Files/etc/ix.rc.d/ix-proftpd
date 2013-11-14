@@ -94,7 +94,7 @@ generate_proftp()
 #XXX missing: ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
     local ftp_chrooteveryone=0 ftp_mod_ban=0 ftp_banner
 #XXX unused: ftp_chrooteveryone
-    local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_tls ftp_anonpath"
+    local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_tls ftp_tls_policy ftp_tls_opt_allow_client_renegotiations ftp_tls_opt_allow_dot_login ftp_tls_opt_allow_per_user ftp_tls_opt_common_name_required ftp_tls_opt_enable_diags ftp_tls_opt_export_cert_data ftp_tls_opt_no_cert_request ftp_tls_opt_no_empty_fragments ftp_tls_opt_no_session_reuse_required ftp_tls_opt_stdenvvars ftp_tls_opt_use_implicit_ssl ftp_tls_opt_dns_name_required ftp_tls_opt_ip_address_required ftp_anonpath"
     eval local $f
     local sf=$(var_to_sf $f)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
@@ -202,16 +202,32 @@ $(bool_on ${ftp_resume} "  AllowStoreRestart on")
 EOF
 
 	if [ ${ftp_tls} -gt 0 ]; then
+tls_options="\
+$(ifnz ${ftp_tls_opt_allow_client_renegotiations} "AllowClientRenegotiations") \
+$(ifnz ${ftp_tls_opt_allow_dot_login} "AllowDotLogin") \
+$(ifnz ${ftp_tls_opt_allow_per_user} "AllowPerUser") \
+$(ifnz ${ftp_tls_opt_common_name_required} "CommonNameRequired") \
+$(ifnz ${ftp_tls_opt_enable_diags} "EnableDiags") \
+$(ifnz ${ftp_tls_opt_export_cert_data} "ExportCertData") \
+$(ifnz ${ftp_tls_opt_no_cert_request} "NoCertRequest") \
+$(ifnz ${ftp_tls_opt_no_empty_fragments} "NoEmptyFragments") \
+$(ifnz ${ftp_tls_opt_no_session_reuse_required} "NoSessionReuseRequired") \
+$(ifnz ${ftp_tls_opt_stdenvvars} "StdEnvVars") \
+$(ifnz ${ftp_tls_opt_use_implicit_ssl} "UseImplicitSSL") \
+$(ifnz ${ftp_tls_opt_dns_name_required} "dNSNameRequired") \
+$(ifnz ${ftp_tls_opt_ip_address_required} "iPAddressRequired")"
+tls_options="TLSOptions $(echo ${tls_options}|sed -E 's|( +)| |g')"
+
 	    cat <<EOF >> ${proftpd_config}
 LoadModule mod_tls.c
 <IfModule mod_tls.c>
   TLSEngine on
   TLSProtocol ${proftpd_tlsprotocol}
-  TLSOptions ${proftpd_tlsoptions}
+  ${tls_options}
   TLSRSACertificateFile ${proftpd_tlsrsacertfile}
   TLSRSACertificateKeyFile ${proftpd_tlsrsakeyfile}
   TLSVerifyClient ${proftpd_tlsverifyclient}
-  TLSRequired ${proftpd_tlsrequired}
+  TLSRequired ${ftp_tls_policy}
 </IfModule>
 EOF
 	fi

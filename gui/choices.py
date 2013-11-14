@@ -696,3 +696,17 @@ SUPPORT_TYPE_CHOICES = (
     ('type5', _('type5')),
     )
 
+
+# on|off|ctrl|[!]data|auth|auth+[!]data
+FTP_TLS_POLICY_CHOICES = (
+    ('on', _('on')),
+    ('off', _('off')),
+    ('data', _('data')),
+    ('!data', _('!data')),
+    ('auth', _('auth')),
+    ('ctrl', _('ctrl')),
+    ('ctrl+data', _('ctrl+data')),
+    ('ctrl+!data', _('ctrl+!data')),
+    ('auth+data', _('auth+data')),
+    ('auth+!data', _('auth+!data'))
+)

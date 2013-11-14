@@ -1183,6 +1183,64 @@ class FTP(Model):
             )
     ftp_tls = models.BooleanField(
             verbose_name=_("Enable TLS"))
+    ftp_tls_policy = models.CharField(
+            max_length=120,
+            choices=choices.FTP_TLS_POLICY_CHOICES,
+            default="on",
+            verbose_name=_("TLS policy")
+            )
+    ftp_tls_opt_allow_client_renegotiations = models.BooleanField(
+            verbose_name=_("TLS allow client renegotiations"),
+            default=False
+            )
+    ftp_tls_opt_allow_dot_login = models.BooleanField(
+            verbose_name=_("TLS allow dot login"),
+            default=False
+            )
+    ftp_tls_opt_allow_per_user = models.BooleanField(
+            verbose_name=_("TLS allow per user"),
+            default=False
+            )
+    ftp_tls_opt_common_name_required = models.BooleanField(
+            verbose_name=_("TLS common name required"),
+            default=False
+            )
+    ftp_tls_opt_enable_diags = models.BooleanField(
+            verbose_name=_("TLS enable diagnostics"),
+            default=False
+            )
+    ftp_tls_opt_export_cert_data = models.BooleanField(
+            verbose_name=_("TLS export certificate data"),
+            default=False
+            )
+    ftp_tls_opt_no_cert_request = models.BooleanField(
+            verbose_name=_("TLS no certificate request"),
+            default=False
+            )
+    ftp_tls_opt_no_empty_fragments = models.BooleanField(
+            verbose_name=_("TLS no empty fragments"),
+            default=False
+            )
+    ftp_tls_opt_no_session_reuse_required = models.BooleanField(
+            verbose_name=_("TLS no session reuse required"),
+            default=False
+            )
+    ftp_tls_opt_stdenvvars = models.BooleanField(
+            verbose_name=_("TLS export standard vars"),
+            default=False
+            )
+    ftp_tls_opt_use_implicit_ssl = models.BooleanField(
+            verbose_name=_("TLS use implicit SSL"),
+            default=False
+            )
+    ftp_tls_opt_dns_name_required = models.BooleanField(
+            verbose_name=_("TL DNS name requiredS"),
+            default=False
+            )
+    ftp_tls_opt_ip_address_required = models.BooleanField(
+            verbose_name=_("TLS IP address required"),
+            default=False
+            )
     ftp_ssltls_certfile = models.TextField(
             verbose_name=_("Certificate and private key"),
             blank=True,
