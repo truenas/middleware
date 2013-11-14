@@ -59,16 +59,16 @@ EOF
 fi
 
 if [ $nfs -eq 1 ]; then
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path FROM sharing_nfs_share_path" | \
-        while read -r path; do
-            cat >> "$multi_service" <<EOF
+    cat >> "$multi_service" <<EOF
   <service>
     <type>_nfs._tcp</type>
     <port>2049</port>
-    <txt-record>path=${path}</txt-record>
-  </service>
-EOF
+    EOF
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path FROM sharing_nfs_share_path" | \
+        while read -r path; do
+            echo "    <txt-record>path=${path}</txt-record>" >> "$multi_service"
     	done
+    echo "  </service>" >> "$multi_service"
 fi
 
 if [ $ssh -eq 1 ]; then

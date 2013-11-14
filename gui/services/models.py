@@ -229,12 +229,6 @@ class CIFS(Model):
 
 
 class AFP(Model):
-    afp_srv_name = models.CharField(
-            max_length=120,
-            verbose_name=_("Server Name"),
-            help_text=_("Name of the server. If this field is left empty the "
-                "default server is specified.")
-            )
     afp_srv_guest = models.BooleanField(
             verbose_name=_("Guest Access"),
             help_text=_("Allows guest access to all apple shares on this box.")
