@@ -4,6 +4,7 @@ import os
 import platform
 import requests
 import re
+import time
 import urllib2
 
 from django.utils.translation import ugettext as _
@@ -348,6 +349,86 @@ class Available(object):
 
         return None
 
+    #
+    # get_icon_count()
+    #
+    # This will get the count of the number of icons pbid has in it's
+    # database at this point. This method is for determinging the 
+    # the number of available icons prior to pbi_browser being 
+    # available (A newly installed machine on which pbid is first run).
+    #
+    def get_icon_count(self):
+        icon_count = 0
+
+        repo_hashes = [] 
+        for f in os.listdir(pbi.PBID_REPOSDIR):
+            parts = f.split('.')
+            repo_hashes.append(parts[-1])
+
+        meta_files = {}
+        for h in repo_hashes:
+            meta_path = "%s/%s-meta" % (pbi.PBID_INDEXDIR, h)
+            if os.path.exists(meta_path):
+                meta_files[h] = meta_path
+
+        meta = {}
+        total_count = 0
+        for h in meta_files:
+            m = meta_files[h]
+            with open(m, 'r') as f:
+                lines = []
+                for l in f.readlines():
+                    lines.append(l.strip())
+                total_count += len(lines)  
+                meta[h] = lines
+                f.close()
+
+        for h in meta:
+            m = meta[h]
+            for line in m:
+                parts = line.split(';')  
+                app = parts[0].replace("App=", "")
+                ext = parts[2].split('.')[-1]
+                icon_path = "%s/%s-%s.%s" % (pbi.PBID_ICONSDIR, h, app, ext)
+                if os.path.exists(icon_path):
+                    icon_count += 1
+
+        return icon_count
+
+    #
+    # get_total_icon_count()
+    #
+    # This method will grab all pbid meta files and total the number
+    # if icons available. This method is (like the above one) to be
+    # used when pbi_browser is not yet initialized.
+    #
+    def get_total_icon_count(self):
+        total_count = 0
+
+        repo_hashes = [] 
+        for f in os.listdir(pbi.PBID_REPOSDIR):
+            parts = f.split('.')
+            repo_hashes.append(parts[-1])
+
+        meta_files = {}
+        for h in repo_hashes:
+            meta_path = "%s/%s-meta" % (pbi.PBID_INDEXDIR, h)
+            if os.path.exists(meta_path):
+                meta_files[h] = meta_path
+
+        meta = {}
+        for h in meta_files:
+            m = meta_files[h]
+            with open(m, 'r') as f:
+                lines = []
+                for l in f.readlines():
+                    lines.append(l.strip())
+                total_count += len(lines)  
+                meta[h] = lines
+                f.close()
+
+        return total_count
+
     def get_icon(self, repo_id=None, oid=None):
 
         icon_path = None
@@ -406,8 +487,30 @@ class Available(object):
 
         p = pbi.PBI()
         p.set_appdir("/var/pbi")
-
+       
+        #
+        # If we have a PBI repo (or we don't), and it fails to return results,
+        # then we aren't yet fully initialized. So, we kind of slap it into shape
+        # over the course of a minute or so by checking the icon count and forcing
+        # a refresh of pbid (since it only wakes up every few minutes). 
+        #
         results = p.browser(repo_id=repo_id, flags=pbi.PBI_BROWSER_FLAGS_VIEWALL)
+        if not results:
+            t = 0
+            timeout = 60
+            while t < timeout:
+                tcount = self.get_total_icon_count()
+                icount = self.get_icon_count()
+                if icount != tcount:
+                    time.sleep(1)
+                    p.pbid(flags=pbi.PBID_FLAGS_REFRESH)
+                    t += 1
+
+                else:  
+                    p.pbid(flags=pbi.PBID_FLAGS_REFRESH)
+                    results = p.browser(repo_id=repo_id, flags=pbi.PBI_BROWSER_FLAGS_VIEWALL)
+                    break
+
         if not results:
             log.debug(
                 "No results returned for repo %s", repo_id

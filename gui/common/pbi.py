@@ -33,6 +33,12 @@ log = logging.getLogger('common.pbi')
 
 PBI_PATH = "/usr/local/sbin"
 PBI_APPDIR = "/var/pbi"
+
+PBID_DBDIR = "/var/db/pbi"
+PBID_REPOSDIR = "%s/repos" % PBID_DBDIR
+PBID_INDEXDIR = "%s/index" % PBID_DBDIR
+PBID_ICONSDIR = "%s/repo-icons" % PBID_DBDIR
+
 JEXEC_PATH = "/usr/sbin/jexec"
 
 from freenasUI.common.cmd import cmd_arg, cmd_pipe
