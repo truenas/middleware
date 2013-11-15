@@ -118,7 +118,7 @@ adctl_stop()
 
 	if ! ad_enabled
 	then
-		return 1
+		srv_set directoryservice 1
 	fi
 
 	if cifs_enabled
