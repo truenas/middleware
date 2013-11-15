@@ -15,7 +15,7 @@ kerberos_start()
 {
 	local res=1
 	local pwfile
-	local timeout=30
+	local timeout=60
 
 	if dirsrv_enabled activedirectory
 	then
