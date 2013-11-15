@@ -197,6 +197,23 @@ class AFPForm(ModelForm):
         ):
             raise ServiceFailed("afp", _("The AFP service failed to reload."))
 
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        home = cleaned_data['afp_srv_homedir_enable']
+        hdir = cleaned_data.get('afp_srv_homedir')
+        if hdir and not home:
+            self._errors['afp_srv_homedir_enable'] = self.error_class()
+            self._errors['afp_srv_homedir_enable'] += self.error_class([
+                    _("This field is required for \"Home directories\"."),
+            ])
+            cleaned_data.pop('afp_srv_homedir_enable', None)
+        if home and not hdir:
+            self._errors['afp_srv_homedir'] = self.error_class()
+            self._errors['afp_srv_homedir'] += self.error_class([
+                    _("This field is required for \"Home directories\"."),
+            ])
+            cleaned_data.pop('afp_srv_homedir', None)
+        return cleaned_data
 
 class NFSForm(ModelForm):
 

@@ -37,8 +37,12 @@ def main():
 
     cf_contents.append("\tmax connections = %s\n" % afp.afp_srv_connections_limit)
     cf_contents.append("\tmimic model = RackMac\n")
-    #server_name = afp.afp_srv_name
     cf_contents.append("\n")
+
+    if afp.afp_srv_homedir_enable:
+        cf_contents.append("[Homes]\n")
+	cf_contents.append("\t basedir-regex %s\n" % afp.afp_srv_homedir)
+        cf_contents.append("\n")
 
     from freenasUI.sharing.models import AFP_Share
     afp_share = AFP_Share.objects.all()

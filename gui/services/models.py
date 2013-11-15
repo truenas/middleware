@@ -254,6 +254,14 @@ class AFP(Model):
                 "default limit is 50."),
             default=50,
             )
+    afp_srv_homedir_enable = models.BooleanField(
+            verbose_name=_("Enable home directories"),
+            help_text=_("Enable/disable home directories for afp user.")
+            )
+    afp_srv_homedir = PathField(
+            verbose_name=_("Home directories"),
+            blank=True,
+            )
 
     class Meta:
         verbose_name = _(u"AFP")
