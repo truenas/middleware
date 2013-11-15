@@ -9,7 +9,6 @@
 # REQUIRE: ntpd
 
 . /etc/rc.freenas
-. /etc/directoryservice/rc.ActiveDirectory
 
 kerberos_start()
 {
