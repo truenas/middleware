@@ -816,16 +816,14 @@ AD_show_config()
 
 AD_join_domain()
 {
-	local adminname="${1}"
-	local adminpw="${2}"
+	local domainname="${1}"
 	local res
 
-	: ${adminname:="$(AD_get ad_adminname)"}
-	: ${adminpw:="$(AD_get ad_adminpw)"}
+	: ${domainname:="$(AD_get ad_domainname)"}
 
-	AD_log "AD_join_domain: net ads join -U ${adminname}"
+	AD_log "AD_join_domain: net -k ads join ${domainname}"
 
-	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net ads join -U "${adminname}%${adminpw}"
+	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net -k ads join "${domainname}"
 	res=$?
 
 	local ok="Failed"
@@ -840,16 +838,14 @@ AD_join_domain()
 
 AD_status_domain()
 {
-	local adminname="${1}"
-	local adminpw="${2}"
+	local domainname="${1}"
 	local res
 
-	: ${adminname:="$(AD_get ad_adminname)"}
-	: ${adminpw:="$(AD_get ad_adminpw)"}
+	: ${domainname:="$(AD_get ad_domainname)"}
 
-	AD_log "AD_status_domain: net ads status -U ${adminname}"
+	AD_log "AD_status_domain: net -k ads status ${domainname}"
 
-	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net ads status -U "${adminname}%${adminpw}"
+	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net -k ads status "${domainname}"
 	res=$?
 
 	local ok="Not okay"
@@ -864,16 +860,14 @@ AD_status_domain()
 
 AD_leave_domain()
 {
-	local adminname="${1}"
-	local adminpw="${2}"
+	local domainname="${1}"
 	local res
 
-	: ${adminname:="$(AD_get ad_adminname)"}
-	: ${adminpw:="$(AD_get ad_adminpw)"}
+	: ${domainname:="$(AD_get ad_domainname)"}
 
-	AD_log "AD_leave_domain: net ads leave -U ${adminname}"
+	AD_log "AD_leave_domain: net -k ads leave ${domainname}"
 
-	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
+	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net -k ads leave "${domainname}"
 	res=$?
 
 	local ok="Failed"
