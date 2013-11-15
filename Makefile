@@ -2,7 +2,12 @@
 NANO_LABEL?=FreeNAS
 VERSION?=9.2.0-ALPHA
 
-RELEASE_LOGFILE=release.build.log
+.ifdef SCRIPT
+RELEASE_LOGFILE?=${SCRIPT}
+.else
+RELEASE_LOGFILE?=release.build.log
+.endif
+
 GIT_REPO_SETTING=.git-repo-setting
 .if exists(${GIT_REPO_SETTING})
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
