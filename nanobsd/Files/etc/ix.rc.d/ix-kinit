@@ -9,12 +9,13 @@
 # REQUIRE: ntpd
 
 . /etc/rc.freenas
-
+. /etc/directoryservice/rc.ActiveDirectory
 
 kerberos_start()
 {
 	local res=1
 	local pwfile
+	local timeout=30
 
 	if dirsrv_enabled activedirectory
 	then
@@ -33,7 +34,7 @@ kerberos_start()
 
 			AD_log "kerberos_start: kinit --password-file=${pwfile} " \
 			    "${adminname}@${domainname}"
-			kinit --password-file="${pwfile}" \
+			__AD_tc ${timeout} kinit --password-file="${pwfile}" \
 			    "${adminname}@${domainname}"
 			res=$?
 
