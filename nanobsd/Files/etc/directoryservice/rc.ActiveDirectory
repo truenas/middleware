@@ -816,10 +816,15 @@ AD_show_config()
 
 AD_join_domain()
 {
-	local domainname="${1}"
+	local adminname="${1}"
+	local domainname="${2}"
 	local res
 
+	: ${adminname:="$(AD_get ad_adminname)"}
 	: ${domainname:="$(AD_get ad_domainname)"}
+
+	LOGNAME="${adminname}"
+	export LOGNAME
 
 	AD_log "AD_join_domain: net -k ads join ${domainname}"
 
@@ -838,10 +843,15 @@ AD_join_domain()
 
 AD_status_domain()
 {
-	local domainname="${1}"
+	local adminname="${1}"
+	local domainname="${2}"
 	local res
 
+	: ${adminname:="$(AD_get ad_adminname)"}
 	: ${domainname:="$(AD_get ad_domainname)"}
+
+	LOGNAME="${adminname}"
+	export LOGNAME
 
 	AD_log "AD_status_domain: net -k ads status ${domainname}"
 
@@ -860,10 +870,15 @@ AD_status_domain()
 
 AD_leave_domain()
 {
-	local domainname="${1}"
+	local adminname="${1}"
+	local domainname="${2}"
 	local res
 
+	: ${adminname:="$(AD_get ad_adminname)"}
 	: ${domainname:="$(AD_get ad_domainname)"}
+
+	LOGNAME="${adminname}"
+	export LOGNAME
 
 	AD_log "AD_leave_domain: net -k ads leave ${domainname}"
 
