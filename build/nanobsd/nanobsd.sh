@@ -853,7 +853,7 @@ on_exit()
 				# (where all is logged) then encourage them to submit a
 				# build break via "make build-bug-report"
 				if [ ! -z "$SCRIPT" ] ; then
-					echo "to submit a build error type 'make build-bug-report [email]' "
+					echo "to submit a build error type 'env RELEASE_LOGFILE=\"$SCRIPT\" make build-bug-report [email]' "
 				fi
 			fi
 		fi

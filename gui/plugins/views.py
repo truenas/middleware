@@ -29,6 +29,7 @@ from collections import namedtuple
 import json
 import logging
 import os
+import urllib2
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponse
@@ -37,7 +38,13 @@ from django.utils.translation import ugettext as _
 import eventlet
 from freenasUI.common import pbi 
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.common.warden import WARDEN_EXTRACT_STATUS_FILE
+from freenasUI.common.warden import (
+    Warden,
+    WardenJail,
+    WARDEN_STATUS_RUNNING,
+    WARDEN_STATUS_STOPPED,
+    WARDEN_EXTRACT_STATUS_FILE
+)
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails.models import Jails, JailsConfiguration
@@ -442,22 +449,49 @@ def upload_progress(request):
     content = json.dumps(data)
     return HttpResponse(content, mimetype='application/json')
 
-
-def plugin_available_icon(request, oid):
+def default_icon():
     default = (
         "/usr/local/www/freenasUI/freeadmin/static/images/ui/menu/plugins.png"
     )
+    try:
+        icon_path = default
+        with open(icon_path, "r") as f:
+            icon = f.read()
+            f.close()
+    except:
+        icon = None
 
+    return icon
+
+def plugin_available_icon(request, oid):
     icon = availablePlugins.get_icon(None, oid)
     if not icon:
-        try:
-            icon_path = default
-            with open(icon_path, "r") as f:
-                icon = f.read()
-                f.close()
-        except:
-            icon = None
+        icon = default_icon()
 
+    return HttpResponse(icon, mimetype="image/png")
+
+
+def plugin_installed_icon(request, plugin_name, oid):
+    icon = None
+    plugin = models.Plugins.objects.get(pk=oid)
+    for wo in Warden().list():
+        wj = WardenJail(**wo)
+        if wj.host == plugin.plugin_jail and wj.status == WARDEN_STATUS_STOPPED:
+            icon = default_icon()  
+            break
+        if wj.host == plugin.plugin_jail and wj.status == WARDEN_STATUS_RUNNING:
+            url = "%s/plugins/%s/%d/treemenu-icon" % \
+                (get_base_url(request), plugin_name, int(oid))
+            try:
+                response = urllib2.urlopen(url, timeout=15)
+                icon = response.read()
+            except:
+                pass
+            break
+
+    if not icon:
+        icon = default_icon()
+   
     return HttpResponse(icon, mimetype="image/png")
 
 

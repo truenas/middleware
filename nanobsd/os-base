@@ -193,7 +193,6 @@ customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
 if is_truenas ; then
-	add_port_with_repo "${NAS_PORTS}" misc/truenas-files LOCALBASE=/
 	add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
 fi
 
@@ -399,7 +398,7 @@ fi
 add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
-if ! is_truenas ; then
+if is_truenas ; then
 	add_port sysutils/sg3_utils
 fi
 add_port graphics/jpeg

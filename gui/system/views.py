@@ -38,7 +38,6 @@ import urllib
 import xmlrpclib
 
 from django.contrib.auth import login, get_backends
-from django.contrib.auth.models import User
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -117,7 +116,7 @@ def config_restore(request):
     if request.method == "POST":
         request.session['allow_reboot'] = True
         notifier().config_restore()
-        user = User.objects.all()[0]
+        user = bsdUsers.objects.filter(bsdusr_uid=0)[0]
         backend = get_backends()[0]
         user.backend = "%s.%s" % (backend.__module__,
                                   backend.__class__.__name__)

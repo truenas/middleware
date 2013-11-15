@@ -30,7 +30,23 @@ from subprocess import Popen, PIPE
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.network import models
+from freenasUI.network.forms import HostnameForm
+
+
+def hostname(request):
+    try:
+        globalconf = models.GlobalConfiguration.objects.order_by("-id")[0]
+    except IndexError:
+        globalconf = models.GlobalConfiguration.objects.create()
+    form = HostnameForm(instance=globalconf, data=request.POST)
+    if form.is_valid():
+        form.save()
+    return JsonResp(
+        request,
+        form=form,
+    )
 
 
 def network(request):

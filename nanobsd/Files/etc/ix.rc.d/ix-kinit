@@ -10,11 +10,11 @@
 
 . /etc/rc.freenas
 
-
 kerberos_start()
 {
 	local res=1
 	local pwfile
+	local timeout=60
 
 	if dirsrv_enabled activedirectory
 	then
@@ -31,9 +31,9 @@ kerberos_start()
 			pwfile=$(mktemp /tmp/tmp.XXXXXXXX)
 			echo -n "${adminpw}" > ${pwfile}
 
-			AD_log "kerberos_start: kinit --password-file=${pwfile} " \
+			AD_log "kerberos_start: /usr/bin/kinit --password-file=${pwfile} " \
 			    "${adminname}@${domainname}"
-			kinit --password-file="${pwfile}" \
+			__AD_tc ${timeout} /usr/bin/kinit --password-file="${pwfile}" \
 			    "${adminname}@${domainname}"
 			res=$?
 

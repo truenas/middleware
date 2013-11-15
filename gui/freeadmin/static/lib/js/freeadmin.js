@@ -740,12 +740,12 @@ require([
         data = form.get('value');
         xhr.post(url, {
             handleAs: 'json',
-            data: {host: data['remote_hostname'], port: data['remote_port']},
+            data: {host: data['repl_remote_hostname'], port: data['repl_remote_port']},
             headers: {"X-CSRFToken": CSRFToken}
         }).then(function(data) {
             sendbtn.set('disabled', false);
             if(!data.error) {
-                var key = query("textarea[name=remote_hostkey]", form.domNode);
+                var key = query("textarea[name=repl_remote_hostkey]", form.domNode);
                 key = registry.getEnclosingWidget(key[0]);
                 key.set('value', data.key);
             } else {

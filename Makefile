@@ -2,7 +2,12 @@
 NANO_LABEL?=FreeNAS
 VERSION?=9.2.0-ALPHA
 
-RELEASE_LOGFILE=release.build.log
+.ifdef SCRIPT
+RELEASE_LOGFILE?=${SCRIPT}
+.else
+RELEASE_LOGFILE?=release.build.log
+.endif
+
 GIT_REPO_SETTING=.git-repo-setting
 .if exists(${GIT_REPO_SETTING})
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
@@ -19,6 +24,9 @@ checkout: git-verify
 clean:
 	${ENV_SETUP} build/build_cleanup.py
 	rm -rf FreeBSD os-base release_stage ${NANO_LABEL}-${VERSION}-release.tar release.build.log
+
+clean-packages:
+	rm -rf os-base/amd64/ports/packages os-base/i386/ports/packages
 
 save-build-env:
 	${ENV_SETUP} build/save_build.sh

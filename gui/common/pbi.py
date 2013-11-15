@@ -32,6 +32,13 @@ import string
 log = logging.getLogger('common.pbi')
 
 PBI_PATH = "/usr/local/sbin"
+PBI_APPDIR = "/var/pbi"
+
+PBID_DBDIR = "/var/db/pbi"
+PBID_REPOSDIR = "%s/repos" % PBID_DBDIR
+PBID_INDEXDIR = "%s/index" % PBID_DBDIR
+PBID_ICONSDIR = "%s/repo-icons" % PBID_DBDIR
+
 JEXEC_PATH = "/usr/sbin/jexec"
 
 from freenasUI.common.cmd import cmd_arg, cmd_pipe
@@ -303,6 +310,7 @@ class pbi_base(object):
         self.flags = flags
         self.args = ""
         self.error = None
+        self.set_appdir(PBI_APPDIR)
 
         if objflags is None:
             objflags = []
@@ -323,6 +331,9 @@ class pbi_base(object):
             self.pipe_func = kwargs["pipe_func"]
 
         log.debug("pbi_base.__init__: leave")
+
+    def set_appdir(self, dir):  
+        os.environ['PBI_APPDIR'] = dir
 
     def run(self, jail=False, jid=0):
         log.debug("pbi_base.run: enter")
@@ -691,6 +702,7 @@ class PBI(object):
         self.obj = None
         self.out = ""
         self.returncode = 0
+        self.set_appdir(PBI_APPDIR)
 
     def __call(self, obj):
         if obj is not None:

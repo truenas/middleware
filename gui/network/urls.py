@@ -30,4 +30,5 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns('freenasUI.network.views',
     url(r'^home/$', 'network', name='network_home'),
     url(r'^summary/$', 'summary', name='network_summary'),
-    )
+    url(r'^hostname/$', 'hostname', name='network_hostname'),
+)

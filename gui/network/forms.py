@@ -33,7 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 from freenasUI import choices
-from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import Form, ModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 from ipaddr import (
@@ -313,6 +313,33 @@ class GlobalConfigurationForm(ModelForm):
         return retval
 
 
+class HostnameForm(Form):
+
+    hostname = forms.CharField(
+        max_length=200,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance')
+        super(HostnameForm, self).__init__(*args, **kwargs)
+
+    def clean_hostname(self):
+        hostname = self.cleaned_data.get('hostname')
+        if '.' not in hostname:
+            raise forms.ValidationError(_(
+                'You need a domain, e.g. hostname.domain'
+            ))
+        host, domain = hostname.split('.', 1)
+        return host, domain
+
+    def save(self):
+        host, domain = self.cleaned_data.get('hostname')
+        self.instance.gc_hostname = host
+        self.instance.gc_domain = domain
+        self.instance.save()
+        notifier().reload("networkgeneral")
+
+
 class VLANForm(ModelForm):
     vlan_pint = forms.ChoiceField(label=_("Parent Interface"))
 
@@ -336,7 +363,7 @@ class VLANForm(ModelForm):
 
     def clean_vlan_tag(self):
         tag = self.cleaned_data['vlan_tag']
-        if  tag > 4095:
+        if tag > 4095:
             raise forms.ValidationError(_("VLAN Tags are 1 - 4095 inclusive"))
         return tag
 
