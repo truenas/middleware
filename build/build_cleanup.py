@@ -2,27 +2,32 @@
 
 import argparse, os, sys, time
 
+def error_and_exit(cmd, starting_path):
+    print "Failed: %s" % cmd
+    print os.getcwd()
+    os.chdir(starting_path)
+    sys.exit(1)
+
 def main(starting_path):
     """Clean up a build environment.  Inspired by a shell
        script of the same name.
     """
 
-    if os.path.exists("os-base"):
-        try:
-            os.system("chflags -R noschg os-base")
-            os.system("rm -rf os-base")
-        except OSError as err:
-            os.chdir(starting_path)
-            sys.exit("Cleanup failed", err)
+    curpath = os.getcwd()
 
-    # Possibly there are more directories than this that can
-    # get left mounted.
-    # TODO: Add leftover directories to this list
-    for dir in ['os-base/amd64/_.w/dev',
-                'os-base/i386/_.w/dev',
-                'os-base/amd64/jails/jail-i386/dev']:
-        if os.path.isdir(dir):
-            os.system("umount %s" % dir)
+    mount = os.popen("mount | grep %s | grep os-base" % curpath).readlines()
+    for dir in mount:
+        os.system("umount -f %s" % dir.split(" ")[2])
+
+    if os.path.exists("os-base"):
+        cmd = "chflags -R noschg os-base"
+        ret = os.system(cmd)
+        if ret:
+            error_and_exit(cmd, starting_path)
+        cmd = "rm -rf os-base"
+        ret = os.system(cmd)
+        if ret:
+            error_and_exit(starting_path)
 
     os.chdir(starting_path)
 
