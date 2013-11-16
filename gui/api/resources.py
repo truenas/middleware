@@ -1442,6 +1442,11 @@ class JailsResourceMixin(object):
                 bundle.data['jail_jid'] = int(reg.groups()[0])
             except:
                 bundle.data['jail_jid'] = None
+
+            bundle.data['jail_os'] = 'FreeBSD'
+            if bundle.obj.is_linux_jail():
+                bundle.data['jail_os'] = 'Linux'
+
         if self.is_webclient(bundle.request):
             bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
                 'id': bundle.obj.id
