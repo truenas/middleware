@@ -325,10 +325,25 @@ start_jail_standard()
 
 load_linux_modules()
 {
-   kldload linux >/dev/null 2>&1
-   kldload linprocfs >/dev/null 2>&1
-   kldload linsysfs >/dev/null 2>&1
-   kldload lindev >/dev/null 2>&1
+   if ! kldstat|awk '{ print $5 }'|grep -qw linux.ko
+   then
+      kldload linux >/dev/null 2>&1
+   fi
+
+   if ! kldstat|awk '{ print $5 }'|grep -qw linprocfs.ko
+   then
+      kldload linprocfs >/dev/null 2>&1
+   fi
+
+   if ! kldstat|awk '{ print $5 }'|grep -qw linsysfs.ko
+   then
+      kldload linsysfs >/dev/null 2>&1
+   fi
+
+   if ! kldstat|awk '{ print $5 }'|grep -qw lindev.ko
+   then
+      kldload lindev >/dev/null 2>&1
+   fi
 
    sysctl compat.linux.osrelease=3.9.9
 }
