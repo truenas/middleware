@@ -89,11 +89,6 @@ def _system_info(request=None):
     except:
         pass
 
-    if request:
-        host = request.META.get("HTTP_HOST")
-    else:
-        host = None
-
     return {
         'hostname': hostname,
         'platform': platform,
@@ -102,7 +97,6 @@ def _system_info(request=None):
         'uptime': uptime,
         'loadavg': loadavg,
         'freenas_build': freenas_build,
-        'host': host,
     }
 
 

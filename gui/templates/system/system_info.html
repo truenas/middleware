@@ -93,12 +93,6 @@
         <th>{% trans "Load Average" %}</th>
         <td class="descr">{{ loadavg }}</td>
     </tr>
-    {% if host %}
-    <tr>
-        <th>{% trans "Connected through" %}</th>
-        <td class="descr">{{ host }}</td>
-    </tr>
-    {% endif %}
     {% for info in info_hook %}
     <tr>
         <th>{{ info.name|safe }}</th>
