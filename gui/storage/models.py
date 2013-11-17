@@ -974,14 +974,14 @@ class Task(Model):
         )
 
     def save(self, *args, **kwargs):
-        super(Task, self).save(args, kwargs)
+        super(Task, self).save(*args, **kwargs)
         try:
             notifier().restart("cron")
         except:
             pass
 
     def delete(self, *args, **kwargs):
-        super(Task, self).delete(args, kwargs)
+        super(Task, self).delete(*args, **kwargs)
         try:
             notifier().restart("cron")
         except:
