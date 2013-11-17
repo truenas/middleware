@@ -118,7 +118,6 @@ usage: ${0##*/} [-aBfJsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-
 		  specified twice, this won't pass any options to nanobsd.sh,
 		  which will force a pristine build.
 -j make-jobs	- number of make jobs to run; defaults to ${MAKE_JOBS}.
--J		- Build with jails
 -s		- show build targets
 -t target	- target to build (os-base, <plugin-name>, etc).
 		  This switch can be used more than once to specify multiple targets.
