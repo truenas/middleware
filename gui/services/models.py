@@ -216,7 +216,7 @@ class CIFS(Model):
             help_text=_("Specifies whether samba should use (expensive) "
                 "hostname lookups or use the ip addresses instead. An example "
                 "place where hostname lookups are currently used is when "
-                "achecking the hosts deny and hosts allow."),
+                "checking the hosts deny and hosts allow."),
             )
 
     class Meta:
