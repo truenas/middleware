@@ -316,7 +316,7 @@ touch "${JAILDIR}/etc/fstab"
 if [ -z "$ARCHIVEFILE" ] ; then
   # Setup rc.conf
   echo "portmap_enable=\"NO\"
-sshd_enable=\"YES\"
+sshd_enable=\"NO\"
 sendmail_enable=\"NO\"
 sendmail_submit_enable=\"NO\"
 sendmail_outbound_enable=\"NO\"
