@@ -253,6 +253,12 @@ def is_mounted(**kwargs):
 
 
 def mount(dev, path, mntopts=None, fstype=None):
+    if isinstance(dev, unicode):
+        dev = dev.encode('utf-8')
+
+    if isinstance(path, unicode):
+        path = path.encode('utf-8')
+
     if mntopts:
         opts = ['-o', mntopts]
     else:
