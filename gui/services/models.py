@@ -1242,7 +1242,7 @@ class FTP(Model):
             default=False
             )
     ftp_tls_opt_dns_name_required = models.BooleanField(
-            verbose_name=_("TL DNS name requiredS"),
+            verbose_name=_("TL DNS name required"),
             default=False
             )
     ftp_tls_opt_ip_address_required = models.BooleanField(
