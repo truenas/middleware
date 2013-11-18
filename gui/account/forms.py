@@ -542,7 +542,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 return home
 
             if home.startswith(u'/mnt/'):
-                from freenasUI.freeadmin.forms import PathField
                 bsdusr_username = self.cleaned_data['bsdusr_username']
                 saved_home = self.bsdusr_home_saved
 
@@ -565,7 +564,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                     self.bsdusr_home_copy = True
 
                 return home
-                
+
         raise forms.ValidationError(
             _('Home directory has to start with /mnt/ or be /nonexistent')
         )
