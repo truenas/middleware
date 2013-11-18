@@ -532,7 +532,9 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
 
     def clean_bsdusr_home(self):
         home = self.cleaned_data['bsdusr_home']
-        if home is not None:
+        if self.instance.id and self.instance.bsdusr_uid == 0:
+            return self.instance.bsdusr_home
+        elif home is not None:
             if ':' in home:
                 raise forms.ValidationError(
                     _("Home directory cannot contain colons")
@@ -609,7 +611,12 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         bsdusr_home = cleaned_data.get('bsdusr_home', '')
         if (
             bsdusr_home and cleaned_data.get('bsdusr_sshpubkey') and
-            not bsdusr_home.startswith(u'/mnt/')
+            (
+                not bsdusr_home.startswith(u'/mnt/') and (
+                    self.instance.id is None or
+                    (self.instance.id and self.instance.bsdusr_uid != 0)
+                )
+            )
         ):
             del cleaned_data['bsdusr_sshpubkey']
             self._errors['bsdusr_sshpubkey'] = self.error_class([
