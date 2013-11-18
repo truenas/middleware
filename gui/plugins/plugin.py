@@ -487,30 +487,24 @@ class Available(object):
 
         p = pbi.PBI()
         p.set_appdir("/var/pbi")
-       
+
         #
         # If we have a PBI repo (or we don't), and it fails to return results,
         # then we aren't yet fully initialized. So, we kind of slap it into shape
         # over the course of a minute or so by checking the icon count and forcing
         # a refresh of pbid (since it only wakes up every few minutes). 
         #
+        t = 0
+        timeout = 90
+        while t < timeout:
+            tcount = self.get_total_icon_count()
+            icount = self.get_icon_count()
+            if icount != tcount:
+                time.sleep(5)
+                p.pbid(flags=pbi.PBID_FLAGS_REFRESH)
+            t += 1
+       
         results = p.browser(repo_id=repo_id, flags=pbi.PBI_BROWSER_FLAGS_VIEWALL)
-        if not results:
-            t = 0
-            timeout = 60
-            while t < timeout:
-                tcount = self.get_total_icon_count()
-                icount = self.get_icon_count()
-                if icount != tcount:
-                    time.sleep(1)
-                    p.pbid(flags=pbi.PBID_FLAGS_REFRESH)
-                    t += 1
-
-                else:  
-                    p.pbid(flags=pbi.PBID_FLAGS_REFRESH)
-                    results = p.browser(repo_id=repo_id, flags=pbi.PBI_BROWSER_FLAGS_VIEWALL)
-                    break
-
         if not results:
             log.debug(
                 "No results returned for repo %s", repo_id
