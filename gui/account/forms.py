@@ -24,7 +24,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import copy
 import logging
 import os
 import re
@@ -74,9 +73,10 @@ class NewPasswordForm(Form):
     def is_valid(self):
         valid = super(NewPasswordForm, self).is_valid()
         if valid:
-            qs = models.bsdUsers.objects.filter(bsdusr_uid=0, bsdusr_unixhash='*')
+            qs = models.bsdUsers.objects.filter(
+                bsdusr_uid=0, bsdusr_unixhash='*'
+            )
             if qs.exists():
-                print "hm"
                 user = qs[0]
                 _notifier = notifier()
                 unixhash, smbhash = _notifier.user_changepassword(
@@ -437,7 +437,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             self.bsdusr_home_copy = False
 
         elif self.instance.id:
-            user = models.bsdUsers.objects.get(id=self.instance.id)
             self.fields['bsdusr_to_group'].choices = [
                 (x.id, x.bsdgrp_group)
                 for x in models.bsdGroups.objects.all()
@@ -724,7 +723,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         if self.bsdusr_home_copy:
             p = pipeopen("su - %s -c '/bin/cp -a %s/* %s/'" % (
                 self.cleaned_data['bsdusr_username'],
-                self.bsdusr_home_saved, 
+                self.bsdusr_home_saved,
                 self.cleaned_data['bsdusr_home']
             ))
             p.communicate()
