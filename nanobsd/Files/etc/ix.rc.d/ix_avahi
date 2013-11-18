@@ -13,10 +13,14 @@ multi_service="/usr/local/etc/avahi/services/multi.service"
 generate_config()
 {
 
-afp=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'afp'")
-cifs=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'cifs'")
-nfs=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")
-ssh=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'ssh'")
+afp=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service = 'afp'")
+cifs=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service = 'cifs'")
+nfs=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service = 'nfs'")
+ssh=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service = 'ssh'")
+ftp=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service = 'ftp'")
+ftpport=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ftp_port FROM services_ftp ORDER BY -id LIMIT 1")
+rsync=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service = 'rsync'")
+rsyncport=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT rsyncd_port FROM services_rsyncd ORDER BY -id LIMIT 1")
 web=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guiprotocol FROM system_settings ORDER BY -id LIMIT 1")
 http=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guiport FROM system_settings ORDER BY -id LIMIT 1")
 if [ -z ${http} ]; then
@@ -111,6 +115,24 @@ if [ $web = "httphttps" ]; then
   <service>
     <type>_https._tcp</type>
     <port>${https}</port>
+  </service>
+EOF
+fi
+
+if [ $ftp -eq 1 ]; then
+    cat >> "$multi_service" <<EOF
+  <service>
+    <type>_ftp._tcp</type>
+    <port>${ftpport}</port>
+  </service>
+EOF
+fi
+
+if [ $rsync -eq 1 ]; then
+    cat >> "$multi_service" <<EOF
+  <service>
+    <type>_rsync._tcp</type>
+    <port>${rsyncport}</port>
   </service>
 EOF
 fi
