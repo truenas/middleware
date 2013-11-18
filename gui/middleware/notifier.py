@@ -779,7 +779,6 @@ class notifier:
 
     def _reload_nfs(self):
         self._system("/usr/sbin/service ix-nfsd quietstart")
-        self._system("/usr/sbin/service mountd reload")
         self._system("/usr/sbin/service ix_avahi quietstart")
         self._system("/usr/sbin/service avahi-daemon reload")
 

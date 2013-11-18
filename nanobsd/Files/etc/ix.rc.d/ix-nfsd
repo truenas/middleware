@@ -95,6 +95,7 @@ generate_exports()
 			echo "${line}"
 		fi
 	done > /etc/exports
+	service mountd reload
 }
 
 name="ix-nfsd"
