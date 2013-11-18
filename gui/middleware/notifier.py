@@ -544,11 +544,23 @@ class notifier:
     def _reload_rsync(self):
         self._system("/usr/sbin/service ix-rsyncd quietstart")
         self._system("/usr/sbin/service rsyncd restart")
+        self._system("/usr/sbin/service ix_avahi quietstart")
+        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _restart_rsync(self):
+        self._stop_rsync()
+        self._start_rsync()
+
+    def _start_rsync(self):
         self._system("/usr/sbin/service ix-rsyncd quietstart")
+        self._system("/usr/sbin/service rsyncd start")
+        self._system("/usr/sbin/service ix_avahi quietstart")
+        self._system("/usr/sbin/service avahi-daemon reload")
+
+    def _stop_rsync(self):
         self._system("/usr/sbin/service rsyncd forcestop")
-        self._system("/usr/sbin/service rsyncd restart")
+        self._system("/usr/sbin/service ix_avahi quietstart")
+        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _get_stg_directoryservice(self):
         from freenasUI.system.models import Settings
@@ -709,16 +721,24 @@ class notifier:
     def _reload_ftp(self):
         self._system("/usr/sbin/service ix-proftpd quietstart")
         self._system("/usr/sbin/service proftpd restart")
+        self._system("/usr/sbin/service ix_avahi quietstart")
+        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _restart_ftp(self):
-        self._system("/usr/sbin/service ix-proftpd quietstart")
-        self._system("/usr/sbin/service proftpd forcestop")
-        self._system("/usr/sbin/service proftpd restart")
+        self._stop_ftp()
+        self._start_ftp()
         self._system("sleep 1")
 
     def _start_ftp(self):
         self._system("/usr/sbin/service ix-proftpd quietstart")
         self._system("/usr/sbin/service proftpd start")
+        self._system("/usr/sbin/service ix_avahi quietstart")
+        self._system("/usr/sbin/service avahi-daemon reload")
+
+    def _stop_ftp(self):
+        self._system("/usr/sbin/service proftpd forcestop")
+        self._system("/usr/sbin/service ix_avahi quietstart")
+        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _start_ups(self):
         self._system("/usr/sbin/service ix-ups quietstart")
