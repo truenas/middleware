@@ -158,6 +158,7 @@ require([
 
     var store = new JsonRest({
         target: "{{ resource_url }}{{ datagrid_filters|escapejs }}",
+        headers: {"X-Requested-From": "WebUI"},
         getChildren: function(parent, options){
             return parent.children;
         },

@@ -24,11 +24,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import base64
 import logging
 import re
 import urllib
 
-from django.db import transaction
+from django.contrib.auth import authenticate
 from django.db.models.fields.related import ForeignKey
 from django.http import QueryDict
 
@@ -39,6 +40,7 @@ from tastypie.authentication import (
 )
 from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.http import HttpUnauthorized
 from tastypie.paginator import Paginator
 from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
 import oauth2
@@ -147,9 +149,56 @@ class OAuth2Authentication(Authentication):
         return True
 
 
+class FreeBasicAuthentication(BasicAuthentication):
+    """
+    Override to do not show WWW-Authenticate for requests from WebUI
+    """
+
+    def is_authenticated(self, request, **kwargs):
+        """
+        Copied from BasicAuthentication due to the call to private
+        _unauthorized without arguments
+        """
+        if not request.META.get('HTTP_AUTHORIZATION'):
+            return self._unauthorized(request)
+
+        try:
+            (auth_type, data) = request.META['HTTP_AUTHORIZATION'].split()
+            if auth_type.lower() != 'basic':
+                return self._unauthorized(request)
+            user_pass = base64.b64decode(data).decode('utf-8')
+        except:
+            return self._unauthorized(request)
+
+        bits = user_pass.split(':', 1)
+
+        if len(bits) != 2:
+            return self._unauthorized(request)
+
+        if self.backend:
+            user = self.backend.authenticate(username=bits[0], password=bits[1])
+        else:
+            user = authenticate(username=bits[0], password=bits[1])
+
+        if user is None:
+            return self._unauthorized(request)
+
+        if not self.check_active(user):
+            return False
+
+        request.user = user
+        return True
+
+    def _unauthorized(self, request):
+        if request.META.get('HTTP_X_REQUESTED_FROM') == 'WebUI':
+            return HttpUnauthorized()
+        else:
+            return super(FreeBasicAuthentication, self)._unauthorized()
+
+
 APIAuthentication = MultiAuthentication(
     DjangoAuthentication(),
-    BasicAuthentication(),
+    FreeBasicAuthentication(),
 )
 
 
