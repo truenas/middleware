@@ -179,7 +179,7 @@ class JailsFAdmin(BaseFreeAdmin):
         actions = OrderedDict()
 
         actions['edit'] = self._action_builder(
-            'edit', icon=False, label=_("Edit Jail")
+            'edit', icon='jail_edit', label=_("Edit Jail")
         )
         actions['storage'] = self._action_builder(
             'jail_storage_add', label=_("Add Storage")
@@ -195,8 +195,12 @@ class JailsFAdmin(BaseFreeAdmin):
         #)
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
+
+        shell_button = '<img src="%simages/ui/buttons/shell.png" width="18px" height="18px">' % settings.STATIC_URL
+
         actions['shell'] = {
-            'button_name': "Shell",
+            'button_name': shell_button,
+            'tooltip': 'Shell',
             'on_select_after': """function(evt, actionName, action) {
     for(var i=0;i < evt.rows.length;i++) {
         var row = evt.rows[i];

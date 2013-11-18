@@ -1018,6 +1018,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.JailEditIcon {
+    background-image:url('/static/images/ui/tree/jail_edit.png');
+    width:16px;
+    height:16px;
+}
 .BeastieIcon {
     background-image:url('/static/images/ui/tree/beastie.png');
     width:16px;
