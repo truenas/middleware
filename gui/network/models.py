@@ -34,6 +34,7 @@ from freenasUI.contrib.IPAddressField import (IPAddressField, IP4AddressField,
     IP6AddressField)
 from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
+from freenasUI.services.models import CIFS
 
 
 class GlobalConfiguration(Model):
@@ -100,8 +101,23 @@ class GlobalConfiguration(Model):
         blank=True,
         )
 
+    def __init__(self, *args, **kwargs):
+        super(GlobalConfiguration, self).__init__(*args, **kwargs)
+        self._orig_gc_hostname = self.__dict__.get('gc_hostname')
+
     def __unicode__(self):
         return u'%s' % self.id
+
+    def save(self, *args, **kwargs):
+        # See #3437
+        if self._orig_gc_hostname != self.gc_hostname:
+            try:
+                cifs = CIFS.objects.order_by('-id')[0]
+                cifs.cifs_srv_netbiosname = self.gc_hostname
+                cifs.save()
+            except:
+                pass
+        return super(GlobalConfiguration, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("Global Configuration")
