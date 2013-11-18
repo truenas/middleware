@@ -25,6 +25,8 @@
  *
  */
 
+var _webshell;
+
 require([
     "dojo",
     "dojo/_base/array",
@@ -1442,7 +1444,7 @@ require([
             } else if(item.action == 'displayprocs') {
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {
-                new WebShell();
+                _webshell = new WebShell();
             } else if(item.action == 'opensupport') {
                 Menu.openSupport();
             } else if(item.type == 'opensharing') {

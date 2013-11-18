@@ -222,7 +222,7 @@ class JailsFAdmin(BaseFreeAdmin):
             if (data.jail_os == 'Linux') {
                 shell = '/bin/sh'
             }
-            new WebShell({jid: data.jail_jid, shell: shell});
+            _webshell = new WebShell({jid: data.jail_jid, shell: shell});
         }
     });
 }"""
