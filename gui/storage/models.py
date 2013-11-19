@@ -440,6 +440,12 @@ class Disk(Model):
         verbose_name=_("Serial"),
         blank=True,
     )
+    disk_size = models.CharField(
+        max_length=20,
+        verbose_name=_('Disk Size'),
+        editable=False,
+        blank=True,
+    )
     disk_multipath_name = models.CharField(
         max_length=30,
         verbose_name=_("Multipath name"),

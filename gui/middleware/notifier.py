@@ -3816,6 +3816,7 @@ class notifier:
         if devname.find("/") != -1:
             return
 
+        doc = self._geom_confxml()
         self.__diskserial.clear()
         self.__camcontrol = None
 
@@ -3838,6 +3839,9 @@ class notifier:
         if reg:
             disk.disk_subsystem = reg.group(1)
             disk.disk_number = int(reg.group(2))
+        mediasize = doc.xpathEval("//class[name = 'DISK']//geom[name = '%s']/provider/mediasize" % devname)
+        if mediasize:
+            disk.disk_size = mediasize[0].content
         disk.save()
 
     def sync_disk_extra(self, disk, add=False):
@@ -3846,6 +3850,7 @@ class notifier:
     def sync_disks(self):
         from freenasUI.storage.models import Disk
 
+        doc = self._geom_confxml()
         disks = self.__get_disks()
         self.__diskserial.clear()
         self.__camcontrol = None
@@ -3874,6 +3879,10 @@ class notifier:
             if disk.disk_serial:
                 serials.append(disk.disk_serial)
 
+            mediasize = doc.xpathEval("//class[name = 'DISK']//geom[name = '%s']/provider/mediasize" % dskname)
+            if mediasize:
+                disk.disk_size = mediasize[0].content
+
             self.sync_disk_extra(disk, add=False)
 
             if dskname not in disks:
@@ -3893,6 +3902,9 @@ class notifier:
                 d.disk_name = disk
                 d.disk_identifier = self.device_to_identifier(disk)
                 d.disk_serial = self.serial_from_device(disk) or ''
+                mediasize = doc.xpathEval("//class[name = 'DISK']//geom[name = '%s']/provider/mediasize" % disk)
+                if mediasize:
+                    d.disk_size = mediasize[0].content
                 if d.disk_serial:
                     if d.disk_serial in serials:
                         #Probably dealing with multipath here, do not add another
