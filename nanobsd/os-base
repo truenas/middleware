@@ -908,10 +908,6 @@ freenas_custom()
 	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
 	ln -s /usr/local/bin/ntfs-3g ${NANO_WORLDDIR}/sbin/mount_ntfs
 
-	cp ${AVATAR_ROOT}/tools/migrate_pluginjail.sh \
-		${NANO_WORLDDIR}/root/migrate_pluginjail.sh
-	chown root:wheel ${NANO_WORLDDIR}/root/migrate_pluginjail.sh
-	chmod 0755 ${NANO_WORLDDIR}/root/migrate_pluginjail.sh
 }
 late_customize_cmd freenas_custom
 
