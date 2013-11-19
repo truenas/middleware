@@ -48,6 +48,7 @@ from freenasUI.account.forms import (
 from freenasUI.account.forms import bsdUserToGroupForm
 from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
+from freenasUI.common import humanize_number_si
 from freenasUI.jails.forms import JailCreateForm
 from freenasUI.jails.models import (
     Jails, JailTemplate, NullMountPoint
@@ -130,6 +131,9 @@ class DiskResourceMixin(object):
                 'devname': bundle.obj.disk_name,
             })
             bundle.data['_editbulk_url'] = reverse('storage_disk_editbulk')
+            bundle.data['disk_size'] = humanize_number_si(
+                bundle.data['disk_size']
+            )
         return bundle
 
 
