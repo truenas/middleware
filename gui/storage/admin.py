@@ -20,6 +20,8 @@ class DiskFAdmin(BaseFreeAdmin):
     exclude_fields = (
         'id',
         'disk_identifier',
+        'disk_subsystem',
+        'disk_number',
         'disk_multipath_name',
         'disk_multipath_member',
         'disk_enabled',
