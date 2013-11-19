@@ -50,15 +50,11 @@ from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_number_si
 from freenasUI.jails.forms import JailCreateForm
-from freenasUI.jails.models import (
-    Jails, JailTemplate, NullMountPoint
-)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware import zfs
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
-from freenasUI.plugins.models import Configuration as PluginConf
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
