@@ -620,6 +620,8 @@ class VolumeImportForm(Form):
         mp.save()
 
         notifier().start("ix-fstab")
+        if volume_fstype == 'NTFS':
+            notifier().start("fusefs")
         notifier().mount_volume(volume)
         #notifier().reload("disk")
 
