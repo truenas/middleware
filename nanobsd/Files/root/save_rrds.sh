@@ -11,10 +11,20 @@ PERSIST_FILE="/data/rrd_dir.tar.bz2"
 cd /var/db
 if [ -d collectd ]
 then
-	if tar jcf $PERSIST_FILE.$$ collectd
+	if tar jcf ${PERSIST_FILE##*/}.$$ collectd > /dev/null 2>&1
 	then
-		mv $PERSIST_FILE.$$ $PERSIST_FILE
+		avail=$(df -k /data | grep /data | awk '{print ($2-$3-20)*1024}')
+		if [ -f ${PERSIST_FILE} ]; then
+			avail=$((${avail}+$(ls -l ${PERSIST_FILE} | awk '{print $5}')))
+		fi
+		rrdsize=$(ls -l ${PERSIST_FILE##*/}.$$ | awk '{print $5}')
+		if [ ${avail} -le ${rrdsize} ]; then
+			logger Not enough space on /data to save collectd data
+			touch /var/tmp/.rrd_enospace
+		else
+			mv ${PERSIST_FILE##*/}.$$ $PERSIST_FILE
+		fi
 	else
-		rm -f $PERSIST_FILE.$$
+		rm -f ${PERSIST_FILE##*/}.$$
 	fi
 fi
