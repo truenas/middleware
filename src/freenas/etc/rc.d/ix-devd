@@ -89,6 +89,14 @@ if [ \${EVENT} = "LINK_UP" ]; then
 	exit 0
     fi
 
+    BACKUPS=\$(ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 ifconfig | grep "carp: BACKUP" | wc -l )
+    if [ \${BACKUPS} -gt 0 ]; then
+	ifconfig \${SUBSYSTEM} advskew 240
+	echo "Ignoring UP state on \${SUBSYSTEM} because we still have interfaces that are BACKUP." | logger
+	echo "\$(date), \$(hostname), \${SUBSYSTEM} assumed master while other interfaces are still in slave mode." | mail -s "Failover WARNING" root
+	exit 1
+    fi
+
     pkill -f fenced
 
     echo "set block-policy drop" > /etc/pf.conf.block
