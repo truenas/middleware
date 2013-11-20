@@ -8,7 +8,8 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         if not orm['system.Tunable'].objects.filter(
-            tun_var='vfs.zfs.zio.use_uma'):
+            tun_var='vfs.zfs.zio.use_uma'
+        ).exists():
             orm['system.Tunable'].objects.create(
                 tun_var='vfs.zfs.zio.use_uma',
                 tun_value='1',
