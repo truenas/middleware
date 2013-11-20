@@ -33,7 +33,8 @@ import signal
 import sys
 import subprocess
 import time
-
+import getpass
+import tempfile
 import ipaddr
 
 WWW_PATH = "/usr/local/www"
@@ -65,7 +66,8 @@ from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings
 from freenasUI.middleware.notifier import notifier
-
+from freenasUI.storage import models
+from freenasUI.freeadmin.apppool import appPool
 
 def quad_to_cidr(quad):
     vals = { 0:True, 128:True, 192:True,
@@ -919,6 +921,87 @@ def configure_dns():
         print _("ok")
         return True
 
+
+def unlock_volumes():
+
+    AllUnlocked  = False
+    VolumeSelected = False
+
+    while not AllUnlocked:
+        while not VolumeSelected: 
+            lock_vols = {}
+            i = 0
+            volumes = models.Volume.objects.filter(vol_encrypt__gt = 0)
+            for vol in volumes:
+                if not vol.is_decrypted():
+                    i=i+1
+                    lock_vols[i] = vol
+                    print ("%d) %s" % (i, vol.vol_name))
+
+            if i == 0:
+                print "All Volumes are unlocked"
+                print
+                raw_input("Press Enter to continue...")
+                return True
+
+            print
+            _input = raw_input(_("Select a Volume to unlock (q to quit): "))
+            if _input.isdigit() and int(_input) in range (1, i+1):
+                unlockvol = lock_vols[int(_input)]
+                VolumeSelected = True
+            elif _input.lower().startswith("q"):
+                return True
+
+        if unlockvol.vol_encrypt == 1: # Encrypted but no password
+            print "Attempting to unlock volume %s" % unlockvol.vol_name
+            notifier().start("geli")
+            failed = 0
+        else:
+            vol_pass = getpass.getpass("Enter password to unlock volume %s: " % unlockvol.vol_name)
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
+                f.write(vol_pass)
+
+            print "Attempting to unlock volume %s" % unlockvol.vol_name
+            failed = notifier().geli_attach(unlockvol, passphrase=passfile)
+            os.unlink(passfile)
+
+        print "..."
+        zimport = notifier().zfs_import(unlockvol.vol_name, id=unlockvol.vol_guid)
+        if not zimport:
+            if failed > 0:
+                print "Volume %s could not be decrypted" % unlockvol.vol_name
+            else:
+                print "Volume %s could not be imported" % unlockvol.vol_name
+
+        else:
+            notifier().sync_encrypted(volume=unlockvol)
+            print "Volume %s decrypted" % unlockvol.vol_name
+            i=i-1
+            print
+            _input = raw_input(_("Restart all services (y/n)?: "))
+            if _input.lower().startswith("y"):
+                svcs= []
+                if os.path.exists('/var/run/dbus.dbus.pid'): svcs.append('afp')
+                if os.path.exists('/var/run/samba/smbd.pid'): svcs.append('cifs')
+                if os.path.exists('/var/run/istgt.pid'): svcs.append('iscsitarget')
+                if os.path.exists('/var/run/mountd.pid'): svcs.append('nfs')
+                app = appPool.get_app('plugins')
+                if getattr(app, 'unlock_restart', False): svcs.append('jails')
+                print
+                for svc in svcs:
+                    notifier().restart(svc)
+                    print "%s service restarted" % svc
+
+        print
+        raw_input("Press Enter to continue...")
+        if i == 0: 
+            AllUnlocked = True     
+        else:
+            VolumeSelected = False
+
+
 def shell():
     return os.system("/usr/bin/su -l root")
 
@@ -986,6 +1069,7 @@ def main_menu():
         [ _("Configure Default Route"), configure_default_route ],
         [ _("Configure Static Routes"), configure_static_routes ],
         [ _("Configure DNS"), configure_dns ],
+        [ _("Unlock Encrypted Volumes"), unlock_volumes ],
         [ _("Reset WebGUI login credentials"), reset_gui_login ],
         [ _("Reset to factory defaults"), reset_factory_defaults ],
         [ _("Shell"), shell ],
