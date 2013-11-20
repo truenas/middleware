@@ -16,7 +16,7 @@
     {% block message %}
     {% if related_num > 0 %}
     <tr>
-        <td>{% blocktrans count related_num as counter %}There is {{ related_num }} related entry that is going to be delete as well because depend on this item{% plural %}There are {{ related_num }} related entries that are going to be delete as well because depend on this item{% endblocktrans %}:
+        <td>{% blocktrans count related_num as counter %}There is {{ related_num }} related entry that will also be deleted as it depend upon this item{% plural %}There are {{ related_num }} related entries that will also be deleted as they depend upon this item{% endblocktrans %}:
             <ul>
                 {% for name, objs in related.items %}
                     <li>{{ name }}: {% for obj in objs %}{{ obj }}{% if not forloop.last %}, {% endif %}{% endfor %}</li>
