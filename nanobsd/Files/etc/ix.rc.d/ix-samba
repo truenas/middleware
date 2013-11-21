@@ -170,7 +170,11 @@ generate_ldap_smbconf()
 	echo "    security = user"
 
 	if [ -n "$(LDAP_get ldap_hostname)" ]; then
-		echo "    passdb backend = ldapsam:ldap://$(LDAP_get ldap_hostname)"
+		if [ "$(LDAP_get ldap_ssl)" = "on" -o "$(LDAP_get ldap_ssl)" = "start_tls" ]; then
+			echo "    passdb backend = ldapsam:ldaps://$(LDAP_get ldap_hostname)"
+		else
+			echo "    passdb backend = ldapsam:ldap://$(LDAP_get ldap_hostname)"
+		fi
 	fi
 
 	if [ -n "$(LDAP_get ldap_rootbasedn)" ]; then
