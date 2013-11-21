@@ -33,7 +33,7 @@ import signal
 import sys
 import subprocess
 import time
-
+import getpass
 import ipaddr
 
 WWW_PATH = "/usr/local/www"
@@ -64,6 +64,8 @@ from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings
 from freenasUI.middleware.notifier import notifier
+from freenasUI.account import models
+from freenasUI.account.models import bsdUsers
 
 
 def quad_to_cidr(quad):
@@ -1000,6 +1002,7 @@ def main_menu():
         menu_max = menu_max + 1
         menu_map[menu_max] = item
 
+    fail_pwd=0
     while True:
         print
         print _("Console setup")
@@ -1010,6 +1013,15 @@ def main_menu():
             print "%d) %s" % (index, menu_map[index][0])
 
         show_ip()
+
+        rootpass = getpass.getpass("Enter password for root to access Console Setup: ")
+        if not bsdUsers.objects.get(bsdusr_username='root').check_password(rootpass):
+           print "Incorrect Password"
+           time.sleep (2**fail_pwd) # basic tarpit 
+           fail_pwd=fail_pwd+1
+           continue
+        else:
+            fail_pwd=0
 
         try:
             ch = int(raw_input(_("Enter an option from 1-%d: ") % (menu_max)))
