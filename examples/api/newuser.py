@@ -13,6 +13,6 @@ r = requests.post(
         'bsdusr_shell': '/usr/local/bin/bash',
         'bsdusr_full_name': 'Full Name',
         'bsdusr_email': 'name@provider.com',
-    })
+    },
 )
 print r.text
