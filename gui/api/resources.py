@@ -130,6 +130,10 @@ class DiskResourceMixin(object):
             bundle.data['disk_size'] = humanize_number_si(
                 bundle.data['disk_size']
             )
+        if 'disk_number' in bundle.data:
+            del bundle.data['disk_number']
+        if 'disk_subsystem' in bundle.data:
+            del bundle.data['disk_subsystem']
         return bundle
 
 
