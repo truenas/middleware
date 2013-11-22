@@ -43,7 +43,6 @@ from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpUnauthorized
 from tastypie.paginator import Paginator
 from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
-import oauth2
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
 log = logging.getLogger('api.resources')
@@ -58,95 +57,6 @@ class DjangoAuthentication(Authentication):
     # Optional but recommended
     def get_identifier(self, request):
         return request.user.username
-
-
-class OAuth2Authentication(Authentication):
-    """OAuth2 authenticator.
-
-    This Authentication method checks for a provided HTTP_AUTHORIZATION
-    and looks up to see if this is a valid OAuth Access Token
-    """
-    def __init__(self, realm='API'):
-        self.realm = realm
-
-    def verify_access_token(self, request, key):
-
-        uurl = "%s://%s%s" % (
-            'https' if request.is_secure() else 'http',
-            request.get_host(),
-            request.path,
-        )
-
-        auth_header = {}
-        if 'Authorization' in request.META:
-            auth_header = {'Authorization': request.META['Authorization']}
-        elif 'HTTP_AUTHORIZATION' in request.META:
-            auth_header = {'Authorization': request.META['HTTP_AUTHORIZATION']}
-
-        oreq = oauth2.Request.from_request(
-            request.method,
-            uurl,
-            headers=auth_header,
-            query_string=request.META.get('QUERY_STRING', None),
-        )
-
-        key = oreq.get("oauth_consumer_key", None)
-
-        secret = None
-        client = APIClient.objects.get(name=key)
-        if client:
-            secret = client.secret
-
-        if not key or not secret:
-            return False
-
-        try:
-            server = oauth2.Server()
-            cons = oauth2.Consumer(key, secret)
-            server.add_signature_method(oauth2.SignatureMethod_HMAC_SHA1())
-            server.verify_request(oreq, cons, None)
-            authorized = True
-        except Exception:
-            log.exception("auth2 error")
-            authorized = False
-        request.oauth2 = authorized
-
-        return authorized
-
-    def is_authenticated(self, request, **kwargs):
-        """Verify 2-legged oauth request. Parameters accepted as
-        values in "Authorization" header, or as a GET request
-        or in a POST body.
-        """
-        log.debug("OAuth2Authentication")
-
-        try:
-            key = request.GET.get('oauth_consumer_key')
-            if not key:
-                key = request.POST.get('oauth_consumer_key')
-            if not key:
-                auth_header_value = request.META.get('HTTP_AUTHORIZATION')
-                if auth_header_value:
-                    key = auth_header_value.split(' ')[1]
-            if not key:
-                log.error('No consumer key found')
-                return None
-
-            assert self.verify_access_token(request, key)
-
-            #request.user = token.user
-            # If OAuth authentication is successful, set oauth_consumer_key
-            # on request in case we need it later
-            request.META['oauth_consumer_key'] = key
-            return True
-        except KeyError:
-            log.exception("Error in OAuth2Authentication")
-            #request.user = AnonymousUser()
-            return False
-        except Exception:
-            log.exception("Error in OAuth2Authentication")
-            return False
-        return True
 
 
 class FreeBasicAuthentication(BasicAuthentication):
