@@ -83,17 +83,18 @@ HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
 
-    # We are already master, do nothing.
+    # We are already master, insist this by setting all advskew to 1
     if [ -e ${FAILOVER_ASSUMED_MASTER} ]; then
+	ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 1
 	rm -f ${FAILOVER_STATE}\${EVENT}
 	exit 0
     fi
 
     BACKUPS=\$(ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 ifconfig | grep "carp: BACKUP" | wc -l )
     if [ \${BACKUPS} -gt 0 ]; then
-	ifconfig \${SUBSYSTEM} advskew 240
 	echo "Ignoring UP state on \${SUBSYSTEM} because we still have interfaces that are BACKUP." | logger
 	echo "\$(date), \$(hostname), \${SUBSYSTEM} assumed master while other interfaces are still in slave mode." | mail -s "Failover WARNING" root
+	rm -f ${FAILOVER_STATE}\${EVENT}
 	exit 1
     fi
 
