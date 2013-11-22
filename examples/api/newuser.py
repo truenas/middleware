@@ -1,10 +1,12 @@
+import json
 import requests
 
 r = requests.post(
     'https://freenas.mydomain/api/v1.0/account/users/',
     auth=('root', 'freenas'),
     headers={'Content-Type': 'application/json'},
-    data={
+    verify=False,
+    data=json.dumps({
         'bsdusr_uid': '1100',
         'bsdusr_username': 'myuser',
         'bsdusr_mode': '755',
@@ -13,6 +15,6 @@ r = requests.post(
         'bsdusr_shell': '/usr/local/bin/bash',
         'bsdusr_full_name': 'Full Name',
         'bsdusr_email': 'name@provider.com',
-    },
+    }),
 )
 print r.text
