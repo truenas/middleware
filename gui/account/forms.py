@@ -695,7 +695,10 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             # Check if updating password
             #
             bsdusr_password = self.cleaned_data.get("bsdusr_password", "")
-            bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
+            if self._api is True:
+                bsdusr_password2 = bsdusr_password
+            else:
+                bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
             if bsdusr_password and (bsdusr_password == bsdusr_password2):
                 unixhash, smbhash = _notifier.user_changepassword(
                     username=str(bsduser.bsdusr_username),
