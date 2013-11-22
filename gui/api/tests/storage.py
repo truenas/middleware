@@ -33,6 +33,7 @@ class DiskResourceTest(APITestCase):
             u'disk_multipath_name': u'',
             u'disk_name': u'ada1',
             u'disk_serial': u'',
+            u'disk_size': u'',
             u'disk_smartoptions': u'',
             u'disk_togglesmart': True,
             u'disk_transfermode': u'Auto',
