@@ -4,6 +4,15 @@ Release Notes for FreeNAS 9.2.0-BETA
 fixes, and updated software packages.  For a complete list see
 http://www.freebsd.org/releases/9.2R/relnotes.html
 
+* The Kernel UMA allocator is now the default for ZFS.  This results in
+higher ZFS performance.
+
+* Avahi (multicast DNS, aka Bonjour) registration of all services, include
+the web service, means you no longer need to have a head on the box to know
+its IP address, even for initial configuration.  freenas.local is the default
+(or freenas-n.local, where n is the # of freenas.local machines already on
+the local network).  This can be changed by changing the hostname.
+
 * The built-in admin user account is no longer used and the Admin Account
 removed. The first time the FreeNAS graphical interface is accessed, a
 pop-up menu will prompt for the root password. Subsequent logins to the
