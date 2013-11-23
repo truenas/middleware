@@ -1,68 +1,74 @@
 Release Notes for FreeNAS 9.2.0-BETA
 
-1) Version 9.2-RELEASE of FreeBSD with performance improvements, bug
-fixes, and updated software packages.  For a complete list of those, see
+* Version 9.2-RELEASE of FreeBSD with performance improvements, bug
+fixes, and updated software packages.  For a complete list see
 http://www.freebsd.org/releases/9.2R/relnotes.html
 
-2) The built-in admin user account is no longer used and the Admin Account
-has been removed. The first time the FreeNAS graphical interface is accessed,
-a pop-up menu will prompt for the root password. Subsequent logins to the
+* The built-in admin user account is no longer used and the Admin Account
+removed. The first time the FreeNAS graphical interface is accessed, a
+pop-up menu will prompt for the root password. Subsequent logins to the
 graphical interface will require this password.
 
-3) The "Permit Sudo" field has been added to the add and edit screens for
+* A complete REST API has been created for FreeNAS, allowing a FreeNAS
+instance to be controlled remotely.  See examples/api in the FreeNAS
+source repository (https://github.com/freenas/freenas/tree/master) for some
+examples of this in action.  Complete API docs are available in docs/api.
+
+* The "Permit Sudo" field has been added to the add and edit screens for
 Users and Groups.  A column in View Groups and View Users now indicates
 whether or not "Permit Sudo" has been set.
 
-4) HTTP and HTTPS access to the FreeNAS graphical interface are no longer
+* HTTP and HTTPS access to the FreeNAS graphical interface are no longer
 mutually exclusive. The fields "WebGUI HTTP Port" and "WebGUI HTTPS Port"
 have been added to System  Settings -> General.
 
-5) An "Edit" button has been added to the "Hostname" field of System
+* An "Edit" button has been added to the "Hostname" field of System
 Information to make the hostname easier to change.
 
-6) The results from the latest ZFS scrub now appear in Volume Status.
+* The results from the latest ZFS scrub now appear in Volume Status.
 
-7) Netatalk has been updated to version 3.1.0. See
+* Netatalk has been updated to version 3.1.0. See
 http://netatalk.sourceforge.net/3.1/ReleaseNotes3.1.0.html for a list of
 changes in this release.  There are also a number of changes made to AFP
 sharing as a result:
 
-	7a) The Add Apple (AFP) Share menu has been simplified and a
-	    "Default umask" option has been added.
+	* The Add Apple (AFP) Share menu has been simplified and a
+	  "Default umask" option has been added.
 
-	7b) The "Server Name" field has also been removed from AFP; in
-            Netatalk 3, this value is automatically derived from the system
-            hostname.
+	* The "Server Name" field has also been removed from AFP; in
+          Netatalk 3, this value is automatically derived from the system
+          hostname.
 
-	7c) "Enable home directories" and "Home directories" options added
-            to AFP.
+	* "Enable home directories" and "Home directories" options added
+           to AFP.
 
-8) The AIO options have been removed from CIFS.
+* The AIO options have been removed from CIFS.
 
-9) Fourteen TLS-related fields have been added to the Advanced Mode of FTP.
+* Fourteen TLS-related fields have been added to the Advanced Mode of FTP.
 
-10) An "IPv4 Address" column has been added to the View Jails screen.
+* An "IPv4 Address" column has been added to the View Jails screen.
 
-11) A shell button has been added to Jails, making it easy to access the
+* A shell button has been added to Jails, making it easy to access the
 command line of the selected jail.
 
-12) A "Create directory" checkbox has been added to the Add Storage function of
+* A "Create directory" checkbox has been added to the Add Storage function of
 a jail so that the user does not have to first access the jail's shell to make
 sure that the directory already exists. A "Read-Only" checkbox has also been
 added to this screen.
 
-13) A jails templating system has been added, allowing the quick deployment of
+* A jails templating system has been added, allowing the quick deployment of
 new jails from existing templates and the ability to create custom templates.
 Linux jail support has also been added and installation templates are included
 for Debian-7.1.0, Gentoo-20130820, Ubuntu-13.04, Centos-6.4, Fedora-19, and
 Suse-12.3.
 
-14) A link to the online FreeBSD manual pages has been added to Help.
+* A link to the online FreeBSD manual pages has been added to Help.
 
-15) Added bxe(4) driver for Broadcom NetXtreme II Ethernet 10Gb PCIe adapter.
+* Added bxe(4) driver for Broadcom NetXtreme II Ethernet 10Gb PCIe adapter.
 
-16) Added padlock(4) driver which provides cryptographic hardware acceleration
+* Added padlock(4) driver which provides cryptographic hardware acceleration
 for VIA C3, C7 and Eden processors.
+
 ==============================================================================
 
 Release Notes for FreeNAS 9.1.0-RELEASE
