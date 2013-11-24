@@ -26,10 +26,7 @@ fi
 
 SAVED_BUILD_ENV_DESTDIR="${SAVED_BUILD_ENV_ROOT}/${SAVED_VERSION_NAME}"
 if [ -e "${SAVED_BUILD_ENV_DESTDIR}" ] ; then
-    echo "ERROR!! ${SAVED_BUILD_ENV_DESTDIR} exists, not overwriting."
-    echo "Either change VERSION in the file $mydir/nano_env or delete the existing directory manually."
-    echo "exiting."
-    exit 1
+    rm -rf ${SAVED_BUILD_ENV_DESTDIR}
 fi
 
 set -x
