@@ -66,7 +66,7 @@ main()
 
 	# Create the install ISO based on contents from the installworld tree
 	mkdir -p ${INSTALLUFSDIR}
-	tar -cf - -C ${NANO_OBJ}/_.w --exclude local . | tar -xf - -C ${INSTALLUFSDIR}
+	tar -cf - -C ${NANO_OBJ}/_.w --exclude local --exclude workdir . | tar -xf - -C ${INSTALLUFSDIR}
 
 	# copy /rescue and /boot from the image to the iso
 	tar -c -f - -C ${NANO_OBJ}/_.w --exclude boot/kernel-debug boot | tar -x -f - -C ${ISODIR}
