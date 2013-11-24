@@ -18,6 +18,10 @@ removed. The first time the FreeNAS graphical interface is accessed, a
 pop-up menu will prompt for the root password. Subsequent logins to the
 graphical interface will require this password.
 
+* The plugin system now offers in-place updates for plugins, also
+segregating installed plugins from available plugins to make the UI
+less cluttered.
+
 * A complete REST API has been created for FreeNAS, allowing a FreeNAS
 instance to be controlled remotely.  See examples/api in the FreeNAS
 source repository (https://github.com/freenas/freenas/tree/master) for some
