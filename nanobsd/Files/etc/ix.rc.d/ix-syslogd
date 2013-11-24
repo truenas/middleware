@@ -131,8 +131,6 @@ ix_syslogd_start()
 			mv /var/log /var/.log.old
 			ln -s ${mp}/log /var/log
 
-			/etc/rc.d/syslogd restart
-
 			break
 		fi
 	done
