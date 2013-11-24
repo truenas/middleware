@@ -10,7 +10,7 @@ Requirements:
   - lang/python26 or lang/python27
   - sysutils/cdrtools
   - ports-mgmt/pbi-manager
-  - Whatever other ports we forgot o
+  - Whatever other ports we forgot to list above
 
 A ZFS filesystem on which to build.  Building FreeNAS depends on ZFS!
 
