@@ -92,6 +92,7 @@ require([
     "dijit/ProgressBar",
     "dijit/Tooltip",
     "dojox/form/BusyButton",
+    "dojox/form/CheckedMultiSelect",
     "dojox/grid/EnhancedGrid",
     "dojox/grid/enhanced/plugins/DnD",
     "dojox/grid/enhanced/plugins/Menu",

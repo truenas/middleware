@@ -217,8 +217,16 @@ class AFPForm(ModelForm):
 
 class NFSForm(ModelForm):
 
+    nfs_srv_bindip = forms.MultipleChoiceField(
+        label=models.NFS._meta.get_field('nfs_srv_bindip').verbose_name,
+        help_text=models.NFS._meta.get_field('nfs_srv_bindip').help_text,
+        required=False,
+        widget=forms.widgets.CheckedMultiSelect(),
+    )
+
     class Meta:
         model = models.NFS
+        exclude = ('nfs_srv_bindip', )
         widgets = {
             'nfs_srv_mountd_port': forms.widgets.TextInput(),
             'nfs_srv_rpcstatd_port': forms.widgets.TextInput(),
@@ -227,6 +235,14 @@ class NFSForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(NFSForm, self).__init__(*args, **kwargs)
+        self.fields['nfs_srv_bindip'].choices = list(choices.IPChoices())
+        self.fields['nfs_srv_bindip'].initial = (
+            self.instance.nfs_srv_bindip.encode('utf-8').split(',') if self.instance.id
+            else ''
+        )
+        self.fields.keyOrder.remove('nfs_srv_bindip')
+        self.fields.keyOrder.insert(2, 'nfs_srv_bindip')
+
         self.fields['nfs_srv_mountd_port'].label = (
             self.fields['nfs_srv_mountd_port'].label.lower()
         )
@@ -242,8 +258,7 @@ class NFSForm(ModelForm):
         if not ips:
             return ''
         bind = []
-        for ip in ips.split(','):
-            ip = ip.strip()
+        for ip in ips:
             try:
                 IPAddress(ip.encode('utf-8'))
             except:
@@ -254,7 +269,9 @@ class NFSForm(ModelForm):
         return ','.join(bind)
 
     def save(self):
-        super(NFSForm, self).save()
+        obj = super(NFSForm, self).save(commit=False)
+        obj.nfs_srv_bindip = self.cleaned_data.get('nfs_srv_bindip')
+        obj.save()
         started = notifier().restart("nfs")
         if (
             started is False
