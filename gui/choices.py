@@ -463,7 +463,7 @@ class IPChoices(NICChoices):
             for line in lines:
                 if line.startswith('\tinet6'):
                     if ipv6 is True:
-                        self._IPlist.append(line.split(' ')[1])
+                        self._IPlist.append(line.split(' ')[1].split('%')[0])
                 elif line.startswith('\tinet'):
                     if ipv4 is True:
                         self._IPlist.append(line.split(' ')[1])
