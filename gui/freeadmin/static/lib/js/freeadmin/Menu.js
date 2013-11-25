@@ -31,11 +31,12 @@ define([
                 opened2 = c[i];
               }
             }
+
             if(gname == 'system.Settings') {
-              p.selectChild(opened);
+              if(opened) p.selectChild(opened);
               opened2 = true;
             } else if(gname == 'system.SysInfo') {
-              p.selectChild(opened2);
+              if(opened2) p.selectChild(opened2);
               opened = true;
             }
 
@@ -47,6 +48,7 @@ define([
                     href: this.urlSettings,
                 });
                 p.addChild(pane);
+                p.selectChild(pane);
             }
 
             if(opened2 == false) {
