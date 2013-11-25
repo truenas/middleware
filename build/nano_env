@@ -133,6 +133,7 @@ add_nano_modules()
 	NANO_MODULES="${NANO_MODULES} $*"
 }
 
+add_nano_modules cc/cc_cdg cc/cc_chd cc/cc_cubic cc/cc_hd cc/cc_htcp cc/cc_vegas
 add_nano_modules cxgb cxgbe cyclic
 add_nano_modules dtrace ext2fs fdescfs geom ipmi krpc
 add_nano_modules libiconv libmchain lindev linprocfs linsysfs linux
