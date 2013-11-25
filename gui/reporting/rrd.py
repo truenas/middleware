@@ -29,8 +29,7 @@ import logging
 import os
 import re
 import tempfile
-
-import rrdtool
+import subprocess
 
 from freenasUI.common.pipesubr import pipeopen
 
@@ -107,6 +106,8 @@ class RRDBase(object):
 
         fh, path = tempfile.mkstemp()
         args = [
+            "/usr/local/bin/rrdtool",
+            "graph",
             path,
             '--imgformat', self.imgformat,
             '--vertical-label', str(self.get_vertical_label()),
@@ -116,7 +117,12 @@ class RRDBase(object):
             '--start', 'end-%s' % starttime, '-b', '1024',
         ]
         args.extend(self.graph())
-        rrdtool.graph(*args)
+        # rrdtool python is suffering from some sort of threading locking issue
+        # See #3478
+        # rrdtool.graph(*args)
+        subprocess.Popen(
+            args, stdout=subprocess.PIPE, stdin=subprocess.PIPE
+        ).communicate()
         return fh, path
 
 
