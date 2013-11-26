@@ -722,6 +722,7 @@ class NullMountPointForm(ModelForm):
         )
         if self.jail:
             self.fields['jail'].initial = self.jail.jail_host
+            self.fields['jail'].widget.attrs['readonly'] = True
 
         try:
             clean_path_execbit(self.jc.jc_path)
