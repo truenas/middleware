@@ -39,8 +39,6 @@ class Migration(SchemaMigration):
         db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
             "values ('centos-6.4', '%s/linux-centos-6.4.tgz')" % get_jails_index())
         db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
-            "values ('fedora-19', '%s/linux-fedora-19.tgz')" % get_jails_index())
-        db.execute("insert into jails_jailtemplate (jt_name, jt_url) "
             "values ('suse-12.3', '%s/linux-suse-12.3.tgz')" % get_jails_index())
 
 
