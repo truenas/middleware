@@ -710,3 +710,16 @@ FTP_TLS_POLICY_CHOICES = (
     ('auth+data', _('auth+data')),
     ('auth+!data', _('auth+!data'))
 )
+
+
+ZFS_RECORDSIZE = (
+    ('512', '512'),
+    ('1K', '1K'),
+    ('2K', '2K'),
+    ('4K', '4K'),
+    ('8K', '8K'),
+    ('16K', '16K'),
+    ('32K', '32K'),
+    ('64K', '64K'),
+    ('128K', '128K'),
+)

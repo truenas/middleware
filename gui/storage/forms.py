@@ -1119,7 +1119,8 @@ class ZFSDataset(Form):
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="inherit",
     )
-    dataset_recordsize = forms.CharField(
+    dataset_recordsize = forms.ChoiceField(
+        choices=(('', 'Inherit'), ) + choices.ZFS_RECORDSIZE,
         label=_('Record Size'),
         initial="",
         required=False,
@@ -1178,18 +1179,10 @@ class ZFSDataset(Form):
         rs = self.cleaned_data.get("dataset_recordsize")
         if not rs:
             return rs
-        if not re.search(r'^[0-9]+K?', rs, re.I):
-            raise forms.ValidationError(_("This is not a valid record size"))
         if rs[-1].lower() == 'k':
             rs = int(rs[:-1]) * 1024
         else:
             rs = int(rs)
-        poftwo = pow(rs, 0.5)
-        if (rs < 512 or rs > 131072) or poftwo != int(poftwo):
-            raise forms.ValidationError(_(
-                "The size specified must be a power of two greater than or "
-                "equal to 512 and less than or equal to 128 Kbytes."
-            ))
         return rs
 
     def clean(self):
