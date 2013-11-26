@@ -34,7 +34,6 @@ import os
 import re
 import tempfile
 
-from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
@@ -47,6 +46,7 @@ from django.utils.translation import ugettext_lazy as _, ungettext
 from dojango import forms
 from dojango.forms import CheckboxSelectMultiple
 from freenasUI import choices
+from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
 from freenasUI.common.system import mount, umount
@@ -1969,15 +1969,14 @@ class ChangePassphraseForm(Form):
             self.fields['passphrase'].widget.attrs['disabled'] = 'disabled'
             self.fields['passphrase2'].widget.attrs['disabled'] = 'disabled'
 
-        user = User.objects.filter(
-            is_superuser=True,
-            password=UNUSABLE_PASSWORD)
-        if user.exists():
-            del self.fields['adminpw']
-
     def clean_adminpw(self):
         pw = self.cleaned_data.get("adminpw")
-        if not User.objects.filter(is_superuser=True)[0].check_password(pw):
+        valid = False
+        for user in bsdUsers.objects.filter(bsdusr_uid=0):
+            if user.check_password(pw):
+                valid = True
+                break
+        if valid is False:
             raise forms.ValidationError(
                 _("Invalid password")
             )
@@ -2112,15 +2111,17 @@ class KeyForm(Form):
     def __init__(self, *args, **kwargs):
         super(KeyForm, self).__init__(*args, **kwargs)
 
-        user = User.objects.filter(
-            is_superuser=True,
-            password=UNUSABLE_PASSWORD)
-        if user.exists() or self._api is True:
+        if self._api is True:
             del self.fields['adminpw']
 
     def clean_adminpw(self):
         pw = self.cleaned_data.get("adminpw")
-        if not User.objects.filter(is_superuser=True)[0].check_password(pw):
+        valid = False
+        for user in bsdUsers.objects.filter(bsdusr_uid=0):
+            if user.check_password(pw):
+                valid = True
+                break
+        if valid is False:
             raise forms.ValidationError(
                 _("Invalid password")
             )
