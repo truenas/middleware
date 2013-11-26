@@ -56,7 +56,7 @@ class DjangoAuthentication(Authentication):
 
     # Optional but recommended
     def get_identifier(self, request):
-        return request.user.username
+        return request.user.bsdusr_username
 
 
 class FreeBasicAuthentication(BasicAuthentication):
