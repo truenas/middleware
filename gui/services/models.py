@@ -27,6 +27,7 @@
 import hashlib
 import hmac
 import logging
+import re
 import uuid
 
 from django.db import models
@@ -44,7 +45,6 @@ from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, Disk
 
 log = logging.getLogger("services.forms")
-
 
 class services(Model):
     srv_service = models.CharField(
@@ -1438,7 +1438,7 @@ class NT4(Model):
     nt4_netbiosname = models.CharField(
             max_length=120,
             verbose_name=_("NetBIOS Name"),
-            help_text=_("System hostname")
+            help_text=_("System hostname"),
             )
     nt4_workgroup = models.CharField(
             max_length=120,
@@ -1459,6 +1459,13 @@ class NT4(Model):
     def __init__(self, *args, **kwargs):
         super(NT4, self).__init__(*args, **kwargs)
         self.svc = 'nt4'
+
+        from freenasUI.network.models import GlobalConfiguration
+        gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+        if gc_hostname:
+            m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
+            if m:
+                self.nt4_netbiosname = m.group(0).upper().strip()
 
     class Meta:
         verbose_name = _("NT4 Domain")
@@ -1556,6 +1563,14 @@ class ActiveDirectory(Model):
     def __init__(self, *args, **kwargs):
         super(ActiveDirectory, self).__init__(*args, **kwargs)
         self.svc = 'activedirectory'
+
+        from freenasUI.network.models import GlobalConfiguration
+        gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+        if gc_hostname:
+            m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
+            if m:
+                self.ad_netbiosname = m.group(0).upper().strip()
+
 
     class Meta:
         verbose_name = _("Active Directory")
