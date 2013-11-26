@@ -229,7 +229,7 @@ class Jails(Model):
         is_linux = False
 
         sysctl_path = "%s/sbin/sysctl" % (self.jail_path)
-        p = pipeopen("file %s" % sysctl_path)
+        p = pipeopen("file %s" % sysctl_path, important=False)
         out = p.communicate()
         if p.returncode != 0:
             return is_linux
