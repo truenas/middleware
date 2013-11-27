@@ -90,7 +90,7 @@ db_update()
 	# Things that need write access to /data can follow this.
 
 	# NOTE: this must be run via the rc.d script, not service(8).
-	env AUTOTUNE_REBOOT=false /etc/rc.d/ix-loader start
+	env AUTOTUNE_REBOOT=false /etc/ix.rc.d/ix-loader start
 
 	echo "Database upgrade complete.  Rebooting."
 	cd /
