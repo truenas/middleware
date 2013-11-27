@@ -713,18 +713,22 @@ __EOF__
 
 __do_AD_get()
 {
-	local prefix="${1}"
-	local name="${2}"
-	local var=\$$(printf "${prefix}${name}")
-	local val=$(eval "echo ${var} 2>/dev/null")
+	local prefix name var val
+
+	prefix="${1}"
+	name="${2}"
+	var=\$$(printf "${prefix}${name}")
+	val="$(eval "echo ${var} 2>/dev/null")"
 
 	__unescape "${val}"
 }
 
 AD_get()
 {
-	local vars="${*}"
-	local prefix="__ad_"
+	local vars prefix
+
+	vars="${*}"
+	prefix="__ad_"
 
 	for v in ${vars}
 	do
@@ -742,19 +746,23 @@ AD_get()
 
 __do_AD_set()
 {
-	local prefix="${1}"
-	local var="${2}"
-	local val=$(__escape "${3}")
-	local pair="${var}=${val}"
+	local prefix var val pair
+
+	prefix="${1}"
+	var="${2}"
+	val="$(__escape "${3}")"
+	pair="${var}=${val}"
 
 	eval "${prefix}${pair}"
 }
 
 AD_set()
 {
-	local var="${1}"
-	local val="${2}"
-	local prefix="__ad_"
+	local var val prefix
+
+	var="${1}"
+	val="${2}"
+	prefix="__ad_"
 
 	__do_AD_set "${prefix}" "${var}" "${val}" 2>/dev/null
 }

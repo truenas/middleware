@@ -120,8 +120,10 @@
 
 __escape()
 {
-	local val="${1}"
-	local delim="${2}"
+	local val delim
+
+	val="${1}"
+	delim="${2}"
 
 	if [ -n "${val}" -a -z "${delim}" ]
 	then
@@ -154,8 +156,10 @@ __escape()
 
 __unescape()
 {
-	local val="${1}"
-	local delim="${2}"
+	local delim
+
+	val="${1}"
+	delim="${2}"
 
 	if [ -n "${val}" -a -z "${delim}" ]
 	then

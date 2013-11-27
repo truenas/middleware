@@ -20,15 +20,15 @@ kerberos_start()
 	then
 		AD_init
 
-		local domainname=$(AD_get ad_domainname)
-		local adminname=$(AD_get ad_adminname)
-		local adminpw=$(AD_get ad_adminpw)
+		local domainname="$(AD_get ad_domainname)"
+		local adminname="$(AD_get ad_adminname)"
+		local adminpw="$(AD_get ad_adminpw)"
 
 		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
 		then
-			domainname=$(echo "${domainname}" | tr a-z A-Z)
+			domainname="$(echo "${domainname}" | tr a-z A-Z)"
 
-			pwfile=$(mktemp /tmp/tmp.XXXXXXXX)
+			pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"
 			echo -n "${adminpw}" > ${pwfile}
 
 			AD_log "kerberos_start: /usr/bin/kinit --password-file=${pwfile} " \
