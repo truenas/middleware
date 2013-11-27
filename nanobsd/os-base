@@ -805,6 +805,12 @@ create_var_home_symlink()
 }
 customize_cmd create_var_home_symlink
 
+add_netcli_shell()
+{
+	echo "/etc/netcli.sh" >> ${NANO_WORLDDIR}/etc/shells
+}
+customize_cmd add_netcli_shell
+
 freenas_custom()
 {
 	compress_ko()
