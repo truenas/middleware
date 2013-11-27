@@ -487,6 +487,7 @@ class Available(object):
 
         p = pbi.PBI()
         p.set_appdir("/var/pbi")
+        p.pbid(flags=pbi.PBID_FLAGS_REFRESH, sync=True)
 
         #
         # If we have a PBI repo (or we don't), and it fails to return results,
