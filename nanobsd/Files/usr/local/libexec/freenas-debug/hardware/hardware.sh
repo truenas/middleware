@@ -27,6 +27,13 @@
 #####################################################################
 
 
+get_physical_disks_list()
+{
+	sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
+		| sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '
+}
+
+
 hardware_opt() { echo h; }
 hardware_help() { echo "Dump Hardware Configuration"; }
 hardware_directory() { echo "Hardware"; }
@@ -89,6 +96,26 @@ hardware_func()
 	section_header "camcontrol devlist"
 	camcontrol devlist
 	section_footer
+
+	for disk in $(get_physical_disks_list)
+	do
+		if echo "${disk}" | egrep -q '^da[0-9]+'
+		then
+			section_header "camcontrol inquiry ${disk}"
+			camcontrol inquiry "${disk}"
+			section_footer
+		fi
+	done
+
+	for disk in $(get_physical_disks_list)
+	do
+		if echo "${disk}" | egrep -q '^ada[0-9]+'
+		then
+			section_header "camcontrol identify ${disk}"
+			camcontrol identify "${disk}" 
+			section_footer
+		fi
+	done
 
 	if [ -c /dev/ipmi0 ]
 	then
