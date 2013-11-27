@@ -61,10 +61,6 @@ if [ -z "${IFACE}" ] ; then
    IFACE=`get_default_interface`
    DEFAULT=1
 fi
-if [ -z "${IFACE}" ] ; then
-  warden_error "no interface specified and a default doesn't exist!"
-  exit 6
-fi
 
 # End of error checking, now shutdown this jail
 ##################################################################
@@ -106,19 +102,25 @@ else
   for _ip in $IP4S
   do
     # See if active alias
-    ifconfig $IFACE | grep -q "${_ip}"
-    if [ $? -ne 0 ] ; then continue ; fi
+    if [ -n "${IFACE}" ]
+    then
+      ifconfig $IFACE | grep -q "${_ip}"
+      if [ $? -ne 0 ] ; then continue ; fi
 
-    ifconfig $IFACE inet -alias ${_ip}
+      ifconfig $IFACE inet -alias ${_ip}
+    fi
   done
 
   for _ip in $IP6S
   do
     # See if active alias
-    ifconfig $IFACE | grep -q "${_ip}"
-    if [ $? -ne 0 ] ; then continue ; fi
+    if [ -n "${IFACE}" ]
+    then
+      ifconfig $IFACE | grep -q "${_ip}"
+      if [ $? -ne 0 ] ; then continue ; fi
 
-    ifconfig $IFACE inet6 ${_ip} delete
+      ifconfig $IFACE inet6 ${_ip} delete
+    fi
   done
 fi
 
