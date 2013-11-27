@@ -807,6 +807,7 @@ class iSCSITarget(Model):
 
     class Meta:
         verbose_name = _("Target")
+        ordering = ['iscsi_target_name']
 
     def __unicode__(self):
         return self.iscsi_target_name
