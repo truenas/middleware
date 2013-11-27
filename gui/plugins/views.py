@@ -78,15 +78,6 @@ def home(request):
     })
 
 
-def refresh(request):
-
-    p = pbi.PBI()
-    p.set_appdir("/var/pbi")
-    p.pbid(flags=pbi.PBID_FLAGS_REFRESH)
-
-    return HttpResponse('OK')
-
-
 def plugins(request):
 
     Service = namedtuple('Service', [
