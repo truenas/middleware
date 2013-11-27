@@ -159,7 +159,10 @@ class ResourceMixin(object):
         )
 
     def is_webclient(self, request):
-        if not request.META.get('HTTP_AUTHORIZATION', '').startswith('Basic'):
+        if (
+            request.META.get('HTTP_X_REQUESTED_FROM') == 'WebUI' or
+            not request.META.get('HTTP_AUTHORIZATION', '').startswith('Basic')
+        ):
             return True
 
     def get_list(self, request, **kwargs):
