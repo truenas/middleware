@@ -25,8 +25,10 @@
 #
 # $FreeBSD$
 #####################################################################
+import glob
 import logging
 import os
+import select
 import string
 
 log = logging.getLogger('common.pbi')
@@ -43,10 +45,15 @@ JEXEC_PATH = "/usr/sbin/jexec"
 
 from freenasUI.common.cmd import cmd_arg, cmd_pipe
 
+
 class pbi_arg(cmd_arg):
     pass
+
+
 class pbi_pipe(cmd_pipe):
     pass
+
+
 class pbi_exception(Exception):
     pass
 
@@ -687,12 +694,42 @@ class pbi_update_hashdir(pbi_base):
 
 
 class pbid(pbi_base):
-    def __init__(self, flags=PBI_FLAGS_NONE, **kwargs):
+    def __init__(self, flags=PBI_FLAGS_NONE, sync=False, **kwargs):
         log.debug("pbid.__init__: enter")
+        self.__sync = sync
 
         super(pbid, self).__init__(PBID, PBID_FLAGS, flags, **kwargs)
 
         log.debug("pbid.__init__: leave")
+
+    def run(self, *args, **kwargs):
+        super(pbid, self).run(*args, **kwargs)
+
+        """
+        pbid --refresh is async and will remove /var/db/pbi/index/*.time,
+        once the refresh is done the file will exist again.
+        Wait for the file using kqueue for the sync operation
+        """
+        if self.__sync is True and self.flags & PBID_FLAGS_REFRESH:
+            fd = os.open(PBID_INDEXDIR, os.O_RDONLY)
+            evts = [
+                select.kevent(fd,
+                    filter=select.KQ_FILTER_VNODE,
+                    flags=select.KQ_EV_ADD | select.KQ_EV_CLEAR,
+                    fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND,
+                )
+            ]
+            kq = select.kqueue()
+            kq.control(evts, 0, 0)
+            timeout = True
+            for i in xrange(30):
+                kq.control(None, 2, 1)
+                if len(glob.glob('%s/*.time' % PBID_INDEXDIR)) > 0:
+                    timeout = False
+                    break
+
+            if timeout:
+                log.debug("pbid.run: sync refresh timed out")
 
 
 class PBI(object):
