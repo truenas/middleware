@@ -1496,6 +1496,13 @@ class iSCSITargetForm(ModelForm):
         name = self.cleaned_data.get("iscsi_target_name").lower()
         if not re.search(r'^[-a-z0-9\.:]+$', name):
             raise forms.ValidationError(_("Use alphanumeric characters, \".\", \"-\" and \":\"."))
+        qs = models.iSCSITarget.objects.filter(iscsi_target_name=name)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(
+                _(u'A target with that name already exists.')
+            )
         return name
 
     def clean_iscsi_target_authgroup(self):
