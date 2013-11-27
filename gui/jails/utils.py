@@ -57,7 +57,7 @@ def get_jails_index(release=None, arch=None):
 # then kill the process if a reply is not received.
 #
 def ping_host(host, ping6=False):
-    tseconds = 10
+    tseconds = 2
 
     cmd = "/sbin/ping -q -t %d -o %s" % (tseconds, host)
     if ping6:
