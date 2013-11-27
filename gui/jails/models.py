@@ -388,9 +388,6 @@ class JailTemplate(Model):
         verbose_name = _("Jail Templates")
         verbose_name_plural = _("Jail Templates")
 
-    class FreeAdmin:
-        deletable = False
-
 
 class NullMountPoint(Model):
 
