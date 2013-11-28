@@ -259,10 +259,11 @@ class Available(object):
                 return repo
 
         for repo in repos:
-            #repoid = repo[0]
-            description = repo[1]
-            if re.match('Official FreeNAS Repository', description, re.I):
+            if re.match('Official FreeNAS Repository', repo[1], re.I):
                 return repo
+
+        for repo in repos:
+            return repo
 
         if create is True:
             if not self.create_repo():
@@ -489,22 +490,6 @@ class Available(object):
         p.set_appdir("/var/pbi")
         p.pbid(flags=pbi.PBID_FLAGS_REFRESH, sync=True)
 
-        #
-        # If we have a PBI repo (or we don't), and it fails to return results,
-        # then we aren't yet fully initialized. So, we kind of slap it into shape
-        # over the course of a minute or so by checking the icon count and forcing
-        # a refresh of pbid (since it only wakes up every few minutes). 
-        #
-        t = 0
-        timeout = 90
-        while t < timeout:
-            tcount = self.get_total_icon_count()
-            icount = self.get_icon_count()
-            if icount != tcount:
-                time.sleep(5)
-                p.pbid(flags=pbi.PBID_FLAGS_REFRESH)
-            t += 1
-       
         results = p.browser(repo_id=repo_id, flags=pbi.PBI_BROWSER_FLAGS_VIEWALL)
         if not results:
             log.debug(
