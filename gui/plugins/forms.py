@@ -25,12 +25,14 @@
 #
 #####################################################################
 import logging
+import requests
 import shutil
 
 from django.forms import FileField, MultipleChoiceField
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
+from freenasUI.common import pbi
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.warden import (
     Warden, WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
@@ -191,3 +193,26 @@ class ConfigurationForm(ModelForm):
 
     class Meta:
         model = models.Configuration
+
+    def __init__(self, *args, **kwargs):
+        super(ConfigurationForm, self).__init__(*args, **kwargs)
+        if self.instance.id:
+            self._orig = dict(self.instance.__dict__)
+        else:
+            self._orig = {}
+
+    def save(self, *args, **kwargs):
+        obj = super(ConfigurationForm, self).save(*args, **kwargs)
+        if self._orig.get('repourl') != obj.repourl:
+            p = pbi.PBI()
+            p.set_appdir("/var/pbi")
+            for repoid, name in p.listrepo():
+                p.deleterepo(repoid=repoid)
+
+            r = requests.get(obj.repourl, stream=True, verify=False, timeout=5)
+            with open('/var/tmp/plugins.rpo', 'wb') as f:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+            p.addrepo(repofile='/var/tmp/plugins.rpo')
+        return obj
