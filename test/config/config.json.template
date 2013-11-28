@@ -1,0 +1,20 @@
+# Use this as a template JSON file.  This
+# is used to configure the test scripts. 
+# Add/change the values based on your test environment.
+
+{
+    "vm_name": "vm2", 
+    "username": "root", 
+    "url": "http://XXXXXXXX", 
+    "ip": "XXXXXXXX", 
+    "disk_img": "/tmp/some_disk.img", 
+    "disks": [
+        "/tmp/disk12.img", 
+        "/tmp/disk13.img"
+    ], 
+    "iso": "/tmp/FreeNAS.iso", 
+    "password": "XXXXXXXX"
+    "tap": "tap0", 
+    "bridge": "bridge0", 
+    "interface": "em0", 
+}

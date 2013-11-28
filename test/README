@@ -1,0 +1,17 @@
+SETUP
+=====
+
+FreeBSD packages
+================
+The following packages from FreeBSD ports must be installed:
+  - lang/python27
+  - misc/py-pexpect
+  - devel/py-pip
+
+Python packages
+===============
+The following package is not in FreeBSD ports but must be installed:
+
+pip install splinter
+
+(see http://splinter.cobrateam.info )
