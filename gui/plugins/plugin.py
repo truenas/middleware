@@ -116,10 +116,12 @@ class Plugin(object):
                     e,
                 )
                 #FIXME: try to download from multiple urls
-                raise MiddlewareError(_("Failed to download %s: %s" % (
-                    url,
-                    e,
-                )))
+                raise MiddlewareError(
+                    _("Failed to download %(url)s: %(error)s" % {
+                        url,
+                        e,
+                    })
+                )
 
         return rv
 

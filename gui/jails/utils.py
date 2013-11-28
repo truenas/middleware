@@ -691,10 +691,10 @@ def jail_auto_configure():
             name = "%s_%d" % (basename, i)
     rv, err = notifier().create_zfs_dataset(name)
     if rv != 0:
-        raise MiddlewareError(_("Failed to create dataset %s: %s") % (
-            name,
-            err,
-        ))
+        raise MiddlewareError(_("Failed to create dataset %(name)s: %(error)s") % {
+            'name': name,
+            'error': err,
+        })
 
     try:
         jail = JailsConfiguration.objects.latest('id')
