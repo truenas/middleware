@@ -216,7 +216,11 @@ $(ifnz ${ftp_tls_opt_stdenvvars} "StdEnvVars") \
 $(ifnz ${ftp_tls_opt_use_implicit_ssl} "UseImplicitSSL") \
 $(ifnz ${ftp_tls_opt_dns_name_required} "dNSNameRequired") \
 $(ifnz ${ftp_tls_opt_ip_address_required} "iPAddressRequired")"
-tls_options="TLSOptions $(echo ${tls_options}|sed -E 's|( +)| |g')"
+if [ ! -z "$(echo ${tls_options}|sed -E 's|( +)||g')" ]; then
+	tls_options="TLSOptions $(echo ${tls_options}|sed -E 's|( +)| |g')"
+else
+	tls_options=""
+fi
 
 	    cat <<EOF >> ${proftpd_config}
 LoadModule mod_tls.c
