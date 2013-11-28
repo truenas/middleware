@@ -768,10 +768,10 @@ class NullMountPointForm(ModelForm):
                 obj.mount()
             except ValueError, e:
                 raise MiddlewareError(
-                    _("The path could not be mounted %s: %s") % (
-                        obj.source,
-                        e,
-                    )
+                    _("The path could not be mounted %(source)s: %(error)s") % {
+                        'source': obj.source,
+                        'error': e,
+                    }
                 )
         elif obj.umount():
             #FIXME better error handling, show the user why
