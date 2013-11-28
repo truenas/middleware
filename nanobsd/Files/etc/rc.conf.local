@@ -135,6 +135,7 @@ _interface_config()
 			fi
 		else
 			echo ifconfig_${interface}_ipv6=\"inet6 auto_linklocal\"
+			echo rtsold_enable=\"YES\"
 		fi
 		if [ -n "${lagg_id}" ]; then
 			cloned_interfaces="${cloned_interfaces} ${interface}"
