@@ -129,6 +129,19 @@ class InterfacesForm(ModelForm):
             )
         return dhcp
 
+    def clean_int_ipv6auto(self):
+        ipv6auto = self.cleaned_data.get("int_ipv6auto")
+        if not ipv6auto:
+            return ipv6auto
+        qs = models.Interfaces.objects.filter(int_ipv6auto=True)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(
+                _("Only one interface can have IPv6 autoconfiguration enabled")
+            )
+        return ipv6auto
+
     def clean_int_v4netmaskbit(self):
         ip = self.cleaned_data.get("int_ipv4address")
         nw = self.cleaned_data.get("int_v4netmaskbit")
