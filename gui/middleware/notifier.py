@@ -412,6 +412,7 @@ class notifier:
         self._system("/usr/sbin/service ix-sysctl reload")
 
     def _start_network(self):
+        self._system("/usr/sbin/service rtsold stop")
         from freenasUI.network.models import Alias, Interfaces
         qs = Interfaces.objects.filter(int_ipv6auto=True).exists()
         qs2 = Interfaces.objects.exclude(int_ipv6address='').exists()
@@ -426,6 +427,7 @@ class notifier:
                 self._system("/usr/sbin/service autolink auto_linklocal quietstart")
                 self._system("/usr/sbin/service netif stop")
         self._system("/etc/netstart")
+        self._system("/usr/sbin/service rtsold start")
 
     def _stop_jails(self):
         from freenasUI.jails.models import Jails
