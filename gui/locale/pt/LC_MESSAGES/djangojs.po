@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-05-27 20:28+0200\n"
-"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
+"PO-Revision-Date: 2013-10-28 18:55+0200\n"
+"Last-Translator: joao.f.vieira <joao.f.vieira@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -24,7 +24,7 @@ msgstr "Relatórios"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
-msgstr "Opções"
+msgstr "Definições"
 
 #: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
@@ -44,12 +44,12 @@ msgstr "Conta"
 
 #: freeadmin/static/lib/js/freeadmin.js:270
 msgid "Storage"
-msgstr "Disco"
+msgstr "Armazenamento"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
 msgid "Some error occurred"
-msgstr "Ocorreu algum erro"
+msgstr "Ocorreu um erro"
 
 #: freeadmin/static/lib/js/freeadmin.js:538
 msgid "Edit"
@@ -96,10 +96,10 @@ msgid "Disk Replacement"
 msgstr "Substituir Disco"
 
 msgid "Detach"
-msgstr "Separar"
+msgstr "Desmontar"
 
 msgid "Disk Detach"
-msgstr "Separar Disco"
+msgstr "Desmontar Disco"
 
 msgid "Every"
 msgstr "Todos"

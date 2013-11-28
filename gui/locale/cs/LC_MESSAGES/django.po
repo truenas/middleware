@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2013-01-15 22:47+0200\n"
-"Last-Translator: Charlieiv <charlieiv@tiscali.cz>\n"
+"PO-Revision-Date: 2013-11-10 09:44+0200\n"
+"Last-Translator: Bongo <bongo@hkfree.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -1308,7 +1308,7 @@ msgstr ""
 
 #: plugins/models.py:122
 msgid "Mount Points"
-msgstr ""
+msgstr "Body připojení"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
@@ -1620,7 +1620,7 @@ msgstr ""
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
-msgstr ""
+msgstr "Číslo autentizační skupiny"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1639,9 +1639,8 @@ msgid "Are you sure you want to delete?"
 msgstr "Jste si jisti, že chcete smazat?"
 
 #: services/forms.py:1147
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "Službě SNMP se nepodařilo znovu načíst konfiguraci."
+msgstr "Službě S.M.A.R.T. se nepodařilo znovu načíst konfiguraci."
 
 #: services/models.py:51
 msgid "Service"
@@ -1789,7 +1788,7 @@ msgstr "Povolit procházení domovských adresářů"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
-msgstr ""
+msgstr "Aktivuje/deaktivuje procházení domovských adresářů pro uživatele samby."
 
 #: services/models.py:156
 msgid "Home directories"
@@ -1946,11 +1945,11 @@ msgstr "I/O timeout ve vteřinách (výchozí hodnota 30)"
 
 #: services/models.py:281
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN Interval"
 
 #: services/models.py:282
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPIN odesílací interval ve vteřinách (přednastaveno 20)."
 
 #: services/models.py:287
 msgid "Max. sessions"
@@ -1970,7 +1969,7 @@ msgstr "Maximální počet spojení v každém sezení (výchozí hodnota 8)."
 
 #: services/models.py:299
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "Maximální počet pre-send R2T"
 
 #: services/models.py:300
 msgid ""
@@ -1980,7 +1979,7 @@ msgstr ""
 
 #: services/models.py:305
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "MaxOutstandingR2T"
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
@@ -2064,6 +2063,8 @@ msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
+"Istgcontrol může přistupovat k cílům se správným uživatelem a heslem ve "
+"specifickéj Auth skupině."
 
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
@@ -2161,6 +2162,8 @@ msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
+"Autorizovaná síť pro přístup k iSCSI cíli. zadávejte IP nebo CIDR adresy "
+"nebo 'ALL' pro libovolnou IP adresu."
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2180,15 +2183,15 @@ msgstr ""
 
 #: services/models.py:614
 msgid "Authorized Access"
-msgstr ""
+msgstr "Autorizovaný přístup"
 
 #: services/models.py:615
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "Autorizované přístupy"
 
 #: services/models.py:632
 msgid "Target Name"
-msgstr ""
+msgstr "Název cíle"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
@@ -2196,11 +2199,11 @@ msgstr ""
 
 #: services/models.py:640
 msgid "Target Alias"
-msgstr ""
+msgstr "Alias cíle"
 
 #: services/models.py:641
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "Volitelný uživatelský název cíle."
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
@@ -2215,7 +2218,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7 templates/system/smarttest.html:5
 msgid "Type"
-msgstr ""
+msgstr "Typ"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."

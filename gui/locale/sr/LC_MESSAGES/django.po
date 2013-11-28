@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2013-08-28 20:21+0200\n"
+"PO-Revision-Date: 2013-10-21 22:44+0200\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -1207,7 +1207,7 @@ msgstr ""
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
-msgstr ""
+msgstr "Putanja za jail dodatne komponente"
 
 #: plugins/forms.py:218
 msgid "Jail IPv4 Address"
@@ -3294,7 +3294,7 @@ msgstr "Ime"
 
 #: sharing/models.py:49
 msgid "Export Read Only"
-msgstr ""
+msgstr "Izvezi kao Read Only"
 
 #: sharing/models.py:51
 msgid "Browsable to Network Clients"
@@ -3497,6 +3497,8 @@ msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Dozvoli ostalim sistemima da otkriju ovaj deljeni resurs kao disk za "
+"podatke, kao Time Machine bekap volumen ili da ga nikako ne otkriju."
 
 #: sharing/models.py:167
 msgid "Disk discovery mode"
@@ -4174,7 +4176,7 @@ msgstr "Vikendi"
 
 #: storage/models.py:340
 msgid "Multipath name"
-msgstr ""
+msgstr "Ime višestruke putanje"
 
 #: storage/models.py:346
 msgid "Multipath member"
@@ -4929,11 +4931,11 @@ msgstr ""
 
 #: system/models.py:527
 msgid "Recurse into directories"
-msgstr ""
+msgstr "Rekurzivno u direktorijume"
 
 #: system/models.py:531
 msgid "Times"
-msgstr ""
+msgstr "Puta"
 
 #: system/models.py:532
 msgid "Preserve modification times"
@@ -5175,7 +5177,7 @@ msgstr "Dodaj novu grupu"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
 msgid "Home"
-msgstr ""
+msgstr "Početni"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
