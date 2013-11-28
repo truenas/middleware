@@ -222,8 +222,12 @@ class InterfacePlugin(RRDBase):
 
     def get_identifiers(self):
         ids = []
+        proc = pipeopen("/sbin/ifconfig -l", important=False, logger=log)
+        ifaces = proc.communicate()[0].strip('\n').split(' ')
         for entry in glob.glob('%s/interface-*' % self._base_path):
             ident = entry.rsplit('-', 1)[-1]
+            if ident not in ifaces:
+                continue
             if re.match("usbus", ident):
                 continue
             if os.path.exists(os.path.join(entry, 'if_octets.rrd')):
