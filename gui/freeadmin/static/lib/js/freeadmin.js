@@ -169,6 +169,7 @@ require([
     ProgressBar,
     Tooltip,
     BusyButton,
+    CheckedMultiSelect,
     EnhancedGrid,
     enhancedDnD,
     enhancedMenu,
