@@ -275,10 +275,10 @@ def mount(dev, path, mntopts=None, fstype=None):
     if proc.returncode != 0:
         log.debug("Mount failed (%s): %s", proc.returncode, output)
         raise ValueError(_(
-            "Mount failed (%s) -> %s" % (
-                proc.returncode,
-                output,
-            )
+            "Mount failed (%(retcode)s) -> %(output)s" % {
+                'retcode': proc.returncode,
+                'output': output,
+            }
         ))
     else:
         return True
