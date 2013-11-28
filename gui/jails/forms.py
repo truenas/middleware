@@ -110,6 +110,11 @@ class JailCreateForm(ModelForm):
             'jail_alias_ipv6',
             'jail_alias_bridge_ipv6'
         )
+        #FIXME: translate in dojango
+        widgets = {
+            'jail_defaultrouter_ipv4': forms.widgets.TextInput(),
+            'jail_defaultrouter_ipv6': forms.widgets.TextInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(JailCreateForm, self).__init__(*args, **kwargs)
