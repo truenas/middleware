@@ -777,6 +777,7 @@ def multipath_status_json(request):
                 'id': str(_id),
                 'name': cn.devname,
                 'status': cn.status,
+                'lunid': cn.lunid,
                 'type': 'consumer',
                 'actions': simplejson.dumps(actions),
             })

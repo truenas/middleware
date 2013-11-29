@@ -62,9 +62,14 @@ class Multipath(object):
     def __repr__(self):
         return "<Multipath:%s [%s]>" % (self.name, ",".join(self.devices))
 
+
 class Consumer(object):
 
     def __init__(self, status, xmlnode):
         self.status = status
         self.devname = xmlnode.xpathEval("./name")[0].content
+        try:
+            self.lunid = xmlnode.xpathEval("./config/lunid")[0].content
+        except:
+            self.lunid = ''
         self.__xml = xmlnode
