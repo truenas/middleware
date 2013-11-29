@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2011-11-22 14:47+0200\n"
+"PO-Revision-Date: 2011-11-22 14:47+0000\n"
 "Last-Translator: Marc <marc.codina@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ca\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1321973224.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -244,9 +245,8 @@ msgstr "Ple"
 msgid "Debug"
 msgstr "Depurar"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Per defecte"
+#~ msgid "Default"
+#~ msgstr "Per defecte"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -339,9 +339,8 @@ msgstr "Encès"
 msgid "Off"
 msgstr "Apagat"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (recomenat)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (recomenat)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -529,9 +528,8 @@ msgstr "Introdueix la mateixa contrasenya de dalt, per verificar-la."
 msgid "Shell"
 msgstr "Terminal"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Desactiva les contrasenyes al logins"
+#~ msgid "Disable password logins"
+#~ msgstr "Desactiva les contrasenyes al logins"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -558,9 +556,8 @@ msgstr "Directori Home"
 msgid "Auxiliary groups"
 msgstr "Grups auxiliars"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Un usuari amb aquest nom d'usuari ja existeix."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Un usuari amb aquest nom d'usuari ja existeix."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -600,9 +597,8 @@ msgstr "Contrasenya desactivada, deixa-ho en blanc"
 msgid "This field is required."
 msgstr "Aquest camp és requereix."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "El directori home ha de començar amb /mnt/ o ser /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "El directori home ha de començar amb /mnt/ o ser /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -729,24 +725,17 @@ msgstr "Compte"
 msgid "Admin Account"
 msgstr "Compte"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Canviar Contrasenya"
+#~ msgid "Change Password"
+#~ msgstr "Canviar Contrasenya"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Canviar usuari Admin"
+#~ msgid "Change Admin User"
+#~ msgstr "Canviar usuari Admin"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Contrasenya actualitzada amb èxit."
+#~ msgid "Password successfully updated."
+#~ msgstr "Contrasenya actualitzada amb èxit."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Usuari Admin actualitzat amb èxit."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Usuari Admin actualitzat amb èxit."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -1117,9 +1106,8 @@ msgstr "Link Aggregation"
 msgid "Link Aggregations"
 msgstr "Link Aggregations"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "Grup d'interfícies LAGG"
+#~ msgid "LAGG Interface group"
+#~ msgstr "Grup d'interfícies LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1162,9 +1150,8 @@ msgstr "Crear Link Aggregation"
 msgid "View Link Aggregations"
 msgstr "Veure totes les Link Aggregations"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG afegit amb èxit"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG afegit amb èxit"
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1530,17 +1517,15 @@ msgstr "Secret (Confirmar)"
 msgid "Enter the same secret above for verification."
 msgstr "Introdueix el mateix secret que a dalt per verificar-lo."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "secret del Initiator"
+#~ msgid "Initiator Secret"
+#~ msgstr "secret del Initiator"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Secret de l'Initiator side. (per autentificació CHAP mutua)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Initiator Secret (Confirmar)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Initiator Secret (Confirmar)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1637,19 +1622,17 @@ msgstr ""
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Dispositiu de disc"
+#~ msgid "Disk device"
+#~ msgstr "Dispositiu de disc"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "El teu ID del portal de grup no pot ser superior de %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "El teu grop ID no pot set superior de %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "El teu grop ID no pot set superior de %d"
 
 #: services/forms.py:1019
 #, fuzzy
@@ -1792,13 +1775,11 @@ msgstr ""
 "Utilitza aquesta opció per anular la màscara de creació de directori (0777 "
 "per defecte)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "RW suport gran (Large RW support)"
+#~ msgid "Large RW support"
+#~ msgstr "RW suport gran (Large RW support)"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Enviar arxius amb sendfile(2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Enviar arxius amb sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1911,17 +1892,15 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Nom del servidor"
+#~ msgid "Server Name"
+#~ msgstr "Nom del servidor"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr ""
-"Nom del servidor. Si el camp es deixa buit, s'especifica el servidor per "
-"defecte."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr ""
+#~ "Nom del servidor. Si el camp es deixa buit, s'especifica el servidor per "
+#~ "defecte."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1960,17 +1939,15 @@ msgstr ""
 "manejar el nivell màxim de concurrencies dels seus clients, normament entre "
 "4 i 6."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Mode asíncron"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Mode asíncron"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Habilita el mode asíncron, que ajudarà en el rendiment a la xarxa de "
-"velocitat per sobre de gigabit."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Habilita el mode asíncron, que ajudarà en el rendiment a la xarxa de "
+#~ "velocitat per sobre de gigabit."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2371,14 +2348,13 @@ msgstr "Proveïdor"
 msgid "Domain name"
 msgstr "Nom de domini"
 
-#: services/models.py:765
-msgid ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
-msgstr ""
-"Nom alias del host. Aquesta opció pot aparèixer múltiple vegades, per cada "
-"domini que té la mateixa IP. Utilitza un espai per separar múltiple nom "
-"d'alias."
+#~ msgid ""
+#~ "A host name alias. This option can appear multiple times, for each domain "
+#~ "that has the same IP. Use a space to separate multiple alias names."
+#~ msgstr ""
+#~ "Nom alias del host. Aquesta opció pot aparèixer múltiple vegades, per cada "
+#~ "domini que té la mateixa IP. Utilitza un espai per separar múltiple nom "
+#~ "d'alias."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2392,9 +2368,8 @@ msgstr ""
 msgid "Forced update period"
 msgstr "Període d'actualització forçada"
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr "Aquests paràmetres s'afegiran als ajustos globals a inadyn.conf"
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr "Aquests paràmetres s'afegiran als ajustos globals a inadyn.conf"
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
@@ -2621,14 +2596,12 @@ msgstr "Ruta"
 msgid "Allow Local User Login"
 msgstr "Permetre Login d'Usuari Local"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "Capçalera"
+#~ msgid "Banner"
+#~ msgstr "Capçalera"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
-"Capçalera de salutació mostrada pel FTP quan hi ha una primera connexió."
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr ""
+#~ "Capçalera de salutació mostrada pel FTP quan hi ha una primera connexió."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2652,9 +2625,8 @@ msgstr "Fer sempre Chroot"
 msgid "Require IDENT Authentication"
 msgstr "Autenticació IDENT requerida"
 
-#: services/models.py:1031
-msgid "Require Reverse DNS for IP"
-msgstr "Inversió de DNS per IP requerida"
+#~ msgid "Require Reverse DNS for IP"
+#~ msgstr "Inversió de DNS per IP requerida"
 
 #: services/models.py:1033
 msgid "Masquerade address"
@@ -2744,9 +2716,8 @@ msgstr ""
 "Ample de banda de baixada de l'usuari anònim en KB/s. Un zero vol dir "
 "infinit."
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "Activar SSL/TLS"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "Activar SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -2863,13 +2834,11 @@ msgstr ""
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1239
-msgid "Domain Controller Name"
-msgstr "Nom del Controlador de Domini"
+#~ msgid "Domain Controller Name"
+#~ msgstr "Nom del Controlador de Domini"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "Nom del PDC o del AD"
+#~ msgid "AD or PDC name."
+#~ msgstr "Nom del PDC o del AD"
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3186,17 +3155,15 @@ msgstr ""
 "Informa si la temperatura ha canviat almenys N graus Celsius des de lúltim "
 "informe. Posa 0 per desactivar-ho."
 
-#: services/models.py:1475
-msgid "Informal"
-msgstr "Informal"
+#~ msgid "Informal"
+#~ msgstr "Informal"
 
-#: services/models.py:1476 services/models.py:1481
-msgid ""
-"Report if the temperature is greater or equal than N degrees Celsius. 0 to "
-"disable"
-msgstr ""
-"Informa si la temperatura és més gran o igual que N graus Celsius. Posa 0 "
-"per desactivar-ho."
+#~ msgid ""
+#~ "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
+#~ "disable"
+#~ msgstr ""
+#~ "Informa si la temperatura és més gran o igual que N graus Celsius. Posa 0 "
+#~ "per desactivar-ho."
 
 #: services/models.py:1480
 msgid "Critical"
@@ -3206,10 +3173,9 @@ msgstr "Crític"
 msgid "Email to report"
 msgstr "Correu on enviar informes"
 
-#: services/models.py:1487
-msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr ""
-"Adreça de correu electrònic de destí. Separa els correus amb punts i comes"
+#~ msgid "Destination email address. Separate email addresses by semi-colon"
+#~ msgstr ""
+#~ "Adreça de correu electrònic de destí. Separa els correus amb punts i comes"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3220,13 +3186,11 @@ msgstr "S.M.A.R.T."
 msgid "Control Services"
 msgstr "Serveis de Control"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "Extents del perifèric"
+#~ msgid "Device Extents"
+#~ msgstr "Extents del perifèric"
 
-#: services/nav.py:72
-msgid "Add Device Extent"
-msgstr "Afegeix un perifèric Extent"
+#~ msgid "Add Device Extent"
+#~ msgstr "Afegeix un perifèric Extent"
 
 #: services/nav.py:79
 #, fuzzy
@@ -3295,14 +3259,12 @@ msgstr "Contrasenya de la compartició"
 msgid "The path %s does not exist"
 msgstr "La ruta no existeix."
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "Al camp no té una adreça IP o xarxa vàlides"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "Al camp no té una adreça IP o xarxa vàlides"
 
-#: sharing/forms.py:165
 #, python-format
-msgid "The IP '%s' is not valid."
-msgstr "La IP '%s' no és vàlida."
+#~ msgid "The IP '%s' is not valid."
+#~ msgstr "La IP '%s' no és vàlida."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3454,17 +3416,15 @@ msgstr ""
 "Aquesta opció et permet introduir una contrasenya de volum, que ha de ser de "
 "màxim 8 caràcters de llarg (Ara per ara és molt recomanat utilitzar ASCII)."
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "Conjunt de caràcters de la compartició"
+#~ msgid "Share Character Set"
+#~ msgstr "Conjunt de caràcters de la compartició"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr ""
-"Especifica el conjunt de caràcters de la compartició. Per exemple UTF8, UTF8-"
-"MAC, ISO-8859-15, etc."
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr ""
+#~ "Especifica el conjunt de caràcters de la compartició. Per exemple UTF8, UTF8-"
+#~ "MAC, ISO-8859-15, etc."
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3516,31 +3476,27 @@ msgstr ""
 "Permet a usuaris i grups definits tenir accés de lectura/escriptura al "
 "recurs. Segueix les mateixes opcions de format que la opció de permesos."
 
-#: sharing/models.py:160
-msgid "Disk Discovery"
-msgstr "Descobriment de disc"
+#~ msgid "Disk Discovery"
+#~ msgstr "Descobriment de disc"
 
-#: sharing/models.py:161
-msgid ""
-"Allow other systems to discover this share as a disk for data, as a Time "
-"Machine backup volume or not at all."
-msgstr ""
-"Permet a altres sistemes descobrir la compartició com un disc per dades, com "
-"un volum de backup de Time Machine,  o que no el descobreixin."
+#~ msgid ""
+#~ "Allow other systems to discover this share as a disk for data, as a Time "
+#~ "Machine backup volume or not at all."
+#~ msgstr ""
+#~ "Permet a altres sistemes descobrir la compartició com un disc per dades, com "
+#~ "un volum de backup de Time Machine,  o que no el descobreixin."
 
-#: sharing/models.py:167
-msgid "Disk discovery mode"
-msgstr "Mode de descobriment del disc"
+#~ msgid "Disk discovery mode"
+#~ msgstr "Mode de descobriment del disc"
 
-#: sharing/models.py:168
-msgid ""
-"Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
-"behavior in MacOS. Default mode exports the volume as a data volume for "
-"users."
-msgstr ""
-"Nota! Seleccionant 'Time Machine' a múltiples comparticions pot produir "
-"comportament imprevisible a MacOS. El mode per defecte exporta el volum com "
-"a volum de dades pels usuaris."
+#~ msgid ""
+#~ "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
+#~ "behavior in MacOS. Default mode exports the volume as a data volume for "
+#~ "users."
+#~ msgstr ""
+#~ "Nota! Seleccionant 'Time Machine' a múltiples comparticions pot produir "
+#~ "comportament imprevisible a MacOS. El mode per defecte exporta el volum com "
+#~ "a volum de dades pels usuaris."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3555,52 +3511,46 @@ msgstr ""
 "d'especificar una ruta d'escriptura, encara que sigui un volum de només "
 "lectura."
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "Cache  CNID"
+#~ msgid "Cache CNID"
+#~ msgstr "Cache  CNID"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"Si s'omple el camp l'AFPD utilitza la informació del ID amagatzemada a la "
-"capçalera dels fitxers AppleDouble V2 per reduir la càrrega a la base de "
-"dades. No posis res en aquesta opció si el volum el modifican clients no AFP "
-"(NFS/SMB/local)."
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "Si s'omple el camp l'AFPD utilitza la informació del ID amagatzemada a la "
+#~ "capçalera dels fitxers AppleDouble V2 per reduir la càrrega a la base de "
+#~ "dades. No posis res en aquesta opció si el volum el modifican clients no AFP "
+#~ "(NFS/SMB/local)."
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "Traducció de CR/LF"
+#~ msgid "Translate CR/LF"
+#~ msgstr "Traducció de CR/LF"
 
-#: sharing/models.py:182
-msgid ""
-"Enables crlf translation for TEXT files, automatically converting macintosh "
-"line breaks into Unix ones. Use of this option might be dangerous since some "
-"older programs store binary data files as type 'TEXT' when saving and switch "
-"the filetype in a second step. Afpd will potentially destroy such files when "
-"'erroneously' changing bytes in order to do line break translation."
-msgstr ""
-"Activa la traducció crlf per fitxers TEXT, convertint de manera automàtica "
-"salts de línea de macintosh als d'UNIX. Utilitzar aquesta opció pot ser "
-"perillòs ja que programes antics guardant fitxers de tipus binari com de "
-"tipus TEXT quan el guardant i després fan el canvi de tipus en un pas "
-"posterior. Afpd potencialment pot destruir aquests fitxers quan de manera "
-"'erronea' canvia els bytes per fer la traducció de salt de línea."
+#~ msgid ""
+#~ "Enables crlf translation for TEXT files, automatically converting macintosh "
+#~ "line breaks into Unix ones. Use of this option might be dangerous since some "
+#~ "older programs store binary data files as type 'TEXT' when saving and switch "
+#~ "the filetype in a second step. Afpd will potentially destroy such files when "
+#~ "'erroneously' changing bytes in order to do line break translation."
+#~ msgstr ""
+#~ "Activa la traducció crlf per fitxers TEXT, convertint de manera automàtica "
+#~ "salts de línea de macintosh als d'UNIX. Utilitzar aquesta opció pot ser "
+#~ "perillòs ja que programes antics guardant fitxers de tipus binari com de "
+#~ "tipus TEXT quan el guardant i després fan el canvi de tipus en un pas "
+#~ "posterior. Afpd potencialment pot destruir aquests fitxers quan de manera "
+#~ "'erronea' canvia els bytes per fer la traducció de salt de línea."
 
-#: sharing/models.py:185
-msgid "Windows File Names"
-msgstr "Noms de fitxers de Windows"
+#~ msgid "Windows File Names"
+#~ msgstr "Noms de fitxers de Windows"
 
-#: sharing/models.py:186
-msgid ""
-"This forces filenames to be restricted to the character set used by Windows. "
-"This is not recommended for shares used principally by Mac computers."
-msgstr ""
-"Això força que els noms dels fitxres sigui restringit al conjunt de "
-"caràcters usat per Windows. No es recomana per a comparticions utilitzades "
-"bàsicament per ordinadors Mac."
+#~ msgid ""
+#~ "This forces filenames to be restricted to the character set used by Windows. "
+#~ "This is not recommended for shares used principally by Mac computers."
+#~ msgstr ""
+#~ "Això força que els noms dels fitxres sigui restringit al conjunt de "
+#~ "caràcters usat per Windows. No es recomana per a comparticions utilitzades "
+#~ "bàsicament per ordinadors Mac."
 
 #: sharing/models.py:189
 #, fuzzy
@@ -3629,33 +3579,27 @@ msgstr ""
 "Sempre s'utilitza el 0 pel número del perifèric. Això ajuda quan el número "
 "del perifèric no és constant al llard del reinici, cluster, etc."
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "Desactivar la ID de fitxers"
+#~ msgid "Disable File ID"
+#~ msgstr "Desactivar la ID de fitxers"
 
-#: sharing/models.py:201
-msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "No publicar crides a createfileid, resolveid, deleteid."
+#~ msgid "Don't advertise createfileid, resolveid, deleteid calls."
+#~ msgstr "No publicar crides a createfileid, resolveid, deleteid."
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "Desactivar noms :hex"
+#~ msgid "Disable :hex Names"
+#~ msgstr "Desactivar noms :hex"
 
-#: sharing/models.py:205
-msgid ""
-"Disable :hex translations for anything except dot files. This option makes "
-"the '/' character illegal."
-msgstr ""
-"Desactiva les traduccions :hex per qualsevol fitxer exceptuant els que tenen "
-"punt. Aquesta opció fa el caràcter '/' ilegal."
+#~ msgid ""
+#~ "Disable :hex translations for anything except dot files. This option makes "
+#~ "the '/' character illegal."
+#~ msgstr ""
+#~ "Desactiva les traduccions :hex per qualsevol fitxer exceptuant els que tenen "
+#~ "punt. Aquesta opció fa el caràcter '/' ilegal."
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "Dona compatibilitat a client amb Apple II."
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "Dona compatibilitat a client amb Apple II."
 
 #: sharing/models.py:212
 msgid "No Stat"
@@ -3697,20 +3641,18 @@ msgstr "Compartició AFP"
 msgid "Apple (AFP) Shares"
 msgstr "Compartició FP"
 
-#: sharing/models.py:268
-msgid "Authorized network or IP addresses"
-msgstr "Adreces IP o xarxa autoritzada"
+#~ msgid "Authorized network or IP addresses"
+#~ msgstr "Adreces IP o xarxa autoritzada"
 
-#: sharing/models.py:269
-msgid ""
-"Network that is authorized to access the NFS share or a list of IP "
-"addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
-"number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
-msgstr ""
-"La xarxa que està autoritzada a accedir una compartició NFS o be una llista "
-"d'IPs. Especifica els números de xarxa amb la forma 1.2.3.4/xx on xx és el "
-"número de bits de la màscara, o be una llista d'adreces 1.2.3.4 1.2.3.5 "
-"1.2.3.6."
+#~ msgid ""
+#~ "Network that is authorized to access the NFS share or a list of IP "
+#~ "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
+#~ "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgstr ""
+#~ "La xarxa que està autoritzada a accedir una compartició NFS o be una llista "
+#~ "d'IPs. Especifica els números de xarxa amb la forma 1.2.3.4/xx on xx és el "
+#~ "número de bits de la màscara, o be una llista d'adreces 1.2.3.4 1.2.3.5 "
+#~ "1.2.3.6."
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -3749,33 +3691,29 @@ msgstr ""
 msgid "Maproot User"
 msgstr "Usuari Maproot"
 
-#: sharing/models.py:289
-msgid "User to map root to"
-msgstr "Usuari al que se li assigna el root"
+#~ msgid "User to map root to"
+#~ msgstr "Usuari al que se li assigna el root"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "Grup Maproot"
 
-#: sharing/models.py:296
-msgid "Group to map root to"
-msgstr "Grup al que se li assigna el root"
+#~ msgid "Group to map root to"
+#~ msgstr "Grup al que se li assigna el root"
 
 #: sharing/models.py:299
 msgid "Mapall User"
 msgstr "Usuari Mapall"
 
-#: sharing/models.py:303
-msgid "User to map all users to"
-msgstr "Usuari per assignar a tots els usuaris"
+#~ msgid "User to map all users to"
+#~ msgstr "Usuari per assignar a tots els usuaris"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "Grup Mapall"
 
-#: sharing/models.py:310
-msgid "Group to map all users to"
-msgstr "Grup per assignar a tots els usuaris"
+#~ msgid "Group to map all users to"
+#~ msgstr "Grup per assignar a tots els usuaris"
 
 #: sharing/models.py:321
 #, fuzzy
@@ -3791,9 +3729,8 @@ msgstr "Comparticions NFS"
 msgid "Sharing"
 msgstr "Compartició"
 
-#: storage/forms.py:105
-msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "Introdueix un numero positiu (sufix opcional K, M, G, T) o, 0"
+#~ msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
+#~ msgstr "Introdueix un numero positiu (sufix opcional K, M, G, T) o, 0"
 
 #: storage/forms.py:120
 #, python-format
@@ -3805,14 +3742,11 @@ msgstr "El nombre %s no és vàlid"
 msgid "Volume name"
 msgstr "Nom del volum"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "Tipo de sistema de fitxers"
+#~ msgid "Filesystem type"
+#~ msgstr "Tipo de sistema de fitxers"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "Forçar la mida del sector a 4096 bytes"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "Forçar la mida del sector a 4096 bytes"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
@@ -3860,21 +3794,18 @@ msgid ""
 "append a virtual device"
 msgstr ""
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "Has de seleccionar un sistema de fitxers"
+#~ msgid "You must select a filesystem"
+#~ msgstr "Has de seleccionar un sistema de fitxers"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "Ja tens un volum amb el mateix nom"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" és una paraula reservada i no pot ser usada"
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"log\" és una paraula reservada i no pot ser usada"
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "El nom del volum NO pot començar amb c[0-9], mirror, raidz o spare"
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr "El nom del volum NO pot començar amb c[0-9], mirror, raidz o spare"
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -3979,13 +3910,11 @@ msgstr "Quota per aquest volum"
 msgid "Reserved space for this volume"
 msgstr "Espai reservat per aquest dataset"
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "Nom del Volum ZFS"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "Nom del Volum ZFS"
 
-#: storage/forms.py:845
-msgid "Size for this ZFS Volume"
-msgstr "Tamany per aquest volum ZFS"
+#~ msgid "Size for this ZFS Volume"
+#~ msgstr "Tamany per aquest volum ZFS"
 
 #: storage/forms.py:846
 msgid "Example: 1g"
@@ -4435,10 +4364,8 @@ msgstr "Importar volum automàticament"
 msgid "View Volumes"
 msgstr "Veure tots els volums"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "Crear un volum ZFS"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "Crear un volum ZFS"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4515,9 +4442,8 @@ msgstr "Snapshot clonat amb èxit"
 msgid "Rollback successful."
 msgstr "Restauració satisfactòria"
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "Snapshot clonat amb èxit"
+#~ msgid "Snapshot successfully added."
+#~ msgstr "Snapshot clonat amb èxit"
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4747,25 +4673,21 @@ msgstr "Utilitzar consola serie"
 msgid "Enable screen saver"
 msgstr "Activar protector de pantalla"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "Comprovar automàticament si hi ha nou firmware"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "Comprovar automàticament si hi ha nou firmware"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "So al arrencar"
+#~ msgid "Beep on boot"
+#~ msgstr "So al arrencar"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "Activar millora especial del sistema"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "Activar millora especial del sistema"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "Activar alimentació (Daemon d'estalvi d'energia)"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "Activar Zeroconf/Bonjou"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "Activar Zeroconf/Bonjou"
 
 #: system/models.py:174
 #, fuzzy
@@ -5170,9 +5092,8 @@ msgstr "El seu email de proba no s'ha pogut enviar"
 msgid "Your test email has been sent!"
 msgstr "El seu email de proba a estat enviat"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Pàgina no trobada"
+#~ msgid "Page Not Found"
+#~ msgstr "Pàgina no trobada"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5194,10 +5115,8 @@ msgstr "Ajuda"
 msgid "Log In"
 msgstr "Iniciar sessió"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -5205,11 +5124,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "Membres"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Modificar"
+#~ msgid "Modify"
+#~ msgstr "Modificar"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5223,52 +5139,42 @@ msgstr "Modificar grup"
 msgid "Delete Group"
 msgstr "Esborrar grup"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "No hi ha grups definits per l'usuari"
+#~ msgid "There are no user defined groups."
+#~ msgstr "No hi ha grups definits per l'usuari"
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "Afegir un nou grup"
+#~ msgid "Add New Group"
+#~ msgstr "Afegir un nou grup"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "Inici"
+#~ msgid "Home"
+#~ msgstr "Inici"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
 msgstr "Modificar usuari"
 
-#: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
-#: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
-msgid "Auxiliary Groups"
-msgstr "Grups auxiliars"
+#~ msgid "Auxiliary Groups"
+#~ msgstr "Grups auxiliars"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
 msgstr "Treure usuari"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "Esborrar usuari"
+#~ msgid "Delete User"
+#~ msgstr "Esborrar usuari"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "No hi ha usuari definit"
+#~ msgid "No users defined"
+#~ msgstr "No hi ha usuari definit"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "Afegir nou usuari"
+#~ msgid "Add New User"
+#~ msgstr "Afegir nou usuari"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "Canviar correu electrònic"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "Canviar contrasenya d'Administrador"
+#~ msgid "Change Admin Password"
+#~ msgstr "Canviar contrasenya d'Administrador"
 
 #: templates/freeadmin/advanced_btn.html:25
 #, fuzzy
@@ -5417,20 +5323,11 @@ msgstr "Documentació"
 msgid "FreeNAS Documentation"
 msgstr "Documentació FreeNAS"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "IPv6 automàtic"
+#~ msgid "IPv6 Auto"
+#~ msgstr "IPv6 automàtic"
 
-#: templates/network/interface.html:12 templates/plugins/index.html:17
-#: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
-#: templates/sharing/windows.html:15 templates/storage/replications.html:24
-#: templates/storage/scrub.html:13 templates/storage/tasks.html:25
-#: templates/storage/volumes.html:64 templates/system/cronjob.html:12
-#: templates/system/ntpserver.html:11 templates/system/rsync.html:16
-#: templates/system/smarttest.html:11 templates/system/sysctl.html:9
-#: templates/system/tunable.html:9
-msgid "Available actions"
-msgstr "Accions disponibles"
+#~ msgid "Available actions"
+#~ msgstr "Accions disponibles"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -5461,22 +5358,18 @@ msgstr "Accions disponibles"
 msgid "Edit"
 msgstr "Editar"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "Editar interfície"
+#~ msgid "Edit Interface"
+#~ msgstr "Editar interfície"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "Esborrar interfície"
+#~ msgid "Delete Interface"
+#~ msgstr "Esborrar interfície"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
 msgstr "No hi ha interfícies definides"
 
-#: templates/network/interface.html:47 templates/network/interface.html:49
-msgid "Add Interface"
-msgstr "Afegir interfície"
+#~ msgid "Add Interface"
+#~ msgstr "Afegir interfície"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5492,50 +5385,38 @@ msgstr "Editar membres"
 msgid "LAGG Members"
 msgstr "Membres LAGG "
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "No hi ha definida l'interfície LAGG"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "No hi ha definida l'interfície LAGG"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "Afegir interfície LAGG"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "Afegir interfície LAGG"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "Afegir LAGG"
+#~ msgid "Add LAGG"
+#~ msgstr "Afegir LAGG"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "Prioritat d'ordenació"
+#~ msgid "Ordering Priority"
+#~ msgstr "Prioritat d'ordenació"
 
-#: templates/network/lagg_members.html:7
-msgid "Startup option"
-msgstr "Opcions d'inici"
+#~ msgid "Startup option"
+#~ msgstr "Opcions d'inici"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "Acció"
+#~ msgid "Action"
+#~ msgstr "Acció"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "Afegir membres del LAGG "
+#~ msgid "Add LAGG Member"
+#~ msgstr "Afegir membres del LAGG "
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "Editar rutes estàtiques"
+#~ msgid "Edit Static Route"
+#~ msgstr "Editar rutes estàtiques"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "Esborrar rutes estàtiques"
+#~ msgid "Delete Static Route"
+#~ msgstr "Esborrar rutes estàtiques"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "No hi ha rutes estàtiques definides"
+#~ msgid "No static route defined"
+#~ msgstr "No hi ha rutes estàtiques definides"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "Afegir ruta estàtica"
+#~ msgid "Add Static Route"
+#~ msgstr "Afegir ruta estàtica"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5553,21 +5434,17 @@ msgstr "Ruta per defecte"
 msgid "No default route defined"
 msgstr "No hi ha ruta per defecte definida"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "Editar VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "Editar VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "Esborrar VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "Esborrar VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "No hi ha VLAN definida"
+#~ msgid "No VLAN defined"
+#~ msgstr "No hi ha VLAN definida"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "Afegir interfície VLAN"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "Afegir interfície VLAN"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
@@ -5665,9 +5542,8 @@ msgstr "Benvingut, %(username). Gracies per iniciar sessió"
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
 msgstr ""
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "Si us plau, inicia sessió"
+#~ msgid "Please log in."
+#~ msgstr "Si us plau, inicia sessió"
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5685,9 +5561,8 @@ msgstr "Tornar a iniciar sessió"
 msgid "AFP Settings"
 msgstr "paràmetres AFP"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "Paràmetres del directori actiu"
+#~ msgid "Active Directory Settings"
+#~ msgstr "Paràmetres del directori actiu"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5705,9 +5580,8 @@ msgstr "Paràmetres FTP"
 msgid "ISCSI Settings"
 msgstr "Paràmetres iSCSI"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "Paràmetres LDAP"
+#~ msgid "LDAP Settings"
+#~ msgstr "Paràmetres LDAP"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
@@ -5772,9 +5646,8 @@ msgstr "Portals"
 msgid "Authorized Initiators"
 msgstr "Iniciador autoritzat"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "Autenticació"
+#~ msgid "Authentication"
+#~ msgstr "Autenticació"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5793,45 +5666,36 @@ msgstr "Targets associats"
 msgid "No associated targets defined"
 msgstr "Cap target definit"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "Afegir Extent al target"
+#~ msgid "Add Extent to Target"
+#~ msgstr "Afegir Extent al target"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "Afegir Extent al target"
+#~ msgid "Add Extent To Target"
+#~ msgstr "Afegir Extent al target"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "Peer"
+#~ msgid "Peer"
+#~ msgstr "Peer"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "Afegir usuari iSCSI"
+#~ msgid "Add iSCSI User"
+#~ msgstr "Afegir usuari iSCSI"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "Xarxa autoritzada"
+#~ msgid "Authorized Network"
+#~ msgstr "Xarxa autoritzada"
 
 #: templates/services/iscsi_authini.html:35
 #, fuzzy
 msgid "No authorized initiators defined"
 msgstr "Iniciador autoritzat"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "Afegir inicador autoritzat"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "Afegir inicador autoritzat"
 
 #: templates/services/iscsi_dextents.html:33
 #, fuzzy
 msgid "No device extents defined"
 msgstr "Cap target definit"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "Afegir extent"
+#~ msgid "Add Extent"
+#~ msgstr "Afegir extent"
 
 #: templates/services/iscsi_extents.html:5
 #, fuzzy
@@ -5851,32 +5715,25 @@ msgstr "Escoltar"
 msgid "No IP defined for this Portal"
 msgstr ""
 
-#: templates/services/iscsi_portals.html:26
-msgid "Edit Portal"
-msgstr "Editar portal"
+#~ msgid "Edit Portal"
+#~ msgstr "Editar portal"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "Esborrar portal"
+#~ msgid "Delete Portal"
+#~ msgstr "Esborrar portal"
 
 #: templates/services/iscsi_portals.html:39
 #, fuzzy
 msgid "No portals defined"
 msgstr "Cap target definit"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "Afegir portal"
+#~ msgid "Add Portal"
+#~ msgstr "Afegir portal"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "Cap target definit"
+#~ msgid "No targets defined"
+#~ msgstr "Cap target definit"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "Afegir target"
+#~ msgid "Add Target"
+#~ msgstr "Afegir target"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -5925,14 +5782,11 @@ msgstr ""
 msgid "Delete Plugins Jail"
 msgstr "Esborrar el fitxer subjacent"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "No hi ha mòduls rsync definits"
+#~ msgid "No rsync modules defined"
+#~ msgstr "No hi ha mòduls rsync definits"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "Shares actiu"
+#~ msgid "Active Shares"
+#~ msgstr "Shares actiu"
 
 #: templates/sharing/apple.html:7
 #, fuzzy
@@ -5949,10 +5803,8 @@ msgstr "Editar Apple Share"
 msgid "Delete Apple (AFP) Share"
 msgstr "Esborrar Apple Share"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "No hi ha share definits"
+#~ msgid "No shares defined"
+#~ msgstr "No hi ha share definits"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 #, fuzzy
@@ -5979,9 +5831,8 @@ msgstr "Afegir finestra de compartició (CIFS)"
 msgid "There are no active UNIX (NFS) shares."
 msgstr "No hi ha comparticions (shares) actives d'UNIX"
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "Punt de montatge"
+#~ msgid "Mountpoint"
+#~ msgstr "Punt de montatge"
 
 #: templates/sharing/unix.html:29
 #, fuzzy
@@ -6125,27 +5976,20 @@ msgid ""
 "to create a replication task"
 msgstr ""
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "Últim snapshot"
+#~ msgid "Last snapshot"
+#~ msgstr "Últim snapshot"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "sistema de fitxers ZFS remot"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "sistema de fitxers ZFS remot"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "Eliminar replicació"
+#~ msgid "Delete Replication"
+#~ msgstr "Eliminar replicació"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "Editar replicació"
+#~ msgid "Edit Replication"
+#~ msgstr "Editar replicació"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "Replicació ZFS no disponible"
+#~ msgid "No ZFS replication available"
+#~ msgstr "Replicació ZFS no disponible"
 
 #: templates/storage/scrub.html:42
 #, fuzzy
@@ -6217,41 +6061,34 @@ msgstr "Clonar snapshot"
 msgid "Periodic Snapshots"
 msgstr "Snapshot periòdic"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "Planificació periòdica de l'snapshot"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "Planificació periòdica de l'snapshot"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "No hi ha planificació periòdica de l'snapshot"
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "No hi ha planificació periòdica de l'snapshot"
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Com"
+#~ msgid "How"
+#~ msgstr "Com"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "Mantenir l'snapshot per"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "De"
+#~ msgid "From"
+#~ msgstr "De"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "a través de"
+#~ msgid "through"
+#~ msgstr "a través de"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", cada"
+#~ msgid ", every"
+#~ msgstr ", cada"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "cada dia"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "a cada"
+#~ msgid "on every"
+#~ msgstr "a cada"
 
 #: templates/storage/tasks.html:147
 #, fuzzy
@@ -6313,13 +6150,11 @@ msgstr "Ruta del volum"
 msgid "Destroy Dataset"
 msgstr "Eliminar el Dataset"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "Eliminar volum ZFS"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "Eliminar volum ZFS"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "No hi ha volums definits"
+#~ msgid "No volumes defined"
+#~ msgstr "No hi ha volums definits"
 
 #: templates/storage/wizard.html:27
 #, fuzzy
@@ -6334,25 +6169,20 @@ msgstr "Discos membres"
 msgid "Group type"
 msgstr "Tipus de grup"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "Extra ZFS"
+#~ msgid "ZFS Extra"
+#~ msgstr "Extra ZFS"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "L'ús de un sol log de disc és molt poc recomenable"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "L'ús de un sol log de disc és molt poc recomenable"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Log"
+#~ msgid "Log"
+#~ msgstr "Log"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "Cache"
+#~ msgid "Cache"
+#~ msgstr "Cache"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "De recanvi"
+#~ msgid "Spare"
+#~ msgstr "De recanvi"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6372,21 +6202,18 @@ msgstr "Substituir disc"
 msgid "Create ZFS volume on %(name)s"
 msgstr "Crear un volum ZFS"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "Afegir volum ZFS"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "Afegir volum ZFS"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "Reconstruir la cache LDAP/AD"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "La cahche s'està reconstruint"
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "La cahche s'està reconstruint"
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "La cache no es pot reconstruir"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "La cache no es pot reconstruir"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6497,9 +6324,8 @@ msgstr "No hi ha rsyncs definits"
 msgid "Add rsync task"
 msgstr "Afegir un rsync"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Afegir un rsync"
+#~ msgid "Add Rsync"
+#~ msgstr "Afegir un rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6552,13 +6378,11 @@ msgstr "S.M.A.R.T."
 msgid "No sysctl defined."
 msgstr "No hi ha rsyncs definits"
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "Afegir sysctl"
+#~ msgid "Add sysctl"
+#~ msgstr "Afegir sysctl"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "Afegir sysctl"
+#~ msgid "Add Sysctl"
+#~ msgstr "Afegir sysctl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6627,18 +6451,16 @@ msgstr "L'estat del %(volume)s és %(status)s"
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "L'estat del %(volume)s és %(status)s"
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr ""
-"Has de canviar la contrasenya de l'usuari admin (actualment no es requereix "
-"contrasenya per validar-se)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr ""
+#~ "Has de canviar la contrasenya de l'usuari admin (actualment no es requereix "
+#~ "contrasenya per validar-se)"
 
-#: tools/alert.py:137
 #, python-format
-msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr "L'adreça del WebGUI no es pot enllaçar a %s; utilitzant comodins"
+#~ msgid "The WebGUI Address could not be bind to %s; using wildcard"
+#~ msgstr "L'adreça del WebGUI no es pot enllaçar a %s; utilitzant comodins"
 
 #: tools/alert.py:147
 #, python-format
@@ -6651,8 +6473,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Alertes Crítiques"
 
-msgid "Selected"
-msgstr "Seleccionat"
+#~ msgid "Selected"
+#~ msgstr "Seleccionat"
 
 #, fuzzy
 msgid "SHA256 sum for the PBI file"
@@ -6670,28 +6492,28 @@ msgstr "Ruta al punt de muntatge"
 msgid "Control Plugins"
 msgstr "Serveis de Control"
 
-msgid "Allow guest access"
-msgstr "Permetre l'accés guest"
+#~ msgid "Allow guest access"
+#~ msgstr "Permetre l'accés guest"
 
-msgid "Only allow guest access"
-msgstr "Només permetre l'accés guest"
+#~ msgid "Only allow guest access"
+#~ msgstr "Només permetre l'accés guest"
 
 #, fuzzy
 msgid "Path to the plugins directory"
 msgstr "La ruta no és un directori."
 
-msgid "Invalid prefix"
-msgstr "Prefixe invalid"
+#~ msgid "Invalid prefix"
+#~ msgstr "Prefixe invalid"
 
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr "Quants minuts passan entre la creació d'Snapshots."
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr "Quants minuts passan entre la creació d'Snapshots."
 
-msgid "An error occurred when setting the options"
-msgstr "Algun error a succeït mentre s'ajustaven les opcions"
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "Algun error a succeït mentre s'ajustaven les opcions"
 
-msgid "Service Pack image to be installed"
-msgstr "Imatge del Service Pack a instalar"
+#~ msgid "Service Pack image to be installed"
+#~ msgstr "Imatge del Service Pack a instalar"
 
 #, fuzzy
 msgid "Invalid service pack"
@@ -6717,142 +6539,142 @@ msgstr "Visualitzar discos"
 msgid "View Tunables"
 msgstr "Veure tots els usuaris"
 
-msgid "Browse"
-msgstr "navegar"
+#~ msgid "Browse"
+#~ msgstr "navegar"
 
-msgid "Close"
-msgstr "Tancar"
+#~ msgid "Close"
+#~ msgstr "Tancar"
 
 #, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "Afegir Apple share"
 
-msgid "Apply Service Pack"
-msgstr "Aplicar el Service Pack"
+#~ msgid "Apply Service Pack"
+#~ msgstr "Aplicar el Service Pack"
 
-msgid "Hourly"
-msgstr "Cada hora"
+#~ msgid "Hourly"
+#~ msgstr "Cada hora"
 
-msgid "Hourly Graphs"
-msgstr "Gràfic a cada hora"
+#~ msgid "Hourly Graphs"
+#~ msgstr "Gràfic a cada hora"
 
-msgid "Daily"
-msgstr "Diari"
+#~ msgid "Daily"
+#~ msgstr "Diari"
 
-msgid "Daily Graphs"
-msgstr "Gràfic diari"
+#~ msgid "Daily Graphs"
+#~ msgstr "Gràfic diari"
 
-msgid "Weekly"
-msgstr "Semanal"
+#~ msgid "Weekly"
+#~ msgstr "Semanal"
 
-msgid "Weekly Graphs"
-msgstr "Gràfic semanal"
+#~ msgid "Weekly Graphs"
+#~ msgstr "Gràfic semanal"
 
-msgid "Monthly"
-msgstr "Mensual"
+#~ msgid "Monthly"
+#~ msgstr "Mensual"
 
-msgid "Monthly Graphs"
-msgstr "Gràfic mensual"
+#~ msgid "Monthly Graphs"
+#~ msgstr "Gràfic mensual"
 
-msgid "Yearly"
-msgstr "Anual"
+#~ msgid "Yearly"
+#~ msgstr "Anual"
 
-msgid "Yearly Graphs"
-msgstr "Gràfic anual"
+#~ msgid "Yearly Graphs"
+#~ msgstr "Gràfic anual"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Cinta"
+#~ msgid "Tape"
+#~ msgstr "Cinta"
 
-msgid "Pass"
-msgstr "Clau"
+#~ msgid "Pass"
+#~ msgstr "Clau"
 
-msgid "Disable password"
-msgstr "Desactivar contrasenya"
+#~ msgid "Disable password"
+#~ msgstr "Desactivar contrasenya"
 
-msgid "My Account"
-msgstr "El meu compte"
+#~ msgid "My Account"
+#~ msgstr "El meu compte"
 
-msgid "View All Users"
-msgstr "Veure tots els usuaris"
+#~ msgid "View All Users"
+#~ msgstr "Veure tots els usuaris"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Ho sentim, però el teu formulari ha expirat. Si us plau continueu omplint-"
-"la des d'aquesta pàgina."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Ho sentim, però el teu formulari ha expirat. Si us plau continueu omplint-"
+#~ "la des d'aquesta pàgina."
 
-msgid "Local Access"
-msgstr "Accés local"
+#~ msgid "Local Access"
+#~ msgstr "Accés local"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
-"Permet a usuaris amb comptes locals a accedir a share d'Apple en aquesta "
-"capsa (box)."
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr ""
+#~ "Permet a usuaris amb comptes locals a accedir a share d'Apple en aquesta "
+#~ "capsa (box)."
 
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"La forma del Portal és 'adreça:port'. Per exemple '192.168.1.1:3260' per "
-"IPv4, '[2001:db8:1:1::1]:3260' per IPv6. El port 3260 és el número de "
-"port estàndar iSCSI. Per qualsevol IP (adreça comodí), utilitza "
-"'0.0.0.0:3260' i/o '[::]:3260'. No barreji comodins i altres IPs a la "
-"mateixa familia d'adreces."
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "La forma del Portal és 'adreça:port'. Per exemple '192.168.1.1:3260' per "
+#~ "IPv4, '[2001:db8:1:1::1]:3260' per IPv6. El port 3260 és el número de "
+#~ "port estàndar iSCSI. Per qualsevol IP (adreça comodí), utilitza "
+#~ "'0.0.0.0:3260' i/o '[::]:3260'. No barreji comodins i altres IPs a la "
+#~ "mateixa familia d'adreces."
 
-msgid "Time in milliseconds"
-msgstr "Temps en milisegons"
+#~ msgid "Time in milliseconds"
+#~ msgstr "Temps en milisegons"
 
-msgid "Username of Domain Administrator Account"
-msgstr "Nom d'usuari del compte del Administrador de Domini"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "Nom d'usuari del compte del Administrador de Domini"
 
-msgid "ISCSI"
-msgstr "iSCSI"
+#~ msgid "ISCSI"
+#~ msgstr "iSCSI"
 
-msgid "Guest Account"
-msgstr "Compte d'invitat"
+#~ msgid "Guest Account"
+#~ msgstr "Compte d'invitat"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Utilitzeu aquesta opció per sobreescriure l'username ('ftp' per defecte) "
-"el cual es farà servir per accedir a serveis especificats com a 'guest'. "
-"Siguin els que siguin els privilegis que té aquest usuari, estarà "
-"disponible per qualsevol client conectant-se al servei 'guest'. Aquest "
-"usuari ha d'existir al fitxer password, però no requereix tenir un login "
-"vàlid."
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Utilitzeu aquesta opció per sobreescriure l'username ('ftp' per defecte) "
+#~ "el cual es farà servir per accedir a serveis especificats com a 'guest'. "
+#~ "Siguin els que siguin els privilegis que té aquest usuari, estarà "
+#~ "disponible per qualsevol client conectant-se al servei 'guest'. Aquest "
+#~ "usuari ha d'existir al fitxer password, però no requereix tenir un login "
+#~ "vàlid."
 
 #, fuzzy
 msgid "CIFS Share"
 msgstr "UNIX Share"
 
-msgid "CIFS Shares"
-msgstr "Comparticions CIFS"
+#~ msgid "CIFS Shares"
+#~ msgstr "Comparticions CIFS"
 
-msgid "NFS Share"
-msgstr "Compartició NFS"
+#~ msgid "NFS Share"
+#~ msgstr "Compartició NFS"
 
-msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr "Quant hem de començar a fer snapshots en el dia, ex: 8:00"
+#~ msgid "When in a day should we start making snapshots, e.g. 8:00"
+#~ msgstr "Quant hem de començar a fer snapshots en el dia, ex: 8:00"
 
-msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr "Quant hem de parar de fer snapshots en un dia, ex: 17:00"
+#~ msgid "When in a day should we stop making snapshots, e.g. 17:00"
+#~ msgstr "Quant hem de parar de fer snapshots en un dia, ex: 17:00"
 
-msgid "NTP server 2"
-msgstr "servidor NTP 2"
+#~ msgid "NTP server 2"
+#~ msgstr "servidor NTP 2"
 
-msgid "NTP server 3"
-msgstr "Servidor NTP 3"
+#~ msgid "NTP server 3"
+#~ msgstr "Servidor NTP 3"
 
 #, fuzzy
 msgid "Loader"
@@ -6862,253 +6684,253 @@ msgstr "Carrega mitja"
 msgid "Loaders"
 msgstr "Carrega mitja"
 
-msgid "Reboot the System"
-msgstr "Reiniciar el sistema"
+#~ msgid "Reboot the System"
+#~ msgstr "Reiniciar el sistema"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
 msgid "Edit Disk"
 msgstr "Editar disc"
 
-msgid "Are you sure you want to export?"
-msgstr "Estas segur que vols exportar-ho?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "Estas segur que vols exportar-ho?"
 
-msgid "Export Volume"
-msgstr "Exportar un volum"
+#~ msgid "Export Volume"
+#~ msgstr "Exportar un volum"
 
 #, fuzzy
 msgid "Add loader"
 msgstr "Afegir portal"
 
-msgid "Volume from which this dataset will be created on"
-msgstr "Volum a partir del qual es crearà el dataset"
+#~ msgid "Volume from which this dataset will be created on"
+#~ msgstr "Volum a partir del qual es crearà el dataset"
 
-msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Volum a partir del qual es crearà aquest volum ZFS"
+#~ msgid "Volume from which this ZFS Volume will be created on"
+#~ msgstr "Volum a partir del qual es crearà aquest volum ZFS"
 
-msgid "Volume this group belongs to"
-msgstr "Aquest volum pertany a"
+#~ msgid "Volume this group belongs to"
+#~ msgstr "Aquest volum pertany a"
 
 msgid "Group Membership"
 msgstr "Membres del grup"
 
-msgid "The disk group containing this disk"
-msgstr "El grup de disc conté aquest disc"
+#~ msgid "The disk group containing this disk"
+#~ msgstr "El grup de disc conté aquest disc"
 
-msgid "successfully added"
-msgstr "Afegit amb èxit"
+#~ msgid "successfully added"
+#~ msgstr "Afegit amb èxit"
 
-msgid "successfully deleted"
-msgstr "esborrat amb èxit"
+#~ msgid "successfully deleted"
+#~ msgstr "esborrat amb èxit"
 
-msgid "successfully edited"
-msgstr "Editat amb èxit"
+#~ msgid "successfully edited"
+#~ msgstr "Editat amb èxit"
 
-msgid "There are no active volumes."
-msgstr "No hi ha volums actius"
+#~ msgid "There are no active volumes."
+#~ msgstr "No hi ha volums actius"
 
-msgid "%s successfully added."
-msgstr "%s afegit amb èxit."
+#~ msgid "%s successfully added."
+#~ msgstr "%s afegit amb èxit."
 
-msgid "IPv6 Netmask"
-msgstr "Màscara IPv6"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "Màscara IPv6"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Aquest valor ha d'estar entre 0 i 10000, inclusivament."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Aquest valor ha d'estar entre 0 i 10000, inclusivament."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Aquest valor ha d'estar entre 0 i 1000, inclusivament."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Aquest valor ha d'estar entre 0 i 1000, inclusivament."
 
-msgid "Enable DDP"
-msgstr "Habilita DDP"
+#~ msgid "Enable DDP"
+#~ msgstr "Habilita DDP"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "Habilita el suport DDP per accessos de baix nivell d'Appletalk "
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "Habilita el suport DDP per accessos de baix nivell d'Appletalk "
 
-msgid "Turn on/off TLS"
-msgstr "Activa o Desactiva TLS"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "Activa o Desactiva TLS"
 
-msgid "Rsyncd"
-msgstr "Rsyncd"
+#~ msgid "Rsyncd"
+#~ msgstr "Rsyncd"
 
-msgid "The volume failed to export"
-msgstr "El volum a fallat en l'exportació"
+#~ msgid "The volume failed to export"
+#~ msgstr "El volum a fallat en l'exportació"
 
-msgid "Cron Scheduler"
-msgstr "Programació de tasques"
+#~ msgid "Cron Scheduler"
+#~ msgstr "Programació de tasques"
 
-msgid "Devel"
-msgstr "Devel"
+#~ msgid "Devel"
+#~ msgstr "Devel"
 
-msgid "Docs"
-msgstr "Documentació"
+#~ msgid "Docs"
+#~ msgstr "Documentació"
 
-msgid "Welcome to"
-msgstr "Benvingut a8"
+#~ msgid "Welcome to"
+#~ msgstr "Benvingut a8"
 
-msgid "LUN"
-msgstr "LUN"
+#~ msgid "LUN"
+#~ msgstr "LUN"
 
-msgid "Mount point"
-msgstr "Punt de montatge"
+#~ msgid "Mount point"
+#~ msgstr "Punt de montatge"
 
-msgid "Dataset name"
-msgstr "Nom del dataset"
+#~ msgid "Dataset name"
+#~ msgstr "Nom del dataset"
 
-msgid "Snapshot name"
-msgstr "Nom del snapshot"
+#~ msgid "Snapshot name"
+#~ msgstr "Nom del snapshot"
 
-msgid "Used space"
-msgstr "Espai utilitzat"
+#~ msgid "Used space"
+#~ msgstr "Espai utilitzat"
 
-msgid "Referenced space"
-msgstr "Referencia de l'espai"
+#~ msgid "Referenced space"
+#~ msgstr "Referencia de l'espai"
 
-msgid "No ZFS snapshot available"
-msgstr "No hi ha cap snapshot ZFS disponible"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "No hi ha cap snapshot ZFS disponible"
 
-msgid "Create Periodic Snapshot"
-msgstr "Crear un Snapshot periòdic"
+#~ msgid "Create Periodic Snapshot"
+#~ msgstr "Crear un Snapshot periòdic"
 
-msgid "Restore to Factory Defaults"
-msgstr "Retornar als valors de fàbrica"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "Retornar als valors de fàbrica"
 
-msgid "Config"
-msgstr "Configuració"
+#~ msgid "Config"
+#~ msgstr "Configuració"
 
-msgid "%s successfully update."
-msgstr "%s actualitzat amb èxit."
+#~ msgid "%s successfully update."
+#~ msgstr "%s actualitzat amb èxit."
 
-msgid "Admin user"
-msgstr "Usuari Admin"
+#~ msgid "Admin user"
+#~ msgstr "Usuari Admin"
 
-msgid "N/A"
-msgstr "No disponible"
+#~ msgid "N/A"
+#~ msgstr "No disponible"
 
-msgid ""
-"Use this option to override the username ('www' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Utilitza aquesta opció per determinar el nom d'usuari (per defecte 'www') "
-"que serà utilitzat per accedir als serveis que son especificats pels "
-"convidats. Qualsevol privilegi que tingui aquest usuari, estarà disponile "
-"per a qualsevol client que es connecti al servei convidat. Aquest usuari "
-"a d'existir al fitxer de contrasenyes pero no cal que tingui un inici de "
-"sessió valid."
+#~ msgid ""
+#~ "Use this option to override the username ('www' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Utilitza aquesta opció per determinar el nom d'usuari (per defecte 'www') "
+#~ "que serà utilitzat per accedir als serveis que son especificats pels "
+#~ "convidats. Qualsevol privilegi que tingui aquest usuari, estarà disponile "
+#~ "per a qualsevol client que es connecti al servei convidat. Aquest usuari "
+#~ "a d'existir al fitxer de contrasenyes pero no cal que tingui un inici de "
+#~ "sessió valid."
 
-msgid "ZVol Name"
-msgstr "Nom ZVol"
+#~ msgid "ZVol Name"
+#~ msgstr "Nom ZVol"
 
 msgid "Dataset"
 msgstr "Dataset"
 
-msgid "Native dataset"
-msgstr "Dataset natiu"
+#~ msgid "Native dataset"
+#~ msgstr "Dataset natiu"
 
-msgid "/var/log/messages"
-msgstr "/var/log/messages"
+#~ msgid "/var/log/messages"
+#~ msgstr "/var/log/messages"
 
-msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ajuda i Suport"
+#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ajuda i Suport"
 
-msgid "Success!"
-msgstr "Èxit!"
+#~ msgid "Success!"
+#~ msgstr "Èxit!"
 
-msgid "Your password was changed."
-msgstr "La teva contrasenya a estat canviada."
+#~ msgid "Your password was changed."
+#~ msgstr "La teva contrasenya a estat canviada."
 
-msgid "Password change"
-msgstr "Canviar contrasenya"
+#~ msgid "Password change"
+#~ msgstr "Canviar contrasenya"
 
-msgid "Please correct the error below."
-msgid_plural "Please correct the errors below."
-msgstr[0] "Si us plau corregeix l'error següent"
-msgstr[1] "Si us plau corregeix els errors següents"
+#~ msgid "Please correct the error below."
+#~ msgid_plural "Please correct the errors below."
+#~ msgstr[0] "Si us plau corregeix l'error següent"
+#~ msgstr[1] "Si us plau corregeix els errors següents"
 
-msgid ""
-"Please enter your old password, and then enter your new password twice to "
-"verify it is typed in correctly."
-msgstr ""
-"Si us plau, introdueix la teva contrasenya antiga, i a continuació "
-"introdueix dos cops la nova contrasenya per verificar que ha estat "
-"introduïda correctament"
+#~ msgid ""
+#~ "Please enter your old password, and then enter your new password twice to "
+#~ "verify it is typed in correctly."
+#~ msgstr ""
+#~ "Si us plau, introdueix la teva contrasenya antiga, i a continuació "
+#~ "introdueix dos cops la nova contrasenya per verificar que ha estat "
+#~ "introduïda correctament"
 
-msgid "Password (again)"
-msgstr "Contrasenya (de nou)"
+#~ msgid "Password (again)"
+#~ msgstr "Contrasenya (de nou)"
 
-msgid "minutes,"
-msgstr "minuts,"
+#~ msgid "minutes,"
+#~ msgstr "minuts,"
 
-msgid "Create ZFS zvol"
-msgstr "Crear un zvol ZFS"
+#~ msgid "Create ZFS zvol"
+#~ msgstr "Crear un zvol ZFS"
 
-msgid "Add ZVol"
-msgstr "Afegir Zvol"
+#~ msgid "Add ZVol"
+#~ msgstr "Afegir Zvol"
 
-msgid "English"
-msgstr "Anglès"
+#~ msgid "English"
+#~ msgstr "Anglès"
 
-msgid "Level"
-msgstr "Nivell"
+#~ msgid "Level"
+#~ msgstr "Nivell"
 
-msgid "Add Link Aggregation"
-msgstr "Afegeix Link Aggregation"
+#~ msgid "Add Link Aggregation"
+#~ msgstr "Afegeix Link Aggregation"
 
-msgid "View All Interfaces"
-msgstr "Veure totes les interfícies"
+#~ msgid "View All Interfaces"
+#~ msgstr "Veure totes les interfícies"
 
-msgid "View All VLANs"
-msgstr "Veure totes les VLANs"
+#~ msgid "View All VLANs"
+#~ msgstr "Veure totes les VLANs"
 
-msgid "View All Static Routes"
-msgstr "Veure totes les rutes estàtiques"
+#~ msgid "View All Static Routes"
+#~ msgstr "Veure totes les rutes estàtiques"
 
-msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr "Versió de Windows on corre el Directori Actiu (Active Directory) "
+#~ msgid "The version of Microsoft Windows that Active Directory is running."
+#~ msgstr "Versió de Windows on corre el Directori Actiu (Active Directory) "
 
-msgid "Service Principal Name"
-msgstr "Nom Principal del Servei"
+#~ msgid "Service Principal Name"
+#~ msgstr "Nom Principal del Servei"
 
-msgid "Service Principal Name, eg service/account."
-msgstr "Nom Principal del Servei, p.e. service/account."
+#~ msgid "Service Principal Name, eg service/account."
+#~ msgstr "Nom Principal del Servei, p.e. service/account."
 
-msgid "Service Principal Name Password"
-msgstr "Contrasenya del Nom Principal del Servei"
+#~ msgid "Service Principal Name Password"
+#~ msgstr "Contrasenya del Nom Principal del Servei"
 
-msgid "Password of the Service Principal Name account."
-msgstr "Contrasenya del compte Nom Principal del Servei"
+#~ msgid "Password of the Service Principal Name account."
+#~ msgstr "Contrasenya del compte Nom Principal del Servei"
 
-msgid "Kerberos Keytab File"
-msgstr "Fitxer Keytab de kerberos"
+#~ msgid "Kerberos Keytab File"
+#~ msgstr "Fitxer Keytab de kerberos"
 
-msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
-msgstr ""
-"El fitxer Keytab de kerberos que fou generat al servidor d'Active "
-"Directory"
+#~ msgid ""
+#~ "The kerberos keytab file that was generated on the Active Directory "
+#~ "server."
+#~ msgstr ""
+#~ "El fitxer Keytab de kerberos que fou generat al servidor d'Active "
+#~ "Directory"
 
-msgid "Auxillary Parameters"
-msgstr "Paràmetres Auxiliars"
+#~ msgid "Auxillary Parameters"
+#~ msgstr "Paràmetres Auxiliars"
 
-msgid "View All UNIX Shares"
-msgstr "Veure tots els UNIX Shares"
+#~ msgid "View All UNIX Shares"
+#~ msgstr "Veure tots els UNIX Shares"
 
-msgid "View All Apple Shares"
-msgstr "Veure tots els Apple Shares"
+#~ msgid "View All Apple Shares"
+#~ msgstr "Veure tots els Apple Shares"
 
-msgid "View All Windows Shares"
-msgstr "Veure tots els Windows Shares"
+#~ msgid "View All Windows Shares"
+#~ msgstr "Veure tots els Windows Shares"
 
 msgid "Read"
 msgstr "Lectura"
@@ -7116,23 +6938,2248 @@ msgstr "Lectura"
 msgid "Write"
 msgstr "Escriptura"
 
-msgid "Execute"
-msgstr "Executar"
+#~ msgid "Execute"
+#~ msgstr "Executar"
 
-msgid "Owner"
-msgstr "Propietari"
+#~ msgid "Owner"
+#~ msgstr "Propietari"
 
-msgid "Other"
-msgstr "Altres"
+#~ msgid "Other"
+#~ msgstr "Altres"
 
-msgid "View All Periodic Snapshot Tasks"
-msgstr "Veure totes les tasques periòdiques d'Snapshot"
+#~ msgid "View All Periodic Snapshot Tasks"
+#~ msgstr "Veure totes les tasques periòdiques d'Snapshot"
 
-msgid "sucessfully edited"
-msgstr "Editat amb èxit"
+#~ msgid "sucessfully edited"
+#~ msgstr "Editat amb èxit"
 
-msgid "Lagg Interface was successfully added"
-msgstr "L'interfície LAGG s'ha afegir amb èxit"
+#~ msgid "Lagg Interface was successfully added"
+#~ msgstr "L'interfície LAGG s'ha afegir amb èxit"
 
-msgid "ActiveDirectory Settings"
+#~ msgid "ActiveDirectory Settings"
+#~ msgstr "Paràmetres del directori actiu"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr ""
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr ""
+
+#: choices.py:308
+msgid "zle (runs of zeros)"
+msgstr ""
+
+#: choices.py:309
+#, fuzzy
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (recomenat)"
+
+#: choices.py:601
+msgid "19200"
+msgstr ""
+
+#: choices.py:604
+msgid "115200"
+msgstr ""
+
+#: choices.py:662
+msgid "Verbose"
+msgstr ""
+
+#: choices.py:670
+msgid "Daemon"
+msgstr ""
+
+#: choices.py:692
+msgid "type1"
+msgstr ""
+
+#: choices.py:693
+msgid "type2"
+msgstr ""
+
+#: choices.py:694
+msgid "type3"
+msgstr ""
+
+#: choices.py:695
+msgid "type4"
+msgstr ""
+
+#: choices.py:696
+msgid "type5"
+msgstr ""
+
+#: choices.py:704
+msgid "data"
+msgstr ""
+
+#: choices.py:706
+msgid "auth"
+msgstr ""
+
+#: choices.py:709
+msgid "ctrl+!data"
+msgstr ""
+
+#: choices.py:711
+msgid "auth+!data"
+msgstr ""
+
+#: account/forms.py:60
+#, fuzzy
+msgid "Confirm New Password"
+msgstr "Confirmar contrasenya"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr ""
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr ""
+
+#: api/resources.py:766
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+msgid "Locked"
+msgstr ""
+
+#: api/resources.py:859
+#, fuzzy
+msgid "on every %(days)s"
+msgstr "Cada %s dies"
+
+#: api/resources.py:865
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr ""
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+#, fuzzy
+msgid "Invalid address: %s"
+msgstr "Firmware o checksum incorrecte"
+
+#: jails/admin.py:75
+#: jails/forms.py:724
+#: jails/models.py:396
+#: templates/plugins/plugins.html:21
+#, fuzzy
+msgid "Jail"
+msgstr "Nom de domini"
+
+#: jails/admin.py:196
+msgid "Start"
+msgstr ""
+
+#: jails/admin.py:261
+#: jails/models.py:346
+msgid "URL"
+msgstr ""
+
+#: jails/forms.py:88
+msgid "type"
+msgstr ""
+
+#: jails/forms.py:170
+msgid "No jail root configured."
+msgstr ""
+
+#: jails/forms.py:233
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr ""
+
+#: jails/forms.py:458
+msgid "autostart"
+msgstr ""
+
+#: jails/forms.py:771
+#, fuzzy
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr "La cache no es pot reconstruir"
+
+#: jails/models.py:72
+#, fuzzy
+msgid "Jail Name"
+msgstr "Nom de domini"
+
+#: jails/models.py:94
+#, fuzzy
+msgid "IPv4 bridge address"
+msgstr "Adreça IPv4"
+
+#: jails/models.py:113
+#, fuzzy
+msgid "IPv6 address"
+msgstr "Adreça IPv6 "
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr ""
+
+#: jails/models.py:224
+#, fuzzy
+msgid "This jail is required by %d plugin(s)"
+msgstr "Aquest camp es requereix per fer login anònim"
+
+#: jails/models.py:260
+msgid "Jail Root"
+msgstr ""
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr ""
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:280
+#, fuzzy
+msgid "IPv6 Network"
+msgstr "Màscara IPv6"
+
+#: jails/models.py:285
+#, fuzzy
+msgid "IPv6 Network Start Address"
+msgstr "Adreça IPv6 "
+
+#: jails/models.py:290
+#, fuzzy
+msgid "IPv6 Network End Address"
+msgstr "Adreça IPv6 "
+
+#: jails/models.py:291
+msgid "IPv6 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:294
+#, fuzzy
+msgid "Collection URL"
+msgstr "Connecions"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr ""
+
+#: jails/models.py:373
+msgid "Template must have 0 instances!"
+msgstr ""
+
+#: jails/models.py:388
+#: jails/models.py:389
+#, fuzzy
+msgid "Jail Templates"
+msgstr "Màscara IPv4 "
+
+#: jails/models.py:408
+#, fuzzy
+msgid "Read-Only"
+msgstr "Només lectura"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr ""
+
+#: jails/nav.py:100
+#, fuzzy
+msgid "View Jails"
+msgstr "Veure tots %s"
+
+#: jails/nav.py:250
+msgid "%s"
+msgstr ""
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr ""
+
+#: jails/utils.py:694
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr ""
+
+#: jails/views.py:94
+#, fuzzy
+msgid "Jail successfully edited."
+msgstr "%s actualitzat amb èxit."
+
+#: jails/views.py:134
+#, fuzzy
+msgid "Jail successfully started."
+msgstr "%s actualitzat amb èxit."
+
+#: jails/views.py:397
+#, fuzzy
+msgid "Jail template successfully edited."
+msgstr "Dataset afegit amb èxit."
+
+#: middleware/notifier.py:2874
+msgid "No RPC Token!"
+msgstr ""
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr ""
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr ""
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr ""
+
+#: network/forms.py:284
+#, fuzzy
+msgid "The IP \"%s\" is not valid"
+msgstr "La IP '%s' no és vàlida."
+
+#: network/forms.py:343
+msgid "You need a domain, e.g. hostname.domain"
+msgstr ""
+
+#: network/forms.py:373
+#, fuzzy
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr ""
+"Els noms de les interfícies han d'esser vlanXX on XX és un número. Exemple "
+"vlan0."
+
+#: network/models.py:77
+#, fuzzy
+msgid "Enable netwait feature"
+msgstr "Habilitar atime"
+
+#: network/models.py:88
+msgid "Netwait IP list"
+msgstr ""
+
+#: network/models.py:97
+msgid "Host name data base"
+msgstr ""
+
+#: network/models.py:401
+#, fuzzy
+msgid "LAGG Interface Group"
+msgstr "Grup d'interfícies LAGG"
+
+#: network/models.py:427
+#, fuzzy
+msgid "Link Aggregation Member"
+msgstr "Link Aggregation"
+
+#: network/models.py:428
+#, fuzzy
+msgid "Link Aggregation Members"
+msgstr "Link Aggregations"
+
+#: plugins/admin.py:58
+#: plugins/admin.py:65
+msgid "Install"
+msgstr ""
+
+#: plugins/forms.py:89
+msgid ""
+"Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
+msgstr ""
+
+#: plugins/forms.py:105
+#, fuzzy
+msgid "Plugin Jail"
+msgstr "Esborrar el fitxer subjacent"
+
+#: plugins/forms.py:106
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr ""
+
+#: plugins/models.py:103
+#, fuzzy
+msgid "Plugin"
+msgstr "Nom de domini"
+
+#: plugins/models.py:175
+#, fuzzy
+msgid "URL for the plugins repository"
+msgstr "La ruta no és un directori."
+
+#: plugins/views.py:196
+#, fuzzy
+msgid "Jail does not exist"
+msgstr "La ruta no existeix."
+
+#: plugins/views.py:205
+#, fuzzy
+msgid "Failed to update plugin"
+msgstr "Eliminar replicació"
+
+#: plugins/views.py:224
+#: plugins/views.py:355
+#, fuzzy
+msgid "No available IP addresses"
+msgstr "Direcció de correu electrònic"
+
+#: services/forms.py:637
+#: services/forms.py:645
+msgid "Spaces or number signs are not allowed."
+msgstr ""
+
+#: services/forms.py:826
+#, fuzzy
+msgid "Peer Secret (Confirm)"
+msgstr "Secret (Confirmar)"
+
+#: services/forms.py:1331
+msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
+msgstr ""
+
+#: services/forms.py:1504
+#, fuzzy
+msgid "A target with that name already exists."
+msgstr "Un grup amb aquest nom ja existeix."
+
+#: services/models.py:214
+#, fuzzy
+msgid "Hostnames lookups"
+msgstr "Hostname"
+
+#: services/models.py:287
+#, fuzzy
+msgid "Allow non-root mount"
+msgstr "Permetre Login de Root"
+
+#: services/models.py:298
+#, fuzzy
+msgid "Bind IP Addresses"
+msgstr "Adreça IPv4"
+
+#: services/models.py:712
+#, fuzzy
+msgid "Initiator side user name."
+msgstr "secret del Initiator"
+
+#: services/models.py:932
+#, fuzzy
+msgid "These parameters will be added to /etc/snmpd.config."
+msgstr "Aquests paràmetres son afegits a la configuració de proftpd.conf."
+
+#: services/models.py:971
+#, fuzzy
+msgid "Remote Port"
+msgstr "Host remot"
+
+#: services/models.py:1015
+#, fuzzy
+msgid "Monitor User"
+msgstr "Modificar usuari"
+
+#: services/models.py:1105
+msgid "Message which will be displayed to the user when they initially login."
+msgstr ""
+
+#: services/models.py:1132
+msgid ""
+"For local users, only allow access to user home directory unless the user is "
+"a member of group wheel."
+msgstr ""
+
+#: services/models.py:1194
+#, fuzzy
+msgid "Enable TLS"
+msgstr "Activar SSL/TLS"
+
+#: services/models.py:1199
+msgid "TLS policy"
+msgstr ""
+
+#: services/models.py:1202
+msgid "TLS allow client renegotiations"
+msgstr ""
+
+#: services/models.py:1214
+msgid "TLS common name required"
+msgstr ""
+
+#: services/models.py:1218
+msgid "TLS enable diagnostics"
+msgstr ""
+
+#: services/models.py:1222
+#, fuzzy
+msgid "TLS export certificate data"
+msgstr "Certificat auto signat"
+
+#: services/models.py:1234
+msgid "TLS no session reuse required"
+msgstr ""
+
+#: services/models.py:1238
+msgid "TLS export standard vars"
+msgstr ""
+
+#: services/models.py:1246
+#, fuzzy
+msgid "TLS DNS name required"
+msgstr "Aquest camp és requereix."
+
+#: services/models.py:1254
+msgid "Certificate and private key"
+msgstr ""
+
+#: services/models.py:1354
+msgid "SFTP Log Facility"
+msgstr ""
+
+#: services/models.py:1436
+#: services/models.py:1532
+#, fuzzy
+msgid "Domain Controller"
+msgstr "Nom del Controlador de Domini"
+
+#: services/models.py:1522
+msgid "Set this if you want to allow Trusted Domains."
+msgstr ""
+
+#: services/models.py:1544
+#, fuzzy
+msgid "Kerberos Server"
+msgstr "Fitxer Keytab de kerberos"
+
+#: services/models.py:1545
+msgid "Hostname of the kerberos server to use."
+msgstr ""
+
+#: services/models.py:1550
+msgid "Kerberos Password Server"
+msgstr ""
+
+#: services/models.py:1560
+#, fuzzy
+msgid "DNS timeout"
+msgstr "Intèrval de temps fins que es finalitza el procés (Timeout) "
+
+#: services/models.py:1600
+#, fuzzy
+msgid "NIS domain"
+msgstr "Domain"
+
+#: services/models.py:1607
+msgid "Comma delimited list of NIS servers"
+msgstr ""
+
+#: services/models.py:1611
+#, fuzzy
+msgid "Secure mode"
+msgstr "Mode d'energia"
+
+#: services/models.py:1612
+msgid "Cause ypbind to run in secure mode"
+msgstr ""
+
+#: services/models.py:1625
+#: services/models.py:1626
+#, fuzzy
+msgid "NIS Domain"
+msgstr "Domain"
+
+#: services/models.py:1868
+#, fuzzy
+msgid "Informational"
+msgstr "Informal"
+
+#: services/models.py:1869
+#, fuzzy
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Informa si la temperatura és més gran o igual que N graus Celsius. Posa 0 "
+"per desactivar-ho."
+
+#: services/models.py:1876
+#, fuzzy
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Informa si la temperatura és més gran o igual que N graus Celsius. Posa 0 "
+"per desactivar-ho."
+
+#: services/models.py:1884
+#, fuzzy
+msgid "Destination email address. Separate email addresses by commas"
+msgstr ""
+"Adreça de correu electrònic de destí. Separa els correus amb punts i comes"
+
+#: services/nav.py:115
+#: templates/services/core.html:27
+#, fuzzy
+msgid "Directory Services"
+msgstr "Permís de directori"
+
+#: sharing/forms.py:148
+#: sharing/forms.py:153
+#, fuzzy
+msgid "The umask must be between 000 and 777."
+msgstr "Aquest valor ha d'estar entre 0 i 1000, inclusivament."
+
+#: sharing/forms.py:274
+msgid "Paths for a NFS share must reside within the same filesystem"
+msgstr ""
+
+#: sharing/forms.py:281
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr ""
+
+#: sharing/forms.py:318
+msgid ""
+"The network %s is already being shared and cannot be used twice for the same "
+"filesystem"
+msgstr ""
+
+#: sharing/models.py:201
+#, fuzzy
+msgid "Authorized networks"
+msgstr "Xarxa autoritzada"
+
+#: sharing/models.py:258
+msgid "The specified group's permission are used by all clients"
+msgstr ""
+
+#: storage/admin.py:280
+#, fuzzy
+msgid "Change Passphrase"
+msgstr "Canviar Contrasenya"
+
+#: storage/admin.py:287
+msgid "Download Key"
+msgstr ""
+
+#: storage/admin.py:299
+msgid "Add recovery key"
+msgstr ""
+
+#: storage/admin.py:311
+msgid "Unlock"
+msgstr ""
+
+#: storage/admin.py:470
+#, fuzzy
+msgid "Replace"
+msgstr "Substituir disc"
+
+#: storage/admin.py:572
+msgid "When"
+msgstr ""
+
+#: storage/admin.py:609
+#, fuzzy
+msgid "Remote Hostname"
+msgstr "Hostname remot"
+
+#: storage/forms.py:120
+#, fuzzy
+msgid "Enter positive number (optionally suffixed by K, M, G, T), or 0"
+msgstr "Introdueix un numero positiu (sufix opcional K, M, G, T) o, 0"
+
+#: storage/forms.py:770
+msgid "No: Skip to import"
+msgstr ""
+
+#: storage/forms.py:773
+#, fuzzy
+msgid "Encrypted ZFS volume?"
+msgstr "Crear un volum ZFS"
+
+#: storage/forms.py:791
+#, fuzzy
+msgid "Encryption Key"
+msgstr "Model d'autenticació"
+
+#: storage/forms.py:839
+msgid "The following disks failed to attach: %s"
+msgstr ""
+
+#: storage/forms.py:1128
+msgid ""
+"Specifies a suggested block size for files in the file system. This property "
+"is designed solely for use with database workloads that access files in "
+"fixed-size records.  ZFS automatically tunes block sizes according to "
+"internal algorithms optimized for typical access patterns."
+msgstr ""
+
+#: storage/forms.py:1272
+#, fuzzy
+msgid "Size for this zvol"
+msgstr "Tamany per aquest volum ZFS"
+
+#: storage/forms.py:1290
+#, fuzzy
+msgid "Block size"
+msgstr "Tamany lògic de bloc (Block Size)"
+
+#: storage/forms.py:1292
+msgid ""
+"The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
+"to 128 Kbytes is valid."
+msgstr ""
+
+#: storage/forms.py:1598
+msgid "Confirmation does not match passphrase"
+msgstr ""
+
+#: storage/forms.py:1606
+#, fuzzy
+msgid "Passphrase is not valid"
+msgstr "L'usuari %s no és vàlid."
+
+#: storage/forms.py:1665
+msgid "Dedicated User Enabled"
+msgstr ""
+
+#: storage/forms.py:1666
+msgid "If disabled then root will be used for replication."
+msgstr ""
+
+#: storage/forms.py:1674
+msgid "Enable High Speed Ciphers"
+msgstr ""
+
+#: storage/forms.py:1678
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which makes it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/forms.py:1944
+#, fuzzy
+msgid "New Passphrase"
+msgstr "Nova contrasenya"
+
+#: storage/forms.py:1948
+#, fuzzy
+msgid "Confirm New Passphrase"
+msgstr "Confirmar contrasenya"
+
+#: storage/forms.py:1974
+#: storage/forms.py:2119
+#, fuzzy
+msgid "Invalid password"
+msgstr "Contrasenya antiga"
+
+#: storage/forms.py:2024
+#, fuzzy
+msgid "Recovery Key"
+msgstr "cada dia"
+
+#: storage/forms.py:2028
+#, fuzzy
+msgid "Restart services"
+msgstr "Serveis de Control"
+
+#: storage/forms.py:2045
+msgid "Jails/Plugins"
+msgstr ""
+
+#: storage/models.py:574
+msgid "Underlying provider"
+msgstr ""
+
+#: storage/models.py:791
+msgid "Remote Dedicated User Enabled"
+msgstr ""
+
+#: storage/models.py:794
+#, fuzzy
+msgid "Remote Dedicated User"
+msgstr "Host de replicació remota"
+
+#: storage/models.py:831
+msgid ""
+"Disabling will stop any new replications being queued. It will not stop any "
+"replications which are queued or in progress."
+msgstr ""
+
+#: storage/models.py:836
+#: storage/models.py:915
+#, fuzzy
+msgid "Volume/Dataset"
+msgstr "Dataset"
+
+#: storage/models.py:852
+#, fuzzy
+msgid "Remote ZFS Volume/Dataset"
+msgstr "Crear un Dataset ZFS"
+
+#: storage/models.py:885
+#, fuzzy
+msgid "Do not start replication after"
+msgstr "Mantenir l'snapshot per"
+
+#: storage/nav.py:39
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "Nom del volum"
+
+#: storage/nav.py:51
+#: templates/storage/volume_datagrid.html:20
+#, fuzzy
+msgid "UFS Volume Manager (legacy)"
+msgstr "Nom del volum"
+
+#: storage/views.py:903
+#, fuzzy
+msgid "Passphrase updated"
+msgstr "Contrasenya actualitzada amb èxit."
+
+#: storage/views.py:997
+#, fuzzy
+msgid "Encryption re-key succeeded"
+msgstr "Model d'autenticació"
+
+#: storage/views.py:1016
+msgid "GELI recovery key download starting..."
+msgstr ""
+
+#: support/models.py:41
+#, fuzzy
+msgid "Support subject."
+msgstr "Problemes de suport"
+
+#: support/models.py:49
+#, fuzzy
+msgid "Support"
+msgstr "Suport EA"
+
+#: system/forms.py:86
+#, fuzzy
+msgid "The volume %s is locked by encryption"
+msgstr "El volum a fallat en l'exportació"
+
+#: system/forms.py:512
+#, fuzzy
+msgid "The two passphrase fields didn't match."
+msgstr "Els dos camps de contrasenya no coincideixen."
+
+#: system/forms.py:564
+msgid "RSA or DSA private key not found"
+msgstr ""
+
+#: system/forms.py:811
+msgid "Usernames cannot exceed 17 characters for cronjobs"
+msgstr ""
+
+#: system/models.py:69
+msgid "WebGUI HTTP Port"
+msgstr ""
+
+#: system/models.py:108
+#, fuzzy
+msgid "Directory Service"
+msgstr "Permís de directori"
+
+#: system/models.py:193
+msgid "Set this to match your serial port speed"
+msgstr ""
+
+#: system/models.py:222
+msgid "Enable report anonymous statistics"
+msgstr ""
+
+#: system/models.py:422
+msgid "Redirect Stderr"
+msgstr ""
+
+#: system/models.py:916
+msgid "Pre Init"
+msgstr ""
+
+#: system/models.py:953
+#, fuzzy
+msgid "Last Name"
+msgstr "Nom base"
+
+#: system/models.py:981
+msgid "Zip"
+msgstr ""
+
+#: system/models.py:991
+msgid "Home Phone"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:8
+#, fuzzy
+msgid "Add %(name)s"
+msgstr "Afegir %s"
+
+#: templates/freeadmin/help.html:39
+msgid "FreeBSD Man Pages"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#, fuzzy
+msgid "Are you sure you want to delete "
+msgstr "Estas segur que vols esborrar-ho?"
+
+#: templates/jails/stop.html:3
+msgid "Stop "
+msgstr ""
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr ""
+
+#: templates/plugins/index.html:10
+msgid "Installed"
+msgstr ""
+
+#: templates/registration/login.html:54
+msgid ""
+"The web admin user has been removed in this release in order to unify the "
+"web and Unix authentication mechanisms."
+msgstr ""
+
+#: templates/registration/login.html:55
+msgid ""
+"Administrators should log in to the web UI as root, since the web UI already "
+"confers superuser privileges in many areas."
+msgstr ""
+
+#: templates/storage/key.html:6
+#: templates/storage/recoverykey_add.html:9
+#: templates/storage/recoverykey_remove.html:6
+#: templates/storage/rekey.html:6
+msgid "Continue"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:4
+msgid "You are about to add a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:5
+msgid "This will invalidate any previous recovery key"
+msgstr ""
+
+#: templates/storage/rekey.html:3
+msgid "You are about to re-key the encryption"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:8
+#, fuzzy
+msgid "Progress"
+msgstr "Compressió"
+
+#: templates/storage/volumestatus_datagrid.html:15
+#, fuzzy
+msgid "Repaired"
+msgstr "Requerit"
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr ""
+
+#: templates/storage/zvols.html:6
+#, fuzzy
+msgid "Add zvol"
+msgstr "Afegir Zvol"
+
+#: tools/alert.py:176
+#, fuzzy
+msgid "The WebGUI Address could not bind to %s; using wildcard"
+msgstr "L'adreça del WebGUI no es pot enllaçar a %s; utilitzant comodins"
+
+#: tools/alert.py:198
+msgid "The following multipaths are not optimal: %s"
+msgstr ""
+
+#: choices.py:52
+#, fuzzy
+msgid "HTTP+HTTPS"
+msgstr "HTTPS"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr ""
+
+#: choices.py:304
+#, fuzzy
+msgid "lz4 (recommended)"
+msgstr "lzjb (recomenat)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr ""
+
+#: choices.py:602
+msgid "38400"
+msgstr ""
+
+#: choices.py:603
+msgid "57600"
+msgstr ""
+
+#: choices.py:659
+msgid "Fatal"
+msgstr ""
+
+#: choices.py:664
+#, fuzzy
+msgid "Debug2"
+msgstr "Depurar"
+
+#: choices.py:665
+#, fuzzy
+msgid "Debug3"
+msgstr "Depurar"
+
+#: choices.py:672
+msgid "Auth"
+msgstr ""
+
+#: choices.py:673
+#, fuzzy
+msgid "Local 0"
+msgstr "Usuari Local"
+
+#: choices.py:674
+#, fuzzy
+msgid "Local 1"
+msgstr "Usuari Local"
+
+#: choices.py:675
+#, fuzzy
+msgid "Local 2"
+msgstr "Usuari Local"
+
+#: choices.py:676
+#, fuzzy
+msgid "Local 3"
+msgstr "Usuari Local"
+
+#: choices.py:677
+#, fuzzy
+msgid "Local 4"
+msgstr "Usuari Local"
+
+#: choices.py:678
+#, fuzzy
+msgid "Local 5"
+msgstr "Usuari Local"
+
+#: choices.py:679
+#, fuzzy
+msgid "Local 6"
+msgstr "Usuari Local"
+
+#: choices.py:680
+#, fuzzy
+msgid "Local 7"
+msgstr "Usuari Local"
+
+#: choices.py:686
+msgid "NT4"
+msgstr ""
+
+#: choices.py:687
+#, fuzzy
+msgid "NIS"
+msgstr "Connexió de xarxa NIC"
+
+#: choices.py:702
+#, fuzzy
+msgid "on"
+msgstr "Cap"
+
+#: choices.py:703
+#, fuzzy
+msgid "off"
+msgstr "Apagat"
+
+#: choices.py:705
+msgid "!data"
+msgstr ""
+
+#: choices.py:707
+msgid "ctrl"
+msgstr ""
+
+#: choices.py:708
+msgid "ctrl+data"
+msgstr ""
+
+#: account/forms.py:55
+#, fuzzy
+msgid "New Password"
+msgstr "Nova contrasenya"
+
+#: account/forms.py:68
+#, fuzzy
+msgid "Passwords do not match"
+msgstr "El secret no coincideix"
+
+#: account/forms.py:561
+#, fuzzy
+msgid "Home directory must end with username"
+msgstr "El directori home és no-escriptura, deixa-ho en blanc"
+
+#: account/models.py:52
+#, fuzzy
+msgid "Built-in Group"
+msgstr "Grups auxiliars"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr ""
+
+#: common/system.py:278
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: freeadmin/forms.py:220
+#, fuzzy
+msgid "A file is required"
+msgstr "El camp és obligatori"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+#, fuzzy
+msgid "Invalid network: %s"
+msgstr "Firmware o checksum incorrecte"
+
+#: freeadmin/navtree.py:573
+#, fuzzy
+msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
+msgstr "Algun error ha succeït mentre s'etiquetaba el disc"
+
+#: jails/admin.py:91
+#: jails/models.py:149
+#, fuzzy
+msgid "Autostart"
+msgstr "Automàtic"
+
+#: jails/admin.py:182
+#, fuzzy
+msgid "Edit Jail"
+msgstr "Editar portal"
+
+#: jails/admin.py:185
+#: jails/nav.py:264
+#, fuzzy
+msgid "Add Storage"
+msgstr "Emmagatzematge"
+
+#: jails/admin.py:188
+#: templates/plugins/available_datagrid.html:27
+#, fuzzy
+msgid "Upload Plugin"
+msgstr "Eliminar replicació"
+
+#: jails/admin.py:197
+msgid "Stop"
+msgstr ""
+
+#: jails/admin.py:267
+msgid "Instances"
+msgstr ""
+
+#: jails/forms.py:92
+msgid "32 bit"
+msgstr ""
+
+#: jails/forms.py:98
+msgid "vanilla"
+msgstr ""
+
+#: jails/forms.py:459
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr ""
+
+#: jails/forms.py:460
+#: jails/models.py:162
+#, fuzzy
+msgid "NAT"
+msgstr "No disponible"
+
+#: jails/forms.py:651
+msgid "Create destination directory if it does not exist"
+msgstr ""
+
+#: jails/forms.py:693
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr ""
+
+#: jails/hook.py:13
+#: jails/models.py:252
+#: jails/models.py:253
+#: jails/nav.py:47
+#: templates/jails/index.html:5
+msgid "Jails"
+msgstr ""
+
+#: jails/models.py:82
+#, fuzzy
+msgid "IPv4 address"
+msgstr "Adreça IPv4"
+
+#: jails/models.py:88
+#, fuzzy
+msgid "IPv4 aliases"
+msgstr "Alias"
+
+#: jails/models.py:100
+msgid "IPv4 bridge aliases"
+msgstr ""
+
+#: jails/models.py:107
+#, fuzzy
+msgid "IPv4 default gateway"
+msgstr "Pasarel.la IPv4 per defecte"
+
+#: jails/models.py:119
+#, fuzzy
+msgid "IPv6 aliases"
+msgstr "Alias"
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr ""
+
+#: jails/models.py:265
+#, fuzzy
+msgid "IPv4 Network"
+msgstr "Màscara IPv4 "
+
+#: jails/models.py:270
+#, fuzzy
+msgid "IPv4 Network Start Address"
+msgstr "Adreça IPv4"
+
+#: jails/models.py:275
+#, fuzzy
+msgid "IPv4 Network End Address"
+msgstr "Adreça IPv4"
+
+#: jails/models.py:305
+#: jails/models.py:306
+#, fuzzy
+msgid "Jails Configuration"
+msgstr "Configuració Global"
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:28
+#: templates/plugins/index.html:18
+#, fuzzy
+msgid "Configuration"
+msgstr "Configuració Global"
+
+#: jails/utils.py:567
+msgid "Unable to determine IPv4 for plugin"
+msgstr ""
+
+#: jails/views.py:114
+#, fuzzy
+msgid "Storage successfully added."
+msgstr "Dataset afegit amb èxit."
+
+#: jails/views.py:155
+#, fuzzy
+msgid "Jail successfully stopped."
+msgstr "%s actualitzat amb èxit."
+
+#: jails/views.py:176
+#, fuzzy
+msgid "Jail successfully deleted."
+msgstr "%s esborrat amb èxit."
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr ""
+
+#: network/admin.py:39
+#, fuzzy
+msgid "IPv4 Addresses"
+msgstr "Adreça IPv4"
+
+#: network/admin.py:44
+#, fuzzy
+msgid "IPv6 Addresses"
+msgstr "Adreça IPv6 "
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr ""
+
+#: network/models.py:78
+msgid ""
+"If enabled, delays the start of network-reliant services until interface is "
+"up and ICMP packets to a destination defined in netwait ip list are "
+"flowing.  Link state is examined first, followed by \"pinging\" an IP "
+"address to verify network usability.  If no destination can be reached or "
+"timeouts are exceeded, network services are started anyway with no guarantee "
+"that the network is usable."
+msgstr ""
+
+#: network/models.py:89
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+
+#: network/models.py:98
+msgid ""
+"This field is appended to /etc/hosts which contains information regarding "
+"known hosts on the network. hosts(5)"
+msgstr ""
+
+#: plugins/models.py:93
+#, fuzzy
+msgid "Plugin jail name"
+msgstr "Nom de domini"
+
+#: plugins/models.py:94
+msgid "Jail where the plugin is installed"
+msgstr ""
+
+#: plugins/models.py:141
+msgid "Kmod"
+msgstr ""
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr ""
+
+#: plugins/plugin.py:120
+msgid "Failed to download %(url)s: %(error)s"
+msgstr ""
+
+#: plugins/views.py:171
+#, fuzzy
+msgid "Plugin not installed"
+msgstr "%s actualitzat amb èxit."
+
+#: plugins/views.py:181
+#: plugins/views.py:242
+#, fuzzy
+msgid "Invalid plugin"
+msgstr "Prefixe invalid"
+
+#: plugins/views.py:192
+#: plugins/views.py:250
+msgid "Failed to download plugin"
+msgstr ""
+
+#: services/models.py:259
+#, fuzzy
+msgid "Enable/disable home directories for afp user."
+msgstr "Això activa/desactiva els directoris home per l'usuari samba."
+
+#: services/models.py:288
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it.  It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+
+#: services/models.py:299
+msgid ""
+"Specify specific IP addresses (separated by commas) to bind to for TCP and "
+"UDP requests. This option may be specified multiple times. If no IP is "
+"specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
+"and if IPv6 is enabled, ::1 to the list."
+msgstr ""
+
+#: services/models.py:307
+msgid "mountd(8) bind port"
+msgstr ""
+
+#: services/models.py:324
+msgid ""
+"This option forces the rpc.statd daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:861
+#, fuzzy
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names."
+msgstr ""
+"Nom alias del host. Aquesta opció pot aparèixer múltiple vegades, per cada "
+"domini que té la mateixa IP. Utilitza un espai per separar múltiple nom "
+"d'alias."
+
+#: services/models.py:888
+#, fuzzy
+msgid "These parameters will be added to global settings in inadyn-mt.conf."
+msgstr "Aquests paràmetres s'afegiran als ajustos globals a inadyn.conf"
+
+#: services/models.py:950
+#, fuzzy
+msgid "Master"
+msgstr "Master local"
+
+#: services/models.py:951
+msgid "Slave"
+msgstr ""
+
+#: services/models.py:1102
+msgid "Display Login"
+msgstr ""
+
+#: services/models.py:1121
+#, fuzzy
+msgid ""
+"Use this option to override the directory creation mask (077 by default)."
+msgstr ""
+"Utilitza aquesta opció per anular la màscara de creació de directori (0777 "
+"per defecte)."
+
+#: services/models.py:1210
+msgid "TLS allow per user"
+msgstr ""
+
+#: services/models.py:1226
+#, fuzzy
+msgid "TLS no certificate request"
+msgstr "Certificat auto signat"
+
+#: services/models.py:1230
+msgid "TLS no empty fragments"
+msgstr ""
+
+#: services/models.py:1242
+msgid "TLS use implicit SSL"
+msgstr ""
+
+#: services/models.py:1250
+msgid "TLS IP address required"
+msgstr ""
+
+#: services/models.py:1343
+#, fuzzy
+msgid "SFTP Log Level"
+msgstr "Nivell de log"
+
+#: services/models.py:1347
+msgid ""
+"Specifies which messages will be logged by sftp-server. INFO and VERBOSE log "
+"transactions that sftp-server performs on behalf of the client. DEBUG2 and "
+"DEBUG3 each specify higher levels of debugging output. The default is ERROR."
+msgstr ""
+
+#: services/models.py:1437
+#: services/models.py:1533
+msgid "Hostname of the domain controller to use."
+msgstr ""
+
+#: services/models.py:1516
+#, fuzzy
+msgid "UNIX extensions"
+msgstr "Cap target definit"
+
+#: services/models.py:1517
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr ""
+
+#: services/models.py:1526
+msgid "Use default domain"
+msgstr ""
+
+#: services/models.py:1538
+msgid "Global Catalog Server"
+msgstr ""
+
+#: services/models.py:1551
+msgid "Hostname of the kerberos password server to use."
+msgstr ""
+
+#: services/models.py:1555
+#, fuzzy
+msgid "AD timeout"
+msgstr "Intèrval de temps fins que es finalitza el procés (Timeout) "
+
+#: services/models.py:1556
+msgid "Timeout for AD related commands."
+msgstr ""
+
+#: services/models.py:1561
+msgid "Timeout for AD DNS queries."
+msgstr ""
+
+#: services/models.py:1601
+#, fuzzy
+msgid "NIS domain name"
+msgstr "Nom de domini"
+
+#: services/models.py:1606
+#, fuzzy
+msgid "NIS servers"
+msgstr "Servidor NTP 1"
+
+#: services/models.py:1616
+msgid "Manycast"
+msgstr ""
+
+#: services/models.py:1617
+msgid "Cause ypbind to use 'many-cast' instead of broadcast"
+msgstr ""
+
+#: sharing/admin.py:78
+#: sharing/models.py:291
+#, fuzzy
+msgid "Paths"
+msgstr "Ruta"
+
+#: sharing/forms.py:195
+#, fuzzy
+msgid "This is not a valid network: %s"
+msgstr "Això no és una màscara valida"
+
+#: sharing/forms.py:309
+msgid "This option is only available once per mountpoint"
+msgstr ""
+
+#: sharing/forms.py:341
+msgid "You need at least one path for the share"
+msgstr ""
+
+#: sharing/models.py:178
+#, fuzzy
+msgid "Default umask"
+msgstr "Per defecte"
+
+#: sharing/models.py:202
+#, fuzzy
+msgid ""
+"Networks that are authorized to access the NFS share. Specify network "
+"numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
+msgstr ""
+"La xarxa que està autoritzada a accedir una compartició NFS o be una llista "
+"d'IPs. Especifica els números de xarxa amb la forma 1.2.3.4/xx on xx és el "
+"número de bits de la màscara, o be una llista d'adreces 1.2.3.4 1.2.3.5 "
+"1.2.3.6."
+
+#: sharing/models.py:208
+#, fuzzy
+msgid "Authorized IP addresses or hosts"
+msgstr "Adreces IP o xarxa autoritzada"
+
+#: sharing/models.py:209
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr ""
+
+#: sharing/models.py:231
+msgid ""
+"If a user is selected, the root user is limited to that user's permissions"
+msgstr ""
+
+#: sharing/models.py:249
+msgid "The specified user's permissions are used by all clients"
+msgstr ""
+
+#: storage/admin.py:35
+msgid "Wipe"
+msgstr ""
+
+#: storage/admin.py:46
+msgid "Edit In Bulk"
+msgstr ""
+
+#: storage/admin.py:249
+#: storage/admin.py:338
+#: storage/nav.py:123
+#, fuzzy
+msgid "Create zvol"
+msgstr "Crear un zvol ZFS"
+
+#: storage/admin.py:293
+#, fuzzy
+msgid "Encryption Re-key"
+msgstr "Model d'autenticació"
+
+#: storage/admin.py:305
+#, fuzzy
+msgid "Remove recovery key"
+msgstr "Hostkey remot"
+
+#: storage/admin.py:345
+#, fuzzy
+msgid "Destroy zvol"
+msgstr "Eliminar volum"
+
+#: storage/admin.py:403
+msgid "Checksum"
+msgstr ""
+
+#: storage/admin.py:467
+#, fuzzy
+msgid "Detach"
+msgstr "Crear un volum"
+
+#: storage/admin.py:578
+msgid "Frequency"
+msgstr ""
+
+#: storage/forms.py:71
+msgid ""
+"Enabling dedup may have drastic performance implications,<br /> as well as "
+"impact your ability to access your data.<br /> Consider using compression "
+"instead."
+msgstr ""
+
+#: storage/forms.py:764
+#, fuzzy
+msgid "Volume imported"
+msgstr "Ruta del volum"
+
+#: storage/forms.py:794
+#: storage/forms.py:1585
+#: storage/forms.py:1904
+#: storage/forms.py:2019
+#: storage/forms.py:2131
+#: system/models.py:354
+msgid "Passphrase"
+msgstr ""
+
+#: storage/forms.py:1269
+#, fuzzy
+msgid "zvol name"
+msgstr "Nom del mòdul"
+
+#: storage/forms.py:1281
+msgid ""
+"Creates a sparse volume with no reservation, also kown as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less then the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+
+#: storage/forms.py:1589
+#: storage/forms.py:1908
+#: system/forms.py:479
+#, fuzzy
+msgid "Confirm Passphrase"
+msgstr "Confirmar contrasenya"
+
+#: storage/forms.py:1670
+#, fuzzy
+msgid "Dedicated User"
+msgstr "Esborrar usuari"
+
+#: storage/forms.py:1940
+#: storage/forms.py:2100
+#, fuzzy
+msgid "Admin password"
+msgstr "Contrasenya antiga"
+
+#: storage/forms.py:1952
+#, fuzzy
+msgid "Remove passphrase"
+msgstr "Treure usuari"
+
+#: storage/forms.py:2054
+msgid "You need either a passphrase or a recovery key to unlock"
+msgstr ""
+
+#: storage/forms.py:2084
+msgid "Volume could not be imported: %d devices failed to decrypt"
+msgstr ""
+
+#: storage/forms.py:2088
+#, fuzzy
+msgid "Volume could not be imported"
+msgstr "La cache no es pot reconstruir"
+
+#: storage/models.py:126
+msgid "LOCKED"
+msgstr ""
+
+#: storage/models.py:445
+#, fuzzy
+msgid "Disk Size"
+msgstr "Dispositiu de disc"
+
+#: storage/models.py:805
+msgid "High Speed Encryption Ciphers"
+msgstr ""
+
+#: storage/models.py:854
+msgid ""
+"This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
+"Datasetname not the mountpoint or filesystem path"
+msgstr ""
+
+#: storage/models.py:880
+#, fuzzy
+msgid "Do not start replication before"
+msgstr "Mantenir l'snapshot per"
+
+#: storage/views.py:717
+msgid "Pool output could not be parsed. Is the pool imported?"
+msgstr ""
+
+#: storage/views.py:722
+msgid "The scrub process has stopped"
+msgstr ""
+
+#: storage/views.py:885
+msgid "Passphrase created"
+msgstr ""
+
+#: storage/views.py:926
+#: storage/views.py:939
+#, fuzzy
+msgid "Volume unlocked"
+msgstr "Nom del volum"
+
+#: storage/views.py:930
+#, fuzzy
+msgid "Volume failed unlocked"
+msgstr "Nom del volum"
+
+#: storage/views.py:1076
+#, fuzzy
+msgid "Disks successfully edited"
+msgstr "%s afegit amb èxit"
+
+#: support/models.py:45
+#, fuzzy
+msgid "A description of the issue."
+msgstr "encriptació de la connexió"
+
+#: support/views.py:86
+#, fuzzy
+msgid "Support request successfully sent"
+msgstr "Snapshot clonat amb èxit"
+
+#: system/forms.py:68
+msgid "The path '%s' requires execute permission bit"
+msgstr ""
+
+#: system/forms.py:581
+msgid "RSA or DSA private key is not valid"
+msgstr ""
+
+#: system/forms.py:604
+msgid "The modulus of certificate and key must match"
+msgstr ""
+
+#: system/forms.py:881
+msgid "Usernames cannot exceed 17 characters for rsync tasks"
+msgstr ""
+
+#: system/forms.py:886
+msgid "Usernames cannot have spaces"
+msgstr ""
+
+#: system/models.py:60
+#, fuzzy
+msgid "WebGUI IPv4 Address"
+msgstr "Adreça IPv4"
+
+#: system/models.py:75
+msgid "WebGUI HTTPS Port"
+msgstr ""
+
+#: system/models.py:194
+msgid "Serial Port Speed"
+msgstr ""
+
+#: system/models.py:219
+#, fuzzy
+msgid "Enable debug kernel"
+msgstr "Activar servei"
+
+#: system/models.py:417
+msgid ""
+"Redirect the standard output to /dev/null. In other words, disable output."
+msgstr ""
+
+#: system/models.py:423
+msgid ""
+"Redirect the standard error output to /dev/null. In other words, disable "
+"error output."
+msgstr ""
+
+#: system/models.py:515
+#, fuzzy
+msgid "Remote SSH Port"
+msgstr "Host remot"
+
+#: system/models.py:516
+#, fuzzy
+msgid "SSH Port"
+msgstr "Port"
+
+#: system/models.py:897
+#: system/models.py:909
+msgid "Script"
+msgstr ""
+
+#: system/models.py:936
+msgid "Init/Shutdown Scripts"
+msgstr ""
+
+#: system/models.py:949
+#, fuzzy
+msgid "First Name"
+msgstr "Nom del Target"
+
+#: system/models.py:957
+msgid "Company"
+msgstr ""
+
+#: system/models.py:969
+msgid "City"
+msgstr ""
+
+#: system/models.py:997
+msgid "Cell Phone"
+msgstr ""
+
+#: system/models.py:1003
+msgid "Work Phone"
+msgstr ""
+
+#: system/models.py:1009
+#: templates/system/settings.html:12
+#, fuzzy
+msgid "Registration"
+msgstr "Destinació"
+
+#: system/views.py:316
+msgid "You must configure the root email (Accounts->Users->root)"
+msgstr ""
+
+#: templates/menubar.html:49
+msgid "Alert"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:176
+msgid "No entry has been found"
+msgstr ""
+
+#: templates/freeadmin/help.html:44
+msgid "Professional Support"
+msgstr ""
+
+#: templates/freeadmin/help.html:46
+msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr ""
+
+#: templates/jails/start.html:3
+#, fuzzy
+msgid "Start "
+msgstr "Opcions d'inici"
+
+#: templates/plugins/available_install.html:3
+#, fuzzy
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr "Estas segur que vols esborrar-ho?"
+
+#: templates/plugins/plugin_update.html:3
+#, fuzzy
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr "Estas segur que vols esborrar-ho?"
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+#, fuzzy
+msgid "Available Plugins"
+msgstr "Accions disponibles"
+
+#: templates/registration/login.html:51
+msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
+msgstr ""
+
+#: templates/registration/login.html:57
+msgid "For security reasons, you must now set a new root password:"
+msgstr ""
+
+#: templates/services/core.html:33
+#, fuzzy
+msgid "Directory Service Settings"
 msgstr "Paràmetres del directori actiu"
+
+#: templates/storage/disk_editbulk.html:3
+msgid "Editing the following disks"
+msgstr ""
+
+#: templates/storage/key.html:3
+msgid "You are about to download the global GELI key"
+msgstr ""
+
+#: templates/storage/replication_add.html:5
+msgid "SSH Key Scan"
+msgstr ""
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr ""
+
+#: templates/storage/volume_datagrid.html:22
+#, fuzzy
+msgid "UFS Volume Manager"
+msgstr "Nom del volum"
+
+#: templates/storage/volume_detach.html:27
+msgid ""
+"This is an encrypted volume, make sure to <a href=\"%(url)s\" "
+"target=\"_blank\">download</a> the key so you can be able to import it in "
+"the future"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "Scan"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "%(scanned)s out of %(total)s"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:14
+#, fuzzy
+msgid "Errors"
+msgstr "Error"
+
+#: templates/storage/wizard.html:92
+#, fuzzy
+msgid "Extend Volume"
+msgstr "Exportar un volum"
+
+#: templates/storage/zvols.html:3
+#, fuzzy
+msgid "Create zvol on %(name)s"
+msgstr "Crear un volum ZFS"
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr ""
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr ""
+
+#: templates/system/firmware_wizard_0.html:6
+#: templates/system/firmware_wizard_1.html:21
+msgid ""
+"Consider downloading your configuration before proceeding, <a "
+"href=\"%(url)s\" target=\"_blank\">click here</a>."
+msgstr ""
+
+#: choices.py:600
+msgid "9600"
+msgstr ""
+
+#: choices.py:710
+msgid "auth+data"
+msgstr ""
+
+#: account/models.py:142
+#, fuzzy
+msgid "Disable password login"
+msgstr "Desactiva les contrasenyes al logins"
+
+#: account/models.py:242
+#, fuzzy
+msgid "Group Memberships"
+msgstr "Membres del grup"
+
+#: freeadmin/navtree.py:608
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr ""
+
+#: jails/forms.py:450
+#, fuzzy
+msgid "Path does not exist!"
+msgstr "La ruta no existeix."
+
+#: jails/models.py:125
+#, fuzzy
+msgid "IPv6 bridge address"
+msgstr "Adreça IPv6 "
+
+#: jails/models.py:138
+#, fuzzy
+msgid "IPv6 default gateway"
+msgstr "Pasarel.la IPv6 per defecte"
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:286
+msgid "IPv6 network start address for jails and plugins"
+msgstr ""
+
+#: jails/nav.py:70
+#, fuzzy
+msgid "Add Jails"
+msgstr "Afegir %s"
+
+#: jails/nav.py:114
+#, fuzzy
+msgid "View Jail Templates"
+msgstr "Veure tots els Extents"
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr ""
+
+#: middleware/zfs.py:644
+#, fuzzy
+msgid "Canceled"
+msgstr "Cancel·lar"
+
+#: services/models.py:216
+msgid ""
+"Specifies whether samba should use (expensive) hostname lookups or use the "
+"ip addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+
+#: services/models.py:312
+msgid ""
+"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
+"families. This is typically done to ensure that the port which mountd binds "
+"to is a known value which can be used in firewall rulesets."
+msgstr ""
+
+#: services/models.py:319
+msgid "rpc.statd(8) bind port"
+msgstr ""
+
+#: services/models.py:329
+msgid "rpc.lockd(8) bind port"
+msgstr ""
+
+#: services/models.py:334
+msgid ""
+"This option forces rpc.lockd the daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:953
+#, fuzzy
+msgid "UPS Mode"
+msgstr "Mode"
+
+#: services/models.py:1020
+#, fuzzy
+msgid "Monitor Password"
+msgstr "Confirmar contrasenya"
+
+#: services/models.py:1139
+#, fuzzy
+msgid "Perform Reverse DNS Lookups"
+msgstr "Inversió de DNS per IP requerida"
+
+#: services/models.py:1206
+#, fuzzy
+msgid "TLS allow dot login"
+msgstr "Permetre Login de Root"
+
+#: services/models.py:1256
+#, fuzzy
+msgid "Place the contents of your certificate and private key here."
+msgstr "Col.loca aquí els continguts del teu fitxer de certificat auto signat."
+
+#: services/models.py:1358
+msgid ""
+"Specifies the facility code that is used when logging messages from sftp-"
+"server."
+msgstr ""
+
+#: services/models.py:1472
+#: services/models.py:1473
+#, fuzzy
+msgid "NT4 Domain"
+msgstr "Domain"
+
+#: services/models.py:1512
+#, fuzzy
+msgid "Verbose logging"
+msgstr "Si us plau, inicia sessió"
+
+#: services/models.py:1527
+msgid "Set this if you want to use the default domain for users and groups."
+msgstr ""
+
+#: services/models.py:1539
+msgid "Hostname of the global catalog server to use."
+msgstr ""
+
+#: sharing/forms.py:118
+#, fuzzy
+msgid "Delete password"
+msgstr "Desactivar contrasenya"
+
+#: sharing/models.py:144
+msgid "Check this to enable Time Machine backups on this share."
+msgstr ""
+
+#: sharing/models.py:240
+msgid ""
+"If a group is selected, the root user will also be limited to that group's "
+"permissions"
+msgstr ""
+
+#: storage/admin.py:273
+#, fuzzy
+msgid "Create Passphrase"
+msgstr "Crear un Dataset ZFS"
+
+#: storage/admin.py:464
+msgid "Offline"
+msgstr ""
+
+#: storage/forms.py:483
+msgid "You need at least %d disks"
+msgstr ""
+
+#: storage/forms.py:527
+msgid "You need a data disk group"
+msgstr ""
+
+#: storage/forms.py:771
+#, fuzzy
+msgid "Yes: Decrypt disks"
+msgstr "Discos membres"
+
+#: storage/forms.py:1117
+#: storage/forms.py:1229
+#, fuzzy
+msgid "ZFS Deduplication"
+msgstr "Replicació ZFS"
+
+#: storage/forms.py:1124
+msgid "Record Size"
+msgstr ""
+
+#: storage/forms.py:1279
+#, fuzzy
+msgid "Sparse volume"
+msgstr "Volum ZFS"
+
+#: storage/forms.py:1917
+#: storage/forms.py:1983
+#, fuzzy
+msgid "The passphrases do not match"
+msgstr "El secret no coincideix"
+
+#: storage/models.py:64
+#, fuzzy
+msgid "Encryption Type"
+msgstr "Model d'autenticació"
+
+#: storage/models.py:807
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which make it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/views.py:115
+#, fuzzy
+msgid "Please enter a hostname"
+msgstr "Nom de Servidor en format antic, p.e. EXEMPLE"
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr ""
+
+#: storage/views.py:958
+msgid "GELI key download starting..."
+msgstr ""
+
+#: storage/views.py:1057
+msgid "Recovery has been removed"
+msgstr ""
+
+#: support/models.py:40
+msgid "Subject"
+msgstr ""
+
+#: system/forms.py:749
+#, fuzzy
+msgid "Memory device"
+msgstr "Memòria"
+
+#: system/models.py:66
+#, fuzzy
+msgid "WebGUI IPv6 Address"
+msgstr "Adreça IPv4"
+
+#: system/models.py:355
+msgid "Private key passphrase"
+msgstr ""
+
+#: system/models.py:416
+msgid "Redirect Stdout"
+msgstr ""
+
+#: system/models.py:917
+msgid "Post Init"
+msgstr ""
+
+#: system/models.py:935
+#, fuzzy
+msgid "Init/Shutdown Script"
+msgstr "secret del Initiator"
+
+#: templates/freeadmin/generic_model_datagrid.html:10
+#, fuzzy
+msgid "Add"
+msgstr "Afegir %s"
+
+#: templates/freeadmin/generic_model_delete.html:19
+msgid ""
+"There is %(related_num)s related entry that will also be deleted as it "
+"depend upon this item"
+msgid_plural ""
+"There are %(related_num)s related entries that will also be deleted as they "
+"depend upon this item"
+msgstr[0] ""
+
+#: templates/jails/index.html:20
+msgid "Templates"
+msgstr ""
+
+#: templates/storage/create_passphrase.html:5
+msgid ""
+"Remember to add a new recovery key as this action invalidates the previous "
+"recovery key"
+msgstr ""
+
+#: templates/storage/recoverykey_remove.html:3
+msgid "You are about to remove a recovery key for this volume"
+msgstr ""

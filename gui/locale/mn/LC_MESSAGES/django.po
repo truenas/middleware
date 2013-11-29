@@ -3,20 +3,21 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2013-11-29 19:46+0000\n"
+"Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: mn\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1385754391.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6175,4 +6176,2021 @@ msgstr ""
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
+msgstr ""
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr ""
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr ""
+
+#: choices.py:308
+msgid "zle (runs of zeros)"
+msgstr ""
+
+#: choices.py:601
+msgid "19200"
+msgstr ""
+
+#: choices.py:604
+msgid "115200"
+msgstr ""
+
+#: choices.py:662
+msgid "Verbose"
+msgstr ""
+
+#: choices.py:670
+msgid "Daemon"
+msgstr ""
+
+#: choices.py:675
+msgid "Local 2"
+msgstr ""
+
+#: choices.py:692
+msgid "type1"
+msgstr ""
+
+#: choices.py:693
+msgid "type2"
+msgstr ""
+
+#: choices.py:694
+msgid "type3"
+msgstr ""
+
+#: choices.py:695
+msgid "type4"
+msgstr ""
+
+#: choices.py:696
+msgid "type5"
+msgstr ""
+
+#: choices.py:704
+msgid "data"
+msgstr ""
+
+#: choices.py:706
+msgid "auth"
+msgstr ""
+
+#: choices.py:709
+msgid "ctrl+!data"
+msgstr ""
+
+#: choices.py:711
+msgid "auth+!data"
+msgstr ""
+
+#: account/forms.py:60
+msgid "Confirm New Password"
+msgstr ""
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr ""
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr ""
+
+#: account/models.py:241
+msgid "Group Membership"
+msgstr ""
+
+#: api/resources.py:766
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+msgid "Locked"
+msgstr ""
+
+#: api/resources.py:859
+msgid "on every %(days)s"
+msgstr ""
+
+#: api/resources.py:865
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr ""
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr ""
+
+#: jails/admin.py:75
+#: jails/forms.py:724
+#: jails/models.py:396
+#: templates/plugins/plugins.html:21
+msgid "Jail"
+msgstr ""
+
+#: jails/admin.py:196
+msgid "Start"
+msgstr ""
+
+#: jails/admin.py:261
+#: jails/models.py:346
+msgid "URL"
+msgstr ""
+
+#: jails/forms.py:88
+msgid "type"
+msgstr ""
+
+#: jails/forms.py:170
+msgid "No jail root configured."
+msgstr ""
+
+#: jails/forms.py:458
+msgid "autostart"
+msgstr ""
+
+#: jails/forms.py:771
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr ""
+
+#: jails/models.py:72
+msgid "Jail Name"
+msgstr ""
+
+#: jails/models.py:94
+msgid "IPv4 bridge address"
+msgstr ""
+
+#: jails/models.py:113
+msgid "IPv6 address"
+msgstr ""
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr ""
+
+#: jails/models.py:224
+msgid "This jail is required by %d plugin(s)"
+msgstr ""
+
+#: jails/models.py:260
+msgid "Jail Root"
+msgstr ""
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr ""
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:280
+msgid "IPv6 Network"
+msgstr ""
+
+#: jails/models.py:285
+msgid "IPv6 Network Start Address"
+msgstr ""
+
+#: jails/models.py:290
+msgid "IPv6 Network End Address"
+msgstr ""
+
+#: jails/models.py:291
+msgid "IPv6 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:294
+msgid "Collection URL"
+msgstr ""
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr ""
+
+#: jails/models.py:373
+msgid "Template must have 0 instances!"
+msgstr ""
+
+#: jails/models.py:388
+#: jails/models.py:389
+msgid "Jail Templates"
+msgstr ""
+
+#: jails/models.py:408
+msgid "Read-Only"
+msgstr ""
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr ""
+
+#: jails/nav.py:100
+msgid "View Jails"
+msgstr ""
+
+#: jails/nav.py:250
+msgid "%s"
+msgstr ""
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr ""
+
+#: jails/utils.py:694
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr ""
+
+#: jails/views.py:94
+msgid "Jail successfully edited."
+msgstr ""
+
+#: jails/views.py:134
+msgid "Jail successfully started."
+msgstr ""
+
+#: jails/views.py:397
+msgid "Jail template successfully edited."
+msgstr ""
+
+#: middleware/notifier.py:2874
+msgid "No RPC Token!"
+msgstr ""
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr ""
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr ""
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr ""
+
+#: network/forms.py:284
+msgid "The IP \"%s\" is not valid"
+msgstr ""
+
+#: network/forms.py:343
+msgid "You need a domain, e.g. hostname.domain"
+msgstr ""
+
+#: network/forms.py:373
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr ""
+
+#: network/models.py:77
+msgid "Enable netwait feature"
+msgstr ""
+
+#: network/models.py:97
+msgid "Host name data base"
+msgstr ""
+
+#: network/models.py:401
+msgid "LAGG Interface Group"
+msgstr ""
+
+#: network/models.py:427
+msgid "Link Aggregation Member"
+msgstr ""
+
+#: network/models.py:428
+msgid "Link Aggregation Members"
+msgstr ""
+
+#: plugins/admin.py:58
+#: plugins/admin.py:65
+msgid "Install"
+msgstr ""
+
+#: plugins/forms.py:89
+msgid ""
+"Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
+msgstr ""
+
+#: plugins/forms.py:105
+msgid "Plugin Jail"
+msgstr ""
+
+#: plugins/forms.py:106
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr ""
+
+#: plugins/models.py:103
+msgid "Plugin"
+msgstr ""
+
+#: plugins/models.py:175
+msgid "URL for the plugins repository"
+msgstr ""
+
+#: plugins/views.py:196
+msgid "Jail does not exist"
+msgstr ""
+
+#: plugins/views.py:205
+msgid "Failed to update plugin"
+msgstr ""
+
+#: plugins/views.py:224
+#: plugins/views.py:355
+msgid "No available IP addresses"
+msgstr ""
+
+#: services/forms.py:637
+#: services/forms.py:645
+msgid "Spaces or number signs are not allowed."
+msgstr ""
+
+#: services/forms.py:826
+msgid "Peer Secret (Confirm)"
+msgstr ""
+
+#: services/forms.py:1331
+msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
+msgstr ""
+
+#: services/forms.py:1504
+msgid "A target with that name already exists."
+msgstr ""
+
+#: services/models.py:214
+msgid "Hostnames lookups"
+msgstr ""
+
+#: services/models.py:287
+msgid "Allow non-root mount"
+msgstr ""
+
+#: services/models.py:298
+msgid "Bind IP Addresses"
+msgstr ""
+
+#: services/models.py:712
+msgid "Initiator side user name."
+msgstr ""
+
+#: services/models.py:932
+msgid "These parameters will be added to /etc/snmpd.config."
+msgstr ""
+
+#: services/models.py:971
+msgid "Remote Port"
+msgstr ""
+
+#: services/models.py:1015
+msgid "Monitor User"
+msgstr ""
+
+#: services/models.py:1105
+msgid "Message which will be displayed to the user when they initially login."
+msgstr ""
+
+#: services/models.py:1132
+msgid ""
+"For local users, only allow access to user home directory unless the user is "
+"a member of group wheel."
+msgstr ""
+
+#: services/models.py:1194
+msgid "Enable TLS"
+msgstr ""
+
+#: services/models.py:1199
+msgid "TLS policy"
+msgstr ""
+
+#: services/models.py:1202
+msgid "TLS allow client renegotiations"
+msgstr ""
+
+#: services/models.py:1214
+msgid "TLS common name required"
+msgstr ""
+
+#: services/models.py:1218
+msgid "TLS enable diagnostics"
+msgstr ""
+
+#: services/models.py:1222
+msgid "TLS export certificate data"
+msgstr ""
+
+#: services/models.py:1234
+msgid "TLS no session reuse required"
+msgstr ""
+
+#: services/models.py:1238
+msgid "TLS export standard vars"
+msgstr ""
+
+#: services/models.py:1246
+msgid "TLS DNS name required"
+msgstr ""
+
+#: services/models.py:1254
+msgid "Certificate and private key"
+msgstr ""
+
+#: services/models.py:1354
+msgid "SFTP Log Facility"
+msgstr ""
+
+#: services/models.py:1436
+#: services/models.py:1532
+msgid "Domain Controller"
+msgstr ""
+
+#: services/models.py:1522
+msgid "Set this if you want to allow Trusted Domains."
+msgstr ""
+
+#: services/models.py:1544
+msgid "Kerberos Server"
+msgstr ""
+
+#: services/models.py:1545
+msgid "Hostname of the kerberos server to use."
+msgstr ""
+
+#: services/models.py:1550
+msgid "Kerberos Password Server"
+msgstr ""
+
+#: services/models.py:1560
+msgid "DNS timeout"
+msgstr ""
+
+#: services/models.py:1600
+msgid "NIS domain"
+msgstr ""
+
+#: services/models.py:1607
+msgid "Comma delimited list of NIS servers"
+msgstr ""
+
+#: services/models.py:1611
+msgid "Secure mode"
+msgstr ""
+
+#: services/models.py:1612
+msgid "Cause ypbind to run in secure mode"
+msgstr ""
+
+#: services/models.py:1625
+#: services/models.py:1626
+msgid "NIS Domain"
+msgstr ""
+
+#: services/models.py:1868
+msgid "Informational"
+msgstr ""
+
+#: services/models.py:1869
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable"
+msgstr ""
+
+#: services/models.py:1876
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable"
+msgstr ""
+
+#: services/models.py:1884
+msgid "Destination email address. Separate email addresses by commas"
+msgstr ""
+
+#: services/nav.py:115
+#: templates/services/core.html:27
+msgid "Directory Services"
+msgstr ""
+
+#: sharing/forms.py:148
+#: sharing/forms.py:153
+msgid "The umask must be between 000 and 777."
+msgstr ""
+
+#: sharing/forms.py:274
+msgid "Paths for a NFS share must reside within the same filesystem"
+msgstr ""
+
+#: sharing/forms.py:281
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr ""
+
+#: sharing/forms.py:318
+msgid ""
+"The network %s is already being shared and cannot be used twice for the same "
+"filesystem"
+msgstr ""
+
+#: sharing/models.py:201
+msgid "Authorized networks"
+msgstr ""
+
+#: sharing/models.py:258
+msgid "The specified group's permission are used by all clients"
+msgstr ""
+
+#: storage/admin.py:280
+msgid "Change Passphrase"
+msgstr ""
+
+#: storage/admin.py:287
+msgid "Download Key"
+msgstr ""
+
+#: storage/admin.py:299
+msgid "Add recovery key"
+msgstr ""
+
+#: storage/admin.py:311
+msgid "Unlock"
+msgstr ""
+
+#: storage/admin.py:470
+msgid "Replace"
+msgstr ""
+
+#: storage/admin.py:572
+msgid "When"
+msgstr ""
+
+#: storage/admin.py:609
+msgid "Remote Hostname"
+msgstr ""
+
+#: storage/forms.py:120
+msgid "Enter positive number (optionally suffixed by K, M, G, T), or 0"
+msgstr ""
+
+#: storage/forms.py:770
+msgid "No: Skip to import"
+msgstr ""
+
+#: storage/forms.py:773
+msgid "Encrypted ZFS volume?"
+msgstr ""
+
+#: storage/forms.py:791
+msgid "Encryption Key"
+msgstr ""
+
+#: storage/forms.py:839
+msgid "The following disks failed to attach: %s"
+msgstr ""
+
+#: storage/forms.py:1128
+msgid ""
+"Specifies a suggested block size for files in the file system. This property "
+"is designed solely for use with database workloads that access files in "
+"fixed-size records.  ZFS automatically tunes block sizes according to "
+"internal algorithms optimized for typical access patterns."
+msgstr ""
+
+#: storage/forms.py:1272
+msgid "Size for this zvol"
+msgstr ""
+
+#: storage/forms.py:1290
+msgid "Block size"
+msgstr ""
+
+#: storage/forms.py:1292
+msgid ""
+"The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
+"to 128 Kbytes is valid."
+msgstr ""
+
+#: storage/forms.py:1598
+msgid "Confirmation does not match passphrase"
+msgstr ""
+
+#: storage/forms.py:1606
+msgid "Passphrase is not valid"
+msgstr ""
+
+#: storage/forms.py:1665
+msgid "Dedicated User Enabled"
+msgstr ""
+
+#: storage/forms.py:1666
+msgid "If disabled then root will be used for replication."
+msgstr ""
+
+#: storage/forms.py:1674
+msgid "Enable High Speed Ciphers"
+msgstr ""
+
+#: storage/forms.py:1678
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which makes it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/forms.py:1944
+msgid "New Passphrase"
+msgstr ""
+
+#: storage/forms.py:1948
+msgid "Confirm New Passphrase"
+msgstr ""
+
+#: storage/forms.py:1974
+#: storage/forms.py:2119
+msgid "Invalid password"
+msgstr ""
+
+#: storage/forms.py:2024
+msgid "Recovery Key"
+msgstr ""
+
+#: storage/forms.py:2028
+msgid "Restart services"
+msgstr ""
+
+#: storage/forms.py:2045
+msgid "Jails/Plugins"
+msgstr ""
+
+#: storage/models.py:574
+msgid "Underlying provider"
+msgstr ""
+
+#: storage/models.py:791
+msgid "Remote Dedicated User Enabled"
+msgstr ""
+
+#: storage/models.py:794
+msgid "Remote Dedicated User"
+msgstr ""
+
+#: storage/models.py:831
+msgid ""
+"Disabling will stop any new replications being queued. It will not stop any "
+"replications which are queued or in progress."
+msgstr ""
+
+#: storage/models.py:836
+#: storage/models.py:915
+msgid "Volume/Dataset"
+msgstr ""
+
+#: storage/models.py:852
+msgid "Remote ZFS Volume/Dataset"
+msgstr ""
+
+#: storage/models.py:885
+msgid "Do not start replication after"
+msgstr ""
+
+#: storage/nav.py:39
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+msgid "ZFS Volume Manager"
+msgstr ""
+
+#: storage/nav.py:51
+#: templates/storage/volume_datagrid.html:20
+msgid "UFS Volume Manager (legacy)"
+msgstr ""
+
+#: storage/views.py:903
+msgid "Passphrase updated"
+msgstr ""
+
+#: storage/views.py:997
+msgid "Encryption re-key succeeded"
+msgstr ""
+
+#: storage/views.py:1016
+msgid "GELI recovery key download starting..."
+msgstr ""
+
+#: support/models.py:41
+msgid "Support subject."
+msgstr ""
+
+#: support/models.py:49
+msgid "Support"
+msgstr ""
+
+#: system/forms.py:86
+msgid "The volume %s is locked by encryption"
+msgstr ""
+
+#: system/forms.py:512
+msgid "The two passphrase fields didn't match."
+msgstr ""
+
+#: system/forms.py:564
+msgid "RSA or DSA private key not found"
+msgstr ""
+
+#: system/forms.py:811
+msgid "Usernames cannot exceed 17 characters for cronjobs"
+msgstr ""
+
+#: system/models.py:69
+msgid "WebGUI HTTP Port"
+msgstr ""
+
+#: system/models.py:108
+msgid "Directory Service"
+msgstr ""
+
+#: system/models.py:193
+msgid "Set this to match your serial port speed"
+msgstr ""
+
+#: system/models.py:222
+msgid "Enable report anonymous statistics"
+msgstr ""
+
+#: system/models.py:422
+msgid "Redirect Stderr"
+msgstr ""
+
+#: system/models.py:916
+msgid "Pre Init"
+msgstr ""
+
+#: system/models.py:953
+msgid "Last Name"
+msgstr ""
+
+#: system/models.py:981
+msgid "Zip"
+msgstr ""
+
+#: system/models.py:991
+msgid "Home Phone"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:8
+msgid "Add %(name)s"
+msgstr ""
+
+#: templates/freeadmin/help.html:39
+msgid "FreeBSD Man Pages"
+msgstr ""
+
+#: templates/jails/delete.html:3
+msgid "Are you sure you want to delete "
+msgstr ""
+
+#: templates/jails/stop.html:3
+msgid "Stop "
+msgstr ""
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr ""
+
+#: templates/plugins/index.html:10
+msgid "Installed"
+msgstr ""
+
+#: templates/registration/login.html:54
+msgid ""
+"The web admin user has been removed in this release in order to unify the "
+"web and Unix authentication mechanisms."
+msgstr ""
+
+#: templates/registration/login.html:55
+msgid ""
+"Administrators should log in to the web UI as root, since the web UI already "
+"confers superuser privileges in many areas."
+msgstr ""
+
+#: templates/storage/dataset_edit.html:4
+msgid "Dataset"
+msgstr ""
+
+#: templates/storage/key.html:6
+#: templates/storage/recoverykey_add.html:9
+#: templates/storage/recoverykey_remove.html:6
+#: templates/storage/rekey.html:6
+msgid "Continue"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:5
+msgid "This will invalidate any previous recovery key"
+msgstr ""
+
+#: templates/storage/rekey.html:3
+msgid "You are about to re-key the encryption"
+msgstr ""
+
+#: templates/storage/replication_add.html:5
+msgid "SSH Key Scan"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:8
+msgid "Progress"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:15
+msgid "Repaired"
+msgstr ""
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr ""
+
+#: templates/storage/zvols.html:6
+msgid "Add zvol"
+msgstr ""
+
+#: tools/alert.py:176
+msgid "The WebGUI Address could not bind to %s; using wildcard"
+msgstr ""
+
+#: tools/alert.py:198
+msgid "The following multipaths are not optimal: %s"
+msgstr ""
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr ""
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr ""
+
+#: choices.py:304
+msgid "lz4 (recommended)"
+msgstr ""
+
+#: choices.py:309
+msgid "lzjb (legacy, not recommended)"
+msgstr ""
+
+#: choices.py:560
+msgid "Verify"
+msgstr ""
+
+#: choices.py:602
+msgid "38400"
+msgstr ""
+
+#: choices.py:603
+msgid "57600"
+msgstr ""
+
+#: choices.py:659
+msgid "Fatal"
+msgstr ""
+
+#: choices.py:664
+msgid "Debug2"
+msgstr ""
+
+#: choices.py:665
+msgid "Debug3"
+msgstr ""
+
+#: choices.py:672
+msgid "Auth"
+msgstr ""
+
+#: choices.py:673
+msgid "Local 0"
+msgstr ""
+
+#: choices.py:674
+msgid "Local 1"
+msgstr ""
+
+#: choices.py:676
+msgid "Local 3"
+msgstr ""
+
+#: choices.py:677
+msgid "Local 4"
+msgstr ""
+
+#: choices.py:678
+msgid "Local 5"
+msgstr ""
+
+#: choices.py:679
+msgid "Local 6"
+msgstr ""
+
+#: choices.py:680
+msgid "Local 7"
+msgstr ""
+
+#: choices.py:686
+msgid "NT4"
+msgstr ""
+
+#: choices.py:687
+msgid "NIS"
+msgstr ""
+
+#: choices.py:703
+msgid "off"
+msgstr ""
+
+#: choices.py:705
+msgid "!data"
+msgstr ""
+
+#: choices.py:707
+msgid "ctrl"
+msgstr ""
+
+#: choices.py:708
+msgid "ctrl+data"
+msgstr ""
+
+#: account/forms.py:55
+msgid "New Password"
+msgstr ""
+
+#: account/forms.py:68
+msgid "Passwords do not match"
+msgstr ""
+
+#: account/forms.py:561
+msgid "Home directory must end with username"
+msgstr ""
+
+#: account/models.py:52
+msgid "Built-in Group"
+msgstr ""
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr ""
+
+#: common/system.py:278
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: freeadmin/forms.py:220
+msgid "A file is required"
+msgstr ""
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+msgid "Invalid network: %s"
+msgstr ""
+
+#: freeadmin/navtree.py:573
+msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
+msgstr ""
+
+#: jails/admin.py:91
+#: jails/models.py:149
+msgid "Autostart"
+msgstr ""
+
+#: jails/admin.py:182
+msgid "Edit Jail"
+msgstr ""
+
+#: jails/admin.py:185
+#: jails/nav.py:264
+msgid "Add Storage"
+msgstr ""
+
+#: jails/admin.py:188
+#: templates/plugins/available_datagrid.html:27
+msgid "Upload Plugin"
+msgstr ""
+
+#: jails/admin.py:197
+msgid "Stop"
+msgstr ""
+
+#: jails/admin.py:267
+msgid "Instances"
+msgstr ""
+
+#: jails/forms.py:92
+msgid "32 bit"
+msgstr ""
+
+#: jails/forms.py:98
+msgid "vanilla"
+msgstr ""
+
+#: jails/forms.py:233
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr ""
+
+#: jails/forms.py:459
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr ""
+
+#: jails/forms.py:460
+#: jails/models.py:162
+msgid "NAT"
+msgstr ""
+
+#: jails/forms.py:651
+msgid "Create destination directory if it does not exist"
+msgstr ""
+
+#: jails/forms.py:693
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr ""
+
+#: jails/hook.py:13
+#: jails/models.py:252
+#: jails/models.py:253
+#: jails/nav.py:47
+#: templates/jails/index.html:5
+msgid "Jails"
+msgstr ""
+
+#: jails/models.py:82
+msgid "IPv4 address"
+msgstr ""
+
+#: jails/models.py:88
+msgid "IPv4 aliases"
+msgstr ""
+
+#: jails/models.py:100
+msgid "IPv4 bridge aliases"
+msgstr ""
+
+#: jails/models.py:107
+msgid "IPv4 default gateway"
+msgstr ""
+
+#: jails/models.py:119
+msgid "IPv6 aliases"
+msgstr ""
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr ""
+
+#: jails/models.py:265
+msgid "IPv4 Network"
+msgstr ""
+
+#: jails/models.py:270
+msgid "IPv4 Network Start Address"
+msgstr ""
+
+#: jails/models.py:275
+msgid "IPv4 Network End Address"
+msgstr ""
+
+#: jails/models.py:305
+#: jails/models.py:306
+msgid "Jails Configuration"
+msgstr ""
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:28
+#: templates/plugins/index.html:18
+msgid "Configuration"
+msgstr ""
+
+#: jails/utils.py:567
+msgid "Unable to determine IPv4 for plugin"
+msgstr ""
+
+#: jails/views.py:114
+msgid "Storage successfully added."
+msgstr ""
+
+#: jails/views.py:155
+msgid "Jail successfully stopped."
+msgstr ""
+
+#: jails/views.py:176
+msgid "Jail successfully deleted."
+msgstr ""
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr ""
+
+#: network/admin.py:39
+msgid "IPv4 Addresses"
+msgstr ""
+
+#: network/admin.py:44
+msgid "IPv6 Addresses"
+msgstr ""
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr ""
+
+#: network/models.py:78
+msgid ""
+"If enabled, delays the start of network-reliant services until interface is "
+"up and ICMP packets to a destination defined in netwait ip list are "
+"flowing.  Link state is examined first, followed by \"pinging\" an IP "
+"address to verify network usability.  If no destination can be reached or "
+"timeouts are exceeded, network services are started anyway with no guarantee "
+"that the network is usable."
+msgstr ""
+
+#: network/models.py:88
+msgid "Netwait IP list"
+msgstr ""
+
+#: network/models.py:89
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+
+#: network/models.py:98
+msgid ""
+"This field is appended to /etc/hosts which contains information regarding "
+"known hosts on the network. hosts(5)"
+msgstr ""
+
+#: plugins/models.py:93
+msgid "Plugin jail name"
+msgstr ""
+
+#: plugins/models.py:94
+msgid "Jail where the plugin is installed"
+msgstr ""
+
+#: plugins/models.py:141
+msgid "Kmod"
+msgstr ""
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr ""
+
+#: plugins/plugin.py:120
+msgid "Failed to download %(url)s: %(error)s"
+msgstr ""
+
+#: plugins/views.py:171
+msgid "Plugin not installed"
+msgstr ""
+
+#: plugins/views.py:181
+#: plugins/views.py:242
+msgid "Invalid plugin"
+msgstr ""
+
+#: plugins/views.py:192
+#: plugins/views.py:250
+msgid "Failed to download plugin"
+msgstr ""
+
+#: services/models.py:259
+msgid "Enable/disable home directories for afp user."
+msgstr ""
+
+#: services/models.py:288
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it.  It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+
+#: services/models.py:299
+msgid ""
+"Specify specific IP addresses (separated by commas) to bind to for TCP and "
+"UDP requests. This option may be specified multiple times. If no IP is "
+"specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
+"and if IPv6 is enabled, ::1 to the list."
+msgstr ""
+
+#: services/models.py:307
+msgid "mountd(8) bind port"
+msgstr ""
+
+#: services/models.py:324
+msgid ""
+"This option forces the rpc.statd daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:861
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names."
+msgstr ""
+
+#: services/models.py:888
+msgid "These parameters will be added to global settings in inadyn-mt.conf."
+msgstr ""
+
+#: services/models.py:950
+msgid "Master"
+msgstr ""
+
+#: services/models.py:951
+msgid "Slave"
+msgstr ""
+
+#: services/models.py:1102
+msgid "Display Login"
+msgstr ""
+
+#: services/models.py:1121
+msgid ""
+"Use this option to override the directory creation mask (077 by default)."
+msgstr ""
+
+#: services/models.py:1210
+msgid "TLS allow per user"
+msgstr ""
+
+#: services/models.py:1226
+msgid "TLS no certificate request"
+msgstr ""
+
+#: services/models.py:1230
+msgid "TLS no empty fragments"
+msgstr ""
+
+#: services/models.py:1242
+msgid "TLS use implicit SSL"
+msgstr ""
+
+#: services/models.py:1250
+msgid "TLS IP address required"
+msgstr ""
+
+#: services/models.py:1343
+msgid "SFTP Log Level"
+msgstr ""
+
+#: services/models.py:1347
+msgid ""
+"Specifies which messages will be logged by sftp-server. INFO and VERBOSE log "
+"transactions that sftp-server performs on behalf of the client. DEBUG2 and "
+"DEBUG3 each specify higher levels of debugging output. The default is ERROR."
+msgstr ""
+
+#: services/models.py:1437
+#: services/models.py:1533
+msgid "Hostname of the domain controller to use."
+msgstr ""
+
+#: services/models.py:1516
+msgid "UNIX extensions"
+msgstr ""
+
+#: services/models.py:1517
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr ""
+
+#: services/models.py:1526
+msgid "Use default domain"
+msgstr ""
+
+#: services/models.py:1538
+msgid "Global Catalog Server"
+msgstr ""
+
+#: services/models.py:1551
+msgid "Hostname of the kerberos password server to use."
+msgstr ""
+
+#: services/models.py:1555
+msgid "AD timeout"
+msgstr ""
+
+#: services/models.py:1556
+msgid "Timeout for AD related commands."
+msgstr ""
+
+#: services/models.py:1561
+msgid "Timeout for AD DNS queries."
+msgstr ""
+
+#: services/models.py:1601
+msgid "NIS domain name"
+msgstr ""
+
+#: services/models.py:1606
+msgid "NIS servers"
+msgstr ""
+
+#: services/models.py:1616
+msgid "Manycast"
+msgstr ""
+
+#: services/models.py:1617
+msgid "Cause ypbind to use 'many-cast' instead of broadcast"
+msgstr ""
+
+#: sharing/admin.py:78
+#: sharing/models.py:291
+msgid "Paths"
+msgstr ""
+
+#: sharing/forms.py:195
+msgid "This is not a valid network: %s"
+msgstr ""
+
+#: sharing/forms.py:309
+msgid "This option is only available once per mountpoint"
+msgstr ""
+
+#: sharing/forms.py:341
+msgid "You need at least one path for the share"
+msgstr ""
+
+#: sharing/models.py:178
+msgid "Default umask"
+msgstr ""
+
+#: sharing/models.py:202
+msgid ""
+"Networks that are authorized to access the NFS share. Specify network "
+"numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
+msgstr ""
+
+#: sharing/models.py:208
+msgid "Authorized IP addresses or hosts"
+msgstr ""
+
+#: sharing/models.py:231
+msgid ""
+"If a user is selected, the root user is limited to that user's permissions"
+msgstr ""
+
+#: sharing/models.py:249
+msgid "The specified user's permissions are used by all clients"
+msgstr ""
+
+#: storage/admin.py:35
+msgid "Wipe"
+msgstr ""
+
+#: storage/admin.py:46
+msgid "Edit In Bulk"
+msgstr ""
+
+#: storage/admin.py:249
+#: storage/admin.py:338
+#: storage/nav.py:123
+msgid "Create zvol"
+msgstr ""
+
+#: storage/admin.py:293
+msgid "Encryption Re-key"
+msgstr ""
+
+#: storage/admin.py:345
+msgid "Destroy zvol"
+msgstr ""
+
+#: storage/admin.py:397
+msgid "Write"
+msgstr ""
+
+#: storage/admin.py:403
+msgid "Checksum"
+msgstr ""
+
+#: storage/admin.py:461
+msgid "Edit Disk"
+msgstr ""
+
+#: storage/admin.py:467
+msgid "Detach"
+msgstr ""
+
+#: storage/admin.py:578
+msgid "Frequency"
+msgstr ""
+
+#: storage/forms.py:71
+msgid ""
+"Enabling dedup may have drastic performance implications,<br /> as well as "
+"impact your ability to access your data.<br /> Consider using compression "
+"instead."
+msgstr ""
+
+#: storage/forms.py:764
+msgid "Volume imported"
+msgstr ""
+
+#: storage/forms.py:794
+#: storage/forms.py:1585
+#: storage/forms.py:1904
+#: storage/forms.py:2019
+#: storage/forms.py:2131
+#: system/models.py:354
+msgid "Passphrase"
+msgstr ""
+
+#: storage/forms.py:1269
+msgid "zvol name"
+msgstr ""
+
+#: storage/forms.py:1281
+msgid ""
+"Creates a sparse volume with no reservation, also kown as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less then the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+
+#: storage/forms.py:1589
+#: storage/forms.py:1908
+#: system/forms.py:479
+msgid "Confirm Passphrase"
+msgstr ""
+
+#: storage/forms.py:1670
+msgid "Dedicated User"
+msgstr ""
+
+#: storage/forms.py:1940
+#: storage/forms.py:2100
+msgid "Admin password"
+msgstr ""
+
+#: storage/forms.py:1952
+msgid "Remove passphrase"
+msgstr ""
+
+#: storage/forms.py:2054
+msgid "You need either a passphrase or a recovery key to unlock"
+msgstr ""
+
+#: storage/forms.py:2084
+msgid "Volume could not be imported: %d devices failed to decrypt"
+msgstr ""
+
+#: storage/forms.py:2088
+msgid "Volume could not be imported"
+msgstr ""
+
+#: storage/models.py:126
+msgid "LOCKED"
+msgstr ""
+
+#: storage/models.py:445
+msgid "Disk Size"
+msgstr ""
+
+#: storage/models.py:805
+msgid "High Speed Encryption Ciphers"
+msgstr ""
+
+#: storage/models.py:854
+msgid ""
+"This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
+"Datasetname not the mountpoint or filesystem path"
+msgstr ""
+
+#: storage/models.py:880
+msgid "Do not start replication before"
+msgstr ""
+
+#: storage/views.py:717
+msgid "Pool output could not be parsed. Is the pool imported?"
+msgstr ""
+
+#: storage/views.py:722
+msgid "The scrub process has stopped"
+msgstr ""
+
+#: storage/views.py:885
+msgid "Passphrase created"
+msgstr ""
+
+#: storage/views.py:926
+#: storage/views.py:939
+msgid "Volume unlocked"
+msgstr ""
+
+#: storage/views.py:930
+msgid "Volume failed unlocked"
+msgstr ""
+
+#: storage/views.py:1076
+msgid "Disks successfully edited"
+msgstr ""
+
+#: support/models.py:45
+msgid "A description of the issue."
+msgstr ""
+
+#: support/views.py:86
+msgid "Support request successfully sent"
+msgstr ""
+
+#: system/forms.py:68
+msgid "The path '%s' requires execute permission bit"
+msgstr ""
+
+#: system/forms.py:581
+msgid "RSA or DSA private key is not valid"
+msgstr ""
+
+#: system/forms.py:604
+msgid "The modulus of certificate and key must match"
+msgstr ""
+
+#: system/forms.py:881
+msgid "Usernames cannot exceed 17 characters for rsync tasks"
+msgstr ""
+
+#: system/forms.py:886
+msgid "Usernames cannot have spaces"
+msgstr ""
+
+#: system/models.py:60
+msgid "WebGUI IPv4 Address"
+msgstr ""
+
+#: system/models.py:75
+msgid "WebGUI HTTPS Port"
+msgstr ""
+
+#: system/models.py:194
+msgid "Serial Port Speed"
+msgstr ""
+
+#: system/models.py:219
+msgid "Enable debug kernel"
+msgstr ""
+
+#: system/models.py:417
+msgid ""
+"Redirect the standard output to /dev/null. In other words, disable output."
+msgstr ""
+
+#: system/models.py:423
+msgid ""
+"Redirect the standard error output to /dev/null. In other words, disable "
+"error output."
+msgstr ""
+
+#: system/models.py:515
+msgid "Remote SSH Port"
+msgstr ""
+
+#: system/models.py:516
+msgid "SSH Port"
+msgstr ""
+
+#: system/models.py:897
+#: system/models.py:909
+msgid "Script"
+msgstr ""
+
+#: system/models.py:936
+msgid "Init/Shutdown Scripts"
+msgstr ""
+
+#: system/models.py:949
+msgid "First Name"
+msgstr ""
+
+#: system/models.py:957
+msgid "Company"
+msgstr ""
+
+#: system/models.py:969
+msgid "City"
+msgstr ""
+
+#: system/models.py:997
+msgid "Cell Phone"
+msgstr ""
+
+#: system/models.py:1003
+msgid "Work Phone"
+msgstr ""
+
+#: system/models.py:1009
+#: templates/system/settings.html:12
+msgid "Registration"
+msgstr ""
+
+#: system/views.py:316
+msgid "You must configure the root email (Accounts->Users->root)"
+msgstr ""
+
+#: templates/menubar.html:49
+msgid "Alert"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:176
+msgid "No entry has been found"
+msgstr ""
+
+#: templates/freeadmin/help.html:44
+msgid "Professional Support"
+msgstr ""
+
+#: templates/freeadmin/help.html:46
+msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr ""
+
+#: templates/jails/start.html:3
+msgid "Start "
+msgstr ""
+
+#: templates/plugins/available_install.html:3
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr ""
+
+#: templates/plugins/plugin_update.html:3
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr ""
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+msgid "Available Plugins"
+msgstr ""
+
+#: templates/registration/login.html:51
+msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
+msgstr ""
+
+#: templates/registration/login.html:57
+msgid "For security reasons, you must now set a new root password:"
+msgstr ""
+
+#: templates/services/core.html:33
+msgid "Directory Service Settings"
+msgstr ""
+
+#: templates/storage/disk_editbulk.html:3
+msgid "Editing the following disks"
+msgstr ""
+
+#: templates/storage/key.html:3
+msgid "You are about to download the global GELI key"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:4
+msgid "You are about to add a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr ""
+
+#: templates/storage/volume_datagrid.html:22
+msgid "UFS Volume Manager"
+msgstr ""
+
+#: templates/storage/volume_detach.html:27
+msgid ""
+"This is an encrypted volume, make sure to <a href=\"%(url)s\" "
+"target=\"_blank\">download</a> the key so you can be able to import it in "
+"the future"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "%(scanned)s out of %(total)s"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:14
+msgid "Errors"
+msgstr ""
+
+#: templates/storage/wizard.html:92
+msgid "Extend Volume"
+msgstr ""
+
+#: templates/storage/zvols.html:3
+msgid "Create zvol on %(name)s"
+msgstr ""
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr ""
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr ""
+
+#: templates/system/firmware_wizard_0.html:6
+#: templates/system/firmware_wizard_1.html:21
+msgid ""
+"Consider downloading your configuration before proceeding, <a "
+"href=\"%(url)s\" target=\"_blank\">click here</a>."
+msgstr ""
+
+#: choices.py:600
+msgid "9600"
+msgstr ""
+
+#: choices.py:702
+msgid "on"
+msgstr ""
+
+#: choices.py:710
+msgid "auth+data"
+msgstr ""
+
+#: account/models.py:142
+msgid "Disable password login"
+msgstr ""
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr ""
+
+#: freeadmin/navtree.py:608
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr ""
+
+#: jails/forms.py:450
+msgid "Path does not exist!"
+msgstr ""
+
+#: jails/models.py:125
+msgid "IPv6 bridge address"
+msgstr ""
+
+#: jails/models.py:138
+msgid "IPv6 default gateway"
+msgstr ""
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:286
+msgid "IPv6 network start address for jails and plugins"
+msgstr ""
+
+#: jails/nav.py:70
+msgid "Add Jails"
+msgstr ""
+
+#: jails/nav.py:114
+msgid "View Jail Templates"
+msgstr ""
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr ""
+
+#: middleware/zfs.py:644
+msgid "Canceled"
+msgstr ""
+
+#: services/models.py:216
+msgid ""
+"Specifies whether samba should use (expensive) hostname lookups or use the "
+"ip addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+
+#: services/models.py:312
+msgid ""
+"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
+"families. This is typically done to ensure that the port which mountd binds "
+"to is a known value which can be used in firewall rulesets."
+msgstr ""
+
+#: services/models.py:319
+msgid "rpc.statd(8) bind port"
+msgstr ""
+
+#: services/models.py:329
+msgid "rpc.lockd(8) bind port"
+msgstr ""
+
+#: services/models.py:334
+msgid ""
+"This option forces rpc.lockd the daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:953
+msgid "UPS Mode"
+msgstr ""
+
+#: services/models.py:1020
+msgid "Monitor Password"
+msgstr ""
+
+#: services/models.py:1139
+msgid "Perform Reverse DNS Lookups"
+msgstr ""
+
+#: services/models.py:1206
+msgid "TLS allow dot login"
+msgstr ""
+
+#: services/models.py:1256
+msgid "Place the contents of your certificate and private key here."
+msgstr ""
+
+#: services/models.py:1358
+msgid ""
+"Specifies the facility code that is used when logging messages from sftp-"
+"server."
+msgstr ""
+
+#: services/models.py:1472
+#: services/models.py:1473
+msgid "NT4 Domain"
+msgstr ""
+
+#: services/models.py:1512
+msgid "Verbose logging"
+msgstr ""
+
+#: services/models.py:1527
+msgid "Set this if you want to use the default domain for users and groups."
+msgstr ""
+
+#: services/models.py:1539
+msgid "Hostname of the global catalog server to use."
+msgstr ""
+
+#: sharing/forms.py:118
+msgid "Delete password"
+msgstr ""
+
+#: sharing/models.py:144
+msgid "Check this to enable Time Machine backups on this share."
+msgstr ""
+
+#: sharing/models.py:209
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr ""
+
+#: sharing/models.py:240
+msgid ""
+"If a group is selected, the root user will also be limited to that group's "
+"permissions"
+msgstr ""
+
+#: storage/admin.py:273
+msgid "Create Passphrase"
+msgstr ""
+
+#: storage/admin.py:305
+msgid "Remove recovery key"
+msgstr ""
+
+#: storage/admin.py:391
+msgid "Read"
+msgstr ""
+
+#: storage/admin.py:464
+msgid "Offline"
+msgstr ""
+
+#: storage/forms.py:483
+msgid "You need at least %d disks"
+msgstr ""
+
+#: storage/forms.py:527
+msgid "You need a data disk group"
+msgstr ""
+
+#: storage/forms.py:771
+msgid "Yes: Decrypt disks"
+msgstr ""
+
+#: storage/forms.py:1117
+#: storage/forms.py:1229
+msgid "ZFS Deduplication"
+msgstr ""
+
+#: storage/forms.py:1124
+msgid "Record Size"
+msgstr ""
+
+#: storage/forms.py:1279
+msgid "Sparse volume"
+msgstr ""
+
+#: storage/forms.py:1917
+#: storage/forms.py:1983
+msgid "The passphrases do not match"
+msgstr ""
+
+#: storage/models.py:64
+msgid "Encryption Type"
+msgstr ""
+
+#: storage/models.py:807
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which make it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/views.py:115
+msgid "Please enter a hostname"
+msgstr ""
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr ""
+
+#: storage/views.py:958
+msgid "GELI key download starting..."
+msgstr ""
+
+#: storage/views.py:1057
+msgid "Recovery has been removed"
+msgstr ""
+
+#: support/models.py:40
+msgid "Subject"
+msgstr ""
+
+#: system/forms.py:749
+msgid "Memory device"
+msgstr ""
+
+#: system/models.py:66
+msgid "WebGUI IPv6 Address"
+msgstr ""
+
+#: system/models.py:355
+msgid "Private key passphrase"
+msgstr ""
+
+#: system/models.py:416
+msgid "Redirect Stdout"
+msgstr ""
+
+#: system/models.py:917
+msgid "Post Init"
+msgstr ""
+
+#: system/models.py:935
+msgid "Init/Shutdown Script"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:10
+msgid "Add"
+msgstr ""
+
+#: templates/freeadmin/generic_model_delete.html:19
+msgid ""
+"There is %(related_num)s related entry that will also be deleted as it "
+"depend upon this item"
+msgid_plural ""
+"There are %(related_num)s related entries that will also be deleted as they "
+"depend upon this item"
+msgstr[0] ""
+
+#: templates/jails/index.html:20
+msgid "Templates"
+msgstr ""
+
+#: templates/storage/create_passphrase.html:5
+msgid ""
+"Remember to add a new recovery key as this action invalidates the previous "
+"recovery key"
+msgstr ""
+
+#: templates/storage/recoverykey_remove.html:3
+msgid "You are about to remove a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "Scan"
 msgstr ""

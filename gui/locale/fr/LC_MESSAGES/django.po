@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2012-08-09 11:12+0200\n"
+"PO-Revision-Date: 2012-08-09 11:12+0000\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1344510732.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -247,9 +248,8 @@ msgstr "Complet"
 msgid "Debug"
 msgstr "Débogage"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Par défaut"
+#~ msgid "Default"
+#~ msgstr "Par défaut"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -346,9 +346,8 @@ msgstr "Activer"
 msgid "Off"
 msgstr "Désactiver"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (recommandé)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (recommandé)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -539,9 +538,8 @@ msgstr "Entrer le même mot de passe que ci-dessus pour vérification."
 msgid "Shell"
 msgstr "Interpréteur"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Désactiver les connexions par mot de passe"
+#~ msgid "Disable password logins"
+#~ msgstr "Désactiver les connexions par mot de passe"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -567,9 +565,8 @@ msgstr "Permissions du répertoire personnel"
 msgid "Auxiliary groups"
 msgstr "Groupes secondaires"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Un utilisateur avec cet UID existe déjà."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Un utilisateur avec cet UID existe déjà."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -609,9 +606,8 @@ msgstr "Le mot de passe est désactivé, laisser vide"
 msgid "This field is required."
 msgstr "Ce champ est requis."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Le répertoire personnel doit commencer par /mnt/ ou être /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Le répertoire personnel doit commencer par /mnt/ ou être /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -737,24 +733,17 @@ msgstr "Compte"
 msgid "Admin Account"
 msgstr "Compte Administrateur"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Modifier le mot de passe"
+#~ msgid "Change Password"
+#~ msgstr "Modifier le mot de passe"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Modifier l'administrateur"
+#~ msgid "Change Admin User"
+#~ msgstr "Modifier l'administrateur"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Mot de passe mis à jour avec succès."
+#~ msgid "Password successfully updated."
+#~ msgstr "Mot de passe mis à jour avec succès."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Administrateur mis à jour avec succès."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Administrateur mis à jour avec succès."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -925,9 +914,8 @@ msgid "Parent Interface"
 msgstr "Interface parente"
 
 # "où XX est un nombre" c'est en chaine 175
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "Le nom doit être vlanXX, où XX est un nombre"
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "Le nom doit être vlanXX, où XX est un nombre"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1125,9 +1113,8 @@ msgstr "Agrégation de liens"
 msgid "Link Aggregations"
 msgstr "Agrégations de liens"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "Groupe d'interface LAGG"
+#~ msgid "LAGG Interface group"
+#~ msgstr "Groupe d'interface LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1170,74 +1157,61 @@ msgid "View Link Aggregations"
 msgstr "Voir les agrégations de liens"
 
 # Utilisé à 6 reprises dans storage/views.py sans nécessiter de féminin ni pluriel
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG ajouté avec succès"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG ajouté avec succès"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
 msgstr "Cette adresse IP est déjà utilisée."
 
-#: plugins/forms.py:92
-msgid "Place to temporarily place PBI file"
-msgstr "Emplacement où stocker temporairement le fichier PBI"
+#~ msgid "Place to temporarily place PBI file"
+#~ msgstr "Emplacement où stocker temporairement le fichier PBI"
 
-#: plugins/forms.py:93
-msgid ""
-"The system will use this place to temporarily store the PBI file before it's "
-"installed."
-msgstr ""
-"Le système utilisera cet emplacement pour stocker temporairement le fichier "
-"PBI avant qu'il ne soit installé."
+#~ msgid ""
+#~ "The system will use this place to temporarily store the PBI file before it's "
+#~ "installed."
+#~ msgstr ""
+#~ "Le système utilisera cet emplacement pour stocker temporairement le fichier "
+#~ "PBI avant qu'il ne soit installé."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
 msgstr "Fichier PBI à installer"
 
-#: plugins/forms.py:173
-msgid "You must turn off Plugins service before proceeding"
-msgstr "Vous devez arrêter le service \"Modules\" avant de continuer."
+#~ msgid "You must turn off Plugins service before proceeding"
+#~ msgstr "Vous devez arrêter le service \"Modules\" avant de continuer."
 
-#: plugins/forms.py:183
 #, python-format
-msgid "The path %s already exists"
-msgstr "Le chemin %s existe déjà"
+#~ msgid "The path %s already exists"
+#~ msgstr "Le chemin %s existe déjà"
 
-#: plugins/forms.py:189
-msgid "The full jail path cannot exceed 76 characters"
-msgstr "Le chemin absolu de la prison ne peut pas dépasser 76 caractères"
+#~ msgid "The full jail path cannot exceed 76 characters"
+#~ msgstr "Le chemin absolu de la prison ne peut pas dépasser 76 caractères"
 
-#: plugins/forms.py:200
-msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr ""
-"Le chemin de la prison des modules ne peut pas faire partie du chemin de "
-"l'archive des modules."
+#~ msgid "The plugins jail path cannot be a subset of the plugins archive path."
+#~ msgstr ""
+#~ "Le chemin de la prison des modules ne peut pas faire partie du chemin de "
+#~ "l'archive des modules."
 
-#: plugins/forms.py:205 services/forms.py:148
-msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr ""
-"Le chemin de l'archive des modules ne peut pas faire partie du chemin de la "
-"prison des modules."
+#~ msgid "The plugins archive path cannot be a subset of the plugins jail path."
+#~ msgstr ""
+#~ "Le chemin de l'archive des modules ne peut pas faire partie du chemin de la "
+#~ "prison des modules."
 
-#: plugins/forms.py:214 services/models.py:803
-msgid "Plugins jail path"
-msgstr "Chemin de la prison des modules"
+#~ msgid "Plugins jail path"
+#~ msgstr "Chemin de la prison des modules"
 
-#: plugins/forms.py:218
-msgid "Jail IPv4 Address"
-msgstr "Adresse IPv4 de la prison"
+#~ msgid "Jail IPv4 Address"
+#~ msgstr "Adresse IPv4 de la prison"
 
-#: plugins/forms.py:222
-msgid "Jail IPv4 Netmask"
-msgstr "Masque de sous-réseau IPv4 de la prison"
+#~ msgid "Jail IPv4 Netmask"
+#~ msgstr "Masque de sous-réseau IPv4 de la prison"
 
-#: plugins/forms.py:228
-msgid "Plugins archive Path"
-msgstr "Chemin de l'archive des modules"
+#~ msgid "Plugins archive Path"
+#~ msgstr "Chemin de l'archive des modules"
 
-#: plugins/forms.py:244
-msgid "Plugins Jail PBI"
-msgstr "Prison des modules PBI"
+#~ msgid "Plugins Jail PBI"
+#~ msgstr "Prison des modules PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
@@ -1247,10 +1221,9 @@ msgstr "Monté ?"
 msgid "The full path cannot exceed 88 characters"
 msgstr "Le chemin absolu ne peut pas dépasser 88 caractères"
 
-#: plugins/forms.py:336
 #, python-format
-msgid "The path could not be mounted %s"
-msgstr "Le chemin n'a pas pu être monté %s"
+#~ msgid "The path could not be mounted %s"
+#~ msgstr "Le chemin n'a pas pu être monté %s"
 
 #: plugins/forms.py:341
 #, python-format
@@ -1332,21 +1305,18 @@ msgstr "Destination"
 msgid "Mount Point"
 msgstr "Point de montage"
 
-#: plugins/models.py:122
-msgid "Mount Points"
-msgstr "Points de montage"
+#~ msgid "Mount Points"
+#~ msgstr "Points de montage"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
 msgstr "Module mis à jour avec succès."
 
-#: plugins/views.py:80
-msgid "Plugin successfully removed."
-msgstr "Module supprimé avec succès."
+#~ msgid "Plugin successfully removed."
+#~ msgstr "Module supprimé avec succès."
 
-#: plugins/views.py:86
-msgid "Unable to remove plugin."
-msgstr "Impossible de supprimer le module."
+#~ msgid "Unable to remove plugin."
+#~ msgstr "Impossible de supprimer le module."
 
 #: plugins/views.py:101
 msgid "Plugin successfully updated"
@@ -1356,13 +1326,11 @@ msgstr "Module mis à jour avec succès"
 msgid "Plugin successfully installed"
 msgstr "Module installé avec succès"
 
-#: plugins/views.py:201
-msgid "There was a problem importing the jail."
-msgstr "Il y a eu un problème en important la prison"
+#~ msgid "There was a problem importing the jail."
+#~ msgstr "Il y a eu un problème en important la prison"
 
-#: plugins/views.py:204
-msgid "Jail successfully imported."
-msgstr "Prison importée avec succès."
+#~ msgid "Jail successfully imported."
+#~ msgstr "Prison importée avec succès."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1390,13 +1358,11 @@ msgstr "Le rechargement du service AFP a échoué."
 msgid "The NFS service failed to reload."
 msgstr "Le rechargement du service NFS a échoué."
 
-#: services/forms.py:157
-msgid "This IP already exists."
-msgstr "Cette adresse IP existe déjà."
+#~ msgid "This IP already exists."
+#~ msgstr "Cette adresse IP existe déjà."
 
-#: services/forms.py:164
-msgid "The Plugins Jail service failed to reload."
-msgstr "Le rechargement du service de prison des modules a échoué."
+#~ msgid "The Plugins Jail service failed to reload."
+#~ msgstr "Le rechargement du service de prison des modules a échoué."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1523,17 +1489,15 @@ msgstr "Secret (confirmation)"
 msgid "Enter the same secret above for verification."
 msgstr "Entrer le même secret pour vérification."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Secret de l'initiateur"
+#~ msgid "Initiator Secret"
+#~ msgstr "Secret de l'initiateur"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Secret côté initiateur. (pour authentification mutuelle CHAP)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Secret de l'initiateur (confirmation)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Secret de l'initiateur (confirmation)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1630,19 +1594,17 @@ msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 "Le fichier doit exister si la taille de l'extension est réglée sur Auto (0)"
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Périphérique disque"
+#~ msgid "Disk device"
+#~ msgstr "Périphérique disque"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "L'ID du Groupe Portail ne peut pas être supérieur à %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "L'ID du Groupe ne peut pas être supérieur à %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "L'ID du Groupe ne peut pas être supérieur à %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1783,13 +1745,11 @@ msgstr ""
 "Utilisez cette option pour forcer le masque de création de répertoire (0777 "
 "par défaut)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Support des lectures/écritures élargies"
+#~ msgid "Large RW support"
+#~ msgstr "Support des lectures/écritures élargies"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Envoi les fichiers avec sendfile(2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Envoi les fichiers avec sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1904,16 +1864,14 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Nom du serveur"
+#~ msgid "Server Name"
+#~ msgstr "Nom du serveur"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr ""
-"Nom du serveur. Si ce champ reste vide, le serveur par défaut est utilisé."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr ""
+#~ "Nom du serveur. Si ce champ reste vide, le serveur par défaut est utilisé."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1951,17 +1909,15 @@ msgstr ""
 "Indique le nombre de serveurs à créer. Il doit y en avoir suffisamment pour "
 "gérer le niveau maximal de concurrence entre les clients, typiquement 4 à 6."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Mode asynchrone"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Mode asynchrone"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Activer le mode asynchrone, ce qui aidera les performances des réseaux "
-"supérieurs au gigabit."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Activer le mode asynchrone, ce qui aidera les performances des réseaux "
+#~ "supérieurs au gigabit."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2361,14 +2317,13 @@ msgstr "Fournisseur"
 msgid "Domain name"
 msgstr "Nom de domaine"
 
-#: services/models.py:765
-msgid ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
-msgstr ""
-"Un alias de nom d'hôte. Cette option peut apparaître plusieurs fois, pour "
-"chaque domaine ayant la même IP. Utiliser un espace pour séparer les alias "
-"multiples."
+#~ msgid ""
+#~ "A host name alias. This option can appear multiple times, for each domain "
+#~ "that has the same IP. Use a space to separate multiple alias names."
+#~ msgstr ""
+#~ "Un alias de nom d'hôte. Cette option peut apparaître plusieurs fois, pour "
+#~ "chaque domaine ayant la même IP. Utiliser un espace pour séparer les alias "
+#~ "multiples."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2382,47 +2337,39 @@ msgstr "Temps en secondes. Environ une minute par défaut."
 msgid "Forced update period"
 msgstr "Période de mise à jour forcée"
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
-"Ces paramètres seront ajoutés à la configuration générale dans inadyn.conf."
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr ""
+#~ "Ces paramètres seront ajoutés à la configuration générale dans inadyn.conf."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
 msgid "Dynamic DNS"
 msgstr "DNS Dynamique"
 
-#: services/models.py:804
-msgid "Path to the plugins jail"
-msgstr "Chemin vers la prison des modules"
+#~ msgid "Path to the plugins jail"
+#~ msgstr "Chemin vers la prison des modules"
 
-#: services/models.py:809
-msgid "Jail name"
-msgstr "Nom de la prison"
+#~ msgid "Jail name"
+#~ msgstr "Nom de la prison"
 
-#: services/models.py:810
-msgid "Name of the plugins jail"
-msgstr "Nom de la prison des modules"
+#~ msgid "Name of the plugins jail"
+#~ msgstr "Nom de la prison des modules"
 
-#: services/models.py:815
-msgid ""
-"Jail name can only contain letters, numbers and hyphens. It must not end "
-"with a hyphen."
-msgstr ""
-"Le nom de la prison peut contenir que des lettres, nombres et traits "
-"d'union. Il ne doit pas se terminer par un trait d'union."
+#~ msgid ""
+#~ "Jail name can only contain letters, numbers and hyphens. It must not end "
+#~ "with a hyphen."
+#~ msgstr ""
+#~ "Le nom de la prison peut contenir que des lettres, nombres et traits "
+#~ "d'union. Il ne doit pas se terminer par un trait d'union."
 
-#: services/models.py:821
-msgid "Jail IP address"
-msgstr "Adresse IP de la prison"
+#~ msgid "Jail IP address"
+#~ msgstr "Adresse IP de la prison"
 
-#: services/models.py:825
-msgid "Jail IP Netmask"
-msgstr "Masque de sous-réseau IP de la prison"
+#~ msgid "Jail IP Netmask"
+#~ msgstr "Masque de sous-réseau IP de la prison"
 
-#: services/models.py:829
-msgid "Plugins archive path"
-msgstr "Chemin de l'archive des modules"
+#~ msgid "Plugins archive path"
+#~ msgstr "Chemin de l'archive des modules"
 
 #: services/models.py:852
 msgid "Location"
@@ -2512,9 +2459,8 @@ msgstr ""
 "Le temps en secondes avant d'initier l'arrêt du système. Si l'onduleur est "
 "réalimenté avant ce délai, l'arrêt sera annulé."
 
-#: services/models.py:933
-msgid "UPS Master User Password"
-msgstr "Mot de passe de l'utilisateur principal de l'onduleur"
+#~ msgid "UPS Master User Password"
+#~ msgstr "Mot de passe de l'utilisateur principal de l'onduleur"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
@@ -2611,13 +2557,11 @@ msgstr "Chemin"
 msgid "Allow Local User Login"
 msgstr "Autoriser la connexion des utilisateurs locaux"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "Bannière"
+#~ msgid "Banner"
+#~ msgstr "Bannière"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "Bannière d'accueil affichée lors d'une connexion FTP."
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "Bannière d'accueil affichée lors d'une connexion FTP."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2642,9 +2586,8 @@ msgstr "Effectuer systématiquement un 'chroot'"
 msgid "Require IDENT Authentication"
 msgstr "Exiger l'authentification par IDENT"
 
-#: services/models.py:1031
-msgid "Require Reverse DNS for IP"
-msgstr "Exiger le DNS inversé des IP"
+#~ msgid "Require Reverse DNS for IP"
+#~ msgstr "Exiger le DNS inversé des IP"
 
 # Quelqu'un à un autre mot que "mascarade" ?
 #: services/models.py:1033
@@ -2738,9 +2681,8 @@ msgstr ""
 "Bande passante descendante des utilisateurs anonymes en Ko/s. 0 équivaut à "
 "illimité."
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "Activer SSL/TLS"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "Activer SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -2859,13 +2801,11 @@ msgstr ""
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1239
-msgid "Domain Controller Name"
-msgstr "Nom du contrôleur de domaine"
+#~ msgid "Domain Controller Name"
+#~ msgstr "Nom du contrôleur de domaine"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "Nom de l'AD ou du PDC."
+#~ msgid "AD or PDC name."
+#~ msgstr "Nom de l'AD ou du PDC."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3183,17 +3123,15 @@ msgstr ""
 "Signaler si la température a changé d'au moins N degrés Celsius depuis le "
 "dernier signalement. 0 pour désactiver"
 
-#: services/models.py:1475
-msgid "Informal"
-msgstr "Informel"
+#~ msgid "Informal"
+#~ msgstr "Informel"
 
-#: services/models.py:1476 services/models.py:1481
-msgid ""
-"Report if the temperature is greater or equal than N degrees Celsius. 0 to "
-"disable"
-msgstr ""
-"Signaler si la température est supérieure ou égale à N degrés Celsius. 0 "
-"pour désactiver"
+#~ msgid ""
+#~ "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
+#~ "disable"
+#~ msgstr ""
+#~ "Signaler si la température est supérieure ou égale à N degrés Celsius. 0 "
+#~ "pour désactiver"
 
 #: services/models.py:1480
 msgid "Critical"
@@ -3203,10 +3141,9 @@ msgstr "Critique"
 msgid "Email to report"
 msgstr "E-mail destinataire"
 
-#: services/models.py:1487
-msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr ""
-"Adresses e-mail de destination. Séparez les adresses par des points-virgules."
+#~ msgid "Destination email address. Separate email addresses by semi-colon"
+#~ msgstr ""
+#~ "Adresses e-mail de destination. Séparez les adresses par des points-virgules."
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3217,30 +3154,23 @@ msgstr "S.M.A.R.T."
 msgid "Control Services"
 msgstr "Contrôle des services"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "Périphériques d'extensions"
+#~ msgid "Device Extents"
+#~ msgstr "Périphériques d'extensions"
 
-#: services/nav.py:72
-msgid "Add Device Extent"
-msgstr "Ajouter un périphérique d'extension"
+#~ msgid "Add Device Extent"
+#~ msgstr "Ajouter un périphérique d'extension"
 
-#: services/nav.py:79
-msgid "View Device Extents"
-msgstr "Voir les périphériques d'extensions"
+#~ msgid "View Device Extents"
+#~ msgstr "Voir les périphériques d'extensions"
 
-#: services/nav.py:92
-msgid "File Extents"
-msgstr "Fichiers d'extension"
+#~ msgid "File Extents"
+#~ msgstr "Fichiers d'extension"
 
-#: services/nav.py:111 templates/services/iscsi_extents.html:39
-#: templates/services/iscsi_extents.html:41
-msgid "Add File Extent"
-msgstr "Ajouter un fichier d'extension"
+#~ msgid "Add File Extent"
+#~ msgstr "Ajouter un fichier d'extension"
 
-#: services/nav.py:118
-msgid "View File Extents"
-msgstr "Voir les fichiers d'extension"
+#~ msgid "View File Extents"
+#~ msgstr "Voir les fichiers d'extension"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -3264,9 +3194,8 @@ msgstr "Voir les modules Rsync"
 msgid "Settings"
 msgstr "Paramètres"
 
-#: services/nav.py:186
-msgid "Management"
-msgstr "Gestion"
+#~ msgid "Management"
+#~ msgstr "Gestion"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3285,14 +3214,12 @@ msgstr "Confirmer le mot de passe du partage"
 msgid "The path %s does not exist"
 msgstr "Le chemin %s n'existe pas"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "Ce champ n'est pas une adresse IP ou un réseau valide"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "Ce champ n'est pas une adresse IP ou un réseau valide"
 
-#: sharing/forms.py:165
 #, python-format
-msgid "The IP '%s' is not valid."
-msgstr "L'IP \"%s\" n'est pas valide."
+#~ msgid "The IP '%s' is not valid."
+#~ msgstr "L'IP \"%s\" n'est pas valide."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3449,17 +3376,15 @@ msgstr ""
 "être long de 8 caractères au maximum (l'utilisation de l'ASCII est fortement "
 "recommandée pour le moment)."
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "Encodage de caractères du partage"
+#~ msgid "Share Character Set"
+#~ msgstr "Encodage de caractères du partage"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr ""
-"Spécifie l'encodage de caractères du partage. Par exemple UTF8, UTF8-MAC, "
-"ISO-8859-15, etc."
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr ""
+#~ "Spécifie l'encodage de caractères du partage. Par exemple UTF8, UTF8-MAC, "
+#~ "ISO-8859-15, etc."
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3510,31 +3435,27 @@ msgstr ""
 "Permet à certains utilisateurs et groupes d'accéder au partage en lecture/"
 "écriture. Suit le même format que l'option Autoriser."
 
-#: sharing/models.py:160
-msgid "Disk Discovery"
-msgstr "Découverte du disque"
+#~ msgid "Disk Discovery"
+#~ msgstr "Découverte du disque"
 
-#: sharing/models.py:161
-msgid ""
-"Allow other systems to discover this share as a disk for data, as a Time "
-"Machine backup volume or not at all."
-msgstr ""
-"Permet à d'autres systèmes de découvrir ce partage en tant que disque de "
-"données, volume de sauvegarde Time Machine ou pas du tout."
+#~ msgid ""
+#~ "Allow other systems to discover this share as a disk for data, as a Time "
+#~ "Machine backup volume or not at all."
+#~ msgstr ""
+#~ "Permet à d'autres systèmes de découvrir ce partage en tant que disque de "
+#~ "données, volume de sauvegarde Time Machine ou pas du tout."
 
-#: sharing/models.py:167
-msgid "Disk discovery mode"
-msgstr "Mode de découverte du disque"
+#~ msgid "Disk discovery mode"
+#~ msgstr "Mode de découverte du disque"
 
-#: sharing/models.py:168
-msgid ""
-"Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
-"behavior in MacOS. Default mode exports the volume as a data volume for "
-"users."
-msgstr ""
-"Note ! Sélectionner \"Time Machine\" sur plusieurs partages peut causer un "
-"comportement erratique dans MacOS. Le mode par défaut exporte le volume en "
-"tant que volume de données pour les utilisateurs."
+#~ msgid ""
+#~ "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
+#~ "behavior in MacOS. Default mode exports the volume as a data volume for "
+#~ "users."
+#~ msgstr ""
+#~ "Note ! Sélectionner \"Time Machine\" sur plusieurs partages peut causer un "
+#~ "comportement erratique dans MacOS. Le mode par défaut exporte le volume en "
+#~ "tant que volume de données pour les utilisateurs."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3548,65 +3469,57 @@ msgstr ""
 "Défini le chemin où stocker la base de données. Vous devez spécifier un "
 "emplacement inscriptible, même si le volume est en lecture seule."
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "Cache CNID"
+#~ msgid "Cache CNID"
+#~ msgstr "Cache CNID"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"Si activé, afpd utilise l'ID stocké dans les entêtes des fichiers "
-"AppleDouble V2 pour réduire la charge de la base de données. Ne pas activer "
-"cette option si le volume est modifié par des clients non AFP (NFS/CIFS/"
-"Local)."
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "Si activé, afpd utilise l'ID stocké dans les entêtes des fichiers "
+#~ "AppleDouble V2 pour réduire la charge de la base de données. Ne pas activer "
+#~ "cette option si le volume est modifié par des clients non AFP (NFS/CIFS/"
+#~ "Local)."
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "Traduction des CR/LF"
+#~ msgid "Translate CR/LF"
+#~ msgstr "Traduction des CR/LF"
 
-#: sharing/models.py:182
-msgid ""
-"Enables crlf translation for TEXT files, automatically converting macintosh "
-"line breaks into Unix ones. Use of this option might be dangerous since some "
-"older programs store binary data files as type 'TEXT' when saving and switch "
-"the filetype in a second step. Afpd will potentially destroy such files when "
-"'erroneously' changing bytes in order to do line break translation."
-msgstr ""
-"Active la traduction des CR/LF pour les fichiers TEXT, converti "
-"automatiquement les fins de ligne Macintosh en fins de ligne UNIX. "
-"L'utilisation de cette option peut être risquée du fait que d'anciens "
-"programmes enregistrent des fichiers de données binaires sous le type TEXT "
-"au moment de la sauvegarde et substituent le type du fichier après coup. Ces "
-"fichiers risquent donc d'être détruis par afpd en changeant à tort des "
-"octets lors de la traduction des fins de ligne."
+#~ msgid ""
+#~ "Enables crlf translation for TEXT files, automatically converting macintosh "
+#~ "line breaks into Unix ones. Use of this option might be dangerous since some "
+#~ "older programs store binary data files as type 'TEXT' when saving and switch "
+#~ "the filetype in a second step. Afpd will potentially destroy such files when "
+#~ "'erroneously' changing bytes in order to do line break translation."
+#~ msgstr ""
+#~ "Active la traduction des CR/LF pour les fichiers TEXT, converti "
+#~ "automatiquement les fins de ligne Macintosh en fins de ligne UNIX. "
+#~ "L'utilisation de cette option peut être risquée du fait que d'anciens "
+#~ "programmes enregistrent des fichiers de données binaires sous le type TEXT "
+#~ "au moment de la sauvegarde et substituent le type du fichier après coup. Ces "
+#~ "fichiers risquent donc d'être détruis par afpd en changeant à tort des "
+#~ "octets lors de la traduction des fins de ligne."
 
-#: sharing/models.py:185
-msgid "Windows File Names"
-msgstr "Noms de fichiers Windows"
+#~ msgid "Windows File Names"
+#~ msgstr "Noms de fichiers Windows"
 
-#: sharing/models.py:186
-msgid ""
-"This forces filenames to be restricted to the character set used by Windows. "
-"This is not recommended for shares used principally by Mac computers."
-msgstr ""
-"Restreint le jeu de caractères des noms de fichiers à celui utilisé par "
-"Windows. Ceci n'est pas recommandé pour les partages utilisés principalement "
-"par des ordinateurs Macintosh."
+#~ msgid ""
+#~ "This forces filenames to be restricted to the character set used by Windows. "
+#~ "This is not recommended for shares used principally by Mac computers."
+#~ msgstr ""
+#~ "Restreint le jeu de caractères des noms de fichiers à celui utilisé par "
+#~ "Windows. Ceci n'est pas recommandé pour les partages utilisés principalement "
+#~ "par des ordinateurs Macintosh."
 
-#: sharing/models.py:189
-msgid "Enable .AppleDouble"
-msgstr "Activer .AppleDouble"
+#~ msgid "Enable .AppleDouble"
+#~ msgstr "Activer .AppleDouble"
 
-#: sharing/models.py:190
-msgid ""
-"This will enable automatic creation of the .AppleDouble directories. This "
-"option should be used if files are accessed by Mac computers."
-msgstr ""
-"Active la création automatique des répertoires .AppleDouble. Cette option "
-"devrait être utilisée si les fichiers sont accédés par des ordinateurs Mac."
+#~ msgid ""
+#~ "This will enable automatic creation of the .AppleDouble directories. This "
+#~ "option should be used if files are accessed by Mac computers."
+#~ msgstr ""
+#~ "Active la création automatique des répertoires .AppleDouble. Cette option "
+#~ "devrait être utilisée si les fichiers sont accédés par des ordinateurs Mac."
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3621,33 +3534,27 @@ msgstr ""
 "numéro de périphérique n'est pas constant au travers des redémarrages, dans "
 "un cluster, ..."
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "Désactiver les ID de fichiers"
+#~ msgid "Disable File ID"
+#~ msgstr "Désactiver les ID de fichiers"
 
-#: sharing/models.py:201
-msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "Ne pas annoncer les appels à createfileid, resolveid, deleteid."
+#~ msgid "Don't advertise createfileid, resolveid, deleteid calls."
+#~ msgstr "Ne pas annoncer les appels à createfileid, resolveid, deleteid."
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "Désactiver les noms hexadécimaux"
+#~ msgid "Disable :hex Names"
+#~ msgstr "Désactiver les noms hexadécimaux"
 
-#: sharing/models.py:205
-msgid ""
-"Disable :hex translations for anything except dot files. This option makes "
-"the '/' character illegal."
-msgstr ""
-"Désactiver les traductions hexadécimales pour autre chose que les fichiers "
-"dot. Cette option rend le caractère '/' illicite."
+#~ msgid ""
+#~ "Disable :hex translations for anything except dot files. This option makes "
+#~ "the '/' character illegal."
+#~ msgstr ""
+#~ "Désactiver les traductions hexadécimales pour autre chose que les fichiers "
+#~ "dot. Cette option rend le caractère '/' illicite."
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "Assure la compatibilité avec les clients Apple II."
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "Assure la compatibilité avec les clients Apple II."
 
 #: sharing/models.py:212
 msgid "No Stat"
@@ -3685,19 +3592,17 @@ msgstr "Partage Apple (AFP)"
 msgid "Apple (AFP) Shares"
 msgstr "Partages Apple (AFP)"
 
-#: sharing/models.py:268
-msgid "Authorized network or IP addresses"
-msgstr "Réseaux ou adresses IP autorisés"
+#~ msgid "Authorized network or IP addresses"
+#~ msgstr "Réseaux ou adresses IP autorisés"
 
-#: sharing/models.py:269
-msgid ""
-"Network that is authorized to access the NFS share or a list of IP "
-"addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
-"number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
-msgstr ""
-"Réseau ou liste d'adresses IP autorisés à accéder au partage NFS. Spécifier "
-"le réseau sous la forme 1.2.3.4/xx où xx est le nombre de bits du masque de "
-"sous-réseau ou une liste d'adresses IP 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgid ""
+#~ "Network that is authorized to access the NFS share or a list of IP "
+#~ "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
+#~ "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgstr ""
+#~ "Réseau ou liste d'adresses IP autorisés à accéder au partage NFS. Spécifier "
+#~ "le réseau sous la forme 1.2.3.4/xx où xx est le nombre de bits du masque de "
+#~ "sous-réseau ou une liste d'adresses IP 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -3735,33 +3640,29 @@ msgstr ""
 msgid "Maproot User"
 msgstr "Lier root à l'utilisateur"
 
-#: sharing/models.py:289
-msgid "User to map root to"
-msgstr "Utilisateur auquel lier root"
+#~ msgid "User to map root to"
+#~ msgstr "Utilisateur auquel lier root"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "Lier root au groupe"
 
-#: sharing/models.py:296
-msgid "Group to map root to"
-msgstr "Groupe auquel lier root"
+#~ msgid "Group to map root to"
+#~ msgstr "Groupe auquel lier root"
 
 #: sharing/models.py:299
 msgid "Mapall User"
 msgstr "Lier \"tout le monde\" à l'utilisateur"
 
-#: sharing/models.py:303
-msgid "User to map all users to"
-msgstr "Utilisateur auquel lier tous les utilisateurs"
+#~ msgid "User to map all users to"
+#~ msgstr "Utilisateur auquel lier tous les utilisateurs"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "Lier \"tout le monde\" au groupe"
 
-#: sharing/models.py:310
-msgid "Group to map all users to"
-msgstr "Groupe auquel lier tous les utilisateurs"
+#~ msgid "Group to map all users to"
+#~ msgstr "Groupe auquel lier tous les utilisateurs"
 
 #: sharing/models.py:321
 msgid "Unix (NFS) Share"
@@ -3776,9 +3677,8 @@ msgid "Sharing"
 msgstr "Partage"
 
 # Entrer ? Entrez ?
-#: storage/forms.py:105
-msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "Saisir un nombre positif (optionnellement suffixé par M, G, T) ou 0"
+#~ msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
+#~ msgstr "Saisir un nombre positif (optionnellement suffixé par M, G, T) ou 0"
 
 #: storage/forms.py:120
 #, python-format
@@ -3790,22 +3690,18 @@ msgstr "%s n'est pas un nombre valide"
 msgid "Volume name"
 msgstr "Nom du volume"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "Type de système de fichiers"
+#~ msgid "Filesystem type"
+#~ msgstr "Type de système de fichiers"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "Forcer la taille des secteurs à 4096 octets"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "Forcer la taille des secteurs à 4096 octets"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
 msgstr "Préciser le chemin personnalisé"
 
-#: storage/forms.py:163
-msgid "Volume add"
-msgstr "Ajouter un volume"
+#~ msgid "Volume add"
+#~ msgstr "Ajouter un volume"
 
 #: storage/forms.py:175
 msgid ""
@@ -3833,11 +3729,10 @@ msgstr "Le chemin n'existe pas."
 msgid "Path is not a directory."
 msgstr "Le chemin n'est pas un répertoire."
 
-#: storage/forms.py:264
-msgid "You cannot select an existing ZFS volume and specify a new volume name"
-msgstr ""
-"Vous ne pouvez pas sélectionner un volume ZFS existant et spécifier un "
-"nouveau nom de volume"
+#~ msgid "You cannot select an existing ZFS volume and specify a new volume name"
+#~ msgstr ""
+#~ "Vous ne pouvez pas sélectionner un volume ZFS existant et spécifier un "
+#~ "nouveau nom de volume"
 
 #: storage/forms.py:269
 msgid ""
@@ -3847,22 +3742,19 @@ msgstr ""
 "Vous devez spécifié un nouveau nom de volume ou sélectionner un volume ZFS "
 "existant pour ajouter un périphérique virtuel"
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "Vous devez sélectionner un système de fichiers"
+#~ msgid "You must select a filesystem"
+#~ msgstr "Vous devez sélectionner un système de fichiers"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "Il y a déjà un volume avec le même nom"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" est un mot réservé et ne peut donc pas être utilisé"
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"log\" est un mot réservé et ne peut donc pas être utilisé"
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
-"Le nom de volume ne peut PAS commencer par c[0-9], mirror, raidz ou spare"
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr ""
+#~ "Le nom de volume ne peut PAS commencer par c[0-9], mirror, raidz ou spare"
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -3968,13 +3860,11 @@ msgstr "Quota pour ce volume"
 msgid "Reserved space for this volume"
 msgstr "Espace réservé pour ce volume"
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "Nom du Volume ZFS"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "Nom du Volume ZFS"
 
-#: storage/forms.py:845
-msgid "Size for this ZFS Volume"
-msgstr "Taille du Volume ZFS"
+#~ msgid "Size for this ZFS Volume"
+#~ msgstr "Taille du Volume ZFS"
 
 #: storage/forms.py:846
 msgid "Example: 1g"
@@ -4265,10 +4155,8 @@ msgstr "Hôte de réplication à distance"
 msgid "Remote Replication Hosts"
 msgstr "Hôtes de réplication à distance"
 
-#: storage/models.py:657 storage/models.py:718
-#: templates/storage/replications.html:20 templates/storage/tasks.html:21
-msgid "Filesystem/Volume"
-msgstr "Système de fichiers/Volume"
+#~ msgid "Filesystem/Volume"
+#~ msgstr "Système de fichiers/Volume"
 
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4281,17 +4169,15 @@ msgstr ""
 msgid "Remote Host"
 msgstr "Hôte distant"
 
-#: storage/models.py:669
-msgid "Remote ZFS filesystem name"
-msgstr "Nom du système de fichiers ZFS distant"
+#~ msgid "Remote ZFS filesystem name"
+#~ msgstr "Nom du système de fichiers ZFS distant"
 
-#: storage/models.py:670
-msgid ""
-"This should be the name of the ZFS filesystem on remote side. eg: poolname/"
-"datasetname not the mountpoint or filesystem path"
-msgstr ""
-"Devrait correspondre au nom du système de fichiers ZFS distant. e.g. : pool/"
-"dataset et non pas au point de montage ou au chemin du système de fichier"
+#~ msgid ""
+#~ "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
+#~ "datasetname not the mountpoint or filesystem path"
+#~ msgstr ""
+#~ "Devrait correspondre au nom du système de fichiers ZFS distant. e.g. : pool/"
+#~ "dataset et non pas au point de montage ou au chemin du système de fichier"
 
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4386,14 +4272,11 @@ msgstr "Stockage"
 msgid "View Snapshots"
 msgstr "Voir les instantanés"
 
-#: storage/nav.py:34
-msgid "View ZFS Scrubs"
-msgstr "Voir les nettoyages ZFS"
+#~ msgid "View ZFS Scrubs"
+#~ msgstr "Voir les nettoyages ZFS"
 
-#: storage/nav.py:41 templates/storage/volumes.html:4
-#: templates/storage/volumes.html.py:6
-msgid "Volume Manager"
-msgstr "Gestionnaire de volumes"
+#~ msgid "Volume Manager"
+#~ msgstr "Gestionnaire de volumes"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4420,10 +4303,8 @@ msgstr "Import automatique de volume"
 msgid "View Volumes"
 msgstr "Voir les volumes"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "Créer un volume ZFS"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "Créer un volume ZFS"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4449,9 +4330,8 @@ msgstr "Modifier les permissions"
 msgid "Volume successfully added."
 msgstr "Volume ajouté avec succès."
 
-#: storage/views.py:254
-msgid "S.M.A.R.T. Extra Options"
-msgstr "Options S.M.A.R.T. supplémentaires"
+#~ msgid "S.M.A.R.T. Extra Options"
+#~ msgstr "Options S.M.A.R.T. supplémentaires"
 
 #: storage/views.py:371
 msgid "Dataset successfully added."
@@ -4498,9 +4378,8 @@ msgstr "Instantanés supprimés avec succès."
 msgid "Rollback successful."
 msgstr "Restauré avec succès."
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "Instantané ajouté avec succès."
+#~ msgid "Snapshot successfully added."
+#~ msgstr "Instantané ajouté avec succès."
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4547,13 +4426,11 @@ msgstr "Disque effacé avec succès"
 msgid "Language (Require UI reload)"
 msgstr "Langue (nécessite de recharger l'interface)"
 
-#: system/forms.py:214
-msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Vous devez spécifier un nombre entre 1 et 65535 inclus."
+#~ msgid "You must specify a number between 1 and 65535, inclusive."
+#~ msgstr "Vous devez spécifier un nombre entre 1 et 65535 inclus."
 
-#: system/forms.py:216
-msgid "Number is required."
-msgstr "Ce nombre est requis."
+#~ msgid "Number is required."
+#~ msgstr "Ce nombre est requis."
 
 #: system/forms.py:245
 msgid "Force"
@@ -4594,13 +4471,11 @@ msgstr "Nouvelle image à installer"
 msgid "SHA256 sum for the image"
 msgstr "Somme SHA256 de l'image"
 
-#: system/forms.py:538
-msgid "Invalid firmware"
-msgstr "Firmware invalide"
+#~ msgid "Invalid firmware"
+#~ msgstr "Firmware invalide"
 
-#: system/forms.py:544
-msgid "Invalid checksum"
-msgstr "Somme de contrôle invalide"
+#~ msgid "Invalid checksum"
+#~ msgstr "Somme de contrôle invalide"
 
 #: system/forms.py:557
 msgid "New config to be installed"
@@ -4622,13 +4497,11 @@ msgstr "Les guillemets ne sont pas autorisés"
 msgid "Protocol"
 msgstr "Protocole"
 
-#: system/models.py:50
-msgid "WebGUI Address"
-msgstr "Adresse du WebGUI"
+#~ msgid "WebGUI Address"
+#~ msgstr "Adresse du WebGUI"
 
-#: system/models.py:56
-msgid "WebGUI Port"
-msgstr "Port du WebGUI"
+#~ msgid "WebGUI Port"
+#~ msgstr "Port du WebGUI"
 
 #: system/models.py:62
 msgid "Language"
@@ -4740,25 +4613,21 @@ msgstr "Utiliser la console série"
 msgid "Enable screen saver"
 msgstr "Activer l'écran de veille"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "Vérifier automatiquement l’existence d'un nouveau firmware"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "Vérifier automatiquement l’existence d'un nouveau firmware"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "Biper au démarrage"
+#~ msgid "Beep on boot"
+#~ msgstr "Biper au démarrage"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "Activer les réglages spéciaux du système"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "Activer les réglages spéciaux du système"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "Activer powerd (démon d'économie de l'énergie)"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "Activer Zeroconf/Bonjour"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "Activer Zeroconf/Bonjour"
 
 #: system/models.py:174
 msgid ""
@@ -5149,9 +5018,8 @@ msgstr "L'e-mail de test n'a pas pu être envoyé : %s"
 msgid "Your test email has been sent!"
 msgstr "L'e-mail de test a été envoyé !"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Page Non Trouvée"
+#~ msgid "Page Not Found"
+#~ msgstr "Page Non Trouvée"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5174,10 +5042,8 @@ msgstr "Aide"
 msgid "Log In"
 msgstr "Connexion"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -5185,11 +5051,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "Membres"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Modifier"
+#~ msgid "Modify"
+#~ msgstr "Modifier"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5203,52 +5066,42 @@ msgstr "Modifier le groupe"
 msgid "Delete Group"
 msgstr "Supprimer le groupe"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "Aucun groupe n'a été défini par l'utilisateur."
+#~ msgid "There are no user defined groups."
+#~ msgstr "Aucun groupe n'a été défini par l'utilisateur."
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "Ajouter un nouveau groupe"
+#~ msgid "Add New Group"
+#~ msgstr "Ajouter un nouveau groupe"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "Répertoire personnel"
+#~ msgid "Home"
+#~ msgstr "Répertoire personnel"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
 msgstr "Modifier l'utilisateur"
 
-#: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
-#: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
-msgid "Auxiliary Groups"
-msgstr "Groupes secondaires"
+#~ msgid "Auxiliary Groups"
+#~ msgstr "Groupes secondaires"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
 msgstr "Supprimer l'utilisateur"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "Supprimer l'utilisateur"
+#~ msgid "Delete User"
+#~ msgstr "Supprimer l'utilisateur"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "Aucun utilisateur n'est défini"
+#~ msgid "No users defined"
+#~ msgstr "Aucun utilisateur n'est défini"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "Ajouter un nouvel utilisateur"
+#~ msgid "Add New User"
+#~ msgstr "Ajouter un nouvel utilisateur"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "Modifier l'e-mail"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "Modifier le mot de passe administrateur"
+#~ msgid "Change Admin Password"
+#~ msgstr "Modifier le mot de passe administrateur"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5292,14 +5145,13 @@ msgstr "CRTITIQUE"
 msgid "Cancel"
 msgstr "Annuler"
 
-#: templates/freeadmin/generic_model_delete.html:14
 #, python-format
-msgid ""
-"There are %(related_num)s related entries that are going to be delete as "
-"well because depend on this"
-msgstr ""
-"Il y a %(related_num)s entrées connexes qui seront également supprimées "
-"puisqu'elles dépendent de cet élément"
+#~ msgid ""
+#~ "There are %(related_num)s related entries that are going to be delete as "
+#~ "well because depend on this"
+#~ msgstr ""
+#~ "Il y a %(related_num)s entrées connexes qui seront également supprimées "
+#~ "puisqu'elles dépendent de cet élément"
 
 #: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
@@ -5397,20 +5249,11 @@ msgstr "Documentation"
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS Documentation"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "IPv6 Auto"
+#~ msgid "IPv6 Auto"
+#~ msgstr "IPv6 Auto"
 
-#: templates/network/interface.html:12 templates/plugins/index.html:17
-#: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
-#: templates/sharing/windows.html:15 templates/storage/replications.html:24
-#: templates/storage/scrub.html:13 templates/storage/tasks.html:25
-#: templates/storage/volumes.html:64 templates/system/cronjob.html:12
-#: templates/system/ntpserver.html:11 templates/system/rsync.html:16
-#: templates/system/smarttest.html:11 templates/system/sysctl.html:9
-#: templates/system/tunable.html:9
-msgid "Available actions"
-msgstr "Actions disponibles"
+#~ msgid "Available actions"
+#~ msgstr "Actions disponibles"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -5441,22 +5284,18 @@ msgstr "Actions disponibles"
 msgid "Edit"
 msgstr "Modifier"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "Modifier l'interface"
+#~ msgid "Edit Interface"
+#~ msgstr "Modifier l'interface"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "Supprimer l'interface"
+#~ msgid "Delete Interface"
+#~ msgstr "Supprimer l'interface"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
 msgstr "Aucune interface n'est définie"
 
-#: templates/network/interface.html:47 templates/network/interface.html:49
-msgid "Add Interface"
-msgstr "Ajouter une interface"
+#~ msgid "Add Interface"
+#~ msgstr "Ajouter une interface"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5472,50 +5311,38 @@ msgstr "Modifier les membres"
 msgid "LAGG Members"
 msgstr "Membres LAGG"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "Aucune interface LAGG n'est définie"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "Aucune interface LAGG n'est définie"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "Ajouter une interface LAGG"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "Ajouter une interface LAGG"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "Ajout d'une interface LAGG"
+#~ msgid "Add LAGG"
+#~ msgstr "Ajout d'une interface LAGG"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "Ordre de priorité"
+#~ msgid "Ordering Priority"
+#~ msgstr "Ordre de priorité"
 
-#: templates/network/lagg_members.html:7
-msgid "Startup option"
-msgstr "Option de démarrage"
+#~ msgid "Startup option"
+#~ msgstr "Option de démarrage"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "Action"
+#~ msgid "Action"
+#~ msgstr "Action"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "Ajouter un membre LAGG"
+#~ msgid "Add LAGG Member"
+#~ msgstr "Ajouter un membre LAGG"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "Modifier la route statique"
+#~ msgid "Edit Static Route"
+#~ msgstr "Modifier la route statique"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "Supprimer la route statique"
+#~ msgid "Delete Static Route"
+#~ msgstr "Supprimer la route statique"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "Aucune route statique n'est définie"
+#~ msgid "No static route defined"
+#~ msgstr "Aucune route statique n'est définie"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "Ajouter un route statique"
+#~ msgid "Add Static Route"
+#~ msgstr "Ajouter un route statique"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5533,50 +5360,41 @@ msgstr "Route par défaut"
 msgid "No default route defined"
 msgstr "Aucune route par défaut n'est définie"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "Modifier le VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "Modifier le VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "Supprimer le VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "Supprimer le VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "Aucun VLAN n'est défini"
+#~ msgid "No VLAN defined"
+#~ msgstr "Aucun VLAN n'est défini"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "Ajouter une interface VLAN"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "Ajouter une interface VLAN"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
 msgstr "Installé..."
 
-#: templates/plugins/index.html:5 templates/plugins/index.html.py:7
-#: templates/services/plugins.html:5 templates/services/plugins.html.py:7
-msgid "Install Plugin"
-msgstr "Installer un module"
+#~ msgid "Install Plugin"
+#~ msgstr "Installer un module"
 
 #: templates/plugins/index.html:31
 msgid "Info"
 msgstr "Info"
 
-#: templates/plugins/index.html:33
-msgid "Plugin info"
-msgstr "Info du module"
+#~ msgid "Plugin info"
+#~ msgstr "Info du module"
 
-#: templates/plugins/index.html:39
-msgid "Edit Plugin"
-msgstr "Modifier le module"
+#~ msgid "Edit Plugin"
+#~ msgstr "Modifier le module"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
 msgstr "Supprimer le module"
 
-#: templates/plugins/index.html:55
-msgid "No plugins installed"
-msgstr "Aucun module n'est installé"
+#~ msgid "No plugins installed"
+#~ msgstr "Aucun module n'est installé"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
@@ -5587,9 +5405,8 @@ msgstr "Importer"
 msgid "Step %(step)s of %(step_count)s"
 msgstr "Étape %(step)s de %(step_count)s"
 
-#: templates/plugins/jailpbi.html:18
-msgid "Upload Jail PBI"
-msgstr "Charger une prison PBI"
+#~ msgid "Upload Jail PBI"
+#~ msgstr "Charger une prison PBI"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5600,21 +5417,17 @@ msgstr "Charger une prison PBI"
 msgid "Please wait..."
 msgstr "Merci de patienter..."
 
-#: templates/plugins/mountpoints.html:19
-msgid "Edit Mount Point"
-msgstr "Modifier le point de montage"
+#~ msgid "Edit Mount Point"
+#~ msgstr "Modifier le point de montage"
 
-#: templates/plugins/mountpoints.html:25
-msgid "Delete Mount Point"
-msgstr "Supprimer le point de montage"
+#~ msgid "Delete Mount Point"
+#~ msgstr "Supprimer le point de montage"
 
-#: templates/plugins/mountpoints.html:32
-msgid "No mount points defined"
-msgstr "Aucun point de montage n'est défini"
+#~ msgid "No mount points defined"
+#~ msgstr "Aucun point de montage n'est défini"
 
-#: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-msgid "Add Mount Point"
-msgstr "Ajouter un point de montage"
+#~ msgid "Add Mount Point"
+#~ msgstr "Ajouter un point de montage"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
@@ -5632,14 +5445,12 @@ msgstr ""
 msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Bienvenue, %(username)s. Merci de vous être connecté."
 
-#: templates/registration/login.html:46
 #, python-format
-msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr "Bienvenue sur %(sw_name)s&trade; %(sw_login_version)s"
+#~ msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
+#~ msgstr "Bienvenue sur %(sw_name)s&trade; %(sw_login_version)s"
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "Merci de vous identifier."
+#~ msgid "Please log in."
+#~ msgstr "Merci de vous identifier."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5657,9 +5468,8 @@ msgstr "Se connecter à nouveau"
 msgid "AFP Settings"
 msgstr "Paramètres AFP"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "Paramètres Active Directory"
+#~ msgid "Active Directory Settings"
+#~ msgstr "Paramètres Active Directory"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5677,21 +5487,18 @@ msgstr "Paramètres FTP"
 msgid "ISCSI Settings"
 msgstr "Paramètres iSCSI"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "Paramètres LDAP"
+#~ msgid "LDAP Settings"
+#~ msgstr "Paramètres LDAP"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
 msgstr "Paramètres NFS"
 
-#: templates/services/core.html:103 templates/services/core.html.py:105
-msgid "Plugins Settings"
-msgstr "Paramètres des modules"
+#~ msgid "Plugins Settings"
+#~ msgstr "Paramètres des modules"
 
-#: templates/services/core.html:105
-msgid "Install Jail PBI"
-msgstr "Installer une prison PBI"
+#~ msgid "Install Jail PBI"
+#~ msgstr "Installer une prison PBI"
 
 #: templates/services/core.html:117
 msgid "Rsync Settings"
@@ -5737,13 +5544,11 @@ msgstr "Gestion iSCSI"
 msgid "Portals"
 msgstr "Portails"
 
-#: templates/services/iscsi.html:14
-msgid "Authorized Initiators"
-msgstr "Initiateurs autorisés"
+#~ msgid "Authorized Initiators"
+#~ msgstr "Initiateurs autorisés"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "Authentification"
+#~ msgid "Authentication"
+#~ msgstr "Authentification"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5757,101 +5562,76 @@ msgstr "Extensions"
 msgid "Associated Targets"
 msgstr "Cibles associées"
 
-#: templates/services/iscsi_assoctargets.html:31
-msgid "No associated targets defined"
-msgstr "Aucune cible associée n'a été définie"
+#~ msgid "No associated targets defined"
+#~ msgstr "Aucune cible associée n'a été définie"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "Ajouter une extension à la cible"
+#~ msgid "Add Extent to Target"
+#~ msgstr "Ajouter une extension à la cible"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "Ajouter une extension à la cible"
+#~ msgid "Add Extent To Target"
+#~ msgstr "Ajouter une extension à la cible"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "Pair"
+#~ msgid "Peer"
+#~ msgstr "Pair"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "Ajouter un utilisateur iSCSI"
+#~ msgid "Add iSCSI User"
+#~ msgstr "Ajouter un utilisateur iSCSI"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "Réseau autorisé"
+#~ msgid "Authorized Network"
+#~ msgstr "Réseau autorisé"
 
-#: templates/services/iscsi_authini.html:35
-msgid "No authorized initiators defined"
-msgstr "Aucun initiateur autorisé n'a été défini"
+#~ msgid "No authorized initiators defined"
+#~ msgstr "Aucun initiateur autorisé n'a été défini"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "Ajouter un initiateur autorisé"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "Ajouter un initiateur autorisé"
 
-#: templates/services/iscsi_dextents.html:33
-msgid "No device extents defined"
-msgstr "Aucun périphérique d'extension n'a été défini"
+#~ msgid "No device extents defined"
+#~ msgstr "Aucun périphérique d'extension n'a été défini"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "Ajouter une extension"
+#~ msgid "Add Extent"
+#~ msgstr "Ajouter une extension"
 
-#: templates/services/iscsi_extents.html:5
-msgid "File Extent"
-msgstr "Fichier d'extension"
+#~ msgid "File Extent"
+#~ msgstr "Fichier d'extension"
 
-#: templates/services/iscsi_extents.html:33
-msgid "No extents defined"
-msgstr "Aucune extension n'a été définie"
+#~ msgid "No extents defined"
+#~ msgstr "Aucune extension n'a été définie"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
 msgstr "Écoute"
 
-#: templates/services/iscsi_portals.html:18
-msgid "No IP defined for this Portal"
-msgstr "Aucune IP n'est définie pour ce portail"
+#~ msgid "No IP defined for this Portal"
+#~ msgstr "Aucune IP n'est définie pour ce portail"
 
-#: templates/services/iscsi_portals.html:26
-msgid "Edit Portal"
-msgstr "Modifier le Portail"
+#~ msgid "Edit Portal"
+#~ msgstr "Modifier le Portail"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "Supprimer le Portail"
+#~ msgid "Delete Portal"
+#~ msgstr "Supprimer le Portail"
 
-#: templates/services/iscsi_portals.html:39
-msgid "No portals defined"
-msgstr "Aucun portail n'a été défini"
+#~ msgid "No portals defined"
+#~ msgstr "Aucun portail n'a été défini"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "Ajouter un portail"
+#~ msgid "Add Portal"
+#~ msgstr "Ajouter un portail"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "Aucune cible n'a été définie"
+#~ msgid "No targets defined"
+#~ msgstr "Aucune cible n'a été définie"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "Ajouter une cible"
+#~ msgid "Add Target"
+#~ msgstr "Ajouter une cible"
 
-#: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-msgid "View Mount Points"
-msgstr "Voir les points de montage"
+#~ msgid "View Mount Points"
+#~ msgstr "Voir les points de montage"
 
-#: templates/services/plugins.html:22
-msgid ""
-"ATTENTION: The plugins service is not running, several functionalities have "
-"been disabled."
-msgstr ""
-"ATTENTION: Le service des modules n'est pas démarré, plusieurs "
-"fonctionnalités ont été désactivées."
+#~ msgid ""
+#~ "ATTENTION: The plugins service is not running, several functionalities have "
+#~ "been disabled."
+#~ msgstr ""
+#~ "ATTENTION: Le service des modules n'est pas démarré, plusieurs "
+#~ "fonctionnalités ont été désactivées."
 
 #: templates/services/plugins.html:31
 msgid "Version"
@@ -5877,45 +5657,34 @@ msgstr "Mettre à jour le module"
 msgid "No available plugins services"
 msgstr "Aucun service de module n'est disponible"
 
-#: templates/services/pluginsjail_delete.html:4
-msgid "All the files within the plugins jail will be permanently deleted."
-msgstr ""
-"Tous les fichiers de la prison du module seront supprimés de façon "
-"permanente."
+#~ msgid "All the files within the plugins jail will be permanently deleted."
+#~ msgstr ""
+#~ "Tous les fichiers de la prison du module seront supprimés de façon "
+#~ "permanente."
 
-#: templates/services/pluginsjail_edit.html:12
-msgid "Delete Plugins Jail"
-msgstr "Supprimer la prison des modules"
+#~ msgid "Delete Plugins Jail"
+#~ msgstr "Supprimer la prison des modules"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "Aucun module rsync n'est défini"
+#~ msgid "No rsync modules defined"
+#~ msgstr "Aucun module rsync n'est défini"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "Partages actifs"
+#~ msgid "Active Shares"
+#~ msgstr "Partages actifs"
 
-#: templates/sharing/apple.html:7
-msgid "There are no active Apple (AFP) shares."
-msgstr "Aucun partage Apple (AFP) n'est actif."
+#~ msgid "There are no active Apple (AFP) shares."
+#~ msgstr "Aucun partage Apple (AFP) n'est actif."
 
-#: templates/sharing/apple.html:29
-msgid "Edit Apple (AFP) Share"
-msgstr "Modifier le partage Apple (AFP)"
+#~ msgid "Edit Apple (AFP) Share"
+#~ msgstr "Modifier le partage Apple (AFP)"
 
-#: templates/sharing/apple.html:35
-msgid "Delete Apple (AFP) Share"
-msgstr "Supprimer le partage Apple (AFP)"
+#~ msgid "Delete Apple (AFP) Share"
+#~ msgstr "Supprimer le partage Apple (AFP)"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "Aucun partage n'est défini"
+#~ msgid "No shares defined"
+#~ msgstr "Aucun partage n'est défini"
 
-#: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-msgid "Add Apple (AFP) Share"
-msgstr "Ajouter un partage Apple (AFP)"
+#~ msgid "Add Apple (AFP) Share"
+#~ msgstr "Ajouter un partage Apple (AFP)"
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
@@ -5929,41 +5698,32 @@ msgstr "UNIX (NFS)"
 msgid "Windows (CIFS)"
 msgstr "Windows (CIFS)"
 
-#: templates/sharing/unix.html:7
-msgid "There are no active UNIX (NFS) shares."
-msgstr "Aucun partage UNIX (NFS) n'est actif."
+#~ msgid "There are no active UNIX (NFS) shares."
+#~ msgstr "Aucun partage UNIX (NFS) n'est actif."
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "Point de montage"
+#~ msgid "Mountpoint"
+#~ msgstr "Point de montage"
 
-#: templates/sharing/unix.html:29
-msgid "Edit UNIX (NFS) Share"
-msgstr "Modifier le partage UNIX (NFS)"
+#~ msgid "Edit UNIX (NFS) Share"
+#~ msgstr "Modifier le partage UNIX (NFS)"
 
-#: templates/sharing/unix.html:35
-msgid "Delete UNIX (NFS) Share"
-msgstr "Supprimer le partage UNIX (NFS)"
+#~ msgid "Delete UNIX (NFS) Share"
+#~ msgstr "Supprimer le partage UNIX (NFS)"
 
-#: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-msgid "Add UNIX (NFS) Share"
-msgstr "Ajouter un partage UNIX (NFS)"
+#~ msgid "Add UNIX (NFS) Share"
+#~ msgstr "Ajouter un partage UNIX (NFS)"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (CIFS) shares."
-msgstr "Aucun partage Windows (CIFS) n'est actif."
+#~ msgid "There are no active Windows (CIFS) shares."
+#~ msgstr "Aucun partage Windows (CIFS) n'est actif."
 
-#: templates/sharing/windows.html:33
-msgid "Edit Windows (CIFS) Share"
-msgstr "Modifier le partage Windows (CIFS)"
+#~ msgid "Edit Windows (CIFS) Share"
+#~ msgstr "Modifier le partage Windows (CIFS)"
 
-#: templates/sharing/windows.html:39
-msgid "Delete Windows (CIFS) Share"
-msgstr "Supprimer le partage Windows (CIFS)"
+#~ msgid "Delete Windows (CIFS) Share"
+#~ msgstr "Supprimer le partage Windows (CIFS)"
 
-#: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (CIFS) Share"
-msgstr "Ajouter un partage Windows (CIFS)"
+#~ msgid "Add Windows (CIFS) Share"
+#~ msgstr "Ajouter un partage Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6078,39 +5838,29 @@ msgstr ""
 "ATTENTION: Un instantané périodique d'un système de fichiers/volume ZFS est "
 "nécessaire pour créer une tâche de réplication"
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "Dernier instantané"
+#~ msgid "Last snapshot"
+#~ msgstr "Dernier instantané"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "Système de fichiers ZFS distant"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "Système de fichiers ZFS distant"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "Supprimer la réplication"
+#~ msgid "Delete Replication"
+#~ msgstr "Supprimer la réplication"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "Modifier la réplication"
+#~ msgid "Edit Replication"
+#~ msgstr "Modifier la réplication"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "Aucune réplication ZFS n'est disponible"
+#~ msgid "No ZFS replication available"
+#~ msgstr "Aucune réplication ZFS n'est disponible"
 
-#: templates/storage/scrub.html:42
-msgid "No scrub tasks defined."
-msgstr "Aucune tâche de nettoyage n'est définie."
+#~ msgid "No scrub tasks defined."
+#~ msgstr "Aucune tâche de nettoyage n'est définie."
 
-#: templates/storage/scrub.html:48
-msgid "Add ZFS Scrub Task"
-msgstr "Ajouter une tâche de nettoyage ZFS"
+#~ msgid "Add ZFS Scrub Task"
+#~ msgstr "Ajouter une tâche de nettoyage ZFS"
 
-#: templates/storage/scrub.html:50
-msgid "Add ZFS Scrub"
-msgstr "Ajouter un nettoyage ZFS"
+#~ msgid "Add ZFS Scrub"
+#~ msgstr "Ajouter un nettoyage ZFS"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -6166,45 +5916,37 @@ msgstr "Supprimer les instantanés"
 msgid "Periodic Snapshots"
 msgstr "Instantanés périodiques"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "Planification des instantanés périodiques"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "Planification des instantanés périodiques"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "Aucun instantané n'est programmé."
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "Aucun instantané n'est programmé."
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Comment"
+#~ msgid "How"
+#~ msgstr "Comment"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "Garder l'instantané pendant"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "De"
+#~ msgid "From"
+#~ msgstr "De"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "au travers de"
+#~ msgid "through"
+#~ msgstr "au travers de"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", tous"
+#~ msgid ", every"
+#~ msgstr ", tous"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "Tous les jours"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "Sur tous"
+#~ msgid "on every"
+#~ msgstr "Sur tous"
 
-#: templates/storage/tasks.html:147
-msgid "There are no periodic snapshots scheduled."
-msgstr "Aucun instantané périodique n'est programmé."
+#~ msgid "There are no periodic snapshots scheduled."
+#~ msgstr "Aucun instantané périodique n'est programmé."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -6258,17 +6000,14 @@ msgstr "État du volume"
 msgid "Destroy Dataset"
 msgstr "Détruire le jeu de données"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "Détruire le volume ZFS"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "Détruire le volume ZFS"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "Aucun volume n'est défini"
+#~ msgid "No volumes defined"
+#~ msgstr "Aucun volume n'est défini"
 
-#: templates/storage/wizard.html:27
-msgid "Volume to extend"
-msgstr "Volume à étendre"
+#~ msgid "Volume to extend"
+#~ msgstr "Volume à étendre"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6278,25 +6017,20 @@ msgstr "Disques membres"
 msgid "Group type"
 msgstr "Type de groupe"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "Options ZFS"
+#~ msgid "ZFS Extra"
+#~ msgstr "Options ZFS"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "L'utilisation d'un unique disque de log est vivement déconseillée"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "L'utilisation d'un unique disque de log est vivement déconseillée"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Journal"
+#~ msgid "Log"
+#~ msgstr "Journal"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "Cache"
+#~ msgid "Cache"
+#~ msgstr "Cache"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "Rechange"
+#~ msgid "Spare"
+#~ msgstr "Rechange"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6310,26 +6044,22 @@ msgstr "Les données existantes seront supprimées"
 msgid "Replace Disk"
 msgstr "Remplacer le disque"
 
-#: templates/storage/zvols.html:3
 #, python-format
-msgid "Create ZFS volume on %(name)s"
-msgstr "Créer un volume ZFS sur %(name)s"
+#~ msgid "Create ZFS volume on %(name)s"
+#~ msgstr "Créer un volume ZFS sur %(name)s"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "Ajouter un Volume ZFS"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "Ajouter un Volume ZFS"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "Reconstruire le cache LDAP/AD"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "Le cache est en cours de reconstruction."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "Le cache est en cours de reconstruction."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "Le cache n'a pas pu être reconstruit"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "Le cache n'a pas pu être reconstruit"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6341,10 +6071,8 @@ msgstr "Enregistrer le Debug"
 msgid "Firmware Update"
 msgstr "Mise-à-jour du Firmware"
 
-#: templates/system/advanced_edit.html:39
-#: templates/system/advanced_edit.html:41
-msgid "Import Plugins Jail"
-msgstr "Importer la prison des modules"
+#~ msgid "Import Plugins Jail"
+#~ msgstr "Importer la prison des modules"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6354,17 +6082,14 @@ msgstr "Redémarrage en cours..."
 msgid "Are you sure you want to restore to factory config?"
 msgstr "Êtes-vous sûr de vouloir restaurer les paramètres par défaut ?"
 
-#: templates/system/cronjob.html:41
-msgid "No cron jobs defined."
-msgstr "Aucune tâche Cron n'est définie."
+#~ msgid "No cron jobs defined."
+#~ msgstr "Aucune tâche Cron n'est définie."
 
-#: templates/system/cronjob.html:47
-msgid "Add a cron job"
-msgstr "Ajouter une tâche Cron"
+#~ msgid "Add a cron job"
+#~ msgstr "Ajouter une tâche Cron"
 
-#: templates/system/cronjob.html:49
-msgid "Add cron job"
-msgstr "Ajouter une tâche Cron"
+#~ msgid "Add cron job"
+#~ msgstr "Ajouter une tâche Cron"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6382,21 +6107,17 @@ msgstr ""
 "ASTUCE : Les e-mails sont envoyés à l'utilisateur root. Pour le configurer, "
 "Utilisateurs -> root -> Modifier l'e-mail"
 
-#: templates/system/ntpserver.html:7
-msgid "iBurst"
-msgstr "iRafale"
+#~ msgid "iBurst"
+#~ msgstr "iRafale"
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "Aucun serveur NTP n'est défini."
+#~ msgid "No NTP servers defined."
+#~ msgstr "Aucun serveur NTP n'est défini."
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "Ajouter un serveur NTP"
+#~ msgid "Add NTP server"
+#~ msgstr "Ajouter un serveur NTP"
 
-#: templates/system/ntpserver.html:46
-msgid "Add NTP Server"
-msgstr "Ajouter un serveur NTP"
+#~ msgid "Add NTP Server"
+#~ msgstr "Ajouter un serveur NTP"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6415,25 +6136,20 @@ msgstr ""
 msgid "History"
 msgstr "Historique"
 
-#: templates/system/rsync.html:5
-msgid "Local Path"
-msgstr "Chemin local"
+#~ msgid "Local Path"
+#~ msgstr "Chemin local"
 
-#: templates/system/rsync.html:6
-msgid "Remote"
-msgstr "Distant"
+#~ msgid "Remote"
+#~ msgstr "Distant"
 
-#: templates/system/rsync.html:48
-msgid "No rsync tasks defined."
-msgstr "Aucune tâche rsync n'est définie."
+#~ msgid "No rsync tasks defined."
+#~ msgstr "Aucune tâche rsync n'est définie."
 
-#: templates/system/rsync.html:54
-msgid "Add rsync task"
-msgstr "Ajouter une tâche rsync"
+#~ msgid "Add rsync task"
+#~ msgstr "Ajouter une tâche rsync"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Ajouter un Rsync"
+#~ msgid "Add Rsync"
+#~ msgstr "Ajouter un Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6468,29 +6184,23 @@ msgstr ""
 msgid "Unknown"
 msgstr "Inconnu"
 
-#: templates/system/smarttest.html:38
-msgid "No S.M.A.R.T. tests defined"
-msgstr "Aucun test S.M.A.R.T. n'a été défini"
+#~ msgid "No S.M.A.R.T. tests defined"
+#~ msgstr "Aucun test S.M.A.R.T. n'a été défini"
 
-#: templates/system/smarttest.html:44
-msgid "Add S.M.A.R.T. Test"
-msgstr "Ajouter un test S.M.A.R.T."
+#~ msgid "Add S.M.A.R.T. Test"
+#~ msgstr "Ajouter un test S.M.A.R.T."
 
-#: templates/system/smarttest.html:46
-msgid "Add S.M.A.R.T. test"
-msgstr "Ajouter un test S.M.A.R.T."
+#~ msgid "Add S.M.A.R.T. test"
+#~ msgstr "Ajouter un test S.M.A.R.T."
 
-#: templates/system/sysctl.html:34
-msgid "No sysctl defined."
-msgstr "Aucun sysctl n'a été défini."
+#~ msgid "No sysctl defined."
+#~ msgstr "Aucun sysctl n'a été défini."
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "Ajouter un sysctl"
+#~ msgid "Add sysctl"
+#~ msgstr "Ajouter un sysctl"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "Ajouter un sysctl"
+#~ msgid "Add Sysctl"
+#~ msgstr "Ajouter un sysctl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6516,21 +6226,17 @@ msgstr "En activité depuis"
 msgid "Load Average"
 msgstr "Charge moyenne"
 
-#: templates/system/system_info.html:34
-msgid "Connected through"
-msgstr "Connecté via"
+#~ msgid "Connected through"
+#~ msgstr "Connecté via"
 
-#: templates/system/tunable.html:34
-msgid "No tunable setting defined."
-msgstr "Aucun paramètre de réglage n'est défini."
+#~ msgid "No tunable setting defined."
+#~ msgstr "Aucun paramètre de réglage n'est défini."
 
-#: templates/system/tunable.html:40
-msgid "Add Tunable"
-msgstr "Ajouter un réglage"
+#~ msgid "Add Tunable"
+#~ msgstr "Ajouter un réglage"
 
-#: templates/system/tunable.html:42
-msgid "Add Loader"
-msgstr "Ajouter un chargeur"
+#~ msgid "Add Loader"
+#~ msgstr "Ajouter un chargeur"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6556,19 +6262,17 @@ msgstr "Le status du volume %(volume)s est %(status)s : %(message)s"
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "Le status du volume %(volume)s est %(status)s"
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr ""
-"Vous devez changer le mot de passe de l'utilisateur admin (actuellement "
-"aucun mot de passe n'est nécessaire pour se connecter)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr ""
+#~ "Vous devez changer le mot de passe de l'utilisateur admin (actuellement "
+#~ "aucun mot de passe n'est nécessaire pour se connecter)"
 
-#: tools/alert.py:137
 #, python-format
-msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
-"L'adresse du WebGUI n'a pas pue être liée à %s; utilisation d'une wildcard"
+#~ msgid "The WebGUI Address could not be bind to %s; using wildcard"
+#~ msgstr ""
+#~ "L'adresse du WebGUI n'a pas pue être liée à %s; utilisation d'une wildcard"
 
 #: tools/alert.py:147
 #, python-format
@@ -6584,511 +6288,511 @@ msgid "Critical Alerts"
 msgstr "Alertes critiques"
 
 # Liste des membres à être ajoutés dans un groupe
-msgid "Selected"
-msgstr "Sélectionné(s)"
+#~ msgid "Selected"
+#~ msgstr "Sélectionné(s)"
 
-msgid "SHA256 sum for the PBI file"
-msgstr "Somme SHA256 du fichier PBI"
+#~ msgid "SHA256 sum for the PBI file"
+#~ msgstr "Somme SHA256 du fichier PBI"
 
-msgid "Jail path cannot contain plugins path."
-msgstr "Le chemin de la prison ne peut pas contenir le chemin des modules."
+#~ msgid "Jail path cannot contain plugins path."
+#~ msgstr "Le chemin de la prison ne peut pas contenir le chemin des modules."
 
-msgid "Plugins path cannot contain jail path."
-msgstr "Le chemin des modules ne peut pas contenir le chemin de la prison."
+#~ msgid "Plugins path cannot contain jail path."
+#~ msgstr "Le chemin des modules ne peut pas contenir le chemin de la prison."
 
-msgid "Plugin view"
-msgstr "Vue du module"
+#~ msgid "Plugin view"
+#~ msgstr "Vue du module"
 
-msgid "Plugin icon"
-msgstr "Icône du module"
+#~ msgid "Plugin icon"
+#~ msgstr "Icône du module"
 
-msgid "Path to plugin"
-msgstr "Chemin du module"
+#~ msgid "Path to plugin"
+#~ msgstr "Chemin du module"
 
-msgid "Control Plugins"
-msgstr "Contrôle des modules"
+#~ msgid "Control Plugins"
+#~ msgstr "Contrôle des modules"
 
-msgid "Configure Plugins"
-msgstr "Configurer les modules"
+#~ msgid "Configure Plugins"
+#~ msgstr "Configurer les modules"
 
-msgid "Allow guest access"
-msgstr "Autoriser l'accès invité"
+#~ msgid "Allow guest access"
+#~ msgstr "Autoriser l'accès invité"
 
-msgid "Only allow guest access"
-msgstr "Autoriser l'accès invité uniquement"
+#~ msgid "Only allow guest access"
+#~ msgstr "Autoriser l'accès invité uniquement"
 
-msgid "Plugins Path"
-msgstr "Chemin des modules"
+#~ msgid "Plugins Path"
+#~ msgstr "Chemin des modules"
 
-msgid "Path to the plugins directory"
-msgstr "Chemin vers le répertoire des modules"
+#~ msgid "Path to the plugins directory"
+#~ msgstr "Chemin vers le répertoire des modules"
 
-msgid "Invalid prefix"
-msgstr "Préfixe invalide"
+#~ msgid "Invalid prefix"
+#~ msgstr "Préfixe invalide"
 
-msgid "I'm aware this will destroy snapshots within this dataset"
-msgid_plural ""
-"I'm aware this will destroy all child datasets and snapshots within this "
-"dataset"
-msgstr[0] ""
-"Je suis conscient que cela va détruire les instantanés de ce jeu de "
-"données"
-msgstr[1] ""
-"Je suis conscient que cela va détruire tous les descendants et les "
-"instantanés de ce jeu de données"
+#~ msgid "I'm aware this will destroy snapshots within this dataset"
+#~ msgid_plural ""
+#~ "I'm aware this will destroy all child datasets and snapshots within this "
+#~ "dataset"
+#~ msgstr[0] ""
+#~ "Je suis conscient que cela va détruire les instantanés de ce jeu de "
+#~ "données"
+#~ msgstr[1] ""
+#~ "Je suis conscient que cela va détruire tous les descendants et les "
+#~ "instantanés de ce jeu de données"
 
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
-"Nombre de minutes devant s'écouler avant la création d'un nouvel "
-"instantané."
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr ""
+#~ "Nombre de minutes devant s'écouler avant la création d'un nouvel "
+#~ "instantané."
 
-msgid "An error occurred when setting the options"
-msgstr "Des erreurs sont survenues pendant le réglage des options"
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "Des erreurs sont survenues pendant le réglage des options"
 
-msgid "Service Pack image to be installed"
-msgstr "Image du Service Pack à installer"
+#~ msgid "Service Pack image to be installed"
+#~ msgstr "Image du Service Pack à installer"
 
-msgid "Invalid service pack"
-msgstr "Service Pack invalide"
+#~ msgid "Invalid service pack"
+#~ msgstr "Service Pack invalide"
 
-msgid "View Cron Jobs"
-msgstr "Voir les tâches Cron"
+#~ msgid "View Cron Jobs"
+#~ msgstr "Voir les tâches Cron"
 
-msgid "View Rsync Tasks"
-msgstr "Voir les tâches rsync"
+#~ msgid "View Rsync Tasks"
+#~ msgstr "Voir les tâches rsync"
 
-msgid "View S.M.A.R.T. Tests"
-msgstr "Voir les tests S.M.A.R.T."
+#~ msgid "View S.M.A.R.T. Tests"
+#~ msgstr "Voir les tests S.M.A.R.T."
 
-msgid "View Sysctls"
-msgstr "Voir les sysctls"
+#~ msgid "View Sysctls"
+#~ msgstr "Voir les sysctls"
 
-msgid "View Tunables"
-msgstr "Voir les réglages"
+#~ msgid "View Tunables"
+#~ msgstr "Voir les réglages"
 
-msgid "Browse"
-msgstr "Parcourir"
+#~ msgid "Browse"
+#~ msgstr "Parcourir"
 
-msgid "Close"
-msgstr "Fermer"
+#~ msgid "Close"
+#~ msgstr "Fermer"
 
-msgid "Jail path"
-msgstr "Chemin de la prison"
+#~ msgid "Jail path"
+#~ msgstr "Chemin de la prison"
 
-msgid "Jail IP"
-msgstr "IP de la prison"
+#~ msgid "Jail IP"
+#~ msgstr "IP de la prison"
 
-msgid "Plugins path"
-msgstr "Chemin des modules"
+#~ msgid "Plugins path"
+#~ msgstr "Chemin des modules"
 
-msgid "Add Apple (CIFS) Share"
-msgstr "Ajouter un partage Apple (CIFS)"
+#~ msgid "Add Apple (CIFS) Share"
+#~ msgstr "Ajouter un partage Apple (CIFS)"
 
-msgid "Apply Service Pack"
-msgstr "Appliquer le Service Pack"
+#~ msgid "Apply Service Pack"
+#~ msgstr "Appliquer le Service Pack"
 
-msgid "Hourly"
-msgstr "Horaire"
+#~ msgid "Hourly"
+#~ msgstr "Horaire"
 
-msgid "Hourly Graphs"
-msgstr "Graphiques Horaires"
+#~ msgid "Hourly Graphs"
+#~ msgstr "Graphiques Horaires"
 
-msgid "Daily"
-msgstr "Journalier"
+#~ msgid "Daily"
+#~ msgstr "Journalier"
 
-msgid "Daily Graphs"
-msgstr "Graphiques Journaliers"
+#~ msgid "Daily Graphs"
+#~ msgstr "Graphiques Journaliers"
 
-msgid "Weekly"
-msgstr "Hebdomadaire"
+#~ msgid "Weekly"
+#~ msgstr "Hebdomadaire"
 
-msgid "Weekly Graphs"
-msgstr "Graphiques Hebdomadaires"
+#~ msgid "Weekly Graphs"
+#~ msgstr "Graphiques Hebdomadaires"
 
-msgid "Monthly"
-msgstr "Mensuel"
+#~ msgid "Monthly"
+#~ msgstr "Mensuel"
 
-msgid "Monthly Graphs"
-msgstr "Graphiques Mensuels"
+#~ msgid "Monthly Graphs"
+#~ msgstr "Graphiques Mensuels"
 
-msgid "Yearly"
-msgstr "Annuel"
+#~ msgid "Yearly"
+#~ msgstr "Annuel"
 
-msgid "Yearly Graphs"
-msgstr "Graphiques Annuels"
+#~ msgid "Yearly Graphs"
+#~ msgstr "Graphiques Annuels"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Bande"
+#~ msgid "Tape"
+#~ msgstr "Bande"
 
 # Pass-thru Device
-msgid "Pass"
-msgstr "Accès direct"
+#~ msgid "Pass"
+#~ msgstr "Accès direct"
 
-msgid "Disable password"
-msgstr "Désactiver le mot de passe"
+#~ msgid "Disable password"
+#~ msgstr "Désactiver le mot de passe"
 
-msgid "My Account"
-msgstr "Mon compte"
+#~ msgid "My Account"
+#~ msgstr "Mon compte"
 
-msgid "View All Users"
-msgstr "Voir les utilisateurs"
+#~ msgid "View All Users"
+#~ msgstr "Voir les utilisateurs"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Veuillez nous excuser, votre formulaire a expiré. Remplissez le "
-"formulaire depuis cette page."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Veuillez nous excuser, votre formulaire a expiré. Remplissez le "
+#~ "formulaire depuis cette page."
 
-msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr "Vous devez spécifier une adresse IPv4 ou IPv6 valide avec CIDR"
+#~ msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
+#~ msgstr "Vous devez spécifier une adresse IPv4 ou IPv6 valide avec CIDR"
 
-msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr ""
-"L'emplacement ne doit contenir que des caractères alphanumériques, '_' ou "
-"'-'"
+#~ msgid "The location must contain only alphanumeric characters, _ or -"
+#~ msgstr ""
+#~ "L'emplacement ne doit contenir que des caractères alphanumériques, '_' ou "
+#~ "'-'"
 
-msgid "Local Access"
-msgstr "Accès local"
+#~ msgid "Local Access"
+#~ msgstr "Accès local"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
-"Autoriser les utilisateurs avec un compte local à accéder aux partages "
-"Apple de ce serveur."
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr ""
+#~ "Autoriser les utilisateurs avec un compte local à accéder aux partages "
+#~ "Apple de ce serveur."
 
 # Traduire wildcard ? Par joker ?
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"Le portail prend la forme 'adresse:port'. Par exemple "
-"\"192.168.1.1:3260\" pour IPv4, \"[2001:db8:1:1::1]:3260\" pour IPv6. Le "
-"port 3260 est le port iSCSI standard. Pour un ensemble d'adresses IP "
-"(wildcard), utiliser \"0.0.0.0:3260\" et/ou \"[::]:3260\". Ne pas "
-"mélanger de wildcard avec d'autres IP dans une même famille d'adresses."
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "Le portail prend la forme 'adresse:port'. Par exemple "
+#~ "\"192.168.1.1:3260\" pour IPv4, \"[2001:db8:1:1::1]:3260\" pour IPv6. Le "
+#~ "port 3260 est le port iSCSI standard. Pour un ensemble d'adresses IP "
+#~ "(wildcard), utiliser \"0.0.0.0:3260\" et/ou \"[::]:3260\". Ne pas "
+#~ "mélanger de wildcard avec d'autres IP dans une même famille d'adresses."
 
-msgid "Time in milliseconds"
-msgstr "Temps en millisecondes"
+#~ msgid "Time in milliseconds"
+#~ msgstr "Temps en millisecondes"
 
-msgid "Username of Domain Administrator Account"
-msgstr "Nom d'utilisateur du compte administrateur du domaine"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "Nom d'utilisateur du compte administrateur du domaine"
 
-msgid "ISCSI"
-msgstr "iSCSI"
+#~ msgid "ISCSI"
+#~ msgstr "iSCSI"
 
-msgid "Guest Account"
-msgstr "Compte invité"
+#~ msgid "Guest Account"
+#~ msgstr "Compte invité"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Utilisez cette option pour forcer le nom d'utilisateur (\"ftp\" par "
-"défaut) qui sera utilisé pour l'accès aux services en tant qu'invité. "
-"Tous privilèges accordés à cet utilisateur le seront également pour les "
-"clients se connectant au service en tant qu'invités. Cet utilisateur doit "
-"exister dans le fichier de mot de passe, mais ne nécessite pas une "
-"connexion valide."
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Utilisez cette option pour forcer le nom d'utilisateur (\"ftp\" par "
+#~ "défaut) qui sera utilisé pour l'accès aux services en tant qu'invité. "
+#~ "Tous privilèges accordés à cet utilisateur le seront également pour les "
+#~ "clients se connectant au service en tant qu'invités. Cet utilisateur doit "
+#~ "exister dans le fichier de mot de passe, mais ne nécessite pas une "
+#~ "connexion valide."
 
-msgid "CIFS Share"
-msgstr "Partage CIFS"
+#~ msgid "CIFS Share"
+#~ msgstr "Partage CIFS"
 
-msgid "CIFS Shares"
-msgstr "Partages CIFS"
+#~ msgid "CIFS Shares"
+#~ msgstr "Partages CIFS"
 
-msgid "NFS Share"
-msgstr "Partage NFS"
+#~ msgid "NFS Share"
+#~ msgstr "Partage NFS"
 
-msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
-"A partir de quand dans la journée commencer à faire des instantanés, e.g. "
-"8:00"
+#~ msgid "When in a day should we start making snapshots, e.g. 8:00"
+#~ msgstr ""
+#~ "A partir de quand dans la journée commencer à faire des instantanés, e.g. "
+#~ "8:00"
 
-msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
-"A partir de quand dans la journée arrêter de faire des instantanés, e.g. "
-"17:00"
+#~ msgid "When in a day should we stop making snapshots, e.g. 17:00"
+#~ msgstr ""
+#~ "A partir de quand dans la journée arrêter de faire des instantanés, e.g. "
+#~ "17:00"
 
-msgid "NTP server 2"
-msgstr "Serveur NTP 2"
+#~ msgid "NTP server 2"
+#~ msgstr "Serveur NTP 2"
 
-msgid "NTP server 3"
-msgstr "Serveur NTP 3"
+#~ msgid "NTP server 3"
+#~ msgstr "Serveur NTP 3"
 
-msgid "Loader"
-msgstr "Chargeur"
+#~ msgid "Loader"
+#~ msgstr "Chargeur"
 
-msgid "Loaders"
-msgstr "Chargeurs"
+#~ msgid "Loaders"
+#~ msgstr "Chargeurs"
 
-msgid "View Loaders"
-msgstr "Voir les chargeurs"
+#~ msgid "View Loaders"
+#~ msgstr "Voir les chargeurs"
 
-msgid "Reboot the System"
-msgstr "Redémarrer le système"
+#~ msgid "Reboot the System"
+#~ msgstr "Redémarrer le système"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
 msgid "Edit Disk"
 msgstr "Modifier le disque"
 
-msgid "Are you sure you want to export?"
-msgstr "Êtes-vous sûr de vouloir exporter ?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "Êtes-vous sûr de vouloir exporter ?"
 
-msgid "Export Volume"
-msgstr "Exporter le volume"
+#~ msgid "Export Volume"
+#~ msgstr "Exporter le volume"
 
-msgid "Add loader"
-msgstr "Ajouter un chargeur"
+#~ msgid "Add loader"
+#~ msgstr "Ajouter un chargeur"
 
-msgid "Volume from which this dataset will be created on"
-msgstr "Volume à partir duquel ce jeu de données sera créé"
+#~ msgid "Volume from which this dataset will be created on"
+#~ msgstr "Volume à partir duquel ce jeu de données sera créé"
 
-msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Volume à partir duquel le Volume ZFS sera créé"
+#~ msgid "Volume from which this ZFS Volume will be created on"
+#~ msgstr "Volume à partir duquel le Volume ZFS sera créé"
 
-msgid "Volume this group belongs to"
-msgstr "Volume auquel appartient ce groupe"
+#~ msgid "Volume this group belongs to"
+#~ msgstr "Volume auquel appartient ce groupe"
 
 msgid "Group Membership"
 msgstr "Groupe d’appartenance"
 
-msgid "The disk group containing this disk"
-msgstr "Groupe contenant ce disque"
+#~ msgid "The disk group containing this disk"
+#~ msgstr "Groupe contenant ce disque"
 
 # Utilisé à 6 reprises dans storage/views.py sans nécessiter de féminin ni pluriel
-msgid "successfully added"
-msgstr "ajouté(e) avec succès"
+#~ msgid "successfully added"
+#~ msgstr "ajouté(e) avec succès"
 
 # Gestion féminin et pluriel ?
-msgid "successfully deleted"
-msgstr "supprimé(e) avec succès"
+#~ msgid "successfully deleted"
+#~ msgstr "supprimé(e) avec succès"
 
 # Utilisé à 2 reprises dans storage/views.py sans nécessiter de féminin ni pluriel
-msgid "successfully edited"
-msgstr "modifié(e) avec succès"
+#~ msgid "successfully edited"
+#~ msgstr "modifié(e) avec succès"
 
-msgid "There are no active volumes."
-msgstr "Aucun volume n'est actif."
+#~ msgid "There are no active volumes."
+#~ msgstr "Aucun volume n'est actif."
 
-msgid "zpool status"
-msgstr "État du zpool"
+#~ msgid "zpool status"
+#~ msgstr "État du zpool"
 
-msgid "%s successfully added."
-msgstr "%s ajouté(e) avec succès."
+#~ msgid "%s successfully added."
+#~ msgstr "%s ajouté(e) avec succès."
 
-msgid "IPv6 Netmask"
-msgstr "Masque de sous-réseau IPv6"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "Masque de sous-réseau IPv6"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Cette valeur doit être comprise entre 0 et 10000 inclus."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Cette valeur doit être comprise entre 0 et 10000 inclus."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Cette valeur doit être comprise entre 0 et 1000 inclus."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Cette valeur doit être comprise entre 0 et 1000 inclus."
 
-msgid "Enable DDP"
-msgstr "Activer DDP"
+#~ msgid "Enable DDP"
+#~ msgstr "Activer DDP"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "Active le support DDP pour les accès AppleTalk de bas-niveaux."
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "Active le support DDP pour les accès AppleTalk de bas-niveaux."
 
-msgid "Turn on/off TLS"
-msgstr "Activer/Désactiver TLS"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "Activer/Désactiver TLS"
 
-msgid "Rsyncd"
-msgstr "Rsyncd"
+#~ msgid "Rsyncd"
+#~ msgstr "Rsyncd"
 
-msgid "The volume failed to export"
-msgstr "L'export du volume a echoué"
+#~ msgid "The volume failed to export"
+#~ msgstr "L'export du volume a echoué"
 
-msgid "Cron Scheduler"
-msgstr "Planificateur Cron"
+#~ msgid "Cron Scheduler"
+#~ msgstr "Planificateur Cron"
 
-msgid "Devel"
-msgstr "Devel"
+#~ msgid "Devel"
+#~ msgstr "Devel"
 
-msgid "Docs"
-msgstr "Docs"
+#~ msgid "Docs"
+#~ msgstr "Docs"
 
-msgid "Welcome to"
-msgstr "Bienvenue sur"
+#~ msgid "Welcome to"
+#~ msgstr "Bienvenue sur"
 
-msgid "LUN"
-msgstr "LUN"
+#~ msgid "LUN"
+#~ msgstr "LUN"
 
-msgid "Mount point"
-msgstr "Point de montage"
+#~ msgid "Mount point"
+#~ msgstr "Point de montage"
 
-msgid "Dataset name"
-msgstr "Nom du jeu de données"
+#~ msgid "Dataset name"
+#~ msgstr "Nom du jeu de données"
 
-msgid "Snapshot name"
-msgstr "Nom de l'instantané"
+#~ msgid "Snapshot name"
+#~ msgstr "Nom de l'instantané"
 
-msgid "Used space"
-msgstr "Espace utilisé"
+#~ msgid "Used space"
+#~ msgstr "Espace utilisé"
 
-msgid "Referenced space"
-msgstr "Espace référencé"
+#~ msgid "Referenced space"
+#~ msgstr "Espace référencé"
 
-msgid "No ZFS snapshot available"
-msgstr "Aucun instantané ZFS n'est disponible"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "Aucun instantané ZFS n'est disponible"
 
-msgid "Create Periodic Snapshot"
-msgstr "Créer un instantané périodique"
+#~ msgid "Create Periodic Snapshot"
+#~ msgstr "Créer un instantané périodique"
 
-msgid "Restore to Factory Defaults"
-msgstr "Restaurer les paramètres par défaut"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "Restaurer les paramètres par défaut"
 
-msgid "Config"
-msgstr "Configuration"
+#~ msgid "Config"
+#~ msgstr "Configuration"
 
-msgid "%s successfully update."
-msgstr "%s mis à jour avec succès."
+#~ msgid "%s successfully update."
+#~ msgstr "%s mis à jour avec succès."
 
-msgid "Admin user"
-msgstr "Administrateur"
+#~ msgid "Admin user"
+#~ msgstr "Administrateur"
 
-msgid "N/A"
-msgstr "Non disponible"
+#~ msgid "N/A"
+#~ msgstr "Non disponible"
 
-msgid ""
-"Use this option to override the username ('www' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Utiliser cette option pour forcer le nom d'utilisateur (\"www\" par "
-"défaut) qui sera utilisé pour l'accès aux services en tant qu'invité. "
-"Tous privilèges accordés à cet utilisateur le seront également pour les "
-"clients se connectant au service en tant qu'invités. Cet utilisateur doit "
-"exister dans le fichier de mot de passe, mais ne nécessite pas une "
-"connexion valide."
+#~ msgid ""
+#~ "Use this option to override the username ('www' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Utiliser cette option pour forcer le nom d'utilisateur (\"www\" par "
+#~ "défaut) qui sera utilisé pour l'accès aux services en tant qu'invité. "
+#~ "Tous privilèges accordés à cet utilisateur le seront également pour les "
+#~ "clients se connectant au service en tant qu'invités. Cet utilisateur doit "
+#~ "exister dans le fichier de mot de passe, mais ne nécessite pas une "
+#~ "connexion valide."
 
-msgid "ZVol Name"
-msgstr "Nom du ZVol ZFS"
+#~ msgid "ZVol Name"
+#~ msgstr "Nom du ZVol ZFS"
 
 msgid "Dataset"
 msgstr "Jeu de données"
 
-msgid "ZVol"
-msgstr "ZVol ZFS"
+#~ msgid "ZVol"
+#~ msgstr "ZVol ZFS"
 
 # Quel est l’intérêt du "Native" ?
-msgid "Native dataset"
-msgstr "Jeu de données"
+#~ msgid "Native dataset"
+#~ msgstr "Jeu de données"
 
-msgid "/var/log/messages"
-msgstr "/var/log/messages"
+#~ msgid "/var/log/messages"
+#~ msgstr "/var/log/messages"
 
-msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aide & Support"
+#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aide & Support"
 
-msgid "Success!"
-msgstr "Succès !"
+#~ msgid "Success!"
+#~ msgstr "Succès !"
 
-msgid "Your password was changed."
-msgstr "Votre mot de passe a été modifié."
+#~ msgid "Your password was changed."
+#~ msgstr "Votre mot de passe a été modifié."
 
-msgid "Password change"
-msgstr "Modifier le mot de passe"
+#~ msgid "Password change"
+#~ msgstr "Modifier le mot de passe"
 
-msgid "Please correct the error below."
-msgid_plural "Please correct the errors below."
-msgstr[0] "Merci de corriger l'erreur ci-dessous."
-msgstr[1] "Merci de corriger les erreurs ci-dessous."
+#~ msgid "Please correct the error below."
+#~ msgid_plural "Please correct the errors below."
+#~ msgstr[0] "Merci de corriger l'erreur ci-dessous."
+#~ msgstr[1] "Merci de corriger les erreurs ci-dessous."
 
-msgid ""
-"Please enter your old password, and then enter your new password twice to "
-"verify it is typed in correctly."
-msgstr ""
-"Merci d'entrer votre ancien mot de passe, puis d'entrer votre nouveau mot "
-"de passe deux fois afin de vérifier qu'il a été saisi correctement."
+#~ msgid ""
+#~ "Please enter your old password, and then enter your new password twice to "
+#~ "verify it is typed in correctly."
+#~ msgstr ""
+#~ "Merci d'entrer votre ancien mot de passe, puis d'entrer votre nouveau mot "
+#~ "de passe deux fois afin de vérifier qu'il a été saisi correctement."
 
-msgid "Password (again)"
-msgstr "Mot de passe (à nouveau)"
+#~ msgid "Password (again)"
+#~ msgstr "Mot de passe (à nouveau)"
 
-msgid "minutes,"
-msgstr "minutes,"
+#~ msgid "minutes,"
+#~ msgstr "minutes,"
 
-msgid "Create ZFS zvol"
-msgstr "Créer un ZVol ZFS"
+#~ msgid "Create ZFS zvol"
+#~ msgstr "Créer un ZVol ZFS"
 
-msgid "Add ZVol"
-msgstr "Ajouter un ZVol ZFS"
+#~ msgid "Add ZVol"
+#~ msgstr "Ajouter un ZVol ZFS"
 
-msgid "English"
-msgstr "Anglais"
+#~ msgid "English"
+#~ msgstr "Anglais"
 
-msgid "Level"
-msgstr "Niveau"
+#~ msgid "Level"
+#~ msgstr "Niveau"
 
-msgid "Add Link Aggregation"
-msgstr "Ajouter une agrégation de liens"
+#~ msgid "Add Link Aggregation"
+#~ msgstr "Ajouter une agrégation de liens"
 
-msgid "View All Interfaces"
-msgstr "Voir les interfaces"
+#~ msgid "View All Interfaces"
+#~ msgstr "Voir les interfaces"
 
-msgid "View All VLANs"
-msgstr "Voir les VLAN"
+#~ msgid "View All VLANs"
+#~ msgstr "Voir les VLAN"
 
-msgid "View All Static Routes"
-msgstr "Voir les routes statiques"
+#~ msgid "View All Static Routes"
+#~ msgstr "Voir les routes statiques"
 
-msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr "La version de Microsoft Windows utilisé par Active Directory."
+#~ msgid "The version of Microsoft Windows that Active Directory is running."
+#~ msgstr "La version de Microsoft Windows utilisé par Active Directory."
 
 # Traduction "officielle" microsoft
-msgid "Service Principal Name"
-msgstr "Nom principal de service"
+#~ msgid "Service Principal Name"
+#~ msgstr "Nom principal de service"
 
-msgid "Service Principal Name, eg service/account."
-msgstr "Nom principal de service, e.g. service/compte."
+#~ msgid "Service Principal Name, eg service/account."
+#~ msgstr "Nom principal de service, e.g. service/compte."
 
-msgid "Service Principal Name Password"
-msgstr "Mot de passe du nom principal de service"
+#~ msgid "Service Principal Name Password"
+#~ msgstr "Mot de passe du nom principal de service"
 
-msgid "Password of the Service Principal Name account."
-msgstr "Mot de passe du compte nom principal de service."
+#~ msgid "Password of the Service Principal Name account."
+#~ msgstr "Mot de passe du compte nom principal de service."
 
-msgid "Kerberos Keytab File"
-msgstr "Fichier Keytab pour Kerberos"
+#~ msgid "Kerberos Keytab File"
+#~ msgstr "Fichier Keytab pour Kerberos"
 
-msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
-msgstr ""
-"Le fichier keytab pour Kerberos généré par le serveur Active Directory."
+#~ msgid ""
+#~ "The kerberos keytab file that was generated on the Active Directory "
+#~ "server."
+#~ msgstr ""
+#~ "Le fichier keytab pour Kerberos généré par le serveur Active Directory."
 
-msgid "Auxillary Parameters"
-msgstr "Paramètres supplémentaires"
+#~ msgid "Auxillary Parameters"
+#~ msgstr "Paramètres supplémentaires"
 
-msgid "View All UNIX Shares"
-msgstr "Voir les partages UNIX"
+#~ msgid "View All UNIX Shares"
+#~ msgstr "Voir les partages UNIX"
 
-msgid "View All Apple Shares"
-msgstr "Voir les partages Apple"
+#~ msgid "View All Apple Shares"
+#~ msgstr "Voir les partages Apple"
 
-msgid "View All Windows Shares"
-msgstr "Voir les partages Windows"
+#~ msgid "View All Windows Shares"
+#~ msgstr "Voir les partages Windows"
 
 msgid "Read"
 msgstr "Lecture"
@@ -7096,24 +6800,2287 @@ msgstr "Lecture"
 msgid "Write"
 msgstr "Écriture"
 
-msgid "Execute"
-msgstr "Exécution"
+#~ msgid "Execute"
+#~ msgstr "Exécution"
 
-msgid "Owner"
-msgstr "Propriétaire"
+#~ msgid "Owner"
+#~ msgstr "Propriétaire"
 
-msgid "Other"
-msgstr "Autre"
+#~ msgid "Other"
+#~ msgstr "Autre"
 
-msgid "View All Periodic Snapshot Tasks"
-msgstr "Voir les tâches périodiques d'instantané"
+#~ msgid "View All Periodic Snapshot Tasks"
+#~ msgstr "Voir les tâches périodiques d'instantané"
 
 # Gestion féminin et pluriel ?
-msgid "sucessfully edited"
-msgstr "modification effectuée"
+#~ msgid "sucessfully edited"
+#~ msgstr "modification effectuée"
 
-msgid "Lagg Interface was successfully added"
-msgstr "L'interface LAGG a été ajoutée avec succès"
+#~ msgid "Lagg Interface was successfully added"
+#~ msgstr "L'interface LAGG a été ajoutée avec succès"
 
-msgid "ActiveDirectory Settings"
+#~ msgid "ActiveDirectory Settings"
+#~ msgstr "Paramètres Active Directory"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr ""
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr ""
+
+#: choices.py:308
+msgid "zle (runs of zeros)"
+msgstr ""
+
+#: choices.py:309
+#, fuzzy
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (recommandé)"
+
+#: choices.py:601
+msgid "19200"
+msgstr ""
+
+#: choices.py:604
+msgid "115200"
+msgstr ""
+
+#: choices.py:662
+msgid "Verbose"
+msgstr ""
+
+#: choices.py:670
+msgid "Daemon"
+msgstr ""
+
+#: choices.py:692
+msgid "type1"
+msgstr ""
+
+#: choices.py:693
+msgid "type2"
+msgstr ""
+
+#: choices.py:694
+msgid "type3"
+msgstr ""
+
+#: choices.py:695
+msgid "type4"
+msgstr ""
+
+#: choices.py:696
+msgid "type5"
+msgstr ""
+
+#: choices.py:704
+msgid "data"
+msgstr ""
+
+#: choices.py:706
+msgid "auth"
+msgstr ""
+
+#: choices.py:709
+msgid "ctrl+!data"
+msgstr ""
+
+#: choices.py:711
+msgid "auth+!data"
+msgstr ""
+
+#: account/forms.py:60
+#, fuzzy
+msgid "Confirm New Password"
+msgstr "Confirmer le mot de passe"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr ""
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr ""
+
+#: api/resources.py:766
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+#, fuzzy
+msgid "Locked"
+msgstr "Verrouiller l'utilisateur"
+
+#: api/resources.py:859
+#, fuzzy
+msgid "on every %(days)s"
+msgstr "Tous les %s jours"
+
+#: api/resources.py:865
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr ""
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+#, fuzzy
+msgid "Invalid address: %s"
+msgstr "Firmware invalide"
+
+#: jails/admin.py:75
+#: jails/forms.py:724
+#: jails/models.py:396
+#: templates/plugins/plugins.html:21
+#, fuzzy
+msgid "Jail"
+msgstr "IP de la prison"
+
+#: jails/admin.py:196
+msgid "Start"
+msgstr ""
+
+#: jails/admin.py:261
+#: jails/models.py:346
+msgid "URL"
+msgstr ""
+
+#: jails/forms.py:88
+msgid "type"
+msgstr ""
+
+#: jails/forms.py:170
+msgid "No jail root configured."
+msgstr ""
+
+#: jails/forms.py:233
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr ""
+
+#: jails/forms.py:458
+msgid "autostart"
+msgstr ""
+
+#: jails/forms.py:771
+#, fuzzy
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr "Le chemin n'a pas pu être monté %s"
+
+#: jails/models.py:72
+#, fuzzy
+msgid "Jail Name"
+msgstr "Nom de la prison"
+
+#: jails/models.py:94
+#, fuzzy
+msgid "IPv4 bridge address"
+msgstr "Adresse IPv4"
+
+#: jails/models.py:113
+#, fuzzy
+msgid "IPv6 address"
+msgstr "Adresse IPv6"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr ""
+
+#: jails/models.py:224
+#, fuzzy
+msgid "This jail is required by %d plugin(s)"
+msgstr "Ce champ est nécessaire pour les connexions anonymes"
+
+#: jails/models.py:260
+#, fuzzy
+msgid "Jail Root"
+msgstr "Chemin de la prison"
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr ""
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:280
+#, fuzzy
+msgid "IPv6 Network"
+msgstr "Masque de sous-réseau IPv6"
+
+#: jails/models.py:285
+#, fuzzy
+msgid "IPv6 Network Start Address"
+msgstr "Adresse IPv6"
+
+#: jails/models.py:290
+#, fuzzy
+msgid "IPv6 Network End Address"
+msgstr "Adresse IPv6"
+
+#: jails/models.py:291
+msgid "IPv6 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:294
+#, fuzzy
+msgid "Collection URL"
+msgstr "Connexions"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr ""
+
+#: jails/models.py:373
+msgid "Template must have 0 instances!"
+msgstr ""
+
+#: jails/models.py:388
+#: jails/models.py:389
+#, fuzzy
+msgid "Jail Templates"
+msgstr "Chemin de la prison"
+
+#: jails/models.py:408
+#, fuzzy
+msgid "Read-Only"
+msgstr "Lecture seule"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr ""
+
+#: jails/nav.py:100
+#, fuzzy
+msgid "View Jails"
+msgstr "Voir les %s"
+
+#: jails/nav.py:250
+msgid "%s"
+msgstr ""
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr ""
+
+#: jails/utils.py:694
+#, fuzzy
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr "Impossible de récupérer %(url)s : %(error)s"
+
+#: jails/views.py:94
+#, fuzzy
+msgid "Jail successfully edited."
+msgstr "Prison importée avec succès."
+
+#: jails/views.py:134
+#, fuzzy
+msgid "Jail successfully started."
+msgstr "Prison importée avec succès."
+
+#: jails/views.py:397
+#, fuzzy
+msgid "Jail template successfully edited."
+msgstr "Jeu de données modifié avec succès."
+
+#: middleware/notifier.py:2874
+msgid "No RPC Token!"
+msgstr ""
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr ""
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr ""
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr ""
+
+#: network/forms.py:284
+#, fuzzy
+msgid "The IP \"%s\" is not valid"
+msgstr "L'IP \"%s\" n'est pas valide."
+
+#: network/forms.py:343
+msgid "You need a domain, e.g. hostname.domain"
+msgstr ""
+
+#: network/forms.py:373
+#, fuzzy
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr ""
+"Les noms d'interfaces doivent être du type vlanXX, où XX est un entier. "
+"Exemple: vlan0."
+
+#: network/models.py:77
+#, fuzzy
+msgid "Enable netwait feature"
+msgstr "Activer les réglages auto"
+
+#: network/models.py:88
+msgid "Netwait IP list"
+msgstr ""
+
+#: network/models.py:97
+msgid "Host name data base"
+msgstr ""
+
+#: network/models.py:401
+#, fuzzy
+msgid "LAGG Interface Group"
+msgstr "Groupe d'interface LAGG"
+
+#: network/models.py:427
+#, fuzzy
+msgid "Link Aggregation Member"
+msgstr "Agrégation de liens"
+
+#: network/models.py:428
+#, fuzzy
+msgid "Link Aggregation Members"
+msgstr "Agrégations de liens"
+
+#: plugins/admin.py:58
+#: plugins/admin.py:65
+#, fuzzy
+msgid "Install"
+msgstr "Installé..."
+
+#: plugins/forms.py:89
+msgid ""
+"Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
+msgstr ""
+
+#: plugins/forms.py:105
+#, fuzzy
+msgid "Plugin Jail"
+msgstr "Prison des modules PBI"
+
+#: plugins/forms.py:106
+#, fuzzy
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr ""
+"Le chemin de la prison des modules ne peut pas faire partie du chemin de "
+"l'archive des modules."
+
+#: plugins/models.py:103
+#, fuzzy
+msgid "Plugin"
+msgstr "Modules"
+
+#: plugins/models.py:175
+#, fuzzy
+msgid "URL for the plugins repository"
+msgstr "Chemin vers le répertoire des modules"
+
+#: plugins/views.py:196
+#, fuzzy
+msgid "Jail does not exist"
+msgstr "Le chemin n'existe pas."
+
+#: plugins/views.py:205
+#, fuzzy
+msgid "Failed to update plugin"
+msgstr "Nom du module"
+
+#: plugins/views.py:224
+#: plugins/views.py:355
+#, fuzzy
+msgid "No available IP addresses"
+msgstr "Adresse IP de la prison"
+
+#: services/forms.py:637
+#: services/forms.py:645
+#, fuzzy
+msgid "Spaces or number signs are not allowed."
+msgstr "Les guillemets ne sont pas autorisés"
+
+#: services/forms.py:826
+#, fuzzy
+msgid "Peer Secret (Confirm)"
+msgstr "Secret (confirmation)"
+
+#: services/forms.py:1331
+msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
+msgstr ""
+
+#: services/forms.py:1504
+#, fuzzy
+msgid "A target with that name already exists."
+msgstr "Un groupe avec ce nom existe déjà."
+
+#: services/models.py:214
+#, fuzzy
+msgid "Hostnames lookups"
+msgstr "Nom d'hôte"
+
+#: services/models.py:287
+#, fuzzy
+msgid "Allow non-root mount"
+msgstr "Autoriser la connexion de root"
+
+#: services/models.py:298
+#, fuzzy
+msgid "Bind IP Addresses"
+msgstr "Adresse IP"
+
+#: services/models.py:712
+#, fuzzy
+msgid "Initiator side user name."
+msgstr "Secret de l'initiateur"
+
+#: services/models.py:932
+#, fuzzy
+msgid "These parameters will be added to /etc/snmpd.config."
+msgstr "Ces paramètres sont ajoutés à proftpd.conf."
+
+#: services/models.py:971
+#, fuzzy
+msgid "Remote Port"
+msgstr "Port distant"
+
+#: services/models.py:1015
+#, fuzzy
+msgid "Monitor User"
+msgstr "Modifier l'utilisateur"
+
+#: services/models.py:1105
+msgid "Message which will be displayed to the user when they initially login."
+msgstr ""
+
+#: services/models.py:1132
+msgid ""
+"For local users, only allow access to user home directory unless the user is "
+"a member of group wheel."
+msgstr ""
+
+#: services/models.py:1194
+#, fuzzy
+msgid "Enable TLS"
+msgstr "Activer SSL/TLS"
+
+#: services/models.py:1199
+msgid "TLS policy"
+msgstr ""
+
+#: services/models.py:1202
+msgid "TLS allow client renegotiations"
+msgstr ""
+
+#: services/models.py:1214
+msgid "TLS common name required"
+msgstr ""
+
+#: services/models.py:1218
+msgid "TLS enable diagnostics"
+msgstr ""
+
+#: services/models.py:1222
+#, fuzzy
+msgid "TLS export certificate data"
+msgstr "Certificat auto-signé"
+
+#: services/models.py:1234
+msgid "TLS no session reuse required"
+msgstr ""
+
+#: services/models.py:1238
+msgid "TLS export standard vars"
+msgstr ""
+
+#: services/models.py:1246
+#, fuzzy
+msgid "TLS DNS name required"
+msgstr "Ce nombre est requis."
+
+#: services/models.py:1254
+msgid "Certificate and private key"
+msgstr ""
+
+#: services/models.py:1354
+msgid "SFTP Log Facility"
+msgstr ""
+
+#: services/models.py:1436
+#: services/models.py:1532
+#, fuzzy
+msgid "Domain Controller"
+msgstr "Nom du contrôleur de domaine"
+
+#: services/models.py:1522
+msgid "Set this if you want to allow Trusted Domains."
+msgstr ""
+
+#: services/models.py:1544
+#, fuzzy
+msgid "Kerberos Server"
+msgstr "Fichier Keytab pour Kerberos"
+
+#: services/models.py:1545
+msgid "Hostname of the kerberos server to use."
+msgstr ""
+
+#: services/models.py:1550
+msgid "Kerberos Password Server"
+msgstr ""
+
+#: services/models.py:1560
+#, fuzzy
+msgid "DNS timeout"
+msgstr "Délai dépassé"
+
+#: services/models.py:1600
+#, fuzzy
+msgid "NIS domain"
+msgstr "Domaine"
+
+#: services/models.py:1607
+msgid "Comma delimited list of NIS servers"
+msgstr ""
+
+#: services/models.py:1611
+#, fuzzy
+msgid "Secure mode"
+msgstr "Mode d'alimentation"
+
+#: services/models.py:1612
+msgid "Cause ypbind to run in secure mode"
+msgstr ""
+
+#: services/models.py:1625
+#: services/models.py:1626
+#, fuzzy
+msgid "NIS Domain"
+msgstr "Domaine"
+
+#: services/models.py:1868
+#, fuzzy
+msgid "Informational"
+msgstr "Informel"
+
+#: services/models.py:1869
+#, fuzzy
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Signaler si la température est supérieure ou égale à N degrés Celsius. 0 "
+"pour désactiver"
+
+#: services/models.py:1876
+#, fuzzy
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Signaler si la température est supérieure ou égale à N degrés Celsius. 0 "
+"pour désactiver"
+
+#: services/models.py:1884
+#, fuzzy
+msgid "Destination email address. Separate email addresses by commas"
+msgstr ""
+"Adresses e-mail de destination. Séparez les adresses par des points-virgules."
+
+#: services/nav.py:115
+#: templates/services/core.html:27
+#, fuzzy
+msgid "Directory Services"
+msgstr "Permission de répertoire"
+
+#: sharing/forms.py:148
+#: sharing/forms.py:153
+#, fuzzy
+msgid "The umask must be between 000 and 777."
+msgstr "Cette valeur doit être comprise entre 0 et 1000 inclus."
+
+#: sharing/forms.py:274
+msgid "Paths for a NFS share must reside within the same filesystem"
+msgstr ""
+
+#: sharing/forms.py:281
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr ""
+
+#: sharing/forms.py:318
+msgid ""
+"The network %s is already being shared and cannot be used twice for the same "
+"filesystem"
+msgstr ""
+
+#: sharing/models.py:201
+#, fuzzy
+msgid "Authorized networks"
+msgstr "Réseau autorisé"
+
+#: sharing/models.py:258
+msgid "The specified group's permission are used by all clients"
+msgstr ""
+
+#: storage/admin.py:280
+#, fuzzy
+msgid "Change Passphrase"
+msgstr "Modifier le mot de passe"
+
+#: storage/admin.py:287
+msgid "Download Key"
+msgstr ""
+
+#: storage/admin.py:299
+msgid "Add recovery key"
+msgstr ""
+
+#: storage/admin.py:311
+msgid "Unlock"
+msgstr ""
+
+#: storage/admin.py:470
+#, fuzzy
+msgid "Replace"
+msgstr "Remplacer le disque"
+
+#: storage/admin.py:572
+msgid "When"
+msgstr ""
+
+#: storage/admin.py:609
+#, fuzzy
+msgid "Remote Hostname"
+msgstr "Nom d'hôte distant"
+
+# Entrer ? Entrez ?
+#: storage/forms.py:120
+#, fuzzy
+msgid "Enter positive number (optionally suffixed by K, M, G, T), or 0"
+msgstr "Saisir un nombre positif (optionnellement suffixé par M, G, T) ou 0"
+
+#: storage/forms.py:770
+msgid "No: Skip to import"
+msgstr ""
+
+#: storage/forms.py:773
+#, fuzzy
+msgid "Encrypted ZFS volume?"
+msgstr "Créer un volume ZFS"
+
+#: storage/forms.py:791
+#, fuzzy
+msgid "Encryption Key"
+msgstr "Mode de chiffrement"
+
+#: storage/forms.py:839
+#, fuzzy
+msgid "The following disks failed to attach: %s"
+msgstr "Les disques suivants ont déjà des tests de ce type: %s"
+
+#: storage/forms.py:1128
+msgid ""
+"Specifies a suggested block size for files in the file system. This property "
+"is designed solely for use with database workloads that access files in "
+"fixed-size records.  ZFS automatically tunes block sizes according to "
+"internal algorithms optimized for typical access patterns."
+msgstr ""
+
+#: storage/forms.py:1272
+#, fuzzy
+msgid "Size for this zvol"
+msgstr "Taille du Volume ZFS"
+
+#: storage/forms.py:1290
+#, fuzzy
+msgid "Block size"
+msgstr "Taille du bloc logique"
+
+#: storage/forms.py:1292
+msgid ""
+"The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
+"to 128 Kbytes is valid."
+msgstr ""
+
+#: storage/forms.py:1598
+msgid "Confirmation does not match passphrase"
+msgstr ""
+
+#: storage/forms.py:1606
+#, fuzzy
+msgid "Passphrase is not valid"
+msgstr "L'utilisateur %s est invalide."
+
+#: storage/forms.py:1665
+msgid "Dedicated User Enabled"
+msgstr ""
+
+#: storage/forms.py:1666
+msgid "If disabled then root will be used for replication."
+msgstr ""
+
+#: storage/forms.py:1674
+msgid "Enable High Speed Ciphers"
+msgstr ""
+
+#: storage/forms.py:1678
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which makes it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/forms.py:1944
+#, fuzzy
+msgid "New Passphrase"
+msgstr "Nouveau mot de passe"
+
+#: storage/forms.py:1948
+#, fuzzy
+msgid "Confirm New Passphrase"
+msgstr "Confirmer le mot de passe"
+
+#: storage/forms.py:1974
+#: storage/forms.py:2119
+#, fuzzy
+msgid "Invalid password"
+msgstr "Ancien mot de passe"
+
+#: storage/forms.py:2024
+#, fuzzy
+msgid "Recovery Key"
+msgstr "Tous les jours"
+
+#: storage/forms.py:2028
+#, fuzzy
+msgid "Restart services"
+msgstr "Contrôle des services"
+
+#: storage/forms.py:2045
+#, fuzzy
+msgid "Jails/Plugins"
+msgstr "Modules"
+
+#: storage/models.py:574
+msgid "Underlying provider"
+msgstr ""
+
+#: storage/models.py:791
+msgid "Remote Dedicated User Enabled"
+msgstr ""
+
+#: storage/models.py:794
+#, fuzzy
+msgid "Remote Dedicated User"
+msgstr "Hôte de réplication à distance"
+
+#: storage/models.py:831
+msgid ""
+"Disabling will stop any new replications being queued. It will not stop any "
+"replications which are queued or in progress."
+msgstr ""
+
+#: storage/models.py:836
+#: storage/models.py:915
+#, fuzzy
+msgid "Volume/Dataset"
+msgstr "Jeu de données"
+
+#: storage/models.py:852
+#, fuzzy
+msgid "Remote ZFS Volume/Dataset"
+msgstr "Créer un jeu de données ZFS"
+
+#: storage/models.py:885
+#, fuzzy
+msgid "Do not start replication after"
+msgstr "Ne pas faire d'instantané après"
+
+#: storage/nav.py:39
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "Gestionnaire de volumes"
+
+#: storage/nav.py:51
+#: templates/storage/volume_datagrid.html:20
+#, fuzzy
+msgid "UFS Volume Manager (legacy)"
+msgstr "Gestionnaire de volumes"
+
+#: storage/views.py:903
+#, fuzzy
+msgid "Passphrase updated"
+msgstr "Mot de passe mis à jour avec succès."
+
+#: storage/views.py:997
+#, fuzzy
+msgid "Encryption re-key succeeded"
+msgstr "Mode de chiffrement"
+
+#: storage/views.py:1016
+msgid "GELI recovery key download starting..."
+msgstr ""
+
+#: support/models.py:41
+#, fuzzy
+msgid "Support subject."
+msgstr "Problèmes de support"
+
+#: support/models.py:49
+#, fuzzy
+msgid "Support"
+msgstr "Support des attributs étendus"
+
+#: system/forms.py:86
+#, fuzzy
+msgid "The volume %s is locked by encryption"
+msgstr "L'export du volume a echoué"
+
+#: system/forms.py:512
+#, fuzzy
+msgid "The two passphrase fields didn't match."
+msgstr "Les deux mots de passe sont différents."
+
+#: system/forms.py:564
+msgid "RSA or DSA private key not found"
+msgstr ""
+
+#: system/forms.py:811
+#, fuzzy
+msgid "Usernames cannot exceed 17 characters for cronjobs"
+msgstr "Le chemin absolu ne peut pas dépasser 88 caractères"
+
+#: system/models.py:69
+#, fuzzy
+msgid "WebGUI HTTP Port"
+msgstr "Port du WebGUI"
+
+#: system/models.py:108
+#, fuzzy
+msgid "Directory Service"
+msgstr "Permission de répertoire"
+
+#: system/models.py:193
+msgid "Set this to match your serial port speed"
+msgstr ""
+
+#: system/models.py:222
+msgid "Enable report anonymous statistics"
+msgstr ""
+
+#: system/models.py:422
+msgid "Redirect Stderr"
+msgstr ""
+
+#: system/models.py:916
+msgid "Pre Init"
+msgstr ""
+
+#: system/models.py:953
+#, fuzzy
+msgid "Last Name"
+msgstr "Nom de base"
+
+#: system/models.py:981
+msgid "Zip"
+msgstr ""
+
+#: system/models.py:991
+msgid "Home Phone"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:8
+#, fuzzy
+msgid "Add %(name)s"
+msgstr "Ajouter %s"
+
+#: templates/freeadmin/help.html:39
+msgid "FreeBSD Man Pages"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#, fuzzy
+msgid "Are you sure you want to delete "
+msgstr "Êtes-vous sûr de vouloir supprimer ?"
+
+#: templates/jails/stop.html:3
+msgid "Stop "
+msgstr ""
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr ""
+
+#: templates/plugins/index.html:10
+#, fuzzy
+msgid "Installed"
+msgstr "Installé..."
+
+#: templates/registration/login.html:54
+msgid ""
+"The web admin user has been removed in this release in order to unify the "
+"web and Unix authentication mechanisms."
+msgstr ""
+
+#: templates/registration/login.html:55
+msgid ""
+"Administrators should log in to the web UI as root, since the web UI already "
+"confers superuser privileges in many areas."
+msgstr ""
+
+#: templates/storage/key.html:6
+#: templates/storage/recoverykey_add.html:9
+#: templates/storage/recoverykey_remove.html:6
+#: templates/storage/rekey.html:6
+msgid "Continue"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:4
+msgid "You are about to add a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:5
+msgid "This will invalidate any previous recovery key"
+msgstr ""
+
+#: templates/storage/rekey.html:3
+msgid "You are about to re-key the encryption"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:8
+#, fuzzy
+msgid "Progress"
+msgstr "Compresser"
+
+# Chiffrement bittorrent
+#: templates/storage/volumestatus_datagrid.html:15
+#, fuzzy
+msgid "Repaired"
+msgstr "Requis"
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr ""
+
+#: templates/storage/zvols.html:6
+#, fuzzy
+msgid "Add zvol"
+msgstr "Ajouter un ZVol ZFS"
+
+#: tools/alert.py:176
+#, fuzzy
+msgid "The WebGUI Address could not bind to %s; using wildcard"
+msgstr ""
+"L'adresse du WebGUI n'a pas pue être liée à %s; utilisation d'une wildcard"
+
+#: tools/alert.py:198
+#, fuzzy
+msgid "The following multipaths are not optimal: %s"
+msgstr "Les disques suivants ont déjà des tests de ce type: %s"
+
+#: choices.py:52
+#, fuzzy
+msgid "HTTP+HTTPS"
+msgstr "HTTPS"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr ""
+
+#: choices.py:304
+#, fuzzy
+msgid "lz4 (recommended)"
+msgstr "lzjb (recommandé)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr ""
+
+#: choices.py:602
+msgid "38400"
+msgstr ""
+
+#: choices.py:603
+msgid "57600"
+msgstr ""
+
+#: choices.py:659
+msgid "Fatal"
+msgstr ""
+
+#: choices.py:664
+#, fuzzy
+msgid "Debug2"
+msgstr "Débogage"
+
+#: choices.py:665
+#, fuzzy
+msgid "Debug3"
+msgstr "Débogage"
+
+#: choices.py:672
+msgid "Auth"
+msgstr ""
+
+#: choices.py:673
+#, fuzzy
+msgid "Local 0"
+msgstr "Utilisateur local"
+
+#: choices.py:674
+#, fuzzy
+msgid "Local 1"
+msgstr "Utilisateur local"
+
+#: choices.py:675
+#, fuzzy
+msgid "Local 2"
+msgstr "Utilisateur local"
+
+#: choices.py:676
+#, fuzzy
+msgid "Local 3"
+msgstr "Utilisateur local"
+
+#: choices.py:677
+#, fuzzy
+msgid "Local 4"
+msgstr "Utilisateur local"
+
+#: choices.py:678
+#, fuzzy
+msgid "Local 5"
+msgstr "Utilisateur local"
+
+#: choices.py:679
+#, fuzzy
+msgid "Local 6"
+msgstr "Utilisateur local"
+
+#: choices.py:680
+#, fuzzy
+msgid "Local 7"
+msgstr "Utilisateur local"
+
+#: choices.py:686
+msgid "NT4"
+msgstr ""
+
+#: choices.py:687
+#, fuzzy
+msgid "NIS"
+msgstr "Interface réseau"
+
+#: choices.py:702
+#, fuzzy
+msgid "on"
+msgstr "Aucun(e)"
+
+#: choices.py:703
+#, fuzzy
+msgid "off"
+msgstr "Désactiver"
+
+#: choices.py:705
+msgid "!data"
+msgstr ""
+
+#: choices.py:707
+msgid "ctrl"
+msgstr ""
+
+#: choices.py:708
+msgid "ctrl+data"
+msgstr ""
+
+#: account/forms.py:55
+#, fuzzy
+msgid "New Password"
+msgstr "Nouveau mot de passe"
+
+#: account/forms.py:68
+#, fuzzy
+msgid "Passwords do not match"
+msgstr "Secret n'est pas identique"
+
+#: account/forms.py:561
+#, fuzzy
+msgid "Home directory must end with username"
+msgstr "Le répertoire personnel n'est pas inscriptible, laisser vide"
+
+#: account/models.py:52
+#, fuzzy
+msgid "Built-in Group"
+msgstr "Groupes secondaires"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr ""
+
+#: common/system.py:278
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: freeadmin/forms.py:220
+#, fuzzy
+msgid "A file is required"
+msgstr "Ce champ est obligatoire"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+#, fuzzy
+msgid "Invalid network: %s"
+msgstr "Somme de contrôle invalide"
+
+#: freeadmin/navtree.py:573
+#, fuzzy
+msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
+msgstr "Une erreur est survenue lors de dé-sérialisation de %(url)s : %(error)s"
+
+#: jails/admin.py:91
+#: jails/models.py:149
+#, fuzzy
+msgid "Autostart"
+msgstr "Automatique"
+
+#: jails/admin.py:182
+#, fuzzy
+msgid "Edit Jail"
+msgstr "Modifier le Portail"
+
+#: jails/admin.py:185
+#: jails/nav.py:264
+#, fuzzy
+msgid "Add Storage"
+msgstr "Stockage"
+
+#: jails/admin.py:188
+#: templates/plugins/available_datagrid.html:27
+#, fuzzy
+msgid "Upload Plugin"
+msgstr "Mettre à jour le module"
+
+#: jails/admin.py:197
+msgid "Stop"
+msgstr ""
+
+#: jails/admin.py:267
+msgid "Instances"
+msgstr ""
+
+#: jails/forms.py:92
+msgid "32 bit"
+msgstr ""
+
+#: jails/forms.py:98
+msgid "vanilla"
+msgstr ""
+
+#: jails/forms.py:459
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr ""
+
+#: jails/forms.py:460
+#: jails/models.py:162
+#, fuzzy
+msgid "NAT"
+msgstr "Non disponible"
+
+#: jails/forms.py:651
+msgid "Create destination directory if it does not exist"
+msgstr ""
+
+#: jails/forms.py:693
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr ""
+
+#: jails/hook.py:13
+#: jails/models.py:252
+#: jails/models.py:253
+#: jails/nav.py:47
+#: templates/jails/index.html:5
+#, fuzzy
+msgid "Jails"
+msgstr "IP de la prison"
+
+#: jails/models.py:82
+#, fuzzy
+msgid "IPv4 address"
+msgstr "Adresse IPv4"
+
+#: jails/models.py:88
+#, fuzzy
+msgid "IPv4 aliases"
+msgstr "Alias"
+
+#: jails/models.py:100
+msgid "IPv4 bridge aliases"
+msgstr ""
+
+#: jails/models.py:107
+#, fuzzy
+msgid "IPv4 default gateway"
+msgstr "Passerelle par défaut IPv4"
+
+#: jails/models.py:119
+#, fuzzy
+msgid "IPv6 aliases"
+msgstr "Alias"
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr ""
+
+#: jails/models.py:265
+#, fuzzy
+msgid "IPv4 Network"
+msgstr "Masque de sous-réseau IPv4"
+
+#: jails/models.py:270
+#, fuzzy
+msgid "IPv4 Network Start Address"
+msgstr "Adresse IPv4"
+
+#: jails/models.py:275
+#, fuzzy
+msgid "IPv4 Network End Address"
+msgstr "Adresse IPv4"
+
+#: jails/models.py:305
+#: jails/models.py:306
+#, fuzzy
+msgid "Jails Configuration"
+msgstr "Configuration générale"
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:28
+#: templates/plugins/index.html:18
+#, fuzzy
+msgid "Configuration"
+msgstr "Configuration générale"
+
+#: jails/utils.py:567
+#, fuzzy
+msgid "Unable to determine IPv4 for plugin"
+msgstr "Impossible de supprimer le module."
+
+#: jails/views.py:114
+#, fuzzy
+msgid "Storage successfully added."
+msgstr "Jeu de données ajouté avec succès."
+
+#: jails/views.py:155
+#, fuzzy
+msgid "Jail successfully stopped."
+msgstr "Prison importée avec succès."
+
+#: jails/views.py:176
+#, fuzzy
+msgid "Jail successfully deleted."
+msgstr "%s supprimé(e) avec succès."
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr ""
+
+#: network/admin.py:39
+#, fuzzy
+msgid "IPv4 Addresses"
+msgstr "Adresse IPv4"
+
+#: network/admin.py:44
+#, fuzzy
+msgid "IPv6 Addresses"
+msgstr "Adresse IPv6"
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr ""
+
+#: network/models.py:78
+msgid ""
+"If enabled, delays the start of network-reliant services until interface is "
+"up and ICMP packets to a destination defined in netwait ip list are "
+"flowing.  Link state is examined first, followed by \"pinging\" an IP "
+"address to verify network usability.  If no destination can be reached or "
+"timeouts are exceeded, network services are started anyway with no guarantee "
+"that the network is usable."
+msgstr ""
+
+#: network/models.py:89
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+
+#: network/models.py:98
+msgid ""
+"This field is appended to /etc/hosts which contains information regarding "
+"known hosts on the network. hosts(5)"
+msgstr ""
+
+#: plugins/models.py:93
+#, fuzzy
+msgid "Plugin jail name"
+msgstr "Nom du module"
+
+#: plugins/models.py:94
+#, fuzzy
+msgid "Jail where the plugin is installed"
+msgstr "Aucun module n'est installé"
+
+#: plugins/models.py:141
+msgid "Kmod"
+msgstr ""
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr ""
+
+#: plugins/plugin.py:120
+#, fuzzy
+msgid "Failed to download %(url)s: %(error)s"
+msgstr "Impossible de récupérer %(url)s : %(error)s"
+
+#: plugins/views.py:171
+#, fuzzy
+msgid "Plugin not installed"
+msgstr "Aucun module n'est installé"
+
+#: plugins/views.py:181
+#: plugins/views.py:242
+#, fuzzy
+msgid "Invalid plugin"
+msgstr "Préfixe invalide"
+
+#: plugins/views.py:192
+#: plugins/views.py:250
+#, fuzzy
+msgid "Failed to download plugin"
+msgstr "Impossible de supprimer le module."
+
+#: services/models.py:259
+#, fuzzy
+msgid "Enable/disable home directories for afp user."
+msgstr "Active/désactive les répertoires personnels des utilisateurs samba."
+
+#: services/models.py:288
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it.  It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+
+#: services/models.py:299
+msgid ""
+"Specify specific IP addresses (separated by commas) to bind to for TCP and "
+"UDP requests. This option may be specified multiple times. If no IP is "
+"specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
+"and if IPv6 is enabled, ::1 to the list."
+msgstr ""
+
+#: services/models.py:307
+msgid "mountd(8) bind port"
+msgstr ""
+
+#: services/models.py:324
+msgid ""
+"This option forces the rpc.statd daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:861
+#, fuzzy
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names."
+msgstr ""
+"Un alias de nom d'hôte. Cette option peut apparaître plusieurs fois, pour "
+"chaque domaine ayant la même IP. Utiliser un espace pour séparer les alias "
+"multiples."
+
+#: services/models.py:888
+#, fuzzy
+msgid "These parameters will be added to global settings in inadyn-mt.conf."
+msgstr ""
+"Ces paramètres seront ajoutés à la configuration générale dans inadyn.conf."
+
+#: services/models.py:950
+#, fuzzy
+msgid "Master"
+msgstr "Maître local"
+
+#: services/models.py:951
+msgid "Slave"
+msgstr ""
+
+#: services/models.py:1102
+msgid "Display Login"
+msgstr ""
+
+#: services/models.py:1121
+#, fuzzy
+msgid ""
+"Use this option to override the directory creation mask (077 by default)."
+msgstr ""
+"Utilisez cette option pour forcer le masque de création de répertoire (0777 "
+"par défaut)."
+
+#: services/models.py:1210
+msgid "TLS allow per user"
+msgstr ""
+
+#: services/models.py:1226
+#, fuzzy
+msgid "TLS no certificate request"
+msgstr "Certificat auto-signé"
+
+#: services/models.py:1230
+msgid "TLS no empty fragments"
+msgstr ""
+
+#: services/models.py:1242
+msgid "TLS use implicit SSL"
+msgstr ""
+
+#: services/models.py:1250
+msgid "TLS IP address required"
+msgstr ""
+
+#: services/models.py:1343
+#, fuzzy
+msgid "SFTP Log Level"
+msgstr "Verbosité du journal"
+
+#: services/models.py:1347
+msgid ""
+"Specifies which messages will be logged by sftp-server. INFO and VERBOSE log "
+"transactions that sftp-server performs on behalf of the client. DEBUG2 and "
+"DEBUG3 each specify higher levels of debugging output. The default is ERROR."
+msgstr ""
+
+#: services/models.py:1437
+#: services/models.py:1533
+msgid "Hostname of the domain controller to use."
+msgstr ""
+
+#: services/models.py:1516
+#, fuzzy
+msgid "UNIX extensions"
+msgstr "Extensions Unix"
+
+#: services/models.py:1517
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr ""
+
+#: services/models.py:1526
+msgid "Use default domain"
+msgstr ""
+
+#: services/models.py:1538
+msgid "Global Catalog Server"
+msgstr ""
+
+#: services/models.py:1551
+msgid "Hostname of the kerberos password server to use."
+msgstr ""
+
+#: services/models.py:1555
+#, fuzzy
+msgid "AD timeout"
+msgstr "Délai dépassé"
+
+#: services/models.py:1556
+msgid "Timeout for AD related commands."
+msgstr ""
+
+#: services/models.py:1561
+msgid "Timeout for AD DNS queries."
+msgstr ""
+
+#: services/models.py:1601
+#, fuzzy
+msgid "NIS domain name"
+msgstr "Nom de domaine"
+
+#: services/models.py:1606
+#, fuzzy
+msgid "NIS servers"
+msgstr "Serveurs NTP"
+
+#: services/models.py:1616
+msgid "Manycast"
+msgstr ""
+
+#: services/models.py:1617
+msgid "Cause ypbind to use 'many-cast' instead of broadcast"
+msgstr ""
+
+#: sharing/admin.py:78
+#: sharing/models.py:291
+#, fuzzy
+msgid "Paths"
+msgstr "Chemin"
+
+#: sharing/forms.py:195
+#, fuzzy
+msgid "This is not a valid network: %s"
+msgstr "Ce n'est pas un réseau valide"
+
+#: sharing/forms.py:309
+msgid "This option is only available once per mountpoint"
+msgstr ""
+
+#: sharing/forms.py:341
+msgid "You need at least one path for the share"
+msgstr ""
+
+#: sharing/models.py:178
+#, fuzzy
+msgid "Default umask"
+msgstr "Par défaut"
+
+#: sharing/models.py:202
+#, fuzzy
+msgid ""
+"Networks that are authorized to access the NFS share. Specify network "
+"numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
+msgstr ""
+"Réseau ou liste d'adresses IP autorisés à accéder au partage NFS. Spécifier "
+"le réseau sous la forme 1.2.3.4/xx où xx est le nombre de bits du masque de "
+"sous-réseau ou une liste d'adresses IP 1.2.3.4 1.2.3.5 1.2.3.6."
+
+#: sharing/models.py:208
+#, fuzzy
+msgid "Authorized IP addresses or hosts"
+msgstr "Réseaux ou adresses IP autorisés"
+
+#: sharing/models.py:209
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr ""
+
+#: sharing/models.py:231
+msgid ""
+"If a user is selected, the root user is limited to that user's permissions"
+msgstr ""
+
+#: sharing/models.py:249
+msgid "The specified user's permissions are used by all clients"
+msgstr ""
+
+#: storage/admin.py:35
+msgid "Wipe"
+msgstr ""
+
+#: storage/admin.py:46
+msgid "Edit In Bulk"
+msgstr ""
+
+#: storage/admin.py:249
+#: storage/admin.py:338
+#: storage/nav.py:123
+#, fuzzy
+msgid "Create zvol"
+msgstr "Créer un ZVol ZFS"
+
+#: storage/admin.py:293
+#, fuzzy
+msgid "Encryption Re-key"
+msgstr "Mode de chiffrement"
+
+#: storage/admin.py:305
+#, fuzzy
+msgid "Remove recovery key"
+msgstr "Clé de l'hôte distant"
+
+#: storage/admin.py:345
+#, fuzzy
+msgid "Destroy zvol"
+msgstr "Détruire"
+
+#: storage/admin.py:403
+msgid "Checksum"
+msgstr ""
+
+#: storage/admin.py:467
+#, fuzzy
+msgid "Detach"
+msgstr "Détacher le volume"
+
+#: storage/admin.py:578
+msgid "Frequency"
+msgstr ""
+
+#: storage/forms.py:71
+msgid ""
+"Enabling dedup may have drastic performance implications,<br /> as well as "
+"impact your ability to access your data.<br /> Consider using compression "
+"instead."
+msgstr ""
+
+#: storage/forms.py:764
+#, fuzzy
+msgid "Volume imported"
+msgstr "Volume à étendre"
+
+#: storage/forms.py:794
+#: storage/forms.py:1585
+#: storage/forms.py:1904
+#: storage/forms.py:2019
+#: storage/forms.py:2131
+#: system/models.py:354
+msgid "Passphrase"
+msgstr ""
+
+#: storage/forms.py:1269
+#, fuzzy
+msgid "zvol name"
+msgstr "Nom du module"
+
+#: storage/forms.py:1281
+msgid ""
+"Creates a sparse volume with no reservation, also kown as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less then the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+
+#: storage/forms.py:1589
+#: storage/forms.py:1908
+#: system/forms.py:479
+#, fuzzy
+msgid "Confirm Passphrase"
+msgstr "Confirmer le mot de passe"
+
+#: storage/forms.py:1670
+#, fuzzy
+msgid "Dedicated User"
+msgstr "Supprimer l'utilisateur"
+
+#: storage/forms.py:1940
+#: storage/forms.py:2100
+#, fuzzy
+msgid "Admin password"
+msgstr "Ancien mot de passe"
+
+#: storage/forms.py:1952
+#, fuzzy
+msgid "Remove passphrase"
+msgstr "Supprimer l'utilisateur"
+
+#: storage/forms.py:2054
+msgid "You need either a passphrase or a recovery key to unlock"
+msgstr ""
+
+#: storage/forms.py:2084
+msgid "Volume could not be imported: %d devices failed to decrypt"
+msgstr ""
+
+#: storage/forms.py:2088
+#, fuzzy
+msgid "Volume could not be imported"
+msgstr "Le chemin n'a pas pu être monté %s"
+
+#: storage/models.py:126
+msgid "LOCKED"
+msgstr ""
+
+#: storage/models.py:445
+#, fuzzy
+msgid "Disk Size"
+msgstr "Périphérique disque"
+
+#: storage/models.py:805
+msgid "High Speed Encryption Ciphers"
+msgstr ""
+
+#: storage/models.py:854
+#, fuzzy
+msgid ""
+"This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
+"Datasetname not the mountpoint or filesystem path"
+msgstr ""
+"Devrait correspondre au nom du système de fichiers ZFS distant. e.g. : pool/"
+"dataset et non pas au point de montage ou au chemin du système de fichier"
+
+#: storage/models.py:880
+#, fuzzy
+msgid "Do not start replication before"
+msgstr "Ne pas faire d'instantané avant"
+
+#: storage/views.py:717
+msgid "Pool output could not be parsed. Is the pool imported?"
+msgstr ""
+
+#: storage/views.py:722
+#, fuzzy
+msgid "The scrub process has stopped"
+msgstr "Le processus de nettoyage a commencé"
+
+#: storage/views.py:885
+msgid "Passphrase created"
+msgstr ""
+
+#: storage/views.py:926
+#: storage/views.py:939
+#, fuzzy
+msgid "Volume unlocked"
+msgstr "Nom du volume"
+
+#: storage/views.py:930
+#, fuzzy
+msgid "Volume failed unlocked"
+msgstr "Ajouter un volume"
+
+# LAGG successfully added
+#: storage/views.py:1076
+#, fuzzy
+msgid "Disks successfully edited"
+msgstr "Disque effacé avec succès"
+
+#: support/models.py:45
+#, fuzzy
+msgid "A description of the issue."
+msgstr "chiffrement de la connexion"
+
+#: support/views.py:86
+#, fuzzy
+msgid "Support request successfully sent"
+msgstr "Instantanés supprimés avec succès."
+
+#: system/forms.py:68
+msgid "The path '%s' requires execute permission bit"
+msgstr ""
+
+#: system/forms.py:581
+msgid "RSA or DSA private key is not valid"
+msgstr ""
+
+#: system/forms.py:604
+msgid "The modulus of certificate and key must match"
+msgstr ""
+
+#: system/forms.py:881
+msgid "Usernames cannot exceed 17 characters for rsync tasks"
+msgstr ""
+
+#: system/forms.py:886
+msgid "Usernames cannot have spaces"
+msgstr ""
+
+#: system/models.py:60
+#, fuzzy
+msgid "WebGUI IPv4 Address"
+msgstr "Adresse du WebGUI"
+
+#: system/models.py:75
+#, fuzzy
+msgid "WebGUI HTTPS Port"
+msgstr "Port du WebGUI"
+
+#: system/models.py:194
+msgid "Serial Port Speed"
+msgstr ""
+
+#: system/models.py:219
+#, fuzzy
+msgid "Enable debug kernel"
+msgstr "Activer le service"
+
+#: system/models.py:417
+msgid ""
+"Redirect the standard output to /dev/null. In other words, disable output."
+msgstr ""
+
+#: system/models.py:423
+msgid ""
+"Redirect the standard error output to /dev/null. In other words, disable "
+"error output."
+msgstr ""
+
+#: system/models.py:515
+#, fuzzy
+msgid "Remote SSH Port"
+msgstr "Port distant"
+
+#: system/models.py:516
+#, fuzzy
+msgid "SSH Port"
+msgstr "Port"
+
+#: system/models.py:897
+#: system/models.py:909
+msgid "Script"
+msgstr ""
+
+#: system/models.py:936
+msgid "Init/Shutdown Scripts"
+msgstr ""
+
+#: system/models.py:949
+#, fuzzy
+msgid "First Name"
+msgstr "Nom de la cible"
+
+#: system/models.py:957
+msgid "Company"
+msgstr ""
+
+#: system/models.py:969
+msgid "City"
+msgstr ""
+
+#: system/models.py:997
+msgid "Cell Phone"
+msgstr ""
+
+#: system/models.py:1003
+msgid "Work Phone"
+msgstr ""
+
+#: system/models.py:1009
+#: templates/system/settings.html:12
+#, fuzzy
+msgid "Registration"
+msgstr "Destination"
+
+#: system/views.py:316
+msgid "You must configure the root email (Accounts->Users->root)"
+msgstr ""
+
+#: templates/menubar.html:49
+msgid "Alert"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:176
+msgid "No entry has been found"
+msgstr ""
+
+#: templates/freeadmin/help.html:44
+msgid "Professional Support"
+msgstr ""
+
+#: templates/freeadmin/help.html:46
+msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr ""
+
+#: templates/jails/start.html:3
+#, fuzzy
+msgid "Start "
+msgstr "Option de démarrage"
+
+#: templates/plugins/available_install.html:3
+#, fuzzy
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr "Êtes-vous sûr de vouloir supprimer \"%(name)s\" ?"
+
+#: templates/plugins/plugin_update.html:3
+#, fuzzy
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr "Êtes-vous sûr de vouloir supprimer \"%(name)s\" ?"
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+#, fuzzy
+msgid "Available Plugins"
+msgstr "Actions disponibles"
+
+#: templates/registration/login.html:51
+#, fuzzy
+msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
+msgstr "Bienvenue sur %(sw_name)s&trade; %(sw_login_version)s"
+
+#: templates/registration/login.html:57
+msgid "For security reasons, you must now set a new root password:"
+msgstr ""
+
+#: templates/services/core.html:33
+#, fuzzy
+msgid "Directory Service Settings"
 msgstr "Paramètres Active Directory"
+
+#: templates/storage/disk_editbulk.html:3
+msgid "Editing the following disks"
+msgstr ""
+
+#: templates/storage/key.html:3
+msgid "You are about to download the global GELI key"
+msgstr ""
+
+#: templates/storage/replication_add.html:5
+msgid "SSH Key Scan"
+msgstr ""
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr ""
+
+#: templates/storage/volume_datagrid.html:22
+#, fuzzy
+msgid "UFS Volume Manager"
+msgstr "Gestionnaire de volumes"
+
+#: templates/storage/volume_detach.html:27
+msgid ""
+"This is an encrypted volume, make sure to <a href=\"%(url)s\" "
+"target=\"_blank\">download</a> the key so you can be able to import it in "
+"the future"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "Scan"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "%(scanned)s out of %(total)s"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:14
+#, fuzzy
+msgid "Errors"
+msgstr "Erreur"
+
+#: templates/storage/wizard.html:92
+#, fuzzy
+msgid "Extend Volume"
+msgstr "Exporter le volume"
+
+#: templates/storage/zvols.html:3
+#, fuzzy
+msgid "Create zvol on %(name)s"
+msgstr "Créer un volume ZFS sur %(name)s"
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr ""
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr ""
+
+#: templates/system/firmware_wizard_0.html:6
+#: templates/system/firmware_wizard_1.html:21
+msgid ""
+"Consider downloading your configuration before proceeding, <a "
+"href=\"%(url)s\" target=\"_blank\">click here</a>."
+msgstr ""
+
+#: choices.py:600
+msgid "9600"
+msgstr ""
+
+#: choices.py:710
+msgid "auth+data"
+msgstr ""
+
+#: account/models.py:142
+#, fuzzy
+msgid "Disable password login"
+msgstr "Désactiver les connexions par mot de passe"
+
+#: account/models.py:242
+#, fuzzy
+msgid "Group Memberships"
+msgstr "Groupe d’appartenance"
+
+#: freeadmin/navtree.py:608
+#, fuzzy
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr "Impossible de récupérer %(url)s : %(error)s"
+
+#: jails/forms.py:450
+#, fuzzy
+msgid "Path does not exist!"
+msgstr "Le chemin n'existe pas."
+
+#: jails/models.py:125
+#, fuzzy
+msgid "IPv6 bridge address"
+msgstr "Adresse IPv6"
+
+#: jails/models.py:138
+#, fuzzy
+msgid "IPv6 default gateway"
+msgstr "Passerelle par défaut IPv6"
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:286
+msgid "IPv6 network start address for jails and plugins"
+msgstr ""
+
+#: jails/nav.py:70
+#, fuzzy
+msgid "Add Jails"
+msgstr "Ajouter %s"
+
+#: jails/nav.py:114
+#, fuzzy
+msgid "View Jail Templates"
+msgstr "Voir les fichiers d'extension"
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr ""
+
+#: middleware/zfs.py:644
+#, fuzzy
+msgid "Canceled"
+msgstr "Annuler"
+
+#: services/models.py:216
+msgid ""
+"Specifies whether samba should use (expensive) hostname lookups or use the "
+"ip addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+
+#: services/models.py:312
+msgid ""
+"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
+"families. This is typically done to ensure that the port which mountd binds "
+"to is a known value which can be used in firewall rulesets."
+msgstr ""
+
+#: services/models.py:319
+msgid "rpc.statd(8) bind port"
+msgstr ""
+
+#: services/models.py:329
+msgid "rpc.lockd(8) bind port"
+msgstr ""
+
+#: services/models.py:334
+msgid ""
+"This option forces rpc.lockd the daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:953
+#, fuzzy
+msgid "UPS Mode"
+msgstr "Mode"
+
+#: services/models.py:1020
+#, fuzzy
+msgid "Monitor Password"
+msgstr "Confirmer le mot de passe"
+
+#: services/models.py:1139
+#, fuzzy
+msgid "Perform Reverse DNS Lookups"
+msgstr "Exiger le DNS inversé des IP"
+
+#: services/models.py:1206
+#, fuzzy
+msgid "TLS allow dot login"
+msgstr "Autoriser la connexion de root"
+
+#: services/models.py:1256
+#, fuzzy
+msgid "Place the contents of your certificate and private key here."
+msgstr "Placez ici le contenu du certificat auto-signé."
+
+#: services/models.py:1358
+msgid ""
+"Specifies the facility code that is used when logging messages from sftp-"
+"server."
+msgstr ""
+
+#: services/models.py:1472
+#: services/models.py:1473
+#, fuzzy
+msgid "NT4 Domain"
+msgstr "Domaine"
+
+#: services/models.py:1512
+#, fuzzy
+msgid "Verbose logging"
+msgstr "Merci de vous identifier."
+
+#: services/models.py:1527
+msgid "Set this if you want to use the default domain for users and groups."
+msgstr ""
+
+#: services/models.py:1539
+msgid "Hostname of the global catalog server to use."
+msgstr ""
+
+#: sharing/forms.py:118
+#, fuzzy
+msgid "Delete password"
+msgstr "Désactiver le mot de passe"
+
+#: sharing/models.py:144
+msgid "Check this to enable Time Machine backups on this share."
+msgstr ""
+
+#: sharing/models.py:240
+msgid ""
+"If a group is selected, the root user will also be limited to that group's "
+"permissions"
+msgstr ""
+
+#: storage/admin.py:273
+#, fuzzy
+msgid "Create Passphrase"
+msgstr "Créer un jeu de données ZFS"
+
+#: storage/admin.py:464
+msgid "Offline"
+msgstr ""
+
+#: storage/forms.py:483
+msgid "You need at least %d disks"
+msgstr ""
+
+#: storage/forms.py:527
+msgid "You need a data disk group"
+msgstr ""
+
+#: storage/forms.py:771
+#, fuzzy
+msgid "Yes: Decrypt disks"
+msgstr "Disques membres"
+
+#: storage/forms.py:1117
+#: storage/forms.py:1229
+#, fuzzy
+msgid "ZFS Deduplication"
+msgstr "Réplication ZFS"
+
+#: storage/forms.py:1124
+msgid "Record Size"
+msgstr ""
+
+#: storage/forms.py:1279
+#, fuzzy
+msgid "Sparse volume"
+msgstr "Nettoyer le volume"
+
+#: storage/forms.py:1917
+#: storage/forms.py:1983
+#, fuzzy
+msgid "The passphrases do not match"
+msgstr "Secret n'est pas identique"
+
+#: storage/models.py:64
+#, fuzzy
+msgid "Encryption Type"
+msgstr "Mode de chiffrement"
+
+#: storage/models.py:807
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which make it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/views.py:115
+#, fuzzy
+msgid "Please enter a hostname"
+msgstr "Nom d'hôte dans l'ancien format, e.g. FREENAS"
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr ""
+
+#: storage/views.py:958
+msgid "GELI key download starting..."
+msgstr ""
+
+#: storage/views.py:1057
+#, fuzzy
+msgid "Recovery has been removed"
+msgstr "Le disque a été supprimé."
+
+#: support/models.py:40
+#, fuzzy
+msgid "Subject"
+msgstr "Sujet de l'e-mail"
+
+#: system/forms.py:749
+#, fuzzy
+msgid "Memory device"
+msgstr "Mémoire"
+
+#: system/models.py:66
+#, fuzzy
+msgid "WebGUI IPv6 Address"
+msgstr "Adresse du WebGUI"
+
+#: system/models.py:355
+msgid "Private key passphrase"
+msgstr ""
+
+#: system/models.py:416
+msgid "Redirect Stdout"
+msgstr ""
+
+#: system/models.py:917
+msgid "Post Init"
+msgstr ""
+
+#: system/models.py:935
+#, fuzzy
+msgid "Init/Shutdown Script"
+msgstr "Secret de l'initiateur"
+
+#: templates/freeadmin/generic_model_datagrid.html:10
+#, fuzzy
+msgid "Add"
+msgstr "Ajouter %s"
+
+#: templates/freeadmin/generic_model_delete.html:19
+#, fuzzy
+msgid ""
+"There is %(related_num)s related entry that will also be deleted as it "
+"depend upon this item"
+msgid_plural ""
+"There are %(related_num)s related entries that will also be deleted as they "
+"depend upon this item"
+msgstr[0] ""
+"Il y a %(related_num)s entrées connexes qui seront également supprimées "
+"puisqu'elles dépendent de cet élément"
+msgstr[1] ""
+"Il y a %(related_num)s entrées connexes qui seront également supprimées "
+"puisqu'elles dépendent de cet élément"
+
+#: templates/jails/index.html:20
+msgid "Templates"
+msgstr ""
+
+#: templates/storage/create_passphrase.html:5
+msgid ""
+"Remember to add a new recovery key as this action invalidates the previous "
+"recovery key"
+msgstr ""
+
+#: templates/storage/recoverykey_remove.html:3
+msgid "You are about to remove a recovery key for this volume"
+msgstr ""

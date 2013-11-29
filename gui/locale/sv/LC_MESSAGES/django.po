@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-07-27 03:59+0200\n"
+"PO-Revision-Date: 2012-07-27 03:59+0000\n"
 "Last-Translator: Robin <robin@gehrke.se>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1343361576.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "Full"
 msgid "Debug"
 msgstr "Felsöka"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Standard"
+#~ msgid "Default"
+#~ msgstr "Standard"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -338,9 +338,8 @@ msgstr "På"
 msgid "Off"
 msgstr "Av"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (rekommenderad)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (rekommenderad)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -529,9 +528,8 @@ msgstr "För att verifiera, skriv samma lösenord som ovan."
 msgid "Shell"
 msgstr "Kommando-skal"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Inaktivera lösenords baserad inloggningar"
+#~ msgid "Disable password logins"
+#~ msgstr "Inaktivera lösenords baserad inloggningar"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -557,9 +555,8 @@ msgstr "Läge för hemkatalog"
 msgid "Auxiliary groups"
 msgstr "Externa grupper"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Det finns redan en användare med detta uid."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Det finns redan en användare med detta uid."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -599,9 +596,8 @@ msgstr "Lösenordet är avstängt, lämna tomt"
 msgid "This field is required."
 msgstr "Obligatoriskt fält."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Hemkatalogen måste börja med /mnt/ eller vara /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Hemkatalogen måste börja med /mnt/ eller vara /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -725,24 +721,17 @@ msgstr "Konto"
 msgid "Admin Account"
 msgstr "Admin konto"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Ändra lösenord"
+#~ msgid "Change Password"
+#~ msgstr "Ändra lösenord"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Ändra Admin-användare"
+#~ msgid "Change Admin User"
+#~ msgstr "Ändra Admin-användare"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Lösenordet är uppdaterat."
+#~ msgid "Password successfully updated."
+#~ msgstr "Lösenordet är uppdaterat."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Admin användare uppdaterades."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Admin användare uppdaterades."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -910,9 +899,8 @@ msgstr "Namnserver 1 måste fyllas i innan namnserver 2"
 msgid "Parent Interface"
 msgstr "Överordnat Gränssnitt"
 
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "Namnet måste vara vlanXX där XX är ett heltal."
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "Namnet måste vara vlanXX där XX är ett heltal."
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1107,9 +1095,8 @@ msgstr "Länksammanslagning"
 msgid "Link Aggregations"
 msgstr "Länksammanslagning"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "LAGG gränsnittsgrupp"
+#~ msgid "LAGG Interface group"
+#~ msgstr "LAGG gränsnittsgrupp"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1151,72 +1138,59 @@ msgstr "Skapa Länksammanslagning"
 msgid "View Link Aggregations"
 msgstr "Visa Link Aggregeringar"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG har lagts till"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG har lagts till"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
 msgstr "Denna IP är redan i bruk"
 
-#: plugins/forms.py:92
-msgid "Place to temporarily place PBI file"
-msgstr "Ställe att tillfälligt placera PBI-fil"
+#~ msgid "Place to temporarily place PBI file"
+#~ msgstr "Ställe att tillfälligt placera PBI-fil"
 
-#: plugins/forms.py:93
-msgid ""
-"The system will use this place to temporarily store the PBI file before it's "
-"installed."
-msgstr ""
-"Systemet kommer att använda denna plats tillfälligt för att lagra PBI filen "
-"innan det är installerat."
+#~ msgid ""
+#~ "The system will use this place to temporarily store the PBI file before it's "
+#~ "installed."
+#~ msgstr ""
+#~ "Systemet kommer att använda denna plats tillfälligt för att lagra PBI filen "
+#~ "innan det är installerat."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
 msgstr "PBI-fil som ska installeras"
 
-#: plugins/forms.py:173
-msgid "You must turn off Plugins service before proceeding"
-msgstr "Du måste stänga av plugins tjänsten innan du fortsätter"
+#~ msgid "You must turn off Plugins service before proceeding"
+#~ msgstr "Du måste stänga av plugins tjänsten innan du fortsätter"
 
-#: plugins/forms.py:183
 #, python-format
-msgid "The path %s already exists"
-msgstr "Sökvägen% s finns redan"
+#~ msgid "The path %s already exists"
+#~ msgstr "Sökvägen% s finns redan"
 
-#: plugins/forms.py:189
-msgid "The full jail path cannot exceed 76 characters"
-msgstr "Den fullständiga sökvägen får inte överstiga 76 tecken"
+#~ msgid "The full jail path cannot exceed 76 characters"
+#~ msgstr "Den fullständiga sökvägen får inte överstiga 76 tecken"
 
-#: plugins/forms.py:200
-msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr ""
-"Den plugins sökvägen kan inte vara en delmängd av plugins arkivet sökväg."
+#~ msgid "The plugins jail path cannot be a subset of the plugins archive path."
+#~ msgstr ""
+#~ "Den plugins sökvägen kan inte vara en delmängd av plugins arkivet sökväg."
 
-#: plugins/forms.py:205 services/forms.py:148
-msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr ""
-"Den plugins arkivet sökvägen kan inte vara en delmängd av plugins sökvägen."
+#~ msgid "The plugins archive path cannot be a subset of the plugins jail path."
+#~ msgstr ""
+#~ "Den plugins arkivet sökvägen kan inte vara en delmängd av plugins sökvägen."
 
-#: plugins/forms.py:214 services/models.py:803
-msgid "Plugins jail path"
-msgstr "Sökväg till Insticksmodul fängelse"
+#~ msgid "Plugins jail path"
+#~ msgstr "Sökväg till Insticksmodul fängelse"
 
-#: plugins/forms.py:218
-msgid "Jail IPv4 Address"
-msgstr "Fängelse IPv4-adress"
+#~ msgid "Jail IPv4 Address"
+#~ msgstr "Fängelse IPv4-adress"
 
-#: plugins/forms.py:222
-msgid "Jail IPv4 Netmask"
-msgstr "IPv4-nätmask"
+#~ msgid "Jail IPv4 Netmask"
+#~ msgstr "IPv4-nätmask"
 
-#: plugins/forms.py:228
-msgid "Plugins archive Path"
-msgstr "Insticksmodulens arkivsökväg"
+#~ msgid "Plugins archive Path"
+#~ msgstr "Insticksmodulens arkivsökväg"
 
-#: plugins/forms.py:244
-msgid "Plugins Jail PBI"
-msgstr "Plugin Jail PBI"
+#~ msgid "Plugins Jail PBI"
+#~ msgstr "Plugin Jail PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
@@ -1226,10 +1200,9 @@ msgstr "Monterad?"
 msgid "The full path cannot exceed 88 characters"
 msgstr "Den fulla sökvägen kan inte överskrida 88 tecken"
 
-#: plugins/forms.py:336
 #, python-format
-msgid "The path could not be mounted %s"
-msgstr "Sökvägen kunde inte monteras"
+#~ msgid "The path could not be mounted %s"
+#~ msgstr "Sökvägen kunde inte monteras"
 
 #: plugins/forms.py:341
 #, python-format
@@ -1311,21 +1284,18 @@ msgstr "Mål"
 msgid "Mount Point"
 msgstr "Monteringspunkt"
 
-#: plugins/models.py:122
-msgid "Mount Points"
-msgstr "Monteringspunkt"
+#~ msgid "Mount Points"
+#~ msgstr "Monteringspunkt"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
 msgstr "Instickmodul har uppdaterats."
 
-#: plugins/views.py:80
-msgid "Plugin successfully removed."
-msgstr "Instickmodul har raderats"
+#~ msgid "Plugin successfully removed."
+#~ msgstr "Instickmodul har raderats"
 
-#: plugins/views.py:86
-msgid "Unable to remove plugin."
-msgstr "Kan inte radera instickmodul"
+#~ msgid "Unable to remove plugin."
+#~ msgstr "Kan inte radera instickmodul"
 
 #: plugins/views.py:101
 msgid "Plugin successfully updated"
@@ -1335,13 +1305,11 @@ msgstr "Insticksmodulen har uppdaterats"
 msgid "Plugin successfully installed"
 msgstr "Insticksmodulen har uppdaterats"
 
-#: plugins/views.py:201
-msgid "There was a problem importing the jail."
-msgstr "Det var ett problem vid importen av fängelset."
+#~ msgid "There was a problem importing the jail."
+#~ msgstr "Det var ett problem vid importen av fängelset."
 
-#: plugins/views.py:204
-msgid "Jail successfully imported."
-msgstr "Fängelset har importerats."
+#~ msgid "Jail successfully imported."
+#~ msgstr "Fängelset har importerats."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1367,13 +1335,11 @@ msgstr "AFP-tjänsten kunde inte startas om."
 msgid "The NFS service failed to reload."
 msgstr "NFS tjänsten kunde inte starta om."
 
-#: services/forms.py:157
-msgid "This IP already exists."
-msgstr "Denna IP-address används redan"
+#~ msgid "This IP already exists."
+#~ msgstr "Denna IP-address används redan"
 
-#: services/forms.py:164
-msgid "The Plugins Jail service failed to reload."
-msgstr " Insticksprogram Jail tjänsten kunde inte ladda om."
+#~ msgid "The Plugins Jail service failed to reload."
+#~ msgstr " Insticksprogram Jail tjänsten kunde inte ladda om."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1498,17 +1464,15 @@ msgstr "Hemlig (bekräfta)"
 msgid "Enter the same secret above for verification."
 msgstr "För att verifiera, ange samma hemlighet som ovan."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Käll-hemlighet"
+#~ msgid "Initiator Secret"
+#~ msgstr "Käll-hemlighet"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Källsidans hemlighet. (för ömsesidig CHAP autentisering)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Käll-hemlighet (verifiera)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Käll-hemlighet (verifiera)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1599,19 +1563,17 @@ msgstr "Detta värde kan vara en storlek i byte eller anges med KB, MB, GB, TB"
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr "Filen måste finnas om omfattningen är inställd på auto (0)"
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Diskenhet"
+#~ msgid "Disk device"
+#~ msgstr "Diskenhet"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "Ditt Portalgrupps ID kan inte vara högre än %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "Ditt Group ID kan inte vara högre än %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "Ditt Group ID kan inte vara högre än %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1751,13 +1713,11 @@ msgid ""
 msgstr ""
 "Använd detta för att överrida skapande av katalog mask (0777 är standard)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Stöd för stora RW"
+#~ msgid "Large RW support"
+#~ msgstr "Stöd för stora RW"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Skicka filer med sendfile(2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Skicka filer med sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1868,15 +1828,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Server namn"
+#~ msgid "Server Name"
+#~ msgstr "Server namn"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "Namn på server. Om detta fält lämnas tomt används standardserver."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "Namn på server. Om detta fält lämnas tomt används standardserver."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1913,17 +1871,15 @@ msgstr ""
 "hantera maximal nivå av samtidiga föffrågningar från klienter, oftast fyra "
 "till sex stycken."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Asynkront läge"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Asynkront läge"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Aktivera asynkront läge, för att hjälpa till med nätverkshastigheter över "
-"gigabit prestanda."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Aktivera asynkront läge, för att hjälpa till med nätverkshastigheter över "
+#~ "gigabit prestanda."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2314,13 +2270,12 @@ msgstr "Leverantör"
 msgid "Domain name"
 msgstr "Domännamn"
 
-#: services/models.py:765
-msgid ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
-msgstr ""
-"Ett värdnamn alias. Detta alternativ kan visas flera gånger, för varje domän "
-"som har samma IP. Använd ett utrymme för att separera flera alias."
+#~ msgid ""
+#~ "A host name alias. This option can appear multiple times, for each domain "
+#~ "that has the same IP. Use a space to separate multiple alias names."
+#~ msgstr ""
+#~ "Ett värdnamn alias. Detta alternativ kan visas flera gånger, för varje domän "
+#~ "som har samma IP. Använd ett utrymme för att separera flera alias."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2334,47 +2289,39 @@ msgstr "Tid i sekunder. Standard är ca 1 min."
 msgid "Forced update period"
 msgstr "Tvingad uppdateringsperiod"
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
-"Dessa parametrar kommer läggas till i de globala inställningar i inadyn.conf"
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr ""
+#~ "Dessa parametrar kommer läggas till i de globala inställningar i inadyn.conf"
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
 msgid "Dynamic DNS"
 msgstr "Dynamisk DNS"
 
-#: services/models.py:804
-msgid "Path to the plugins jail"
-msgstr "Sökväg till Insticksmodulens fängelse"
+#~ msgid "Path to the plugins jail"
+#~ msgstr "Sökväg till Insticksmodulens fängelse"
 
-#: services/models.py:809
-msgid "Jail name"
-msgstr "Fängelse namn"
+#~ msgid "Jail name"
+#~ msgstr "Fängelse namn"
 
-#: services/models.py:810
-msgid "Name of the plugins jail"
-msgstr "Namn över insticksmodulens fängelse"
+#~ msgid "Name of the plugins jail"
+#~ msgstr "Namn över insticksmodulens fängelse"
 
-#: services/models.py:815
-msgid ""
-"Jail name can only contain letters, numbers and hyphens. It must not end "
-"with a hyphen."
-msgstr ""
-"Fängelsenamn kan bara innehålla bokstäver, siffror och bindestreck. Det får "
-"inte sluta med ett bindestreck."
+#~ msgid ""
+#~ "Jail name can only contain letters, numbers and hyphens. It must not end "
+#~ "with a hyphen."
+#~ msgstr ""
+#~ "Fängelsenamn kan bara innehålla bokstäver, siffror och bindestreck. Det får "
+#~ "inte sluta med ett bindestreck."
 
-#: services/models.py:821
-msgid "Jail IP address"
-msgstr "Fängelse IP-adress"
+#~ msgid "Jail IP address"
+#~ msgstr "Fängelse IP-adress"
 
-#: services/models.py:825
-msgid "Jail IP Netmask"
-msgstr "Fängelse IP-nätmask"
+#~ msgid "Jail IP Netmask"
+#~ msgstr "Fängelse IP-nätmask"
 
-#: services/models.py:829
-msgid "Plugins archive path"
-msgstr "Sökvägen till arkivet för insticksmoduler"
+#~ msgid "Plugins archive path"
+#~ msgstr "Sökvägen till arkivet för insticksmoduler"
 
 #: services/models.py:852
 msgid "Location"
@@ -2460,9 +2407,8 @@ msgstr ""
 "Tiden i sekunder tills avstängning initieras. Om UPS-enheten råkar komma "
 "tillbaka innan tiden är ute avbryts avstängningen."
 
-#: services/models.py:933
-msgid "UPS Master User Password"
-msgstr "UPS huvudanvändare Lösenord"
+#~ msgid "UPS Master User Password"
+#~ msgstr "UPS huvudanvändare Lösenord"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
@@ -2558,13 +2504,11 @@ msgstr "Sökväg"
 msgid "Allow Local User Login"
 msgstr "Tillåt inloggning för lokal användare"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "Banderoll"
+#~ msgid "Banner"
+#~ msgstr "Banderoll"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "Hälsnings banderollen visas av FTP när anslutningen först kommer in"
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "Hälsnings banderollen visas av FTP när anslutningen först kommer in"
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2588,9 +2532,8 @@ msgstr "Alltid Chroot"
 msgid "Require IDENT Authentication"
 msgstr "Kräv IDENT-autentisering"
 
-#: services/models.py:1031
-msgid "Require Reverse DNS for IP"
-msgstr "Kräv Omvänd DNS för IP"
+#~ msgid "Require Reverse DNS for IP"
+#~ msgstr "Kräv Omvänd DNS för IP"
 
 #: services/models.py:1033
 msgid "Masquerade address"
@@ -2679,9 +2622,8 @@ msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Anonym användares nerladdningshastighet i KB / s. Noll innebär oändlighet."
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "Aktivera SSL/TLS"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "Aktivera SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -2798,13 +2740,11 @@ msgstr ""
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1239
-msgid "Domain Controller Name"
-msgstr "Namn på domänkontrollanten"
+#~ msgid "Domain Controller Name"
+#~ msgstr "Namn på domänkontrollanten"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "AD eller PDC namn"
+#~ msgid "AD or PDC name."
+#~ msgstr "AD eller PDC namn"
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3115,17 +3055,15 @@ msgstr ""
 "Rapportera om temperaturen har förändrats med minst N grader sedan den "
 "senaste rapporten. 0 för att inaktivera"
 
-#: services/models.py:1475
-msgid "Informal"
-msgstr "Informell"
+#~ msgid "Informal"
+#~ msgstr "Informell"
 
-#: services/models.py:1476 services/models.py:1481
-msgid ""
-"Report if the temperature is greater or equal than N degrees Celsius. 0 to "
-"disable"
-msgstr ""
-"Rapportera om temperaturen är högre än eller lika med N grader Celsius. 0 "
-"för att inaktivera"
+#~ msgid ""
+#~ "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
+#~ "disable"
+#~ msgstr ""
+#~ "Rapportera om temperaturen är högre än eller lika med N grader Celsius. 0 "
+#~ "för att inaktivera"
 
 #: services/models.py:1480
 msgid "Critical"
@@ -3135,9 +3073,8 @@ msgstr "Kritisk"
 msgid "Email to report"
 msgstr "E-posta för att rapportera"
 
-#: services/models.py:1487
-msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr "Destination e-postadress. Separera e-postadresser med semikolon"
+#~ msgid "Destination email address. Separate email addresses by semi-colon"
+#~ msgstr "Destination e-postadress. Separera e-postadresser med semikolon"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3148,30 +3085,23 @@ msgstr "S.M.A.R.T."
 msgid "Control Services"
 msgstr "Kontroll tjänster"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "Enhets omfattningar"
+#~ msgid "Device Extents"
+#~ msgstr "Enhets omfattningar"
 
-#: services/nav.py:72
-msgid "Add Device Extent"
-msgstr "Lägga till enhet omfattning"
+#~ msgid "Add Device Extent"
+#~ msgstr "Lägga till enhet omfattning"
 
-#: services/nav.py:79
-msgid "View Device Extents"
-msgstr "Visa enhetens omfattningar"
+#~ msgid "View Device Extents"
+#~ msgstr "Visa enhetens omfattningar"
 
-#: services/nav.py:92
-msgid "File Extents"
-msgstr "Fil omfattningar"
+#~ msgid "File Extents"
+#~ msgstr "Fil omfattningar"
 
-#: services/nav.py:111 templates/services/iscsi_extents.html:39
-#: templates/services/iscsi_extents.html:41
-msgid "Add File Extent"
-msgstr "Lägg till fil omfattning"
+#~ msgid "Add File Extent"
+#~ msgstr "Lägg till fil omfattning"
 
-#: services/nav.py:118
-msgid "View File Extents"
-msgstr "Visa fil omfattningar"
+#~ msgid "View File Extents"
+#~ msgstr "Visa fil omfattningar"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -3195,9 +3125,8 @@ msgstr "Visa rsync moduler"
 msgid "Settings"
 msgstr "Inställningar"
 
-#: services/nav.py:186
-msgid "Management"
-msgstr "Hantering"
+#~ msgid "Management"
+#~ msgstr "Hantering"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3216,14 +3145,12 @@ msgstr "Bekräfta delat lösenord"
 msgid "The path %s does not exist"
 msgstr "Sökvägen% s finns inte"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "Fältet är en inte en giltig IP-adress eller nätverk"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "Fältet är en inte en giltig IP-adress eller nätverk"
 
-#: sharing/forms.py:165
 #, python-format
-msgid "The IP '%s' is not valid."
-msgstr "IP-numret '%s' är inte giltigt."
+#~ msgid "The IP '%s' is not valid."
+#~ msgstr "IP-numret '%s' är inte giltigt."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3377,17 +3304,15 @@ msgstr ""
 "Detta alternativ låter dig ställa in ett lösenord för volymen, som kan vara "
 "högst 8 tecken långt (ASCII rekommenderas starkt när detta skrivs)."
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "Delad teckenuppsättning"
+#~ msgid "Share Character Set"
+#~ msgstr "Delad teckenuppsättning"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr ""
-"Anger den delade teckenuppästtningen. Till exempel UTF8, UTF8-MAC, "
-"ISO-8859-15, etc."
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr ""
+#~ "Anger den delade teckenuppästtningen. Till exempel UTF8, UTF8-MAC, "
+#~ "ISO-8859-15, etc."
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3439,31 +3364,27 @@ msgstr ""
 "Låter vissa användare och grupper för att ha läs / skriv tillgång till en "
 "viss utdelning. Detta följer tillåt alternativet format."
 
-#: sharing/models.py:160
-msgid "Disk Discovery"
-msgstr "Hårddisk upptäckt"
+#~ msgid "Disk Discovery"
+#~ msgstr "Hårddisk upptäckt"
 
-#: sharing/models.py:161
-msgid ""
-"Allow other systems to discover this share as a disk for data, as a Time "
-"Machine backup volume or not at all."
-msgstr ""
-"Låt andra system att upptäcka denna utdelning som en disk för data, som en "
-"Time Machine backup volym eller inte alls."
+#~ msgid ""
+#~ "Allow other systems to discover this share as a disk for data, as a Time "
+#~ "Machine backup volume or not at all."
+#~ msgstr ""
+#~ "Låt andra system att upptäcka denna utdelning som en disk för data, som en "
+#~ "Time Machine backup volym eller inte alls."
 
-#: sharing/models.py:167
-msgid "Disk discovery mode"
-msgstr "Hårddisk upptäckts läge"
+#~ msgid "Disk discovery mode"
+#~ msgstr "Hårddisk upptäckts läge"
 
-#: sharing/models.py:168
-msgid ""
-"Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
-"behavior in MacOS. Default mode exports the volume as a data volume for "
-"users."
-msgstr ""
-"Notera! Att välja \"Time Machine\" på flera utdelningarna kan orsaka "
-"oförutsägbart beteende i MacOS. Standardläge exporterar volym som en data "
-"volym för användare."
+#~ msgid ""
+#~ "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
+#~ "behavior in MacOS. Default mode exports the volume as a data volume for "
+#~ "users."
+#~ msgstr ""
+#~ "Notera! Att välja \"Time Machine\" på flera utdelningarna kan orsaka "
+#~ "oförutsägbart beteende i MacOS. Standardläge exporterar volym som en data "
+#~ "volym för användare."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3477,63 +3398,55 @@ msgstr ""
 "Ställer databasen information som skall lagras i sögväg.en Du måste ange en "
 "skrivbar plats, även om volymen är skrivskyddad."
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "Cache CNID"
+#~ msgid "Cache CNID"
+#~ msgstr "Cache CNID"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"Om inställd använder afpd ID-information som lagras i AppleDouble V2 "
-"huvudfiler för att minska databasen belastningen. Ställ inte det här "
-"alternativet om volymen ändras av icke AFP kunder (NFS/SMB/lokalt)."
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "Om inställd använder afpd ID-information som lagras i AppleDouble V2 "
+#~ "huvudfiler för att minska databasen belastningen. Ställ inte det här "
+#~ "alternativet om volymen ändras av icke AFP kunder (NFS/SMB/lokalt)."
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "Översätt CR/LF"
+#~ msgid "Translate CR/LF"
+#~ msgstr "Översätt CR/LF"
 
-#: sharing/models.py:182
-msgid ""
-"Enables crlf translation for TEXT files, automatically converting macintosh "
-"line breaks into Unix ones. Use of this option might be dangerous since some "
-"older programs store binary data files as type 'TEXT' when saving and switch "
-"the filetype in a second step. Afpd will potentially destroy such files when "
-"'erroneously' changing bytes in order to do line break translation."
-msgstr ""
-"Möjliggör crlf översättning av textfiler att automatiskt konvertera "
-"Macintosh radbrytningar intill Unix liknande. Användning av detta alternativ "
-"kan vara farligt eftersom vissa äldre program lagra datafiler som binära "
-"text filer när du sparar och slå på filtyp i ett andra steg. Afpd kommer "
-"eventuellt förstöra sådana filer när \"felaktigt\" att ändra byte för att göra "
-"översättningen radbrytnin"
+#~ msgid ""
+#~ "Enables crlf translation for TEXT files, automatically converting macintosh "
+#~ "line breaks into Unix ones. Use of this option might be dangerous since some "
+#~ "older programs store binary data files as type 'TEXT' when saving and switch "
+#~ "the filetype in a second step. Afpd will potentially destroy such files when "
+#~ "'erroneously' changing bytes in order to do line break translation."
+#~ msgstr ""
+#~ "Möjliggör crlf översättning av textfiler att automatiskt konvertera "
+#~ "Macintosh radbrytningar intill Unix liknande. Användning av detta alternativ "
+#~ "kan vara farligt eftersom vissa äldre program lagra datafiler som binära "
+#~ "text filer när du sparar och slå på filtyp i ett andra steg. Afpd kommer "
+#~ "eventuellt förstöra sådana filer när \"felaktigt\" att ändra byte för att göra "
+#~ "översättningen radbrytnin"
 
-#: sharing/models.py:185
-msgid "Windows File Names"
-msgstr "Windows filnamn"
+#~ msgid "Windows File Names"
+#~ msgstr "Windows filnamn"
 
-#: sharing/models.py:186
-msgid ""
-"This forces filenames to be restricted to the character set used by Windows. "
-"This is not recommended for shares used principally by Mac computers."
-msgstr ""
-"Detta tvingar filnamn att vara begränsat till den teckenuppsättning som "
-"används av Windows. Detta rekommenderas inte för utdelningar som främst "
-"används av Mac-datorer."
+#~ msgid ""
+#~ "This forces filenames to be restricted to the character set used by Windows. "
+#~ "This is not recommended for shares used principally by Mac computers."
+#~ msgstr ""
+#~ "Detta tvingar filnamn att vara begränsat till den teckenuppsättning som "
+#~ "används av Windows. Detta rekommenderas inte för utdelningar som främst "
+#~ "används av Mac-datorer."
 
-#: sharing/models.py:189
-msgid "Enable .AppleDouble"
-msgstr "Aktivera. AppleDouble"
+#~ msgid "Enable .AppleDouble"
+#~ msgstr "Aktivera. AppleDouble"
 
-#: sharing/models.py:190
-msgid ""
-"This will enable automatic creation of the .AppleDouble directories. This "
-"option should be used if files are accessed by Mac computers."
-msgstr ""
-"Detta kommer att möjliggöra automatiska skapandet av toppdomänen. "
-"AppleDouble kataloger. Denna option bör används om filer nås av Mac-datorer"
+#~ msgid ""
+#~ "This will enable automatic creation of the .AppleDouble directories. This "
+#~ "option should be used if files are accessed by Mac computers."
+#~ msgstr ""
+#~ "Detta kommer att möjliggöra automatiska skapandet av toppdomänen. "
+#~ "AppleDouble kataloger. Denna option bör används om filer nås av Mac-datorer"
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3547,33 +3460,27 @@ msgstr ""
 "Använd alltid 0 för enhetsnummer, hjälper när enhets-numret inte är konstant "
 "över en omstarter, kluster, ..."
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "Inaktivera Fil ID"
+#~ msgid "Disable File ID"
+#~ msgstr "Inaktivera Fil ID"
 
-#: sharing/models.py:201
-msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "Marknadsför inte \"createfileid\" och \"resolveid\" och \"deleteid\" samtal."
+#~ msgid "Don't advertise createfileid, resolveid, deleteid calls."
+#~ msgstr "Marknadsför inte \"createfileid\" och \"resolveid\" och \"deleteid\" samtal."
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "Inaktivera: hex Namn"
+#~ msgid "Disable :hex Names"
+#~ msgstr "Inaktivera: hex Namn"
 
-#: sharing/models.py:205
-msgid ""
-"Disable :hex translations for anything except dot files. This option makes "
-"the '/' character illegal."
-msgstr ""
-"Inaktivera: hex översättningar för något annat än dot-filer. Detta "
-"alternativ gör '/' tecknet olagligt."
+#~ msgid ""
+#~ "Disable :hex translations for anything except dot files. This option makes "
+#~ "the '/' character illegal."
+#~ msgstr ""
+#~ "Inaktivera: hex översättningar för något annat än dot-filer. Detta "
+#~ "alternativ gör '/' tecknet olagligt."
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "Tillhandahåll kompatibilitet med Apple II klienter."
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "Tillhandahåll kompatibilitet med Apple II klienter."
 
 #: sharing/models.py:212
 msgid "No Stat"
@@ -3612,20 +3519,18 @@ msgstr "Apple (AFP) Utdelning"
 msgid "Apple (AFP) Shares"
 msgstr "Apple (AFP) Utdelningar"
 
-#: sharing/models.py:268
-msgid "Authorized network or IP addresses"
-msgstr "Tillåtna nätverk eller IP-adresser"
+#~ msgid "Authorized network or IP addresses"
+#~ msgstr "Tillåtna nätverk eller IP-adresser"
 
-#: sharing/models.py:269
-msgid ""
-"Network that is authorized to access the NFS share or a list of IP "
-"addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
-"number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
-msgstr ""
-"Nätverk som är behörig att komma åt NFS utdelning eller en lista över IP-"
-"adresser. Specificera nätverksnummer av formen 1.2.3.4/xx där xx är antalet "
-"bitar hos Nätmasken eller när en lista över IP-adresser 1.2.3.4 1.2.3.5 "
-"1.2.3.6."
+#~ msgid ""
+#~ "Network that is authorized to access the NFS share or a list of IP "
+#~ "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
+#~ "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgstr ""
+#~ "Nätverk som är behörig att komma åt NFS utdelning eller en lista över IP-"
+#~ "adresser. Specificera nätverksnummer av formen 1.2.3.4/xx där xx är antalet "
+#~ "bitar hos Nätmasken eller när en lista över IP-adresser 1.2.3.4 1.2.3.5 "
+#~ "1.2.3.6."
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -3663,33 +3568,29 @@ msgstr ""
 msgid "Maproot User"
 msgstr "maproot användare"
 
-#: sharing/models.py:289
-msgid "User to map root to"
-msgstr "Användare att montera root till"
+#~ msgid "User to map root to"
+#~ msgstr "Användare att montera root till"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "maproot grupp"
 
-#: sharing/models.py:296
-msgid "Group to map root to"
-msgstr "Grupp att montera root till"
+#~ msgid "Group to map root to"
+#~ msgstr "Grupp att montera root till"
 
 #: sharing/models.py:299
 msgid "Mapall User"
 msgstr "mapall användare"
 
-#: sharing/models.py:303
-msgid "User to map all users to"
-msgstr "Användare att montera alla användare till"
+#~ msgid "User to map all users to"
+#~ msgstr "Användare att montera alla användare till"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "mapall grupp"
 
-#: sharing/models.py:310
-msgid "Group to map all users to"
-msgstr "Grupp att montera alla användare till"
+#~ msgid "Group to map all users to"
+#~ msgstr "Grupp att montera alla användare till"
 
 #: sharing/models.py:321
 msgid "Unix (NFS) Share"
@@ -3703,9 +3604,8 @@ msgstr "nix (NFS) utdelningar"
 msgid "Sharing"
 msgstr "Delning"
 
-#: storage/forms.py:105
-msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "Anger positivt tal (eventuellt med tillägget av K, M, G, T), eller, 0"
+#~ msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
+#~ msgstr "Anger positivt tal (eventuellt med tillägget av K, M, G, T), eller, 0"
 
 #: storage/forms.py:120
 #, python-format
@@ -3717,22 +3617,18 @@ msgstr "%s är ​​inte ett giltigt nummer"
 msgid "Volume name"
 msgstr "Volym namn"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "Filsystemstyp"
+#~ msgid "Filesystem type"
+#~ msgstr "Filsystemstyp"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "Forcera 4096 bytes sektorstorlek"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "Forcera 4096 bytes sektorstorlek"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
 msgstr "Ange anpassad väg"
 
-#: storage/forms.py:163
-msgid "Volume add"
-msgstr "Volym tillagd"
+#~ msgid "Volume add"
+#~ msgstr "Volym tillagd"
 
 #: storage/forms.py:175
 msgid ""
@@ -3760,9 +3656,8 @@ msgstr "Sökvägen finns inte."
 msgid "Path is not a directory."
 msgstr "Sökvägen är inte en katalog."
 
-#: storage/forms.py:264
-msgid "You cannot select an existing ZFS volume and specify a new volume name"
-msgstr "Du kan inte välja en befintlig ZFS volym och ange ett nytt volymnamn"
+#~ msgid "You cannot select an existing ZFS volume and specify a new volume name"
+#~ msgstr "Du kan inte välja en befintlig ZFS volym och ange ett nytt volymnamn"
 
 #: storage/forms.py:269
 msgid ""
@@ -3772,22 +3667,19 @@ msgstr ""
 "Du måste ange en ny volym namn eller välj en befintlig ZFS volym för att "
 "lägga till en virtuell enhet"
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "Du måste välja ett filsystem"
+#~ msgid "You must select a filesystem"
+#~ msgstr "Du måste välja ett filsystem"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "Du har redan en volym med samma namn"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" är en reserverat ord och kan därför inte användas"
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"log\" är en reserverat ord och kan därför inte användas"
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
-"Volym Namnet får inte börja med \"c[0-9]\", \"mirror\", \"raidz\" eller \"spare\""
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr ""
+#~ "Volym Namnet får inte börja med \"c[0-9]\", \"mirror\", \"raidz\" eller \"spare\""
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -3889,13 +3781,11 @@ msgstr "Kvota för denna volym"
 msgid "Reserved space for this volume"
 msgstr "Reserverat utrymme för denna volym"
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "ZFS Volym namn"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "ZFS Volym namn"
 
-#: storage/forms.py:845
-msgid "Size for this ZFS Volume"
-msgstr "Storlek för ZFS Volym"
+#~ msgid "Size for this ZFS Volume"
+#~ msgstr "Storlek för ZFS Volym"
 
 #: storage/forms.py:846
 msgid "Example: 1g"
@@ -4183,10 +4073,8 @@ msgstr "Fjärr replikering värd"
 msgid "Remote Replication Hosts"
 msgstr "Fjärr replikering värdar"
 
-#: storage/models.py:657 storage/models.py:718
-#: templates/storage/replications.html:20 templates/storage/tasks.html:21
-msgid "Filesystem/Volume"
-msgstr "Filsystem/Volym"
+#~ msgid "Filesystem/Volume"
+#~ msgstr "Filsystem/Volym"
 
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4199,17 +4087,15 @@ msgstr ""
 msgid "Remote Host"
 msgstr "Fjärrvärd"
 
-#: storage/models.py:669
-msgid "Remote ZFS filesystem name"
-msgstr "Fjärr ZFS filsystem namn"
+#~ msgid "Remote ZFS filesystem name"
+#~ msgstr "Fjärr ZFS filsystem namn"
 
-#: storage/models.py:670
-msgid ""
-"This should be the name of the ZFS filesystem on remote side. eg: poolname/"
-"datasetname not the mountpoint or filesystem path"
-msgstr ""
-"Detta bör vara namnet på ZFS filsystem på fjärrdatorns sida. t.ex.: "
-"poolnamn/datasetnamn inte monteringspunkt eller filsystem bana"
+#~ msgid ""
+#~ "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
+#~ "datasetname not the mountpoint or filesystem path"
+#~ msgstr ""
+#~ "Detta bör vara namnet på ZFS filsystem på fjärrdatorns sida. t.ex.: "
+#~ "poolnamn/datasetnamn inte monteringspunkt eller filsystem bana"
 
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -4304,14 +4190,11 @@ msgstr "Lagring"
 msgid "View Snapshots"
 msgstr "Visa ögonblicksbilder"
 
-#: storage/nav.py:34
-msgid "View ZFS Scrubs"
-msgstr "Visa ZFS Scrubs"
+#~ msgid "View ZFS Scrubs"
+#~ msgstr "Visa ZFS Scrubs"
 
-#: storage/nav.py:41 templates/storage/volumes.html:4
-#: templates/storage/volumes.html.py:6
-msgid "Volume Manager"
-msgstr "Volymhanterare"
+#~ msgid "Volume Manager"
+#~ msgstr "Volymhanterare"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4338,10 +4221,8 @@ msgstr "Autoimportera volym"
 msgid "View Volumes"
 msgstr "Visa volymer"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "Skapa ZFS Volym"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "Skapa ZFS Volym"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4367,9 +4248,8 @@ msgstr "Ändra behörigheter"
 msgid "Volume successfully added."
 msgstr "Volymen har lagts till korrekt."
 
-#: storage/views.py:254
-msgid "S.M.A.R.T. Extra Options"
-msgstr "S.M.A.R.T. extra alternativ"
+#~ msgid "S.M.A.R.T. Extra Options"
+#~ msgstr "S.M.A.R.T. extra alternativ"
 
 #: storage/views.py:371
 msgid "Dataset successfully added."
@@ -4415,9 +4295,8 @@ msgstr "Ögonblicksbilden har tagits bort."
 msgid "Rollback successful."
 msgstr "Återställing framgångsrik"
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "Ögonblicksbilden lagts till."
+#~ msgid "Snapshot successfully added."
+#~ msgstr "Ögonblicksbilden lagts till."
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4463,13 +4342,11 @@ msgstr "Hårddisken har framgångsrikt formaterats"
 msgid "Language (Require UI reload)"
 msgstr "Språk (kräver UI omstart)"
 
-#: system/forms.py:214
-msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Du måste ange ett värde mellan 1 och 65535, inklusive."
+#~ msgid "You must specify a number between 1 and 65535, inclusive."
+#~ msgstr "Du måste ange ett värde mellan 1 och 65535, inklusive."
 
-#: system/forms.py:216
-msgid "Number is required."
-msgstr "Nummer obligatorisk."
+#~ msgid "Number is required."
+#~ msgstr "Nummer obligatorisk."
 
 #: system/forms.py:245
 msgid "Force"
@@ -4508,13 +4385,11 @@ msgstr "Ny avbild som ska installeras"
 msgid "SHA256 sum for the image"
 msgstr "SHA256 summan för avbildningen"
 
-#: system/forms.py:538
-msgid "Invalid firmware"
-msgstr "Ogiltig firmware"
+#~ msgid "Invalid firmware"
+#~ msgstr "Ogiltig firmware"
 
-#: system/forms.py:544
-msgid "Invalid checksum"
-msgstr "Ogiltig kontrollsumma"
+#~ msgid "Invalid checksum"
+#~ msgstr "Ogiltig kontrollsumma"
 
 #: system/forms.py:557
 msgid "New config to be installed"
@@ -4536,13 +4411,11 @@ msgstr "Citationstecken är inte tillåtna"
 msgid "Protocol"
 msgstr "Protokoll"
 
-#: system/models.py:50
-msgid "WebGUI Address"
-msgstr "WebGUI Adress"
+#~ msgid "WebGUI Address"
+#~ msgstr "WebGUI Adress"
 
-#: system/models.py:56
-msgid "WebGUI Port"
-msgstr "WebGUI Port"
+#~ msgid "WebGUI Port"
+#~ msgstr "WebGUI Port"
 
 #: system/models.py:62
 msgid "Language"
@@ -4651,25 +4524,21 @@ msgstr "Använda seriekonsoll"
 msgid "Enable screen saver"
 msgstr "Aktivera skärmsläckare"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "Kontrollera automatiskt efter ny firmware"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "Kontrollera automatiskt efter ny firmware"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "Pip vid uppstart"
+#~ msgid "Beep on boot"
+#~ msgstr "Pip vid uppstart"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "Aktivera speciell system optimering"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "Aktivera speciell system optimering"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "Aktivera powerd (Energisparläges demon)"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "Aktivera Noll-konfigurerings / Bonjour"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "Aktivera Noll-konfigurerings / Bonjour"
 
 #: system/models.py:174
 msgid ""
@@ -5056,9 +4925,8 @@ msgstr "Ditt testmeddelande kunde inte skickas: %s"
 msgid "Your test email has been sent!"
 msgstr "Ditt testmeddelande har skickats!"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Sidan kunde inte hittas"
+#~ msgid "Page Not Found"
+#~ msgstr "Sidan kunde inte hittas"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5080,10 +4948,8 @@ msgstr "Hjälp"
 msgid "Log In"
 msgstr "Logga in"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -5091,11 +4957,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "Medlemmar"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Ändra"
+#~ msgid "Modify"
+#~ msgstr "Ändra"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5109,52 +4972,42 @@ msgstr "Ändra Grupp"
 msgid "Delete Group"
 msgstr "Ta bort grupp"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "Det finns inga användardefinierade grupper."
+#~ msgid "There are no user defined groups."
+#~ msgstr "Det finns inga användardefinierade grupper."
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "Lägg till ny grupp"
+#~ msgid "Add New Group"
+#~ msgstr "Lägg till ny grupp"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "Hem"
+#~ msgid "Home"
+#~ msgstr "Hem"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
 msgstr "Ändra Användare"
 
-#: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
-#: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
-msgid "Auxiliary Groups"
-msgstr "Hjälpgrupper"
+#~ msgid "Auxiliary Groups"
+#~ msgstr "Hjälpgrupper"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
 msgstr "Ta bort användare"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "Ta bort Användare"
+#~ msgid "Delete User"
+#~ msgstr "Ta bort Användare"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "Inga användare definierade"
+#~ msgid "No users defined"
+#~ msgstr "Inga användare definierade"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "Lägg till ny användare"
+#~ msgid "Add New User"
+#~ msgstr "Lägg till ny användare"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "Ändra E-post"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "Ändra Administratörslösenordet"
+#~ msgid "Change Admin Password"
+#~ msgstr "Ändra Administratörslösenordet"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5198,14 +5051,13 @@ msgstr "KRITISK"
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: templates/freeadmin/generic_model_delete.html:14
 #, python-format
-msgid ""
-"There are %(related_num)s related entries that are going to be delete as "
-"well because depend on this"
-msgstr ""
-"Det finns %(related_num)s relaterade poster som kommer att raderas och "
-"eftersom beroende av detta"
+#~ msgid ""
+#~ "There are %(related_num)s related entries that are going to be delete as "
+#~ "well because depend on this"
+#~ msgstr ""
+#~ "Det finns %(related_num)s relaterade poster som kommer att raderas och "
+#~ "eftersom beroende av detta"
 
 #: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
@@ -5303,20 +5155,11 @@ msgstr "Dokumentation"
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS Dokumentation"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "IPv6 Auto"
+#~ msgid "IPv6 Auto"
+#~ msgstr "IPv6 Auto"
 
-#: templates/network/interface.html:12 templates/plugins/index.html:17
-#: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
-#: templates/sharing/windows.html:15 templates/storage/replications.html:24
-#: templates/storage/scrub.html:13 templates/storage/tasks.html:25
-#: templates/storage/volumes.html:64 templates/system/cronjob.html:12
-#: templates/system/ntpserver.html:11 templates/system/rsync.html:16
-#: templates/system/smarttest.html:11 templates/system/sysctl.html:9
-#: templates/system/tunable.html:9
-msgid "Available actions"
-msgstr "Tillgängliga åtgärder"
+#~ msgid "Available actions"
+#~ msgstr "Tillgängliga åtgärder"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -5347,22 +5190,18 @@ msgstr "Tillgängliga åtgärder"
 msgid "Edit"
 msgstr "Ändra"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "Redigera gränssnitt"
+#~ msgid "Edit Interface"
+#~ msgstr "Redigera gränssnitt"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "Tar bort gränssnitt"
+#~ msgid "Delete Interface"
+#~ msgstr "Tar bort gränssnitt"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
 msgstr "Inga gränssnitt definierade "
 
-#: templates/network/interface.html:47 templates/network/interface.html:49
-msgid "Add Interface"
-msgstr "Lägga till gränssnitt"
+#~ msgid "Add Interface"
+#~ msgstr "Lägga till gränssnitt"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5378,50 +5217,38 @@ msgstr "Redigera medlemmar"
 msgid "LAGG Members"
 msgstr "LAGG medlemmar"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "Inget LAGG gränssnitt definierat"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "Inget LAGG gränssnitt definierat"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "Lägg till LAGG gränssnitt"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "Lägg till LAGG gränssnitt"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "Lägg till LAGG"
+#~ msgid "Add LAGG"
+#~ msgstr "Lägg till LAGG"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "Beställnings prioritet"
+#~ msgid "Ordering Priority"
+#~ msgstr "Beställnings prioritet"
 
-#: templates/network/lagg_members.html:7
-msgid "Startup option"
-msgstr "Start-up-alternativ"
+#~ msgid "Startup option"
+#~ msgstr "Start-up-alternativ"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "Åtgärd"
+#~ msgid "Action"
+#~ msgstr "Åtgärd"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "Lägg till LAGG medlem"
+#~ msgid "Add LAGG Member"
+#~ msgstr "Lägg till LAGG medlem"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "Ändra Statisk Rutt"
+#~ msgid "Edit Static Route"
+#~ msgstr "Ändra Statisk Rutt"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "Ta bort Statisk rutt"
+#~ msgid "Delete Static Route"
+#~ msgstr "Ta bort Statisk rutt"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "Ingen statisk rutt definierad"
+#~ msgid "No static route defined"
+#~ msgstr "Ingen statisk rutt definierad"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "Lägg till Statisk rutt"
+#~ msgid "Add Static Route"
+#~ msgstr "Lägg till Statisk rutt"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5439,50 +5266,41 @@ msgstr "Standard rutt"
 msgid "No default route defined"
 msgstr "Ingen standard rutt definierad"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "Redigera VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "Redigera VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "Ta bort VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "Ta bort VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "Inget VLAN definierat"
+#~ msgid "No VLAN defined"
+#~ msgstr "Inget VLAN definierat"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "Lägg till VLAN-gränssnit"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "Lägg till VLAN-gränssnit"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
 msgstr "Installerad ..."
 
-#: templates/plugins/index.html:5 templates/plugins/index.html.py:7
-#: templates/services/plugins.html:5 templates/services/plugins.html.py:7
-msgid "Install Plugin"
-msgstr "installera insticksmodul"
+#~ msgid "Install Plugin"
+#~ msgstr "installera insticksmodul"
 
 #: templates/plugins/index.html:31
 msgid "Info"
 msgstr "Info"
 
-#: templates/plugins/index.html:33
-msgid "Plugin info"
-msgstr "Insticksmodul info"
+#~ msgid "Plugin info"
+#~ msgstr "Insticksmodul info"
 
-#: templates/plugins/index.html:39
-msgid "Edit Plugin"
-msgstr "Redigera insticksmodul"
+#~ msgid "Edit Plugin"
+#~ msgstr "Redigera insticksmodul"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
 msgstr "Radera insticksmodul"
 
-#: templates/plugins/index.html:55
-msgid "No plugins installed"
-msgstr "Inga insticksprogram installerad"
+#~ msgid "No plugins installed"
+#~ msgstr "Inga insticksprogram installerad"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
@@ -5493,9 +5311,8 @@ msgstr "Importera"
 msgid "Step %(step)s of %(step_count)s"
 msgstr "Steg %(step) av %(step_count)"
 
-#: templates/plugins/jailpbi.html:18
-msgid "Upload Jail PBI"
-msgstr "Ladda upp Jail PBI"
+#~ msgid "Upload Jail PBI"
+#~ msgstr "Ladda upp Jail PBI"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5506,21 +5323,17 @@ msgstr "Ladda upp Jail PBI"
 msgid "Please wait..."
 msgstr "Vänligen vänta..."
 
-#: templates/plugins/mountpoints.html:19
-msgid "Edit Mount Point"
-msgstr "Redigera monteringspunkt"
+#~ msgid "Edit Mount Point"
+#~ msgstr "Redigera monteringspunkt"
 
-#: templates/plugins/mountpoints.html:25
-msgid "Delete Mount Point"
-msgstr "Radera monteringspunkt"
+#~ msgid "Delete Mount Point"
+#~ msgstr "Radera monteringspunkt"
 
-#: templates/plugins/mountpoints.html:32
-msgid "No mount points defined"
-msgstr "Inga monteringspunkter definierade"
+#~ msgid "No mount points defined"
+#~ msgstr "Inga monteringspunkter definierade"
 
-#: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-msgid "Add Mount Point"
-msgstr "Lägg till monteringspunkt"
+#~ msgid "Add Mount Point"
+#~ msgstr "Lägg till monteringspunkt"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
@@ -5536,14 +5349,12 @@ msgstr "Ditt användarnamn och lösenord matchade inte. Försök igen."
 msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Välkommmen, %(username)s. Tack för att du loggar in."
 
-#: templates/registration/login.html:46
 #, python-format
-msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr "Välkommen till %(sw_name)s&trade; %(sw_login_version)s"
+#~ msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
+#~ msgstr "Välkommen till %(sw_name)s&trade; %(sw_login_version)s"
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "Vänligen logga in"
+#~ msgid "Please log in."
+#~ msgstr "Vänligen logga in"
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5561,9 +5372,8 @@ msgstr "Logga in igen"
 msgid "AFP Settings"
 msgstr "AFP Inställningar"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "Active DirectoryInställningar"
+#~ msgid "Active Directory Settings"
+#~ msgstr "Active DirectoryInställningar"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5581,21 +5391,18 @@ msgstr "FTP inställningar"
 msgid "ISCSI Settings"
 msgstr "ISCSI-Inställningar"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "LDAP Inställningar"
+#~ msgid "LDAP Settings"
+#~ msgstr "LDAP Inställningar"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
 msgstr "NFS inställningar"
 
-#: templates/services/core.html:103 templates/services/core.html.py:105
-msgid "Plugins Settings"
-msgstr "Insticksmodul inställningar"
+#~ msgid "Plugins Settings"
+#~ msgstr "Insticksmodul inställningar"
 
-#: templates/services/core.html:105
-msgid "Install Jail PBI"
-msgstr "Installera Jail PBI"
+#~ msgid "Install Jail PBI"
+#~ msgstr "Installera Jail PBI"
 
 #: templates/services/core.html:117
 msgid "Rsync Settings"
@@ -5641,13 +5448,11 @@ msgstr "iSCSI hantering"
 msgid "Portals"
 msgstr "Portaler"
 
-#: templates/services/iscsi.html:14
-msgid "Authorized Initiators"
-msgstr "Auktoriserade Initiatorer"
+#~ msgid "Authorized Initiators"
+#~ msgstr "Auktoriserade Initiatorer"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "Autentisering"
+#~ msgid "Authentication"
+#~ msgstr "Autentisering"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5661,101 +5466,76 @@ msgstr "Omfattningar"
 msgid "Associated Targets"
 msgstr "Associerad mål"
 
-#: templates/services/iscsi_assoctargets.html:31
-msgid "No associated targets defined"
-msgstr "Inga samband mål definieras"
+#~ msgid "No associated targets defined"
+#~ msgstr "Inga samband mål definieras"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "Lägg till omfattning till mål"
+#~ msgid "Add Extent to Target"
+#~ msgstr "Lägg till omfattning till mål"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "Lägg till omfattning till mål"
+#~ msgid "Add Extent To Target"
+#~ msgstr "Lägg till omfattning till mål"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "Peer"
+#~ msgid "Peer"
+#~ msgstr "Peer"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "Lägg till iSCSI-användare"
+#~ msgid "Add iSCSI User"
+#~ msgstr "Lägg till iSCSI-användare"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "Auktoriserade nätverk"
+#~ msgid "Authorized Network"
+#~ msgstr "Auktoriserade nätverk"
 
-#: templates/services/iscsi_authini.html:35
-msgid "No authorized initiators defined"
-msgstr "Inga tillåtna initiatorer definieras"
+#~ msgid "No authorized initiators defined"
+#~ msgstr "Inga tillåtna initiatorer definieras"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "Lägg till auktoriserade Initiator"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "Lägg till auktoriserade Initiator"
 
-#: templates/services/iscsi_dextents.html:33
-msgid "No device extents defined"
-msgstr "Ingen omfattning om enheter definierade"
+#~ msgid "No device extents defined"
+#~ msgstr "Ingen omfattning om enheter definierade"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "Lägg till omfattning"
+#~ msgid "Add Extent"
+#~ msgstr "Lägg till omfattning"
 
-#: templates/services/iscsi_extents.html:5
-msgid "File Extent"
-msgstr "Fil omfattning"
+#~ msgid "File Extent"
+#~ msgstr "Fil omfattning"
 
-#: templates/services/iscsi_extents.html:33
-msgid "No extents defined"
-msgstr "Ingen definierade omfattning"
+#~ msgid "No extents defined"
+#~ msgstr "Ingen definierade omfattning"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
 msgstr "Lyssna"
 
-#: templates/services/iscsi_portals.html:18
-msgid "No IP defined for this Portal"
-msgstr "Ingen IP definierats för denna Portal"
+#~ msgid "No IP defined for this Portal"
+#~ msgstr "Ingen IP definierats för denna Portal"
 
-#: templates/services/iscsi_portals.html:26
-msgid "Edit Portal"
-msgstr "Redigera Portal"
+#~ msgid "Edit Portal"
+#~ msgstr "Redigera Portal"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "Ta bort Portal"
+#~ msgid "Delete Portal"
+#~ msgstr "Ta bort Portal"
 
-#: templates/services/iscsi_portals.html:39
-msgid "No portals defined"
-msgstr "Ingen portaler definierade"
+#~ msgid "No portals defined"
+#~ msgstr "Ingen portaler definierade"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "Lägg till Portal"
+#~ msgid "Add Portal"
+#~ msgstr "Lägg till Portal"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "Inget mål angivet"
+#~ msgid "No targets defined"
+#~ msgstr "Inget mål angivet"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "Lägg till Mål"
+#~ msgid "Add Target"
+#~ msgstr "Lägg till Mål"
 
-#: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-msgid "View Mount Points"
-msgstr "Visa monteringspunkter"
+#~ msgid "View Mount Points"
+#~ msgstr "Visa monteringspunkter"
 
-#: templates/services/plugins.html:22
-msgid ""
-"ATTENTION: The plugins service is not running, several functionalities have "
-"been disabled."
-msgstr ""
-"VARNING: insticksmodul tjänsten inte körs, har ett flertal funktioner har "
-"inaktiverats."
+#~ msgid ""
+#~ "ATTENTION: The plugins service is not running, several functionalities have "
+#~ "been disabled."
+#~ msgstr ""
+#~ "VARNING: insticksmodul tjänsten inte körs, har ett flertal funktioner har "
+#~ "inaktiverats."
 
 #: templates/services/plugins.html:31
 msgid "Version"
@@ -5781,43 +5561,32 @@ msgstr "Uppdatera insticksmodulen"
 msgid "No available plugins services"
 msgstr "Inga tillgängliga insticksmodul tjänster"
 
-#: templates/services/pluginsjail_delete.html:4
-msgid "All the files within the plugins jail will be permanently deleted."
-msgstr "Alla filer i insticksmodul fängelset tas bort permanent."
+#~ msgid "All the files within the plugins jail will be permanently deleted."
+#~ msgstr "Alla filer i insticksmodul fängelset tas bort permanent."
 
-#: templates/services/pluginsjail_edit.html:12
-msgid "Delete Plugins Jail"
-msgstr "Ta bort Insticksmoduler fängelse"
+#~ msgid "Delete Plugins Jail"
+#~ msgstr "Ta bort Insticksmoduler fängelse"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "Inga rsync-moduler definierade"
+#~ msgid "No rsync modules defined"
+#~ msgstr "Inga rsync-moduler definierade"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "Aktiva utdelningar"
+#~ msgid "Active Shares"
+#~ msgstr "Aktiva utdelningar"
 
-#: templates/sharing/apple.html:7
-msgid "There are no active Apple (AFP) shares."
-msgstr "Det finns inga aktiva Apple (AFP) utdelningar."
+#~ msgid "There are no active Apple (AFP) shares."
+#~ msgstr "Det finns inga aktiva Apple (AFP) utdelningar."
 
-#: templates/sharing/apple.html:29
-msgid "Edit Apple (AFP) Share"
-msgstr "Redigera Apple (AFP) utdelningar"
+#~ msgid "Edit Apple (AFP) Share"
+#~ msgstr "Redigera Apple (AFP) utdelningar"
 
-#: templates/sharing/apple.html:35
-msgid "Delete Apple (AFP) Share"
-msgstr "Ta bort Apple (AFP) utdelningar"
+#~ msgid "Delete Apple (AFP) Share"
+#~ msgstr "Ta bort Apple (AFP) utdelningar"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "Inga utdelningar definierade"
+#~ msgid "No shares defined"
+#~ msgstr "Inga utdelningar definierade"
 
-#: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-msgid "Add Apple (AFP) Share"
-msgstr "Lägg till Apple (AFP) utdelning"
+#~ msgid "Add Apple (AFP) Share"
+#~ msgstr "Lägg till Apple (AFP) utdelning"
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
@@ -5831,41 +5600,32 @@ msgstr "UNIX (NFS)"
 msgid "Windows (CIFS)"
 msgstr "Windows (CIFS)"
 
-#: templates/sharing/unix.html:7
-msgid "There are no active UNIX (NFS) shares."
-msgstr "Det finns inga aktiva UNIX (NFS) utdelningar."
+#~ msgid "There are no active UNIX (NFS) shares."
+#~ msgstr "Det finns inga aktiva UNIX (NFS) utdelningar."
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "Monteringspunkt"
+#~ msgid "Mountpoint"
+#~ msgstr "Monteringspunkt"
 
-#: templates/sharing/unix.html:29
-msgid "Edit UNIX (NFS) Share"
-msgstr "Redigera UNIX (NFS) utdelningar"
+#~ msgid "Edit UNIX (NFS) Share"
+#~ msgstr "Redigera UNIX (NFS) utdelningar"
 
-#: templates/sharing/unix.html:35
-msgid "Delete UNIX (NFS) Share"
-msgstr "Ta bort UNIX (NFS) utdelningar"
+#~ msgid "Delete UNIX (NFS) Share"
+#~ msgstr "Ta bort UNIX (NFS) utdelningar"
 
-#: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-msgid "Add UNIX (NFS) Share"
-msgstr "Lägg till UNIX (NFS) utdelningar"
+#~ msgid "Add UNIX (NFS) Share"
+#~ msgstr "Lägg till UNIX (NFS) utdelningar"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (CIFS) shares."
-msgstr "Det finns inga aktiva Windows (CIFS) utdelningar."
+#~ msgid "There are no active Windows (CIFS) shares."
+#~ msgstr "Det finns inga aktiva Windows (CIFS) utdelningar."
 
-#: templates/sharing/windows.html:33
-msgid "Edit Windows (CIFS) Share"
-msgstr "Redigera Windows (CIFS) utdelningar"
+#~ msgid "Edit Windows (CIFS) Share"
+#~ msgstr "Redigera Windows (CIFS) utdelningar"
 
-#: templates/sharing/windows.html:39
-msgid "Delete Windows (CIFS) Share"
-msgstr "Ta bort Windows (CIFS) utdelningar"
+#~ msgid "Delete Windows (CIFS) Share"
+#~ msgstr "Ta bort Windows (CIFS) utdelningar"
 
-#: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (CIFS) Share"
-msgstr "Lägg till Windows (CIFS) utdelning"
+#~ msgid "Add Windows (CIFS) Share"
+#~ msgstr "Lägg till Windows (CIFS) utdelning"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -5973,39 +5733,29 @@ msgstr ""
 "OBS: En periodisk ögonblicksbild av en viss ZFS-filsystem / volym krävs för "
 "att skapa en replikering"
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "Sista ögonblicksbild"
+#~ msgid "Last snapshot"
+#~ msgstr "Sista ögonblicksbild"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "Fjärr ZFS-filsystem"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "Fjärr ZFS-filsystem"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "Ta bort replikering"
+#~ msgid "Delete Replication"
+#~ msgstr "Ta bort replikering"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "Redigera replikering"
+#~ msgid "Edit Replication"
+#~ msgstr "Redigera replikering"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "Ingen ZFS replikering tillgänglig"
+#~ msgid "No ZFS replication available"
+#~ msgstr "Ingen ZFS replikering tillgänglig"
 
-#: templates/storage/scrub.html:42
-msgid "No scrub tasks defined."
-msgstr "Inga skrub uppgifter definierats."
+#~ msgid "No scrub tasks defined."
+#~ msgstr "Inga skrub uppgifter definierats."
 
-#: templates/storage/scrub.html:48
-msgid "Add ZFS Scrub Task"
-msgstr "Lägg till ZFS Scrub Uppgift"
+#~ msgid "Add ZFS Scrub Task"
+#~ msgstr "Lägg till ZFS Scrub Uppgift"
 
-#: templates/storage/scrub.html:50
-msgid "Add ZFS Scrub"
-msgstr "Lägg till ZFS Scrub"
+#~ msgid "Add ZFS Scrub"
+#~ msgstr "Lägg till ZFS Scrub"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -6060,45 +5810,37 @@ msgstr "Ta bort ögonblicksbilder"
 msgid "Periodic Snapshots"
 msgstr "Periodiska ögonblicksbilder"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "Schema över periodiska ögonblicksbilder"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "Schema över periodiska ögonblicksbilder"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "Det finns inga schemalagda ögonblicksbilder."
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "Det finns inga schemalagda ögonblicksbilder."
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Hur"
+#~ msgid "How"
+#~ msgstr "Hur"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "Behåll ögonblicksbild för"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "Från"
+#~ msgid "From"
+#~ msgstr "Från"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "genom"
+#~ msgid "through"
+#~ msgstr "genom"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", varje"
+#~ msgid ", every"
+#~ msgstr ", varje"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "varje dag"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "på varje"
+#~ msgid "on every"
+#~ msgstr "på varje"
 
-#: templates/storage/tasks.html:147
-msgid "There are no periodic snapshots scheduled."
-msgstr "Det finns inga periodiska schemalagda ögonblicksbilder."
+#~ msgid "There are no periodic snapshots scheduled."
+#~ msgstr "Det finns inga periodiska schemalagda ögonblicksbilder."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -6152,17 +5894,14 @@ msgstr "Volymstatus"
 msgid "Destroy Dataset"
 msgstr "Förstör dataset"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "Förstör ZFS Volym"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "Förstör ZFS Volym"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "Inga definierade volymer"
+#~ msgid "No volumes defined"
+#~ msgstr "Inga definierade volymer"
 
-#: templates/storage/wizard.html:27
-msgid "Volume to extend"
-msgstr "Volym att förlänga"
+#~ msgid "Volume to extend"
+#~ msgstr "Volym att förlänga"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6172,25 +5911,20 @@ msgstr "Medlems hårddiskar"
 msgid "Group type"
 msgstr "Grupptyp"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS Extra"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS Extra"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Användningen av endast 1 log disk är mycket avrådande"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "Användningen av endast 1 log disk är mycket avrådande"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Logg"
+#~ msgid "Log"
+#~ msgstr "Logg"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "Cache"
+#~ msgid "Cache"
+#~ msgstr "Cache"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "Reservdel"
+#~ msgid "Spare"
+#~ msgstr "Reservdel"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6204,26 +5938,22 @@ msgstr "Befintliga data kommer att raderas"
 msgid "Replace Disk"
 msgstr "Ersätt hårddisken"
 
-#: templates/storage/zvols.html:3
 #, python-format
-msgid "Create ZFS volume on %(name)s"
-msgstr "Skapa ZFS volymen på %(namn)"
+#~ msgid "Create ZFS volume on %(name)s"
+#~ msgstr "Skapa ZFS volymen på %(namn)"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "Lägg till ZFS Volym"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "Lägg till ZFS Volym"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "Bygg om LDAP/AD Cachen"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "Cachen byggs om."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "Cachen byggs om."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "Cachen kunde inte byggas om"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "Cachen kunde inte byggas om"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6235,10 +5965,8 @@ msgstr "Spara felsökningsloggar"
 msgid "Firmware Update"
 msgstr "Firmware uppdatering"
 
-#: templates/system/advanced_edit.html:39
-#: templates/system/advanced_edit.html:41
-msgid "Import Plugins Jail"
-msgstr "Import Insticksmoduler fängelse"
+#~ msgid "Import Plugins Jail"
+#~ msgstr "Import Insticksmoduler fängelse"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6250,17 +5978,14 @@ msgstr ""
 "Är du säker på att du vill återställa konfigurationen till "
 "fabriksinställningar?"
 
-#: templates/system/cronjob.html:41
-msgid "No cron jobs defined."
-msgstr "Inga cron-jobb definierats."
+#~ msgid "No cron jobs defined."
+#~ msgstr "Inga cron-jobb definierats."
 
-#: templates/system/cronjob.html:47
-msgid "Add a cron job"
-msgstr "Lägg till ett cron-jobb"
+#~ msgid "Add a cron job"
+#~ msgstr "Lägg till ett cron-jobb"
 
-#: templates/system/cronjob.html:49
-msgid "Add cron job"
-msgstr "Lägg till cron-jobb"
+#~ msgid "Add cron job"
+#~ msgstr "Lägg till cron-jobb"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6278,21 +6003,17 @@ msgstr ""
 "TIPS: Test e-post skickas till root-användaren.För att konfigurera den gå "
 "till: Användare -> root -> Ändra E-pos"
 
-#: templates/system/ntpserver.html:7
-msgid "iBurst"
-msgstr "iBurst"
+#~ msgid "iBurst"
+#~ msgstr "iBurst"
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "Inga NTP-servrar definieras."
+#~ msgid "No NTP servers defined."
+#~ msgstr "Inga NTP-servrar definieras."
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "Lägg till NTP-server"
+#~ msgid "Add NTP server"
+#~ msgstr "Lägg till NTP-server"
 
-#: templates/system/ntpserver.html:46
-msgid "Add NTP Server"
-msgstr "Lägg till NTP-server"
+#~ msgid "Add NTP Server"
+#~ msgstr "Lägg till NTP-server"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6310,25 +6031,20 @@ msgstr ""
 msgid "History"
 msgstr "Historik"
 
-#: templates/system/rsync.html:5
-msgid "Local Path"
-msgstr "Lokal sökväg"
+#~ msgid "Local Path"
+#~ msgstr "Lokal sökväg"
 
-#: templates/system/rsync.html:6
-msgid "Remote"
-msgstr "Fjärr"
+#~ msgid "Remote"
+#~ msgstr "Fjärr"
 
-#: templates/system/rsync.html:48
-msgid "No rsync tasks defined."
-msgstr "Inga rsync uppgifter definierats."
+#~ msgid "No rsync tasks defined."
+#~ msgstr "Inga rsync uppgifter definierats."
 
-#: templates/system/rsync.html:54
-msgid "Add rsync task"
-msgstr "Lägg till rsync uppgift"
+#~ msgid "Add rsync task"
+#~ msgstr "Lägg till rsync uppgift"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Lägg till Rsynk"
+#~ msgid "Add Rsync"
+#~ msgstr "Lägg till Rsynk"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6362,29 +6078,23 @@ msgstr ""
 msgid "Unknown"
 msgstr "Okänd"
 
-#: templates/system/smarttest.html:38
-msgid "No S.M.A.R.T. tests defined"
-msgstr "Inga S.M.A.R.T. definierade test"
+#~ msgid "No S.M.A.R.T. tests defined"
+#~ msgstr "Inga S.M.A.R.T. definierade test"
 
-#: templates/system/smarttest.html:44
-msgid "Add S.M.A.R.T. Test"
-msgstr "Lägg till S.M.A.R.T. testet"
+#~ msgid "Add S.M.A.R.T. Test"
+#~ msgstr "Lägg till S.M.A.R.T. testet"
 
-#: templates/system/smarttest.html:46
-msgid "Add S.M.A.R.T. test"
-msgstr "Lägg till S.M.A.R.T. test"
+#~ msgid "Add S.M.A.R.T. test"
+#~ msgstr "Lägg till S.M.A.R.T. test"
 
-#: templates/system/sysctl.html:34
-msgid "No sysctl defined."
-msgstr "Inga sysctl definierats."
+#~ msgid "No sysctl defined."
+#~ msgstr "Inga sysctl definierats."
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "Lägg till sysctl"
+#~ msgid "Add sysctl"
+#~ msgstr "Lägg till sysctl"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "Lägg till sysctl"
+#~ msgid "Add Sysctl"
+#~ msgstr "Lägg till sysctl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6410,21 +6120,17 @@ msgstr "Upptid"
 msgid "Load Average"
 msgstr "Genomsnittlig systemlast"
 
-#: templates/system/system_info.html:34
-msgid "Connected through"
-msgstr "Ansluten genom"
+#~ msgid "Connected through"
+#~ msgstr "Ansluten genom"
 
-#: templates/system/tunable.html:34
-msgid "No tunable setting defined."
-msgstr "Inga avstämbara inställningar definierade."
+#~ msgid "No tunable setting defined."
+#~ msgstr "Inga avstämbara inställningar definierade."
 
-#: templates/system/tunable.html:40
-msgid "Add Tunable"
-msgstr "Lägg till Inställningsbar"
+#~ msgid "Add Tunable"
+#~ msgstr "Lägg till Inställningsbar"
 
-#: templates/system/tunable.html:42
-msgid "Add Loader"
-msgstr "Lägg till laddare"
+#~ msgid "Add Loader"
+#~ msgstr "Lägg till laddare"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6450,18 +6156,16 @@ msgstr "Volymen %(volym)s status är %(status)s: %(meddelande)s"
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "Volymen %(volym)s status är %(status)s"
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr ""
-"Du måste byta lösenord för administratören (admin användaren) (just nu "
-"behövs inget lösenord för att logga in)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr ""
+#~ "Du måste byta lösenord för administratören (admin användaren) (just nu "
+#~ "behövs inget lösenord för att logga in)"
 
-#: tools/alert.py:137
 #, python-format
-msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr "WebbGUI adressen kunde inte bindas till %s; använd vildkort"
+#~ msgid "The WebGUI Address could not be bind to %s; using wildcard"
+#~ msgstr "WebbGUI adressen kunde inte bindas till %s; använd vildkort"
 
 #: tools/alert.py:147
 #, python-format
@@ -6476,161 +6180,2436 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritiska Alarm"
 
-msgid "Selected"
-msgstr "Vald"
+#~ msgid "Selected"
+#~ msgstr "Vald"
 
-msgid "Allow guest access"
-msgstr "Tillåt gäståtkomst"
+#~ msgid "Allow guest access"
+#~ msgstr "Tillåt gäståtkomst"
 
-msgid "Only allow guest access"
-msgstr "Tillåt bara gäståtkomst"
+#~ msgid "Only allow guest access"
+#~ msgstr "Tillåt bara gäståtkomst"
 
-msgid "View S.M.A.R.T. Tests"
-msgstr "Visa S.M.A.R.T. Tester"
+#~ msgid "View S.M.A.R.T. Tests"
+#~ msgstr "Visa S.M.A.R.T. Tester"
 
-msgid "View Sysctls"
-msgstr "Visa Sysctl"
+#~ msgid "View Sysctls"
+#~ msgstr "Visa Sysctl"
 
-msgid "View Tunables"
-msgstr "Visa Inställbara"
+#~ msgid "View Tunables"
+#~ msgstr "Visa Inställbara"
 
-msgid "Browse"
-msgstr "Blälddra"
+#~ msgid "Browse"
+#~ msgstr "Blälddra"
 
-msgid "Close"
-msgstr "Stäng"
+#~ msgid "Close"
+#~ msgstr "Stäng"
 
-msgid "Add Apple (CIFS) Share"
-msgstr "Lägg till Apple (CIFS) utdelningar"
+#~ msgid "Add Apple (CIFS) Share"
+#~ msgstr "Lägg till Apple (CIFS) utdelningar"
 
-msgid "Hourly"
-msgstr "Varje timme"
+#~ msgid "Hourly"
+#~ msgstr "Varje timme"
 
-msgid "Daily"
-msgstr "Dagligen"
+#~ msgid "Daily"
+#~ msgstr "Dagligen"
 
-msgid "Weekly"
-msgstr "Veckovis"
+#~ msgid "Weekly"
+#~ msgstr "Veckovis"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Band"
+#~ msgid "Tape"
+#~ msgstr "Band"
 
-msgid "Pass"
-msgstr "Passera"
+#~ msgid "Pass"
+#~ msgstr "Passera"
 
-msgid "Disable password"
-msgstr "Stäng av lösenord"
+#~ msgid "Disable password"
+#~ msgstr "Stäng av lösenord"
 
-msgid "My Account"
-msgstr "Mitt konto"
+#~ msgid "My Account"
+#~ msgstr "Mitt konto"
 
-msgid "View All Users"
-msgstr "Visa samtliga användare"
+#~ msgid "View All Users"
+#~ msgstr "Visa samtliga användare"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Vi ber om ursäkt, men ditt formulär har gått ut. Du kan fortsätta att "
+#~ "fylla i formuläret från denna sida."
+
+#~ msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
+#~ msgstr ""
+#~ "Du måste specifiera mellan antingen en giltig IPv4 eller IPv6 med mask bit"
+
+#~ msgid "The location must contain only alphanumeric characters, _ or -"
+#~ msgstr "Platsen kan ändast innehålla alfanumeriska tecken, _ eller -"
+
+#~ msgid "Local Access"
+#~ msgstr "Lokalåtkomst"
+
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr ""
+#~ "Tillåt användare med lokala konton att ta del av apple utdelningar i "
+#~ "denna ruta."
+
+#~ msgid "Guest Account"
+#~ msgstr "Gästkonto"
+
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Använd detta val för att åsidosätta användarnamnet (standard är 'ftp') "
+#~ "som används för tillgång till tjänster för gästkontot. Alla rättigheter "
+#~ "som användaren har blir tillgängliga för alla som använder gästkontot. "
+#~ "Denna användare måste finnas i lösenordsfilen, men behöver inget giltigt "
+#~ "lösenord."
+
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
+
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "Är du säker på att du vill exportera?"
+
+#~ msgid "Export Volume"
+#~ msgstr "Exportera Volym"
+
+#~ msgid "successfully deleted"
+#~ msgstr "tagits bort"
+
+#~ msgid "%s successfully added."
+#~ msgstr "%s har skapats."
+
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6-nätmask"
+
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Detta värde måste vara mellan 0 och 10000, inklusive."
+
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Detta värde måste vara mellan 0 och 1000, inklusive."
+
+#~ msgid "Enable DDP"
+#~ msgstr "Aktivera DDP"
+
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "Aktiverar DDP-stöd för låg-nivå AppleTalk access"
+
+#~ msgid "%s successfully update."
+#~ msgstr "%s uppdatering lyckades."
+
+#~ msgid "Admin user"
+#~ msgstr "Admin-användare"
+
+#~ msgid ""
+#~ "Use this option to override the username ('www' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Använd detta val för att åsidosätta användarnamnet (standard är 'www') "
+#~ "som används för tillgång till tjänster för gästkontot. Alla rättigheter "
+#~ "som användaren har blir tillgängliga för alla som använder gästkontot. "
+#~ "Denna användare måste finnas i lösenordsfilen, men behöver inget giltigt "
+#~ "lösenord."
+
+#~ msgid "ZVol Name"
+#~ msgstr "ZVol Namn"
+
+#~ msgid "English"
+#~ msgstr "Engelska"
+
+#~ msgid "Level"
+#~ msgstr "Nivå"
+
+#~ msgid "Add Link Aggregation"
+#~ msgstr "Lägg till Länksammanslagning"
+
+#~ msgid "View All Interfaces"
+#~ msgstr "Visa alla gränssnittstyper"
+
+#~ msgid "View All VLANs"
+#~ msgstr "Visa alla VLANs"
+
+#: choices.py:165
+msgid "Unencrypted"
 msgstr ""
-"Vi ber om ursäkt, men ditt formulär har gått ut. Du kan fortsätta att "
-"fylla i formuläret från denna sida."
 
-msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
+#: choices.py:166
+msgid "Encrypted, no passphrase"
 msgstr ""
-"Du måste specifiera mellan antingen en giltig IPv4 eller IPv6 med mask bit"
 
-msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr "Platsen kan ändast innehålla alfanumeriska tecken, _ eller -"
-
-msgid "Local Access"
-msgstr "Lokalåtkomst"
-
-msgid "Allow users with local accounts to access apple shares on this box."
+#: choices.py:308
+msgid "zle (runs of zeros)"
 msgstr ""
-"Tillåt användare med lokala konton att ta del av apple utdelningar i "
-"denna ruta."
 
-msgid "Guest Account"
-msgstr "Gästkonto"
-
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+#: choices.py:601
+msgid "19200"
 msgstr ""
-"Använd detta val för att åsidosätta användarnamnet (standard är 'ftp') "
-"som används för tillgång till tjänster för gästkontot. Alla rättigheter "
-"som användaren har blir tillgängliga för alla som använder gästkontot. "
-"Denna användare måste finnas i lösenordsfilen, men behöver inget giltigt "
-"lösenord."
 
-msgid "UNIX"
-msgstr "UNIX"
+#: choices.py:604
+msgid "115200"
+msgstr ""
 
-msgid "Are you sure you want to export?"
-msgstr "Är du säker på att du vill exportera?"
+#: choices.py:662
+msgid "Verbose"
+msgstr ""
 
-msgid "Export Volume"
-msgstr "Exportera Volym"
+#: choices.py:670
+msgid "Daemon"
+msgstr ""
 
-msgid "successfully deleted"
-msgstr "tagits bort"
+#: choices.py:675
+#, fuzzy
+msgid "Local 2"
+msgstr "Lokal användare"
 
-msgid "%s successfully added."
-msgstr "%s har skapats."
+#: choices.py:692
+msgid "type1"
+msgstr ""
 
-msgid "IPv6 Netmask"
+#: choices.py:693
+msgid "type2"
+msgstr ""
+
+#: choices.py:694
+msgid "type3"
+msgstr ""
+
+#: choices.py:695
+msgid "type4"
+msgstr ""
+
+#: choices.py:696
+msgid "type5"
+msgstr ""
+
+#: choices.py:704
+msgid "data"
+msgstr ""
+
+#: choices.py:706
+msgid "auth"
+msgstr ""
+
+#: choices.py:709
+msgid "ctrl+!data"
+msgstr ""
+
+#: choices.py:711
+msgid "auth+!data"
+msgstr ""
+
+#: account/forms.py:60
+#, fuzzy
+msgid "Confirm New Password"
+msgstr "Bekräfta lösenord"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr ""
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr ""
+
+#: account/models.py:241
+#, fuzzy
+msgid "Group Membership"
+msgstr "LAGG medlemmar"
+
+#: api/resources.py:766
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+#, fuzzy
+msgid "Locked"
+msgstr "Lås användare"
+
+# Kan vara: Var 1:a dag, Var 3:e dag osv.
+#: api/resources.py:859
+#, fuzzy
+msgid "on every %(days)s"
+msgstr "Varje %s dag"
+
+#: api/resources.py:865
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr ""
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+#, fuzzy
+msgid "Invalid address: %s"
+msgstr "Ogiltig firmware"
+
+#: jails/admin.py:75
+#: jails/forms.py:724
+#: jails/models.py:396
+#: templates/plugins/plugins.html:21
+#, fuzzy
+msgid "Jail"
+msgstr "Fängelse namn"
+
+#: jails/admin.py:196
+msgid "Start"
+msgstr ""
+
+#: jails/admin.py:261
+#: jails/models.py:346
+msgid "URL"
+msgstr ""
+
+#: jails/forms.py:88
+msgid "type"
+msgstr ""
+
+#: jails/forms.py:170
+msgid "No jail root configured."
+msgstr ""
+
+#: jails/forms.py:458
+msgid "autostart"
+msgstr ""
+
+#: jails/forms.py:771
+#, fuzzy
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr "Sökvägen kunde inte monteras"
+
+#: jails/models.py:72
+#, fuzzy
+msgid "Jail Name"
+msgstr "Fängelse namn"
+
+#: jails/models.py:94
+#, fuzzy
+msgid "IPv4 bridge address"
+msgstr "IPv4-adress"
+
+#: jails/models.py:113
+#, fuzzy
+msgid "IPv6 address"
+msgstr "IPv6-adress"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr ""
+
+#: jails/models.py:224
+#, fuzzy
+msgid "This jail is required by %d plugin(s)"
+msgstr "Detta fält krävs för anonyma inloggningar"
+
+#: jails/models.py:260
+msgid "Jail Root"
+msgstr ""
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr ""
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:280
+#, fuzzy
+msgid "IPv6 Network"
 msgstr "IPv6-nätmask"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Detta värde måste vara mellan 0 och 10000, inklusive."
+#: jails/models.py:285
+#, fuzzy
+msgid "IPv6 Network Start Address"
+msgstr "IPv6-adress"
 
-msgid "This value must be between 0 and 1000, inclusive."
+#: jails/models.py:290
+#, fuzzy
+msgid "IPv6 Network End Address"
+msgstr "IPv6-adress"
+
+#: jails/models.py:291
+msgid "IPv6 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:294
+#, fuzzy
+msgid "Collection URL"
+msgstr "Anslutningar"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr ""
+
+#: jails/models.py:373
+msgid "Template must have 0 instances!"
+msgstr ""
+
+#: jails/models.py:388
+#: jails/models.py:389
+#, fuzzy
+msgid "Jail Templates"
+msgstr "Fängelse IP-nätmask"
+
+#: jails/models.py:408
+#, fuzzy
+msgid "Read-Only"
+msgstr "Endast-läsa"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr ""
+
+#: jails/nav.py:100
+#, fuzzy
+msgid "View Jails"
+msgstr "Visa %s"
+
+#: jails/nav.py:250
+msgid "%s"
+msgstr ""
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr ""
+
+#: jails/utils.py:694
+#, fuzzy
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr "Kunde inte hämta% (url) s:% (error) s"
+
+#: jails/views.py:94
+#, fuzzy
+msgid "Jail successfully edited."
+msgstr "Fängelset har importerats."
+
+#: jails/views.py:134
+#, fuzzy
+msgid "Jail successfully started."
+msgstr "Fängelset har importerats."
+
+#: jails/views.py:397
+#, fuzzy
+msgid "Jail template successfully edited."
+msgstr "Dataset har redigerats korrekt."
+
+#: middleware/notifier.py:2874
+msgid "No RPC Token!"
+msgstr ""
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr ""
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr ""
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr ""
+
+#: network/forms.py:284
+#, fuzzy
+msgid "The IP \"%s\" is not valid"
+msgstr "IP-numret '%s' är inte giltigt."
+
+#: network/forms.py:343
+msgid "You need a domain, e.g. hostname.domain"
+msgstr ""
+
+#: network/forms.py:373
+#, fuzzy
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr "Gränssnitt namnet måste vara VLAN X där X är en siffra. Exempel: vlan0."
+
+#: network/models.py:77
+#, fuzzy
+msgid "Enable netwait feature"
+msgstr "Aktivera autojustering"
+
+#: network/models.py:97
+msgid "Host name data base"
+msgstr ""
+
+#: network/models.py:401
+#, fuzzy
+msgid "LAGG Interface Group"
+msgstr "LAGG gränsnittsgrupp"
+
+#: network/models.py:427
+#, fuzzy
+msgid "Link Aggregation Member"
+msgstr "Länksammanslagning"
+
+#: network/models.py:428
+#, fuzzy
+msgid "Link Aggregation Members"
+msgstr "Länksammanslagning"
+
+#: plugins/admin.py:58
+#: plugins/admin.py:65
+#, fuzzy
+msgid "Install"
+msgstr "Installerad ..."
+
+#: plugins/forms.py:89
+msgid ""
+"Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
+msgstr ""
+
+#: plugins/forms.py:105
+#, fuzzy
+msgid "Plugin Jail"
+msgstr "Plugin Jail PBI"
+
+#: plugins/forms.py:106
+#, fuzzy
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr ""
+"Den plugins sökvägen kan inte vara en delmängd av plugins arkivet sökväg."
+
+#: plugins/models.py:103
+#, fuzzy
+msgid "Plugin"
+msgstr "Instickmoduler"
+
+#: plugins/models.py:175
+msgid "URL for the plugins repository"
+msgstr ""
+
+#: plugins/views.py:196
+#, fuzzy
+msgid "Jail does not exist"
+msgstr "Sökvägen finns inte."
+
+#: plugins/views.py:205
+#, fuzzy
+msgid "Failed to update plugin"
+msgstr "Namn på plugin"
+
+#: plugins/views.py:224
+#: plugins/views.py:355
+#, fuzzy
+msgid "No available IP addresses"
+msgstr "Fängelse IP-adress"
+
+#: services/forms.py:637
+#: services/forms.py:645
+#, fuzzy
+msgid "Spaces or number signs are not allowed."
+msgstr "Citationstecken är inte tillåtna"
+
+#: services/forms.py:826
+#, fuzzy
+msgid "Peer Secret (Confirm)"
+msgstr "Hemlig (bekräfta)"
+
+#: services/forms.py:1331
+msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
+msgstr ""
+
+#: services/forms.py:1504
+#, fuzzy
+msgid "A target with that name already exists."
+msgstr "En grupp med det användarnamnet finns redan."
+
+#: services/models.py:214
+#, fuzzy
+msgid "Hostnames lookups"
+msgstr "Värdnamn"
+
+#: services/models.py:287
+#, fuzzy
+msgid "Allow non-root mount"
+msgstr "Tillåt root-inloggning"
+
+#: services/models.py:298
+#, fuzzy
+msgid "Bind IP Addresses"
+msgstr "IP-adress"
+
+#: services/models.py:712
+#, fuzzy
+msgid "Initiator side user name."
+msgstr "Käll-hemlighet"
+
+#: services/models.py:932
+#, fuzzy
+msgid "These parameters will be added to /etc/snmpd.config."
+msgstr "Dessa parametrar läggs till i proftpd.conf."
+
+#: services/models.py:971
+#, fuzzy
+msgid "Remote Port"
+msgstr "Fjärrport"
+
+#: services/models.py:1015
+#, fuzzy
+msgid "Monitor User"
+msgstr "Ändra Användare"
+
+#: services/models.py:1105
+msgid "Message which will be displayed to the user when they initially login."
+msgstr ""
+
+#: services/models.py:1132
+msgid ""
+"For local users, only allow access to user home directory unless the user is "
+"a member of group wheel."
+msgstr ""
+
+#: services/models.py:1194
+#, fuzzy
+msgid "Enable TLS"
+msgstr "Aktivera SSL/TLS"
+
+#: services/models.py:1199
+msgid "TLS policy"
+msgstr ""
+
+#: services/models.py:1202
+msgid "TLS allow client renegotiations"
+msgstr ""
+
+#: services/models.py:1214
+msgid "TLS common name required"
+msgstr ""
+
+#: services/models.py:1218
+msgid "TLS enable diagnostics"
+msgstr ""
+
+#: services/models.py:1222
+#, fuzzy
+msgid "TLS export certificate data"
+msgstr "Självsignerat certifikat"
+
+#: services/models.py:1234
+msgid "TLS no session reuse required"
+msgstr ""
+
+#: services/models.py:1238
+msgid "TLS export standard vars"
+msgstr ""
+
+#: services/models.py:1246
+#, fuzzy
+msgid "TLS DNS name required"
+msgstr "Nummer obligatorisk."
+
+#: services/models.py:1254
+msgid "Certificate and private key"
+msgstr ""
+
+#: services/models.py:1354
+msgid "SFTP Log Facility"
+msgstr ""
+
+#: services/models.py:1436
+#: services/models.py:1532
+#, fuzzy
+msgid "Domain Controller"
+msgstr "Namn på domänkontrollanten"
+
+#: services/models.py:1522
+msgid "Set this if you want to allow Trusted Domains."
+msgstr ""
+
+#: services/models.py:1544
+#, fuzzy
+msgid "Kerberos Server"
+msgstr "Antal servrar"
+
+#: services/models.py:1545
+msgid "Hostname of the kerberos server to use."
+msgstr ""
+
+#: services/models.py:1550
+msgid "Kerberos Password Server"
+msgstr ""
+
+#: services/models.py:1560
+#, fuzzy
+msgid "DNS timeout"
+msgstr "´Timeout"
+
+#: services/models.py:1600
+#, fuzzy
+msgid "NIS domain"
+msgstr "Domän"
+
+#: services/models.py:1607
+msgid "Comma delimited list of NIS servers"
+msgstr ""
+
+#: services/models.py:1611
+#, fuzzy
+msgid "Secure mode"
+msgstr "Strömläge"
+
+#: services/models.py:1612
+msgid "Cause ypbind to run in secure mode"
+msgstr ""
+
+#: services/models.py:1625
+#: services/models.py:1626
+#, fuzzy
+msgid "NIS Domain"
+msgstr "Domän"
+
+#: services/models.py:1868
+#, fuzzy
+msgid "Informational"
+msgstr "Informell"
+
+#: services/models.py:1869
+#, fuzzy
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Rapportera om temperaturen är högre än eller lika med N grader Celsius. 0 "
+"för att inaktivera"
+
+#: services/models.py:1876
+#, fuzzy
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Rapportera om temperaturen är högre än eller lika med N grader Celsius. 0 "
+"för att inaktivera"
+
+#: services/models.py:1884
+#, fuzzy
+msgid "Destination email address. Separate email addresses by commas"
+msgstr "Destination e-postadress. Separera e-postadresser med semikolon"
+
+#: services/nav.py:115
+#: templates/services/core.html:27
+#, fuzzy
+msgid "Directory Services"
+msgstr "Katalogrättigheter"
+
+#: sharing/forms.py:148
+#: sharing/forms.py:153
+#, fuzzy
+msgid "The umask must be between 000 and 777."
 msgstr "Detta värde måste vara mellan 0 och 1000, inklusive."
 
-msgid "Enable DDP"
-msgstr "Aktivera DDP"
-
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "Aktiverar DDP-stöd för låg-nivå AppleTalk access"
-
-msgid "%s successfully update."
-msgstr "%s uppdatering lyckades."
-
-msgid "Admin user"
-msgstr "Admin-användare"
-
-msgid ""
-"Use this option to override the username ('www' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+#: sharing/forms.py:274
+msgid "Paths for a NFS share must reside within the same filesystem"
 msgstr ""
-"Använd detta val för att åsidosätta användarnamnet (standard är 'www') "
-"som används för tillgång till tjänster för gästkontot. Alla rättigheter "
-"som användaren har blir tillgängliga för alla som använder gästkontot. "
-"Denna användare måste finnas i lösenordsfilen, men behöver inget giltigt "
-"lösenord."
 
-msgid "ZVol Name"
-msgstr "ZVol Namn"
+#: sharing/forms.py:281
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr ""
 
-msgid "English"
-msgstr "Engelska"
+#: sharing/forms.py:318
+msgid ""
+"The network %s is already being shared and cannot be used twice for the same "
+"filesystem"
+msgstr ""
 
-msgid "Level"
-msgstr "Nivå"
+#: sharing/models.py:201
+#, fuzzy
+msgid "Authorized networks"
+msgstr "Auktoriserad nätverk"
 
-msgid "Add Link Aggregation"
-msgstr "Lägg till Länksammanslagning"
+#: sharing/models.py:258
+msgid "The specified group's permission are used by all clients"
+msgstr ""
 
-msgid "View All Interfaces"
-msgstr "Visa alla gränssnittstyper"
+#: storage/admin.py:280
+#, fuzzy
+msgid "Change Passphrase"
+msgstr "Ändra lösenord"
 
-msgid "View All VLANs"
-msgstr "Visa alla VLANs"
+#: storage/admin.py:287
+msgid "Download Key"
+msgstr ""
+
+#: storage/admin.py:299
+msgid "Add recovery key"
+msgstr ""
+
+#: storage/admin.py:311
+msgid "Unlock"
+msgstr ""
+
+#: storage/admin.py:470
+#, fuzzy
+msgid "Replace"
+msgstr "Rrsätta hårddisken"
+
+#: storage/admin.py:572
+msgid "When"
+msgstr ""
+
+#: storage/admin.py:609
+#, fuzzy
+msgid "Remote Hostname"
+msgstr "Fjärrdatornamn"
+
+#: storage/forms.py:120
+#, fuzzy
+msgid "Enter positive number (optionally suffixed by K, M, G, T), or 0"
+msgstr "Anger positivt tal (eventuellt med tillägget av K, M, G, T), eller, 0"
+
+#: storage/forms.py:770
+msgid "No: Skip to import"
+msgstr ""
+
+#: storage/forms.py:773
+#, fuzzy
+msgid "Encrypted ZFS volume?"
+msgstr "Skapa ZFS Volym"
+
+#: storage/forms.py:791
+#, fuzzy
+msgid "Encryption Key"
+msgstr "Krypteringsläge"
+
+#: storage/forms.py:839
+#, fuzzy
+msgid "The following disks failed to attach: %s"
+msgstr "Följande hårddiskar har redan test för denna typ: %s"
+
+#: storage/forms.py:1128
+msgid ""
+"Specifies a suggested block size for files in the file system. This property "
+"is designed solely for use with database workloads that access files in "
+"fixed-size records.  ZFS automatically tunes block sizes according to "
+"internal algorithms optimized for typical access patterns."
+msgstr ""
+
+#: storage/forms.py:1272
+#, fuzzy
+msgid "Size for this zvol"
+msgstr "Storlek för ZFS Volym"
+
+#: storage/forms.py:1290
+#, fuzzy
+msgid "Block size"
+msgstr "Logisk blockstorlek"
+
+#: storage/forms.py:1292
+msgid ""
+"The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
+"to 128 Kbytes is valid."
+msgstr ""
+
+#: storage/forms.py:1598
+msgid "Confirmation does not match passphrase"
+msgstr ""
+
+#: storage/forms.py:1606
+#, fuzzy
+msgid "Passphrase is not valid"
+msgstr "Användare %s är inte gilltig."
+
+#: storage/forms.py:1665
+msgid "Dedicated User Enabled"
+msgstr ""
+
+#: storage/forms.py:1666
+msgid "If disabled then root will be used for replication."
+msgstr ""
+
+#: storage/forms.py:1674
+msgid "Enable High Speed Ciphers"
+msgstr ""
+
+#: storage/forms.py:1678
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which makes it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/forms.py:1944
+#, fuzzy
+msgid "New Passphrase"
+msgstr "Nytt lösenord"
+
+#: storage/forms.py:1948
+#, fuzzy
+msgid "Confirm New Passphrase"
+msgstr "Bekräfta lösenord"
+
+#: storage/forms.py:1974
+#: storage/forms.py:2119
+#, fuzzy
+msgid "Invalid password"
+msgstr "Gammalt lösenord"
+
+#: storage/forms.py:2024
+#, fuzzy
+msgid "Recovery Key"
+msgstr "varje dag"
+
+#: storage/forms.py:2028
+#, fuzzy
+msgid "Restart services"
+msgstr "Kontroll tjänster"
+
+#: storage/forms.py:2045
+#, fuzzy
+msgid "Jails/Plugins"
+msgstr "Instickmoduler"
+
+#: storage/models.py:574
+msgid "Underlying provider"
+msgstr ""
+
+#: storage/models.py:791
+msgid "Remote Dedicated User Enabled"
+msgstr ""
+
+#: storage/models.py:794
+#, fuzzy
+msgid "Remote Dedicated User"
+msgstr "Fjärr replikering värd"
+
+#: storage/models.py:831
+msgid ""
+"Disabling will stop any new replications being queued. It will not stop any "
+"replications which are queued or in progress."
+msgstr ""
+
+#: storage/models.py:836
+#: storage/models.py:915
+#, fuzzy
+msgid "Volume/Dataset"
+msgstr "Volymer"
+
+#: storage/models.py:852
+#, fuzzy
+msgid "Remote ZFS Volume/Dataset"
+msgstr "Skapa ZFS Dataset"
+
+#: storage/models.py:885
+#, fuzzy
+msgid "Do not start replication after"
+msgstr "Ta inte ögonblicksbild efter"
+
+#: storage/nav.py:39
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "Volymhanterare"
+
+#: storage/nav.py:51
+#: templates/storage/volume_datagrid.html:20
+#, fuzzy
+msgid "UFS Volume Manager (legacy)"
+msgstr "Volymhanterare"
+
+#: storage/views.py:903
+#, fuzzy
+msgid "Passphrase updated"
+msgstr "Lösenordet är uppdaterat."
+
+#: storage/views.py:997
+#, fuzzy
+msgid "Encryption re-key succeeded"
+msgstr "Krypteringsläge"
+
+#: storage/views.py:1016
+msgid "GELI recovery key download starting..."
+msgstr ""
+
+#: support/models.py:41
+#, fuzzy
+msgid "Support subject."
+msgstr "Supportärenden"
+
+#: support/models.py:49
+#, fuzzy
+msgid "Support"
+msgstr "Stöd för EA"
+
+#: system/forms.py:86
+msgid "The volume %s is locked by encryption"
+msgstr ""
+
+#: system/forms.py:512
+#, fuzzy
+msgid "The two passphrase fields didn't match."
+msgstr "De två lösenordsfälten matchade inte."
+
+#: system/forms.py:564
+msgid "RSA or DSA private key not found"
+msgstr ""
+
+#: system/forms.py:811
+#, fuzzy
+msgid "Usernames cannot exceed 17 characters for cronjobs"
+msgstr "Den fulla sökvägen kan inte överskrida 88 tecken"
+
+#: system/models.py:69
+#, fuzzy
+msgid "WebGUI HTTP Port"
+msgstr "WebGUI Port"
+
+#: system/models.py:108
+#, fuzzy
+msgid "Directory Service"
+msgstr "Katalogrättigheter"
+
+#: system/models.py:193
+msgid "Set this to match your serial port speed"
+msgstr ""
+
+#: system/models.py:222
+msgid "Enable report anonymous statistics"
+msgstr ""
+
+#: system/models.py:422
+msgid "Redirect Stderr"
+msgstr ""
+
+#: system/models.py:916
+msgid "Pre Init"
+msgstr ""
+
+#: system/models.py:953
+#, fuzzy
+msgid "Last Name"
+msgstr "Basnamnet"
+
+#: system/models.py:981
+msgid "Zip"
+msgstr ""
+
+#: system/models.py:991
+msgid "Home Phone"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:8
+#, fuzzy
+msgid "Add %(name)s"
+msgstr "Lägg till %s"
+
+#: templates/freeadmin/help.html:39
+msgid "FreeBSD Man Pages"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#, fuzzy
+msgid "Are you sure you want to delete "
+msgstr "Är du säker på att du vill ta bort?"
+
+#: templates/jails/stop.html:3
+msgid "Stop "
+msgstr ""
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr ""
+
+#: templates/plugins/index.html:10
+#, fuzzy
+msgid "Installed"
+msgstr "Installerad ..."
+
+#: templates/registration/login.html:54
+msgid ""
+"The web admin user has been removed in this release in order to unify the "
+"web and Unix authentication mechanisms."
+msgstr ""
+
+#: templates/registration/login.html:55
+msgid ""
+"Administrators should log in to the web UI as root, since the web UI already "
+"confers superuser privileges in many areas."
+msgstr ""
+
+#: templates/storage/dataset_edit.html:4
+#, fuzzy
+msgid "Dataset"
+msgstr "Lägg till dataset"
+
+#: templates/storage/key.html:6
+#: templates/storage/recoverykey_add.html:9
+#: templates/storage/recoverykey_remove.html:6
+#: templates/storage/rekey.html:6
+msgid "Continue"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:5
+msgid "This will invalidate any previous recovery key"
+msgstr ""
+
+#: templates/storage/rekey.html:3
+msgid "You are about to re-key the encryption"
+msgstr ""
+
+#: templates/storage/replication_add.html:5
+msgid "SSH Key Scan"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:8
+#, fuzzy
+msgid "Progress"
+msgstr "Komprimera"
+
+#: templates/storage/volumestatus_datagrid.html:15
+#, fuzzy
+msgid "Repaired"
+msgstr "Obligatorisk"
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr ""
+
+#: templates/storage/zvols.html:6
+#, fuzzy
+msgid "Add zvol"
+msgstr "Lägg till Portal"
+
+#: tools/alert.py:176
+#, fuzzy
+msgid "The WebGUI Address could not bind to %s; using wildcard"
+msgstr "WebbGUI adressen kunde inte bindas till %s; använd vildkort"
+
+#: tools/alert.py:198
+#, fuzzy
+msgid "The following multipaths are not optimal: %s"
+msgstr "Följande hårddiskar har redan test för denna typ: %s"
+
+#: choices.py:52
+#, fuzzy
+msgid "HTTP+HTTPS"
+msgstr "HTTPS"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr ""
+
+#: choices.py:304
+#, fuzzy
+msgid "lz4 (recommended)"
+msgstr "lzjb (rekommenderad)"
+
+#: choices.py:309
+#, fuzzy
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (rekommenderad)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr ""
+
+#: choices.py:602
+msgid "38400"
+msgstr ""
+
+#: choices.py:603
+msgid "57600"
+msgstr ""
+
+#: choices.py:659
+msgid "Fatal"
+msgstr ""
+
+#: choices.py:664
+#, fuzzy
+msgid "Debug2"
+msgstr "Felsöka"
+
+#: choices.py:665
+#, fuzzy
+msgid "Debug3"
+msgstr "Felsöka"
+
+#: choices.py:672
+msgid "Auth"
+msgstr ""
+
+#: choices.py:673
+#, fuzzy
+msgid "Local 0"
+msgstr "Lokal användare"
+
+#: choices.py:674
+#, fuzzy
+msgid "Local 1"
+msgstr "Lokal användare"
+
+#: choices.py:676
+#, fuzzy
+msgid "Local 3"
+msgstr "Lokal användare"
+
+#: choices.py:677
+#, fuzzy
+msgid "Local 4"
+msgstr "Lokal användare"
+
+#: choices.py:678
+#, fuzzy
+msgid "Local 5"
+msgstr "Lokal användare"
+
+#: choices.py:679
+#, fuzzy
+msgid "Local 6"
+msgstr "Lokal användare"
+
+#: choices.py:680
+#, fuzzy
+msgid "Local 7"
+msgstr "Lokal användare"
+
+#: choices.py:686
+msgid "NT4"
+msgstr ""
+
+#: choices.py:687
+#, fuzzy
+msgid "NIS"
+msgstr "Nätverkskort"
+
+#: choices.py:703
+#, fuzzy
+msgid "off"
+msgstr "Av"
+
+#: choices.py:705
+msgid "!data"
+msgstr ""
+
+#: choices.py:707
+msgid "ctrl"
+msgstr ""
+
+#: choices.py:708
+msgid "ctrl+data"
+msgstr ""
+
+#: account/forms.py:55
+#, fuzzy
+msgid "New Password"
+msgstr "Nytt lösenord"
+
+#: account/forms.py:68
+#, fuzzy
+msgid "Passwords do not match"
+msgstr "Hemlighet matchar inte"
+
+#: account/forms.py:561
+#, fuzzy
+msgid "Home directory must end with username"
+msgstr "Kan inte skriva till hemkatalogen, lämna tomt"
+
+#: account/models.py:52
+#, fuzzy
+msgid "Built-in Group"
+msgstr "Hjälpgrupper"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr ""
+
+#: common/system.py:278
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: freeadmin/forms.py:220
+#, fuzzy
+msgid "A file is required"
+msgstr "Detta fält är obligatoriskt"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+#, fuzzy
+msgid "Invalid network: %s"
+msgstr "Ogiltig kontrollsumma"
+
+#: freeadmin/navtree.py:573
+#, fuzzy
+msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
+msgstr "Ett fel inträffade när unserializing från% (url) s:% (error) s"
+
+#: jails/admin.py:91
+#: jails/models.py:149
+#, fuzzy
+msgid "Autostart"
+msgstr "Automatisk"
+
+#: jails/admin.py:182
+#, fuzzy
+msgid "Edit Jail"
+msgstr "Redigera Portal"
+
+#: jails/admin.py:185
+#: jails/nav.py:264
+#, fuzzy
+msgid "Add Storage"
+msgstr "Lagring"
+
+#: jails/admin.py:188
+#: templates/plugins/available_datagrid.html:27
+#, fuzzy
+msgid "Upload Plugin"
+msgstr "Uppdatera insticksmodulen"
+
+#: jails/admin.py:197
+msgid "Stop"
+msgstr ""
+
+#: jails/admin.py:267
+msgid "Instances"
+msgstr ""
+
+#: jails/forms.py:92
+msgid "32 bit"
+msgstr ""
+
+#: jails/forms.py:98
+msgid "vanilla"
+msgstr ""
+
+#: jails/forms.py:233
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr ""
+
+#: jails/forms.py:459
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr ""
+
+#: jails/forms.py:460
+#: jails/models.py:162
+msgid "NAT"
+msgstr ""
+
+#: jails/forms.py:651
+msgid "Create destination directory if it does not exist"
+msgstr ""
+
+#: jails/forms.py:693
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr ""
+
+#: jails/hook.py:13
+#: jails/models.py:252
+#: jails/models.py:253
+#: jails/nav.py:47
+#: templates/jails/index.html:5
+msgid "Jails"
+msgstr ""
+
+#: jails/models.py:82
+#, fuzzy
+msgid "IPv4 address"
+msgstr "IPv4-adress"
+
+#: jails/models.py:88
+#, fuzzy
+msgid "IPv4 aliases"
+msgstr "Aliases"
+
+#: jails/models.py:100
+msgid "IPv4 bridge aliases"
+msgstr ""
+
+#: jails/models.py:107
+#, fuzzy
+msgid "IPv4 default gateway"
+msgstr "IPv4 Standard-gateway"
+
+#: jails/models.py:119
+#, fuzzy
+msgid "IPv6 aliases"
+msgstr "Aliases"
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr ""
+
+#: jails/models.py:265
+#, fuzzy
+msgid "IPv4 Network"
+msgstr "IPv4-nätmask"
+
+#: jails/models.py:270
+#, fuzzy
+msgid "IPv4 Network Start Address"
+msgstr "IPv4-adress"
+
+#: jails/models.py:275
+#, fuzzy
+msgid "IPv4 Network End Address"
+msgstr "IPv4-adress"
+
+#: jails/models.py:305
+#: jails/models.py:306
+#, fuzzy
+msgid "Jails Configuration"
+msgstr "Globala inställningar"
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:28
+#: templates/plugins/index.html:18
+#, fuzzy
+msgid "Configuration"
+msgstr "Globala inställningar"
+
+#: jails/utils.py:567
+#, fuzzy
+msgid "Unable to determine IPv4 for plugin"
+msgstr "Kan inte radera instickmodul"
+
+#: jails/views.py:114
+#, fuzzy
+msgid "Storage successfully added."
+msgstr "Datasetet har lagts till korrekt."
+
+#: jails/views.py:155
+#, fuzzy
+msgid "Jail successfully stopped."
+msgstr "Fängelset har importerats."
+
+#: jails/views.py:176
+#, fuzzy
+msgid "Jail successfully deleted."
+msgstr "%s har tagits bort."
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr ""
+
+#: network/admin.py:39
+#, fuzzy
+msgid "IPv4 Addresses"
+msgstr "IPv4-adress"
+
+#: network/admin.py:44
+#, fuzzy
+msgid "IPv6 Addresses"
+msgstr "IPv6-adress"
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr ""
+
+#: network/models.py:78
+msgid ""
+"If enabled, delays the start of network-reliant services until interface is "
+"up and ICMP packets to a destination defined in netwait ip list are "
+"flowing.  Link state is examined first, followed by \"pinging\" an IP "
+"address to verify network usability.  If no destination can be reached or "
+"timeouts are exceeded, network services are started anyway with no guarantee "
+"that the network is usable."
+msgstr ""
+
+#: network/models.py:88
+msgid "Netwait IP list"
+msgstr ""
+
+#: network/models.py:89
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+
+#: network/models.py:98
+msgid ""
+"This field is appended to /etc/hosts which contains information regarding "
+"known hosts on the network. hosts(5)"
+msgstr ""
+
+#: plugins/models.py:93
+#, fuzzy
+msgid "Plugin jail name"
+msgstr "Plugin namn"
+
+#: plugins/models.py:94
+#, fuzzy
+msgid "Jail where the plugin is installed"
+msgstr "Inga insticksprogram installerad"
+
+#: plugins/models.py:141
+msgid "Kmod"
+msgstr ""
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr ""
+
+#: plugins/plugin.py:120
+#, fuzzy
+msgid "Failed to download %(url)s: %(error)s"
+msgstr "Kunde inte hämta% (url) s:% (error) s"
+
+#: plugins/views.py:171
+#, fuzzy
+msgid "Plugin not installed"
+msgstr "Inga insticksprogram installerad"
+
+#: plugins/views.py:181
+#: plugins/views.py:242
+#, fuzzy
+msgid "Invalid plugin"
+msgstr "installera insticksmodul"
+
+#: plugins/views.py:192
+#: plugins/views.py:250
+#, fuzzy
+msgid "Failed to download plugin"
+msgstr "Kan inte radera instickmodul"
+
+#: services/models.py:259
+#, fuzzy
+msgid "Enable/disable home directories for afp user."
+msgstr "Detta aktiverar\\inaktiverar hemma kataloger för samba användare."
+
+#: services/models.py:288
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it.  It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+
+#: services/models.py:299
+msgid ""
+"Specify specific IP addresses (separated by commas) to bind to for TCP and "
+"UDP requests. This option may be specified multiple times. If no IP is "
+"specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
+"and if IPv6 is enabled, ::1 to the list."
+msgstr ""
+
+#: services/models.py:307
+msgid "mountd(8) bind port"
+msgstr ""
+
+#: services/models.py:324
+msgid ""
+"This option forces the rpc.statd daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:861
+#, fuzzy
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names."
+msgstr ""
+"Ett värdnamn alias. Detta alternativ kan visas flera gånger, för varje domän "
+"som har samma IP. Använd ett utrymme för att separera flera alias."
+
+#: services/models.py:888
+#, fuzzy
+msgid "These parameters will be added to global settings in inadyn-mt.conf."
+msgstr ""
+"Dessa parametrar kommer läggas till i de globala inställningar i inadyn.conf"
+
+#: services/models.py:950
+#, fuzzy
+msgid "Master"
+msgstr "Lokalt Överordnad"
+
+#: services/models.py:951
+msgid "Slave"
+msgstr ""
+
+#: services/models.py:1102
+msgid "Display Login"
+msgstr ""
+
+#: services/models.py:1121
+#, fuzzy
+msgid ""
+"Use this option to override the directory creation mask (077 by default)."
+msgstr ""
+"Använd detta för att överrida skapande av katalog mask (0777 är standard)."
+
+#: services/models.py:1210
+msgid "TLS allow per user"
+msgstr ""
+
+#: services/models.py:1226
+#, fuzzy
+msgid "TLS no certificate request"
+msgstr "Självsignerat certifikat"
+
+#: services/models.py:1230
+msgid "TLS no empty fragments"
+msgstr ""
+
+#: services/models.py:1242
+msgid "TLS use implicit SSL"
+msgstr ""
+
+#: services/models.py:1250
+msgid "TLS IP address required"
+msgstr ""
+
+#: services/models.py:1343
+#, fuzzy
+msgid "SFTP Log Level"
+msgstr "Logg nivå"
+
+#: services/models.py:1347
+msgid ""
+"Specifies which messages will be logged by sftp-server. INFO and VERBOSE log "
+"transactions that sftp-server performs on behalf of the client. DEBUG2 and "
+"DEBUG3 each specify higher levels of debugging output. The default is ERROR."
+msgstr ""
+
+#: services/models.py:1437
+#: services/models.py:1533
+msgid "Hostname of the domain controller to use."
+msgstr ""
+
+#: services/models.py:1516
+#, fuzzy
+msgid "UNIX extensions"
+msgstr "UNIX anknytningar"
+
+#: services/models.py:1517
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr ""
+
+#: services/models.py:1526
+msgid "Use default domain"
+msgstr ""
+
+#: services/models.py:1538
+msgid "Global Catalog Server"
+msgstr ""
+
+#: services/models.py:1551
+msgid "Hostname of the kerberos password server to use."
+msgstr ""
+
+#: services/models.py:1555
+#, fuzzy
+msgid "AD timeout"
+msgstr "´Timeout"
+
+#: services/models.py:1556
+msgid "Timeout for AD related commands."
+msgstr ""
+
+#: services/models.py:1561
+msgid "Timeout for AD DNS queries."
+msgstr ""
+
+#: services/models.py:1601
+#, fuzzy
+msgid "NIS domain name"
+msgstr "Domännamn"
+
+#: services/models.py:1606
+#, fuzzy
+msgid "NIS servers"
+msgstr "NTP-servrar"
+
+#: services/models.py:1616
+msgid "Manycast"
+msgstr ""
+
+#: services/models.py:1617
+msgid "Cause ypbind to use 'many-cast' instead of broadcast"
+msgstr ""
+
+#: sharing/admin.py:78
+#: sharing/models.py:291
+#, fuzzy
+msgid "Paths"
+msgstr "Sökväg"
+
+#: sharing/forms.py:195
+#, fuzzy
+msgid "This is not a valid network: %s"
+msgstr "Detta är inte ett giltigt nätverk"
+
+#: sharing/forms.py:309
+msgid "This option is only available once per mountpoint"
+msgstr ""
+
+#: sharing/forms.py:341
+msgid "You need at least one path for the share"
+msgstr ""
+
+#: sharing/models.py:178
+#, fuzzy
+msgid "Default umask"
+msgstr "Standard"
+
+#: sharing/models.py:202
+#, fuzzy
+msgid ""
+"Networks that are authorized to access the NFS share. Specify network "
+"numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
+msgstr ""
+"Nätverk som är behörig att komma åt NFS utdelning eller en lista över IP-"
+"adresser. Specificera nätverksnummer av formen 1.2.3.4/xx där xx är antalet "
+"bitar hos Nätmasken eller när en lista över IP-adresser 1.2.3.4 1.2.3.5 "
+"1.2.3.6."
+
+#: sharing/models.py:208
+#, fuzzy
+msgid "Authorized IP addresses or hosts"
+msgstr "Tillåtna nätverk eller IP-adresser"
+
+#: sharing/models.py:231
+msgid ""
+"If a user is selected, the root user is limited to that user's permissions"
+msgstr ""
+
+#: sharing/models.py:249
+msgid "The specified user's permissions are used by all clients"
+msgstr ""
+
+#: storage/admin.py:35
+msgid "Wipe"
+msgstr ""
+
+#: storage/admin.py:46
+msgid "Edit In Bulk"
+msgstr ""
+
+#: storage/admin.py:249
+#: storage/admin.py:338
+#: storage/nav.py:123
+#, fuzzy
+msgid "Create zvol"
+msgstr "Skapa ZFS Volym"
+
+#: storage/admin.py:293
+#, fuzzy
+msgid "Encryption Re-key"
+msgstr "Krypteringsläge"
+
+#: storage/admin.py:345
+#, fuzzy
+msgid "Destroy zvol"
+msgstr "Förstör"
+
+#: storage/admin.py:397
+#, fuzzy
+msgid "Write"
+msgstr "Enbart-skrivning"
+
+#: storage/admin.py:403
+msgid "Checksum"
+msgstr ""
+
+#: storage/admin.py:461
+#, fuzzy
+msgid "Edit Disk"
+msgstr "Redigera datasetet"
+
+#: storage/admin.py:467
+#, fuzzy
+msgid "Detach"
+msgstr "Koppla bort volym"
+
+#: storage/admin.py:578
+msgid "Frequency"
+msgstr ""
+
+#: storage/forms.py:71
+msgid ""
+"Enabling dedup may have drastic performance implications,<br /> as well as "
+"impact your ability to access your data.<br /> Consider using compression "
+"instead."
+msgstr ""
+
+#: storage/forms.py:764
+#, fuzzy
+msgid "Volume imported"
+msgstr "Volym att förlänga"
+
+#: storage/forms.py:794
+#: storage/forms.py:1585
+#: storage/forms.py:1904
+#: storage/forms.py:2019
+#: storage/forms.py:2131
+#: system/models.py:354
+msgid "Passphrase"
+msgstr ""
+
+#: storage/forms.py:1269
+#, fuzzy
+msgid "zvol name"
+msgstr "Modul namn"
+
+#: storage/forms.py:1281
+msgid ""
+"Creates a sparse volume with no reservation, also kown as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less then the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+
+#: storage/forms.py:1589
+#: storage/forms.py:1908
+#: system/forms.py:479
+#, fuzzy
+msgid "Confirm Passphrase"
+msgstr "Bekräfta lösenord"
+
+#: storage/forms.py:1670
+#, fuzzy
+msgid "Dedicated User"
+msgstr "Ta bort Användare"
+
+#: storage/forms.py:1940
+#: storage/forms.py:2100
+#, fuzzy
+msgid "Admin password"
+msgstr "Gammalt lösenord"
+
+#: storage/forms.py:1952
+#, fuzzy
+msgid "Remove passphrase"
+msgstr "Ta bort användare"
+
+#: storage/forms.py:2054
+msgid "You need either a passphrase or a recovery key to unlock"
+msgstr ""
+
+#: storage/forms.py:2084
+msgid "Volume could not be imported: %d devices failed to decrypt"
+msgstr ""
+
+#: storage/forms.py:2088
+#, fuzzy
+msgid "Volume could not be imported"
+msgstr "Sökvägen kunde inte monteras"
+
+#: storage/models.py:126
+msgid "LOCKED"
+msgstr ""
+
+#: storage/models.py:445
+#, fuzzy
+msgid "Disk Size"
+msgstr "Diskenhet"
+
+#: storage/models.py:805
+msgid "High Speed Encryption Ciphers"
+msgstr ""
+
+#: storage/models.py:854
+#, fuzzy
+msgid ""
+"This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
+"Datasetname not the mountpoint or filesystem path"
+msgstr ""
+"Detta bör vara namnet på ZFS filsystem på fjärrdatorns sida. t.ex.: poolnamn/"
+"datasetnamn inte monteringspunkt eller filsystem bana"
+
+#: storage/models.py:880
+#, fuzzy
+msgid "Do not start replication before"
+msgstr "Ta inte ögonblicksbild före"
+
+#: storage/views.py:717
+msgid "Pool output could not be parsed. Is the pool imported?"
+msgstr ""
+
+#: storage/views.py:722
+#, fuzzy
+msgid "The scrub process has stopped"
+msgstr "Skrubb processen har börjat"
+
+#: storage/views.py:885
+msgid "Passphrase created"
+msgstr ""
+
+#: storage/views.py:926
+#: storage/views.py:939
+#, fuzzy
+msgid "Volume unlocked"
+msgstr "Volym namn"
+
+#: storage/views.py:930
+#, fuzzy
+msgid "Volume failed unlocked"
+msgstr "Volym tillagd"
+
+#: storage/views.py:1076
+#, fuzzy
+msgid "Disks successfully edited"
+msgstr "Hårddisken har framgångsrikt formaterats"
+
+#: support/models.py:45
+#, fuzzy
+msgid "A description of the issue."
+msgstr "kryptering av förbindelsen"
+
+#: support/views.py:86
+#, fuzzy
+msgid "Support request successfully sent"
+msgstr "Ögonblicksbilden har tagits bort."
+
+#: system/forms.py:68
+msgid "The path '%s' requires execute permission bit"
+msgstr ""
+
+#: system/forms.py:581
+msgid "RSA or DSA private key is not valid"
+msgstr ""
+
+#: system/forms.py:604
+msgid "The modulus of certificate and key must match"
+msgstr ""
+
+#: system/forms.py:881
+msgid "Usernames cannot exceed 17 characters for rsync tasks"
+msgstr ""
+
+#: system/forms.py:886
+msgid "Usernames cannot have spaces"
+msgstr ""
+
+#: system/models.py:60
+#, fuzzy
+msgid "WebGUI IPv4 Address"
+msgstr "WebGUI Adress"
+
+#: system/models.py:75
+#, fuzzy
+msgid "WebGUI HTTPS Port"
+msgstr "WebGUI Port"
+
+#: system/models.py:194
+msgid "Serial Port Speed"
+msgstr ""
+
+#: system/models.py:219
+#, fuzzy
+msgid "Enable debug kernel"
+msgstr "Aktivera tjänst"
+
+#: system/models.py:417
+msgid ""
+"Redirect the standard output to /dev/null. In other words, disable output."
+msgstr ""
+
+#: system/models.py:423
+msgid ""
+"Redirect the standard error output to /dev/null. In other words, disable "
+"error output."
+msgstr ""
+
+#: system/models.py:515
+#, fuzzy
+msgid "Remote SSH Port"
+msgstr "Fjärrport"
+
+#: system/models.py:516
+#, fuzzy
+msgid "SSH Port"
+msgstr "Port"
+
+#: system/models.py:897
+#: system/models.py:909
+msgid "Script"
+msgstr ""
+
+#: system/models.py:936
+msgid "Init/Shutdown Scripts"
+msgstr ""
+
+#: system/models.py:949
+#, fuzzy
+msgid "First Name"
+msgstr "Målnamn"
+
+#: system/models.py:957
+msgid "Company"
+msgstr ""
+
+#: system/models.py:969
+msgid "City"
+msgstr ""
+
+#: system/models.py:997
+msgid "Cell Phone"
+msgstr ""
+
+#: system/models.py:1003
+msgid "Work Phone"
+msgstr ""
+
+#: system/models.py:1009
+#: templates/system/settings.html:12
+#, fuzzy
+msgid "Registration"
+msgstr "Mål"
+
+#: system/views.py:316
+msgid "You must configure the root email (Accounts->Users->root)"
+msgstr ""
+
+#: templates/menubar.html:49
+msgid "Alert"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:176
+msgid "No entry has been found"
+msgstr ""
+
+#: templates/freeadmin/help.html:44
+msgid "Professional Support"
+msgstr ""
+
+#: templates/freeadmin/help.html:46
+msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr ""
+
+#: templates/jails/start.html:3
+#, fuzzy
+msgid "Start "
+msgstr "Start-up-alternativ"
+
+#: templates/plugins/available_install.html:3
+#, fuzzy
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr "Är du säker på att du vill förstöra \"%(name)s\"?"
+
+#: templates/plugins/plugin_update.html:3
+#, fuzzy
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr "Är du säker på att du vill förstöra \"%(name)s\"?"
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+#, fuzzy
+msgid "Available Plugins"
+msgstr "Tillgängliga åtgärder"
+
+#: templates/registration/login.html:51
+#, fuzzy
+msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
+msgstr "Välkommen till %(sw_name)s&trade; %(sw_login_version)s"
+
+#: templates/registration/login.html:57
+msgid "For security reasons, you must now set a new root password:"
+msgstr ""
+
+#: templates/services/core.html:33
+#, fuzzy
+msgid "Directory Service Settings"
+msgstr "Active DirectoryInställningar"
+
+#: templates/storage/disk_editbulk.html:3
+msgid "Editing the following disks"
+msgstr ""
+
+#: templates/storage/key.html:3
+msgid "You are about to download the global GELI key"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:4
+msgid "You are about to add a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr ""
+
+#: templates/storage/volume_datagrid.html:22
+#, fuzzy
+msgid "UFS Volume Manager"
+msgstr "Volymhanterare"
+
+#: templates/storage/volume_detach.html:27
+msgid ""
+"This is an encrypted volume, make sure to <a href=\"%(url)s\" "
+"target=\"_blank\">download</a> the key so you can be able to import it in "
+"the future"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "%(scanned)s out of %(total)s"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:14
+#, fuzzy
+msgid "Errors"
+msgstr "Fel"
+
+#: templates/storage/wizard.html:92
+#, fuzzy
+msgid "Extend Volume"
+msgstr "Exportera Volym"
+
+#: templates/storage/zvols.html:3
+#, fuzzy
+msgid "Create zvol on %(name)s"
+msgstr "Skapa ZFS volymen på %(namn)"
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr ""
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr ""
+
+#: templates/system/firmware_wizard_0.html:6
+#: templates/system/firmware_wizard_1.html:21
+msgid ""
+"Consider downloading your configuration before proceeding, <a "
+"href=\"%(url)s\" target=\"_blank\">click here</a>."
+msgstr ""
+
+#: choices.py:600
+msgid "9600"
+msgstr ""
+
+#: choices.py:702
+#, fuzzy
+msgid "on"
+msgstr "Ingen"
+
+#: choices.py:710
+msgid "auth+data"
+msgstr ""
+
+#: account/models.py:142
+#, fuzzy
+msgid "Disable password login"
+msgstr "Inaktivera lösenords baserad inloggningar"
+
+#: account/models.py:242
+#, fuzzy
+msgid "Group Memberships"
+msgstr "LAGG medlemmar"
+
+#: freeadmin/navtree.py:608
+#, fuzzy
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr "Kunde inte hämta% (url) s:% (error) s"
+
+#: jails/forms.py:450
+#, fuzzy
+msgid "Path does not exist!"
+msgstr "Sökvägen finns inte."
+
+#: jails/models.py:125
+#, fuzzy
+msgid "IPv6 bridge address"
+msgstr "IPv6-adress"
+
+#: jails/models.py:138
+#, fuzzy
+msgid "IPv6 default gateway"
+msgstr "IPv6 Standard-gateway"
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:286
+msgid "IPv6 network start address for jails and plugins"
+msgstr ""
+
+#: jails/nav.py:70
+#, fuzzy
+msgid "Add Jails"
+msgstr "Lägg till %s"
+
+#: jails/nav.py:114
+#, fuzzy
+msgid "View Jail Templates"
+msgstr "Visa fil omfattningar"
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr ""
+
+#: middleware/zfs.py:644
+#, fuzzy
+msgid "Canceled"
+msgstr "Avbryt"
+
+#: services/models.py:216
+msgid ""
+"Specifies whether samba should use (expensive) hostname lookups or use the "
+"ip addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+
+#: services/models.py:312
+msgid ""
+"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
+"families. This is typically done to ensure that the port which mountd binds "
+"to is a known value which can be used in firewall rulesets."
+msgstr ""
+
+#: services/models.py:319
+msgid "rpc.statd(8) bind port"
+msgstr ""
+
+#: services/models.py:329
+msgid "rpc.lockd(8) bind port"
+msgstr ""
+
+#: services/models.py:334
+msgid ""
+"This option forces rpc.lockd the daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:953
+#, fuzzy
+msgid "UPS Mode"
+msgstr "Läge"
+
+#: services/models.py:1020
+#, fuzzy
+msgid "Monitor Password"
+msgstr "Bekräfta lösenord"
+
+#: services/models.py:1139
+#, fuzzy
+msgid "Perform Reverse DNS Lookups"
+msgstr "Kräv Omvänd DNS för IP"
+
+#: services/models.py:1206
+#, fuzzy
+msgid "TLS allow dot login"
+msgstr "Tillåt root-inloggning"
+
+#: services/models.py:1256
+#, fuzzy
+msgid "Place the contents of your certificate and private key here."
+msgstr "Placera innehållet av ditt självsignerade certifikat fil här."
+
+#: services/models.py:1358
+msgid ""
+"Specifies the facility code that is used when logging messages from sftp-"
+"server."
+msgstr ""
+
+#: services/models.py:1472
+#: services/models.py:1473
+#, fuzzy
+msgid "NT4 Domain"
+msgstr "Domän"
+
+#: services/models.py:1512
+#, fuzzy
+msgid "Verbose logging"
+msgstr "Vänligen logga in"
+
+#: services/models.py:1527
+msgid "Set this if you want to use the default domain for users and groups."
+msgstr ""
+
+#: services/models.py:1539
+msgid "Hostname of the global catalog server to use."
+msgstr ""
+
+#: sharing/forms.py:118
+#, fuzzy
+msgid "Delete password"
+msgstr "Stäng av lösenord"
+
+#: sharing/models.py:144
+msgid "Check this to enable Time Machine backups on this share."
+msgstr ""
+
+#: sharing/models.py:209
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr ""
+
+#: sharing/models.py:240
+msgid ""
+"If a group is selected, the root user will also be limited to that group's "
+"permissions"
+msgstr ""
+
+#: storage/admin.py:273
+#, fuzzy
+msgid "Create Passphrase"
+msgstr "Skapa ZFS Dataset"
+
+#: storage/admin.py:305
+#, fuzzy
+msgid "Remove recovery key"
+msgstr "Fjärrvärd värdnyckel"
+
+#: storage/admin.py:391
+#, fuzzy
+msgid "Read"
+msgstr "Endast-läsa"
+
+#: storage/admin.py:464
+msgid "Offline"
+msgstr ""
+
+#: storage/forms.py:483
+msgid "You need at least %d disks"
+msgstr ""
+
+#: storage/forms.py:527
+msgid "You need a data disk group"
+msgstr ""
+
+#: storage/forms.py:771
+#, fuzzy
+msgid "Yes: Decrypt disks"
+msgstr "Medlems hårddiskar"
+
+#: storage/forms.py:1117
+#: storage/forms.py:1229
+#, fuzzy
+msgid "ZFS Deduplication"
+msgstr "ZFS replikering"
+
+#: storage/forms.py:1124
+msgid "Record Size"
+msgstr ""
+
+#: storage/forms.py:1279
+#, fuzzy
+msgid "Sparse volume"
+msgstr "Skrubba volym"
+
+#: storage/forms.py:1917
+#: storage/forms.py:1983
+#, fuzzy
+msgid "The passphrases do not match"
+msgstr "Hemlighet matchar inte"
+
+#: storage/models.py:64
+#, fuzzy
+msgid "Encryption Type"
+msgstr "Krypteringsläge"
+
+#: storage/models.py:807
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which make it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/views.py:115
+#, fuzzy
+msgid "Please enter a hostname"
+msgstr "Systemets värdnamn"
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr ""
+
+#: storage/views.py:958
+msgid "GELI key download starting..."
+msgstr ""
+
+#: storage/views.py:1057
+#, fuzzy
+msgid "Recovery has been removed"
+msgstr "Hårddisken har tagits bort."
+
+#: support/models.py:40
+#, fuzzy
+msgid "Subject"
+msgstr "E-post ämne"
+
+#: system/forms.py:749
+#, fuzzy
+msgid "Memory device"
+msgstr "Minne"
+
+#: system/models.py:66
+#, fuzzy
+msgid "WebGUI IPv6 Address"
+msgstr "WebGUI Adress"
+
+#: system/models.py:355
+msgid "Private key passphrase"
+msgstr ""
+
+#: system/models.py:416
+msgid "Redirect Stdout"
+msgstr ""
+
+#: system/models.py:917
+msgid "Post Init"
+msgstr ""
+
+#: system/models.py:935
+#, fuzzy
+msgid "Init/Shutdown Script"
+msgstr "Käll-hemlighet"
+
+#: templates/freeadmin/generic_model_datagrid.html:10
+#, fuzzy
+msgid "Add"
+msgstr "Lägg till %s"
+
+#: templates/freeadmin/generic_model_delete.html:19
+#, fuzzy
+msgid ""
+"There is %(related_num)s related entry that will also be deleted as it "
+"depend upon this item"
+msgid_plural ""
+"There are %(related_num)s related entries that will also be deleted as they "
+"depend upon this item"
+msgstr[0] ""
+"Det finns %(related_num)s relaterade poster som kommer att raderas och "
+"eftersom beroende av detta"
+msgstr[1] ""
+"Det finns %(related_num)s relaterade poster som kommer att raderas och "
+"eftersom beroende av detta"
+
+#: templates/jails/index.html:20
+msgid "Templates"
+msgstr ""
+
+#: templates/storage/create_passphrase.html:5
+msgid ""
+"Remember to add a new recovery key as this action invalidates the previous "
+"recovery key"
+msgstr ""
+
+#: templates/storage/recoverykey_remove.html:3
+msgid "You are about to remove a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "Scan"
+msgstr ""

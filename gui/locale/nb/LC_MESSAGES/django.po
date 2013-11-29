@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2013-01-06 23:44+0200\n"
+"PO-Revision-Date: 2013-01-06 23:44+0000\n"
 "Last-Translator: SnurrDass <danove@rotarynorge.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1357515875.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "Full"
 msgid "Debug"
 msgstr "Feilsøk"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Standard"
+#~ msgid "Default"
+#~ msgstr "Standard"
 
 # Egenavn
 #: choices.py:196
@@ -339,9 +339,8 @@ msgstr "På"
 msgid "Off"
 msgstr "Av"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (anbefalt)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (anbefalt)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -526,9 +525,8 @@ msgstr "Skriv inn samme passord som over for å bekrefte"
 msgid "Shell"
 msgstr "Shell"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Deaktiver passord innlogging"
+#~ msgid "Disable password logins"
+#~ msgstr "Deaktiver passord innlogging"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -554,9 +552,8 @@ msgstr "Hjemmemappe modus"
 msgid "Auxiliary groups"
 msgstr "Tilleggsgrupper"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "En bruker med det brukernavnet finnes allerede."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "En bruker med det brukernavnet finnes allerede."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -596,9 +593,8 @@ msgstr "Passord er deaktivert, la dette stå tomt"
 msgid "This field is required."
 msgstr "Dette feltet er obligatorisk."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Hjemmemappen må begynne med /mnt/ eller være /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Hjemmemappen må begynne med /mnt/ eller være /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -722,24 +718,17 @@ msgstr "Konto"
 msgid "Admin Account"
 msgstr "Admin konto"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Bytt passord"
+#~ msgid "Change Password"
+#~ msgstr "Bytt passord"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Skift administatorbruker"
+#~ msgid "Change Admin User"
+#~ msgstr "Skift administatorbruker"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Passordet ble vellykket oppdatert."
+#~ msgid "Password successfully updated."
+#~ msgstr "Passordet ble vellykket oppdatert."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Adminbruker ble vellykket oppdatert"
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Adminbruker ble vellykket oppdatert"
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -1105,9 +1094,8 @@ msgstr "Lenkesamling"
 msgid "Link Aggregations"
 msgstr "Tilkoblinger med redundanse/økt driftsikkerhet"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "LAGG grensesnittgruppe"
+#~ msgid "LAGG Interface group"
+#~ msgstr "LAGG grensesnittgruppe"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1150,9 +1138,8 @@ msgstr "Sett opp redundanse/økt ytelse"
 msgid "View Link Aggregations"
 msgstr "Vis alle tilkoblinger med redundanse/økt ytelse"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG ble lagt til"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG ble lagt til"
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1510,17 +1497,15 @@ msgstr "Hemmelighet (bekreft)"
 msgid "Enter the same secret above for verification."
 msgstr "Skriv inn samme hemmeligheten som over for kontroll."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Initiativtagers hemmelighet"
+#~ msgid "Initiator Secret"
+#~ msgstr "Initiativtagers hemmelighet"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Initiativtagers hemmelighet. (for felles CHAP godkjenning)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Initiativtakers Hemmelighet (Bekreft)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Initiativtakers Hemmelighet (Bekreft)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1616,19 +1601,17 @@ msgstr ""
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Diskenhet"
+#~ msgid "Disk device"
+#~ msgstr "Diskenhet"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "Din portalgruppeID kan ikke være høyere enn %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "Din gruppeID kan ikke være høyere enn %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "Din gruppeID kan ikke være høyere enn %d"
 
 #: services/forms.py:1019
 #, fuzzy
@@ -1769,13 +1752,11 @@ msgstr ""
 "Bruk dette valget for å overstyre mappeopprettelsesmasken (0777 som "
 "standard)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Stor RW støtte"
+#~ msgid "Large RW support"
+#~ msgstr "Stor RW støtte"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Send filer med sendfile(2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Send filer med sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1887,15 +1868,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Servernavn"
+#~ msgid "Server Name"
+#~ msgstr "Servernavn"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "Servernavn. Om dette feltet er tomt, vil standardserveren bli valgt."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "Servernavn. Om dette feltet er tomt, vil standardserveren bli valgt."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1934,16 +1913,14 @@ msgstr ""
 "maksimums mengden av samtidige tilkoblinger fra dens klienter, typisk er "
 "fire til seks."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Asynkron tilstand"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Asynkron tilstand"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Aktiver asynkron modus som vil hjelpe for ytelse utover gigabitnettverk."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Aktiver asynkron modus som vil hjelpe for ytelse utover gigabitnettverk."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2345,13 +2322,12 @@ msgstr "Tilbyder"
 msgid "Domain name"
 msgstr "Domenenavn"
 
-#: services/models.py:765
-msgid ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
-msgstr ""
-"Vertsnavn kallenavn. Dette alternativet kan oppstå flere ganger, for hvert "
-"domene som har samme IP. Benytt et mellomrom for å separere flere kallenavn."
+#~ msgid ""
+#~ "A host name alias. This option can appear multiple times, for each domain "
+#~ "that has the same IP. Use a space to separate multiple alias names."
+#~ msgstr ""
+#~ "Vertsnavn kallenavn. Dette alternativet kan oppstå flere ganger, for hvert "
+#~ "domene som har samme IP. Benytt et mellomrom for å separere flere kallenavn."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2365,10 +2341,9 @@ msgstr ""
 msgid "Forced update period"
 msgstr "Tvungen periodisk oppdatering"
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
-"Disse parameterne vil bli lagt til de globale instillingene i inadyn.conf."
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr ""
+#~ "Disse parameterne vil bli lagt til de globale instillingene i inadyn.conf."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
@@ -2598,13 +2573,11 @@ msgstr "Sti"
 msgid "Allow Local User Login"
 msgstr "tillat pålogging for lokale brukere"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "Fane"
+#~ msgid "Banner"
+#~ msgstr "Fane"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "Velkomstfane vist av FTP når en tilkobling opprettes."
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "Velkomstfane vist av FTP når en tilkobling opprettes."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2628,9 +2601,8 @@ msgstr "Alltid bruk Chroot"
 msgid "Require IDENT Authentication"
 msgstr "Krev IDENT godkjenning"
 
-#: services/models.py:1031
-msgid "Require Reverse DNS for IP"
-msgstr "Krev reversert DNS for IP"
+#~ msgid "Require Reverse DNS for IP"
+#~ msgstr "Krev reversert DNS for IP"
 
 #: services/models.py:1033
 msgid "Masquerade address"
@@ -2709,9 +2681,8 @@ msgstr ""
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr "Lokal brukers upload båndbredde i KB/s. Null betyr uendelig."
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "Aktiver SSL/TLS"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "Aktiver SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -2820,13 +2791,11 @@ msgstr ""
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1239
-msgid "Domain Controller Name"
-msgstr "Navn på domenekontroller"
+#~ msgid "Domain Controller Name"
+#~ msgstr "Navn på domenekontroller"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "AD eller PDC sitt navn."
+#~ msgid "AD or PDC name."
+#~ msgstr "AD eller PDC sitt navn."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3216,14 +3185,12 @@ msgstr "Bytt passord"
 msgid "The path %s does not exist"
 msgstr "Sti til omfanget"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "Dette feltet inneholder ikke en gyldig IP addresse eller nettverk"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "Dette feltet inneholder ikke en gyldig IP addresse eller nettverk"
 
-#: sharing/forms.py:165
 #, python-format
-msgid "The IP '%s' is not valid."
-msgstr "The IP '%s' is not valid."
+#~ msgid "The IP '%s' is not valid."
+#~ msgstr "The IP '%s' is not valid."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3494,9 +3461,8 @@ msgid ""
 "across a reboot, cluster, ..."
 msgstr ""
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "Deaktiver Fil ID"
+#~ msgid "Disable File ID"
+#~ msgstr "Deaktiver Fil ID"
 
 #: sharing/models.py:201
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
@@ -3661,9 +3627,8 @@ msgstr "Volumnavn"
 msgid "Filesystem type"
 msgstr ""
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "Tving 4096 byte sektorstørrelse"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "Tving 4096 byte sektorstørrelse"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
@@ -4602,13 +4567,11 @@ msgstr "Bruk seriellkonsoll"
 msgid "Enable screen saver"
 msgstr "Aktiver skjermsparer"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "Automatisk Sjekk for Ny Fastvare"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "Automatisk Sjekk for Ny Fastvare"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "Bip ved start"
+#~ msgid "Beep on boot"
+#~ msgstr "Bip ved start"
 
 #: system/models.py:167
 msgid "Enable Special System Tuning"
@@ -5029,10 +4992,8 @@ msgstr "Hjelp"
 msgid "Log In"
 msgstr "Logg inn"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -5040,11 +5001,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "Medlemmer"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Modifiser"
+#~ msgid "Modify"
+#~ msgstr "Modifiser"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5058,17 +5016,14 @@ msgstr "Modifiser gruppe"
 msgid "Delete Group"
 msgstr "Slett gruppe"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "Det er ingen brukerdefinerte grupper."
+#~ msgid "There are no user defined groups."
+#~ msgstr "Det er ingen brukerdefinerte grupper."
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "Opprett ny gruppe"
+#~ msgid "Add New Group"
+#~ msgstr "Opprett ny gruppe"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "Hjem"
+#~ msgid "Home"
+#~ msgstr "Hjem"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
@@ -5084,27 +5039,22 @@ msgstr ""
 msgid "Remove User"
 msgstr "Fjern bruker"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "Slett bruker"
+#~ msgid "Delete User"
+#~ msgstr "Slett bruker"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "Ingen brukere er definert"
+#~ msgid "No users defined"
+#~ msgstr "Ingen brukere er definert"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "Legg til ny bruker"
+#~ msgid "Add New User"
+#~ msgstr "Legg til ny bruker"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 #, fuzzy
 msgid "Change E-mail"
 msgstr "E-post"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "Bytt admin passord"
+#~ msgid "Change Admin Password"
+#~ msgstr "Bytt admin passord"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5983,9 +5933,8 @@ msgstr ""
 msgid "Edit Replication"
 msgstr ""
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "Ingen ZFS replikering tilgjengelig"
+#~ msgid "No ZFS replication available"
+#~ msgstr "Ingen ZFS replikering tilgjengelig"
 
 #: templates/storage/scrub.html:42
 #, fuzzy
@@ -6064,33 +6013,28 @@ msgstr ""
 msgid "There are no scheduled snapshots."
 msgstr ""
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Hvordan"
+#~ msgid "How"
+#~ msgstr "Hvordan"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr ""
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "Fra"
+#~ msgid "From"
+#~ msgstr "Fra"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "gjennom"
+#~ msgid "through"
+#~ msgstr "gjennom"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", hver"
+#~ msgid ", every"
+#~ msgstr ", hver"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "hverdag"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "på hver"
+#~ msgid "on every"
+#~ msgstr "på hver"
 
 #: templates/storage/tasks.html:147
 msgid "There are no periodic snapshots scheduled."
@@ -6156,9 +6100,8 @@ msgstr "Ødelegg datasett"
 msgid "Destroy ZFS Volume"
 msgstr "ZFS-Partisjon"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "Ingen volumer definert"
+#~ msgid "No volumes defined"
+#~ msgstr "Ingen volumer definert"
 
 #: templates/storage/wizard.html:27
 #, fuzzy
@@ -6173,25 +6116,21 @@ msgstr "Disker som er medlem"
 msgid "Group type"
 msgstr "Gruppe type"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS Ekstra"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS Ekstra"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Bruk av bare en loggdisk er ikke anbefalt"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "Bruk av bare en loggdisk er ikke anbefalt"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Logg"
+#~ msgid "Log"
+#~ msgstr "Logg"
 
 #: templates/storage/wizard.html:117
 msgid "Cache"
 msgstr ""
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "Reserve"
+#~ msgid "Spare"
+#~ msgstr "Reserve"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6427,9 +6366,8 @@ msgstr "Gjennomsnittelig last"
 msgid "Connected through"
 msgstr ""
 
-#: templates/system/tunable.html:34
-msgid "No tunable setting defined."
-msgstr "Ingen tunable konfigurering er definert"
+#~ msgid "No tunable setting defined."
+#~ msgstr "Ingen tunable konfigurering er definert"
 
 #: templates/system/tunable.html:40
 msgid "Add Tunable"
@@ -6489,8 +6427,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-msgid "Selected"
-msgstr "Valgt"
+#~ msgid "Selected"
+#~ msgstr "Valgt"
 
 #, fuzzy
 msgid "Plugin uname"
@@ -6500,17 +6438,17 @@ msgstr "Domenenavn"
 msgid "Control Plugins"
 msgstr "Kontrolltjenester"
 
-msgid "Allow guest access"
-msgstr "Tillat gjestetilgang"
+#~ msgid "Allow guest access"
+#~ msgstr "Tillat gjestetilgang"
 
-msgid "Only allow guest access"
-msgstr "Tillat kun gjestetilgang"
+#~ msgid "Only allow guest access"
+#~ msgstr "Tillat kun gjestetilgang"
 
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
-"Hvor mange minutter mellom hver gang et nytt speilbilde blir laget etter "
-"det siste."
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr ""
+#~ "Hvor mange minutter mellom hver gang et nytt speilbilde blir laget etter "
+#~ "det siste."
 
 #, fuzzy
 msgid "Invalid service pack"
@@ -6536,106 +6474,106 @@ msgstr "Vis alle brukere"
 msgid "Add Apple (CIFS) Share"
 msgstr "Legg til Apple deling"
 
-msgid "Apply Service Pack"
-msgstr "Legg inn Service Pack"
+#~ msgid "Apply Service Pack"
+#~ msgstr "Legg inn Service Pack"
 
-msgid "Hourly"
-msgstr "Hver time"
+#~ msgid "Hourly"
+#~ msgstr "Hver time"
 
-msgid "Hourly Graphs"
-msgstr "Timesgraf"
+#~ msgid "Hourly Graphs"
+#~ msgstr "Timesgraf"
 
-msgid "Daily"
-msgstr "Daglig"
+#~ msgid "Daily"
+#~ msgstr "Daglig"
 
-msgid "Daily Graphs"
-msgstr "Daggraf"
+#~ msgid "Daily Graphs"
+#~ msgstr "Daggraf"
 
-msgid "Weekly"
-msgstr "Ukentlig"
+#~ msgid "Weekly"
+#~ msgstr "Ukentlig"
 
-msgid "Weekly Graphs"
-msgstr "Ukegraf"
+#~ msgid "Weekly Graphs"
+#~ msgstr "Ukegraf"
 
-msgid "Monthly"
-msgstr "Måntlig"
+#~ msgid "Monthly"
+#~ msgstr "Måntlig"
 
-msgid "Monthly Graphs"
-msgstr "Månedsgraf"
+#~ msgid "Monthly Graphs"
+#~ msgstr "Månedsgraf"
 
-msgid "Yearly"
-msgstr "Årlig"
+#~ msgid "Yearly"
+#~ msgstr "Årlig"
 
-msgid "Yearly Graphs"
-msgstr "Årlig graf"
+#~ msgid "Yearly Graphs"
+#~ msgstr "Årlig graf"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Tape"
+#~ msgid "Tape"
+#~ msgstr "Tape"
 
-msgid "Pass"
-msgstr "Godkjent"
+#~ msgid "Pass"
+#~ msgstr "Godkjent"
 
-msgid "Disable password"
-msgstr "Deaktiver passord"
+#~ msgid "Disable password"
+#~ msgstr "Deaktiver passord"
 
-msgid "My Account"
-msgstr "Min konto"
+#~ msgid "My Account"
+#~ msgstr "Min konto"
 
-msgid "View All Users"
-msgstr "Vis alle brukere"
+#~ msgid "View All Users"
+#~ msgstr "Vis alle brukere"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Vi beklager, men siden har blitt utdatert. Vennligst fortsett å fylle ut "
-"feltene fra denne siden."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Vi beklager, men siden har blitt utdatert. Vennligst fortsett å fylle ut "
+#~ "feltene fra denne siden."
 
-msgid "Local Access"
-msgstr "Lokal tilgang"
+#~ msgid "Local Access"
+#~ msgstr "Lokal tilgang"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
-"Tillat brukere med lokale brukerkontoer å få tilgang til delte apple-"
-"ressurser på denne maskinen."
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr ""
+#~ "Tillat brukere med lokale brukerkontoer å få tilgang til delte apple-"
+#~ "ressurser på denne maskinen."
 
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"Portalen tar form i 'adresse:port'. F.eks. '192.168.1.1:3260' for IPv4, "
-"'[2001:db8:1::1]:3260' for IPv6. Porten 3260 er standard iSCSI "
-"portnummer. For hvilke som helst IP'er (jokertegn adresser), benytt "
-"'0.0.0.0:3260' og/eller '[::]:3260'. Ikke bland jokertegn og andre IP'er "
-"i samme adressefamilie."
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "Portalen tar form i 'adresse:port'. F.eks. '192.168.1.1:3260' for IPv4, "
+#~ "'[2001:db8:1::1]:3260' for IPv6. Porten 3260 er standard iSCSI "
+#~ "portnummer. For hvilke som helst IP'er (jokertegn adresser), benytt "
+#~ "'0.0.0.0:3260' og/eller '[::]:3260'. Ikke bland jokertegn og andre IP'er "
+#~ "i samme adressefamilie."
 
-msgid "Time in milliseconds"
-msgstr "Tid i millisekunder"
+#~ msgid "Time in milliseconds"
+#~ msgstr "Tid i millisekunder"
 
-msgid "Username of Domain Administrator Account"
-msgstr "Brukernavn til domeneadministratorkontoen"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "Brukernavn til domeneadministratorkontoen"
 
-msgid "Guest Account"
-msgstr "Gjestekonto"
+#~ msgid "Guest Account"
+#~ msgstr "Gjestekonto"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Bruk dette valget for å overstyre brukernavnet ('ftp' som standard) som "
-"blir brukt for tilgang til gjestetjenester. De privilegiene som denne "
-"brukeren har være tilgjengelige til alle klienter som kobler seg til "
-"gjestetjenesten. Denne brukeren må være opprettet i passordfilen, men "
-"trenger ikke en gyldig pålogging."
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Bruk dette valget for å overstyre brukernavnet ('ftp' som standard) som "
+#~ "blir brukt for tilgang til gjestetjenester. De privilegiene som denne "
+#~ "brukeren har være tilgjengelige til alle klienter som kobler seg til "
+#~ "gjestetjenesten. Denne brukeren må være opprettet i passordfilen, men "
+#~ "trenger ikke en gyldig pålogging."
 
 #, fuzzy
 msgid "CIFS Share"
@@ -6645,17 +6583,17 @@ msgstr "UNIX tegnsett"
 msgid "CIFS Shares"
 msgstr "UNIX tegnsett"
 
-msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr "Når på dagen skal vi starte å lage speilbilde, f.eks 8:00"
+#~ msgid "When in a day should we start making snapshots, e.g. 8:00"
+#~ msgstr "Når på dagen skal vi starte å lage speilbilde, f.eks 8:00"
 
-msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr "Når på dagen skal vi stoppe å lage speilbilde, f.eks 17:00"
+#~ msgid "When in a day should we stop making snapshots, e.g. 17:00"
+#~ msgstr "Når på dagen skal vi stoppe å lage speilbilde, f.eks 17:00"
 
-msgid "NTP server 2"
-msgstr "NTP server 2"
+#~ msgid "NTP server 2"
+#~ msgstr "NTP server 2"
 
-msgid "NTP server 3"
-msgstr "NTP server 3"
+#~ msgid "NTP server 3"
+#~ msgstr "NTP server 3"
 
 #, fuzzy
 msgid "Loader"
@@ -6665,14 +6603,14 @@ msgstr "Gjennomsnittelig last"
 msgid "Loaders"
 msgstr "Gjennomsnittelig last"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
 #, fuzzy
 msgid "Are you sure you want to export?"
@@ -6686,71 +6624,71 @@ msgstr "Importer volum"
 msgid "Add loader"
 msgstr "Legg til volum"
 
-msgid "successfully added"
-msgstr "suksessfullt lagt til"
+#~ msgid "successfully added"
+#~ msgstr "suksessfullt lagt til"
 
 #, fuzzy
 msgid "successfully deleted"
 msgstr "Slettet"
 
-msgid "successfully edited"
-msgstr "endringer utført"
+#~ msgid "successfully edited"
+#~ msgstr "endringer utført"
 
-msgid "%s successfully added."
-msgstr "% er lagt til korrekt."
+#~ msgid "%s successfully added."
+#~ msgstr "% er lagt til korrekt."
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 Nettmaske"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 Nettmaske"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Denne verdien må være mellom 0 og 10000, inkludert."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Denne verdien må være mellom 0 og 10000, inkludert."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Denne verdien må være mellom 0 og 1000, inkludert."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Denne verdien må være mellom 0 og 1000, inkludert."
 
-msgid "Enable DDP"
-msgstr "Aktiver DDP"
+#~ msgid "Enable DDP"
+#~ msgstr "Aktiver DDP"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "Aktiverer DDP støtte for lavnivå appletalktilgang."
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "Aktiverer DDP støtte for lavnivå appletalktilgang."
 
-msgid "Turn on/off TLS"
-msgstr "Slå av/på TLS"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "Slå av/på TLS"
 
 #, fuzzy
 msgid "The volume failed to export"
 msgstr "Denne tjenesten kunne ikke startes på nytt."
 
-msgid "Used space"
-msgstr "Brukt plass"
+#~ msgid "Used space"
+#~ msgstr "Brukt plass"
 
-msgid "Restore to Factory Defaults"
-msgstr "Gjennopprett til fabrikkinstillinger"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "Gjennopprett til fabrikkinstillinger"
 
-msgid "Config"
-msgstr "Konfigurasjon"
+#~ msgid "Config"
+#~ msgstr "Konfigurasjon"
 
-msgid "%s successfully update."
-msgstr "% oppdaterte seg korrekt."
+#~ msgid "%s successfully update."
+#~ msgstr "% oppdaterte seg korrekt."
 
-msgid "Admin user"
-msgstr "Administratorbruker"
+#~ msgid "Admin user"
+#~ msgstr "Administratorbruker"
 
-msgid "N/A"
-msgstr "N/A"
+#~ msgid "N/A"
+#~ msgstr "N/A"
 
-msgid ""
-"Use this option to override the username ('www' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Bruk dette valget for å overstyre brukernavnet ('www' er standard) som "
-"blir brukt for å gi tilgang til tjenester som er spesifisert som gjest. "
-"Den tilgangen denne brukeren har vil bli tilgjengelig for klienter som "
-"kobler seg til gjestekontoen. Brukeren må eksistere i passordsfilen, men "
-"trenger ikke en gyldig adgang."
+#~ msgid ""
+#~ "Use this option to override the username ('www' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Bruk dette valget for å overstyre brukernavnet ('www' er standard) som "
+#~ "blir brukt for å gi tilgang til tjenester som er spesifisert som gjest. "
+#~ "Den tilgangen denne brukeren har vil bli tilgjengelig for klienter som "
+#~ "kobler seg til gjestekontoen. Brukeren må eksistere i passordsfilen, men "
+#~ "trenger ikke en gyldig adgang."
 
 #, fuzzy
 msgid "ZVol Name"
@@ -6759,17 +6697,17 @@ msgstr "Fullt navn"
 msgid "Dataset"
 msgstr "Datasett"
 
-msgid "minutes,"
-msgstr "minutt,"
+#~ msgid "minutes,"
+#~ msgstr "minutt,"
 
-msgid "English"
-msgstr "Engelsk"
+#~ msgid "English"
+#~ msgstr "Engelsk"
 
-msgid "Level"
-msgstr "Nivå"
+#~ msgid "Level"
+#~ msgstr "Nivå"
 
-msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr "Versjonen av Microsoft Windows som Active Directory bruker"
+#~ msgid "The version of Microsoft Windows that Active Directory is running."
+#~ msgstr "Versjonen av Microsoft Windows som Active Directory bruker"
 
 msgid "Read"
 msgstr "Lese"
@@ -6777,11 +6715,2222 @@ msgstr "Lese"
 msgid "Write"
 msgstr "Skrive"
 
-msgid "Execute"
-msgstr "Kjør"
+#~ msgid "Execute"
+#~ msgstr "Kjør"
 
-msgid "Owner"
-msgstr "Eier"
+#~ msgid "Owner"
+#~ msgstr "Eier"
 
-msgid "Other"
-msgstr "Annet"
+#~ msgid "Other"
+#~ msgstr "Annet"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr ""
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr ""
+
+#: choices.py:308
+msgid "zle (runs of zeros)"
+msgstr ""
+
+#: choices.py:601
+msgid "19200"
+msgstr ""
+
+#: choices.py:604
+msgid "115200"
+msgstr ""
+
+#: choices.py:662
+msgid "Verbose"
+msgstr ""
+
+#: choices.py:670
+msgid "Daemon"
+msgstr ""
+
+#: choices.py:675
+#, fuzzy
+msgid "Local 2"
+msgstr "Lokalbruker"
+
+#: choices.py:692
+msgid "type1"
+msgstr ""
+
+#: choices.py:693
+msgid "type2"
+msgstr ""
+
+#: choices.py:694
+msgid "type3"
+msgstr ""
+
+#: choices.py:695
+msgid "type4"
+msgstr ""
+
+#: choices.py:696
+msgid "type5"
+msgstr ""
+
+#: choices.py:704
+msgid "data"
+msgstr ""
+
+#: choices.py:706
+msgid "auth"
+msgstr ""
+
+#: choices.py:709
+msgid "ctrl+!data"
+msgstr ""
+
+#: choices.py:711
+msgid "auth+!data"
+msgstr ""
+
+#: account/forms.py:60
+#, fuzzy
+msgid "Confirm New Password"
+msgstr "Bytt passord"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr ""
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr ""
+
+#: account/models.py:241
+#, fuzzy
+msgid "Group Membership"
+msgstr "Gruppenavn"
+
+#: api/resources.py:766
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+#, fuzzy
+msgid "Locked"
+msgstr "Lås bruker"
+
+#: api/resources.py:859
+#, fuzzy
+msgid "on every %(days)s"
+msgstr "Hver eneste dag"
+
+#: api/resources.py:865
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr ""
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+#, fuzzy
+msgid "Invalid address: %s"
+msgstr "Feil firmware eller sjekksum"
+
+#: jails/admin.py:75
+#: jails/forms.py:724
+#: jails/models.py:396
+#: templates/plugins/plugins.html:21
+#, fuzzy
+msgid "Jail"
+msgstr "Domenenavn"
+
+#: jails/admin.py:196
+msgid "Start"
+msgstr ""
+
+#: jails/admin.py:261
+#: jails/models.py:346
+msgid "URL"
+msgstr ""
+
+#: jails/forms.py:88
+msgid "type"
+msgstr ""
+
+#: jails/forms.py:170
+msgid "No jail root configured."
+msgstr ""
+
+#: jails/forms.py:458
+msgid "autostart"
+msgstr ""
+
+#: jails/forms.py:771
+#, fuzzy
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr "Kunne ikke motta %(url): %(error)"
+
+#: jails/models.py:72
+#, fuzzy
+msgid "Jail Name"
+msgstr "Domenenavn"
+
+#: jails/models.py:94
+#, fuzzy
+msgid "IPv4 bridge address"
+msgstr "IPv4 Adresse"
+
+#: jails/models.py:113
+#, fuzzy
+msgid "IPv6 address"
+msgstr "IPv6 Adresse"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr ""
+
+#: jails/models.py:224
+#, fuzzy
+msgid "This jail is required by %d plugin(s)"
+msgstr "Dette feltet er nødvendig for anonym innlogging"
+
+#: jails/models.py:260
+msgid "Jail Root"
+msgstr ""
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr ""
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:280
+#, fuzzy
+msgid "IPv6 Network"
+msgstr "IPv6 Nettmaske"
+
+#: jails/models.py:285
+#, fuzzy
+msgid "IPv6 Network Start Address"
+msgstr "IPv6 Adresse"
+
+#: jails/models.py:290
+#, fuzzy
+msgid "IPv6 Network End Address"
+msgstr "IPv6 Adresse"
+
+#: jails/models.py:291
+msgid "IPv6 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:294
+#, fuzzy
+msgid "Collection URL"
+msgstr "Forbindelser"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr ""
+
+#: jails/models.py:373
+msgid "Template must have 0 instances!"
+msgstr ""
+
+#: jails/models.py:388
+#: jails/models.py:389
+#, fuzzy
+msgid "Jail Templates"
+msgstr "IPv4 Nettmaske"
+
+#: jails/models.py:408
+#, fuzzy
+msgid "Read-Only"
+msgstr "Kun lese"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr ""
+
+#: jails/nav.py:100
+#, fuzzy
+msgid "View Jails"
+msgstr "Vis alle %"
+
+#: jails/nav.py:250
+msgid "%s"
+msgstr ""
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr ""
+
+#: jails/utils.py:694
+#, fuzzy
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr "Kunne ikke motta %(url): %(error)"
+
+#: jails/views.py:94
+#, fuzzy
+msgid "Jail successfully edited."
+msgstr "% er korrekt oppdatert."
+
+#: jails/views.py:134
+#, fuzzy
+msgid "Jail successfully started."
+msgstr "% er korrekt oppdatert."
+
+#: jails/views.py:397
+#, fuzzy
+msgid "Jail template successfully edited."
+msgstr "% er korrekt slettet."
+
+#: middleware/notifier.py:2874
+msgid "No RPC Token!"
+msgstr ""
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr ""
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr ""
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr ""
+
+#: network/forms.py:284
+#, fuzzy
+msgid "The IP \"%s\" is not valid"
+msgstr "The IP '%s' is not valid."
+
+#: network/forms.py:343
+msgid "You need a domain, e.g. hostname.domain"
+msgstr ""
+
+#: network/forms.py:373
+#, fuzzy
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr "Navn på grensesnitt må være vlanXX, hvor XX er et tall"
+
+#: network/models.py:77
+msgid "Enable netwait feature"
+msgstr ""
+
+#: network/models.py:97
+msgid "Host name data base"
+msgstr ""
+
+#: network/models.py:401
+#, fuzzy
+msgid "LAGG Interface Group"
+msgstr "LAGG grensesnittgruppe"
+
+#: network/models.py:427
+#, fuzzy
+msgid "Link Aggregation Member"
+msgstr "Lenkesamling"
+
+#: network/models.py:428
+#, fuzzy
+msgid "Link Aggregation Members"
+msgstr "Tilkoblinger med redundanse/økt driftsikkerhet"
+
+#: plugins/admin.py:58
+#: plugins/admin.py:65
+msgid "Install"
+msgstr ""
+
+#: plugins/forms.py:89
+msgid ""
+"Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
+msgstr ""
+
+#: plugins/forms.py:105
+#, fuzzy
+msgid "Plugin Jail"
+msgstr "Slett underliggende fil"
+
+#: plugins/forms.py:106
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr ""
+
+#: plugins/models.py:103
+#, fuzzy
+msgid "Plugin"
+msgstr "Domenenavn"
+
+#: plugins/models.py:175
+msgid "URL for the plugins repository"
+msgstr ""
+
+#: plugins/views.py:196
+#, fuzzy
+msgid "Jail does not exist"
+msgstr "Sti til omfanget"
+
+#: plugins/views.py:205
+#, fuzzy
+msgid "Failed to update plugin"
+msgstr "Slett gruppe"
+
+#: plugins/views.py:224
+#: plugins/views.py:355
+#, fuzzy
+msgid "No available IP addresses"
+msgstr "Kontrollers IP-adresse"
+
+#: services/forms.py:637
+#: services/forms.py:645
+msgid "Spaces or number signs are not allowed."
+msgstr ""
+
+#: services/forms.py:826
+#, fuzzy
+msgid "Peer Secret (Confirm)"
+msgstr "Hemmelighet (bekreft)"
+
+#: services/forms.py:1331
+msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
+msgstr ""
+
+#: services/forms.py:1504
+#, fuzzy
+msgid "A target with that name already exists."
+msgstr "En gruppe med det navnet finnes allerede"
+
+#: services/models.py:214
+#, fuzzy
+msgid "Hostnames lookups"
+msgstr "Hostnavn"
+
+#: services/models.py:287
+#, fuzzy
+msgid "Allow non-root mount"
+msgstr "Tillat pålogging som Root"
+
+#: services/models.py:298
+#, fuzzy
+msgid "Bind IP Addresses"
+msgstr "IPv4 Adresse"
+
+#: services/models.py:712
+#, fuzzy
+msgid "Initiator side user name."
+msgstr "Initiativtagers hemmelighet"
+
+#: services/models.py:932
+#, fuzzy
+msgid "These parameters will be added to /etc/snmpd.config."
+msgstr "Disse parameterne blir lagt til proftpd.conf."
+
+#: services/models.py:971
+#, fuzzy
+msgid "Remote Port"
+msgstr "Fjernmonitor"
+
+#: services/models.py:1015
+#, fuzzy
+msgid "Monitor User"
+msgstr "Modifiser bruker"
+
+#: services/models.py:1105
+msgid "Message which will be displayed to the user when they initially login."
+msgstr ""
+
+#: services/models.py:1132
+msgid ""
+"For local users, only allow access to user home directory unless the user is "
+"a member of group wheel."
+msgstr ""
+
+#: services/models.py:1194
+#, fuzzy
+msgid "Enable TLS"
+msgstr "Aktiver SSL/TLS"
+
+#: services/models.py:1199
+msgid "TLS policy"
+msgstr ""
+
+#: services/models.py:1202
+msgid "TLS allow client renegotiations"
+msgstr ""
+
+#: services/models.py:1214
+msgid "TLS common name required"
+msgstr ""
+
+#: services/models.py:1218
+msgid "TLS enable diagnostics"
+msgstr ""
+
+#: services/models.py:1222
+#, fuzzy
+msgid "TLS export certificate data"
+msgstr "Selvsignert sertifikat"
+
+#: services/models.py:1234
+msgid "TLS no session reuse required"
+msgstr ""
+
+#: services/models.py:1238
+msgid "TLS export standard vars"
+msgstr ""
+
+#: services/models.py:1246
+#, fuzzy
+msgid "TLS DNS name required"
+msgstr "Dette feltet er obligatorisk."
+
+#: services/models.py:1254
+msgid "Certificate and private key"
+msgstr ""
+
+#: services/models.py:1354
+msgid "SFTP Log Facility"
+msgstr ""
+
+#: services/models.py:1436
+#: services/models.py:1532
+#, fuzzy
+msgid "Domain Controller"
+msgstr "Navn på domenekontroller"
+
+#: services/models.py:1522
+msgid "Set this if you want to allow Trusted Domains."
+msgstr ""
+
+#: services/models.py:1544
+#, fuzzy
+msgid "Kerberos Server"
+msgstr "Antall servere"
+
+#: services/models.py:1545
+msgid "Hostname of the kerberos server to use."
+msgstr ""
+
+#: services/models.py:1550
+msgid "Kerberos Password Server"
+msgstr ""
+
+#: services/models.py:1560
+#, fuzzy
+msgid "DNS timeout"
+msgstr "Timeout"
+
+#: services/models.py:1600
+#, fuzzy
+msgid "NIS domain"
+msgstr "Domene"
+
+#: services/models.py:1607
+msgid "Comma delimited list of NIS servers"
+msgstr ""
+
+#: services/models.py:1611
+#, fuzzy
+msgid "Secure mode"
+msgstr "Lukkemodus"
+
+#: services/models.py:1612
+msgid "Cause ypbind to run in secure mode"
+msgstr ""
+
+#: services/models.py:1625
+#: services/models.py:1626
+#, fuzzy
+msgid "NIS Domain"
+msgstr "Domene"
+
+#: services/models.py:1868
+#, fuzzy
+msgid "Informational"
+msgstr "Vanlig"
+
+#: services/models.py:1869
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable"
+msgstr ""
+
+#: services/models.py:1876
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable"
+msgstr ""
+
+#: services/models.py:1884
+#, fuzzy
+msgid "Destination email address. Separate email addresses by commas"
+msgstr "Destinasjons epost adresse. Skill epost adressene med semikolon."
+
+#: services/nav.py:115
+#: templates/services/core.html:27
+#, fuzzy
+msgid "Directory Services"
+msgstr "Mapperettigheter"
+
+#: sharing/forms.py:148
+#: sharing/forms.py:153
+#, fuzzy
+msgid "The umask must be between 000 and 777."
+msgstr "Denne verdien må være mellom 0 og 1000, inkludert."
+
+#: sharing/forms.py:274
+msgid "Paths for a NFS share must reside within the same filesystem"
+msgstr ""
+
+#: sharing/forms.py:281
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr ""
+
+#: sharing/forms.py:318
+msgid ""
+"The network %s is already being shared and cannot be used twice for the same "
+"filesystem"
+msgstr ""
+
+#: sharing/models.py:201
+#, fuzzy
+msgid "Authorized networks"
+msgstr "Autorisert nettverk"
+
+#: sharing/models.py:258
+msgid "The specified group's permission are used by all clients"
+msgstr ""
+
+#: storage/admin.py:280
+#, fuzzy
+msgid "Change Passphrase"
+msgstr "Bytt passord"
+
+#: storage/admin.py:287
+msgid "Download Key"
+msgstr ""
+
+#: storage/admin.py:299
+msgid "Add recovery key"
+msgstr ""
+
+#: storage/admin.py:311
+msgid "Unlock"
+msgstr ""
+
+#: storage/admin.py:470
+msgid "Replace"
+msgstr ""
+
+#: storage/admin.py:572
+msgid "When"
+msgstr ""
+
+#: storage/admin.py:609
+#, fuzzy
+msgid "Remote Hostname"
+msgstr "Hostnavn"
+
+#: storage/forms.py:120
+msgid "Enter positive number (optionally suffixed by K, M, G, T), or 0"
+msgstr ""
+
+#: storage/forms.py:770
+msgid "No: Skip to import"
+msgstr ""
+
+#: storage/forms.py:773
+#, fuzzy
+msgid "Encrypted ZFS volume?"
+msgstr "ZFS-Partisjon"
+
+#: storage/forms.py:791
+#, fuzzy
+msgid "Encryption Key"
+msgstr "Godkjenningsmodell"
+
+#: storage/forms.py:839
+msgid "The following disks failed to attach: %s"
+msgstr ""
+
+#: storage/forms.py:1128
+msgid ""
+"Specifies a suggested block size for files in the file system. This property "
+"is designed solely for use with database workloads that access files in "
+"fixed-size records.  ZFS automatically tunes block sizes according to "
+"internal algorithms optimized for typical access patterns."
+msgstr ""
+
+#: storage/forms.py:1272
+#, fuzzy
+msgid "Size for this zvol"
+msgstr "Endre ZFS volum"
+
+#: storage/forms.py:1290
+#, fuzzy
+msgid "Block size"
+msgstr "Logisk blokkstørrelse"
+
+#: storage/forms.py:1292
+msgid ""
+"The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
+"to 128 Kbytes is valid."
+msgstr ""
+
+#: storage/forms.py:1598
+msgid "Confirmation does not match passphrase"
+msgstr ""
+
+#: storage/forms.py:1606
+#, fuzzy
+msgid "Passphrase is not valid"
+msgstr "Brukeren % er ikke gyldig."
+
+#: storage/forms.py:1665
+msgid "Dedicated User Enabled"
+msgstr ""
+
+#: storage/forms.py:1666
+msgid "If disabled then root will be used for replication."
+msgstr ""
+
+#: storage/forms.py:1674
+msgid "Enable High Speed Ciphers"
+msgstr ""
+
+#: storage/forms.py:1678
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which makes it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/forms.py:1944
+#, fuzzy
+msgid "New Passphrase"
+msgstr "Nytt passord"
+
+#: storage/forms.py:1948
+#, fuzzy
+msgid "Confirm New Passphrase"
+msgstr "Bytt passord"
+
+#: storage/forms.py:1974
+#: storage/forms.py:2119
+#, fuzzy
+msgid "Invalid password"
+msgstr "Gammelt passord"
+
+#: storage/forms.py:2024
+#, fuzzy
+msgid "Recovery Key"
+msgstr "hverdag"
+
+#: storage/forms.py:2028
+#, fuzzy
+msgid "Restart services"
+msgstr "Kontrolltjenester"
+
+#: storage/forms.py:2045
+msgid "Jails/Plugins"
+msgstr ""
+
+#: storage/models.py:574
+msgid "Underlying provider"
+msgstr ""
+
+#: storage/models.py:791
+msgid "Remote Dedicated User Enabled"
+msgstr ""
+
+#: storage/models.py:794
+#, fuzzy
+msgid "Remote Dedicated User"
+msgstr "Fjern bruker"
+
+#: storage/models.py:831
+msgid ""
+"Disabling will stop any new replications being queued. It will not stop any "
+"replications which are queued or in progress."
+msgstr ""
+
+#: storage/models.py:836
+#: storage/models.py:915
+#, fuzzy
+msgid "Volume/Dataset"
+msgstr "Datasett"
+
+#: storage/models.py:852
+#, fuzzy
+msgid "Remote ZFS Volume/Dataset"
+msgstr "Lag ZFS datasett"
+
+#: storage/models.py:885
+#, fuzzy
+msgid "Do not start replication after"
+msgstr "Ødelegg datasett"
+
+#: storage/nav.py:39
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "Volumnavn"
+
+#: storage/nav.py:51
+#: templates/storage/volume_datagrid.html:20
+#, fuzzy
+msgid "UFS Volume Manager (legacy)"
+msgstr "Volumnavn"
+
+#: storage/views.py:903
+#, fuzzy
+msgid "Passphrase updated"
+msgstr "Passordet ble vellykket oppdatert."
+
+#: storage/views.py:997
+#, fuzzy
+msgid "Encryption re-key succeeded"
+msgstr "Godkjenningsmodell"
+
+#: storage/views.py:1016
+msgid "GELI recovery key download starting..."
+msgstr ""
+
+#: support/models.py:41
+msgid "Support subject."
+msgstr ""
+
+#: support/models.py:49
+#, fuzzy
+msgid "Support"
+msgstr "Støtte for EA"
+
+#: system/forms.py:86
+#, fuzzy
+msgid "The volume %s is locked by encryption"
+msgstr "Denne tjenesten kunne ikke startes på nytt."
+
+#: system/forms.py:512
+#, fuzzy
+msgid "The two passphrase fields didn't match."
+msgstr "De to passordfeltene er ikke identiske"
+
+#: system/forms.py:564
+msgid "RSA or DSA private key not found"
+msgstr ""
+
+#: system/forms.py:811
+msgid "Usernames cannot exceed 17 characters for cronjobs"
+msgstr ""
+
+#: system/models.py:69
+msgid "WebGUI HTTP Port"
+msgstr ""
+
+#: system/models.py:108
+#, fuzzy
+msgid "Directory Service"
+msgstr "Mapperettigheter"
+
+#: system/models.py:193
+msgid "Set this to match your serial port speed"
+msgstr ""
+
+#: system/models.py:222
+msgid "Enable report anonymous statistics"
+msgstr ""
+
+#: system/models.py:422
+msgid "Redirect Stderr"
+msgstr ""
+
+#: system/models.py:916
+msgid "Pre Init"
+msgstr ""
+
+#: system/models.py:953
+#, fuzzy
+msgid "Last Name"
+msgstr "Basenavn"
+
+#: system/models.py:981
+msgid "Zip"
+msgstr ""
+
+#: system/models.py:991
+msgid "Home Phone"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:8
+#, fuzzy
+msgid "Add %(name)s"
+msgstr "Legg til %"
+
+#: templates/freeadmin/help.html:39
+msgid "FreeBSD Man Pages"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#, fuzzy
+msgid "Are you sure you want to delete "
+msgstr "Er du sikker på at du vil slette?"
+
+#: templates/jails/stop.html:3
+msgid "Stop "
+msgstr ""
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr ""
+
+#: templates/plugins/index.html:10
+msgid "Installed"
+msgstr ""
+
+#: templates/registration/login.html:54
+msgid ""
+"The web admin user has been removed in this release in order to unify the "
+"web and Unix authentication mechanisms."
+msgstr ""
+
+#: templates/registration/login.html:55
+msgid ""
+"Administrators should log in to the web UI as root, since the web UI already "
+"confers superuser privileges in many areas."
+msgstr ""
+
+#: templates/storage/key.html:6
+#: templates/storage/recoverykey_add.html:9
+#: templates/storage/recoverykey_remove.html:6
+#: templates/storage/rekey.html:6
+msgid "Continue"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:4
+msgid "You are about to add a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:5
+msgid "This will invalidate any previous recovery key"
+msgstr ""
+
+#: templates/storage/rekey.html:3
+msgid "You are about to re-key the encryption"
+msgstr ""
+
+#: templates/storage/replication_add.html:5
+msgid "SSH Key Scan"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:8
+msgid "Progress"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:15
+#, fuzzy
+msgid "Repaired"
+msgstr "Nødvendig"
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr ""
+
+#: templates/storage/zvols.html:6
+#, fuzzy
+msgid "Add zvol"
+msgstr "Legg til volum"
+
+#: tools/alert.py:176
+msgid "The WebGUI Address could not bind to %s; using wildcard"
+msgstr ""
+
+#: tools/alert.py:198
+msgid "The following multipaths are not optimal: %s"
+msgstr ""
+
+#: choices.py:52
+#, fuzzy
+msgid "HTTP+HTTPS"
+msgstr "HTTPS"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr ""
+
+#: choices.py:304
+#, fuzzy
+msgid "lz4 (recommended)"
+msgstr "lzjb (anbefalt)"
+
+#: choices.py:309
+#, fuzzy
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (anbefalt)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr ""
+
+#: choices.py:602
+msgid "38400"
+msgstr ""
+
+#: choices.py:603
+msgid "57600"
+msgstr ""
+
+#: choices.py:659
+msgid "Fatal"
+msgstr ""
+
+#: choices.py:664
+#, fuzzy
+msgid "Debug2"
+msgstr "Feilsøk"
+
+#: choices.py:665
+#, fuzzy
+msgid "Debug3"
+msgstr "Feilsøk"
+
+#: choices.py:672
+msgid "Auth"
+msgstr ""
+
+#: choices.py:673
+#, fuzzy
+msgid "Local 0"
+msgstr "Lokalbruker"
+
+#: choices.py:674
+#, fuzzy
+msgid "Local 1"
+msgstr "Lokalbruker"
+
+#: choices.py:676
+#, fuzzy
+msgid "Local 3"
+msgstr "Lokalbruker"
+
+#: choices.py:677
+#, fuzzy
+msgid "Local 4"
+msgstr "Lokalbruker"
+
+#: choices.py:678
+#, fuzzy
+msgid "Local 5"
+msgstr "Lokalbruker"
+
+#: choices.py:679
+#, fuzzy
+msgid "Local 6"
+msgstr "Lokalbruker"
+
+#: choices.py:680
+#, fuzzy
+msgid "Local 7"
+msgstr "Lokalbruker"
+
+#: choices.py:686
+msgid "NT4"
+msgstr ""
+
+#: choices.py:687
+#, fuzzy
+msgid "NIS"
+msgstr "NIC"
+
+#: choices.py:702
+#, fuzzy
+msgid "on"
+msgstr "Ingen"
+
+#: choices.py:703
+#, fuzzy
+msgid "off"
+msgstr "Av"
+
+#: choices.py:705
+msgid "!data"
+msgstr ""
+
+#: choices.py:707
+msgid "ctrl"
+msgstr ""
+
+#: choices.py:708
+msgid "ctrl+data"
+msgstr ""
+
+#: account/forms.py:55
+#, fuzzy
+msgid "New Password"
+msgstr "Nytt passord"
+
+#: account/forms.py:68
+#, fuzzy
+msgid "Passwords do not match"
+msgstr "Hemmeligheter stemmer ikke overens"
+
+#: account/forms.py:561
+#, fuzzy
+msgid "Home directory must end with username"
+msgstr "Hjemmemappen er ikke skrivvar, la dette stå tomt"
+
+#: account/models.py:52
+#, fuzzy
+msgid "Built-in Group"
+msgstr "Slett gruppe"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr ""
+
+#: common/system.py:278
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: freeadmin/forms.py:220
+#, fuzzy
+msgid "A file is required"
+msgstr "Dette feltet er obligatorisk"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+#, fuzzy
+msgid "Invalid network: %s"
+msgstr "Feil firmware eller sjekksum"
+
+#: freeadmin/navtree.py:573
+#, fuzzy
+msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
+msgstr "En feil oppsto når unserializing fra %(url): %(error)"
+
+#: jails/admin.py:91
+#: jails/models.py:149
+#, fuzzy
+msgid "Autostart"
+msgstr "Automatisk"
+
+#: jails/admin.py:182
+#, fuzzy
+msgid "Edit Jail"
+msgstr "Vis disker"
+
+#: jails/admin.py:185
+#: jails/nav.py:264
+#, fuzzy
+msgid "Add Storage"
+msgstr "Lagring"
+
+#: jails/admin.py:188
+#: templates/plugins/available_datagrid.html:27
+#, fuzzy
+msgid "Upload Plugin"
+msgstr "Slett gruppe"
+
+#: jails/admin.py:197
+msgid "Stop"
+msgstr ""
+
+#: jails/admin.py:267
+msgid "Instances"
+msgstr ""
+
+#: jails/forms.py:92
+msgid "32 bit"
+msgstr ""
+
+#: jails/forms.py:98
+msgid "vanilla"
+msgstr ""
+
+#: jails/forms.py:233
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr ""
+
+#: jails/forms.py:459
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr ""
+
+#: jails/forms.py:460
+#: jails/models.py:162
+#, fuzzy
+msgid "NAT"
+msgstr "N/A"
+
+#: jails/forms.py:651
+msgid "Create destination directory if it does not exist"
+msgstr ""
+
+#: jails/forms.py:693
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr ""
+
+#: jails/hook.py:13
+#: jails/models.py:252
+#: jails/models.py:253
+#: jails/nav.py:47
+#: templates/jails/index.html:5
+msgid "Jails"
+msgstr ""
+
+#: jails/models.py:82
+#, fuzzy
+msgid "IPv4 address"
+msgstr "IPv4 Adresse"
+
+#: jails/models.py:88
+msgid "IPv4 aliases"
+msgstr ""
+
+#: jails/models.py:100
+msgid "IPv4 bridge aliases"
+msgstr ""
+
+#: jails/models.py:107
+#, fuzzy
+msgid "IPv4 default gateway"
+msgstr "IPv4 standard Gateway"
+
+#: jails/models.py:119
+msgid "IPv6 aliases"
+msgstr ""
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr ""
+
+#: jails/models.py:265
+#, fuzzy
+msgid "IPv4 Network"
+msgstr "IPv4 Nettmaske"
+
+#: jails/models.py:270
+#, fuzzy
+msgid "IPv4 Network Start Address"
+msgstr "IPv4 Adresse"
+
+#: jails/models.py:275
+#, fuzzy
+msgid "IPv4 Network End Address"
+msgstr "IPv4 Adresse"
+
+#: jails/models.py:305
+#: jails/models.py:306
+#, fuzzy
+msgid "Jails Configuration"
+msgstr "Global konfigurasjon"
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:28
+#: templates/plugins/index.html:18
+#, fuzzy
+msgid "Configuration"
+msgstr "Global konfigurasjon"
+
+#: jails/utils.py:567
+msgid "Unable to determine IPv4 for plugin"
+msgstr ""
+
+#: jails/views.py:114
+#, fuzzy
+msgid "Storage successfully added."
+msgstr "% er korrekt slettet."
+
+#: jails/views.py:155
+#, fuzzy
+msgid "Jail successfully stopped."
+msgstr "% er korrekt oppdatert."
+
+#: jails/views.py:176
+#, fuzzy
+msgid "Jail successfully deleted."
+msgstr "% er korrekt slettet."
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr ""
+
+#: network/admin.py:39
+#, fuzzy
+msgid "IPv4 Addresses"
+msgstr "IPv4 Adresse"
+
+#: network/admin.py:44
+#, fuzzy
+msgid "IPv6 Addresses"
+msgstr "IPv6 Adresse"
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr ""
+
+#: network/models.py:78
+msgid ""
+"If enabled, delays the start of network-reliant services until interface is "
+"up and ICMP packets to a destination defined in netwait ip list are "
+"flowing.  Link state is examined first, followed by \"pinging\" an IP "
+"address to verify network usability.  If no destination can be reached or "
+"timeouts are exceeded, network services are started anyway with no guarantee "
+"that the network is usable."
+msgstr ""
+
+#: network/models.py:88
+msgid "Netwait IP list"
+msgstr ""
+
+#: network/models.py:89
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+
+#: network/models.py:98
+msgid ""
+"This field is appended to /etc/hosts which contains information regarding "
+"known hosts on the network. hosts(5)"
+msgstr ""
+
+#: plugins/models.py:93
+#, fuzzy
+msgid "Plugin jail name"
+msgstr "Domenenavn"
+
+#: plugins/models.py:94
+msgid "Jail where the plugin is installed"
+msgstr ""
+
+#: plugins/models.py:141
+msgid "Kmod"
+msgstr ""
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr ""
+
+#: plugins/plugin.py:120
+#, fuzzy
+msgid "Failed to download %(url)s: %(error)s"
+msgstr "Kunne ikke motta %(url): %(error)"
+
+#: plugins/views.py:171
+#, fuzzy
+msgid "Plugin not installed"
+msgstr "% er korrekt oppdatert."
+
+#: plugins/views.py:181
+#: plugins/views.py:242
+#, fuzzy
+msgid "Invalid plugin"
+msgstr "Feil firmware eller sjekksum"
+
+#: plugins/views.py:192
+#: plugins/views.py:250
+msgid "Failed to download plugin"
+msgstr ""
+
+#: services/models.py:259
+#, fuzzy
+msgid "Enable/disable home directories for afp user."
+msgstr "Dette aktiverer\\deaktiverer hjemmemapper for sambabrukeren."
+
+#: services/models.py:288
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it.  It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+
+#: services/models.py:299
+msgid ""
+"Specify specific IP addresses (separated by commas) to bind to for TCP and "
+"UDP requests. This option may be specified multiple times. If no IP is "
+"specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
+"and if IPv6 is enabled, ::1 to the list."
+msgstr ""
+
+#: services/models.py:307
+msgid "mountd(8) bind port"
+msgstr ""
+
+#: services/models.py:324
+msgid ""
+"This option forces the rpc.statd daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:861
+#, fuzzy
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names."
+msgstr ""
+"Vertsnavn kallenavn. Dette alternativet kan oppstå flere ganger, for hvert "
+"domene som har samme IP. Benytt et mellomrom for å separere flere kallenavn."
+
+#: services/models.py:888
+#, fuzzy
+msgid "These parameters will be added to global settings in inadyn-mt.conf."
+msgstr ""
+"Disse parameterne vil bli lagt til de globale instillingene i inadyn.conf."
+
+#: services/models.py:950
+#, fuzzy
+msgid "Master"
+msgstr "Lokal hovedmaskin"
+
+#: services/models.py:951
+msgid "Slave"
+msgstr ""
+
+#: services/models.py:1102
+msgid "Display Login"
+msgstr ""
+
+#: services/models.py:1121
+#, fuzzy
+msgid ""
+"Use this option to override the directory creation mask (077 by default)."
+msgstr ""
+"Bruk dette valget for å overstyre mappeopprettelsesmasken (0777 som "
+"standard)."
+
+#: services/models.py:1210
+msgid "TLS allow per user"
+msgstr ""
+
+#: services/models.py:1226
+#, fuzzy
+msgid "TLS no certificate request"
+msgstr "Selvsignert sertifikat"
+
+#: services/models.py:1230
+msgid "TLS no empty fragments"
+msgstr ""
+
+#: services/models.py:1242
+msgid "TLS use implicit SSL"
+msgstr ""
+
+#: services/models.py:1250
+msgid "TLS IP address required"
+msgstr ""
+
+#: services/models.py:1343
+#, fuzzy
+msgid "SFTP Log Level"
+msgstr "Loggnivå"
+
+#: services/models.py:1347
+msgid ""
+"Specifies which messages will be logged by sftp-server. INFO and VERBOSE log "
+"transactions that sftp-server performs on behalf of the client. DEBUG2 and "
+"DEBUG3 each specify higher levels of debugging output. The default is ERROR."
+msgstr ""
+
+#: services/models.py:1437
+#: services/models.py:1533
+msgid "Hostname of the domain controller to use."
+msgstr ""
+
+#: services/models.py:1516
+#, fuzzy
+msgid "UNIX extensions"
+msgstr "Ingen brukere er definert"
+
+#: services/models.py:1517
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr ""
+
+#: services/models.py:1526
+msgid "Use default domain"
+msgstr ""
+
+#: services/models.py:1538
+msgid "Global Catalog Server"
+msgstr ""
+
+#: services/models.py:1551
+msgid "Hostname of the kerberos password server to use."
+msgstr ""
+
+#: services/models.py:1555
+#, fuzzy
+msgid "AD timeout"
+msgstr "Timeout"
+
+#: services/models.py:1556
+msgid "Timeout for AD related commands."
+msgstr ""
+
+#: services/models.py:1561
+msgid "Timeout for AD DNS queries."
+msgstr ""
+
+#: services/models.py:1601
+#, fuzzy
+msgid "NIS domain name"
+msgstr "Domenenavn"
+
+#: services/models.py:1606
+#, fuzzy
+msgid "NIS servers"
+msgstr "NTP server 1"
+
+#: services/models.py:1616
+msgid "Manycast"
+msgstr ""
+
+#: services/models.py:1617
+msgid "Cause ypbind to use 'many-cast' instead of broadcast"
+msgstr ""
+
+#: sharing/admin.py:78
+#: sharing/models.py:291
+#, fuzzy
+msgid "Paths"
+msgstr "Sti"
+
+#: sharing/forms.py:195
+#, fuzzy
+msgid "This is not a valid network: %s"
+msgstr "Brukeren % er ikke gyldig."
+
+#: sharing/forms.py:309
+msgid "This option is only available once per mountpoint"
+msgstr ""
+
+#: sharing/forms.py:341
+msgid "You need at least one path for the share"
+msgstr ""
+
+#: sharing/models.py:178
+#, fuzzy
+msgid "Default umask"
+msgstr "Standard"
+
+#: sharing/models.py:202
+msgid ""
+"Networks that are authorized to access the NFS share. Specify network "
+"numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
+msgstr ""
+
+#: sharing/models.py:208
+#, fuzzy
+msgid "Authorized IP addresses or hosts"
+msgstr "Autorisert Adgang"
+
+#: sharing/models.py:209
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr ""
+
+#: sharing/models.py:231
+msgid ""
+"If a user is selected, the root user is limited to that user's permissions"
+msgstr ""
+
+#: sharing/models.py:249
+msgid "The specified user's permissions are used by all clients"
+msgstr ""
+
+#: storage/admin.py:35
+msgid "Wipe"
+msgstr ""
+
+#: storage/admin.py:46
+msgid "Edit In Bulk"
+msgstr ""
+
+#: storage/admin.py:249
+#: storage/admin.py:338
+#: storage/nav.py:123
+#, fuzzy
+msgid "Create zvol"
+msgstr "ZFS-Partisjon"
+
+#: storage/admin.py:293
+#, fuzzy
+msgid "Encryption Re-key"
+msgstr "Godkjenningsmodell"
+
+#: storage/admin.py:345
+#, fuzzy
+msgid "Destroy zvol"
+msgstr "Ødelegg volum"
+
+#: storage/admin.py:403
+msgid "Checksum"
+msgstr ""
+
+#: storage/admin.py:461
+#, fuzzy
+msgid "Edit Disk"
+msgstr "Vis disker"
+
+#: storage/admin.py:467
+#, fuzzy
+msgid "Detach"
+msgstr "Opprett volum"
+
+#: storage/admin.py:578
+msgid "Frequency"
+msgstr ""
+
+#: storage/forms.py:71
+msgid ""
+"Enabling dedup may have drastic performance implications,<br /> as well as "
+"impact your ability to access your data.<br /> Consider using compression "
+"instead."
+msgstr ""
+
+#: storage/forms.py:764
+#, fuzzy
+msgid "Volume imported"
+msgstr "Volumer"
+
+#: storage/forms.py:794
+#: storage/forms.py:1585
+#: storage/forms.py:1904
+#: storage/forms.py:2019
+#: storage/forms.py:2131
+#: system/models.py:354
+msgid "Passphrase"
+msgstr ""
+
+#: storage/forms.py:1269
+#, fuzzy
+msgid "zvol name"
+msgstr "Volumnavn"
+
+#: storage/forms.py:1281
+msgid ""
+"Creates a sparse volume with no reservation, also kown as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less then the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+
+#: storage/forms.py:1589
+#: storage/forms.py:1908
+#: system/forms.py:479
+#, fuzzy
+msgid "Confirm Passphrase"
+msgstr "Bytt passord"
+
+#: storage/forms.py:1670
+#, fuzzy
+msgid "Dedicated User"
+msgstr "Slett bruker"
+
+#: storage/forms.py:1940
+#: storage/forms.py:2100
+#, fuzzy
+msgid "Admin password"
+msgstr "Gammelt passord"
+
+#: storage/forms.py:1952
+#, fuzzy
+msgid "Remove passphrase"
+msgstr "Fjern bruker"
+
+#: storage/forms.py:2054
+msgid "You need either a passphrase or a recovery key to unlock"
+msgstr ""
+
+#: storage/forms.py:2084
+msgid "Volume could not be imported: %d devices failed to decrypt"
+msgstr ""
+
+#: storage/forms.py:2088
+msgid "Volume could not be imported"
+msgstr ""
+
+#: storage/models.py:126
+msgid "LOCKED"
+msgstr ""
+
+#: storage/models.py:445
+#, fuzzy
+msgid "Disk Size"
+msgstr "Diskenhet"
+
+#: storage/models.py:805
+msgid "High Speed Encryption Ciphers"
+msgstr ""
+
+#: storage/models.py:854
+msgid ""
+"This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
+"Datasetname not the mountpoint or filesystem path"
+msgstr ""
+
+#: storage/models.py:880
+#, fuzzy
+msgid "Do not start replication before"
+msgstr "Ødelegg datasett"
+
+#: storage/views.py:717
+msgid "Pool output could not be parsed. Is the pool imported?"
+msgstr ""
+
+#: storage/views.py:722
+msgid "The scrub process has stopped"
+msgstr ""
+
+#: storage/views.py:885
+msgid "Passphrase created"
+msgstr ""
+
+#: storage/views.py:926
+#: storage/views.py:939
+#, fuzzy
+msgid "Volume unlocked"
+msgstr "Volumnavn"
+
+#: storage/views.py:930
+#, fuzzy
+msgid "Volume failed unlocked"
+msgstr "Volumnavn"
+
+#: storage/views.py:1076
+#, fuzzy
+msgid "Disks successfully edited"
+msgstr "% lagt til"
+
+#: support/models.py:45
+msgid "A description of the issue."
+msgstr ""
+
+#: support/views.py:86
+#, fuzzy
+msgid "Support request successfully sent"
+msgstr "% er korrekt slettet."
+
+#: system/forms.py:68
+msgid "The path '%s' requires execute permission bit"
+msgstr ""
+
+#: system/forms.py:581
+msgid "RSA or DSA private key is not valid"
+msgstr ""
+
+#: system/forms.py:604
+msgid "The modulus of certificate and key must match"
+msgstr ""
+
+#: system/forms.py:881
+msgid "Usernames cannot exceed 17 characters for rsync tasks"
+msgstr ""
+
+#: system/forms.py:886
+msgid "Usernames cannot have spaces"
+msgstr ""
+
+#: system/models.py:60
+#, fuzzy
+msgid "WebGUI IPv4 Address"
+msgstr "IPv4 Adresse"
+
+#: system/models.py:75
+msgid "WebGUI HTTPS Port"
+msgstr ""
+
+#: system/models.py:194
+msgid "Serial Port Speed"
+msgstr ""
+
+#: system/models.py:219
+#, fuzzy
+msgid "Enable debug kernel"
+msgstr "Aktiver tjeneste"
+
+#: system/models.py:417
+msgid ""
+"Redirect the standard output to /dev/null. In other words, disable output."
+msgstr ""
+
+#: system/models.py:423
+msgid ""
+"Redirect the standard error output to /dev/null. In other words, disable "
+"error output."
+msgstr ""
+
+#: system/models.py:515
+#, fuzzy
+msgid "Remote SSH Port"
+msgstr "Fjernmonitor"
+
+#: system/models.py:516
+#, fuzzy
+msgid "SSH Port"
+msgstr "Port"
+
+#: system/models.py:897
+#: system/models.py:909
+msgid "Script"
+msgstr ""
+
+#: system/models.py:936
+msgid "Init/Shutdown Scripts"
+msgstr ""
+
+#: system/models.py:949
+#, fuzzy
+msgid "First Name"
+msgstr "Mål Navn"
+
+#: system/models.py:957
+msgid "Company"
+msgstr ""
+
+#: system/models.py:969
+msgid "City"
+msgstr ""
+
+#: system/models.py:997
+msgid "Cell Phone"
+msgstr ""
+
+#: system/models.py:1003
+msgid "Work Phone"
+msgstr ""
+
+#: system/models.py:1009
+#: templates/system/settings.html:12
+#, fuzzy
+msgid "Registration"
+msgstr "Beskrivelse"
+
+#: system/views.py:316
+msgid "You must configure the root email (Accounts->Users->root)"
+msgstr ""
+
+#: templates/menubar.html:49
+msgid "Alert"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:176
+msgid "No entry has been found"
+msgstr ""
+
+#: templates/freeadmin/help.html:44
+msgid "Professional Support"
+msgstr ""
+
+#: templates/freeadmin/help.html:46
+msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr ""
+
+#: templates/jails/start.html:3
+msgid "Start "
+msgstr ""
+
+#: templates/plugins/available_install.html:3
+#, fuzzy
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr "Er du sikker på at du vil slette?"
+
+#: templates/plugins/plugin_update.html:3
+#, fuzzy
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr "Er du sikker på at du vil slette?"
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+#, fuzzy
+msgid "Available Plugins"
+msgstr "Tilgjengelig"
+
+#: templates/registration/login.html:51
+msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
+msgstr ""
+
+#: templates/registration/login.html:57
+msgid "For security reasons, you must now set a new root password:"
+msgstr ""
+
+#: templates/services/core.html:33
+#, fuzzy
+msgid "Directory Service Settings"
+msgstr "Mapperettigheter"
+
+#: templates/storage/disk_editbulk.html:3
+msgid "Editing the following disks"
+msgstr ""
+
+#: templates/storage/key.html:3
+msgid "You are about to download the global GELI key"
+msgstr ""
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr ""
+
+#: templates/storage/volume_datagrid.html:22
+#, fuzzy
+msgid "UFS Volume Manager"
+msgstr "Volumnavn"
+
+#: templates/storage/volume_detach.html:27
+msgid ""
+"This is an encrypted volume, make sure to <a href=\"%(url)s\" "
+"target=\"_blank\">download</a> the key so you can be able to import it in "
+"the future"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "%(scanned)s out of %(total)s"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:14
+#, fuzzy
+msgid "Errors"
+msgstr "Feil: %s"
+
+#: templates/storage/wizard.html:92
+#, fuzzy
+msgid "Extend Volume"
+msgstr "Importer volum"
+
+#: templates/storage/zvols.html:3
+#, fuzzy
+msgid "Create zvol on %(name)s"
+msgstr "ZFS-Partisjon"
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr ""
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr ""
+
+#: templates/system/firmware_wizard_0.html:6
+#: templates/system/firmware_wizard_1.html:21
+msgid ""
+"Consider downloading your configuration before proceeding, <a "
+"href=\"%(url)s\" target=\"_blank\">click here</a>."
+msgstr ""
+
+#: choices.py:600
+msgid "9600"
+msgstr ""
+
+#: choices.py:710
+msgid "auth+data"
+msgstr ""
+
+#: account/models.py:142
+#, fuzzy
+msgid "Disable password login"
+msgstr "Deaktiver passord innlogging"
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr ""
+
+#: freeadmin/navtree.py:608
+#, fuzzy
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr "Kunne ikke motta %(url): %(error)"
+
+#: jails/forms.py:450
+#, fuzzy
+msgid "Path does not exist!"
+msgstr "Sti til omfanget"
+
+#: jails/models.py:125
+#, fuzzy
+msgid "IPv6 bridge address"
+msgstr "IPv6 Adresse"
+
+#: jails/models.py:138
+#, fuzzy
+msgid "IPv6 default gateway"
+msgstr "IPv6 standard Gateway"
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:286
+msgid "IPv6 network start address for jails and plugins"
+msgstr ""
+
+#: jails/nav.py:70
+#, fuzzy
+msgid "Add Jails"
+msgstr "Legg til %"
+
+#: jails/nav.py:114
+#, fuzzy
+msgid "View Jail Templates"
+msgstr "Vis alle brukere"
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr ""
+
+#: middleware/zfs.py:644
+#, fuzzy
+msgid "Canceled"
+msgstr "Avbryt"
+
+#: services/models.py:216
+msgid ""
+"Specifies whether samba should use (expensive) hostname lookups or use the "
+"ip addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+
+#: services/models.py:312
+msgid ""
+"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
+"families. This is typically done to ensure that the port which mountd binds "
+"to is a known value which can be used in firewall rulesets."
+msgstr ""
+
+#: services/models.py:319
+msgid "rpc.statd(8) bind port"
+msgstr ""
+
+#: services/models.py:329
+msgid "rpc.lockd(8) bind port"
+msgstr ""
+
+#: services/models.py:334
+msgid ""
+"This option forces rpc.lockd the daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:953
+#, fuzzy
+msgid "UPS Mode"
+msgstr "Modus"
+
+#: services/models.py:1020
+#, fuzzy
+msgid "Monitor Password"
+msgstr "Bytt passord"
+
+#: services/models.py:1139
+#, fuzzy
+msgid "Perform Reverse DNS Lookups"
+msgstr "Krev reversert DNS for IP"
+
+#: services/models.py:1206
+#, fuzzy
+msgid "TLS allow dot login"
+msgstr "Tillat pålogging som Root"
+
+#: services/models.py:1256
+#, fuzzy
+msgid "Place the contents of your certificate and private key here."
+msgstr "Plasser innholdet i ditt selvsignerte sertifikatfil her."
+
+#: services/models.py:1358
+msgid ""
+"Specifies the facility code that is used when logging messages from sftp-"
+"server."
+msgstr ""
+
+#: services/models.py:1472
+#: services/models.py:1473
+#, fuzzy
+msgid "NT4 Domain"
+msgstr "Domene"
+
+#: services/models.py:1512
+msgid "Verbose logging"
+msgstr ""
+
+#: services/models.py:1527
+msgid "Set this if you want to use the default domain for users and groups."
+msgstr ""
+
+#: services/models.py:1539
+msgid "Hostname of the global catalog server to use."
+msgstr ""
+
+#: sharing/forms.py:118
+#, fuzzy
+msgid "Delete password"
+msgstr "Deaktiver passord"
+
+#: sharing/models.py:144
+msgid "Check this to enable Time Machine backups on this share."
+msgstr ""
+
+#: sharing/models.py:240
+msgid ""
+"If a group is selected, the root user will also be limited to that group's "
+"permissions"
+msgstr ""
+
+#: storage/admin.py:273
+#, fuzzy
+msgid "Create Passphrase"
+msgstr "Lag ZFS datasett"
+
+#: storage/admin.py:305
+#, fuzzy
+msgid "Remove recovery key"
+msgstr "Fjern bruker"
+
+#: storage/admin.py:464
+msgid "Offline"
+msgstr ""
+
+#: storage/forms.py:483
+msgid "You need at least %d disks"
+msgstr ""
+
+#: storage/forms.py:527
+msgid "You need a data disk group"
+msgstr ""
+
+#: storage/forms.py:771
+#, fuzzy
+msgid "Yes: Decrypt disks"
+msgstr "Disker som er medlem"
+
+#: storage/forms.py:1117
+#: storage/forms.py:1229
+#, fuzzy
+msgid "ZFS Deduplication"
+msgstr "Ingen ZFS replikering tilgjengelig"
+
+#: storage/forms.py:1124
+msgid "Record Size"
+msgstr ""
+
+#: storage/forms.py:1279
+#, fuzzy
+msgid "Sparse volume"
+msgstr "ZFS-Partisjon"
+
+#: storage/forms.py:1917
+#: storage/forms.py:1983
+#, fuzzy
+msgid "The passphrases do not match"
+msgstr "Hemmeligheter stemmer ikke overens"
+
+#: storage/models.py:64
+#, fuzzy
+msgid "Encryption Type"
+msgstr "Godkjenningsmodell"
+
+#: storage/models.py:807
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which make it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/views.py:115
+#, fuzzy
+msgid "Please enter a hostname"
+msgstr "Vertsnavn i gammelt format, etc EKSEMPEL"
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr ""
+
+#: storage/views.py:958
+msgid "GELI key download starting..."
+msgstr ""
+
+#: storage/views.py:1057
+msgid "Recovery has been removed"
+msgstr ""
+
+#: support/models.py:40
+msgid "Subject"
+msgstr ""
+
+#: system/forms.py:749
+#, fuzzy
+msgid "Memory device"
+msgstr "Tjeneste"
+
+#: system/models.py:66
+#, fuzzy
+msgid "WebGUI IPv6 Address"
+msgstr "IPv4 Adresse"
+
+#: system/models.py:355
+msgid "Private key passphrase"
+msgstr ""
+
+#: system/models.py:416
+msgid "Redirect Stdout"
+msgstr ""
+
+#: system/models.py:917
+msgid "Post Init"
+msgstr ""
+
+#: system/models.py:935
+#, fuzzy
+msgid "Init/Shutdown Script"
+msgstr "Initiativtagers hemmelighet"
+
+#: templates/freeadmin/generic_model_datagrid.html:10
+#, fuzzy
+msgid "Add"
+msgstr "Legg til %"
+
+#: templates/freeadmin/generic_model_delete.html:19
+msgid ""
+"There is %(related_num)s related entry that will also be deleted as it "
+"depend upon this item"
+msgid_plural ""
+"There are %(related_num)s related entries that will also be deleted as they "
+"depend upon this item"
+msgstr[0] ""
+
+#: templates/jails/index.html:20
+msgid "Templates"
+msgstr ""
+
+#: templates/storage/create_passphrase.html:5
+msgid ""
+"Remember to add a new recovery key as this action invalidates the previous "
+"recovery key"
+msgstr ""
+
+#: templates/storage/recoverykey_remove.html:3
+msgid "You are about to remove a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "Scan"
+msgstr ""
