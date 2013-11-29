@@ -42,7 +42,7 @@ def main():
 
     if afp.afp_srv_homedir_enable:
         cf_contents.append("[Homes]\n")
-	cf_contents.append("\t basedir-regex %s\n" % afp.afp_srv_homedir)
+	cf_contents.append("\tbasedir regex = %s\n" % afp.afp_srv_homedir)
         cf_contents.append("\n")
 
     from freenasUI.sharing.models import AFP_Share
