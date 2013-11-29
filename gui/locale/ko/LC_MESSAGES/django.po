@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2013-07-15 07:31+0200\n"
+"PO-Revision-Date: 2013-07-15 07:31+0000\n"
 "Last-Translator: Richard Peter <shon9178@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1373873480.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -244,9 +245,8 @@ msgstr "Full"
 msgid "Debug"
 msgstr "Debug"
 
-#: choices.py:195
-msgid "Default"
-msgstr "초기"
+#~ msgid "Default"
+#~ msgstr "초기"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -339,9 +339,8 @@ msgstr "On"
 msgid "Off"
 msgstr "Off"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "무손실데이터압축 [lzjp] (권장)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "무손실데이터압축 [lzjp] (권장)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -523,9 +522,8 @@ msgstr "확인을 위해 위와 동일한 비밀번호를 입력하시오."
 msgid "Shell"
 msgstr "Shell"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "비밀번호 사용 접속 불능화"
+#~ msgid "Disable password logins"
+#~ msgstr "비밀번호 사용 접속 불능화"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -551,9 +549,8 @@ msgstr "Home Directory Mode"
 msgid "Auxiliary groups"
 msgstr "보조그룹"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "사용자가 이미 존재합니다."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "사용자가 이미 존재합니다."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -593,9 +590,8 @@ msgstr "비밀번호는 사용할 수 없으니 이곳은 공백으로 남겨두
 msgid "This field is required."
 msgstr "이곳은 필수 입력란입니다."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "홈 디렉토리는 /mnt로 시작하거나 /nonexistent이어야 합니다."
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "홈 디렉토리는 /mnt로 시작하거나 /nonexistent이어야 합니다."
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -719,24 +715,17 @@ msgstr "계정"
 msgid "Admin Account"
 msgstr "관리자 계정"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "비밀번호 변경"
+#~ msgid "Change Password"
+#~ msgstr "비밀번호 변경"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "관리자 계정 변경"
+#~ msgid "Change Admin User"
+#~ msgstr "관리자 계정 변경"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "비밀번호가 성공적으로 갱신 되었습니다."
+#~ msgid "Password successfully updated."
+#~ msgstr "비밀번호가 성공적으로 갱신 되었습니다."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Admin 계정이 갱신되었습니다."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Admin 계정이 갱신되었습니다."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -903,9 +892,8 @@ msgstr "2차 네임서버를 입력하기 전에 1차 네임서버를 입력하�
 msgid "Parent Interface"
 msgstr "상위 인터페이스"
 
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "이름은 vlanXX의 형식이어야 하며 XX는 정수여야 합니다. "
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "이름은 vlanXX의 형식이어야 하며 XX는 정수여야 합니다. "
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1098,9 +1086,8 @@ msgstr "링크 어그리게이션"
 msgid "Link Aggregations"
 msgstr "링크어그리게이션 목록"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "LAGG 인터페이스 그룹"
+#~ msgid "LAGG Interface group"
+#~ msgstr "LAGG 인터페이스 그룹"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1142,68 +1129,56 @@ msgstr "링크어그리게이션 생성"
 msgid "View Link Aggregations"
 msgstr "링크어그리게이션 보기"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG가 성공적으로 추가되었습니다"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG가 성공적으로 추가되었습니다"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
 msgstr "이 IP는 이미 사용중입니다."
 
-#: plugins/forms.py:92
-msgid "Place to temporarily place PBI file"
-msgstr "PBI파일을 임시로 넣을 장소"
+#~ msgid "Place to temporarily place PBI file"
+#~ msgstr "PBI파일을 임시로 넣을 장소"
 
-#: plugins/forms.py:93
-msgid ""
-"The system will use this place to temporarily store the PBI file before it's "
-"installed."
-msgstr "이곳은 시스템이 PBI 파일을 설치하기전 임시로 PBI파일을 저장하는 장소입니다."
+#~ msgid ""
+#~ "The system will use this place to temporarily store the PBI file before it's "
+#~ "installed."
+#~ msgstr "이곳은 시스템이 PBI 파일을 설치하기전 임시로 PBI파일을 저장하는 장소입니다."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
 msgstr "설치될 PBI 파일"
 
-#: plugins/forms.py:173
-msgid "You must turn off Plugins service before proceeding"
-msgstr "계속 진행하기전 반드시 Plugins 서비스를 꺼주세요."
+#~ msgid "You must turn off Plugins service before proceeding"
+#~ msgstr "계속 진행하기전 반드시 Plugins 서비스를 꺼주세요."
 
-#: plugins/forms.py:183
 #, python-format
-msgid "The path %s already exists"
-msgstr "경로 %s가 이미 존재합니다"
+#~ msgid "The path %s already exists"
+#~ msgstr "경로 %s가 이미 존재합니다"
 
-#: plugins/forms.py:189
-msgid "The full jail path cannot exceed 76 characters"
-msgstr "전체 jail 경로는 76문자를 초과할 수 없습니다"
+#~ msgid "The full jail path cannot exceed 76 characters"
+#~ msgstr "전체 jail 경로는 76문자를 초과할 수 없습니다"
 
-#: plugins/forms.py:200
-msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr "Plugins Jail 경로는 Plugins가 보관되어지는 경로 안쪽으로는 사용되어질 수 없습니다."
+#~ msgid "The plugins jail path cannot be a subset of the plugins archive path."
+#~ msgstr "Plugins Jail 경로는 Plugins가 보관되어지는 경로 안쪽으로는 사용되어질 수 없습니다."
 
-#: plugins/forms.py:205 services/forms.py:148
-msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr "Plugins 이 저장되어지는 경로는 Plugins Jail의 경로 안쪽으로는 사용되어질 수 없습니다."
+#~ msgid "The plugins archive path cannot be a subset of the plugins jail path."
+#~ msgstr "Plugins 이 저장되어지는 경로는 Plugins Jail의 경로 안쪽으로는 사용되어질 수 없습니다."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
 msgstr ""
 
-#: plugins/forms.py:218
-msgid "Jail IPv4 Address"
-msgstr "Jail IPv4 주소"
+#~ msgid "Jail IPv4 Address"
+#~ msgstr "Jail IPv4 주소"
 
-#: plugins/forms.py:222
-msgid "Jail IPv4 Netmask"
-msgstr "Jail IPv4 넷마스크"
+#~ msgid "Jail IPv4 Netmask"
+#~ msgstr "Jail IPv4 넷마스크"
 
-#: plugins/forms.py:228
-msgid "Plugins archive Path"
-msgstr "플러그인 저장 경로"
+#~ msgid "Plugins archive Path"
+#~ msgstr "플러그인 저장 경로"
 
-#: plugins/forms.py:244
-msgid "Plugins Jail PBI"
-msgstr "플러그인 제일 PBI"
+#~ msgid "Plugins Jail PBI"
+#~ msgstr "플러그인 제일 PBI"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
@@ -1213,10 +1188,9 @@ msgstr "마운트 여부?"
 msgid "The full path cannot exceed 88 characters"
 msgstr "전체 경로는 88 문자를 초과할 수 없습니다"
 
-#: plugins/forms.py:336
 #, python-format
-msgid "The path could not be mounted %s"
-msgstr "해당 경로가 %s에 마운트 될 수 없습니다"
+#~ msgid "The path could not be mounted %s"
+#~ msgstr "해당 경로가 %s에 마운트 될 수 없습니다"
 
 #: plugins/forms.py:341
 #, python-format
@@ -1307,13 +1281,11 @@ msgstr "마운트 포인트"
 msgid "Plugin successfully updated."
 msgstr "플러그인이 성공적으로 갱신되었습니다."
 
-#: plugins/views.py:80
-msgid "Plugin successfully removed."
-msgstr "플러그인이 성공적으로 제거 되었습니다."
+#~ msgid "Plugin successfully removed."
+#~ msgstr "플러그인이 성공적으로 제거 되었습니다."
 
-#: plugins/views.py:86
-msgid "Unable to remove plugin."
-msgstr "플러그인 제거 불능."
+#~ msgid "Unable to remove plugin."
+#~ msgstr "플러그인 제거 불능."
 
 #: plugins/views.py:101
 msgid "Plugin successfully updated"
@@ -1323,13 +1295,11 @@ msgstr "플러그인이 성공적으로 갱신 되었습니다"
 msgid "Plugin successfully installed"
 msgstr "플러그인이 성공적으로 설치 되었습니다"
 
-#: plugins/views.py:201
-msgid "There was a problem importing the jail."
-msgstr "jail을 가져오는데 문제가 있었습니다."
+#~ msgid "There was a problem importing the jail."
+#~ msgstr "jail을 가져오는데 문제가 있었습니다."
 
-#: plugins/views.py:204
-msgid "Jail successfully imported."
-msgstr "Jail을 성공적으로 가져왔습니다."
+#~ msgid "Jail successfully imported."
+#~ msgstr "Jail을 성공적으로 가져왔습니다."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1355,13 +1325,11 @@ msgstr "AFP 서비스 재실행 실패."
 msgid "The NFS service failed to reload."
 msgstr "NFS 서비스를 다시 시작하는데 실패하였습니다."
 
-#: services/forms.py:157
-msgid "This IP already exists."
-msgstr "이 IP는 이미 존재합니다."
+#~ msgid "This IP already exists."
+#~ msgstr "이 IP는 이미 존재합니다."
 
-#: services/forms.py:164
-msgid "The Plugins Jail service failed to reload."
-msgstr "플러그인 Jail 서비스의 재실행이 실패하였습니다."
+#~ msgid "The Plugins Jail service failed to reload."
+#~ msgstr "플러그인 Jail 서비스의 재실행이 실패하였습니다."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1480,17 +1448,15 @@ msgstr "비밀번호(확인)"
 msgid "Enter the same secret above for verification."
 msgstr "확인을 위해 같은 비밀번호를 한번 더 입력해주세요."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Initiator 비밀번호"
+#~ msgid "Initiator Secret"
+#~ msgstr "Initiator 비밀번호"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Initiator 비밀번호.(상호 CHAP 인증에 필요)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Initiator 비밀번호(확인)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Initiator 비밀번호(확인)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1576,19 +1542,17 @@ msgstr "이 크기 값은 바이트로 될 수있고, 또는 KB, MB, GB, TB로 �
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr "확장 크기가 auto (0)로 설정되어있다면 파일이 반드시 존재하여야 합니다"
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "디스크 장치"
+#~ msgid "Disk device"
+#~ msgstr "디스크 장치"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "포탈 그룹 ID는 %d보다 높아서는 안됩니다."
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "그룹ID는 %d 보다 높아서는 안됩니다."
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "그룹ID는 %d 보다 높아서는 안됩니다."
 
 #: services/forms.py:1019
 msgid ""
@@ -1717,13 +1681,11 @@ msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr "기존 디렉토리 마스크를 무시하고 새로운 마스크를 만들기 위해서 이 옵션을 사용합니다 (기본으로 0777)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Large RW지원"
+#~ msgid "Large RW support"
+#~ msgstr "Large RW지원"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "sendfile(2)로 파일들을 보내기"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "sendfile(2)로 파일들을 보내기"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1827,15 +1789,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "서버 이름"
+#~ msgid "Server Name"
+#~ msgstr "서버 이름"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "서버이름. 이란이 공백으로 남겨질 경우 기본 서버가 지정되어질 것 입니다."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "서버이름. 이란이 공백으로 남겨질 경우 기본 서버가 지정되어질 것 입니다."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1871,15 +1831,13 @@ msgstr ""
 "몇개의 서버를 생성할지 지정해 주세요. 클라이언트로부터 최대의 동시 사용성을 견딜 수 있게 충분하여야 하고, 일반적으로 4에서 6대 "
 "입니다."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "비동기 모드"
+#~ msgid "Asynchronous mode"
+#~ msgstr "비동기 모드"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr "비동기 모드 활성화, 기가비트 네트웍 속도 성능에 도움이 됩니다."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr "비동기 모드 활성화, 기가비트 네트웍 속도 성능에 도움이 됩니다."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2260,13 +2218,12 @@ msgstr ""
 msgid "Domain name"
 msgstr "도메인 이름"
 
-#: services/models.py:765
-msgid ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
-msgstr ""
-"호스트 이름 alias. 이 옵션은 같은 IP를 가지는 각각의 도메인에 여러번 나타날 수 있습니다. 다수의 alias 이름들을 구별하기 "
-"위해선 스페이스를 사용해 주십시요."
+#~ msgid ""
+#~ "A host name alias. This option can appear multiple times, for each domain "
+#~ "that has the same IP. Use a space to separate multiple alias names."
+#~ msgstr ""
+#~ "호스트 이름 alias. 이 옵션은 같은 IP를 가지는 각각의 도메인에 여러번 나타날 수 있습니다. 다수의 alias 이름들을 구별하기 "
+#~ "위해선 스페이스를 사용해 주십시요."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2280,9 +2237,8 @@ msgstr ""
 msgid "Forced update period"
 msgstr "강제 갱신 기간"
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr "이 파라메터들은 inadyn.conf 파일 안의 global settings에 추가 될 것입니다."
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr "이 파라메터들은 inadyn.conf 파일 안의 global settings에 추가 될 것입니다."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
@@ -2603,9 +2559,8 @@ msgstr "익명사용자 다운로드 대역폭"
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr "익명사용자 다운로드 대역폭"
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "SSL/TLS 활성"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "SSL/TLS 활성"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -3539,10 +3494,8 @@ msgstr "사용자 계정 %s 는 유효하지 않습니다. "
 msgid "Volume name"
 msgstr ""
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "파일시스템 타입"
+#~ msgid "Filesystem type"
+#~ msgstr "파일시스템 타입"
 
 #: storage/forms.py:147 templates/storage/wizard.html:65
 msgid "Force 4096 bytes sector size"
@@ -4130,10 +4083,8 @@ msgstr "스냅샷 보기"
 msgid "View ZFS Scrubs"
 msgstr "모든 그룹 보기"
 
-#: storage/nav.py:41 templates/storage/volumes.html:4
-#: templates/storage/volumes.html.py:6
-msgid "Volume Manager"
-msgstr "볼륨 관리자"
+#~ msgid "Volume Manager"
+#~ msgstr "볼륨 관리자"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4874,9 +4825,8 @@ msgstr "테스트 이메일을 보낼수 없었습니다: %s"
 msgid "Your test email has been sent!"
 msgstr "테스트 메일을 보냈습니다!"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "페이지를 찾을 수 없습니다"
+#~ msgid "Page Not Found"
+#~ msgstr "페이지를 찾을 수 없습니다"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -4909,11 +4859,8 @@ msgstr ""
 msgid "Members"
 msgstr ""
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "수정"
+#~ msgid "Modify"
+#~ msgstr "수정"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5125,16 +5072,8 @@ msgstr "FreeNASA 문서"
 msgid "IPv6 Auto"
 msgstr ""
 
-#: templates/network/interface.html:12 templates/plugins/index.html:17
-#: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
-#: templates/sharing/windows.html:15 templates/storage/replications.html:24
-#: templates/storage/scrub.html:13 templates/storage/tasks.html:25
-#: templates/storage/volumes.html:64 templates/system/cronjob.html:12
-#: templates/system/ntpserver.html:11 templates/system/rsync.html:16
-#: templates/system/smarttest.html:11 templates/system/sysctl.html:9
-#: templates/system/tunable.html:9
-msgid "Available actions"
-msgstr "사용할 수 있는 활동들"
+#~ msgid "Available actions"
+#~ msgstr "사용할 수 있는 활동들"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -5165,14 +5104,11 @@ msgstr "사용할 수 있는 활동들"
 msgid "Edit"
 msgstr "수정"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "인터페이스 수정"
+#~ msgid "Edit Interface"
+#~ msgstr "인터페이스 수정"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "인터페이스 삭제"
+#~ msgid "Delete Interface"
+#~ msgstr "인터페이스 삭제"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
@@ -5277,30 +5213,25 @@ msgstr ""
 msgid "Installed..."
 msgstr "설치되었습니다..."
 
-#: templates/plugins/index.html:5 templates/plugins/index.html.py:7
-#: templates/services/plugins.html:5 templates/services/plugins.html.py:7
-msgid "Install Plugin"
-msgstr "플러그인 설치하기"
+#~ msgid "Install Plugin"
+#~ msgstr "플러그인 설치하기"
 
 #: templates/plugins/index.html:31
 msgid "Info"
 msgstr "정보"
 
-#: templates/plugins/index.html:33
-msgid "Plugin info"
-msgstr "플러그인 정보"
+#~ msgid "Plugin info"
+#~ msgstr "플러그인 정보"
 
-#: templates/plugins/index.html:39
-msgid "Edit Plugin"
-msgstr "플러그인 고치기"
+#~ msgid "Edit Plugin"
+#~ msgstr "플러그인 고치기"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
 msgstr "플러그인 삭제하기"
 
-#: templates/plugins/index.html:55
-msgid "No plugins installed"
-msgstr "플러그인이 설치되어있지 않습니다"
+#~ msgid "No plugins installed"
+#~ msgstr "플러그인이 설치되어있지 않습니다"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
@@ -5311,9 +5242,8 @@ msgstr "불러오기"
 msgid "Step %(step)s of %(step_count)s"
 msgstr ""
 
-#: templates/plugins/jailpbi.html:18
-msgid "Upload Jail PBI"
-msgstr "Jail PBI 업로드하기"
+#~ msgid "Upload Jail PBI"
+#~ msgstr "Jail PBI 업로드하기"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5324,21 +5254,17 @@ msgstr "Jail PBI 업로드하기"
 msgid "Please wait..."
 msgstr "잠시 기다리세요..."
 
-#: templates/plugins/mountpoints.html:19
-msgid "Edit Mount Point"
-msgstr "마운트 포인트 고치기"
+#~ msgid "Edit Mount Point"
+#~ msgstr "마운트 포인트 고치기"
 
-#: templates/plugins/mountpoints.html:25
-msgid "Delete Mount Point"
-msgstr "마운트 포인트 삭제하기"
+#~ msgid "Delete Mount Point"
+#~ msgstr "마운트 포인트 삭제하기"
 
-#: templates/plugins/mountpoints.html:32
-msgid "No mount points defined"
-msgstr "마운트 포인트가 지정되어있지 않습니다"
+#~ msgid "No mount points defined"
+#~ msgstr "마운트 포인트가 지정되어있지 않습니다"
 
-#: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-msgid "Add Mount Point"
-msgstr "마운트 포인트 추가하기"
+#~ msgid "Add Mount Point"
+#~ msgstr "마운트 포인트 추가하기"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
@@ -5400,21 +5326,18 @@ msgstr "FTP 설정"
 msgid "ISCSI Settings"
 msgstr ""
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "LDAP 설정"
+#~ msgid "LDAP Settings"
+#~ msgstr "LDAP 설정"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
 msgstr ""
 
-#: templates/services/core.html:103 templates/services/core.html.py:105
-msgid "Plugins Settings"
-msgstr "플러그인 설정들"
+#~ msgid "Plugins Settings"
+#~ msgstr "플러그인 설정들"
 
-#: templates/services/core.html:105
-msgid "Install Jail PBI"
-msgstr "Jail PBI 설치하기"
+#~ msgid "Install Jail PBI"
+#~ msgstr "Jail PBI 설치하기"
 
 #: templates/services/core.html:117
 #, fuzzy
@@ -5461,9 +5384,8 @@ msgstr ""
 msgid "Portals"
 msgstr ""
 
-#: templates/services/iscsi.html:14
-msgid "Authorized Initiators"
-msgstr "허가되어진 Initiators"
+#~ msgid "Authorized Initiators"
+#~ msgstr "허가되어진 Initiators"
 
 #: templates/services/iscsi.html:20
 msgid "Authentication"
@@ -5481,9 +5403,8 @@ msgstr ""
 msgid "Associated Targets"
 msgstr ""
 
-#: templates/services/iscsi_assoctargets.html:31
-msgid "No associated targets defined"
-msgstr "연관되어진 targets이 지정되어있지 않습니다"
+#~ msgid "No associated targets defined"
+#~ msgstr "연관되어진 targets이 지정되어있지 않습니다"
 
 #: templates/services/iscsi_assoctargets.html:37
 msgid "Add Extent to Target"
@@ -5505,39 +5426,34 @@ msgstr ""
 msgid "Authorized Network"
 msgstr ""
 
-#: templates/services/iscsi_authini.html:35
-msgid "No authorized initiators defined"
-msgstr "허가되어진 initiators가 설정되어있지 않습니다"
+#~ msgid "No authorized initiators defined"
+#~ msgstr "허가되어진 initiators가 설정되어있지 않습니다"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
 msgstr ""
 
-#: templates/services/iscsi_dextents.html:33
-msgid "No device extents defined"
-msgstr "기기 extents가 설정되어있지 않습니다"
+#~ msgid "No device extents defined"
+#~ msgstr "기기 extents가 설정되어있지 않습니다"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
 msgid "Add Extent"
 msgstr ""
 
-#: templates/services/iscsi_extents.html:5
-msgid "File Extent"
-msgstr "File Extent"
+#~ msgid "File Extent"
+#~ msgstr "File Extent"
 
-#: templates/services/iscsi_extents.html:33
-msgid "No extents defined"
-msgstr "extents가 설정되어있지 않습니다"
+#~ msgid "No extents defined"
+#~ msgstr "extents가 설정되어있지 않습니다"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
 msgstr ""
 
-#: templates/services/iscsi_portals.html:18
-msgid "No IP defined for this Portal"
-msgstr "이 포탈에 IP가 지정되어있지 않습니다"
+#~ msgid "No IP defined for this Portal"
+#~ msgstr "이 포탈에 IP가 지정되어있지 않습니다"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
@@ -5547,33 +5463,26 @@ msgstr ""
 msgid "Delete Portal"
 msgstr ""
 
-#: templates/services/iscsi_portals.html:39
-msgid "No portals defined"
-msgstr "포탈이 설정되어있지 않습니다."
+#~ msgid "No portals defined"
+#~ msgstr "포탈이 설정되어있지 않습니다."
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "포탈 추가하기"
+#~ msgid "Add Portal"
+#~ msgstr "포탈 추가하기"
 
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
 msgstr ""
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "타겟 추가하기"
+#~ msgid "Add Target"
+#~ msgstr "타겟 추가하기"
 
-#: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-msgid "View Mount Points"
-msgstr "마운트 포인트 보기"
+#~ msgid "View Mount Points"
+#~ msgstr "마운트 포인트 보기"
 
-#: templates/services/plugins.html:22
-msgid ""
-"ATTENTION: The plugins service is not running, several functionalities have "
-"been disabled."
-msgstr "주의: 플러그인 서비스가 작동중이 아닙니다. 여러 기능들이 비활성화 되었습니다."
+#~ msgid ""
+#~ "ATTENTION: The plugins service is not running, several functionalities have "
+#~ "been disabled."
+#~ msgstr "주의: 플러그인 서비스가 작동중이 아닙니다. 여러 기능들이 비활성화 되었습니다."
 
 #: templates/services/plugins.html:31
 msgid "Version"
@@ -5599,43 +5508,32 @@ msgstr "플러그인 갱신하기"
 msgid "No available plugins services"
 msgstr "사용 가능한 플러그인 서비스가 없습니다"
 
-#: templates/services/pluginsjail_delete.html:4
-msgid "All the files within the plugins jail will be permanently deleted."
-msgstr "플러그인 jail안의 모든 파일들은 영구적으로 삭제될것 입니다."
+#~ msgid "All the files within the plugins jail will be permanently deleted."
+#~ msgstr "플러그인 jail안의 모든 파일들은 영구적으로 삭제될것 입니다."
 
-#: templates/services/pluginsjail_edit.html:12
-msgid "Delete Plugins Jail"
-msgstr "플러그인 Jail 삭제하기"
+#~ msgid "Delete Plugins Jail"
+#~ msgstr "플러그인 Jail 삭제하기"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "rsync 모듈이 지정되어있지 않습니다"
+#~ msgid "No rsync modules defined"
+#~ msgstr "rsync 모듈이 지정되어있지 않습니다"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "공유 활성화하기"
+#~ msgid "Active Shares"
+#~ msgstr "공유 활성화하기"
 
-#: templates/sharing/apple.html:7
-msgid "There are no active Apple (AFP) shares."
-msgstr "활성중인 애플 공유 (AFP)가  없습니다."
+#~ msgid "There are no active Apple (AFP) shares."
+#~ msgstr "활성중인 애플 공유 (AFP)가  없습니다."
 
-#: templates/sharing/apple.html:29
-msgid "Edit Apple (AFP) Share"
-msgstr "애플 공유 (AFS) 수정하기"
+#~ msgid "Edit Apple (AFP) Share"
+#~ msgstr "애플 공유 (AFS) 수정하기"
 
-#: templates/sharing/apple.html:35
-msgid "Delete Apple (AFP) Share"
-msgstr "애플고유 (AFP) 삭제하기"
+#~ msgid "Delete Apple (AFP) Share"
+#~ msgstr "애플고유 (AFP) 삭제하기"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "설정된 공유목록이 없음"
+#~ msgid "No shares defined"
+#~ msgstr "설정된 공유목록이 없음"
 
-#: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-msgid "Add Apple (AFP) Share"
-msgstr "애플 공유 (AFP) 추가하기"
+#~ msgid "Add Apple (AFP) Share"
+#~ msgstr "애플 공유 (AFP) 추가하기"
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
@@ -5649,41 +5547,32 @@ msgstr "유닉스 (NFS)"
 msgid "Windows (CIFS)"
 msgstr "윈도우 (CIFS)"
 
-#: templates/sharing/unix.html:7
-msgid "There are no active UNIX (NFS) shares."
-msgstr "현재 활성중인 UNIX 공유(NFS)가 없습니다."
+#~ msgid "There are no active UNIX (NFS) shares."
+#~ msgstr "현재 활성중인 UNIX 공유(NFS)가 없습니다."
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "마운트포인트"
+#~ msgid "Mountpoint"
+#~ msgstr "마운트포인트"
 
-#: templates/sharing/unix.html:29
-msgid "Edit UNIX (NFS) Share"
-msgstr "유닉스 공유 (NFS) 수정하기"
+#~ msgid "Edit UNIX (NFS) Share"
+#~ msgstr "유닉스 공유 (NFS) 수정하기"
 
-#: templates/sharing/unix.html:35
-msgid "Delete UNIX (NFS) Share"
-msgstr "유닉스 공유 (NFS) 삭제하기"
+#~ msgid "Delete UNIX (NFS) Share"
+#~ msgstr "유닉스 공유 (NFS) 삭제하기"
 
-#: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-msgid "Add UNIX (NFS) Share"
-msgstr "UNIX 공유 (NFS) 추가하기"
+#~ msgid "Add UNIX (NFS) Share"
+#~ msgstr "UNIX 공유 (NFS) 추가하기"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (CIFS) shares."
-msgstr "활성화된 윈도우 공유 (CIFS) 가 없습니다. "
+#~ msgid "There are no active Windows (CIFS) shares."
+#~ msgstr "활성화된 윈도우 공유 (CIFS) 가 없습니다. "
 
-#: templates/sharing/windows.html:33
-msgid "Edit Windows (CIFS) Share"
-msgstr "윈도우 공유 (CIFS) 수정하기"
+#~ msgid "Edit Windows (CIFS) Share"
+#~ msgstr "윈도우 공유 (CIFS) 수정하기"
 
-#: templates/sharing/windows.html:39
-msgid "Delete Windows (CIFS) Share"
-msgstr "윈도우 공유 (CIFS) 삭제하기"
+#~ msgid "Delete Windows (CIFS) Share"
+#~ msgstr "윈도우 공유 (CIFS) 삭제하기"
 
-#: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (CIFS) Share"
-msgstr "윈도우 공유(CIFS) 추가하기"
+#~ msgid "Add Windows (CIFS) Share"
+#~ msgstr "윈도우 공유(CIFS) 추가하기"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -5788,39 +5677,30 @@ msgid ""
 "to create a replication task"
 msgstr ""
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "최근 스냅샷"
+#~ msgid "Last snapshot"
+#~ msgstr "최근 스냅샷"
 
 #: templates/storage/replications.html:23
 msgid "Remote ZFS filesystem"
 msgstr ""
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "복제 삭제"
+#~ msgid "Delete Replication"
+#~ msgstr "복제 삭제"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "복제 수정"
+#~ msgid "Edit Replication"
+#~ msgstr "복제 수정"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "사용가능한 ZFS 복제 없음"
+#~ msgid "No ZFS replication available"
+#~ msgstr "사용가능한 ZFS 복제 없음"
 
-#: templates/storage/scrub.html:42
-msgid "No scrub tasks defined."
-msgstr "스크럽 작업들이 설정되어 있지 않습니다."
+#~ msgid "No scrub tasks defined."
+#~ msgstr "스크럽 작업들이 설정되어 있지 않습니다."
 
-#: templates/storage/scrub.html:48
-msgid "Add ZFS Scrub Task"
-msgstr "ZFS Scrub 작업 추가하기"
+#~ msgid "Add ZFS Scrub Task"
+#~ msgstr "ZFS Scrub 작업 추가하기"
 
-#: templates/storage/scrub.html:50
-msgid "Add ZFS Scrub"
-msgstr "ZFS Scrub 추가하기"
+#~ msgid "Add ZFS Scrub"
+#~ msgstr "ZFS Scrub 추가하기"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -5871,45 +5751,37 @@ msgstr "스냅샷 삭제하기"
 msgid "Periodic Snapshots"
 msgstr "주기적인 스냅샷"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "주기적인 스냅샷 일정"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "주기적인 스냅샷 일정"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "스냅샷 일정이 없습니다. "
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "스냅샷 일정이 없습니다. "
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "어떻게"
+#~ msgid "How"
+#~ msgstr "어떻게"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "동안 스냅샷 보관"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "부터"
+#~ msgid "From"
+#~ msgstr "부터"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "까지"
+#~ msgid "through"
+#~ msgstr "까지"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", 매번"
+#~ msgid ", every"
+#~ msgstr ", 매번"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "매일"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "항상 "
+#~ msgid "on every"
+#~ msgstr "항상 "
 
-#: templates/storage/tasks.html:147
-msgid "There are no periodic snapshots scheduled."
-msgstr "정기적으로 예약된 스냅샷 일정이 없습니다."
+#~ msgid "There are no periodic snapshots scheduled."
+#~ msgstr "정기적으로 예약된 스냅샷 일정이 없습니다."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -5963,17 +5835,14 @@ msgstr "볼륨상태"
 msgid "Destroy Dataset"
 msgstr "데이타셋 삭제"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "ZFS 볼륨 삭제하기"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "ZFS 볼륨 삭제하기"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "설정된 볼륨 없음"
+#~ msgid "No volumes defined"
+#~ msgstr "설정된 볼륨 없음"
 
-#: templates/storage/wizard.html:27
-msgid "Volume to extend"
-msgstr "확장할 볼륨"
+#~ msgid "Volume to extend"
+#~ msgstr "확장할 볼륨"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -5983,25 +5852,21 @@ msgstr "구성 디스크"
 msgid "Group type"
 msgstr "그룹 타입"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS Extra"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS Extra"
 
 #: templates/storage/wizard.html:109
 msgid "The use of only 1 log disk is highly discouraged"
 msgstr ""
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "로그"
+#~ msgid "Log"
+#~ msgstr "로그"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "캐시"
+#~ msgid "Cache"
+#~ msgstr "캐시"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "예비"
+#~ msgid "Spare"
+#~ msgstr "예비"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6015,26 +5880,22 @@ msgstr "기존 데이타는 초기화 됩니다. "
 msgid "Replace Disk"
 msgstr "디스크 교체하기"
 
-#: templates/storage/zvols.html:3
 #, python-format
-msgid "Create ZFS volume on %(name)s"
-msgstr "%(name)s에 ZFS 볼륨 만들기"
+#~ msgid "Create ZFS volume on %(name)s"
+#~ msgstr "%(name)s에 ZFS 볼륨 만들기"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "ZFS 볼륨 추가하기"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "ZFS 볼륨 추가하기"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "LDAP/AD 캐시 재생성"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "캐시 재성성 중입니다."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "캐시 재성성 중입니다."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "캐시를 재생성할 수 없습니다."
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "캐시를 재생성할 수 없습니다."
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6046,10 +5907,8 @@ msgstr "디버그 저장하기"
 msgid "Firmware Update"
 msgstr "펌웨어 업데이트"
 
-#: templates/system/advanced_edit.html:39
-#: templates/system/advanced_edit.html:41
-msgid "Import Plugins Jail"
-msgstr "Plugins Jail 가져오기"
+#~ msgid "Import Plugins Jail"
+#~ msgstr "Plugins Jail 가져오기"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6059,17 +5918,14 @@ msgstr "재시작 하는 중...."
 msgid "Are you sure you want to restore to factory config?"
 msgstr "공장초기값으로 복원 하시겠습니까?"
 
-#: templates/system/cronjob.html:41
-msgid "No cron jobs defined."
-msgstr "cron 작업이 설정되어있지 않습니다."
+#~ msgid "No cron jobs defined."
+#~ msgstr "cron 작업이 설정되어있지 않습니다."
 
-#: templates/system/cronjob.html:47
-msgid "Add a cron job"
-msgstr "cron 작업 추가하기"
+#~ msgid "Add a cron job"
+#~ msgstr "cron 작업 추가하기"
 
-#: templates/system/cronjob.html:49
-msgid "Add cron job"
-msgstr "cron 작업 추가하기"
+#~ msgid "Add cron job"
+#~ msgstr "cron 작업 추가하기"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6091,17 +5947,14 @@ msgstr ""
 msgid "iBurst"
 msgstr ""
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "NTP 서버가 정의되지 않았습니다."
+#~ msgid "No NTP servers defined."
+#~ msgstr "NTP 서버가 정의되지 않았습니다."
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "NTP 서버 추가"
+#~ msgid "Add NTP server"
+#~ msgstr "NTP 서버 추가"
 
-#: templates/system/ntpserver.html:46
-msgid "Add NTP Server"
-msgstr "NTP 서버 추가"
+#~ msgid "Add NTP Server"
+#~ msgstr "NTP 서버 추가"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6118,25 +5971,20 @@ msgstr "시스템을 <strong>재기동</strong> 하려고 합니다. 계속 진�
 msgid "History"
 msgstr "사용내역"
 
-#: templates/system/rsync.html:5
-msgid "Local Path"
-msgstr "로컬 경로"
+#~ msgid "Local Path"
+#~ msgstr "로컬 경로"
 
-#: templates/system/rsync.html:6
-msgid "Remote"
-msgstr "원격"
+#~ msgid "Remote"
+#~ msgstr "원격"
 
-#: templates/system/rsync.html:48
-msgid "No rsync tasks defined."
-msgstr "rsync 작업이 설정되어있지 않습니다."
+#~ msgid "No rsync tasks defined."
+#~ msgstr "rsync 작업이 설정되어있지 않습니다."
 
-#: templates/system/rsync.html:54
-msgid "Add rsync task"
-msgstr "rsync 작업 추가하기"
+#~ msgid "Add rsync task"
+#~ msgstr "rsync 작업 추가하기"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Rsync 추가하기"
+#~ msgid "Add Rsync"
+#~ msgstr "Rsync 추가하기"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6169,29 +6017,23 @@ msgstr "시스템을 <strong>종료</strong> 하려고 합니다. 계속 진행�
 msgid "Unknown"
 msgstr ""
 
-#: templates/system/smarttest.html:38
-msgid "No S.M.A.R.T. tests defined"
-msgstr "S.M.A.R.T. 테스트가 설정되어있지 않습니다"
+#~ msgid "No S.M.A.R.T. tests defined"
+#~ msgstr "S.M.A.R.T. 테스트가 설정되어있지 않습니다"
 
-#: templates/system/smarttest.html:44
-msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T. 테스트 추가하기"
+#~ msgid "Add S.M.A.R.T. Test"
+#~ msgstr "S.M.A.R.T. 테스트 추가하기"
 
-#: templates/system/smarttest.html:46
-msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T. 테스트 추가하기"
+#~ msgid "Add S.M.A.R.T. test"
+#~ msgstr "S.M.A.R.T. 테스트 추가하기"
 
-#: templates/system/sysctl.html:34
-msgid "No sysctl defined."
-msgstr "sysctl이 설정되어 있지 않습니다."
+#~ msgid "No sysctl defined."
+#~ msgstr "sysctl이 설정되어 있지 않습니다."
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "Sysctl 추가하기"
+#~ msgid "Add sysctl"
+#~ msgstr "Sysctl 추가하기"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "Sysctl 추가하기"
+#~ msgid "Add Sysctl"
+#~ msgstr "Sysctl 추가하기"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6217,21 +6059,17 @@ msgstr "업타임"
 msgid "Load Average"
 msgstr "평균 부하량"
 
-#: templates/system/system_info.html:34
-msgid "Connected through"
-msgstr "연결되어진"
+#~ msgid "Connected through"
+#~ msgstr "연결되어진"
 
-#: templates/system/tunable.html:34
-msgid "No tunable setting defined."
-msgstr "tunable 설정이 정의되지 않았습니다."
+#~ msgid "No tunable setting defined."
+#~ msgstr "tunable 설정이 정의되지 않았습니다."
 
-#: templates/system/tunable.html:40
-msgid "Add Tunable"
-msgstr "Tunable 추가"
+#~ msgid "Add Tunable"
+#~ msgstr "Tunable 추가"
 
-#: templates/system/tunable.html:42
-msgid "Add Loader"
-msgstr "Loader 추가하기"
+#~ msgid "Add Loader"
+#~ msgstr "Loader 추가하기"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6257,16 +6095,14 @@ msgstr ""
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "%s 볼륨 상태가 %(status)s 입니다"
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr "관리자 계정의 비밀번호를 바꿔야만 합니다 (현재 로그인 비밀번호가 설정되어있지 않습니다)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr "관리자 계정의 비밀번호를 바꿔야만 합니다 (현재 로그인 비밀번호가 설정되어있지 않습니다)"
 
-#: tools/alert.py:137
 #, python-format
-msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr "해당 WebGUI 주소가 %s에 바인드 될 수 없습니다: 와일드 카드 사용하기"
+#~ msgid "The WebGUI Address could not be bind to %s; using wildcard"
+#~ msgstr "해당 WebGUI 주소가 %s에 바인드 될 수 없습니다: 와일드 카드 사용하기"
 
 #: tools/alert.py:147
 #, python-format
@@ -6279,14 +6115,14 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "중요 알람"
 
-msgid "Selected"
-msgstr "선택되어진"
+#~ msgid "Selected"
+#~ msgstr "선택되어진"
 
-msgid "Allow guest access"
-msgstr "방문자 접속 허용"
+#~ msgid "Allow guest access"
+#~ msgstr "방문자 접속 허용"
 
-msgid "Only allow guest access"
-msgstr "방문자 접속만 허용"
+#~ msgid "Only allow guest access"
+#~ msgstr "방문자 접속만 허용"
 
 #, fuzzy
 msgid "Invalid service pack"
@@ -6296,81 +6132,81 @@ msgstr "서비스팩 적용"
 msgid "View Rsync Tasks"
 msgstr "디스크 보기"
 
-msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. 테스트 보기"
+#~ msgid "View S.M.A.R.T. Tests"
+#~ msgstr "S.M.A.R.T. 테스트 보기"
 
-msgid "View Sysctls"
-msgstr "Sysctls 보기"
+#~ msgid "View Sysctls"
+#~ msgstr "Sysctls 보기"
 
-msgid "View Tunables"
-msgstr "Tunables 보기"
+#~ msgid "View Tunables"
+#~ msgstr "Tunables 보기"
 
-msgid "Add Apple (CIFS) Share"
-msgstr "애플 공유 (CIFS) 추가하기"
+#~ msgid "Add Apple (CIFS) Share"
+#~ msgstr "애플 공유 (CIFS) 추가하기"
 
-msgid "Apply Service Pack"
-msgstr "서비스팩 적용"
+#~ msgid "Apply Service Pack"
+#~ msgstr "서비스팩 적용"
 
-msgid "Hourly"
-msgstr "시간별"
+#~ msgid "Hourly"
+#~ msgstr "시간별"
 
-msgid "Hourly Graphs"
-msgstr "시간별 그래프"
+#~ msgid "Hourly Graphs"
+#~ msgstr "시간별 그래프"
 
-msgid "Daily"
-msgstr "일별"
+#~ msgid "Daily"
+#~ msgstr "일별"
 
-msgid "Daily Graphs"
-msgstr "일별 그래프"
+#~ msgid "Daily Graphs"
+#~ msgstr "일별 그래프"
 
-msgid "Weekly"
-msgstr "주별"
+#~ msgid "Weekly"
+#~ msgstr "주별"
 
-msgid "Weekly Graphs"
-msgstr "주별 그래프"
+#~ msgid "Weekly Graphs"
+#~ msgstr "주별 그래프"
 
-msgid "Monthly"
-msgstr "월별"
+#~ msgid "Monthly"
+#~ msgstr "월별"
 
-msgid "Monthly Graphs"
-msgstr "월별 그래프 "
+#~ msgid "Monthly Graphs"
+#~ msgstr "월별 그래프 "
 
-msgid "Yearly"
-msgstr "연별"
+#~ msgid "Yearly"
+#~ msgstr "연별"
 
-msgid "Yearly Graphs"
-msgstr "연별 그래프"
+#~ msgid "Yearly Graphs"
+#~ msgstr "연별 그래프"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Tape"
+#~ msgid "Tape"
+#~ msgstr "Tape"
 
-msgid "Pass"
-msgstr "Pass"
+#~ msgid "Pass"
+#~ msgstr "Pass"
 
-msgid "Disable password"
-msgstr "비밀번호 불능화"
+#~ msgid "Disable password"
+#~ msgstr "비밀번호 불능화"
 
-msgid "My Account"
-msgstr "내 계정"
+#~ msgid "My Account"
+#~ msgstr "내 계정"
 
-msgid "View All Users"
-msgstr "모든 사용자 보기"
+#~ msgid "View All Users"
+#~ msgstr "모든 사용자 보기"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"죄송합니다, 입력 양식이 만료되었습니다. 이 페이지에서 양식을 계속 작성하십"
-"시오. "
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "죄송합니다, 입력 양식이 만료되었습니다. 이 페이지에서 양식을 계속 작성하십"
+#~ "시오. "
 
-msgid "Local Access"
-msgstr "로컬 접근"
+#~ msgid "Local Access"
+#~ msgstr "로컬 접근"
 
-msgid "Guest Account"
-msgstr "게스트 계정"
+#~ msgid "Guest Account"
+#~ msgstr "게스트 계정"
 
 #, fuzzy
 msgid "CIFS Share"
@@ -6384,48 +6220,48 @@ msgstr "UNIX 공유 추가"
 msgid "NFS Share"
 msgstr "NFS 공유 수정"
 
-msgid "Reboot the System"
-msgstr "시스템 재기동"
+#~ msgid "Reboot the System"
+#~ msgstr "시스템 재기동"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "유닉스"
+#~ msgid "UNIX"
+#~ msgstr "유닉스"
 
-msgid "Windows"
-msgstr "윈도우"
+#~ msgid "Windows"
+#~ msgstr "윈도우"
 
-msgid "Are you sure you want to export?"
-msgstr "정말 내보내시겠습니까?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "정말 내보내시겠습니까?"
 
-msgid "Export Volume"
-msgstr "볼륨 내보내기"
+#~ msgid "Export Volume"
+#~ msgstr "볼륨 내보내기"
 
-msgid "Add loader"
-msgstr "loader 추가하기"
+#~ msgid "Add loader"
+#~ msgstr "loader 추가하기"
 
-msgid "Volume this group belongs to"
-msgstr "이 그룹이 속해 있는 볼륨 "
+#~ msgid "Volume this group belongs to"
+#~ msgstr "이 그룹이 속해 있는 볼륨 "
 
 #, fuzzy
 msgid "successfully deleted"
 msgstr "삭제 되었습니다."
 
-msgid "%s successfully added."
-msgstr "%s을(를) 성공적으로 추가하였습니다."
+#~ msgid "%s successfully added."
+#~ msgstr "%s을(를) 성공적으로 추가하였습니다."
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 서브넷 마스크"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 서브넷 마스크"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "이 값은 0부터 10000까지만 포함되어야 합니다. "
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "이 값은 0부터 10000까지만 포함되어야 합니다. "
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "이 값은 0부터 1000까지만 포함되어야 합니다."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "이 값은 0부터 1000까지만 포함되어야 합니다."
 
-msgid "Enable DDP"
-msgstr "DDP 활성화"
+#~ msgid "Enable DDP"
+#~ msgstr "DDP 활성화"
 
 #, fuzzy
 msgid "Cron Scheduler"
@@ -6435,60 +6271,2289 @@ msgstr "주기적인 스냅샷 일정"
 msgid "Docs"
 msgstr "공지사항"
 
-msgid "Snapshot name"
-msgstr "스냅샷 이름"
+#~ msgid "Snapshot name"
+#~ msgstr "스냅샷 이름"
 
-msgid "Used space"
-msgstr "사용 된 공간"
+#~ msgid "Used space"
+#~ msgstr "사용 된 공간"
 
-msgid "Referenced space"
-msgstr "참조 공간"
+#~ msgid "Referenced space"
+#~ msgstr "참조 공간"
 
-msgid "No ZFS snapshot available"
-msgstr "이용 가능한 ZFS 스냅샷 없음"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "이용 가능한 ZFS 스냅샷 없음"
 
-msgid "Restore to Factory Defaults"
-msgstr "공장도초기화 복원"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "공장도초기화 복원"
 
-msgid "Config"
-msgstr "구성"
+#~ msgid "Config"
+#~ msgstr "구성"
 
-msgid "%s successfully update."
-msgstr "%s이(가) 성공적으로 갱신되었습니다."
+#~ msgid "%s successfully update."
+#~ msgstr "%s이(가) 성공적으로 갱신되었습니다."
 
-msgid "Admin user"
-msgstr "관리자 계정"
+#~ msgid "Admin user"
+#~ msgstr "관리자 계정"
 
 #, fuzzy
 msgid "ZVol Name"
 msgstr "전체 이름"
 
-msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;도움말 & 지원"
+#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;도움말 & 지원"
 
-msgid "minutes,"
-msgstr "분"
+#~ msgid "minutes,"
+#~ msgstr "분"
 
-msgid "Create ZFS zvol"
-msgstr "ZFS zvol 생성하기"
+#~ msgid "Create ZFS zvol"
+#~ msgstr "ZFS zvol 생성하기"
 
-msgid "Add ZVol"
+#~ msgid "Add ZVol"
+#~ msgstr "ZVol 추가하기"
+
+#~ msgid "English"
+#~ msgstr "영어"
+
+#~ msgid "Level"
+#~ msgstr "Level"
+
+#~ msgid "Add Link Aggregation"
+#~ msgstr "링크어그리게이션 추가"
+
+#~ msgid "View All Interfaces"
+#~ msgstr "모든 인터페이스 목록 보기"
+
+#~ msgid "View All VLANs"
+#~ msgstr "VLAN 다 보기"
+
+#~ msgid "sucessfully edited"
+#~ msgstr "수정 되었습니다"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr ""
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr ""
+
+#: choices.py:308
+msgid "zle (runs of zeros)"
+msgstr ""
+
+#: choices.py:601
+msgid "19200"
+msgstr ""
+
+#: choices.py:604
+msgid "115200"
+msgstr ""
+
+#: choices.py:662
+msgid "Verbose"
+msgstr ""
+
+#: choices.py:670
+msgid "Daemon"
+msgstr ""
+
+# 로컬 사용자
+#: choices.py:675
+#, fuzzy
+msgid "Local 2"
+msgstr "Local User"
+
+#: choices.py:692
+msgid "type1"
+msgstr ""
+
+#: choices.py:693
+msgid "type2"
+msgstr ""
+
+#: choices.py:694
+msgid "type3"
+msgstr ""
+
+#: choices.py:695
+msgid "type4"
+msgstr ""
+
+#: choices.py:696
+msgid "type5"
+msgstr ""
+
+#: choices.py:704
+msgid "data"
+msgstr ""
+
+#: choices.py:706
+msgid "auth"
+msgstr ""
+
+#: choices.py:709
+msgid "ctrl+!data"
+msgstr ""
+
+#: choices.py:711
+msgid "auth+!data"
+msgstr ""
+
+#: account/forms.py:60
+#, fuzzy
+msgid "Confirm New Password"
+msgstr "암호 확인"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr ""
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr ""
+
+#: account/models.py:241
+#, fuzzy
+msgid "Group Membership"
+msgstr "Group Name"
+
+#: api/resources.py:766
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+#, fuzzy
+msgid "Locked"
+msgstr "Lock user"
+
+#: api/resources.py:859
+#, fuzzy
+msgid "on every %(days)s"
+msgstr "매일"
+
+#: api/resources.py:865
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr ""
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr ""
+
+#: jails/admin.py:75
+#: jails/forms.py:724
+#: jails/models.py:396
+#: templates/plugins/plugins.html:21
+msgid "Jail"
+msgstr ""
+
+#: jails/admin.py:196
+msgid "Start"
+msgstr ""
+
+#: jails/admin.py:261
+#: jails/models.py:346
+msgid "URL"
+msgstr ""
+
+#: jails/forms.py:88
+msgid "type"
+msgstr ""
+
+#: jails/forms.py:170
+msgid "No jail root configured."
+msgstr ""
+
+#: jails/forms.py:458
+msgid "autostart"
+msgstr ""
+
+#: jails/forms.py:771
+#, fuzzy
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr "해당 경로가 %s에 마운트 될 수 없습니다"
+
+#: jails/models.py:72
+#, fuzzy
+msgid "Jail Name"
+msgstr "Full Name"
+
+#: jails/models.py:94
+#, fuzzy
+msgid "IPv4 bridge address"
+msgstr "IPv4 주소"
+
+#: jails/models.py:113
+#, fuzzy
+msgid "IPv6 address"
+msgstr "IPv6 주소"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr ""
+
+#: jails/models.py:224
+#, fuzzy
+msgid "This jail is required by %d plugin(s)"
+msgstr "이 입력란은 익명 접속을 위해서 꼭 필요합니다"
+
+#: jails/models.py:260
+msgid "Jail Root"
+msgstr ""
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr ""
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:280
+#, fuzzy
+msgid "IPv6 Network"
+msgstr "IPv6 서브넷 마스크"
+
+#: jails/models.py:285
+#, fuzzy
+msgid "IPv6 Network Start Address"
+msgstr "IPv6 주소"
+
+#: jails/models.py:290
+#, fuzzy
+msgid "IPv6 Network End Address"
+msgstr "IPv6 주소"
+
+#: jails/models.py:291
+msgid "IPv6 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:294
+#, fuzzy
+msgid "Collection URL"
+msgstr "접속"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr ""
+
+#: jails/models.py:373
+msgid "Template must have 0 instances!"
+msgstr ""
+
+#: jails/models.py:388
+#: jails/models.py:389
+#, fuzzy
+msgid "Jail Templates"
+msgstr "IPv4 서브넷 마스크"
+
+#: jails/models.py:408
+#, fuzzy
+msgid "Read-Only"
+msgstr "읽기전용"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr ""
+
+#: jails/nav.py:100
+#, fuzzy
+msgid "View Jails"
+msgstr "%s 보기"
+
+#: jails/nav.py:250
+msgid "%s"
+msgstr ""
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr ""
+
+#: jails/utils.py:694
+#, fuzzy
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr "%(url)s을 가져올 수 없습니다: %(오류)s"
+
+#: jails/views.py:94
+#, fuzzy
+msgid "Jail successfully edited."
+msgstr "Jail을 성공적으로 가져왔습니다."
+
+#: jails/views.py:134
+#, fuzzy
+msgid "Jail successfully started."
+msgstr "Jail을 성공적으로 가져왔습니다."
+
+#: jails/views.py:397
+#, fuzzy
+msgid "Jail template successfully edited."
+msgstr "%s가 삭제 되었습니다. "
+
+#: middleware/notifier.py:2874
+msgid "No RPC Token!"
+msgstr ""
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr ""
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr ""
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr ""
+
+#: network/forms.py:284
+#, fuzzy
+msgid "The IP \"%s\" is not valid"
+msgstr "사용자 계정 %s 는 유효하지 않습니다. "
+
+#: network/forms.py:343
+msgid "You need a domain, e.g. hostname.domain"
+msgstr ""
+
+#: network/forms.py:373
+#, fuzzy
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr "인터페이스 명은 vlanXX의 형식이어야 하며 XX는 정수여야 합니다. 예: vlan0."
+
+#: network/models.py:77
+#, fuzzy
+msgid "Enable netwait feature"
+msgstr "autotune 활성화하기"
+
+#: network/models.py:97
+msgid "Host name data base"
+msgstr ""
+
+#: network/models.py:401
+#, fuzzy
+msgid "LAGG Interface Group"
+msgstr "LAGG 인터페이스 그룹"
+
+#: network/models.py:427
+#, fuzzy
+msgid "Link Aggregation Member"
+msgstr "링크 어그리게이션"
+
+#: network/models.py:428
+#, fuzzy
+msgid "Link Aggregation Members"
+msgstr "링크어그리게이션 목록"
+
+#: plugins/admin.py:58
+#: plugins/admin.py:65
+#, fuzzy
+msgid "Install"
+msgstr "설치되었습니다..."
+
+#: plugins/forms.py:89
+msgid ""
+"Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
+msgstr ""
+
+#: plugins/forms.py:105
+#, fuzzy
+msgid "Plugin Jail"
+msgstr "플러그인 제일 PBI"
+
+#: plugins/forms.py:106
+#, fuzzy
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr "Plugins Jail 경로는 Plugins가 보관되어지는 경로 안쪽으로는 사용되어질 수 없습니다."
+
+#: plugins/models.py:103
+#, fuzzy
+msgid "Plugin"
+msgstr "플러그인"
+
+#: plugins/models.py:175
+msgid "URL for the plugins repository"
+msgstr ""
+
+#: plugins/views.py:196
+msgid "Jail does not exist"
+msgstr ""
+
+#: plugins/views.py:205
+#, fuzzy
+msgid "Failed to update plugin"
+msgstr "플러그인 이름"
+
+#: plugins/views.py:224
+#: plugins/views.py:355
+#, fuzzy
+msgid "No available IP addresses"
+msgstr "전자우편 주소"
+
+#: services/forms.py:637
+#: services/forms.py:645
+msgid "Spaces or number signs are not allowed."
+msgstr ""
+
+#: services/forms.py:826
+#, fuzzy
+msgid "Peer Secret (Confirm)"
+msgstr "비밀번호(확인)"
+
+#: services/forms.py:1331
+msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
+msgstr ""
+
+#: services/forms.py:1504
+#, fuzzy
+msgid "A target with that name already exists."
+msgstr "해당 이름을 가진 그룹이 이미 존재합니다."
+
+#: services/models.py:214
+#, fuzzy
+msgid "Hostnames lookups"
+msgstr "호스트명"
+
+#: services/models.py:287
+#, fuzzy
+msgid "Allow non-root mount"
+msgstr "루트 로그인 허용하기"
+
+#: services/models.py:298
+#, fuzzy
+msgid "Bind IP Addresses"
+msgstr "IPv4 주소"
+
+#: services/models.py:712
+#, fuzzy
+msgid "Initiator side user name."
+msgstr "Initiator 비밀번호"
+
+#: services/models.py:932
+#, fuzzy
+msgid "These parameters will be added to /etc/snmpd.config."
+msgstr "이 파라메터들은 inadyn.conf 파일 안의 global settings에 추가 될 것입니다."
+
+#: services/models.py:971
+#, fuzzy
+msgid "Remote Port"
+msgstr "원격 모니터"
+
+#: services/models.py:1015
+msgid "Monitor User"
+msgstr ""
+
+#: services/models.py:1105
+msgid "Message which will be displayed to the user when they initially login."
+msgstr ""
+
+#: services/models.py:1132
+msgid ""
+"For local users, only allow access to user home directory unless the user is "
+"a member of group wheel."
+msgstr ""
+
+#: services/models.py:1194
+#, fuzzy
+msgid "Enable TLS"
+msgstr "SSL/TLS 활성"
+
+#: services/models.py:1199
+msgid "TLS policy"
+msgstr ""
+
+#: services/models.py:1202
+msgid "TLS allow client renegotiations"
+msgstr ""
+
+#: services/models.py:1214
+msgid "TLS common name required"
+msgstr ""
+
+#: services/models.py:1218
+msgid "TLS enable diagnostics"
+msgstr ""
+
+#: services/models.py:1222
+msgid "TLS export certificate data"
+msgstr ""
+
+#: services/models.py:1234
+msgid "TLS no session reuse required"
+msgstr ""
+
+#: services/models.py:1238
+msgid "TLS export standard vars"
+msgstr ""
+
+#: services/models.py:1246
+#, fuzzy
+msgid "TLS DNS name required"
+msgstr "이 입력란은 필수입니다. "
+
+#: services/models.py:1254
+msgid "Certificate and private key"
+msgstr ""
+
+#: services/models.py:1354
+msgid "SFTP Log Facility"
+msgstr ""
+
+#: services/models.py:1436
+#: services/models.py:1532
+#, fuzzy
+msgid "Domain Controller"
+msgstr "도메인 이름"
+
+#: services/models.py:1522
+msgid "Set this if you want to allow Trusted Domains."
+msgstr ""
+
+#: services/models.py:1544
+#, fuzzy
+msgid "Kerberos Server"
+msgstr "서버 갯수"
+
+#: services/models.py:1545
+msgid "Hostname of the kerberos server to use."
+msgstr ""
+
+#: services/models.py:1550
+msgid "Kerberos Password Server"
+msgstr ""
+
+#: services/models.py:1560
+#, fuzzy
+msgid "DNS timeout"
+msgstr "시간초과"
+
+#: services/models.py:1600
+#, fuzzy
+msgid "NIS domain"
+msgstr "도메인"
+
+#: services/models.py:1607
+msgid "Comma delimited list of NIS servers"
+msgstr ""
+
+#: services/models.py:1611
+#, fuzzy
+msgid "Secure mode"
+msgstr "종료 모드"
+
+#: services/models.py:1612
+msgid "Cause ypbind to run in secure mode"
+msgstr ""
+
+#: services/models.py:1625
+#: services/models.py:1626
+#, fuzzy
+msgid "NIS Domain"
+msgstr "도메인"
+
+#: services/models.py:1868
+#, fuzzy
+msgid "Informational"
+msgstr "시스템 정보"
+
+#: services/models.py:1869
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable"
+msgstr ""
+
+#: services/models.py:1876
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable"
+msgstr ""
+
+#: services/models.py:1884
+#, fuzzy
+msgid "Destination email address. Separate email addresses by commas"
+msgstr "목적지 이메일 주소. 세미콜론으로 구분지어 주세요."
+
+#: services/nav.py:115
+#: templates/services/core.html:27
+#, fuzzy
+msgid "Directory Services"
+msgstr "디렉토리 사용권한"
+
+#: sharing/forms.py:148
+#: sharing/forms.py:153
+#, fuzzy
+msgid "The umask must be between 000 and 777."
+msgstr "이 값은 0부터 1000까지만 포함되어야 합니다."
+
+#: sharing/forms.py:274
+msgid "Paths for a NFS share must reside within the same filesystem"
+msgstr ""
+
+#: sharing/forms.py:281
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr ""
+
+#: sharing/forms.py:318
+msgid ""
+"The network %s is already being shared and cannot be used twice for the same "
+"filesystem"
+msgstr ""
+
+#: sharing/models.py:201
+#, fuzzy
+msgid "Authorized networks"
+msgstr "승인된 네트웍"
+
+#: sharing/models.py:258
+msgid "The specified group's permission are used by all clients"
+msgstr ""
+
+#: storage/admin.py:280
+#, fuzzy
+msgid "Change Passphrase"
+msgstr "비밀번호 변경"
+
+#: storage/admin.py:287
+msgid "Download Key"
+msgstr ""
+
+#: storage/admin.py:299
+msgid "Add recovery key"
+msgstr ""
+
+#: storage/admin.py:311
+msgid "Unlock"
+msgstr ""
+
+#: storage/admin.py:470
+#, fuzzy
+msgid "Replace"
+msgstr "디스크 교체"
+
+#: storage/admin.py:572
+msgid "When"
+msgstr ""
+
+#: storage/admin.py:609
+#, fuzzy
+msgid "Remote Hostname"
+msgstr "호스트명"
+
+#: storage/forms.py:120
+msgid "Enter positive number (optionally suffixed by K, M, G, T), or 0"
+msgstr ""
+
+#: storage/forms.py:770
+msgid "No: Skip to import"
+msgstr ""
+
+#: storage/forms.py:773
+#, fuzzy
+msgid "Encrypted ZFS volume?"
+msgstr "ZFS 볼륨 수정"
+
+#: storage/forms.py:791
+#, fuzzy
+msgid "Encryption Key"
+msgstr "인증 모델"
+
+#: storage/forms.py:839
+msgid "The following disks failed to attach: %s"
+msgstr ""
+
+#: storage/forms.py:1128
+msgid ""
+"Specifies a suggested block size for files in the file system. This property "
+"is designed solely for use with database workloads that access files in "
+"fixed-size records.  ZFS automatically tunes block sizes according to "
+"internal algorithms optimized for typical access patterns."
+msgstr ""
+
+#: storage/forms.py:1272
+#, fuzzy
+msgid "Size for this zvol"
+msgstr "ZFS 볼륨 수정"
+
+#: storage/forms.py:1290
+#, fuzzy
+msgid "Block size"
+msgstr "Lock user"
+
+#: storage/forms.py:1292
+msgid ""
+"The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
+"to 128 Kbytes is valid."
+msgstr ""
+
+#: storage/forms.py:1598
+msgid "Confirmation does not match passphrase"
+msgstr ""
+
+#: storage/forms.py:1606
+#, fuzzy
+msgid "Passphrase is not valid"
+msgstr "사용자 계정 %s 는 유효하지 않습니다. "
+
+#: storage/forms.py:1665
+msgid "Dedicated User Enabled"
+msgstr ""
+
+#: storage/forms.py:1666
+msgid "If disabled then root will be used for replication."
+msgstr ""
+
+#: storage/forms.py:1674
+msgid "Enable High Speed Ciphers"
+msgstr ""
+
+#: storage/forms.py:1678
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which makes it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/forms.py:1944
+#, fuzzy
+msgid "New Passphrase"
+msgstr "새 비밀번호"
+
+#: storage/forms.py:1948
+#, fuzzy
+msgid "Confirm New Passphrase"
+msgstr "암호 확인"
+
+#: storage/forms.py:1974
+#: storage/forms.py:2119
+#, fuzzy
+msgid "Invalid password"
+msgstr "이전 암호"
+
+#: storage/forms.py:2024
+#, fuzzy
+msgid "Recovery Key"
+msgstr "매일"
+
+#: storage/forms.py:2028
+msgid "Restart services"
+msgstr ""
+
+#: storage/forms.py:2045
+#, fuzzy
+msgid "Jails/Plugins"
+msgstr "플러그인"
+
+#: storage/models.py:574
+msgid "Underlying provider"
+msgstr ""
+
+#: storage/models.py:791
+msgid "Remote Dedicated User Enabled"
+msgstr ""
+
+#: storage/models.py:794
+msgid "Remote Dedicated User"
+msgstr ""
+
+#: storage/models.py:831
+msgid ""
+"Disabling will stop any new replications being queued. It will not stop any "
+"replications which are queued or in progress."
+msgstr ""
+
+#: storage/models.py:836
+#: storage/models.py:915
+#, fuzzy
+msgid "Volume/Dataset"
+msgstr "볼륨상태"
+
+#: storage/models.py:852
+#, fuzzy
+msgid "Remote ZFS Volume/Dataset"
+msgstr "ZFS 볼륨 수정"
+
+#: storage/models.py:885
+#, fuzzy
+msgid "Do not start replication after"
+msgstr "후에는 스냅샷 보관하지 않기"
+
+#: storage/nav.py:39
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "볼륨 관리자"
+
+#: storage/nav.py:51
+#: templates/storage/volume_datagrid.html:20
+#, fuzzy
+msgid "UFS Volume Manager (legacy)"
+msgstr "볼륨 관리자"
+
+#: storage/views.py:903
+#, fuzzy
+msgid "Passphrase updated"
+msgstr "비밀번호가 성공적으로 갱신 되었습니다."
+
+#: storage/views.py:997
+#, fuzzy
+msgid "Encryption re-key succeeded"
+msgstr "인증 모델"
+
+#: storage/views.py:1016
+msgid "GELI recovery key download starting..."
+msgstr ""
+
+#: support/models.py:41
+msgid "Support subject."
+msgstr ""
+
+#: support/models.py:49
+#, fuzzy
+msgid "Support"
+msgstr "EA 지원"
+
+#: system/forms.py:86
+msgid "The volume %s is locked by encryption"
+msgstr ""
+
+#: system/forms.py:512
+#, fuzzy
+msgid "The two passphrase fields didn't match."
+msgstr "암호가 일치하지 않습니다. "
+
+#: system/forms.py:564
+msgid "RSA or DSA private key not found"
+msgstr ""
+
+#: system/forms.py:811
+#, fuzzy
+msgid "Usernames cannot exceed 17 characters for cronjobs"
+msgstr "전체 경로는 88 문자를 초과할 수 없습니다"
+
+#: system/models.py:69
+msgid "WebGUI HTTP Port"
+msgstr ""
+
+#: system/models.py:108
+#, fuzzy
+msgid "Directory Service"
+msgstr "디렉토리 사용권한"
+
+#: system/models.py:193
+msgid "Set this to match your serial port speed"
+msgstr ""
+
+#: system/models.py:222
+msgid "Enable report anonymous statistics"
+msgstr ""
+
+#: system/models.py:422
+msgid "Redirect Stderr"
+msgstr ""
+
+#: system/models.py:916
+msgid "Pre Init"
+msgstr ""
+
+#: system/models.py:953
+#, fuzzy
+msgid "Last Name"
+msgstr "Base 이름"
+
+#: system/models.py:981
+msgid "Zip"
+msgstr ""
+
+#: system/models.py:991
+msgid "Home Phone"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:8
+#, fuzzy
+msgid "Add %(name)s"
+msgstr "%s을(를) 추가하기."
+
+#: templates/freeadmin/help.html:39
+msgid "FreeBSD Man Pages"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#, fuzzy
+msgid "Are you sure you want to delete "
+msgstr "삭제 하시겠습니까?"
+
+#: templates/jails/stop.html:3
+msgid "Stop "
+msgstr ""
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr ""
+
+#: templates/plugins/index.html:10
+#, fuzzy
+msgid "Installed"
+msgstr "설치되었습니다..."
+
+#: templates/registration/login.html:54
+msgid ""
+"The web admin user has been removed in this release in order to unify the "
+"web and Unix authentication mechanisms."
+msgstr ""
+
+#: templates/registration/login.html:55
+msgid ""
+"Administrators should log in to the web UI as root, since the web UI already "
+"confers superuser privileges in many areas."
+msgstr ""
+
+#: templates/storage/dataset_edit.html:4
+#, fuzzy
+msgid "Dataset"
+msgstr "데이터셋 더하기"
+
+#: templates/storage/key.html:6
+#: templates/storage/recoverykey_add.html:9
+#: templates/storage/recoverykey_remove.html:6
+#: templates/storage/rekey.html:6
+msgid "Continue"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:5
+msgid "This will invalidate any previous recovery key"
+msgstr ""
+
+#: templates/storage/rekey.html:3
+msgid "You are about to re-key the encryption"
+msgstr ""
+
+#: templates/storage/replication_add.html:5
+msgid "SSH Key Scan"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:8
+msgid "Progress"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:15
+#, fuzzy
+msgid "Repaired"
+msgstr "필수"
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr ""
+
+#: templates/storage/zvols.html:6
+#, fuzzy
+msgid "Add zvol"
 msgstr "ZVol 추가하기"
 
-msgid "English"
-msgstr "영어"
+#: tools/alert.py:176
+#, fuzzy
+msgid "The WebGUI Address could not bind to %s; using wildcard"
+msgstr "해당 WebGUI 주소가 %s에 바인드 될 수 없습니다: 와일드 카드 사용하기"
 
-msgid "Level"
-msgstr "Level"
+#: tools/alert.py:198
+msgid "The following multipaths are not optimal: %s"
+msgstr ""
 
-msgid "Add Link Aggregation"
-msgstr "링크어그리게이션 추가"
+#: choices.py:52
+#, fuzzy
+msgid "HTTP+HTTPS"
+msgstr "HTTPS"
 
-msgid "View All Interfaces"
-msgstr "모든 인터페이스 목록 보기"
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr ""
 
-msgid "View All VLANs"
-msgstr "VLAN 다 보기"
+#: choices.py:304
+#, fuzzy
+msgid "lz4 (recommended)"
+msgstr "무손실데이터압축 [lzjp] (권장)"
 
-msgid "sucessfully edited"
-msgstr "수정 되었습니다"
+#: choices.py:309
+#, fuzzy
+msgid "lzjb (legacy, not recommended)"
+msgstr "무손실데이터압축 [lzjp] (권장)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr ""
+
+#: choices.py:602
+msgid "38400"
+msgstr ""
+
+#: choices.py:603
+msgid "57600"
+msgstr ""
+
+#: choices.py:659
+msgid "Fatal"
+msgstr ""
+
+#: choices.py:664
+#, fuzzy
+msgid "Debug2"
+msgstr "Debug"
+
+#: choices.py:665
+#, fuzzy
+msgid "Debug3"
+msgstr "Debug"
+
+#: choices.py:672
+msgid "Auth"
+msgstr ""
+
+# 로컬 사용자
+#: choices.py:673
+#, fuzzy
+msgid "Local 0"
+msgstr "Local User"
+
+# 로컬 사용자
+#: choices.py:674
+#, fuzzy
+msgid "Local 1"
+msgstr "Local User"
+
+# 로컬 사용자
+#: choices.py:676
+#, fuzzy
+msgid "Local 3"
+msgstr "Local User"
+
+# 로컬 사용자
+#: choices.py:677
+#, fuzzy
+msgid "Local 4"
+msgstr "Local User"
+
+# 로컬 사용자
+#: choices.py:678
+#, fuzzy
+msgid "Local 5"
+msgstr "Local User"
+
+# 로컬 사용자
+#: choices.py:679
+#, fuzzy
+msgid "Local 6"
+msgstr "Local User"
+
+# 로컬 사용자
+#: choices.py:680
+#, fuzzy
+msgid "Local 7"
+msgstr "Local User"
+
+#: choices.py:686
+msgid "NT4"
+msgstr ""
+
+#: choices.py:687
+#, fuzzy
+msgid "NIS"
+msgstr "네트워크 인터페이스"
+
+#: choices.py:703
+#, fuzzy
+msgid "off"
+msgstr "Off"
+
+#: choices.py:705
+msgid "!data"
+msgstr ""
+
+#: choices.py:707
+msgid "ctrl"
+msgstr ""
+
+#: choices.py:708
+msgid "ctrl+data"
+msgstr ""
+
+#: account/forms.py:55
+#, fuzzy
+msgid "New Password"
+msgstr "새 비밀번호"
+
+#: account/forms.py:68
+#, fuzzy
+msgid "Passwords do not match"
+msgstr "비밀번호 불일치"
+
+#: account/forms.py:561
+#, fuzzy
+msgid "Home directory must end with username"
+msgstr "홈 디렉토리는 읽기전용이므로 공백으로 남겨두세요."
+
+#: account/models.py:52
+#, fuzzy
+msgid "Built-in Group"
+msgstr "보조그룹"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr ""
+
+#: common/system.py:278
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: freeadmin/forms.py:220
+#, fuzzy
+msgid "A file is required"
+msgstr "이곳은 필수 입력란입니다."
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+#, fuzzy
+msgid "Invalid network: %s"
+msgstr "사용자 계정 %s 는 유효하지 않습니다. "
+
+#: freeadmin/navtree.py:573
+#, fuzzy
+msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
+msgstr "비직렬화를 행하는도중 %(url)s: %(error)s 로부터 오류가 발생하였습니다."
+
+#: jails/admin.py:91
+#: jails/models.py:149
+#, fuzzy
+msgid "Autostart"
+msgstr "자동"
+
+#: jails/admin.py:182
+#, fuzzy
+msgid "Edit Jail"
+msgstr "수정"
+
+#: jails/admin.py:185
+#: jails/nav.py:264
+#, fuzzy
+msgid "Add Storage"
+msgstr "스토리지"
+
+#: jails/admin.py:188
+#: templates/plugins/available_datagrid.html:27
+#, fuzzy
+msgid "Upload Plugin"
+msgstr "플러그인 갱신하기"
+
+#: jails/admin.py:197
+msgid "Stop"
+msgstr ""
+
+#: jails/admin.py:267
+msgid "Instances"
+msgstr ""
+
+#: jails/forms.py:92
+msgid "32 bit"
+msgstr ""
+
+#: jails/forms.py:98
+msgid "vanilla"
+msgstr ""
+
+#: jails/forms.py:233
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr ""
+
+#: jails/forms.py:459
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr ""
+
+#: jails/forms.py:460
+#: jails/models.py:162
+msgid "NAT"
+msgstr ""
+
+#: jails/forms.py:651
+msgid "Create destination directory if it does not exist"
+msgstr ""
+
+#: jails/forms.py:693
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr ""
+
+#: jails/hook.py:13
+#: jails/models.py:252
+#: jails/models.py:253
+#: jails/nav.py:47
+#: templates/jails/index.html:5
+msgid "Jails"
+msgstr ""
+
+#: jails/models.py:82
+#, fuzzy
+msgid "IPv4 address"
+msgstr "IPv4 주소"
+
+#: jails/models.py:88
+#, fuzzy
+msgid "IPv4 aliases"
+msgstr "Aliases"
+
+#: jails/models.py:100
+msgid "IPv4 bridge aliases"
+msgstr ""
+
+#: jails/models.py:107
+#, fuzzy
+msgid "IPv4 default gateway"
+msgstr "IPv4 기본 게이트웨이"
+
+#: jails/models.py:119
+#, fuzzy
+msgid "IPv6 aliases"
+msgstr "Aliases"
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr ""
+
+#: jails/models.py:265
+#, fuzzy
+msgid "IPv4 Network"
+msgstr "IPv4 서브넷 마스크"
+
+#: jails/models.py:270
+#, fuzzy
+msgid "IPv4 Network Start Address"
+msgstr "IPv4 주소"
+
+#: jails/models.py:275
+#, fuzzy
+msgid "IPv4 Network End Address"
+msgstr "IPv4 주소"
+
+#: jails/models.py:305
+#: jails/models.py:306
+#, fuzzy
+msgid "Jails Configuration"
+msgstr "전역 설정"
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:28
+#: templates/plugins/index.html:18
+#, fuzzy
+msgid "Configuration"
+msgstr "전역 설정"
+
+#: jails/utils.py:567
+#, fuzzy
+msgid "Unable to determine IPv4 for plugin"
+msgstr "플러그인 제거 불능."
+
+#: jails/views.py:114
+#, fuzzy
+msgid "Storage successfully added."
+msgstr "%s가 삭제 되었습니다. "
+
+#: jails/views.py:155
+#, fuzzy
+msgid "Jail successfully stopped."
+msgstr "Jail을 성공적으로 가져왔습니다."
+
+#: jails/views.py:176
+#, fuzzy
+msgid "Jail successfully deleted."
+msgstr "%s가 삭제 되었습니다. "
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr ""
+
+#: network/admin.py:39
+#, fuzzy
+msgid "IPv4 Addresses"
+msgstr "IPv4 주소"
+
+#: network/admin.py:44
+#, fuzzy
+msgid "IPv6 Addresses"
+msgstr "IPv6 주소"
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr ""
+
+#: network/models.py:78
+msgid ""
+"If enabled, delays the start of network-reliant services until interface is "
+"up and ICMP packets to a destination defined in netwait ip list are "
+"flowing.  Link state is examined first, followed by \"pinging\" an IP "
+"address to verify network usability.  If no destination can be reached or "
+"timeouts are exceeded, network services are started anyway with no guarantee "
+"that the network is usable."
+msgstr ""
+
+#: network/models.py:88
+msgid "Netwait IP list"
+msgstr ""
+
+#: network/models.py:89
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+
+#: network/models.py:98
+msgid ""
+"This field is appended to /etc/hosts which contains information regarding "
+"known hosts on the network. hosts(5)"
+msgstr ""
+
+#: plugins/models.py:93
+#, fuzzy
+msgid "Plugin jail name"
+msgstr "플러그인 이름"
+
+#: plugins/models.py:94
+#, fuzzy
+msgid "Jail where the plugin is installed"
+msgstr "플러그인이 설치되어있지 않습니다"
+
+#: plugins/models.py:141
+msgid "Kmod"
+msgstr ""
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr ""
+
+#: plugins/plugin.py:120
+#, fuzzy
+msgid "Failed to download %(url)s: %(error)s"
+msgstr "%(url)s을 가져올 수 없습니다: %(오류)s"
+
+#: plugins/views.py:171
+#, fuzzy
+msgid "Plugin not installed"
+msgstr "플러그인이 설치되어있지 않습니다"
+
+#: plugins/views.py:181
+#: plugins/views.py:242
+#, fuzzy
+msgid "Invalid plugin"
+msgstr "플러그인 설치하기"
+
+#: plugins/views.py:192
+#: plugins/views.py:250
+#, fuzzy
+msgid "Failed to download plugin"
+msgstr "플러그인 제거 불능."
+
+#: services/models.py:259
+#, fuzzy
+msgid "Enable/disable home directories for afp user."
+msgstr "삼바 사용자를 위한 홈 디렉토리 활성화\\비활성화"
+
+#: services/models.py:288
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it.  It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+
+#: services/models.py:299
+msgid ""
+"Specify specific IP addresses (separated by commas) to bind to for TCP and "
+"UDP requests. This option may be specified multiple times. If no IP is "
+"specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
+"and if IPv6 is enabled, ::1 to the list."
+msgstr ""
+
+#: services/models.py:307
+msgid "mountd(8) bind port"
+msgstr ""
+
+#: services/models.py:324
+msgid ""
+"This option forces the rpc.statd daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:861
+#, fuzzy
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names."
+msgstr ""
+"호스트 이름 alias. 이 옵션은 같은 IP를 가지는 각각의 도메인에 여러번 나타날 수 있습니다. 다수의 alias 이름들을 구별하기 "
+"위해선 스페이스를 사용해 주십시요."
+
+#: services/models.py:888
+#, fuzzy
+msgid "These parameters will be added to global settings in inadyn-mt.conf."
+msgstr "이 파라메터들은 inadyn.conf 파일 안의 global settings에 추가 될 것입니다."
+
+#: services/models.py:950
+#, fuzzy
+msgid "Master"
+msgstr "로컬 마스터"
+
+#: services/models.py:951
+msgid "Slave"
+msgstr ""
+
+#: services/models.py:1102
+msgid "Display Login"
+msgstr ""
+
+#: services/models.py:1121
+#, fuzzy
+msgid ""
+"Use this option to override the directory creation mask (077 by default)."
+msgstr "기존 디렉토리 마스크를 무시하고 새로운 마스크를 만들기 위해서 이 옵션을 사용합니다 (기본으로 0777)."
+
+#: services/models.py:1210
+msgid "TLS allow per user"
+msgstr ""
+
+#: services/models.py:1226
+msgid "TLS no certificate request"
+msgstr ""
+
+#: services/models.py:1230
+msgid "TLS no empty fragments"
+msgstr ""
+
+#: services/models.py:1242
+msgid "TLS use implicit SSL"
+msgstr ""
+
+#: services/models.py:1250
+msgid "TLS IP address required"
+msgstr ""
+
+#: services/models.py:1343
+#, fuzzy
+msgid "SFTP Log Level"
+msgstr "로그 레벨"
+
+#: services/models.py:1347
+msgid ""
+"Specifies which messages will be logged by sftp-server. INFO and VERBOSE log "
+"transactions that sftp-server performs on behalf of the client. DEBUG2 and "
+"DEBUG3 each specify higher levels of debugging output. The default is ERROR."
+msgstr ""
+
+#: services/models.py:1437
+#: services/models.py:1533
+msgid "Hostname of the domain controller to use."
+msgstr ""
+
+#: services/models.py:1516
+#, fuzzy
+msgid "UNIX extensions"
+msgstr "유닉스 확장자들"
+
+#: services/models.py:1517
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr ""
+
+#: services/models.py:1526
+msgid "Use default domain"
+msgstr ""
+
+#: services/models.py:1538
+msgid "Global Catalog Server"
+msgstr ""
+
+#: services/models.py:1551
+msgid "Hostname of the kerberos password server to use."
+msgstr ""
+
+#: services/models.py:1555
+#, fuzzy
+msgid "AD timeout"
+msgstr "시간초과"
+
+#: services/models.py:1556
+msgid "Timeout for AD related commands."
+msgstr ""
+
+#: services/models.py:1561
+msgid "Timeout for AD DNS queries."
+msgstr ""
+
+#: services/models.py:1601
+#, fuzzy
+msgid "NIS domain name"
+msgstr "도메인 이름"
+
+#: services/models.py:1606
+#, fuzzy
+msgid "NIS servers"
+msgstr "NTP 서비스"
+
+#: services/models.py:1616
+msgid "Manycast"
+msgstr ""
+
+#: services/models.py:1617
+msgid "Cause ypbind to use 'many-cast' instead of broadcast"
+msgstr ""
+
+#: sharing/admin.py:78
+#: sharing/models.py:291
+msgid "Paths"
+msgstr ""
+
+#: sharing/forms.py:195
+#, fuzzy
+msgid "This is not a valid network: %s"
+msgstr "사용자 계정 %s 는 유효하지 않습니다. "
+
+#: sharing/forms.py:309
+msgid "This option is only available once per mountpoint"
+msgstr ""
+
+#: sharing/forms.py:341
+msgid "You need at least one path for the share"
+msgstr ""
+
+#: sharing/models.py:178
+#, fuzzy
+msgid "Default umask"
+msgstr "초기"
+
+#: sharing/models.py:202
+msgid ""
+"Networks that are authorized to access the NFS share. Specify network "
+"numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
+msgstr ""
+
+#: sharing/models.py:208
+#, fuzzy
+msgid "Authorized IP addresses or hosts"
+msgstr "인증되어진 접근들"
+
+#: sharing/models.py:231
+msgid ""
+"If a user is selected, the root user is limited to that user's permissions"
+msgstr ""
+
+#: sharing/models.py:249
+msgid "The specified user's permissions are used by all clients"
+msgstr ""
+
+#: storage/admin.py:35
+msgid "Wipe"
+msgstr ""
+
+#: storage/admin.py:46
+msgid "Edit In Bulk"
+msgstr ""
+
+#: storage/admin.py:249
+#: storage/admin.py:338
+#: storage/nav.py:123
+#, fuzzy
+msgid "Create zvol"
+msgstr "ZFS zvol 생성하기"
+
+#: storage/admin.py:293
+#, fuzzy
+msgid "Encryption Re-key"
+msgstr "인증 모델"
+
+#: storage/admin.py:345
+#, fuzzy
+msgid "Destroy zvol"
+msgstr "제거하기"
+
+#: storage/admin.py:397
+#, fuzzy
+msgid "Write"
+msgstr "쓰기전용"
+
+#: storage/admin.py:403
+msgid "Checksum"
+msgstr ""
+
+#: storage/admin.py:461
+#, fuzzy
+msgid "Edit Disk"
+msgstr "데이터셋 바꾸기"
+
+#: storage/admin.py:467
+#, fuzzy
+msgid "Detach"
+msgstr "볼륨 탈착"
+
+#: storage/admin.py:578
+msgid "Frequency"
+msgstr ""
+
+#: storage/forms.py:71
+msgid ""
+"Enabling dedup may have drastic performance implications,<br /> as well as "
+"impact your ability to access your data.<br /> Consider using compression "
+"instead."
+msgstr ""
+
+#: storage/forms.py:764
+#, fuzzy
+msgid "Volume imported"
+msgstr "확장할 볼륨"
+
+#: storage/forms.py:794
+#: storage/forms.py:1585
+#: storage/forms.py:1904
+#: storage/forms.py:2019
+#: storage/forms.py:2131
+#: system/models.py:354
+msgid "Passphrase"
+msgstr ""
+
+#: storage/forms.py:1269
+#, fuzzy
+msgid "zvol name"
+msgstr "플러그인 이름"
+
+#: storage/forms.py:1281
+msgid ""
+"Creates a sparse volume with no reservation, also kown as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less then the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+
+#: storage/forms.py:1589
+#: storage/forms.py:1908
+#: system/forms.py:479
+#, fuzzy
+msgid "Confirm Passphrase"
+msgstr "암호 확인"
+
+#: storage/forms.py:1670
+#, fuzzy
+msgid "Dedicated User"
+msgstr "피어 사용자"
+
+#: storage/forms.py:1940
+#: storage/forms.py:2100
+#, fuzzy
+msgid "Admin password"
+msgstr "이전 암호"
+
+#: storage/forms.py:1952
+msgid "Remove passphrase"
+msgstr ""
+
+#: storage/forms.py:2054
+msgid "You need either a passphrase or a recovery key to unlock"
+msgstr ""
+
+#: storage/forms.py:2084
+msgid "Volume could not be imported: %d devices failed to decrypt"
+msgstr ""
+
+#: storage/forms.py:2088
+#, fuzzy
+msgid "Volume could not be imported"
+msgstr "해당 경로가 %s에 마운트 될 수 없습니다"
+
+#: storage/models.py:126
+msgid "LOCKED"
+msgstr ""
+
+#: storage/models.py:445
+#, fuzzy
+msgid "Disk Size"
+msgstr "디스크 장치"
+
+#: storage/models.py:805
+msgid "High Speed Encryption Ciphers"
+msgstr ""
+
+#: storage/models.py:854
+msgid ""
+"This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
+"Datasetname not the mountpoint or filesystem path"
+msgstr ""
+
+#: storage/models.py:880
+#, fuzzy
+msgid "Do not start replication before"
+msgstr "전에는 스냅샷 보관하지 않기"
+
+#: storage/views.py:717
+msgid "Pool output could not be parsed. Is the pool imported?"
+msgstr ""
+
+#: storage/views.py:722
+msgid "The scrub process has stopped"
+msgstr ""
+
+#: storage/views.py:885
+msgid "Passphrase created"
+msgstr ""
+
+#: storage/views.py:926
+#: storage/views.py:939
+#, fuzzy
+msgid "Volume unlocked"
+msgstr "확장할 볼륨"
+
+#: storage/views.py:930
+#, fuzzy
+msgid "Volume failed unlocked"
+msgstr "볼륨"
+
+#: storage/views.py:1076
+#, fuzzy
+msgid "Disks successfully edited"
+msgstr "%s가 갱신 되었습니다. "
+
+#: support/models.py:45
+msgid "A description of the issue."
+msgstr ""
+
+#: support/views.py:86
+#, fuzzy
+msgid "Support request successfully sent"
+msgstr "%s가 삭제 되었습니다. "
+
+#: system/forms.py:68
+msgid "The path '%s' requires execute permission bit"
+msgstr ""
+
+#: system/forms.py:581
+msgid "RSA or DSA private key is not valid"
+msgstr ""
+
+#: system/forms.py:604
+msgid "The modulus of certificate and key must match"
+msgstr ""
+
+#: system/forms.py:881
+msgid "Usernames cannot exceed 17 characters for rsync tasks"
+msgstr ""
+
+#: system/forms.py:886
+msgid "Usernames cannot have spaces"
+msgstr ""
+
+#: system/models.py:60
+#, fuzzy
+msgid "WebGUI IPv4 Address"
+msgstr "IPv4 주소"
+
+#: system/models.py:75
+msgid "WebGUI HTTPS Port"
+msgstr ""
+
+#: system/models.py:194
+msgid "Serial Port Speed"
+msgstr ""
+
+#: system/models.py:219
+#, fuzzy
+msgid "Enable debug kernel"
+msgstr "서비스 활성"
+
+#: system/models.py:417
+msgid ""
+"Redirect the standard output to /dev/null. In other words, disable output."
+msgstr ""
+
+#: system/models.py:423
+msgid ""
+"Redirect the standard error output to /dev/null. In other words, disable "
+"error output."
+msgstr ""
+
+#: system/models.py:515
+#, fuzzy
+msgid "Remote SSH Port"
+msgstr "원격 모니터"
+
+#: system/models.py:516
+#, fuzzy
+msgid "SSH Port"
+msgstr "포트"
+
+#: system/models.py:897
+#: system/models.py:909
+msgid "Script"
+msgstr ""
+
+#: system/models.py:936
+msgid "Init/Shutdown Scripts"
+msgstr ""
+
+#: system/models.py:949
+#, fuzzy
+msgid "First Name"
+msgstr "타겟 이름"
+
+#: system/models.py:957
+msgid "Company"
+msgstr ""
+
+#: system/models.py:969
+msgid "City"
+msgstr ""
+
+#: system/models.py:997
+msgid "Cell Phone"
+msgstr ""
+
+#: system/models.py:1003
+msgid "Work Phone"
+msgstr ""
+
+#: system/models.py:1009
+#: templates/system/settings.html:12
+#, fuzzy
+msgid "Registration"
+msgstr "설명"
+
+#: system/views.py:316
+msgid "You must configure the root email (Accounts->Users->root)"
+msgstr ""
+
+#: templates/menubar.html:49
+msgid "Alert"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:176
+msgid "No entry has been found"
+msgstr ""
+
+#: templates/freeadmin/help.html:44
+msgid "Professional Support"
+msgstr ""
+
+#: templates/freeadmin/help.html:46
+msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr ""
+
+#: templates/jails/start.html:3
+msgid "Start "
+msgstr ""
+
+#: templates/plugins/available_install.html:3
+#, fuzzy
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr "정말로 \"%(name)s\"를 삭제 하시겠습니까?"
+
+#: templates/plugins/plugin_update.html:3
+#, fuzzy
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr "정말로 \"%(name)s\"를 삭제 하시겠습니까?"
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+#, fuzzy
+msgid "Available Plugins"
+msgstr "사용할 수 있는 활동들"
+
+#: templates/registration/login.html:51
+msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
+msgstr ""
+
+#: templates/registration/login.html:57
+msgid "For security reasons, you must now set a new root password:"
+msgstr ""
+
+#: templates/services/core.html:33
+#, fuzzy
+msgid "Directory Service Settings"
+msgstr "디렉토리 사용권한"
+
+#: templates/storage/disk_editbulk.html:3
+msgid "Editing the following disks"
+msgstr ""
+
+#: templates/storage/key.html:3
+msgid "You are about to download the global GELI key"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:4
+msgid "You are about to add a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr ""
+
+#: templates/storage/volume_datagrid.html:22
+#, fuzzy
+msgid "UFS Volume Manager"
+msgstr "볼륨 관리자"
+
+#: templates/storage/volume_detach.html:27
+msgid ""
+"This is an encrypted volume, make sure to <a href=\"%(url)s\" "
+"target=\"_blank\">download</a> the key so you can be able to import it in "
+"the future"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "%(scanned)s out of %(total)s"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:14
+#, fuzzy
+msgid "Errors"
+msgstr "오류: %s"
+
+#: templates/storage/wizard.html:92
+#, fuzzy
+msgid "Extend Volume"
+msgstr "볼륨 내보내기"
+
+#: templates/storage/zvols.html:3
+#, fuzzy
+msgid "Create zvol on %(name)s"
+msgstr "%(name)s에 ZFS 볼륨 만들기"
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr ""
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr ""
+
+#: templates/system/firmware_wizard_0.html:6
+#: templates/system/firmware_wizard_1.html:21
+msgid ""
+"Consider downloading your configuration before proceeding, <a "
+"href=\"%(url)s\" target=\"_blank\">click here</a>."
+msgstr ""
+
+#: choices.py:600
+msgid "9600"
+msgstr ""
+
+#: choices.py:702
+#, fuzzy
+msgid "on"
+msgstr "None"
+
+#: choices.py:710
+msgid "auth+data"
+msgstr ""
+
+#: account/models.py:142
+#, fuzzy
+msgid "Disable password login"
+msgstr "비밀번호 사용 접속 불능화"
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr ""
+
+#: freeadmin/navtree.py:608
+#, fuzzy
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr "%(url)s을 가져올 수 없습니다: %(오류)s"
+
+#: jails/forms.py:450
+#, fuzzy
+msgid "Path does not exist!"
+msgstr "확장으로의 경로"
+
+#: jails/models.py:125
+#, fuzzy
+msgid "IPv6 bridge address"
+msgstr "IPv6 주소"
+
+#: jails/models.py:138
+#, fuzzy
+msgid "IPv6 default gateway"
+msgstr "IPv6 기본 게이트웨이"
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:286
+msgid "IPv6 network start address for jails and plugins"
+msgstr ""
+
+#: jails/nav.py:70
+#, fuzzy
+msgid "Add Jails"
+msgstr "%s을(를) 추가하기."
+
+#: jails/nav.py:114
+#, fuzzy
+msgid "View Jail Templates"
+msgstr "모든 사용자 보기"
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr ""
+
+#: middleware/zfs.py:644
+#, fuzzy
+msgid "Canceled"
+msgstr "취소"
+
+#: services/models.py:216
+msgid ""
+"Specifies whether samba should use (expensive) hostname lookups or use the "
+"ip addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+
+#: services/models.py:312
+msgid ""
+"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
+"families. This is typically done to ensure that the port which mountd binds "
+"to is a known value which can be used in firewall rulesets."
+msgstr ""
+
+#: services/models.py:319
+msgid "rpc.statd(8) bind port"
+msgstr ""
+
+#: services/models.py:329
+msgid "rpc.lockd(8) bind port"
+msgstr ""
+
+#: services/models.py:334
+msgid ""
+"This option forces rpc.lockd the daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:953
+msgid "UPS Mode"
+msgstr ""
+
+#: services/models.py:1020
+#, fuzzy
+msgid "Monitor Password"
+msgstr "암호 확인"
+
+#: services/models.py:1139
+msgid "Perform Reverse DNS Lookups"
+msgstr ""
+
+#: services/models.py:1206
+#, fuzzy
+msgid "TLS allow dot login"
+msgstr "루트 로그인 허용하기"
+
+#: services/models.py:1256
+msgid "Place the contents of your certificate and private key here."
+msgstr ""
+
+#: services/models.py:1358
+msgid ""
+"Specifies the facility code that is used when logging messages from sftp-"
+"server."
+msgstr ""
+
+#: services/models.py:1472
+#: services/models.py:1473
+#, fuzzy
+msgid "NT4 Domain"
+msgstr "도메인"
+
+#: services/models.py:1512
+#, fuzzy
+msgid "Verbose logging"
+msgstr "잠시 기다리세요..."
+
+#: services/models.py:1527
+msgid "Set this if you want to use the default domain for users and groups."
+msgstr ""
+
+#: services/models.py:1539
+msgid "Hostname of the global catalog server to use."
+msgstr ""
+
+#: sharing/forms.py:118
+#, fuzzy
+msgid "Delete password"
+msgstr "비밀번호 불능화"
+
+#: sharing/models.py:144
+msgid "Check this to enable Time Machine backups on this share."
+msgstr ""
+
+#: sharing/models.py:209
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr ""
+
+#: sharing/models.py:240
+msgid ""
+"If a group is selected, the root user will also be limited to that group's "
+"permissions"
+msgstr ""
+
+#: storage/admin.py:273
+#, fuzzy
+msgid "Create Passphrase"
+msgstr "스냅샷 생성"
+
+#: storage/admin.py:305
+msgid "Remove recovery key"
+msgstr ""
+
+#: storage/admin.py:391
+#, fuzzy
+msgid "Read"
+msgstr "읽기전용"
+
+#: storage/admin.py:464
+msgid "Offline"
+msgstr ""
+
+#: storage/forms.py:483
+msgid "You need at least %d disks"
+msgstr ""
+
+#: storage/forms.py:527
+msgid "You need a data disk group"
+msgstr ""
+
+#: storage/forms.py:771
+#, fuzzy
+msgid "Yes: Decrypt disks"
+msgstr "구성 디스크"
+
+#: storage/forms.py:1117
+#: storage/forms.py:1229
+#, fuzzy
+msgid "ZFS Deduplication"
+msgstr "복제 추가"
+
+#: storage/forms.py:1124
+msgid "Record Size"
+msgstr ""
+
+#: storage/forms.py:1279
+#, fuzzy
+msgid "Sparse volume"
+msgstr "Scrub 볼륨"
+
+#: storage/forms.py:1917
+#: storage/forms.py:1983
+#, fuzzy
+msgid "The passphrases do not match"
+msgstr "비밀번호 불일치"
+
+#: storage/models.py:64
+#, fuzzy
+msgid "Encryption Type"
+msgstr "인증 모델"
+
+#: storage/models.py:807
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which make it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/views.py:115
+msgid "Please enter a hostname"
+msgstr ""
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr ""
+
+#: storage/views.py:958
+msgid "GELI key download starting..."
+msgstr ""
+
+#: storage/views.py:1057
+msgid "Recovery has been removed"
+msgstr ""
+
+#: support/models.py:40
+msgid "Subject"
+msgstr ""
+
+#: system/forms.py:749
+#, fuzzy
+msgid "Memory device"
+msgstr "메모리"
+
+#: system/models.py:66
+#, fuzzy
+msgid "WebGUI IPv6 Address"
+msgstr "IPv4 주소"
+
+#: system/models.py:355
+msgid "Private key passphrase"
+msgstr ""
+
+#: system/models.py:416
+msgid "Redirect Stdout"
+msgstr ""
+
+#: system/models.py:917
+msgid "Post Init"
+msgstr ""
+
+#: system/models.py:935
+#, fuzzy
+msgid "Init/Shutdown Script"
+msgstr "Initiator 비밀번호"
+
+#: templates/freeadmin/generic_model_datagrid.html:10
+#, fuzzy
+msgid "Add"
+msgstr "%s을(를) 추가하기."
+
+#: templates/freeadmin/generic_model_delete.html:19
+msgid ""
+"There is %(related_num)s related entry that will also be deleted as it "
+"depend upon this item"
+msgid_plural ""
+"There are %(related_num)s related entries that will also be deleted as they "
+"depend upon this item"
+msgstr[0] ""
+
+#: templates/jails/index.html:20
+msgid "Templates"
+msgstr ""
+
+#: templates/storage/create_passphrase.html:5
+msgid ""
+"Remember to add a new recovery key as this action invalidates the previous "
+"recovery key"
+msgstr ""
+
+#: templates/storage/recoverykey_remove.html:3
+msgid "You are about to remove a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "Scan"
+msgstr ""
