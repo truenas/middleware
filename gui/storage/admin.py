@@ -600,12 +600,12 @@ class ReplicationFAdmin(BaseFreeAdmin):
         'repl_remote',
         'repl_userepl',
         'repl_resetonce',
-        )
+    )
 
     def get_datagrid_columns(self):
         columns = super(ReplicationFAdmin, self).get_datagrid_columns()
         columns.insert(2, {
-            'name': 'ssh_remote_host',
+            'name': 'repl_remote_hostname',
             'label': _('Remote Hostname'),
             'sortable': False,
         })
