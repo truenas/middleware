@@ -3010,6 +3010,12 @@ class notifier:
                     },
                 })
 
+        for mp in self.multipath_all():
+            for consumer in mp.consumers:
+                if consumer.lunid and mp.devname in disksd:
+                    disksd[mp.devname]['ident'] = consumer.lunid
+                    break
+
         return disksd
 
     def get_partitions(self, try_disks=True):
