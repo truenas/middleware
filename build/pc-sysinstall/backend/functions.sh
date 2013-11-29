@@ -386,7 +386,7 @@ write_image()
         ;;
 
       xz)
-        if ! xz -d ${IMAGE_FILE} -c -v | dd ibs=8k obs=128k of=${DEVICE_FILE} conv=sparse; then
+        if ! xz -d ${IMAGE_FILE} -c -v | dd ibs=8k obs=128k of=${DEVICE_FILE}; then
 	    exit_err "Error ${STATUS}: xz"
 	fi
         ;;
