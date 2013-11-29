@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2013-11-29 20:04+0000\n"
+"PO-Revision-Date: 2013-11-29 20:28+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1385755468.0\n"
+"X-POOTLE-MTIME: 1385756929.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -6768,20 +6768,20 @@ msgstr "Запись"
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr "Без шифрования"
+msgstr "Не зашифрован"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr ""
+msgstr "Зашифрован без пароля"
 
 #: choices.py:308
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "zle (сжатие нолей)"
 
 #: choices.py:309
 #, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb (рекомендуется)"
+msgstr "lzjb (наследие, не рекомендуется)"
 
 #: choices.py:601
 msgid "19200"
@@ -6793,11 +6793,11 @@ msgstr ""
 
 #: choices.py:662
 msgid "Verbose"
-msgstr ""
+msgstr "Подробно"
 
 #: choices.py:670
 msgid "Daemon"
-msgstr ""
+msgstr "Демон"
 
 #: choices.py:692
 msgid "type1"
@@ -6836,30 +6836,27 @@ msgid "auth+!data"
 msgstr ""
 
 #: account/forms.py:60
-#, fuzzy
 msgid "Confirm New Password"
 msgstr "Подтверждение пароля"
 
 #: account/forms.py:539
 msgid "Home directory cannot contain colons"
-msgstr ""
+msgstr "Домашний каталог не может содержать двоеточие"
 
 #: account/models.py:135
 msgid "Built-in User"
-msgstr ""
+msgstr "Встроенный пользователь"
 
 #: api/resources.py:766
 #: storage/models.py:725
 #: storage/models.py:735
 #: storage/models.py:752
-#, fuzzy
 msgid "Locked"
-msgstr "Заблокировкать пользователя"
+msgstr "Заблокирован"
 
 #: api/resources.py:859
-#, fuzzy
 msgid "on every %(days)s"
-msgstr "Каждые %s дня"
+msgstr "Каждые %(days)s"
 
 #: api/resources.py:865
 msgid "From %(begin)s through %(end)s, %(repeat)s"
@@ -7732,16 +7729,15 @@ msgstr "HTTPS"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr ""
+msgstr "Зашифрован с паролем"
 
 #: choices.py:304
-#, fuzzy
 msgid "lz4 (recommended)"
-msgstr "lzjb (рекомендуется)"
+msgstr "lz4 (рекомендуется)"
 
 #: choices.py:560
 msgid "Verify"
-msgstr ""
+msgstr "Проверять"
 
 #: choices.py:602
 msgid "38400"
@@ -7753,79 +7749,77 @@ msgstr ""
 
 #: choices.py:659
 msgid "Fatal"
-msgstr ""
+msgstr "Критическая ошибка"
 
 #: choices.py:664
 #, fuzzy
 msgid "Debug2"
-msgstr "Отладка"
+msgstr "Отладка2"
 
 #: choices.py:665
 #, fuzzy
 msgid "Debug3"
-msgstr "Отладка"
+msgstr "Отладка3"
 
 #: choices.py:672
 msgid "Auth"
-msgstr ""
+msgstr "Аутентификация"
 
 #: choices.py:673
 #, fuzzy
 msgid "Local 0"
-msgstr "Локальный Пользователь"
+msgstr "Локальный 0"
 
 #: choices.py:674
 #, fuzzy
 msgid "Local 1"
-msgstr "Локальный Пользователь"
+msgstr "Локальный 1"
 
 #: choices.py:675
 #, fuzzy
 msgid "Local 2"
-msgstr "Локальный Пользователь"
+msgstr "Локальный 2"
 
 #: choices.py:676
 #, fuzzy
 msgid "Local 3"
-msgstr "Локальный Пользователь"
+msgstr "Локальный 3"
 
 #: choices.py:677
 #, fuzzy
 msgid "Local 4"
-msgstr "Локальный Пользователь"
+msgstr "Локальный 4"
 
 #: choices.py:678
 #, fuzzy
 msgid "Local 5"
-msgstr "Локальный Пользователь"
+msgstr "Локальный 5"
 
 #: choices.py:679
 #, fuzzy
 msgid "Local 6"
-msgstr "Локальный Пользователь"
+msgstr "Локальный 6"
 
 #: choices.py:680
 #, fuzzy
 msgid "Local 7"
-msgstr "Локальный Пользователь"
+msgstr "Локальный 7"
 
 #: choices.py:686
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 # не "сетевая карта" во избежание путанцы, к примеру, с двухголовыми платами
 #: choices.py:687
 #, fuzzy
 msgid "NIS"
-msgstr "Сетевой интерфейс"
+msgstr "NIS"
 
 #: choices.py:702
-#, fuzzy
 msgid "on"
-msgstr "Нет"
+msgstr "Вкл"
 
 #: choices.py:703
-#, fuzzy
 msgid "off"
 msgstr "Выкл"
 
@@ -7842,29 +7836,26 @@ msgid "ctrl+data"
 msgstr ""
 
 #: account/forms.py:55
-#, fuzzy
 msgid "New Password"
 msgstr "Новый пароль"
 
 #: account/forms.py:68
-#, fuzzy
 msgid "Passwords do not match"
-msgstr "Секрет не совпадает"
+msgstr "Пароли не совпадают"
 
 #: account/forms.py:561
 #, fuzzy
 msgid "Home directory must end with username"
-msgstr "Домашний каталог не доступен для записи, оставьте это поле пустым"
+msgstr "Домашний каталог должен заканчиваться именем пользователя"
 
 #: account/models.py:52
-#, fuzzy
 msgid "Built-in Group"
-msgstr "Дополнительные группы"
+msgstr "Встроенная группа"
 
 #: account/models.py:56
 #: account/models.py:150
 msgid "Permit Sudo"
-msgstr ""
+msgstr "Разрешить sudo"
 
 #: common/system.py:278
 msgid "Mount failed (%(retcode)s) -> %(output)s"
@@ -8735,14 +8726,13 @@ msgid "auth+data"
 msgstr ""
 
 #: account/models.py:142
-#, fuzzy
 msgid "Disable password login"
 msgstr "Отключить вход по паролю"
 
 #: account/models.py:242
 #, fuzzy
 msgid "Group Memberships"
-msgstr "Членство в группе"
+msgstr "Членство в группах"
 
 #: freeadmin/navtree.py:608
 #, fuzzy
