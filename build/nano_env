@@ -138,6 +138,7 @@ add_nano_modules cxgb cxgbe cyclic
 add_nano_modules dtrace ext2fs fdescfs geom ipmi krpc
 add_nano_modules libiconv libmchain lindev linprocfs linsysfs linux
 add_nano_modules nfs_common nfsclient nfslock
+add_nano_modules ispfw/ispfw
 add_nano_modules opensolaris
 add_nano_modules pf pflog smbfs tmpfs
 add_nano_modules udf usb/xhci zfs
