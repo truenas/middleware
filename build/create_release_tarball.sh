@@ -10,8 +10,6 @@ TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
 
-IMG_PREFIX=$NANO_LABEL-$VERSION
-
 map_x86=i386
 map_x64=amd64
 
@@ -25,8 +23,8 @@ for arch in x64 x86 ; do
 	echo $arch = $mapped_arch
 	mkdir -p ${TOP}/release_stage/${arch}
 	for ext in img.xz GUI_Upgrade.txz iso ; do
-		ln ${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-*-${arch}.${ext} ${TOP}/release_stage/${arch}
-		ln ${TOP}/os-base/$mapped_arch/${IMG_PREFIX}-*-${arch}.${ext}.sha256.txt ${TOP}/release_stage/${arch}
+		ln ${TOP}/os-base/$mapped_arch/${NANO_NAME}.${ext} ${TOP}/release_stage/${arch}
+		ln ${TOP}/os-base/$mapped_arch/${NANO_NAME}.${ext}.sha256.txt ${TOP}/release_stage/${arch}
 	done
 done
 tar -czvf $TARBALL -H release_stage
