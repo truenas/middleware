@@ -315,7 +315,10 @@ checkpbiscripts() {
 copypbiscripts() {
   if [ -z "${1}" ] ; then return ; fi
   mkdir -p ${1}/usr/local/sbin >/dev/null 2>/dev/null
-  cp /usr/local/sbin/pbi* ${1}/usr/local/sbin/
+  for p in /usr/local/sbin/pbi*
+  do
+    sed 's|PBI_APPDIR="/var/pbi"|PBI_APPDIR="/usr/pbi"|g' "${p}" > "${1}/${p}"
+  done
   chmod 755 ${1}/usr/local/sbin/pbi*
 
   # Copy rc.d pbid script

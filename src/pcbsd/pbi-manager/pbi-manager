@@ -1335,7 +1335,7 @@ init_vars() {
 		PBI_BINDIR="${PROGBASE}/sbin"
 	fi
 	if [ -z "${PBI_APPDIR}" -o "`basename $0`" = "pbi_makeport_chroot" ] ; then
-		PBI_APPDIR="/usr/pbi"
+		PBI_APPDIR="/var/pbi"
         fi
 	PBI_WRAPPERFILE="${PBI_APPDIR}/.pbiwrapper-${ARCH}"
 	#if [ -n "${PBI_BUILDDIR}" ] ; then

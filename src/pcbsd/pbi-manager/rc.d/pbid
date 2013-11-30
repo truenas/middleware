@@ -28,10 +28,6 @@ pbid_start()
 		return 0
 	fi
 
-	PBI_APPDIR=/var/pbi
-	mkdir -p "${PBI_APPDIR}"
-	export PBI_APPDIR
-
     	echo "Starting ${name}..."
 
 	(nice $command) &
