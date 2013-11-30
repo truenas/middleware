@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2013-04-01 22:02+0000\n"
-"Last-Translator: ataman <mk@ataman.sk>\n"
+"PO-Revision-Date: 2013-11-30 12:37+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1364853756.0\n"
+"X-POOTLE-MTIME: 1385815021.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6874,9 +6874,8 @@ msgstr ""
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
-#, fuzzy
 msgid "Invalid address: %s"
-msgstr "Neplatný firmware alebo kontrolný súčet"
+msgstr "Neplatná adresa: %s"
 
 #: jails/admin.py:75
 #: jails/forms.py:724
@@ -7868,7 +7867,7 @@ msgstr "Toto pole je povinné"
 #: freeadmin/forms.py:283
 #, fuzzy
 msgid "Invalid network: %s"
-msgstr "Neplatný firmware alebo kontrolný súčet"
+msgstr "Chybná sieť: %s"
 
 #: freeadmin/navtree.py:573
 #, fuzzy
@@ -8723,7 +8722,7 @@ msgstr "Členstvo v skupine"
 #: freeadmin/navtree.py:608
 #, fuzzy
 msgid "Could not reverse url, skipping node %(node)s: %(error)s"
-msgstr "Nemohlo byť získané %(url)s: %(error)s"
+msgstr "Nemohlo byť získané %(node)s: %(error)s"
 
 #: jails/forms.py:450
 #, fuzzy

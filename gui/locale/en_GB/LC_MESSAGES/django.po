@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2013-06-19 15:37+0000\n"
-"Last-Translator: Andi <andi@gowling.com>\n"
+"PO-Revision-Date: 2013-11-30 12:45+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en_GB\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1371656226.0\n"
+"X-POOTLE-MTIME: 1385815537.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -3974,7 +3974,7 @@ msgstr ""
 #: system/models.py:705
 #, fuzzy, python-format
 msgid "Every %s days"
-msgstr "Everyday"
+msgstr "Every %s days"
 
 #: storage/models.py:288 system/models.py:416 system/models.py:625
 #: system/models.py:712
@@ -6424,9 +6424,8 @@ msgid "Locked"
 msgstr "Lock user"
 
 #: api/resources.py:859
-#, fuzzy
 msgid "on every %(days)s"
-msgstr "Everyday"
+msgstr "on every %(days)s"
 
 #: api/resources.py:865
 msgid "From %(begin)s through %(end)s, %(repeat)s"
@@ -6467,9 +6466,8 @@ msgid "autostart"
 msgstr ""
 
 #: jails/forms.py:771
-#, fuzzy
 msgid "The path could not be mounted %(source)s: %(error)s"
-msgstr "The path could not be mounted %s"
+msgstr "The path could not be mounted %(source)s: %(error)s"
 
 #: jails/models.py:72
 #, fuzzy
@@ -6491,9 +6489,8 @@ msgid "MAC"
 msgstr ""
 
 #: jails/models.py:224
-#, fuzzy
 msgid "This jail is required by %d plugin(s)"
-msgstr "This field is required for anonymous login"
+msgstr "This jail is required by %d plugin(s)"
 
 #: jails/models.py:260
 msgid "Jail Root"
@@ -6563,9 +6560,8 @@ msgid "Add Jail Templates"
 msgstr ""
 
 #: jails/nav.py:100
-#, fuzzy
 msgid "View Jails"
-msgstr "View %s"
+msgstr "View Jails"
 
 #: jails/nav.py:250
 msgid "%s"
@@ -6576,9 +6572,8 @@ msgid "Failed to install plugin: %s"
 msgstr ""
 
 #: jails/utils.py:694
-#, fuzzy
 msgid "Failed to create dataset %(name)s: %(error)s"
-msgstr "Couldn't retrieve %(url)s: %(error)s"
+msgstr "Failed to create dataset %(name)s: %(error)s"
 
 #: jails/views.py:94
 #, fuzzy
@@ -6997,9 +6992,8 @@ msgid "Confirmation does not match passphrase"
 msgstr ""
 
 #: storage/forms.py:1606
-#, fuzzy
 msgid "Passphrase is not valid"
-msgstr "The user %s is not valid."
+msgstr "Passphrase is not valid."
 
 #: storage/forms.py:1665
 msgid "Dedicated User Enabled"
@@ -7406,9 +7400,8 @@ msgstr "This field is required."
 
 #: freeadmin/forms.py:259
 #: freeadmin/forms.py:283
-#, fuzzy
 msgid "Invalid network: %s"
-msgstr "This is not a valid network"
+msgstr "Invalid network: %s"
 
 #: freeadmin/navtree.py:573
 #, fuzzy
@@ -7557,9 +7550,8 @@ msgid "Jail successfully stopped."
 msgstr "Jail successfully imported."
 
 #: jails/views.py:176
-#, fuzzy
 msgid "Jail successfully deleted."
-msgstr "%s successfully deleted."
+msgstr "Jail successfully deleted."
 
 #: middleware/zfs.py:633
 msgid "Completed"
@@ -7807,9 +7799,8 @@ msgid "Paths"
 msgstr "Path"
 
 #: sharing/forms.py:195
-#, fuzzy
 msgid "This is not a valid network: %s"
-msgstr "This is not a valid network"
+msgstr "This is not a valid network: %s"
 
 #: sharing/forms.py:309
 msgid "This option is only available once per mountpoint"
@@ -7960,9 +7951,8 @@ msgid "Volume could not be imported: %d devices failed to decrypt"
 msgstr ""
 
 #: storage/forms.py:2088
-#, fuzzy
 msgid "Volume could not be imported"
-msgstr "The path could not be mounted %s"
+msgstr "Volume could not be imported"
 
 #: storage/models.py:126
 msgid "LOCKED"
@@ -8011,9 +8001,8 @@ msgid "Volume failed unlocked"
 msgstr "ZFS Volume"
 
 #: storage/views.py:1076
-#, fuzzy
 msgid "Disks successfully edited"
-msgstr "%s successfully updated."
+msgstr "Disks successfully edited"
 
 #: support/models.py:45
 msgid "A description of the issue."
@@ -8208,9 +8197,8 @@ msgid "%(scanned)s out of %(total)s"
 msgstr ""
 
 #: templates/storage/volumestatus_datagrid.html:14
-#, fuzzy
 msgid "Errors"
-msgstr "Error: %s"
+msgstr "Errors"
 
 #: templates/storage/wizard.html:92
 #, fuzzy
@@ -8218,9 +8206,8 @@ msgid "Extend Volume"
 msgstr "ZFS Volume"
 
 #: templates/storage/zvols.html:3
-#, fuzzy
 msgid "Create zvol on %(name)s"
-msgstr "ZFS Volume"
+msgstr "Create zvol on %(name)s"
 
 #: templates/support/index.html:57
 msgid "Submit"
@@ -8264,7 +8251,7 @@ msgstr ""
 #: freeadmin/navtree.py:608
 #, fuzzy
 msgid "Could not reverse url, skipping node %(node)s: %(error)s"
-msgstr "Couldn't retrieve %(url)s: %(error)s"
+msgstr "Couldn't retrieve %(node)s: %(error)s"
 
 #: jails/forms.py:450
 #, fuzzy
@@ -8290,9 +8277,8 @@ msgid "IPv6 network start address for jails and plugins"
 msgstr ""
 
 #: jails/nav.py:70
-#, fuzzy
 msgid "Add Jails"
-msgstr "Add %s"
+msgstr "Add Jails"
 
 #: jails/nav.py:114
 msgid "View Jail Templates"
@@ -8511,9 +8497,8 @@ msgid "Init/Shutdown Script"
 msgstr "Initiator Secret"
 
 #: templates/freeadmin/generic_model_datagrid.html:10
-#, fuzzy
 msgid "Add"
-msgstr "Add %s"
+msgstr "Add"
 
 #: templates/freeadmin/generic_model_delete.html:19
 msgid ""

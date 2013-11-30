@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2013-10-14 19:10+0000\n"
-"Last-Translator: jjstecchino <jjstecchino@yahoo.com>\n"
+"PO-Revision-Date: 2013-11-30 12:34+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1381777846.0\n"
+"X-POOTLE-MTIME: 1385814869.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -399,12 +399,12 @@ msgstr "Lettura e Scrittura"
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minuti)s minuto(i)"
+msgstr "%(minutes)s minuto(i)"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(ore)s ora(e)"
+msgstr "%(hour)s ora(e)"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
@@ -6997,9 +6997,8 @@ msgstr ""
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
-#, fuzzy
 msgid "Invalid address: %s"
-msgstr "Firmware non valido"
+msgstr "Indirizzo non valido: %s"
 
 #: jails/admin.py:75
 #: jails/forms.py:724
@@ -7036,9 +7035,8 @@ msgid "autostart"
 msgstr ""
 
 #: jails/forms.py:771
-#, fuzzy
 msgid "The path could not be mounted %(source)s: %(error)s"
-msgstr "Il percorso non può essere montato %s"
+msgstr "Il percorso non può essere montato %(source)s: %(error)s"
 
 #: jails/models.py:72
 #, fuzzy
@@ -8009,9 +8007,8 @@ msgstr "Questo campo è obbligatorio"
 
 #: freeadmin/forms.py:259
 #: freeadmin/forms.py:283
-#, fuzzy
 msgid "Invalid network: %s"
-msgstr "Checksum non valido"
+msgstr "Rete non valida: %s"
 
 #: freeadmin/navtree.py:573
 #, fuzzy
@@ -8877,9 +8874,8 @@ msgid "Group Memberships"
 msgstr "Appartenenza al Gruppo"
 
 #: freeadmin/navtree.py:608
-#, fuzzy
 msgid "Could not reverse url, skipping node %(node)s: %(error)s"
-msgstr "Impossibile recuperare %(url)s: %(error)s"
+msgstr "Impossibile recuperare %(node)s: %(error)s"
 
 #: jails/forms.py:450
 #, fuzzy
