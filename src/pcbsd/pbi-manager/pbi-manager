@@ -560,6 +560,7 @@ parse_mt_pbi_cmdline() {
 		     if [ -z "${PBI_MT_ADDDESC}" ] ; then usage_mt_add ; fi
 
 	 	     if [ "$PBI_MT_TYPE" = "CAT" ]; then	      
+			:
 		     elif [ "$PBI_MT_TYPE" = "APP" ]; then
 		     	if [ -z "${PBI_MT_ADDCAT}" ]; then usage_mt_add ; fi
 		     	if [ -z "${PBI_MT_ADDAUTHOR}" ]; then usage_mt_add ; fi
@@ -7271,6 +7272,7 @@ pbi_crash_init() {
 	which "pbi-crashhandler-gui" >/dev/null 2>/dev/null
 	if [ "$?" = "0" -a -n "${DISPLAY}" ] ; then
 		#pbi-crashhandler-gui "$@"
+		:
 	fi
 }
 

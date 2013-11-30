@@ -146,7 +146,11 @@ start_jail_vimage()
   # Configure default IPv4 gateway 
   #
   if [ -n "${GATEWAY4}" ] ; then
-     jexec ${JID} route add -inet default ${GATEWAY4}
+     if [ "${LINUXJAIL}" != "YES" ] ; then
+        jexec ${JID} route add -inet default ${GATEWAY4}
+     else
+        jexec ${JID} route add default gateway ${GATEWAY4}
+     fi  
 
   #
   # No defaultrouter configured for IPv4, so if bridge IP address was
@@ -154,14 +158,22 @@ start_jail_vimage()
   #
   elif [ -n "${BRIDGEIP4}" ] ; then
      get_ip_and_netmask "${BRIDGEIP4}"
-     jexec ${JID} route add -inet default ${JIP}
+     if [ "${LINUXJAIL}" != "YES" ] ; then
+        jexec ${JID} route add -inet default ${JIP}
+     else
+        jexec ${JID} route add default gateway ${JIP}
+     fi
   fi
 
   #
   # Configure default IPv6 gateway
   #
   if [ -n "${GATEWAY6}" ] ; then
-     jexec ${JID} route add -inet6 default ${GATEWAY6}
+     if [ "${LINUXJAIL}" != "YES" ] ; then
+        jexec ${JID} route add -inet6 default ${GATEWAY6}
+     else
+        jexec ${JID} route -A inet6 add default gateway ${GATEWAY6}
+     fi 
 
   #
   # No defaultrouter configured for IPv6, so if bridge IP address was
@@ -169,7 +181,11 @@ start_jail_vimage()
   #
   elif [ -n "${BRIDGEIP6}" ] ; then
      get_ip_and_netmask "${BRIDGEIP6}"
-     jexec ${JID} route add -inet6 default ${JIP}
+     if [ "${LINUXJAIL}" != "YES" ] ; then
+        jexec ${JID} route add -inet6 default ${JIP}
+     else
+        jexec ${JID} route -A inet6 add default gateway ${JIP}
+     fi
   fi
 
   #
@@ -185,7 +201,11 @@ start_jail_vimage()
         GATEWAY4="$(get_default_route)"
      fi 
      if [ -n "${GATEWAY4}" ] ; then 
-        jexec ${JID} route add -inet default ${GATEWAY4}
+        if [ "${LINUXJAIL}" != "YES" ] ; then
+           jexec ${JID} route add -inet default ${GATEWAY4}
+        else
+           jexec ${JID} route add default gateway ${GATEWAY4}
+        fi 
      fi
 
      return 0
