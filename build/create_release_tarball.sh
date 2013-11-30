@@ -13,7 +13,7 @@ TOP="$(pwd)"
 map_x86=i386
 map_x64=amd64
 
-TARBALL="$TOP/$IMG_PREFIX-release.tar"
+TARBALL="${TOP}/${NANO_LABEL}-${VERSION}-release.tar"
 rm -rf "${TOP}/release_stage"
 set -x
 set -e
