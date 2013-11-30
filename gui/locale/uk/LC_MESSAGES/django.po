@@ -8,16 +8,17 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2013-09-22 18:40+0200\n"
-"Last-Translator: zubr139 <zubr139@ukr.net>\n"
+"PO-Revision-Date: 2013-11-30 12:30+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
-"X-Generator: Pootle 2.1.6\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1385814628.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1311,7 +1312,7 @@ msgstr "Плагіни"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Джерело"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1616,12 +1617,12 @@ msgstr "Дисковий пристрій"
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "Ваш 'Ідентифікатор групи порталу' не може бути більше ніж% d"
+msgstr "Ваш 'Ідентифікатор групи порталу' не може бути більше ніж %d"
 
 #: services/forms.py:1001
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr "Ваш 'Ідентифікатор групи' не може бути більше ніж% d"
+msgstr "Ваш 'Ідентифікатор групи' не може бути більше ніж %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1791,7 +1792,7 @@ msgstr "Включити домашні каталоги"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
-msgstr "Включає \\ відключає домашні каталоги для користувача Samba."
+msgstr "Включає/відключає домашні каталоги для користувача Samba."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
@@ -1799,8 +1800,7 @@ msgstr "Увімкнути перегляд домашніх каталогів"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
-msgstr ""
-"Включає \\ відключає перегляд домашніх каталогів для користувачів Samba."
+msgstr "Включає/відключає перегляд домашніх каталогів для користувачів Samba."
 
 #: services/models.py:156
 msgid "Home directories"
@@ -1832,7 +1832,7 @@ msgstr "Включити асинхронний ввід / вивід"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr "Включає \\ відключає асинхронний ввід / вивід"
+msgstr "Включає/відключає асинхронний ввід / вивід"
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
@@ -2064,9 +2064,8 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "TCP порт логічного контролера (3261 типово)"
 
 #: services/models.py:358
-#, fuzzy
 msgid "Controller Authorized Network"
-msgstr "Мережева маска авторизації контролера"
+msgstr "Авторизована мережа контролера"
 
 #: services/models.py:360
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
@@ -2116,8 +2115,8 @@ msgstr "Шлях до екстента"
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
-"Шлях до файлу (наприклад / mnt/sharename/extent/extent0) використовуваний як "
-"екстент"
+"Шлях до файлу (наприклад /mnt/sharename/extent/extent0) використовуваний як "
+"екстент."
 
 #: services/models.py:413
 msgid "Extent size"
@@ -2372,6 +2371,8 @@ msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"Iм'я jail може складатися тільки з літер, чисел або дефісів. Воно не може "
+"закінчуватися дефісом."
 
 #: services/models.py:821
 msgid "Jail IP address"
@@ -2505,8 +2506,8 @@ msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
-"Тема листа. Ви можете використовувати наступні параметри для підстановки: "
-"<br /> <ul> <li>% d - дата </ li> <li>% h - ім'я хоста </ li> </ ul>"
+"Тема листа. Ви можете використовувати наступні параметри для підстановки: <"
+"br /><ul><li>%d - дата</li><li>%h - ім'я хоста</li></ul>"
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
@@ -2727,8 +2728,7 @@ msgstr "Дозволити нові файли"
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
-msgstr ""
-"Порт для прослуховування. Типово TFTP порт вказується в / etc / services."
+msgstr "Порт для прослуховування. Типово TFTP порт вказується в /etc/services."
 
 #: services/models.py:1127
 msgid "Specifies the username which the service will run as."
@@ -2736,7 +2736,7 @@ msgstr "Вказує ім'я користувача під яким буде в�
 
 #: services/models.py:1131
 msgid "umask"
-msgstr "Umask (маска режиму створення користувацьких файлів)"
+msgstr "umask (маска режиму створення файлів)"
 
 #: services/models.py:1132
 msgid ""
@@ -3951,7 +3951,7 @@ msgstr "Назва знимку"
 
 #: storage/forms.py:986
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr "Тільки [A-Z], [a-z], [0-9], \"_\", \".\" допускаються для імені знимку"
+msgstr "Тільки [-a-zA-Z0-9_.] допускаються для імені знимку"
 
 #: storage/forms.py:996
 msgid "Snapshot"
@@ -4278,7 +4278,7 @@ msgstr "Інтервал"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
-msgstr ""
+msgstr "Скільки часу минуло між двома спробами створення знімку."
 
 #: storage/models.py:756
 msgid "Occurrence"
@@ -4554,7 +4554,7 @@ msgstr "Мова"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
-msgstr ""
+msgstr "Розклад клавіатури консолі."
 
 #: system/models.py:74
 msgid "Timezone"
@@ -4715,7 +4715,7 @@ msgid ""
 "it sends, eg: freenas@example.com"
 msgstr ""
 "Адреса електронної пошти, яку система буде використовувати для відправлення, "
-"наприклад freenas@mydomain.com"
+"наприклад freenas@example.com"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
@@ -5253,7 +5253,7 @@ msgstr "IRC (чат)"
 
 #: templates/freeadmin/index.html:66
 msgid "#freenas on freenode"
-msgstr "# FreeNAS на FreeNode"
+msgstr "#freenas на freenode"
 
 #: templates/freeadmin/index.html:70
 msgid "Mailing Lists"
@@ -5380,7 +5380,7 @@ msgstr "Не визначені LAGG інтерфейси"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr "Додати LAGG інтерфейс"
+msgstr "Додати LAGG інтерфейс "
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
@@ -5487,7 +5487,7 @@ msgstr "Імпорт"
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr "Крок %(step) з %(step_count)"
+msgstr "Крок %(step)s з %(step_count)s"
 
 #: templates/plugins/jailpbi.html:18
 msgid "Upload Jail PBI"
@@ -5503,9 +5503,8 @@ msgid "Please wait..."
 msgstr "Будь ласка, зачекайте ..."
 
 #: templates/plugins/mountpoints.html:19
-#, fuzzy
 msgid "Edit Mount Point"
-msgstr "Точка монтування"
+msgstr "Редагувати точку монтування"
 
 #: templates/plugins/mountpoints.html:25
 msgid "Delete Mount Point"
@@ -5532,7 +5531,7 @@ msgstr ""
 #: templates/registration/login.html:44
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr "Ласкаво просимо, %(username). Дякуємо за вхід."
+msgstr "Ласкаво просимо, %(username)s. Дякуємо за вхід."
 
 #: templates/registration/login.html:46
 #, python-format
@@ -5629,7 +5628,7 @@ msgstr "Ні"
 
 #: templates/services/index.html:2
 msgid "Core"
-msgstr ""
+msgstr "Ядро"
 
 #: templates/services/iscsi.html:1
 msgid "iSCSI Management"
@@ -5961,7 +5960,7 @@ msgstr "Змінити права"
 #: templates/storage/permission.html:5
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr "Змінити права для %(path) до"
+msgstr "Змінити права для %(path)s до"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
@@ -6304,7 +6303,7 @@ msgstr "Увага!"
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
-msgstr "Ви збираєтеся <strong> ПЕРЕЗАВАНТАЖИТИ</ strong> систему?"
+msgstr "Ви збираєтеся <strong>ПЕРЕЗАВАНТАЖИТИ</strong> систему?"
 
 #: templates/system/reporting.html:2
 msgid "History"
@@ -6355,7 +6354,7 @@ msgstr "Завантажити конфігурацію"
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr "Ви збираєтеся <strong> ВИМКНУТИ </ strong> систему?"
+msgstr "Ви збираєтеся <strong>ВИМКНУТИ</strong> систему?"
 
 #: templates/system/smarttest.html:16
 msgid "Unknown"
