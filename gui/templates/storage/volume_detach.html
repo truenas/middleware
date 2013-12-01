@@ -16,7 +16,7 @@
 {% if services %}
     <tr>
         <td colspan="2">
-        <p>ATTENTION - Currently the following services depend on this volume: <strong>{{ services.keys|join:", " }}</strong></p>
+        <p>{% trans "ATTENTION - Currently the following services depend on this volume: " %}<strong>{{ services.keys|join:", " }}</strong></p>
         </td>
     </tr>
 {% endif %}
