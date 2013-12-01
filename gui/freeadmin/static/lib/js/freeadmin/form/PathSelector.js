@@ -29,6 +29,9 @@ define([
         postCreate: function() {
 
             var path = this;
+            if(!gettext) {
+                gettext = function(s) { return s; }
+            }
             var target;
             if(this.dirsonly) {
                 target = '/system/lsdir/';
@@ -74,15 +77,15 @@ define([
 
             browse = new Button({
                 id: path.name + "_openClose",
-                label: 'Browse',
+                label: gettext('Browse'),
                 onClick: function() {
                     var dialog = getDialog(path);
-                    if(this.get('label') == 'Close') {
+                    if(this.get('label') == gettext('Close')) {
                         domStyle.set(path.treeContainer, 'display', 'none');
-                        this.set('label', 'Browse');
+                        this.set('label', gettext('Browse'));
                     } else {
                         domStyle.set(path.treeContainer, 'display', 'block');
-                        this.set('label', 'Close');
+                        this.set('label', gettext('Close'));
                     }
                     if(dialog) {
                         //dialog.layout();
