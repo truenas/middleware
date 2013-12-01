@@ -15,10 +15,10 @@
                     });
                     if(this.mode == 'basic') {
                         this.mode = 'advanced';
-                        this.set('label', gettext('Basic Mode'));
+                        this.set('label', '{% trans "Basic Mode" %}');
                     } else {
                         this.mode = 'basic';
-                        this.set('label', gettext('Advanced Mode'));
+                        this.set('label', '{% trans "Advanced Mode" %}');
                     }
                     var dialog = getDialog(this);
                     if(dialog) {
