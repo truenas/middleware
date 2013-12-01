@@ -134,7 +134,7 @@ _interface_config()
 				echo ifconfig_${interface}_ipv6=\"inet6\"
 			fi
 		else
-			echo ifconfig_${interface}_ipv6=\"inet6 auto_linklocal\"
+			echo ifconfig_${interface}_ipv6=\"inet6 accept_rtadv auto_linklocal\"
 			echo rtsold_enable=\"YES\"
 		fi
 		if [ -n "${lagg_id}" ]; then
