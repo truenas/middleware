@@ -39,7 +39,7 @@
                 {% endfor %}
                 <tr>
                     <td colspan="2">
-                    <a href="javascript:void(0);" onClick="add_formset(this, '{{ model.get_empty_formset_url }}', '{{ formset.prefix|escapejs }}');">Add extra {{ formset.verbose_name }}</a>
+                    <a href="javascript:void(0);" onClick="add_formset(this, '{{ model.get_empty_formset_url }}', '{{ formset.prefix|escapejs }}');">{% trans "Add extra" %} {{ formset.verbose_name }}</a>
                     </td>
                 </tr>
             </table>
