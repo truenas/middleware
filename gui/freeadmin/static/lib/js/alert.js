@@ -74,7 +74,7 @@ require([
 
     alert_open = function() {
         var alertdlg = new Dialog({
-            title: "Alert System",
+            title: gettext("Alert System"),
             style: "width: 400px",
             id: "alert_dialog",
             href: "/admin/alert/",

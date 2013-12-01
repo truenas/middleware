@@ -74,7 +74,7 @@ define([
         style: "min-height:400px;background-color: black;",
         baseClass: "Terminal",
         content: me._content,
-        title: 'Shell',
+        title: gettext('Shell'),
         region: 'center',
         onShow: function() {
           me.start();

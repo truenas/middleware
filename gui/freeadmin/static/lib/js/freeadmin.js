@@ -236,7 +236,7 @@ require([
     ask_service = function(srv) {
 
         dialog = new Dialog({
-            title: 'Enable service',
+            title: gettext('Enable service'),
             href: '/services/enable/'+srv+'/',
             parseOnLoad: true,
             closable: true,
