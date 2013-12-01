@@ -594,9 +594,9 @@ def parse_status(name, doc, data):
     The scrub is within scan: tag and may have multiple lines
     """
     scan = re.search(r'scan: (scrub.+?)\b[a-z]+:', data, re.M|re.S)
+    scrub = {}
     if scan:
         scan = scan.group(1)
-        scrub = {}
         if scan.find('in progress') != -1:
             scrub.update({
                 'progress': None,
@@ -650,10 +650,8 @@ def parse_status(name, doc, data):
         scrub['status'] = scrub_status
         scrub['status_verbose'] = scrub_statusv
     else:
-        scrub = {
-            'status': 'NONE',
-            'status_verbose': 'None requested',
-        }
+        scrub['status'] = 'NONE'
+        scrub['status_verbose'] = _('None requested')
 
     status = data.split('config:')[1]
     pid = re.search(r'id: (?P<id>\d+)', data)
