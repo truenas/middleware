@@ -247,7 +247,7 @@ class Base(object):
     def new_storage_node_view(self, nmp):
         storage_node_view = TreeNode()
 
-        storage_node_view.name = _('%s' % nmp.destination)
+        storage_node_view.name = nmp.destination
         storage_node_view.gname = nmp.id
         storage_node_view.type = 'editobject'
         storage_node_view.view = 'freeadmin_jails_nullmountpoint_edit'
