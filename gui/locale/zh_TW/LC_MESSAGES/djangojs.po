@@ -7,93 +7,140 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-07-06 18:21+0200\n"
-"Last-Translator: pctine <kevinling@mail2000.com.tw>\n"
+"POT-Creation-Date: 2013-12-01 16:52+0000\n"
+"PO-Revision-Date: 2013-06-14 08:41+0000\n"
+"Last-Translator: kentwelcome <kentwelcome@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1371199287.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "報表"
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:68
-msgid "Settings"
-msgstr "設定"
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:79
-msgid "System Information"
-msgstr "系統資訊"
-
-#: freeadmin/static/lib/js/freeadmin.js:119
-msgid "Network Settings"
-msgstr "網路設定"
-
-#: freeadmin/static/lib/js/freeadmin.js:190
-msgid "Services"
-msgstr "服務"
-
-#: freeadmin/static/lib/js/freeadmin.js:231
-msgid "Account"
-msgstr "帳號"
-
-#: freeadmin/static/lib/js/freeadmin.js:270
-msgid "Storage"
-msgstr "儲存"
-
-#: freeadmin/static/lib/js/freeadmin.js:500
-#: freeadmin/static/lib/js/freeadmin.js:523
+#: freeadmin/static/lib/js/freeadmin.js:390
+#: freeadmin/static/lib/js/freeadmin.js:409
 msgid "Some error occurred"
 msgstr "發生錯誤"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "編輯"
+#: freeadmin/static/lib/js/freeadmin.js:733
+msgid "The cache is being rebuilt."
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "磁碟管理"
+#: freeadmin/static/lib/js/freeadmin.js:735
+msgid "The cache could not be rebuilt: "
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "清除"
-
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "抹除磁碟"
-
-#: freeadmin/static/lib/js/freeadmin.js:862
+#: freeadmin/static/lib/js/freeadmin.js:943
 msgid "Please wait..."
 msgstr "請稍候"
 
-#: freeadmin/static/lib/js/freeadmin.js:927
+#: freeadmin/static/lib/js/freeadmin.js:1023
 msgid "An error occurred!"
 msgstr "發生錯誤！"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
+#: freeadmin/static/lib/js/freeadmin/Menu.js:46
+msgid "Settings"
+msgstr "設定"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:57
+msgid "System Information"
+msgstr "系統資訊"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:96
+msgid "Network Settings"
+msgstr "網路設定"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:167
+msgid "Services"
+msgstr "服務"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:208
+msgid "Jails"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:246
+msgid "Plugins"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:286
+msgid "Account"
+msgstr "帳號"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:325
+msgid "Storage"
+msgstr "儲存"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:394
+msgid "Support"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
 msgid "Each selected"
 msgstr "所選的每個"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
 msgid "Every N"
 msgstr "每 N 個"
 
-msgid "CronJobs"
-msgstr "例行工作"
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr ""
 
-msgid "Replace"
-msgstr "移轉"
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr ""
 
-msgid "Disk Replacement"
-msgstr "更換磁碟"
+#~ msgid "Reporting"
+#~ msgstr "報表"
 
-msgid "Detach"
-msgstr "卸載"
+#~ msgid "Edit"
+#~ msgstr "編輯"
 
-msgid "Disk Detach"
-msgstr "磁碟卸載"
+#~ msgid "Edit Disk"
+#~ msgstr "磁碟管理"
+
+#~ msgid "Wipe"
+#~ msgstr "清除"
+
+#~ msgid "Wipe Disk"
+#~ msgstr "抹除磁碟"
+
+#~ msgid "CronJobs"
+#~ msgstr "例行工作"
+
+#~ msgid "Replace"
+#~ msgstr "移轉"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "更換磁碟"
+
+#~ msgid "Detach"
+#~ msgstr "卸載"
+
+#~ msgid "Disk Detach"
+#~ msgstr "磁碟卸載"

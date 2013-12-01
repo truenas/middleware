@@ -7,95 +7,139 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2011-12-21 11:44+0200\n"
-"Last-Translator: Zlatko <z.emanuilov@ecopharm.bg>\n"
+"POT-Creation-Date: 2013-12-01 16:49+0000\n"
+"PO-Revision-Date: 2012-10-18 12:01+0000\n"
+"Last-Translator: ikroumov <ikroumov@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1350561714.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Статистика"
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:68
-msgid "Settings"
-msgstr "Настройки"
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:79
-msgid "System Information"
-msgstr "Инф. за системата"
-
-#: freeadmin/static/lib/js/freeadmin.js:119
-msgid "Network Settings"
-msgstr "Мрежови настройки"
-
-#: freeadmin/static/lib/js/freeadmin.js:190
-msgid "Services"
-msgstr "Услуги"
-
-#: freeadmin/static/lib/js/freeadmin.js:231
-msgid "Account"
-msgstr "Профил"
-
-#: freeadmin/static/lib/js/freeadmin.js:270
-msgid "Storage"
-msgstr "Съхранение"
-
-#: freeadmin/static/lib/js/freeadmin.js:500
-#: freeadmin/static/lib/js/freeadmin.js:523
+#: freeadmin/static/lib/js/freeadmin.js:390
+#: freeadmin/static/lib/js/freeadmin.js:409
 #, fuzzy
 msgid "Some error occurred"
 msgstr "Възникна грешка!"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Редактиране"
-
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Редактиране на диска"
-
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
+#: freeadmin/static/lib/js/freeadmin.js:733
+msgid "The cache is being rebuilt."
 msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
-msgid "Wipe Disk"
-msgstr "Редактиране на диска"
+#: freeadmin/static/lib/js/freeadmin.js:735
+msgid "The cache could not be rebuilt: "
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:862
+#: freeadmin/static/lib/js/freeadmin.js:943
 msgid "Please wait..."
 msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:927
+#: freeadmin/static/lib/js/freeadmin.js:1023
 msgid "An error occurred!"
 msgstr "Възникна грешка!"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
+#: freeadmin/static/lib/js/freeadmin/Menu.js:46
+msgid "Settings"
+msgstr "Настройки"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:57
+msgid "System Information"
+msgstr "Инф. за системата"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:96
+msgid "Network Settings"
+msgstr "Мрежови настройки"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:167
+msgid "Services"
+msgstr "Услуги"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:208
+msgid "Jails"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:246
+msgid "Plugins"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:286
+msgid "Account"
+msgstr "Профил"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:325
+msgid "Storage"
+msgstr "Съхранение"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:394
+msgid "Support"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
 msgid "Each selected"
 msgstr "Всяко от избраните"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
 msgid "Every N"
 msgstr "Всяко N"
 
-msgid "CronJobs"
-msgstr "Разписание на задачите"
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr ""
 
-msgid "Replace"
-msgstr "Замяна"
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr ""
 
-msgid "Disk Replacement"
-msgstr "Смяна на диск"
+#~ msgid "Reporting"
+#~ msgstr "Статистика"
 
-msgid "Detach"
-msgstr "Откачи"
+#~ msgid "Edit"
+#~ msgstr "Редактиране"
 
-msgid "Disk Detach"
-msgstr "Откачи диска"
+#~ msgid "Edit Disk"
+#~ msgstr "Редактиране на диска"
+
+#, fuzzy
+#~ msgid "Wipe Disk"
+#~ msgstr "Редактиране на диска"
+
+#~ msgid "CronJobs"
+#~ msgstr "Разписание на задачите"
+
+#~ msgid "Replace"
+#~ msgstr "Замяна"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Смяна на диск"
+
+#~ msgid "Detach"
+#~ msgstr "Откачи"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Откачи диска"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-12-08 00:25+0200\n"
+"POT-Creation-Date: 2013-12-01 16:50+0000\n"
+"PO-Revision-Date: 2012-12-08 00:37+0000\n"
 "Last-Translator: ebela <bela@dandre.hu>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
@@ -16,87 +16,131 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1354927033.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Jelentések"
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:68
-msgid "Settings"
-msgstr "Beállítások"
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:79
-msgid "System Information"
-msgstr "Rendszer információk"
-
-#: freeadmin/static/lib/js/freeadmin.js:119
-msgid "Network Settings"
-msgstr "Hálózati beállítások"
-
-#: freeadmin/static/lib/js/freeadmin.js:190
-msgid "Services"
-msgstr "Szolgáltatások"
-
-#: freeadmin/static/lib/js/freeadmin.js:231
-msgid "Account"
-msgstr "Fiók"
-
-#: freeadmin/static/lib/js/freeadmin.js:270
-msgid "Storage"
-msgstr "Tároló"
-
-#: freeadmin/static/lib/js/freeadmin.js:500
-#: freeadmin/static/lib/js/freeadmin.js:523
+#: freeadmin/static/lib/js/freeadmin.js:390
+#: freeadmin/static/lib/js/freeadmin.js:409
 msgid "Some error occurred"
 msgstr "Hiba történt"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Szerkesztés"
+#: freeadmin/static/lib/js/freeadmin.js:733
+msgid "The cache is being rebuilt."
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Lemez szerkesztése"
+#: freeadmin/static/lib/js/freeadmin.js:735
+msgid "The cache could not be rebuilt: "
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Törlés"
-
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Lemez törlése"
-
-#: freeadmin/static/lib/js/freeadmin.js:862
+#: freeadmin/static/lib/js/freeadmin.js:943
 msgid "Please wait..."
 msgstr "Kérem várjon…"
 
-#: freeadmin/static/lib/js/freeadmin.js:927
+#: freeadmin/static/lib/js/freeadmin.js:1023
 msgid "An error occurred!"
 msgstr "Hiba történt!"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
-msgid "Each selected"
-msgstr "Mind kiválasztva"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:46
+msgid "Settings"
+msgstr "Beállítások"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
-msgid "Every N"
-msgstr "Minden N"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:57
+msgid "System Information"
+msgstr "Rendszer információk"
 
+#: freeadmin/static/lib/js/freeadmin/Menu.js:96
+msgid "Network Settings"
+msgstr "Hálózati beállítások"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:167
+msgid "Services"
+msgstr "Szolgáltatások"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:208
+msgid "Jails"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:246
 msgid "Plugins"
 msgstr "Beépülő modulok"
 
-msgid "CronJobs"
-msgstr "Ütemezett (cron) feladatok"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:286
+msgid "Account"
+msgstr "Fiók"
 
-msgid "Replace"
-msgstr "Csere"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:325
+msgid "Storage"
+msgstr "Tároló"
 
-msgid "Disk Replacement"
-msgstr "Lemez csere"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:394
+msgid "Support"
+msgstr ""
 
-msgid "Detach"
-msgstr "Lecsatolás"
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr ""
 
-msgid "Disk Detach"
-msgstr "Lemez lecsatolása"
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
+msgid "Each selected"
+msgstr "Mind kiválasztva"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
+msgid "Every N"
+msgstr "Minden N"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr ""
+
+#~ msgid "Reporting"
+#~ msgstr "Jelentések"
+
+#~ msgid "Edit"
+#~ msgstr "Szerkesztés"
+
+#~ msgid "Edit Disk"
+#~ msgstr "Lemez szerkesztése"
+
+#~ msgid "Wipe"
+#~ msgstr "Törlés"
+
+#~ msgid "Wipe Disk"
+#~ msgstr "Lemez törlése"
+
+#~ msgid "CronJobs"
+#~ msgstr "Ütemezett (cron) feladatok"
+
+#~ msgid "Replace"
+#~ msgstr "Csere"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Lemez csere"
+
+#~ msgid "Detach"
+#~ msgstr "Lecsatolás"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Lemez lecsatolása"

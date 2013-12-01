@@ -7,100 +7,144 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-06-15 04:59+0200\n"
-"Last-Translator: phome <phome@tut.by>\n"
+"POT-Creation-Date: 2013-12-01 16:52+0000\n"
+"PO-Revision-Date: 2013-05-31 03:17+0000\n"
+"Last-Translator: Hugh____ <box.xoq@msn.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1369970272.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "报表"
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:68
-msgid "Settings"
-msgstr "配置"
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:79
-msgid "System Information"
-msgstr "系统信息"
-
-#: freeadmin/static/lib/js/freeadmin.js:119
-msgid "Network Settings"
-msgstr "网络配置"
-
-#: freeadmin/static/lib/js/freeadmin.js:190
-msgid "Services"
-msgstr "服务"
-
-#: freeadmin/static/lib/js/freeadmin.js:231
-msgid "Account"
-msgstr "帐号"
-
-#: freeadmin/static/lib/js/freeadmin.js:270
-msgid "Storage"
-msgstr "存储"
-
-#: freeadmin/static/lib/js/freeadmin.js:500
-#: freeadmin/static/lib/js/freeadmin.js:523
+#: freeadmin/static/lib/js/freeadmin.js:390
+#: freeadmin/static/lib/js/freeadmin.js:409
 msgid "Some error occurred"
 msgstr "有错误发生"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "编辑"
+#: freeadmin/static/lib/js/freeadmin.js:733
+msgid "The cache is being rebuilt."
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "编辑硬盘"
+#: freeadmin/static/lib/js/freeadmin.js:735
+msgid "The cache could not be rebuilt: "
+msgstr ""
 
-# 这个是哪里的单词，不是太清楚
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "清除"
-
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "擦除硬盘"
-
-#: freeadmin/static/lib/js/freeadmin.js:862
+#: freeadmin/static/lib/js/freeadmin.js:943
 msgid "Please wait..."
 msgstr "请稍候..."
 
-#: freeadmin/static/lib/js/freeadmin.js:927
+#: freeadmin/static/lib/js/freeadmin.js:1023
 msgid "An error occurred!"
 msgstr "有错误发生！"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
-msgid "Each selected"
-msgstr "每个被选中的"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:46
+msgid "Settings"
+msgstr "配置"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
-msgid "Every N"
-msgstr "每N个"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:57
+msgid "System Information"
+msgstr "系统信息"
 
+#: freeadmin/static/lib/js/freeadmin/Menu.js:96
+msgid "Network Settings"
+msgstr "网络配置"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:167
+msgid "Services"
+msgstr "服务"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:208
+msgid "Jails"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:246
 msgid "Plugins"
 msgstr "插件"
 
-msgid "CronJobs"
-msgstr "计划任务"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:286
+msgid "Account"
+msgstr "帐号"
 
-msgid "Replace"
-msgstr "替换"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:325
+msgid "Storage"
+msgstr "存储"
 
-msgid "Disk Replacement"
-msgstr "替换硬盘"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:394
+msgid "Support"
+msgstr ""
 
-msgid "Detach"
-msgstr "卸载"
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr ""
 
-msgid "Disk Detach"
-msgstr "卸载硬盘"
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr ""
 
-msgid "Every"
-msgstr "每个"
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
+msgid "Each selected"
+msgstr "每个被选中的"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
+msgid "Every N"
+msgstr "每N个"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr ""
+
+#~ msgid "Reporting"
+#~ msgstr "报表"
+
+#~ msgid "Edit"
+#~ msgstr "编辑"
+
+#~ msgid "Edit Disk"
+#~ msgstr "编辑硬盘"
+
+# 这个是哪里的单词，不是太清楚
+#~ msgid "Wipe"
+#~ msgstr "清除"
+
+#~ msgid "Wipe Disk"
+#~ msgstr "擦除硬盘"
+
+#~ msgid "CronJobs"
+#~ msgstr "计划任务"
+
+#~ msgid "Replace"
+#~ msgstr "替换"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "替换硬盘"
+
+#~ msgid "Detach"
+#~ msgstr "卸载"
+
+#~ msgid "Disk Detach"
+#~ msgstr "卸载硬盘"
+
+#~ msgid "Every"
+#~ msgstr "每个"

@@ -7,100 +7,144 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-03-13 00:47+0200\n"
-"Last-Translator: zubr139 <zubr139@ukr.net>\n"
+"POT-Creation-Date: 2013-12-01 16:52+0000\n"
+"PO-Revision-Date: 2013-11-30 12:30+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
-"X-Generator: Pootle 2.1.6\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1385814628.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Звіти"
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:68
-msgid "Settings"
-msgstr "Налаштування"
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:79
-msgid "System Information"
-msgstr "Системна інформація"
-
-#: freeadmin/static/lib/js/freeadmin.js:119
-msgid "Network Settings"
-msgstr "Налаштування мережі"
-
-#: freeadmin/static/lib/js/freeadmin.js:190
-msgid "Services"
-msgstr "Служби"
-
-#: freeadmin/static/lib/js/freeadmin.js:231
-msgid "Account"
-msgstr "Облікові записи"
-
-#: freeadmin/static/lib/js/freeadmin.js:270
-msgid "Storage"
-msgstr "Сховище"
-
-#: freeadmin/static/lib/js/freeadmin.js:500
-#: freeadmin/static/lib/js/freeadmin.js:523
+#: freeadmin/static/lib/js/freeadmin.js:390
+#: freeadmin/static/lib/js/freeadmin.js:409
 msgid "Some error occurred"
 msgstr "Деякі помилки"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Редагувати"
+#: freeadmin/static/lib/js/freeadmin.js:733
+msgid "The cache is being rebuilt."
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Редагувати диск"
+#: freeadmin/static/lib/js/freeadmin.js:735
+msgid "The cache could not be rebuilt: "
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Очищення"
-
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Очистити диск"
-
-#: freeadmin/static/lib/js/freeadmin.js:862
+#: freeadmin/static/lib/js/freeadmin.js:943
 msgid "Please wait..."
 msgstr "Будь ласка, ЗАЧЕКАЙТЕ ..."
 
-#: freeadmin/static/lib/js/freeadmin.js:927
+#: freeadmin/static/lib/js/freeadmin.js:1023
 msgid "An error occurred!"
 msgstr "Сталася помилка!"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
-msgid "Each selected"
-msgstr "Кожен обраний"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:46
+msgid "Settings"
+msgstr "Налаштування"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
-msgid "Every N"
-msgstr "Кожен номер"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:57
+msgid "System Information"
+msgstr "Системна інформація"
 
+#: freeadmin/static/lib/js/freeadmin/Menu.js:96
+msgid "Network Settings"
+msgstr "Налаштування мережі"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:167
+msgid "Services"
+msgstr "Служби"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:208
+msgid "Jails"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:246
 msgid "Plugins"
 msgstr "Плагіни"
 
-msgid "CronJobs"
-msgstr "Планувальник Cron"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:286
+msgid "Account"
+msgstr "Облікові записи"
 
-msgid "Replace"
-msgstr "Замінити"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:325
+msgid "Storage"
+msgstr "Сховище"
 
-msgid "Disk Replacement"
-msgstr "Заміна диску"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:394
+msgid "Support"
+msgstr ""
 
-msgid "Detach"
-msgstr "Від'єднати"
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr ""
 
-msgid "Disk Detach"
-msgstr "Від'єднати диск"
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr ""
 
-msgid "Every"
-msgstr "Кожен"
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
+msgid "Each selected"
+msgstr "Кожен обраний"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
+msgid "Every N"
+msgstr "Кожен номер"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr ""
+
+#~ msgid "Reporting"
+#~ msgstr "Звіти"
+
+#~ msgid "Edit"
+#~ msgstr "Редагувати"
+
+#~ msgid "Edit Disk"
+#~ msgstr "Редагувати диск"
+
+#~ msgid "Wipe"
+#~ msgstr "Очищення"
+
+#~ msgid "Wipe Disk"
+#~ msgstr "Очистити диск"
+
+#~ msgid "CronJobs"
+#~ msgstr "Планувальник Cron"
+
+#~ msgid "Replace"
+#~ msgstr "Замінити"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Заміна диску"
+
+#~ msgid "Detach"
+#~ msgstr "Від'єднати"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Від'єднати диск"
+
+#~ msgid "Every"
+#~ msgstr "Кожен"

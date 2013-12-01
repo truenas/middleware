@@ -7,99 +7,143 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-06-07 18:06+0200\n"
-"Last-Translator: raulfg <raulfg3@gmail.com>\n"
+"POT-Creation-Date: 2013-12-01 16:50+0000\n"
+"PO-Revision-Date: 2013-02-08 08:16+0000\n"
+"Last-Translator: mcruz <mcruz079@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1360311370.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Informes"
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:68
-msgid "Settings"
-msgstr "Configuración"
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:79
-msgid "System Information"
-msgstr "Información del Sistema"
-
-#: freeadmin/static/lib/js/freeadmin.js:119
-msgid "Network Settings"
-msgstr "Configuración de Red"
-
-#: freeadmin/static/lib/js/freeadmin.js:190
-msgid "Services"
-msgstr "Servicios"
-
-#: freeadmin/static/lib/js/freeadmin.js:231
-msgid "Account"
-msgstr "Cuenta"
-
-#: freeadmin/static/lib/js/freeadmin.js:270
-msgid "Storage"
-msgstr "Almacenamiento"
-
-#: freeadmin/static/lib/js/freeadmin.js:500
-#: freeadmin/static/lib/js/freeadmin.js:523
+#: freeadmin/static/lib/js/freeadmin.js:390
+#: freeadmin/static/lib/js/freeadmin.js:409
 msgid "Some error occurred"
 msgstr "Ocurrió algún error"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Editar"
+#: freeadmin/static/lib/js/freeadmin.js:733
+msgid "The cache is being rebuilt."
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Editar Disco"
+#: freeadmin/static/lib/js/freeadmin.js:735
+msgid "The cache could not be rebuilt: "
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Borrar"
-
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Borrar disco"
-
-#: freeadmin/static/lib/js/freeadmin.js:862
+#: freeadmin/static/lib/js/freeadmin.js:943
 msgid "Please wait..."
 msgstr "Por favor espere..."
 
-#: freeadmin/static/lib/js/freeadmin.js:927
+#: freeadmin/static/lib/js/freeadmin.js:1023
 msgid "An error occurred!"
 msgstr "¡Ocurrió algún error!"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
-msgid "Each selected"
-msgstr "Cada uno selecionado"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:46
+msgid "Settings"
+msgstr "Configuración"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
-msgid "Every N"
-msgstr "Cada 'N'"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:57
+msgid "System Information"
+msgstr "Información del Sistema"
 
+#: freeadmin/static/lib/js/freeadmin/Menu.js:96
+msgid "Network Settings"
+msgstr "Configuración de Red"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:167
+msgid "Services"
+msgstr "Servicios"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:208
+msgid "Jails"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:246
 msgid "Plugins"
 msgstr "Plugins"
 
-msgid "CronJobs"
-msgstr "Tareas Programadas"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:286
+msgid "Account"
+msgstr "Cuenta"
 
-msgid "Replace"
-msgstr "Sustituir"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:325
+msgid "Storage"
+msgstr "Almacenamiento"
 
-msgid "Disk Replacement"
-msgstr "Sustitución de Disco"
+#: freeadmin/static/lib/js/freeadmin/Menu.js:394
+msgid "Support"
+msgstr ""
 
-msgid "Detach"
-msgstr "Desconectar"
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr ""
 
-msgid "Disk Detach"
-msgstr "Desconexión de Disco"
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr ""
 
-msgid "Every"
-msgstr "Cada"
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
+msgid "Each selected"
+msgstr "Cada uno selecionado"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
+msgid "Every N"
+msgstr "Cada 'N'"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr ""
+
+#~ msgid "Reporting"
+#~ msgstr "Informes"
+
+#~ msgid "Edit"
+#~ msgstr "Editar"
+
+#~ msgid "Edit Disk"
+#~ msgstr "Editar Disco"
+
+#~ msgid "Wipe"
+#~ msgstr "Borrar"
+
+#~ msgid "Wipe Disk"
+#~ msgstr "Borrar disco"
+
+#~ msgid "CronJobs"
+#~ msgstr "Tareas Programadas"
+
+#~ msgid "Replace"
+#~ msgstr "Sustituir"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Sustitución de Disco"
+
+#~ msgid "Detach"
+#~ msgstr "Desconectar"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Desconexión de Disco"
+
+#~ msgid "Every"
+#~ msgstr "Cada"
