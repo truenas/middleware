@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-03-10 16:45+0200\n"
+"POT-Creation-Date: 2013-12-01 16:50+0000\n"
+"PO-Revision-Date: 2012-03-10 16:45+0000\n"
 "Last-Translator: ngosngosan <ngosngosan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
@@ -16,89 +16,133 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1331397940.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Pelaporan"
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:68
-msgid "Settings"
-msgstr "Pengaturan"
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:79
-msgid "System Information"
-msgstr "Informasi Sistem"
-
-#: freeadmin/static/lib/js/freeadmin.js:119
-msgid "Network Settings"
-msgstr "Pengaturan Jaringan"
-
-#: freeadmin/static/lib/js/freeadmin.js:190
-msgid "Services"
-msgstr "Layanan"
-
-#: freeadmin/static/lib/js/freeadmin.js:231
-msgid "Account"
-msgstr "Akun"
-
-#: freeadmin/static/lib/js/freeadmin.js:270
-msgid "Storage"
-msgstr "Penyimpanan"
-
-#: freeadmin/static/lib/js/freeadmin.js:500
-#: freeadmin/static/lib/js/freeadmin.js:523
+#: freeadmin/static/lib/js/freeadmin.js:390
+#: freeadmin/static/lib/js/freeadmin.js:409
 #, fuzzy
 msgid "Some error occurred"
 msgstr "Terjadi beberapa kesalahan!"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Sesuaikan"
-
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Sesuaikan Cakram"
-
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
+#: freeadmin/static/lib/js/freeadmin.js:733
+msgid "The cache is being rebuilt."
 msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
-msgid "Wipe Disk"
-msgstr "Sesuaikan Cakram"
+#: freeadmin/static/lib/js/freeadmin.js:735
+msgid "The cache could not be rebuilt: "
+msgstr ""
 
-#: freeadmin/static/lib/js/freeadmin.js:862
+#: freeadmin/static/lib/js/freeadmin.js:943
 msgid "Please wait..."
 msgstr "Harap tunggu..."
 
-#: freeadmin/static/lib/js/freeadmin.js:927
+#: freeadmin/static/lib/js/freeadmin.js:1023
 msgid "An error occurred!"
 msgstr "Terjadi beberapa kesalahan!"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
+#: freeadmin/static/lib/js/freeadmin/Menu.js:46
+msgid "Settings"
+msgstr "Pengaturan"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:57
+msgid "System Information"
+msgstr "Informasi Sistem"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:96
+msgid "Network Settings"
+msgstr "Pengaturan Jaringan"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:167
+msgid "Services"
+msgstr "Layanan"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:208
+msgid "Jails"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:246
+msgid "Plugins"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:286
+msgid "Account"
+msgstr "Akun"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:325
+msgid "Storage"
+msgstr "Penyimpanan"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:394
+msgid "Support"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
 msgid "Each selected"
 msgstr "Masing-masing yang dipilih"
 
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
 msgid "Every N"
 msgstr "Setiap N"
 
-msgid "CronJobs"
-msgstr "Tugas Cron"
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr ""
 
-msgid "Replace"
-msgstr "Ganti"
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr ""
 
-msgid "Disk Replacement"
-msgstr "Pergantian Cakram"
+#~ msgid "Reporting"
+#~ msgstr "Pelaporan"
 
-msgid "Detach"
-msgstr "Melepaskan"
+#~ msgid "Edit"
+#~ msgstr "Sesuaikan"
 
-msgid "Disk Detach"
-msgstr "Melepaskan Cakram"
+#~ msgid "Edit Disk"
+#~ msgstr "Sesuaikan Cakram"
 
-msgid "Every"
-msgstr "Setiap"
+#, fuzzy
+#~ msgid "Wipe Disk"
+#~ msgstr "Sesuaikan Cakram"
+
+#~ msgid "CronJobs"
+#~ msgstr "Tugas Cron"
+
+#~ msgid "Replace"
+#~ msgstr "Ganti"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Pergantian Cakram"
+
+#~ msgid "Detach"
+#~ msgstr "Melepaskan"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Melepaskan Cakram"
+
+#~ msgid "Every"
+#~ msgstr "Setiap"
