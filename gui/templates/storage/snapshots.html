@@ -79,27 +79,27 @@
     var struc = [
     {
         field: 'filesystem',
-        name: 'Volume/Dataset',
+        name: '{% trans "Volume/Dataset"|escapejs %}',
         width: 'auto',
     },
     {
         field: 'name',
-        name: 'Snapshot Name',
+        name: '{% trans "Snapshot Name"|escapejs %}',
         width: 'auto',
     },
     {
         field: 'used',
-        name: 'Used',
+        name: '{% trans "Used"|escapejs %}',
         width: 'auto',
     },
     {
         field: 'refer',
-        name: 'Refer',
+        name: '{% trans "Refer"|escapejs %}',
         width: 'auto',
     },
     {
         field: 'extra',
-        name: 'Available Actions',
+        name: '{% trans "Available Actions"|escapejs %}',
         width: 'auto',
         filterable: false,
         formatter: acts,
