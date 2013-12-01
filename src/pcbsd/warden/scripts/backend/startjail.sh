@@ -146,22 +146,29 @@ start_jail_vimage()
   # Configure default IPv4 gateway 
   #
   if [ -n "${GATEWAY4}" ] ; then
+     local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
      if [ "${LINUXJAIL}" != "YES" ] ; then
         jexec ${JID} route add -inet default ${GATEWAY4}
      else
         jexec ${JID} route add default gateway ${GATEWAY4}
      fi  
-
+     if [ -n "${ether}" ] ; then
+        jexec ${JID} arp -s "${GATEWAY4}" "${ether}"
+     fi
   #
   # No defaultrouter configured for IPv4, so if bridge IP address was
   # configured, we set the default router to that IP.
   #
   elif [ -n "${BRIDGEIP4}" ] ; then
+     local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
      get_ip_and_netmask "${BRIDGEIP4}"
      if [ "${LINUXJAIL}" != "YES" ] ; then
         jexec ${JID} route add -inet default ${JIP}
      else
         jexec ${JID} route add default gateway ${JIP}
+     fi
+     if [ -n "${ether}" ] ; then
+        jexec ${JID} arp -s "${BRIDGEIP4}" "${ether}"
      fi
   fi
 
@@ -201,11 +208,16 @@ start_jail_vimage()
         GATEWAY4="$(get_default_route)"
      fi 
      if [ -n "${GATEWAY4}" ] ; then 
+        local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
         if [ "${LINUXJAIL}" != "YES" ] ; then
            jexec ${JID} route add -inet default ${GATEWAY4}
         else
            jexec ${JID} route add default gateway ${GATEWAY4}
         fi 
+        if [ -n "${ether}" ] ; then
+           jexec ${JID} arp -s "${GATEWAY4}" "${ether}"
+           echo jexec ${JID} arp -s "${GATEWAY4}" "${ether}"
+        fi
      fi
 
      return 0
