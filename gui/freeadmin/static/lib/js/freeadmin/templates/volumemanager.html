@@ -3,7 +3,7 @@
   <input type="hidden" data-dojo-attach-point="dapAll" />
   <table>
     <tr>
-      <th colspan="2">Volume Name</th>
+      <th colspan="2" data-dojo-attach-point="dapVolNameLabel">Volume Name</th>
     </tr>
     <tr>
       <td colspan="2">
@@ -11,7 +11,7 @@
       </td>
     </tr>
     <tr>
-      <th colspan="2">Volume to extend</th>
+      <th colspan="2" data-dojo-attach-point="dapVolExtendLabel">Volume to extend</th>
     </tr>
     <tr>
       <td colspan="2">
@@ -22,17 +22,17 @@
     <tr>
       <td>
         <input data-dojo-attach-point="dapDiskEnc" type="checkbox" />
-        Encryption
+        <span data-dojo-attach-point="dapDiskEncLabel">Encryption</span>
       </td>
       <td>
         <input data-dojo-attach-point="dapDiskEncIni" type="checkbox" />
-        Initialize Safely
+        <span data-dojo-attach-point="dapDiskEncIniLabel">Initialize Safely</span>
       </td>
     </tr>
     <tr>
       <td colspan="2">
         <fieldset>
-          <legend>Available disks</legend>
+          <legend data-dojo-attach-point="dapAvailLabel">Available disks</legend>
           <div data-dojo-attach-point="dapDisks">
           </div>
         </fieldset>
@@ -41,7 +41,7 @@
     <tr>
       <td colspan="2">
         <fieldset>
-          <legend>Volume layout (Estimated capacity: <span data-dojo-attach-point="dapCapacity"></span>)</legend>
+          <legend><span data-dojo-attach-point="dapLayoutLabel">Volume layout</span> (<span data-dojo-attach-point="dapLayoutEstimatedLabel">Estimated capacity</span>: <span data-dojo-attach-point="dapCapacity"></span>)</legend>
           <div data-dojo-attach-point="dapLayout">
           <input type="hidden" data-dojo-attach-point="dapLayoutAll" />
           <table class="layoutTable" data-dojo-attach-point="dapLayoutTable">

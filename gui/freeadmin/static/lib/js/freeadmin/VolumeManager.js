@@ -120,7 +120,7 @@ define([
         new Tooltip({
           showDelay: 200,
           connectId: [me.domNode],
-          label: "Size: " + me.size
+          label: gettext("Size") + ": " + me.size
           //label: "Size: " + me.size + "<br />Serial: " + me.serial
         });
         on(this.domNode, "click", function() {
@@ -259,11 +259,11 @@ define([
         if(this.disks.length > 0) {
           this.dapAdd.set('disabled', false);
           if(this.disks.length > 1) {
-            this.dapNum.innerHTML = sprintf("%d drives, ", this.disks.length);
+            this.dapNum.innerHTML = sprintf("%d %s, ", this.disks.length, gettext('drives'));
           } else {
-            this.dapNum.innerHTML = sprintf("%d drive, ", this.disks.length);
+            this.dapNum.innerHTML = sprintf("%d %s, ", this.disks.length, gettext('drive'));
           }
-          this._showNode = domConst.create("a", {innerHTML: "show"}, this.dapNum);
+          this._showNode = domConst.create("a", {innerHTML: gettext("show")}, this.dapNum);
           var me = this;
           on(this._showNode, mouse.enter, function() {
             me.show();
@@ -273,7 +273,7 @@ define([
           });
         } else {
           this.dapAdd.set('disabled', true);
-          this.dapNum.innerHTML = "no more drives";
+          this.dapNum.innerHTML = gettext("no more drives");
         }
       },
       show: function() {
@@ -331,7 +331,7 @@ define([
           }
         }
         if(valid === false) {
-          throw new Object({message: "Disk size mismatch"});
+          throw new Object({message: gettext("Disk size mismatch")});
         }
       },
       getDisksPerRow: function() {
@@ -516,12 +516,12 @@ define([
           if(this._isOptimal) {
             domStyle.set(this.dapOptimal, "fontWeight", "");
             domStyle.set(this.dapOptimal, "color", "");
-            this._optimalTooltip.set('content', "Your configuration is optimal!<br /><br />It means you'll have the best performance possible for this number of disks and type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>.");
+            this._optimalTooltip.set('content', gettext("Your configuration is optimal!<br /><br />It means you'll have the best performance possible for this number of disks and type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>."));
             this.dapOptimal.innerHTML = 'optimal';
           } else {
             domStyle.set(this.dapOptimal, "fontWeight", "bold");
             domStyle.set(this.dapOptimal, "color", "red");
-            this._optimalTooltip.set('content', "Your configuration is not optimal!<br /><br />It means this number of disks will not provide the best performance for that type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>.");
+            this._optimalTooltip.set('content', gettext("Your configuration is not optimal!<br /><br />It means this number of disks will not provide the best performance for that type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>."));
             this.dapOptimal.innerHTML = 'non-optimal';
           }
         } else {
@@ -661,6 +661,8 @@ define([
       },
       postCreate: function() {
         var me = this;
+
+        this.dapCapacityLabel.innerHTML = gettext('Capacity');
 
         this.disks = [];
         this._disksSwitch = [];
@@ -968,7 +970,7 @@ define([
 
         this._dragTooltip = Tooltip({
           connectId: [this.resize.domNode],
-          label: "Drag and drop this to resize",
+          label: gettext("Drag and drop this to resize"),
           onHide: function() {
             var checkDragTooltip = function() {
               if(!me._draggedOnce) {
@@ -1010,8 +1012,8 @@ define([
       dedup_warning: "",
       extend: "",
       swapSize: 0,
-      add_label: 'Add Volume<br/ ><span style="color: red;">Existing data will be cleared</span>',
-      extend_label: "Extend Volume",
+      add_label: gettext('Add Volume') + '<br/ ><span style="color: red;">' + gettext('Existing data will be cleared') + '</span>',
+      extend_label: gettext("Extend Volume"),
       _layout: [],
       _total_vdevs: null,
       _initial_vdevs: null,
@@ -1057,6 +1059,15 @@ define([
 
         this._form = new Form({}, this.dapForm);
         this._form.startup();
+
+        this.dapVolNameLabel.innerHTML = gettext('Volume Name');
+        this.dapVolExtendLabel.innerHTML = gettext('Volume to extend');
+        this.dapExtendEnc.innerHTML = gettext('Extending an encrypted volume will reset the passphrase and recovery key!');
+        this.dapDiskEncLabel.innerHTML = gettext('Encryption');
+        this.dapDiskEncIniLabel.innerHTML = gettext('Initialize Safely');
+        this.dapAvailLabel.innerHTML = gettext('Available disks');
+        this.dapLayoutLabel.innerHTML = gettext('Volume layout');
+        this.dapLayoutEstimatedLabel.innerHTML = gettext('Estimated capacity');
 
         new TextBox({
           name: "__all__",
@@ -1176,7 +1187,7 @@ define([
          * Add extra row for the layout
          */
         var add_extra = new Button({
-          label: "Add Extra Device"
+          label: gettext("Add Extra Device")
         }, this.dapLayoutAdd);
         on(add_extra, "click", function(evt) {
           lang.hitch(me, me.addVdev)({can_delete: true});
@@ -1190,7 +1201,7 @@ define([
         }, this.dapAdd);
 
         new Button({
-          label: "Cancel",
+          label: gettext("Cancel"),
           onClick: function() {
             cancelDialog(this);
           }
