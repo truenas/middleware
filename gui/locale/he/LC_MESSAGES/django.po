@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:43+0000\n"
+"POT-Creation-Date: 2013-12-02 02:03+0000\n"
 "PO-Revision-Date: 2012-11-29 08:48+0000\n"
 "Last-Translator: shaharhd <shaharhd@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1441,11 +1441,6 @@ msgstr "ראה את כל ההקפים"
 #, fuzzy
 msgid "Configuration"
 msgstr "תצורה עולמית"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 msgid "Unable to determine IPv4 for plugin"
@@ -4565,7 +4560,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "משומש"
 
@@ -5058,7 +5053,7 @@ msgstr "לפחות יום אחת חייב להיבחר"
 msgid "Recursive snapshot"
 msgstr "צילום רקורסיבי"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "שם הצילום"
 
@@ -5390,6 +5385,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "סט מידע"
@@ -7095,6 +7091,16 @@ msgstr "חזור לתצלום הזה"
 msgid "Rollback to this snapshot"
 msgstr "חזור לתצלום הזה"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "מועדף"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "פעולות זמינות"
+
 #: templates/storage/snapshots.html:142
 #, fuzzy
 msgid "Destroy"
@@ -7852,9 +7858,6 @@ msgstr "קריטי"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 אוטומטי"
-
-#~ msgid "Available actions"
-#~ msgstr "פעולות זמינות"
 
 #~ msgid "Edit Interface"
 #~ msgstr "ערוך מנשק"

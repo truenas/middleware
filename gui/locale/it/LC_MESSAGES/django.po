@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 13:19+0000\n"
-"PO-Revision-Date: 2013-12-01 15:03+0000\n"
+"POT-Creation-Date: 2013-12-02 02:04+0000\n"
+"PO-Revision-Date: 2013-12-01 15:05+0000\n"
 "Last-Translator: dalmazio <angelovioletto@live.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1385910184.0\n"
+"X-POOTLE-MTIME: 1385910317.0\n"
 
 #: choices.py:43
 msgid "Plain"
@@ -1447,11 +1447,6 @@ msgstr "Visualizza Extent dei file"
 #, fuzzy
 msgid "Configuration"
 msgstr "Configurazione globale"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4678,7 +4673,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Usato"
 
@@ -5171,7 +5166,7 @@ msgstr "Devi scegliere almeno un giorno"
 msgid "Recursive snapshot"
 msgstr "Snapshot ricorsivo"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Nome snapshot"
 
@@ -5499,6 +5494,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Dataset"
@@ -6850,6 +6846,11 @@ msgstr ""
 msgid "Import"
 msgstr "Importa Volume"
 
+#: templates/plugins/plugin_info.html:2
+#, fuzzy
+msgid "Plugin information"
+msgstr "Nome delle informazioni del plugin"
+
 #: templates/plugins/plugin_info.html:27 templates/system/wizard.html:23
 msgid "Please wait..."
 msgstr "Attendere prego..."
@@ -7225,6 +7226,16 @@ msgstr "Ripristina Snapshot"
 msgid "Rollback to this snapshot"
 msgstr "Ripristina questo snapshot"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Preferisci"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Azioni disponibili"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Distruggi"
@@ -7252,6 +7263,10 @@ msgstr "Manager dei Volumi"
 msgid "You have %(used)s of used space within this volume"
 msgstr "Hai %(used)s di spazio utilizzato in questo volume"
 
+#: templates/storage/volume_detach.html:19
+msgid "ATTENTION - Currently the following services depend on this volume: "
+msgstr ""
+
 #: templates/storage/volume_detach.html:27
 #, python-format
 msgid ""
@@ -7262,6 +7277,11 @@ msgstr ""
 #: templates/storage/volume_edit.html:3
 msgid "Edit ZFS Volume"
 msgstr "Modifica Volume ZFS"
+
+#: templates/storage/volumestatus_datagrid.html:4
+#, fuzzy
+msgid "Scrub"
+msgstr "Scrub ZFS"
 
 #: templates/storage/volumestatus_datagrid.html:8
 #, fuzzy
@@ -7390,6 +7410,11 @@ msgstr ""
 msgid "Apply Update"
 msgstr "Applica aggiornamento"
 
+#: templates/system/reboot.html:79
+#, fuzzy
+msgid "System is rebooting"
+msgstr "Ora di Sistema"
+
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
 msgid "Warning!"
@@ -7426,6 +7451,10 @@ msgstr "Salva Configurazione"
 #: templates/system/settings_edit.html:20
 msgid "Upload Config"
 msgstr "Carica Configurazione"
+
+#: templates/system/shutdown.html:85
+msgid "System is shutting down"
+msgstr ""
 
 #: templates/system/shutdown_dialog.html:4
 msgid ""
@@ -8008,9 +8037,6 @@ msgstr "Avvisi Critici"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 Auto"
-
-#~ msgid "Available actions"
-#~ msgstr "Azioni disponibili"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Modifica interfaccia"

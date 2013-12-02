@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:48+0000\n"
+"POT-Creation-Date: 2013-12-02 02:08+0000\n"
 "PO-Revision-Date: 2012-06-28 17:24+0000\n"
 "Last-Translator: Simor <batio3pzt@aol.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -287,11 +287,11 @@ msgstr "Aygıt"
 
 # ZFS Volume, aslında bölüm değil. YAni diğer dosya sistemlerindeki partition(bölümleme değil). HAtta unix ve linux onu bir aygıt olarak kabul ediyor. O yüzden bence bölüm yanlış. 
 # Open solaris sayfasından alıntı: ZFS Volumes
-# 
+#
 # A ZFS volume is a dataset that represents a block device and can be used like any block device. ZFS volumes are identified as devices in the /dev/zvol/{dsk,rdsk}/path directory.
-# 
+#
 # In the following example, 5-Gbyte ZFS volume, tank/vol, is created:
-# 
+#
 # .. Bu yüzden bence birim veya ne bileyim sanal aygıt denebilir veya daha uygun birşey.
 #: choices.py:217
 msgid "ZFS Volume"
@@ -1453,11 +1453,6 @@ msgstr "Aygıt Dosyalarını Göster"
 #, fuzzy
 msgid "Configuration"
 msgstr "Genel Yapılandırma"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4625,7 +4620,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Kullanılan"
 
@@ -4643,11 +4638,11 @@ msgstr "Birimi Ayır"
 
 # ZFS Volume, aslında bölüm değil. YAni diğer dosya sistemlerindeki partition(bölümleme değil). HAtta unix ve linux onu bir aygıt olarak kabul ediyor. O yüzden bence bölüm yanlış. 
 # Open solaris sayfasından alıntı: ZFS Volumes
-# 
+#
 # A ZFS volume is a dataset that represents a block device and can be used like any block device. ZFS volumes are identified as devices in the /dev/zvol/{dsk,rdsk}/path directory.
-# 
+#
 # In the following example, 5-Gbyte ZFS volume, tank/vol, is created:
-# 
+#
 # .. Bu yüzden bence birim veya ne bileyim sanal aygıt denebilir veya daha uygun birşey.
 #: storage/admin.py:236
 msgid "Scrub Volume"
@@ -5064,11 +5059,11 @@ msgstr "Örneğin: 1g"
 
 # ZFS Volume, aslında bölüm değil. YAni diğer dosya sistemlerindeki partition(bölümleme değil). HAtta unix ve linux onu bir aygıt olarak kabul ediyor. O yüzden bence bölüm yanlış. 
 # Open solaris sayfasından alıntı: ZFS Volumes
-# 
+#
 # A ZFS volume is a dataset that represents a block device and can be used like any block device. ZFS volumes are identified as devices in the /dev/zvol/{dsk,rdsk}/path directory.
-# 
+#
 # In the following example, 5-Gbyte ZFS volume, tank/vol, is created:
-# 
+#
 # .. Bu yüzden bence birim veya ne bileyim sanal aygıt denebilir veya daha uygun birşey.
 #: storage/forms.py:1279
 #, fuzzy
@@ -5130,7 +5125,7 @@ msgstr "En azından bir gün seçilmelidir"
 msgid "Recursive snapshot"
 msgstr "Yinelemeli anlık durum görüntüsü"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Anlık durum görüntüsü adı"
 
@@ -5459,6 +5454,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Birimler"
@@ -7164,6 +7160,16 @@ msgstr "Anlık Durum Görüntüsünü Geri Al"
 #: templates/storage/snapshots.html:67
 msgid "Rollback to this snapshot"
 msgstr "Bu Anlık Durum Görüntüsünü Geri Al"
+
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Tercih"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Kullanılabilir işlemler"
 
 #: templates/storage/snapshots.html:142
 msgid "Destroy"

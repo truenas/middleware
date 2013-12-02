@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:40+0000\n"
+"POT-Creation-Date: 2013-12-02 02:01+0000\n"
 "PO-Revision-Date: 2011-11-22 14:47+0000\n"
 "Last-Translator: Marc <marc.codina@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1446,11 +1446,6 @@ msgstr "Veure tots els Extents"
 #, fuzzy
 msgid "Configuration"
 msgstr "Configuració Global"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 msgid "Unable to determine IPv4 for plugin"
@@ -4664,7 +4659,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Utilitzat"
 
@@ -5157,7 +5152,7 @@ msgstr "Al menys un dia ha de ser escollit"
 msgid "Recursive snapshot"
 msgstr "Snapshot recorsiu"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Nom del Sanpshot"
 
@@ -5489,6 +5484,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Dataset"
@@ -7210,6 +7206,16 @@ msgstr "Rollback a aquest snapshot"
 msgid "Rollback to this snapshot"
 msgstr "Rollback a aquest snapshot"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Preferit"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Accions disponibles"
+
 #: templates/storage/snapshots.html:142
 #, fuzzy
 msgid "Destroy"
@@ -7982,9 +7988,6 @@ msgstr "Alertes Crítiques"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 automàtic"
-
-#~ msgid "Available actions"
-#~ msgstr "Accions disponibles"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Editar interfície"

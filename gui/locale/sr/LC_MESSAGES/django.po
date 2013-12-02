@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:47+0000\n"
+"POT-Creation-Date: 2013-12-02 02:07+0000\n"
 "PO-Revision-Date: 2013-10-21 22:44+0000\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1450,11 +1450,6 @@ msgstr "Pogledaj oblast datoteke"
 #, fuzzy
 msgid "Configuration"
 msgstr "Globalna Konfiguracija"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4652,7 +4647,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Upotrebljen"
 
@@ -5141,7 +5136,7 @@ msgstr "Najmanje jedan dan mora biti izabran"
 msgid "Recursive snapshot"
 msgstr "Rekurzivni snimak"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Ime snimka"
 
@@ -5468,6 +5463,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Volumeni"
@@ -7201,6 +7197,16 @@ msgstr "Vraćanje snimka"
 msgid "Rollback to this snapshot"
 msgstr "Vrati na ovaj snimak"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Poželjan"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Dostupne radnje"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Uništiti"
@@ -8005,9 +8011,6 @@ msgstr "Kritična upozorenja"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 Auto"
-
-#~ msgid "Available actions"
-#~ msgstr "Dostupne radnje"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Uredi interfejs"

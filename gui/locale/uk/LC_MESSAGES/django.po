@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:48+0000\n"
-"PO-Revision-Date: 2013-11-30 12:30+0000\n"
+"POT-Creation-Date: 2013-12-02 02:08+0000\n"
+"PO-Revision-Date: 2013-12-01 21:27+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1385814628.0\n"
+"X-POOTLE-MTIME: 1385933242.0\n"
 
 #: choices.py:43
 msgid "Plain"
@@ -42,9 +42,8 @@ msgid "HTTPS"
 msgstr "HTTPS"
 
 #: choices.py:52
-#, fuzzy
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTP+HTTPS"
 
 #: choices.py:56 choices.py:235
 msgid "Auto"
@@ -235,15 +234,15 @@ msgstr "Неділя"
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr ""
+msgstr "Не зашифрований"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr ""
+msgstr "Зашифрований без пароля"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr ""
+msgstr "Зашифрований з паролем"
 
 #: choices.py:173
 msgid "Anonymous"
@@ -351,9 +350,8 @@ msgid "Off"
 msgstr "Викл."
 
 #: choices.py:304
-#, fuzzy
 msgid "lz4 (recommended)"
-msgstr "lzjb (рекомендовано)"
+msgstr "lz4 (рекомендовано)"
 
 #: choices.py:305
 msgid "gzip (default level, 6)"
@@ -369,12 +367,11 @@ msgstr "gzip (максимальний, повільно)"
 
 #: choices.py:308
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "zle (стиснення нулів)"
 
 #: choices.py:309
-#, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb (рекомендовано)"
+msgstr "lzjb (спадщина, не рекомендовано)"
 
 #: choices.py:538
 msgid "Hour(s)"
@@ -420,7 +417,7 @@ msgstr "Читання та запис"
 
 #: choices.py:560
 msgid "Verify"
-msgstr ""
+msgstr "Перевіряти"
 
 #: choices.py:569 choices.py:570 choices.py:571 choices.py:572
 #, python-format
@@ -486,23 +483,23 @@ msgstr "Негайний Offline тест (тільки ATA)"
 
 #: choices.py:600
 msgid "9600"
-msgstr ""
+msgstr "9600"
 
 #: choices.py:601
 msgid "19200"
-msgstr ""
+msgstr "19200"
 
 #: choices.py:602
 msgid "38400"
-msgstr ""
+msgstr "38400"
 
 #: choices.py:603
 msgid "57600"
-msgstr ""
+msgstr "57600"
 
 #: choices.py:604
 msgid "115200"
-msgstr ""
+msgstr "115200"
 
 #: choices.py:633
 msgid "Rsync module"
@@ -526,7 +523,7 @@ msgstr "Тихий"
 
 #: choices.py:659
 msgid "Fatal"
-msgstr ""
+msgstr "Критична помилка"
 
 #: choices.py:660 middleware/zfs.py:540 storage/models.py:136
 #: storage/models.py:760 storage/models.py:768
@@ -539,21 +536,19 @@ msgstr "Інформація"
 
 #: choices.py:662
 msgid "Verbose"
-msgstr ""
+msgstr "Докладно"
 
 #: choices.py:664
-#, fuzzy
 msgid "Debug2"
-msgstr "Налагодження"
+msgstr "Debug2"
 
 #: choices.py:665
-#, fuzzy
 msgid "Debug3"
-msgstr "Налагодження"
+msgstr "Debug3"
 
 #: choices.py:670
 msgid "Daemon"
-msgstr ""
+msgstr "Демон"
 
 #: choices.py:671 account/models.py:159 account/models.py:237
 #: services/models.py:699 services/models.py:1790 system/models.py:375
@@ -563,47 +558,39 @@ msgstr "Користувач"
 
 #: choices.py:672
 msgid "Auth"
-msgstr ""
+msgstr "Аутентифiкацiя"
 
 #: choices.py:673
-#, fuzzy
 msgid "Local 0"
-msgstr "Локальний користувач"
+msgstr "Локальний 0"
 
 #: choices.py:674
-#, fuzzy
 msgid "Local 1"
-msgstr "Локальний користувач"
+msgstr "Локальний 1"
 
 #: choices.py:675
-#, fuzzy
 msgid "Local 2"
-msgstr "Локальний користувач"
+msgstr "Локальний 2"
 
 #: choices.py:676
-#, fuzzy
 msgid "Local 3"
-msgstr "Локальний користувач"
+msgstr "Локальний 3"
 
 #: choices.py:677
-#, fuzzy
 msgid "Local 4"
-msgstr "Локальний користувач"
+msgstr "Локальний 4"
 
 #: choices.py:678
-#, fuzzy
 msgid "Local 5"
-msgstr "Локальний користувач"
+msgstr "Локальний 5"
 
 #: choices.py:679
-#, fuzzy
 msgid "Local 6"
-msgstr "Локальний користувач"
+msgstr "Локальний 6"
 
 #: choices.py:680
-#, fuzzy
 msgid "Local 7"
-msgstr "Локальний користувач"
+msgstr "Локальний 7"
 
 #: choices.py:684 services/models.py:1577 services/models.py:1578
 msgid "Active Directory"
@@ -615,12 +602,11 @@ msgstr "LDAP"
 
 #: choices.py:686
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 #: choices.py:687
-#, fuzzy
 msgid "NIS"
-msgstr "Мережевий інтерфейс"
+msgstr "NIS"
 
 #: choices.py:692
 msgid "type1"
@@ -643,14 +629,12 @@ msgid "type5"
 msgstr ""
 
 #: choices.py:702
-#, fuzzy
 msgid "on"
-msgstr "Нічого"
+msgstr "вкл"
 
 #: choices.py:703
-#, fuzzy
 msgid "off"
-msgstr "Викл."
+msgstr "викл"
 
 #: choices.py:704
 msgid "data"
@@ -709,19 +693,16 @@ msgid "Delete Group"
 msgstr "Видалити групу"
 
 #: account/forms.py:55
-#, fuzzy
 msgid "New Password"
 msgstr "Новий пароль"
 
 #: account/forms.py:60
-#, fuzzy
 msgid "Confirm New Password"
 msgstr "Підтвердження пароля"
 
 #: account/forms.py:68
-#, fuzzy
 msgid "Passwords do not match"
-msgstr "Секрет не співпадає"
+msgstr "Паролі не збігаються"
 
 #: account/forms.py:110
 msgid "Your name cannot start with \"-\""
@@ -814,12 +795,11 @@ msgstr "Паролі не співпадають."
 
 #: account/forms.py:539
 msgid "Home directory cannot contain colons"
-msgstr ""
+msgstr "Домашній каталог не може містити двокрапки"
 
 #: account/forms.py:561
-#, fuzzy
 msgid "Home directory must end with username"
-msgstr "Домашній каталог для запису не доступний, залиште це поле порожнім"
+msgstr "Домашній каталог повинен закiнчуватися iм'ям корискувача"
 
 #: account/forms.py:570
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
@@ -893,13 +873,12 @@ msgid "Group Name"
 msgstr "Ім'я групи"
 
 #: account/models.py:52
-#, fuzzy
 msgid "Built-in Group"
-msgstr "Допоміжні Групи"
+msgstr "Вбудована група"
 
 #: account/models.py:56 account/models.py:150
 msgid "Permit Sudo"
-msgstr ""
+msgstr "Дозволити sudo"
 
 #: account/models.py:60 account/models.py:233 services/models.py:1801
 msgid "Group"
@@ -944,16 +923,15 @@ msgstr "Повне ім'я"
 
 #: account/models.py:135
 msgid "Built-in User"
-msgstr ""
+msgstr "Вбудований користувач"
 
 #: account/models.py:138
 msgid "E-mail"
 msgstr "E-mail"
 
 #: account/models.py:142
-#, fuzzy
 msgid "Disable password login"
-msgstr "Відключити вхід під паролем"
+msgstr "Відключити вхід по паролю"
 
 #: account/models.py:146
 msgid "Lock user"
@@ -973,9 +951,8 @@ msgid "Group Membership"
 msgstr "Членство в групі"
 
 #: account/models.py:242
-#, fuzzy
 msgid "Group Memberships"
-msgstr "Членство в групі"
+msgstr "Членство в групах"
 
 #: account/nav.py:4 templates/menubar.html:67
 msgid "Account"
@@ -991,28 +968,27 @@ msgstr "Групи успішно оновлені."
 
 #: api/resources.py:766 storage/models.py:725 storage/models.py:735
 #: storage/models.py:752
-#, fuzzy
 msgid "Locked"
-msgstr "Блокувати користувача"
+msgstr "Заблокован"
 
 #: api/resources.py:852
 msgid "everyday"
 msgstr "щоденно"
 
 #: api/resources.py:859
-#, fuzzy, python-format
+#, python-format
 msgid "on every %(days)s"
-msgstr "Кожні %s дня"
+msgstr "Кожні %(days)s"
 
 #: api/resources.py:865
 #, python-format
 msgid "From %(begin)s through %(end)s, %(repeat)s"
-msgstr ""
+msgstr "С %(begin)s по %(end)s, %(repeat)s"
 
 #: common/system.py:278
 #, python-format
 msgid "Mount failed (%(retcode)s) -> %(output)s"
-msgstr ""
+msgstr "Сбiй монтування (%(retcode)s) -> %(output)s"
 
 #: freeadmin/forms.py:136
 #, python-format
@@ -1029,19 +1005,18 @@ msgid "The path must reside within a volume mount point"
 msgstr "Шлях повинен знаходитися в точці монтування томів."
 
 #: freeadmin/forms.py:220
-#, fuzzy
 msgid "A file is required"
-msgstr "Це поле є обов'язковим"
+msgstr "Потрібен файл"
 
 #: freeadmin/forms.py:255 freeadmin/forms.py:279
-#, fuzzy, python-format
+#, python-format
 msgid "Invalid address: %s"
-msgstr "Неприпустима прошивка"
+msgstr "Некоректна адреса: %s"
 
 #: freeadmin/forms.py:259 freeadmin/forms.py:283
-#, fuzzy, python-format
+#, python-format
 msgid "Invalid network: %s"
-msgstr "Невірна контрольна сума"
+msgstr "Некоректна мережа: %s"
 
 #: freeadmin/middleware.py:191 freeadmin/options.py:339
 #: freeadmin/options.py:517
@@ -1089,14 +1064,14 @@ msgid "An error occurred while unserializing from %(url)s: %(error)s"
 msgstr "Сталася помилка при десеріалізациі з %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:573
-#, fuzzy, python-format
+#, python-format
 msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
-msgstr "Сталася помилка при десеріалізациі з %(url)s: %(error)s"
+msgstr "Сталася помилка при десеріалізациі %(url)s (%(error)s), отримано:"
 
 #: freeadmin/navtree.py:608
-#, fuzzy, python-format
+#, python-format
 msgid "Could not reverse url, skipping node %(node)s: %(error)s"
-msgstr "Неможливо отримати %(url)s: %(error)s"
+msgstr "Неможливо отримати %(node)s: %(error)s"
 
 #: freeadmin/options.py:331 freeadmin/options.py:493 freeadmin/options.py:501
 #, python-format
@@ -1123,9 +1098,8 @@ msgstr "Не вдалося отримати поточний статус"
 
 #: jails/admin.py:75 jails/forms.py:724 jails/models.py:396
 #: templates/plugins/plugins.html:21
-#, fuzzy
 msgid "Jail"
-msgstr "Jail IP"
+msgstr "Jail"
 
 #: jails/admin.py:81 network/models.py:148 network/models.py:253
 #: templates/network/summary.html:6
@@ -1133,9 +1107,8 @@ msgid "IPv4 Address"
 msgstr "Адреса IPv4"
 
 #: jails/admin.py:91 jails/models.py:149
-#, fuzzy
 msgid "Autostart"
-msgstr "Авто"
+msgstr "Автозапуск"
 
 #: jails/admin.py:97 jails/models.py:153 storage/admin.py:125
 #: storage/admin.py:409 templates/storage/volumestatus_datagrid.html:5
@@ -1148,27 +1121,24 @@ msgid "Type"
 msgstr "Тип"
 
 #: jails/admin.py:182
-#, fuzzy
 msgid "Edit Jail"
-msgstr "Редагувати портал"
+msgstr "Редагувати Jail"
 
 #: jails/admin.py:185 jails/nav.py:264
-#, fuzzy
 msgid "Add Storage"
-msgstr "Сховище"
+msgstr "Додати сховище"
 
 #: jails/admin.py:188 templates/plugins/available_datagrid.html:27
-#, fuzzy
 msgid "Upload Plugin"
-msgstr "Поновити плагін"
+msgstr "Завантажити плагін"
 
 #: jails/admin.py:196
 msgid "Start"
-msgstr ""
+msgstr "Запустити"
 
 #: jails/admin.py:197
 msgid "Stop"
-msgstr ""
+msgstr "Зупинити"
 
 #: jails/admin.py:232 system/models.py:604
 #: templates/freeadmin/generic_model_edit.html:97
@@ -1185,11 +1155,11 @@ msgstr "Ім'я"
 
 #: jails/admin.py:261 jails/models.py:346
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: jails/admin.py:267
 msgid "Instances"
-msgstr ""
+msgstr "Примірники"
 
 #: jails/admin.py:287 jails/forms.py:655
 msgid "Mounted?"
@@ -1197,11 +1167,11 @@ msgstr "Встановити?"
 
 #: jails/forms.py:88
 msgid "type"
-msgstr ""
+msgstr "тип"
 
 #: jails/forms.py:92
 msgid "32 bit"
-msgstr ""
+msgstr "32-бітовий"
 
 #: jails/forms.py:98
 msgid "vanilla"
@@ -1209,45 +1179,44 @@ msgstr ""
 
 #: jails/forms.py:170
 msgid "No jail root configured."
-msgstr ""
+msgstr "Не встановлено корiнь jail."
 
 #: jails/forms.py:233 jails/utils.py:623
 msgid "Unable to find template!"
-msgstr ""
+msgstr "На вдалося знайти шаблон!"
 
 #: jails/forms.py:450
-#, fuzzy
 msgid "Path does not exist!"
-msgstr "Шлях не існує."
+msgstr "Шлях не існує!"
 
 #: jails/forms.py:458
 msgid "autostart"
-msgstr ""
+msgstr "автозапуск"
 
 #: jails/forms.py:459 jails/models.py:158
 msgid "VIMAGE"
-msgstr ""
+msgstr "VIMAGE"
 
 #: jails/forms.py:460 jails/models.py:162
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: jails/forms.py:651
 msgid "Create destination directory if it does not exist"
-msgstr ""
+msgstr "Створити каталог призначення, якщо його ще не існує"
 
 #: jails/forms.py:693
 msgid "This shouldn't happen, but the jail could not be found"
-msgstr ""
+msgstr "Це не повинно траплятися, але jail не може бути знайдений"
 
 #: jails/forms.py:700
 msgid "The full path cannot exceed 88 characters"
 msgstr "Повний шлях не може перевищувати 88 символів"
 
 #: jails/forms.py:771
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %(source)s: %(error)s"
-msgstr "Шлях не може бути встановлений %s"
+msgstr "Шлях не може бути змонтовано %(source)s: %(error)s"
 
 #: jails/forms.py:778
 #, python-format
@@ -1256,157 +1225,137 @@ msgstr "Шлях не може бути размонтовано: %s"
 
 #: jails/hook.py:13 jails/models.py:252 jails/models.py:253 jails/nav.py:47
 #: templates/jails/index.html:5
-#, fuzzy
 msgid "Jails"
-msgstr "Jail IP"
+msgstr "Jail"
 
 #: jails/models.py:72
-#, fuzzy
 msgid "Jail Name"
-msgstr "Jail ім'я"
+msgstr "Iм'я Jail"
 
 #: jails/models.py:82
-#, fuzzy
 msgid "IPv4 address"
 msgstr "Адреса IPv4"
 
 #: jails/models.py:88
-#, fuzzy
 msgid "IPv4 aliases"
-msgstr "Псевдоніми"
+msgstr "Псевдоніми IPv4"
 
 #: jails/models.py:94
-#, fuzzy
 msgid "IPv4 bridge address"
-msgstr "Адреса IPv4"
+msgstr "Адреса IPv4 bridge"
 
 #: jails/models.py:100
 msgid "IPv4 bridge aliases"
-msgstr ""
+msgstr "Псевдоніми IPv4 bridge"
 
 #: jails/models.py:107
-#, fuzzy
 msgid "IPv4 default gateway"
-msgstr "Типовий IPv4 Шлюз"
+msgstr "Шлюз IPv4 за замовчуванням"
 
 #: jails/models.py:113
-#, fuzzy
 msgid "IPv6 address"
 msgstr "Адреса IPv6"
 
 #: jails/models.py:119
-#, fuzzy
 msgid "IPv6 aliases"
-msgstr "Псевдоніми"
+msgstr "Псевдоніми IPv6"
 
 #: jails/models.py:125
-#, fuzzy
 msgid "IPv6 bridge address"
-msgstr "Адреса IPv6"
+msgstr "Адреса IPv6 bridge"
 
 #: jails/models.py:131
 msgid "IPv6 bridge aliases"
-msgstr ""
+msgstr "Псевдоніми IPv6 bridge"
 
 #: jails/models.py:138
-#, fuzzy
 msgid "IPv6 default gateway"
-msgstr "Типовий IPv6 Шлюз"
+msgstr "Шлюз IPv6 за замовчуванням"
 
 #: jails/models.py:144
 msgid "MAC"
-msgstr ""
+msgstr "MAC"
 
 #: jails/models.py:224
-#, fuzzy, python-format
+#, python-format
 msgid "This jail is required by %d plugin(s)"
-msgstr "Це поле є обов'язковим для забезпечення анонімного входу."
+msgstr "Цей jail є обов'язковим для %d плагiн(-iв)"
 
 #: jails/models.py:260
-#, fuzzy
 msgid "Jail Root"
-msgstr "Jail шлях"
+msgstr "Корiнь Jail"
 
 #: jails/models.py:261
 msgid "Path where to store jail data"
-msgstr ""
+msgstr "Шлях для зберігання даних jail"
 
 #: jails/models.py:265
-#, fuzzy
 msgid "IPv4 Network"
 msgstr "Маска мережі IPv4"
 
 #: jails/models.py:266
 msgid "IPv4 network range for jails and plugins"
-msgstr ""
+msgstr "Діапазон IPv4 адрес для jail і плагінів"
 
 #: jails/models.py:270
-#, fuzzy
 msgid "IPv4 Network Start Address"
-msgstr "Адреса IPv4"
+msgstr "Початкова адреса IPv4 мережi"
 
 #: jails/models.py:271
 msgid "IPv4 network start address for jails and plugins"
-msgstr ""
+msgstr "Початкова адреса IPv4 мережі для jail і плагінів"
 
 #: jails/models.py:275
-#, fuzzy
 msgid "IPv4 Network End Address"
-msgstr "Адреса IPv4"
+msgstr "Кiнцева адреса IPv4 мережі"
 
 #: jails/models.py:276
 msgid "IPv4 network end address for jails and plugins"
-msgstr ""
+msgstr "Кiнцева адреса IPv4 мережі для jail і плагінів"
 
 #: jails/models.py:280
-#, fuzzy
 msgid "IPv6 Network"
 msgstr "Маска мережі IPv6"
 
 #: jails/models.py:281
 msgid "IPv6 network range for jails and plugins"
-msgstr ""
+msgstr "Дiапазон IPv6 адрес для jail і плагінів"
 
 #: jails/models.py:285
-#, fuzzy
 msgid "IPv6 Network Start Address"
-msgstr "Адреса IPv6"
+msgstr "Початкова адреса IPv6 мережi"
 
 #: jails/models.py:286
 msgid "IPv6 network start address for jails and plugins"
-msgstr ""
+msgstr "Початкова адреса IPv6 мережі для jail і плагінів"
 
 #: jails/models.py:290
-#, fuzzy
 msgid "IPv6 Network End Address"
-msgstr "Адреса IPv6"
+msgstr "Кiнцева адреса IPv6 мережi"
 
 #: jails/models.py:291
 msgid "IPv6 network end address for jails and plugins"
-msgstr ""
+msgstr "Кiнцева адреса IPv6 мережі для jail і плагінів"
 
 #: jails/models.py:294
-#, fuzzy
 msgid "Collection URL"
-msgstr "З'єднання"
+msgstr "URL колекцii"
 
 #: jails/models.py:296
 msgid "URL for the jails index"
-msgstr ""
+msgstr "URL перелiку jail"
 
 #: jails/models.py:305 jails/models.py:306
-#, fuzzy
 msgid "Jails Configuration"
-msgstr "Загальна конфігурація"
+msgstr "Конфігурація jail"
 
 #: jails/models.py:373
 msgid "Template must have 0 instances!"
-msgstr ""
+msgstr "Шаблон повинен не мати примiрникiв!"
 
 #: jails/models.py:388 jails/models.py:389
-#, fuzzy
 msgid "Jail Templates"
-msgstr "Jail шлях"
+msgstr "Шаблони jail"
 
 #: jails/models.py:400
 msgid "Source"
@@ -1417,9 +1366,8 @@ msgid "Destination"
 msgstr "Напрямок"
 
 #: jails/models.py:408
-#, fuzzy
 msgid "Read-Only"
-msgstr "Тільки читати"
+msgstr "Тільки читання"
 
 #: jails/models.py:412 jails/models.py:413 jails/nav.py:242 storage/nav.py:5
 #: templates/menubar.html:20
@@ -1427,83 +1375,67 @@ msgid "Storage"
 msgstr "Сховище"
 
 #: jails/nav.py:70
-#, fuzzy
 msgid "Add Jails"
-msgstr "Додати %s"
+msgstr "Додати jail"
 
 #: jails/nav.py:85
 msgid "Add Jail Templates"
-msgstr ""
+msgstr "Додати шаблон jail"
 
 #: jails/nav.py:100
-#, fuzzy
 msgid "View Jails"
-msgstr "Переглянути %s"
+msgstr "Переглянути jail"
 
 #: jails/nav.py:114
-#, fuzzy
 msgid "View Jail Templates"
-msgstr "Переглянути файл екстент"
+msgstr "Переглянути шаблони jail"
 
 #: jails/nav.py:129 plugins/models.py:183 templates/jails/index.html:28
 #: templates/plugins/index.html:18
-#, fuzzy
 msgid "Configuration"
-msgstr "Загальна конфігурація"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
+msgstr "Конфігурація"
 
 #: jails/utils.py:567
-#, fuzzy
 msgid "Unable to determine IPv4 for plugin"
-msgstr "Не вдається видалити плагін."
+msgstr "Неможливо визначити адресу IPv4 для плагіна"
 
 #: jails/utils.py:640
 #, python-format
 msgid "Failed to install plugin: %s"
-msgstr ""
+msgstr "Не вдалось встановити плагiн: %s"
 
 #: jails/utils.py:679
 msgid "You need to create a ZFS volume to proceed!"
-msgstr ""
+msgstr "Ви повинні створити том ZFS для продовження!"
 
 #: jails/utils.py:694
-#, fuzzy, python-format
+#, python-format
 msgid "Failed to create dataset %(name)s: %(error)s"
-msgstr "Неможливо отримати %(url)s: %(error)s"
+msgstr "Неможливо створити %(name)s: %(error)s"
 
 #: jails/views.py:94
-#, fuzzy
 msgid "Jail successfully edited."
-msgstr "Jail успішно імпортовано."
+msgstr "Jail успішно змiнено."
 
 #: jails/views.py:114
-#, fuzzy
 msgid "Storage successfully added."
-msgstr "Набір даних успішно додано."
+msgstr "Сховище успішно додано."
 
 #: jails/views.py:134
-#, fuzzy
 msgid "Jail successfully started."
-msgstr "Jail успішно імпортовано."
+msgstr "Jail успішно запущено."
 
 #: jails/views.py:155
-#, fuzzy
 msgid "Jail successfully stopped."
-msgstr "Jail успішно імпортовано."
+msgstr "Jail успішно зупинено."
 
 #: jails/views.py:176
-#, fuzzy
 msgid "Jail successfully deleted."
-msgstr "%s успішно видалено."
+msgstr "jail успішно видалено."
 
 #: jails/views.py:397
-#, fuzzy
 msgid "Jail template successfully edited."
-msgstr "Набір даних успішно змінений."
+msgstr "Шаблон jail успішно змінено."
 
 #: middleware/notifier.py:2874
 msgid "No RPC Token!"
@@ -1523,16 +1455,15 @@ msgstr "Помилка при отриманні використовувано�
 
 #: middleware/zfs.py:609
 msgid "In Progress"
-msgstr ""
+msgstr "Виконується"
 
 #: middleware/zfs.py:633
 msgid "Completed"
-msgstr ""
+msgstr "Завершено"
 
 #: middleware/zfs.py:644
-#, fuzzy
 msgid "Canceled"
-msgstr "Скасувати"
+msgstr "Скасовано"
 
 #: middleware/zfs.py:648
 msgid "Unknown"
@@ -1540,17 +1471,15 @@ msgstr "Невідомий"
 
 #: middleware/zfs.py:654
 msgid "None requested"
-msgstr ""
+msgstr "Не було запитано"
 
 #: network/admin.py:39
-#, fuzzy
 msgid "IPv4 Addresses"
-msgstr "Адреса IPv4"
+msgstr "Адреси IPv4"
 
 #: network/admin.py:44
-#, fuzzy
 msgid "IPv6 Addresses"
-msgstr "Адреса IPv6"
+msgstr "Адреси IPv6"
 
 #: network/admin.py:62
 msgid "Edit Members"
@@ -1573,16 +1502,16 @@ msgstr ""
 
 #: network/forms.py:128
 msgid "Only one interface can be used for DHCP"
-msgstr ""
+msgstr "Лише один iнтерфейс може бути використаний для DHCP"
 
 #: network/forms.py:141
 msgid "Only one interface can have IPv6 autoconfiguration enabled"
-msgstr ""
+msgstr "Лише один iнтерфейс може використовувати автоналагодженя IPv6"
 
 #: network/forms.py:175 network/forms.py:584
 #, python-format
 msgid "The network %s is already in use by another NIC."
-msgstr ""
+msgstr "Мережа %s вже використовується iншим iнтерфейсом."
 
 #: network/forms.py:208
 msgid "You have to specify IPv4 address as well"
@@ -1621,7 +1550,7 @@ msgid "169.254/16 subnet is not valid for nameserver"
 msgstr "169.254/16 підмережа не поширюється на DNS (сервер імен)"
 
 #: network/forms.py:284
-#, fuzzy, python-format
+#, python-format
 msgid "The IP \"%s\" is not valid"
 msgstr "IP-адреса '%s' є недопустимою."
 
@@ -1643,17 +1572,16 @@ msgstr "Необхідно заповнити DNS 1 перед заповнен�
 
 #: network/forms.py:343
 msgid "You need a domain, e.g. hostname.domain"
-msgstr ""
+msgstr "Потрiбен домен, наприклад hostname.domain"
 
 #: network/forms.py:357
 msgid "Parent Interface"
 msgstr "Оригінальний інтерфейс"
 
 #: network/forms.py:373
-#, fuzzy
 msgid "The name must be vlanX where X is a number. Example: vlan0"
 msgstr ""
-"Імена інтерфейсів повинні мати вигляд: vlanXX, де XX- число. Як приклад: "
+"Імена інтерфейсів повинні мати вигляд: vlanXX, де XX - число. На приклад: "
 "vlan0."
 
 #: network/forms.py:380
@@ -1728,9 +1656,8 @@ msgid "Nameserver 3"
 msgstr "DNS 3"
 
 #: network/models.py:77
-#, fuzzy
 msgid "Enable netwait feature"
-msgstr "Увімкнути автоналаштування"
+msgstr "Увімкнути очiкування мережi"
 
 #: network/models.py:78
 msgid ""
@@ -1741,10 +1668,16 @@ msgid ""
 "timeouts are exceeded, network services are started anyway with no guarantee "
 "that the network is usable."
 msgstr ""
+"Якщо увiмкнено, затримує запуск мережевих сервісів до моменту підйому "
+"мережевого інтерфейсу і проходження ICMP пакетів до зазначених IP адрес. У "
+"першу чергу перевіряється стан інтерфейсу, потім IP адреса \"пінгуєтся\", "
+"щоб перевірити функціонування мережі. Якщо адреса не досяжна або перевищено "
+"інтервал очікування, мережевий сервіс все одно буде запущений, але без "
+"гарантії його функціонування."
 
 #: network/models.py:88
 msgid "Netwait IP list"
-msgstr ""
+msgstr "Перелiк IP для очiкування"
 
 #: network/models.py:89
 msgid ""
@@ -1752,16 +1685,22 @@ msgid ""
 "are specified, each will be tried until one is successful or the list is "
 "exhausted. If it is empty the default gateway will be used."
 msgstr ""
+"Розділений пробілами список IP адрес для ping(8). Якщо вказано декілька "
+"адрес, вони перевірятимуться послідовно до отримання першої успішної "
+"відповіді. Якщо список порожній, використовується адреса шлюзу за "
+"замовчуванням."
 
 #: network/models.py:97
 msgid "Host name data base"
-msgstr ""
+msgstr "База даных хостов"
 
 #: network/models.py:98
 msgid ""
 "This field is appended to /etc/hosts which contains information regarding "
 "known hosts on the network. hosts(5)"
 msgstr ""
+"Це поле додається до файлу /etc/hosts, який містить інформацію про відомi "
+"мережевi хости. hosts (5)"
 
 #: network/models.py:123 network/models.py:124 network/nav.py:23
 #: templates/network/index.html:2
@@ -1878,7 +1817,6 @@ msgid "Link Aggregations"
 msgstr "Об'єднання інтерфейсів"
 
 #: network/models.py:401
-#, fuzzy
 msgid "LAGG Interface Group"
 msgstr "Група інтерфейсів LAGG"
 
@@ -1891,14 +1829,12 @@ msgid "Physical NIC"
 msgstr "Фізичний мережевий інтерфейс"
 
 #: network/models.py:427
-#, fuzzy
 msgid "Link Aggregation Member"
-msgstr "Об'єднання інтерфейсів (Link Aggregation)"
+msgstr "Член об'єднання інтерфейсів"
 
 #: network/models.py:428
-#, fuzzy
 msgid "Link Aggregation Members"
-msgstr "Об'єднання інтерфейсів"
+msgstr "Члени об'єднання інтерфейсів"
 
 #: network/models.py:435
 msgid "Destination network"
@@ -1933,9 +1869,8 @@ msgid "View Link Aggregations"
 msgstr "Переглянути всі об'єднані інтерфейси"
 
 #: plugins/admin.py:58 plugins/admin.py:65
-#, fuzzy
 msgid "Install"
-msgstr "Встановлено​..."
+msgstr "Встановлення"
 
 #: plugins/forms.py:58
 msgid "This IP is already in use."
@@ -1950,16 +1885,16 @@ msgid ""
 "Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en/"
 "package-management/' onclick='window.open(this.href);return false;'>"
 msgstr ""
+"Натиснiть сюди щоб дiзнатися що таке PBI!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
 
 #: plugins/forms.py:105
-#, fuzzy
 msgid "Plugin Jail"
-msgstr "Plugins Jail PBI"
+msgstr "Jail плагiна"
 
 #: plugins/forms.py:106
-#, fuzzy
 msgid "The plugin jail that the PBI is to be installed in."
-msgstr "Шлях плагінів не може бути або містити jail шлях."
+msgstr "Jail плагіна до якого повинен бути встановлений PBI."
 
 #: plugins/hook.py:14 plugins/models.py:104 plugins/nav.py:29
 msgid "Plugins"
@@ -2022,19 +1957,16 @@ msgid "Path where the plugins are saved after installation"
 msgstr "Шлях, де плагіни зберігаються після інсталяціі"
 
 #: plugins/models.py:93
-#, fuzzy
 msgid "Plugin jail name"
-msgstr "Ім'я плагіна"
+msgstr "Ім'я jail плагіна"
 
 #: plugins/models.py:94
-#, fuzzy
 msgid "Jail where the plugin is installed"
-msgstr "Плагіни не встановлені"
+msgstr "jail до якого встановлено палагін"
 
 #: plugins/models.py:103
-#, fuzzy
 msgid "Plugin"
-msgstr "Плагіни"
+msgstr "Плагін"
 
 #: plugins/models.py:141
 msgid "Kmod"
@@ -2046,15 +1978,14 @@ msgstr "Версія"
 
 #: plugins/models.py:173
 msgid "Repository URL"
-msgstr ""
+msgstr "URL сховища"
 
 #: plugins/models.py:175
-#, fuzzy
 msgid "URL for the plugins repository"
 msgstr "Шлях до каталогу з плагінами"
 
 #: plugins/plugin.py:120
-#, fuzzy, python-format
+#, python-format
 msgid "Failed to download %(url)s: %(error)s"
 msgstr "Неможливо отримати %(url)s: %(error)s"
 
@@ -2063,38 +1994,32 @@ msgid "Plugin successfully updated."
 msgstr "Плагін успішно оновлено."
 
 #: plugins/views.py:171
-#, fuzzy
 msgid "Plugin not installed"
-msgstr "Плагіни не встановлені"
+msgstr "Плагін не встановлено"
 
 #: plugins/views.py:181 plugins/views.py:242
-#, fuzzy
 msgid "Invalid plugin"
-msgstr "Неприпустимий префікс"
+msgstr "Неприпустимий плагiн"
 
 #: plugins/views.py:192 plugins/views.py:250
-#, fuzzy
 msgid "Failed to download plugin"
-msgstr "Не вдається видалити плагін."
+msgstr "Не вдалося завантажити плагін"
 
 #: plugins/views.py:196
-#, fuzzy
 msgid "Jail does not exist"
-msgstr "Шлях не існує."
+msgstr "jail не існує"
 
 #: plugins/views.py:205
-#, fuzzy
 msgid "Failed to update plugin"
-msgstr "Назва плагіна"
+msgstr "Не вдалося оновити плагiн"
 
 #: plugins/views.py:209
 msgid "Plugin successfully updated"
 msgstr "Плагін успішно оновлено."
 
 #: plugins/views.py:224 plugins/views.py:355
-#, fuzzy
 msgid "No available IP addresses"
-msgstr "IP адреса Jail"
+msgstr "Немає доступних IP адрес"
 
 #: plugins/views.py:266 plugins/views.py:390
 msgid "Plugin successfully installed"
@@ -2215,9 +2140,8 @@ msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr "Використовуйте літери, цифри, \".\" \"-\" і \"_\"."
 
 #: services/forms.py:637 services/forms.py:645
-#, fuzzy
 msgid "Spaces or number signs are not allowed."
-msgstr "Лапки не дозволені"
+msgstr "Прогалини і числа не дозволені."
 
 #: services/forms.py:659 services/forms.py:1570
 #, python-format
@@ -2250,9 +2174,8 @@ msgid "Enter the same secret above for verification."
 msgstr "Введіть такий секрет, що і вище для перевірки."
 
 #: services/forms.py:826
-#, fuzzy
 msgid "Peer Secret (Confirm)"
-msgstr "Секрет (Підтвердження)"
+msgstr "Секрет напарника (Підтвердження)"
 
 #: services/forms.py:868
 msgid "Secret does not match"
@@ -2353,6 +2276,7 @@ msgstr ""
 #, python-format
 msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
 msgstr ""
+"Серійний номер не знайдено та glabel не спрацював для %(disk)s: %(error)s"
 
 #: services/forms.py:1380
 #, python-format
@@ -2376,9 +2300,8 @@ msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
 msgstr "Використовуйте алфавітно-цифрові символи, \".\", \"-\" і \":\"."
 
 #: services/forms.py:1504
-#, fuzzy
 msgid "A target with that name already exists."
-msgstr "Група з таким ім'ям вже існує."
+msgstr "Цiль з таким ім'ям вже існує."
 
 #: services/forms.py:1535
 msgid "Delete underlying file"
@@ -2595,9 +2518,8 @@ msgstr ""
 "Browser в Windows."
 
 #: services/models.py:214
-#, fuzzy
 msgid "Hostnames lookups"
-msgstr "Ім’я хоста"
+msgstr "Пошук назв хостов"
 
 #: services/models.py:216
 msgid ""
@@ -2605,6 +2527,9 @@ msgid ""
 "ip addresses instead. An example place where hostname lookups are currently "
 "used is when checking the hosts deny and hosts allow."
 msgstr ""
+"Вказує чи повинна samba використовувати (дороге) перетворення імен або "
+"використовувати замість них IP адреси. Як приклад використання імен можна "
+"називати списки дозволених і заборонених хостів."
 
 #: services/models.py:223 services/models.py:224 storage/forms.py:2039
 #: templates/services/core.html:15
@@ -2631,9 +2556,8 @@ msgid ""
 msgstr "Максимально дозволена кількість з'єднань через AFP. Типово 50."
 
 #: services/models.py:259
-#, fuzzy
 msgid "Enable/disable home directories for afp user."
-msgstr "Включає/відключає домашні каталоги для користувача Samba."
+msgstr "Включає/відключає домашні каталоги для користувачiв afp."
 
 #: services/models.py:267 services/models.py:268 storage/forms.py:2038
 #: templates/services/core.html:4
@@ -2654,9 +2578,8 @@ msgstr ""
 "до шести."
 
 #: services/models.py:287
-#, fuzzy
 msgid "Allow non-root mount"
-msgstr "Дозволити вхід суперкористувача"
+msgstr "Дозволити монтування не суперкористувачем"
 
 #: services/models.py:288
 msgid ""
@@ -2665,9 +2588,12 @@ msgid ""
 "nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept NFS "
 "requests from reserved ports only."
 msgstr ""
+"Дозволяє запити монтування не від суперкористувача. Це має зазначатися "
+"тільки при наявності клієнта що вимагає цього. Це автоматично скине sysctl "
+"vfs.nfsrv.nfs_privport, що контролюює чи буде ядро приймати NFS запити "
+"тільки з зарезервованих портів."
 
 #: services/models.py:298
-#, fuzzy
 msgid "Bind IP Addresses"
 msgstr "Адреса IP"
 
@@ -2678,10 +2604,13 @@ msgid ""
 "specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
 "and if IPv6 is enabled, ::1 to the list."
 msgstr ""
+"Вказує конкретні IP адреси (розділені комами) для прийому TCP і UDP запитів. "
+"Якщо IP не вказаний, запити будуть прийматися на всіх адресах. Адреси "
+"127.0.0.1 і :: 1 додаються до списку автоматично."
 
 #: services/models.py:307
 msgid "mountd(8) bind port"
-msgstr ""
+msgstr "Порт mountd(8)"
 
 #: services/models.py:312
 msgid ""
@@ -2689,26 +2618,29 @@ msgid ""
 "families. This is typically done to ensure that the port which mountd binds "
 "to is a known value which can be used in firewall rulesets."
 msgstr ""
+"Змушує mountd використовувати вказаний порт для IPv4 та IPv6. Зазвичай це "
+"робиться коли необхідно знати конкретний номер порту для налаштування "
+"мережевих фільтрів."
 
 #: services/models.py:319
 msgid "rpc.statd(8) bind port"
-msgstr ""
+msgstr "Порт rpc.statd(8)"
 
 #: services/models.py:324
 msgid ""
 "This option forces the rpc.statd daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
-msgstr ""
+msgstr "Змушує демона rpc.statd використовувати вказаний порт для IPv4 та IPv6."
 
 #: services/models.py:329
 msgid "rpc.lockd(8) bind port"
-msgstr ""
+msgstr "Порт rpc.lockd(8)"
 
 #: services/models.py:334
 msgid ""
 "This option forces rpc.lockd the daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
-msgstr ""
+msgstr "Змушує демона rpc.lockd використовувати вказаний порт для IPv4 та IPv6."
 
 #: services/models.py:340 services/models.py:341 storage/forms.py:2041
 #: templates/services/core.html:76
@@ -2977,9 +2909,8 @@ msgid "Peer User"
 msgstr "Користувач-пір"
 
 #: services/models.py:712
-#, fuzzy
 msgid "Initiator side user name."
-msgstr "Ініціатор Секрету"
+msgstr "Ім'я користувача з боку ініціатора."
 
 #: services/models.py:716
 msgid "Peer Secret"
@@ -3098,12 +3029,11 @@ msgid "Domain name"
 msgstr "Доменне ім’я"
 
 #: services/models.py:861
-#, fuzzy
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a comma to separate multiple alias names."
 msgstr ""
-"Псевдонім імені хоста. Ця опція може з'являтися кілька разів, для кожного "
+"Псевдонім імені хоста. Ця опція може з'являтися кілька разів для кожного "
 "домену, який має ідентичний IP. Використовуйте пробіли для розділення "
 "декількох псевдонімів."
 
@@ -3120,9 +3050,8 @@ msgid "Forced update period"
 msgstr "Період примусового поновлення"
 
 #: services/models.py:888
-#, fuzzy
 msgid "These parameters will be added to global settings in inadyn-mt.conf."
-msgstr "Ці параметри будуть додані до глобальних налаштувань в inadyn.conf."
+msgstr "Ці параметри будуть додані до глобальних налаштувань в inadyn-mt.conf."
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/core.html:39
@@ -3166,9 +3095,8 @@ msgid "Send SNMP Traps"
 msgstr "Надіслати SNMP пастки"
 
 #: services/models.py:932
-#, fuzzy
 msgid "These parameters will be added to /etc/snmpd.config."
-msgstr "Ці параметри будуть додані в proftpd.conf."
+msgstr "Ці параметри будуть додані в /etc/snmpd.config."
 
 #: services/models.py:936 services/models.py:937
 #: templates/services/core.html:109
@@ -3176,18 +3104,16 @@ msgid "SNMP"
 msgstr "SNMP"
 
 #: services/models.py:950
-#, fuzzy
 msgid "Master"
-msgstr "Локальний Майстер"
+msgstr "Майстер"
 
 #: services/models.py:951
 msgid "Slave"
-msgstr ""
+msgstr "Підлеглий"
 
 #: services/models.py:953
-#, fuzzy
 msgid "UPS Mode"
-msgstr "Режим"
+msgstr "Режим ДБЖ"
 
 #: services/models.py:957 storage/models.py:435
 msgid "Identifier"
@@ -3202,7 +3128,6 @@ msgid "Remote Host"
 msgstr "Віддалений хост"
 
 #: services/models.py:971
-#, fuzzy
 msgid "Remote Port"
 msgstr "Віддалений порт"
 
@@ -3243,14 +3168,12 @@ msgstr ""
 "відновлюється, то виключення скасовується."
 
 #: services/models.py:1015
-#, fuzzy
 msgid "Monitor User"
-msgstr "Змінити користувача"
+msgstr "Користувач монiторiнгу"
 
 #: services/models.py:1020
-#, fuzzy
 msgid "Monitor Password"
-msgstr "Підтвердження пароля"
+msgstr "Пароль монiторiнгу"
 
 #: services/models.py:1024
 msgid "Extra users (upsd.users)"
@@ -3349,18 +3272,17 @@ msgstr "Дозволити вхід локальних користувачів"
 
 #: services/models.py:1102
 msgid "Display Login"
-msgstr ""
+msgstr "Повідомлення при вході"
 
 #: services/models.py:1105
 msgid "Message which will be displayed to the user when they initially login."
-msgstr ""
+msgstr "Повідомлення, яке буде показано користувачеві при першому вході."
 
 #: services/models.py:1113
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr "Використовуйте цю опцію для зміни маски створення файлів (077 типово)."
 
 #: services/models.py:1121
-#, fuzzy
 msgid ""
 "Use this option to override the directory creation mask (077 by default)."
 msgstr ""
@@ -3382,16 +3304,15 @@ msgstr "Завжди міняти кореневої каталог"
 msgid ""
 "For local users, only allow access to user home directory unless the user is "
 "a member of group wheel."
-msgstr ""
+msgstr "Для користувачів не з групи wheel обмежувати доступ домашнім каталогом."
 
 #: services/models.py:1137
 msgid "Require IDENT Authentication"
 msgstr "Вимагати IDENT аутентифікації"
 
 #: services/models.py:1139
-#, fuzzy
 msgid "Perform Reverse DNS Lookups"
-msgstr "Вимагає зворотного DNS для IP"
+msgstr "Виконувати зворотнє перетвореня DNS"
 
 #: services/models.py:1141
 msgid "Masquerade address"
@@ -3485,13 +3406,12 @@ msgstr ""
 "обмежень."
 
 #: services/models.py:1194
-#, fuzzy
 msgid "Enable TLS"
-msgstr "Увімкнути SSL / TLS"
+msgstr "Увімкнути TLS"
 
 #: services/models.py:1199
 msgid "TLS policy"
-msgstr ""
+msgstr "Полiтика TLS"
 
 #: services/models.py:1202
 msgid "TLS allow client renegotiations"
@@ -3551,12 +3471,11 @@ msgstr ""
 
 #: services/models.py:1254
 msgid "Certificate and private key"
-msgstr ""
+msgstr "Сертифікат та приватний ключ"
 
 #: services/models.py:1256
-#, fuzzy
 msgid "Place the contents of your certificate and private key here."
-msgstr "Помістіть сюди вміст файлу Вашого сертифікату."
+msgstr "Помістіть сюди ваш сертифікат та приватний ключ."
 
 #: services/models.py:1263
 msgid "These parameters are added to proftpd.conf."
@@ -3659,9 +3578,8 @@ msgid "Paste a RSA PRIVATE KEY in PEM format here."
 msgstr "Вставити тут закритий ключ RSA в форматі PEM."
 
 #: services/models.py:1343
-#, fuzzy
 msgid "SFTP Log Level"
-msgstr "Рівень журналювання"
+msgstr "Рівень журналювання SFTP"
 
 #: services/models.py:1347
 msgid ""
@@ -3669,16 +3587,22 @@ msgid ""
 "transactions that sftp-server performs on behalf of the client. DEBUG2 and "
 "DEBUG3 each specify higher levels of debugging output. The default is ERROR."
 msgstr ""
+"Вказує які повідомлення будуть журналіровани SFTP сервером. INFO і VERBOSE "
+"журналюють транзакції які SFTP сервер виконує від імені клієнта, DEBUG2 і "
+"DEBUG3 вказують більш високі рівні налагодження. За замовчуванням "
+"використовується ERROR."
 
 #: services/models.py:1354
 msgid "SFTP Log Facility"
-msgstr ""
+msgstr "Категорiя журналювания SFTP"
 
 #: services/models.py:1358
 msgid ""
 "Specifies the facility code that is used when logging messages from sftp-"
 "server."
 msgstr ""
+"Вказує категорію (Facility) для використання при журналюваннi повідомлень "
+"від SFTP сервера."
 
 #: services/models.py:1365
 msgid ""
@@ -3694,13 +3618,12 @@ msgid "SSH"
 msgstr "SSH"
 
 #: services/models.py:1436 services/models.py:1532
-#, fuzzy
 msgid "Domain Controller"
-msgstr "Ім'я контролера домену"
+msgstr "Контролер домену"
 
 #: services/models.py:1437 services/models.py:1533
 msgid "Hostname of the domain controller to use."
-msgstr ""
+msgstr "Iм'я хоста контролера домену."
 
 #: services/models.py:1441 services/models.py:1487
 msgid "NetBIOS Name"
@@ -3735,9 +3658,8 @@ msgid "Domain Administrator account password."
 msgstr "Пароль адміністратора домену."
 
 #: services/models.py:1472 services/models.py:1473
-#, fuzzy
 msgid "NT4 Domain"
-msgstr "Домен"
+msgstr "NT4 Домен"
 
 #: services/models.py:1482
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3748,18 +3670,16 @@ msgid "Domain Name, eg example.com"
 msgstr "Доменне ім'я, як приклад example.com"
 
 #: services/models.py:1512
-#, fuzzy
 msgid "Verbose logging"
-msgstr "Будь ласка, увійдіть"
+msgstr "Докладні записи до журналу"
 
 #: services/models.py:1516
-#, fuzzy
 msgid "UNIX extensions"
-msgstr "Розширення Unix"
+msgstr "Розширення UNIX"
 
 #: services/models.py:1517
 msgid "Set this if your Active Directory has UNIX extensions."
-msgstr ""
+msgstr "Встановіть якщо ваш Active Directory має розширення UNIX."
 
 #: services/models.py:1521
 msgid "Allow Trusted Domains"
@@ -3767,86 +3687,81 @@ msgstr "Дозволити Надійні Домени(Trusted Domains)"
 
 #: services/models.py:1522
 msgid "Set this if you want to allow Trusted Domains."
-msgstr ""
+msgstr "Встановіть якщо ви хочете дозволити Довірені Домени."
 
 #: services/models.py:1526
 msgid "Use default domain"
-msgstr ""
+msgstr "Використовувати домен за замовченям"
 
 #: services/models.py:1527
 msgid "Set this if you want to use the default domain for users and groups."
 msgstr ""
+"Встановіть якщо ви хочете використовувати домен за замовчуванням для "
+"користувачів і груп."
 
 #: services/models.py:1538
 msgid "Global Catalog Server"
-msgstr ""
+msgstr "Сервер глобального каталогу"
 
 #: services/models.py:1539
 msgid "Hostname of the global catalog server to use."
-msgstr ""
+msgstr "Iм'я хоста серверу глобального каталогу."
 
 #: services/models.py:1544
-#, fuzzy
 msgid "Kerberos Server"
-msgstr "Кількість серверів"
+msgstr "Сервер Kerberos"
 
 #: services/models.py:1545
 msgid "Hostname of the kerberos server to use."
-msgstr ""
+msgstr "Им'я хоста сервера Kerberos."
 
 #: services/models.py:1550
 msgid "Kerberos Password Server"
-msgstr ""
+msgstr "Сервер паролей Kerberos"
 
 #: services/models.py:1551
 msgid "Hostname of the kerberos password server to use."
-msgstr ""
+msgstr "Им'я хоста сервера паролей Kerberos."
 
 #: services/models.py:1555
-#, fuzzy
 msgid "AD timeout"
-msgstr "Таймаут"
+msgstr "Таймаут AD"
 
 #: services/models.py:1556
 msgid "Timeout for AD related commands."
-msgstr ""
+msgstr "Таймаут для команд Active Directory."
 
 #: services/models.py:1560
-#, fuzzy
 msgid "DNS timeout"
-msgstr "Таймаут"
+msgstr "Таймаут DNS"
 
 #: services/models.py:1561
 msgid "Timeout for AD DNS queries."
-msgstr ""
+msgstr "Таймаут для Active Directory DNS запитiв."
 
 #: services/models.py:1600
-#, fuzzy
 msgid "NIS domain"
-msgstr "Домен"
+msgstr "Домен NIS"
 
 #: services/models.py:1601
-#, fuzzy
 msgid "NIS domain name"
-msgstr "Доменне ім’я"
+msgstr "Назва домену NIS"
 
 #: services/models.py:1606
-#, fuzzy
 msgid "NIS servers"
-msgstr "NTP-сервери"
+msgstr "Сервери NIS"
 
 #: services/models.py:1607
 msgid "Comma delimited list of NIS servers"
-msgstr ""
+msgstr "Розділений комами список серверів NIS"
 
 #: services/models.py:1611
-#, fuzzy
 msgid "Secure mode"
-msgstr "Режим енергозбереження"
+msgstr "Безпечний режим"
 
 #: services/models.py:1612
 msgid "Cause ypbind to run in secure mode"
-msgstr ""
+msgstr "Викликає запуск ypbind в безпечному режимі"
 
 #: services/models.py:1616
 msgid "Manycast"
@@ -3854,12 +3769,11 @@ msgstr ""
 
 #: services/models.py:1617
 msgid "Cause ypbind to use 'many-cast' instead of broadcast"
-msgstr ""
+msgstr "Використовувати в ypbind 'many-cast' замість широкомовних розсилок"
 
 #: services/models.py:1625 services/models.py:1626
-#, fuzzy
 msgid "NIS Domain"
-msgstr "Домен"
+msgstr "Домен NIS"
 
 #: services/models.py:1637
 msgid "The name or IP address of the LDAP server"
@@ -4112,38 +4026,34 @@ msgstr ""
 "останнього повідомлення. 0 - для відключення"
 
 #: services/models.py:1868
-#, fuzzy
 msgid "Informational"
-msgstr "Неофіційний"
+msgstr "Інформаційні"
 
 #: services/models.py:1869
-#, fuzzy
 msgid ""
 "Report as informational in the system log if the temperature is greater or "
 "equal than N degrees Celsius. 0 to disable"
 msgstr ""
-"Повідомляє, якщо температура більше або дорівнює N градусів (за Цельсієм). 0 "
-"- для відключення"
+"Повідомляти як iнформацiйне, якщо температура більше або дорівнює N градусів "
+"(за Цельсієм). 0 - для відключення"
 
 #: services/models.py:1875
 msgid "Critical"
 msgstr "Критичний"
 
 #: services/models.py:1876
-#, fuzzy
 msgid ""
 "Report as critical in the system log and send an email if the temperature is "
 "greater or equal than N degrees Celsius. 0 to disable"
 msgstr ""
-"Повідомляє, якщо температура більше або дорівнює N градусів (за Цельсієм). 0 "
-"- для відключення"
+"Повідомляти як критичне, якщо температура більше або дорівнює N градусів (за "
+"Цельсієм). 0 - для відключення"
 
 #: services/models.py:1881
 msgid "Email to report"
 msgstr "E-mail для звітів"
 
 #: services/models.py:1884
-#, fuzzy
 msgid "Destination email address. Separate email addresses by commas"
 msgstr ""
 "Адреса одержувача електронної пошти. Використовуйте кому для розділення "
@@ -4175,9 +4085,8 @@ msgid "View Rsync Modules"
 msgstr "Перегляд модулів Rsync"
 
 #: services/nav.py:115 templates/services/core.html:27
-#, fuzzy
 msgid "Directory Services"
-msgstr "Права доступу до каталогу"
+msgstr "Служби каталогу"
 
 #: services/views.py:191
 msgid "The service could not be stopped."
@@ -4188,28 +4097,25 @@ msgid "The service could not be started."
 msgstr "Служба не може бути задіяна."
 
 #: sharing/admin.py:78 sharing/models.py:291
-#, fuzzy
 msgid "Paths"
-msgstr "Шлях"
+msgstr "Шляхи"
 
 #: sharing/forms.py:88
 msgid "Confirm Share Password"
 msgstr "Підтвердіть пароль загального доступу"
 
 #: sharing/forms.py:118
-#, fuzzy
 msgid "Delete password"
-msgstr "Відключити пароль"
+msgstr "Видалити пароль"
 
 #: sharing/forms.py:148 sharing/forms.py:153
-#, fuzzy
 msgid "The umask must be between 000 and 777."
-msgstr "Значення має бути між 0 та 1000 включно."
+msgstr "Значення umask має бути між 0000 та 777 включно."
 
 #: sharing/forms.py:195
-#, fuzzy, python-format
+#, python-format
 msgid "This is not a valid network: %s"
-msgstr "Це не є допустимою мережею"
+msgstr "Це не є допустимою мережею: %s"
 
 #: sharing/forms.py:229
 msgid "Maproot group requires Maproot user"
@@ -4229,26 +4135,28 @@ msgstr ""
 
 #: sharing/forms.py:274
 msgid "Paths for a NFS share must reside within the same filesystem"
-msgstr ""
+msgstr "Шлях до ресурсу NFS повинен бути в тій-самiй файловiй системи"
 
 #: sharing/forms.py:281
 msgid "You cannot share a mount point and subdirectories all at once"
 msgstr ""
+"Ви не можете відкрити загальний доступ одночасно до точки монтування та "
+"підкаталогам"
 
 #: sharing/forms.py:309
 msgid "This option is only available once per mountpoint"
-msgstr ""
+msgstr "Ця опція доступна тільки один раз для кожної точки монтування"
 
 #: sharing/forms.py:318
 #, python-format
 msgid ""
 "The network %s is already being shared and cannot be used twice for the same "
 "filesystem"
-msgstr ""
+msgstr "Мережа %s не може бути вказана двічі для однієї файлової системи"
 
 #: sharing/forms.py:341
 msgid "You need at least one path for the share"
-msgstr ""
+msgstr "Необхідний хоча б один шлях для русурса"
 
 #: sharing/forms.py:364
 #, python-format
@@ -4440,7 +4348,7 @@ msgstr "Машина часу"
 
 #: sharing/models.py:144
 msgid "Check this to enable Time Machine backups on this share."
-msgstr ""
+msgstr "Виберіть щоб дозволити резервні копії Time Machine для цього ресурсу."
 
 #: sharing/models.py:148
 msgid "Database Path"
@@ -4487,19 +4395,16 @@ msgid "Use AFP3 unix privileges."
 msgstr "Використовувати AFP3 привілеї UNIX."
 
 #: sharing/models.py:168
-#, fuzzy
 msgid "Default file permission"
-msgstr "Права доступу до файлу"
+msgstr "Права доступу до файлу за замовченям"
 
 #: sharing/models.py:173
-#, fuzzy
 msgid "Default directory permission"
-msgstr "Права доступу до каталогу"
+msgstr "Права доступу до каталогу за замовченям"
 
 #: sharing/models.py:178
-#, fuzzy
 msgid "Default umask"
-msgstr "Типово"
+msgstr "imask за замовченям"
 
 #: sharing/models.py:189
 msgid "Apple (AFP) Share"
@@ -4510,28 +4415,25 @@ msgid "Apple (AFP) Shares"
 msgstr "Спільні ресурси Apple"
 
 #: sharing/models.py:201
-#, fuzzy
 msgid "Authorized networks"
-msgstr "Авторизована мережа"
+msgstr "Авторизованi мережi"
 
 #: sharing/models.py:202
-#, fuzzy
 msgid ""
 "Networks that are authorized to access the NFS share. Specify network "
 "numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
 msgstr ""
-"Мережі або список IP-адрес, які мають право доступу до загального ресурсу "
-"NFS. Вкажіть номери мереж виду 1.2.3.4/xx, де XX - маска мережі або список "
-"IP-адрес 1.2.3.4 1.2.3.5 1.2.3.6."
+"Мережі або список IP-адрес, що мають право доступу до загального ресурсу "
+"NFS. Вкажіть номери мереж у виглядi 1.2.3.4/xx, де XX - маска мережі або "
+"список IP-адрес 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:208
-#, fuzzy
 msgid "Authorized IP addresses or hosts"
-msgstr "Авторизована мережа або IP-адреси"
+msgstr "Авторизованi IP-адреси або хости"
 
 #: sharing/models.py:209
 msgid "IP addresses or hostnames that are authorized to access the NFS share."
-msgstr ""
+msgstr "IP адреси або імена хостів яким дозволений доступ до цього ресурсу NFS."
 
 #: sharing/models.py:214
 msgid "All Directories"
@@ -4567,7 +4469,7 @@ msgstr "Закріпити ідентифікатор \"root\" за корист
 #: sharing/models.py:231
 msgid ""
 "If a user is selected, the root user is limited to that user's permissions"
-msgstr ""
+msgstr "Якщо користувач обраний, root буде обмежений правами цього користувача"
 
 #: sharing/models.py:235
 msgid "Maproot Group"
@@ -4577,7 +4479,7 @@ msgstr "Закріпити ідентифікатор \"root\" за групою
 msgid ""
 "If a group is selected, the root user will also be limited to that group's "
 "permissions"
-msgstr ""
+msgstr "Якщо група обрана, root буде обмежений правами цієї групи"
 
 #: sharing/models.py:244
 msgid "Mapall User"
@@ -4585,7 +4487,7 @@ msgstr "Закріпити ідентифікатор \"all\" за корист�
 
 #: sharing/models.py:249
 msgid "The specified user's permissions are used by all clients"
-msgstr ""
+msgstr "Права зазначеного користувача будуть використовуватися усіма клієнтами"
 
 #: sharing/models.py:253
 msgid "Mapall Group"
@@ -4593,7 +4495,7 @@ msgstr "Закріпити ідентифікатор \"all\" за групою"
 
 #: sharing/models.py:258
 msgid "The specified group's permission are used by all clients"
-msgstr ""
+msgstr "Права зазначеної групи будуть використовуватися усіма клієнтами"
 
 #: sharing/models.py:276
 msgid "Unix (NFS) Share"
@@ -4609,13 +4511,13 @@ msgstr "Спільне використання"
 
 #: storage/admin.py:35
 msgid "Wipe"
-msgstr ""
+msgstr "Витерти"
 
 #: storage/admin.py:46
 msgid "Edit In Bulk"
-msgstr ""
+msgstr "Редагувати разом"
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Використано"
 
@@ -4645,9 +4547,8 @@ msgid "Create ZFS Dataset"
 msgstr "Створення набору даних ZFS"
 
 #: storage/admin.py:249 storage/admin.py:338 storage/nav.py:123
-#, fuzzy
 msgid "Create zvol"
-msgstr "Створити ZFS том"
+msgstr "Створити zvol"
 
 #: storage/admin.py:253 storage/nav.py:165 storage/nav.py:223
 msgid "Change Permissions"
@@ -4662,59 +4563,52 @@ msgid "Volume Status"
 msgstr "Статус тома"
 
 #: storage/admin.py:273
-#, fuzzy
 msgid "Create Passphrase"
-msgstr "Створення набору даних ZFS"
+msgstr "Задати пароль"
 
 #: storage/admin.py:280
-#, fuzzy
 msgid "Change Passphrase"
 msgstr "Змінити пароль"
 
 #: storage/admin.py:287
 msgid "Download Key"
-msgstr ""
+msgstr "Скачати ключ"
 
 #: storage/admin.py:293
-#, fuzzy
 msgid "Encryption Re-key"
-msgstr "Режим шифрування"
+msgstr "Змiнити ключ шифрування"
 
 #: storage/admin.py:299
 msgid "Add recovery key"
-msgstr ""
+msgstr "Додати ключ вiдновлення"
 
 #: storage/admin.py:305
-#, fuzzy
 msgid "Remove recovery key"
-msgstr "Віддалений сервер ключів"
+msgstr "Видалити ключ вiдновлення"
 
 #: storage/admin.py:311
 msgid "Unlock"
-msgstr ""
+msgstr "Розблокувати"
 
 #: storage/admin.py:319
 msgid "Destroy Dataset"
 msgstr "Знищити набір даних"
 
 #: storage/admin.py:345
-#, fuzzy
 msgid "Destroy zvol"
-msgstr "Знищити"
+msgstr "Знищити zvol"
 
 #: storage/admin.py:391
-#, fuzzy
 msgid "Read"
-msgstr "Тільки читати"
+msgstr "Читання"
 
 #: storage/admin.py:397
-#, fuzzy
 msgid "Write"
-msgstr "Тільки запис"
+msgstr "Запис"
 
 #: storage/admin.py:403
 msgid "Checksum"
-msgstr ""
+msgstr "Контрольна сума"
 
 #: storage/admin.py:461
 msgid "Edit Disk"
@@ -4725,14 +4619,12 @@ msgid "Offline"
 msgstr ""
 
 #: storage/admin.py:467
-#, fuzzy
 msgid "Detach"
-msgstr "Відключити том"
+msgstr "Від'єднати"
 
 #: storage/admin.py:470
-#, fuzzy
 msgid "Replace"
-msgstr "Замінити диск"
+msgstr "Замінити"
 
 #: storage/admin.py:473
 msgid "Remove"
@@ -4780,18 +4672,17 @@ msgstr "Включити"
 
 #: storage/admin.py:572
 msgid "When"
-msgstr ""
+msgstr "Коли"
 
 #: storage/admin.py:578
 msgid "Frequency"
-msgstr ""
+msgstr "Частота"
 
 #: storage/admin.py:584
 msgid "Keep snapshot for"
 msgstr "Тримати знимок для"
 
 #: storage/admin.py:609
-#, fuzzy
 msgid "Remote Hostname"
 msgstr "Ім'я віддаленого хоста"
 
@@ -4801,11 +4692,13 @@ msgid ""
 "impact your ability to access your data.<br /> Consider using compression "
 "instead."
 msgstr ""
+"Увiмкнення дедуплікаціі може мати радикальні наслідки для продуктивностi <br "
+"/> і навіть можливості доступу до даних. <br /> Обдумайте замість цього "
+"використання стиснення."
 
 #: storage/forms.py:120
-#, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or 0"
-msgstr "Введіть додатнє число (опціонально з суфіксом М, G, T), або 0"
+msgstr "Введіть додатнє число (опціонально з суфіксом K, М, G, T), або 0"
 
 #: storage/forms.py:134
 #, python-format
@@ -4868,11 +4761,11 @@ msgstr ""
 #: storage/forms.py:483
 #, python-format
 msgid "You need at least %d disks"
-msgstr ""
+msgstr "Потрiбно найменше %d дискiв"
 
 #: storage/forms.py:527
 msgid "You need a data disk group"
-msgstr ""
+msgstr "Потрiбен диск данних"
 
 #: storage/forms.py:536 storage/forms.py:1530
 msgid "Member disk"
@@ -4895,38 +4788,34 @@ msgstr ""
 "пулу"
 
 #: storage/forms.py:764
-#, fuzzy
 msgid "Volume imported"
-msgstr "Розширити том"
+msgstr "Том iмпортовано"
 
 #: storage/forms.py:770
 msgid "No: Skip to import"
-msgstr ""
+msgstr "Нi: Продовжити iмпорт"
 
 #: storage/forms.py:771
-#, fuzzy
 msgid "Yes: Decrypt disks"
-msgstr "Список дисків"
+msgstr "Так: Розшифрувати диски"
 
 #: storage/forms.py:773
-#, fuzzy
 msgid "Encrypted ZFS volume?"
-msgstr "Створити ZFS том"
+msgstr "Зашифрувати ZFS том?"
 
 #: storage/forms.py:791
-#, fuzzy
 msgid "Encryption Key"
-msgstr "Режим шифрування"
+msgstr "Ключ шифрування"
 
 #: storage/forms.py:794 storage/forms.py:1585 storage/forms.py:1904
 #: storage/forms.py:2019 storage/forms.py:2131 system/models.py:354
 msgid "Passphrase"
-msgstr ""
+msgstr "Пароль"
 
 #: storage/forms.py:839
-#, fuzzy, python-format
+#, python-format
 msgid "The following disks failed to attach: %s"
-msgstr "Наступні диски вже мають тести цього типу: %s"
+msgstr "Не вдалося пiдключити наступні диски: %s"
 
 #: storage/forms.py:909
 msgid "You must select a volume."
@@ -4993,13 +4882,12 @@ msgid "Reserved space for this dataset and all children"
 msgstr "Зарезервоване місце для цього набору даних і всіх його похідних"
 
 #: storage/forms.py:1117 storage/forms.py:1229
-#, fuzzy
 msgid "ZFS Deduplication"
-msgstr "ZFS реплікація"
+msgstr "Дедуплікація ZFS"
 
 #: storage/forms.py:1124
 msgid "Record Size"
-msgstr ""
+msgstr "Розмір запису"
 
 #: storage/forms.py:1128
 msgid ""
@@ -5008,6 +4896,11 @@ msgid ""
 "fixed-size records.  ZFS automatically tunes block sizes according to "
 "internal algorithms optimized for typical access patterns."
 msgstr ""
+"Вказує пропонований розмір блоку для файлів на файловій системі. Ця "
+"властивість розроблена виключно для баз даних, що використовують записи "
+"фіксованого розміру. ZFS автоматично підлаштовує розміри блоків у "
+"відповідності з внутрішніми алгоритмами оптимізованими для типових "
+"навантажень."
 
 #: storage/forms.py:1173
 msgid ""
@@ -5030,23 +4923,20 @@ msgid "Reserved space for this volume"
 msgstr "Зарезервований простір для цього тому"
 
 #: storage/forms.py:1269
-#, fuzzy
 msgid "zvol name"
-msgstr "Ім'я модуля"
+msgstr "Ім'я zvol"
 
 #: storage/forms.py:1272
-#, fuzzy
 msgid "Size for this zvol"
-msgstr "Розмір цього тому ZFS"
+msgstr "Розмір цього zvol"
 
 #: storage/forms.py:1273
 msgid "Example: 1g"
 msgstr "Наприклад: 1г"
 
 #: storage/forms.py:1279
-#, fuzzy
 msgid "Sparse volume"
-msgstr "Scrub тома"
+msgstr "Том з пропусками"
 
 #: storage/forms.py:1281
 msgid ""
@@ -5055,17 +4945,22 @@ msgid ""
 "volume size. Consequently, writes to a sparse volume can fail with ENOSPC "
 "when the pool is low on space. (NOT RECOMMENDED)"
 msgstr ""
+"Створює том без резервування простору, також відомо як \"тонкий провіжінінг\""
+". Подiбний том займає місця менш свого повного обсягу. Як наслідок це може "
+"призвести до помилок ENOSPC при подальшому запису якщо на пулі недостатньо "
+"місця. (НЕ РЕКОМЕНДУЄТЬСЯ)"
 
 #: storage/forms.py:1290
-#, fuzzy
 msgid "Block size"
-msgstr "Розмір логічного блоку"
+msgstr "Розмір блоку"
 
 #: storage/forms.py:1292
 msgid ""
 "The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
 "to 128 Kbytes is valid."
 msgstr ""
+"Розмір блоку за замовчуванням 8 КБайт. Допускаетя будь-який ступінь 2 від "
+"512 до 128K."
 
 #: storage/forms.py:1310
 msgid ""
@@ -5103,7 +4998,7 @@ msgstr "Принаймні один день повинен бути вибра�
 msgid "Recursive snapshot"
 msgstr "Рекурсивні знімок"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Назва знимку"
 
@@ -5128,18 +5023,16 @@ msgid "Clone must be within the same volume"
 msgstr "Клон повинен знаходитися в тому ж томі"
 
 #: storage/forms.py:1589 storage/forms.py:1908 system/forms.py:479
-#, fuzzy
 msgid "Confirm Passphrase"
-msgstr "Підтвердження пароля"
+msgstr "Підтвердiть пароль"
 
 #: storage/forms.py:1598
 msgid "Confirmation does not match passphrase"
-msgstr ""
+msgstr "Підтвердження не збігається з паролем"
 
 #: storage/forms.py:1606
-#, fuzzy
 msgid "Passphrase is not valid"
-msgstr "Користувач %s не вірний."
+msgstr "Пароль не дiйсний"
 
 #: storage/forms.py:1658 storage/models.py:783
 msgid "Remote hostname"
@@ -5151,20 +5044,19 @@ msgstr "Віддалений порт"
 
 #: storage/forms.py:1665
 msgid "Dedicated User Enabled"
-msgstr ""
+msgstr "Використовувати виділеного користувача"
 
 #: storage/forms.py:1666
 msgid "If disabled then root will be used for replication."
-msgstr ""
+msgstr "Якщо вимкнено, для реплікації буде використовуватися root."
 
 #: storage/forms.py:1670
-#, fuzzy
 msgid "Dedicated User"
-msgstr "Видалити користувача"
+msgstr "Видiлений користувач"
 
 #: storage/forms.py:1674
 msgid "Enable High Speed Ciphers"
-msgstr ""
+msgstr "Увiмкнути високошвидкiснi шифри"
 
 #: storage/forms.py:1678
 msgid ""
@@ -5172,6 +5064,9 @@ msgid ""
 "networks.  It uses less secure encryption algorithms than the defaults, "
 "which makes it less desirable on untrusted networks."
 msgstr ""
+"Увiмкненя цього може збільшити швидкість передачі для швидких мереж. При "
+"цьому використовуються менш безпечні алгоритми, що може бути небажано в "
+"небезпечних мережах."
 
 #: storage/forms.py:1684 storage/models.py:801
 msgid "Remote hostkey"
@@ -5216,76 +5111,65 @@ msgid "Full with random data"
 msgstr "Заповнити випадковими даними."
 
 #: storage/forms.py:1917 storage/forms.py:1983
-#, fuzzy
 msgid "The passphrases do not match"
-msgstr "Секрет не співпадає"
+msgstr "Паролі не збігаються"
 
 #: storage/forms.py:1940 storage/forms.py:2100
-#, fuzzy
 msgid "Admin password"
-msgstr "Старий пароль"
+msgstr "Пароль адміністратора"
 
 #: storage/forms.py:1944
-#, fuzzy
 msgid "New Passphrase"
 msgstr "Новий пароль"
 
 #: storage/forms.py:1948
-#, fuzzy
 msgid "Confirm New Passphrase"
 msgstr "Підтвердження пароля"
 
 #: storage/forms.py:1952
-#, fuzzy
 msgid "Remove passphrase"
-msgstr "Видалити користувача"
+msgstr "Видалити пароль"
 
 #: storage/forms.py:1974 storage/forms.py:2119
-#, fuzzy
 msgid "Invalid password"
-msgstr "Старий пароль"
+msgstr "Неправильний пароль"
 
 #: storage/forms.py:2024
-#, fuzzy
 msgid "Recovery Key"
-msgstr "щоденно"
+msgstr "Ключ вiдновлення"
 
 #: storage/forms.py:2028
-#, fuzzy
 msgid "Restart services"
-msgstr "Управління службами"
+msgstr "Перезапустити служби"
 
 #: storage/forms.py:2045
-#, fuzzy
 msgid "Jails/Plugins"
-msgstr "Плагіни"
+msgstr "Jail/Плагіни"
 
 #: storage/forms.py:2054
 msgid "You need either a passphrase or a recovery key to unlock"
-msgstr ""
+msgstr "Для розблокування потрiбен пароль або ключ відновлення"
 
 #: storage/forms.py:2084
 #, python-format
 msgid "Volume could not be imported: %d devices failed to decrypt"
-msgstr ""
+msgstr "Том не може бути імпортовано: %d пристроїв не розшифровано"
 
 #: storage/forms.py:2088
-#, fuzzy
 msgid "Volume could not be imported"
-msgstr "Шлях не може бути встановлений %s"
+msgstr "Том не може бути Iмпортовано"
 
 #: storage/models.py:54
 msgid "File System Type"
 msgstr "Тип файлової системи"
 
 #: storage/models.py:64
-#, fuzzy
 msgid "Encryption Type"
-msgstr "Режим шифрування"
+msgstr "Тип шифрування"
 
 #: storage/models.py:126
 msgid "LOCKED"
-msgstr ""
+msgstr "ЗАБЛОКОВАН"
 
 #: storage/models.py:309
 msgid "Determine how many days shall be between scrubs"
@@ -5355,9 +5239,8 @@ msgid "Weekends"
 msgstr "Вихідні"
 
 #: storage/models.py:445
-#, fuzzy
 msgid "Disk Size"
-msgstr "Дисковий пристрій"
+msgstr "Розмір диску"
 
 #: storage/models.py:451
 msgid "Multipath name"
@@ -5397,16 +5280,15 @@ msgstr "Вкажіть тут параметри монтування"
 
 #: storage/models.py:791
 msgid "Remote Dedicated User Enabled"
-msgstr ""
+msgstr "Віддалений виділений користувач включений"
 
 #: storage/models.py:794
-#, fuzzy
 msgid "Remote Dedicated User"
-msgstr "Хост віддаленої реплікації"
+msgstr "Віддалений виділений користувач"
 
 #: storage/models.py:805
 msgid "High Speed Encryption Ciphers"
-msgstr ""
+msgstr "Високошвидкiснi шифри"
 
 #: storage/models.py:807
 msgid ""
@@ -5414,6 +5296,9 @@ msgid ""
 "networks.  It uses less secure encryption algorithms than the defaults, "
 "which make it less desirable on untrusted networks."
 msgstr ""
+"Увiмкнення цього може збільшити швидкість передачі у швидких мережах. При "
+"цьому використовуються менш безпечні алгоритми, що може бути небажано в "
+"небезпечних мережах."
 
 #: storage/models.py:814
 msgid "Remote Replication Host"
@@ -5428,11 +5313,13 @@ msgid ""
 "Disabling will stop any new replications being queued. It will not stop any "
 "replications which are queued or in progress."
 msgstr ""
+"Відключення зупинить постановку в чергу нових завдань реплікації. Вже "
+"поставлені в чергу або розпочаті реплікації зупинені не будуть."
 
 #: storage/models.py:836 storage/models.py:915
-#, fuzzy
+#: templates/storage/snapshots.html:82
 msgid "Volume/Dataset"
-msgstr "Томи"
+msgstr "Том/Набор даних"
 
 #: storage/models.py:843
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -5441,18 +5328,16 @@ msgstr ""
 "реплікації)"
 
 #: storage/models.py:852
-#, fuzzy
 msgid "Remote ZFS Volume/Dataset"
-msgstr "Створення набору даних ZFS"
+msgstr "Вiддалений том/набiр даных ZFS"
 
 #: storage/models.py:854
-#, fuzzy
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
 "Datasetname not the mountpoint or filesystem path"
 msgstr ""
 "Це має бути ім'я файлової системи ZFS на віддаленій стороні. Тобто: poolname/"
-"DataSetName це не точка монтування або шлях файлової системи"
+"DataSetName, а не точка монтування або шлях файлової системи"
 
 #: storage/models.py:861
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -5477,18 +5362,16 @@ msgid "Begin"
 msgstr "Почати"
 
 #: storage/models.py:880
-#, fuzzy
 msgid "Do not start replication before"
-msgstr "Не робити знімок до"
+msgstr "Не запускати реплікацію до"
 
 #: storage/models.py:884 storage/models.py:938
 msgid "End"
 msgstr "Кінець"
 
 #: storage/models.py:885
-#, fuzzy
 msgid "Do not start replication after"
-msgstr "Не робити знімок після"
+msgstr "Не запускати реплікацію пiсля"
 
 #: storage/models.py:889
 msgid "Replication Task"
@@ -5552,14 +5435,12 @@ msgstr "Показати всі знімки"
 
 #: storage/nav.py:39 templates/storage/volume_datagrid.html:6
 #: templates/storage/volume_datagrid.html:10
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Управління томами"
+msgstr "Управління томами ZFS"
 
 #: storage/nav.py:51 templates/storage/volume_datagrid.html:20
-#, fuzzy
 msgid "UFS Volume Manager (legacy)"
-msgstr "Управління томами"
+msgstr "Управління томами UFS"
 
 #: storage/nav.py:63 templates/storage/import.html:2
 #: templates/storage/volume_datagrid.html:28
@@ -5595,13 +5476,12 @@ msgid "Volumes"
 msgstr "Томи"
 
 #: storage/views.py:115
-#, fuzzy
 msgid "Please enter a hostname"
-msgstr "Ім'я системи (хоста)"
+msgstr "Введіть назву хоста"
 
 #: storage/views.py:128
 msgid "Key could not be retrieved for unknown reason"
-msgstr ""
+msgstr "Ключ не може бути отриманий з невідомої причини"
 
 #: storage/views.py:143 storage/views.py:207 storage/views.py:241
 msgid "Volume successfully added."
@@ -5685,12 +5565,11 @@ msgstr "Том був успішно відключений"
 
 #: storage/views.py:717
 msgid "Pool output could not be parsed. Is the pool imported?"
-msgstr ""
+msgstr "Неможливо розібрати висновок пулу. Чи був пул імпортований?"
 
 #: storage/views.py:722
-#, fuzzy
 msgid "The scrub process has stopped"
-msgstr "Процес \"Scrub\" розпочався"
+msgstr "Процес перевiрки зупинено"
 
 #: storage/views.py:725
 msgid "The scrub process has begun"
@@ -5702,80 +5581,69 @@ msgstr "Диск успішно стерто"
 
 #: storage/views.py:885
 msgid "Passphrase created"
-msgstr ""
+msgstr "Пароль створено"
 
 #: storage/views.py:903
-#, fuzzy
 msgid "Passphrase updated"
-msgstr "Пароль успішно змінено."
+msgstr "Пароль успішно змінено"
 
 #: storage/views.py:926 storage/views.py:939
-#, fuzzy
 msgid "Volume unlocked"
-msgstr "Ім'я тому"
+msgstr "Том разблоковано"
 
 #: storage/views.py:930
-#, fuzzy
 msgid "Volume failed unlocked"
-msgstr "Додати том"
+msgstr "Не вдалося розборкувати том"
 
 #: storage/views.py:958
 msgid "GELI key download starting..."
-msgstr ""
+msgstr "Починається загрузка ключа GELI..."
 
 #: storage/views.py:997
-#, fuzzy
 msgid "Encryption re-key succeeded"
-msgstr "Режим шифрування"
+msgstr "Змина ключа пройшла успiшно"
 
 #: storage/views.py:1016
 msgid "GELI recovery key download starting..."
-msgstr ""
+msgstr "Починається загрузка ключа вiдновлення GELI..."
 
 #: storage/views.py:1057
-#, fuzzy
 msgid "Recovery has been removed"
-msgstr "Диск був видалений."
+msgstr "Ключ вiдновлення був видалений"
 
 #: storage/views.py:1076
-#, fuzzy
 msgid "Disks successfully edited"
-msgstr "Диск успішно стерто"
+msgstr "Диски успішно вiдредаговано"
 
 #: support/models.py:40
-#, fuzzy
 msgid "Subject"
-msgstr "Тема електронного листа"
+msgstr "Тема"
 
 #: support/models.py:41
-#, fuzzy
 msgid "Support subject."
-msgstr "Питання підтримки"
+msgstr "Питання підтримки."
 
 #: support/models.py:45
-#, fuzzy
 msgid "A description of the issue."
-msgstr "шифрування з'єднання"
+msgstr "Опис проблеми."
 
 #: support/models.py:49
-#, fuzzy
 msgid "Support"
-msgstr "Підтримка EA"
+msgstr "Підтримка"
 
 #: support/views.py:86
-#, fuzzy
 msgid "Support request successfully sent"
-msgstr "Знімки успішно вилучений."
+msgstr "Запит на підтримку успішно відправлений"
 
 #: system/forms.py:68
 #, python-format
 msgid "The path '%s' requires execute permission bit"
-msgstr ""
+msgstr "Шлях '%s' вимагає прав на виконання"
 
 #: system/forms.py:86
-#, fuzzy, python-format
+#, python-format
 msgid "The volume %s is locked by encryption"
-msgstr "Том не вдалося експортувати"
+msgstr "Том %s зашифровано"
 
 #: system/forms.py:222
 msgid "Language (Require UI reload)"
@@ -5794,21 +5662,20 @@ msgid "Server could not be reached. Check \"Force\" to continue regardless."
 msgstr "Сервер недоступний. Поставте \"Примусово\" щоб не звертати увагу."
 
 #: system/forms.py:512
-#, fuzzy
 msgid "The two passphrase fields didn't match."
 msgstr "Паролі не співпадають."
 
 #: system/forms.py:564
 msgid "RSA or DSA private key not found"
-msgstr ""
+msgstr "Секретный ключ RSA или DSA не знайден"
 
 #: system/forms.py:581
 msgid "RSA or DSA private key is not valid"
-msgstr ""
+msgstr "Секретный ключ RSA или DSA не дiйсний"
 
 #: system/forms.py:604
 msgid "The modulus of certificate and key must match"
-msgstr ""
+msgstr "Сертифікат та ключ повинні відповідати один одному"
 
 #: system/forms.py:717
 #, python-format
@@ -5828,7 +5695,6 @@ msgstr ""
 "прошивки."
 
 #: system/forms.py:749
-#, fuzzy
 msgid "Memory device"
 msgstr "Пам'ять"
 
@@ -5845,17 +5711,16 @@ msgid "New config to be installed"
 msgstr "Нова конфігурація для встановлення"
 
 #: system/forms.py:811
-#, fuzzy
 msgid "Usernames cannot exceed 17 characters for cronjobs"
-msgstr "Повний шлях не може перевищувати 88 символів"
+msgstr "Ім'я користувача для завдань cron не може перевищувати 17 символів"
 
 #: system/forms.py:881
 msgid "Usernames cannot exceed 17 characters for rsync tasks"
-msgstr ""
+msgstr "Ім'я користувача для завдань rsync не може перевищувати 17 символів"
 
 #: system/forms.py:886
 msgid "Usernames cannot have spaces"
-msgstr ""
+msgstr "Ім'я користувача не може містити пробіли"
 
 #: system/forms.py:935
 msgid ""
@@ -5874,24 +5739,20 @@ msgid "Protocol"
 msgstr "Протокол"
 
 #: system/models.py:60
-#, fuzzy
 msgid "WebGUI IPv4 Address"
-msgstr "Адреса web-інтерфейсу"
+msgstr "IPv4 адреса web-інтерфейсу"
 
 #: system/models.py:66
-#, fuzzy
 msgid "WebGUI IPv6 Address"
-msgstr "Адреса web-інтерфейсу"
+msgstr "IPv6 адреса web-інтерфейсу"
 
 #: system/models.py:69
-#, fuzzy
 msgid "WebGUI HTTP Port"
-msgstr "Порт web-інтерфейсу"
+msgstr "HTTP порт web-інтерфейсу"
 
 #: system/models.py:75
-#, fuzzy
 msgid "WebGUI HTTPS Port"
-msgstr "Порт web-інтерфейсу"
+msgstr "HTTPS порт web-інтерфейсу"
 
 #: system/models.py:84
 msgid "Language"
@@ -5910,9 +5771,8 @@ msgid "Syslog server"
 msgstr "Syslog сервер"
 
 #: system/models.py:108
-#, fuzzy
 msgid "Directory Service"
-msgstr "Права доступу до каталогу"
+msgstr "Служба каталогу"
 
 #: system/models.py:113 system/nav.py:22 templates/system/settings.html:2
 msgid "Settings"
@@ -6005,11 +5865,11 @@ msgstr "Використовувати послідовну консоль"
 
 #: system/models.py:193
 msgid "Set this to match your serial port speed"
-msgstr ""
+msgstr "Встановіть це рівним швидкості вашого послідовного порту"
 
 #: system/models.py:194
 msgid "Serial Port Speed"
-msgstr ""
+msgstr "Швидкість послідовно порту"
 
 #: system/models.py:197
 msgid "Enable screen saver"
@@ -6044,13 +5904,12 @@ msgid "Enable autotune"
 msgstr "Увімкнути автоналаштування"
 
 #: system/models.py:219
-#, fuzzy
 msgid "Enable debug kernel"
-msgstr "Увімкнути службу"
+msgstr "Увімкнути ядро для вiдлагодженя"
 
 #: system/models.py:222
 msgid "Enable report anonymous statistics"
-msgstr ""
+msgstr "Включити відправку анонімної статистики"
 
 #: system/models.py:234
 msgid "MOTD banner"
@@ -6170,7 +6029,7 @@ msgstr "Загальне ім'я (наприклад, ваше ім'я)"
 
 #: system/models.py:355
 msgid "Private key passphrase"
-msgstr ""
+msgstr "Пароль закритого ключа"
 
 #: system/models.py:360
 msgid "SSL Certificate"
@@ -6227,14 +6086,12 @@ msgid "IP Address or hostname"
 msgstr "IP-адреса або ім'я хоста"
 
 #: system/models.py:515
-#, fuzzy
 msgid "Remote SSH Port"
-msgstr "Віддалений порт"
+msgstr "Віддалений порт SSH"
 
 #: system/models.py:516
-#, fuzzy
 msgid "SSH Port"
-msgstr "Порт"
+msgstr "Порт SSH"
 
 #: system/models.py:526
 msgid "Remote Module Name"
@@ -6365,63 +6222,59 @@ msgstr "Параметри налаштування"
 
 #: system/models.py:897 system/models.py:909
 msgid "Script"
-msgstr ""
+msgstr "Скрипт"
 
 #: system/models.py:916
 msgid "Pre Init"
-msgstr ""
+msgstr "До iнiцiалiзацii"
 
 #: system/models.py:917
 msgid "Post Init"
-msgstr ""
+msgstr "Пiсля iнiцiалiзацii"
 
 #: system/models.py:935
-#, fuzzy
 msgid "Init/Shutdown Script"
-msgstr "Ініціатор Секрету"
+msgstr "Скрипт запуску/завершення"
 
 #: system/models.py:936
 msgid "Init/Shutdown Scripts"
-msgstr ""
+msgstr "Скрипти запуску/завершення"
 
 #: system/models.py:949
-#, fuzzy
 msgid "First Name"
-msgstr "Ім'я цілі"
+msgstr "Ім'я"
 
 #: system/models.py:953
-#, fuzzy
 msgid "Last Name"
-msgstr "Базове ім'я"
+msgstr "Прізвище"
 
 #: system/models.py:957
 msgid "Company"
-msgstr ""
+msgstr "Організація"
 
 #: system/models.py:969
 msgid "City"
-msgstr ""
+msgstr "Місто"
 
 #: system/models.py:981
 msgid "Zip"
-msgstr ""
+msgstr "Індекс"
 
 #: system/models.py:991
 msgid "Home Phone"
-msgstr ""
+msgstr "Домашній телефон"
 
 #: system/models.py:997
 msgid "Cell Phone"
-msgstr ""
+msgstr "Мобільний телефон"
 
 #: system/models.py:1003
 msgid "Work Phone"
-msgstr ""
+msgstr "Робочий телефон"
 
 #: system/models.py:1009 templates/system/settings.html:12
-#, fuzzy
 msgid "Registration"
-msgstr "Напрямок"
+msgstr "Реєстрація"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -6446,6 +6299,7 @@ msgstr "Задіяно процес вимкнення"
 #: system/views.py:316
 msgid "You must configure the root email (Accounts->Users->root)"
 msgstr ""
+"Ви повинні налаштувати email користувача root (Accounts->Користувачi-> root)"
 
 #: system/views.py:326
 #, python-format
@@ -6476,7 +6330,7 @@ msgstr "згорнути все"
 
 #: templates/menubar.html:49
 msgid "Alert"
-msgstr ""
+msgstr "Попередження"
 
 #: templates/menubar.html:55
 msgid "Log Out"
@@ -6537,19 +6391,17 @@ msgstr "Скасувати"
 #: templates/freeadmin/generic_model_add.html:38
 #: templates/freeadmin/generic_model_edit.html:42
 #: templates/support/index.html:41
-#, fuzzy
 msgid "Add extra"
-msgstr "Додати інтерфейс"
+msgstr "Додати ще"
 
 #: templates/freeadmin/generic_model_datagrid.html:8
-#, fuzzy, python-format
+#, python-format
 msgid "Add %(name)s"
-msgstr "Додати %s"
+msgstr "Додати %(name)s"
 
 #: templates/freeadmin/generic_model_datagrid.html:10
-#, fuzzy
 msgid "Add"
-msgstr "Додати %s"
+msgstr "Додати"
 
 #: templates/freeadmin/generic_model_datagrid.html:175
 #: templates/freeadmin/index.html:39 templates/freeadmin/index.html.py:45
@@ -6559,7 +6411,7 @@ msgstr "Завантаження ..."
 
 #: templates/freeadmin/generic_model_datagrid.html:176
 msgid "No entry has been found"
-msgstr ""
+msgstr "Не знайдено"
 
 #: templates/freeadmin/generic_model_delete.html:19
 #, fuzzy, python-format
@@ -6668,15 +6520,15 @@ msgstr "FreeNAS Документація"
 
 #: templates/freeadmin/help.html:39
 msgid "FreeBSD Man Pages"
-msgstr ""
+msgstr "Сторінки керівництва FreeBSD"
 
 #: templates/freeadmin/help.html:44
 msgid "Professional Support"
-msgstr ""
+msgstr "Професiйна пiдтримка"
 
 #: templates/freeadmin/help.html:46
 msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
-msgstr ""
+msgstr "Устаткування засноване на FreeNAS з професійною підтримкою"
 
 #: templates/freeadmin/index.html:34
 msgid "Running Processes"
@@ -6687,27 +6539,25 @@ msgid "Help & Support"
 msgstr "Допомога та підтримка"
 
 #: templates/jails/delete.html:3
-#, fuzzy
 msgid "Are you sure you want to delete "
-msgstr "Ви дійсно хочете видалити?"
+msgstr "Ви дійсно хочете видалити "
 
 #: templates/jails/delete.html:3 templates/jails/start.html:3
 #: templates/jails/stop.html:3
 msgid "?"
-msgstr ""
+msgstr "?"
 
 #: templates/jails/index.html:20
 msgid "Templates"
-msgstr ""
+msgstr "Шаблони"
 
 #: templates/jails/start.html:3
-#, fuzzy
 msgid "Start "
-msgstr "Опції запуску"
+msgstr "Запустити "
 
 #: templates/jails/stop.html:3
 msgid "Stop "
-msgstr ""
+msgstr "Зупинити "
 
 #: templates/network/summary.html:16
 msgid "No interfaces defined"
@@ -6731,7 +6581,7 @@ msgstr "Не визначений типовий маршрут"
 
 #: templates/plugins/available_datagrid.html:13
 msgid "Refresh"
-msgstr ""
+msgstr "Оновити"
 
 #: templates/plugins/available_datagrid.html:25
 #: templates/plugins/upload.html:17
@@ -6739,25 +6589,23 @@ msgid "Upload"
 msgstr "Завантажити"
 
 #: templates/plugins/available_install.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
-msgstr "Ви дійсно хочете видалити \"%(name)s\"?"
+msgstr "Ви дійсно хочете встановити плагiн \"%(plugin)s\"?"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
 msgstr "Встановлено​..."
 
 #: templates/plugins/index.html:10
-#, fuzzy
 msgid "Installed"
-msgstr "Встановлено​..."
+msgstr "Встановленi"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
 msgstr "Імпорт"
 
 #: templates/plugins/plugin_info.html:2
-#, fuzzy
 msgid "Plugin information"
 msgstr "Інформація про плагін"
 
@@ -6766,9 +6614,9 @@ msgid "Please wait..."
 msgstr "Будь ласка, зачекайте ..."
 
 #: templates/plugins/plugin_update.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
-msgstr "Ви дійсно хочете видалити \"%(name)s\"?"
+msgstr "Ви дійсно хочете поновити плагiн \"%(plugin)s\"?"
 
 #: templates/plugins/plugins.html:20
 msgid "PBI"
@@ -6800,9 +6648,8 @@ msgstr "Немае плагінів"
 
 #: templates/plugins/plugins_datagrid.html:4
 #: templates/plugins/plugins_datagrid.html:6
-#, fuzzy
 msgid "Available Plugins"
-msgstr "Доступні дії"
+msgstr "Доступні плагiни"
 
 #: templates/registration/login.html:45
 msgid "Your username and password didn't match. Please try again."
@@ -6815,25 +6662,29 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Ласкаво просимо, %(username)s. Дякуємо за вхід."
 
 #: templates/registration/login.html:51
-#, fuzzy, python-format
+#, python-format
 msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
-msgstr "Ласкаво просимо до %(sw_name)s&trade; %(sw_login_version)s"
+msgstr "Ласкаво просимо до %(sw_name)s&reg; %(sw_login_version)s"
 
 #: templates/registration/login.html:54
 msgid ""
 "The web admin user has been removed in this release in order to unify the "
 "web and Unix authentication mechanisms."
 msgstr ""
+"WEB користувач admin був видалений в цьому релізі для уніфікації WEB і UNIX "
+"аутентифікації."
 
 #: templates/registration/login.html:55
 msgid ""
 "Administrators should log in to the web UI as root, since the web UI already "
 "confers superuser privileges in many areas."
 msgstr ""
+"Адміністратори повинні входити в web-інтерфейс під ім'ям root, так як web-"
+"інтерфейс вже надає права суперкористувача в багатьох областях."
 
 #: templates/registration/login.html:57
 msgid "For security reasons, you must now set a new root password:"
-msgstr ""
+msgstr "Заради безпеки ви повинні задати новий пароль root зараз:"
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -6856,9 +6707,8 @@ msgid "CIFS Settings"
 msgstr "Налаштування CIFS"
 
 #: templates/services/core.html:33
-#, fuzzy
 msgid "Directory Service Settings"
-msgstr "Налаштування Active Directory"
+msgstr "Налаштування сервісу каталогів"
 
 #: templates/services/core.html:47
 msgid "Dynamic DNS Settings"
@@ -6953,6 +6803,8 @@ msgid ""
 "Remember to add a new recovery key as this action invalidates the previous "
 "recovery key"
 msgstr ""
+"Не забудте додати новий ключ відновлення, так як ця дія робить попередній "
+"ключ недійсним"
 
 #: templates/storage/dataset_confirm_delete.html:5
 #, python-format
@@ -6981,9 +6833,8 @@ msgstr[2] ""
 "наборах даних.\n"
 
 #: templates/storage/dataset_edit.html:4
-#, fuzzy
 msgid "Dataset"
-msgstr "Додати набір даних"
+msgstr "Набір даних"
 
 #: templates/storage/dataset_edit.html:8
 msgid "Edit Dataset"
@@ -7005,7 +6856,7 @@ msgstr "Ви впевнені, що хочете відокремити?"
 
 #: templates/storage/disk_editbulk.html:3
 msgid "Editing the following disks"
-msgstr ""
+msgstr "Редагування наступних дисків"
 
 #: templates/storage/disk_offline.html:3
 msgid "Are you sure you want to offline?"
@@ -7037,12 +6888,12 @@ msgstr "ZFS реплікація"
 
 #: templates/storage/key.html:3
 msgid "You are about to download the global GELI key"
-msgstr ""
+msgstr "Ви збираєтеся скачати глобальний ключ GELI"
 
 #: templates/storage/key.html:6 templates/storage/recoverykey_add.html:9
 #: templates/storage/recoverykey_remove.html:6 templates/storage/rekey.html:6
 msgid "Continue"
-msgstr ""
+msgstr "Продовжити"
 
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
@@ -7063,23 +6914,23 @@ msgstr "Змінити права для %(path)s до"
 
 #: templates/storage/recoverykey_add.html:4
 msgid "You are about to add a recovery key for this volume"
-msgstr ""
+msgstr "Ви збираєтеся додати ключ відновлення для цього тому"
 
 #: templates/storage/recoverykey_add.html:5
 msgid "This will invalidate any previous recovery key"
-msgstr ""
+msgstr "Це зробить недійсними всі попередні ключі відновлення"
 
 #: templates/storage/recoverykey_remove.html:3
 msgid "You are about to remove a recovery key for this volume"
-msgstr ""
+msgstr "Ви збираєтеся видалити ключ відновлення для цього тому"
 
 #: templates/storage/rekey.html:3
 msgid "You are about to re-key the encryption"
-msgstr ""
+msgstr "Ви збираєтеся змінити ключ шифрування"
 
 #: templates/storage/replication_add.html:5
 msgid "SSH Key Scan"
-msgstr ""
+msgstr "Отримати ключ SSH"
 
 #: templates/storage/replication_datagrid.html:5
 #: templates/storage/replication_datagrid.html:7
@@ -7136,6 +6987,16 @@ msgstr "Відкат знімку"
 msgid "Rollback to this snapshot"
 msgstr "Відкат на цей знимок"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Віддавати перевагу"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Доступні дії"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Знищити"
@@ -7150,12 +7011,11 @@ msgstr "Періодичні знимки"
 
 #: templates/storage/unlock.html:3
 msgid "Do you want to unlock this volume?"
-msgstr ""
+msgstr "Ви хочете розблокувати цей том?"
 
 #: templates/storage/volume_datagrid.html:22
-#, fuzzy
 msgid "UFS Volume Manager"
-msgstr "Управління томами"
+msgstr "Управління томами UFS"
 
 #: templates/storage/volume_detach.html:13
 #, python-format
@@ -7164,7 +7024,7 @@ msgstr "У вас є %(used)s з використаного місця в цьо
 
 #: templates/storage/volume_detach.html:19
 msgid "ATTENTION - Currently the following services depend on this volume: "
-msgstr ""
+msgstr "УВАГА -- Оцi сервiси зараз залежать вiд цього тома: "
 
 #: templates/storage/volume_detach.html:27
 #, python-format
@@ -7172,39 +7032,38 @@ msgid ""
 "This is an encrypted volume, make sure to <a href=\"%(url)s\" target=\"_blank"
 "\">download</a> the key so you can be able to import it in the future"
 msgstr ""
+"Це шифруваний том, переконайтеся що ви <a href=\"%(url)s\" "
+"target=\"_blank\">завантажили</a> ключ, щоб вы могли імпортувати його в "
+"подальшому"
 
 #: templates/storage/volume_edit.html:3
 msgid "Edit ZFS Volume"
 msgstr "Змінити ZFS том"
 
 #: templates/storage/volumestatus_datagrid.html:4
-#, fuzzy
 msgid "Scrub"
-msgstr "ZFS Scrub"
+msgstr "Перевiрка"
 
 #: templates/storage/volumestatus_datagrid.html:8
-#, fuzzy
 msgid "Progress"
-msgstr "Стиснення"
+msgstr "Поступ"
 
 #: templates/storage/volumestatus_datagrid.html:9
 msgid "Scan"
-msgstr ""
+msgstr "Сканування"
 
 #: templates/storage/volumestatus_datagrid.html:9
 #, python-format
 msgid "%(scanned)s out of %(total)s"
-msgstr ""
+msgstr "%(scanned)s з %(total)s"
 
 #: templates/storage/volumestatus_datagrid.html:14
-#, fuzzy
 msgid "Errors"
-msgstr "Помилка"
+msgstr "Помилки"
 
 #: templates/storage/volumestatus_datagrid.html:15
-#, fuzzy
 msgid "Repaired"
-msgstr "Необхідний"
+msgstr "Відновлено"
 
 #: templates/storage/wizard.html:30
 msgid "Member disks"
@@ -7223,9 +7082,8 @@ msgid "Existing data will be cleared"
 msgstr "Існуючі дані будуть очищені"
 
 #: templates/storage/wizard.html:92
-#, fuzzy
 msgid "Extend Volume"
-msgstr "Експортувати том"
+msgstr "Розширити том"
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
@@ -7237,26 +7095,25 @@ msgstr "Заміна диска"
 
 #: templates/storage/zpool_disk_replace.html:8
 msgid "WARNING: The recovery key of your volume will be invalidated!"
-msgstr ""
+msgstr "УВАГА: Ключ відновлення для вашого томи буде недійсний!"
 
 #: templates/storage/zvols.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Create zvol on %(name)s"
-msgstr "Створити ZFS том в %(name)s"
+msgstr "Створити zvol на %(name)s"
 
 #: templates/storage/zvols.html:6
-#, fuzzy
 msgid "Add zvol"
-msgstr "Додати ZVol"
+msgstr "Додати zvol"
 
 #: templates/support/index.html:57
 msgid "Submit"
-msgstr ""
+msgstr "Надіслати"
 
 #: templates/support/index.html:60 templates/system/registration_add.html:11
 #: templates/system/registration_edit.html:11
 msgid "Reset"
-msgstr ""
+msgstr "Скинути"
 
 #: templates/system/advanced_edit.html:6
 msgid "Rebuild LDAP/AD Cache"
@@ -7302,15 +7159,16 @@ msgid ""
 "Consider downloading your configuration before proceeding, <a href=\"%(url)s"
 "\" target=\"_blank\">click here</a>."
 msgstr ""
+"Не забудьте скачати вашу конфігурацію перед продовженням, <a href=\"%(url)s\""
+" target=\"_blank\">натисніть сюди</a>."
 
 #: templates/system/firmware_wizard_1.html:26
 msgid "Apply Update"
 msgstr "Застосувати оновлення"
 
 #: templates/system/reboot.html:79
-#, fuzzy
 msgid "System is rebooting"
-msgstr "Системний час"
+msgstr "Система перезавантажується"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -7350,7 +7208,7 @@ msgstr "Завантажити конфігурацію"
 
 #: templates/system/shutdown.html:85
 msgid "System is shutting down"
-msgstr ""
+msgstr "Система вимикається"
 
 #: templates/system/shutdown_dialog.html:4
 msgid ""
@@ -7408,10 +7266,10 @@ msgid "The volume %s status is DEGRADED"
 msgstr "Стан тому %s - ЗРУЙНОВАНО"
 
 #: tools/alert.py:176
-#, fuzzy, python-format
+#, python-format
 msgid "The WebGUI Address could not bind to %s; using wildcard"
 msgstr ""
-"Адреса веб-інтерфейсу не може бути прив'язаний до %s; використовуйте шаблон"
+"Адреса веб-інтерфейсу не може бути прив'язаний до %s; використовується шаблон"
 
 #: tools/alert.py:186
 #, python-format
@@ -7423,9 +7281,9 @@ msgstr ""
 "%s"
 
 #: tools/alert.py:198
-#, fuzzy, python-format
+#, python-format
 msgid "The following multipaths are not optimal: %s"
-msgstr "Наступні диски вже мають тести цього типу: %s"
+msgstr "Наступні mulipath у не оптимальному станi: %s"
 
 #: tools/alert.py:236
 msgid "Critical Alerts"

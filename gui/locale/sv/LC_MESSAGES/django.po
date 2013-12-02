@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:47+0000\n"
+"POT-Creation-Date: 2013-12-02 02:08+0000\n"
 "PO-Revision-Date: 2012-07-27 03:59+0000\n"
 "Last-Translator: Robin <robin@gehrke.se>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1445,11 +1445,6 @@ msgstr "Visa fil omfattningar"
 #, fuzzy
 msgid "Configuration"
 msgstr "Globala inställningar"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4605,7 +4600,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Använt"
 
@@ -5095,7 +5090,7 @@ msgstr "Minst en dag måste väljas"
 msgid "Recursive snapshot"
 msgstr "Rekursiv ögonblicksbild"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Ögonblicksbild namn"
 
@@ -5423,6 +5418,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Volymer"
@@ -7135,6 +7131,16 @@ msgstr "Återställ tidigare ögonblicksbild"
 msgid "Rollback to this snapshot"
 msgstr "Återställning av denna ögonblicksbild"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Önskvärd"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Tillgängliga åtgärder"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Förstör"
@@ -7942,9 +7948,6 @@ msgstr "Kritiska Alarm"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 Auto"
-
-#~ msgid "Available actions"
-#~ msgstr "Tillgängliga åtgärder"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Redigera gränssnitt"

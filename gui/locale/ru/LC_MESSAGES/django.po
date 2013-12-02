@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:47+0000\n"
-"PO-Revision-Date: 2013-12-01 16:00+0000\n"
+"POT-Creation-Date: 2013-12-02 02:07+0000\n"
+"PO-Revision-Date: 2013-12-01 21:31+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1385913604.0\n"
+"X-POOTLE-MTIME: 1385933518.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:43
@@ -1408,11 +1408,6 @@ msgstr "Просмотр шаблонов jail"
 #: templates/plugins/index.html:18
 msgid "Configuration"
 msgstr "Конфигурация"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 msgid "Unable to determine IPv4 for plugin"
@@ -4565,7 +4560,7 @@ msgstr "Стереть"
 msgid "Edit In Bulk"
 msgstr "Редактировать вместе"
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Использовано"
 
@@ -5048,7 +5043,7 @@ msgstr "По крайней мере один день должен быть в�
 msgid "Recursive snapshot"
 msgstr "Рекурсивный снимок"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Имя снимка"
 
@@ -5367,6 +5362,7 @@ msgstr ""
 "поставленные в очередь или начатые репликации остановлены не будут."
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 msgid "Volume/Dataset"
 msgstr "Том/Набор данных"
 
@@ -6666,7 +6662,6 @@ msgid "Import"
 msgstr "Импорт"
 
 #: templates/plugins/plugin_info.html:2
-#, fuzzy
 msgid "Plugin information"
 msgstr "Информация о плагине"
 
@@ -7051,6 +7046,16 @@ msgstr "Откатить снимок"
 msgid "Rollback to this snapshot"
 msgstr "Откат на этот снимок"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Предпочтитать"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Доступные действия"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Уничтожить"
@@ -7078,7 +7083,7 @@ msgstr "У вас есть %(used)s использованного места в
 
 #: templates/storage/volume_detach.html:19
 msgid "ATTENTION - Currently the following services depend on this volume: "
-msgstr ""
+msgstr "ВНИМАНИЕ - Данные сервисы зависят от этого тома: "
 
 #: templates/storage/volume_detach.html:27
 #, python-format
@@ -7094,9 +7099,8 @@ msgid "Edit ZFS Volume"
 msgstr "Изменить том ZFS"
 
 #: templates/storage/volumestatus_datagrid.html:4
-#, fuzzy
 msgid "Scrub"
-msgstr "ZFS Scrub"
+msgstr "Проверка"
 
 #: templates/storage/volumestatus_datagrid.html:8
 msgid "Progress"
@@ -7221,9 +7225,8 @@ msgid "Apply Update"
 msgstr "Применить обновление"
 
 #: templates/system/reboot.html:79
-#, fuzzy
 msgid "System is rebooting"
-msgstr "Системное время"
+msgstr "Система перезагружается"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -7263,7 +7266,7 @@ msgstr "Загрузить конфигурацию"
 
 #: templates/system/shutdown.html:85
 msgid "System is shutting down"
-msgstr ""
+msgstr "Система выключается"
 
 #: templates/system/shutdown_dialog.html:4
 msgid ""
@@ -7852,9 +7855,6 @@ msgstr "Критические оповещения"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "Авто IPv6"
-
-#~ msgid "Available actions"
-#~ msgstr "Доступные действия"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Редактировать интерфейс"

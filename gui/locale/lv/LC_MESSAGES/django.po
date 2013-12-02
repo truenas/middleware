@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:45+0000\n"
+"POT-Creation-Date: 2013-12-02 02:05+0000\n"
 "PO-Revision-Date: 2012-09-13 12:40+0000\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1443,11 +1443,6 @@ msgstr "Skatīt datnes apjomus"
 #, fuzzy
 msgid "Configuration"
 msgstr "Galvenie uzstādījumi"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4594,7 +4589,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Lietots"
 
@@ -5083,7 +5078,7 @@ msgstr "Vismaz vienai dienai jābūt izvēlētai"
 msgid "Recursive snapshot"
 msgstr "Atpakaļejošs uzņēmums"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Uzņēmuma nosaukums"
 
@@ -5410,6 +5405,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Sējumi"
@@ -7132,6 +7128,16 @@ msgstr "Atgriezties uz šo Iznīcināt momentuzņēmumu"
 msgid "Rollback to this snapshot"
 msgstr "Atgriezties uz šo uzņēmumu"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Vēlamais"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Pieejamās darbības"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Iznīcināt"
@@ -7925,9 +7931,6 @@ msgstr "Kritiskas Trauksmes"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 Auto"
-
-#~ msgid "Available actions"
-#~ msgstr "Pieejamās darbības"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Labot interfeisu"
