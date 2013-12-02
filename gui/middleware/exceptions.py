@@ -35,7 +35,7 @@ class MiddlewareError(Exception):
         if not value:
             raise ValueError('You deserve to be shot for not providing an '
                              'actionable error message mister developer')
-        log.error(str(self))
+        log.warn(str(self))
 
     def __str__(self):
         return "[%s: %s]" % (type(self).__name__, self.value.encode('utf-8'))
