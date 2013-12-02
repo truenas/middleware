@@ -84,6 +84,11 @@ for VIA C3, C7 and Eden processors.
 
 * Improved performance of encrypted ZFS volumes.
 
+* The iSCSI options have been updated to ensure the GUI constraints match the
+daemon constraints.  In particular the GUI limited the number of sessions and
+the number of connections to a low value that may need to be increased if there
+are large numbers of targets or clients or both.
+
 ==============================================================================
 
 Release Notes for FreeNAS 9.1.0-RELEASE
