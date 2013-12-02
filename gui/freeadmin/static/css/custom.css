@@ -1205,10 +1205,8 @@ span.shell_bf {
     position:relative;
 }
 #messages {
-    position:absolute;
-    left:400px;
+    float: left;
     min-width:250px;
-    opacity:0.6;
 }
 label[for=stopmsgrefresh] {
     color: white;
