@@ -37,7 +37,7 @@ def get_jails_index(release=None, arch=None):
         if arch[0] == '64bit':
             arch = 'x64'
         else:
-            arch = 'x32'
+            arch = 'x86'
 
     if release is None:
         release = "latest"

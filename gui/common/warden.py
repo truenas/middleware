@@ -27,6 +27,7 @@
 #####################################################################
 import logging
 import os
+import platform
 import string
 
 log = logging.getLogger('common.warden')
@@ -38,6 +39,7 @@ WARDEN = "/usr/local/bin/warden"
 WARDENCONF = "/usr/local/etc/warden.conf"
 
 from freenasUI.common.cmd import cmd_arg, cmd_pipe
+from freenasUI.common.pipesubr import pipeopen
 
 class warden_arg(cmd_arg):
     pass
@@ -1107,3 +1109,48 @@ class Warden(warden_base):
 
     def zfsrmsnap(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_zfsrmsnap(flags, **kwargs))
+
+
+def get_warden_template_abi_arch(template_path):
+    abi_arch = None
+
+    sysctl_path = "%s/sbin/sysctl" % template_path
+    p = pipeopen("file -b %s" % sysctl_path, important=False)
+    out = p.communicate()
+    if p.returncode != 0:
+        return None
+
+    try:
+        out = out[0]
+        parts = out.split(',')
+        out = parts[0].split()
+        if out[1] == '64-bit':
+            abi_arch = 'x64'
+        else:
+            abi_arch = 'x86'
+
+    except:
+        pass
+
+    return abi_arch
+
+
+def get_warden_template_abi_version(template_path):
+    abi_version = None
+
+    sysctl_path = "%s/sbin/sysctl" % template_path
+    p = pipeopen("file -b %s" % sysctl_path, important=False)
+    out = p.communicate()
+    if p.returncode != 0:
+        return None
+
+    try:
+        out = out[0]
+        parts = out.split(',')
+        out = parts[4].split()
+        abi_version = "%s-RELEASE" % out[2]
+
+    except:
+        pass
+
+    return abi_version

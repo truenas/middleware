@@ -459,3 +459,21 @@ def nis_objects():
     c.close()
     h.close()
     return objects
+
+
+def get_avatar_conf():
+    avatar_conf= {}
+    avatar_vars = [
+        'AVATAR_PROJECT',
+        'AVATAR_PROJECT_SITE',
+        'AVATAR_SUPPORT_SITE',
+        'AVATAR_VERSION',
+        'AVATAR_BUILD_NUMBER',
+        'AVATAR_ARCH',
+        'AVATAR_COMPONENT',
+    ]
+
+    for av in avatar_vars:
+        avatar_conf[av] = get_freenas_var_by_file("/etc/avatar.conf", av)
+
+    return avatar_conf
