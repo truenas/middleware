@@ -82,6 +82,8 @@ Suse-12.3.
 * Added padlock(4) driver which provides cryptographic hardware acceleration
 for VIA C3, C7 and Eden processors.
 
+* Improved performance of encrypted ZFS volumes.
+
 ==============================================================================
 
 Release Notes for FreeNAS 9.1.0-RELEASE
