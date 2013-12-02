@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:46+0000\n"
-"PO-Revision-Date: 2013-10-26 18:24+0000\n"
-"Last-Translator: MightyNerd <staszw@gmail.com>\n"
+"POT-Creation-Date: 2013-12-02 02:06+0000\n"
+"PO-Revision-Date: 2013-12-02 02:01+0000\n"
+"Last-Translator: Quver <pawel@quver.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1382811883.0\n"
+"X-POOTLE-MTIME: 1385949716.0\n"
 
 #: choices.py:43
 msgid "Plain"
@@ -42,9 +42,8 @@ msgid "HTTPS"
 msgstr "HTTPS"
 
 #: choices.py:52
-#, fuzzy
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTP+HTTPS"
 
 #: choices.py:56 choices.py:235
 msgid "Auto"
@@ -1443,11 +1442,6 @@ msgstr "Zobacz wszystkie zakresy"
 #, fuzzy
 msgid "Configuration"
 msgstr "Konfiguracja globalna"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4605,7 +4599,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Użyte"
 
@@ -5097,7 +5091,7 @@ msgstr "Musi być wybrany przynajmniej jeden dzień"
 msgid "Recursive snapshot"
 msgstr "Rekursywna kopia migawkowa"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Nazwa kopii migawkowej"
 
@@ -5428,6 +5422,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Zbiór danych"
@@ -7134,6 +7129,16 @@ msgstr "Przywróć do tej kopii migawkowej"
 msgid "Rollback to this snapshot"
 msgstr "Przywróć do tej kopii migawkowej"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Preferowany"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Dostępne akcje"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Zniszcz"
@@ -7839,9 +7844,6 @@ msgstr "Krytyczny"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "Auto IPv6"
-
-#~ msgid "Available actions"
-#~ msgstr "Dostępne akcje"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Edytuj interfejs"

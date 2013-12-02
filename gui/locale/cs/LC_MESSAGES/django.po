@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:41+0000\n"
+"POT-Creation-Date: 2013-12-02 02:01+0000\n"
 "PO-Revision-Date: 2013-11-10 09:44+0000\n"
 "Last-Translator: Bongo <bongo@hkfree.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1442,11 +1442,6 @@ msgstr "zobrazit všechny uživatele"
 #, fuzzy
 msgid "Configuration"
 msgstr "Hlavní nastavení"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4442,7 +4437,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr ""
 
@@ -4916,7 +4911,7 @@ msgstr ""
 msgid "Recursive snapshot"
 msgstr ""
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr ""
 
@@ -5241,6 +5236,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Svazky"
@@ -6929,6 +6925,16 @@ msgstr ""
 msgid "Rollback to this snapshot"
 msgstr ""
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "preferovaný"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Dostupné akce"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Zrušit"
@@ -7466,9 +7472,6 @@ msgstr "Kritická upozornění"
 
 #~ msgid "Change Admin Password"
 #~ msgstr "Změnit administrátorské heslo"
-
-#~ msgid "Available actions"
-#~ msgstr "Dostupné akce"
 
 #~ msgid "Add LAGG"
 #~ msgstr "Přidat LAGG"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:49+0000\n"
+"POT-Creation-Date: 2013-12-02 02:09+0000\n"
 "PO-Revision-Date: 2013-05-31 03:17+0000\n"
 "Last-Translator: Hugh____ <box.xoq@msn.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1440,11 +1440,6 @@ msgstr "查看文件范围列表"
 #, fuzzy
 msgid "Configuration"
 msgstr "全局配置"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4465,7 +4460,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "已用"
 
@@ -4944,7 +4939,7 @@ msgstr "必须至少选择一天"
 msgid "Recursive snapshot"
 msgstr "循环快照"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "快照名"
 
@@ -5271,6 +5266,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "卷"
@@ -6945,6 +6941,16 @@ msgstr "回滚快照"
 #: templates/storage/snapshots.html:67
 msgid "Rollback to this snapshot"
 msgstr "回退至此快照"
+
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "首选"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "可用操作"
 
 #: templates/storage/snapshots.html:142
 msgid "Destroy"

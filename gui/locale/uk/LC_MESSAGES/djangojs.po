@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:52+0000\n"
-"PO-Revision-Date: 2013-11-30 12:30+0000\n"
+"POT-Creation-Date: 2013-12-02 02:12+0000\n"
+"PO-Revision-Date: 2013-12-01 21:27+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,15 +18,15 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1385814628.0\n"
+"X-POOTLE-MTIME: 1385933242.0\n"
 
 #: freeadmin/static/lib/js/alert.js:77
 msgid "Alert System"
-msgstr ""
+msgstr "Система попереджень"
 
 #: freeadmin/static/lib/js/freeadmin.js:239
 msgid "Enable service"
-msgstr ""
+msgstr "Увімкнути службу"
 
 #: freeadmin/static/lib/js/freeadmin.js:390
 #: freeadmin/static/lib/js/freeadmin.js:409
@@ -35,11 +35,11 @@ msgstr "Деякі помилки"
 
 #: freeadmin/static/lib/js/freeadmin.js:733
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Кеш было перебудовано."
 
 #: freeadmin/static/lib/js/freeadmin.js:735
 msgid "The cache could not be rebuilt: "
-msgstr ""
+msgstr "Не вдалося перебудувати кеш: "
 
 #: freeadmin/static/lib/js/freeadmin.js:943
 msgid "Please wait..."
@@ -63,7 +63,7 @@ msgstr "Налаштування мережі"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:134
 msgid "Shares"
-msgstr ""
+msgstr "Спільні ресурси"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:167
 msgid "Services"
@@ -71,7 +71,7 @@ msgstr "Служби"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:208
 msgid "Jails"
-msgstr ""
+msgstr "Jail"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:246
 msgid "Plugins"
@@ -87,16 +87,16 @@ msgstr "Сховище"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:394
 msgid "Support"
-msgstr ""
+msgstr "Підтримка"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
 msgid "Shell"
-msgstr ""
+msgstr "Командний iнтерпретатор"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:90
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:114
 msgid "Paste"
-msgstr ""
+msgstr "Вставити"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
 msgid "Each selected"
@@ -109,12 +109,12 @@ msgstr "Кожен номер"
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
 msgid "Browse"
-msgstr ""
+msgstr "Огляд"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
 msgid "Close"
-msgstr ""
+msgstr "Закрити"
 
 #~ msgid "Reporting"
 #~ msgstr "Звіти"

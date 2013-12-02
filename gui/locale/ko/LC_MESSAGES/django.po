@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:39+0000\n"
+"POT-Creation-Date: 2013-12-02 02:00+0000\n"
 "PO-Revision-Date: 2013-07-15 07:31+0000\n"
 "Last-Translator: Richard Peter <shon9178@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1444,11 +1444,6 @@ msgstr "모든 사용자 보기"
 #, fuzzy
 msgid "Configuration"
 msgstr "전역 설정"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4478,7 +4473,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "사용 된"
 
@@ -4963,7 +4958,7 @@ msgstr ""
 msgid "Recursive snapshot"
 msgstr ""
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr ""
 
@@ -5294,6 +5289,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "볼륨상태"
@@ -6971,6 +6967,16 @@ msgstr "스냅샷 복원하기"
 msgid "Rollback to this snapshot"
 msgstr "이 스냅샷으로 복원"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "바람직한"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "사용할 수 있는 활동들"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "제거하기"
@@ -7491,9 +7497,6 @@ msgstr "중요 알람"
 
 #~ msgid "Modify"
 #~ msgstr "수정"
-
-#~ msgid "Available actions"
-#~ msgstr "사용할 수 있는 활동들"
 
 #~ msgid "Edit Interface"
 #~ msgstr "인터페이스 수정"

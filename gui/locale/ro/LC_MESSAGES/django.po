@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:46+0000\n"
+"POT-Creation-Date: 2013-12-02 02:07+0000\n"
 "PO-Revision-Date: 2013-08-29 12:06+0000\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1446,11 +1446,6 @@ msgstr "Vizualizare extensii fişier"
 #, fuzzy
 msgid "Configuration"
 msgstr "Configuraţie globală"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4643,7 +4638,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Utilizat"
 
@@ -5133,7 +5128,7 @@ msgstr "Cel puţin o zi trebuie aleasă"
 msgid "Recursive snapshot"
 msgstr "Punct de restaurare recursiv"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Nume punct de restaurare"
 
@@ -5460,6 +5455,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Set date"
@@ -7175,6 +7171,16 @@ msgstr "Revenire la un punct de restaurare"
 msgid "Rollback to this snapshot"
 msgstr "Revenire la acest punct de restaurare"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Preferat"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Acţiuni dsiponibile"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Distrugere"
@@ -7978,9 +7984,6 @@ msgstr "Alerte critice"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 automat"
-
-#~ msgid "Available actions"
-#~ msgstr "Acţiuni dsiponibile"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Editare interfaţă"

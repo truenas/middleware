@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:47+0000\n"
+"POT-Creation-Date: 2013-12-02 02:07+0000\n"
 "PO-Revision-Date: 2013-11-30 12:37+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1445,11 +1445,6 @@ msgstr "Zobraziť všetky Extenty"
 #, fuzzy
 msgid "Configuration"
 msgstr "Hlavné nastavenia"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 msgid "Unable to determine IPv4 for plugin"
@@ -4642,7 +4637,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Použité"
 
@@ -5139,7 +5134,7 @@ msgstr "Aspoň jeden deň musí byť zvolený"
 msgid "Recursive snapshot"
 msgstr "Rekurzívny snímok"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Názov snímku"
 
@@ -5472,6 +5467,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Zväzky"
@@ -7186,6 +7182,16 @@ msgstr "Vrátiť sa k tejto snímke"
 msgid "Rollback to this snapshot"
 msgstr "Vrátiť sa k tejto snímke"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Preferovaný"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Dostupné akcie"
+
 #: templates/storage/snapshots.html:142
 #, fuzzy
 msgid "Destroy"
@@ -7946,9 +7952,6 @@ msgstr "Kritické"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 Auto"
-
-#~ msgid "Available actions"
-#~ msgstr "Dostupné akcie"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Upraviť rozhranie"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:44+0000\n"
+"POT-Creation-Date: 2013-12-02 02:04+0000\n"
 "PO-Revision-Date: 2013-11-29 19:45+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1380,11 +1380,6 @@ msgstr ""
 #: jails/nav.py:129 plugins/models.py:183 templates/jails/index.html:28
 #: templates/plugins/index.html:18
 msgid "Configuration"
-msgstr ""
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
 msgstr ""
 
 #: jails/utils.py:567
@@ -4272,7 +4267,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr ""
 
@@ -4729,7 +4724,7 @@ msgstr ""
 msgid "Recursive snapshot"
 msgstr ""
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr ""
 
@@ -5040,6 +5035,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 msgid "Volume/Dataset"
 msgstr ""
 
@@ -6653,6 +6649,14 @@ msgstr ""
 
 #: templates/storage/snapshots.html:67
 msgid "Rollback to this snapshot"
+msgstr ""
+
+#: templates/storage/snapshots.html:97
+msgid "Refer"
+msgstr ""
+
+#: templates/storage/snapshots.html:102
+msgid "Available Actions"
 msgstr ""
 
 #: templates/storage/snapshots.html:142

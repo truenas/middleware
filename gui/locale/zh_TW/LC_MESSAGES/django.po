@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:49+0000\n"
+"POT-Creation-Date: 2013-12-02 02:09+0000\n"
 "PO-Revision-Date: 2013-06-14 08:41+0000\n"
 "Last-Translator: kentwelcome <kentwelcome@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1453,11 +1453,6 @@ msgstr "檢視全部延伸磁區(Extents)"
 #, fuzzy
 msgid "Configuration"
 msgstr "全區組態"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 msgid "Unable to determine IPv4 for plugin"
@@ -4509,7 +4504,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "已使用"
 
@@ -4988,7 +4983,7 @@ msgstr "至少必須選擇一天"
 msgid "Recursive snapshot"
 msgstr "遞迴快照"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "快照名稱"
 
@@ -5318,6 +5313,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "資料集"
@@ -7005,6 +7001,16 @@ msgstr "還原快照"
 #: templates/storage/snapshots.html:67
 msgid "Rollback to this snapshot"
 msgstr "還原這個快照"
+
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "建議值"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "可執行的功能"
 
 #: templates/storage/snapshots.html:142
 msgid "Destroy"

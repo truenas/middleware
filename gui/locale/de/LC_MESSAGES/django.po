@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:41+0000\n"
+"POT-Creation-Date: 2013-12-02 02:01+0000\n"
 "PO-Revision-Date: 2012-09-24 04:19+0000\n"
 "Last-Translator: SirAL <hglpd@hotmail.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1476,11 +1476,6 @@ msgstr "Datei Extents anzeigen"
 #, fuzzy
 msgid "Configuration"
 msgstr "Allgemeine Konfiguration"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4789,7 +4784,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Benutzt"
 
@@ -5294,7 +5289,7 @@ msgstr "Mindestens ein Tag muss ausgewählt werden"
 msgid "Recursive snapshot"
 msgstr "Rekursiver Snapshot"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Snapshotname"
 
@@ -5625,6 +5620,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Dataset"
@@ -7382,6 +7378,16 @@ msgstr "Snapshot zurücksetzen"
 msgid "Rollback to this snapshot"
 msgstr "Zu diesem Snapshot wechseln"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Bevorzugt"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Verfügbare Aktionen"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "Löschen"
@@ -8231,9 +8237,6 @@ msgstr "Kritische Alarme"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 Autokonfiguration"
-
-#~ msgid "Available actions"
-#~ msgstr "Verfügbare Aktionen"
 
 # das "Interface" übersetzen? Netzwerkinterface? Schnittstelle?
 #~ msgid "Edit Interface"

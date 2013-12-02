@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:44+0000\n"
+"POT-Creation-Date: 2013-12-02 02:04+0000\n"
 "PO-Revision-Date: 2013-10-28 00:55+0000\n"
 "Last-Translator: zeke <sage.0118@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1464,11 +1464,6 @@ msgstr "すべてのユーザを表示"
 #, fuzzy
 msgid "Configuration"
 msgstr "全般設定"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 #, fuzzy
@@ -4703,7 +4698,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "使用中"
 
@@ -5203,7 +5198,7 @@ msgstr "少なくとも一つの曜日を選択する必要があります。"
 msgid "Recursive snapshot"
 msgstr "再帰的なスナップショット"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "スナップショット名"
 
@@ -5539,6 +5534,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "データセット"
@@ -7311,6 +7307,16 @@ msgstr "スナップショットへロールバック"
 msgid "Rollback to this snapshot"
 msgstr "スナップショットへロールバック"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "優先"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "利用可能な操作"
+
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
 msgstr "削除"
@@ -8114,9 +8120,6 @@ msgstr "致命的なアラート"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 Auto"
-
-#~ msgid "Available actions"
-#~ msgstr "利用可能な操作"
 
 #~ msgid "Edit Interface"
 #~ msgstr "インタフェースを編集"

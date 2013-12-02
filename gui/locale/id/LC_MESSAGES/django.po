@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:44+0000\n"
+"POT-Creation-Date: 2013-12-02 02:04+0000\n"
 "PO-Revision-Date: 2012-03-10 16:45+0000\n"
 "Last-Translator: ngosngosan <ngosngosan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1439,11 +1439,6 @@ msgstr "Lihat Semua Ekstensi"
 #, fuzzy
 msgid "Configuration"
 msgstr "Pengaturan Global"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 msgid "Unable to determine IPv4 for plugin"
@@ -4635,7 +4630,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr "Digunakan"
 
@@ -5134,7 +5129,7 @@ msgstr "Setidaknya satu hari harus dipilih"
 msgid "Recursive snapshot"
 msgstr "Snapshot recursif"
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr "Nama Snapshot"
 
@@ -5472,6 +5467,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 #, fuzzy
 msgid "Volume/Dataset"
 msgstr "Volume-Volume"
@@ -7197,6 +7193,16 @@ msgstr "Kembalikan ke snapshot ini"
 msgid "Rollback to this snapshot"
 msgstr "Kembalikan ke snapshot ini"
 
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Disukai"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Aksi yang tersedia"
+
 #: templates/storage/snapshots.html:142
 #, fuzzy
 msgid "Destroy"
@@ -7957,9 +7963,6 @@ msgstr "Kritikal"
 
 #~ msgid "IPv6 Auto"
 #~ msgstr "IPv6 Otomatis"
-
-#~ msgid "Available actions"
-#~ msgstr "Aksi yang tersedia"
 
 #~ msgid "Edit Interface"
 #~ msgstr "Sunting Interface"

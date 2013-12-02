@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-01 16:43+0000\n"
+"POT-Creation-Date: 2013-12-02 02:03+0000\n"
 "PO-Revision-Date: 2013-06-27 22:53+0000\n"
 "Last-Translator: gzuri <goran.zuri@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1438,11 +1438,6 @@ msgstr ""
 #, fuzzy
 msgid "Configuration"
 msgstr "Osnovna konfiguracija"
-
-#: jails/nav.py:250
-#, python-format
-msgid "%s"
-msgstr ""
 
 #: jails/utils.py:567
 msgid "Unable to determine IPv4 for plugin"
@@ -4438,7 +4433,7 @@ msgstr ""
 msgid "Edit In Bulk"
 msgstr ""
 
-#: storage/admin.py:107
+#: storage/admin.py:107 templates/storage/snapshots.html:92
 msgid "Used"
 msgstr ""
 
@@ -4917,7 +4912,7 @@ msgstr ""
 msgid "Recursive snapshot"
 msgstr ""
 
-#: storage/forms.py:1451
+#: storage/forms.py:1451 templates/storage/snapshots.html:87
 msgid "Snapshot Name"
 msgstr ""
 
@@ -5241,6 +5236,7 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:836 storage/models.py:915
+#: templates/storage/snapshots.html:82
 msgid "Volume/Dataset"
 msgstr ""
 
@@ -6909,6 +6905,16 @@ msgstr ""
 #: templates/storage/snapshots.html:67
 msgid "Rollback to this snapshot"
 msgstr ""
+
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Predodređen"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Available Actions"
+msgstr "Dostupno"
 
 #: templates/storage/snapshots.html:142
 msgid "Destroy"
