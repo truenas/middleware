@@ -473,7 +473,7 @@ define([
         }
         if(this.disks.length == 0) {
           this.vdevtype.set('value', '');
-        } else if(this.disks.length == 1) {
+        } else if(numDisksRow == 1) {
           if(!this.vdevtype.get("value")) {
             this.vdevtype.set("value", "stripe");
           }
