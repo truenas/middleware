@@ -2687,6 +2687,7 @@ class notifier:
 
         for pair in out:
             (var, val) = pair.split('=', 1)
+            log.debug("XXX: var = %s, val = %s", var, val)
 
             var = var.lower()
             if var == 'pbi information for':
@@ -2711,7 +2712,7 @@ class notifier:
         from freenasUI.plugins.models import Plugins
         plugin = None
 
-        qs = Plugins.objects.filter(plugin_name=name)
+        qs = Plugins.objects.filter(plugin_name__iexact=name)
         if qs.count() > 0:
             plugin = qs[0]
 
@@ -2772,6 +2773,8 @@ class notifier:
         log.debug("XXX: newarch = %s", newarch)
 
         plugin = self._get_plugin_info(newname)
+        if not plugin:
+            raise MiddlewareError("plugin could not be found and is NULL")
 
         pbitemp = "/var/tmp/pbi"
         oldpbitemp = "%s/old" % pbitemp
