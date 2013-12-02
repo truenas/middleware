@@ -128,6 +128,15 @@ class JailsFAdmin(BaseFreeAdmin):
                 for(var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
 
+                    if (row.data.jail_isplugin) {
+                        if (actionName == 'delete') {
+                            query(".grid" + actionName).forEach(function(item, idx) {
+                                domStyle.set(item, "display", "none");
+                            });
+                        }
+                        break;
+                    }
+
                     if (row.data.jail_type != 'pluginjail' || row.data.jail_status == 'Stopped') {
                         if (actionName == 'plugins') {
                             query(".grid" + actionName).forEach(function(item, idx) {
@@ -143,6 +152,7 @@ class JailsFAdmin(BaseFreeAdmin):
                             });
                         }
                         break;
+
                     } else if (row.data.jail_status == 'Stopped') {
                         if (actionName == 'stop') {
                             query(".grid" + actionName).forEach(function(item, idx) {
@@ -202,30 +212,30 @@ class JailsFAdmin(BaseFreeAdmin):
             'button_name': shell_button,
             'tooltip': 'Shell',
             'on_select_after': """function(evt, actionName, action) {
-    for(var i=0;i < evt.rows.length;i++) {
-        var row = evt.rows[i];
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
 
-        if (row.data.jail_status == 'Stopped') {
-            query(".grid" + actionName).forEach(function(item, idx) {
-                domStyle.set(item, "display", "none");
-            });
-            break;
-        }
-    }
- }""",
+                    if (row.data.jail_status == 'Stopped') {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                        break;
+                    }
+                }
+            }""",
             'on_click': """function() {
-    var mybtn = this;
-    require(["freeadmin/WebShell"], function(WebShell) {
-        for (var i in grid.selection) {
-            var data = grid.row(i).data;
-            var shell = "/bin/csh";
-            if (data.jail_os == 'Linux') {
-                shell = '/bin/sh'
-            }
-            _webshell = new WebShell({jid: data.jail_jid, shell: shell});
-        }
-    });
-}"""
+                var mybtn = this;
+                require(["freeadmin/WebShell"], function(WebShell) {
+                    for (var i in grid.selection) {
+                        var data = grid.row(i).data;
+                        var shell = "/bin/csh";
+                        if (data.jail_os == 'Linux') {
+                            shell = '/bin/sh'
+                        }
+                        _webshell = new WebShell({jid: data.jail_jid, shell: shell});
+                    }
+                });
+            }"""
         }
         actions['delete'] = self._action_builder(
             'jail_delete',

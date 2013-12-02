@@ -55,6 +55,7 @@ from freenasUI.middleware import zfs
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
+from freenasUI.plugins.models import Plugins
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
@@ -1450,6 +1451,11 @@ class JailsResourceMixin(object):
             bundle.data['jail_os'] = 'FreeBSD'
             if bundle.obj.is_linux_jail():
                 bundle.data['jail_os'] = 'Linux'
+
+            bundle.data['jail_isplugin'] = False
+            plugin = Plugins.objects.filter(plugin_jail=bundle.obj.jail_host)
+            if plugin:
+                bundle.data['jail_isplugin'] = True
 
         if self.is_webclient(bundle.request):
             bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
