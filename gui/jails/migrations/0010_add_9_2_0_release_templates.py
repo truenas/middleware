@@ -49,10 +49,10 @@ class Migration(DataMigration):
             arch = 'x86'
 
         for t in templates:
-            t = orm['jails.Jailtemplate'].objects.filter(jt_name='%s' % t)[0]
-            t.jt_url = "%s/freenas-%s-%s.tgz" % \
+            obj= orm['jails.Jailtemplate'].objects.filter(jt_name='%s' % t)[0]
+            obj.jt_url = "%s/freenas-%s-%s.tgz" % \
                  (get_jails_index(release='9.2.0', arch=arch), t, freebsd_release)
-            t.save()
+            obj.save()
 
         jc = None
         jc_dataset = None
