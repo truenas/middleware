@@ -117,6 +117,7 @@ start_jail_vimage()
   if [ -n "${IP4}" ] ; then
      warden_print "Setting IP4 address: ${IP4}"
      jexec ${JID} ifconfig ${EPAIRB} inet "${IP4}"
+     arp -s "${IP4}" "${MAC}"
   fi
   for ip4 in ${IPS4}
   do
@@ -124,9 +125,11 @@ start_jail_vimage()
      if [ "$?" = "0" ] ; then
         if ! ipv4_address_configured "${EPAIRB}" "${ip4}" "${JID}" ; then
            jexec ${JID} ifconfig ${EPAIRB} inet alias ${ip4}
+           arp -s "${ip4}" "${MAC}"
         fi
      else
         jexec ${JID} ifconfig ${EPAIRB} inet ${ip4}
+        arp -s "${ip4}" "${MAC}"
      fi
   done
 
