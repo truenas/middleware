@@ -29,6 +29,8 @@ import math
 import syslog
 import types
 
+from django.utils import translation
+
 
 class SysLogHandler(logging.Handler):
 
@@ -53,7 +55,11 @@ class SysLogHandler(logging.Handler):
 
     def emit(self, record):
         syslog.openlog(facility=self.facility)
-        msg = self.format(record)
+        # Log everything in english for now as console is not unicode ready
+        with translation.override('en'):
+            if hasattr(record.msg, '_proxy____kw'):
+                record.msg = unicode(record.msg)
+            msg = self.format(record)
         if type(msg) is types.UnicodeType:
             msg = msg.encode('utf-8')
         """
