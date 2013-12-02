@@ -688,15 +688,6 @@ DIRECTORY_SERVICE_CHOICES = (
     )
 
 
-SUPPORT_TYPE_CHOICES = (
-    ('type1', _('type1')),
-    ('type2', _('type2')),
-    ('type3', _('type3')),
-    ('type4', _('type4')),
-    ('type5', _('type5')),
-    )
-
-
 # on|off|ctrl|[!]data|auth|auth+[!]data
 FTP_TLS_POLICY_CHOICES = (
     ('on', _('on')),
