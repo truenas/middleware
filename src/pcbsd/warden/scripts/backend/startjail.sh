@@ -103,6 +103,11 @@ start_jail_vimage()
     if [ -n "${MAC}" ] ; then
       ifconfig ${EPAIRB} ether "${MAC}"
     fi
+  else  
+    MAC="$(ifconfig ${EPAIRB}|egrep ether|awk '{ print $2 }')"
+    if [ -n "${MAC}" ] ; then
+      echo "${MAC}" > "${JMETADIR}/mac"
+    fi
   fi
 
   # Move epairb into jail
