@@ -1,5 +1,17 @@
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_jails">
 
+{% if not default_iface %}
+
+  <div>
+  <span style="color:red;font-weight:bold;">
+  <pre>
+        You must configure a default route (Network->IPv4 Default Gateway)
+  </pre>
+  </span>
+  </div>
+
+{% else %}
+
 {% if jailsconf.jc_path %}
 
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Jails"|escapejs %}'
@@ -30,5 +42,7 @@
   doLayout: false,
   refreshOnShow: true" class="objrefresh data_jails_JailsConfiguration"" tab="jails.JailsConfiguration" id="tab_JailsConfiguration">
   </div>
+
+{% endif %}
 
 </div>

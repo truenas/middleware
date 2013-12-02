@@ -50,6 +50,7 @@ log = logging.getLogger("jails.views")
 
 
 def jails_home(request):
+    default_iface = notifier().guess_default_interface()
 
     try:
         jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
@@ -63,7 +64,8 @@ def jails_home(request):
 
     return render(request, 'jails/index.html', {
         'focus_form': request.GET.get('tab', 'jails.View'),
-        'jailsconf': jailsconf
+        'jailsconf': jailsconf,
+        'default_iface' : default_iface
     })
 
 

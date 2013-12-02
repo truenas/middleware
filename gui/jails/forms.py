@@ -78,6 +78,7 @@ from freenasUI.common.warden import (
     WARDEN_KEY_HOST,
 )
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.notifier import notifier
 from freenasUI.system.forms import clean_path_execbit
 
 log = logging.getLogger('jails.forms')

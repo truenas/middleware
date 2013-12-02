@@ -1,5 +1,7 @@
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_pluginssettings">
 
+{% if default_iface %}
+
 <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Available"|escapejs %}'
     {% if focus == "plugins.Available" %}, selected: true{% endif %},
     doLayout: true,
@@ -21,5 +23,17 @@
     href: '{% url "freeadmin_plugins_configuration_edit" oid=conf.id %}?inline=true',
     refreshOnShow: true" class="objrefresh" tab="plugins.Configuration" id="tab_Configuration">
 </div>
+
+{% else %}
+
+  <div>
+  <span style="color:red;font-weight:bold;">
+  <pre>
+        You must configure a default route (Network->IPv4 Default Gateway)
+  </pre>
+  </span>
+  </div>
+
+{% endif %}
 
 </div>

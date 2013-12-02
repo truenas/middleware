@@ -436,8 +436,7 @@ if [ -z "${IFACE}" ] ; then
    DEFAULT=1
 fi
 if [ -z "${IFACE}" ] ; then
-  warden_error "no interface specified and a default doesn't exist!"
-  exit 6
+  warden_warn "no interface specified and a default doesn't exist!"
 fi
 
 MTU=`ifconfig ${IFACE} | head -1 | sed -E 's/.*mtu ([0-9]+)/\1/g'`
