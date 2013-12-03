@@ -374,6 +374,11 @@ _gen_conf()
 		touch /etc/zfs/exports
 	fi
 
+	if [ -e /etc/nfsv4_enable ]; then
+		echo "nfsv4_server_enable=\"YES\""
+		echo "nfsuserd_enable=\"YES\""
+	fi
+
 	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
 	_count_config fusefs_enable storage_volume vol_fstype =\'NTFS\'
 	_count_config fusefs_safe storage_volume vol_fstype =\'NTFS\'

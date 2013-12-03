@@ -48,6 +48,9 @@ generate_exports()
 	local f="id nfs_network nfs_hosts nfs_alldirs nfs_ro nfs_quiet nfs_maproot_user nfs_maproot_group nfs_mapall_user nfs_mapall_group"
 	eval local $f
 	local sf=$(var_to_sf $f)
+	if [ -e /etc/nfsv4_enable ]; then
+		echo "V4: /" > /etc/exports
+	fi
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \
 	while eval read -r $f; do
 		local path paths line
@@ -94,7 +97,7 @@ generate_exports()
 		elif [ -z "${nfs_network}" ]; then
 			echo "${line}"
 		fi
-	done > /etc/exports
+	done >> /etc/exports
 	service mountd quietreload
 }
 
