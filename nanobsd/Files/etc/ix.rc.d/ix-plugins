@@ -169,6 +169,15 @@ plugins_stop()
 		then
 			touch "${tmpfile}"
 		fi
+
+		if [ "${rc_force}" = "yes" ]
+		then
+			jexec ${jid} ps -axw | \
+				grep control.py | \
+				grep -v grep | \
+				awk '{ print $1 }' | \
+				xargs kill -9 >/dev/null 2>&1
+		fi
 	done
 	IFS="${_ifs}"
 

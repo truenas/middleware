@@ -2838,7 +2838,7 @@ class notifier:
         if out[0] != 0:
             raise MiddlewareError("Unable to make a PBI patch")
 
-        pbpfile = "%s-%s_to_%s-%s.pbp" % (plugin.plugin_name,
+        pbpfile = "%s-%s_to_%s-%s.pbp" % (plugin.plugin_name.lower(),
             plugin.plugin_version, newversion, plugin.plugin_arch)
 
         log.debug("XXX: pbpfile = %s", pbpfile)
@@ -2887,6 +2887,9 @@ class notifier:
         os.write(fd,"key = %s\n" % rpctoken.key)
         os.write(fd,"secret = %s\n" % rpctoken.secret)
         os.close(fd)
+
+        self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, newname))
+        self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, newname))
 
         log.debug("XXX: update_pbi: returning %s", ret)
         return ret
