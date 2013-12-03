@@ -1337,7 +1337,7 @@ class MountPointAccessForm(Form):
         label=_('Type of ACL'),
         choices=(
             ('unix', 'Unix'),
-            ('windows', 'Windows'),
+            ('windows', 'Windows / Mac'),
         ),
         initial='unix',
         widget=forms.widgets.RadioSelect(),
