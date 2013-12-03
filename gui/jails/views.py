@@ -478,3 +478,16 @@ def jail_zfsrmclonesnap(request, id):
 def jail_zfsrmsnap(request, id):
     log.debug("XXX: jail_zfsrmsnap()")
     return render(request, 'jails/zfsrmsnap.html', {})
+
+
+def jail_template_info(request, name):
+
+    data = { }
+    jt = models.JailTemplate.objects.get(jt_name=name)
+    if jt:
+        data['jt_name'] = jt.jt_name
+        data['jt_os'] = jt.jt_os
+        data['jt_url'] = jt.jt_url
+
+    content = simplejson.dumps(data)
+    return HttpResponse(content, mimetype='application/json')

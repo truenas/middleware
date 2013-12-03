@@ -30,6 +30,7 @@ import re
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI import choices
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.system import is_mounted, mount, umount
@@ -337,8 +338,15 @@ class JailTemplate(Model):
 
     jt_name = models.CharField(
         max_length=120,
-        verbose_name=_("Name")
-        )
+        verbose_name=_("Name"),
+        unique=True
+    )
+
+    jt_os = models.CharField(
+        max_length=120,
+        verbose_name=_("OS"),
+        choices=choices.JAIL_TEMPLATE_OS_CHOICES
+    )
 
     jt_url = models.CharField(
         max_length=255,

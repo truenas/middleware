@@ -446,6 +446,126 @@ require([
 
     }
 
+    jail_arch_save = function(key) {
+        if (!key) { key = "save"; }  
+
+        var arch = registry.byId("id_jail_32bit");
+        var jail_arch = arch.get("checked");
+        var arch_save = registry.byId("id_jail_arch_" + key);
+
+        if (arch_save == undefined) {
+            arch_save = new CheckBox({
+                id: "id_jail_arch_" + key,
+                name: "jail_arch_" + key,
+                type: "hidden"
+            });
+        }
+
+        arch_save.set("checked", jail_arch);
+    }   
+
+    jail_arch_restore = function(key) {
+        if (!key) { key = "save"; }  
+
+        var arch_save = registry.byId("id_jail_arch_" + key);
+        var arch = registry.byId("id_jail_arch");
+        if (arch_save) {
+            arch.set("checked", arch_save.get("checked"));
+        }
+
+        arch_save.set("checked", "");
+    }
+
+    jail_nat_save = function(key) {
+        if (!key) { key = "save"; }  
+
+        var nat = registry.byId("id_jail_nat");
+        var jail_nat = nat.get("checked");
+        var nat_save = registry.byId("id_jail_nat_" + key);
+
+        if (nat_save == undefined) {
+            nat_save = new CheckBox({
+                id: "id_jail_nat_" + key,
+                name: "jail_nat_" + key,
+                type: "hidden"
+            });
+        }
+
+        nat_save.set("checked", jail_nat);
+    }   
+
+    jail_nat_restore = function(key) {
+        if (!key) { key = "save"; }  
+
+        var nat_save = registry.byId("id_jail_nat_" + key);
+        var nat = registry.byId("id_jail_nat");
+        if (nat_save) {
+            nat.set("checked", nat_save.get("checked"));
+        }
+
+        nat_save.set("checked", "");
+    }
+
+    jail_vanilla_save = function(key) {
+        if (!key) { key = "save"; }  
+
+        var vanilla = registry.byId("id_jail_vanilla");
+        var jail_vanilla = vanilla.get("checked");
+        var vanilla_save = registry.byId("id_jail_vanilla_" + key);
+
+        if (vanilla_save == undefined) {
+            vanilla_save = new CheckBox({
+                id: "id_jail_vanilla_" + key,
+                name: "jail_vanilla_" + key,
+                type: "hidden"
+            });
+        }
+
+        vanilla_save.set("checked", jail_vanilla);
+    }   
+
+    jail_vanilla_restore = function(key) {
+        if (!key) { key = "save"; }  
+
+        var vanilla_save = registry.byId("id_jail_vanilla_" + key);
+        var vanilla = registry.byId("id_jail_vanilla");
+        if (vanilla_save) {
+            vanilla.set("checked", vanilla_save.get("checked"));
+        }
+
+        vanilla_save.set("checked", "");
+    }
+
+    jail_vnet_save = function(key) {
+        if (!key) { key = "save"; }  
+
+        var vnet = registry.byId("id_jail_vnet");
+        var jail_vnet = vnet.get("checked");
+        var vnet_save = registry.byId("id_jail_vnet_" + key);
+
+        if (vnet_save == undefined) {
+            vnet_save = new CheckBox({
+                id: "id_jail_vnet_" + key,
+                name: "jail_vnet_" + key,
+                type: "hidden"
+            });
+        }
+
+        vnet_save.set("checked", jail_vnet);
+    }   
+
+    jail_vnet_restore = function(key) {
+        if (!key) { key = "save"; }  
+
+        var vnet_save = registry.byId("id_jail_vnet_" + key);
+        var vnet = registry.byId("id_jail_vnet");
+        if (vnet_save) {
+            vnet.set("checked", vnet_save.get("checked"));
+        }
+
+        vnet_save.set("checked", "");
+    }
+
     jail_networking_save = function(key) {
         if (!key) { key = "save"; }  
 
@@ -600,19 +720,53 @@ require([
         nat.set("checked", "");
     }
 
+    jail_is_linuxjail = function() {
+        var type = registry.byId("id_jail_type");
+        var jail_type = type.get("value");
+
+        var is_linuxjail = false;
+        xhr.get('/jails/template_info/' + jail_type + '/', {
+            sync: true
+        }).then(function(data) {
+            jt = JSON.parse(data);
+            if (jt.jt_os == 'Linux') {
+                is_linuxjail = true;  
+            }
+        });
+
+        return is_linuxjail;
+    }
+
     jail_type_toggle = function() {
         var type = registry.byId("id_jail_type");
         var vnet = registry.byId("id_jail_vnet");
+        var arch = registry.byId("id_jail_32bit");
+        var vanilla = registry.byId("id_jail_vanilla");
 
         var jail_type = type.get("value");
         var jail_vnet = vnet.get("value");
 
-        if (jail_vnet == 'on' && jail_type == 'linuxjail') {
-            vnet.set("value", false);
+        if (jail_is_linuxjail()) {
+            jail_vnet_save('type');
+            jail_vanilla_save('type');
+
+            vnet.set("checked", false);
+            vnet.set("disabled", true);
+
+            vanilla.set("checked", false);
+            vanilla.set("disabled", true);
+
+        } else {
+            vnet.set("disabled", false);
+            vanilla.set("disabled", false);
+
+            jail_vnet_restore('type');
+            jail_vanilla_restore('type');
         }
     }
 
     jail_32bit_toggle = function() {
+/*
         var arch = registry.byId("id_jail_32bit");
         var vnet = registry.byId("id_jail_vnet");
 
@@ -622,6 +776,7 @@ require([
         if (jail_vnet == 'on' && jail_32bit == 'on') {
             vnet.set("value", false);
         }
+*/
     }
 
     jail_vnet_toggle = function() {
@@ -640,26 +795,27 @@ require([
         var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
         var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
 
-        if (jail_vnet == 'on') {
-            arch.set("disabled", true);
-        } else {
-            arch.set("disabled", false);
-        }
-
         if (jail_vnet != 'on') {
             jail_networking_save('vnet');
+            jail_arch_save('vnet');
 
             defaultrouter_ipv4.set("value", "");
             defaultrouter_ipv6.set("value", "");
             bridge_ipv4.set("value", "");
             bridge_ipv6.set("value", "");
-            nat.set("checked", "");  
+            nat.set("checked", false);
 
             nat.set("disabled", true);
             defaultrouter_ipv4.set("disabled", true);
             defaultrouter_ipv6.set("disabled", true);
             bridge_ipv4.set("disabled", true);
             bridge_ipv6.set("disabled", true);
+
+            arch.set("disabled", false);
+            if (jail_is_linuxjail()) {
+                arch.set("checked", true);
+                arch.set("disabled", true);
+            }
 
         } else {
 
@@ -668,8 +824,11 @@ require([
             bridge_ipv4.set("disabled", false);
             bridge_ipv6.set("disabled", false);
             nat.set("disabled", false);
+            arch.set("disabled", true);
+            arch.set("checked", false);
 
             jail_networking_restore('vnet');
+            jail_arch_restore('vnet');
         }
     }
 

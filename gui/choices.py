@@ -714,3 +714,8 @@ ZFS_RECORDSIZE = (
     ('64K', '64K'),
     ('128K', '128K'),
 )
+
+JAIL_TEMPLATE_OS_CHOICES = (
+    ('FreeBSD', 'FreeBSD'),
+    ('Linux', 'Linux')
+)
