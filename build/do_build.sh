@@ -568,7 +568,7 @@ check_for_command_from_port()
 
 check_build_tools()
 {
-	check_for_command_from_port mkisofs devel/cdrutils
+	check_for_command_from_port mkisofs sysutils/cdrtools
 	check_for_command_from_port git devel/git
 	check_for_command_from_port pxz archivers/pxz
 	check_for_command_from_port xz archivers/xz
