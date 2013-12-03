@@ -5,11 +5,14 @@
   <button id="btn_ServicesEnable_Ok" data-dojo-type="dijit.form.Button">
     {% trans "Yes" %}
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-      Menu.openServices(null, '{{ svc|escapejs }}');
-      var svc = dojo.byId("{{ svc }}_toggle");
-      if(svc)
-        toggle_service(svc);
-      cancelDialog(this);
+      var me = this;
+      require(["dojo/dom"], function(dom) {
+        Menu.openServices(null, '{{ svc|escapejs }}');
+        var svc = dom.byId("{{ svc }}_toggle");
+        if(svc)
+          toggle_service(svc);
+        cancelDialog(me);
+      });
     </script>
   </button>
   <button id="btn_ServicesEnable_Cancel" data-dojo-type="dijit.form.Button">
