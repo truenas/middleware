@@ -167,7 +167,11 @@ define([
                     title: gettext('Services'),
                     closable: true,
                     href: href,
-                    onLoad: onload,
+                    onLoad: function() {
+                      onload();
+                      // Do not refresh with ?toggleCore twice
+                      pane.href = pane.href.split('?')[0];
+                    },
                     refreshOnShow: true
                 });
                 pane.tab = 'services';
