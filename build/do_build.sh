@@ -559,7 +559,7 @@ check_for_command_from_port()
    if [ -z "$FOUND" ]; then
        MSG="ERROR: $COMMAND not found."
        if [ -n "$PACKAGE" ]; then
-           MSG="$MSG. Please install $PACKAGE package from ports."
+           MSG="$MSG.\nERROR: Please run 'pkg install $PACKAGE' or install from ports."
        fi
        printf "\n$MSG\n\n"
        exit 1
