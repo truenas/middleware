@@ -404,6 +404,7 @@ fi
 add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
+add_port emulators/virtualbox-ose-kmod
 
 #
 # These are all for SSSD
