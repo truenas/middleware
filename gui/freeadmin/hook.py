@@ -91,6 +91,14 @@ class AppHook(object):
     """
 
     """
+    def hook_feature_disabled_<name>(self):
+        '''
+        Hook called to check weather a given feature is disabled
+        '''
+        pass
+    """
+
+    """
     def hook_form_buttons_<FormName>(self, form, *args, **kwargs):
         '''
         Hook called to get extra buttons to be placed at the end of the form

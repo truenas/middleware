@@ -67,6 +67,12 @@ class AppPool(object):
             'hook_datagrid_buttons_%s' % rname, admin,
         )
 
+    def hook_feature_disabled(self, name):
+        return True in self._get_array(
+            'hook_feature_disabled_%s' % name,
+            _method=list.append
+        )
+
     def hook_form_buttons(self, fname, form, action, *args, **kwargs):
         return self._get_array(
             'hook_form_buttons_%s' % fname, form, action, *args, **kwargs
