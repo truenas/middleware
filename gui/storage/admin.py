@@ -9,6 +9,7 @@ from freenasUI.api.resources import (
     DiskResourceMixin, ReplicationResourceMixin, ScrubResourceMixin,
     TaskResourceMixin, VolumeResourceMixin
 )
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.middleware.notifier import notifier
@@ -81,14 +82,16 @@ class VolumeFAdmin(BaseFreeAdmin):
         'vol_guid',
         'vol_encrypt',
         'vol_encryptkey',
-        )
+    )
 
     def get_datagrid_context(self, request):
         has_multipath = models.Disk.objects.exclude(
             disk_multipath_name='').exists()
+        ufs_disabled = appPool.hook_feature_disabled('ufs')
         return {
             'has_multipath': has_multipath,
-            }
+            'ufs_disabled': ufs_disabled,
+        }
 
     def get_datagrid_columns(self):
 
