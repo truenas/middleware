@@ -90,7 +90,7 @@ def runTest():
     child2.expect(['Proceed with the installation'])
     child2.sendline("Y")
     child2.expect(['Please remove'], 250000)
-    child2.sendline("O")
+    child2.sendline("")
     child2.expect("Shutdown")
     child2.sendline("4")
     child2.expect("The operating system has halted.")
