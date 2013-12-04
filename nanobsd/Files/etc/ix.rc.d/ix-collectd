@@ -51,12 +51,14 @@ LoadPlugin uptime
 <Plugin "interface">
     Interface "lo0"
     Interface "plip0"
+    Interface "/^usbus/"
     IgnoreSelected true
 </Plugin>
 
 <Plugin "disk">
     Disk "/^gptid/"
     Disk "/^md/"
+    Disk "/^pass/"
     IgnoreSelected true
 </Plugin>
 
