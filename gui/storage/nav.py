@@ -1,3 +1,4 @@
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
 import models
@@ -184,12 +185,14 @@ class Volumes(TreeNode):
         super(Volumes, self).__init__(*args, **kwargs)
         self.append_children([
             AddVolume(),
-            AddVolumeUFS(),
             ImportVolume(),
             AutoImportVolume(),
             ViewVolumes(),
             ViewDisks(),
         ])
+
+        if not appPool.hook_feature_disabled('ufs'):
+            self.append_child(AddVolumeUFS())
 
         has_multipath = models.Disk.objects.exclude(
             disk_multipath_name=''
