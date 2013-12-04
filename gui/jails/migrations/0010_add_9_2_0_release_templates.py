@@ -8,36 +8,11 @@ from south.v2 import DataMigration
 from django.db import models
 
 from freenasUI.jails.utils import get_jails_index
-from freenasUI.common.pipesubr import pipeopen
-from freenasUI.common.warden import (
-    get_warden_template_abi_arch,
-    get_warden_template_abi_version,
-)
 
 class Migration(DataMigration):
 
-    def zfs_rename(self, src, dst):
-        p = pipeopen("/sbin/zfs rename -f '%s' '%s'" % (src, dst))
-        zfsout = p.communicate()
-        if p.returncode != 0:
-            return False
-        return True
-
-    def zfs_set_mountpoint(self, dataset, mp):
-        p = pipeopen("/sbin/zfs set mountpoint='%s' '%s'" % (mp, dataset))
-        zfsout = p.communicate()
-        if p.returncode != 0:
-            return False
-        return True
-
-    def mv_template(self, src, dst):
-        p = pipeopen("/bin/mv '%s' '%s'" % (src, dst))
-        out = p.communicate()
-        if p.returncode != 0:
-            return False
-        return True
-
     def forwards(self, orm):
+
         templates = ['pluginjail', 'portjail', 'standard']
         freebsd_release = '9.2-RELEASE'
         freenas_release = '9.2.0'
@@ -53,75 +28,6 @@ class Migration(DataMigration):
             obj.jt_url = "%s/freenas-%s-%s.tgz" % \
                  (get_jails_index(release='9.2.0', arch=arch), t, freebsd_release)
             obj.save()
-
-        jc = None
-        jc_dataset = None
-
-        try:
-            jc = orm['jails.JailsConfiguration'].objects.order_by("-id")[0]
-        except:
-            pass
-
-        if jc and jc.jc_path:
-            p = pipeopen("/sbin/zfs list -H")
-            zfsout = p.communicate()
-            lines = zfsout[0].strip().split('\n')
-            for line in lines:
-                parts = line.split()
-                if parts[4] == jc.jc_path:
-                    jc_dataset = parts[0]
-                    break
-
-        if jc_dataset:
-            for t in templates:
-                template = "%s/.warden-template-%s" % (jc.jc_path, t)
-                if not os.path.exists(template):
-                    continue
-
-                a = get_warden_template_abi_arch(template)
-                v = get_warden_template_abi_version(template)
-                template = "%s/.warden-template-%s" % (jc_dataset, t)
-
-                #
-                # The template is already on 9.2-RELEASE and
-                # has the same architecture.
-                #
-                if v == freebsd_release and a == arch:
-                    pass
-
-                #
-                # The template is either not on 9.2-RELEASE or
-                # has a different architecture.
-                #
-                else:
-                    newt = "%s/.warden-template-%s-%s-%s" % (jc_dataset, t, v, a)
-                    newmp = "%s/.warden-template-%s-%s-%s" % (jc.jc_path, t, v, a)
-                    oldmp = "%s/.warden-template-%s" % (jc.jc_path, t)
-
-                    #
-                    # Don't rename dataset or move directory if it already exists
-                    #
-                    if os.path.exists(newmp):
-                        timestr = time.strftime("%Y%m%d%H%M%S")
-                        newt = "%s/.warden-template-%s-%s-%s-%s" % \
-                            (jc_dataset, t, v, a, timstr)
-                        newmp = "%s/.warden-template-%s-%s-%s-%s" % \
-                            (jc.jc_path, t, v, a, timestr)
-
-                    #
-                    # Set mountpoint to none so we can rename the directory
-                    # the dataset is currently mounted on.
-                    #
-                    if not self.zfs_set_mountpoint(template, 'none'):
-                        continue
-
-                    #
-                    # Rename the dataset, move the directory, set new mountpoint
-                    #
-                    if self.zfs_rename(template, newt):
-                        if self.mv_template(oldmp, newmp):
-                            newmp = newmp.replace("/mnt", "")
-                            self.zfs_set_mountpoint(newt, newmp)
 
     def backwards(self, orm):
         templates = ['pluginjail', 'portjail', 'standard']

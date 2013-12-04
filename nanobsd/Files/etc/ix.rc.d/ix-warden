@@ -9,6 +9,197 @@
 . /etc/rc.freenas
 
 WARDENCONF="/usr/local/etc/warden.conf"
+WARDEN_UPDATE=/data/warden-update
+
+_w()
+{
+ 	local args="$*"
+
+	if [ -n "${args}" ]
+	then
+		logger -t "ix-warden" "${args}"
+		${args}
+		return $?
+	fi
+
+	return 0
+}
+
+
+get_jc_path()
+{
+	local IFS="|"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		jc_path
+	FROM
+		jails_jailsconfiguration
+	ORDER BY
+		-id
+	LIMIT 1
+	" | while read jc_path
+	do
+		echo "${jc_path}"
+	done
+}
+
+get_jc_dataset()
+{
+	local jc_path
+	
+	jc_path="${1}"
+	if [ -z "${jc_path}" ]
+	then
+		return 1
+	fi
+
+	zfs list -H|awk -v jc_path="${jc_path}" '$5 == jc_path { print $1 }'
+	return 0
+}
+
+get_arch()
+{
+	if [ "$(uname -m)" = "amd64" ]
+	then
+		echo "x64"
+	else
+		echo "x86"
+	fi
+}
+
+get_release()
+{
+	uname -r
+}
+
+get_ta()
+{
+	local sysctl_path
+	local path
+	local arch
+
+	path="${1}"
+	if [ ! -d "${path}" ] 
+	then
+		return 1
+	fi
+
+	sysctl_path="${path}/sbin/sysctl"
+
+	arch="$(file -b "${sysctl_path}" | awk '{ print $2 }')"
+	if [ "${arch}" = "64-bit" ] ; then
+		arch="x64"
+	else
+		arch="x86"
+	fi
+
+	echo "${arch}"
+	return 0
+}
+
+migrate_warden_templates()
+{
+	local templates
+	local jc_path
+	local jc_dataset
+	local arch
+	local version
+
+	jc_path="$(get_jc_path)"
+	jc_dataset="$(get_jc_dataset "${jc_path}")"
+
+	if [ -z "${jc_path}" -o -z "${jc_dataset}" ]
+	then
+		return
+	fi
+
+	arch="$(get_arch)"
+	version="$(get_release)"
+	templates="pluginjail portjail standard"
+
+	for t in ${templates}
+	do
+		local template
+		local ta
+		local tv
+
+		template="${jc_path}/.warden-template-${t}"
+		if [ ! -d "${template}" ]
+		then
+			continue
+		fi	
+
+		ta="$(get_ta "${template}")"
+		tv="$(get_tv "${template}")"
+
+		template="${jc_dataset}/.warden-template-${t}"
+
+		if [ "${tv}" = "${version}" -a \
+			"${ta}" = "${arch}" ]
+		then
+			continue
+		fi
+
+		newt="${jc_dataset}/.warden-template-${t}-${tv}-${ta}"
+		newmp="${jc_path}/.warden-template-${t}-${tv}-${ta}"
+		oldmpg="${jc_path}/.warden-template-${t}"
+
+		if [ -d "${newmp}" ]
+		then
+			local timestr="$(date +'%Y%m%d%H%M%S')"
+
+			newt="${jc_dataset}/.warden-template-${t}-${tv}-${ta}-${timestr}"
+			newmp="${jc_path}/.warden-template-${t}-${tv}-${ta}-${timestr}"
+		fi
+
+		_w zfs set mountpoint='none' "${template}"
+		if [ "$?" != "0" ]
+		then
+			continue
+		fi
+
+		_w zfs rename -f "${template}" "${newt}"
+		if [ "$?" != "0" ]
+		then
+			continue
+		fi
+
+		_w mv "${oldmpg}" "${newmp}"
+		if [ "$?" != "0" ]
+		then
+			continue
+		fi
+
+		_w zfs set mountpoint="${newmp}" "${newt}"
+		if [ "$?" != "0" ]
+		then
+			continue
+		fi
+	done
+}
+
+get_tv()
+{
+	local sysctl_path
+	local version
+	local path
+
+	path="${1}"
+	if [ ! -d "${path}" ] 
+	then
+		return 1
+	fi
+
+	sysctl_path="${path}/sbin/sysctl"
+
+	version="$(file -b "${sysctl_path}"|cut -d ',' -f 5|awk '{ print $3 }')"
+	if [ -n "${version}" ]
+	then
+		echo "${version}-RELEASE"
+	fi
+	return 0
+}
 
 generate_warden_conf()
 {
@@ -46,9 +237,14 @@ __EOF__
 	fi
 }
 
+ix_warden_start()
+{
+	generate_warden_conf
+	migrate_warden_templates
+}
 
 name="ix-warden"
-start_cmd='generate_warden_conf'
+start_cmd='ix_warden_start'
             
 load_rc_config $name
 run_rc_command "$1"
