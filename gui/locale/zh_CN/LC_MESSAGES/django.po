@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-02 02:09+0000\n"
-"PO-Revision-Date: 2013-05-31 03:17+0000\n"
-"Last-Translator: Hugh____ <box.xoq@msn.com>\n"
+"PO-Revision-Date: 2013-12-04 09:11+0000\n"
+"Last-Translator: banemon <banemon@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1369970272.0\n"
+"X-POOTLE-MTIME: 1386148263.0\n"
 
 #: choices.py:43
 msgid "Plain"
@@ -41,9 +41,8 @@ msgid "HTTPS"
 msgstr "HTTPS"
 
 #: choices.py:52
-#, fuzzy
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTPS(加密的超文本传输协议）"
 
 #: choices.py:56 choices.py:235
 msgid "Auto"
@@ -231,15 +230,15 @@ msgstr "星期日"
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr ""
+msgstr "未加密"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr ""
+msgstr "加密方式，无密码的"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr ""
+msgstr "加密方式，有密码的"
 
 #: choices.py:173
 msgid "Anonymous"
@@ -349,7 +348,7 @@ msgstr "关"
 #: choices.py:304
 #, fuzzy
 msgid "lz4 (recommended)"
-msgstr "lzjb算法压缩（推荐）"
+msgstr "lz4算法无损压缩（推荐）"
 
 #: choices.py:305
 msgid "gzip (default level, 6)"
@@ -370,7 +369,7 @@ msgstr ""
 #: choices.py:309
 #, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb算法压缩（推荐）"
+msgstr "lzjb算法压缩（不推荐）"
 
 #: choices.py:538
 msgid "Hour(s)"
@@ -416,7 +415,7 @@ msgstr "读写"
 
 #: choices.py:560
 msgid "Verify"
-msgstr ""
+msgstr "验证"
 
 #: choices.py:569 choices.py:570 choices.py:571 choices.py:572
 #, python-format
