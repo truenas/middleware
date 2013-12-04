@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-02 02:07+0000\n"
-"PO-Revision-Date: 2013-12-02 21:31+0000\n"
+"PO-Revision-Date: 2013-12-04 10:23+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1386019919.0\n"
+"X-POOTLE-MTIME: 1386152609.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:43
@@ -3795,7 +3795,7 @@ msgstr "Вызывает запуск ypbind в безопасном режим�
 
 #: services/models.py:1616
 msgid "Manycast"
-msgstr ""
+msgstr "Manycast"
 
 #: services/models.py:1617
 msgid "Cause ypbind to use 'many-cast' instead of broadcast"
