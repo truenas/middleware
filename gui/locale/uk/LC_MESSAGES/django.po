@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-02 02:08+0000\n"
-"PO-Revision-Date: 2013-12-03 20:51+0000\n"
+"PO-Revision-Date: 2013-12-04 11:36+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1386103863.0\n"
+"X-POOTLE-MTIME: 1386156963.0\n"
 
 #: choices.py:43
 msgid "Plain"
@@ -4535,7 +4535,7 @@ msgstr "Відключити том"
 
 #: storage/admin.py:236
 msgid "Scrub Volume"
-msgstr "Scrub тома"
+msgstr "Перевiрка тома"
 
 #: storage/admin.py:240 storage/admin.py:326
 msgid "Edit ZFS Options"
@@ -5191,11 +5191,11 @@ msgstr "Допускаються значення 1-31."
 
 #: storage/models.py:350
 msgid "ZFS Scrub"
-msgstr "ZFS Scrub"
+msgstr "Перевiрка ZFS"
 
 #: storage/models.py:351
 msgid "ZFS Scrubs"
-msgstr "ZFS Scrubs"
+msgstr "Перевiрки ZFS"
 
 #: storage/models.py:359 system/models.py:443 system/models.py:652
 msgid "Every minute"
@@ -5573,7 +5573,7 @@ msgstr "Процес перевiрки зупинено"
 
 #: storage/views.py:725
 msgid "The scrub process has begun"
-msgstr "Процес \"Scrub\" розпочався"
+msgstr "Процес перевiрки розпочато"
 
 #: storage/views.py:830
 msgid "Disk successfully wiped"
@@ -6955,11 +6955,13 @@ msgstr ""
 #: templates/storage/scrub_confirm.html:6
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
-msgstr "Scrub в даний час працює! Ви дійсно хочете ЗУПИНИТИ процес Scrub?"
+msgstr ""
+"Перевiрка в даний час виконується! Ви дійсно хочете ЗУПИНИТИ процес "
+"перевiрки?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "Are you sure you want to scrub?"
-msgstr "Ви впевнені, що хочете почати Scrub?"
+msgstr "Ви впевнені, що хочете почати перевiрку?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
