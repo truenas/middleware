@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-02 02:04+0000\n"
-"PO-Revision-Date: 2013-12-01 15:05+0000\n"
-"Last-Translator: dalmazio <angelovioletto@live.it>\n"
+"PO-Revision-Date: 2013-12-04 12:13+0000\n"
+"Last-Translator: mrbenza <superstage@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1385910317.0\n"
+"X-POOTLE-MTIME: 1386159208.0\n"
 
 #: choices.py:43
 msgid "Plain"
@@ -497,7 +497,7 @@ msgstr "57600"
 
 #: choices.py:604
 msgid "115200"
-msgstr ""
+msgstr "115200"
 
 #: choices.py:633
 msgid "Rsync module"
@@ -713,9 +713,8 @@ msgid "Confirm New Password"
 msgstr "Conferma Password"
 
 #: account/forms.py:68
-#, fuzzy
 msgid "Passwords do not match"
-msgstr "La password non corrisponde"
+msgstr "Le password non coincidono"
 
 #: account/forms.py:110
 msgid "Your name cannot start with \"-\""

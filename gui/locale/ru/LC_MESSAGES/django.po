@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-02 02:07+0000\n"
-"PO-Revision-Date: 2013-12-04 10:23+0000\n"
+"PO-Revision-Date: 2013-12-04 11:35+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1386152609.0\n"
+"X-POOTLE-MTIME: 1386156931.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:43
@@ -4579,7 +4579,7 @@ msgstr "Отключить том"
 
 #: storage/admin.py:236
 msgid "Scrub Volume"
-msgstr "Scrub тома"
+msgstr "Проверить том"
 
 #: storage/admin.py:240 storage/admin.py:326
 msgid "Edit ZFS Options"
@@ -5218,7 +5218,7 @@ msgstr "ЗАБЛОКИРОВАН"
 
 #: storage/models.py:309
 msgid "Determine how many days shall be between scrubs"
-msgstr "Установите сколько дней должно быть между scrubs"
+msgstr "Установите сколько дней должно быть между проверками"
 
 #: storage/models.py:320 system/models.py:390 system/models.py:554
 msgid "Values 0-59 allowed."
@@ -5236,11 +5236,11 @@ msgstr "Допускаются значения 1-31."
 
 #: storage/models.py:350
 msgid "ZFS Scrub"
-msgstr "ZFS Scrub"
+msgstr "Проверка ZFS"
 
 #: storage/models.py:351
 msgid "ZFS Scrubs"
-msgstr "ZFS Scrubs"
+msgstr "Проверки ZFS"
 
 #: storage/models.py:359 system/models.py:443 system/models.py:652
 msgid "Every minute"
@@ -5616,11 +5616,11 @@ msgstr "Невозможно разобрать вывод пула. Был ли
 
 #: storage/views.py:722
 msgid "The scrub process has stopped"
-msgstr "Процесс scrub остановлен"
+msgstr "Процесс проверки остановлен"
 
 #: storage/views.py:725
 msgid "The scrub process has begun"
-msgstr "Процесс scrub начался"
+msgstr "Процесс проверки начат"
 
 #: storage/views.py:830
 msgid "Disk successfully wiped"
@@ -7011,12 +7011,12 @@ msgstr ""
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
 msgstr ""
-"Scrub в настоящее время работает! Вы действительно хотите ОСТАНОВИТЬ процесс "
-"scrub?"
+"Проверка выполняется в настоящее время! Вы действительно хотите ОСТАНОВИТЬ "
+"процесс проверки?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "Are you sure you want to scrub?"
-msgstr "Вы уверены, что хотите начать scrub?"
+msgstr "Вы уверены, что хотите начать проверку?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
