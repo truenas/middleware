@@ -479,4 +479,6 @@ if [ -n "${_doumount}" ]; then
 	umount /data
 fi
 
-. ${FREENAS_RC}
+if [ -f ${FREENAS_RC} ]; then
+	. ${FREENAS_RC}
+fi
