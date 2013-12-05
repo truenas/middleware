@@ -6,7 +6,7 @@
     <p>{% trans "ZFS Volume Manager" %}</p>
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
         commonDialog({
-	  style: "min-width: 600px; max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+	  style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
 	  name: '{% trans "ZFS Volume Manager"|escapejs %}',
 	  url: '{% url "storage_volumemanager" %}',
 	  nodes: [this,]
