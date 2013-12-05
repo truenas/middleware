@@ -1600,7 +1600,9 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
             n = d['nETBIOSName']
             self.__users[n] = []
 
-            self.host = d['dnsRoot']
+            dcs = self.get_domain_controllers(d['dnsRoot'])
+            (self.host, self.port) = self.dc_connect(d['dnsRoot'], self.binddn, self.bindpw)
+
             self.basedn = d['nCName']
             self.attributes = ['sAMAccountName']
             self.pagesize = FREENAS_LDAP_PAGESIZE
@@ -1864,7 +1866,9 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
             n = d['nETBIOSName']
             self.__groups[n] = []
 
-            self.host = d['dnsRoot']
+            dcs = self.get_domain_controllers(d['dnsRoot'])
+            (self.host, self.port) = self.dc_connect(d['dnsRoot'], self.binddn, self.bindpw)
+
             self.basedn = d['nCName']
             self.attributes = ['sAMAccountName']
             self.pagesize = FREENAS_LDAP_PAGESIZE
