@@ -300,7 +300,7 @@ def os_arch(request):
 
 
 @jsonrpc_method("os.kldload")
-def os_arch(request, plugin_id, module):
+def os_kldload(request, plugin_id, module):
     """
     Load a kernel module
 
@@ -324,7 +324,7 @@ def os_arch(request, plugin_id, module):
 
     pipe = Popen([
         "/sbin/kldload",
-         module,
+        module,
     ], stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
     pipe.communicate()
     return pipe.returncode == 0
