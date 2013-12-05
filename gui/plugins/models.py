@@ -138,7 +138,10 @@ class Kmod(Model):
     )
 
     class Meta:
-        verbose_name = _("Kmod")
+        verbose_name = _("Plugin Kernel Module")
+
+    def __unicode__(self):
+        return u'%s (%s)' % (self.module, self.plugin.plugin_name)
 
     def save(self, *args, **kwargs):
         if self.order is None:
