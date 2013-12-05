@@ -471,9 +471,8 @@ require([
         var arch = registry.byId("id_jail_arch");
         if (arch_save) {
             arch.set("checked", arch_save.get("checked"));
+            arch_save.set("checked", "");
         }
-
-        arch_save.set("checked", "");
     }
 
     jail_nat_save = function(key) {
@@ -501,9 +500,8 @@ require([
         var nat = registry.byId("id_jail_nat");
         if (nat_save) {
             nat.set("checked", nat_save.get("checked"));
+            nat_save.set("checked", "");
         }
-
-        nat_save.set("checked", "");
     }
 
     jail_vanilla_save = function(key) {
@@ -531,9 +529,8 @@ require([
         var vanilla = registry.byId("id_jail_vanilla");
         if (vanilla_save) {
             vanilla.set("checked", vanilla_save.get("checked"));
+            vanilla_save.set("checked", "");
         }
-
-        vanilla_save.set("checked", "");
     }
 
     jail_vnet_save = function(key) {
@@ -561,9 +558,8 @@ require([
         var vnet = registry.byId("id_jail_vnet");
         if (vnet_save) {
             vnet.set("checked", vnet_save.get("checked"));
+            vnet_save.set("checked", "");
         }
-
-        vnet_save.set("checked", "");
     }
 
     jail_networking_save = function(key) {
@@ -673,33 +669,32 @@ require([
 
         if (ipv4_save) {
             ipv4.set("value", ipv4_save.get("value"));
+            ipv4_save.set("value", "");
         }
         if (ipv6_save) {
             ipv6.set("value", ipv6_save.get("value"));
+            ipv6_save.set("value", "");
         }
         if (bridge_ipv4_save) {
             bridge_ipv4.set("value", bridge_ipv4_save.get("value"));
+            bridge_ipv4_save.set("value", "");
         }
         if (bridge_ipv6_save) {
             bridge_ipv6.set("value", bridge_ipv6_save.get("value"));
+            bridge_ipv6_save.set("value", "");
         }
         if (defaultrouter_ipv4_save) {
             defaultrouter_ipv4.set("value", defaultrouter_ipv4_save.get("value"));
+            defaultrouter_ipv4_save.set("value", "");
         }
         if (defaultrouter_ipv6_save) {
             defaultrouter_ipv6.set("value", defaultrouter_ipv6_save.get("value"));
+            defaultrouter_ipv6_save.set("value", "");
         }
         if (nat_save) {
             nat.set("checked", nat_save.get("checked"));
+            nat_save.set("checked", "");
         }
-
-        ipv4_save.set("value", "");
-        ipv6_save.set("value", "");
-        bridge_ipv4_save.set("value", "");
-        bridge_ipv6_save.set("value", "");
-        defaultrouter_ipv4_save.set("value", "");
-        defaultrouter_ipv6_save.set("value", "");
-        nat_save.set("checked", "");
     }
 
     jail_networking_clear = function() {
