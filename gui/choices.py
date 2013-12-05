@@ -719,3 +719,8 @@ JAIL_TEMPLATE_OS_CHOICES = (
     ('FreeBSD', 'FreeBSD'),
     ('Linux', 'Linux')
 )
+
+JAIL_TEMPLATE_ARCH_CHOICES = (
+    ('x64', 'x64'),
+    ('x86', 'x86')
+)

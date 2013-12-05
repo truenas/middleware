@@ -487,6 +487,7 @@ def jail_template_info(request, name):
     if jt:
         data['jt_name'] = jt.jt_name
         data['jt_os'] = jt.jt_os
+        data['jt_arch'] = jt.jt_arch
         data['jt_url'] = jt.jt_url
 
     content = simplejson.dumps(data)

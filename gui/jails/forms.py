@@ -89,12 +89,6 @@ class JailCreateForm(ModelForm):
         label=_("type"),
     )
 
-    jail_32bit = forms.BooleanField(
-        label=_("32 bit"),
-        required=False,
-        initial=False
-    )
-
     jail_vanilla = forms.BooleanField(
         label=_("vanilla"),
         required=False,
@@ -137,9 +131,6 @@ class JailCreateForm(ModelForm):
         self.fields['jail_type'].widget.attrs['onChange'] = (
             "jail_type_toggle();"
         )
-        self.fields['jail_32bit'].widget.attrs['onChange'] = (
-            "jail_32bit_toggle();"
-        )
         self.fields['jail_vnet'].widget.attrs['onChange'] = (
             "jail_vnet_toggle();"
         )
@@ -180,8 +171,6 @@ class JailCreateForm(ModelForm):
 
         w = Warden()
 
-        if self.cleaned_data['jail_32bit']:
-            jail_flags |= WARDEN_CREATE_FLAGS_32BIT
 #        if self.cleaned_data['jail_source']:
 #            jail_flags |= WARDEN_CREATE_FLAGS_SRC
 #        if self.cleaned_data['jail_ports']:
@@ -199,6 +188,7 @@ class JailCreateForm(ModelForm):
             WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
             WARDEN_TEMPLATE_CREATE_FLAGS_TAR
 
+        saved_template = template
         template = None
         template_list_flags = {}
         template_list_flags['flags'] = WARDEN_TEMPLATE_FLAGS_LIST
@@ -331,9 +321,7 @@ class JailCreateForm(ModelForm):
         jail_flags = WARDEN_FLAGS_NONE
         if jail_vnet:
             # XXXX if NOT LINUX XXXX (revisit this)
-            if (
-                not self.cleaned_data['jail_32bit']
-            ):
+            if  (saved_template.jt_arch != 'x86' and saved_template.jt_os != 'Linux'):
                 jail_flags |= WARDEN_SET_FLAGS_VNET_ENABLE
             else:
                 jail_flags |= WARDEN_SET_FLAGS_VNET_DISABLE
@@ -637,6 +625,8 @@ class JailTemplateEditForm(ModelForm):
         ninstances = int(obj.jt_instances)
         if ninstances > 0:
             self.fields['jt_name'].widget.attrs['readonly'] = True
+            self.fields['jt_arch'].widget.attrs['readonly'] = True
+            self.fields['jt_os'].widget.attrs['readonly'] = True
             self.fields['jt_name'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled'

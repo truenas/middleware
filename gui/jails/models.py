@@ -348,6 +348,12 @@ class JailTemplate(Model):
         choices=choices.JAIL_TEMPLATE_OS_CHOICES
     )
 
+    jt_arch = models.CharField(
+        max_length=120,
+        verbose_name=_("Architecture"),
+        choices=choices.JAIL_TEMPLATE_ARCH_CHOICES
+    )
+
     jt_url = models.CharField(
         max_length=255,
         verbose_name=_("URL")
