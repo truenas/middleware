@@ -134,7 +134,6 @@ class JailsFAdmin(BaseFreeAdmin):
                                 domStyle.set(item, "display", "none");
                             });
                         }
-                        break;
                     }
 
                     if (row.data.jail_type != 'pluginjail' || row.data.jail_status == 'Stopped') {
