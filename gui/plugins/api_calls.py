@@ -309,7 +309,7 @@ def os_kldload(request, plugin_id, module):
     plugin = Plugins.objects.filter(pk=plugin_id)
     if plugin.exists():
         Kmod.objects.create(
-            plugin=plugin,
+            plugin=plugin[0],
             module=module,
             order=None,
         )
