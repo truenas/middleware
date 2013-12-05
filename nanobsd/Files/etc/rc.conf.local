@@ -470,7 +470,7 @@ fi
 # However this solution could not deal with backward date changes
 _NEWSUM=$(md5 -q ${FREENAS_CONFIG})
 _OLDSUM=$(cat ${FREENAS_CONFIG_MD5} 2> /dev/null)
-if [ ! "${_NEWSUM}" = "${_OLDSUM}" ]; then
+if [ ! "${_NEWSUM}" = "${_OLDSUM}" -a ! -f "${NEED_UPDATE_SENTINEL}"]; then
 	_gen_conf > ${FREENAS_RC}
 	echo ${_NEWSUM} > ${FREENAS_CONFIG_MD5}
 fi
