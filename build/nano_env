@@ -111,8 +111,7 @@ fi
 # REVISION gets set to "" when doing tagged versions, SVNREVISION allows
 # us to keep the SVN[/git] revision number for the build.
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
-#: ${REVISION=$(echo ${svn}${git})}
-REVISION=""
+: ${REVISION=$(echo ${svn}${git})}
 
 if is_truenas ; then
 	NANO_KERNEL="$TRUENAS_COMPONENTS_ROOT/nanobsd/TRUENAS.$NANO_ARCH"
