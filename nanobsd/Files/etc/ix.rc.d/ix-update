@@ -69,7 +69,21 @@ EOF
 
 db_update()
 {
+	if ! fsck -p /data; then
+		echo "/data couldn't be preened clean; trying full fsck"
+		if ! fsck -y /data; then
+			echo "Cannot fsck -y /data either; your system is probably hosed :(."
+			exit 1
+		fi
+	fi
+	if ! mount -w -onoatime /data; then
+		echo "Cannot mount /data to see if you need an upgrade."
+		exit 1
+	fi
 	if [ ! -f $NEED_UPDATE_SENTINEL ]; then
+		# XXX: this seems somewhat dangerous, depending on script
+		# ordering and system state.
+		umount /data 
 		# No need to update, exit script and continue boot
 		exit 0
 	fi
@@ -88,6 +102,10 @@ db_update()
 	rm -f $CD_UPGRADE_SENTINEL
 
 	# Things that need write access to /data can follow this.
+
+
+	# Things that just need to read from /data can follow this.
+	mount -ur /data
 
 	# NOTE: this must be run via the rc.d script, not service(8).
 	env AUTOTUNE_REBOOT=false /etc/ix.rc.d/ix-loader start
