@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-02 02:07+0000\n"
-"PO-Revision-Date: 2013-12-04 11:35+0000\n"
+"PO-Revision-Date: 2013-12-06 09:58+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1386156931.0\n"
+"X-POOTLE-MTIME: 1386323939.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:43
@@ -5461,7 +5461,7 @@ msgstr "Вхождение"
 
 #: storage/models.py:954
 msgid "How the task is repeated"
-msgstr "Как задача повторяется"
+msgstr "Как задание повторяется"
 
 #: storage/models.py:959
 msgid "Weekday"
@@ -5470,11 +5470,11 @@ msgstr "Будний день"
 # не знаю, как это перевести
 #: storage/models.py:997
 msgid "Periodic Snapshot Task"
-msgstr "Задача периодического создания снимков"
+msgstr "Задание периодического создания снимков"
 
 #: storage/models.py:998 templates/storage/index.html:17
 msgid "Periodic Snapshot Tasks"
-msgstr "Задачи периодического создания снимков"
+msgstr "Задания периодического создания снимков"
 
 #: storage/nav.py:28
 msgid "View Snapshots"
@@ -6234,11 +6234,11 @@ msgstr "Дополнительные параметры командной ст�
 
 #: system/models.py:638
 msgid "Rsync Task"
-msgstr "Задача Rsync"
+msgstr "Задание Rsync"
 
 #: system/models.py:639
 msgid "Rsync Tasks"
-msgstr "Задачи Rsync"
+msgstr "Задания Rsync"
 
 #: system/models.py:810
 msgid "S.M.A.R.T. Test"
@@ -7005,7 +7005,7 @@ msgid ""
 "to create a replication task"
 msgstr ""
 "ВНИМАНИЕ: Периодические снимки данной файловой системы/тома ZFS, необходимы "
-"для создания задачи репликации"
+"для создания задания репликации"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -8751,3 +8751,16 @@ msgstr "Критические оповещения"
 
 #~ msgid "ActiveDirectory Settings"
 #~ msgstr "Настройки ActiveDirectory"
+
+#: jails/models.py:347
+msgid "OS"
+msgstr "ОС"
+
+#: system/models.py:222
+msgid "Enable automatic upload of kernel crash dumps"
+msgstr "Разрешить автоматическую отправку информации о сбоях ядра"
+
+#: templates/jails/index.html:8
+#: templates/plugins/index.html:32
+msgid "You must configure a default route (Network->IPv4 Default Gateway)"
+msgstr "Вы должны настроить шлюз по умолчанию (Сеть->Шлюз Ipv4 по умолчанию)"
