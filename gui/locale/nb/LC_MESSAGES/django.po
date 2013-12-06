@@ -8153,3 +8153,16 @@ msgstr ""
 
 #~ msgid "Other"
 #~ msgstr "Annet"
+
+#: jails/models.py:347
+msgid "OS"
+msgstr ""
+
+#: system/models.py:222
+msgid "Enable automatic upload of kernel crash dumps"
+msgstr ""
+
+#: templates/jails/index.html:8
+#: templates/plugins/index.html:32
+msgid "You must configure a default route (Network->IPv4 Default Gateway)"
+msgstr ""
