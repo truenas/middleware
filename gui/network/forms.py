@@ -322,7 +322,14 @@ class GlobalConfigurationForm(ModelForm):
         # TODO: new IP address should be added in a side-by-side manner
         # or the interface wouldn't appear once IP was changed.
         retval = super(GlobalConfigurationForm, self).save()
-        notifier().reload("networkgeneral")
+
+        whattoreload = "hostname"
+        if self.instance._orig_gc_ipv4gateway != self.cleaned_data.get('gc_ipv4gateway'):
+            whattoreload = "networkgeneral"
+        if self.instance._orig_gc_ipv6gateway != self.cleaned_data.get('gc_ipv6gateway'):
+            whattoreload = "networkgeneral"
+        notifier().reload(whattoreload)
+
         return retval
 
 
@@ -350,7 +357,7 @@ class HostnameForm(Form):
         self.instance.gc_hostname = host
         self.instance.gc_domain = domain
         self.instance.save()
-        notifier().reload("networkgeneral")
+        notifier().reload("hostname")
 
 
 class VLANForm(ModelForm):

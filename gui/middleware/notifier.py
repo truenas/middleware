@@ -497,6 +497,13 @@ class notifier:
     def _reload_named(self):
         self._system("/usr/sbin/service named reload")
 
+    def _reload_hostname(self):
+        self._system('/bin/hostname ""')
+        self._system("/usr/sbin/service ix-hostname quietstart")
+        self._system("/usr/sbin/service hostname quietstart")
+        self._system("/usr/sbin/service ix_avahi quietstart")
+        self._system("/usr/sbin/service avahi-daemon restart")
+
     def _reload_networkgeneral(self):
         self._system('/bin/hostname ""')
         self._system("/usr/sbin/service ix-hostname quietstart")
