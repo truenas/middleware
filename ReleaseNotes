@@ -4,6 +4,11 @@ Release Notes for FreeNAS 9.2.0-RC
 fixes, and updated software packages.  For a complete list see
 http://www.freebsd.org/releases/9.2R/relnotes.html
 
+* USB 3.0 support is disabled by default as it currently is not compatible
+with some hardware, including Haswell (Lynx point) chipsets. To enable
+USB 3.0 support, create a Tunable named xhci_load, set its value to YES,
+and reboot the system.
+
 * The Kernel UMA allocator is now the default for ZFS.  This results in
 higher ZFS performance.
 
