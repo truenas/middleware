@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-02 02:12+0000\n"
-"PO-Revision-Date: 2013-12-04 11:40+0000\n"
+"PO-Revision-Date: 2013-12-06 11:05+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1386157207.0\n"
+"X-POOTLE-MTIME: 1386327912.0\n"
 
 #: freeadmin/static/lib/js/alert.js:77
 msgid "Alert System"
@@ -151,28 +151,27 @@ msgstr "Закрити"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
 msgid "Size"
-msgstr ""
+msgstr "Розмір"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:262
 msgid "drives"
-msgstr ""
+msgstr "диски"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:264
 msgid "drive"
-msgstr ""
+msgstr "диск"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:266
 msgid "show"
-msgstr ""
+msgstr "показати"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
 msgid "no more drives"
-msgstr ""
+msgstr "більше дисків немає"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
-#, fuzzy
 msgid "Disk size mismatch"
-msgstr "Від'єднати диск"
+msgstr "Розмір диска не збігається"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:519
 msgid ""
@@ -182,6 +181,11 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
+"Ваша конфігурація оптимальна!<br /><br />Ви отримаєте найкращу можливу "
+"продуктивність для цієї кількості дисків і типу групи.<br /><br />За "
+"додатковою інформацією звертайтеся до <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target ="
+"'_blank '>документації</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
 msgid ""
@@ -191,64 +195,69 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
+"Ваша конфігурація не оптимальна!<br /><br />Ця кількість дисків не надасть "
+"найкращу можливу продуктивність для цього типу групи.<br /><br />За "
+"додатковою інформацією звертайтеся до <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target ="
+"'_blank '>документації</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
 msgid "Capacity"
-msgstr ""
+msgstr "Місткість"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
 msgid "Drag and drop this to resize"
-msgstr ""
+msgstr "Перетягнiть мишею для зміни розміру"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
 msgid "Add Volume"
-msgstr ""
+msgstr "Додати том"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Існуючі дані будуть очищені"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
 msgid "Extend Volume"
-msgstr ""
+msgstr "Розширити том"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
 msgid "Volume Name"
-msgstr ""
+msgstr "Назва тому"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
 msgid "Volume to extend"
-msgstr ""
+msgstr "Том для розширення"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
 msgid ""
 "Extending an encrypted volume will reset the passphrase and recovery key!"
-msgstr ""
+msgstr "Розширення зашифрованого томи скине пароль і ключ відновлення!"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Encryption"
-msgstr ""
+msgstr "Шифрування"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
 msgid "Initialize Safely"
-msgstr ""
+msgstr "Ініціалізувати безпечно"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
 msgid "Available disks"
-msgstr ""
+msgstr "Наявні диски"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
 msgid "Volume layout"
-msgstr ""
+msgstr "Планування тому"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
 msgid "Estimated capacity"
-msgstr ""
+msgstr "Розрахункова ємність"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Add Extra Device"
-msgstr ""
+msgstr "Додати ще диск"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
 msgid "Cancel"
-msgstr ""
+msgstr "Скасувати"

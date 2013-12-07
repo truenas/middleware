@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-02 02:05+0000\n"
-"PO-Revision-Date: 2013-12-05 02:14+0000\n"
+"PO-Revision-Date: 2013-12-06 11:05+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: mk\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n==1 || n%10==1 ? 0 : 1;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1386209676.0\n"
+"X-POOTLE-MTIME: 1386327902.0\n"
 
 #: choices.py:43
 msgid "Plain"
@@ -6954,4 +6954,12 @@ msgstr ""
 #: templates/jails/index.html:8
 #: templates/plugins/index.html:32
 msgid "You must configure a default route (Network->IPv4 Default Gateway)"
+msgstr ""
+
+#: jails/models.py:353
+msgid "Architecture"
+msgstr ""
+
+#: plugins/models.py:141
+msgid "Plugin Kernel Module"
 msgstr ""
