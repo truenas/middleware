@@ -37,7 +37,7 @@ from freenasUI.common import humanize_size
 
 log = logging.getLogger('middleware.zfs')
 
-ZPOOL_NAME_RE = r'[a-z][a-z0-9_\-\.]+'
+ZPOOL_NAME_RE = r'[a-z][a-z0-9_\-\.]*'
 
 
 def _is_vdev(name):
