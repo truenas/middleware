@@ -1142,6 +1142,9 @@ class iSCSITargetExtentForm(ModelForm):
 
     class Meta:
         model = models.iSCSITargetExtent
+        exclude = (
+            'iscsi_target_extent_type',
+        )
         widgets = {
             'iscsi_target_extent_path': DirectoryBrowser(dirsonly=False),
         }
