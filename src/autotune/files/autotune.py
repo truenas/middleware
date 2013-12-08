@@ -26,6 +26,10 @@ from django.core.management import setup_environ
 
 setup_environ(settings)
 
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
+
 try:
     from freenasUI.system.models import Advanced, Sysctl, Tunable
 except ImportError:
