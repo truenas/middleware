@@ -1151,6 +1151,8 @@ class iSCSITargetExtentForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetExtentForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder.remove('iscsi_target_extent_type')
+        self.fields.keyOrder.insert(1, 'iscsi_target_extent_type')
         if self.instance.id:
             if self.instance.iscsi_target_extent_type == 'File':
                 self.fields['iscsi_target_extent_type'].initial = 'File'
