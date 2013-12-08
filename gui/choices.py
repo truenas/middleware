@@ -211,12 +211,6 @@ CASEFOLDING_CHOICES = (
         ('uppercaseclient', _('Client sees uppercase, server sees lowercase')),
         )
 
-ISCSI_TARGET_EXTENT_TYPE_CHOICES = (
-        ('File',        _('File')),
-        ('Device',      _('Device')),
-        ('ZFS Volume',  _('ZFS Volume')),
-        )
-
 ISCSI_TARGET_TYPE_CHOICES = (
         ('Disk', _('Disk')),
         #Those types are not supported by istgt yet

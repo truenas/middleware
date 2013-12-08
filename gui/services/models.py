@@ -502,7 +502,6 @@ class iSCSITargetExtent(Model):
             max_length=120,
             verbose_name=_("Extent Type"),
             help_text=_("Type used as extent."),
-            choices=choices.ISCSI_TARGET_EXTENT_TYPE_CHOICES,
             )
     iscsi_target_extent_path = models.CharField(
             max_length=120,
