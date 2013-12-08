@@ -448,6 +448,10 @@ require([
 
     jail_is_linuxjail = function() {
         var type = registry.byId("id_jail_type");
+        if (type == undefined) {
+            return false;
+        }
+
         var jail_type = type.get("value");
 
         var is_linuxjail = false;
@@ -465,6 +469,10 @@ require([
 
     jail_is_x86 = function() {
         var type = registry.byId("id_jail_type");
+        if (type == undefined) {
+            return false;
+        }
+
         var jail_type = type.get("value");
 
         var is_x86 = false;
@@ -514,11 +522,9 @@ require([
     }
 
     jail_vnet_toggle = function() {
-        var type = registry.byId("id_jail_type");
         var vnet = registry.byId("id_jail_vnet");
         var nat = registry.byId("id_jail_nat");
 
-        var jail_type = type.get("value");
         var jail_vnet = vnet.get("value");
         var jail_nat = nat.get("value");
 

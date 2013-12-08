@@ -1,2 +1,13 @@
-{% extends "freeadmin/generic_form.html" %}
+{% extends "freeadmin/generic_model_edit.html" %}
 {% block oklabel %}{% trans "Save" %}{% endblock %}
+
+{% block post_form %}
+
+<script type="dojo/method">
+addToStack(function() {
+    jail_nat_toggle();
+    jail_vnet_toggle();
+});
+</script>
+
+{% endblock %}

@@ -524,6 +524,13 @@ class JailsEditForm(ModelForm):
         instance = getattr(self, 'instance', None)
         self.__instance_save(instance, self.__myfields)
 
+        self.fields['jail_vnet'].widget.attrs['onChange'] = (
+            "jail_vnet_toggle();"
+        )
+        self.fields['jail_nat'].widget.attrs['onChange'] = (
+            "jail_nat_toggle();"
+        )
+
         self.__set_ro(instance, 'jail_host')
 
     def save(self):

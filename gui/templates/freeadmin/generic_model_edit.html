@@ -54,11 +54,13 @@
                 <script type="dojo/method">
                         {{ extra_js }}
                 </script>
+                {% block oklabel %}
                 {% if inline %}
                 {% trans "Save" %}
                 {% else %}
                 {% trans "OK" %}
                 {% endif %}
+                {% endblock %}
             </button>
             {% if not inline %}
             <button id="btn_{{ verbose_name}}_Cancel" data-dojo-type="dijit.form.Button" class="cancelform">
