@@ -49,7 +49,10 @@ nfs_func()
 	section_footer
 	
 	section_header "showmount -e"
-	showmount -e
+	if srv_enabled nfs
+	then
+		showmount -e
+	fi
 	section_footer
 
 	section_header "nfsstat"
