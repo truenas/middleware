@@ -201,6 +201,21 @@ class ConfigurationForm(ModelForm):
         else:
             self._orig = {}
 
+    def clean_repourl(self):
+        repourl = self.cleaned_data.get('repourl')
+        if self._orig.get('repourl') != repourl:
+            try:
+                r = requests.get(repourl, stream=True, verify=False, timeout=5)
+                with open('/var/tmp/plugins.rpo', 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        if chunk:
+                            f.write(chunk)
+            except Exception, e:
+                raise forms.ValidationError(
+                    _('Unable to set repository: %s') % e
+                )
+        return repourl
+
     def save(self, *args, **kwargs):
         obj = super(ConfigurationForm, self).save(*args, **kwargs)
         if self._orig.get('repourl') != obj.repourl:
@@ -208,11 +223,5 @@ class ConfigurationForm(ModelForm):
             p.set_appdir("/var/pbi")
             for repoid, name in p.listrepo():
                 p.deleterepo(repoid=repoid)
-
-            r = requests.get(obj.repourl, stream=True, verify=False, timeout=5)
-            with open('/var/tmp/plugins.rpo', 'wb') as f:
-                for chunk in r.iter_content(chunk_size=1024):
-                    if chunk:
-                        f.write(chunk)
             p.addrepo(repofile='/var/tmp/plugins.rpo')
         return obj
