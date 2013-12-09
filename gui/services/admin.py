@@ -59,6 +59,12 @@ class ISCSITargetFAdmin(BaseFreeAdmin):
     icon_add = u"AddTargetIcon"
     icon_view = u"ViewAllTargetsIcon"
 
+    exclude_fields = (
+        'id',
+        'iscsi_target_initialdigest',
+        'iscsi_target_type',
+    )
+
     resource_mixin = ISCSITargetResourceMixin
 
 
