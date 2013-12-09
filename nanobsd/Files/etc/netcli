@@ -945,9 +945,7 @@ def shutdown():
 
 def show_ip():
     proto = Settings.objects.all().order_by('-id')[0].stg_guiprotocol
-    if proto == 'httphttps':
-        proto = 'http'
-    p1 = subprocess.Popen("sockstat -P tcp |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $6 }'|head -1", shell=True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen("sockstat -P tcp |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $6 }'|sort|uniq", shell=True, stdout=subprocess.PIPE)
     addrs = p1.communicate()[0].split('\n')[:-1]
 
     if addrs:
@@ -957,15 +955,22 @@ def show_ip():
 
         for addr in addrs:
             ip, port = addr.split(':')
-            hide_port = True if (proto == 'http' and port == '80') or \
-                             (proto == 'https' and port == '443') else False
+            hide_port = True if (proto in ('http', 'httphttps') and port == '80') or \
+                             (proto in ('https', 'httphttps') and port == '443') else False
+            if hide_port is True and port == '443':
+                _proto = 'https'
+            elif proto == 'httphttps':
+                _proto = 'http'
+            else:
+                _proto = proto
+
             if ip == '*':
                 if hide_port:
                     p1 = subprocess.Popen(['ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
-                      'sed -e s,^,%s://,g -e s,$,/,g' % proto], shell=True, stdout=subprocess.PIPE)
+                      'sed -e s,^,%s://,g -e s,$,/,g' % _proto], shell=True, stdout=subprocess.PIPE)
                 else:
                     p1 = subprocess.Popen(['ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
-                      'sed -e s,^,%s://,g -e s,$,:%s/,g' % (proto, port)], shell=True, stdout=subprocess.PIPE)
+                      'sed -e s,^,%s://,g -e s,$,:%s/,g' % (_proto, port)], shell=True, stdout=subprocess.PIPE)
                 out = p1.communicate()[0]
                 if out:
                     print out
@@ -974,9 +979,9 @@ def show_ip():
 
             else:
                 if hide_port:
-                    print "%s://%s/" % (proto, ip)
+                    print "%s://%s/" % (_proto, ip)
                 else:
-                    print "%s://%s/" % (proto, addr)
+                    print "%s://%s/" % (_proto, addr)
 
         print
 
