@@ -40,7 +40,7 @@ from django.template.loader import get_template
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from dojango.forms.models import inlineformset_factory
+from dojango.forms.models import BaseInlineFormSet, inlineformset_factory
 from freenasUI.api import v1_api
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -48,6 +48,20 @@ from freenasUI.services.exceptions import ServiceFailed
 from tastypie.validation import FormValidation
 
 log = logging.getLogger('freeadmin.options')
+
+
+class FreeBaseInlineFormSet(BaseInlineFormSet):
+
+    def __init__(self, *args, **kwargs):
+        self._fparent = kwargs.pop('parent', None)
+        super(FreeBaseInlineFormSet, self).__init__(*args, **kwargs)
+
+    def _construct_forms(self):
+        return super(FreeBaseInlineFormSet, self)._construct_forms()
+
+    def _construct_form(self, i, **kwargs):
+        kwargs['parent'] = self._fparent
+        return super(FreeBaseInlineFormSet, self)._construct_form(i, **kwargs)
 
 
 class BaseFreeAdmin(object):
@@ -296,6 +310,7 @@ class BaseFreeAdmin(object):
                         m,
                         inline._meta.model,
                         form=inline,
+                        formset=FreeBaseInlineFormSet,
                         extra=0,
                         **extrakw)
                     try:
@@ -305,6 +320,7 @@ class BaseFreeAdmin(object):
                         formsets[fsname] = fset(
                             request.POST,
                             prefix=prefix,
+                            parent=mf,
                             instance=instance)
                     except dforms.ValidationError:
                         pass
@@ -368,12 +384,15 @@ class BaseFreeAdmin(object):
                         m,
                         inline._meta.model,
                         form=inline,
+                        formset=FreeBaseInlineFormSet,
                         extra=1,
                         **extrakw)
                     fsname = 'formset_%s' % (
                         inline._meta.model._meta.module_name,
                     )
-                    formsets[fsname] = fset(prefix=prefix, instance=instance)
+                    formsets[fsname] = fset(
+                        prefix=prefix, instance=instance, parent=mf
+                    )
                     formsets[fsname].verbose_name = (
                         inline._meta.model._meta.verbose_name
                     )
@@ -457,6 +476,7 @@ class BaseFreeAdmin(object):
                         m,
                         inline._meta.model,
                         form=inline,
+                        formset=FreeBaseInlineFormSet,
                         extra=0,
                         **extrakw)
                     try:
@@ -466,6 +486,7 @@ class BaseFreeAdmin(object):
                         formsets[fsname] = fset(
                             request.POST,
                             prefix=prefix,
+                            parent=mf,
                             instance=instance)
                     except dforms.ValidationError:
                         pass
@@ -541,12 +562,15 @@ class BaseFreeAdmin(object):
                         m,
                         inline._meta.model,
                         form=inline,
+                        formset=FreeBaseInlineFormSet,
                         extra=1,
                         **extrakw)
                     fsname = 'formset_%s' % (
                         inline._meta.model._meta.module_name,
                     )
-                    formsets[fsname] = fset(prefix=prefix, instance=instance)
+                    formsets[fsname] = fset(
+                        prefix=prefix, instance=instance, parent=mf,
+                    )
                     formsets[fsname].verbose_name = (
                         inline._meta.model._meta.verbose_name
                     )
