@@ -3218,20 +3218,32 @@ class notifier:
             MiddlewareError: the volume's mountpoint couldn't be removed.
         """
 
+        succeeded = False
+
         vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
         if vol_fstype == 'ZFS':
-            cmds = [ 'zpool export %s' % (vol_name, ) ]
+            cmd = 'zpool export %s' % (vol_name)
+            cmdf = 'zpool export -f %s' % (vol_name)
         else:
-            cmds = [ 'umount %s' % (vol_mountpath, ) ]
+            cmd = 'umount %s' % (vol_mountpath)
+            cmdf = 'umount -f %s' % (vol_mountpath)
 
-        for cmd in cmds:
-            p1 = self._pipeopen(cmd)
+        self.stop("syslogd")
+
+        p1 = self._pipeopen(cmd)
+        stdout, stderr = p1.communicate()
+        if p1.returncode == 0:
+            succeeded = True
+        else:
+            p1 = self._pipeopen(cmdf)
             stdout, stderr = p1.communicate()
-            if p1.returncode:
-                raise MiddlewareError('Failed to detach %s with "%s" (exited '
-                                      'with %d): %s'
-                                      % (vol_name, cmd, p1.returncode,
-                                         stderr, )) 
+
+        self.start("syslogd")
+
+        if not succeeded and p1.returncode:
+            raise MiddlewareError('Failed to detach %s with "%s" (exited '
+                                  'with %d): %s' %
+                                  (vol_name, cmd, p1.returncode, stderr))
         self.__rmdir_mountpoint(vol_mountpath)
 
 
