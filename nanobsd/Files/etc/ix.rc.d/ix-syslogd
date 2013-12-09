@@ -41,7 +41,7 @@ ix_syslogd_start()
 {
 	generate_syslog_conf
 
-	local syslog_volumes="$(zfs list -H|awk '{ print $1 }'|grep -i syslog)"
+	local syslog_volumes="$(zfs list -H -o name |grep -i syslog)"
 	if [ -z "${syslog_volumes}" ]
 	then
 		return 0
