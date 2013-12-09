@@ -409,7 +409,7 @@ def get_arc_summary(Kstat):
     ### ARC Sizing ###
     output['arc_sizing'] = {}
     output['arc_sizing']['arc_size'] = {
-        'pre': fPerc(arc_size, target_max_size),
+        'per': fPerc(arc_size, target_max_size),
         'num': fBytes(arc_size),
     }
     output['arc_sizing']['target_max_size'] = {
@@ -417,11 +417,11 @@ def get_arc_summary(Kstat):
         'num': fBytes(target_max_size),
     }
     output['arc_sizing']['target_min_size'] = {
-        'pre': fPerc(target_min_size, target_max_size),
+        'per': fPerc(target_min_size, target_max_size),
         'num': fBytes(target_min_size),
     }
     output['arc_sizing']['target_size'] = {
-        'pre': fPerc(target_size, target_max_size),
+        'per': fPerc(target_size, target_max_size),
         'num': fBytes(target_size),
     }
 
@@ -447,22 +447,22 @@ def get_arc_summary(Kstat):
     if arc_size > target_size:
         mfu_size = (arc_size - mru_size)
         output['arc_size_break']['recently_used_cache_size'] = {
-            'pre': fPerc(mru_size, arc_size),
+            'per': fPerc(mru_size, arc_size),
             'num': fBytes(mru_size),
         }
         output['arc_size_break']['frequently_used_cache_size'] = {
-            'pre': fPerc(mfu_size, arc_size),
+            'per': fPerc(mfu_size, arc_size),
             'num': fBytes(mfu_size),
         }
 
     elif arc_size < target_size:
         mfu_size = (target_size - mru_size)
         output['arc_size_break']['recently_used_cache_size'] = {
-            'pre': fPerc(mru_size, target_size),
+            'per': fPerc(mru_size, target_size),
             'num': fBytes(mru_size),
         }
         output['arc_size_break']['frequently_used_cache_size'] = {
-            'pre': fPerc(mfu_size, target_size),
+            'per': fPerc(mfu_size, target_size),
             'num': fBytes(mfu_size),
         }
 
@@ -476,7 +476,7 @@ def get_arc_summary(Kstat):
     output['arc_hash_break'] = {}
     output['arc_hash_break']['elements_max'] = fHits(hash_elements_max)
     output['arc_hash_break']['elements_current'] = {
-        'pre': fPerc(hash_elements, hash_elements_max),
+        'per': fPerc(hash_elements, hash_elements_max),
         'num': fHits(hash_elements),
         }
     output['arc_hash_break']['collisions'] = fHits(hash_collisions)
@@ -507,18 +507,18 @@ def _arc_summary(Kstat):
 
     ### ARC Sizing ###
     sys.stdout.write("ARC Size:\t\t\t\t%s\t%s\n" % (
-        arc['arc_sizing']['arc_size']['pre'],
+        arc['arc_sizing']['arc_size']['per'],
         arc['arc_sizing']['arc_size']['num']
         )
     )
     sys.stdout.write("\tTarget Size: (Adaptive)\t\t%s\t%s\n" % (
-        arc['arc_sizing']['target_size']['pre'],
+        arc['arc_sizing']['target_size']['per'],
         arc['arc_sizing']['target_size']['num'],
         )
     )
 
     sys.stdout.write("\tMin Size (Hard Limit):\t\t%s\t%s\n" % (
-        arc['arc_sizing']['target_min_size']['pre'],
+        arc['arc_sizing']['target_min_size']['per'],
         arc['arc_sizing']['target_min_size']['num'],
         )
     )
@@ -531,12 +531,12 @@ def _arc_summary(Kstat):
 
     sys.stdout.write("\nARC Size Breakdown:\n")
     sys.stdout.write("\tRecently Used Cache Size:\t%s\t%s\n" % (
-        arc['arc_size_break']['recently_used_cache_size']['pre'],
+        arc['arc_size_break']['recently_used_cache_size']['per'],
         arc['arc_size_break']['recently_used_cache_size']['num'],
         )
     )
     sys.stdout.write("\tFrequently Used Cache Size:\t%s\t%s\n" % (
-        arc['arc_size_break']['frequently_used_cache_size']['pre'],
+        arc['arc_size_break']['frequently_used_cache_size']['per'],
         arc['arc_size_break']['frequently_used_cache_size']['num'],
         )
     )
@@ -547,7 +547,7 @@ def _arc_summary(Kstat):
     sys.stdout.write("ARC Hash Breakdown:\n")
     sys.stdout.write("\tElements Max:\t\t\t\t%s\n" % arc['arc_hash_break']['elements_max'])
     sys.stdout.write("\tElements Current:\t\t%s\t%s\n" % (
-        arc['arc_hash_break']['elements_current']['pre'],
+        arc['arc_hash_break']['elements_current']['per'],
         arc['arc_hash_break']['elements_current']['num'],
         )
     )
@@ -855,7 +855,7 @@ def get_l2arc_summary(Kstat):
         output["l2_arc_size"] = {}
         output["l2_arc_size"]["adative"] = fBytes(l2_size)
         output["l2_arc_size"]["head_size"] = {
-            'pre': fPerc(l2_hdr_size, l2_size),
+            'per': fPerc(l2_hdr_size, l2_size),
             'num': fBytes(l2_hdr_size),
         }
 
@@ -866,11 +866,11 @@ def get_l2arc_summary(Kstat):
         output['l2_arc_breakdown'] = {}
         output['l2_arc_breakdown']['value'] = fHits(l2_access_total)
         output['l2_arc_breakdown']['hit_ratio'] = {
-            'pre': fPerc(l2_hits, l2_access_total),
+            'per': fPerc(l2_hits, l2_access_total),
             'num': fHits(l2_hits),
         }
         output['l2_arc_breakdown']['miss_ratio'] = {
-            'pre': fPerc(l2_misses, l2_access_total),
+            'per': fPerc(l2_misses, l2_access_total),
             'num': fHits(l2_misses),
         }
         output['l2_arc_breakdown']['feeds'] = fHits(l2_feeds)
@@ -890,16 +890,16 @@ def get_l2arc_summary(Kstat):
                 'num': fHits(l2_writes_sent),
             }
             output['l2_arc_writes']['done_ratio'] = {
-                'pre': fPerc(l2_writes_done, l2_writes_sent),
+                'per': fPerc(l2_writes_done, l2_writes_sent),
                 'num': fHits(l2_writes_done),
             }
             output['l2_arc_writes']['error_ratio'] = {
-                'pre': fPerc(l2_writes_error, l2_writes_sent),
+                'per': fPerc(l2_writes_error, l2_writes_sent),
                 'num': fHits(l2_writes_error),
             }
         else:
             output['l2_arc_writes']['writes_sent']  = {
-                'pre': fPerc(100),
+                'per': fPerc(100),
                 'num': fHits(l2_writes_sent),
             }
 
@@ -947,13 +947,13 @@ def _l2arc_summary(Kstat):
 
         sys.stdout.write("L2 ARC Breakdown:\t\t\t\t%s\n" % arc['l2_arc_breakdown']['value'])
         sys.stdout.write("\tHit Ratio:\t\t\t%s\t%s\n" % (
-            arc['l2_arc_breakdown']['hit_ratio']['pre'],
+            arc['l2_arc_breakdown']['hit_ratio']['per'],
             arc['l2_arc_breakdown']['hit_ratio']['num'],
             )
         )
 
         sys.stdout.write("\tMiss Ratio:\t\t\t%s\t%s\n" % (
-            arc['l2_arc_breakdown']['miss_ratio']['pre'],
+            arc['l2_arc_breakdown']['miss_ratio']['per'],
             arc['l2_arc_breakdown']['miss_ratio']['num'],
             )
         )
@@ -976,18 +976,18 @@ def _l2arc_summary(Kstat):
                 )
             )
             sys.stdout.write("\t  Done Ratio:\t\t\t%s\t%s\n" % (
-                arc['l2_arc_writes']['done_ratio']['pre'],
+                arc['l2_arc_writes']['done_ratio']['per'],
                 arc['l2_arc_writes']['done_ratio']['num'],
                 )
             )
             sys.stdout.write("\t  Error Ratio:\t\t\t%s\t%s\n" % (
-                arc['l2_arc_writes']['error_ratio']['pre'],
+                arc['l2_arc_writes']['error_ratio']['per'],
                 arc['l2_arc_writes']['error_ratio']['num'],
                 )
             )
         else:
             sys.stdout.write("\tWrites Sent:\t\t\t%s\t%s\n" % (
-                arc['l2_arc_writes']['writes_sent']['pre'],
+                arc['l2_arc_writes']['writes_sent']['per'],
                 arc['l2_arc_writes']['writes_sent']['num'],
                 )
             )
@@ -1031,33 +1031,33 @@ def get_dmu_summary(Kstat):
         output['dmu']['efficiency'] = {}
         output['dmu']['efficiency']['value'] = fHits(zfetch_access_total)
         output['dmu']['efficiency']['hit_ratio'] = {
-            'pre': fPerc(zfetch_hits, zfetch_access_total),
+            'per': fPerc(zfetch_hits, zfetch_access_total),
             'num': fHits(zfetch_hits),
         }
         output['dmu']['efficiency']['miss_ratio'] = {
-            'pre': fPerc(zfetch_misses, zfetch_access_total),
+            'per': fPerc(zfetch_misses, zfetch_access_total),
             'num': fHits(zfetch_misses),
         }
 
         output['dmu']['colinear'] = {}
         output['dmu']['colinear']['value'] = fHits(zfetch_colinear_total)
         output['dmu']['colinear']['hit_ratio'] = {
-            'pre': fPerc(zfetch_colinear_hits, zfetch_colinear_total),
+            'per': fPerc(zfetch_colinear_hits, zfetch_colinear_total),
             'num': fHits(zfetch_colinear_hits),
         }
         output['dmu']['colinear']['miss_ratio'] = {
-            'pre': fPerc(zfetch_colinear_misses, zfetch_colinear_total),
+            'per': fPerc(zfetch_colinear_misses, zfetch_colinear_total),
             'num': fHits(zfetch_colinear_misses),
         }
 
         output['dmu']['stride'] = {}
         output['dmu']['stride']['value'] = fHits(zfetch_stride_total)
         output['dmu']['stride']['hit_ratio'] = {
-            'pre': fPerc(zfetch_stride_hits, zfetch_stride_total),
+            'per': fPerc(zfetch_stride_hits, zfetch_stride_total),
             'num': fHits(zfetch_stride_hits),
         }
         output['dmu']['stride']['miss_ratio'] = {
-            'pre': fPerc(zfetch_stride_misses, zfetch_stride_total),
+            'per': fPerc(zfetch_stride_misses, zfetch_stride_total),
             'num': fHits(zfetch_stride_misses),
         }
 
@@ -1070,22 +1070,22 @@ def get_dmu_summary(Kstat):
         output['dmu_misc']['reclaim'] = {}
         output['dmu_misc']['reclaim']['value'] = fHits(zfetch_reclaim_total)
         output['dmu_misc']['reclaim']['successes'] = {
-            'pre': fPerc(zfetch_reclaim_successes, zfetch_reclaim_total),
+            'per': fPerc(zfetch_reclaim_successes, zfetch_reclaim_total),
             'num': fHits(zfetch_reclaim_successes),
         }
         output['dmu_misc']['reclaim']['failure'] = {
-            'pre': fPerc(zfetch_reclaim_failures, zfetch_reclaim_total),
+            'per': fPerc(zfetch_reclaim_failures, zfetch_reclaim_total),
             'num': fHits(zfetch_reclaim_failures),
         }
 
         output['dmu_misc']['streams'] = {}
         output['dmu_misc']['streams']['value'] = fHits(zfetch_streams_total)
         output['dmu_misc']['streams']['plus_resets'] = {
-            'pre': fPerc(zfetch_streams_resets, zfetch_streams_total),
+            'per': fPerc(zfetch_streams_resets, zfetch_streams_total),
             'num': fHits(zfetch_streams_resets),
         }
         output['dmu_misc']['streams']['neg_resets'] = {
-            'pre': fPerc(zfetch_streams_noresets, zfetch_streams_total),
+            'per': fPerc(zfetch_streams_noresets, zfetch_streams_total),
             'num': fHits(zfetch_streams_noresets),
         }
         output['dmu_misc']['streams']['bogus'] = fHits(zfetch_bogus_streams)
@@ -1102,12 +1102,12 @@ def _dmu_summary(Kstat):
 
         sys.stdout.write("DMU Efficiency:\t\t\t\t\t%s\n" % arc['dmu']['efficiency']['value'])
         sys.stdout.write("\tHit Ratio:\t\t\t%s\t%s\n" % (
-            arc['dmu']['efficiency']['hit_ratio']['pre'],
+            arc['dmu']['efficiency']['hit_ratio']['per'],
             arc['dmu']['efficiency']['hit_ratio']['num'],
             )
         )
         sys.stdout.write("\tMiss Ratio:\t\t\t%s\t%s\n" % (
-            arc['dmu']['efficiency']['miss_ratio']['pre'],
+            arc['dmu']['efficiency']['miss_ratio']['per'],
             arc['dmu']['efficiency']['miss_ratio']['num'],
             )
         )
@@ -1116,13 +1116,13 @@ def _dmu_summary(Kstat):
 
         sys.stdout.write("\tColinear:\t\t\t\t%s\n" % arc['dmu']['colinear']['value'])
         sys.stdout.write("\t  Hit Ratio:\t\t\t%s\t%s\n" % (
-            arc['dmu']['colinear']['hit_ratio']['pre'],
+            arc['dmu']['colinear']['hit_ratio']['per'],
             arc['dmu']['colinear']['hit_ratio']['num'],
             )
         )
 
         sys.stdout.write("\t  Miss Ratio:\t\t\t%s\t%s\n" % (
-            arc['dmu']['colinear']['miss_ratio']['pre'],
+            arc['dmu']['colinear']['miss_ratio']['per'],
             arc['dmu']['colinear']['miss_ratio']['num'],
             )
         )
@@ -1131,13 +1131,13 @@ def _dmu_summary(Kstat):
 
         sys.stdout.write("\tStride:\t\t\t\t\t%s\n" % arc['dmu']['stride']['value'])
         sys.stdout.write("\t  Hit Ratio:\t\t\t%s\t%s\n" % (
-            arc['dmu']['stride']['hit_ratio']['pre'],
+            arc['dmu']['stride']['hit_ratio']['per'],
             arc['dmu']['stride']['hit_ratio']['num'],
             )
         )
 
         sys.stdout.write("\t  Miss Ratio:\t\t\t%s\t%s\n" % (
-            arc['dmu']['stride']['miss_ratio']['pre'],
+            arc['dmu']['stride']['miss_ratio']['per'],
             arc['dmu']['stride']['miss_ratio']['num'],
             )
         )
@@ -1147,26 +1147,26 @@ def _dmu_summary(Kstat):
 
         sys.stdout.write("\tReclaim:\t\t\t\t%s\n" % arc['dmu_misc']['reclaim']['value'])
         sys.stdout.write("\t  Successes:\t\t\t%s\t%s\n" % (
-            arc['dmu_misc']['reclaim']['successes']['pre'],
+            arc['dmu_misc']['reclaim']['successes']['per'],
             arc['dmu_misc']['reclaim']['successes']['num'],
             )
         )
 
         sys.stdout.write("\t  Failures:\t\t\t%s\t%s\n" % (
-            arc['dmu_misc']['reclaim']['failure']['pre'],
+            arc['dmu_misc']['reclaim']['failure']['per'],
             arc['dmu_misc']['reclaim']['failure']['num'],
             )
         )
 
         sys.stdout.write("\n\tStreams:\t\t\t\t%s\n" % arc['dmu_misc']['streams']['value'])
         sys.stdout.write("\t  +Resets:\t\t\t%s\t%s\n" % (
-            arc['dmu_misc']['streams']['plus_resets']['pre'],
+            arc['dmu_misc']['streams']['plus_resets']['per'],
             arc['dmu_misc']['streams']['plus_resets']['num'],
             )
         )
 
         sys.stdout.write("\t  -Resets:\t\t\t%s\t%s\n" % (
-            arc['dmu_misc']['streams']['neg_resets']['pre'],
+            arc['dmu_misc']['streams']['neg_resets']['per'],
             arc['dmu_misc']['streams']['neg_resets']['num'],
             )
         )
@@ -1191,15 +1191,15 @@ def get_vdev_summary(Kstat):
         output['vdev_cache'] = {}
         output['vdev_cache']['summary'] = fHits(vdev_cache_total)
         output['vdev_cache']['hit_ratio'] = {
-            'pre': fPerc(vdev_cache_hits, vdev_cache_total),
+            'per': fPerc(vdev_cache_hits, vdev_cache_total),
             'num': fHits(vdev_cache_hits),
         }
         output['vdev_cache']['miss_ratio'] = {
-            'pre': fPerc(vdev_cache_misses, vdev_cache_total),
+            'per': fPerc(vdev_cache_misses, vdev_cache_total),
             'num': fHits(vdev_cache_misses),
         }
         output['vdev_cache']['delegations'] = {
-            'pre': fPerc(vdev_cache_delegations, vdev_cache_total),
+            'per': fPerc(vdev_cache_delegations, vdev_cache_total),
             'num': fHits(vdev_cache_delegations),
         }
 
@@ -1211,17 +1211,17 @@ def _vdev_summary(Kstat):
     if arc['vdev_cache_total'] > 0:
         sys.stdout.write("VDEV Cache Summary:\t\t\t\t%s\n" % arc['summary'])
         sys.stdout.write("\tHit Ratio:\t\t\t%s\t%s\n" % (
-            arc['vdev_cache']['hit_ratio']['pre'],
+            arc['vdev_cache']['hit_ratio']['per'],
             arc['vdev_cache']['hit_ratio']['num'],
             )
         )
         sys.stdout.write("\tMiss Ratio:\t\t\t%s\t%s\n" % (
-            arc['vdev_cache']['miss_ratio']['pre'],
+            arc['vdev_cache']['miss_ratio']['per'],
             arc['vdev_cache']['miss_ratio']['num'],
             )
         )
         sys.stdout.write("\tDelegations:\t\t\t%s\t%s\n" % (
-            arc['vdev_cache']['delegations']['pre'],
+            arc['vdev_cache']['delegations']['per'],
             arc['vdev_cache']['delegations']['num'],
             )
         )
