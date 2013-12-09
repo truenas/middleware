@@ -1418,7 +1418,11 @@ class iSCSITargetPortalIPForm(ModelForm):
                     ips.append((alias.alias_v6address, alias.alias_v6address))
         self.fields['iscsi_target_portalip_ip'].choices = ips
         if not self.instance.id and not self.data:
-            self.fields['iscsi_target_portalip_ip'].initial = '0.0.0.0'
+            if not(
+                self._parent.instance.id and
+                self._parent.instance.ips.all().count() > 0
+            ) or not self._parent.instance.id:
+                self.fields['iscsi_target_portalip_ip'].initial = '0.0.0.0'
 
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
