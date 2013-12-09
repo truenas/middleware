@@ -157,6 +157,7 @@ define([
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
                 if(c[i].tab == 'services'){
+                    c[i].href = href;
                     p.selectChild(c[i]);
                     opened = true;
                     if(onload) lang.hitch(this, onload)();
