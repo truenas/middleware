@@ -8918,3 +8918,13 @@ msgstr ""
 #: templates/plugins/index.html:32
 msgid "You must configure a default route (Network->IPv4 Default Gateway)"
 msgstr ""
+
+#: jails/models.py:353
+#, fuzzy
+msgid "Architecture"
+msgstr "Αρχιτεκτονική πρόσθετου"
+
+#: plugins/models.py:141
+#, fuzzy
+msgid "Plugin Kernel Module"
+msgstr "Πρόσθετο ενεργοποιημένο"

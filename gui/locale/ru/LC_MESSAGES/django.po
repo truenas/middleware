@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-02 02:07+0000\n"
-"PO-Revision-Date: 2013-12-06 09:58+0000\n"
+"PO-Revision-Date: 2013-12-06 12:44+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1386323939.0\n"
+"X-POOTLE-MTIME: 1386333888.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:43
@@ -4567,7 +4567,7 @@ msgstr "Использовано"
 # или Доступно
 #: storage/admin.py:113 templates/plugins/index.html:3
 msgid "Available"
-msgstr "Доступный"
+msgstr "Доступно"
 
 #: storage/admin.py:119
 msgid "Size"
@@ -8764,3 +8764,11 @@ msgstr "Разрешить автоматическую отправку инф�
 #: templates/plugins/index.html:32
 msgid "You must configure a default route (Network->IPv4 Default Gateway)"
 msgstr "Вы должны настроить шлюз по умолчанию (Сеть->Шлюз Ipv4 по умолчанию)"
+
+#: jails/models.py:353
+msgid "Architecture"
+msgstr "Архитектура"
+
+#: plugins/models.py:141
+msgid "Plugin Kernel Module"
+msgstr "Модуль ядра плагина"
