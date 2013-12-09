@@ -3142,7 +3142,11 @@ class notifier:
         for pool, zid in pool_name.findall(res):
             # get status part of the pool
             status = res.split('id: %s\n' % zid)[1].split('pool:')[0]
-            roots = zfs.parse_status(pool, doc, 'id: %s\n%s' % (zid, status))
+            try:
+                roots = zfs.parse_status(pool, doc, 'id: %s\n%s' % (zid, status))
+            except Exception, e:
+                log.warn("Error parsing %s: %s", pool, e)
+                continue
 
             if roots['data'].status != 'UNAVAIL':
                 volumes.append({
