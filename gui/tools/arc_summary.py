@@ -595,7 +595,7 @@ def get_arc_efficiency(Kstat):
     prefetch_data_total = (prefetch_data_hits + prefetch_data_misses)
     real_hits = (mfu_hits + mru_hits)
 
-    output["efficiency"] = fHits(arc_accesses_total)
+    output["total_accesses"] = fHits(arc_accesses_total)
     output["cache_hit_ratio"] = {
         'per': fPerc(arc_hits, arc_accesses_total),
         'num': fHits(arc_hits),
@@ -685,7 +685,7 @@ def get_arc_efficiency(Kstat):
 def _arc_efficiency(Kstat):
     arc = get_arc_efficiency(Kstat)
 
-    sys.stdout.write("ARC Efficiency:\t\t\t\t\t%s\n" % arc['efficiency'])
+    sys.stdout.write("ARC Total accesses:\t\t\t\t\t%s\n" % arc['total_accesses'])
     sys.stdout.write("\tCache Hit Ratio:\t\t%s\t%s\n" % (
         arc['cache_hit_ratio']['per'],
         arc['cache_hit_ratio']['num'],
