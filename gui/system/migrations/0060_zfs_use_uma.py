@@ -7,15 +7,18 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        if not orm['system.Tunable'].objects.filter(
-            tun_var='vfs.zfs.zio.use_uma'
-        ).exists():
-            orm['system.Tunable'].objects.create(
-                tun_var='vfs.zfs.zio.use_uma',
-                tun_value='1',
-                tun_enabled=True,
-                tun_comment='Use uma(9) for ZIO allocations (ZFS)',
-            )
+        pass
+        # Do not add the tunable anymore, see #3449
+        #
+        #if not orm['system.Tunable'].objects.filter(
+        #    tun_var='vfs.zfs.zio.use_uma'
+        #).exists():
+        #    orm['system.Tunable'].objects.create(
+        #        tun_var='vfs.zfs.zio.use_uma',
+        #        tun_value='1',
+        #        tun_enabled=True,
+        #        tun_comment='Use uma(9) for ZIO allocations (ZFS)',
+        #    )
 
     def backwards(self, orm):
         "Write your backwards methods here."
