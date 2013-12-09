@@ -801,7 +801,13 @@ class AutoImportDecryptForm(Form):
         self.fields['disks'].choices = self._populate_disk_choices()
 
     def _populate_disk_choices(self):
-        return notifier().geli_get_all_providers()
+        gelis = notifier().geli_get_all_providers()
+        for vol in models.Volume.objects.filter(vol_encrypt__gt=0):
+            for disk in vol.get_disks():
+                for geli in list(gelis):
+                    if '%sp' % disk in geli[1]:
+                        gelis.remove(geli)
+        return gelis
 
     def clean(self):
         key = self.cleaned_data.get("key")
