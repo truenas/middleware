@@ -213,6 +213,7 @@ define([
                     title: gettext('Jails'),
                     closable: true,
                     href:openurl,
+                    refreshOnShow: true
                 });
                 pane.tab = 'jails';
                 p.addChild(pane);
