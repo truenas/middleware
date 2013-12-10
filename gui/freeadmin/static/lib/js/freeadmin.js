@@ -532,12 +532,16 @@ require([
         var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
         var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
         var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+        var bridge_ipv4_netmask = registry.byId("id_jail_bridge_ipv4_netmask");
+        var bridge_ipv6_prefix = registry.byId("id_jail_bridge_ipv6_prefix");
 
         if (jail_vnet != 'on') {
             defaultrouter_ipv4.set("value", "");
             defaultrouter_ipv6.set("value", "");
             bridge_ipv4.set("value", "");
             bridge_ipv6.set("value", "");
+            bridge_ipv4_netmask.set("value", "");
+            bridge_ipv6_prefix.set("value", "");
             nat.set("checked", false);
 
             nat.set("disabled", true);
@@ -545,6 +549,8 @@ require([
             defaultrouter_ipv6.set("disabled", true);
             bridge_ipv4.set("disabled", true);
             bridge_ipv6.set("disabled", true);
+            bridge_ipv4_netmask.set("disabled", true);
+            bridge_ipv6_prefix.set("disabled", true);
 
         } else {
 
@@ -552,6 +558,8 @@ require([
             defaultrouter_ipv6.set("disabled", false);
             bridge_ipv4.set("disabled", false);
             bridge_ipv6.set("disabled", false);
+            bridge_ipv4_netmask.set("disabled", false);
+            bridge_ipv6_prefix.set("disabled", false);
             nat.set("disabled", false);
         }
 
@@ -568,6 +576,8 @@ require([
         var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
         var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
         var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+        var bridge_ipv4_netmask = registry.byId("id_jail_bridge_ipv4_netmask");
+        var bridge_ipv6_prefix = registry.byId("id_jail_bridge_ipv6_prefix");
         var vnet = registry.byId("id_jail_vnet");
 
         var jail_vnet = vnet.get("value");
@@ -578,12 +588,16 @@ require([
             defaultrouter_ipv6.set("disabled", true);
             bridge_ipv4.set("disabled", false);
             bridge_ipv6.set("disabled", false);
+            bridge_ipv4_netmask.set("disabled", false);
+            bridge_ipv6_prefix.set("disabled", false);
 
         } else if (jail_nat == 'on' && !jail_vnet) {
             defaultrouter_ipv4.set("disabled", false);
             defaultrouter_ipv6.set("disabled", false);
             bridge_ipv4.set("disabled", true);
             bridge_ipv6.set("disabled", true);
+            bridge_ipv4_netmask.set("disabled", true);
+            bridge_ipv6_prefix.set("disabled", true);
             nat.set("disabled", true);
 
         } else if (!jail_nat && jail_vnet == 'on') {
@@ -591,12 +605,16 @@ require([
             defaultrouter_ipv6.set("disabled", false);
             bridge_ipv4.set("disabled", false);
             bridge_ipv6.set("disabled", false);
+            bridge_ipv4_netmask.set("disabled", false);
+            bridge_ipv6_prefix.set("disabled", false);
 
         } else if (!jail_nat && !jail_vnet) {
-            defaultrouter_ipv4.set("disabled", false);
-            defaultrouter_ipv6.set("disabled", false);
+            defaultrouter_ipv4.set("disabled", true);
+            defaultrouter_ipv6.set("disabled", true);
             bridge_ipv4.set("disabled", true);
             bridge_ipv6.set("disabled", true);
+            bridge_ipv4_netmask.set("disabled", true);
+            bridge_ipv6_prefix.set("disabled", true);
         }
     }
 

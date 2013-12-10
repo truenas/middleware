@@ -82,6 +82,13 @@ class Jails(Model):
         null=True,
         verbose_name=_("IPv4 address")
     )
+    jail_ipv4_netmask = models.CharField(
+        max_length=3,
+        choices=choices.v4NetmaskBitList,
+        blank=True,
+        default='',
+        verbose_name=_("IPv4 netmask"),
+    )
     jail_alias_ipv4 = models.CharField(
         max_length=120,
         blank=True,
@@ -93,6 +100,13 @@ class Jails(Model):
         blank=True,
         null=True,
         verbose_name=_("IPv4 bridge address")
+    )
+    jail_bridge_ipv4_netmask = models.CharField(
+        max_length=3,
+        choices=choices.v4NetmaskBitList,
+        blank=True,
+        default='',
+        verbose_name=_("IPv4 bridge netmask"),
     )
     jail_alias_bridge_ipv4 = models.CharField(
         max_length=120,
@@ -112,6 +126,13 @@ class Jails(Model):
         null=True,
         verbose_name=_("IPv6 address")
     )
+    jail_ipv6_prefix = models.CharField(
+        max_length=4,
+        choices=choices.v6NetmaskBitList,
+        blank=True,
+        default='',
+        verbose_name=_("IPv6 prefix length")
+    )
     jail_alias_ipv6 = models.CharField(
         max_length=120,
         blank=True,
@@ -123,6 +144,13 @@ class Jails(Model):
         blank=True,
         null=True,
         verbose_name=_("IPv6 bridge address")
+    )
+    jail_bridge_ipv6_prefix = models.CharField(
+        max_length=4,
+        choices=choices.v6NetmaskBitList,
+        blank=True,
+        default='',
+        verbose_name=_("IPv6 bridge prefix length")
     )
     jail_alias_bridge_ipv6 = models.CharField(
         max_length=120,
@@ -213,6 +241,44 @@ class Jails(Model):
             self.jail_nat = True
         elif self.jail_nat == WARDEN_NAT_DISABLED:
             self.jail_nat = False
+
+        #
+        # XXX
+        #
+        # This should probably be done in forms.py.. but for some reason,
+        # probably related to how this model fakes out django and doesn't
+        # use a database table (just a guess), when changing the form instance
+        # variable, it does not reflect in the GUI. Will return to this 
+        # particular issue some other time. For now, hacky hack hacks!
+        #
+        # Also note, the mask/prefix is stripped here for display in the GUI,
+        # and appended back on in the form save() method.
+        #
+        # XXX
+        #
+        if self.jail_ipv4:
+            parts = self.jail_ipv4.split('/')
+            self.jail_ipv4 = parts[0]
+            if len(parts) > 1:
+                self.jail_ipv4_netmask = parts[1]
+
+        if self.jail_bridge_ipv4:
+            parts = self.jail_bridge_ipv4.split('/')
+            self.jail_bridge_ipv4 = parts[0]
+            if len(parts) > 1:
+                self.jail_bridge_ipv4_netmask = parts[1]
+
+        if self.jail_ipv6:
+            parts = self.jail_ipv6.split('/')
+            self.jail_ipv6 = parts[0]
+            if len(parts) > 1:
+                self.jail_ipv6_prefix = parts[1]
+
+        if self.jail_bridge_ipv6:
+            parts = self.jail_bridge_ipv6.split('/')
+            self.jail_bridge_ipv6 = parts[0]
+            if len(parts) > 1:
+                self.jail_bridge_ipv6_prefix = parts[1]
 
     def delete(self, force=False):
         #FIXME: Cyclic dependency
@@ -327,11 +393,14 @@ class JailsConfiguration(Model):
             )
 
         if not self.jc_ipv4_network_start:
-            self.jc_ipv4_network_start = st.usable_range[0]
+            self.jc_ipv4_network_start = str(st.usable_range[0]).split('/')[0]
+        else:
+            self.jc_ipv4_network_start = self.jc_ipv4_network_start.split('/')[0]  
 
         if not self.jc_ipv4_network_end:
-            self.jc_ipv4_network_end = st.usable_range[1]
-
+            self.jc_ipv4_network_end = str(st.usable_range[1]).split('/')[0]
+        else:
+            self.jc_ipv4_network_end = self.jc_ipv4_network_end.split('/')[0]
 
 
 class JailTemplate(Model):

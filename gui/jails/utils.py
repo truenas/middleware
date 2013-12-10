@@ -97,7 +97,6 @@ def get_ipv4_exclude_dict():
     for j in jails:
         mask = 24
         if j['ipv4']:
-            print 'foo'
             parts = j['ipv4'].split('/')
             if len(parts) == 2:
                 mask = int(parts[1])

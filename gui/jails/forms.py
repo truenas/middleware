@@ -140,17 +140,29 @@ class JailCreateForm(ModelForm):
 
         addrs = guess_addresses()
 
-        if addrs['high_ipv6']:
-            self.fields['jail_ipv6'].initial = addrs['high_ipv6']
-
         if addrs['high_ipv4']:
-            self.fields['jail_ipv4'].initial = addrs['high_ipv4']
+            parts = str(addrs['high_ipv4']).split('/')
+            self.fields['jail_ipv4'].initial = parts[0]
+            if len(parts) > 1:
+                self.fields['jail_ipv4_netmask'].initial = parts[1]
+
+        if addrs['high_ipv6']:
+            parts = str(addrs['high_ipv6']).split('/')
+            self.fields['jail_ipv6'].initial = parts[0]
+            if len(parts) > 1:
+                self.fields['jail_ipv6_prefix'].initial = parts[1]
 
         if addrs['bridge_ipv4']:
-            self.fields['jail_bridge_ipv4'].initial = addrs['bridge_ipv4']
+            parts = str(addrs['bridge_ipv4']).split('/')
+            self.fields['jail_bridge_ipv4'].initial = parts[0]
+            if len(parts) > 1:
+                self.fields['jail_bridge_ipv4_netmask'].initial = parts[1]
 
         if addrs['bridge_ipv6']:
-            self.fields['jail_bridge_ipv6'].initial = addrs['bridge_ipv6']
+            parts = str(addrs['bridge_ipv6']).split('/')
+            self.fields['jail_bridge_ipv6'].initial = parts[0]
+            if len(parts) > 1:
+                self.fields['jail_bridge_ipv6_prefix'].initial = parts[1]
 
     def save(self):
         try:
@@ -161,9 +173,25 @@ class JailCreateForm(ModelForm):
         if not jc.jc_path:
             raise MiddlewareError(_("No jail root configured."))
 
+        jc_ipv4_netmask = 24
+        if jc.jc_ipv4_network:
+            parts = jc.jc_ipv4_network.split('/')
+            if len(parts) > 1:
+                jc_ipv4_netmask = parts[1]  
+
+        jc_ipv6_prefix = 64
+        if jc.jc_ipv6_network:
+            parts = jc.jc_ipv6_network.split('/')
+            if len(parts) > 1:
+                jc_ipv6_prefix = parts[1]
+
         jail_host = self.cleaned_data.get('jail_host')
+
         jail_ipv4 = self.cleaned_data.get('jail_ipv4')
+        jail_ipv4_netmask = self.cleaned_data.get('jail_ipv4_netmask', jc_ipv4_netmask)
+
         jail_ipv6 = self.cleaned_data.get('jail_ipv6')
+        jail_ipv6_prefix = self.cleaned_data.get('jail_ipv6_prefix', jc_ipv6_prefix)
 
         jail_flags = WARDEN_FLAGS_NONE
         jail_create_args = {}
@@ -235,11 +263,15 @@ class JailCreateForm(ModelForm):
 
         if jail_ipv4:
             jail_flags |= WARDEN_CREATE_FLAGS_IPV4
-            jail_create_args['ipv4'] = jail_ipv4
+            jail_create_args['ipv4'] = "%s/%s" % (
+                jail_ipv4, jail_ipv4_netmask
+            )
 
         if jail_ipv6:
             jail_flags |= WARDEN_CREATE_FLAGS_IPV6
-            jail_create_args['ipv6'] = jail_ipv6
+            jail_create_args['ipv6'] = "%s/%s" % (
+                jail_ipv6, jail_ipv6_prefix
+            )
 
         jail_flags |= WARDEN_CREATE_FLAGS_LOGFILE
         jail_flags |= WARDEN_CREATE_FLAGS_SYSLOG
@@ -272,12 +304,14 @@ class JailCreateForm(ModelForm):
             val = self.cleaned_data.get(key, None)
             if val:
                 if key == 'jail_bridge_ipv4':
+                    mask = self.cleaned_data.get('jail_bridge_ipv4_netmask', jc_ipv4_netmask)
                     jail_flags |= WARDEN_SET_FLAGS_BRIDGE_IPV4
-                    jail_set_args['bridge-ipv4'] = val
+                    jail_set_args['bridge-ipv4'] = "%s/%s" % (val, mask)
 
                 elif key == 'jail_bridge_ipv6':
+                    prefix = self.cleaned_data.get('jail_bridge_ipv6_prefix', jc_ipv6_prefix)
                     jail_flags |= WARDEN_SET_FLAGS_BRIDGE_IPV6
-                    jail_set_args['bridge-ipv6'] = val
+                    jail_set_args['bridge-ipv6'] = "%s/%s" % (val, prefix)
 
                 elif key == 'jail_defaultrouter_ipv4':
                     jail_flags |= WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4
@@ -507,13 +541,17 @@ class JailsEditForm(ModelForm):
         self.__myfields = [
             'jail_autostart',
             'jail_ipv4',
+            'jail_ipv4_netmask',
             'jail_alias_ipv4',
             'jail_bridge_ipv4',
+            'jail_bridge_ipv4_netmask',
             'jail_alias_bridge_ipv4',
             'jail_defaultrouter_ipv4',
             'jail_ipv6',
+            'jail_ipv6_prefix',
             'jail_alias_ipv6',
             'jail_bridge_ipv6',
+            'jail_bridge_ipv6_prefix',
             'jail_alias_bridge_ipv6',
             'jail_defaultrouter_ipv6',
             'jail_mac',
@@ -543,6 +581,27 @@ class JailsEditForm(ModelForm):
         changed_fields = self.__instance_changed_fields(
             instance, self.__myfields
         )
+
+        try:
+            jc = JailsConfiguration.objects.order_by("-id")[0]
+        except Exception as e:
+            raise MiddlewareError(e.message)
+
+        if not jc.jc_path:
+            raise MiddlewareError(_("No jail root configured."))
+
+        jc_ipv4_netmask = 24
+        if jc.jc_ipv4_network:
+            parts = jc.jc_ipv4_network.split('/')
+            if len(parts) > 1:
+                jc_ipv4_netmask = parts[1]  
+
+        jc_ipv6_prefix = 64
+        if jc.jc_ipv6_network:
+            parts = jc.jc_ipv6_network.split('/')
+            if len(parts) > 1:
+                jc_ipv6_prefix = parts[1]
+
         for cf in changed_fields:
             if cf == 'jail_autostart':
                 Warden().auto(jail=jail_host)
@@ -550,13 +609,21 @@ class JailsEditForm(ModelForm):
                 args = {}
                 flags = WARDEN_FLAGS_NONE
 
-                if cf == 'jail_ipv4':
-                    flags |= WARDEN_SET_FLAGS_IPV4
-                    args['ipv4'] = self.cleaned_data.get(cf)
+                if cf == 'jail_ipv4' or cf == 'jail_ipv4_netmask':
+                    ipv4 = self.cleaned_data.get('jail_ipv4')
+                    mask = self.cleaned_data.get('jail_ipv4_netmask', jc_ipv4_netmask)
+                    jail_ipv4 = "%s/%s" % (ipv4, mask)
 
-                elif cf == 'jail_ipv6':
+                    flags |= WARDEN_SET_FLAGS_IPV4
+                    args['ipv4'] = jail_ipv4
+
+                elif cf == 'jail_ipv6' or cf == 'jail_ipv6_prefix':
+                    ipv6 = self.cleaned_data.get('jail_ipv6')
+                    prefix = self.cleaned_data.get('jail_ipv6_prefix', jc_ipv6_prefix)
+                    jail_ipv6 = "%s/%s" % (ipv6, prefix)
+
                     flags |= WARDEN_SET_FLAGS_IPV6
-                    args['ipv6'] = self.cleaned_data.get(cf)
+                    args['ipv6'] = jail_ipv6
 
                 elif cf == 'jail_alias_ipv4':
                     flags |= WARDEN_SET_FLAGS_ALIAS_IPV4
@@ -566,13 +633,21 @@ class JailsEditForm(ModelForm):
                     flags |= WARDEN_SET_FLAGS_ALIAS_IPV6
                     args['alias-ipv6'] = self.cleaned_data.get(cf)
 
-                elif cf == 'jail_bridge_ipv4':
-                    flags |= WARDEN_SET_FLAGS_BRIDGE_IPV4
-                    args['bridge-ipv4'] = self.cleaned_data.get(cf)
+                elif cf == 'jail_bridge_ipv4' or cf == 'jail_bridge_ipv4_netmask':
+                    bridge_ipv4 = self.cleaned_data.get('jail_bridge_ipv4')
+                    mask = self.cleaned_data.get('jail_bridge_ipv4_netmask', jc_ipv4_netmask)
+                    jail_bridge_ipv4 = "%s/%s" % (bridge_ipv4, mask)
 
-                elif cf == 'jail_bridge_ipv6':
+                    flags |= WARDEN_SET_FLAGS_BRIDGE_IPV4
+                    args['bridge-ipv4'] = jail_bridge_ipv4
+
+                elif cf == 'jail_bridge_ipv6' or cf == 'jail_bridge_ipv6_prefix':
+                    bridge_ipv6 = self.cleaned_data.get('jail_bridge_ipv6')
+                    prefix = self.cleaned_data.get('jail_bridge_ipv6_prefix', jc_ipv6_prefix)
+                    jail_bridge_ipv6 = "%s/%s" % (bridge_ipv6, prefix)
+
                     flags |= WARDEN_SET_FLAGS_BRIDGE_IPV6
-                    args['bridge-ipv6'] = self.cleaned_data.get(cf)
+                    args['bridge-ipv6'] = jail_bridge_ipv6
 
                 elif cf == 'jail_alias_bridge_ipv4':
                     flags |= WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4
