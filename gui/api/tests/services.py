@@ -1,4 +1,5 @@
 from .utils import APITestCase
+from freenasUI.network.models import GlobalConfiguration
 from freenasUI.services import models
 from freenasUI.storage.models import MountPoint, Volume
 
@@ -7,6 +8,7 @@ class ActiveDirectoryResourceTest(APITestCase):
 
     def setUp(self):
         super(ActiveDirectoryResourceTest, self).setUp()
+        GlobalConfiguration.objects.create()
         models.services.objects.create(
             srv_service='directoryservice',
         )
@@ -594,6 +596,7 @@ class NT4ResourceTest(APITestCase):
 
     def setUp(self):
         super(NT4ResourceTest, self).setUp()
+        GlobalConfiguration.objects.create()
         models.services.objects.create(
             srv_service='directoryservice',
         )
