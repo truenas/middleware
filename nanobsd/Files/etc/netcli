@@ -35,6 +35,7 @@ import subprocess
 import time
 
 import ipaddr
+import requests
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -944,44 +945,55 @@ def shutdown():
             return False
 
 def show_ip():
-    proto = Settings.objects.all().order_by('-id')[0].stg_guiprotocol
-    p1 = subprocess.Popen("sockstat -P tcp |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $6 }'|sort|uniq", shell=True, stdout=subprocess.PIPE)
-    addrs = p1.communicate()[0].split('\n')[:-1]
+    p1 = subprocess.Popen("sockstat -4P tcp |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $6 }'|sort|uniq", shell=True, stdout=subprocess.PIPE)
+    addrsv4 = p1.communicate()[0].split('\n')[:-1]
+    urls = []
 
-    if addrs:
+    if addrsv4:
         print
         print _("You may try the following URLs to access the web user interface:")
         print
 
-        for addr in addrs:
+        for addr in addrsv4:
             ip, port = addr.split(':')
-            hide_port = True if (proto in ('http', 'httphttps') and port == '80') or \
-                             (proto in ('https', 'httphttps') and port == '443') else False
-            if hide_port is True and port == '443':
-                _proto = 'https'
-            elif proto == 'httphttps':
-                _proto = 'http'
-            else:
-                _proto = proto
 
+            ips = []
             if ip == '*':
-                if hide_port:
-                    p1 = subprocess.Popen(['ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
-                      'sed -e s,^,%s://,g -e s,$,/,g' % _proto], shell=True, stdout=subprocess.PIPE)
-                else:
-                    p1 = subprocess.Popen(['ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
-                      'sed -e s,^,%s://,g -e s,$,:%s/,g' % (_proto, port)], shell=True, stdout=subprocess.PIPE)
-                out = p1.communicate()[0]
+                p1 = subprocess.Popen('ifconfig -a inet | grep broadcast | cut -f2 -d" "', shell=True, stdout=subprocess.PIPE)
+                out = p1.communicate()[0].strip('\n').strip(' ').split('\n')
                 if out:
-                    print out
-                else:
-                    print _("No configured interfaces were found. Try to do it manually.")
-
+                    ips = out
             else:
-                if hide_port:
-                    print "%s://%s/" % (_proto, ip)
-                else:
-                    print "%s://%s/" % (_proto, addr)
+                ips = [ip]
+            for o in ips:
+                try:
+                    if port == '80':
+                        url = 'http://%s' % o
+                    else:
+                        url = 'http://%s:%s' % (o, port)
+                    r = requests.head(url, timeout=1)
+                    assert r.status_code in (200, 302, 301)
+                    urls.append(url)
+                    continue
+                except Exception, e:
+                    pass
+
+                try:
+                    if port == '443':
+                        url = 'https://%s' % o
+                    else:
+                        url = 'https://%s:%s' % (o, port)
+                    r = requests.head(url, timeout=1, verify=False)
+                    assert r.status_code in (200, 302)
+                    urls.append(url)
+                    continue
+                except Exception, e:
+                    pass
+
+        for url in sorted(urls):
+            print url
+        if not urls:
+            print _("No configured interfaces were found. Try to do it manually.")
 
         print
 
