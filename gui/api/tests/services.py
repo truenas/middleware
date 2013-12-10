@@ -1544,8 +1544,10 @@ class iSCSITargetResourceTest(APITestCase):
             u'iscsi_target_authtype': u'Auto',
             u'iscsi_target_flags': u'rw',
             u'iscsi_target_initialdigest': u'Auto',
+            u'iscsi_target_initiatorgroup': 1,
             u'iscsi_target_logical_blocksize': 512,
             u'iscsi_target_name': u'target',
+            u'iscsi_target_portalgroup': 1,
             u'iscsi_target_queue_depth': 32,
             u'iscsi_target_serial': u'10000001',
             u'iscsi_target_type': u'Disk'
