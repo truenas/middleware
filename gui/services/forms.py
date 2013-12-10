@@ -235,9 +235,17 @@ class NFSForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(NFSForm, self).__init__(*args, **kwargs)
+        if self.data and self.data.get('nfs_srv_bindip'):
+            if ',' in self.data['nfs_srv_bindip']:
+                self.data = self.data.copy()
+                self.data.setlist(
+                    'nfs_srv_bindip',
+                    self.data['nfs_srv_bindip'].split(',')
+                )
         self.fields['nfs_srv_bindip'].choices = list(choices.IPChoices())
         self.fields['nfs_srv_bindip'].initial = (
-            self.instance.nfs_srv_bindip.encode('utf-8').split(',') if self.instance.id
+            self.instance.nfs_srv_bindip.encode('utf-8').split(',')
+            if self.instance.id and self.instance.nfs_srv_bindip
             else ''
         )
         self.fields.keyOrder.remove('nfs_srv_bindip')

@@ -57,7 +57,7 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
 from freenasUI.services.forms import iSCSITargetPortalIPForm
-from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
+from freenasUI.services.models import NFS, iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
@@ -875,6 +875,19 @@ class TaskResourceMixin(object):
             bundle.obj.task_ret_count,
             bundle.obj.task_ret_unit,
         )
+        return bundle
+
+
+class NFSResourceMixin(object):
+
+    def hydrate(self, bundle):
+        bundle = super(NFSResourceMixin, self).hydrate(bundle)
+        if 'nfs_srv_bindip' not in bundle.data and bundle.obj.id:
+            bundle.data['nfs_srv_bindip'] = (
+                bundle.obj.nfs_srv_bindip
+                if bundle.obj.nfs_srv_bindip
+                else None
+            )
         return bundle
 
 

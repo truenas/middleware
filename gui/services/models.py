@@ -340,10 +340,6 @@ class NFS(Model):
         verbose_name = _("NFS")
         verbose_name_plural = _("NFS")
 
-    class FreeAdmin:
-        deletable = False
-        icon_model = u"NFSIcon"
-
 
 class iSCSITargetGlobalConfiguration(Model):
     iscsi_basename = models.CharField(
