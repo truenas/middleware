@@ -971,7 +971,7 @@ def show_ip():
                         url = 'http://%s' % o
                     else:
                         url = 'http://%s:%s' % (o, port)
-                    r = requests.head(url, timeout=1)
+                    r = requests.head(url, timeout=3)
                     assert r.status_code in (200, 302, 301)
                     urls.append(url)
                     continue
@@ -983,7 +983,7 @@ def show_ip():
                         url = 'https://%s' % o
                     else:
                         url = 'https://%s:%s' % (o, port)
-                    r = requests.head(url, timeout=1, verify=False)
+                    r = requests.head(url, timeout=3, verify=False)
                     assert r.status_code in (200, 302)
                     urls.append(url)
                     continue
