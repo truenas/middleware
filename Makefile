@@ -45,6 +45,10 @@ cdrom:
 force: git-verify
 	${ENV_SETUP} build/do_build.sh -fu
 
+truenas: git-verify
+	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
+	env NANO_LABEL=TrueNAS make
+
 # Build truenas using all sources 
 truenas-all-direct:
 	${ENV_SETUP} TESTING_TRUENAS=1 NAS_PORTS_DIRECT=1 $(MAKE) all
@@ -65,7 +69,7 @@ git-verify:
 		echo "internal developer.  You only need to do this once."; \
 		exit 1; \
 	fi
-	@echo "NOTICE: You are building from the `cat ${GIT_REPO_SETTING}` git repo."
+	@echo "NOTICE: You are building from the ${GIT_LOCATION} git repo."
 
 git-internal:
 	@echo "INTERNAL" > ${GIT_REPO_SETTING}
