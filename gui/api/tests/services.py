@@ -122,7 +122,8 @@ class AFPResourceTest(APITestCase):
             u'afp_srv_connections_limit': 50,
             u'afp_srv_guest': False,
             u'afp_srv_guest_user': u'nobody',
-            u'afp_srv_name': u''
+            u'afp_srv_homedir': None,
+            u'afp_srv_homedir_enable': False,
         })
 
     def test_Update(self):
@@ -131,13 +132,13 @@ class AFPResourceTest(APITestCase):
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
             data={
-                'afp_srv_name': 'freenas',
+                'afp_srv_guest': True,
             }
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
-        self.assertEqual(data['afp_srv_name'], 'freenas')
+        self.assertEqual(data['afp_srv_guest'], True)
 
     def test_Delete(self):
         resp = self.api_client.delete(
