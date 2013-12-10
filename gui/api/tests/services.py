@@ -356,6 +356,20 @@ class FTPResourceTest(APITestCase):
             u'ftp_ssltls_certfile': u'',
             u'ftp_timeout': 120,
             u'ftp_tls': False,
+            u'ftp_tls_opt_allow_client_renegotiations': False,
+            u'ftp_tls_opt_allow_dot_login': False,
+            u'ftp_tls_opt_allow_per_user': False,
+            u'ftp_tls_opt_common_name_required': False,
+            u'ftp_tls_opt_dns_name_required': False,
+            u'ftp_tls_opt_enable_diags': False,
+            u'ftp_tls_opt_export_cert_data': False,
+            u'ftp_tls_opt_ip_address_required': False,
+            u'ftp_tls_opt_no_cert_request': False,
+            u'ftp_tls_opt_no_empty_fragments': False,
+            u'ftp_tls_opt_no_session_reuse_required': False,
+            u'ftp_tls_opt_stdenvvars': False,
+            u'ftp_tls_opt_use_implicit_ssl': False,
+            u'ftp_tls_policy': u'on'
         })
 
     def test_Update(self):
