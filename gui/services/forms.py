@@ -1424,6 +1424,21 @@ class iSCSITargetPortalIPForm(ModelForm):
             ) or (self.parent and not self.parent.instance.id):
                 self.fields['iscsi_target_portalip_ip'].initial = '0.0.0.0'
 
+    def clean(self):
+        ip = self.cleaned_data.get('iscsi_target_portalip_ip')
+        port = self.cleaned_data.get('iscsi_target_portalip_port')
+        qs = models.iSCSITargetPortalIP.objects.filter(
+            iscsi_target_portalip_ip=ip,
+            iscsi_target_portalip_port=port,
+        )
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            self._errors['__all__'] = self.error_class([
+                _('This IP and port are already in use.'),
+            ])
+        return self.cleaned_data
+
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
 
