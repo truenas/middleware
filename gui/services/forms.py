@@ -1419,9 +1419,9 @@ class iSCSITargetPortalIPForm(ModelForm):
         self.fields['iscsi_target_portalip_ip'].choices = ips
         if not self.instance.id and not self.data:
             if not(
-                self._parent.instance.id and
-                self._parent.instance.ips.all().count() > 0
-            ) or not self._parent.instance.id:
+                self.parent and self.parent.instance.id and
+                self.parent.instance.ips.all().count() > 0
+            ) or (self.parent and not self.parent.instance.id):
                 self.fields['iscsi_target_portalip_ip'].initial = '0.0.0.0'
 
 

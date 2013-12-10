@@ -54,7 +54,7 @@ class AdvMixin(object):
     def __init__(self, *args, **kwargs):
         if not hasattr(self, 'advanced_fields'):
             self.advanced_fields = []
-        self._parent = kwargs.pop('parent', None)
+        self.parent = kwargs.pop('parent', None)
         super(AdvMixin, self).__init__(*args, **kwargs)
 
     def isAdvanced(self):

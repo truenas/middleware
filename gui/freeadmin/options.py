@@ -40,6 +40,7 @@ from django.template.loader import get_template
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
+from dojango import forms
 from dojango.forms.models import BaseInlineFormSet, inlineformset_factory
 from freenasUI.api import v1_api
 from freenasUI.freeadmin.apppool import appPool
@@ -327,7 +328,7 @@ class BaseFreeAdmin(object):
 
             for name, fs in formsets.items():
                 for frm in fs.forms:
-                    frm.parent = mf
+                    valid &= frm.is_valid()
                 valid &= fs.is_valid()
 
             valid &= mf.is_valid(formsets=formsets)
@@ -493,7 +494,7 @@ class BaseFreeAdmin(object):
 
             for name, fs in formsets.items():
                 for frm in fs.forms:
-                    frm.parent = mf
+                    valid &= frm.is_valid()
                 valid &= fs.is_valid()
 
             valid &= mf.is_valid(formsets=formsets)
@@ -734,6 +735,7 @@ class BaseFreeAdmin(object):
                 m,
                 inline._meta.model,
                 form=inline,
+                formset=FreeBaseInlineFormSet,
                 extra=1)
             fsins = fset(prefix=prefix)
 
