@@ -47,7 +47,7 @@ class ActiveDirectoryResourceTest(APITestCase):
             u'ad_gcname': u'',
             u'ad_kpwdname': u'',
             u'ad_krbname': u'',
-            u'ad_netbiosname': u'',
+            u'ad_netbiosname': u'NAS',
             u'ad_timeout': 10,
             u'ad_unix_extensions': False,
             u'ad_use_default_domain': True,
@@ -626,7 +626,7 @@ class NT4ResourceTest(APITestCase):
             u'nt4_adminname': u'',
             u'nt4_adminpw': u'',
             u'nt4_dcname': u'',
-            u'nt4_netbiosname': u'',
+            u'nt4_netbiosname': u'NAS',
             u'nt4_workgroup': u''
         })
 
