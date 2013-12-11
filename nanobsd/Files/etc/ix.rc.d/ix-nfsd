@@ -44,6 +44,7 @@ setgroup()
 #
 generate_exports()
 {
+	rm /etc/exports
 	local IFS="|"
 	local f="id nfs_network nfs_hosts nfs_alldirs nfs_ro nfs_quiet nfs_maproot_user nfs_maproot_group nfs_mapall_user nfs_mapall_group"
 	eval local $f
@@ -97,7 +98,7 @@ generate_exports()
 		elif [ -z "${nfs_network}" ]; then
 			echo "${line}"
 		fi
-	done > /etc/exports
+	done >> /etc/exports
 	service mountd quietreload
 }
 
