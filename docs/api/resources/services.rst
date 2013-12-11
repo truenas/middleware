@@ -247,7 +247,8 @@ List resource
                 "afp_srv_guest": false,
                 "id": 1,
                 "afp_srv_connections_limit": 50,
-                "afp_srv_name": "freenas"
+                "afp_srv_homedir": null,
+                "afp_srv_homedir_enable": false
         }
 
    :resheader Content-Type: content type of the response
@@ -285,13 +286,15 @@ Update resource
                 "afp_srv_guest": true,
                 "id": 1,
                 "afp_srv_connections_limit": 50,
-                "afp_srv_name": "freenas"
+                "afp_srv_homedir": null,
+                "afp_srv_homedir_enable": false
         }
 
-   :json string afp_srv_name: name of the server
    :json string afp_srv_guest_user: guest account
    :json boolean afp_srv_guest: allow guest access
    :json integer afp_srv_connections_limit: maximum number of connections permitted
+   :json string afp_srv_homedir: path to home directory
+   :json boolean afp_srv_homedir_enable: enable to home directory feature
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
