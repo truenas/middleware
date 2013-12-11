@@ -97,7 +97,7 @@ generate_exports()
 		elif [ -z "${nfs_network}" ]; then
 			echo "${line}"
 		fi
-	done >> /etc/exports
+	done > /etc/exports
 	service mountd quietreload
 }
 
