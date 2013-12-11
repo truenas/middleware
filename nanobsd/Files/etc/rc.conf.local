@@ -74,13 +74,22 @@ ftp_tls_enabled()
 
 _interface_config()
 {
+	local saved_ifs="${IFS}"
 	local IFS=\|
-	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
+	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options 
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
 	local vlan_vint vlan_pint vlan_tag
 
 	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` -eq 0 ]; then
-		echo "ifconfig_DEFAULT=\"DHCP\""
+		IFS="${saved_ifs}"
+		for interface in $(ifconfig -l)
+		do
+			if echo "${interface}"|egrep -q '^(bridge|epair|ipfw|lo)[0-9]+'
+			then
+				continue
+			fi
+			echo "ifconfig_${interface}=\"DHCP\""
+		done
 	fi
 
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.

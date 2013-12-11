@@ -139,7 +139,7 @@ List resource
                 "ad_adminpw": "",
                 "ad_verbose_logging": false,
                 "ad_allow_trusted_doms": false,
-                "ad_netbiosname": ""
+                "ad_netbiosname": "NAS"
         }
 
    :resheader Content-Type: content type of the response
@@ -247,7 +247,8 @@ List resource
                 "afp_srv_guest": false,
                 "id": 1,
                 "afp_srv_connections_limit": 50,
-                "afp_srv_name": "freenas"
+                "afp_srv_homedir": null,
+                "afp_srv_homedir_enable": false
         }
 
    :resheader Content-Type: content type of the response
@@ -285,13 +286,15 @@ Update resource
                 "afp_srv_guest": true,
                 "id": 1,
                 "afp_srv_connections_limit": 50,
-                "afp_srv_name": "freenas"
+                "afp_srv_homedir": null,
+                "afp_srv_homedir_enable": false
         }
 
-   :json string afp_srv_name: name of the server
    :json string afp_srv_guest_user: guest account
    :json boolean afp_srv_guest: allow guest access
    :json integer afp_srv_connections_limit: maximum number of connections permitted
+   :json string afp_srv_homedir: path to home directory
+   :json boolean afp_srv_homedir_enable: enable to home directory feature
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
@@ -587,6 +590,20 @@ List resource
                 "ftp_anonuserdlbw": 0,
                 "ftp_clients": 5,
                 "ftp_tls": false,
+                "ftp_tls_opt_allow_client_renegotiations": false,
+                "ftp_tls_opt_allow_dot_login": false,
+                "ftp_tls_opt_allow_per_user": false,
+                "ftp_tls_opt_common_name_required": false,
+                "ftp_tls_opt_dns_name_required": false,
+                "ftp_tls_opt_enable_diags": false,
+                "ftp_tls_opt_export_cert_data": false,
+                "ftp_tls_opt_ip_address_required": false,
+                "ftp_tls_opt_no_cert_request": false,
+                "ftp_tls_opt_no_empty_fragments": false,
+                "ftp_tls_opt_no_session_reuse_required": false,
+                "ftp_tls_opt_stdenvvars": false,
+                "ftp_tls_opt_use_implicit_ssl": false,
+                "ftp_tls_policy": "on",
                 "ftp_fxp": false,
                 "ftp_filemask": "077",
                 "ftp_localuserdlbw": 0,
@@ -648,6 +665,20 @@ Update resource
                 "ftp_anonuserdlbw": 0,
                 "ftp_clients": 5,
                 "ftp_tls": false,
+                "ftp_tls_opt_allow_client_renegotiations": false,
+                "ftp_tls_opt_allow_dot_login": false,
+                "ftp_tls_opt_allow_per_user": false,
+                "ftp_tls_opt_common_name_required": false,
+                "ftp_tls_opt_dns_name_required": false,
+                "ftp_tls_opt_enable_diags": false,
+                "ftp_tls_opt_export_cert_data": false,
+                "ftp_tls_opt_ip_address_required": false,
+                "ftp_tls_opt_no_cert_request": false,
+                "ftp_tls_opt_no_empty_fragments": false,
+                "ftp_tls_opt_no_session_reuse_required": false,
+                "ftp_tls_opt_stdenvvars": false,
+                "ftp_tls_opt_use_implicit_ssl": false,
+                "ftp_tls_policy": "on",
                 "ftp_fxp": false,
                 "ftp_filemask": "077",
                 "ftp_localuserdlbw": 0,
@@ -681,6 +712,19 @@ Update resource
    :json integer ftp_anonuserbw: anonymous user upload bandwidth in KB/s
    :json integer ftp_anonuserdlbw: anonymous user download bandwidth in KB/s
    :json boolean ftp_tls: enable TLS
+   :json boolean ftp_tls_opt_allow_client_renegotiations: allow client renegotiations
+   :json boolean ftp_tls_opt_allow_dot_login: allow dot login
+   :json boolean ftp_tls_opt_allow_per_user: allow per user options
+   :json boolean ftp_tls_opt_common_name_required: certificate common name is required
+   :json boolean ftp_tls_opt_dns_name_required: dns name certificate required
+   :json boolean ftp_tls_opt_enable_diags: enable diags
+   :json boolean ftp_tls_opt_export_cert_data: export certificate data
+   :json boolean ftp_tls_opt_ip_address_required: ip address required
+   :json boolean ftp_tls_opt_no_cert_request: no certificate request
+   :json boolean ftp_tls_opt_no_empty_fragments: no empty fragments
+   :json boolean ftp_tls_opt_no_session_reuse_required: no session reuse requird
+   :json boolean ftp_tls_opt_stdenvvars: standard environment variables
+   :json boolean ftp_tls_opt_use_implicit_ssl: use implicit SSL
    :json string ftp_ssltls_certfile: certificate and private key
    :json string ftp_options: these parameters are added to proftpd.conf
    :reqheader Content-Type: the request content type
@@ -994,7 +1038,7 @@ List resource
                 "nt4_adminname": "",
                 "nt4_dcname": "",
                 "nt4_workgroup": "",
-                "nt4_netbiosname": "",
+                "nt4_netbiosname": "NAS",
                 "nt4_adminpw": "",
                 "id": 1
         }

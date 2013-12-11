@@ -38,7 +38,7 @@ class DiskFAdmin(BaseFreeAdmin):
                 var mybtn = this;
                 for (var i in grid.selection) {
                     var data = grid.row(i).data;
-                    editObject('Wipe', data._wipe_url, [mybtn,]);
+                    editScaryObject('Wipe', data._wipe_url, [mybtn,]);
                 }
             }""",
         }

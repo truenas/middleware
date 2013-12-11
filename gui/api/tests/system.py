@@ -754,6 +754,7 @@ class AdvancedResourceTest(APITestCase):
             u'adv_serialspeed': u'9600',
             u'adv_swapondrive': 2,
             u'adv_traceback': True,
+            u'adv_uploadcrash': True,
         })
 
     def test_Update(self):

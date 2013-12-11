@@ -35,6 +35,7 @@ List resource
         {
                 "adv_serialconsole": false,
                 "adv_traceback": true,
+                "adv_uploadcrash": true,
                 "adv_consolescreensaver": false,
                 "adv_debugkernel": false,
                 "adv_advancedmode": false,
@@ -83,6 +84,7 @@ Update resource
         {
                 "adv_serialconsole": false,
                 "adv_traceback": true,
+                "adv_uploadcrash": true,
                 "adv_consolescreensaver": false,
                 "adv_debugkernel": false,
                 "adv_advancedmode": false,
@@ -106,6 +108,7 @@ Update resource
    :json string adv_swapondrive: Swap size on each drive in GiB, affects new disks only
    :json boolean adv_consolemsg: Show console messages in the footer
    :json boolean adv_traceback: Show tracebacks in case of fatal errors
+   :json boolean adv_uploadcrash: Upload kernel crashes to analysis
    :json boolean adv_advancedmode: Show advanced fields by default
    :json boolean adv_autotune: Enable autotune
    :json boolean adv_debugkernel: Enable debug kernel
