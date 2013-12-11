@@ -639,7 +639,7 @@ class notifier:
     def _started_nt4(self):
         res = False
         if self._get_stg_directoryservice() == 'nt4':
-            res = self._system_nolog("/etc/rc.d/ix-nt4 status")
+            res = self._system_nolog("service ix-nt4 status")
         return (True if res == 0 else False)
 
     def _start_nt4(self):
