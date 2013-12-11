@@ -139,7 +139,7 @@ List resource
                 "ad_adminpw": "",
                 "ad_verbose_logging": false,
                 "ad_allow_trusted_doms": false,
-                "ad_netbiosname": ""
+                "ad_netbiosname": "NAS"
         }
 
    :resheader Content-Type: content type of the response
@@ -994,7 +994,7 @@ List resource
                 "nt4_adminname": "",
                 "nt4_dcname": "",
                 "nt4_workgroup": "",
-                "nt4_netbiosname": "",
+                "nt4_netbiosname": "NAS",
                 "nt4_adminpw": "",
                 "id": 1
         }
