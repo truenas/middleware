@@ -23,6 +23,12 @@ removed. The first time the FreeNAS graphical interface is accessed, a
 pop-up menu will prompt for the root password. Subsequent logins to the
 graphical interface will require this password.
 
+* FreeNAS no longer sends daily emails when email reporting is enabled
+unless actual errors or issues of concern have arisen. Simply saying
+"all is well!" each and every day was causing email fatigue and obscuring
+actual errors.  Those wishing for daily "all is well!" reports can simply
+add a cron job that does this.
+
 * The plugin system now offers in-place updates for plugins, also
 segregating installed plugins from available plugins to make the UI
 less cluttered.
