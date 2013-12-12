@@ -423,6 +423,8 @@ class VolumeManagerForm(VolumeMixin, Form):
             grouped = OrderedDict()
             #FIXME: Make log as log mirror
             for i, form in enumerate(formset):
+                if not form.cleaned_data.get('vdevtype'):
+                    continue
                 grouped[i] = {
                     'type': form.cleaned_data.get("vdevtype"),
                     'disks': form.cleaned_data.get("disks"),
