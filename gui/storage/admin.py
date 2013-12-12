@@ -132,7 +132,8 @@ class VolumeFAdmin(BaseFreeAdmin):
 
     def _action_builder(
         self, name, label=None, url=None, func="editObject", icon=None,
-        show=None, fstype="ZFS", decrypted=True, has_enc=False, enc_level=None
+        show=None, fstype="ZFS", decrypted=True, has_enc=False, enc_level=None,
+        hide_unknown=True,
     ):
 
         if url is None:
@@ -180,10 +181,15 @@ class VolumeFAdmin(BaseFreeAdmin):
         else:
             hide_hasenc = "false"
 
+        if hide_unknown is True:
+            hide_unknown = "row.data.status == 'UNKNOWN'"
+        else:
+            hide_unknown = "false"
+
         on_select_after = """function(evt, actionName, action) {
   for(var i=0;i < evt.rows.length;i++) {
     var row = evt.rows[i];
-    if((%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s)) {
+    if((%(hide_unknown)s) || (%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s)) {
       query(".grid" + actionName).forEach(function(item, idx) {
         domStyle.set(item, "display", "none");
       });
@@ -195,6 +201,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             'hide_fs': hide_fs,
             'hide_enc': hide_enc,
             'hide_hasenc': hide_hasenc,
+            'hide_unknown': hide_unknown,
             }
 
         on_click = """function() {
@@ -234,6 +241,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             icon="remove_volume",
             fstype="ALL",
             decrypted=None,
+            hide_unknown=False,
             )
         actions['Scrub'] = self._action_builder(
             'scrub', label=_('Scrub Volume')
