@@ -191,11 +191,12 @@ class bsdUsers(Model):
         # Only allow uid 0 for now
         if self.bsdusr_uid != 0:
             return False
-        cryptedpasswd = pwd.getpwnam(self.get_username())[1]
-        if cryptedpasswd:
-            if cryptedpasswd == 'x' or cryptedpasswd == '*':
+        if self.bsdusr_unixhash:
+            if self.bsdusr_unixhash == 'x' or self.bsdusr_unixhash == '*':
                 return False
-            return crypt.crypt(raw_password, cryptedpasswd) == cryptedpasswd
+            return crypt.crypt(
+                raw_password, str(self.bsdusr_unixhash)
+            ) == str(self.bsdusr_unixhash)
 
     def delete(self, using=None, reload=True):
         if self.bsdusr_builtin is True:
