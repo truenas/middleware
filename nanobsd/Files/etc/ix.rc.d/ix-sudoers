@@ -14,7 +14,7 @@ sudoers_start()
 {
 	local IFS="|"
 
-	cp /conf/base/etc/local/sudoers "${SUDOERS_FILE}"
+	echo > "${SUDOERS_FILE}"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
 	SELECT
 		bsdusr_username
@@ -38,6 +38,8 @@ sudoers_start()
 	do
 		echo "%${group} ALL=(ALL) ALL" >> "${SUDOERS_FILE}"
 	done
+
+	cat /conf/base/etc/local/sudoers >> "${SUDOERS_FILE}"
 }
 
 name="ix-sudoers"
