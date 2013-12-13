@@ -3545,11 +3545,11 @@ class notifier:
         self._system("ifconfig %s mtu %s" % (iface, mtu))
 
     def guess_default_interface(self):
-        p1 = self._pipeopen("netstat -nr|egrep '^default'|awk '{ print $6}'")
+        p1 = self._pipeopen("route get default | grep 'interface:' | awk '{ print $2 }'")
         iface = p1.communicate()
         if p1.returncode != 0:
             iface = None
-        try:  
+        try:
             iface = iface[0].strip()
         except:
             pass
