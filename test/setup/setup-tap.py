@@ -28,6 +28,7 @@ def main(argv):
     try:
         opts, args = getopt.getopt(sys.argv[1:], "f:")
     except getopt.GetoptError as err:
+        usage(argv)
         sys.exit(2)
 
     global test_config
