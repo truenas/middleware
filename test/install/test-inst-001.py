@@ -76,6 +76,7 @@ def runTest():
     print
     ret = os.system(cmd)
     cmd = "bhyveload -m 2G -d %s %s" % (test_config['iso'], test_config['vm_name'])
+    print cmd
     child1 = pexpect.spawn(cmd)
     child1.logfile = sys.stdout
     child1.expect(pexpect.EOF)

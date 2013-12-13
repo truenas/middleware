@@ -60,14 +60,14 @@ def runTest():
     global sentinel_file
 
     cmd = "bhyvectl --destroy --vm=%s" % test_config['vm_name']
-    print
+    print cmd
     ret = os.system(cmd)
 
     cmd = "bhyveload -m 2G -d %s %s" % (test_config['disk_img'], test_config['vm_name'])
-    print
+    print cmd
     child5 = pexpect.spawn(cmd)
     child5.logfile = sys.stdout
-    child5.expect (['Booting...'])
+    #child5.expect (['Booting...'], 250000)
     child5.expect(pexpect.EOF)
     extra_disks = ""
     i = 1
@@ -77,6 +77,7 @@ def runTest():
             i=i+1
 
     cmd = "bhyve -c 2 -m 2G -AI -H -P -g 0 -s 0:0,hostbridge -s 1:0,lpc -s 2:0,virtio-net,%s -s 31:0,virtio-blk,%s %s -l com1,stdio %s" % (test_config['tap'], test_config['disk_img'], extra_disks, test_config['vm_name'])
+    print cmd
     child6 = pexpect.spawn(cmd)
     child6.logfile = sys.stdout
     c = child6.expect("bound to", 25000000)
