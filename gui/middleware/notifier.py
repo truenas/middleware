@@ -1749,6 +1749,17 @@ class notifier:
                     ed = EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume, passphrase=passphrase)
 
+        # Temporary disable larger ashift before we issue zpool replace.
+        # This would allow disks be replaced if pool is created as
+        # ashift=9.
+        larger_ashift = 1
+        try:
+            larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
+        except AssertionError:
+            pass
+
+        self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
+
         if from_disk == to_disk:
             self._system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
             ret = self._system_nolog('/sbin/zpool replace %s %s' % (volume.vol_name, to_label))
@@ -1770,6 +1781,10 @@ class notifier:
                     self._system('/sbin/geli detach %s' % (devname, ))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
             #TODO: geli detach -l
+
+        # Restore previous larger ashift state.
+        if larger_ashift == 1:
+            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=1")
 
         if to_swap:
             self._system('/sbin/geli onetime /dev/%s' % (to_swap))

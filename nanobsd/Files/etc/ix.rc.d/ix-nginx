@@ -232,6 +232,7 @@ __EOF__
 		cat << __EOF__
     server {
 	listen ${addr}:80;
+	listen [${addr6}]:80;
 	server_name localhost;
 	rewrite ^ https://\$server_addr:${httpsport}\$request_uri? permanent;
     }

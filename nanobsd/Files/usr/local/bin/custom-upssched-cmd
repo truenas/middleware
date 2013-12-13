@@ -12,6 +12,8 @@
 
 . /etc/rc.freenas
 
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
 IFS=\|
 
 f="ups_emailnotify ups_toemail ups_subject ups_shutdown"
