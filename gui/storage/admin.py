@@ -380,10 +380,12 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
 
     def get_datagrid_context(self, request):
         volume = models.Volume.objects.get(id=request.GET.get('id'))
-        pool = notifier().zpool_parse(volume.vol_name)
-        return {
-            'pool': pool,
-        }
+        if volume.vol_fstype == 'ZFS':
+            pool = notifier().zpool_parse(volume.vol_name)
+            return {
+                'pool': pool,
+            }
+        return {}
 
     def get_datagrid_columns(self):
 

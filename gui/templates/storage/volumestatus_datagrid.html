@@ -1,5 +1,6 @@
 {% extends "freeadmin/generic_model_datagrid.html" %}
 {% block actions_static_pane %}
+{% if pool %}
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'top', splitter: false" style="background-color: white;height: 60px; margin: 7px;" doLayout="false">
     <strong>{% trans "Scrub" %}</strong><br />
     <p style="padding: 3px;">{% trans "Status" %}: {{ pool.scrub.status_verbose }}</p>
@@ -16,4 +17,5 @@
     </p>
     {% endif %}
   </div>
+{% endif %}
 {% endblock %}
