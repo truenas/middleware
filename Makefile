@@ -47,8 +47,8 @@ force: git-verify
 truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
 	env NANO_LABEL=TrueNAS make
-	mkdir -f release_stage
-	mv os-base/amd64/${NANO_LABEL}-${VERSION}-* release_stage
+	mkdir -p release_stage
+	mv os-base/amd64/TrueNAS-${VERSION}-* release_stage
 
 # Build truenas using all sources 
 truenas-all-direct:
