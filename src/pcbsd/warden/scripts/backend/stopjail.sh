@@ -130,8 +130,9 @@ if [ -e "${JMETADIR}/jail-linux" ] ; then LINUXJAIL="YES" ; fi
 # Check for user-supplied mounts
 if [ -e "${JMETADIR}/fstab" ] ; then
    warden_print "Unmounting user-supplied file-systems"
-   cp ${JMETADIR}/fstab /tmp/.wardenfstab.$$
-   sed -i '' "s|%%JAILDIR%%|${JAILDIR}|g" /tmp/.wardenfstab.$$
+   cat ${JMETADIR}/fstab \
+     | sed "s|%%JAILDIR%%|${JAILDIR}|g" \
+     | sort -r -k 2 > /tmp/.wardenfstab.$$
    umount -a -F /tmp/.wardenfstab.$$
    rm /tmp/.wardenfstab.$$
 fi

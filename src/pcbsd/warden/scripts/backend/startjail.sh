@@ -543,8 +543,9 @@ fi
 # Check for user-supplied mounts
 if [ -e "${JMETADIR}/fstab" ] ; then
    warden_print "Mounting user-supplied file-systems"
-   cp ${JMETADIR}/fstab /tmp/.wardenfstab.$$
-   sed -i '' "s|%%JAILDIR%%|${JAILDIR}|g" /tmp/.wardenfstab.$$
+   cat ${JMETADIR}/fstab \
+     | sed "s|%%JAILDIR%%|${JAILDIR}|g"
+     | sort -k 2 > /tmp/.wardenfstab.$$
    mount -a -F /tmp/.wardenfstab.$$
    rm /tmp/.wardenfstab.$$
 fi
