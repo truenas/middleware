@@ -1874,6 +1874,18 @@ class ScrubForm(ModelForm):
             1, 2, 3, 4, 5, 6, 7
         ])
 
+    def clean_scrub_volume(self):
+        vol = self.cleaned_data.get('scrub_volume')
+        if vol:
+            qs = models.Scrub.objects.filter(scrub_volume__id=vol.id)
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.exists():
+                raise forms.ValidationError(
+                    _('A scrub with this volume already exists.')
+                )
+        return vol
+
     def clean_scrub_month(self):
         m = self.data.getlist("scrub_month")
         if len(m) == 12:
