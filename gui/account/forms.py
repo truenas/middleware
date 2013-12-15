@@ -85,13 +85,12 @@ class NewPasswordForm(Form):
                 )
                 user.bsdusr_unixhash = unixhash
                 user.bsdusr_smbhash = smbhash
+                user.save()
                 self.user_cache = authenticate(
                     username=user.bsdusr_username,
                     password=self.cleaned_data['password'].encode('utf-8'),
                 )
-                user.save()
                 _notifier.reload("user")
-        print "wtf"
         return valid
 
 
