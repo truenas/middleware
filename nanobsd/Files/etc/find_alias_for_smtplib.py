@@ -1,4 +1,4 @@
-#!/usr/bin/local/bin/python2
+#!/usr/local/bin/python2
 
 import argparse
 import email
