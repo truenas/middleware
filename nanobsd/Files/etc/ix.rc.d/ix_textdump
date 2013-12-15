@@ -18,6 +18,18 @@ stop_cmd="ix_textdump_stop"
 ix_textdump_start()
 {
 
+	if ! [ -d /data/crash ]; then
+		if ! fsck -p /data; then
+			echo "/data couldn't be preened clean; trying full fsck"
+			if ! fsck -y /data; then
+				echo "Cannot fsck -y /data either; your system is probably hosed :(."
+			fi
+		fi
+		if ! mount -w -onoatime /data; then
+                echo "Unable to mount /data to create crashdump directory"
+        	mkdir -p "/data/crash"
+        fi
+
         if [ -z "${dumpdev}" ] ; then
                 debug "dumpdev not set exiting"
                 return 1
@@ -28,7 +40,6 @@ ix_textdump_start()
 	ddb script "kdb.enter.default=watchdog 38; textdump set; capture on; show allpcpu; bt; ps; alltrace; textdump dump; reset"
 	sysctl debug.ddb.textdump.pending=1
         sysctl debug.debugger_on_panic=1
-        mkdir -p "/data/crash"
 }
 
 ix_textdump_stop()
