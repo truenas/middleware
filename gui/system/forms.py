@@ -641,7 +641,6 @@ class SMARTTestForm(ModelForm):
     def __init__(self, *args, **kwargs):
         if 'instance' in kwargs:
             ins = kwargs.get('instance')
-            ins.smarttest_month = ins.smarttest_month.replace("10", "a").replace("11", "b").replace("12", "c")
             if ins.smarttest_daymonth == "..":
                 ins.smarttest_daymonth = '*/1'
             elif ',' in ins.smarttest_daymonth:
@@ -691,7 +690,6 @@ class SMARTTestForm(ModelForm):
     def clean_smarttest_month(self):
         m = eval(self.cleaned_data.get("smarttest_month"))
         m = ",".join(m)
-        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
         return m
 
     def clean_smarttest_dayweek(self):
