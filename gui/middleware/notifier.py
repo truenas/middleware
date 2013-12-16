@@ -2365,6 +2365,7 @@ class notifier:
             if proc.returncode != 0:
                 raise MiddlewareError("Could not create temporary filesystem: %s" % err)
 
+            self._system("/bin/rm -rf /var/tmp/firmware")
             self._system("/bin/mkdir -p /var/tmp/firmware")
             proc = self._pipeopen("mount /dev/ufs/%s /var/tmp/firmware" % (label, ))
             err = proc.communicate()[1]
