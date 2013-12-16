@@ -26,9 +26,8 @@ ix_textdump_start()
 			fi
 		fi
 		if ! mount -w -onoatime /data; then
-                	echo "Unable to mount /data to create crashdump directory"
-        		mkdir -p "/data/crash"
-		fi
+                echo "Unable to mount /data to create crashdump directory"
+        	mkdir -p "/data/crash"
         fi
 
         if [ -z "${dumpdev}" ] ; then
