@@ -854,7 +854,7 @@ class TaskResourceMixin(object):
         elif bundle.obj.task_repeat_unit == "weekly":
             wchoices = dict(choices.WEEKDAYS_CHOICES)
             labels = []
-            for w in eval(bundle.obj.task_byweekday):
+            for w in eval(bundle.obj.task_byweekday + ','):
                 labels.append(unicode(wchoices[str(w)]))
             days = ', '.join(labels)
             repeat = _('on every %(days)s') % {
