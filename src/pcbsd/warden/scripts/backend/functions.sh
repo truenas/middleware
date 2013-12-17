@@ -326,7 +326,7 @@ copypbiscripts() {
   cp /usr/local/etc/rc.d/pbid ${1}/usr/local/etc/rc.d/
 
   # Copy any PBI manpages
-  for man in `find /usr/local/man | grep pbi`
+  for man in `find /usr/local/man 2>/dev/null| grep pbi`
   do
     if [ ! -d "${1}`dirname $man`" ] ; then
       mkdir -p "${1}`dirname $man`"
@@ -1597,38 +1597,36 @@ list_templates()
      warden_print "------------------------------"
    fi
 
-   isDirZFS "${JDIR}"
-   if [ $? -eq 0 ] ; then
-     for i in `ls -d ${JDIR}/.warden-template* 2>/dev/null`
-     do
-        if [ ! -e "$i/bin/sh" ] ; then continue ; fi
-        NICK=`echo "$i" | sed "s|${JDIR}/.warden-template-||g"`
+   for i in `ls -d ${JDIR}/.warden-template* 2>/dev/null`
+   do
+      if [ ! -e "$i/bin/sh" ] ; then continue ; fi
+      NICK=`echo "$i" | sed "s|${JDIR}/.warden-template-||g"`
 
-        file "$i/sbin/sysctl" 2>/dev/null | grep -q "64-bit"
-        if [ $? -eq 0 ] ; then
-           ARCH="amd64"
-        else
-           ARCH="i386"
-        fi
-        VER=`file "$i/sbin/sysctl" | cut -d ',' -f 5 | awk '{print $3}'`
-        OS=`file "$i/sbin/sysctl" | cut -d ',' -f 5 | awk '{print $2}'`
-        if [ -e "$i/etc/rc.delay" ] ; then
-           TYPE="TrueOS"
-        elif echo "${OS}"|egrep -q Linux ; then
-           TYPE="Linux"
-        else
-           TYPE="FreeBSD"
-        fi
+      file "$i/sbin/sysctl" 2>/dev/null | grep -q "64-bit"
+      if [ $? -eq 0 ] ; then
+         ARCH="amd64"
+      else
+         ARCH="i386"
+      fi
+      VER=`file "$i/sbin/sysctl" | cut -d ',' -f 5 | awk '{print $3}'`
+      OS=`file "$i/sbin/sysctl" | cut -d ',' -f 5 | awk '{print $2}'`
+      if [ -e "$i/etc/rc.delay" ] ; then
+         TYPE="TrueOS"
+      elif echo "${OS}"|egrep -q Linux ; then
+         TYPE="Linux"
+      else
+         TYPE="FreeBSD"
+      fi
         
-        if [ "${verbose}" = "0" ] ; then
-          warden_print "${NICK} - $TYPE $VER ($ARCH)"
+      if [ "${verbose}" = "0" ] ; then
+        warden_print "${NICK} - $TYPE $VER ($ARCH)"
 
-        else
-          if [ "${verbose}" = "1" ] ; then
-            INSTANCES="$(get_template_instances "${NICK}")" 
+      else
+        if [ "${verbose}" = "1" ] ; then
+          INSTANCES="$(get_template_instances "${NICK}")" 
 
-            out="$(mktemp  /tmp/.wjvXXXXXX)"
-            cat<<__EOF__ >"${out}"
+          out="$(mktemp  /tmp/.wjvXXXXXX)"
+          cat<<__EOF__ >"${out}"
 
 nick: ${NICK}
 type: ${TYPE}
@@ -1637,15 +1635,11 @@ arch: ${ARCH}
 instances: ${INSTANCES}
 
 __EOF__
-            warden_cat "${out}"
-            rm -f "${out}"
-          fi
-       fi
-     done
-   else
-     # UFS, no details for U!
-     ls ${JDIR}/.warden-template*.tbz | sed "s|${JDIR}/.warden-template-||g" | sed "s|.tbz||g"
-   fi
+          warden_cat "${out}"
+          rm -f "${out}"
+        fi
+     fi
+   done
    exit 0
 }
 

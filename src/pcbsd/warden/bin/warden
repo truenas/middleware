@@ -1201,12 +1201,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
                           ;;
              --template) shift
                          if [ -z "$1" ] ; then warden_exit "No template string specified!"; fi
-                         isDirZFS "${JDIR}"
-                         if [ $? -eq 0 ] ; then
-                            TDIR="${JDIR}/.warden-template-$1"
-                         else
-                            TDIR="${JDIR}/.warden-template-$1.tbz"
-                         fi
+                         TDIR="${JDIR}/.warden-template-$1"
                          if [ ! -e "$TDIR" ] ; then
                             warden_exit"Invalid template specified: $1"
                          fi

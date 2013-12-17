@@ -166,12 +166,7 @@ create_template()
     trap INT QUIT ABRT KILL TERM EXIT
 
   else
-
-    if [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
-      TDIR="${JDIR}/.${TNICK}"
-    else
-      TDIR="${JDIR}/.templatedir"
-    fi
+    TDIR="${JDIR}/.warden-template-${TNICK}"
 
     clean_exit()
     {
@@ -190,7 +185,7 @@ create_template()
 
     if [ -n "$FBSDTAR" ] ; then
       # User-supplied tar file 
-      cp $FBSDTAR ${TDIR}
+      "${EXTRACT_TARBALL}" -u "${FBSDTAR}" -d "${TDIR}" -s "${EXTRACT_TARBALL_STATUSFILE}"
 
     elif [ "$oldFBSD" = "YES" ] ; then
       mkdir -p ${TDIR}

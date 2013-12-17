@@ -104,8 +104,6 @@ if [ -z "$TEMPLATE" -a -z "$ARCHIVEFILE" ] ; then
   isDirZFS "${JDIR}"
   if [ $? -eq 0 ] ; then
      TDIR="${JDIR}/.warden-template-$DEFTEMPLATE"
-  else
-     TDIR="${JDIR}/.warden-template-$DEFTEMPLATE.tbz"
   fi
 
   if [ ! -e "$TDIR" ] ; then
@@ -137,11 +135,6 @@ elif [ -z "$ARCHIVEFILE" ] ; then
   # Set WORLDCHROOT to the dir we will clone / file to extract
   WORLDCHROOT="${JDIR}/.warden-template-$TEMPLATE"
 
-  isDirZFS "${JDIR}"
-  if [ $? -ne 0 ] ; then
-    WORLDCHROOT="${WORLDCHROOT}.tbz"
-  fi
-
   JAILTYPE="${TEMPLATE}"
   ARCH="$(get_template_arch "${TEMPLATE}")"
   if [ "$(get_template_os "${TEMPLATE}")" = "Linux" ] ; then
@@ -153,11 +146,9 @@ elif [ -z "$ARCHIVEFILE" ] ; then
   export ARCH
 
 else
-
    # See if we are overriding the default archive file
    WORLDCHROOT="$ARCHIVEFILE"
 fi
-
 
 if [ "${IP4}" != "OFF" ] ; then
   get_ip_and_netmask "${IP4}"
@@ -270,7 +261,7 @@ if [ "$VANILLA" != "YES" -a "${PLUGINJAIL}" != "YES" ] ; then
   bootstrap_pkgng "${JAILDIR}"
 fi
 
-mkdir ${JMETADIR}
+mkdir -p "${JMETADIR}" >/dev/null 2>&1
 echo "${HOST}" > ${JMETADIR}/host
 if [ "${IP4}" != "OFF" ] ; then
    echo "${IP4}/${MASK4}" > ${JMETADIR}/ipv4
