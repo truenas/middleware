@@ -255,6 +255,7 @@ def get_system_memory(Kstat):
 
     return output
 
+
 def _system_memory(Kstat):
 
     arc = get_system_memory(Kstat)
@@ -676,7 +677,7 @@ def get_arc_efficiency(Kstat):
     }
     output["cache_misses_by_data_type"]["prefetch_metadata"] = {
         'per': fPerc(prefetch_metadata_misses, arc_misses),
-        'num':fHits(prefetch_metadata_misses),
+        'num': fHits(prefetch_metadata_misses),
     }
 
     return output
@@ -745,7 +746,6 @@ def _arc_efficiency(Kstat):
         arc['most_frequently_used_ghost']['num'],
         )
     )
-
 
     sys.stdout.write("\n\tCACHE HITS BY DATA TYPE:\n")
     sys.stdout.write("\t  Demand Data:\t\t\t%s\t%s\n" % (
@@ -829,14 +829,14 @@ def get_l2arc_summary(Kstat):
     l2_writes_sent = Kstat["kstat.zfs.misc.arcstats.l2_writes_sent"]
 
     l2_access_total = (l2_hits + l2_misses)
-    l2_health_count = (l2_writes_error + l2_cksum_bad + l2_io_error)
+    output['l2_health_count'] = (l2_writes_error + l2_cksum_bad + l2_io_error)
 
     output['l2_access_total'] = l2_access_total
     output['l2_size'] = l2_size
 
     if l2_size > 0 and l2_access_total > 0:
 
-        if l2_health_count > 0:
+        if output['l2_health_count'] > 0:
             output["health"] = "DEGRADED"
         else:
             output["health"] = "HEALTHY"
@@ -898,7 +898,7 @@ def get_l2arc_summary(Kstat):
                 'num': fHits(l2_writes_error),
             }
         else:
-            output['l2_arc_writes']['writes_sent']  = {
+            output['l2_arc_writes']['writes_sent'] = {
                 'per': fPerc(100),
                 'num': fHits(l2_writes_sent),
             }
@@ -915,7 +915,7 @@ def _l2arc_summary(Kstat):
 
     if arc['l2_size'] > 0 and arc['l2_access_total'] > 0:
         sys.stdout.write("L2 ARC Summary: ")
-        if l2_health_count > 0:
+        if arc['l2_health_count'] > 0:
             sys.stdout.write("(DEGRADED)\n")
         else:
             sys.stdout.write("(HEALTHY)\n")
@@ -1205,6 +1205,7 @@ def get_vdev_summary(Kstat):
 
     return output
 
+
 def _vdev_summary(Kstat):
     arc = get_vdev_summary(Kstat)
 
@@ -1228,25 +1229,7 @@ def _vdev_summary(Kstat):
 
 
 def get_systl_summary(Kstat):
-    output = dict_hash()
-    Tunable = [
-            "kern.maxusers",
-            "vm.kmem_size",
-            "vm.kmem_size_scale",
-            "vm.kmem_size_min",
-            "vm.kmem_size_max",
-            "vfs.zfs"
-        ]
-
-    Kstat_desc = self._get_Kstat(Tunable, True)
-    Kstat = get_Kstat(Tunable)
-
-    for key, value in Kstat.iteritems():
-        output['zfs_tunable_sysctl'][key] = {
-            'desc': Kstat_desc[key].capitalize(),
-            'num': value,
-            }
-
+    output = {}
     return output
 
 
