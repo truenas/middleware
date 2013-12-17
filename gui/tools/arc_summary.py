@@ -861,7 +861,7 @@ def get_l2arc_summary(Kstat):
 
         output["l2_arc_evicts"] = {}
         output["l2_arc_evicts"]['lock_retries'] = fHits(l2_evict_lock_retry)
-        output["l2_arc_evicts"]['upon_reading'] = fHits(l2_evict_reading)
+        output["l2_arc_evicts"]['reading'] = fHits(l2_evict_reading)
 
         output['l2_arc_breakdown'] = {}
         output['l2_arc_breakdown']['value'] = fHits(l2_access_total)
@@ -920,7 +920,7 @@ def _l2arc_summary(Kstat):
         else:
             sys.stdout.write("(HEALTHY)\n")
         sys.stdout.write("\tPassed Headroom:\t\t\t%s\n" % arc['passed_headroom'])
-        sys.stdout.write("\tTried Lock Failures:\t\t\t%s\n" % arc['tried_lock_failures'])
+        sys.stdout.write("\tTried Lock Failures:\t\t\t%s\n" % arc['tried_lock_failure'])
         sys.stdout.write("\tIO In Progress:\t\t\t\t%s\n" % arc['io_in_progress'])
         sys.stdout.write("\tLow Memory Aborts:\t\t\t%s\n" % arc['low_memory_aborts'])
         sys.stdout.write("\tFree on Write:\t\t\t\t%s\n" % arc['free_on_write'])
@@ -933,16 +933,16 @@ def _l2arc_summary(Kstat):
 
         sys.stdout.write("L2 ARC Size: (Adaptive)\t\t\t\t%s\n" % arc["l2_arc_size"]["adative"])
         sys.stdout.write("\tHeader Size:\t\t\t%s\t%s\n" % (
-            arc["l2_arc_size"]["header"]["pre"],
-            arc["l2_arc_size"]["header"]["num"],
+            arc["l2_arc_size"]["head_size"]["per"],
+            arc["l2_arc_size"]["head_size"]["num"],
             )
         )
         sys.stdout.write("\n")
 
-        if arc["l2_arc_evicts"]['lock_retries'] + arc["l2_arc_evicts"]["evict_reading"] > 0:
+        if arc["l2_arc_evicts"]['lock_retries'] + arc["l2_arc_evicts"]["reading"] > 0:
             sys.stdout.write("L2 ARC Evicts:\n")
             sys.stdout.write("\tLock Retries:\t\t\t\t%s\n" % arc["l2_arc_evicts"]['lock_retries'])
-            sys.stdout.write("\tUpon Reading:\t\t\t\t%s\n" % arc["l2_arc_evicts"]["evict_reading"])
+            sys.stdout.write("\tUpon Reading:\t\t\t\t%s\n" % arc["l2_arc_evicts"]["reading"])
             sys.stdout.write("\n")
 
         sys.stdout.write("L2 ARC Breakdown:\t\t\t\t%s\n" % arc['l2_arc_breakdown']['value'])
