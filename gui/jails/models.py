@@ -24,7 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import glob
 import logging
+import os
 import re
 
 from django.db import models
@@ -430,21 +432,46 @@ class JailTemplate(Model):
 
     @property
     def jt_instances(self):
+        template = self.jt_name
         instances = 0
 
-        w = Warden()
+        jc = JailsConfiguration.objects.all()[0]
+        if not jc:
+            return -1
 
-        template = None
-        template_list_args = {}
-        template_list_args['flags'] = WARDEN_TEMPLATE_FLAGS_LIST
-        templates = w.template(**template_list_args)
-        for t in templates:
-            if t['nick'] == self.jt_name:
-                template = t
-                break
+        tdir = os.path.realpath("%s/.warden-template-%s" % (jc.jc_path, template))
+        if not os.path.exists(tdir):
+            return -1
 
-        if template:
-            instances = t['instances']
+        p = pipeopen("/sbin/zfs list -H -o name %s" % tdir)
+        zfsout = p.communicate()
+        if p.returncode != 0:
+            return -1
+        if not zfsout:
+            return -1
+
+        template_dataset = zfsout[0].strip()
+        for metadir in glob.iglob("%s/.*.meta" % jc.jc_path):
+            metadir = metadir.split('/')[-1]
+            jail = re.sub('\.meta|\.', '', metadir)
+            rp = os.path.realpath("%s/%s" % (jc.jc_path, jail))
+
+            p = pipeopen("/sbin/zfs get -H origin %s" % rp)
+            zfsout = p.communicate()
+            if p.returncode != 0:
+                continue
+            if not zfsout:
+                continue
+
+            zfsout = zfsout[0]
+            parts = zfsout.split('\t')
+            if len(parts) < 3:
+                continue
+
+            snapshot = parts[2].strip()
+            dataset = snapshot.replace('@clean', '')
+            if template_dataset == dataset:
+                instances += 1
 
         return instances
 

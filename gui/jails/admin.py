@@ -279,6 +279,26 @@ class JailTemplateFAdmin(BaseFreeAdmin):
 
         return columns
 
+    def get_actions(self):
+        actions = super(JailTemplateFAdmin, self).get_actions()
+
+        on_select_after = """
+            function(evt, actionName, action) {
+                for (var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if (row.data.jt_instances >= 0 && actionName == 'Delete') {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                    }
+                }
+            }
+        """
+        actions['Edit']['on_select_after'] = on_select_after
+        actions['Delete']['on_select_after'] = on_select_after
+
+        return actions
+
 
 class NullMountPointFAdmin(BaseFreeAdmin):
 
