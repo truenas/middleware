@@ -14,13 +14,12 @@ higher ZFS performance.
 
 * ZFS will now alert the administrator for pools that are not 4K-aligned.
 
-By default, FreeNAS would treat all disks as 4K sector ("Advanced Format")
-disks.  This is a future-proof setting that allows AF disks be used in a
-pool, should the user needs to replace the drive in the future when no
-legacy 512 byte sector disks would be available without compromising
-performance.  The administrator can optionally disable this default-4K
-behavior by setting vfs.zfs.vdev.larger_ashift_minimal to 0 in both
-sysctl and loader tunables.
+By default, FreeNAS will treat all disks as 4K sector ("Advanced Format")
+disks.  This is a future-proof setting that allows AF disks to later
+be used as replacement drives for older, legacy 512 byte sector drives
+without compromising performance.  The administrator can optionally disable
+this 4K-by-default behavior by setting vfs.zfs.vdev.larger_ashift_minimal
+to 0 in both sysctl and loader tunables.
 
 * Avahi (multicast DNS, aka Bonjour) registration of all services, include
 the web service, means you no longer need to have a head on the box to know
