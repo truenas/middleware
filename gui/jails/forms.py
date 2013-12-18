@@ -263,7 +263,7 @@ class JailCreateForm(ModelForm):
 
         if template['type'] == 'Linux':
             jail_flags |= WARDEN_CREATE_FLAGS_LINUXJAIL
-        if template['arch'] == 'i386' and arch == 'x64':
+        if template['arch'] == 'i386' and self.arch == 'x64':
             jail_flags |= WARDEN_CREATE_FLAGS_32BIT
 
         jail_flags |= WARDEN_CREATE_FLAGS_TEMPLATE
