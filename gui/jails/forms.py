@@ -25,6 +25,7 @@
 #
 #####################################################################
 import os
+import platform
 import logging
 
 from django.utils.translation import ugettext_lazy as _
@@ -123,6 +124,13 @@ class JailCreateForm(ModelForm):
             os.unlink(self.statusfile)
         except:
             pass
+
+        arch = platform.architecture()
+        if arch[0] == '64bit':
+            arch = 'x64'
+        else:
+            arch = 'x86'
+        self.arch = arch
 
         os.environ['EXTRACT_TARBALL_STATUSFILE'] = self.statusfile
         types = ((jt.jt_name, jt.jt_name) for jt in JailTemplate.objects.all())
@@ -255,7 +263,7 @@ class JailCreateForm(ModelForm):
 
         if template['type'] == 'Linux':
             jail_flags |= WARDEN_CREATE_FLAGS_LINUXJAIL
-        if template['arch'] == 'i386':
+        if template['arch'] == 'i386' and arch == 'x64':
             jail_flags |= WARDEN_CREATE_FLAGS_32BIT
 
         jail_flags |= WARDEN_CREATE_FLAGS_TEMPLATE
