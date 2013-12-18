@@ -1188,17 +1188,16 @@ def get_vdev_summary(Kstat):
     output['vdev_cache_total'] = vdev_cache_total
 
     if vdev_cache_total > 0:
-        output['vdev_cache'] = {}
-        output['vdev_cache']['summary'] = fHits(vdev_cache_total)
-        output['vdev_cache']['hit_ratio'] = {
+        output['summary'] = fHits(vdev_cache_total)
+        output['hit_ratio'] = {
             'per': fPerc(vdev_cache_hits, vdev_cache_total),
             'num': fHits(vdev_cache_hits),
         }
-        output['vdev_cache']['miss_ratio'] = {
+        output['miss_ratio'] = {
             'per': fPerc(vdev_cache_misses, vdev_cache_total),
             'num': fHits(vdev_cache_misses),
         }
-        output['vdev_cache']['delegations'] = {
+        output['delegations'] = {
             'per': fPerc(vdev_cache_delegations, vdev_cache_total),
             'num': fHits(vdev_cache_delegations),
         }
@@ -1212,20 +1211,17 @@ def _vdev_summary(Kstat):
     if arc['vdev_cache_total'] > 0:
         sys.stdout.write("VDEV Cache Summary:\t\t\t\t%s\n" % arc['summary'])
         sys.stdout.write("\tHit Ratio:\t\t\t%s\t%s\n" % (
-            arc['vdev_cache']['hit_ratio']['per'],
-            arc['vdev_cache']['hit_ratio']['num'],
-            )
-        )
+            arc['hit_ratio']['per'],
+            arc['hit_ratio']['num'],
+        ))
         sys.stdout.write("\tMiss Ratio:\t\t\t%s\t%s\n" % (
-            arc['vdev_cache']['miss_ratio']['per'],
-            arc['vdev_cache']['miss_ratio']['num'],
-            )
-        )
+            arc['miss_ratio']['per'],
+            arc['miss_ratio']['num'],
+        ))
         sys.stdout.write("\tDelegations:\t\t\t%s\t%s\n" % (
-            arc['vdev_cache']['delegations']['per'],
-            arc['vdev_cache']['delegations']['num'],
-            )
-        )
+            arc['delegations']['per'],
+            arc['delegations']['num'],
+        ))
 
 
 def get_systl_summary(Kstat):
