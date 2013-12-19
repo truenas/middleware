@@ -1,6 +1,8 @@
+import glob
 import logging
 import os
 import platform
+import re
 import time
 
 from django.utils.translation import ugettext as _
@@ -665,6 +667,8 @@ def jail_path_configured():
 
 
 def jail_auto_configure():
+    import platform
+
     """
     Auto configure the jail settings
 
@@ -673,27 +677,61 @@ def jail_auto_configure():
     append "_N" where N 2..100 until a dataset is not found.
     """
 
+    vol_fstype = 'ZFS'
     volume = Volume.objects.filter(vol_fstype='ZFS')
     if not volume.exists():
-        raise MiddlewareError(_("You need to create a ZFS volume to proceed!"))
+        log.warn("ZFS is recommended for plugins!")
+        volume = Volume.objects.filter(vol_fstype='UFS')
+        if not volume.exists():
+            raise MiddlewareError(_("You need to create a volume to proceed!"))
+        vol_fstype = 'UFS'  
+
     volume = volume[0]
     basename = "%s/jails" % volume.vol_name
-    name = basename
-    for i in xrange(2, 100):
-        datasets = list_datasets(
-            path="/mnt/%s" % name,
-            recursive=False,
-        )
-        if not datasets:
-            break
-        else:
-            name = "%s_%d" % (basename, i)
-    rv, err = notifier().create_zfs_dataset(name)
-    if rv != 0:
-        raise MiddlewareError(_("Failed to create dataset %(name)s: %(error)s") % {
-            'name': name,
-            'error': err,
-        })
+
+    if vol_fstype == 'ZFS':
+        name = basename
+        for i in xrange(2, 100):
+            datasets = list_datasets(
+                path="/mnt/%s" % name,
+                recursive=False,
+            )
+            if not datasets:
+                break
+            else:
+                name = "%s_%d" % (basename, i)
+        rv, err = notifier().create_zfs_dataset(name)
+        if rv != 0:
+            raise MiddlewareError(_("Failed to create dataset %(name)s: %(error)s") % {
+                'name': name,
+                'error': err,
+            })
+
+    elif vol_fstype == 'UFS':
+        name = "/mnt/%s" % basename
+        if os.path.exists(name):
+            max = 1
+            dirs = glob.glob("%s_*" % name)
+            if dirs:
+                for d in dirs:
+                    parts = d.split('_')
+                    if len(parts) > 1 and re.match('^[0-9]+$', parts[1]):
+                        num = int(parts[1])
+                        if num > max:
+                            max = num
+
+            name = "%s_%d" % (name, max + 1)
+
+        name = name.replace('/mnt/', '')
+        try:
+            os.makedirs("/mnt/%s" % name)
+
+        except Exception as e:  
+            raise MiddlewareError(_("Failed to create directory %(name)s: %(error)s") % {
+               'name': name,
+               'error': e
+            })
+
 
     try:
         jail = JailsConfiguration.objects.latest('id')
@@ -701,3 +739,9 @@ def jail_auto_configure():
         jail = JailsConfiguration()
     jail.jc_path = "/mnt/%s" % name
     jail.save()
+
+    w = warden.Warden()
+    w.wtmp = jail.jc_path
+    w.jdir = jail.jc_path
+    w.release = platform.release().strip()
+    w.save()
