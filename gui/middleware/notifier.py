@@ -426,7 +426,7 @@ class notifier:
                 self._system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
                 self._system("/usr/sbin/service autolink auto_linklocal quietstart")
                 self._system("/usr/sbin/service netif stop")
-        interfaces = self._pipeopen("ifconfig -l")
+        interfaces = self._pipeopen("ifconfig -l").communicate()[0]
         interface_list = interfaces.split(" ")
         for interface in interface_list:
             if interface.startswith("vlan"):
