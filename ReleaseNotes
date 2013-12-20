@@ -14,7 +14,7 @@ higher ZFS performance.
 
 * ZFS will now alert the administrator for pools that are not 4K-aligned.
 
-By default, FreeNAS will treat all disks as 4K sector ("Advanced Format")
+* By default, FreeNAS will treat all disks as 4K sector ("Advanced Format")
 disks.  This is a future-proof setting that allows AF disks to later
 be used as replacement drives for older, legacy 512 byte sector drives
 without compromising performance.  The administrator can optionally disable
