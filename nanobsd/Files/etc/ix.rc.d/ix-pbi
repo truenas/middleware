@@ -3,6 +3,7 @@
 # $FreeBSD$
 #
 
+# PROVIDE: ix-pbi
 # BEFORE: pbid
 
 . /etc/rc.freenas
