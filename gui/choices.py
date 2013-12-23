@@ -197,6 +197,7 @@ UNIXCHARSET_CHOICES = (
         )
 
 LOGLEVEL_CHOICES = (
+        ('0',  _('None')),
         ('1',  _('Minimum')),
         ('2',  _('Normal')),
         ('3',  _('Full')),
