@@ -544,6 +544,7 @@ require([
             bridge_ipv6.set("value", "");
             bridge_ipv4_netmask.set("value", "");
             bridge_ipv6_prefix.set("value", "");
+            mac.set("value", "");
             nat.set("checked", false);
 
             nat.set("disabled", true);
