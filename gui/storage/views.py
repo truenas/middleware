@@ -279,7 +279,7 @@ def dataset_create(request, fs):
             if refreservation != '0':
                 props['refreservation'] = refreservation.__str__()
             dedup = cleaned_data.get('dataset_dedup')
-            if dedup != 'off':
+            if dedup != 'inherit':
                 props['dedup'] = dedup.__str__()
             recordsize = cleaned_data.get('dataset_recordsize')
             if recordsize:
