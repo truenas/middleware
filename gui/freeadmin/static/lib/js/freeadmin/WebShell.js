@@ -92,7 +92,7 @@ define([
 
           var pasteDialog;
           var text = new Textarea({
-            style: {width: "200px"}
+            style: {width: "200px", marginBottom: "8px", marginLeft: "8px"}
           });
 
           var ok = new Button({
@@ -112,6 +112,7 @@ define([
 
           pasteDialog = new Dialog({
             title: gettext("Paste"),
+            style: "background-color: white;",
             onShow: function() {
               me._stopConnections();
             },
