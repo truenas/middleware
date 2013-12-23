@@ -524,9 +524,11 @@ require([
     jail_vnet_toggle = function() {
         var vnet = registry.byId("id_jail_vnet");
         var nat = registry.byId("id_jail_nat");
+        var mac = registry.byId("id_jail_mac");
 
         var jail_vnet = vnet.get("value");
         var jail_nat = nat.get("value");
+        var jail_mac = mac.get("value");
 
         var defaultrouter_ipv4 = registry.byId("id_jail_defaultrouter_ipv4");
         var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
@@ -551,6 +553,7 @@ require([
             bridge_ipv6.set("disabled", true);
             bridge_ipv4_netmask.set("disabled", true);
             bridge_ipv6_prefix.set("disabled", true);
+            mac.set("disabled", true);
 
         } else {
 
@@ -561,6 +564,7 @@ require([
             bridge_ipv4_netmask.set("disabled", false);
             bridge_ipv6_prefix.set("disabled", false);
             nat.set("disabled", false);
+            mac.set("disabled", false);
         }
 
         if (jail_is_linuxjail() || jail_is_x86()) {
