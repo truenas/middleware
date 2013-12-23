@@ -5111,8 +5111,7 @@ start_update_checks() {
 				check_pbi_update "$i" "display" \
 				 "$PBI_PROGNAME" "current" \
 				 "$PBI_FBSDVER" "$PBI_APPARCH" "$_repoID" "$PBI_PROGMDATE"
-                        fi
-                done
+                        fi done
 		return 0
 	fi
 
@@ -5141,6 +5140,7 @@ check_update_index() {
 		if [ "$?" = "0" ] ; then
 			_passed=`expr $_curTime - $_oTime`
 			if [ "$_passed" -lt "$_trigTime" ] ; then
+				rm_tmpdir
 				return;
 			fi
 		fi
@@ -5164,11 +5164,13 @@ check_update_index() {
 
 	fetch -o "${_tmpPbiIndex}.bz2" "${_upURL}/${PBI_INDEXUPFILE}.bz2" >/dev/null 2>/dev/null
 	if [ "$?" != "0" ] ; then
+		rm_tmpdir
 		return
 	fi
 
 	bzip2 -d "${_tmpPbiIndex}.bz2" >/dev/null 2>/dev/null
 	if [ "$?" != "0" ] ; then
+		rm_tmpdir
 		return
 	fi
 
@@ -5198,6 +5200,7 @@ check_update_index() {
 	# Save the time that we are done
 	date +%s > ${_pbiIndexTime}
 
+	rm_tmpdir
 }
 
 # Check if we need to update any repository icons

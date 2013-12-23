@@ -2574,6 +2574,12 @@ class notifier:
 
         pjail_path = "%s/%s" % (jc.jc_path, wjail.host)
         plugins_path = "%s/%s" % (pjail_path, ".plugins")
+        tmpdir = "%s/var/tmp" % pjail_path
+
+        saved_tmpdir = None
+        if os.environ.has_key('TMPDIR'):  
+            saved_tmpdir = os.environ['TMPDIR']
+        os.environ['TMPDIR'] = tmpdir
 
         log.debug("install_pbi: pjail_path = %s, plugins_path = %s", pjail_path, plugins_path)
 
@@ -2582,6 +2588,8 @@ class notifier:
         out = p.info(False, -1, 'pbi information for', 'prefix', 'name', 'version', 'arch')
 
         if not out:
+            if saved_tmpdir:
+                os.environ['TMPDIR'] = saved_tmpdir
             raise MiddlewareError("This file was not identified as in PBI "
                 "format, it might as well be corrupt.")
 
@@ -2698,9 +2706,13 @@ class notifier:
                         pbiname,
                         )
                     )
+            if saved_tmpdir:
+                os.environ['TMPDIR'] = saved_tmpdir
             raise MiddlewareError(p.error)
 
         log.debug("install_pbi: everything went well, returning %s", ret)
+        if saved_tmpdir:
+            os.environ['TMPDIR'] = saved_tmpdir
         return ret
 
     def _get_pbi_info(self, pbifile):
