@@ -3882,17 +3882,15 @@ class notifier:
         qs = Disk.objects.filter(disk_identifier=ident)
         if ident and qs.exists():
             disk = qs[0]
-            disk.disk_name = devname
-            disk.disk_enabled = True
         else:
             qs = Disk.objects.filter(disk_name=devname).update(
                 disk_enabled=False
             )
             disk = Disk()
-            disk.disk_name = devname
             disk.disk_identifier = ident
-            disk.disk_enabled = True
-            disk.disk_serial = self.serial_from_device(devname) or ''
+        disk.disk_name = devname
+        disk.disk_enabled = True
+        disk.disk_serial = self.serial_from_device(devname) or ''
         reg = RE_DSKNAME.search(devname)
         if reg:
             disk.disk_subsystem = reg.group(1)
