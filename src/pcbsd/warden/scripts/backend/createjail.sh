@@ -361,6 +361,12 @@ __EOF__
 
 fi # End of ARCHIVEFILE check
 
+# Fixup sendmail permissions
+chroot "${JAILDIR}" chown smmsp /var/spool/clientmqueue
+chroot "${JAILDIR}" chgrp smmsp /var/spool/clientmqueue
+chroot "${JAILDIR}" chgrp smmsp /usr/libexec/sendmail/sendmail 
+chroot "${JAILDIR}" chmod +s /usr/libexec/sendmail/sendmail
+
 if [ "$AUTOSTART" = "YES" ] ; then
   touch "${JMETADIR}/autostart"
 fi
