@@ -39,12 +39,11 @@ generate_ntp_conf()
 
 	if [ -s /etc/ntp.conf ]; then
 		cat >> /etc/ntp.conf <<EOF
-# XXX: this doesn't work as documented
-#restrict default ignore
+restrict -4 default nomodify nopeer noquery notrap
+restrict -6 default nomodify nopeer noquery notrap
 restrict 127.0.0.1
 restrict -6 ::1
-
-disable bclient
+restrict 127.127.1.0
 EOF
 	fi
 }
