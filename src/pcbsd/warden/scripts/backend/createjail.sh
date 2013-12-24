@@ -367,6 +367,11 @@ chroot "${JAILDIR}" chgrp smmsp /var/spool/clientmqueue
 chroot "${JAILDIR}" chgrp smmsp /usr/libexec/sendmail/sendmail 
 chroot "${JAILDIR}" chmod +s /usr/libexec/sendmail/sendmail
 
+# Kill off cron jobs that aren't necessary
+crontab="$(mktemp "${JAILDIR}/tmp/.XXXXXX")"
+sed -E 's|^(.+\/save-entropy)|#\1|' "${JAILDIR}/etc/crontab" > "${crontab}"
+mv "${crontab}" "${JAILDIR}/etc/crontab"
+
 if [ "$AUTOSTART" = "YES" ] ; then
   touch "${JMETADIR}/autostart"
 fi
