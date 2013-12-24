@@ -62,7 +62,7 @@ if [ -c /dev/${ROOTDEV} ]; then
 	# TODO: Find a way so we do not hardcode this value.
 	if [ ${ROOTDEV_SIZE} -lt 3699999744 ]; then
 		warn "Root device too small!"
-		rm -fr ${SCRIPTDIR}
+		find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
 		exit 1
 	fi
 
@@ -81,7 +81,7 @@ if [ -c /dev/${ROOTDEV} ]; then
 		VOLUME_DEVICE=`mount | grep ${VOLUME_MOUNTPOINT} | awk '{print $1;}'`
 		if [ "${VOLUME_DEVICE##/dev/md}" != ${VOLUME_DEVICE} ]; then
 			warn "Can not do trampoline upgrade without backing storage."
-			rm -fr ${SCRIPTDIR}
+			find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
 			exit 1
 		fi
 
@@ -223,9 +223,9 @@ EOF
 	fi
 else
 	warn "Can not determine root device"
-	rm -fr ${SCRIPTDIR}
+	find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
 	exit 1
 fi
 
 fi
-rm -fr ${SCRIPTDIR}
+find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
