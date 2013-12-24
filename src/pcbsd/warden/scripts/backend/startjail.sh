@@ -117,7 +117,8 @@ start_jail_vimage()
   if [ -n "${IP4}" ] ; then
      warden_print "Setting IP4 address: ${IP4}"
      jexec ${JID} ifconfig ${EPAIRB} inet "${IP4}"
-     arp -s "${IP4}" "${MAC}"
+     get_ip_and_netmask "${IP4}"
+     arp -s "${JIP}" "${MAC}"
   fi
   for ip4 in ${IPS4}
   do
@@ -125,11 +126,13 @@ start_jail_vimage()
      if [ "$?" = "0" ] ; then
         if ! ipv4_address_configured "${EPAIRB}" "${ip4}" "${JID}" ; then
            jexec ${JID} ifconfig ${EPAIRB} inet alias ${ip4}
-           arp -s "${ip4}" "${MAC}"
+           get_ip_and_netmask "${ip4}"
+           arp -s "${JIP}" "${MAC}"
         fi
      else
         jexec ${JID} ifconfig ${EPAIRB} inet ${ip4}
-        arp -s "${ip4}" "${MAC}"
+        get_ip_and_netmask "${ip4}"
+        arp -s "${JIP}" "${MAC}"
      fi
   done
 
@@ -161,7 +164,8 @@ start_jail_vimage()
         jexec ${JID} route add default gateway ${GATEWAY4}
      fi  
      if [ -n "${ether}" ] ; then
-        jexec ${JID} arp -s "${GATEWAY4}" "${ether}"
+        get_ip_and_netmask "${GATEWAY4}:
+        jexec ${JID} arp -s "${JIP}" "${ether}"
      fi
   #
   # No defaultrouter configured for IPv4, so if bridge IP address was
@@ -176,7 +180,8 @@ start_jail_vimage()
         jexec ${JID} route add default gateway ${JIP}
      fi
      if [ -n "${ether}" ] ; then
-        jexec ${JID} arp -s "${BRIDGEIP4}" "${ether}"
+        get_ip_and_netmask "${BRIDGEIP4}:
+        jexec ${JID} arp -s "${JIP}" "${ether}"
      fi
   fi
 
@@ -223,8 +228,8 @@ start_jail_vimage()
            jexec ${JID} route add default gateway ${GATEWAY4}
         fi 
         if [ -n "${ether}" ] ; then
-           jexec ${JID} arp -s "${GATEWAY4}" "${ether}"
-           echo jexec ${JID} arp -s "${GATEWAY4}" "${ether}"
+           get_ip_and_netmask "${GATEWAY4}"
+           jexec ${JID} arp -s "${JIP}" "${ether}"
         fi
      fi
 

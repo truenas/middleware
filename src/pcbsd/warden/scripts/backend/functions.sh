@@ -803,7 +803,6 @@ jail_interfaces_down()
                ipfw delete "${rule}"
             done
          fi
-	 /usr/sbin/arp -d ${_ip6}
       done
 
       jexec ${_jid} ifconfig ${_epairb} down
