@@ -159,7 +159,7 @@ if [ -z "$NANO_LABEL" ] ; then
 fi
 
 if [ -z "$VERSION" ] ; then
-	echo "build/nano_env: VERSION unset, should be '9.2.0-ALPHA'"
+	echo "build/nano_env: VERSION unset, should be '9.2.1-ALPHA'"
 	exit 1
 fi
 
