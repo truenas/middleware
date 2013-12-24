@@ -108,7 +108,7 @@ class Plugins(Model):
             id__exact=self.id
         )
         with transaction.commit_on_success():
-            notifier()._stop_plugins(self.plugin_name)
+            notifier()._stop_plugins(jail=self.plugin_jail, plugin=self.plugin_name)
             if qs.count() > 0:
                 notifier().delete_pbi(self)
             else:
