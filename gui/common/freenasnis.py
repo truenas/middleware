@@ -109,7 +109,7 @@ class FreeNAS_NIS_Base(object):
         user = None
         users = self.get_users()
         for u in users:
-            if u['uid'].strip().lower() == str(who).strip().lower():
+            if who and u['uid'].strip().lower() == str(who).strip().lower():
                 user = u
                 break
 
@@ -148,7 +148,7 @@ class FreeNAS_NIS_Base(object):
         group = None
         groups = self.get_groups()
         for g in groups:
-            if g['group'].strip().lower() == str(who).strip().lower():
+            if who and g['group'].strip().lower() == str(who).strip().lower():
                 group = g
                 break
 
