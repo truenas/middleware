@@ -13,6 +13,6 @@
       editObject('{% trans "View Public Key"|force_escape|force_escape %}', '{% url "storage_replications_key" %}', [this,]);
   </script>
 </button>
-  <p style="margin:10px;"><span style="color: red;">{% trans "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required to create a replication task" %}</span></p>
+  <p style="margin:10px;"><span style="color: red;">{% trans "ATTENTION: A periodic snapshot of a given ZFS Volume/Dataset is required to create a replication task" %}</span></p>
 <span class="clear"></span>
 {% endblock %}
