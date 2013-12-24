@@ -527,6 +527,44 @@ class VdevFormSet(BaseFormSet):
                     break
             if not has_datavdev:
                 raise forms.ValidationError(_("You need a data disk group"))
+        else:
+            log.error("add!")
+            zpool = notifier().zpool_parse(
+                self.form.cleaned_data.get("volume_add")
+            )
+            for vdev in zpool.data:
+
+                for i in range(0, self.total_form_count()):
+                    form = self.forms[i]
+                    if not form.cleaned_data.get('vdevtype'):
+                        continue
+                    disks = form.cleaned_data.get('disks')
+
+                    errors = []
+                    if vdev.type != form.cleaned_data.get('vdevtype'):
+                        errors.append(_(
+                            "You are trying to add a virtual device of type "
+                            "'%(addtype)s' in a pool that has a virtual "
+                            "device of type '%(vdevtype)s'") % {
+                            'addtype': form.cleaned_data.get('vdevtype'),
+                            'vdevtype': vdev.type,
+                            }
+                        )
+
+                    if len(disks) != len(list(iter(vdev))):
+                        errors.append(_(
+                            "You are trying to add a virtual device consisting"
+                            " of %(addnum)s device(s) in a pool that has a "
+                            "virtual device consisted of %(vdevnum)s device(s)"
+                            ) % {
+                            'addnum': len(disks),
+                            'vdevnum': len(list(iter(vdev))),
+                            }
+                        )
+                    if errors:
+                        #form._errors['disks'] = form.error_class(errors)
+                        raise forms.ValidationError(errors[0])
+                        break
 
 
 class VolumeImportForm(Form):
