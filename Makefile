@@ -23,7 +23,7 @@ checkout: git-verify
 
 clean:
 	${ENV_SETUP} build/build_cleanup.py
-	rm -rf FreeBSD release_stage ${NANO_LABEL}-${VERSION}-release.tar release.build.log
+	rm -rf FreeBSD ${NANO_LABEL}-${VERSION}-* release.build.log
 
 clean-packages:
 	find os-base -name "*.tbz" -delete
