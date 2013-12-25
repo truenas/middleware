@@ -13,18 +13,19 @@ TOP="$(pwd)"
 map_x86=i386
 map_x64=amd64
 
-TARBALL="${TOP}/${NANO_LABEL}-${VERSION}-release.tar"
-rm -rf "${TOP}/release_stage"
+TARBALL="${TOP}/${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}.tar"
+STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}
+rm -rf "${TOP}/${STAGEDIR}"
 set -x
 set -e
-mkdir -p "${TOP}/release_stage"
+mkdir -p "${TOP}/${STAGEDIR}"
 for arch in x64 x86 ; do 
 	eval mapped_arch=\$map_$arch
 	echo $arch = $mapped_arch
-	mkdir -p ${TOP}/release_stage/${arch}
+	mkdir -p ${TOP}/${STAGEDIR}/${arch}
 	for ext in img.xz GUI_Upgrade.txz iso ; do
-		ln ${TOP}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ${TOP}/release_stage/${arch}
-		ln ${TOP}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}.sha256.txt ${TOP}/release_stage/${arch}
+		ln ${TOP}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ${TOP}/${STAGEDIR}/${arch}
+		ln ${TOP}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}.sha256.txt ${TOP}/${STAGEDIR}/${arch}
 	done
 done
-tar -czvf $TARBALL -H release_stage
+tar -czvf $TARBALL -H ${STAGEDIR}

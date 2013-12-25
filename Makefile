@@ -1,5 +1,6 @@
 NANO_LABEL?=FreeNAS
 VERSION?=9.2.1-ALPHA
+BUILD_TIMESTAMP!=date '+%Y%M%d'
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -11,7 +12,7 @@ GIT_REPO_SETTING=.git-repo-setting
 .if exists(${GIT_REPO_SETTING})
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
-ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION}
+ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION} BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
 
 all: git-verify
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
@@ -47,8 +48,8 @@ force: git-verify
 truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
 	env NANO_LABEL=TrueNAS make
-	mkdir -p release_stage
-	mv os-base/amd64/TrueNAS-${VERSION}-* release_stage
+	mkdir -p TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+	mv os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 
 # Build truenas using all sources 
 truenas-all-direct:
