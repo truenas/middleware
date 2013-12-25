@@ -623,11 +623,7 @@ generate_smb_config()
 	touch "${SMB_CONF}"
 	ln -s "${SMB_CONF}" "${SMB4_CONF}"
 
-	if [ ! -d "/var/run/samba" ]
-	then
-		mkdir -p "/var/run/samba"
-	fi
-
+	mkdir -p "/var/run/samba"
 	mkdir -p /var/etc/private
 	chmod 700 /var/etc/private
 	generate_smb_tdb
