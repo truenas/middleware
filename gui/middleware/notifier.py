@@ -2487,7 +2487,7 @@ class notifier:
             os.unlink(path)
         open(NEED_UPDATE_SENTINEL, 'w').close()
 
-    def __umount_filesystems_within(self, path):
+    def umount_filesystems_within(self, path):
         """
         Try to umount filesystems within a certain path
 
@@ -2844,7 +2844,7 @@ class notifier:
         log.debug("XXX: oldpbiname = %s", oldpbiname)
         log.debug("XXX: newpbiname = %s", newpbiname)
 
-        self.__umount_filesystems_within("%s%s" % (jail_path, newprefix))
+        self.umount_filesystems_within("%s%s" % (jail_path, newprefix))
 
         # Create a PBI from the installed version
         p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP|PBI_CREATE_FLAGS_OUTDIR,
@@ -2968,7 +2968,7 @@ class notifier:
             "usr/pbi",
             "%s-%s" % (plugin.plugin_name, platform.machine()),
             )
-        self.__umount_filesystems_within(pbi_path)
+        self.umount_filesystems_within(pbi_path)
 
         p = pbi_delete(pbi=plugin.plugin_pbiname)
         res = p.run(jail=True, jid=jail.jid)

@@ -639,6 +639,11 @@ def new_default_plugin_jail(basename):
         )
     except Exception, e:
         raise MiddlewareError(_("Failed to install plugin: %s") % e)
+
+    jaildir = "%s/%s" % (jc.jc_path, jailname)
+    with open('%s/.plugins/PLUGIN' % jaildir, 'w') as f:
+        f.close()
+
     w.auto(jail=jailname)
     w.set(
         jail=jailname,
