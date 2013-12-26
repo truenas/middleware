@@ -257,8 +257,8 @@ def install_available(request, oid):
         if notifier().install_pbi(jail.jail_host, newplugin):
             newplugin = newplugin[0]
             notifier()._restart_plugins(
-                newplugin.plugin_jail,
-                newplugin.plugin_name,
+                jail=newplugin.plugin_jail,
+                plugin=newplugin.plugin_name,
             )
         else:
             jail.delete()

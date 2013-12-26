@@ -855,8 +855,8 @@ class notifier:
             self._system_nolog("/usr/sbin/service ix-plugins forcestop")
 
     def _restart_plugins(self, jail=None, plugin=None):
-        self._stop_plugins(jail, plugin)
-        self._start_plugins(jail, plugin)
+        self._stop_plugins(jail=jail, plugin=plugin)
+        self._start_plugins(jail=jail, plugin=plugin)
 
     def _started_plugins(self, jail=None, plugin=None):
         res = False

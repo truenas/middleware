@@ -74,7 +74,10 @@ class PluginsForm(ModelForm):
 
     def save(self):
         super(PluginsForm, self).save()
-        notifier()._restart_plugins(self.instance.plugin_name)
+        notifier()._restart_plugins(
+            jail=self.instance.plugin_jail,
+            plugin=self.instance.plugin_name
+        )
 
     def delete(self, request=None, events=None):
         super(PluginsForm, self).delete(request=request, events=events)
@@ -147,8 +150,8 @@ class PBIUploadForm(Form):
         if notifier().install_pbi(pjail, newplugin):
             newplugin = newplugin[0]
             notifier()._restart_plugins(
-                newplugin.plugin_jail,
-                newplugin.plugin_name,
+                jail=newplugin.plugin_jail,
+                plugin=newplugin.plugin_name,
             )
         elif jail:
             jail.delete()
@@ -174,8 +177,8 @@ class PBIUpdateForm(PBIUploadForm):
     def done(self, *args, **kwargs):
         notifier().update_pbi(self.plugin)
         notifier()._restart_plugins(
-            self.plugin.plugin_jail,
-            self.plugin.plugin_name)
+            jail=self.plugin.plugin_jail,
+            plugin=self.plugin.plugin_name)
 
 
 class PluginUpdateForm(Form):
