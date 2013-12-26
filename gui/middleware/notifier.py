@@ -3252,6 +3252,7 @@ class notifier:
         """
 
         succeeded = False
+        provider = None
 
         vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
         if vol_fstype == 'ZFS':
@@ -3260,6 +3261,7 @@ class notifier:
         else:
             cmd = 'umount %s' % (vol_mountpath)
             cmdf = 'umount -f %s' % (vol_mountpath)
+            provider = self.get_label_consumer('ufs', vol_name)
 
         self.stop("syslogd")
 
@@ -3270,6 +3272,12 @@ class notifier:
         else:
             p1 = self._pipeopen(cmdf)
             stdout, stderr = p1.communicate()
+
+        if vol_fstype != 'ZFS':
+            geom_type = provider.xpathEval("../../name")[0].content.lower()
+            if geom_type in ('mirror', 'stripe', 'raid3'):
+                g_name = provider.xpathEval("../name")[0].content
+                self._system("geom %s stop %s" % (geom_type, g_name))
 
         self.start("syslogd")
 
