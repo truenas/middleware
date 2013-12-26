@@ -3,7 +3,9 @@ To build the system (experts only):
 Requirements:
 
 - Your build environment must be FreeBSD 9.2-RELEASE or newer.
-- amd64 or i386 for i386 builds; an amd64 for amd64 builds.
+- amd64 or i386 for i386 builds; an amd64 for amd64 builds.  8GB of
+  memory, or an equal/greater amount of swap space, is also required
+
 - You will need the following ports/packages when compiling anything
   FreeNAS-related:
   - devel/git
