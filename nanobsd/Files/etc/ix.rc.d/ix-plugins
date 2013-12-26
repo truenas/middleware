@@ -12,9 +12,6 @@
 plugins_start()
 {
 	local args="$*"
-	echo "start: args = $*" | logger -t XXX
-	echo "start: jexec 2 ps -axww = " | logger -t XXX
-	jexec 2 ps -axwwww | logger -t XXX
 
 	local sql="
 	SELECT
@@ -87,7 +84,6 @@ plugins_start()
 			continue
 		fi
 
-		echo jexec ${jid} "${path}/control" start "${jip}" "${port}" | logger -t XXX
 		echo jexec ${jid} "${path}/control" start "${jip}" "${port}"
 		jexec ${jid} "${path}/control" start "${jip}" "${port}" 2>/dev/null
 		if [ "$?" != "0" ]
@@ -110,9 +106,6 @@ plugins_start()
 plugins_stop()
 {
 	local args="$*"
-	echo "stop: args = $*" | logger -t XXX
-	echo "stop: jexec 2 ps -axww = " | logger -t XXX
-	jexec 2 ps -axwwww | logger -t XXX
 
 	sql="
 	SELECT
@@ -170,7 +163,6 @@ plugins_stop()
 			continue
 		fi
 
-		echo jexec ${jid} "${path}/control" stop | logger -t XXX
 		echo jexec ${jid} "${path}/control" stop
 		jexec ${jid} "${path}/control" stop 2>/dev/null
 		if [ "$?" != "0" ]
