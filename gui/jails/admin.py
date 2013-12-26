@@ -286,7 +286,7 @@ class JailTemplateFAdmin(BaseFreeAdmin):
             function(evt, actionName, action) {
                 for (var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
-                    if (row.data.jt_instances >= 0 && actionName == 'Delete') {
+                    if (row.data.jt_instances > 0 && actionName == 'Delete') {
                         query(".grid" + actionName).forEach(function(item, idx) {
                             domStyle.set(item, "display", "none");
                         });

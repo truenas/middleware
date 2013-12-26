@@ -437,18 +437,18 @@ class JailTemplate(Model):
 
         jc = JailsConfiguration.objects.all()[0]
         if not jc:
-            return -1
+            return 0
 
         tdir = os.path.realpath("%s/.warden-template-%s" % (jc.jc_path, template))
         if not os.path.exists(tdir):
-            return -1
+            return 0
 
         p = pipeopen("/sbin/zfs list -H -o name %s" % tdir)
         zfsout = p.communicate()
         if p.returncode != 0:
-            return -1
+            return 0
         if not zfsout:
-            return -1
+            return 0
 
         template_dataset = zfsout[0].strip()
         for metadir in glob.iglob("%s/.*.meta" % jc.jc_path):
@@ -481,6 +481,18 @@ class JailTemplate(Model):
             raise MiddlewareError(
                 _("Template must have 0 instances!")
             )
+
+        template = self.jt_name
+        jc = JailsConfiguration.objects.all()[0]
+        if not jc:
+            raise MiddlewareError(
+                _("Jail root is not configured!")
+            )
+
+        tdir = os.path.realpath("%s/.warden-template-%s" % (jc.jc_path, template))
+        if not os.path.exists(tdir):
+            super(JailTemplate, self).delete()
+            return
 
         try:
             w = Warden()
