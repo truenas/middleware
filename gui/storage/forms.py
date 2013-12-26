@@ -628,7 +628,9 @@ class VolumeImportForm(Form):
             cleaned_data.get('volume_fstype', ''))
         if not isvalid:
             msg = _(
-                u"The selected disks were not verified for this import rules.")
+                u"The selected disks were not verified for these import "
+                "rules. Filesystem check failed."
+            )
             self._errors["volume_name"] = self.error_class([msg])
             if "volume_name" in cleaned_data:
                 del cleaned_data["volume_name"]
