@@ -628,7 +628,20 @@ require([
         var jail_type = type.get("value");
         return (jail_type);
     }
-   
+
+    jailtemplate_os = function() {
+      var os = registry.byId("id_jt_os").get("value");
+      var arch = registry.byId("id_jt_arch");
+      if(os == 'Linux') {
+        arch.set("value", "x86");
+        arch.set("readOnly", true);
+        domClass.add(arch.domNode, ['dijitDisabled', 'dijitSelectDisabled']);
+      } else {
+        arch.set("readOnly", false);
+        domClass.remove(arch.domNode, ['dijitDisabled', 'dijitSelectDisabled']);
+      }
+    }
+
     mpAclChange = function(acl) {
       var mode = registry.byId("id_mp_mode");
       if(acl.get('value') === false) {

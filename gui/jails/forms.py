@@ -703,6 +703,12 @@ class JailTemplateCreateForm(ModelForm):
     class Meta:
         model = JailTemplate
 
+    def __init__(self, *args, **kwargs):
+        super(JailTemplateCreateForm, self).__init__(*args, **kwargs)
+        self.fields['jt_os'].widget.attrs['onChange'] = (
+            'jailtemplate_os(this);'
+        )
+
 
 class JailTemplateEditForm(ModelForm):
     class Meta:
@@ -720,6 +726,15 @@ class JailTemplateEditForm(ModelForm):
             self.fields['jt_name'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled'
+            )
+        else:
+            self.fields['jt_os'].widget.attrs['onChange'] = (
+                'jailtemplate_os(this);'
+            )
+        if self.instance.jt_os == 'Linux':
+            self.fields['jt_arch'].widget.attrs['readOnly'] = 'readOnly'
+            self.fields['jt_arch'].widget.attrs['class'] = (
+                'dijitDisabled dijitSelectDisabled'
             )
 
 
