@@ -2,24 +2,20 @@ To build the system (experts only):
 
 Requirements:
 
-- Your build environment must be FreeBSD 9.1-RELEASE or newer.
+- Your build environment must be FreeBSD 9.2-RELEASE or newer.
 - amd64 or i386 for i386 builds; an amd64 for amd64 builds.
 - You will need the following ports/packages when compiling anything
   FreeNAS-related:
   - devel/git
-  - lang/python26 or lang/python27
   - sysutils/cdrtools
-  - ports-mgmt/pbi-manager
   - archivers/pxz
-  - Whatever other ports we forgot to list above
-
-A ZFS filesystem on which to build.  Building FreeNAS depends on ZFS!
+  (and all the dependencies that these ports/pkgs install, of course)
 
 Building the System Quickstart Flow:
 
 - Checking out the code from git:
 
-% cd /path/to/your-zfs-filesystem
+% cd /path/to/your-build-filesystem
 % git clone git://github.com/freenas/freenas.git
 % cd freenas
 
