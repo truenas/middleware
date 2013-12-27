@@ -192,7 +192,7 @@ def volumemanager(request):
                 'label': x.vol_name,
                 'value': x.vol_name,
                 'enc': x.vol_encrypt > 0
-            } for x in qs]
+            } for x in qs if x.is_decrypted()]
         ),
     })
 
