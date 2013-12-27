@@ -1450,7 +1450,6 @@ class notifier:
         if larger_ashift == 0:
             self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=1")
 
-        if from_disk == to_disk:
         p1 = self._pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
                       "-o failmode=continue "
                       "-o autoexpand=on "
