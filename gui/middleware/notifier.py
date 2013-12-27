@@ -1441,6 +1441,16 @@ class notifier:
 
         altroot = 'none' if path else '/mnt'
         mountpoint = path if path else ('/%s' % (z_name, ))
+
+        larger_ashift = 0
+        try:
+            larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
+        except AssertionError:
+            pass
+        if larger_ashift == 0:
+            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=1")
+
+        if from_disk == to_disk:
         p1 = self._pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
                       "-o failmode=continue "
                       "-o autoexpand=on "
@@ -1449,6 +1459,10 @@ class notifier:
         if p1.wait() != 0:
             error = ", ".join(p1.communicate()[1].split('\n'))
             raise MiddlewareError('Unable to create the pool: %s' % error)
+
+        # Restore previous larger ashift state.
+        if larger_ashift == 0:
+            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
 
         #We've our pool, lets retrieve the GUID
         p1 = self._pipeopen("zpool get guid %s" % z_name)
@@ -1492,8 +1506,21 @@ class notifier:
         vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, encrypt, volume)
         z_vdev += " ".join([''] + vdevs)
 
+        larger_ashift = 0
+        try:
+            larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
+        except AssertionError:
+            pass
+        if larger_ashift == 0:
+            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=1")
+
         # Finally, attach new groups to the zpool.
         self._system("zpool add -f %s %s" % (z_name, z_vdev))
+
+        # Restore previous larger ashift state.
+        if larger_ashift == 0:
+            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
+
         #TODO: geli detach -l
         self._reload_disk()
 
@@ -1754,16 +1781,13 @@ class notifier:
                     ed = EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume, passphrase=passphrase)
 
-        # Temporary disable larger ashift before we issue zpool replace.
-        # This would allow disks be replaced if pool is created as
-        # ashift=9.
-        larger_ashift = 1
+        larger_ashift = 0
         try:
             larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
         except AssertionError:
             pass
-
-        self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
+        if larger_ashift == 1:
+            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
 
         if from_disk == to_disk:
             self._system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
