@@ -528,7 +528,6 @@ class VdevFormSet(BaseFormSet):
             if not has_datavdev:
                 raise forms.ValidationError(_("You need a data disk group"))
         else:
-            log.error("add!")
             zpool = notifier().zpool_parse(
                 self.form.cleaned_data.get("volume_add")
             )
