@@ -68,11 +68,9 @@ if [ "${GIT_LOCATION}" = "EXTERNAL" ] ; then
     : ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
 fi
 
-: ${GIT_FREEBSD_CACHE="file:///freenas-build/trueos.git"}
 : ${GIT_FREEBSD_BRANCH=feature/unified_freebsd}
 : ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
 
-: ${GIT_PORTS_CACHE="file:///freenas-build/ports.git"}
 : ${GIT_PORTS_BRANCH=freenas/9.1-stable-b}
 : ${GIT_PORTS_REPO=git@gitserver:/git/repos/freenas-build/ports.git}
 
@@ -89,20 +87,6 @@ TRACE=""
 
 # NanoBSD flags
 NANO_ARGS=""
-
-if [ -e "${GIT_FREEBSD_CACHE##file://}" ]; then
-        echo "Using local mirror in $GIT_FREEBSD_CACHE"
-else
-        echo "no local mirror, to speed up builds we suggest doing"
-        echo "'git clone --mirror ${GIT_FREEBSD_REPO} into ${GIT_FREEBSD_CACHE}"
-fi
-
-if [ -e "${GIT_PORTS_CACHE##file://}" ]; then
-    echo "Using local git ports mirror in $GIT_PORTS_REPO"
-else
-    echo "no local mirror, to speed up builds we suggest doing"
-    echo "'git clone --mirror https://github.com/freenas/ports.git into ${HOME}/freenas/git/ports.git"
-fi
 
 usage() {
 	cat <<EOF
@@ -363,8 +347,6 @@ do_git_update()
 #  $3 - Actual name the git checkout should be done under.
 # Globals:
 #  ${GIT_${repo_name}_REPO} - authoritive repo path
-#  ${GIT_${repo_name}_CACHE} - (optional) mirror location that is faster
-#                              to clone from
 #  ${GIT_${repo_name}_BRANCH} - which branch to pull
 #  ${GIT_${repo_name}_TAG} - which tag to pull, superscedes "branch"
 #  ${GIT_${repo_name}_DEEP} - set to non-empty string to do a full checkout
@@ -383,7 +365,6 @@ generic_checkout_git()
     eval local my_deep=\${GIT_${repo_name}_DEEP}
     eval local my_deep=\${GIT_${repo_name}_SHALLOW}
     eval local my_repo=\${GIT_${repo_name}_REPO}
-    eval local my_cache=\${GIT_${repo_name}_CACHE}
     eval local my_branch=\${GIT_${repo_name}_BRANCH}
     eval local my_tag=\${GIT_${repo_name}_TAG}
     echo "Checkout: $repo_name -> $my_repo"
@@ -446,15 +427,7 @@ generic_checkout_git()
 		cd ..
 	else
 
-        if [ -e "${my_cache##file://}" ]; then
-            git clone ${my_cache} ${checkout_name}
-            cd ${checkout_name}
-            git remote set-url origin "${my_repo}"
-            git fetch origin
-	    do_git_update "${my_branch}" "${my_tag}"
-        else
             git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_name}
-        fi
 	fi
 	echo $spl | grep -q x || set +x
 	)
