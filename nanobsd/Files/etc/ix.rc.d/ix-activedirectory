@@ -47,8 +47,8 @@ generate_nss_ldap_conf()
 	local secret="${NSS_LDAP_SECRET}"
 	local dcname="$(AD_get ad_dcname)"
 	local domainname="$(AD_get ad_domainname)"
-	local adminname="$(AD_get ad_adminname)"
-	local adminpw="$(AD_get ad_adminpw)"
+	local bindname="$(AD_get ad_bindname)"
+	local bindpw="$(AD_get ad_bindpw)"
 	local base="$(get_basename "${domainname}")"
 
 	[ -z "${dcname}" -o -z "${base}" ] && return 1 
@@ -57,7 +57,7 @@ generate_nss_ldap_conf()
 	host ${dcname}
 	base ${base}
 	uri ldap://${dcname}/
-	rootbinddn ${adminname}@${domainname}
+	rootbinddn ${bindname}@${domainname}
 	scope sub
 	ssl no
 	ldap_version 3
@@ -79,7 +79,7 @@ generate_nss_ldap_conf()
 	pam_password ad
 
 EOF
-	printf "${adminpw}" > "${secret}"
+	printf "${bindpw}" > "${secret}"
 	chmod 600 "${secret}"
 
 	ln -sf ${nssconf} "$(dirname ${nssconf})/ldap.conf" 2>/dev/null

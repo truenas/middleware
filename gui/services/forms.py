@@ -32,6 +32,7 @@ import subprocess
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import email_re
+from django.forms import FileField
 from django.utils.safestring import mark_safe
 from django.utils.translation import (
     ugettext_lazy as _, ungettext_lazy
@@ -720,17 +721,18 @@ class NT4(ModelForm):
 
 
 class ActiveDirectoryForm(ModelForm):
-    ad_adminpw2 = forms.CharField(
+    ad_bindpw2 = forms.CharField(
         max_length=50,
-        label=_("Confirm Administrator Password"),
+        label=_("Confirm Domain Account Password"),
         widget=forms.widgets.PasswordInput(),
         required=False,
     )
+    ad_keytab = FileField(label=_("Kerberos keytab"), required=False)
 
     class Meta:
         model = models.ActiveDirectory
         widgets = {
-            'ad_adminpw': forms.widgets.PasswordInput(render_value=False),
+            'ad_bindpw': forms.widgets.PasswordInput(render_value=False),
         }
 
     def __original_save(self):
@@ -740,10 +742,12 @@ class ActiveDirectoryForm(ModelForm):
             'ad_workgroup',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
+            'ad_use_keytab',
+            'ad_keytab',
             'ad_unix_extensions',
             'ad_verbose_logging',
-            'ad_adminname',
-            'ad_adminpw',
+            'ad_bindname',
+            'ad_bindpw'
         ):
             setattr(
                 self.instance,
@@ -766,42 +770,70 @@ class ActiveDirectoryForm(ModelForm):
             return True
         if self.instance._original_ad_verbose_logging != self.instance.ad_verbose_logging:
             return True
-        if self.instance._original_ad_adminname != self.instance.ad_adminname:
+        if self.instance._original_ad_bindname != self.instance.ad_bindname:
             return True
-        if self.instance._original_ad_adminpw != self.instance.ad_adminpw:
+        if self.instance._original_ad_bindpw != self.instance.ad_bindpw:
+            return True
+        if self.instance._original_ad_keytab != self.instance.ad_keytab:
+            return True
+        if self.instance._original_ad_use_keytab != self.instance.ad_use_keytab:
             return True
         return False
 
     def __init__(self, *args, **kwargs):
         super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
-        if self.instance.ad_adminpw:
-            self.fields['ad_adminpw'].required = False
+        if self.instance.ad_bindpw:
+            self.fields['ad_bindpw'].required = False
         if self._api is True:
-            del self.fields['ad_adminpw2']
+            del self.fields['ad_bindpw2']
         self.__original_save()
 
-    def clean_ad_adminpw2(self):
-        password1 = self.cleaned_data.get("ad_adminpw")
-        password2 = self.cleaned_data.get("ad_adminpw2")
+    def clean_ad_bindpw2(self):
+        password1 = self.cleaned_data.get("ad_bindpw")
+        password2 = self.cleaned_data.get("ad_bindpw2")
         if password1 != password2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
 
+    def clean_ad_keytab(self):
+        filename = "/data/krb5.keytab"
+
+        ad_keytab = self.cleaned_data.get("ad_keytab", None)
+        if ad_keytab and ad_keytab != filename:
+            if hasattr(ad_keytab, 'temporary_file_path'):
+                shutil.move(ad_keytab.temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as f:
+                    for c in ad_keytab.chunks():
+                        f.write(c)
+                    f.close()
+
+            os.chmod(filename, 0400)
+            self.instance.ad_keytab = filename
+
+        return filename
+
     def clean(self):
         cdata = self.cleaned_data
-        if not cdata.get("ad_adminpw"):
-            cdata['ad_adminpw'] = self.instance.ad_adminpw
+        if not cdata.get("ad_bindpw"):
+            cdata['ad_bindpw'] = self.instance.ad_bindpw
         return cdata
 
     def save(self):
         super(ActiveDirectoryForm, self).save()
         if self.__original_changed():
             notifier()._clear_activedirectory_config()
-        started = notifier().start("activedirectory")
-        if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:
-            raise ServiceFailed("activedirectory", _("The activedirectory service failed to reload."))
-ActiveDirectoryForm.base_fields.keyOrder.remove('ad_adminpw2')
-ActiveDirectoryForm.base_fields.keyOrder.insert(5, 'ad_adminpw2')
+        started = notifier().started("activedirectory")
+        if started is True and models.services.objects.get(
+            srv_service='directoryservice').srv_enable:
+            started = notifier().restart("activedirectory")
+        if started is False and models.services.objects.get(
+            srv_service='directoryservice').srv_enable:
+            raise ServiceFailed("activedirectory",
+                _("The activedirectory service failed to reload."))
+
+ActiveDirectoryForm.base_fields.keyOrder.remove('ad_bindpw2')
+ActiveDirectoryForm.base_fields.keyOrder.insert(5, 'ad_bindpw2')
 
 
 class NIS(ModelForm):
@@ -820,7 +852,7 @@ class LDAPForm(ModelForm):
     def save(self):
         super(LDAPForm, self).save()
         started = notifier().restart("ldap")
-        if started is False and models.services.objects.get(srv_service='ldap').srv_enable:
+        if started is False and models.services.objects.get(srv_service='directoryservice').srv_enable:
             raise ServiceFailed("ldap", _("The ldap service failed to reload."))
 
 

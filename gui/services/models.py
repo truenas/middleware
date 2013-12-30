@@ -1487,21 +1487,30 @@ class ActiveDirectory(Model):
             verbose_name=_("Workgroup Name"),
             help_text=_("Workgroup or domain name in old format, eg WORKGROUP")
             )
-    ad_adminname = models.CharField(
+    ad_bindname = models.CharField(
             max_length=120,
-            verbose_name=_("Administrator Name"),
-            help_text=_("Domain Administrator account name")
+            verbose_name=_("Domain Account Name"),
+            help_text=_("Domain account name to bind as")
             )
-    ad_adminpw = models.CharField(
+    ad_bindpw = models.CharField(
             max_length=120,
-            verbose_name=_("Administrator Password"),
-            help_text=_("Domain Administrator account password.")
+            verbose_name=_("Domain Account Password"),
+            help_text=_("Domain Account password.")
             )
 
     #
     # AD Advanced settings
     #
-
+    ad_use_keytab = models.BooleanField(
+            default=False,
+            verbose_name=_("Use keytab"),
+            )
+    ad_keytab = models.TextField(
+            verbose_name=_("Kerberos keytab"),
+            help_text=_("Kerberos keytab file"),
+            blank=True,
+            null=True,
+            )
     ad_verbose_logging = models.BooleanField(
             default=False,
             verbose_name=_("Verbose logging"),
@@ -1576,6 +1585,8 @@ class ActiveDirectory(Model):
         deletable = False
         icon_model = "ActiveDirectoryIcon"
         advanced_fields = (
+            'ad_use_keytab',
+            'ad_keytab',
             'ad_verbose_logging',
             'ad_unix_extensions',
             'ad_allow_trusted_doms',

@@ -20,21 +20,53 @@ kerberos_start()
 	then
 		AD_init
 
+		local bindname="$(AD_get ad_bindname)"
+		local bindpw="$(AD_get ad_bindpw)"
 		local domainname="$(AD_get ad_domainname)"
-		local adminname="$(AD_get ad_adminname)"
-		local adminpw="$(AD_get ad_adminpw)"
+		local use_keytab=$(AD_get ad_use_keytab)
+		local keytab="$(AD_get ad_keytab)"
 
-		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
+		if [ "${use_keytab}" = "1" -a -f "${keytab}" ]
+		then
+			local res=0
+			local principals
+
+			domainname="$(echo "${domainname}" | tr a-z A-Z)"
+
+			principals="$(ktutil -k "${keytab}" list |tail +4|awk '{ print $3 }')"
+			for p in ${principals}
+			do
+				AD_log "kerberos_start: kinit -t ${keytab} -k ${p}"
+				kinit -t "${keytab}" -k "${p}"
+				if [ "$?" != "0" ]
+				then
+					res=1
+					break
+				fi
+				res=0
+			done
+
+			local ok="Failed"
+			if [ "${res}" = "0" ]
+			then
+				ok="Successful"
+			fi
+
+			AD_log "kerberos_start: ${ok}"
+			rm -f "${pwfile}"
+			sleep 10
+
+		elif [ -n "${bindname}" -a -n "${domainname}" -a -n "${bindpw}" ]
 		then
 			domainname="$(echo "${domainname}" | tr a-z A-Z)"
 
 			pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"
-			echo -n "${adminpw}" > ${pwfile}
+			echo -n "${bindpw}" > ${pwfile}
 
 			AD_log "kerberos_start: /usr/bin/kinit --password-file=${pwfile} " \
-			    "${adminname}@${domainname}"
+			    "${bindname}@${domainname}"
 			__AD_tc ${timeout} /usr/bin/kinit --password-file="${pwfile}" \
-			    "${adminname}@${domainname}"
+			    "${bindname}@${domainname}"
 			res=$?
 
 			local ok="Failed"
@@ -61,15 +93,15 @@ kerberos_status()
 		AD_init
 
 		local domainname=$(AD_get ad_domainname)
-		local adminname=$(AD_get ad_adminname)
-		local adminpw=$(AD_get ad_adminpw)
+		local bindname=$(AD_get ad_bindname)
+		local bindpw=$(AD_get ad_bindpw)
 
-		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
+		if [ -n "${bindname}" -a -n "${domainname}" -a -n "${bindpw}" ]
 		then
 			domainname=$(echo "${domainname}"|tr a-z A-Z)
 
-			AD_log "kerberos_status: klist -l | grep -q ^${adminname}@${domainname}"
-			klist -l | grep -q "^${adminname}@${domainname}"
+			AD_log "kerberos_status: klist -t"
+			klist -t
 			res=$?
 
 			local ok="Failed"

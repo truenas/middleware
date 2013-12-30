@@ -837,8 +837,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         self.domain = self.adset(self.domain, ad['ad_domainname'])
         self.netbiosname = self.adset(self.netbiosname, ad['ad_workgroup'])
 
-        self.binddn = self.adset(self.binddn, ad['ad_adminname'] + '@' + self.domain.upper())
-        self.bindpw = self.adset(self.bindpw, ad['ad_adminpw'])
+        self.binddn = self.adset(self.binddn, ad['ad_bindname'] + '@' + self.domain.upper())
+        self.bindpw = self.adset(self.bindpw, ad['ad_bindpw'])
 
         self.trusted = True if self.trusted else False
         self.trusted = self.adset(self.trusted, True if long(ad['ad_allow_trusted_doms']) != 0 else False)

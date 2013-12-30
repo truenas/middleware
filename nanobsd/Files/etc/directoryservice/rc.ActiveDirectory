@@ -562,7 +562,7 @@ __do_AD_query()
 	local dcport="${2}"
 	local basedn="${3}"
 	local binddn="${4}"
-	local adminpw="${5}"
+	local bindpw="${5}"
 	local scope="${6}"
 	local filter="${7}"
 	local attributes="${8}"
@@ -572,7 +572,7 @@ __do_AD_query()
 	: ${dcport:="$(AD_get ad_dcport)"}
 	: ${basedn:="$(AD_get ad_basedn)"}
 	: ${binddn:="$(AD_get ad_binddn)"}
-	: ${adminpw:="$(AD_get ad_adminpw)"}
+	: ${bindpw:="$(AD_get ad_bindpw)"}
 	: ${scope:="sub"}
 	: ${filter:="(objectclass=*)"}
 
@@ -581,7 +581,7 @@ __do_AD_query()
 	    -H "ldap://${dchost}:${dcport}" \
 	    -b "${basedn}" \
 	    -D "${binddn}" \
-	    -w "${adminpw}" \
+	    -w "${bindpw}" \
 	    -s "${scope}" \
 	    -x \
 	    -z 0 \
@@ -612,10 +612,10 @@ AD_query()
 	local dchost="$(AD_get ad_dchost)"
 	local dcport="$(AD_get ad_dcport)"
 	local binddn="$(AD_get ad_binddn)"
-	local adminpw="$(AD_get ad_adminpw)"
+	local bindpw="$(AD_get ad_bindpw)"
 
 	__do_AD_query "${dchost}" "${dcport}" "${basedn}" \
-		"${binddn}" "${adminpw}" "sub" "${filter}" \
+		"${binddn}" "${bindpw}" "sub" "${filter}" \
 		"${attributes}" 2>/dev/null
 }
 
@@ -657,13 +657,13 @@ AD_query_global_catalog()
 	local gchost="$(AD_get ad_gchost)"
 	local gcport="$(AD_get ad_gcport)"
 	local binddn="$(AD_get ad_binddn)"
-	local adminpw="$(AD_get ad_adminpw)"
+	local bindpw="$(AD_get ad_bindpw)"
 
 	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
 	    -H "ldap://${gchost}:${gcport}" \
 	    -D "${binddn}" \
-	    -w "${adminpw}" \
+	    -w "${bindpw}" \
 	    -b "" \
 	    -s sub \
 	    -x \
@@ -690,13 +690,13 @@ AD_query_rootDSE()
 	local dchost="$(AD_get ad_dchost)"
 	local dcport="$(AD_get ad_dcport)"
 	local binddn="$(AD_get ad_binddn)"
-	local adminpw="$(AD_get ad_adminpw)"
+	local bindpw="$(AD_get ad_bindpw)"
 
 	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
 	    -H "ldap://${dchost}:${dcport}" \
 	    -D "${binddn}" \
-	    -w "${adminpw}" \
+	    -w "${bindpw}" \
 	    -b "" \
 	    -s base \
 	    -x \
@@ -770,7 +770,7 @@ AD_set()
 AD_save()
 {
 	local prefix="__save_"
-	local vars="ad_adminname ad_domainname ad_basedn ad_binddn ad_dcname \
+	local vars="ad_bindname ad_domainname ad_basedn ad_binddn ad_dcname \
 		ad_dchost ad_dcport ad_gcname ad_gchost ad_gcport ad_krbname \
 		ad_krbhost ad_krbport ad_kpwdname ad_kpwdhost ad_kpwdport \
 		ad_timeout ad_dns_timeout"
@@ -784,7 +784,7 @@ AD_save()
 AD_restore()
 {
 	local prefix="__save_"
-	local vars="ad_adminname ad_domainname ad_basedn ad_binddn ad_dcname \
+	local vars="ad_bindname ad_domainname ad_basedn ad_binddn ad_dcname \
 		ad_dchost ad_dcport ad_gcname ad_gchost ad_gcport ad_krbname \
 		ad_krbhost ad_krbport ad_kpwdname ad_kpwdhost ad_kpwdport \
 		ad_timeout ad_dns_timeout"
@@ -803,8 +803,8 @@ AD_show_config()
 	printf "ad_dcport:       %d\n" $(AD_get ad_dcport)
 	printf "ad_domainname:   %s\n" $(AD_get ad_domainname)
 	printf "ad_basedn:       %s\n" $(AD_get ad_basedn)
-	printf "ad_adminname:    %s\n" $(AD_get ad_adminname)
-	printf "ad_adminpw:      %s\n" $(AD_get ad_adminpw)
+	printf "ad_bindname:     %s\n" $(AD_get ad_bindname)
+	printf "ad_bindpw:       %s\n" $(AD_get ad_bindpw)
 	printf "ad_workgroup:    %s\n" $(AD_get ad_workgroup)
 	printf "ad_netbiosname:  %s\n" $(AD_get ad_netbiosname)
 	printf "ad_gchost:       %s\n" $(AD_get ad_gchost)
@@ -819,19 +819,21 @@ AD_show_config()
 	printf "ad_verbose:      %s\n" $(AD_get ad_verbose_logging)
 	printf "ad_timeout:      %s\n" $(AD_get ad_timeout)
 	printf "ad_dns_timeout:  %s\n" $(AD_get ad_dns_timeout)
+	printf "ad_use_keytab:   %s\n" $(AD_get ad_use_keytab)
+	printf "ad_keytab:       %s\n" $(AD_get ad_keytab)
 	printf "+------------------------------------------+\n"
 }
 
 AD_join_domain()
 {
-	local adminname="${1}"
+	local bindname="${1}"
 	local domainname="${2}"
 	local res
 
-	: ${adminname:="$(AD_get ad_adminname)"}
+	: ${bindname:="$(AD_get ad_bindname)"}
 	: ${domainname:="$(AD_get ad_domainname)"}
 
-	LOGNAME="${adminname}"
+	LOGNAME="${bindname}"
 	export LOGNAME
 
 	AD_log "AD_join_domain: net -k ads join ${domainname}"
@@ -851,14 +853,14 @@ AD_join_domain()
 
 AD_status_domain()
 {
-	local adminname="${1}"
+	local bindname="${1}"
 	local domainname="${2}"
 	local res
 
-	: ${adminname:="$(AD_get ad_adminname)"}
+	: ${bindname:="$(AD_get ad_bindname)"}
 	: ${domainname:="$(AD_get ad_domainname)"}
 
-	LOGNAME="${adminname}"
+	LOGNAME="${bindname}"
 	export LOGNAME
 
 	AD_log "AD_status_domain: net -k ads status ${domainname}"
@@ -878,14 +880,14 @@ AD_status_domain()
 
 AD_leave_domain()
 {
-	local adminname="${1}"
+	local bindname="${1}"
 	local domainname="${2}"
 	local res
 
-	: ${adminname:="$(AD_get ad_adminname)"}
+	: ${bindname:="$(AD_get ad_bindname)"}
 	: ${domainname:="$(AD_get ad_domainname)"}
 
-	LOGNAME="${adminname}"
+	LOGNAME="${bindname}"
 	export LOGNAME
 
 	AD_log "AD_leave_domain: net -k ads leave ${domainname}"
@@ -922,8 +924,8 @@ AD_load_database_values()
 	cat << __SQL__ | ${FREENAS_SQLITE_CMD} -line ${FREENAS_CONFIG} > ${tmpfile}
 	SELECT
 		ad_domainname,
-		ad_adminname,
-		ad_adminpw,
+		ad_bindname,
+		ad_bindpw,
 		ad_workgroup,
 		ad_netbiosname,
 		ad_verbose_logging,
@@ -932,6 +934,8 @@ AD_load_database_values()
 		ad_use_default_domain,
 		ad_dcname,
 		ad_gcname,
+		ad_use_keytab,
+		ad_keytab,
 		ad_krbname,
 		ad_kpwdname,
 		ad_timeout,
@@ -962,7 +966,7 @@ __SQL__
 AD_generate_config()
 {
 	local vars="\
-		ad_adminname \
+		ad_bindname \
 		ad_domainname \
 		ad_basedn \
 		ad_binddn \
@@ -972,6 +976,8 @@ AD_generate_config()
 		ad_gcname \
 		ad_gchost \
 		ad_gcport \
+		ad_use_keytab \
+		ad_keytab \
 		ad_krbname\
 		ad_krbhost \
 		ad_krbport \
@@ -1028,13 +1034,13 @@ AD_init()
 		AD_set ad_dns_timeout "${dns_timeout}"
 	fi
 
-	local adminname=$(AD_get ad_adminname)
+	local bindname=$(AD_get ad_bindname)
 	local domainname=$(AD_get ad_domainname)
 
 	local binddn=$(AD_get ad_binddn)
 	if [ -z "${binddn}" ]
 	then
-		binddn="${adminname}@$(echo ${domainname}|tr a-z A-Z)"
+		binddn="${bindname}@$(echo ${domainname}|tr a-z A-Z)"
 		AD_set ad_binddn "${binddn}"
 	fi	
 	AD_log "AD_init: binddn = $(AD_get ad_binddn)"

@@ -38,8 +38,8 @@ class ActiveDirectoryResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, {
             u'id': self._obj.id,
-            u'ad_adminname': u'',
-            u'ad_adminpw': u'',
+            u'ad_bindname': u'',
+            u'ad_bindpw': u'',
             u'ad_allow_trusted_doms': False,
             u'ad_dcname': u'',
             u'ad_dns_timeout': 10,
@@ -63,8 +63,8 @@ class ActiveDirectoryResourceTest(APITestCase):
                 'ad_netbiosname': 'mynas',
                 'ad_domainname': 'mydomain',
                 'ad_workgroup': 'WORKGROUP',
-                'ad_adminname': 'admin',
-                'ad_adminpw': 'mypw',
+                'ad_bindname': 'admin',
+                'ad_bindpw': 'mypw',
             }
         )
         self.assertHttpOK(resp)
@@ -73,7 +73,7 @@ class ActiveDirectoryResourceTest(APITestCase):
         self.assertEqual(data['ad_netbiosname'], 'mynas')
         self.assertEqual(data['ad_domainname'], 'mydomain')
         self.assertEqual(data['ad_workgroup'], 'WORKGROUP')
-        self.assertEqual(data['ad_adminname'], 'admin')
+        self.assertEqual(data['ad_bindname'], 'admin')
 
     def test_Delete(self):
         resp = self.api_client.delete(
