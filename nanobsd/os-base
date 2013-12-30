@@ -216,7 +216,6 @@ if is_truenas ; then
 	add_port misc/cpuid
 fi
 add_port net-mgmt/bsnmp-ucd
-add_port net-mgmt/bsnmptools
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
 add_port net/istgt
@@ -233,6 +232,7 @@ add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
 add_port lang/python27 OPTIONS_FILE_UNSET+=NLS
 add_port lang/python2
 add_port lang/python
+add_port devel/py-setuptools
 add_port dns/py-dnspython
 add_port devel/tevent
 add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
@@ -266,7 +266,6 @@ fi
 add_port databases/sqlite3
 add_port databases/py-sqlite3
 add_port databases/py-bsddb3
-add_port devel/py-distribute
 add_port devel/py-sysctl
 add_port www/py-flup
 add_port www/py-django OPTIONS_FILE_SET+=FASTCGI
