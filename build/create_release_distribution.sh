@@ -28,4 +28,3 @@ for arch in x64 x86 ; do
 		ln ${TOP}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}.sha256.txt ${TOP}/${STAGEDIR}/${arch}
 	done
 done
-tar -czvf $TARBALL -H ${STAGEDIR}
