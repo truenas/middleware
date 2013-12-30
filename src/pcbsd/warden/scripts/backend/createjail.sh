@@ -71,13 +71,13 @@ touch /etc/mtab
   # Yum is dumb. Trick it to know we have space.
   #
   if [ -f "${JAILDIR}/etc/yum.conf" ] ; then
-    grep -qw diskspace "${JAILDIR}/etc/yum.conf"
+    grep -qw diskspacecheck "${JAILDIR}/etc/yum.conf"
     if [ "$?" = "0" ] ; then
-      sed -E 's/^(diskspace=.+)/diskspace=0/' \
+      sed -E 's/^(diskspacecheck=.+)/diskspacecheck=0/' \
           "${JAILDIR}/etc/yum.conf" > "${JAILDIR}/tmp/yum.conf"
       mv "${JAILDIR}/tmp/yum.conf" "${JAILDIR}/etc/yum.conf"
     else
-      echo 'diskspace=0' >> "${JAILDIR}/etc/yum.conf"
+      echo 'diskspacecheck=0' >> "${JAILDIR}/etc/yum.conf"
     fi
   fi
 
