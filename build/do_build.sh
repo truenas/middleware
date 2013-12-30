@@ -71,7 +71,7 @@ fi
 : ${GIT_FREEBSD_BRANCH=feature/unified_freebsd}
 : ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
 
-: ${GIT_PORTS_BRANCH=freenas/9.1-stable-b}
+: ${GIT_PORTS_BRANCH=freenas/9-stable}
 : ${GIT_PORTS_REPO=git@gitserver:/git/repos/freenas-build/ports.git}
 
 
