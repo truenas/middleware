@@ -404,9 +404,6 @@ fi
 add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
-if ! is_truenas ; then
-	add_port emulators/virtualbox-ose-kmod
-fi
 
 #
 # These are all for SSSD
