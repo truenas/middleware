@@ -408,12 +408,12 @@ class NavTree(object):
                         }
                         navopt.view = 'freeadmin_%s_%s_edit' % (
                             model._meta.app_label,
-                            model._meta.module_name,
+                            model._meta.model_name,
                         )
                     except:
                         navopt.view = 'freeadmin_%s_%s_add' % (
                             model._meta.app_label,
-                            model._meta.module_name,
+                            model._meta.model_name,
                         )
 
                 else:
@@ -448,7 +448,7 @@ class NavTree(object):
                             subopt.type = 'editobject'
                             subopt.view = 'freeadmin_%s_%s_edit' % (
                                 model._meta.app_label,
-                                model._meta.module_name,
+                                model._meta.model_name,
                             )
                             if model._admin.icon_object is not None:
                                 subopt.icon = model._admin.icon_object
@@ -473,7 +473,7 @@ class NavTree(object):
                     subopt.name = _(u'Add %s') % model._meta.verbose_name
                     subopt.view = 'freeadmin_%s_%s_add' % (
                         model._meta.app_label,
-                        model._meta.module_name,
+                        model._meta.model_name,
                     )
                     subopt.order = 500
                     subopt.type = 'dialog'
@@ -490,7 +490,7 @@ class NavTree(object):
                     )
                     subopt.view = u'freeadmin_%s_%s_datagrid' % (
                         model._meta.app_label,
-                        model._meta.module_name,
+                        model._meta.model_name,
                     )
                     if model._admin.icon_view is not None:
                         subopt.icon = model._admin.icon_view

@@ -109,7 +109,7 @@ class BaseFreeAdmin(object):
         #FIXME: duplicated code
         if self.module_name is None:
             if self._model:
-                self.module_name = self._model._meta.module_name
+                self.module_name = self._model._meta.model_name
             else:
                 raise ValueError("module_name cannot be None")
         if self.app_label is None:
@@ -316,7 +316,7 @@ class BaseFreeAdmin(object):
                         **extrakw)
                     try:
                         fsname = 'formset_%s' % (
-                            inline._meta.model._meta.module_name,
+                            inline._meta.model._meta.model_name,
                         )
                         formsets[fsname] = fset(
                             request.POST,
@@ -389,7 +389,7 @@ class BaseFreeAdmin(object):
                         extra=1,
                         **extrakw)
                     fsname = 'formset_%s' % (
-                        inline._meta.model._meta.module_name,
+                        inline._meta.model._meta.model_name,
                     )
                     formsets[fsname] = fset(
                         prefix=prefix, instance=instance, parent=mf
@@ -482,7 +482,7 @@ class BaseFreeAdmin(object):
                         **extrakw)
                     try:
                         fsname = 'formset_%s' % (
-                            inline._meta.model._meta.module_name,
+                            inline._meta.model._meta.model_name,
                         )
                         formsets[fsname] = fset(
                             request.POST,
@@ -567,7 +567,7 @@ class BaseFreeAdmin(object):
                         extra=1,
                         **extrakw)
                     fsname = 'formset_%s' % (
-                        inline._meta.model._meta.module_name,
+                        inline._meta.model._meta.model_name,
                     )
                     formsets[fsname] = fset(
                         prefix=prefix, instance=instance, parent=mf,
@@ -582,7 +582,7 @@ class BaseFreeAdmin(object):
             'instance': instance,
             'delete_url': reverse('freeadmin_%s_%s_delete' % (
                 m._meta.app_label,
-                m._meta.module_name,
+                m._meta.model_name,
             ), kwargs={
                 'oid': instance.id,
             }),
@@ -659,7 +659,7 @@ class BaseFreeAdmin(object):
         related, related_num = get_related_objects(instance)
         context = {
             'app': m._meta.app_label,
-            'model': m._meta.module_name,
+            'model': m._meta.model_name,
             'oid': oid,
             'object': instance,
             'verbose_name': instance._meta.verbose_name,
