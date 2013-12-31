@@ -31,7 +31,7 @@ import re
 import subprocess
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.validators import email_re
+from django.core.validators import validate_email
 from django.forms import FileField
 from django.utils.safestring import mark_safe
 from django.utils.translation import (
@@ -544,10 +544,7 @@ class SNMPForm(ModelForm):
     def clean_snmp_contact(self):
         contact = self.cleaned_data['snmp_contact']
         if '@' in contact:
-            if not email_re.match(contact):
-                raise forms.ValidationError(
-                    _(u"This is not a valid e-mail address")
-                )
+            validate_email(contact)
         elif not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
             raise forms.ValidationError(
                 _(u"The contact must contain only alphanumeric characters, _, "
