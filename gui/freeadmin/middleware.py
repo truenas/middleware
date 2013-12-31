@@ -34,7 +34,6 @@ import cProfile
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 from django.contrib.auth import login, get_backends
 from django.http import HttpResponse
 from django.utils import translation
