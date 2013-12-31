@@ -399,6 +399,7 @@ class JailsConfigurationForm(ModelForm):
     ]
 
     class Meta:
+        fields = '__all__'
         model = JailsConfiguration
         widgets = {
             'jc_path': forms.widgets.TextInput(attrs={
@@ -700,7 +701,9 @@ class JailsEditForm(ModelForm):
 
 
 class JailTemplateCreateForm(ModelForm):
+
     class Meta:
+        fields = '__all__'
         model = JailTemplate
 
     def __init__(self, *args, **kwargs):
@@ -711,7 +714,9 @@ class JailTemplateCreateForm(ModelForm):
 
 
 class JailTemplateEditForm(ModelForm):
+
     class Meta:
+        fields = '__all__'
         model = JailTemplate
 
     def __init__(self, *args, **kwargs):
@@ -759,6 +764,7 @@ class NullMountPointForm(ModelForm):
     )
 
     class Meta:
+        fields = '__all__'
         model = NullMountPoint
         widgets = {
             'source': forms.widgets.TextInput(attrs={

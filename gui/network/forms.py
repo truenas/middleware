@@ -48,6 +48,7 @@ class InterfacesForm(ModelForm):
     int_interface = forms.ChoiceField(label=_("NIC"))
 
     class Meta:
+        fields = '__all__'
         model = models.Interfaces
 
     def __init__(self, *args, **kwargs):
@@ -239,6 +240,7 @@ class InterfacesForm(ModelForm):
 class GlobalConfigurationForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.GlobalConfiguration
 
     def _clean_nameserver(self, value):
@@ -364,6 +366,7 @@ class VLANForm(ModelForm):
     vlan_pint = forms.ChoiceField(label=_("Parent Interface"))
 
     class Meta:
+        fields = '__all__'
         model = models.VLAN
 
     def __init__(self, *args, **kwargs):
@@ -475,6 +478,7 @@ class LAGGInterfaceMemberForm(ModelForm):
     lagg_physnic = forms.ChoiceField(label=_("LAGG Physical NIC"))
 
     class Meta:
+        fields = '__all__'
         model = models.LAGGInterfaceMembers
 
     def __init__(self, *args, **kwargs):
@@ -498,6 +502,7 @@ class LAGGInterfaceMemberForm(ModelForm):
 class StaticRouteForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.StaticRoute
 
     def save(self):
@@ -522,14 +527,15 @@ class StaticRouteForm(ModelForm):
 
 
 class AliasForm(ModelForm):
+
     class Meta:
-        model = models.Alias
         fields = (
             'alias_v4address',
             'alias_v4netmaskbit',
             'alias_v6address',
             'alias_v6netmaskbit',
         )
+        model = models.Alias
 
     def __init__(self, *args, **kwargs):
         super(AliasForm, self).__init__(*args, **kwargs)

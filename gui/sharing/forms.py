@@ -58,6 +58,7 @@ class CIFS_ShareForm(ModelForm):
             self.fields['cifs_guestonly'].widget.attrs['disabled'] = 'disabled'
 
     class Meta:
+        fields = '__all__'
         model = models.CIFS_Share
 
     def clean_cifs_hostsallow(self):
@@ -91,6 +92,7 @@ class AFP_ShareForm(ModelForm):
     )
 
     class Meta:
+        fields = '__all__'
         model = models.AFP_Share
         widgets = {
             'afp_sharepw': forms.widgets.PasswordInput(render_value=False),
@@ -178,6 +180,7 @@ AFP_ShareForm.base_fields.keyOrder.insert(4, 'afp_sharepw2')
 class NFS_ShareForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.NFS_Share
 
     def clean_nfs_network(self):
@@ -356,6 +359,7 @@ class NFS_ShareForm(ModelForm):
 class NFS_SharePathForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.NFS_Share_Path
 
     def clean_path(self):

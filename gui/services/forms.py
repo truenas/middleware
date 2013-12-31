@@ -60,6 +60,7 @@ log = logging.getLogger('services.form')
 
 class servicesForm(ModelForm):
     class Meta:
+        fields = '__all__'
         model = models.services
 
     def save(self, *args, **kwargs):
@@ -124,6 +125,7 @@ class servicesForm(ModelForm):
 class CIFSForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.CIFS
 
     def __check_octet(self, v):
@@ -186,6 +188,7 @@ class CIFSForm(ModelForm):
 class AFPForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.AFP
 
     def save(self):
@@ -296,6 +299,7 @@ class FTPForm(ModelForm):
     ftp_dirmask = UnixPermissionField(label=_('Directory Permission'))
 
     class Meta:
+        fields = '__all__'
         model = models.FTP
         widgets = {
             'ftp_port': forms.widgets.TextInput(),
@@ -386,6 +390,7 @@ class FTPForm(ModelForm):
 class TFTPForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.TFTP
         widgets = {
             'tftp_port': forms.widgets.TextInput(),
@@ -407,6 +412,7 @@ class TFTPForm(ModelForm):
 class SSHForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.SSH
         widgets = {
             'ssh_tcpport': forms.widgets.TextInput(),
@@ -426,6 +432,7 @@ class SSHForm(ModelForm):
 class RsyncdForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.Rsyncd
 
     def save(self):
@@ -444,6 +451,7 @@ class RsyncdForm(ModelForm):
 class RsyncModForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.RsyncMod
 
     def clean_rsyncmod_name(self):
@@ -499,7 +507,8 @@ class DynamicDNSForm(ModelForm):
             'ddns_password2',
             'ddns_updateperiod',
             'ddns_fupdateperiod',
-            'ddns_options')
+            'ddns_options',
+        )
 
     def __init__(self, *args, **kwargs):
         super(DynamicDNSForm, self).__init__(*args, **kwargs)
@@ -539,6 +548,7 @@ class DynamicDNSForm(ModelForm):
 class SNMPForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.SNMP
 
     def clean_snmp_contact(self):
@@ -577,6 +587,7 @@ class SNMPForm(ModelForm):
 class UPSForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.UPS
         widgets = {
             'ups_remoteport': forms.widgets.TextInput(),
@@ -689,6 +700,7 @@ class NT4(ModelForm):
     )
 
     class Meta:
+        fields = '__all__'
         model = models.NT4
         widgets = {
             'nt4_adminpw': forms.widgets.PasswordInput(render_value=False),
@@ -727,6 +739,7 @@ class ActiveDirectoryForm(ModelForm):
     ad_keytab = FileField(label=_("Kerberos keytab"), required=False)
 
     class Meta:
+        fields = '__all__'
         model = models.ActiveDirectory
         widgets = {
             'ad_bindpw': forms.widgets.PasswordInput(render_value=False),
@@ -835,12 +848,14 @@ ActiveDirectoryForm.base_fields.keyOrder.insert(5, 'ad_bindpw2')
 
 class NIS(ModelForm):
     class Meta:
+        fields = '__all__'
         model = models.NIS
 
 
 class LDAPForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.LDAP
         widgets = {
             'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True),
@@ -867,6 +882,7 @@ class iSCSITargetAuthCredentialForm(ModelForm):
     )
 
     class Meta:
+        fields = '__all__'
         model = models.iSCSITargetAuthCredential
         widgets = {
             'iscsi_target_auth_secret': forms.PasswordInput(render_value=True),
@@ -976,6 +992,7 @@ class iSCSITargetAuthCredentialForm(ModelForm):
 
 class iSCSITargetToExtentForm(ModelForm):
     class Meta:
+        fields = '__all__'
         model = models.iSCSITargetToExtent
         widgets = {
             'iscsi_target': forms.widgets.FilteringSelect(),
@@ -1016,6 +1033,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
     iscsi_discoveryauthgroup = forms.ChoiceField(label=_("Discovery Auth Group"))
 
     class Meta:
+        fields = '__all__'
         model = models.iSCSITargetGlobalConfiguration
         widgets = {
             'iscsi_lucport': forms.widgets.TextInput(),
@@ -1405,6 +1423,7 @@ iSCSITargetExtentForm.base_fields.keyOrder.insert(2, 'iscsi_target_extent_disk')
 class iSCSITargetPortalForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.iSCSITargetPortal
         widgets = {
             'iscsi_target_portal_tag': forms.widgets.HiddenInput(),
@@ -1432,6 +1451,7 @@ class iSCSITargetPortalForm(ModelForm):
 class iSCSITargetPortalIPForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.iSCSITargetPortalIP
         widgets = {
             'iscsi_target_portalip_port': forms.widgets.TextInput(),
@@ -1480,6 +1500,7 @@ class iSCSITargetPortalIPForm(ModelForm):
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.iSCSITargetAuthorizedInitiator
         exclude = (
             'iscsi_target_initiator_tag',
@@ -1528,6 +1549,7 @@ class iSCSITargetForm(ModelForm):
     iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
 
     class Meta:
+        fields = '__all__'
         model = models.iSCSITarget
         exclude = ('iscsi_target_initialdigest', 'iscsi_target_type')
 
@@ -1616,6 +1638,7 @@ class ExtentDelete(Form):
 class SMARTForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.SMART
 
     def clean_smart_email(self):

@@ -809,6 +809,7 @@ class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
 class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
 
     class Meta:
+        fields = '__all__'
         model = models.bsdGroups
         widgets = {
             'bsdgrp_gid': forms.widgets.ValidationTextInput(),

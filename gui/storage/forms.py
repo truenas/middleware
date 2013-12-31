@@ -990,6 +990,7 @@ class VolumeAutoImportForm(Form):
 
 
 class DiskFormPartial(ModelForm):
+
     class Meta:
         model = models.Disk
         exclude = (
@@ -1438,6 +1439,7 @@ class MountPointAccessForm(Form):
 class PeriodicSnapForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.Task
         widgets = {
             'task_byweekday': CheckboxSelectMultiple(
@@ -1733,6 +1735,7 @@ class ReplicationForm(ModelForm):
     )
 
     class Meta:
+        fields = '__all__'
         model = models.Replication
         exclude = ('repl_lastsnapshot', 'repl_remote')
         widgets = {
@@ -1838,6 +1841,7 @@ class ReplicationForm(ModelForm):
 class ReplRemoteForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.ReplRemote
 
     def save(self):
@@ -1883,7 +1887,9 @@ class Dataset_Destroy(Form):
 
 
 class ScrubForm(ModelForm):
+
     class Meta:
+        fields = '__all__'
         model = models.Scrub
         widgets = {
             'scrub_minute': CronMultiple(

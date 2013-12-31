@@ -197,6 +197,7 @@ class FirmwareWizard(FileWizard):
 class SettingsForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.Settings
         widgets = {
             'stg_timezone': forms.widgets.FilteringSelect(),
@@ -280,6 +281,7 @@ class NTPForm(ModelForm):
     force = forms.BooleanField(label=_("Force"), required=False)
 
     class Meta:
+        fields = '__all__'
         model = models.NTPServer
 
     def __init__(self, *args, **kwargs):
@@ -326,6 +328,7 @@ class NTPForm(ModelForm):
 class AdvancedForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.Advanced
 
     def __init__(self, *args, **kwargs):
@@ -482,6 +485,7 @@ class SSLForm(ModelForm):
     )
 
     class Meta:
+        fields = '__all__'
         model = models.SSL
         widgets = {
             'ssl_passphrase': forms.widgets.PasswordInput(render_value=False),
@@ -620,6 +624,7 @@ class SSLForm(ModelForm):
 class SMARTTestForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.SMARTTest
         widgets = {
             'smarttest_hour': CronMultiple(
@@ -770,6 +775,7 @@ class ConfigUploadForm(Form):
 class CronJobForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.CronJob
         widgets = {
             'cron_command': forms.widgets.TextInput(),
@@ -838,6 +844,7 @@ class CronJobForm(ModelForm):
 class RsyncForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.Rsync
         widgets = {
             'rsync_minute': CronMultiple(
@@ -991,7 +998,9 @@ TUNABLE_VARNAME_FORMAT_RE = \
 
 
 class SysctlForm(ModelForm):
+
     class Meta:
+        fields = '__all__'
         model = models.Sysctl
 
     def clean_sysctl_comment(self):
@@ -1015,7 +1024,9 @@ class SysctlForm(ModelForm):
 
 
 class TunableForm(ModelForm):
+
     class Meta:
+        fields = '__all__'
         model = models.Tunable
 
     def clean_ldr_comment(self):
@@ -1041,6 +1052,7 @@ class TunableForm(ModelForm):
 class InitShutdownForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.InitShutdown
 
     def __init__(self, *args, **kwargs):
@@ -1067,6 +1079,7 @@ class InitShutdownForm(ModelForm):
 class RegistrationForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.Registration
 
     def __init__(self, *args, **kwargs):
