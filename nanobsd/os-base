@@ -819,6 +819,14 @@ fi
 
 remove_var_db_pkg()
 {
+	# Workaround to remove packages from a fat image
+	CR "pkg_delete -f gcc47\* || true"
+	CR "pkg_delete -f gcc-ecj\* || true"
+	CR "pkg_delete -f kBuild\* || true"
+	CR "pkg_delete -f cmake\* || true"
+	CR "pkg_delete -f docbook\* || true"
+	CR "pkg_delete -f automake\* || true"
+	CR "pkg_delete -f autoconf\* || true"
 	# Eats up ~7 MB on the install image.
 	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
 	# bsnmpd complains about no such directory found
