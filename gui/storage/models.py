@@ -251,7 +251,7 @@ class Volume(Model):
 
     def delete(self, destroy=True, cascade=True):
 
-        with transaction.commit_on_success():
+        with transaction.atomic():
             try:
                 svcs, reloads = Volume._delete(self,
                                                destroy=destroy,

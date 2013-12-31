@@ -287,7 +287,7 @@ class VolumeManagerUFSForm(Form, VolumeMixin):
         group_type = self.cleaned_data.get('group_type')
         ufspath = self.cleaned_data['ufspath']
 
-        with transaction.commit_on_success():
+        with transaction.atomic():
             volume = models.Volume(
                 vol_name=volume_name,
                 vol_fstype='UFS',
@@ -397,7 +397,7 @@ class VolumeManagerForm(VolumeMixin, Form):
             volume_encrypt = 0
         dedup = self.cleaned_data.get("dedup", False)
 
-        with transaction.commit_on_success():
+        with transaction.atomic():
             vols = models.Volume.objects.filter(
                 vol_name=volume_name,
                 vol_fstype='ZFS')
@@ -739,7 +739,7 @@ class AutoImportWizard(SessionWizardView):
             volume_fstype = 'ZFS'
 
         try:
-            with transaction.commit_on_success():
+            with transaction.atomic():
                 volume = models.Volume(
                     vol_name=volume_name,
                     vol_fstype=volume_fstype,
@@ -1109,7 +1109,7 @@ class DiskEditBulkForm(Form):
 
     def save(self):
 
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for disk in self._disks:
 
                 for opt in (
@@ -1668,7 +1668,7 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
         else:
             passfile = None
 
-        with transaction.commit_on_success():
+        with transaction.atomic():
             if devname != self.disk:
                 rv = notifier().zfs_replace_disk(
                     self.volume,

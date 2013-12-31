@@ -135,7 +135,7 @@ class Plugins(Model):
         qs = Plugins.objects.filter(plugin_jail=self.plugin_jail).exclude(
             id__exact=self.id
         )
-        with transaction.commit_on_success():
+        with transaction.atomic():
             jc = JailsConfiguration.objects.order_by('-id')[0]
             jaildir = "%s/%s" % (jc.jc_path, self.plugin_jail)
 

@@ -1033,7 +1033,7 @@ class PasswordChangeForm(SetPasswordForm):
         return old_password
 
     def save(self, *args, **kwargs):
-        with transaction.commit_on_success():
+        with transaction.atomic():
             if self.cleaned_data.get('change_root'):
                 root = models.bsdUsers.objects.get(bsdusr_username='root')
                 new_password = self.cleaned_data.get('new_password')

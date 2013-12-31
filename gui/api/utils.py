@@ -299,7 +299,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
         Saving the objects under a transaction won't work very well
         because some rc.d scripts and rc.conf will not be able to visualize
         the changes until the transaction is committed.
-        # with transaction.commit_on_success():
+        # with transaction.atomic():
         """
         form.save()
         bundle.obj = form.instance

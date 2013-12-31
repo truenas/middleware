@@ -191,7 +191,7 @@ class Interfaces(Model):
         self._original_int_options = self.int_options
 
     def delete(self):
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for lagg in self.lagginterface_set.all():
                 lagg.delete()
             if self.id:

@@ -443,7 +443,7 @@ class LAGGInterfaceForm(ModelForm):
         lagg_name = "lagg%d" % candidate_index
         lagg_protocol = self.cleaned_data['lagg_protocol']
         lagg_member_list = self.cleaned_data['lagg_interfaces']
-        with transaction.commit_on_success():
+        with transaction.atomic():
             # Step 1: Create an entry in interface table that
             # represents the lagg interface
             lagg_interface = models.Interfaces(
