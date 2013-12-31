@@ -238,12 +238,12 @@ class FreeAdminSite(object):
         try:
             navtree.generate(request)
             final = navtree.dijitTree(request.user)
-            json = json.dumps(final)
+            data = json.dumps(final)
         except Exception, e:
             log.debug("Fatal error while generating the tree json: %s", e)
-            json = ""
+            data = ""
 
-        return HttpResponse(json, mimetype="application/json")
+        return HttpResponse(data, mimetype="application/json")
 
     @never_cache
     def alert_status(self, request):
