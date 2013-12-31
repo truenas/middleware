@@ -243,7 +243,7 @@ class FreeAdminSite(object):
             log.debug("Fatal error while generating the tree json: %s", e)
             data = ""
 
-        return HttpResponse(data, mimetype="application/json")
+        return HttpResponse(data, content_type="application/json")
 
     @never_cache
     def alert_status(self, request):

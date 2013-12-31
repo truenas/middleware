@@ -451,7 +451,7 @@ def directory_browser(request, path='/'):
     ).items()
     context = directories
     content = simplejson.dumps(context)
-    return HttpResponse(content, mimetype='application/json')
+    return HttpResponse(content, content_type='application/json')
 
 
 def file_browser(request, path='/'):
@@ -466,7 +466,7 @@ def file_browser(request, path='/'):
     ).items()
     context = directories
     content = simplejson.dumps(context)
-    return HttpResponse(content, mimetype='application/json')
+    return HttpResponse(content, content_type='application/json')
 
 
 def firmware_progress(request):
@@ -506,7 +506,7 @@ def firmware_progress(request):
             pass
 
     content = simplejson.dumps(data)
-    return HttpResponse(content, mimetype='application/json')
+    return HttpResponse(content, content_type='application/json')
 
 
 def restart_httpd(request):

@@ -298,7 +298,7 @@ def jail_progress(request):
             jail_progress_start_time = 0
             jail_progress_percent = 0
 
-    return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+    return HttpResponse(simplejson.dumps(data), content_type="application/json")
 
 linux_jail_progress_estimated_time = 600
 linux_jail_progress_start_time = 0
@@ -384,7 +384,7 @@ def jail_linuxprogress(request):
             linux_jail_progress_start_time = 0
             linux_jail_progress_percent = 0
 
-    return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+    return HttpResponse(simplejson.dumps(data), content_type="application/json")
 
 def jail_template_edit(request, id):
 
@@ -491,4 +491,4 @@ def jail_template_info(request, name):
         data['jt_url'] = jt.jt_url
 
     content = simplejson.dumps(data)
-    return HttpResponse(content, mimetype='application/json')
+    return HttpResponse(content, content_type='application/json')

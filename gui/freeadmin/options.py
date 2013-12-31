@@ -607,7 +607,7 @@ class BaseFreeAdmin(object):
                 request,
                 template,
                 context,
-                mimetype='text/html')
+                content_type='text/html')
             resp.content = (
                 "<html><body><textarea>"
                 + resp.content +

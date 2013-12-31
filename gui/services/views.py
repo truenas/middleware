@@ -211,7 +211,7 @@ def servicesToggleView(request, formname):
         'events': events,
     }
 
-    return HttpResponse(json.dumps(data), mimetype="application/json")
+    return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 def enable(request, svc):

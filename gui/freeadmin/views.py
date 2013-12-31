@@ -181,7 +181,7 @@ def server_error(request, *args, **kwargs):
         if tb:
             reporter = ExceptionReporter(request, *sys.exc_info())
             html = reporter.get_traceback_html()
-            return HttpResponse(html, mimetype='text/html')
+            return HttpResponse(html, content_type='text/html')
         else:
             raise
     except Exception, e:

@@ -324,7 +324,7 @@ def install_progress(request):
         data = {'step': 4}
 
     content = json.dumps(data)
-    return HttpResponse(content, mimetype='application/json')
+    return HttpResponse(content, content_type='application/json')
 
 
 def update_progress(request):
@@ -343,7 +343,7 @@ def update_progress(request):
         data = {'step': 2}
 
     content = json.dumps(data)
-    return HttpResponse(content, mimetype='application/json')
+    return HttpResponse(content, content_type='application/json')
 
 
 def upload(request, jail_id=-1):
@@ -440,7 +440,7 @@ def upload_progress(request):
         data = {'step': 3}
 
     content = json.dumps(data)
-    return HttpResponse(content, mimetype='application/json')
+    return HttpResponse(content, content_type='application/json')
 
 def default_icon():
     default = (
@@ -461,7 +461,7 @@ def plugin_available_icon(request, oid):
     if not icon:
         icon = default_icon()
 
-    return HttpResponse(icon, mimetype="image/png")
+    return HttpResponse(icon, content_type="image/png")
 
 
 def plugin_installed_icon(request, plugin_name, oid):
@@ -485,7 +485,7 @@ def plugin_installed_icon(request, plugin_name, oid):
     if not icon:
         icon = default_icon()
    
-    return HttpResponse(icon, mimetype="image/png")
+    return HttpResponse(icon, content_type="image/png")
 
 
 @public
