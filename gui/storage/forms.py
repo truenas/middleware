@@ -370,7 +370,7 @@ class VolumeManagerForm(VolumeMixin, Form):
             formset=VdevFormSet,
         )
         self._formset = vdevFormSet(self.data, prefix='layout')
-        self._formset.form = self
+        self._formset.pform = self
         return valid and self._formset.is_valid()
 
     def clean(self):
@@ -511,7 +511,7 @@ class VdevFormSet(BaseFormSet):
             # is valid on its own
             return
 
-        if not self.form.cleaned_data.get("volume_add"):
+        if not self.pform.cleaned_data.get("volume_add"):
             """
             We need to make sure at least one vdev is a
             data vdev (non-log/cache/spare)
@@ -529,7 +529,7 @@ class VdevFormSet(BaseFormSet):
                 raise forms.ValidationError(_("You need a data disk group"))
         else:
             zpool = notifier().zpool_parse(
-                self.form.cleaned_data.get("volume_add")
+                self.pform.cleaned_data.get("volume_add")
             )
             for vdev in zpool.data:
 
