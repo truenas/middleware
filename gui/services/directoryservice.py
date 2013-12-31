@@ -25,7 +25,6 @@
 #
 #####################################################################
 from django.db import models
-from django.db.models.query import EmptyQuerySet
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
@@ -56,6 +55,12 @@ class DirectoryServiceQuerySet(models.query.QuerySet):
 
         elif type == 'nis':
             super(DirectoryServiceQuerySet, self).__init__(NIS, query, using)
+
+
+class EmptyQuerySet(models.query.QuerySet):
+
+    def __getitem__(self, k):
+        raise IndexError
 
 
 class DirectoryServiceManager(models.Manager):
