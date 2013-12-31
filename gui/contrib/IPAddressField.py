@@ -29,14 +29,14 @@ class IPNetworkManager(models.Manager):
         self.queryset_class = qs_class
         super(IPNetworkManager, self).__init__()
 
-    def get_query_set(self):
+    def get_queryset(self):
         return self.queryset_class(self.model)
 
     def __getattr__(self, attr, *args):
         try:
             return getattr(self.__class__, attr, *args)
         except AttributeError:
-            return getattr(self.get_query_set(), attr, *args)
+            return getattr(self.get_queryset(), attr, *args)
 
 
 class IPNetworkQuerySet(models.query.QuerySet):

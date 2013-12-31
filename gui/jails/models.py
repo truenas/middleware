@@ -60,11 +60,11 @@ class JailsManager(models.Manager):
         self.queryset_class = qs_class
         super(JailsManager, self).__init__()
 
-    def get_query_set(self):
+    def get_queryset(self):
         return JailsQuerySet(self.model)
 
     def __getattr__(self, name):
-        return getattr(self.get_query_set(), name)
+        return getattr(self.get_queryset(), name)
 
 
 class Jails(Model):

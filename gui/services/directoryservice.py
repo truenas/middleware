@@ -70,7 +70,7 @@ class DirectoryServiceManager(models.Manager):
         self.queryset_class = qs_class
         super(DirectoryServiceManager, self).__init__()
 
-    def get_query_set(self):
+    def get_queryset(self):
         settings = Settings.objects.order_by("-id")
         if settings:
             settings = settings[0]  
@@ -83,7 +83,7 @@ class DirectoryServiceManager(models.Manager):
             return EmptyQuerySet(self.model)
 
     def __getattr__(self, name):
-        return getattr(self.get_query_set(), name)
+        return getattr(self.get_queryset(), name)
 
 
 class DirectoryService(Model):
