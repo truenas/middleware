@@ -70,7 +70,7 @@ class RandomWorker(threading.Thread):
         proc = subprocess.Popen(
             [
                 "dd",
-                "if=/dev/random",
+                "if=/dev/zero",
                 "of=%s" % self._dev,
                 "bs=1m",
             ],
