@@ -432,8 +432,8 @@ class DojoFileStore(object):
 
         item['$ref'] = os.path.abspath(
             reverse(self._lookupurl, kwargs={
-                'path': path + '?root=' + urllib.quote_plus(self.root),
-            })
+                'path': path,
+            }) + '?root=%s' % urllib.quote_plus(self.root),
         )
         item['id'] = item['$ref']
         return item
