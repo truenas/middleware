@@ -31,6 +31,7 @@ clean-packages:
 save-build-env:
 	${ENV_SETUP} build/save_build.sh
 
+freenas: release
 release:
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} do-release
 
