@@ -317,7 +317,7 @@ generate_smbconf()
 		    obey pam restrictions = Yes
 		    # NOTE: read smb.conf.
 		    directory name cache size = 0
-		    max protocol = SMB2
+		    max protocol = SMB3
 EOF
 
 		if [ "${ad_enable}" = "0" -a "${nt4_enable}" = "0" ]; then
