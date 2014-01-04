@@ -405,6 +405,12 @@ add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
 
+# When we are ready to bring vbox back this fixes
+# an issue with bridging. Ticket #3701
+#if ! is_truenas ; then
+#	add_port emulators/virtualbox-ose-kmod OPTIONS_FILE_SET+=VIMAGE
+#fi
+
 #
 # These are all for SSSD
 # 
