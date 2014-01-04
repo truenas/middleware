@@ -65,7 +65,7 @@ def main():
             cf_contents.append("\tvol dbpath = %s\n" % share.afp_dbpath)
         if not share.afp_nodev:
             cf_contents.append("\tcnid dev = no\n")
-        if not share.afp_nostat:
+        if share.afp_nostat:
             cf_contents.append("\tstat vol = no\n")
         if not share.afp_upriv:
             cf_contents.append("\tunix priv = no\n")
