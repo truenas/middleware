@@ -568,7 +568,7 @@ EOF
 			# Order matters. shadow_copy2 must be enabled before
 			# zfsacl, otherwise zfsacl will prevent shadow_copy2
 			# from working because of permissions issues.
-			vfs_objects="$vfs_objects $zfsacl"
+			vfs_objects="$vfs_objects $zfsacl streams_xattr"
 
 			if [ -n "$vfs_objects" ]
 			then
