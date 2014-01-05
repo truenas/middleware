@@ -86,8 +86,8 @@ main()
 	_scrub_diff=$(expr -e \( $(date +%s) - \
 		$(date -j -f %F.%T ${_last_scrub} +%s) \) / 60 / 60 / 24)
 	if [ ${_scrub_diff} -lt ${threshold} ]; then
-		echo "   skipping scrubbing of pool '${pool}':"
-		echo "	  last scrubbing is ${_scrub_diff} days ago, threshold is set to ${threshold} days"
+		# echo "   skipping scrubbing of pool '${pool}':"
+		# echo "	  last scrubbing is ${_scrub_diff} days ago, threshold is set to ${threshold} days"
 		return 3
 	fi
 
