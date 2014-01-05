@@ -404,6 +404,7 @@ fi
 add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
+add_port net/trafshow
 
 # When we are ready to bring vbox back this fixes
 # an issue with bridging. Ticket #3701
