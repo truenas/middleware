@@ -49,8 +49,6 @@ def main():
     for share in afp_share:
         cf_contents.append("[%s]\n" % share.afp_name)
         cf_contents.append("\tpath = %s\n" % share.afp_path)
-        if share.afp_sharepw:
-            cf_contents.append("\tpassword = %s\n" % share.afp_sharepw)
         if share.afp_allow:
             cf_contents.append("\tallow = %s\n" % share.afp_allow)
         if share.afp_deny:
