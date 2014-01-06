@@ -84,19 +84,9 @@ class CIFS_ShareForm(ModelForm):
 
 class AFP_ShareForm(ModelForm):
 
-    afp_sharepw2 = forms.CharField(
-        max_length=50,
-        label=_("Confirm Share Password"),
-        widget=forms.widgets.PasswordInput(render_value=False),
-        required=False,
-    )
-
     class Meta:
         fields = '__all__'
         model = models.AFP_Share
-        widgets = {
-            'afp_sharepw': forms.widgets.PasswordInput(render_value=False),
-        }
 
     def __init__(self, *args, **kwargs):
         super(AFP_ShareForm, self).__init__(*args, **kwargs)
@@ -114,15 +104,6 @@ class AFP_ShareForm(ModelForm):
             required=False,
         )
         if self.instance.id:
-            self.fields['afp_sharepw2'].initial = self.instance.afp_sharepw
-            if self.instance.afp_sharepw:
-                self.fields['afp_deletepw'] = forms.BooleanField(
-                    label=_("Delete password"),
-                    initial=False,
-                    required=False,
-                )
-                self.fields.keyOrder.remove('afp_deletepw')
-                self.fields.keyOrder.insert(5, 'afp_deletepw')
             if not self.instance.afp_upriv:
                 self.fields['afp_fperm'].widget.attrs['disabled'] = 'true'
                 self.fields['afp_dperm'].widget.attrs['disabled'] = 'true'
@@ -131,15 +112,6 @@ class AFP_ShareForm(ModelForm):
                 self.fields['afp_fperm'].widget.attrs['disabled'] = 'false'
                 self.fields['afp_dperm'].widget.attrs['disabled'] = 'false'
                 self.fields['afp_umask'].widget.attrs['disabled'] = 'false'
-
-    def clean_afp_sharepw2(self):
-        password1 = self.cleaned_data.get("afp_sharepw")
-        password2 = self.cleaned_data.get("afp_sharepw2")
-        if password1 != password2:
-            raise forms.ValidationError(
-                _("The two password fields didn't match.")
-            )
-        return password2
 
     def clean_afp_umask(self):
         umask = self.cleaned_data.get("afp_umask")
@@ -156,13 +128,6 @@ class AFP_ShareForm(ModelForm):
                 )
         return umask
 
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("afp_sharepw") and not cdata.get("afp_deletepw"):
-            cdata['afp_sharepw'] = self.instance.afp_sharepw
-        return cdata
-
     def save(self):
         ret = super(AFP_ShareForm, self).save()
         notifier().reload("afp")
@@ -172,9 +137,6 @@ class AFP_ShareForm(ModelForm):
         if not services.objects.get(srv_service='afp').srv_enable:
             events.append('ask_service("afp")')
         super(AFP_ShareForm, self).done(request, events)
-
-AFP_ShareForm.base_fields.keyOrder.remove('afp_sharepw2')
-AFP_ShareForm.base_fields.keyOrder.insert(4, 'afp_sharepw2')
 
 
 class NFS_ShareForm(ModelForm):
