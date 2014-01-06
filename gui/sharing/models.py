@@ -109,12 +109,6 @@ class AFP_Share(Model):
             )
     afp_path = PathField(
             verbose_name=_("Path"))
-    afp_sharepw = models.CharField(
-            max_length=120,
-            verbose_name=_("Share password"),
-            blank=True,
-            help_text=_("This option allows you to set a volume password, which can be a maximum of 8 characters long (using ASCII strongly recommended at the time of this writing).")
-        )
     afp_allow = models.CharField(
             max_length=120,
             verbose_name=_("Allow List"),
