@@ -25,6 +25,7 @@
 # SUCH DAMAGE.
 #
 from decimal import Decimal
+import bisect
 import logging
 import os
 import re
@@ -433,7 +434,7 @@ class ZFSList(SortedDict):
 
     def append(self, new):
         if new.pool in self.pools:
-            self.pools.get(new.pool).append(new)
+            bisect.insort(self.pools.get(new.pool), new)
         else:
             self.pools[new.pool] = [new]
         self[new.name] = new
@@ -770,8 +771,8 @@ def list_datasets(path="", recursive=False, hierarchical=False,
         "/sbin/zfs",
         "list",
         "-H",
-        "-t",
-        "filesystem"
+        "-t", "filesystem",
+        "-s", "name",
     ]
     if recursive:
         args.insert(3, "-r")

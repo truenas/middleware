@@ -38,6 +38,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, QueryDict
+from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
 from freenasUI import choices
@@ -645,7 +646,7 @@ class VolumeResourceMixin(NestedMixin):
                     })
 
             if dataset.children:
-                _datasets = {}
+                _datasets = SortedDict()
                 for child in dataset.children:
                     _datasets[child.name] = child
                 data['children'] = self._get_datasets(
