@@ -187,6 +187,10 @@ class bsdUsers(Model):
         """
         return True
 
+    def set_password(self, password):
+        """stub required for the API"""
+        pass
+
     def check_password(self, raw_password):
         # Only allow uid 0 for now
         if self.bsdusr_uid != 0:
