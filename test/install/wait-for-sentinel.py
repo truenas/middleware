@@ -1,3 +1,10 @@
+# WAIT FOR SENTINEL FILE
+#
+# The following test
+#   (1) reads a json file specified by the -f flag.
+#   (2) waits for a sentinel file to exit 
+#
+
 from optparse import OptionParser
 import atexit
 import getopt
@@ -15,11 +22,6 @@ sentinel_file = None
 def usage(argv):
     print "Usage:"
     print "    %s -f [JSON config file]" % argv[0]
-
-
-# The following test
-#   (1) reads a json file specified by the -f flag.
-#   (2) waits for a sentinel file to exit 
 
 def main(argv):
 

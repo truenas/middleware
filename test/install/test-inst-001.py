@@ -1,3 +1,11 @@
+# INSTALL TEST WITH BHYVE
+#
+# The following test:
+#   (1) takes an ISO image
+#   (2) installs it into a disk image
+#   (3) boots the disk image
+#
+
 from optparse import OptionParser
 import atexit
 import getopt
@@ -24,11 +32,6 @@ def usage(argv):
     print "Usage:"
     print "    %s -f [JSON config file]" % argv[0]
 
-
-# The following test:
-#   (1) takes an ISO image
-#   (2) installs it into a disk image
-#   (3) boots the disk image
 
 def main(argv):
 
