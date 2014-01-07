@@ -13,7 +13,7 @@
         "/tmp/disk13.img"
     ], 
     "iso": "/tmp/FreeNAS.iso", 
-    "password": "XXXXXXXX"
+    "password": "XXXXXXXX",
     "tap": "tap0", 
     "bridge": "bridge0", 
     "interface": "em0", 
