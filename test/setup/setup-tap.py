@@ -1,3 +1,11 @@
+# SETUP TAP INTERFACE AND BRIDGE
+#
+# The following script:
+#   (1) sets up a tap interface
+#   (2) associates the tap interface with a bridge
+#
+# This tap interface can be used by BHyve VMs. 
+
 from optparse import OptionParser
 import atexit
 import getopt
@@ -15,12 +23,6 @@ def usage(argv):
     print "Usage:"
     print "    %s -f [JSON config file]" % argv[0]
 
-
-# The following script:
-#   (1) sets up a tap interface
-#   (2) associates the tap interface with a bridge
-#
-# This tap interface can be used by BHyve VMs. 
 
 def main(argv):
 
