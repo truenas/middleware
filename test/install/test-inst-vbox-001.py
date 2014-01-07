@@ -11,7 +11,6 @@ import atexit
 import getopt
 import json
 import os
-#import pexpect
 import sys
 import subprocess
 import tempfile
