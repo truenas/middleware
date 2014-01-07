@@ -1,7 +1,12 @@
 <form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e,  '{{ request.path }}',
-        function(){zfswizardcheckings();}, {progressbar: true});
+        doSubmit({
+          form: this,
+          event: e,
+          url: '{{ request.path }}',
+          progressbar: true,
+          onComplete: function(){zfswizardcheckings();}
+        });
     </script>
     <table>
         {% if form.non_field_errors %}
