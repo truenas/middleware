@@ -566,6 +566,224 @@ class VdevFormSet(BaseFormSet):
                         break
 
 
+class ZFSVolumeWizardForm(forms.Form):
+    volume_name = forms.CharField(
+        max_length=30,
+        label=_('Volume name'),
+        required=False)
+    volume_disks = forms.MultipleChoiceField(
+        choices=(),
+        widget=forms.SelectMultiple(attrs=attrs_dict),
+        label='Member disks',
+        required=False)
+    group_type = forms.ChoiceField(
+        choices=(),
+        widget=forms.RadioSelect(attrs=attrs_dict),
+        required=False)
+    dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+        choices=choices.ZFS_DEDUP,
+        initial="off",
+        )
+    def __init__(self, *args, **kwargs):
+        super(ZFSVolumeWizardForm, self).__init__(*args, **kwargs)
+        self.fields['volume_disks'].choices = self._populate_disk_choices()
+        qs = models.Volume.objects.filter(vol_fstype='ZFS')
+        if qs.exists():
+            self.fields['volume_add'] = forms.ChoiceField(
+                label=_('Volume add'),
+                required=False)
+            self.fields['volume_add'].choices = [('', '-----')] + \
+                                        [(x.vol_name, x.vol_name) for x in qs]
+            self.fields['volume_add'].widget.attrs['onChange'] = (
+                'wizardcheckings(true);')
+
+        grouptype_choices = (
+            ('mirror', 'mirror'),
+            ('stripe', 'stripe'),
+            )
+        if "volume_disks" in self.data:
+            disks = self.data.getlist("volume_disks")
+        else:
+            disks = []
+        if len(disks) >= 3:
+            grouptype_choices += (('raidz', 'RAID-Z'), )
+        if len(disks) >= 4:
+            grouptype_choices += ( ('raidz2', 'RAID-Z2'), )
+        if len(disks) >= 5:
+            grouptype_choices += ( ('raidz3', 'RAID-Z3'), )
+        self.fields['group_type'].choices = grouptype_choices
+
+        #dedup = _dedup_enabled()
+        dedup = True
+        if not dedup:
+            self.fields['dedup'].widget.attrs['readonly'] = True
+            self.fields['dedup'].widget.attrs['class'] = (
+                'dijitSelectDisabled dijitDisabled')
+
+    def _populate_disk_choices(self):
+
+        disks = []
+
+        # Grab disk list
+        # Root device already ruled out
+        for disk, info in notifier().get_disks().items():
+            disks.append(Disk(info['devname'], info['capacity'],
+                serial=info.get('ident')))
+
+        # Exclude what's already added
+        used_disks = []
+        for v in models.Volume.objects.all():
+            used_disks.extend(v.get_disks())
+
+        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
+        used_disks.extend([i.get_device()[5:] for i in qs])
+        for d in list(disks):
+            if d.dev in used_disks:
+                disks.remove(d)
+
+        choices = sorted(disks)
+        choices = [tuple(d) for d in choices]
+        return choices
+
+    def clean_volume_name(self):
+        vname = self.cleaned_data['volume_name']
+        if vname and not re.search(r'^[a-z][-_.a-z0-9]*$', vname, re.I):
+            raise forms.ValidationError(_("The volume name must start with "
+                "letters and may include numbers, \"-\", \"_\" and \".\" ."))
+        if models.Volume.objects.filter(vol_name=vname).exists():
+            raise forms.ValidationError(_("A volume with that name already "
+                "exists."))
+        return vname
+
+    def clean_group_type(self):
+        if 'volume_disks' not in self.cleaned_data or \
+                len(self.cleaned_data['volume_disks']) > 1 and \
+                self.cleaned_data['group_type'] in (None, ''):
+            raise forms.ValidationError(_("This field is required."))
+        return self.cleaned_data['group_type']
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        volume_name = cleaned_data.get("volume_name", "")
+        disks = cleaned_data.get("volume_disks")
+        if volume_name and cleaned_data.get("volume_add"):
+            self._errors['__all__'] = self.error_class([
+                _("You cannot select an existing ZFS volume and specify a new "
+                    "volume name"),
+                ])
+        elif not(volume_name or cleaned_data.get("volume_add")):
+            self._errors['__all__'] = self.error_class([
+                _("You must specify a new volume name or select an existing "
+                    "ZFS volume to append a virtual device"),
+                ])
+        elif not volume_name:
+            volume_name = cleaned_data.get("volume_add")
+
+        if len(disks) == 0 and models.Volume.objects.filter(
+                vol_name=volume_name).count() == 0:
+            msg = _(u"This field is required")
+            self._errors["volume_disks"] = self.error_class([msg])
+            del cleaned_data["volume_disks"]
+        if models.Volume.objects.filter(vol_name=volume_name).exclude(
+                vol_fstype='ZFS').count() > 0:
+            msg = _(u"You already have a volume with same name")
+            self._errors["volume_name"] = self.error_class([msg])
+            del cleaned_data["volume_name"]
+
+        if volume_name in ('log',):
+            msg = _(u"\"log\" is a reserved word and thus cannot be used")
+            self._errors["volume_name"] = self.error_class([msg])
+            cleaned_data.pop("volume_name", None)
+        elif re.search(r'^c[0-9].*', volume_name) or \
+                re.search(r'^mirror.*', volume_name) or \
+                re.search(r'^spare.*', volume_name) or \
+                re.search(r'^raidz.*', volume_name):
+            msg = _(u"The volume name may NOT start with c[0-9], mirror, "
+                "raidz or spare")
+            self._errors["volume_name"] = self.error_class([msg])
+            cleaned_data.pop("volume_name", None)
+
+        return cleaned_data
+
+    def done(self, request, events):
+        # Construct and fill forms into database.
+        volume_name = self.cleaned_data.get("volume_name") or \
+                            self.cleaned_data.get("volume_add")
+        volume_fstype = 'ZFS'
+        disk_list = self.cleaned_data['volume_disks']
+        dedup = self.cleaned_data.get("dedup", False)
+        mp_options = "rw"
+        mp_path = None
+
+        if (len(disk_list) < 2):
+            group_type = 'stripe'
+        else:
+            group_type = self.cleaned_data['group_type']
+
+        with transaction.commit_on_success():
+            vols = models.Volume.objects.filter(vol_name=volume_name,
+                vol_fstype='ZFS')
+            if vols.count() == 1:
+                volume = vols[0]
+                add = True
+            else:
+                add = False
+                volume = models.Volume(vol_name=volume_name,
+                    vol_fstype=volume_fstype)
+                volume.save()
+
+                mp_path = '/mnt/' + volume_name
+
+                mp = models.MountPoint(mp_volume=volume, mp_path=mp_path,
+                    mp_options=mp_options)
+                mp.save()
+            self.volume = volume
+
+            zpoolfields = re.compile(r'zpool_(.+)')
+            grouped = OrderedDict()
+            grouped['root'] = {'type': group_type, 'disks': disk_list}
+            for i, gtype in request.POST.items():
+                if zpoolfields.match(i):
+                    if gtype == 'none':
+                        continue
+                    disk = zpoolfields.search(i).group(1)
+                    if gtype in grouped:
+                        # if this is a log vdev we need to mirror it for safety
+                        if gtype == 'log':
+                            grouped[gtype]['type'] = 'log mirror'
+                        grouped[gtype]['disks'].append(disk)
+                    else:
+                        grouped[gtype] = {'type': gtype, 'disks': [disk, ]}
+
+            if len(disk_list) > 0 and add:
+                notifier().zfs_volume_attach_group(volume, grouped['root'])
+
+            if add:
+                for grp_type in grouped:
+                    if grp_type in ('log', 'cache', 'spare'):
+                        notifier().zfs_volume_attach_group(volume,
+                            grouped.get(grp_type))
+
+            else:
+                notifier().init("volume", volume, groups=grouped)
+
+                if dedup:
+                    notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
+
+                models.Scrub.objects.create(scrub_volume=volume)
+
+                try:
+                    notifier().zpool_enclosure_sync(volume.vol_name)
+                except Exception, e:
+                   log.error("Error syncing enclosure: %s", e)
+
+        # This must be outside transaction block to make sure the changes
+        # are committed before the call of ix-fstab
+        notifier().reload("disk")
+        # For scrub cronjob
+        notifier().restart("cron")
+
+
 class VolumeImportForm(Form):
 
     volume_name = forms.CharField(max_length=30, label=_('Volume name'))

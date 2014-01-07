@@ -231,6 +231,43 @@ def volumemanager_progress(request):
         return HttpResponse('new Object({state: "starting"})')
 
 
+def volumemanager_zfs(request):
+
+    if request.method == "POST":
+
+        form = forms.ZFSVolumeWizardForm(request.POST)
+        if form.is_valid():
+            events = []
+            form.done(request, events)
+            return JsonResp(
+                request,
+                message=_("Volume successfully added."),
+                events=events,
+            )
+        else:
+            if 'volume_disks' in request.POST:
+                disks = request.POST.getlist('volume_disks')
+            else:
+                disks = None
+            zpoolfields = re.compile(r'zpool_(.+)')
+            zfsextra = [
+                (zpoolfields.search(i).group(1), i, request.POST.get(i)) \
+                        for i in request.POST.keys() if zpoolfields.match(i)]
+
+    else:
+        form = forms.ZFSVolumeWizardForm()
+        disks = []
+        zfsextra = None
+    #dedup = forms._dedup_enabled()
+    dedup = True
+    return render(request, 'storage/zfswizard.html', {
+        'form': form,
+        'disks': disks,
+        'zfsextra': zfsextra,
+        'dedup': dedup,
+    })
+
+
 def volimport(request):
 
     if request.method == "POST":
