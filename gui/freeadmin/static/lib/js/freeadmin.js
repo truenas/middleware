@@ -1222,7 +1222,7 @@ require([
             }
             disks.invertSelection(null);
 
-            if(unselected.length > 0 && zfs == true && first_load != true) {
+            if(unselected.length > 0 && first_load != true) {
 
                 var tab = dom.byId("disks_unselected");
                 query("#disks_unselected tbody tr").orphan();
@@ -1274,11 +1274,8 @@ require([
                     domStyle.set("zfsextra", "display", "none");
                 }
             }
-        } else if(zfs == false) {
-            domStyle.set("zfsextra", "display", "none");
         }
 
-        var zfs = true;
         if(d.length >= 2) {
             domStyle.set("grpopt", "display", "");
         } else {
