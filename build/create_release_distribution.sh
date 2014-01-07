@@ -10,7 +10,7 @@ TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
 
-map_x86=i386
+#map_x86=i386
 map_x64=amd64
 
 TARBALL="${TOP}/${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}.tar"
@@ -19,7 +19,8 @@ rm -rf "${TOP}/${STAGEDIR}"
 set -x
 set -e
 mkdir -p "${TOP}/${STAGEDIR}"
-for arch in x64 x86 ; do 
+#for arch in x64 x86 ; do 
+for arch in x64 ; do 
 	eval mapped_arch=\$map_$arch
 	echo $arch = $mapped_arch
 	mkdir -p ${TOP}/${STAGEDIR}/${arch}
