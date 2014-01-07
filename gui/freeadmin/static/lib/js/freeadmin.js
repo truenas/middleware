@@ -1261,24 +1261,23 @@ require([
                 }
 
                 for(var i=0;i<toappend.length;i++) {
-                    dojo.place(toappend[i], dojo.query("#disks_unselected tbody")[0]);
+                    dojo.place(toappend[i], query("#disks_unselected tbody")[0]);
                 }
 
                domStyle.set("zfsextra", "display", "");
 
             } else {
-                if(zfs == true && first_load == true) {
+                if(first_load == true) {
                     domStyle.set("zfsextra", "display", "");
                 } else {
-                    dojo.query("#disks_unselected tbody tr").orphan();
+                    query("#disks_unselected tbody tr").orphan();
                     domStyle.set("zfsextra", "display", "none");
                 }
             }
         } else if(zfs == false) {
-               domStyle.set("zfsextra", "display", "none");
+            domStyle.set("zfsextra", "display", "none");
         }
 
-        var ufs = false;
         var zfs = true;
         if(d.length >= 2) {
             domStyle.set("grpopt", "display", "");
@@ -1290,28 +1289,24 @@ require([
             });
         }
 
-        if(zfs) {
-            domStyle.set('zfsdedup', 'display', 'table-row');
+        domStyle.set('zfsdedup', 'display', 'table-row');
+
+        if(d.length >= 3) {
+            domStyle.set("grpraidz", "display", "block");
         } else {
-            domStyle.set('zfsdedup', 'display', 'none');
+            domStyle.set("grpraidz", "display", "none");
         }
 
-        if(d.length >= 3 && zfs) {
-                domStyle.set("grpraidz", "display", "block");
+        if(d.length >= 4) {
+            domStyle.set("grpraidz2", "display", "block");
         } else {
-                domStyle.set("grpraidz", "display", "none");
+            domStyle.set("grpraidz2", "display", "none");
         }
 
-        if(d.length >= 4 && zfs) {
-                domStyle.set("grpraidz2", "display", "block");
+        if(d.length >= 5) {
+            domStyle.set("grpraidz3", "display", "block");
         } else {
-                domStyle.set("grpraidz2", "display", "none");
-        }
-
-        if(d.length >= 5 && zfs) {
-                domStyle.set("grpraidz3", "display", "block");
-        } else {
-                domStyle.set("grpraidz3", "display", "none");
+            domStyle.set("grpraidz3", "display", "none");
         }
 
     }
