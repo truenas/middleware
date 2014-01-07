@@ -624,6 +624,7 @@ generate_smb_config()
 	ln -s "${SMB_CONF}" "${SMB4_CONF}"
 
 	mkdir -p "/var/log/samba4"
+	mkdir -p "/var/db/samba4"
 	mkdir -p "/var/run/samba4"
 	mkdir -p /var/etc/private
 	chmod 700 /var/etc/private
