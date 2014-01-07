@@ -623,7 +623,8 @@ generate_smb_config()
 	touch "${SMB_CONF}"
 	ln -s "${SMB_CONF}" "${SMB4_CONF}"
 
-	mkdir -p "/var/run/samba"
+	mkdir -p "/var/log/samba4"
+	mkdir -p "/var/run/samba4"
 	mkdir -p /var/etc/private
 	chmod 700 /var/etc/private
 	generate_smb_tdb
