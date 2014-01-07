@@ -92,10 +92,12 @@ def runTest():
 
     ret = os.system("ifconfig %s" % test_config['tap'])
     if ret != 0:
+        print "Run setup-tap.py script to set up tap and bridge devices"
         exit(1)
 
     ret = os.system("ifconfig %s" % test_config['bridge'])
     if ret != 0:
+        print "Run setup-tap.py script to set up tap and bridge devices"
         exit(1)
 
 
