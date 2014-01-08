@@ -720,6 +720,8 @@ class DiskPlugin(RRDBase):
         ids = []
         for entry in glob.glob('%s/disk-*' % self._base_path):
             ident = entry.split('-', 1)[-1]
+            if not os.path.exists('/dev/%s' % ident):
+                continue
             if os.path.exists(os.path.join(entry, 'disk_octets.rrd')):
                 ids.append(ident)
         return ids
