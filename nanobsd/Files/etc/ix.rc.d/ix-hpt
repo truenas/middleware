@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-hpt
+# REQUIRE: ix-fstab
+
+. /etc/rc.freenas
+
+generate_hptcfg()
+{
+	/sbin/camcontrol devlist -v | grep "on hpt" | sed -E 's/.*(hpt.+)[0-9]+ .*/\1/' | sort | uniq > /etc/htpcfg
+	if [ -s /etc/htpcfg ]; then
+		/usr/local/sbin/hptsvr
+	fi
+}
+
+stop_hpt()
+{
+	htpid=$(ps -cx | grep hptsvr | grep -v grep | awk '{print $1 ;}')
+	if [ "x${hptid}" != x ] ; then
+		kill -9 ${hptid}
+	fi
+}
+
+name="ix-cache"
+start_cmd='generate_hptcfg'
+stop_cmd='stop_hpt'
+
+load_rc_config $name
+run_rc_command "$1"
