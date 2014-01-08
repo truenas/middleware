@@ -104,6 +104,10 @@ nsswitch_conf_start()
 	elif dirsrv_enabled nis
 	then
 		nis="1"
+
+	elif srv_enabled domaincontroller
+	then
+		ad="1"
 	fi
 
 	generate_nsswitch_conf "${ad}" "${ldap}" "${nis}"

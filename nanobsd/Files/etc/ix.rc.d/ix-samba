@@ -412,6 +412,7 @@ EOF
 		#	echo "    aio write size = ${cifs_aio_ws}"
 		#fi
 
+            #
 	    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	    SELECT
 	    	cifs_srv_smb_options
@@ -611,24 +612,18 @@ generate_smb_tdb()
 	local tmp
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_smbhash FROM account_bsdusers WHERE bsdusr_smbhash LIKE '%:%:XXXX%' AND bsdusr_locked = 0 AND bsdusr_password_disabled = 0" > $tmp
-	rm -f /var/etc/private/passdb.tdb
-	/usr/local/bin/pdbedit -d 0 -i smbpasswd:$tmp \
-	    -e tdbsam:/var/etc/private/passdb.tdb >/dev/null
+	/usr/local/bin/pdbedit -d 0 -i smbpasswd:$tmp
 	rm -f $tmp
 }
 
 generate_smb_config()
 {
-	rm -f "${SMB4_CONF}"
-	touch "${SMB_CONF}"
-	ln -s "${SMB_CONF}" "${SMB4_CONF}"
+#	mkdir -p "/var/run/samba4"
+#	generate_smb_tdb
+#	generate_smbconf > ${SMB_CONF}
+#	generate_exports >> ${SMB_CONF}
 
-	mkdir -p "/var/run/samba"
-	mkdir -p /var/etc/private
-	chmod 700 /var/etc/private
-	generate_smb_tdb
-	generate_smbconf > ${SMB_CONF}
-	generate_exports >> ${SMB_CONF}
+	/usr/local/libexec/nas/generate_smb4_conf.py
 }
 
 name="ix-samba"

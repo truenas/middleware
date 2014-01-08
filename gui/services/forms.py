@@ -1663,3 +1663,42 @@ class SMARTForm(ModelForm):
         started = notifier().restart("smartd")
         if started is False and models.services.objects.get(srv_service='smartd').srv_enable:
             raise ServiceFailed("smartd", _("The S.M.A.R.T. service failed to reload."))
+
+
+class DomainControllerForm(ModelForm):
+    dc_passwd2 = forms.CharField(
+        max_length=50,
+        label=_("Confirm Administrator Password"),
+        widget=forms.widgets.PasswordInput(),
+        required=False,
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.DomainController
+        widgets = {
+            'dc_passwd': forms.widgets.PasswordInput(render_value=False),
+        }
+
+    def clean_dc_passwd2(self):
+        password1 = self.cleaned_data.get("dc_passwd")
+        password2 = self.cleaned_data.get("dc_passwd2")
+        if password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
+
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("dc_passwd"):
+            cdata['dc_passwd'] = self.instance.ad_bindpw
+        return cdata
+
+    def save(self):
+        super(DomainControllerForm, self).save()
+
+    def __init__(self, *args, **kwargs):
+        super(DomainControllerForm, self).__init__(*args, **kwargs)
+        if self.instance.dc_passwd:
+            self.fields['dc_passwd'].required = False
+        if self._api is True:
+            del self.fields['dc_passwd2']
