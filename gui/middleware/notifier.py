@@ -36,6 +36,7 @@ actions.
 
 from collections import defaultdict, OrderedDict
 from decimal import Decimal
+import bisect
 import ctypes
 import errno
 import glob
@@ -3632,6 +3633,20 @@ class notifier:
 
         self.__twcli[controller] = units
         return self.__twcli[controller]
+
+    def __hpt_indexes(self):
+        """
+        Returns all the controllers and lun ids available via hpt controller
+        """
+        p1 = self._pipeopen("/usr/local/bin/hptraidconf -u RAID -p hpt query devices")
+        output = p1.communicate()[0]
+        if p1.returncode != 0:
+            return None
+        output = re.sub(r'^.*?[-]{5,}\n(.*)', '\\1', output, flags=re.S|re.M)
+        indexes = defaultdict(list)
+        for controller, lun in re.findall(r'^(\d+)/(\d+)', output, flags=re.M):
+            bisect.insort(indexes[int(controller)], int(lun))
+        return indexes
 
     def serial_from_device(self, devname):
         if devname in self.__diskserial:
