@@ -3674,10 +3674,19 @@ class notifier:
                     "areca,%d" % (info["lun"] + 1 + (info["channel"] * 8), )
                     ]
             elif info.get("drv").startswith("hpt"):
-                args = [
-                    "/dev/%s" % info["drv"],
-                    "-d",
-                    "hpt,%d/%d" % (info["controller"] + 1, info["channel"] + 1)
+                indexes = self.__hpt_indexes()
+                if indexes:
+                    args = [
+                        "/dev/%s" % info["drv"],
+                        "-d",
+                        "hpt,%d/%d" % (info["controller"] + 1, indexes[info["controller"] + 1][info["chan
+nel"]])
+                    ]
+                else:
+                    args = [
+                        "/dev/%s" % info["drv"],
+                        "-d",
+                        "hpt,%d/%d" % (info["controller"] + 1, info["channel"] + 1)
                     ]
             elif info.get("drv") == "ciss":
                 args = [
