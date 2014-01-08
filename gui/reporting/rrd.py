@@ -706,3 +706,47 @@ class UptimePlugin(RRDBase):
         ]
 
         return args
+
+
+class DiskPlugin(RRDBase):
+
+    vertical_label = "Bytes/s"
+
+    def get_title(self):
+        title = self.identifier.replace("disk-", "")
+        return 'Disk I/O (%s)' % title
+
+    def get_identifiers(self):
+        ids = []
+        for entry in glob.glob('%s/disk-*' % self._base_path):
+            ident = entry.split('-', 1)[-1]
+            if os.path.exists(os.path.join(entry, 'disk_octets.rrd')):
+                ids.append(ident)
+        return ids
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, "disk-%s" % self.identifier, "disk_octets.rrd")
+
+        args = [
+            'DEF:min_rd=%s:read:MIN' % path,
+            'DEF:avg_rd=%s:read:AVERAGE' % path,
+            'DEF:max_rd=%s:read:MAX' % path,
+            'DEF:min_wr=%s:write:MIN' % path,
+            'DEF:avg_wr=%s:write:AVERAGE' % path,
+            'DEF:max_wr=%s:write:MAX' % path,
+            'AREA:max_rd#bfffbf',
+            'AREA:min_rd#FFFFFF',
+            'LINE1:avg_rd#00ff00: read ',
+            'GPRINT:min_rd:MIN:%6.2lf%s Min,',
+            'GPRINT:avg_rd:AVERAGE:%6.2lf%s Avg,',
+            'GPRINT:max_rd:MAX:%6.2lf%s Max,',
+            'GPRINT:avg_rd:LAST:%6.2lf%s Last\l',
+            'LINE1:avg_wr#0000ff: write',
+            'GPRINT:min_wr:MIN:%6.2lf%s Min,',
+            'GPRINT:avg_wr:AVERAGE:%6.2lf%s Avg,',
+            'GPRINT:max_wr:MAX:%6.2lf%s Max,',
+            'GPRINT:max_wr:LAST:%6.2lf%s Last\l',
+        ]
+
+        return args
