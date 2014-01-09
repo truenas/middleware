@@ -38,7 +38,7 @@ reload_precmd="samba_checkconfig"
 reload_cmd="samba_reload_cmd"
 rcvar_cmd="samba_rcvar_cmd"
 # Defaults
-samba_config_default="/usr/local/etc/smb.conf"
+samba_config_default="/usr/local/etc/smb4.conf"
 testparm_command="/usr/local/bin/testparm"
 smbcontrol_command="/usr/local/bin/smbcontrol"
 samba_parm="${testparm_command} -s -v --parameter-name"

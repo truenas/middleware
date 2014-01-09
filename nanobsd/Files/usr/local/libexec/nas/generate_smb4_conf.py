@@ -600,7 +600,7 @@ def smb4_setup():
 
 
 def main():
-    smb_conf_path = "/usr/local/etc/smb.conf"
+    smb_conf_path = "/usr/local/etc/smb4.conf"
 
     smb4_tdb = []
     smb4_conf = []
@@ -614,7 +614,6 @@ def main():
 
     role = get_server_role()
     if role == 'dc':
-        smb_conf_path = "/usr/local/etc/smb4.conf"
         provision_smb4()
          
     with open(smb_conf_path, "w") as f:
