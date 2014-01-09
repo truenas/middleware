@@ -10,7 +10,7 @@
 
 generate_hptcfg()
 {
-	/sbin/camcontrol devlist -v | grep "on hpt" | sed -E 's/.*(hpt.+)[0-9]+ .*/\1/' | sort | uniq > /etc/htpcfg
+	/sbin/camcontrol devlist -v | grep "on hpt" | sed -E 's/.*(hpt.+)[0-9]+ .*/\1/' | sort | uniq > /etc/hptcfg
 	if [ -s /etc/htpcfg ]; then
 		/usr/local/sbin/hptsvr
 	fi
