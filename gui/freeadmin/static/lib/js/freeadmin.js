@@ -1222,7 +1222,7 @@ require([
             }
             disks.invertSelection(null);
 
-            if(unselected.length > 0 && first_load != true) {
+            if(unselected.length > 0) {
 
                 var tab = dom.byId("disks_unselected");
                 query("#disks_unselected tbody tr").orphan();
