@@ -174,6 +174,9 @@ CIFSAUTH_CHOICES = (
         ('user', _('Local User')),
         )
 
+CIFS_SMB_PROTO_CHOICES = (
+        )
+
 DOSCHARSET_CHOICES = (
         ('CP437', 'CP437'),
         ('CP850', 'CP850'),
@@ -718,4 +721,27 @@ JAIL_TEMPLATE_OS_CHOICES = (
 JAIL_TEMPLATE_ARCH_CHOICES = (
     ('x64', 'x64'),
     ('x86', 'x86')
+)
+
+SAMBA4_ROLE_CHOICES = (
+#    ('auto', 'auto'),
+#    ('classic', 'classic primary domain controller'),
+#    ('netbios', 'netbios backup domain controller'),
+    ('dc', 'active directory domain controller'),
+#    ('member', 'member server'),
+#    ('standalone', 'standalone')
+)
+
+SAMBA4_DNS_BACKEND_CHOICES = (
+    ('SAMBA_INTERNAL', 'SAMBA_INTERNAL'),
+    ('BIND9_FLATFILE', 'BIND9_FLATFILE'),
+    ('BIND9_DLZ', 'BIND9_DLZ'),
+    ('NONE', 'NONE')
+)
+
+SAMBA4_FOREST_LEVEL_CHOICES = (
+    ('2000', '2000'),
+    ('2003', '2003'),
+    ('2008', '2008'),
+    ('2008_R2', '2008_R2')
 )

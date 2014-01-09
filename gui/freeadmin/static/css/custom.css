@@ -483,6 +483,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.DomainControllerIcon {
+    background-image:url('/static/images/ui/tree/domain_controller.png');
+    width:16px;
+    height:16px;
+}
 .ActiveDirectoryIcon {
     background-image:url('/static/images/ui/tree/active_directory.png');
     width:16px;

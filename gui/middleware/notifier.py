@@ -704,6 +704,18 @@ class notifier:
             res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
         return (True if res == 0 else False)
 
+    def _start_domaincontroller(self):
+        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service samba4 forcestart")
+
+    def _stop_domaincontroller(self):
+        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service samba4 forcestop")
+
+    def _restart_domaincontroller(self):
+        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service samba4 forcerestart")
+
     def _restart_syslogd(self):
         self._system("/usr/sbin/service ix-syslogd quietstart")
         self._system("/usr/sbin/service syslogd restart")
