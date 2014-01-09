@@ -705,16 +705,16 @@ class notifier:
         return (True if res == 0 else False)
 
     def _start_domaincontroller(self):
-        self._system("/usr/sbin/sevice ix-samba quietstart")
-        self._system("/usr/sbin/service samba forcestart")
+        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service samba4 forcestart")
 
     def _stop_domaincontroller(self):
-        self._system("/usr/sbin/sevice ix-samba quietstart")
-        self._system("/usr/sbin/service samba forcestop")
+        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service samba4 forcestop")
 
     def _restart_domaincontroller(self):
-        self._system("/usr/sbin/sevice ix-samba quietstart")
-        self._system("/usr/sbin/service samba forcerestart")
+        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service samba4 forcerestart")
 
     def _restart_syslogd(self):
         self._system("/usr/sbin/service ix-syslogd quietstart")

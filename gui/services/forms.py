@@ -29,6 +29,7 @@ import logging
 import os
 import re
 import subprocess
+import time
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import validate_email
@@ -56,7 +57,6 @@ from ipaddr import (
 )
 
 log = logging.getLogger('services.form')
-
 
 class servicesForm(ModelForm):
     class Meta:
@@ -101,6 +101,10 @@ class servicesForm(ModelForm):
                     started = _notifier.start(obj.srv_service)
                 else:
                     started = _notifier.stop(obj.srv_service)
+            elif obj.srv_service == 'domaincontroller':
+                _notifier.stop('cifs')
+                started = _notifier.restart(obj.srv_service)
+
             else:
                 started = _notifier.restart(obj.srv_service)
 

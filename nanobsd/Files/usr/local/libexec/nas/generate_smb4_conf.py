@@ -211,7 +211,10 @@ def add_ldap_conf(smb4_conf):
 
     if ldap.ldap_rootbindpw:
         p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_rootbindpw)
-        p.communicate()
+        out = p.communicate()
+        if out and out[1]:
+            for line in out[1].split('\n'):
+                print line
 
     confset2(smb4_conf, "ldap suffix = %s", ldap.ldap_basedn)
     confset2(smb4_conf, "ldap user suffix = %s", ldap.ldap_usersuffix)
@@ -398,9 +401,13 @@ def generate_smb4_conf(smb4_conf):
         if cifs.cifs_srv_authmodel == 'share':
             confset2(smb4_conf, "force user = %s", cifs.cifs_srv_guest)
             confset2(smb4_conf, "force group = %s", cifs.cifs_srv_guest)
+            confset1(smb4_conf, "passdb backend = tdbsam:/var/etc/private/passdb.tdb")
+
 
     if role != 'dc':
         confset1(smb4_conf, "pid directory = /var/run/samba")
+        confset1(smb4_conf, "smb passwd file = /var/etc/private/smbpasswd")
+        confset1(smb4_conf, "private dir = /var/etc/private")
 
     confset2(smb4_conf, "create mask = %s", cifs.cifs_srv_filemask)
     confset2(smb4_conf, "directory mask = %s", cifs.cifs_srv_dirmask)
@@ -552,29 +559,44 @@ def provision_smb4():
         else:
             samba_tool_args = "%s --%s" % (samba_tool_args, key)
 
-    print samba_tool_args
-    #p = pipeopen("/usr/local/bin/samba-tool %s" % )
+    p = pipeopen("/usr/local/bin/samba-tool %s" % samba_tool_args)
+    out = p.communicate()
+    if out and out[1]:
+        for line in out[1].split('\n'):
+            print line
+
+    if p.returncode != 0:
+        return False
+
+    return True
+
+
+def smb4_mkdir(dir):
+    try:
+        os.makedirs(dir)
+    except:
+        pass
+
+
+def smb4_unlink(dir):
+    try:
+        os.unlink(dir)
+    except:
+        pass
 
 
 def smb4_setup():
-    try:
-        os.mkdirs("/var/run/samba")
-        os.mkdirs("/var/run/samba4")
+    smb4_mkdir("/var/run/samba")
+    smb4_mkdir("/var/db/samba")
 
-    except:
-        pass
+    smb4_mkdir("/var/run/samba4")
+    smb4_mkdir("/var/db/samba4")
 
-    try:
-        os.unlink("/usr/local/etc/smb.conf")
+    smb4_mkdir("/var/etc/private")
+    os.chmod("/var/etc/private", 0700)
 
-    except:
-        pass
-
-    try:
-        os.unlink("/usr/local/etc/smb4.conf")
-
-    except:
-        pass
+    smb4_unlink("/usr/local/etc/smb.conf")
+    smb4_unlink("/usr/local/etc/smb4.conf")
 
 
 def main():
@@ -591,25 +613,29 @@ def main():
     generate_smb4_shares(smb4_shares)
 
     role = get_server_role()
-    if role == 'activedirectory':
+    if role == 'dc':
         smb_conf_path = "/usr/local/etc/smb4.conf"
         provision_smb4()
-
-    (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
-    for line in smb4_tdb:
-        os.write(fd, line + '\n')
-    os.close(fd)
-
-    p = pipeopen("/usr/local/bin/pdbedit -d 0 -i smbpasswd:%s" % tmpfile)
-    out = p.communicate()
-    os.unlink(tmpfile)
-
+         
     with open(smb_conf_path, "w") as f:
         for line in smb4_conf:
             f.write(line + '\n')
         for line in smb4_shares:
             f.write(line + '\n')
         f.close()
+
+    (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
+    for line in smb4_tdb:
+        os.write(fd, line + '\n')
+    os.close(fd)
+
+    p = pipeopen("/usr/local/bin/pdbedit -d 0 -i smbpasswd:%s -e %s -s %s" % (
+        tmpfile, "tdbsam:/var/etc/private/passdb.tdb", smb_conf_path))
+    out = p.communicate()
+    if out and out[1]:
+        for line in out[1].split('\n'):
+            print line
+    os.unlink(tmpfile)
 
 
 if __name__ == '__main__':
