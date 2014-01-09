@@ -114,21 +114,33 @@ def runTest():
     cmd = "VBoxManage createvm --name %s --ostype FreeBSD_64 --register" % test_config['vm_name']
     print cmd 
     os.system(cmd)
-    cmd = 'VBoxManage createhd --filename "%s/%s/disk.vdi"  --size 90000 --format VDI' % (VBOX_FOLDER, test_config['vm_name'])
-    print cmd 
-    os.system(cmd)
+
+    for d in test_config['disks']:
+        cmd = "rm -f %s" % d
+        print cmd
+        os.system(cmd)
+        cmd = 'VBoxManage createhd --filename "%s"  --size 90000 --format VDI' % d
+        print cmd 
+        os.system(cmd)
+
     cmd = 'VBoxManage modifyvm %s --cpus 2 --memory 4000 --hpet on --ioapic on --nic1 bridged --bridgeadapter1 tap0' % test_config['vm_name']
     print cmd 
     os.system(cmd)
     cmd = 'VBoxManage storagectl %s --name PIIX4 --add ide --controller PIIX4' % test_config['vm_name']
     print cmd 
     os.system(cmd)
-    cmd = 'VBoxManage storageattach %s --storagectl PIIX4 --port 0 --device 0 --type hdd --medium "%s/%s/disk.vdi"' % (test_config['vm_name'], VBOX_FOLDER, test_config['vm_name'])
-    print cmd 
-    os.system(cmd)
     cmd = 'VBoxManage storageattach %s --storagectl PIIX4 --port 1 --device 0 --type dvddrive --medium "%s"' % (test_config['vm_name'], test_config['iso'])
     print cmd 
     os.system(cmd)
+
+
+    device = 0
+    for d in test_config['disks']:
+        cmd = 'VBoxManage storageattach %s --storagectl PIIX4 --port 0 --device %d --type hdd --medium "%s"' % (test_config['vm_name'], device, d)
+        print cmd 
+        os.system(cmd)
+        device = device + 1
+
     cmd = 'VBoxManage startvm %s' % test_config['vm_name']
     print cmd 
     os.system(cmd)

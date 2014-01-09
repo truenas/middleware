@@ -102,7 +102,7 @@ def runTest():
     child2.expect(pexpect.EOF)
 
     cmd = "bhyveload -m 2G -d %s %s" % (test_config['disk_img'], test_config['vm_name'])
-    print
+    print cmd
     child5 = pexpect.spawn(cmd)
     child5.logfile = sys.stdout
     child5.expect (['Booting...'])

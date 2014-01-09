@@ -1090,8 +1090,13 @@ class notifier:
         self._system("geli attach %s -k %s /dev/%s" % (_passphrase2, geli_keyfile, devname))
         # TODO: initialize the provider in background (wipe with random data)
 
-        ident = self.device_to_identifier(diskname)
-        diskobj = Disk.objects.get(disk_identifier=ident)
+        if diskname.startswith('multipath/'):
+            diskobj = Disk.objects.get(
+                disk_multipath_name=diskname.replace('multipath/', '')
+            )
+        else:
+            ident = self.device_to_identifier(diskname)
+            diskobj = Disk.objects.get(disk_identifier=ident)
         encdiskobj = EncryptedDisk()
         encdiskobj.encrypted_volume = volume
         encdiskobj.encrypted_disk = diskobj

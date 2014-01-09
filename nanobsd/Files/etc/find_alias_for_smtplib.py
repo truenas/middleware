@@ -12,8 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 
 sys.path.extend(["/usr/local/www", "/usr/local/www/freenasUI"])
 
-from freenasUI import settings
-setup_environ(settings)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 # Make sure to load all modules
 from django.db.models.loading import cache
