@@ -1695,6 +1695,7 @@ class DomainControllerForm(ModelForm):
 
     def save(self):
         super(DomainControllerForm, self).save()
+        notifier().restart("domaincontroller")
 
     def __init__(self, *args, **kwargs):
         super(DomainControllerForm, self).__init__(*args, **kwargs)

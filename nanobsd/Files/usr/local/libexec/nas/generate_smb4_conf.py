@@ -323,7 +323,6 @@ def generate_smb4_conf(smb4_conf):
     # standard stuff... should probably do this differently
     confset1(smb4_conf, "[global]", space=0)
 
-    confset1(smb4_conf, "pid directory = /var/run/samba4")
     confset1(smb4_conf, "encrypt passwords = yes")
     confset1(smb4_conf, "dns proxy = no")
     confset1(smb4_conf, "strict locking = no")
@@ -399,6 +398,9 @@ def generate_smb4_conf(smb4_conf):
         if cifs.cifs_srv_authmodel == 'share':
             confset2(smb4_conf, "force user = %s", cifs.cifs_srv_guest)
             confset2(smb4_conf, "force group = %s", cifs.cifs_srv_guest)
+
+    if role != 'dc':
+        confset1(smb4_conf, "pid directory = /var/run/samba")
 
     confset2(smb4_conf, "create mask = %s", cifs.cifs_srv_filemask)
     confset2(smb4_conf, "directory mask = %s", cifs.cifs_srv_dirmask)
@@ -554,11 +556,7 @@ def provision_smb4():
     #p = pipeopen("/usr/local/bin/samba-tool %s" % )
 
 
-def main():
-    smb4_tdb = []
-    smb4_conf = []
-    smb4_shares = []
-
+def smb4_setup():
     try:
         os.mkdirs("/var/run/samba")
         os.mkdirs("/var/run/samba4")
@@ -566,16 +564,35 @@ def main():
     except:
         pass
 
+    try:
+        os.unlink("/usr/local/etc/smb.conf")
+
+    except:
+        pass
+
+    try:
+        os.unlink("/usr/local/etc/smb4.conf")
+
+    except:
+        pass
+
+
+def main():
+    smb_conf_path = "/usr/local/etc/smb.conf"
+
+    smb4_tdb = []
+    smb4_conf = []
+    smb4_shares = []
+
+    smb4_setup()
+
     generate_smb4_tdb(smb4_tdb)
     generate_smb4_conf(smb4_conf)
     generate_smb4_shares(smb4_shares)
 
     role = get_server_role()
     if role == 'activedirectory':
-        try:
-            os.unlink("/usr/local/etc/smb4.conf")
-        except:
-            pass
+        smb_conf_path = "/usr/local/etc/smb4.conf"
         provision_smb4()
 
     (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
@@ -587,7 +604,7 @@ def main():
     out = p.communicate()
     os.unlink(tmpfile)
 
-    with open("/usr/local/etc/smb4.conf", "w") as f:
+    with open(smb_conf_path, "w") as f:
         for line in smb4_conf:
             f.write(line + '\n')
         for line in smb4_shares:

@@ -167,7 +167,7 @@ def servicesToggleView(request, formname):
         'ups_toggle': 'ups',
         'plugins_toggle': 'plugins',
         'directoryservice_toggle': 'directoryservice',
-        'domaincontroller': 'domaincontroller'
+        'domaincontroller_toggle': 'domaincontroller'
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
