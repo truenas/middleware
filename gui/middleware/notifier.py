@@ -704,6 +704,12 @@ class notifier:
             res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
         return (True if res == 0 else False)
 
+    def _started_domaincontroller(self):
+        res = False
+        if self._get_stg_directoryservice() == 'domaincontroller':
+            res = self._system_nolog("/etc/directoryservice/DomainController/ctl status")
+        return (True if res == 0 else False)
+
     def _start_domaincontroller(self):
         res = False
         if self._get_stg_directoryservice() == 'domaincontroller':
