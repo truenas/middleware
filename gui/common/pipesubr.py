@@ -52,9 +52,10 @@ def unblock_sigchld():
     libc.sigprocmask(SIG_SETMASK, pmask, None)
 
 
-def pipeopen(command, important=True, logger=log, allowfork=False):
-    logger.log(logging.NOTICE if important else logging.DEBUG,
-        "Popen()ing: " + command)
+def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False):
+    if not quiet:
+        logger.log(logging.NOTICE if important else logging.DEBUG,
+            "Popen()ing: " + command)
     args = shlex_split(str(command))
 
     preexec_fn = None

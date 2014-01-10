@@ -552,7 +552,7 @@ def provision_smb4():
         else:
             samba_tool_args = "%s --%s" % (samba_tool_args, key)
 
-    p = pipeopen("/usr/local/bin/samba-tool %s" % samba_tool_args)
+    p = pipeopen("/usr/local/bin/samba-tool %s" % samba_tool_args, quiet=True)
     out = p.communicate()
     if out and out[1]:
         for line in out[1].split('\n'):
