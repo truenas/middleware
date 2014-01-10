@@ -585,6 +585,9 @@ def smb4_setup():
     smb4_mkdir("/var/run/samba4")
     smb4_mkdir("/var/db/samba4")
 
+    smb4_mkdir("/var/log/samba4")
+    os.chmod("/var/log/samba4", 0755)
+
     smb4_mkdir("/var/etc/private")
     os.chmod("/var/etc/private", 0700)
 
