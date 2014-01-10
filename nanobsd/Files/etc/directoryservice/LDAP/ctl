@@ -126,21 +126,21 @@ ldapctl_stop()
 
 	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]
 	then
-		ldapctl_cmd ${service} samba forcestop
+		ldapctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		srv_set directoryservice 0
 		ldapctl_cmd ${service} ix-samba start
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
-		ldapctl_cmd ${service} samba forcestop
+		ldapctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		srv_set directoryservice 0
 		ldapctl_cmd ${service} ix-samba start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then
-		ldapctl_cmd ${service} samba forcestop
+		ldapctl_cmd ${service} samba_server forcestop
 		srv_set directoryservice 0
 		srv_set cifs 1
 		ldapctl_cmd ${service} ix-samba start
@@ -148,7 +148,7 @@ ldapctl_stop()
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
 	then
-		ldapctl_cmd ${service} samba forcestop
+		ldapctl_cmd ${service} samba_server forcestop
 		srv_set directoryservice 0
 		srv_set cifs 1
 		ldapctl_cmd ${service} ix-samba start

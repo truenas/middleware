@@ -62,11 +62,6 @@ def core(request):
             directoryservice = None
 
     try:
-        domaincontroller = models.DomainController.objects.order_by("-id")[0]
-    except:
-        domaincontroller = models.DomainController.create()
-
-    try:
         afp = models.AFP.objects.order_by("-id")[0]
     except IndexError:
         afp = models.AFP.objects.create()
@@ -135,8 +130,7 @@ def core(request):
         'tftp': tftp,
         'smart': smart,
         'ssh': ssh,
-        'directoryservice': directoryservice,
-        'domaincontroller': domaincontroller
+        'directoryservice': directoryservice
     })
 
 
@@ -166,8 +160,7 @@ def servicesToggleView(request, formname):
         'smartd_toggle': 'smartd',
         'ups_toggle': 'ups',
         'plugins_toggle': 'plugins',
-        'directoryservice_toggle': 'directoryservice',
-        'domaincontroller_toggle': 'domaincontroller'
+        'directoryservice_toggle': 'directoryservice'
     }
     changing_service = form2namemap[formname]
     if changing_service == "":

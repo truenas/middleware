@@ -705,16 +705,22 @@ class notifier:
         return (True if res == 0 else False)
 
     def _start_domaincontroller(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
-        self._system("/usr/sbin/service samba4 forcestart")
+        res = False
+        if self._get_stg_directoryservice() == 'domaincontroller':
+            res = self._system_nolog("/etc/directoryservice/DomainController/ctl start")
+        return (True if res == 0 else False)
 
     def _stop_domaincontroller(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
-        self._system("/usr/sbin/service samba4 forcestop")
+        res = False
+        if self._get_stg_directoryservice() == 'domaincontroller':
+            res = self._system_nolog("/etc/directoryservice/DomainController/ctl stop")
+        return (True if res == 0 else False)
 
     def _restart_domaincontroller(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
-        self._system("/usr/sbin/service samba4 forcerestart")
+        res = False
+        if self._get_stg_directoryservice() == 'domaincontroller':
+            res = self._system_nolog("/etc/directoryservice/DomainController/ctl restart")
+        return (True if res == 0 else False)
 
     def _restart_syslogd(self):
         self._system("/usr/sbin/service ix-syslogd quietstart")
@@ -927,25 +933,25 @@ class notifier:
 
     def _reload_cifs(self):
         self._system("/usr/sbin/service ix-samba quietstart")
-        self._system("/usr/sbin/service samba forcereload")
+        self._system("/usr/sbin/service samba_server forcereload")
         self._system("/usr/sbin/service ix_avahi quietstart")
         self._system("/usr/sbin/service avahi-daemon reload")
 
     def _restart_cifs(self):
         self._system("/usr/sbin/service ix-samba quietstart")
-        self._system("/usr/sbin/service samba forcestop")
-        self._system("/usr/sbin/service samba quietrestart")
+        self._system("/usr/sbin/service samba_server forcestop")
+        self._system("/usr/sbin/service samba_server quietrestart")
         self._system("/usr/sbin/service ix_avahi quietstart")
         self._system("/usr/sbin/service avahi-daemon reload")
 
     def _start_cifs(self):
         self._system("/usr/sbin/service ix-samba quietstart")
-        self._system("/usr/sbin/service samba quietstart")
+        self._system("/usr/sbin/service samba_server quietstart")
         self._system("/usr/sbin/service ix_avahi quietstart")
         self._system("/usr/sbin/service avahi-daemon reload")
 
     def _stop_cifs(self):
-        self._system("/usr/sbin/service samba forcestop")
+        self._system("/usr/sbin/service samba_server forcestop")
         self._system("/usr/sbin/service ix_avahi quietstart")
         self._system("/usr/sbin/service avahi-daemon reload")
 

@@ -1960,6 +1960,10 @@ class DomainController(Model):
             help_text=_("Administrator Password"),
             )
 
+    def __init__(self, *args, **kwargs):
+        super(DomainController, self).__init__(*args, **kwargs)
+        self.svc = 'domaincontroller'
+
     class Meta:
         verbose_name = _(u"Domain Controller")
         verbose_name_plural = _(u"Domain Controller")

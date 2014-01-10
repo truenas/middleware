@@ -96,31 +96,24 @@ def directoryservice_enabled(ds=None):
     return enabled
 
 
-def nt4_enabled():
-    return directoryservice_enabled('nt4')
-
-
 def activedirectory_enabled():
     return directoryservice_enabled('activedirectory')
 
 
-def nis_enabled():
-    return directoryservice_enabled('nis')
+def domaincontroller_enabled():
+    return directoryservice_enabled('domaincontroller')
 
 
 def ldap_enabled():
     return directoryservice_enabled('ldap')
 
 
-def domaincontroller_enabled():
-    enabled = False
-    try:
-        if services.objects.filter(srv_service='domaincontroller')[0].srv_enable:
-            enabled = True
-    except:
-        pass
+def nis_enabled():
+    return directoryservice_enabled('nis')
 
-    return enabled
+
+def nt4_enabled():
+    return directoryservice_enabled('nt4')
 
 
 def get_server_role():

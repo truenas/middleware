@@ -13,23 +13,16 @@
 
 generate_krb5_conf()
 {
-	AD_init
-
-	local krbhost=$(AD_get ad_krbhost)
-	local krbport=$(AD_get ad_krbport)
-	local krbsvc=$(AD_get ad_krbsvc)
-	local kpwdhost=$(AD_get ad_kpwdhost)
-	local kpwdport=$(AD_get ad_kpwdport)
-	local domainname=$(AD_get ad_domainname)
+	local domainname="${1}"
+	local krbhost="${2}"
+	local krbport="${3}"
+	local krbsvc="${4}"
+	local kpwdhost="${5}"
+	local kpwdport="${6}"
 	local template="${PATH_KRB5_TEMPLATE}"
 
-	AD_log "generate_krb5_conf: krbhost=${krbhost}, kpwdhost=${kpwdhost}, " \
-		"domainname=${domainname}"
-
-	if [ ! -f "${template}" ]
-	then
-		return 1
-	fi
+	logger -t ix-kerberos "generate_krb5_conf: krbhost=${krbhost}, " \
+		"kpwdhost=${kpwdhost}, domainname=${domainname}"
 
 	awk -v realm="${domainname}" \
 		-v krbhost="${krbhost}" \
@@ -73,21 +66,55 @@ generate_krb5_conf()
 	}
 	' < "${template}" > "${PATH_KRB5_CONFIG}"
 
-	local IFS="
-"
 	for line in $(verify_krb5_conf 2>&1) 
 	do
-		AD_log "generate_krb5_conf: ${line}"
+		logger -t ix-kerberos "generate_krb5_conf: ${line}"
 	done
 
 	return 0
+}
+
+generate_activedirectory_krb5_conf()
+{
+	AD_init
+
+	local krbhost="$(AD_get ad_krbhost)"
+	local krbport="$(AD_get ad_krbport)"
+	local krbsvc="$(AD_get ad_krbsvc)"
+	local kpwdhost="$(AD_get ad_kpwdhost)"
+	local kpwdport="$(AD_get ad_kpwdport)"
+	local domainname="$(AD_get ad_domainname)"
+
+	generate_krb5_conf "${domainname}" "${krbhost}" "${krbport}" \
+		"${krbsvc}" "${krbhost}" "${krbport}"
+
+	return 0
+}
+
+generate_domaincontroller_krb5_conf()
+{
+	DC_init
+
+	local krbhost="$(DC_get dc_hostname)"
+	local krbport=
+	local krbsvc=
+	local kpwdhost="$(DC_get dc_hostname)"
+	local kpwdport=
+	local domainname="$(DC_get dc_realm | tr A-Z a-z)"
+
+	generate_krb5_conf "${domainname}" "${krbhost}" "${krbport}" \
+		"${krbsvc}" "${krbhost}" "${krbport}"
 }
 
 generate_kerberos_files()
 {
 	if dirsrv_enabled activedirectory
 	then
-		generate_krb5_conf
+		generate_activedirectory_krb5_conf
+
+	elif dirsrv_enabled domaincontroller
+	then
+		generate_domaincontroller_krb5_conf
 	fi
 }
 

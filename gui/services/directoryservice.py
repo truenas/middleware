@@ -30,7 +30,13 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware.notifier import notifier
 from freenasUI.freeadmin.models import Model
-from freenasUI.services.models import ActiveDirectory, LDAP, NIS, NT4
+from freenasUI.services.models import (
+    ActiveDirectory,
+    DomainController,
+    LDAP,
+    NIS,
+    NT4
+)
 from freenasUI.system.models import Settings
 
 import logging
@@ -46,6 +52,8 @@ class DirectoryServiceQuerySet(models.query.QuerySet):
 
         if type == 'activedirectory':
             super(DirectoryServiceQuerySet, self).__init__(ActiveDirectory, query, using)
+        elif type == 'domaincontroller':
+            super(DirectoryServiceQuerySet, self).__init__(DomainController, query, using)
 
         elif type == 'ldap':
             super(DirectoryServiceQuerySet, self).__init__(LDAP, query, using)
@@ -76,7 +84,7 @@ class DirectoryServiceManager(models.Manager):
             settings = settings[0]  
 
         type = settings.stg_directoryservice
-        if type in ('activedirectory', 'ldap', 'nt4', 'nis'):
+        if type in ('activedirectory', 'domaincontroller', 'ldap', 'nt4', 'nis'):
             return DirectoryServiceQuerySet(self.model)
 
         else:
@@ -100,6 +108,9 @@ class DirectoryService(Model):
         type = settings.stg_directoryservice
 
         if type == 'activedirectory':
+            new_class = ActiveDirectory(*args, **kwargs)
+
+        if type == 'domaincontroller':
             new_class = ActiveDirectory(*args, **kwargs)
 
         elif type == 'ldap':

@@ -232,6 +232,11 @@ pam_start()
 			ad=2
 		fi
 
+	elif dirsrv_enabled domaincontroller
+	then
+		ad=1
+
+
 	elif dirsrv_enabled nt4
 	then
 		nt4=1
