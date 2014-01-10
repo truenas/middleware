@@ -52,6 +52,27 @@ cifs_restart()
 	return $?
 }
 
+resolvconf_start()
+{
+	if [ ! -f /etc/resolv.conf.dc ]
+	then
+		echo '127.0.0.1' > /etc/resolv.conf.dc
+		chmod 644 /etc/resolv.conf.dc
+	fi
+
+	cp /etc/resolv.conf /etc/resolv.conf.bak
+	cp /etc/resolv.conf.dc /etc/resolv.conf
+}
+
+resolvconf_stop()
+{
+	if [ -f /etc/resolv.conf.bak ]
+	then
+		cp /etc/resolv.conf.bak /etc/resolv.conf
+		chmod 644 /etc/resolv.conf
+	fi
+}
+
 dcctl_start()
 {
 	local cifs_started=0	
@@ -75,6 +96,8 @@ dcctl_start()
 	echo ${cifs_started} > "${cifs_file}"
 
 	dcctl_cmd ${service} ix-kerberos quietstart
+
+	resolvconf_start
 
 	dcctl_cmd ${service} ix-nsswitch quietstart
 	dcctl_cmd ${service} ix-pam quietstart
@@ -110,8 +133,6 @@ dcctl_stop()
 	dcctl_cmd ${service} ix-kerberos quietstop
 	dcctl_cmd ${service} ix-nsswitch quietstop
 	dcctl_cmd ${service} ix-pam quietstop
-#	dcctl_cmd ${service} ix-kinit forcestop
-#	dcctl_cmd ${service} ix-activedirectory forcestop
 	dcctl_cmd "${service} ix-cache quietstop &"
 
 	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]
@@ -146,6 +167,8 @@ dcctl_stop()
 	fi
 
 	srv_set directoryservice 0
+	resolvconf_stop
+
 	return 0
 }
 
