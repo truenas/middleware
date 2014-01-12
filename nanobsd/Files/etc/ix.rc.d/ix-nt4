@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-nt4
 # REQUIRE: ix-samba
-# BEFORE: winbindd
+# BEFORE: samba_server
 
 . /etc/rc.freenas
 

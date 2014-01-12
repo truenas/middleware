@@ -6,7 +6,7 @@
 # PROVIDE: ix-samba
 # REQUIRE: FILESYSTEMS mountlate
 # REQUIRE: ix-pam
-# BEFORE: smbd
+# BEFORE: samba_server
 
 . /etc/rc.freenas
 

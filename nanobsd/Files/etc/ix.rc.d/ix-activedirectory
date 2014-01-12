@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-activedirectory
 # REQUIRE: ix-samba ix-kinit
-# BEFORE: winbindd
+# BEFORE: samba_server
 
 . /etc/rc.freenas
 
