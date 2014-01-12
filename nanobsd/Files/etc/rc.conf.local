@@ -407,7 +407,7 @@ _gen_conf()
 	local numservers
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_servers FROM services_nfs ORDER BY id DESC LIMIT 1" | \
 	while read numservers; do
-		echo "nfs_server_flags=\"-t -u -n ${numservers} ${nfsips}\""
+		echo "nfs_server_flags=\"-t -n ${numservers} ${nfsips}\""
 	done
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_allow_nonroot, nfs_srv_mountd_port, nfs_srv_rpcstatd_port, nfs_srv_rpclockd_port FROM services_nfs ORDER BY -id LIMIT 1" | \
