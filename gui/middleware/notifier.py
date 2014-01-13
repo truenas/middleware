@@ -246,7 +246,6 @@ class notifier:
             'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
             'webshell': (None, '/var/run/webshell.pid'),
-            'avahi': ('avahi-daemon', None),
         }
 
     def _started_notify(self, verb, what):
@@ -506,16 +505,12 @@ class notifier:
         self._system('/bin/hostname ""')
         self._system("/usr/sbin/service ix-hostname quietstart")
         self._system("/usr/sbin/service hostname quietstart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon restart")
 
     def _reload_networkgeneral(self):
         self._system('/bin/hostname ""')
         self._system("/usr/sbin/service ix-hostname quietstart")
         self._system("/usr/sbin/service hostname quietstart")
         self._system("/usr/sbin/service routing restart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon restart")
 
     def _reload_timeservices(self):
         self._system("/usr/sbin/service ix-localtime quietstart")
@@ -534,32 +529,22 @@ class notifier:
     def _reload_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
         self._system("/usr/sbin/service sshd reload")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _start_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
         self._system("/usr/sbin/service sshd start")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _stop_ssh(self):
         self._system("/usr/sbin/service sshd forcestop")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _restart_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
         self._system("/usr/sbin/service sshd forcestop")
         self._system("/usr/sbin/service sshd restart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _reload_rsync(self):
         self._system("/usr/sbin/service ix-rsyncd quietstart")
         self._system("/usr/sbin/service rsyncd restart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _restart_rsync(self):
         self._stop_rsync()
@@ -568,13 +553,9 @@ class notifier:
     def _start_rsync(self):
         self._system("/usr/sbin/service ix-rsyncd quietstart")
         self._system("/usr/sbin/service rsyncd start")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _stop_rsync(self):
         self._system("/usr/sbin/service rsyncd forcestop")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _get_stg_directoryservice(self):
         from freenasUI.system.models import Settings
@@ -759,8 +740,6 @@ class notifier:
     def _reload_ftp(self):
         self._system("/usr/sbin/service ix-proftpd quietstart")
         self._system("/usr/sbin/service proftpd restart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _restart_ftp(self):
         self._stop_ftp()
@@ -770,13 +749,9 @@ class notifier:
     def _start_ftp(self):
         self._system("/usr/sbin/service ix-proftpd quietstart")
         self._system("/usr/sbin/service proftpd start")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _stop_ftp(self):
         self._system("/usr/sbin/service proftpd forcestop")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _start_ups(self):
         self._system("/usr/sbin/service ix-ups quietstart")
@@ -811,19 +786,13 @@ class notifier:
     def _load_afp(self):
         self._system("/usr/sbin/service ix-afpd quietstart")
         self._system("/usr/sbin/service netatalk quietstart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _start_afp(self):
         self._system("/usr/sbin/service ix-afpd start")
         self._system("/usr/sbin/service netatalk start")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _stop_afp(self):
         self._system("/usr/sbin/service netatalk forcestop")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _restart_afp(self):
         self._stop_afp()
@@ -832,13 +801,9 @@ class notifier:
     def _reload_afp(self):
         self._system("/usr/sbin/service ix-afpd quietstart")
         self._system("killall -1 netatalk")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _reload_nfs(self):
         self._system("/usr/sbin/service ix-nfsd quietstart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _restart_nfs(self):
         self._stop_nfs()
@@ -850,8 +815,6 @@ class notifier:
         self._system("/usr/sbin/service statd forcestop")
         self._system("/usr/sbin/service mountd forcestop")
         self._system("/usr/sbin/service nfsd forcestop")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _start_nfs(self):
         self._system("/usr/sbin/service ix-nfsd quietstart")
@@ -860,8 +823,6 @@ class notifier:
         self._system("/usr/sbin/service nfsd quietstart")
         self._system("/usr/sbin/service statd quietstart")
         self._system("/usr/sbin/service lockd quietstart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _force_stop_jail(self):
         self._system("/usr/sbin/service jail forcestop")
@@ -940,26 +901,18 @@ class notifier:
     def _reload_cifs(self):
         self._system("/usr/sbin/service ix-samba quietstart")
         self._system("/usr/sbin/service samba_server forcereload")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _restart_cifs(self):
         self._system("/usr/sbin/service ix-samba quietstart")
         self._system("/usr/sbin/service samba_server forcestop")
         self._system("/usr/sbin/service samba_server quietrestart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _start_cifs(self):
         self._system("/usr/sbin/service ix-samba quietstart")
         self._system("/usr/sbin/service samba_server quietstart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _stop_cifs(self):
         self._system("/usr/sbin/service samba_server forcestop")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _start_snmp(self):
         self._system("/usr/sbin/service ix-bsnmpd quietstart")
@@ -976,14 +929,10 @@ class notifier:
     def _restart_http(self):
         self._system("/usr/sbin/service ix-nginx quietstart")
         self._system("/usr/sbin/service nginx restart")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _reload_http(self):
         self._system("/usr/sbin/service ix-nginx quietstart")
         self._system("/usr/sbin/service nginx reload")
-        self._system("/usr/sbin/service ix_avahi quietstart")
-        self._system("/usr/sbin/service avahi-daemon reload")
 
     def _reload_loader(self):
         self._system("/usr/sbin/service ix-loader reload")
