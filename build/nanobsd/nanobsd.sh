@@ -179,17 +179,6 @@ NANO_IGNORE_FILES_EXPR='(CVS|\.git|\.svn)'
 #
 #######################################################################
 
-clean_build ( ) (
-	pprint 2 "Clean and create object directory (${MAKEOBJDIRPREFIX})"
-
-	if ! rm -rf ${MAKEOBJDIRPREFIX} > /dev/null 2>&1 ; then
-		chflags -R noschg ${MAKEOBJDIRPREFIX}
-		rm -r ${MAKEOBJDIRPREFIX}
-	fi
-	mkdir -p ${MAKEOBJDIRPREFIX}
-	printenv > ${MAKEOBJDIRPREFIX}/_.env
-)
-
 make_conf_build ( ) (
 	pprint 2 "Construct build make.conf ($NANO_MAKE_CONF_BUILD)"
 
@@ -207,7 +196,9 @@ build_world ( ) (
 		TARGET_ARCH=${NANO_ARCH##*:} \
 		${NANO_PMAKE} \
 		SRCCONF=${SRCCONF} \
-		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} buildworld \
+		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
+		NO_CLEAN=1 \
+		buildworld \
 		> ${MAKEOBJDIRPREFIX}/_.bw 2>&1
 )
 
@@ -235,31 +226,13 @@ build_kernel ( ) (
 		TARGET_ARCH=${NANO_ARCH##*:} \
 		${NANO_PMAKE} \
 		buildkernel \
+		NO_KERNELCLEAN=1 \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf} \
 		MODULES_OVERRIDE="${NANO_MODULES}" \
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	) > ${MAKEOBJDIRPREFIX}/_.bk 2>&1
-)
-
-clean_world ( ) (
-	if [ "${NANO_OBJ}" != "${MAKEOBJDIRPREFIX}" ]; then
-		pprint 2 "Clean and create object directory (${NANO_OBJ})"
-		if ! rm -rf ${NANO_OBJ} > /dev/null 2>&1 ; then
-			chflags -R noschg ${NANO_OBJ}
-			rm -r ${NANO_OBJ}
-		fi
-		mkdir -p ${NANO_OBJ} ${NANO_WORLDDIR}
-		printenv > ${NANO_OBJ}/_.env
-	else
-		pprint 2 "Clean and create world directory (${NANO_WORLDDIR})"
-		if ! rm -rf ${NANO_WORLDDIR}/ > /dev/null 2>&1 ; then
-			chflags -R noschg ${NANO_WORLDDIR}
-			rm -rf ${NANO_WORLDDIR}
-		fi
-		mkdir -p ${NANO_WORLDDIR}
-	fi
 )
 
 make_conf_install ( ) (
@@ -882,7 +855,6 @@ EOF
 
 set +e
 
-do_clean=true
 do_kernel=true
 do_world=true
 do_image=true
@@ -921,9 +893,6 @@ do
 		;;
 	k)
 		do_kernel=false
-		;;
-	n)
-		do_clean=false
 		;;
 	q)
 		: $(( PPLEVEL -= 1))
@@ -977,12 +946,6 @@ else
 	exit 1
 fi
 
-if $do_clean ; then
-	true
-else
-	NANO_PMAKE="${NANO_PMAKE} -DNO_CLEAN"
-fi
-
 # Override user's NANO_DRIVE if they specified a NANO_LABEL
 if [ ! -z "${NANO_LABEL}" ]; then
 	NANO_DRIVE=ufs/${NANO_LABEL}
@@ -1026,11 +989,8 @@ pprint 1 "NanoBSD image ${NANO_NAME} build starting"
 trap on_exit EXIT
 
 if $do_world ; then
-	if $do_clean ; then
-		clean_build
-	else
-		pprint 2 "Using existing build tree (as instructed)"
-	fi
+	mkdir -p ${MAKEOBJDIRPREFIX}
+	printenv > ${MAKEOBJDIRPREFIX}/_.env
 	make_conf_build
 	build_world
 else
@@ -1046,7 +1006,8 @@ else
 	pprint 2 "Skipping buildkernel (as instructed)"
 fi
 
-clean_world
+mkdir -p ${NANO_OBJ} ${NANO_WORLDDIR}
+printenv > ${NANO_OBJ}/_.env
 make_conf_install
 install_world
 install_etc

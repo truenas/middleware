@@ -17,11 +17,6 @@ BUILD=true
 # only checkout sources
 CHECKOUT_ONLY=false
 
-# 0 - build only what's required (src, ports, diskimage, etc).
-# 1 - force src build.
-# 2 - nuke the obj directories (os-base.*, etc) and build from scratch.
-#FORCE_BUILD=0
-
 # Number of jobs to pass to make. Only applies to src so far.
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
 if [ ${MAKE_JOBS} -gt 10 ]; then
@@ -96,11 +91,6 @@ usage: ${0##*/} [-aBfJsux] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-
 -B		- don't build. Will pull the sources and show you the
 		  nanobsd.sh invocation string instead. 
 -c		- Only checkout the source code don't do anything else.
--f  		- if not specified, will pass either -b (if prebuilt) to
-		  nanobsd.sh, or nothing if not prebuilt. If specified once,
-		  force a buildworld / buildkernel (passes -n to nanobsd). If
-		  specified twice, this won't pass any options to nanobsd.sh,
-		  which will force a pristine build.
 -j make-jobs	- number of make jobs to run; defaults to ${MAKE_JOBS}.
 -s		- show build targets
 -t target	- target to build (os-base, <plugin-name>, etc).
@@ -170,9 +160,6 @@ parse_cmdline()
             UPDATE=true # force update
 			FORCE_UPDATE=true # force update
             ;;
-		f)
-			: $(( FORCE_BUILD += 1 ))
-			;;
 		j)
 			echo ${OPTARG} | egrep -q '^[[:digit:]]+$' && [ ${OPTARG} -gt 0 ]
 			if [ $? -ne 0 ]; then
@@ -231,7 +218,6 @@ build_target()
 	local _target="${1}"
 	local _args="${NANO_ARGS}"
 	local _nanobsd="${AVATAR_ROOT}/build/nanobsd/nanobsd.sh"
-	local _fb=${FORCE_BUILD}
 	local _c
 
 	export AVATAR_COMPONENT=${_target##*/}
@@ -243,43 +229,19 @@ build_target()
 	#
 	export NANO_OBJ=${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}
 
-	#
-	# _fb is unset -- apply sane defaults based on what's already been built.
-	#
-	if [ -z "${_fb}" ]
+	local _required_logs="_.iw"
+	if [ "${AVATAR_COMPONENT}" = "os-base" ]
 	then
-		_fb=0
-
-		local _required_logs="_.iw"
-		if [ "${AVATAR_COMPONENT}" = "os-base" ]
-		then
-			#
-			# The base OS distro requires a kernel build.
-			#
-			_required_logs="_.ik _.iw"
-		fi
-
-		for _required_log in ${_required_logs}
-		do
-			if [ ! -s "${NANO_OBJ}/${_required_log}" ]
-			then
-				_fb=2
-				break
-			fi
-		done
+		#
+		# The base OS distro requires a kernel build.
+		#
+		_required_logs="_.ik _.iw"
 	fi
 
-	if [ "${_fb}" = "0" ]
-	then
-		_args="${_args} -b"
-
-	elif [ "${_fb}" = "1" ]
-	then
-		_args="${_args} -n"
-		_c=$(echo ${AVATAR_COMPONENT} | tr '-' '_')
+	_args="${_args} -n"
+	_c=$(echo ${AVATAR_COMPONENT} | tr '-' '_')
 		
-		export "${_c}_FORCE=1"
-	fi
+	export "${_c}_FORCE=1"
 
 	local _cmd="${_nanobsd} -c ${_target} ${_args} -j ${MAKE_JOBS}"
 
