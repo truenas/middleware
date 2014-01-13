@@ -1,6 +1,45 @@
 Release Notes for FreeNAS 9.2.1-BETA
 
-* Samba (SMB/CIFS support) upgraded to version 4.1.3.  This adds support for
+* Samba (SMB/CIFS support) upgraded to version 4.1.4.  This adds support for
 SMB3, the ability for FreeNAS to be a Windows Domain Controller, and multiple
 years worth of improvements over the version of Samba that shipped in 9.2.0
+In addition enable SMB protocol version 3.  Previous versions of FreeNAS
+limited samba to SMB2 because of random crashes that would occur using
+SMB3.
 
+* Added the LSI 12G SAS driver as a module to the build.  This can be
+enabled by adding a tunable for mpslsi3_load with a value of YES.  This
+driver is still under development and not yet committed to FreeBSD. It
+is provided for beta testing only. For production use please consider using
+a 6G SAS adpter, such as the LSI 9207.
+
+* Fixed a bug with netatalk that prevented share browsing from working
+in the finder on OSX.
+
+* Brought back the FreeNAS 8.x volume manager.  This volume manager allows
+manual vdev building and contains no anti-footshooting logic. Unless you
+know exactly what you are doing and why you are doing it using the standard
+volume manager is highly recommended by the development team.
+
+* Fix a bug that prevented building an encrypted volume using multipath
+devices.
+
+* Update django (used by the WebUI) to 1.6 and dojo to 1.9.2
+
+* Add reporting graphs that show individual disk activity.
+
+* Add the following ZFS features:   enabled_txg hole_birth
+extensible_dataset bookmarks
+
+* Remove the non functional share password field from AFP shares.
+
+* Add trafshow to the image.  This utlity gives a CLI view of connections
+and usage to the FreeNAS box.
+
+* Fix kernel module load for fuse.  This is needed for importing NTFS
+volumes.
+
+* Add the ability to use a keytab for AD joins.  This eliminates the need
+to use the AD Administrator account to join FreeNAS to AD, closing a long
+standing issue of needing the AD Admin password in the FreeNAS configuration
+database.
