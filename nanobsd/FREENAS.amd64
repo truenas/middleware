@@ -109,6 +109,7 @@ device		carp
 device		snp
 device		ctl
 device		iscsi
+device		pf
 
 # Make an SMP-capable kernel by default
 options 	SMP			# Symmetric MultiProcessor Kernel

@@ -108,6 +108,7 @@ device		carp
 device		snp
 device		ctl
 device		iscsi
+device		pf
 
 options		KVA_PAGES=512
 
