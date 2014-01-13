@@ -539,6 +539,15 @@ class VdevFormSet(BaseFormSet):
                         continue
                     disks = form.cleaned_data.get('disks')
 
+                    if form.cleaned_data.get('vdevtype') in (
+                        'cache',
+                        'log',
+                        'log mirror',
+                        'spare',
+                    ):
+                        continue
+
+
                     errors = []
                     if vdev.type != form.cleaned_data.get('vdevtype'):
                         errors.append(_(
