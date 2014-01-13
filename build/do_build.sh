@@ -63,6 +63,10 @@ if is_truenas ; then
 
 fi
 
+if [ -e "${AVATAR_ROOT}/build/do_build.custom.early" ] ; then
+    . "${AVATAR_ROOT}/build/do_build.custom.early"
+fi
+
 if [ "${GIT_LOCATION}" = "EXTERNAL" ] ; then
     : ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos}
     : ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
