@@ -11,7 +11,7 @@ SMB3.
 enabled by adding a tunable for mpslsi3_load with a value of YES.  This
 driver is still under development and not yet committed to FreeBSD. It
 is provided for beta testing only. For production use please consider using
-a 6G SAS adpter, such as the LSI 9207.
+a 6G SAS adapter, such as the LSI 9207.
 
 * Fixed a bug with netatalk that prevented share browsing from working
 in the finder on OSX.
@@ -33,7 +33,7 @@ extensible_dataset bookmarks
 
 * Remove the non functional share password field from AFP shares.
 
-* Add trafshow to the image.  This utlity gives a CLI view of connections
+* Add trafshow to the image.  This utility gives a CLI view of connections
 and usage to the FreeNAS box.
 
 * Fix kernel module load for fuse.  This is needed for importing NTFS
