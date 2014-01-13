@@ -238,7 +238,6 @@ build_target()
 		_required_logs="_.ik _.iw"
 	fi
 
-	_args="${_args} -n"
 	_c=$(echo ${AVATAR_COMPONENT} | tr '-' '_')
 		
 	export "${_c}_FORCE=1"
