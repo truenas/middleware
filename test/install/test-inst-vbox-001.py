@@ -57,34 +57,6 @@ def main(argv):
     config_file.close()
     runTest()
 
-# ISO_IMAGE=$1
-# 
-# if [ -z "$ISO_IMAGE" ]; then
-#    echo "Usage: "
-#    echo    $0 "[ISO file]"
-#    exit 1
-# fi
-# 
-# set -e
-# 
-# ifconfig tap0
-# ifconfig bridge0
-# 
-# VBOX_FOLDER=`VBoxManage list systemproperties | grep  "Default machine folder" | sed -e 's/^.*://' -e 's/^[[:space:]]*//'`
-# 
-# VBoxManage unregistervm --delete Test1
-# rm -fr "$VBOX_FOLDER/Test1"
-# VBoxManage createvm --name "Test1" --ostype FreeBSD_64 --register
-# VBoxManage createhd --filename "$VBOX_FOLDER/Test1/disk.vdi"  --size 90000 --format VDI
-# 
-# VBoxManage modifyvm Test1 --cpus 2 --memory 4000 --hpet on --ioapic on --nic1 bridged --bridgeadapter1 tap0
-# 
-# VBoxManage storagectl Test1 --name PIIX4 --add ide --controller PIIX4
-# VBoxManage storageattach Test1 --storagectl PIIX4 --port 0 --device 0 --type hdd --medium "${VBOX_FOLDER}/Test1/disk.vdi"
-# VBoxManage storageattach Test1 --storagectl PIIX4 --port 1 --device 0 --type dvddrive --medium "$ISO_IMAGE"
-# 
-# VBoxManage startvm Test1
-
 def runTest():
     global test_config
     global test_config_file
@@ -123,23 +95,23 @@ def runTest():
         print cmd 
         os.system(cmd)
 
-    cmd = 'VBoxManage modifyvm %s --cpus 2 --memory 4000 --hpet on --ioapic on --nic1 bridged --bridgeadapter1 tap0' % test_config['vm_name']
+    cmd = 'VBoxManage modifyvm %s --cpus 2 --memory 4000 --hpet on --ioapic on --nic1 bridged --bridgeadapter1 %s' % (test_config['vm_name'], test_config['tap'])
     print cmd 
     os.system(cmd)
-    cmd = 'VBoxManage storagectl %s --name PIIX4 --add ide --controller PIIX4' % test_config['vm_name']
+    cmd = 'VBoxManage storagectl %s --name SATA --add sata --controller IntelAHCI' % test_config['vm_name']
     print cmd 
     os.system(cmd)
-    cmd = 'VBoxManage storageattach %s --storagectl PIIX4 --port 1 --device 0 --type dvddrive --medium "%s"' % (test_config['vm_name'], test_config['iso'])
+    cmd = 'VBoxManage storageattach %s --storagectl SATA --port 0 --device 0 --type dvddrive --medium "%s"' % (test_config['vm_name'], test_config['iso'])
     print cmd 
     os.system(cmd)
 
 
-    device = 0
+    port = 1
     for d in test_config['disks']:
-        cmd = 'VBoxManage storageattach %s --storagectl PIIX4 --port 0 --device %d --type hdd --medium "%s"' % (test_config['vm_name'], device, d)
+        cmd = 'VBoxManage storageattach %s --storagectl SATA --port %d --device 0 --type hdd --medium "%s"' % (test_config['vm_name'], port, d)
         print cmd 
         os.system(cmd)
-        device = device + 1
+        port = port + 1
 
     cmd = 'VBoxManage startvm %s' % test_config['vm_name']
     print cmd 
