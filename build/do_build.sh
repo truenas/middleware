@@ -549,11 +549,6 @@ main()
 	expand_targets
 
 	#
-	# If UPDATE is set, we need to grab the FreeBSD source code
-	#
-	checkout_freebsd_source
-
-	#
 	# HACK: chmod +x the script because:
 	# 1. It's not in FreeBSD proper, so it will always be touched.
 	# 2. The mode is 0644 by default, and using a pattern like ${SHELL}
