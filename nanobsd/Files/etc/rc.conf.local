@@ -404,10 +404,14 @@ _gen_conf()
 
 	# set NFS server options
 	local IFS=\|
-	local numservers
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_servers FROM services_nfs ORDER BY id DESC LIMIT 1" | \
-	while read numservers; do
-		echo "nfs_server_flags=\"-t -n ${numservers} ${nfsips}\""
+	local numservers nfsudp
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_servers, nfs_srv_udp FROM services_nfs ORDER BY id DESC LIMIT 1" | \
+	while read numservers nfsudp; do
+		if [ ${nfsudp} -eq 0 ]; then
+			echo "nfs_server_flags=\"-t -n ${numservers} ${nfsips}\""
+		else
+			echo "nfs_server_flags=\"-t -u -n ${numservers} ${nfsips}\""
+		fi
 	done
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_allow_nonroot, nfs_srv_mountd_port, nfs_srv_rpcstatd_port, nfs_srv_rpclockd_port FROM services_nfs ORDER BY -id LIMIT 1" | \
