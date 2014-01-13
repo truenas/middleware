@@ -1012,6 +1012,7 @@ define([
       dedup_warning: "",
       extend: "",
       swapSize: 0,
+      manualUrl: "",
       add_label: gettext('Add Volume') + '<br/ ><span style="color: red;">' + gettext('Existing data will be cleared') + '</span>',
       extend_label: gettext("Extend Volume"),
       _layout: [],
@@ -1206,6 +1207,21 @@ define([
             cancelDialog(this);
           }
         }, this.dapCancel);
+
+        new Button({
+          label: gettext("Manual setup"),
+          style: "float: right;",
+          onClick: function() {
+            cancelDialog(this);
+            commonDialog({
+              style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+              name: gettext('ZFS Volume Manager'),
+              url: me.manualUrl
+              //nodes: [this,]
+            });
+
+          }
+        }, this.dapManual);
 
         this._total_vdevs = new _Widget({
             name: "layout-TOTAL_FORMS",

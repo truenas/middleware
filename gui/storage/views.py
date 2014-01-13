@@ -186,6 +186,7 @@ def volumemanager(request):
         'disks': json.dumps(bysize),
         'dedup_warning': forms.DEDUP_WARNING,
         'swap_size': swap * 1024 * 1024 * 1024,
+        'manual_url': reverse('storage_volumemanager_zfs'),
         'extend': json.dumps(
             [{'value': '', 'label': '-----'}] +
             [{
