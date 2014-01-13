@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'NFS.nfs_srv_udp'
         db.add_column(u'services_nfs', 'nfs_srv_udp',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
+
+        orm['services.NFS'].objects.update(nfs_srv_udp=False)
 
 
     def backwards(self, orm):
