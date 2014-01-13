@@ -282,6 +282,10 @@ class NFS(Model):
             "clients, typically four to six."
         )
     )
+    nfs_srv_udp = models.BooleanField(
+        verbose_name=_('Serve UDP NFS clients'),
+        default=False,
+    )
     nfs_srv_allow_nonroot = models.BooleanField(
         default=False,
         verbose_name=_("Allow non-root mount"),
