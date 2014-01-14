@@ -177,7 +177,7 @@ def config_save(request):
     response = HttpResponse(wrapper, content_type='application/octet-stream')
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = \
-        'attachment; filename=%s-%s-%s.db' % (
+        'attachment; filename="%s-%s-%s.db"' % (
             hostname.encode('utf-8'),
             freenas_build,
             time.strftime('%Y%m%d%H%M%S'))
