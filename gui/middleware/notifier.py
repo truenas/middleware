@@ -1431,6 +1431,7 @@ class notifier:
         p1 = self._pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
                       "-o failmode=continue "
                       "-o autoexpand=on "
+                      "-O compression=lz4 "
                       "-O aclmode=passthrough -O aclinherit=passthrough "
                       "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
         if p1.wait() != 0:
