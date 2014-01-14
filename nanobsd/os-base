@@ -565,7 +565,7 @@ add_gui()
 	dst=${NANO_WORLDDIR}${dstCR}
 	if [ -d ${gui} ]; then
 	pprint 2 "Adding freenas web gui"
-	mkdir ${dst}
+	mkdir -p ${dst}
 	( cd ${gui}
 	  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	if is_truenas ; then
@@ -573,7 +573,7 @@ add_gui()
 		  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	fi
 	pprint 2 "Making freenas initial database"
-	mkdir ${NANO_WORLDDIR}/data
+	mkdir -p ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate --traceback)"
 	CR "(cd ${dstCR}; python manage.py collectstatic --noinput)"
 	CR "(cd ${dstCR}; python tools/compilemsgs.py)"
