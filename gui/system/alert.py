@@ -57,6 +57,15 @@ class Alert(object):
     def __unicode__(self):
         return self._message.decode('utf8')
 
+    def getId(self):
+        return self._id
+
+    def getLevel(self):
+        return self._level
+
+    def getMessage(self):
+        return self._message
+
 
 class AlertPlugins(object):
 
