@@ -106,8 +106,7 @@ class AlertPlugins(object):
                 if rv:
                     rvs.extend(rv)
             except Exception, e:
-                raise
-                log.debug("Alert module '%s' failed: %s", instance, e)
+                log.error("Alert module '%s' failed: %s", instance, e)
 
         with open(self.ALERT_FILE, 'w') as f:
             cPickle.dump({
