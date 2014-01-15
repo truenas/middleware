@@ -2575,8 +2575,8 @@ patch_merge_bsdiffs()
 		fi
 		
 		# Make sure we really are trying to patch the same file
-		sha1="`sha256 -q ${PBI_PATCHWRKDIR}/${_tFile}`"
-		sha2="`cat ${PBI_EXTRACTDIR}/${_tFile}.sha256`"
+		sha1="`sha256 -q "${PBI_PATCHWRKDIR}/${_tFile}"`"
+		sha2="`cat "${PBI_EXTRACTDIR}/${_tFile}.sha256"`"
 		if [ "$sha1" != "$sha2" ] ; then
 			echo "Warning: Checksum failed for ${_tFile}, skipping."
 			continue
@@ -2593,7 +2593,7 @@ patch_merge_bsdiffs()
         	fi
 		
 		# Now do the patching
-	 	#echo "Patching $_tFile"	
+	 	echo "Patching $_tFile"	
 		mv "${PBI_PATCHWRKDIR}/${_tFile}" "${PBI_PATCHWRKDIR}/${_tFile}.patch.$$"
 		bspatch "${PBI_PATCHWRKDIR}/${_tFile}.patch.$$" \
 			"${PBI_PATCHWRKDIR}/${_tFile}" \
