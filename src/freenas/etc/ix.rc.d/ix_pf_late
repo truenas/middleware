@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix_pf_late
+# AFTER: bgfsck
+# KEYWORD: nojail shutdown
+
+. /etc/rc.subr
+
+name="ix_pf_late"
+start_cmd="ix_pf_late_start"
+stop_cmd="ix_pf_late_stop"
+stop_cmd=":"
+
+
+ix_pf_late_start()
+{
+	checkyesno failover_enable || /sbin/pfctl -d
+}
+
+ix_pf_late_stop()
+{
+	checkyesno failover_enable || /sbin/pfctl -e /etc/pf.conf.block
+}
+
+run_rc_command "$1"
