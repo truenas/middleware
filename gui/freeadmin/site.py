@@ -263,31 +263,18 @@ class FreeAdminSite(object):
                 current in ('OK', 'WARN')
             ):
                 current = status
-            return HttpResponse(current)
-        else:
-            return HttpResponse('WARN')
+        return HttpResponse(current)
 
     @never_cache
     def alert_detail(self, request):
         from freenasUI.system.models import Alert
+        from freenasUI.system.alert import alertPlugins
         dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
-        if os.path.exists('/var/tmp/alert'):
-            with open('/var/tmp/alert') as f:
-                entries = f.read().split('\n')
-            alerts = []
-            for entry in entries:
-                if not entry:
-                    continue
-                status, msgid, message = RE_ALERT.match(entry).groups()
-                alerts.append({
-                    'status': status,
-                    'msgid': msgid,
-                    'dismissed': msgid in dismisseds,
-                    'message': message,
-                })
-
+        alerts = alertPlugins.run()
+        if alerts:
             return render(request, "freeadmin/alert_status.html", {
                 'alerts': alerts,
+                'dismisseds': dismisseds,
             })
         else:
             return HttpResponse(
