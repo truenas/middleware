@@ -14,7 +14,9 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION} BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
 
-all: git-verify
+all:	build
+
+build: git-verify
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
 	${ENV_SETUP} build/do_build.sh
 
@@ -23,7 +25,7 @@ checkout: git-verify
 
 clean:
 	${ENV_SETUP} build/build_cleanup.py
-	rm -rf FreeBSD ${NANO_LABEL}-${VERSION}-* release.build.log
+	rm -rf FreeBSD ${NANO_LABEL}-${VERSION}-* release.build.log nas_source
 
 clean-packages:
 	find os-base -name "*.tbz" -delete
@@ -48,7 +50,7 @@ force: git-verify
 
 truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
-	env NANO_LABEL=TrueNAS make
+	env NANO_LABEL=TrueNAS ${MAKE} build
 	mkdir -p TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 	mv os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 
