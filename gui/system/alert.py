@@ -5,6 +5,11 @@ import logging
 import os
 import time
 
+from django.utils.translation import ugettext_lazy as _
+
+from freenasUI.common.system import send_mail
+from freenasUI.system.models import Alert as mAlert
+
 log = logging.getLogger('system.alert')
 
 
@@ -57,6 +62,9 @@ class Alert(object):
     def __unicode__(self):
         return self._message.decode('utf8')
 
+    def __eq__(self, other):
+        return self.getId() == other.getId()
+
     def getId(self):
         return self._id
 
@@ -97,8 +105,22 @@ class AlertPlugins(object):
         instance = klass(self)
         self.mods.append(instance)
 
+    def email(self, alerts):
+        dismisseds = [a.message_id
+            for a in mAlert.objects.filter(dismiss=True)
+        ]
+        msgs = []
+        for alert in alerts:
+            if alert.getId() not in dismisseds:
+                msgs.append(unicode(alert))
+        if len(msgs) == 0:
+            return
+        send_mail(subject=_("Critical Alerts"),
+                  text='\n'.join(msgs))
+
     def run(self):
 
+        obj = None
         if os.path.exists(self.ALERT_FILE):
             with open(self.ALERT_FILE, 'r') as f:
                 try:
@@ -116,6 +138,17 @@ class AlertPlugins(object):
                     rvs.extend(rv)
             except Exception, e:
                 log.error("Alert module '%s' failed: %s", instance, e)
+
+        crits = sorted([a for a in rvs if a.getLevel() == Alert.CRIT])
+        if obj and crits:
+            lastcrits = sorted([
+                a for a in obj['alerts'] if a.getLevel() == Alert.CRIT
+            ])
+            if crits == lastcrits:
+                crits = []
+
+        if crits:
+            self.email(crits)
 
         with open(self.ALERT_FILE, 'w') as f:
             cPickle.dump({
