@@ -2761,9 +2761,13 @@ class notifier:
         return  plugin
 
     def update_pbi(self, plugin=None):
-        from freenasUI.jails.models import JailsConfiguration
+        from freenasUI.jails.models import JailsConfiguration, NullMountPoint
         from freenasUI.services.models import RPCToken
+        from freenasUI.common.pipesubr import pipeopen
         ret = False
+
+        if not plugin:
+            raise MiddlewareError("plugin could not be found and is NULL")
 
         if 'PATH' in os.environ:
             paths = os.environ['PATH']
@@ -2799,6 +2803,14 @@ class notifier:
 
         jc = JailsConfiguration.objects.order_by("-id")[0]
 
+        mountpoints = NullMountPoint.objects.filter(jail=jail_name)
+        for mp in mountpoints:
+            fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
+            p = pipeopen("/sbin/umount -f '%s'" % fp)
+            out = p.communicate()
+            if p.returncode != 0:
+                raise MiddlewareError(out[1])
+
         jail_root = jc.jc_path
         jail_path = "%s/%s" % (jail_root, jail_name)
         plugins_path = "%s/%s" % (jail_path, ".plugins")
@@ -2813,10 +2825,6 @@ class notifier:
         log.debug("XXX: newname = %s", newname)
         log.debug("XXX: newversion = %s", newversion)
         log.debug("XXX: newarch = %s", newarch)
-
-        plugin = self._get_plugin_info(newname)
-        if not plugin:
-            raise MiddlewareError("plugin could not be found and is NULL")
 
         pbitemp = "/var/tmp/pbi"
         oldpbitemp = "%s/old" % pbitemp
@@ -2933,8 +2941,16 @@ class notifier:
         self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, newname))
         self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, newname))
 
+        for mp in mountpoints:
+            fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
+            p = pipeopen("/sbin/mount_nullfs -f '%s' '%s'" % (mp.source, fp))
+            out = p.communicate()
+            if p.returncode != 0:
+                raise MiddlewareError(out[1])
+
         log.debug("XXX: update_pbi: returning %s", ret)
         return ret
+
 
     def delete_pbi(self, plugin):
         ret = False
