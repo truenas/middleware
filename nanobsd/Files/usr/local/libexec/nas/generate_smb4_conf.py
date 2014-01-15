@@ -510,7 +510,8 @@ def generate_smb4_shares(smb4_shares):
         if vfs_objects:
             confset2(smb4_shares, "vfs objects = %s", string.join(vfs_objects, ' '))
 
-        confset2(smb4_shares, "hide dot files = no", share.cifs_showhiddenfiles)
+        confset2(smb4_shares, "hide dot files = %s",
+            "yes" if share.cifs_showhiddenfiles else "no")
         confset2(smb4_shares, "hosts allow = %s", share.cifs_hostsallow)
         confset2(smb4_shares, "hosts deny = %s", share.cifs_hostsdeny)
         confset2(smb4_shares, "guest ok = %s", "yes" if share.cifs_guestok else "no")
