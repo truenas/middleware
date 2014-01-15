@@ -451,36 +451,6 @@ checkout_freebsd_source()
 	echo "$NANO_LABEL" > ${AVATAR_ROOT}/FreeBSD/.pulled
 }
 
-do_pbi_wrapper_hack()
-{
-	local _src="${AVATAR_ROOT}/src/pcbsd/pbi-wrapper"
-	local _dst="${AVATAR_ROOT}/FreeBSD/src/pbi-wrapper"
-
-	if [ ! -d "${_dst}" ]
-	then
-		mkdir -p "${_dst}"
-	fi
-	cp ${_src}/* ${_dst}
-
-	NANO_LOCAL_DIRS="${NANO_LOCAL_DIRS} pbi-wrapper"
-	export NANO_LOCAL_DIRS
-}
-
-do_extract_tarball_hack()
-{
-	local _src="${AVATAR_ROOT}/src/extract-tarball"
-	local _dst="${AVATAR_ROOT}/FreeBSD/src/extract-tarball"
-
-	if [ ! -d "${_dst}" ]
-	then
-		mkdir -p "${_dst}"
-	fi
-	cp ${_src}/* ${_dst}
-
-	NANO_LOCAL_DIRS="${NANO_LOCAL_DIRS} extract-tarball"
-	export NANO_LOCAL_DIRS
-}
-
 check_for_command_from_port()
 {
    local COMMAND=$1
@@ -558,16 +528,6 @@ main()
 	then
 		chmod +x ${NANO_SRC}/include/mk-osreldate.sh
 	fi
-
-	#
-	# pbiwrapper hacks
-	#
-	do_pbi_wrapper_hack
-
-	#
-	# compile extract-tarball during FreeBSD world build
-	#
-	do_extract_tarball_hack
 
 	#
 	# Now let's build the targets

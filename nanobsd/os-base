@@ -193,6 +193,8 @@ fi
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
+customize_cmd build_nas_source2
+
 if is_truenas ; then
 	add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
 fi
@@ -737,14 +739,6 @@ add_pbi_wrapper()
 }
 customize_cmd add_pbi_wrapper
 
-install_extract_tarball()
-{
-	mkdir -p ${NANO_WORLDDIR}/usr/local/bin
-	mv ${NANO_WORLDDIR}/usr/bin/extract-tarball \
-		${NANO_WORLDDIR}/usr/local/bin/extract-tarball
-}
-customize_cmd install_extract_tarball
-
 # Move the $world/data to the /data partion
 move_data()
 {
@@ -1134,4 +1128,41 @@ install_debug_kernel ( )
 	local _kernconf=$(basename ${NANO_KERNEL})
 
 	install_kernel2  ${NANO_OBJ}/${_kernconf}-DEBUG  /boot/kernel-debug
+}
+
+build_nas_source2 ( )
+{
+	mkdir -p ${NANO_WORLDDIR}/usr/src
+	mkdir -p ${NANO_WORLDDIR}/usr/nas_source2
+
+	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
+	mount -t nullfs -o noatime ${AVATAR_ROOT}/src ${NANO_WORLDDIR}/usr/nas_source2
+
+        (
+	    # Build PBI wrapper
+            local _target
+            for _target in obj all install; do
+	        CR "unset MAKEOBJDIRPREFIX; \
+	            env \
+	            TARGET=${NANO_ARCH} \
+	            TARGET_ARCH=${NANO_ARCH} \
+	            ${NANO_PMAKE} \
+	            -C /usr/nas_source2/pcbsd/pbi-wrapper \
+	            ${_target}"
+            done
+
+	    # Build extract-tarball
+            for _target in obj all install; do
+	        CR "unset MAKEOBJDIRPREFIX;
+	            env \
+	            TARGET=${NANO_ARCH} \
+	            TARGET_ARCH=${NANO_ARCH} \
+	            ${NANO_PMAKE} \
+	            BINDIR=/usr/local/bin \
+	             -C /usr/nas_source2/extract-tarball \
+	            ${_target}"
+            done
+        )
+	umount -f ${NANO_WORLDDIR}/usr/nas_source2
+	umount -f ${NANO_WORLDDIR}/usr/src
 }
