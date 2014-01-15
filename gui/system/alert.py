@@ -125,8 +125,6 @@ class AlertPlugins(object):
             with open(self.ALERT_FILE, 'r') as f:
                 try:
                     obj = cPickle.load(f)
-                    if time.time() - (5 * 60) < obj['last']:
-                        return obj['alerts']
                 except:
                     pass
 
