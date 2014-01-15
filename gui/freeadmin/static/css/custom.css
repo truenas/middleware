@@ -603,11 +603,6 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.AddVolumeIcon {
-    background-image:url('/static/images/ui/tree/add_volume.png');
-    width:16px;
-    height:16px;
-}
 .AddShareIcon {
     background-image:url('/static/images/ui/tree/add_share.png');
     width:16px;
