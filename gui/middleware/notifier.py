@@ -2943,7 +2943,7 @@ class notifier:
 
         for mp in mountpoints:
             fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
-            p = pipeopen("/sbin/mount_nullfs -f '%s' '%s'" % (mp.source, fp))
+            p = pipeopen("/sbin/mount_nullfs '%s' '%s'" % (mp.source, fp))
             out = p.communicate()
             if p.returncode != 0:
                 raise MiddlewareError(out[1])
