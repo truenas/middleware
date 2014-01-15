@@ -25,6 +25,7 @@
 #
 #####################################################################
 import os
+import logging
 import platform
 
 from django.db import models, transaction
@@ -36,6 +37,7 @@ from freenasUI.freeadmin.models import Model
 from freenasUI.jails.models import Jails, JailsConfiguration
 from freenasUI.middleware.notifier import notifier
 
+log = logging.getLogger('plugins.models')
 
 class Plugins(Model):
     plugin_name = models.CharField(
