@@ -56,7 +56,7 @@ resolvconf_start()
 {
 	if [ ! -f /etc/resolv.conf.dc ]
 	then
-		echo '127.0.0.1' > /etc/resolv.conf.dc
+		echo 'nameserver 127.0.0.1' > /etc/resolv.conf.dc
 		chmod 644 /etc/resolv.conf.dc
 	fi
 
