@@ -167,7 +167,7 @@ class CIFS(Model):
             )
     cifs_srv_homedir_enable = models.BooleanField(
         verbose_name=_("Enable home directories"),
-        help_text=_("Enable/disable home directories for samba user.")
+        help_text=_("Enable/disable home directories for samba user."),
         default=False,
     )
     cifs_srv_homedir_browseable_enable = models.BooleanField(
