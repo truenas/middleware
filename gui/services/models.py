@@ -54,7 +54,9 @@ class services(Model):
                 "time")
             )
     srv_enable = models.BooleanField(
-            verbose_name=_("Enable Service"))
+        verbose_name=_("Enable Service"),
+        default=False,
+    )
 
     class Meta:
         verbose_name = _("Services")
@@ -111,9 +113,13 @@ class CIFS(Model):
             verbose_name=_("Log level")
             )
     cifs_srv_localmaster = models.BooleanField(
-            verbose_name=_("Local Master"))
+        verbose_name=_("Local Master"),
+        default=False,
+    )
     cifs_srv_timeserver = models.BooleanField(
-            verbose_name=_("Time Server for Domain"))
+        verbose_name=_("Time Server for Domain"),
+        default=False,
+    )
     cifs_srv_guest = UserField(
             max_length=120,
             default="nobody",
@@ -142,11 +148,17 @@ class CIFS(Model):
                 "mask (0777 by default).")
             )
     cifs_srv_easupport = models.BooleanField(
-            verbose_name=_("EA Support"))
+        verbose_name=_("EA Support"),
+        default=False,
+    )
     cifs_srv_dosattr = models.BooleanField(
-            verbose_name=_("Support DOS File Attributes"))
+        verbose_name=_("Support DOS File Attributes"),
+        default=False,
+    )
     cifs_srv_nullpw = models.BooleanField(
-            verbose_name=_("Allow Empty Password"))
+        verbose_name=_("Allow Empty Password"),
+        default=False,
+    )
     cifs_srv_smb_options = models.TextField(
             verbose_name=_("Auxiliary parameters"),
             blank=True,
@@ -154,15 +166,16 @@ class CIFS(Model):
                 "smb.conf")
             )
     cifs_srv_homedir_enable = models.BooleanField(
-            verbose_name=_("Enable home directories"),
-            help_text=_("Enable/disable home directories for samba user.")
-            )
+        verbose_name=_("Enable home directories"),
+        help_text=_("Enable/disable home directories for samba user.")
+        default=False,
+    )
     cifs_srv_homedir_browseable_enable = models.BooleanField(
-            verbose_name=_("Enable home directories browsing"),
-            help_text=_("Enable/disable home directories browsing for samba "
-                "user."),
-            default=False,
-            )
+        verbose_name=_("Enable home directories browsing"),
+        help_text=_("Enable/disable home directories browsing for samba "
+            "user."),
+        default=False,
+    )
     cifs_srv_homedir = PathField(
             verbose_name=_("Home directories"),
             blank=True,
@@ -230,9 +243,10 @@ class CIFS(Model):
 
 class AFP(Model):
     afp_srv_guest = models.BooleanField(
-            verbose_name=_("Guest Access"),
-            help_text=_("Allows guest access to all apple shares on this box.")
-            )
+        verbose_name=_("Guest Access"),
+        help_text=_("Allows guest access to all apple shares on this box."),
+        default=False,
+    )
     afp_srv_guest_user = UserField(
             max_length=120,
             default="nobody",
@@ -255,9 +269,10 @@ class AFP(Model):
             default=50,
             )
     afp_srv_homedir_enable = models.BooleanField(
-            verbose_name=_("Enable home directories"),
-            help_text=_("Enable/disable home directories for afp user.")
-            )
+        verbose_name=_("Enable home directories"),
+        help_text=_("Enable/disable home directories for afp user."),
+        default=False,
+    )
     afp_srv_homedir = PathField(
             verbose_name=_("Home directories"),
             blank=True,
@@ -1023,9 +1038,13 @@ class UPS(Model):
             verbose_name=_("Extra users (upsd.users)"),
             )
     ups_rmonitor = models.BooleanField(
-            verbose_name=_("Remote Monitor"))
+        verbose_name=_("Remote Monitor"),
+        default=False,
+    )
     ups_emailnotify = models.BooleanField(
-            verbose_name=_("Send Email Status Updates"))
+        verbose_name=_("Send Email Status Updates"),
+        default=False,
+    )
     ups_toemail = models.CharField(
             max_length=120,
             verbose_name=_("To email"),
@@ -1087,14 +1106,20 @@ class FTP(Model):
             help_text=_("Maximum idle time in seconds.")
             )
     ftp_rootlogin = models.BooleanField(
-            verbose_name=_("Allow Root Login"))
+        verbose_name=_("Allow Root Login"),
+        default=False,
+    )
     ftp_onlyanonymous = models.BooleanField(
-            verbose_name=_("Allow Anonymous Login"))
+        verbose_name=_("Allow Anonymous Login"),
+        default=False,
+    )
     ftp_anonpath = PathField(
         blank=True,
         verbose_name=_("Path"))
     ftp_onlylocal = models.BooleanField(
-            verbose_name=_("Allow Local User Login"))
+        verbose_name=_("Allow Local User Login"),
+        default=False,
+    )
     #FIXME: rename the field
     ftp_banner = models.TextField(
         max_length=120,
@@ -1122,20 +1147,29 @@ class FTP(Model):
         ),
     )
     ftp_fxp = models.BooleanField(
-            verbose_name=_("Enable FXP"))
+        verbose_name=_("Enable FXP"),
+        default=False,
+    )
     ftp_resume = models.BooleanField(
-            verbose_name=_("Allow Transfer Resumption"))
+        verbose_name=_("Allow Transfer Resumption"),
+        default=False,
+    )
     ftp_defaultroot = models.BooleanField(
         verbose_name=_("Always Chroot"),
         help_text=_(
             "For local users, only allow access to user home directory unless "
             "the user is a member of group wheel."
-        )
+        ),
+        default=False,
     )
     ftp_ident = models.BooleanField(
-            verbose_name=_("Require IDENT Authentication"))
+        verbose_name=_("Require IDENT Authentication"),
+        default=False,
+    )
     ftp_reversedns = models.BooleanField(
-            verbose_name=_("Perform Reverse DNS Lookups"))
+        verbose_name=_("Perform Reverse DNS Lookups"),
+        default=False,
+    )
     ftp_masqaddress = models.CharField(
             verbose_name=_("Masquerade address"),
             blank=True,
@@ -1190,7 +1224,9 @@ class FTP(Model):
                 " infinity.")
             )
     ftp_tls = models.BooleanField(
-            verbose_name=_("Enable TLS"))
+        verbose_name=_("Enable TLS"),
+        default=False,
+    )
     ftp_tls_policy = models.CharField(
             max_length=120,
             choices=choices.FTP_TLS_POLICY_CHOICES,
@@ -1275,7 +1311,9 @@ class TFTP(Model):
                 "directory as part of the transfer."),
             )
     tftp_newfiles = models.BooleanField(
-            verbose_name=_("Allow New Files"))
+        verbose_name=_("Allow New Files"),
+        default=False,
+    )
     tftp_port = models.PositiveIntegerField(
             verbose_name=_("Port"),
             validators=[MinValueValidator(1), MaxValueValidator(65535)],
@@ -1322,16 +1360,23 @@ class SSH(Model):
             help_text=_("Alternate TCP port. Default is 22"),
             )
     ssh_rootlogin = models.BooleanField(
-            verbose_name=_("Login as Root with password"),
-            help_text=_("Disabled: Root can only login via public key "
-                "authentication; Enabled: Root login permitted with password")
-            )
+        verbose_name=_("Login as Root with password"),
+        help_text=_("Disabled: Root can only login via public key "
+            "authentication; Enabled: Root login permitted with password"),
+        default=False,
+    )
     ssh_passwordauth = models.BooleanField(
-            verbose_name=_("Allow Password Authentication"))
+        verbose_name=_("Allow Password Authentication"),
+        default=False,
+    )
     ssh_tcpfwd = models.BooleanField(
-            verbose_name=_("Allow TCP Port Forwarding"))
+        verbose_name=_("Allow TCP Port Forwarding"),
+        default=False,
+    )
     ssh_compression = models.BooleanField(
-            verbose_name=_("Compress Connections"))
+        verbose_name=_("Compress Connections"),
+        default=False,
+    )
     ssh_privatekey = models.TextField(
             max_length=1024,
             verbose_name=_("Host Private Key"),
@@ -1654,7 +1699,9 @@ class LDAP(Model):
                 "searches, eg dc=test,dc=org")
             )
     ldap_anonbind = models.BooleanField(
-            verbose_name=_("Allow Anonymous Binding"))
+        verbose_name=_("Allow Anonymous Binding"),
+        default=False,
+    )
     ldap_rootbasedn = models.CharField(
             max_length=120,
             verbose_name=_("Root bind DN"),
