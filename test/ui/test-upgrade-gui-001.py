@@ -4,10 +4,9 @@
 #
 # The following test opens a web browser.
 #   (1) opens a web browser
-#   (2) clicks on the System icon
-#   (3) clicks on the Services icon
-#   (4) clicks on the SSH settings to enable ssh, and permit ssh root login
-#   (5) set the admin password
+#   (2) logs into the FreeNAS UI as the root user
+#   (3) clicks on the System -> Settings -> Advanced -> Firmware Upgrade
+#   (4) Uploads an image for upgrade
 
 from splinter import Browser
 import json, getopt
