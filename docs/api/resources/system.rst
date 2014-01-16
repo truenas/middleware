@@ -13,7 +13,7 @@ The Advanced resource represents the advanced settings.
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/services/advanced/
+.. http:get:: /api/v1.0/system/advanced/
 
    Returns the advanced dictionary.
 
@@ -21,7 +21,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/services/advanced/ HTTP/1.1
+      GET /api/v1.0/ssytem/advanced/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -58,7 +58,7 @@ List resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/services/advanced/
+.. http:put:: /api/v1.0/system/advanced/
 
    Update advanced.
 
@@ -66,7 +66,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/services/advanced/ HTTP/1.1
+      PUT /api/v1.0/system/advanced/ HTTP/1.1
       Content-Type: application/json
 
         {
