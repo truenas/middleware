@@ -1422,7 +1422,7 @@ class notifier:
 
         larger_ashift = 0
         try:
-            larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
+            larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")[0])
         except AssertionError:
             pass
         if larger_ashift == 0:
@@ -1486,7 +1486,7 @@ class notifier:
 
         larger_ashift = 0
         try:
-            larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
+            larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")[0])
         except AssertionError:
             pass
         if larger_ashift == 0:
@@ -1761,7 +1761,7 @@ class notifier:
 
         larger_ashift = 0
         try:
-            larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
+            larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")[0])
         except AssertionError:
             pass
         if larger_ashift == 1:
