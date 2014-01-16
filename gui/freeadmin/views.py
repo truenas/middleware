@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+import json
 import logging
 import sys
 
@@ -32,7 +33,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.views import debug
 from django.template import Context
 from django.template.loader import get_template
-from django.utils import simplejson
 
 from freenasUI.common.system import get_sw_version
 from freenasUI.system.models import Advanced
@@ -125,11 +125,11 @@ class JsonResp(HttpResponse):
         })
 
         if request.is_ajax() or self.force_json:
-            kwargs['content'] = simplejson.dumps(data)
+            kwargs['content'] = json.dumps(data)
             kwargs['content_type'] = 'application/json'
         else:
             kwargs['content'] = ("<html><body><textarea>"
-                + simplejson.dumps(data) +
+                + json.dumps(data) +
                 "</textarea></boby></html>")
         super(JsonResp, self).__init__(*args, **kwargs)
 
