@@ -183,9 +183,13 @@ class NTPServer(Model):
 
 class Advanced(Model):
     adv_consolemenu = models.BooleanField(
-            verbose_name=_("Enable Console Menu"))
+        verbose_name=_("Enable Console Menu"),
+        default=False,
+    )
     adv_serialconsole = models.BooleanField(
-            verbose_name=_("Use Serial Console"))
+        verbose_name=_("Use Serial Console"),
+        default=False,
+    )
     adv_serialspeed = models.CharField(
             max_length=120,
             choices=choices.SERIAL_SPEED,
@@ -194,9 +198,13 @@ class Advanced(Model):
             verbose_name=_("Serial Port Speed")
             )
     adv_consolescreensaver = models.BooleanField(
-            verbose_name=_("Enable screen saver"))
+        verbose_name=_("Enable screen saver"),
+        default=False,
+    )
     adv_powerdaemon = models.BooleanField(
-            verbose_name=_("Enable powerd (Power Saving Daemon)"))
+        verbose_name=_("Enable powerd (Power Saving Daemon)"),
+        default=False,
+    )
     adv_swapondrive = models.IntegerField(
             validators=[MinValueValidator(0)],
             verbose_name=_("Swap size on each drive in GiB, affects new disks "
