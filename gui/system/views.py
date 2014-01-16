@@ -246,6 +246,10 @@ def top(request):
 
 def reboot_dialog(request):
     if request.method == "POST":
+        if notifier().zpool_scrubbing():
+            if not request.session.has_key('scrub_asked'):
+                request.session['scrub_asked'] = True
+                return render(request, 'system/reboot_dialog2.html')
         request.session['allow_reboot'] = True
         return JsonResp(
             request,
@@ -273,6 +277,10 @@ def reboot_run(request):
 
 def shutdown_dialog(request):
     if request.method == "POST":
+        if notifier().zpool_scrubbing():
+            if not request.session.has_key('scrub_asked'):
+                request.session['scrub_asked'] = True
+                return render(request, 'system/shutdown_dialog2.html')
         request.session['allow_shutdown'] = True
         return JsonResp(
             request,

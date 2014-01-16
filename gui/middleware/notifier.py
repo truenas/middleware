@@ -3852,6 +3852,12 @@ class notifier:
         parse = zfs.parse_status(name, doc, res)
         return parse
 
+    def zpool_scrubbing(self):
+        p1 = self._pipeopen("zpool status")
+        res = p1.communicate()[0]
+        r = re.compile(r'scan: (resilver|scrub) in progress')
+        return r.search(res) is not None
+
     def _camcontrol_list(self):
         """
         Parse camcontrol devlist -v output to gather
