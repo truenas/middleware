@@ -1,4 +1,4 @@
-from .utils import APITestCase
+from freenasUI.api.tests.utils import APITestCase
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.services import models
 from freenasUI.storage.models import MountPoint, Volume

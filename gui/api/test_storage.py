@@ -1,4 +1,4 @@
-from .utils import APITestCase
+from freenasUI.api.tests.utils import APITestCase
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage import models
 

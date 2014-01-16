@@ -1,4 +1,4 @@
-from .utils import APITestCase
+from freenasUI.api.tests.utils import APITestCase
 from freenasUI.jails import models
 from freenasUI.common.warden import WARDEN_TYPE_PLUGINJAIL
 
