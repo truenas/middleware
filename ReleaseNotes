@@ -16,12 +16,14 @@ a 6G SAS adapter, such as the LSI 9207.
 * Fixed a bug with netatalk that prevented share browsing from working
 in the finder on OSX.
 
-* Brought back the FreeNAS 8.x volume manager.  This volume manager allows
-manual vdev building and contains no anti-footshooting logic. Unless you
-know exactly what you are doing and why you are doing it using the standard
-volume manager is highly recommended by the development team.
+* Switched from Avahi to mDNSResponder for Zeroconf network configuration.
 
-* Fix a bug that prevented building an encrypted volume using multipath
+* Brought back the FreeNAS 8.x volume manager as a "Manual Setup" option.
+This volume manager allows manual vdev building and offers no seatbelts.
+Unless you know exactly what you are doing and why you are doing it, using
+the standard volume manager is highly recommended by the development team!
+
+* Fixed a bug that prevented building an encrypted volume using multipath
 devices.
 
 * Update django (used by the WebUI) to 1.6 and dojo to 1.9.2
