@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix_pf_late
-# AFTER: bgfsck
+# REQUIRE: ix-smbpasswd ix-nfsd
 # KEYWORD: nojail shutdown
 
 . /etc/rc.subr
