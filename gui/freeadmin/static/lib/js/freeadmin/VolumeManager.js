@@ -1197,6 +1197,10 @@ define([
         okbtn = new Button({
           label: this.add_label,
           onClick: function() {
+            for(var key in me._layout) {
+              var diskg = me._layout[key];
+              diskg._dragTooltip.close();
+            }
             lang.hitch(me, me.submit)();
           }
         }, this.dapAdd);
