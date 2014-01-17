@@ -198,6 +198,7 @@ if is_truenas ; then
 fi
 
 add_port net/mDNSResponder
+add_port dns/py-bonjour
 add_port textproc/libxml2
 add_port devel/libffi
 add_port archivers/lzo2
