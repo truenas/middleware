@@ -1,9 +1,10 @@
 Release Notes for FreeNAS 9.2.1-BETA
 
 * Samba (SMB/CIFS support) upgraded to version 4.1.4.  This adds support for
-SMB3, the ability for FreeNAS to be a Windows Domain Controller, and multiple
-years worth of improvements over the version of Samba that shipped in 9.2.0
-In addition enable SMB protocol version 3.  Previous versions of FreeNAS
+SMB3, the ability for FreeNAS to be a Windows Domain Controller, and advanced
+features like server-side copy support in Windows 2008 and later, along with
+multiple years worth of improvements over the version of Samba that shipped
+in 9.2.0.  It also enables SMB protocol version 3.  Previous versions of FreeNAS
 limited samba to SMB2 because of random crashes that would occur using
 SMB3.
 
