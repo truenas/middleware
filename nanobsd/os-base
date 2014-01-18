@@ -362,19 +362,12 @@ if ! is_truenas ; then
 	add_port devel/libevent2
 fi
 add_port sysutils/tmux
-if is_truenas ; then
-	add_port net/netatalk OPTIONS_FILE_SET+=PAM \
-		OPTIONS_FILE_SET+=ZEROCONF \
-		OPTIONS_FILE_SET+=LDAP \
-		OPTIONS_FILE_UNSET+=APPLETALK
-else
-	add_port devel/py-dbus
-	add_port net/netatalk3 OPTIONS_FILE_SET+=PAM \
-		OPTIONS_FILE_SET+=SENDFILE \
-		OPTIONS_FILE_SET+=MDNSRESPONDER \
-		OPTIONS_FILE_UNSET+=AVAHI \
-		OPTIONS_FILE_SET+=LDAP
-fi
+add_port devel/py-dbus
+add_port net/netatalk3 OPTIONS_FILE_SET+=PAM \
+	OPTIONS_FILE_SET+=SENDFILE \
+	OPTIONS_FILE_SET+=MDNSRESPONDER \
+	OPTIONS_FILE_UNSET+=AVAHI \
+	OPTIONS_FILE_SET+=LDAP
 
 add_port dns/libidn
 add_port ftp/wget
