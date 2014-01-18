@@ -467,9 +467,12 @@ def generate_smb4_shares(smb4_shares):
                 break
         if fs:
             task = Task.objects.filter(Q(task_filesystem=fs) |
-                Q(task_filesystem__regex=r'^%s/.+$' % fs), task_recursive=True)
-            if task:
-                task = task[0]  
+                (Q(task_filesystem__regex=r'^%s/.+$' % fs) & Q(task_recursive=True))
+            )
+            if task.exists():
+                task = task[0]
+            else:
+                task = False
 
         confset1(smb4_shares, "\n")
         confset2(smb4_shares, "[%s]", share.cifs_name, space=0)
