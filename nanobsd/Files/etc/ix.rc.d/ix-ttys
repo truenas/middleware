@@ -24,7 +24,7 @@ netcli_enable()
 	fi
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	sed -E -e "s,^(ttyu0.*)std\.[0-9]+(.*)\$,\1freenas_serial${serspeed}\2," /etc/ttys > "${tmp}"
+	sed -E -e "s,^(sercons.*)std\.[0-9]+(.*)\$,\1freenas_serial${serspeed}\2," /etc/ttys > "${tmp}"
 	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
 	else
@@ -47,38 +47,7 @@ netcli_disable()
 	fi
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	sed -E -e "s,^(ttyu0.*)freenas_serial[0-9]+(.*)\$,\1std.${serspeed}\2," /etc/ttys > "${tmp}"
-	if [ -s "${tmp}" ]; then
-		mv "${tmp}" /etc/ttys
-	else
-		rm -f "$tmp"
-	fi
-}
-
-netcli_serial_enable()
-{
-	local serspeed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
-	local tmp
-
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	sed -E -e "s,^(ttyu0.*)std\.[0-9]+(.*)\$,\1freenas_serial${serspeed}\2," /etc/ttys > "${tmp}"
-
-	if [ -s "${tmp}" ]; then
-		mv "${tmp}" /etc/ttys
-	else
-		rm -f "$tmp"
-	fi
-}
-
-netcli_serial_disable()
-{
-	local serspeed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
-
-	local tmp
-
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	sed -E -e "s,^(ttyu0.*)freenas_serial\.[0-9]+(.*)\$,\1std.${serspeed}\2," /etc/ttys > "${tmp}"
-
+	sed -E -e "s,^(sercons0.*)freenas_serial[0-9]+(.*)\$,\1std.${serspeed}\2," /etc/ttys > "${tmp}"
 	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
 	else
@@ -92,9 +61,7 @@ serial_enable()
 	local tmp
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
-	sed -E -e "s,^(ttyu0.*)off(.*)\$,\1on\2," \
-	       -e "s,^(ttyu0.*)dialup(.*)\$,\1vt100\2," \
-	       -e "s,^(ttyu0.*)std\.[0-9]+(.*)\$,\1std.${serspeed}\2," \
+	sed -E -e "s,^(sercons.*)off(.*)\$,\1on\2," \
 		  /etc/ttys > "${tmp}"
 
 	if [ -s "${tmp}" ]; then
@@ -102,6 +69,12 @@ serial_enable()
 	else
 		rm -f "$tmp"
 	fi
+
+	sercons=`conscontrol | grep Configured | sed 's/.* //' | sed -E 's/ttyv[0-9]+,?//' | sed 's/,.*/ /'`
+	if [ "${sercons}ZZZ" == "ZZZ" ] ; then
+		sercons="ttyu0"
+	fi
+	ln -sf $sercons /dev/sercons
 }
 
 serial_disable()
@@ -110,8 +83,7 @@ serial_disable()
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
-	sed -E -e "s,^(ttyu0.*)on(.*)\$,\1off\2," \
-	       -e "s,^(ttyu0.*)vt100(.*)\$,\1dialup\2," \
+	sed -E -e "s,^(sercons.*)on(.*)\$,\1off\2," \
 		  /etc/ttys > "${tmp}"
 
 	if [ -s "${tmp}" ]; then
@@ -119,6 +91,7 @@ serial_disable()
 	else
 		rm -f "$tmp"
 	fi
+	rm -f /dev/sercons
 }
 
 update_ttys()
@@ -147,8 +120,8 @@ update_ttys()
 		esac
 
 		case "${adv_consolemenu}" in
-			0) netcli_disable; netcli_serial_disable ;;
-			1) netcli_enable; netcli_serial_enable ;;
+			0) netcli_disable ;;
+			1) netcli_enable ;;
 		esac
 		kill -HUP 1
 		break
