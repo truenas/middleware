@@ -248,49 +248,33 @@ class FreeAdminSite(object):
     @never_cache
     def alert_status(self, request):
         from freenasUI.system.models import Alert
+        from freenasUI.system.alert import alertPlugins
         dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
-        if os.path.exists('/var/tmp/alert'):
-            current = 'OK'
-            with open('/var/tmp/alert') as f:
-                entries = f.readlines()
-            for entry in entries:
-                if not entry:
-                    continue
-                status, msgid, message = RE_ALERT.match(entry).groups()
-                # Skip dismissed alerts
-                if msgid in dismisseds:
-                    continue
-                if (
-                    (status == 'WARN' and current == 'OK') or
-                    status == 'CRIT' and
-                    current in ('OK', 'WARN')
-                ):
-                    current = status
-            return HttpResponse(current)
-        else:
-            return HttpResponse('WARN')
+        alerts = alertPlugins.run()
+        current = 'OK'
+        for alert in alerts:
+            # Skip dismissed alerts
+            if alert.getId() in dismisseds:
+                continue
+            status = alert.getLevel()
+            if (
+                (status == 'WARN' and current == 'OK') or
+                status == 'CRIT' and
+                current in ('OK', 'WARN')
+            ):
+                current = status
+        return HttpResponse(current)
 
     @never_cache
     def alert_detail(self, request):
         from freenasUI.system.models import Alert
+        from freenasUI.system.alert import alertPlugins
         dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
-        if os.path.exists('/var/tmp/alert'):
-            with open('/var/tmp/alert') as f:
-                entries = f.read().split('\n')
-            alerts = []
-            for entry in entries:
-                if not entry:
-                    continue
-                status, msgid, message = RE_ALERT.match(entry).groups()
-                alerts.append({
-                    'status': status,
-                    'msgid': msgid,
-                    'dismissed': msgid in dismisseds,
-                    'message': message,
-                })
-
+        alerts = alertPlugins.run()
+        if alerts:
             return render(request, "freeadmin/alert_status.html", {
                 'alerts': alerts,
+                'dismisseds': dismisseds,
             })
         else:
             return HttpResponse(

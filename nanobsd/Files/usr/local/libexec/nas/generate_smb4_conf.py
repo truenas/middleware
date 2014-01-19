@@ -4,6 +4,7 @@ import os
 import string
 import sys
 import tempfile
+import time
 
 sys.path.extend([
     '/usr/local/www',
@@ -466,9 +467,12 @@ def generate_smb4_shares(smb4_shares):
                 break
         if fs:
             task = Task.objects.filter(Q(task_filesystem=fs) |
-                Q(task_filesystem__regex=r'^%s/.+$' % fs), task_recursive=True)
-            if task:
-                task = task[0]  
+                (Q(task_filesystem__regex=r'^%s/.+$' % fs) & Q(task_recursive=True))
+            )
+            if task.exists():
+                task = task[0]
+            else:
+                task = False
 
         confset1(smb4_shares, "\n")
         confset2(smb4_shares, "[%s]", share.cifs_name, space=0)
@@ -492,6 +496,7 @@ def generate_smb4_shares(smb4_shares):
             vfs_objects.append('shadow_copy2')
         if is_within_zfs(share.cifs_path):
             vfs_objects.append('zfsacl')
+        vfs_objects.append('streams_xattr')
 
         confset1(smb4_shares, "recycle:repository = .recycle/%U")
         confset1(smb4_shares, "recycle:keeptree = yes")
@@ -510,7 +515,8 @@ def generate_smb4_shares(smb4_shares):
         if vfs_objects:
             confset2(smb4_shares, "vfs objects = %s", string.join(vfs_objects, ' '))
 
-        confset2(smb4_shares, "hide dot files = no", share.cifs_showhiddenfiles)
+        confset2(smb4_shares, "hide dot files = %s",
+            "no" if share.cifs_showhiddenfiles else "yes")
         confset2(smb4_shares, "hosts allow = %s", share.cifs_hostsallow)
         confset2(smb4_shares, "hosts deny = %s", share.cifs_hostsdeny)
         confset2(smb4_shares, "guest ok = %s", "yes" if share.cifs_guestok else "no")
@@ -561,7 +567,25 @@ def provision_smb4():
     if p.returncode != 0:
         return False
 
-    return True
+    try: 
+        pfile = "/var/db/samba4/.provisioned"
+        with open(pfile, 'w') as f:
+            f.close()
+        os.chmod(pfile, 0400)
+        return True
+
+    except Exception as e:
+        print e
+
+    return False
+
+
+def smb4_domain_provisioned():
+    pfile = "/var/db/samba4/.provisioned"
+    if os.path.exists(pfile) and os.path.isfile(pfile):
+        return True
+
+    return False
 
 
 def smb4_mkdir(dir):
@@ -579,11 +603,12 @@ def smb4_unlink(dir):
 
 
 def smb4_setup():
+    statedir = "/var/db/samba4"
+
     smb4_mkdir("/var/run/samba")
     smb4_mkdir("/var/db/samba")
 
     smb4_mkdir("/var/run/samba4")
-    smb4_mkdir("/var/db/samba4")
 
     smb4_mkdir("/var/log/samba4")
     os.chmod("/var/log/samba4", 0755)
@@ -593,6 +618,31 @@ def smb4_setup():
 
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
+
+    role = get_server_role()
+    if role != 'dc':
+        smb4_mkdir(statedir)
+          
+    elif role == 'dc':
+        dc = DomainController.objects.all()[0]
+        if os.path.exists(statedir) and os.path.islink(statedir):
+            return
+
+        elif os.path.exists(statedir):
+            try:
+                p = pipeopen("/bin/rm -rf '%s'" % statedir)
+                p.communicate()
+
+            except:
+                olddir = "%s.%s" % (statedir, time.time())
+                p = pipeopen("/bin/mv '%s' '%s'" % (statedir, olddir))
+                p.communicate()
+
+        try:
+            os.symlink(dc.dc_storage, statedir)
+        except Exception as e:  
+            print "Unable to create symlink '%s' -> '%s' (%s)" % (
+                dc.dc_storage, statedir, e)
 
 
 def main():
@@ -609,7 +659,7 @@ def main():
     generate_smb4_shares(smb4_shares)
 
     role = get_server_role()
-    if role == 'dc':
+    if role == 'dc' and not smb4_domain_provisioned():
         provision_smb4()
          
     with open(smb_conf_path, "w") as f:
@@ -624,13 +674,14 @@ def main():
         os.write(fd, line + '\n')
     os.close(fd)
 
-    p = pipeopen("/usr/local/bin/pdbedit -d 0 -i smbpasswd:%s -e %s -s %s" % (
-        tmpfile, "tdbsam:/var/etc/private/passdb.tdb", smb_conf_path))
-    out = p.communicate()
-    if out and out[1]:
-        for line in out[1].split('\n'):
-            print line
-    os.unlink(tmpfile)
+    if role != 'dc':
+        p = pipeopen("/usr/local/bin/pdbedit -d 0 -i smbpasswd:%s -e %s -s %s" % (
+            tmpfile, "tdbsam:/var/etc/private/passdb.tdb", smb_conf_path))
+        out = p.communicate()
+        if out and out[1]:
+            for line in out[1].split('\n'):
+                print line
+        os.unlink(tmpfile)
 
 
 if __name__ == '__main__':

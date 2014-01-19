@@ -121,6 +121,10 @@ for replication in replication_tasks:
     if not isTimeBetween(now, replication.repl_begin, replication.repl_end):
         continue
 
+    if not replication.repl_enabled:
+        log.warn("%s replication not enabled" % replication)
+        continue
+
     remote = replication.repl_remote.ssh_remote_hostname.__str__()
     remote_port = replication.repl_remote.ssh_remote_port
     dedicateduser = replication.repl_remote.ssh_remote_dedicateduser

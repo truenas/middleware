@@ -13,6 +13,7 @@
         "/tmp/disk13.img"
     ], 
     "iso": "/tmp/FreeNAS.iso", 
+    "upgrade_file": "/mnt/Dev/releng/TrueNAS-9.2.1-ALPHA-20140115/TrueNAS-9.2.1-ALPHA-1f87859-x64.GUI_Upgrade.txz",
     "password": "XXXXXXXX",
     "tap": "tap0", 
     "bridge": "bridge0", 

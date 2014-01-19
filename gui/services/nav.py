@@ -15,6 +15,7 @@ BLACKLIST = [
     'iSCSITargetPortalIP',
     'RPCToken',
     'ActiveDirectory',
+    'DomainController',
     'NT4',
     'NIS',
     'LDAP'
@@ -119,11 +120,12 @@ class DirectoryServiceView(TreeNode):
         super(DirectoryServiceView, self).__init__(*args, **kwargs)
 
         ad_node = self.new_activedirectory_node()
+        dc_node = self.new_domaincontroller_node()
         nt4_node = self.new_nt4_node()
         nis_node = self.new_nis_node()
         ldap_node = self.new_ldap_node()
 
-        self.append_children([ad_node, nt4_node, nis_node, ldap_node])
+        self.append_children([ad_node, dc_node, nt4_node, nis_node, ldap_node])
 
     def new_activedirectory_node(self):
         ad_node = TreeNode("Active Directory")
@@ -141,6 +143,25 @@ class DirectoryServiceView(TreeNode):
         except:
             ad_node.type = 'object'
             ad_node.view = 'freeadmin_services_activedirectory_add'
+
+        return ad_node
+
+    def new_domaincontroller_node(self):
+        ad_node = TreeNode("Domain Controller")
+
+        ad_node.name = 'Domain Controller'
+        ad_node.app_name = 'domaincontroller'
+        ad_node.icon = u'DomainControllerIcon'
+
+        try:
+            ad = DomainController.objects.order_by("-id")[0]
+            ad_node.kwargs = {'oid': ad.id}
+            ad_node.type = 'editobject'
+            ad_node.view = 'freeadmin_services_domaincontroller_edit'
+
+        except:
+            ad_node.type = 'object'
+            ad_node.view = 'freeadmin_services_domaincontroller_add'
 
         return ad_node
 

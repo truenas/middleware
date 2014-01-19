@@ -528,18 +528,22 @@ class notifier:
 
     def _reload_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd reload")
 
     def _start_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd start")
 
     def _stop_ssh(self):
         self._system("/usr/sbin/service sshd forcestop")
+        self._system("/usr/sbin/service ix_register reload")
 
     def _restart_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
         self._system("/usr/sbin/service sshd forcestop")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd restart")
 
     def _reload_rsync(self):
@@ -928,10 +932,12 @@ class notifier:
 
     def _restart_http(self):
         self._system("/usr/sbin/service ix-nginx quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service nginx restart")
 
     def _reload_http(self):
         self._system("/usr/sbin/service ix-nginx quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service nginx reload")
 
     def _reload_loader(self):
@@ -1422,7 +1428,7 @@ class notifier:
 
         larger_ashift = 0
         try:
-            larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
+            larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")[0])
         except AssertionError:
             pass
         if larger_ashift == 0:
@@ -1486,7 +1492,7 @@ class notifier:
 
         larger_ashift = 0
         try:
-            larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
+            larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")[0])
         except AssertionError:
             pass
         if larger_ashift == 0:
@@ -1761,7 +1767,7 @@ class notifier:
 
         larger_ashift = 0
         try:
-            larger_ashift = self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")
+            larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal")[0])
         except AssertionError:
             pass
         if larger_ashift == 1:
@@ -2761,9 +2767,13 @@ class notifier:
         return  plugin
 
     def update_pbi(self, plugin=None):
-        from freenasUI.jails.models import JailsConfiguration
+        from freenasUI.jails.models import JailsConfiguration, NullMountPoint
         from freenasUI.services.models import RPCToken
+        from freenasUI.common.pipesubr import pipeopen
         ret = False
+
+        if not plugin:
+            raise MiddlewareError("plugin could not be found and is NULL")
 
         if 'PATH' in os.environ:
             paths = os.environ['PATH']
@@ -2799,6 +2809,14 @@ class notifier:
 
         jc = JailsConfiguration.objects.order_by("-id")[0]
 
+        mountpoints = NullMountPoint.objects.filter(jail=jail_name)
+        for mp in mountpoints:
+            fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
+            p = pipeopen("/sbin/umount -f '%s'" % fp)
+            out = p.communicate()
+            if p.returncode != 0:
+                raise MiddlewareError(out[1])
+
         jail_root = jc.jc_path
         jail_path = "%s/%s" % (jail_root, jail_name)
         plugins_path = "%s/%s" % (jail_path, ".plugins")
@@ -2813,10 +2831,6 @@ class notifier:
         log.debug("XXX: newname = %s", newname)
         log.debug("XXX: newversion = %s", newversion)
         log.debug("XXX: newarch = %s", newarch)
-
-        plugin = self._get_plugin_info(newname)
-        if not plugin:
-            raise MiddlewareError("plugin could not be found and is NULL")
 
         pbitemp = "/var/tmp/pbi"
         oldpbitemp = "%s/old" % pbitemp
@@ -2933,8 +2947,16 @@ class notifier:
         self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, newname))
         self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, newname))
 
+        for mp in mountpoints:
+            fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
+            p = pipeopen("/sbin/mount_nullfs '%s' '%s'" % (mp.source, fp))
+            out = p.communicate()
+            if p.returncode != 0:
+                raise MiddlewareError(out[1])
+
         log.debug("XXX: update_pbi: returning %s", ret)
         return ret
+
 
     def delete_pbi(self, plugin):
         ret = False
@@ -3835,6 +3857,12 @@ class notifier:
         res = p1.communicate()[0]
         parse = zfs.parse_status(name, doc, res)
         return parse
+
+    def zpool_scrubbing(self):
+        p1 = self._pipeopen("zpool status")
+        res = p1.communicate()[0]
+        r = re.compile(r'scan: (resilver|scrub) in progress')
+        return r.search(res) is not None
 
     def _camcontrol_list(self):
         """

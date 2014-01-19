@@ -64,6 +64,7 @@ from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
     ReKeyForm, UnlockPassphraseForm, VolumeManagerForm, ZFSDiskReplacementForm
 )
+from freenasUI.system.alert import alertPlugins, Alert
 from freenasUI.storage.models import Disk
 from tastypie import fields
 from tastypie.http import (
@@ -108,6 +109,53 @@ class NestedMixin(object):
                 "More than one resource is found at this URI."
             ))
         return bundle, obj
+
+
+class AlertResource(DojoResource):
+
+    id = fields.CharField(attribute='_id')
+    level = fields.CharField(attribute='_level')
+    message = fields.CharField(attribute='_message')
+
+    class Meta:
+        allowed_methods = ['get']
+        object_class = Alert
+        resource_name = 'system/alert'
+
+    def get_list(self, request, **kwargs):
+        results = alertPlugins.run()
+        paginator = self._meta.paginator_class(
+            request,
+            results,
+            resource_uri=self.get_resource_uri(),
+            limit=self._meta.limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
+        )
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request,
+            to_be_serialized
+        )
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset+length-1,
+            len(results)
+        )
+        return response
+
+    def dehydrate(self, bundle):
+        return bundle
 
 
 class DiskResourceMixin(object):

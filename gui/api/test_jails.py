@@ -1,4 +1,8 @@
-from .utils import APITestCase
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
+
+from freenasUI.api.tests.utils import APITestCase
 from freenasUI.jails import models
 from freenasUI.common.warden import WARDEN_TYPE_PLUGINJAIL
 

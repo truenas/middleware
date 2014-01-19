@@ -3,8 +3,6 @@ import logging
 from django.test.client import Client
 
 from tastypie.test import ResourceTestCase, TestApiClient
-from freenasUI.account.models import bsdGroups, bsdUsers
-from freenasUI.system.models import Advanced, Settings
 
 log = logging.getLogger('api.tests.utils')
 
@@ -31,6 +29,7 @@ class TestCaseMeta(type):
         if name.endswith('ResourceTest'):
             rsname = name.replace('ResourceTest', '').lower()
             app = new_class.__module__.rsplit('.', 1)[-1]
+            app = app.replace('test_', '')
             if new_class.resource_name is None:
                 new_class.resource_name = "%s/%s" % (app, rsname)
         return new_class
@@ -44,6 +43,8 @@ class APITestCase(ResourceTestCase):
 
     def setUp(self):
         super(APITestCase, self).setUp()
+        from freenasUI.system.models import Advanced, Settings
+        from freenasUI.account.models import bsdGroups, bsdUsers
         self._settings = Settings.objects.create()
         self._advanced = Advanced.objects.create()
         username = 'root'

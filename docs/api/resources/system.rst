@@ -13,7 +13,7 @@ The Advanced resource represents the advanced settings.
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/services/advanced/
+.. http:get:: /api/v1.0/system/advanced/
 
    Returns the advanced dictionary.
 
@@ -21,7 +21,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/services/advanced/ HTTP/1.1
+      GET /api/v1.0/ssytem/advanced/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -58,7 +58,7 @@ List resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/services/advanced/
+.. http:put:: /api/v1.0/system/advanced/
 
    Update advanced.
 
@@ -66,7 +66,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/services/advanced/ HTTP/1.1
+      PUT /api/v1.0/system/advanced/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -115,6 +115,43 @@ Update resource
    :json string adv_motd: MOTD banner
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
+   :statuscode 200: no error
+
+
+Alert
+-----
+
+The Alert resource represents system alerts.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/system/alert/
+
+   Returns a list of system alerts.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/alert/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        [{
+                "id": "256ad2f48e5e541e28388701e34409cc",
+                "level": "OK",
+                "message": "The volume tank (ZFS) status is HEALTHY"
+        }]
+
+   :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
 

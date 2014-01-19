@@ -1690,7 +1690,7 @@ class DomainControllerForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("dc_passwd"):
-            cdata['dc_passwd'] = self.instance.ad_bindpw
+            cdata['dc_passwd'] = self.instance.dc_passwd
         return cdata
 
     def save(self):

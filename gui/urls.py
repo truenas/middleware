@@ -35,7 +35,9 @@ from django.template.loader import add_to_builtins
 from freenasUI import freeadmin
 from freenasUI.api import v1_api
 from freenasUI.api.resources import (
-    AdminPasswordResource, AdminUserResource, RebootResource, ShutdownResource,
+    AdminPasswordResource, AdminUserResource,
+    AlertResource,
+    RebootResource, ShutdownResource,
     SnapshotResource
 )
 from freenasUI.freeadmin.site import site
@@ -47,6 +49,7 @@ handler404 = 'freenasUI.freeadmin.views.page_not_found'
 
 v1_api.register(AdminPasswordResource())
 v1_api.register(AdminUserResource())
+v1_api.register(AlertResource())
 v1_api.register(RebootResource())
 v1_api.register(ShutdownResource())
 v1_api.register(SnapshotResource())
