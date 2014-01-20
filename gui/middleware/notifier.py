@@ -528,22 +528,22 @@ class notifier:
 
     def _reload_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
-        self._system("/usr/sbin/service ix_register quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd reload")
 
     def _start_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
-        self._system("/usr/sbin/service ix_register quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd start")
 
     def _stop_ssh(self):
         self._system("/usr/sbin/service sshd forcestop")
-        self._system("/usr/sbin/service ix_register quietstart")
+        self._system("/usr/sbin/service ix_register reload")
 
     def _restart_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
         self._system("/usr/sbin/service sshd forcestop")
-        self._system("/usr/sbin/service ix_register quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd restart")
 
     def _reload_rsync(self):
@@ -932,12 +932,12 @@ class notifier:
 
     def _restart_http(self):
         self._system("/usr/sbin/service ix-nginx quietstart")
-        self._system("/usr/sbin/service ix_register quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service nginx restart")
 
     def _reload_http(self):
         self._system("/usr/sbin/service ix-nginx quietstart")
-        self._system("/usr/sbin/service ix_register quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service nginx reload")
 
     def _reload_loader(self):
