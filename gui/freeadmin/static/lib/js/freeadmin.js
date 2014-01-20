@@ -1206,12 +1206,20 @@ require([
             add_mode = true;
         }
         var disks = registry.byId("wizarddisks");
+        var enc = registry.byId("id_enc");
+        var encini = registry.byId("id_encini");
         var d = disks.get('value');
-        dojo.html.set(dom.byId("wizard_num_disks"), d.length + '');
-
-        var zfs = true;
+        html.set(dom.byId("wizard_num_disks"), d.length + '');
 
         registry.byId("id_volume_name").set('disabled', add_mode);
+
+        if(enc.get("value") == 'on' && !add_mode) {
+          encini.set('disabled', false);
+          enc.set('disabled', false);
+        } else {
+          enc.set('disabled', add_mode);
+          encini.set('disabled', true);
+        }
 
         if(vol_change == true) {
             var unselected = [];
