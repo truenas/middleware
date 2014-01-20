@@ -48,6 +48,7 @@ List resource
                 "adv_motd": "Welcome to FreeNAS",
                 "adv_consolemenu": true,
                 "id": 1,
+                "adv_serialport": "0x2f8"
                 "adv_serialspeed": "9600"
         }
 
@@ -97,11 +98,13 @@ Update resource
                 "adv_motd": "Welcome to FreeNAS",
                 "adv_consolemenu": true,
                 "id": 1,
+                "adv_serialport": "0x2f8"
                 "adv_serialspeed": "9600"
         }
 
    :json boolean adv_consolemenu: Enable Console Menu
    :json boolean adv_serialconsole: Use Serial Console
+   :json string adv_serialport: 0x2f8, 0x3f8
    :json string adv_serialspeed: 9600, 19200, 38400, 57600, 115200
    :json boolean adv_consolescreensaver: Enable screen saver
    :json boolean adv_powerdaemon: Enable powerd (Power Saving Daemon)

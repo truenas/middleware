@@ -755,6 +755,7 @@ class AdvancedResourceTest(APITestCase):
             u'adv_motd': u'Welcome',
             u'adv_powerdaemon': False,
             u'adv_serialconsole': False,
+            u'adv_serialport': u'0x2f8',
             u'adv_serialspeed': u'9600',
             u'adv_swapondrive': 2,
             u'adv_traceback': True,
