@@ -1,0 +1,64 @@
+<div data-dojo-type="dijit/layout/ContentPane">
+  <script type="dojo/method">
+    series_chart('{% url "ana_tg_memory" %}',  'container-memory', '{% trans "System Memory Utilization"|escapejs %}');
+  </script>
+</div>
+
+<div style="width: 350px; margin: 2px; float:left">
+  <div style="width: 350px; margin: 2px">
+  <h2>{% trans "General Memory Information" %}</h2>
+    <table class="grid" style="width: 350px">
+      <thead class="ghead">
+          <td>{% trans "Free" %}</td>
+          <td>{% trans "Active" %}</td>
+          <td>{% trans "Inactive" %}</td>
+          <td>{% trans "Cache" %}</td>
+          <td>{% trans "Wired" %}</td>
+      </thead>
+      <tbody>
+        <tr class='even'>
+            <td>{{ rt_val.free }}</td>
+            <td>{{ rt_val.active }}</td>
+            <td>{{ rt_val.inactive }}</td>
+            <td>{{ rt_val.cache }}</td>
+            <td>{{ rt_val.wired }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="width: 250px; margin: 2px">
+    <h2>{% trans "Time period" %}:</h2>
+     <p class="btn">
+       <button data-dojo-type="dijit.form.Button" type="button">
+         {% trans "Day" %}
+         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+         chart_update_mem('{% url "ana_tg_memory" %}', 'container-memory', 'day', 1);
+         </script>
+       </button>
+       <button data-dojo-type="dijit.form.Button" type="button">
+         {% trans "Week" %}
+         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                 chart_update_mem('{% url "ana_tg_memory" %}', 'container-memory', 'day', 7);
+         </script>
+       </button>
+       <button data-dojo-type="dijit.form.Button" type="button">
+         {% trans "Month" %}
+         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                 chart_update_mem('{% url "ana_tg_memory" %}', 'container-memory', 'day', 31);
+         </script>
+       </button>
+       <button data-dojo-type="dijit.form.Button" type="button">
+         {% trans "Year" %}
+         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                 chart_update_mem('{% url "ana_tg_memory" %}', 'container-memory', 'day', 365);
+         </script>
+       </button>
+    </p>
+
+  </div>
+</div>
+
+<div style="width: 675px; float:left">
+  <div id="container-memory" style="width: 675px; height: 300px; margin: 0 auto; float: left"></div>
+</div>

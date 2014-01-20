@@ -1,0 +1,22 @@
+<div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, title: '{% trans "Reporting"|force_escape|force_escape %}'{% if focus_form == "system" %}, selected: true{% endif %}, doLayout: true" style="width:100%;">
+
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Report Dashboard" %}', href: '{% url "ana_dashboard" %}', refreshOnShow: true">
+        </div>
+
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "CPU" %}', href: '{% url "ana_cpus" %}', refreshOnShow: true">
+        </div>
+
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Memory" %}', href: '{% url "ana_memory" %}', refreshOnShow: true">
+        </div>
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Partition" %}', href: '{% url "ana_partition" %}', refreshOnShow: true">
+        </div>
+
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Network" %}', href: '{% url "ana_interface" %}', refreshOnShow: true">
+        </div>
+
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Disk" %}', href: '{% url "ana_report_disk" %}', refreshOnShow: true">
+        </div>
+
+        <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Summary" %}', href: '{% url "ana_zfs_details" %}', refreshOnShow: true">
+        </div>
+</div>

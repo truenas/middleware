@@ -1,0 +1,94 @@
+<div data-dojo-type="dijit/layout/ContentPane">
+  <script type="dojo/method">
+    rt_cpu('{% url "ana_rt_cpu" %}', 'rt-cpu');
+    {% for vol in volumes %}
+    rt_df('{% filter escapejs %}{% blocktrans with name=vol.vol_name %}{{ name }} Pool Utilization{% endblocktrans %}{% endfilter %}', '{% url "ana_rt_storage_val" volume=vol.vol_name value='1' %}', 'rt-df{{ vol.id }}');
+    {% endfor %}
+    rt_network('{% url "ana_rt_network" %}', 'rt-network');
+  </script>
+</div>
+
+<div style="width: 100%; margin: 0 auto;">
+<div id="rt-cpu" style="width: 250px; height: 200px; float: left"></div>
+<div id="rt-network" style="width: 600px; height: 200px; float: left"></div>
+{% for vol in volumes %}
+<div id="rt-df{{ vol.id }}" style="width: 300px; height: 200px; float: left"></div>
+{% endfor %}
+
+<div style="clear:both;">
+<br>
+<h2>{% trans "General Application Information" %}</h2>
+
+<table class="grid" width="700px">
+    <thead class="ghead">
+        <td>{% trans "Property" %}</a></td>
+        <td>{% trans "Value" %}</td>
+    </thead>
+    <tbody>
+        <tr class='odd'>
+        <td>{% trans "Total Memory" %}</td>
+        <td>{{ system_memory.real_installed }}</td>
+        </tr>
+        <tr class='even'>
+        <td>{% trans "Active Memory" %}</td>
+        <td>{{ system_memory.active.num }}</td>
+        </tr>
+        <tr class='odd'>
+        <td>{% trans "Wired Memory" %}</td>
+        <td>{{ system_memory.wired.num }}</td>
+        </tr>
+        <tr class='even'>
+        <td>{% trans "Free Memory" %}</td>
+        <td>{{ system_memory.free.num }}</td>
+        </tr>
+        <tr class='odd'>
+        <td>{% trans "Inactive Memory" %}</td>
+        <td>{{ system_memory.inact.num }}</td>
+        </tr>
+        <tr class='even'>
+        <td>{% trans "Cache Memory" %}</td>
+        <td>{{ system_memory.cache.num }}</td>
+        </tr>
+        <tr class='odd'>
+        <td>{% trans "Gap Memory" %}</td>
+        <td>{{ system_memory.gap.num }}</td>
+        </tr>
+       </tbody>
+ </table>
+
+<h2>{% trans "General ZFS ARC Information" %} </h2>
+
+<table class="grid" width="700px">
+    <thead class="ghead">
+        <td>{% trans "Property" %}</td>
+        <td>{% trans "Value" %}</td>
+    </thead>
+    <tbody>
+        <tr class='odd'>
+        <td>{% trans "Min / Current / Max ARC Size" %}</td>
+        <td>{{ arc_size.target_min_size.num }} / {{ arc_size.arc_size.num }} / {{ arc_size.target_max_size.num }}</td>
+        </tr>
+        <tr class='even'>
+        <td>{% trans "Cache Hits / Misses" %}</td>
+        <td>{{ arc_efficiency.cache_hit_ratio.num }} / {{ arc_efficiency.cache_miss_ratio.num }}</td>
+        </tr>
+        <tr class='odd'>
+        <td>{% trans "Demand Data Efficiency" %}</td>
+        <td>{{ arc_efficiency.data_demand_efficiency.per }}</td>
+        </tr>
+        {% if arc_efficiency.data_prefetch_efficiency %}
+        <tr class='even'>
+        <td>{% trans "Prefetch Data Efficiency" %}</td>
+        <td>{{ arc_efficiency.data_prefetch_efficiency.per }}</td>
+        </tr>
+        <tr class='odd'>
+        {% else %}
+        <tr class='even'>
+        {% endif %}
+        <td>{% trans "ARC Efficiency" %}</td>
+        <td>{{ arc_efficiency.cache_hit_ratio.per }}</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+</div>
