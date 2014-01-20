@@ -216,9 +216,6 @@ else
   mkdir -p "${JAILDIR}"
 fi
 
-# Get next unique ID
-META_ID="$(get_next_id "${JDIR}")"
-
 # Create the meta-dir
 set_warden_metadir
 mkdir ${JMETADIR}
@@ -227,7 +224,7 @@ mkdir ${JMETADIR}
 cp tmp.$$/jail-* ${JMETADIR}/ 2>/dev/null
 
 # give new jail an id
-echo "${META_ID}" > ${JMETADIR}/id
+set_unique_id "${JDIR}"
 
 # Cleanup tmp meta-dir
 rm -rf tmp.$$ 2>/dev/null

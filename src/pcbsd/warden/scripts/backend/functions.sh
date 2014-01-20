@@ -1681,6 +1681,19 @@ get_next_id()
    echo ${meta_id}
 }
 
+set_unique_id()
+{
+   local jdir="${1}"
+   local meta_id=0
+
+   set_warden_metadir
+
+   lockf "/var/tmp/.jailid" \
+      ${PROGDIR}/scripts/backend/jailid.sh "${JDIR}" "${JMETADIR}"
+
+   return $?
+}
+
 get_freebsd_mirrors()
 {
    cat<<-__EOF__
