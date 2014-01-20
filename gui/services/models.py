@@ -2005,6 +2005,9 @@ class DomainController(Model):
             choices=choices.SAMBA4_FOREST_LEVEL_CHOICES,
             default='2003'
             )
+    dc_storage = PathField(
+            verbose_name=_("Storage Path")
+            )
     dc_passwd = models.CharField(
             max_length=120,
             verbose_name=_("Administrator Password"),
