@@ -405,3 +405,14 @@ device		virtio_blk
 device		virtio_balloon
 device		vtnet
 device		virtio_scsi
+
+# InfiniBand support
+options		OFED		# InfiniBand support
+options		SDP		# SDP protocol
+options		IPOIB		# IPoIB
+options		IPOIB_CM	# IPoIB connected mode
+
+# InfiniBand Adapters
+device		mlx4ib
+device		mlxen
+device		mthca
