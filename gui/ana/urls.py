@@ -42,6 +42,7 @@ urlpatterns = patterns('ana.views',
 
     url(r'^tg/cpu/$', 'tg_cpu', name='ana_tg_cpu'),
     url(r'^tg/cpu/(?P<cpu_type>[^/]+)/(?P<data_range>\w+)/(?P<t_range>\d+)/(?P<combined>\d+)/$', 'tg_cpu', name='ana_tg_cpu'),
+    url(r'^tg/cpu/aggregate/(?P<data_range>\w+)/(?P<t_range>\d+)/$', 'tg_cpu_aggregate', name='ana_tg_cpu_aggregate'),
     #url(r'^tg/partition/$', 'tg_partition', name='tg_partition'),
 
     url(r'^tg/disk/$', 'tg_disk', name='ana_tg_disk'),

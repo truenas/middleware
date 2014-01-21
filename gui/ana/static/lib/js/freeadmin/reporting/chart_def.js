@@ -39,6 +39,16 @@ require([
 
     };
 
+    chart_update_cpu_agg = function(url, container, tg, range, t_date, t_type) {
+        var MyTypes = tg.split(",");
+        MyTypes.forEach(function(value, index) {
+            console.log(url, 'aggregate/' + range +'/'+ t_date, "--", value);
+            series_chart(url + 'aggregate/' + range +'/'+ t_date + '/', container+value, 'Composite CPU Utilization');
+            console.log("ok?")
+        });
+
+    };
+
     chart_update_mem = function(url, container, range, t_date, t_type) {
         series_chart(url + range +'/'+ t_date +'/', container ,'System Memory Utilization');
     };

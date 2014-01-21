@@ -178,6 +178,19 @@ def tg_cpu(request, cpu_type='cpu', data_range='hrs', t_range=10, combined=0):
         content_type='application/javascript')
 
 
+def tg_cpu_aggregate(request, data_range='hrs', t_range=10):
+    data_list = data_client.get_data(
+        target_type='aggregation',
+        identifier='cpu-sum',
+        data_range=data_range,
+        t_range=int(t_range),
+    )
+    if not data_list:
+        data_list = [{}]
+    return HttpResponse(simplejson.dumps(data_list),
+        content_type='application/javascript')
+
+
 def tg_partition(request):
     data_list = data_client.get_data(target_type='df', combined=True)
     rt_val = data_client.get_real_time_val('memory', data_list)

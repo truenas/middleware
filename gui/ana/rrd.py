@@ -314,6 +314,10 @@ class CPUPlugin(RRDBase):
         return round(val_ave, 2)
 
 
+class AggregationPlugin(RRDBase):
+    pass
+
+
 class InterfacePlugin(RRDBase):
 
     def get_identifiers(self):

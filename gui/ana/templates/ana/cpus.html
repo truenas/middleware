@@ -1,5 +1,6 @@
 <div data-dojo-type="dijit/layout/ContentPane">
     <script type="dojo/method">
+    series_chart('{% url "ana_tg_cpu_aggregate" "day" 1 %}',  'reportall', '{% filter escapejs %}{% trans "Composite CPU Utilization" %}{% endfilter %}');
     {% for target, name in target_dict.iteritems %}
     series_chart('{% url "ana_tg_cpu" target "day" 1 0 %}',  'report{{ forloop.counter0 }}', '{% filter escapejs %}{% blocktrans with name=name|upper %}CPU {{ name }} Utilization{% endblocktrans %}{% endfilter %}');
     {% endfor %}
@@ -30,6 +31,7 @@
         <button data-dojo-type="dijit.form.Button" type="button">
           {% trans "Day" %}
           <script type="dojo/method" event="onClick" args="evt">
+          chart_update_cpu_agg('{% url "ana_tg_cpu" %}','report', 'all', 'day', 1, '');
           chart_update_cpu('{% url "ana_tg_cpu" %}','report', '{{ target_str }}','day', 1, '');
           </script>
         </button>
@@ -37,6 +39,7 @@
         <button data-dojo-type="dijit.form.Button" type="button">
           {% trans "Week" %}
           <script type="dojo/method" event="onClick" args="evt">
+          chart_update_cpu_agg('{% url "ana_tg_cpu" %}','report', 'all', 'day', 7, '');
           chart_update_cpu('{% url "ana_tg_cpu" %}','report', '{{ target_str }}','day', 7, '');
           </script>
         </button>
@@ -44,6 +47,7 @@
         <button data-dojo-type="dijit.form.Button" type="button">
           {% trans "Month" %}
           <script type="dojo/method" event="onClick" args="evt">
+          chart_update_cpu_agg('{% url "ana_tg_cpu" %}','report', 'all', 'day', 31, '');
           chart_update_cpu('{% url "ana_tg_cpu" %}','report', '{{ target_str }}','day', 31, '');
           </script>
         </button>
@@ -51,6 +55,7 @@
         <button data-dojo-type="dijit.form.Button" type="button">
           {% trans "Year" %}
           <script type="dojo/method" event="onClick" args="evt">
+          chart_update_cpu_agg('{% url "ana_tg_cpu" %}','report', 'all', 'day', 365, '');
           chart_update_cpu('{% url "ana_tg_cpu" %}','report', '{{ target_str }}','day', 365, '');
           </script>
         </button>
@@ -59,6 +64,7 @@
 </div>
 
 <div style="width: 675px; float:left">
+        <div id="reportall" style="width: 675px; height: 300px; margin: 0 auto; float: left"></div>
     {% for target, name in target_dict.iteritems %}
         <div id="report{{ forloop.counter0 }}" style="width: 675px; height: 300px; margin: 0 auto; float: left"></div>
     {% endfor %}
