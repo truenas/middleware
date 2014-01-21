@@ -460,7 +460,7 @@ def generate_smb4_shares(smb4_shares):
             zfsout = zfsout[0] 
 
         fs = None
-        task = none
+        task = None
         for line in zfsout.split('\n'):
             parts = line.split()
             if parts and parts[0] == share.cifs_path and len(parts) > 1:
