@@ -49,8 +49,8 @@ require([
 
     };
 
-    chart_update_mem = function(url, container, range, t_date, t_type) {
-        series_chart(url + range +'/'+ t_date +'/', container ,'System Memory Utilization');
+    chart_update_mem = function(url, container, range, t_date, attrs) {
+        series_chart(url + range +'/'+ t_date +'/', container ,'System Memory Utilization', attrs);
     };
 
     series_sub = function(url, container, tg, name, sub_types) {
@@ -434,7 +434,11 @@ require([
         });
     };
 
-    series_chart = function(url, container, title) {
+    series_chart = function(url, container, title, attrs) {
+        if(!attrs) {
+          attrs = {};
+        }
+
         xhr.get(url, {
             handleAs: 'json'
         }).then(function(data) {
@@ -455,7 +459,8 @@ require([
                 series: data,
                 exporting: {
                     enabled: false
-                }
+                },
+                tooltip: attrs['tooltip']
             });
         });
     };
