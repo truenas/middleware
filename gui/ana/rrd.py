@@ -84,6 +84,14 @@ class RRDBase(object):
     def __repr__(self):
         return '<RRD:%s>' % self.plugin
 
+    @staticmethod
+    def _sort_identifiers(entry):
+        reg = re.search('(.+)(\d+)$', entry)
+        if not reg:
+            return entry
+        if reg:
+            return (reg.group(1), int(reg.group(2)))
+
     def get_identifiers(self):
         ids = []
         for _file in os.listdir(self.base_path):
@@ -93,7 +101,7 @@ class RRDBase(object):
         if not ids:
             return None
         else:
-            ids.sort()
+            ids.sort(key=RRDBase._sort_identifiers)
         return ids
 
     def get_types(self, identifier=None, name=None):
