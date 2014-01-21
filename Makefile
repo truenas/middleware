@@ -21,7 +21,7 @@ build: git-verify
 	${ENV_SETUP} build/do_build.sh
 
 checkout: git-verify
-	${ENV_SETUP} build/do_build.sh -c
+	${ENV_SETUP} build/do_checkout.sh
 
 update: checkout
 
