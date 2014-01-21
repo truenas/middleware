@@ -175,7 +175,7 @@ def tg_cpu(request, cpu_type='cpu', data_range='hrs', t_range=10, combined=0):
     if not data_list:
         data_list = [{}]
     return HttpResponse(simplejson.dumps(data_list),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def tg_partition(request):
@@ -207,7 +207,7 @@ def tg_partition(request):
     return HttpResponse(simplejson.dumps({
         'data': out_put_list,
         'categories': categories,
-        }), mimetype='application/javascript')
+        }), content_type='application/javascript')
 
 
 def tg_memory(request, data_range='hrs', t_range=10):
@@ -218,14 +218,14 @@ def tg_memory(request, data_range='hrs', t_range=10):
         t_range=int(t_range))
 
     return HttpResponse(simplejson.dumps(data_list),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def tg_network(request, interface=None, data_type='', data_range='hrs',
         t_range=10):
     if not interface:
         return HttpResponse(simplejson.dumps({}),
-            mimetype='application/javascript')
+            content_type='application/javascript')
 
     if data_type:
         target_sub_type = data_type
@@ -237,7 +237,7 @@ def tg_network(request, interface=None, data_type='', data_range='hrs',
         t_range=int(t_range))
 
     return HttpResponse(simplejson.dumps(data_list),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def tg_zfs_arc(request, data_type='', data_range='hrs', t_range=10):
@@ -250,14 +250,14 @@ def tg_zfs_arc(request, data_type='', data_range='hrs', t_range=10):
     )
 
     return HttpResponse(simplejson.dumps(data_list),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def tg_disk(request, disk=None, data_type='', data_range='hrs', t_range=10):
 
     if not disk:
         return HttpResponse(simplejson.dumps({}),
-            mimetype='application/javascript')
+            content_type='application/javascript')
 
     data_list = data_client.get_data(
         target_type='disk',
@@ -267,7 +267,7 @@ def tg_disk(request, disk=None, data_type='', data_range='hrs', t_range=10):
         t_range=int(t_range))
 
     return HttpResponse(simplejson.dumps(data_list),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def rt_cpu(request):
@@ -307,7 +307,7 @@ def rt_cpu(request):
 
     return HttpResponse(
         simplejson.dumps(float("%.2f" % rt_val)),
-        mimetype='application/javascript'
+        content_type='application/javascript'
     )
 
 
@@ -334,7 +334,7 @@ def rt_partition(request):
         pre = (used / free) * 100
 
     return HttpResponse(simplejson.dumps(pre),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def rt_memory(request):
@@ -349,7 +349,7 @@ def rt_memory(request):
         output_dict[k.split('-')[1]] = v
 
     return HttpResponse(simplejson.dumps(output_dict),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def rt_network(request):
@@ -393,7 +393,7 @@ def rt_network(request):
         }
 
     return HttpResponse(simplejson.dumps(stat),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def rt_storage_pie(request, volume, value=None):
@@ -441,10 +441,10 @@ def rt_storage_pie(request, volume, value=None):
     if value:
         pre = 100 * (used_total / zpool_size)
         return HttpResponse(simplejson.dumps(pre),
-            mimetype='application/javascript')
+            content_type='application/javascript')
 
     return HttpResponse(simplejson.dumps(series),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def zfs_info_pie(request, volume):
@@ -455,7 +455,7 @@ def zfs_info_pie(request, volume):
 
     if not zfs_info:
         return HttpResponse(simplejson.dumps({}),
-            mimetype='application/javascript')
+            content_type='application/javascript')
 
     if 'referenced' in zfs_info:
         referenced = check_val(zfs_info['referenced'])
@@ -512,7 +512,7 @@ def zfs_info_pie(request, volume):
         }
 
     return HttpResponse(simplejson.dumps(series_data),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def check_val(val):
@@ -531,26 +531,26 @@ def check_val(val):
 def zfs_info(request, volume):
     if not volume:
         return HttpResponse(simplejson.dumps({}),
-            mimetype='application/javascript')
+            content_type='application/javascript')
 
     zfs_info = data_client.get_zfs_info(volume)
     return HttpResponse(simplejson.dumps(zfs_info),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def zfs_tank_list(request):
     tank_list = data_client.get_zfs_list()
     return HttpResponse(simplejson.dumps(tank_list),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def zfs_zpool_list(request):
     zpool_list = data_client.get_zfs_zpool_list()
     return HttpResponse(simplejson.dumps(zpool_list),
-        mimetype='application/javascript')
+        content_type='application/javascript')
 
 
 def zfs_sum(request):
     zpool_list = data_client.get_arc_summ()
     return HttpResponse(simplejson.dumps(zpool_list),
-        mimetype='application/javascript')
+        content_type='application/javascript')
