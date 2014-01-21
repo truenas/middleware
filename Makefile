@@ -23,6 +23,8 @@ build: git-verify
 checkout: git-verify
 	${ENV_SETUP} build/do_build.sh -c
 
+update: checkout
+
 clean:
 	${ENV_SETUP} build/build_cleanup.py
 	rm -rf FreeBSD ${NANO_LABEL}-${VERSION}-* release.build.log nas_source
