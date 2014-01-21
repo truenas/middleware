@@ -26,6 +26,7 @@
 #####################################################################
 
 import glob
+import json
 import logging
 import os
 import pwd
@@ -41,7 +42,6 @@ from django.forms import FileField
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.translation import ugettext_lazy as _
-from django.utils import simplejson
 
 from dojango import forms
 from freenasUI import choices
@@ -1106,5 +1106,5 @@ class RegistrationForm(ModelForm):
                 registration_info[key] = str(self.cleaned_data[key])
 
         f = open("/usr/local/etc/registration", "w")
-        f.write(simplejson.dumps(registration_info))
+        f.write(json.dumps(registration_info))
         f.close()
