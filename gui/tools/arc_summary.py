@@ -69,6 +69,8 @@ def get_Kstat():
         "vm.kmem_size_min",
         "vm.kmem_size_scale",
         "vm.stats",
+        "vm.swap_total",
+        "vm.swap_reserved",
         "kstat.zfs",
         "vfs.zfs"
     ]
@@ -249,6 +251,19 @@ def get_system_memory(Kstat):
         'per': fPerc(mem_avail, mem_total),
         'num': fBytes(mem_avail),
     }
+
+    output["swap_total"] = fBytes(Kstat["vm.swap_total"])
+    output["swap_reserved"] = fBytes(Kstat["vm.swap_reserved"])
+
+    proc = Popen(
+        "/usr/sbin/swapinfo -k|tail -1|awk '{print $3}'",
+        shell=True,
+        stdout=PIPE,
+        stderr=PIPE,
+    )
+    swap_used = proc.communicate()[0]
+    if proc.returncode == 0:
+        output['swap_used'] = fBytes(int(swap_used) * 1024)
 
     output['kmem_map_size'] = Kstat["vm.kmem_map_size"]
     output['kmem_map_free'] = Kstat["vm.kmem_map_free"]

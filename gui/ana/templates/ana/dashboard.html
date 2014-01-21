@@ -53,6 +53,14 @@
         <td>{% trans "Gap Memory" %}</td>
         <td>{{ system_memory.gap.num }}</td>
         </tr>
+        <tr class='even'>
+        <td>{% trans "Swap Total" %}</td>
+        <td>{{ system_memory.swap_total }}</td>
+        </tr>
+        <tr class='odd'>
+        <td>{% trans "Swap Used" %}</td>
+        <td>{{ system_memory.swap_used }}</td>
+        </tr>
        </tbody>
  </table>
 

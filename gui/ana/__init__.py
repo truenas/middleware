@@ -256,6 +256,8 @@ class DataAccessClient(object):
                 "vm.kmem_size_min",
                 "vm.kmem_size_scale",
                 "vm.stats",
+                "vm.swap_total",
+                "vm.swap_reserved",
                 "kstat.zfs",
                 "vfs.zfs"
             ]
