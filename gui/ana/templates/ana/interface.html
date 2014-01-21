@@ -17,6 +17,12 @@
 <div style="width: 250px; margin: 2px; float:left">
   <div style="width: 250px; margin: 2px">
     <h2>{% trans "Available Network Interfaces" %}:</h2>
+      <button data-dojo-type="dijit.form.Button" type="button">
+        {% trans "All" %}
+        <script type="dojo/method" event="onClick" args="evt">
+          chart_switch('#interface_main', '#interface_sub')
+        </script>
+      </button>
     {% for target, name in target_dict.iteritems %}
       <button data-dojo-type="dijit.form.Button" type="button">
         {{ name }}
