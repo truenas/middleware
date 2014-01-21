@@ -123,6 +123,9 @@ class RRDBase(object):
             types.append((full_path, tname))
         return types
 
+    def value_transform(self, value):
+        return value
+
     def fetch(
         self,
         identifier=None,
@@ -182,7 +185,9 @@ class RRDBase(object):
                     i_val = {}
                     for ds in ds_rrd:
                         if i[ds_rrd.index(ds)] is not None:
-                            i_val[ds] = i[ds_rrd.index(ds)]
+                            i_val[ds] = self.value_transform(
+                                i[ds_rrd.index(ds)]
+                            )
                         else:
                             i_val[ds] = 0.0
 
@@ -352,7 +357,9 @@ class InterfacePlugin(RRDBase):
 
 
 class MemoryPlugin(RRDBase):
-    pass
+
+    def value_transform(self, value):
+        return int(value)
 
 
 class SwapPlugin(RRDBase):
