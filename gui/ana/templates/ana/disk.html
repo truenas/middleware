@@ -1,5 +1,12 @@
 <div data-dojo-type="dijit/layout/ContentPane">
   <script type="dojo/method">
+
+    disk_switch = function() {
+
+      chart_switch('#disk_sub', '#disk_main')
+      series_sub(this.get("data-url"), 'report_disk_sub_',  this.get("data-target"), this.get("value"), '{{ sub_types_str }}');
+
+    }
     require([
       "dojo/dom-style",
       "dojo/domReady!"
@@ -17,14 +24,9 @@
 <div style="width: 250px; margin: 2px; float:left">
   <div style="width: 250px; margin: 2px">
     <h2>{% trans "Avalible Disks" %}:</h2>
+    <input data-dojo-type="dijit/form/RadioButton" type="radio" name="disk" value="{{ name }}" onClick="chart_switch('#disk_main', '#disk_sub')" checked/> {% trans "All" %} <br />
     {% for target, name in target_dict.iteritems %}
-    <button data-dojo-type="dijit.form.Button" type="button">
-      {{ name }}
-      <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-        chart_switch('#disk_sub', '#disk_main')
-        series_sub('{% url "ana_tg_disk" target %}', 'report_disk_sub_',  '{{ target }}', '{{ name }}', '{{ sub_types_str }}');
-      </script>
-    </button>
+    <input data-dojo-type="dijit/form/RadioButton" type="radio" name="disk" value="{{ name }}" onClick="disk_switch" data-url="{% url "ana_tg_disk" target %}" data-target="{{ target }}" /> {{ name }}<br />
     {% endfor %}
   </div>
   <div style="width: 250px; margin: 2px">
