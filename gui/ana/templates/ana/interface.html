@@ -1,5 +1,11 @@
 <div id="report_interface_hold" data-dojo-type="dijit/layout/ContentPane">
     <script type="dojo/method">
+
+    iface_switch = function() {
+      series_sub(this.get("data-url"), 'interface_sub_', this.get("data-header"), this.get("data-newtitle"), '{{ sub_types_str|escapejs }}');
+      chart_switch('#interface_sub', '#interface_main')
+    }
+
     require([
       "dojo/dom-style",
       "dojo/domReady!"
@@ -17,20 +23,10 @@
 <div style="width: 250px; margin: 2px; float:left">
   <div style="width: 250px; margin: 2px">
     <h2>{% trans "Available Network Interfaces" %}:</h2>
-      <button data-dojo-type="dijit.form.Button" type="button">
-        {% trans "All" %}
-        <script type="dojo/method" event="onClick" args="evt">
-          chart_switch('#interface_main', '#interface_sub')
-        </script>
-      </button>
+    <input data-dojo-type="dijit/form/RadioButton" type="radio" name="network" value="{{ name }}" onClick="chart_switch('#interface_main', '#interface_sub')" checked/> {% trans "All" %} <br />
     {% for target, name in target_dict.iteritems %}
-      <button data-dojo-type="dijit.form.Button" type="button">
-        {{ name }}
-        <script type="dojo/method" event="onClick" args="evt">
-          series_sub('{% url "ana_tg_network" target %}', 'interface_sub_', '{{ target|title }}', '{% filter escapejs %}{% blocktrans with iname=name %}Interface {{ iname }}{% endblocktrans %}{% endfilter %}', '{{sub_types_str}}');
-          chart_switch('#interface_sub', '#interface_main')
-        </script>
-      </button>
+      <input data-dojo-type="dijit/form/RadioButton" type="radio" name="network" value="{{ name }}" data-newtitle="{% filter escapejs %}{% blocktrans with iname=name %}Interface {{ iname }}{% endblocktrans %}{% endfilter %}" data-header="{{ target|title }}" data-url="{% url "ana_tg_network" target %}" onClick="iface_switch" />
+      {{ name }}<br />
     {% endfor %}
 
   </div>
