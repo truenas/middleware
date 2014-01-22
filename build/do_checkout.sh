@@ -256,8 +256,8 @@ check_sandbox()
 	if [ $status -ne 0 ]; then
 		echo ""
 		echo "ERROR: sandbox is not fully checked out"
-		echo "       Type 'make checkout' or 'make update' to get all the"
-		echo "       sources from the SCM."
+		echo "       Type 'env NANO_LABEL=${NANO_LABEL} make checkout' or 'env NANO_LABEL=${NANO_LABEL} make update'"
+		echo "       to get all the sources from the SCM."
 		echo ""
 	fi
 
