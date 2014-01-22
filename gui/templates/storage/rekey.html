@@ -2,7 +2,9 @@
 {% block form %}
     <tr><td colspan="2">
         {% trans "You are about to re-key the encryption" %}
-        <p style="color: red">{% trans "Remember to create a new passphrase as this action removes the current passphrase" %}</p>
+        {% if volume.vol_encrypt == 2 %}
+            <p style="color: red">{% trans "Remember to create a new passphrase as this action removes the current passphrase" %}</p>
+        {% endif %}
     </td></tr>
     {{ block.super }}
 {% endblock %}
