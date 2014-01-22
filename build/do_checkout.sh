@@ -228,8 +228,52 @@ checkout_freebsd_source()
 	echo "$NANO_LABEL" > ${AVATAR_ROOT}/FreeBSD/.pulled
 }
 
+check_sandbox()
+{
+	local status=0
+	local checkout_proj_dir
+
+	if [ ! -e ${AVATAR_ROOT}/FreeBSD/.pulled ]; then
+		status=1
+	fi
+
+	if [ ! -e ${AVATAR_ROOT}/FreeBSD/src/.git ]; then
+		status=1
+	fi
+
+	if [ ! -e ${AVATAR_ROOT}/FreeBSD/ports/.git ]; then
+		status=1
+	fi
+
+
+	for proj in $ADDL_REPOS; do
+		checkout_proj_dir=`echo $proj | tr 'A-Z' 'a-z' | tr '-' '_'`
+		if [ ! -e ${AVATAR_ROOT}/nas_source/${checkout_proj_dir} ]; then
+			status=1
+		fi
+	done
+
+	if [ $status -ne 0 ]; then
+		echo ""
+		echo "ERROR: sandbox is not fully checked out"
+		echo "       Type 'make checkout' or 'make update' to get all the"
+		echo "       sources from the SCM."
+		echo ""
+	fi
+
+	return $status
+}
+
+
 main()
 {
+	case "$1" in
+	check-sandbox)
+		check_sandbox
+		exit $?
+		;;
+	esac
+
 	checkout_freebsd_source
 }
 
