@@ -1176,6 +1176,10 @@ class notifier:
             raise MiddlewareError("Unable to set key: %s" % (err, ))
         else:
             self._system("mv %s.tmp %s" % (geli_keyfile, geli_keyfile))
+            vol_encrypt = 1 if passphrase is None else 2
+            if volume.vol_encrypt != vol_encrypt:
+                volume.vol_encrypt = vol_encrypt
+                volume.save()
 
     def geli_recoverykey_add(self, volume, passphrase=None):
 
