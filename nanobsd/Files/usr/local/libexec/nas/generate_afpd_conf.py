@@ -50,9 +50,9 @@ def main():
         cf_contents.append("[%s]\n" % share.afp_name)
         cf_contents.append("\tpath = %s\n" % share.afp_path)
         if share.afp_allow:
-            cf_contents.append("\tallow = %s\n" % share.afp_allow)
+            cf_contents.append("\tvalid users = %s\n" % share.afp_allow)
         if share.afp_deny:
-            cf_contents.append("\tdeny = %s\n" % share.afp_deny)
+            cf_contents.append("\tinvalid users = %s\n" % share.afp_deny)
         if share.afp_ro:
             cf_contents.append("\trolist = %s\n" % share.afp_ro)
         if share.afp_rw:
