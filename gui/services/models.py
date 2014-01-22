@@ -42,9 +42,10 @@ from freenasUI.freeadmin.models import (
 )
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.storage.models import Volume, Disk
+from freenasUI.storage.models import Disk
 
 log = logging.getLogger("services.forms")
+
 
 class services(Model):
     srv_service = models.CharField(

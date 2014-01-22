@@ -28,6 +28,7 @@ import glob
 import logging
 import os
 import re
+import shutil
 import subprocess
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -218,6 +219,7 @@ class AFPForm(ModelForm):
             ])
             cleaned_data.pop('afp_srv_homedir', None)
         return cleaned_data
+
 
 class NFSForm(ModelForm):
 
