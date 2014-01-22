@@ -1127,9 +1127,10 @@ class notifier:
             if proc.returncode != 0:
                 raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
 
-    def geli_rekey(self, volume, passphrase=None, slot=0):
+    def geli_rekey(self, volume, slot=0):
         """
         Regenerates the geli global key and set it to devs
+        Removes the passphrase if it was present
 
         Raises:
             MiddlewareError
@@ -1141,14 +1142,9 @@ class notifier:
         self._system("dd if=/dev/random of=%s.tmp bs=64 count=1" % (geli_keyfile, ))
         error = False
         applied = []
-        if passphrase:
-            _passphrase = "-J %s" % (passphrase, )
-        else:
-            _passphrase = "-P"
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            proc = self._pipeopen("geli setkey %s -n %d -K %s.tmp %s" % (
-                _passphrase,
+            proc = self._pipeopen("geli setkey -P -n %d -K %s.tmp %s" % (
                 slot,
                 geli_keyfile,
                 dev,
@@ -1164,8 +1160,7 @@ class notifier:
         # If rekey failed for one of the devs, revert for the ones already applied
         if error:
             for dev in applied:
-                proc = self._pipeopen("geli setkey %s -n %d -k %s.tmp -K %s %s" % (
-                    _passphrase,
+                proc = self._pipeopen("geli setkey -P -n %d -k %s.tmp -K %s %s" % (
                     slot,
                     geli_keyfile,
                     geli_keyfile,
@@ -1176,9 +1171,8 @@ class notifier:
             raise MiddlewareError("Unable to set key: %s" % (err, ))
         else:
             self._system("mv %s.tmp %s" % (geli_keyfile, geli_keyfile))
-            vol_encrypt = 1 if passphrase is None else 2
-            if volume.vol_encrypt != vol_encrypt:
-                volume.vol_encrypt = vol_encrypt
+            if volume.vol_encrypt != 1:
+                volume.vol_encrypt = 1
                 volume.save()
 
     def geli_recoverykey_add(self, volume, passphrase=None):
