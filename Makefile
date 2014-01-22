@@ -38,7 +38,6 @@ save-build-env:
 
 freenas: release
 release:
-	${ENV_SETUP} ${MAKE} checkout
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} do-release
 
 do-release: git-verify
