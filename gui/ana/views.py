@@ -223,6 +223,18 @@ def tg_partition(request):
         }), content_type='application/javascript')
 
 
+def tg_load(request, data_range='hrs', t_range=10):
+    data_list = data_client.get_data(
+        target_type='load',
+        data_range=data_range,
+        t_range=int(t_range),
+    )
+    if not data_list:
+        data_list = [{}]
+    return HttpResponse(simplejson.dumps(data_list),
+        content_type='application/javascript')
+
+
 def tg_memory(request, data_range='hrs', t_range=10):
 
     data_list = data_client.get_data(

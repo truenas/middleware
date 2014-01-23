@@ -126,6 +126,22 @@ class RRDBase(object):
     def value_transform(self, value):
         return value
 
+    def get_time_range(self, data_range="hrs", t_range=10):
+        end_tmp = datetime.datetime.utcnow()
+        end = int(timegm(end_tmp.timetuple()))
+
+        if data_range == "hrs":
+            start_tmp = end_tmp - datetime.timedelta(hours=t_range)
+        elif data_range == "day":
+            start_tmp = end_tmp - datetime.timedelta(days=t_range)
+        elif data_range == "min":
+            start_tmp = end_tmp - datetime.timedelta(minutes=t_range)
+        else:
+            raise ValueError(data_range)
+
+        start = int(timegm(start_tmp.timetuple()))
+        return start, end
+
     def fetch(
         self,
         identifier=None,
@@ -140,19 +156,7 @@ class RRDBase(object):
         Fetch rrd data
         """
 
-        end_tmp = datetime.datetime.utcnow()
-        end = int(timegm(end_tmp.timetuple()))
-
-        if data_range == "hrs":
-            start_tmp = end_tmp - datetime.timedelta(hours=t_range)
-        elif data_range == "day":
-            start_tmp = end_tmp - datetime.timedelta(days=t_range)
-        elif data_range == "min":
-            start_tmp = end_tmp - datetime.timedelta(minutes=t_range)
-        else:
-            raise ValueError(data_range)
-
-        first = int(timegm(start_tmp.timetuple()))
+        first, end = self.get_time_range(data_range, t_range)
 
         target_dict = dict_hash()
 
@@ -356,6 +360,10 @@ class InterfacePlugin(RRDBase):
         return idents
 
 
+class LoadPlugin(RRDBase):
+    pass
+
+
 class MemoryPlugin(RRDBase):
 
     def value_transform(self, value):
@@ -389,7 +397,6 @@ class DiskPlugin(RRDBase):
             (regb.group(1), int(regb.group(2))),
         )
 
-
     def get_identifiers(self):
         idents = super(DiskPlugin, self).get_identifiers()
         if not idents:
@@ -397,4 +404,3 @@ class DiskPlugin(RRDBase):
         idents = filter(lambda x: re.search(r'^a?da\d+$', x), idents)
         idents.sort(DiskPlugin._diskcmp)
         return idents
-

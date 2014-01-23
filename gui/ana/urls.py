@@ -50,6 +50,9 @@ urlpatterns = patterns('ana.views',
     url(r'^tg/disk/(?P<disk>[^/]+)/(?P<data_type>\w+)/$', 'tg_disk', name='ana_tg_disk'),
     url(r'^tg/disk/(?P<disk>[^/]+)/(?P<data_type>\w+)/(?P<data_range>\w+)/(?P<t_range>\d+)/$', 'tg_disk', name='ana_tg_disk'),
 
+    url(r'^tg/load//$', 'tg_load', name='ana_tg_load'),
+    url(r'^tg/load/(?P<data_range>\w+)/(?P<t_range>\d+)/$', 'tg_load', name='ana_tg_load'),
+
     url(r'^tg/network/$', 'tg_network', name='ana_tg_network'),
     url(r'^tg/network/(?P<interface>\w+)/$', 'tg_network', name='ana_tg_network'),
     url(r'^tg/network/(?P<interface>\w+)/(?P<data_type>\w+)/$', 'tg_network', name='ana_tg_network'),

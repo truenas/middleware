@@ -39,6 +39,14 @@ require([
 
     };
 
+    chart_update_load = function(url, container, tg, range, t_date, t_type) {
+        var MyTypes = tg.split(",");
+        MyTypes.forEach(function(value, index) {
+            series_chart(url + range +'/'+ t_date +'/', container+value, 'CPU Load');
+        });
+
+    };
+
     chart_update_cpu_agg = function(url, container, tg, range, t_date, t_type) {
         var MyTypes = tg.split(",");
         MyTypes.forEach(function(value, index) {
