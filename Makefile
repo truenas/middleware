@@ -48,9 +48,6 @@ do-release: git-verify
 cdrom:
 	${ENV_SETUP} sh -x build/create_iso.sh
 
-force: git-verify
-	${ENV_SETUP} build/do_build.sh -fu
-
 truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
 	env NANO_LABEL=TrueNAS ${MAKE} build
