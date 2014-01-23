@@ -2297,7 +2297,7 @@ class notifier:
             args=" -o '%s' -g '%s' -d %s " % (user, group, mode)
             if recursive:
                 args += " -r "
-            args += " -p %s" % path
+            args += " -p '%s'" % path
             cmd = "%s %s" % (script, args)
             log.debug("XXX: CMD = %s", cmd)
             self._system(cmd)
