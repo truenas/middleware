@@ -25,11 +25,11 @@
 #
 #####################################################################
 import logging
+import re
 
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from eventlet.green import urllib2
 from freenasUI.middleware.notifier import notifier
 
 from ipaddr import IPv6Address
@@ -60,8 +60,12 @@ def get_base_url(request=None):
 
 
 def get_plugin_status(args):
-
     plugin, host, request = args
+    if re.match('^.+\[.+\]', host, re.I):
+        import urllib2
+    else:
+        from eventlet.green import urllib2 
+
     url = "%s/plugins/%s/%d/_s/status" % (
         host,
         plugin.plugin_name,
@@ -91,8 +95,12 @@ def get_plugin_status(args):
 
 
 def get_plugin_start(args):
-
     plugin, host, request = args
+    if re.match('^.+\[.+\]', host, re.I):
+        import urllib2
+    else:
+        from eventlet.green import urllib2 
+
     url = "%s/plugins/%s/%d/_s/start" % (
         host,
         plugin.plugin_name,
@@ -122,8 +130,12 @@ def get_plugin_start(args):
 
 
 def get_plugin_stop(args):
-
     plugin, host, request = args
+    if re.match('^.+\[.+\]', host, re.I):
+        import urllib2
+    else:
+        from eventlet.green import urllib2 
+
     url = "%s/plugins/%s/%d/_s/stop" % (
         host,
         plugin.plugin_name,
