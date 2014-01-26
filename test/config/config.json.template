@@ -1,7 +1,3 @@
-# Use this as a template JSON file.  This
-# is used to configure the test scripts. 
-# Add/change the values based on your test environment.
-
 {
     "vm_name": "vm2", 
     "username": "root", 

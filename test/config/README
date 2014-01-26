@@ -1,0 +1,5 @@
+# Copy config.json.template to another file, such as config.mine.json.
+# Modify config.mine.json with the parameters the you want when running
+# the tests.
+# Add/change the values based on your test environment.
+# The same config.mine.json file can be used when running the test scripts.
