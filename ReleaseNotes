@@ -34,8 +34,8 @@ devices.
 
 * Add reporting graphs that show individual disk activity.
 
-* Add the following ZFS features:   enabled_txg hole_birth
-extensible_dataset bookmarks
+* Add the following ZFS features: enabled_txg hole_birth, extensible_dataset,
+bookmarks
 
 * Add trafshow to the image.  This utility gives a CLI view of connections
 and usage to the FreeNAS box.
