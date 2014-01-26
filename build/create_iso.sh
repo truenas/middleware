@@ -79,11 +79,18 @@ main()
 	rm -f ${INSTALLUFSDIR}/bin/* ${INSTALLUFSDIR}/sbin/*
 	rm -f ${INSTALLUFSDIR}/usr/bin/* ${INSTALLUFSDIR}/usr/sbin/*
 
+	mkdir -p ${INSTALLUFSDIR}/usr/local/pre-install
+	mkdir -p ${INSTALLUFSDIR}/usr/local/install
+	mkdir -p ${INSTALLUFSDIR}/usr/local/sbin
 
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
 	if is_truenas ; then
 		cp -p ${TRUENAS_COMPONENTS_ROOT}/build/files/install_sata_dom.sh \
 			${INSTALLUFSDIR}/etc
+		cp -p ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/sbin/sas2flash \
+			${INSTALLUFSDIR}/usr/local/sbin
+		cp -p ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/install/0100.lsi_firmware.sh \
+			${INSTALLUFSDIR}/usr/local/install
 	fi
 	cp -p ${AVATAR_ROOT}/build/files/rc ${INSTALLUFSDIR}/etc
 
@@ -97,8 +104,6 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/conf/default/tmp
 	mkdir -p ${INSTALLUFSDIR}/conf/default/var
 	mkdir -p ${INSTALLUFSDIR}/tank
-
-	mkdir -p ${INSTALLUFSDIR}/usr/local/pre-install
 
     echo "IMG_SIZE=\"${IMG_SIZE}\"" > \
         ${INSTALLUFSDIR}/etc/avatar_img_size.conf
