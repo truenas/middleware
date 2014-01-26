@@ -100,7 +100,8 @@ require([
     });
 
     var defaultOnSelect = function(evt, actionName, action) {
-        var numrows = evt.rows.length;
+        var numrows = 0;
+        for(var key in evt.grid.selection) numrows++;
         if(numrows > 1 || numrows == 0) {
             query(".grid" + actionName).forEach(function(item, idx) {
                 domStyle.set(item, "display", "none");

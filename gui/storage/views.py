@@ -1038,6 +1038,7 @@ def volume_rekey(request, object_id):
 
     return render(request, "storage/rekey.html", {
         'form': form,
+        'volume': volume,
     })
 
 

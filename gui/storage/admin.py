@@ -56,7 +56,9 @@ class DiskFAdmin(BaseFreeAdmin):
         [mybtn,]);
 }""",
             'on_select_after': """function(evt, actionName, action) {
-    if(evt.rows.length <= 1) {
+    var numrows = 0;
+    for(var i in evt.grid.selection) numrows++;
+    if(numrows <= 1) {
         query(".grid" + actionName).forEach(function(item, idx) {
             domStyle.set(item, "display", "none");
         });

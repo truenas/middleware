@@ -21,7 +21,8 @@ in the finder on OSX.  Also enabled options for fuller-fidelity AFP copies
 with Mac OS ACLs (ACEs) now stored as ZFS ACLs.
 Remove the non functional share password field from AFP shares.
 
-* Switched from Avahi to mDNSResponder for Zeroconf network configuration.
+* Switched from Avahi to mDNSResponder for Zeroconf network configuration,
+improving the Mac share browsing experience.
 
 * Moved to a new reporting system with prettier UI and tabs for each class of
 report (CPU, Networking, Storage, etc).

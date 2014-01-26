@@ -28,8 +28,8 @@ import glob
 import logging
 import os
 import re
+import shutil
 import subprocess
-import time
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import validate_email
@@ -46,7 +46,7 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.network.models import Alias, Interfaces
+from freenasUI.network.models import Interfaces
 from freenasUI.services import models
 from freenasUI.services.directoryservice import DirectoryService
 from freenasUI.services.exceptions import ServiceFailed
@@ -57,6 +57,7 @@ from ipaddr import (
 )
 
 log = logging.getLogger('services.form')
+
 
 class servicesForm(ModelForm):
     class Meta:
@@ -218,6 +219,7 @@ class AFPForm(ModelForm):
             ])
             cleaned_data.pop('afp_srv_homedir', None)
         return cleaned_data
+
 
 class NFSForm(ModelForm):
 
@@ -668,7 +670,9 @@ class UPSForm(ModelForm):
         if email:
             invalids = []
             for e in email.split(';'):
-                if not email_re.match(e.strip()):
+                try:
+                    validate_email(e.strip())
+                except:
                     invalids.append(e.strip())
 
             if len(invalids) > 0:
@@ -1531,9 +1535,15 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
 
     def save(self):
         o = super(iSCSITargetAuthorizedInitiatorForm, self).save(commit=False)
-        o.iscsi_target_initiator_tag = (
-            models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
-        )
+        i = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
+        while True:
+            qs = models.iSCSITargetAuthorizedInitiator.objects.filter(
+                iscsi_target_initiator_tag=i
+            )
+            if not qs.exists():
+                break
+            i += 1
+        o.iscsi_target_initiator_tag = i
         o.save()
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(
@@ -1646,7 +1656,9 @@ class SMARTForm(ModelForm):
         if email:
             invalids = []
             for e in email.split(','):
-                if not email_re.match(e.strip()):
+                try:
+                    validate_email(e.strip())
+                except:
                     invalids.append(e.strip())
 
             if len(invalids) > 0:

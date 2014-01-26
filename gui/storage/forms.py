@@ -474,7 +474,7 @@ class VolumeVdevForm(Form):
         max_length=20,
     )
     disks = forms.CharField(
-        max_length=200,
+        max_length=800,
         widget=forms.widgets.SelectMultiple(),
     )
 
@@ -2413,7 +2413,7 @@ class UnlockPassphraseForm(Form):
 class KeyForm(Form):
 
     adminpw = forms.CharField(
-        label=_("Admin password"),
+        label=_("Root password"),
         widget=forms.widgets.PasswordInput(),
     )
 
@@ -2442,20 +2442,6 @@ class ReKeyForm(KeyForm):
     def __init__(self, *args, **kwargs):
         self.volume = kwargs.pop('volume')
         super(ReKeyForm, self).__init__(*args, **kwargs)
-        if self.volume.vol_encrypt == 2:
-            self.fields['passphrase'] = forms.CharField(
-                label=_("Passphrase"),
-                widget=forms.widgets.PasswordInput(),
-            )
 
     def done(self):
-        passphrase = self.cleaned_data.get("passphrase")
-        if passphrase:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-            passphrase = passfile
-        notifier().geli_rekey(self.volume, passphrase)
-        if passphrase:
-            os.unlink(passfile)
+        notifier().geli_rekey(self.volume)

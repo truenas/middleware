@@ -35,7 +35,6 @@ from django.forms import ModelForm
 from django.utils.translation import ugettext_lazy as _
 
 import eventlet
-from eventlet.green import urllib2
 from freenasUI.common.log import log_traceback
 from freenasUI.common.warden import (
     WARDEN_STATUS_RUNNING, WARDEN_TYPE_PLUGINJAIL
@@ -502,6 +501,11 @@ class NavTree(object):
 
     def _plugin_fetch(self, args):
         plugin, host, request = args
+        if re.match('^.+\[.+\]', host, re.I):
+            import urllib2
+        else:
+            from eventlet.green import urllib2
+
         data = None
         url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
         try:

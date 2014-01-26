@@ -185,6 +185,27 @@ require([
 
     Menu = new fMenu();
 
+    humanizeSize = function(value, integer) {
+      var map = [
+        ['PiB', 1125899906842624],
+        ['TiB', 1099511627776],
+        ['GiB', 1073741824],
+        ['MiB', 1048576],
+        ['KiB', 1024],
+        ['B', 1]
+      ];
+      for(var i=0;i<map.length;i++) {
+        if(value > map[i][1]) {
+          if(integer) {
+            return new Int(value / map[i][1]) + ' ' + map[i][0];
+          } else {
+            return (value / map[i][1]).toFixed(2) + ' ' + map[i][0];
+          }
+        }
+      }
+      return value + ' B';
+    }
+
     restartHttpd = function(newurl) {
 
         var handle = function(data) {
