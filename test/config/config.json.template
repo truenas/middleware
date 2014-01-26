@@ -17,5 +17,5 @@
     "password": "XXXXXXXX",
     "tap": "tap0", 
     "bridge": "bridge0", 
-    "interface": "em0", 
+    "interface": "em0"
 }
