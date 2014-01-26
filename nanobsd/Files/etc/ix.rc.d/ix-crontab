@@ -11,14 +11,14 @@
 
 generate_crontab()
 {
-	local IFS="|"
+	local IFS=""
 	local f="cron_minute cron_hour cron_daymonth cron_month cron_dayweek cron_user cron_command cron_stdout cron_stderr"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local cron_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin"
 	cp /conf/base/etc/crontab /etc/crontab
 	# Generate cronjobs
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	${FREENAS_SQLITE_CMD} -separator "" ${FREENAS_CONFIG} \
 	"SELECT $sf FROM system_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
 	while eval read -r $f; do
 		# Note that echo -e will do the wrong thing with certain characters. Read the commit
