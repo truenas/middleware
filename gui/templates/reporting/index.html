@@ -1,3 +1,19 @@
-{% for graph in graphs %}
-<div data-dojo-type="freeadmin.RRDControl" href="{% url "reporting_generate" %}" plugin="{{ graph.plugin }}"{% if graph.identifier %} identifier="{{ graph.identifier }}"{% endif %}></div>
-{% endfor %}
+<div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, title: '{% trans "Reporting"|escapejs %}', doLayout: true" style="width: 100%;">
+
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "CPU" %}', href: '{% url "reporting_cpu" %}', refreshOnShow: true"></div>
+
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Disk" %}', href: '{% url "reporting_disk" %}', refreshOnShow: true"></div>
+
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Memory" %}', href: '{% url "reporting_memory" %}', refreshOnShow: true"></div>
+
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Network" %}', href: '{% url "reporting_network" %}', refreshOnShow: true"></div>
+
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Partition" %}', href: '{% url "reporting_partition" %}', refreshOnShow: true"></div>
+
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "System" %}', href: '{% url "reporting_system" %}', refreshOnShow: true"></div>
+
+{% comment %}
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Summary" %}', href: '{% url "ana_zfs_details" %}', refreshOnShow: true">
+  </div>
+{% endcomment %}
+</div>
