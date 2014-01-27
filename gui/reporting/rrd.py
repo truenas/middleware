@@ -722,6 +722,8 @@ class DiskPlugin(RRDBase):
             ident = entry.split('-', 1)[-1]
             if not os.path.exists('/dev/%s' % ident):
                 continue
+            if ident.startswith('pass'):
+                continue
             if os.path.exists(os.path.join(entry, 'disk_octets.rrd')):
                 ids.append(ident)
         return ids
