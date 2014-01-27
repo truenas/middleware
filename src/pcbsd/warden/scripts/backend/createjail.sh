@@ -53,7 +53,8 @@ setup_linux_jail()
   rm ${JAILDIR}/tmp/passwd
 
   # Copy resolv.conf
-  cp /etc/resolv.conf ${JAILDIR}/etc/resolv.conf
+  rm -f "${JAILDIR}/etc/resolv.conf"
+  cp "/etc/resolv.conf" "${JAILDIR}/etc/resolv.conf"
 
   # Do some touch-up to make linux happy
   echo '#!/bin/bash
@@ -354,6 +355,7 @@ __EOF__
   fi
 
   # Copy resolv.conf
+  rm -f "${JAILDIR}/etc/resolv.conf"  
   cp /etc/resolv.conf "${JAILDIR}/etc/resolv.conf"
 
 fi # End of ARCHIVEFILE check
