@@ -139,7 +139,7 @@ start_jail_vimage()
   # Configure the IPv6 addresses
   if [ -n "${IP6}" ] ; then
      warden_print "Setting IP6 address: ${IP6}"
-     jexec ${JID} ifconfig ${EPAIRB} inet6 "${IP4}"
+     jexec ${JID} ifconfig ${EPAIRB} inet6 "${IP6}"
   fi
   for ip6 in ${IPS6}
   do
