@@ -568,6 +568,10 @@ add_gui()
 	mkdir ${dst}
 	( cd ${gui}
 	  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
+	if is_truenas ; then
+		( cd ${TRUENAS_COMPONENTS_ROOT}/gui
+		  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
+	fi
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate --traceback)"
