@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 9.2.1-BETA
+Release Notes for FreeNAS 9.2.1-RC
 
 * Samba (SMB/CIFS support) upgraded to version 4.1.4.  This adds support for
 SMB3, the ability for FreeNAS to be a Windows Domain Controller, and advanced
@@ -27,12 +27,13 @@ This volume manager allows manual vdev building and offers no seatbelts.
 Unless you know exactly what you are doing and why you are doing it, using
 the standard volume manager is highly recommended by the development team!
 
+* Made some changes to reporting graphs that segregates reports by type,
+one type per tab.  Add graphs that show individual disk activity.
+
 * Fixed a bug that prevented building an encrypted volume using multipath
 devices.
 
 * Update django (used by the WebUI) to 1.6 and dojo to 1.9.2
-
-* Add reporting graphs that show individual disk activity.
 
 * Add the following ZFS features: enabled_txg hole_birth, extensible_dataset,
 bookmarks
