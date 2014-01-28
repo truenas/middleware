@@ -53,6 +53,7 @@ options 	CD9660			# ISO 9660 Filesystem
 options 	PROCFS			# Process filesystem (requires PSEUDOFS)
 options 	PSEUDOFS		# Pseudo-filesystem framework
 options 	GEOM_PART_GPT		# GUID Partition Tables.
+options		GEOM_RAID		# Soft RAID functionality
 options 	GEOM_LABEL		# Provides labelization
 options 	COMPAT_43TTY		# BSD 4.3 TTY compat (sgtty)
 options 	COMPAT_FREEBSD32	# Compatible with i386 binaries
@@ -76,40 +77,11 @@ options 	MAC			# TrustedBSD MAC Framework
 #options	FLOWTABLE		# per-cpu routing cache
 options 	KDTRACE_FRAME		# Ensure frames are compiled in
 options 	KDTRACE_HOOKS		# Kernel DTrace hooks
-options 	DDB_CTF			# Kernel ELF linker loads CTF data
 options 	INCLUDE_CONFIG_FILE     # Include this file in kernel
-
-# ipfw and nat for jails
-options		IPDIVERT
-options		IPFIREWALL
-options		IPFIREWALL_VERBOSE
-options		IPFIREWALL_FORWARD
-options		IPFIREWALL_DEFAULT_TO_ACCEPT
-options		IPFIREWALL_NAT
-options		DUMMYNET
-options		LIBALIAS
-
-# Debugging for use in -current
-options		KDB			# Enable kernel debugger support.
+options		KDB			# Kernel debugger related code
+options		KDB_TRACE		# Print a stack trace for a panic
+options 	DDB_CTF			# Kernel ELF linker loads CTF data
 options		DDB			# Support DDB.
-
-# FreeNAS modifications
-options		GEOM_UZIP
-options		GEOM_MIRROR
-options		GEOM_RAID
-options		GEOM_ELI
-device		aesni
-device  	padlock
-options		NULLFS
-options		UNIONFS
-options		VFS_AIO
-options		VIMAGE
-options		NETGRAPH
-device		carp
-device		snp
-device		ctl
-device		iscsi
-device		pf
 
 # Make an SMP-capable kernel by default
 options 	SMP			# Symmetric MultiProcessor Kernel
@@ -135,6 +107,9 @@ options 	ATA_STATIC_ID	# Static device numbering
 device		mvs		# Marvell 88SX50XX/88SX60XX/88SX70XX/SoC SATA
 device		siis		# SiliconImage SiI3124/SiI3132/SiI3531 SATA
 
+# FC target support
+options		ISP_TARGET_MODE
+
 # SCSI Controllers
 device		ahc		# AHA2940 and onboard AIC7xxx devices
 options 	AHC_REG_PRETTY_PRINT	# Print register bitfields in debug
@@ -146,7 +121,6 @@ options 	AHD_REG_PRETTY_PRINT	# Print register bitfields in debug
 device		hptiop		# Highpoint RocketRaid 3xxx series
 device		isci		# Intel C600 SAS controllers
 device		isp		# Qlogic family
-options		ISP_TARGET_MODE
 #device		ispfw		# Firmware for QLogic HBAs- normally a module
 device		mpt		# LSI-Logic MPT-Fusion
 device		mps		# LSI-Logic MPT-Fusion 2
@@ -167,6 +141,7 @@ device		sa		# Sequential Access (tape etc)
 device		cd		# CD
 device		pass		# Passthrough device (direct SCSI access)
 device		ses		# SCSI Environmental Services (and SAF-TE)
+device		ctl		# CAM Target Layer
 
 # RAID controllers interfaced to the SCSI subsystem
 device		amr		# AMI MegaRAID
@@ -211,27 +186,8 @@ device		sc
 
 device		agp		# support several AGP chipsets
 
-# PCCARD (PCMCIA) support
-# PCMCIA and cardbus bridge support
-#device		cbb		# cardbus (yenta) bridge
-#device		pccard		# PC Card (16-bit) bus
-#device		cardbus		# CardBus (32-bit) bus
-
 # Serial (COM) ports
 device		uart		# Generic UART driver
-
-# Parallel port
-device		ppc
-device		ppbus		# Parallel port bus (required)
-device		lpt		# Printer
-#device		plip		# TCP/IP over parallel
-#device		ppi		# Parallel port interface device
-#device		vpo		# Requires scbus and da
-
-# If you've got a "dumb" serial or parallel PCI card that is
-# supported by the puc(4) glue driver, uncomment the following
-# line to enable it (connects to sio, uart and/or ppc drivers):
-#device		puc
 
 # PCI Ethernet NICs.
 device		bxe		# Broadcom BCM57710/BCM57711/BCM57711E 10Gb Ethernet
@@ -285,34 +241,6 @@ device		vr		# VIA Rhine, Rhine II
 device		wb		# Winbond W89C840F
 device		xl		# 3Com 3c90x (``Boomerang'', ``Cyclone'')
 
-# ISA Ethernet NICs.  pccard NICs included.
-#device		cs		# Crystal Semiconductor CS89x0 NIC
-# 'device ed' requires 'device miibus'
-#device		ed		# NE[12]000, SMC Ultra, 3c503, DS8390 cards
-#device		ex		# Intel EtherExpress Pro/10 and Pro/10+
-#device		ep		# Etherlink III based cards
-#device		fe		# Fujitsu MB8696x based cards
-#device		sn		# SMC's 9000 series of Ethernet chips
-#device		xe		# Xircom pccard Ethernet
-
-# Wireless NIC cards
-#device		wlan		# 802.11 support
-#options 	IEEE80211_DEBUG	# enable debug msgs
-#options 	IEEE80211_AMPDU_AGE # age frames in AMPDU reorder q's
-#options 	IEEE80211_SUPPORT_MESH	# enable 802.11s draft support
-#device		wlan_wep	# 802.11 WEP support
-#device		wlan_ccmp	# 802.11 CCMP support
-#device		wlan_tkip	# 802.11 TKIP support
-#device		wlan_amrr	# AMRR transmit rate control algorithm
-#device		an		# Aironet 4500/4800 802.11 wireless NICs.
-#device		ath		# Atheros pci/cardbus NIC's
-#device		ath_hal		# pci/cardbus chip support
-#options 	AH_SUPPORT_AR5416	# enable AR5416 tx/rx descriptors
-#device		ath_rate_sample	# SampleRate tx rate control for ath
-#device		ral		# Ralink Technology RT2500 wireless NICs.
-#device		wi		# WaveLAN/Intersil/Symbol 802.11 wireless NICs.
-#device		wl		# Older non 802.11 Wavelan wireless NIC.
-
 # Pseudo devices.
 device		loop		# Network loopback
 device		random		# Entropy device
@@ -327,8 +255,6 @@ device		faith		# IPv6-to-IPv4 relaying (translation)
 device		firmware	# firmware assist module
 device		crypto		# hardware crypto access driver
 device		cryptodev	# hardware crypto access driver
-device		epair	# A pair of virtual back-to-back connected Ethernet interfaces
-device		if_bridge	# network bridge device
 
 # The `bpf' device enables the Berkeley Packet Filter.
 # Be aware of the administrative consequences of enabling this!
@@ -336,51 +262,56 @@ device		if_bridge	# network bridge device
 device		bpf		# Berkeley packet filter
 
 # USB support
+options		USB_DEBUG	# enable debug msgs
 device		uhci		# UHCI PCI->USB interface
 device		ohci		# OHCI PCI->USB interface
 device		ehci		# EHCI PCI->USB interface (USB 2.0)
 device		usb		# USB Bus (required)
-#device		udbp		# USB Double Bulk Pipe devices
 device		uhid		# "Human Interface Devices"
 device		ukbd		# Keyboard
 device		ulpt		# Printer
 device		umass		# Disks/Mass storage - Requires scbus and da
 device		ums		# Mouse
-#device		urio		# Diamond Rio 500 MP3 player
-# USB Serial devices
-#device		u3g		# USB-based 3G modems (Option, Huawei, Sierra)
-device		uark		# Technologies ARK3116 based serial adapters
-device		ubsa		# Belkin F5U103 and compatible serial adapters
-device		uftdi		# For FTDI usb serial adapters
-#device		uipaq		# Some WinCE based devices
-device		uplcom		# Prolific PL-2303 serial adapters
-device		uslcom		# SI Labs CP2101/CP2102 serial adapters
-#device		uvisor		# Visor and Palm devices
-#device		uvscom		# USB serial support for DDI pocket's PHS
-# USB Ethernet, requires miibus
-#device		aue		# ADMtek USB Ethernet
-#device		axe		# ASIX Electronics USB Ethernet
-#device		cdce		# Generic USB over Ethernet
-#device		cue		# CATC USB Ethernet
-#device		kue		# Kawasaki LSI USB Ethernet
-#device		rue		# RealTek RTL8150 USB Ethernet
-#device		udav		# Davicom DM9601E USB
-# USB Wireless
-#device		rum		# Ralink Technology RT2501USB wireless NICs
-#device		uath		# Atheros AR5523 wireless NICs
-#device		ural		# Ralink Technology RT2500USB wireless NICs
-#device		zyd		# ZyDAS zb1211/zb1211b wireless NICs
-
-# FireWire support
-device		firewire	# FireWire bus code
-device		sbp		# SCSI over FireWire (Requires scbus and da)
-#device		fwe		# Ethernet over FireWire (non-standard!)
-#device		fwip		# IP over FireWire (RFC 2734,3146)
-#device		dcons		# Dumb console driver
-#device		dcons_crom	# Configuration ROM for dcons
 
 # Needed for ipmi(4)
 device		smbus
+
+## This is FreeNAS specific but leaving it here because I'm unsure
+## if putting it after PF will change the order that packets are handled
+## by the system, and everything works nicely now
+# ipfw and nat for jails
+options		IPDIVERT
+options		IPFIREWALL
+options		IPFIREWALL_VERBOSE
+options		IPFIREWALL_FORWARD
+options		IPFIREWALL_DEFAULT_TO_ACCEPT
+options		IPFIREWALL_NAT
+options		DUMMYNET
+options		LIBALIAS
+## End FreeNAS specific section
+
+# FreeNAS shared modifications
+options		GEOM_UZIP
+options		GEOM_ELI
+options		NULLFS
+options		UNIONFS
+options		VFS_AIO
+device		aesni
+device		carp
+device		pf
+device		pflog
+device		pfsync
+
+## FreeNAS specific modifications
+# misc
+device  	padlock
+options		VIMAGE
+options		NETGRAPH
+device		snp
+device		iscsi
+device		epair		# A pair of virtual back-to-back connected Ethernet interfaces
+device		if_bridge	# network bridge device
+options		GEOM_MIRROR
 
 # Watchdog support
 device		ichwd
@@ -395,3 +326,29 @@ device		virtio_blk
 device		virtio_balloon
 device		vtnet
 device		virtio_scsi
+
+# FireWire support
+device		firewire	# FireWire bus code
+device		sbp		# SCSI over FireWire (Requires scbus and da)
+#device		fwe		# Ethernet over FireWire (non-standard!)
+#device		fwip		# IP over FireWire (RFC 2734,3146)
+#device		dcons		# Dumb console driver
+#device		dcons_crom	# Configuration ROM for dcons
+
+# USB Serial devices
+device		u3g		# USB-based 3G modems (Option, Huawei, Sierra)
+device		uark		# Technologies ARK3116 based serial adapters
+device		ubsa		# Belkin F5U103 and compatible serial adapters
+device		uftdi		# For FTDI usb serial adapters
+device		uplcom		# Prolific PL-2303 serial adapters
+device		uslcom		# SI Labs CP2101/CP2102 serial adapters
+
+# USB Ethernet, requires miibus
+device		aue		# ADMtek USB Ethernet
+device		axe		# ASIX Electronics USB Ethernet
+device		cdce		# Generic USB over Ethernet
+device		cue		# CATC USB Ethernet
+device		kue		# Kawasaki LSI USB Ethernet
+device		rue		# RealTek RTL8150 USB Ethernet
+device		udav		# Davicom DM9601E USB
+## End FreeNAS specific section
