@@ -71,7 +71,7 @@ fi
 : ${GIT_FREEBSD_BRANCH=feature/hyperv}
 : ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
 
-: ${GIT_PORTS_BRANCH=freenas/9-stable}
+: ${GIT_PORTS_BRANCH=feature/hyperv}
 : ${GIT_PORTS_REPO=git@gitserver:/git/repos/freenas-build/ports.git}
 
 
