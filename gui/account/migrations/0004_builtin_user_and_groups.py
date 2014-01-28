@@ -13,8 +13,8 @@ class Migration(DataMigration):
 
         jf = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "fixtures", "bsdGroups.json")
         with open(jf) as json_fd:
-            json = json_fd.read()
-        groups = json.loads(json)
+            data = json_fd.read()
+        groups = json.loads(data)
         for entry in groups:
             group = orm.bsdGroups(pk=entry['pk'])
             for field in entry['fields']:
@@ -24,8 +24,8 @@ class Migration(DataMigration):
 
         jf = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "fixtures", "bsdUsers.json")
         with open(jf) as json_fd:
-            json = json_fd.read()
-        users = json.loads(json)
+            data = json_fd.read()
+        users = json.loads(data)
         for entry in users:
             user = orm.bsdUsers(pk=entry['pk'])
             for field in entry['fields']:
