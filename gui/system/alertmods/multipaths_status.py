@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert

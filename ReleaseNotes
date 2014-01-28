@@ -48,3 +48,6 @@ volumes.
 to use the AD Administrator account to join FreeNAS to AD, closing a long
 standing issue of needing the AD Admin password in the FreeNAS configuration
 database.
+
+* Updated the LSI 6 Gbps HBA driver (mps) to version 16.  Please update the
+firmware of any mps HBAs to phase 16.

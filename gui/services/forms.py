@@ -1245,7 +1245,7 @@ class iSCSITargetExtentForm(ModelForm):
             qs = qs.exclude(id=exclude.id)
         used_zvol = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
 
-        for v in models.Volume.objects.all():
+        for v in Volume.objects.all():
             used_disks.extend(v.get_disks())
 
         _notifier = notifier()
