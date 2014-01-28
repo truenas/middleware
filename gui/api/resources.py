@@ -1316,8 +1316,8 @@ class ISCSITargetToExtentResourceMixin(object):
             bundle.data['iscsi_target'] = bundle.obj.iscsi_target
             bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
         else:
-            bundle.data['iscsi_target'] = bundle.obj.pk
-            bundle.data['iscsi_extent'] = bundle.obj.pk
+            bundle.data['iscsi_target'] = bundle.obj.iscsi_target.id
+            bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent.id
         return bundle
 
 
