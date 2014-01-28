@@ -24,10 +24,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
 import logging
 import re
 
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from freenasUI.middleware.notifier import notifier
@@ -85,13 +85,13 @@ def get_plugin_status(args):
         ]
         #TODO: Increase timeout based on number of plugins
         response = opener.open(url, None).read()
-        json = simplejson.loads(response)
+        data = json.loads(response)
     except Exception, e:
         log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
             'url': url,
             'error': e,
         })
-    return plugin, json, jail_status
+    return plugin, data, jail_status
 
 
 def get_plugin_start(args):
@@ -120,13 +120,13 @@ def get_plugin_start(args):
         ]
         #TODO: Increase timeout based on number of plugins
         response = opener.open(url, None).read()
-        json = simplejson.loads(response)
+        data = json.loads(response)
     except Exception, e:
         log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
             'url': url,
             'error': e,
         })
-    return plugin, json, jail_status
+    return plugin, data, jail_status
 
 
 def get_plugin_stop(args):
@@ -155,10 +155,10 @@ def get_plugin_stop(args):
         ]
         #TODO: Increase timeout based on number of plugins
         response = opener.open(url, None).read()
-        json = simplejson.loads(response)
+        data = json.loads(response)
     except Exception, e:
         log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
             'url': url,
             'error': e,
         })
-    return plugin, json, jail_status
+    return plugin, data, jail_status
