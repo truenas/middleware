@@ -42,9 +42,10 @@ from freenasUI.freeadmin.models import (
 )
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.storage.models import Volume, Disk
+from freenasUI.storage.models import Disk
 
 log = logging.getLogger("services.forms")
+
 
 class services(Model):
     srv_service = models.CharField(
@@ -2004,6 +2005,9 @@ class DomainController(Model):
             help_text=_("Domain and Forest Level, eg 2003"),
             choices=choices.SAMBA4_FOREST_LEVEL_CHOICES,
             default='2003'
+            )
+    dc_storage = PathField(
+            verbose_name=_("Storage Path")
             )
     dc_passwd = models.CharField(
             max_length=120,

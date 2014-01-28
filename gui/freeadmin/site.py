@@ -271,15 +271,10 @@ class FreeAdminSite(object):
         from freenasUI.system.alert import alertPlugins
         dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
         alerts = alertPlugins.run()
-        if alerts:
-            return render(request, "freeadmin/alert_status.html", {
-                'alerts': alerts,
-                'dismisseds': dismisseds,
-            })
-        else:
-            return HttpResponse(
-                _("It was not possible to retrieve the current status")
-            )
+        return render(request, "freeadmin/alert_status.html", {
+            'alerts': alerts,
+            'dismisseds': dismisseds,
+        })
 
     @never_cache
     def alert_dismiss(self, request):

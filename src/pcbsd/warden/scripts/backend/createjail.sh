@@ -53,7 +53,8 @@ setup_linux_jail()
   rm ${JAILDIR}/tmp/passwd
 
   # Copy resolv.conf
-  cp /etc/resolv.conf ${JAILDIR}/etc/resolv.conf
+  rm -f "${JAILDIR}/etc/resolv.conf"
+  cp "/etc/resolv.conf" "${JAILDIR}/etc/resolv.conf"
 
   # Do some touch-up to make linux happy
   echo '#!/bin/bash
@@ -202,9 +203,6 @@ do
   fi
 done
 
-# Get next unique ID
-META_ID="$(get_next_id "${JDIR}")"
-
 # Set the jailtype
 mkdir -p "${JMETADIR}" >/dev/null 2>&1
 echo "${JAILTYPE}" > "${JMETADIR}/jailtype"
@@ -234,7 +232,7 @@ if [ "$LINUXJAIL" = "YES" ] ; then
    fi
    setup_linux_jail
 
-   echo "${META_ID}" > ${JMETADIR}/id
+   set_unique_id "${JDIR}"
    if [ -d "${PROGDIR}/scripts/hooks" ] ; then
      cp ${PROGDIR}/scripts/hooks/jail-* "${JMETADIR}"
    fi
@@ -283,7 +281,7 @@ fi
 if [ "${IP6}" != "OFF" ] ; then
    echo "${IP6}/${MASK6}" > ${JMETADIR}/ipv6
 fi
-echo "${META_ID}" > ${JMETADIR}/id
+set_unique_id "${JDIR}"
 
 if [ "$SOURCE" = "YES" ]
 then
@@ -357,6 +355,7 @@ __EOF__
   fi
 
   # Copy resolv.conf
+  rm -f "${JAILDIR}/etc/resolv.conf"  
   cp /etc/resolv.conf "${JAILDIR}/etc/resolv.conf"
 
 fi # End of ARCHIVEFILE check

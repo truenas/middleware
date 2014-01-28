@@ -32,5 +32,11 @@ appPool.register(ReportingHook)
 
 urlpatterns = patterns('freenasUI.reporting.views',
     url(r'^$', 'index', name="reporting_index"),
+    url(r'^cpu/$', 'generic_graphs', {'names': ['aggregation-cpu-sum', 'load']}, name="reporting_cpu"),
+    url(r'^disk/$', 'generic_graphs', {'names': ['disk']}, name="reporting_disk"),
+    url(r'^memory/$', 'generic_graphs', {'names': ['memory', 'swap']}, name="reporting_memory"),
+    url(r'^network/$', 'generic_graphs', {'names': ['interface']}, name="reporting_network"),
+    url(r'^partition/$', 'generic_graphs', {'names': ['df']}, name="reporting_partition"),
+    url(r'^system/$', 'generic_graphs', {'names': ['processes', 'uptime']}, name="reporting_system"),
     url(r'^generate/$', 'generate', name="reporting_generate"),
 )

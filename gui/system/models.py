@@ -190,6 +190,13 @@ class Advanced(Model):
         verbose_name=_("Use Serial Console"),
         default=False,
     )
+    adv_serialport = models.CharField(
+            max_length=120,
+            default="0x2f8",
+            help_text=_("Set this to match your serial port address "
+		"(0x3f8, 0x2f8, etc.)"),
+            verbose_name=_("Serial Port Address")
+            )
     adv_serialspeed = models.CharField(
             max_length=120,
             choices=choices.SERIAL_SPEED,

@@ -37,26 +37,41 @@ RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
 log = logging.getLogger('reporting.views')
 
 
-def index(request):
+def plugin2graphs(name):
 
     graphs = []
-    for klass in rrd.name2plugin.values():
-        ins = klass(RRD_BASE_PATH)
+    if name in rrd.name2plugin:
+        ins = rrd.name2plugin[name](RRD_BASE_PATH)
         ids = ins.get_identifiers()
-        if ids is not None and len(ids) == 0:
-            continue
-        if not ids:
-            graphs.append({
-                'plugin': klass.plugin,
-            })
+        if ids is not None:
+            if len(ids) > 0:
+                for ident in ids:
+                    graphs.append({
+                        'plugin': ins.plugin,
+                        'identifier': ident,
+                    })
         else:
-            for ident in ids:
-                graphs.append({
-                    'plugin': klass.plugin,
-                    'identifier': ident,
-                })
+           graphs.append({
+               'plugin': ins.plugin,
+           })
 
-    return render(request, "reporting/index.html", {
+    return graphs
+
+
+def index(request):
+    return render(request, "reporting/index.html")
+
+
+def generic_graphs(request, names=None):
+
+    if names is None:
+        names = []
+
+    graphs = []
+    for name in names:
+        graphs.extend(plugin2graphs(name))
+
+    return render(request, 'reporting/graphs.html', {
         'graphs': graphs,
     })
 

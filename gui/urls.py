@@ -68,7 +68,6 @@ urlpatterns = patterns('',
         public(serve),
         {'document_root': '/usr/local/www/dojo'}),
     (r'^admin/', include(site.urls)),
-    url(r'^api/', include(v1_api.urls)),
     (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
 )
 
@@ -78,5 +77,9 @@ for app in settings.APP_MODULES:
         url(r'^%s/' % app.rsplit('.')[-1], include('%s.urls' % app)),
     )
 
+urlpatterns += patterns(
+    '',
+    url(r'^api/', include(v1_api.urls)),
+)
 
 urlpatterns += staticfiles_urlpatterns()

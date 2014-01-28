@@ -1,10 +1,10 @@
 # encoding: utf-8
+import json
 import os
 import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from django.utils import simplejson
 
 class Migration(DataMigration):
 
@@ -13,8 +13,8 @@ class Migration(DataMigration):
 
         jf = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "fixtures", "bsdGroups.json")
         with open(jf) as json_fd:
-            json = json_fd.read()
-        groups = simplejson.loads(json)
+            data = json_fd.read()
+        groups = json.loads(data)
         for entry in groups:
             group = orm.bsdGroups(pk=entry['pk'])
             for field in entry['fields']:
@@ -24,8 +24,8 @@ class Migration(DataMigration):
 
         jf = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "fixtures", "bsdUsers.json")
         with open(jf) as json_fd:
-            json = json_fd.read()
-        users = simplejson.loads(json)
+            data = json_fd.read()
+        users = json.loads(data)
         for entry in users:
             user = orm.bsdUsers(pk=entry['pk'])
             for field in entry['fields']:

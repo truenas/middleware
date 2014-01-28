@@ -474,7 +474,7 @@ class VolumeVdevForm(Form):
         max_length=20,
     )
     disks = forms.CharField(
-        max_length=200,
+        max_length=800,
         widget=forms.widgets.SelectMultiple(),
     )
 
@@ -547,7 +547,6 @@ class VdevFormSet(BaseFormSet):
                     ):
                         continue
 
-
                     errors = []
                     if vdev.type != form.cleaned_data.get('vdevtype'):
                         errors.append(_(
@@ -589,10 +588,19 @@ class ZFSVolumeWizardForm(forms.Form):
         choices=(),
         widget=forms.RadioSelect(attrs=attrs_dict),
         required=False)
-    dedup = forms.ChoiceField(label=_('ZFS Deduplication'),
+    enc = forms.BooleanField(
+        label=_('Encryption'),
+        required=False,
+    )
+    encini = forms.BooleanField(
+        label=_('Initialize Safely'),
+        required=False,
+    )
+    dedup = forms.ChoiceField(
+        label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP,
         initial="off",
-        )
+    )
     def __init__(self, *args, **kwargs):
         super(ZFSVolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
@@ -604,7 +612,10 @@ class ZFSVolumeWizardForm(forms.Form):
             self.fields['volume_add'].choices = [('', '-----')] + \
                                         [(x.vol_name, x.vol_name) for x in qs]
             self.fields['volume_add'].widget.attrs['onChange'] = (
-                'wizardcheckings(true);')
+                'zfswizardcheckings(true);')
+
+        self.fields['enc'].widget.attrs['onChange'] = (
+            'zfswizardcheckings(true);')
 
         grouptype_choices = (
             ('mirror', 'mirror'),
@@ -721,6 +732,11 @@ class ZFSVolumeWizardForm(forms.Form):
         volume_fstype = 'ZFS'
         disk_list = self.cleaned_data['volume_disks']
         dedup = self.cleaned_data.get("dedup", False)
+        init_rand = self.cleaned_data.get("encini", False)
+        if self.cleaned_data.get("enc", False):
+            volume_encrypt = 1
+        else:
+            volume_encrypt = 0
         mp_options = "rw"
         mp_path = None
 
@@ -737,14 +753,20 @@ class ZFSVolumeWizardForm(forms.Form):
                 add = True
             else:
                 add = False
-                volume = models.Volume(vol_name=volume_name,
-                    vol_fstype=volume_fstype)
+                volume = models.Volume(
+                    vol_name=volume_name,
+                    vol_fstype=volume_fstype,
+                    vol_encrypt=volume_encrypt,
+                )
                 volume.save()
 
                 mp_path = '/mnt/' + volume_name
 
-                mp = models.MountPoint(mp_volume=volume, mp_path=mp_path,
-                    mp_options=mp_options)
+                mp = models.MountPoint(
+                    mp_volume=volume,
+                    mp_path=mp_path,
+                    mp_options=mp_options,
+                )
                 mp.save()
             self.volume = volume
 
@@ -774,7 +796,9 @@ class ZFSVolumeWizardForm(forms.Form):
                             grouped.get(grp_type))
 
             else:
-                notifier().init("volume", volume, groups=grouped)
+                notifier().init(
+                    "volume", volume, groups=grouped, init_rand=init_rand
+                )
 
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
@@ -2389,7 +2413,7 @@ class UnlockPassphraseForm(Form):
 class KeyForm(Form):
 
     adminpw = forms.CharField(
-        label=_("Admin password"),
+        label=_("Root password"),
         widget=forms.widgets.PasswordInput(),
     )
 
@@ -2418,20 +2442,6 @@ class ReKeyForm(KeyForm):
     def __init__(self, *args, **kwargs):
         self.volume = kwargs.pop('volume')
         super(ReKeyForm, self).__init__(*args, **kwargs)
-        if self.volume.vol_encrypt == 2:
-            self.fields['passphrase'] = forms.CharField(
-                label=_("Passphrase"),
-                widget=forms.widgets.PasswordInput(),
-            )
 
     def done(self):
-        passphrase = self.cleaned_data.get("passphrase")
-        if passphrase:
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-            passphrase = passfile
-        notifier().geli_rekey(self.volume, passphrase)
-        if passphrase:
-            os.unlink(passfile)
+        notifier().geli_rekey(self.volume)

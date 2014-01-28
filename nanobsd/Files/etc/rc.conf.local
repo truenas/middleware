@@ -136,15 +136,15 @@ _interface_config()
 		echo ${aliases}
 		has_ipv6=$(echo ${aliases}|grep -c inet6)
 
-		if [ "${doipv6auto}" = "0" ]; then
+		if [ "$doipv6auto" = "1" ]; then
+			echo ifconfig_${interface}_ipv6=\"inet6 accept_rtadv auto_linklocal\"
+                        echo rtsold_enable=\"YES\"
+		else
 			if [ -n "${ipv6addr}" ]; then
 				echo ifconfig_${interface}_ipv6=\"${ipv6addr}/${ipv6netmask}\"
-			elif [ ${has_ipv6} -gt 0 ]; then
-				echo ifconfig_${interface}_ipv6=\"inet6\"
-			fi
-		else
-			echo ifconfig_${interface}_ipv6=\"inet6 accept_rtadv auto_linklocal\"
-			echo rtsold_enable=\"YES\"
+                        elif [ ${has_ipv6} -gt 0 ]; then
+                                echo ifconfig_${interface}_ipv6=\"inet6\"
+                        fi
 		fi
 		if [ -n "${lagg_id}" ]; then
 			cloned_interfaces="${cloned_interfaces} ${interface}"

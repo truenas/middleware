@@ -272,6 +272,10 @@ def add_activedirectory_conf(smb4_conf):
     confset2(smb4_conf, "template homedir = %s",
         "/home/%D/%U" if ad.ad_use_default_domain else "/home/%U")
 
+    if not ad.ad_unix_extensions:
+        confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: range = 20000-20000000", ad.ad_workgroup)
+
    
 def add_domaincontroller_conf(smb4_conf):
     try:
@@ -460,6 +464,7 @@ def generate_smb4_shares(smb4_shares):
             zfsout = zfsout[0] 
 
         fs = None
+        task = None
         for line in zfsout.split('\n'):
             parts = line.split()
             if parts and parts[0] == share.cifs_path and len(parts) > 1:

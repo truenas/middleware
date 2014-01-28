@@ -357,11 +357,8 @@ add_port textproc/py-xml
 add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port sysutils/graid5
-add_port devel/libevent
-if ! is_truenas ; then
-	add_port devel/libevent2
-fi
-add_port sysutils/tmux
+add_port devel/libevent2
+add_port sysutils/tmux OPTIONS_FILE_SET+=LIBEVENT2
 add_port devel/py-dbus
 add_port net/netatalk3 OPTIONS_FILE_SET+=PAM \
 	OPTIONS_FILE_SET+=SENDFILE \
@@ -572,8 +569,6 @@ add_gui()
 	( cd ${gui}
 	  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	if is_truenas ; then
-		# Reporting is replaced by ana
-		rm -rf ${dst}/reporting
 		( cd ${TRUENAS_COMPONENTS_ROOT}/gui
 		  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	fi

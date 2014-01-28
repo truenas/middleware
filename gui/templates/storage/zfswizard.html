@@ -36,6 +36,24 @@
             </td>
         </tr>
         {% endif %}
+        <tr id="encrypt">
+            <td style="width:150px;">
+                {% trans "Encryption" %}
+            </td>
+            <td>
+                {{ form.enc.errors }}
+                {{ form.enc }}
+            </td>
+        </tr>
+        <tr id="encryptini">
+            <td style="width:150px;">
+                {% trans "Initialize Safely" %}
+            </td>
+            <td>
+                {{ form.encini.errors }}
+                {{ form.encini }}
+            </td>
+        </tr>
         <tr>
             <td>
                 {% trans "Member disks" %} (<span id="wizard_num_disks">0</span>)

@@ -85,7 +85,6 @@ require([
     "dijit/layout/ContentPane",
     "dijit/layout/TabContainer",
     "dijit/registry",
-    "dijit/tree/ForestStoreModel",
     "dijit/Dialog",
     "dijit/MenuBar",
     "dijit/MenuBarItem",
@@ -162,7 +161,6 @@ require([
     ContentPane,
     TabContainer,
     registry,
-    ForestStoreModel,
     Dialog,
     MenuBar,
     MenuBarItem,
@@ -184,6 +182,27 @@ require([
     ) {
 
     Menu = new fMenu();
+
+    humanizeSize = function(value, integer) {
+      var map = [
+        ['PiB', 1125899906842624],
+        ['TiB', 1099511627776],
+        ['GiB', 1073741824],
+        ['MiB', 1048576],
+        ['KiB', 1024],
+        ['B', 1]
+      ];
+      for(var i=0;i<map.length;i++) {
+        if(value > map[i][1]) {
+          if(integer) {
+            return new Int(value / map[i][1]) + ' ' + map[i][0];
+          } else {
+            return (value / map[i][1]).toFixed(2) + ' ' + map[i][0];
+          }
+        }
+      }
+      return value + ' B';
+    }
 
     restartHttpd = function(newurl) {
 
@@ -1206,12 +1225,20 @@ require([
             add_mode = true;
         }
         var disks = registry.byId("wizarddisks");
+        var enc = registry.byId("id_enc");
+        var encini = registry.byId("id_encini");
         var d = disks.get('value');
-        dojo.html.set(dom.byId("wizard_num_disks"), d.length + '');
-
-        var zfs = true;
+        html.set(dom.byId("wizard_num_disks"), d.length + '');
 
         registry.byId("id_volume_name").set('disabled', add_mode);
+
+        if(enc.get("value") == 'on' && !add_mode) {
+          encini.set('disabled', false);
+          enc.set('disabled', false);
+        } else {
+          enc.set('disabled', add_mode);
+          encini.set('disabled', true);
+        }
 
         if(vol_change == true) {
             var unselected = [];

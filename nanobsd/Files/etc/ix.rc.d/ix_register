@@ -12,6 +12,7 @@
 name="ix_register"
 start_cmd="ix_register_start"
 reload_cmd="ix_register_reload"
+extra_commands="reload"
 pid="/var/run/register.pid"
 stop_cmd=":"
 

@@ -51,18 +51,13 @@ loader_serial()
 {
 	local serial_enable=0
 
-	serial_enable=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		adv_serialconsole
-
-	FROM
-		system_advanced
-	
-	ORDER BY
-		-id
-	LIMIT 1")
+	serial_enable=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialconsole FROM system_advanced ORDER BY -id LIMIT 1")
 
 	if [ "${serial_enable}" != "0" ]; then
+		serial_port=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialport FROM system_advanced ORDER BY -id LIMIT 1")
+		echo "comconsole_port=\"${serial_port}\""
+		serial_speed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY -id LIMIT 1")
+		echo "comconsole_speed=\"${serial_speed}\""
 		echo 'boot_multicons="YES"'
 		echo 'console="vidconsole,comconsole"'
 	fi

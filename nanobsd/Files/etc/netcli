@@ -234,6 +234,9 @@ def configure_interface():
                     iface.int_ipv4address = ''
                     iface.int_v4netmaskbit = ''
                     iface.int_dhcp = False
+                    iface.int_v6netmaskbit = ''
+                    iface.int_ipv6address = ''
+                    iface.int_ipv6auto = False
                     iface.save()
             except Exception, err:
                 print _("Failed %s") % str(err)
@@ -267,8 +270,11 @@ def configure_interface():
                 int_name = iface.int_name
             iface.int_interface = nic
             iface.int_dhcp = True
-            iface.int_ipv4address = ""
-            iface.int_v4netmaskbit = ""
+            iface.int_ipv4address =  ''
+            iface.int_v4netmaskbit = '' 
+            iface.int_v6netmaskbit = ''
+            iface.int_ipv6address = ''
+            iface.int_ipv6auto = False
             print _("Saving interface configuration:"),
             try:
                 iface.save()
@@ -361,6 +367,9 @@ Acceptable formats are 255.255.255.0,
             iface.int_ipv4address = ip
             iface.int_v4netmaskbit = mask
             iface.int_dhcp = False
+            iface.int_v6netmaskbit = ''
+            iface.int_ipv6address = ''
+            iface.int_ipv6auto = False
             print _("Saving interface configuration:"),
             try:
                 iface.save()

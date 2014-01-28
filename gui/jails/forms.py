@@ -80,6 +80,7 @@ from freenasUI.common.warden import (
 )
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import clean_path_execbit
 
 log = logging.getLogger('jails.forms')
@@ -483,6 +484,24 @@ class JailsConfigurationForm(ModelForm):
                 )
 
         return jc_collectionurl
+
+    def clean_jc_path(self):
+        jc_path = self.cleaned_data.get('jc_path')
+
+        in_volume = False
+        mountpoints = MountPoint.objects.all()
+        for mp in mountpoints:
+            fp = mp.mp_path + '/'
+            if jc_path.startswith(fp):
+                in_volume = True
+                break
+
+        if not in_volume:
+            raise forms.ValidationError(
+                _("Jail root must be on a volume or dataset!")
+            )
+
+        return jc_path
 
 
 class JailsEditForm(ModelForm):

@@ -1102,7 +1102,7 @@ table.grid tr {
 .alert_ok {
     background:url("/static/images/ui/alerts/ok.png") no-repeat 0 0 transparent !important;
     width:25px;
-    height:25px;
+    height:24px;
     padding:0;
     margin:0 auto;
     margin-bottom:2px;
@@ -1111,7 +1111,7 @@ table.grid tr {
 .alert_warn {
     background:url("/static/images/ui/alerts/warn.gif") no-repeat 0 0 transparent !important;
     width:25px;
-    height:25px;
+    height:24px;
     padding:0 !important;
     margin:0 auto;
     margin-bottom:2px;
@@ -1120,7 +1120,7 @@ table.grid tr {
 .alert_crit {
     background:url("/static/images/ui/alerts/crit.gif") no-repeat 0 0 transparent !important;
     width:25px;
-    height:25px;
+    height:24px;
     padding:0 !important;
     margin:0 auto;
     margin-bottom:2px;

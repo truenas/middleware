@@ -16,5 +16,7 @@
     {% endif %}
     </span>
     {{ alert.getMessage }}</li>
+{% empty %}
+  <li>The system has no alerts</li>
 {% endfor %}
 </ul>
