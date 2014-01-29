@@ -219,8 +219,8 @@ if [ \${EVENT} = "LINK_UP" ]; then
     /usr/sbin/service istgt forcestop
     /usr/sbin/service istgt restart
     /usr/sbin/service ix-samba quietstart
-    /usr/sbin/service samba forcestop
-    /usr/sbin/service samba restart
+    /usr/sbin/service samba_server forcestop
+    /usr/sbin/service samba_server restart
     /usr/sbin/service ix-afpd quietstart
     /usr/sbin/service netatalk forcestop
     /usr/sbin/service netatalk restart
