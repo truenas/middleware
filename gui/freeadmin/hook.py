@@ -9,7 +9,10 @@ class HookMetaclass(type):
 
     def __new__(cls, name, bases, attrs):
         base = type(name, (object, ), attrs)
-        bases = list(bases) + [base]
+        if attrs.get('__hook_reverse_order__', None) is not False:
+            bases = list(bases) + [base]
+        else:
+            bases = [base] + list(bases)
         appPool.hook_class_new(name, bases, attrs)
         new_class = type(name, tuple(bases), {})
         return new_class

@@ -3,11 +3,16 @@ import subprocess
 
 from django.utils.translation import ugettext as _
 
+from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.storage.models import Volume
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 
 
 class VolumeStatusAlert(BaseAlert):
+
+    __metaclass__ = HookMetaclass
+    __hook_reverse_order__ = False
+    name = 'VolumeStatus'
 
     def on_volume_status_not_healthy(self, vol, status, message):
         if message:
