@@ -956,11 +956,12 @@ fi # [ $PACKAGE_PREP_BUILD = 1 ]
 
 if $do_image; then
 last_orders() {
-	local cd_image_log
+	local cd_image_log usb_image_log
 	local full_image full_image_log
 	local firmware_img gui_upgrade_bname gui_upgrade_image_log
 
 	cd_image_log="${MAKEOBJDIRPREFIX}/_.cd_iso"
+	usb_image_log="${MAKEOBJDIRPREFIX}/_.usb_image"
 	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
 	gui_image_log="${MAKEOBJDIRPREFIX}/_.gui_image"
 
@@ -1033,6 +1034,16 @@ last_orders() {
 	sh "$AVATAR_ROOT/build/create_iso.sh"
 
 	) > "${cd_image_log}" 2>&1
+
+	pprint 2 "Creating USB image"
+	log_file "${usb_image_log}"
+
+	(
+	set -x
+
+	sh "$AVATAR_ROOT/build/create_bootusb.sh"
+
+	) > "${usb_image_log}" 2>&1
 
 }
 fi # $do_image
