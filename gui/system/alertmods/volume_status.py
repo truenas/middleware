@@ -38,7 +38,10 @@ class VolumeStatusAlert(BaseAlert):
         return True
 
     def on_volume_status_degraded(self, vol, status, message):
-        self.log(self.LOG_CRIT, _('The volume %s status is DEGRADED') % vol)
+        return Alert(
+            Alert.CRIT,
+            _('The volume %s status is DEGRADED') % vol,
+        )
 
     def run(self):
         if not self.volumes_status_enabled():
