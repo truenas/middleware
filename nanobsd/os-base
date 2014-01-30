@@ -41,6 +41,10 @@ if is_truenas ; then
 	. ${TRUENAS_COMPONENTS_ROOT}/nanobsd/os-base.truenas
 fi
 
+if [ -e "$AVATAR_ROOT/nanobsd/os-base.custom.early" ] ; then
+	. "$AVATAR_ROOT/nanobsd/os-base.custom.early"
+fi
+
 # DEBUG=1, etc.
 for feature in $SW_FEATURES; do
 	eval "$(echo "$feature")=1"
@@ -477,6 +481,10 @@ if [ "${DEBUG}" = 1 ]; then
 			OPTIONS_FILE_UNSET+=CONTRIB \
 			OPTIONS_FILE_UNSET+=NLS
 	add_port devel/ctags
+fi
+
+if [ -e "$AVATAR_ROOT/nanobsd/os-base.custom.add_port" ] ; then
+	. "$AVATAR_ROOT/nanobsd/os-base.custom.add_port"
 fi
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
@@ -1166,3 +1174,7 @@ build_nas_source2 ( )
 	umount -f ${NANO_WORLDDIR}/usr/nas_source2
 	umount -f ${NANO_WORLDDIR}/usr/src
 }
+
+if [ -e "$AVATAR_ROOT/nanobsd/os-base.custom.late" ] ; then
+	. "$AVATAR_ROOT/nanobsd/os-base.custom.late"
+fi
