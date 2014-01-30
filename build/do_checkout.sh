@@ -11,6 +11,10 @@ TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
 
+if [ -e "${AVATAR_ROOT}/build/do_checkout.custom.early" ] ; then
+	. "${AVATAR_ROOT}/build/do_checkout.custom.early"
+fi
+
 # only checkout sources
 CHECKOUT_ONLY=false
 
