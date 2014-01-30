@@ -84,7 +84,7 @@ clean_packages()
 	for f in bin etc lib libdata libexec sbin share; do
 		mkdir -p ${LOCAL_DIR}/$f
 	done
-	find ${LOCAL_DIR}/var/db/pkg/ -mindepth 1 -maxdepth 1 | xargs rm -Rf
+	find ${NANO_WORLDDIR}/var/db/pkg/ -mindepth 1 -maxdepth 1 | xargs rm -Rf
 }
 customize_cmd clean_packages
 

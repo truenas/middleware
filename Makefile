@@ -17,11 +17,14 @@ ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOC
 all:	build
 
 build: git-verify
+	${ENV_SETUP} build/do_checkout.sh check-sandbox
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
 	${ENV_SETUP} build/do_build.sh
 
 checkout: git-verify
-	${ENV_SETUP} build/do_build.sh -c
+	${ENV_SETUP} build/do_checkout.sh
+
+update: checkout
 
 clean:
 	${ENV_SETUP} build/build_cleanup.py
@@ -44,9 +47,6 @@ do-release: git-verify
 
 cdrom:
 	${ENV_SETUP} sh -x build/create_iso.sh
-
-force: git-verify
-	${ENV_SETUP} build/do_build.sh -fu
 
 truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)

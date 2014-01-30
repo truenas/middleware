@@ -193,6 +193,8 @@ fi
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
+customize_cmd build_nas_source2
+
 if is_truenas ; then
 	add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
 fi
@@ -566,7 +568,7 @@ add_gui()
 	dst=${NANO_WORLDDIR}${dstCR}
 	if [ -d ${gui} ]; then
 	pprint 2 "Adding freenas web gui"
-	mkdir ${dst}
+	mkdir -p ${dst}
 	( cd ${gui}
 	  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	if is_truenas ; then
@@ -574,7 +576,7 @@ add_gui()
 		  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
 	fi
 	pprint 2 "Making freenas initial database"
-	mkdir ${NANO_WORLDDIR}/data
+	mkdir -p ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate --traceback)"
 	CR "(cd ${dstCR}; python manage.py collectstatic --noinput)"
 	CR "(cd ${dstCR}; python tools/compilemsgs.py)"
@@ -737,14 +739,6 @@ add_pbi_wrapper()
 	fi
 }
 customize_cmd add_pbi_wrapper
-
-install_extract_tarball()
-{
-	mkdir -p ${NANO_WORLDDIR}/usr/local/bin
-	mv ${NANO_WORLDDIR}/usr/bin/extract-tarball \
-		${NANO_WORLDDIR}/usr/local/bin/extract-tarball
-}
-customize_cmd install_extract_tarball
 
 # Move the $world/data to the /data partion
 move_data()
@@ -942,13 +936,13 @@ freenas_custom()
 	find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
 	find ${NANO_WORLDDIR} -type f -name "*.service" -delete
 	mkdir ${NANO_WORLDDIR}/data/zfs
-	ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
-	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
+	ln -s -f /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
+	ln -s -f /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
 
 	# This is wrong.  Needs a way to tell kernel how to find the mount utility
 	# instead.
 	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
-	ln -s /usr/local/bin/ntfs-3g ${NANO_WORLDDIR}/sbin/mount_ntfs
+	ln -s -f /usr/local/bin/ntfs-3g ${NANO_WORLDDIR}/sbin/mount_ntfs
 
 }
 late_customize_cmd freenas_custom
@@ -1068,7 +1062,7 @@ build_kernel2 ( ) (
 		TARGET=${NANO_ARCH%:*} \
 		TARGET_ARCH=${NANO_ARCH##*:} \
 		${NANO_PMAKE} \
-		buildkernel -DNO_KERNELCLEAN \
+		buildkernel NO_KERNELCLEAN=1 \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf} \
 		MODULES_OVERRIDE="${NANO_MODULES}" \
@@ -1135,4 +1129,41 @@ install_debug_kernel ( )
 	local _kernconf=$(basename ${NANO_KERNEL})
 
 	install_kernel2  ${NANO_OBJ}/${_kernconf}-DEBUG  /boot/kernel-debug
+}
+
+build_nas_source2 ( )
+{
+	mkdir -p ${NANO_WORLDDIR}/usr/src
+	mkdir -p ${NANO_WORLDDIR}/usr/nas_source2
+
+	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
+	mount -t nullfs -o noatime ${AVATAR_ROOT}/src ${NANO_WORLDDIR}/usr/nas_source2
+
+        (
+	    # Build PBI wrapper
+            local _target
+            for _target in obj all install; do
+	        CR "unset MAKEOBJDIRPREFIX; \
+	            env \
+	            TARGET=${NANO_ARCH} \
+	            TARGET_ARCH=${NANO_ARCH} \
+	            ${NANO_PMAKE} \
+	            -C /usr/nas_source2/pcbsd/pbi-wrapper \
+	            ${_target}"
+            done
+
+	    # Build extract-tarball
+            for _target in obj all install; do
+	        CR "unset MAKEOBJDIRPREFIX;
+	            env \
+	            TARGET=${NANO_ARCH} \
+	            TARGET_ARCH=${NANO_ARCH} \
+	            ${NANO_PMAKE} \
+	            BINDIR=/usr/local/bin \
+	             -C /usr/nas_source2/extract-tarball \
+	            ${_target}"
+            done
+        )
+	umount -f ${NANO_WORLDDIR}/usr/nas_source2
+	umount -f ${NANO_WORLDDIR}/usr/src
 }
