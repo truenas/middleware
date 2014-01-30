@@ -117,6 +117,13 @@ generate_crontab()
 	else
 		echo "15	4	*	*	6	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
 	fi
+
+	# Ugly and dirty custom crontab scripts
+	ls /etc/ix.rc.d/ix-crontab-custom-* | \
+	while read -r cron; do
+		. ${cron}
+	done
+
 }
 
 original_crontab()
