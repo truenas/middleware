@@ -44,7 +44,8 @@ build_installfs  "${NANO_OBJ}/_.isodir"
 	sed -i "" 's/%NANO_LABEL_LOWER%/'${NANO_LABEL_LOWER}'/'  ${STAGE_DIR}/boot/loader.conf
 	cp -p ${AVATAR_ROOT}/build/files/mount.conf.cdrom ${STAGE_DIR}/.mount.conf
 
-	dd if=/dev/zero "of=${OUTPUT}" bs=1m count=260
+	rm -f "${OUTPUT}"
+	dd if=/dev/zero "of=${OUTPUT}" bs=1m count=280
 	md_device=`mdconfig -f "${OUTPUT}"`
 	if [ $? != 0 ] ; then
 	    echo mdconfig failed...
@@ -55,20 +56,20 @@ build_installfs  "${NANO_OBJ}/_.isodir"
 	gpart create -s MBR "$md_device"
 	gpart add -t freebsd "$md_device"
 	gpart set -a active -i 1 "$md_device"
-	# XXX: try /boot/mbr!
-	#gpart bootcode -b /boot/boot0 "$md_device"
 	gpart bootcode -b /boot/mbr "$md_device"
 
 	gpart create -s BSD -n 20 "${md_device}s1"
 
+	gpart add -t freebsd-ufs -s 270M "${md_device}s1"
+	# make a spare for scratch space for debug/work.
 	gpart add -t freebsd-ufs "${md_device}s1"
-	# swap?
-	# /sbin/gpart add -t freebsd-swap -s 4G ada0s1
 
 	gpart bootcode -b /boot/boot "${md_device}s1"
 
 	fsdevice="${md_path}s1a"
 	newfs -L "${USB_LABEL}" "$fsdevice"
+	# make debug partition useful for putting hacks to the installer
+	newfs "${md_path}s1b"
 	md_mount="${NANO_OBJ}/_.mnt/"
 	mount "$fsdevice" "$md_mount"
 	tar -C  "${STAGE_DIR}" -cf - . | tar -C "$md_mount" -xvpf -
