@@ -11,6 +11,10 @@ TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
 
+if [ -e "${AVATAR_ROOT}/build/do_build.custom.early" ] ; then
+	. "${AVATAR_ROOT}/build/do_build.custom.early"
+fi
+
 # Should we build?
 BUILD=true
 
