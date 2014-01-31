@@ -4,7 +4,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.tree import TreeNode
 #from freenasUI.services.directoryservice import DirectoryService
-from freenasUI.services.models import ActiveDirectory, NT4, NIS, LDAP
+from freenasUI.services.models import (
+    ActiveDirectory, DomainController, NT4, NIS, LDAP
+)
 
 log = logging.getLogger('services.nav')
 
@@ -140,7 +142,7 @@ class DirectoryServiceView(TreeNode):
             ad_node.type = 'editobject'
             ad_node.view = 'freeadmin_services_activedirectory_edit'
 
-        except:
+        except IndexError:
             ad_node.type = 'object'
             ad_node.view = 'freeadmin_services_activedirectory_add'
 
@@ -159,7 +161,7 @@ class DirectoryServiceView(TreeNode):
             ad_node.type = 'editobject'
             ad_node.view = 'freeadmin_services_domaincontroller_edit'
 
-        except:
+        except IndexError:
             ad_node.type = 'object'
             ad_node.view = 'freeadmin_services_domaincontroller_add'
 
@@ -178,7 +180,7 @@ class DirectoryServiceView(TreeNode):
             nt4_node.type = 'editobject'
             nt4_node.view = 'freeadmin_services_nt4_edit'
 
-        except:
+        except IndexError:
             nt4_node.type = 'object'
             nt4_node.view = 'freeadmin_services_nt4_add'
 
@@ -197,7 +199,7 @@ class DirectoryServiceView(TreeNode):
             nis_node.type = 'editobject'
             nis_node.view = 'freeadmin_services_nis_edit'
 
-        except:
+        except IndexError:
             nis_node.type = 'object'
             nis_node.view = 'freeadmin_services_nis_add'
 
@@ -216,7 +218,7 @@ class DirectoryServiceView(TreeNode):
             ldap_node.type = 'editobject'
             ldap_node.view = 'freeadmin_services_ldap_edit'
 
-        except:
+        except IndexError:
             ldap_node.type = 'object'
             ldap_node.view = 'freeadmin_services_ldap_add'
 
