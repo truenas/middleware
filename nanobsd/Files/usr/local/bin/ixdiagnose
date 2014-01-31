@@ -210,9 +210,9 @@ if $has_ticket_info ; then
 fi
 
 set +e
-dmidecode > "$dir/dmidecode"
+/usr/local/sbin/dmidecode > "$dir/dmidecode"
 sysctl hw > "$dir/sysctl_hw"
-cpuid > "$dir/cpuid"
+/usr/local/bin/cpuid > "$dir/cpuid"
 set -e
 
 if [ -f /etc/hostid ] ; then

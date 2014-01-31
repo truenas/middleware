@@ -37,8 +37,8 @@ generate_crontab()
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local rsync_command
-	# Gnerate rsync
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	# Generate rsync
+	${FREENAS_SQLITE_CMD} -separator "" ${FREENAS_CONFIG} \
 	"SELECT $sf FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
 	while eval read -r $f; do
 		rsync_command=$(
@@ -76,16 +76,16 @@ generate_crontab()
 
 			if [ "${rsync_mode}" = "module" ]; then
 				if [ "${rsync_direction}" = "push" ]; then
-					echo -n "'${rsync_path}' ${rsync_remotehost}::${rsync_remotemodule}"
+					echo -n "'${rsync_path}' ${rsync_user}@${rsync_remotehost}::${rsync_remotemodule}"
 				else
-					echo -n "${rsync_remotehost}::${rsync_remotemodule} '${rsync_path}'"
+					echo -n "${rsync_user}@${rsync_remotehost}::${rsync_remotemodule} '${rsync_path}'"
 				fi
 			else
 				echo -n "-e 'ssh -p ${rsync_remoteport} -o BatchMode=yes -o StrictHostKeyChecking=yes' "
 				if [ "${rsync_direction}" = "push" ]; then
-					echo -n "'${rsync_path}' ${rsync_remotehost}:'${rsync_remotepath}'"
+					echo -n "'${rsync_path}' ${rsync_user}@${rsync_remotehost}:'${rsync_remotepath}'"
 				else
-					echo -n "${rsync_remotehost}:'${rsync_remotepath}' '${rsync_path}'"
+					echo -n "${rsync_user}@${rsync_remotehost}:'${rsync_remotepath}' '${rsync_path}'"
 				fi
 			fi
 
@@ -102,7 +102,7 @@ generate_crontab()
 	local f="scrub_threshold scrub_minute scrub_hour scrub_daymonth scrub_month scrub_dayweek vol_name"
 	eval local $f
 	local sf=$(var_to_sf $f)
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	${FREENAS_SQLITE_CMD} -separator "" ${FREENAS_CONFIG} \
 	"SELECT $sf FROM storage_scrub s, storage_volume v WHERE s.scrub_volume_id = v.id AND scrub_enabled = 1 ORDER BY v.id" | \
 	while eval read -r $f; do
 		# Note that echo -e will do the wrong thing with certain characters. Read the commit
@@ -119,7 +119,7 @@ generate_crontab()
 	fi
 
 	# Ugly and dirty custom crontab scripts
-	ls /etc/ix.rc.d/ix-crontab-custom-* | \
+	ls /etc/ix.rc.d/ix-crontab-custom-* 2> /dev/null | \
 	while read -r cron; do
 		. ${cron}
 	done

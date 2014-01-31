@@ -2,12 +2,6 @@ define(["dojox/data/JsonRestStore", "dojo/_base/declare"], function(JsonRestStor
 
     var MyStore = declare("freeadmin.tree.JsonRestStore", [JsonRestStore], {
         loadItem: function(args) {
-            if(args.item.id.indexOf("?") >= 0) {
-                args.item.__id = args.item.__id + '&preventCache=' + new Date().getTime();
-            } else {
-                args.item.__id = args.item.__id + '?preventCache=' + new Date().getTime();
-            }
-            //args.item.__id = args.item.__id + '&test=11';
             var item;
             var oldload = args.item._loadObject;
             if(args.item._loadObject){

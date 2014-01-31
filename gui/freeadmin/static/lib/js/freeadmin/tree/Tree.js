@@ -20,6 +20,7 @@ define([
               myId = myId + "_";
             }
             args['id'] = myId;
+            args['labelNode'] = myId;
           }
           return this.inherited(arguments);
 

@@ -3,11 +3,11 @@
 import argparse
 import email
 import email.parser
+import os
 import re
 import socket
 import sys
 
-from django.core.management import setup_environ
 from django.utils.translation import ugettext_lazy as _
 
 sys.path.extend(["/usr/local/www", "/usr/local/www/freenasUI"])

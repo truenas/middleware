@@ -50,7 +50,7 @@ cdrom:
 
 truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
-	env NANO_LABEL=TrueNAS ${MAKE} build
+	env NANO_LABEL=TrueNAS script -a ${RELEASE_LOGFILE} ${MAKE} build
 	mkdir -p TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 	mv os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 
