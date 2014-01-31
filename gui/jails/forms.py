@@ -488,11 +488,15 @@ class JailsConfigurationForm(ModelForm):
     def clean_jc_path(self):
         jc_path = self.cleaned_data.get('jc_path')
 
+        jc_fpath = jc_path
+        if not jc_fpath.endswith('/'):
+            jc_fpath = jc_fpath + '/'
+
         in_volume = False
         mountpoints = MountPoint.objects.all()
         for mp in mountpoints:
             fp = mp.mp_path + '/'
-            if jc_path.startswith(fp):
+            if jc_fpath.startswith(fp):
                 in_volume = True
                 break
 
