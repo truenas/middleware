@@ -64,17 +64,17 @@ def get_plugin_status(args):
     if re.match('^.+\[.+\]', host, re.I):
         import urllib2
     else:
-        from eventlet.green import urllib2 
+        from eventlet.green import urllib2
 
     url = "%s/plugins/%s/%d/_s/status" % (
         host,
         plugin.plugin_name,
         plugin.id)
-    json = None
+    data = None
 
     jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
     if not jail_status:
-        return plugin, json, jail_status
+        return plugin, data, jail_status
 
     try:
         opener = urllib2.build_opener()
@@ -99,17 +99,17 @@ def get_plugin_start(args):
     if re.match('^.+\[.+\]', host, re.I):
         import urllib2
     else:
-        from eventlet.green import urllib2 
+        from eventlet.green import urllib2
 
     url = "%s/plugins/%s/%d/_s/start" % (
         host,
         plugin.plugin_name,
         plugin.id)
-    json = None
+    data = None
 
     jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
     if not jail_status:
-        return plugin, json, jail_status
+        return plugin, data, jail_status
 
     try:
         opener = urllib2.build_opener()
@@ -134,17 +134,17 @@ def get_plugin_stop(args):
     if re.match('^.+\[.+\]', host, re.I):
         import urllib2
     else:
-        from eventlet.green import urllib2 
+        from eventlet.green import urllib2
 
     url = "%s/plugins/%s/%d/_s/stop" % (
         host,
         plugin.plugin_name,
         plugin.id)
-    json = None
+    data = None
 
     jail_status = notifier().pluginjail_running(pjail=plugin.plugin_jail)
     if not jail_status:
-        return plugin, json, jail_status
+        return plugin, data, jail_status
 
     try:
         opener = urllib2.build_opener()

@@ -1591,7 +1591,7 @@ class SnapshotResource(DojoResource):
     parent_type = fields.CharField(attribute='parent_type')
 
     class Meta:
-        allowed_methods = ['get']
+        allowed_methods = ['get', 'post']
         object_class = zfs.Snapshot
         resource_name = 'storage/snapshot'
 
@@ -1645,6 +1645,9 @@ class SnapshotResource(DojoResource):
             len(results)
         )
         return response
+
+    #def post_list(self, request, **kwargs):
+    #    pass
 
     def dehydrate(self, bundle):
         bundle.data['extra'] = {
