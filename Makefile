@@ -19,6 +19,7 @@ all:	build
 build: git-verify
 	${ENV_SETUP} build/do_checkout.sh check-sandbox
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
+	${ENV_SETUP} build/do_build.sh -z
 	${ENV_SETUP} build/do_build.sh
 
 checkout: git-verify
