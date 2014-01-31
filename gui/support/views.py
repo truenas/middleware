@@ -24,13 +24,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
 import logging
 import string
 import os
 
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.pipesubr import pipeopen
@@ -70,7 +70,7 @@ def index(request):
 
             try:
                 fsi = NamedTemporaryFile(delete=False)
-                fsi.write(simplejson.dumps(support_info))
+                fsi.write(json.dumps(support_info))
                 fsi.close()
 
                 args = ["/usr/local/bin/ixdiagnose", "-F", "-t", fsi.name]

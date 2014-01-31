@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+import json
 import logging
 import os
 import re
@@ -44,7 +45,6 @@ from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
@@ -355,7 +355,7 @@ def clearcache(request):
         " /usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py "
         "fill >/dev/null 2>&1) &")
 
-    return HttpResponse(simplejson.dumps({
+    return HttpResponse(json.dumps({
         'error': error,
         'errmsg': errmsg,
     }))
@@ -458,7 +458,7 @@ def directory_browser(request, path='/'):
         root=request.GET.get("root", "/"),
     ).items()
     context = directories
-    content = simplejson.dumps(context)
+    content = json.dumps(context)
     return HttpResponse(content, content_type='application/json')
 
 
@@ -473,7 +473,7 @@ def file_browser(request, path='/'):
         root=request.GET.get("root", "/"),
     ).items()
     context = directories
-    content = simplejson.dumps(context)
+    content = json.dumps(context)
     return HttpResponse(content, content_type='application/json')
 
 
@@ -513,7 +513,7 @@ def firmware_progress(request):
         except OSError:
             pass
 
-    content = simplejson.dumps(data)
+    content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
 
 
