@@ -119,7 +119,7 @@ generate_crontab()
 	fi
 
 	# Ugly and dirty custom crontab scripts
-	ls /etc/ix.rc.d/ix-crontab-custom-* | \
+	ls /etc/ix.rc.d/ix-crontab-custom-* 2> /dev/null | \
 	while read -r cron; do
 		. ${cron}
 	done
