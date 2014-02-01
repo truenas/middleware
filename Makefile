@@ -5,6 +5,7 @@
 NANO_LABEL?=FreeNAS
 VERSION?=9.2.1-RC
 BUILD_TIMESTAMP!=date '+%Y%m%d'
+COMPANY?="iXsystems"
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -75,7 +76,7 @@ build-bug-report:
 git-verify:
 	@if [ ! -f ${GIT_REPO_SETTING} ]; then \
 		echo "No git repo choice is set.  Please use \"make git-external\" to build as an"; \
-		echo "external developer or \"make git-internal\" to build as an iXsystems"; \
+		echo "external developer or \"make git-internal\" to build as an ${COMPANY}"; \
 		echo "internal developer.  You only need to do this once."; \
 		exit 1; \
 	fi
@@ -83,7 +84,7 @@ git-verify:
 
 git-internal:
 	@echo "INTERNAL" > ${GIT_REPO_SETTING}
-	@echo "You are set up for internal (iXsystems) development.  You can use"
+	@echo "You are set up for internal (${COMPANY}) development.  You can use"
 	@echo "the standard make targets (e.g. build or release) now."
 
 git-external:
