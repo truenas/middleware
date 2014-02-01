@@ -1,3 +1,7 @@
+.if exists(build/hooks/Makefile)
+.include "build/hooks/Makefile"
+.endif
+
 NANO_LABEL?=FreeNAS
 VERSION?=9.2.1-RC
 BUILD_TIMESTAMP!=date '+%Y%m%d'
