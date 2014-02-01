@@ -217,9 +217,7 @@ add_port dns/inadyn-mt
 add_port devel/pcre
 add_port editors/nano
 add_port ftp/proftpd
-if is_truenas ; then
-	add_port misc/cpuid
-fi
+add_port misc/cpuid
 add_port net-mgmt/bsnmp-ucd
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
