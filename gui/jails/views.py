@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
 import logging
 import os
 import string
@@ -32,7 +33,6 @@ import time
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.views import JsonResp
@@ -298,7 +298,7 @@ def jail_progress(request):
             jail_progress_start_time = 0
             jail_progress_percent = 0
 
-    return HttpResponse(simplejson.dumps(data), content_type="application/json")
+    return HttpResponse(json.dumps(data), content_type="application/json")
 
 linux_jail_progress_estimated_time = 600
 linux_jail_progress_start_time = 0
@@ -384,7 +384,7 @@ def jail_linuxprogress(request):
             linux_jail_progress_start_time = 0
             linux_jail_progress_percent = 0
 
-    return HttpResponse(simplejson.dumps(data), content_type="application/json")
+    return HttpResponse(json.dumps(data), content_type="application/json")
 
 def jail_template_edit(request, id):
 
@@ -490,5 +490,5 @@ def jail_template_info(request, name):
         data['jt_arch'] = jt.jt_arch
         data['jt_url'] = jt.jt_url
 
-    content = simplejson.dumps(data)
+    content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')

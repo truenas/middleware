@@ -29,7 +29,6 @@ import logging
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.contrib.auth.views import login
 from django.contrib.auth import REDIRECT_FIELD_NAME
@@ -44,6 +43,7 @@ from freenasUI.common.freenascache import (
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_Groups
 from freenasUI.common.system import get_sw_login_version, get_sw_name
 from freenasUI.freeadmin.views import JsonResp
+import json
 
 log = logging.getLogger('account.views')
 
@@ -93,7 +93,7 @@ def json_users(request, exclude=None):
 
     query = request.GET.get("q", None)
 
-    json = {
+    json_user = {
         'identifier': 'id',
         'label': 'name',
         'items': [],
@@ -113,20 +113,20 @@ def json_users(request, exclude=None):
             (query is None or user.pw_name.startswith(query)) and
             user.pw_name not in exclude
         ):
-            json['items'].append({
+            json_user['items'].append({
                 'id': user.pw_name,
                 'name': user.pw_name,
                 'label': user.pw_name,
             })
             idx += 1
-    return HttpResponse(simplejson.dumps(json, indent=3))
+    return HttpResponse(json.dumps(json_user, indent=3))
 
 
 def json_groups(request):
 
     query = request.GET.get("q", None)
 
-    json = {
+    json_group = {
         'identifier': 'id',
         'label': 'name',
         'items': [],
@@ -139,13 +139,13 @@ def json_groups(request):
         if idx > 50:
             break
         if query is None or grp.gr_name.startswith(query):
-            json['items'].append({
+            json_group['items'].append({
                 'id': grp.gr_name,
                 'name': grp.gr_name,
                 'label': grp.gr_name,
             })
             idx += 1
-    return HttpResponse(simplejson.dumps(json, indent=3))
+    return HttpResponse(json.dumps(json_group, indent=3))
 
 
 def login_wrapper(

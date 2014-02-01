@@ -36,7 +36,6 @@ from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from freenasUI.common import humanize_size
@@ -128,7 +127,7 @@ def replications_keyscan(request):
                 errmsg = _("Key could not be retrieved for unknown reason")
             data = {'error': True, 'errmsg': errmsg}
 
-    return HttpResponse(simplejson.dumps(data))
+    return HttpResponse(json.dumps(data))
 
 
 def snapshots(request):
@@ -817,7 +816,7 @@ def multipath_status_json(request):
                 'status': cn.status,
                 'lunid': cn.lunid,
                 'type': 'consumer',
-                'actions': simplejson.dumps(actions),
+                'actions': json.dumps(actions),
             })
             children.append({'_reference': str(_id)})
             _id += 1
@@ -830,7 +829,7 @@ def multipath_status_json(request):
         }
         items.append(data)
         _id += 1
-    return HttpResponse(simplejson.dumps({
+    return HttpResponse(json.dumps({
         'identifier': 'id',
         'label': 'name',
         'items': items,
