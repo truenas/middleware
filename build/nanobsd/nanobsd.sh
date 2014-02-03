@@ -604,7 +604,7 @@ create_i386_diskimage ( ) (
 
 	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
 		echo "Writing out ${NANO_IMGNAME}..."
-		dd if=/dev/${MD} of=${IMG} bs=64k
+		dd if=/dev/${MD} of=${IMG} bs=1m
 	fi
 
 	if ${do_copyout_partition} ; then
