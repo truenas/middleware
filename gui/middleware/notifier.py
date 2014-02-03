@@ -3390,11 +3390,11 @@ class notifier:
                 fsinfo[fs] = snaplist
         return fsinfo
 
-    def zfs_mksnap(self, path, name, recursive):
+    def zfs_mksnap(self, dataset, name, recursive=False):
         if recursive:
-            p1 = self._pipeopen("/sbin/zfs snapshot -r %s@%s" % (path, name))
+            p1 = self._pipeopen("/sbin/zfs snapshot -r %s@%s" % (dataset, name))
         else:
-            p1 = self._pipeopen("/sbin/zfs snapshot %s@%s" % (path, name))
+            p1 = self._pipeopen("/sbin/zfs snapshot %s@%s" % (dataset, name))
         if p1.wait() != 0:
             err = p1.communicate()[1]
             raise MiddlewareError("Snapshot could not be taken: %s" % err)
