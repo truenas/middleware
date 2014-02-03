@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from struct import pack
 import logging
 import re
 import socket
@@ -34,6 +35,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
+from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 from ipaddr import (
@@ -235,6 +237,67 @@ class InterfacesForm(ModelForm):
         # TODO: new IP address should be added in a side-by-side manner
         # or the interface wouldn't appear once IP was changed.
         notifier().start("network")
+
+
+class IPMIForm(Form):
+    # Max password length via IPMI v2.0 is 20 chars. We only support IPMI
+    # v2.0+ compliant boards thus far.
+    ipmi_password1 = forms.CharField(
+        label=_("Password"),
+        max_length=20,
+        widget=forms.PasswordInput,
+        required=False
+    )
+    ipmi_password2 = forms.CharField(
+        label=_("Password confirmation"),
+        max_length=20,
+        widget=forms.PasswordInput,
+        help_text=_("Enter the same password as above, for verification."),
+        required=False
+    )
+    dhcp = forms.BooleanField(
+        label=_("DHCP"),
+        required=False,
+    )
+    ipv4address = IP4AddressFormField(
+        initial='',
+        required=False,
+        label=_("IPv4 Address"),
+    )
+    ipv4netmaskbit = forms.ChoiceField(
+        choices=choices.v4NetmaskBitList,
+        required=False,
+        label=_("IPv4 Netmask"),
+    )
+    ipv4gw = IP4AddressFormField(
+        initial='',
+        required=False,
+        label=_("IPv4 Default Gateway"),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(IPMIForm, self).__init__(*args, **kwargs)
+        self.fields['dhcp'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric('
+            '"id_dhcp", ["id_ipv4address", "id_ipv4netmaskbit"]);'
+        )
+
+    def clean_ipmi_password2(self):
+        ipmi_password1 = self.cleaned_data.get("ipmi_password1", "")
+        ipmi_password2 = self.cleaned_data["ipmi_password2"]
+        if ipmi_password1 != ipmi_password2:
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+            )
+        return ipmi_password2
+
+    def clean_ipv4netmaskbit(self):
+        try:
+            cidr = int(self.cleaned_data.get("ipv4netmaskbit"))
+        except ValueError:
+            return None
+        bits = 0xffffffff ^ (1 << 32 - cidr) - 1
+        return socket.inet_ntoa(pack('>I', bits))
 
 
 class GlobalConfigurationForm(ModelForm):
