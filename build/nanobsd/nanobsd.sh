@@ -133,7 +133,8 @@ NANO_BOOT2CFG="-h"
 
 # Backing type of md(4) device
 # Can be "file" or "swap"
-NANO_MD_BACKING="file"
+#NANO_MD_BACKING="file"
+NANO_MD_BACKING="swap"
 
 # Progress Print level
 PPLEVEL=3
