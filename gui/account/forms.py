@@ -700,8 +700,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
             if bsdusr_password and (bsdusr_password == bsdusr_password2):
                 unixhash, smbhash = _notifier.user_changepassword(
-                    username=str(bsduser.bsdusr_username),
-                    password=str(bsdusr_password),
+                    username=bsduser.bsdusr_username.encode('utf8'),
+                    password=bsdusr_password.encode('utf8'),
                 )
                 bsduser.bsdusr_unixhash = unixhash
                 bsduser.bsdusr_smbhash = smbhash
