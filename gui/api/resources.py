@@ -51,8 +51,9 @@ from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_number_si
 from freenasUI.jails.forms import JailCreateForm
-from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware import zfs
+from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.notifier import notifier
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
@@ -1653,7 +1654,14 @@ class SnapshotResource(DojoResource):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json')
         )
-        notifier().zfs_mksnap(**deserialized)
+        try:
+            notifier().zfs_mksnap(**deserialized)
+        except MiddlewareError, e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error': e.value,
+                })
+            )
         snap = notifier().zfs_snapshot_list(path='%s@%s' % (
             deserialized['dataset'],
             deserialized['name'],
