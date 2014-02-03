@@ -251,4 +251,14 @@ sub_FlashDevice () {
 		exit 2
 		;;
 	esac
+	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
+	    local x page_size round_down
+	    x=${NANO_MEDIASIZE}
+	    page_size=`sysctl -n hw.pagesize`
+	    round_down=$(($x % $page_size))
+	    NANO_MEDIASIZE=$(($x - $round_down))
+	    if [ "$x" != "$NANO_MEDIASIZE" ] ; then 
+		echo "Nano media size rounded down for SWAP backing $x -> ${NANO_MEDIASIZE}"
+	    fi
+	fi
 }
