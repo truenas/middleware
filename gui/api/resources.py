@@ -67,8 +67,9 @@ from freenasUI.storage.forms import (
 from freenasUI.system.alert import alertPlugins, Alert
 from freenasUI.storage.models import Disk
 from tastypie import fields
+from tastypie.bundle import Bundle
 from tastypie.http import (
-    HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
+    HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
 )
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.utils import trailing_slash
@@ -1646,25 +1647,43 @@ class SnapshotResource(DojoResource):
         )
         return response
 
-    #def post_list(self, request, **kwargs):
-    #    pass
+    def post_list(self, request, **kwargs):
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json')
+        )
+        notifier().zfs_mksnap(**deserialized)
+        snap = notifier().zfs_snapshot_list(path='%s@%s' % (
+            deserialized['dataset'],
+            deserialized['name'],
+        )).values()[0][0]
+        bundle = self.full_dehydrate(
+            self.build_bundle(obj=snap, request=request)
+        )
+        return self.create_response(
+            request,
+            bundle,
+            response_class=HttpCreated,
+        )
 
     def dehydrate(self, bundle):
-        bundle.data['extra'] = {
-            'clone_url': reverse(
-                'storage_clonesnap',
-                kwargs={
-                    'snapshot': bundle.obj.fullname,
+        if self.is_webclient(bundle.request):
+            bundle.data['extra'] = {
+                'clone_url': reverse(
+                    'storage_clonesnap',
+                    kwargs={
+                        'snapshot': bundle.obj.fullname,
+                    }),
+                'rollback_url': reverse('storage_snapshot_rollback', kwargs={
+                    'dataset': bundle.obj.filesystem,
+                    'snapname': bundle.obj.name,
+                }) if bundle.obj.mostrecent else None,
+                'delete_url': reverse('storage_snapshot_delete', kwargs={
+                    'dataset': bundle.obj.filesystem,
+                    'snapname': bundle.obj.name,
                 }),
-            'rollback_url': reverse('storage_snapshot_rollback', kwargs={
-                'dataset': bundle.obj.filesystem,
-                'snapname': bundle.obj.name,
-            }) if bundle.obj.mostrecent else None,
-            'delete_url': reverse('storage_snapshot_delete', kwargs={
-                'dataset': bundle.obj.filesystem,
-                'snapname': bundle.obj.name,
-            }),
-        }
+            }
         return bundle
 
 
