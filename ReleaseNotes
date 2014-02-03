@@ -22,7 +22,9 @@ Remove the non functional share password field from AFP shares.
 * Switched from Avahi to mDNSResponder for Zeroconf network configuration,
 improving the Mac share browsing experience.
 
-* Added additional Web API functionality for manipulating snapshots.
+* Added additional Web API functionality for manipulating ZFS snapshots.
+
+* Added IPMI network configuration support for machines with that capability.
 
 * Brought back the FreeNAS 8.x volume manager as a "Manual Setup" option.
 This volume manager allows manual vdev building and offers no seatbelts.
