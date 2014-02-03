@@ -1,6 +1,6 @@
-Release Notes for FreeNAS 9.2.1-RC
+Release Notes for FreeNAS 9.2.1-RC2
 
-* Samba (SMB/CIFS support) upgraded to version 4.1.4.  This adds support for
+* Samba (SMB/CIFS support) upgraded to version 4.1.3.  This adds support for
 SMB3, the ability for FreeNAS to be a Windows Domain Controller, and advanced
 features like server-side copy support in Windows 2012 and later, along with
 multiple years worth of improvements over the version of Samba that shipped
@@ -21,6 +21,8 @@ Remove the non functional share password field from AFP shares.
 
 * Switched from Avahi to mDNSResponder for Zeroconf network configuration,
 improving the Mac share browsing experience.
+
+* Added additional Web API functionality for manipulating snapshots.
 
 * Brought back the FreeNAS 8.x volume manager as a "Manual Setup" option.
 This volume manager allows manual vdev building and offers no seatbelts.

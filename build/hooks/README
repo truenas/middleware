@@ -1,0 +1,3 @@
+This directory contains optional custom hooks for the FreeNAS build process.
+Their names should be reasonably self-explanatory about where they fit into
+the build process.

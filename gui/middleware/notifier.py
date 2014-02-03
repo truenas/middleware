@@ -3390,11 +3390,11 @@ class notifier:
                 fsinfo[fs] = snaplist
         return fsinfo
 
-    def zfs_mksnap(self, path, name, recursive):
+    def zfs_mksnap(self, dataset, name, recursive=False):
         if recursive:
-            p1 = self._pipeopen("/sbin/zfs snapshot -r %s@%s" % (path, name))
+            p1 = self._pipeopen("/sbin/zfs snapshot -r %s@%s" % (dataset, name))
         else:
-            p1 = self._pipeopen("/sbin/zfs snapshot %s@%s" % (path, name))
+            p1 = self._pipeopen("/sbin/zfs snapshot %s@%s" % (dataset, name))
         if p1.wait() != 0:
             err = p1.communicate()[1]
             raise MiddlewareError("Snapshot could not be taken: %s" % err)
@@ -3791,17 +3791,10 @@ class notifier:
         else:
             return ''
 
-    def get_allswapdev(self):
-        from freenasUI.storage.models import Volume, Disk
-
-        disks = []
-        for v in Volume.objects.all():
-            disks = disks + v.get_disks()
-
-        result = []
-        for disk in disks:
-            result.append(self.part_type_from_device('swap', disk))
-        return "\n".join(result)
+    def swap_from_diskid(self, diskid):
+        from freenasUI.storage.models import Disk
+        disk = Disk.objects.get(id=diskid)
+        return self.part_type_from_device('swap', disk.devname)
 
     def swap_from_identifier(self, ident):
         return self.part_type_from_device('swap', self.identifier_to_device(ident))
@@ -4514,6 +4507,122 @@ class notifier:
                     )
         else:
             raise ValueError("Unknown mode %s" % (mode, ))
+
+    def __toCamelCase(self, name):
+        pass1 = re.sub(r'[^a-zA-Z0-9]', ' ', name.strip())
+        pass2 = re.sub(r'\s{2,}', ' ', pass1)
+        camel = ''.join([word.capitalize() for word in pass2.split()])
+        return camel
+
+    def ipmi_loaded(self):
+        """
+        Check whether we have a valid /dev/ipmi
+
+        Returns:
+            bool: IPMI device found?
+        """
+        return os.path.exists('/dev/ipmi0')
+
+    def ipmi_get_lan(self):
+        """Get lan info from ipmitool
+
+        Returns:
+            A dict object with key, val
+
+        Raises:
+            AssertionError: ipmitool lan print failed
+            MiddlewareError: the ipmi device could not be found
+        """
+
+        if not self.ipmi_loaded():
+            raise MiddlewareError('The ipmi device could not be found')
+
+        RE_ATTRS = re.compile(r'^(?P<key>^.+?)\s+?:\s+?(?P<val>.+?)\r?$', re.M)
+
+        p1 = self._pipeopen('/usr/local/bin/ipmitool lan print')
+        ipmi = p1.communicate()[0]
+        if p1.returncode != 0:
+            raise AssertionError(
+                "Could not retrieve data, ipmi device possibly in use?"
+            )
+
+        data = {}
+        items = RE_ATTRS.findall(ipmi)
+        for key, val in items:
+            dkey = self.__toCamelCase(key)
+            if dkey:
+                data[dkey] = val.strip()
+        return data
+
+    def ipmi_set_lan(self, data):
+        """Set lan info from ipmitool
+
+        Returns:
+            0 if the operation was successful, > 0 otherwise
+
+        Raises:
+            MiddlewareError: the ipmi device could not be found
+        """
+
+        if not self.ipmi_loaded():
+            raise MiddlewareError('The ipmi device could not be found')
+
+        if data['dhcp']:
+            rv = self._system_nolog(
+                '/usr/local/bin/ipmitool lan set 1 ipsrc dhcp'
+            )
+        else:
+            rv = self._system_nolog(
+                '/usr/local/bin/ipmitool lan set 1 ipsrc static'
+            )
+            rv |= self._system_nolog(
+                '/usr/local/bin/ipmitool lan set 1 ipaddr %s' % (
+                    data['ipv4address'],
+                )
+            )
+            rv |= self._system_nolog(
+                '/usr/local/bin/ipmitool lan set 1 netmask %s' % (
+                    data['ipv4netmaskbit'],
+                )
+            )
+            rv |= self._system_nolog(
+                '/usr/local/bin/ipmitool lan set 1 defgw ipaddr %s' % (
+                    data['ipv4gw'],
+                )
+            )
+
+        rv |= self._system_nolog('/usr/local/bin/ipmitool lan set 1 access on')
+        rv |= self._system_nolog(
+            '/usr/local/bin/ipmitool lan set 1 auth USER "MD2,MD5"'
+        )
+        rv |= self._system_nolog(
+            '/usr/local/bin/ipmitool lan set 1 auth OPERATOR "MD2,MD5"'
+        )
+        rv |= self._system_nolog(
+            '/usr/local/bin/ipmitool lan set 1 auth ADMIN "MD2,MD5"'
+        )
+        rv |= self._system_nolog(
+            '/usr/local/bin/ipmitool lan set 1 auth CALLBACK "MD2,MD5"'
+        )
+        rv |= self._system_nolog(
+            '/usr/local/bin/ipmitool lan set 1 arp respond on'
+        )
+        rv |= self._system_nolog(
+            '/usr/local/bin/ipmitool lan set 1 arp generate on'
+        )
+        if data.get("ipmi_password1"):
+            rv |= self._system_nolog(
+                '/usr/local/bin/ipmitool user set password 2 "%s"' % (
+                    pipes.quote(data.get('ipmi_password1')),
+                )
+            )
+        rv |= self._system_nolog('/usr/local/bin/ipmitool user enable 2')
+        #XXX: according to dwhite, this needs to be executed off the box via
+        # the lanplus interface.
+        #rv |= self._system_nolog(
+        #    '/usr/local/bin/ipmitool sol set enabled true 1'
+        #)
+        return rv
 
 
 def usage():

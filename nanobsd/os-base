@@ -217,9 +217,7 @@ add_port dns/inadyn-mt
 add_port devel/pcre
 add_port editors/nano
 add_port ftp/proftpd
-if is_truenas ; then
-	add_port misc/cpuid
-fi
+add_port misc/cpuid
 add_port net-mgmt/bsnmp-ucd
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
@@ -953,14 +951,17 @@ last_orders() {
 	local cd_image_log
 	local full_image full_image_log
 	local firmware_img gui_upgrade_bname gui_upgrade_image_log
+	local vmdk_image vmdk_image_log
 
 	cd_image_log="${MAKEOBJDIRPREFIX}/_.cd_iso"
 	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
 	gui_image_log="${MAKEOBJDIRPREFIX}/_.gui_image"
+	vmdk_image_log="${MAKEOBJDIRPREFIX}/_.vmdk_image"
 
 	firmware_img="$NANO_DISKIMGDIR/firmware.img"
 	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.img"
 	gui_upgrade_bname="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
+	vmdk_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.vmdk"
 
 	if $do_copyout_partition; then
 
@@ -997,6 +998,20 @@ last_orders() {
 		echo "${sha256_signature}" > ${NANO_IMGNAME}.GUI_Upgrade.txz.sha256.txt
 		)
 	fi
+
+	pprint 2 "Creating VMDK"
+	log_file "${vmdk_image_log}"
+
+	(
+	set -x
+	if [ -f /usr/local/bin/VBoxManage ]; then
+		VBoxManage convertfromraw "$NANO_DISKIMGDIR/$NANO_IMGNAME" "${vmdk_image}" --format VMDK
+		sha256_signature=`sha256 ${vmdk_image}`
+		echo "${sha256_signature}" > ${vmdk_image}.sha256.txt
+	else
+		echo "VBoxManage not found"
+	fi
+	) > "$vmdk_image_log}" 2>&1
 
 	pprint 2 "Compressing full disk image"
 	log_file "${full_image_log}"

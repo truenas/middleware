@@ -87,6 +87,14 @@ class RRDBase(object):
     def get_vertical_label(self):
         return self.vertical_label
 
+    @staticmethod
+    def _sort_identifiers(entry):
+        reg = re.search('(.+)(\d+)$', entry)
+        if not reg:
+            return entry
+        if reg:
+            return (reg.group(1), int(reg.group(2)))
+
     def get_identifiers(self):
         return None
 
@@ -726,6 +734,8 @@ class DiskPlugin(RRDBase):
                 continue
             if os.path.exists(os.path.join(entry, 'disk_octets.rrd')):
                 ids.append(ident)
+
+        ids.sort(key=RRDBase._sort_identifiers)
         return ids
 
     def graph(self):
