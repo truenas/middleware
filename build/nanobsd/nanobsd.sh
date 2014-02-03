@@ -545,8 +545,12 @@ create_i386_diskimage ( ) (
 	mkdir -p ${MNT}
 
 	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
-		MD=`mdconfig -a -t swap -s ${NANO_MEDIASIZE} -x ${NANO_SECTS} \
-			-y ${NANO_HEADS}`
+		echo "Creating md via swap..."
+	        MDCMD="mdconfig -a -t swap -s ${NANO_MEDIASIZE} -x ${NANO_SECTS} -y ${NANO_HEADS}"
+		echo "${MDCMD}"
+		#MD=`mdconfig -a -t swap -s ${NANO_MEDIASIZE} -x ${NANO_SECTS} \
+		#	-y ${NANO_HEADS}`
+		MD=`${MDCMD}`
 	else
 		echo "Creating md backing file..."
 		rm -f ${IMG}
