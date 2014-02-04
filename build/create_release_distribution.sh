@@ -23,7 +23,7 @@ for arch in x64 x86 ; do
 	eval mapped_arch=\$map_$arch
 	echo $arch = $mapped_arch
 	mkdir -p ${TOP}/${STAGEDIR}/${arch}
-	for ext in img.xz GUI_Upgrade.txz iso vmdk ; do
+	for ext in img.xz GUI_Upgrade.txz iso vmdk.xz ; do
 		if [ -f ${TOP}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ]; then
 			ln ${TOP}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ${TOP}/${STAGEDIR}/${arch}
 			ln ${TOP}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}.sha256.txt ${TOP}/${STAGEDIR}/${arch}
