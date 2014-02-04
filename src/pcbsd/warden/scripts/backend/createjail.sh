@@ -402,6 +402,9 @@ if [ -d "${PROGDIR}/scripts/hooks" ] ; then
   cp ${PROGDIR}/scripts/hooks/jail-* "${JMETADIR}"
 fi
 
+# setup pkgng
+create_jail_pkgconf "${JAILDIR}" "" "${ARCH}"
+
 # Check if making a portjail
 if [ "$PORTJAIL" = "YES" ] ; then mkportjail "${JAILDIR}" ; fi
 

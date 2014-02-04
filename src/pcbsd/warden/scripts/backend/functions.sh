@@ -1116,24 +1116,19 @@ create_jail_pkgconf()
   local pkgsite="${2}"
   local arch="${3}"
 
+  : ${pkgsite:="http://pkg.FreeBSD.org/${arch}/latest"}
+
   if [ ! -d "${jaildir}" -o -z "${pkgsite}" ] ; then 
     return 1
   fi
 
-  if [ "${arch}" != "i386" ] ; then
-  	cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
-PACKAGESITE: ${pkgsite}
-HTTP_MIRROR: http
-PUBKEY: /usr/local/etc/pkg-pubkey.cert
-PKG_CACHEDIR: /usr/local/tmp
+  cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
+FreeBSD: {
+  url: "pkg+${pkgsite}",
+  mirror_type: "srv",
+  enabled: yes
+}
 __EOF__
-  else
-  	cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
-PACKAGESITE: ${pkgsite}
-HTTP_MIRROR: http
-PKG_CACHEDIR: /usr/local/tmp
-__EOF__
-  fi
 
   return 0
 }
