@@ -1,12 +1,27 @@
-from freenasUI.freeadmin.tree import TreeNode
-from freenasUI.choices import LAGGType
 from django.utils.translation import ugettext_lazy as _
-import models
+from freenasUI.choices import LAGGType
+from freenasUI.freeadmin.tree import TreeNode
+from freenasUI.middleware.notifier import notifier
+
+from . import models
 
 NAME = _('Network')
 ICON = u'NetworkIcon'
 BLACKLIST = ['LAGGInterfaceMembers', 'Alias', 'LAGGInterface']
 ORDER = 10
+
+
+class IPMI(TreeNode):
+
+    gname = u'IPMI'
+    name = _(u'IPMI')
+    type = 'opennetwork'
+    icon = u'IPMIIcon'
+    append_to = 'network'
+
+    def pre_build_options(self):
+        if not notifier().ipmi_loaded():
+            raise ValueError
 
 
 class NetSummary(TreeNode):

@@ -24,15 +24,19 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import socket
+import struct
 
 from subprocess import Popen, PIPE
 
 from django.shortcuts import render
+from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
-from freenasUI.network.forms import HostnameForm
+from freenasUI.network.forms import HostnameForm, IPMIForm
 
 
 def hostname(request):
@@ -49,6 +53,42 @@ def hostname(request):
     )
 
 
+def ipmi(request):
+
+    if request.method == "POST":
+        form = IPMIForm(request.POST)
+        if form.is_valid():
+            rv = notifier().ipmi_set_lan(form.cleaned_data)
+            if rv == 0:
+                return JsonResp(request, message=_("IPMI successfully edited"))
+            else:
+                return JsonResp(request, error=True, message=_("IPMI failed"))
+    else:
+        try:
+            ipmi = notifier().ipmi_get_lan()
+
+            #TODO: There might be a better way to convert netmask to CIDR
+            mask = ipmi.get("SubnetMask")
+            num, cidr = struct.unpack('>I', socket.inet_aton(mask))[0], 0
+            while num > 0:
+                num = num << 1 & 0xffffffff
+                cidr += 1
+            initial = {
+                'dhcp': False
+                if ipmi.get("IpAddressSource") == "Static Address"
+                else True,
+                'ipv4address': ipmi.get("IpAddress"),
+                'ipv4gw': ipmi.get("DefaultGatewayIp"),
+                'ipv4netmaskbit': str(cidr),
+            }
+        except Exception:
+            initial = {}
+        form = IPMIForm(initial=initial)
+    return render(request, 'network/ipmi.html', {
+        'form': form,
+    })
+
+
 def network(request):
 
     try:
@@ -61,6 +101,7 @@ def network(request):
         'focus_form': request.GET.get('tab', 'network'),
         'globalconf': globalconf,
         'hook_tabs': tabs,
+        'ipmi': notifier().ipmi_loaded(),
     })
 
 

@@ -2,7 +2,9 @@ To build the system (experts only):
 
 Requirements:
 
-- Your build environment must be FreeBSD 9.2-RELEASE or newer.
+- Your build environment must be FreeBSD 9.2-RELEASE (building on
+  FreeBSD 10 or 11 is not supported at this time).
+
 - amd64 or i386 for i386 builds; an amd64 for amd64 builds.  8GB of
   memory, or an equal/greater amount of swap space, is also required
 
@@ -11,6 +13,7 @@ Requirements:
   - devel/git
   - sysutils/cdrtools
   - archivers/pxz
+  - lang/python (2.7 or later)
   (and all the dependencies that these ports/pkgs install, of course)
 
 Building the System Quickstart Flow:

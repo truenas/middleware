@@ -268,6 +268,8 @@ class Volume(Model):
             super(Volume, self).delete()
         # Refresh the fstab
         n.reload("disk")
+        # For scrub tasks
+        n.restart("cron")
 
         # Django signal could have been used instead
         # Do it this way to make sure its ran in the time we want
