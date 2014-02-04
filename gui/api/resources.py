@@ -70,7 +70,7 @@ from freenasUI.storage.models import Disk
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.http import (
-    HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
+    HttpAccepted, HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
 )
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.utils import trailing_slash
@@ -1593,7 +1593,7 @@ class SnapshotResource(DojoResource):
     parent_type = fields.CharField(attribute='parent_type')
 
     class Meta:
-        allowed_methods = ['get', 'post']
+        allowed_methods = ['delete', 'get', 'post']
         object_class = zfs.Snapshot
         resource_name = 'storage/snapshot'
 
@@ -1673,6 +1673,44 @@ class SnapshotResource(DojoResource):
             request,
             bundle,
             response_class=HttpCreated,
+        )
+
+    def obj_delete(self, bundle=None, **kwargs):
+        if '@' not in kwargs['pk']:
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, {
+                    'error': _('Invalid snapshot'),
+                })
+            )
+        dataset, name = kwargs['pk'].split('@', 1)
+        snap = notifier().zfs_snapshot_list(path='%s@%s' % (
+            dataset,
+            name,
+        )).values()
+        if not snap:
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, {
+                    'error': _('Invalid snapshot'),
+                })
+            )
+        snap = snap[0][0]
+
+        try:
+            notifier().destroy_zfs_dataset(path=kwargs['pk'].encode('utf8'))
+        except MiddlewareError, e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error': e.value,
+                })
+            )
+
+        bundle = self.full_dehydrate(
+            self.build_bundle(obj=snap, request=bundle.request)
+        )
+        return self.create_response(
+            bundle.request,
+            bundle,
+            response_class=HttpAccepted,
         )
 
     def dehydrate(self, bundle):
