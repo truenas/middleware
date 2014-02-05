@@ -319,6 +319,24 @@ do_add_port ()
 		envargs="$envargs MAKEOBJDIRPREFIX=$makeobjdirprefix"
 	fi
 
+	if [ "x${NANO_BREAKPOINT}" = "xadd_port${port_repo}${port_path}" ] ; then
+	    echo "env \
+	    TARGET=${NANO_ARCH} \
+	    TARGET_ARCH=${NANO_ARCH} \
+	    $envargs \
+	    make \
+	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
+	    SRC_BASE=/usr/src \
+	    WRKDIRPREFIX=/usr/workdir -C /usr/ports_dir/$port_path \
+	    clean all install package BATCH=yes -DUSE_PACKAGE_DEPENDS \
+	    $* -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
+	    CR "env \
+		TARGET=${NANO_ARCH} \
+		TARGET_ARCH=${NANO_ARCH} \
+		$envargs \
+		/bin/sh"
+	fi
+
 	# Improvement: Don't know why package-recursive don't works here
 	CR "env \
 	    TARGET=${NANO_ARCH} \

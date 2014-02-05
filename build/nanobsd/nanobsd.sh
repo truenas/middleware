@@ -319,7 +319,11 @@ run_customize() (
 		pprint 2 "[$i/$num_steps] customize \"$c\""
 		log_file "${NANO_OBJ}/_.cust.$c"
 		pprint 4 "`type $c`"
-		( set -x ; $c ) > ${NANO_OBJ}/_.cust.$c 2>&1
+		if [ "x${NANO_BREAKPOINT}" != "x" ] ; then
+		    $c
+		else
+		    ( set -x ; $c ) > ${NANO_OBJ}/_.cust.$c 2>&1
+		fi
 		shift
 		: $(( i += 1 ))
 	done
