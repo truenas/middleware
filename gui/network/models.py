@@ -142,10 +142,11 @@ class Interfaces(Model):
             help_text=_("Name your NIC.")
             )
     int_dhcp = models.BooleanField(
-            verbose_name=_("DHCP"),
-            help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
-                " as default router, etc.")
-            )
+        verbose_name=_("DHCP"),
+        default=False,
+        help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
+            " as default router, etc.")
+    )
     int_ipv4address = IPAddressField(
             verbose_name=_("IPv4 Address"),
             blank=True,
@@ -160,10 +161,13 @@ class Interfaces(Model):
             help_text=""
             )
     int_ipv6auto = models.BooleanField(
-            verbose_name=_("Auto configure IPv6"),
-            help_text=_("When enabled, automatically configurate IPv6 address "
-                "via rtsol(8).")
-            )
+        verbose_name=_("Auto configure IPv6"),
+        default=False,
+        help_text=_(
+            "When enabled, automatically configurate IPv6 address "
+            "via rtsol(8)."
+        ),
+    )
     int_ipv6address = IPAddressField(
             verbose_name=_("IPv6 Address"),
             blank=True,
