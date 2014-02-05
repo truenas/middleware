@@ -1007,6 +1007,7 @@ last_orders() {
 	set -x
 	if [ -f /usr/local/bin/VBoxManage ]; then
 		VBoxManage convertfromraw "$NANO_DISKIMGDIR/$NANO_IMGNAME" "${vmdk_image}" --format VMDK
+		chmod 644 "${vmdk_image}"
 		time ${NANO_XZ} --verbose -9 -f "${vmdk_image}"
 		sha256_signature=`sha256 ${vmdk_image_compressed}`
 		echo "${sha256_signature}" > ${vmdk_image_compressed}.sha256.txt
