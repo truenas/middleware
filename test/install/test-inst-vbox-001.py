@@ -82,10 +82,15 @@ def runTest():
     os.system(cmd)
     cmd = 'rm -fr "%s/%s"' % (VBOX_FOLDER,  test_config['vm_name'])
     print cmd 
-    os.system(cmd)
+    ret = os.system(cmd)
     cmd = "VBoxManage createvm --name %s --ostype FreeBSD_64 --register" % test_config['vm_name']
+    if ret != 0:
+        sys.exit(ret)
+
     print cmd 
-    os.system(cmd)
+    ret = os.system(cmd)
+    if ret != 0:
+        sys.exit(ret)
 
     for d in test_config['disks']:
         cmd = "rm -f %s" % d
@@ -95,15 +100,28 @@ def runTest():
         print cmd 
         os.system(cmd)
 
-    cmd = 'VBoxManage modifyvm %s --cpus 2 --memory 4000 --hpet on --ioapic on --nic1 bridged --bridgeadapter1 %s' % (test_config['vm_name'], test_config['tap'])
+    macaddress = ""
+    if test_config.has_key('mac'):
+        macaddress = "--macaddress1 %s" % test_config['mac'].replace(":", "")
+
+    cmd = 'VBoxManage modifyvm %s --cpus 2 --memory 4000 --hpet on --ioapic on --nic1 bridged --bridgeadapter1 %s %s' % (test_config['vm_name'], test_config['tap'], macaddress)
     print cmd 
-    os.system(cmd)
+    ret = os.system(cmd)
+    if ret != 0:
+        sys.exit(ret)
+
     cmd = 'VBoxManage storagectl %s --name SATA --add sata --controller IntelAHCI' % test_config['vm_name']
     print cmd 
-    os.system(cmd)
+    ret = os.system(cmd)
     cmd = 'VBoxManage storageattach %s --storagectl SATA --port 0 --device 0 --type dvddrive --medium "%s"' % (test_config['vm_name'], test_config['iso'])
+    if ret != 0:
+        sys.exit(ret)
+
     print cmd 
-    os.system(cmd)
+    ret = os.system(cmd)
+    if ret != 0:
+        sys.exit(ret)
+
 
 
     port = 1
