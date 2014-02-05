@@ -86,6 +86,10 @@ class InterfacesForm(ModelForm):
                 'disabled')
 
         if self.instance.id:
+            if self.instance.int_interface.startswith('carp'):
+                self.fields['int_v4netmaskbit'].widget.attrs['class'] = (
+                    'dijitDisabled dijitSelectDisabled'
+                )
             self.fields['int_interface'] = \
                 forms.CharField(
                     label=self.fields['int_interface'].label,
