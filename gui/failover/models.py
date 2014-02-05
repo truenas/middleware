@@ -4,10 +4,16 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.contrib.IPAddressField import IPAddressField, IP4AddressField
 from freenasUI.freeadmin.models import Model
+from freenasUI.network.models import Interfaces, VLAN
 from freenasUI.storage.models import Volume
 
 
 class CARP(Model):
+    carp_interface = models.ForeignKey(
+        Interfaces,
+        unique=True,
+        verbose_name=_("Interface")
+    )
     carp_vhid = models.PositiveIntegerField(
         verbose_name=_("Virtual Host ID"),
         unique=True,
@@ -17,19 +23,6 @@ class CARP(Model):
         blank=False,
         verbose_name=_("Password")
     )
-    carp_v4address = IP4AddressField(
-        verbose_name=_("IPv4 Address"),
-        blank=True,
-        default='',
-    )
-    carp_v4netmaskbit = models.CharField(
-        max_length=3,
-        choices=choices.v4NetmaskBitList,
-        blank=True,
-        default='',
-        verbose_name=_("IPv4 Netmask"),
-        help_text=""
-    )
     carp_skew = models.PositiveIntegerField(
         default=0,
         verbose_name=_("Advertisements Skew"),
@@ -38,7 +31,10 @@ class CARP(Model):
     )
 
     def __unicode__(self):
-        return u'%d:%s' % (self.carp_vhid, self.carp_v4address)
+        try:
+            return u'%d:%s' % (self.carp_vhid, self.carp_interface.int_ipv4address)
+        except:
+            return self.carp_vhid
 
     class Meta:
         verbose_name = _("CARP")
@@ -51,6 +47,14 @@ class CARP(Model):
         icon_add = u"AddCARPIcon"
         icon_view = u"ViewAllCARPsIcon"
         menu_child_of = 'network'
+
+    def delete(self):
+        super(CARP, self).delete()
+        VLAN.objects.filter(
+            vlan_pint=self.carp_interface.int_interface
+            ).delete()
+        self.carp_interface.delete()
+        notifier().iface_destroy(self.carp_interface.int_interface)
 
 
 class Failover(Model):
