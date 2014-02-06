@@ -175,6 +175,7 @@ class Jails(Model):
     )
     jail_flags = models.TextField(
         verbose_name=_("Sysctls"),
+        blank=True,
         help_text=_("Comma delimited list of sysctl's")
     )
     jail_autostart = models.BooleanField(
