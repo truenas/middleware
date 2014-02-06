@@ -3442,22 +3442,36 @@ class notifier:
 
         return True
 
-    def zfs_get_options(self, name):
-        data = {}
+    def zfs_get_options(self, name=None, recursive=False, props=None):
         noinherit_fields = ['quota', 'refquota', 'reservation', 'refreservation']
-        zfsname = str(name)
 
-        zfsproc = self._pipeopen("/sbin/zfs get -H -o property,value,source all %s" % (zfsname))
+        if props is None:
+            props = 'all'
+        else:
+            props = ','.join(props)
+
+        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source %s %s" % (
+            '-r' if recursive else '',
+            props,
+            str(name) if name else '',
+        ))
         zfs_output = zfsproc.communicate()[0]
-        zfs_output = zfs_output.split('\n')
         retval = {}
-        for line in zfs_output:
-            if line != "":
-                data = line.split('\t')
-                if (not data[0] in noinherit_fields) and (data[2] == 'default' or data[2].startswith('inherited')):
-                    retval[data[0]] = "inherit"
+        for line in zfs_output.split('\n'):
+            if not line:
+                continue
+            data = line.split('\t')
+            if recursive:
+                if data[0] not in retval:
+                    dval = retval[data[0]] = {}
                 else:
-                    retval[data[0]] = data[1]
+                    dval = retval[data[0]]
+            else:
+                dval = retval
+            if (not data[1] in noinherit_fields) and (data[3] == 'default' or data[3].startswith('inherited')):
+                dval[data[1]] = "inherit"
+            else:
+                dval[data[1]] = data[2]
         return retval
 
     def zfs_set_option(self, name, item, value):
