@@ -59,7 +59,7 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
 from freenasUI.services.forms import iSCSITargetPortalIPForm
-from freenasUI.services.models import NFS, iSCSITargetPortal, iSCSITargetPortalIP
+from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
@@ -68,9 +68,9 @@ from freenasUI.storage.forms import (
 from freenasUI.system.alert import alertPlugins, Alert
 from freenasUI.storage.models import Disk
 from tastypie import fields
-from tastypie.bundle import Bundle
 from tastypie.http import (
-    HttpAccepted, HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
+    HttpAccepted,
+    HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
 )
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.utils import trailing_slash
@@ -739,7 +739,9 @@ class VolumeResourceMixin(NestedMixin):
                 recursive=True,
                 props=['compression', 'compressratio'],
             )
-        return super(VolumeResourceMixin, self).dispatch_list(request, **kwargs)
+        return super(VolumeResourceMixin, self).dispatch_list(
+            request, **kwargs
+        )
 
     def dehydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).dehydrate(bundle)
@@ -1729,7 +1731,7 @@ class SnapshotResource(DojoResource):
             notifier().destroy_zfs_dataset(path=kwargs['pk'].encode('utf8'))
         except MiddlewareError, e:
             raise ImmediateHttpResponse(
-                response=self.error_response(request, {
+                response=self.error_response(bundle.request, {
                     'error': e.value,
                 })
             )
