@@ -1665,7 +1665,7 @@ get_next_id()
    if [ -d "${jdir}" ] ; then
       for i in `ls -d ${jdir}/.*.meta 2>/dev/null`
       do
-        id=`cat ${i}/id`
+        id="$(cat ${i}/id 2>/dev/null)"
         if [ "${id}" -gt "${meta_id}" ] ; then
           meta_id="${id}"
         fi
