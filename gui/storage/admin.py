@@ -126,6 +126,12 @@ class VolumeFAdmin(BaseFreeAdmin):
         })
 
         columns.append({
+            'name': 'compression',
+            'label': _('Compression'),
+            'sortable': False,
+        })
+
+        columns.append({
             'name': 'status',
             'label': _('Status'),
             'sortable': False,

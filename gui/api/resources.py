@@ -650,7 +650,7 @@ class VolumeResourceMixin(NestedMixin):
         for name, dataset in datasets.items():
             if name.startswith('.'):
                 continue
- 
+
             data = {
                 'id': uid.next(),
                 'name': name,
@@ -659,6 +659,11 @@ class VolumeResourceMixin(NestedMixin):
                 'mountpoint': dataset.mountpoint,
                 'path': dataset.path,
             }
+            if self.is_webclient(bundle.request):
+                data['compression'] = self.__zfsopts.get(
+                    dataset.path,
+                    {},
+                ).get('compression', '-')
             for attr in attr_fields:
                 data[attr] = getattr(dataset, attr)
 
@@ -723,6 +728,15 @@ class VolumeResourceMixin(NestedMixin):
         bundle.data['layout-TOTAL_FORMS'] = i + 1
         return bundle
 
+    def dispatch_list(self, request, **kwargs):
+        # Only for webclient to do not break API
+        if self.is_webclient(request):
+            self.__zfsopts = notifier().zfs_get_options(
+                recursive=True,
+                props=['compression'],
+            )
+        return super(VolumeResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).dehydrate(bundle)
         mp = bundle.obj.mountpoint_set.all()[0]
@@ -732,6 +746,11 @@ class VolumeResourceMixin(NestedMixin):
                 del bundle.data[key]
 
         bundle.data['name'] = bundle.obj.vol_name
+        if self.is_webclient(bundle.request):
+            bundle.data['compression'] = self.__zfsopts.get(
+                bundle.obj.vol_name,
+                {},
+            ).get('compression', '-')
 
         is_decrypted = bundle.obj.is_decrypted()
         if bundle.obj.vol_fstype == 'ZFS':
