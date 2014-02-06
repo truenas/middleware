@@ -290,7 +290,6 @@ options		GEOM_ELI
 options		NULLFS
 options		UNIONFS
 options		VFS_AIO
-device		aesni
 device		carp
 device		pf
 device		pflog
