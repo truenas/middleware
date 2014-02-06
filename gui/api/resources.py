@@ -664,6 +664,10 @@ class VolumeResourceMixin(NestedMixin):
                     dataset.path,
                     {},
                 ).get('compression', '-')
+                data['compressratio'] = self.__zfsopts.get(
+                    dataset.path,
+                    {},
+                ).get('compressratio', '-')
             for attr in attr_fields:
                 data[attr] = getattr(dataset, attr)
 
@@ -733,7 +737,7 @@ class VolumeResourceMixin(NestedMixin):
         if self.is_webclient(request):
             self.__zfsopts = notifier().zfs_get_options(
                 recursive=True,
-                props=['compression'],
+                props=['compression', 'compressratio'],
             )
         return super(VolumeResourceMixin, self).dispatch_list(request, **kwargs)
 
@@ -751,6 +755,10 @@ class VolumeResourceMixin(NestedMixin):
                 bundle.obj.vol_name,
                 {},
             ).get('compression', '-')
+            bundle.data['compressratio'] = self.__zfsopts.get(
+                bundle.obj.vol_name,
+                {},
+            ).get('compressratio', '-')
 
         is_decrypted = bundle.obj.is_decrypted()
         if bundle.obj.vol_fstype == 'ZFS':
