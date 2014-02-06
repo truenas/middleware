@@ -973,7 +973,8 @@ define([
           label: gettext("Drag and drop this to resize"),
           onHide: function() {
             var checkDragTooltip = function() {
-              if(!me._draggedOnce) {
+              var formStyle = domStyle.get(me.manager._form.domNode, "display");
+              if(!me._draggedOnce && formStyle != "none") {
                 me._dragTooltip.open(me.resize.domNode);
               }
             }
