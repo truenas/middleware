@@ -87,6 +87,7 @@ class InterfacesForm(ModelForm):
 
         if self.instance.id:
             if self.instance.int_interface.startswith('carp'):
+                self.fields['int_v4netmaskbit'].widget.attrs['readonly'] = True
                 self.fields['int_v4netmaskbit'].widget.attrs['class'] = (
                     'dijitDisabled dijitSelectDisabled'
                 )
