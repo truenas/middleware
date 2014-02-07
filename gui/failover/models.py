@@ -14,6 +14,14 @@ class CARP(Model):
         unique=True,
         verbose_name=_("Interface")
     )
+    carp_number = models.PositiveIntegerField(
+        verbose_name=_("Interface Number"),
+        unique=True,
+        help_text=_(
+            'Number used to identify the CARP interface, e.g. carp0, where 0 '
+            'is the interface number'
+        ),
+    )
     carp_vhid = models.PositiveIntegerField(
         verbose_name=_("Virtual Host ID"),
         unique=True,
