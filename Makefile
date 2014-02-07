@@ -43,13 +43,10 @@ save-build-env:
 	${ENV_SETUP} build/save_build.sh
 
 freenas: release
-release:
-	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} do-release
-
-do-release: git-verify
+release: git-verify
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
-	${ENV_SETUP} build/build_release.sh
+	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/build_release.sh
 
 cdrom:
 	${ENV_SETUP} sh -x build/create_iso.sh
