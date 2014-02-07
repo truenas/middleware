@@ -789,14 +789,17 @@ class notifier:
 
     def _load_afp(self):
         self._system("/usr/sbin/service ix-afpd quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service netatalk quietstart")
 
     def _start_afp(self):
         self._system("/usr/sbin/service ix-afpd start")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service netatalk start")
 
     def _stop_afp(self):
         self._system("/usr/sbin/service netatalk forcestop")
+        self._system("/usr/sbin/service ix_register reload")
 
     def _restart_afp(self):
         self._stop_afp()
@@ -804,6 +807,7 @@ class notifier:
 
     def _reload_afp(self):
         self._system("/usr/sbin/service ix-afpd quietstart")
+        self._system("/usr/sbin/service ix_register reload")
         self._system("killall -1 netatalk")
 
     def _reload_nfs(self):

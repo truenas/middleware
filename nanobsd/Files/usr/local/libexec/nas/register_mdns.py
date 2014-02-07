@@ -45,6 +45,12 @@ def main():
         hostname = socket.gethostname()
         
 
+    afp_service = services.objects.filter(srv_service='afp', srv_enable=1)
+    if afp_service:
+        t = threading.Thread(target=register, args (hostname, '_afp._tcp', 548))
+        t.daemon = False
+        t.start()
+
     ssh_service = services.objects.filter(srv_service='ssh', srv_enable=1)
     if ssh_service:
         sshport = int(SSH.objects.values('ssh_tcpport')[0]['ssh_tcpport'])
