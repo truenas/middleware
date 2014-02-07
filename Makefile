@@ -48,6 +48,11 @@ release: git-verify
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/build_release.sh
 
+rebuild:
+	@${ENV_SETUP} ${MAKE} checkout
+	@${ENV_SETUP} ${MAKE} all
+	@${ENV_SETUP) sh build/create_release_distribution.sh
+
 cdrom:
 	${ENV_SETUP} sh -x build/create_iso.sh
 
