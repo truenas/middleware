@@ -155,6 +155,8 @@ class InterfacesForm(ModelForm):
         if not nw or not ip:
             return nw
         network = IPNetwork('%s/%s' % (ip, nw))
+        if self.instance.id and self.instance.int_interface.startswith('carp'):
+            return nw
         used_networks = []
         qs = models.Interfaces.objects.all()
         if self.instance.id:
@@ -635,6 +637,11 @@ class AliasForm(ModelForm):
         if not nw or not ip:
             return nw
         network = IPNetwork('%s/%s' % (ip, nw))
+        if (
+            self.instance.id and
+            self.instance.alias_interface.int_interface.startswith('carp')
+        ):
+            return nw
         used_networks = []
         qs = models.Interfaces.objects.all()
         if self.instance.id:
