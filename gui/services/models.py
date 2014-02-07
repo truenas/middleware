@@ -1622,7 +1622,7 @@ class ActiveDirectory(Model):
         from freenasUI.network.models import GlobalConfiguration
         gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
         if gc_hostname:
-            m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
+            m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
             if m:
                 self.ad_netbiosname = m.group(0).upper().strip()
 
