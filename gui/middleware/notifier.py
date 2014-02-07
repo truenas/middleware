@@ -43,6 +43,7 @@ import grp
 import libxml2
 import logging
 import os
+import pipes
 import platform
 import pwd
 import re
