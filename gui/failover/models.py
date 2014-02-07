@@ -1,9 +1,9 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI import choices
-from freenasUI.contrib.IPAddressField import IPAddressField, IP4AddressField
+from freenasUI.contrib.IPAddressField import IPAddressField
 from freenasUI.freeadmin.models import Model
+from freenasUI.middleware import notifier
 from freenasUI.network.models import Interfaces, VLAN
 from freenasUI.storage.models import Volume
 
