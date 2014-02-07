@@ -91,6 +91,8 @@ class InterfacesForm(ModelForm):
                 self.fields['int_v4netmaskbit'].widget.attrs['class'] = (
                     'dijitDisabled dijitSelectDisabled'
                 )
+                self.fields['int_v4netmaskbit'].initial = '32'
+                self.instance.int_v4netmaskbit = '32'
             self.fields['int_interface'] = \
                 forms.CharField(
                     label=self.fields['int_interface'].label,
