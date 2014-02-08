@@ -648,6 +648,9 @@ class VolumeResourceMixin(NestedMixin):
         children = []
         attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
         for name, dataset in datasets.items():
+            if name.startswith('.'):
+                continue
+ 
             data = {
                 'id': uid.next(),
                 'name': name,

@@ -1,6 +1,9 @@
 #!/usr/local/bin/python
 
+import glob
 import os
+import platform
+import re
 import string
 import sys
 import tempfile
@@ -22,6 +25,8 @@ from django.db.models import Q
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.zfs import list_datasets
 from freenasUI.services.models import (
     services,
     ActiveDirectory,
@@ -34,8 +39,56 @@ from freenasUI.services.models import (
 
 from freenasUI.services.directoryservice import DirectoryService
 from freenasUI.sharing.models import CIFS_Share
-from freenasUI.storage.models import Task
+from freenasUI.storage.models import Task, Volume
 from freenasUI.system.models import Settings
+
+
+def create_samba4_dataset():
+    vol_fstype = 'ZFS'
+    path = None
+
+    volume = Volume.objects.filter(vol_fstype='ZFS')
+    if not volume.exists():
+        volume = Volume.objects.filter(vol_fstype='UFS')
+        if not volume.exists():
+            print >> sys.stderr, "You need to create a volume to proceed!"
+            sys.exit(1)
+        vol_fstype = 'UFS'
+
+    volume = volume[0]
+    basename = "%s/.samba4" % volume.vol_name
+
+    if vol_fstype == 'ZFS':
+        name = basename
+        path = "/mnt/%s" % name
+
+        datasets = list_datasets(
+            path=path,
+            recursive=False,
+        )
+        if not datasets:
+            rv, err = notifier().create_zfs_dataset(name)
+            if rv != 0:
+                print >> sys.stderr, "Failed to create dataset %(name)s: %(error)s" % {
+                    'name': name,
+                    'error': err,
+                }
+                sys.exit(1)
+
+    elif vol_fstype == 'UFS':
+        path = "/mnt/%s" % basename
+        if not os.path.exists(path):
+            try:
+                os.makedirs(path)
+
+            except Exception as e:
+                print >> sys.stderr, "Failed to create directory %(name)s: %(error)s" % {
+                   'name': path,
+                   'error': e
+                }
+                sys.exit(1)
+
+    return path
 
 
 def is_within_zfs(mountpoint):
@@ -580,7 +633,7 @@ def provision_smb4():
         return True
 
     except Exception as e:
-        print e
+        print >> sys.stderr, e
 
     return False
 
@@ -610,6 +663,24 @@ def smb4_unlink(dir):
 def smb4_setup():
     statedir = "/var/db/samba4"
 
+    if not os.path.islink(statedir):
+        if os.path.exists(statedir):
+            try:
+                p = pipeopen("/bin/rm -rf '%s'" % statedir)
+                p.communicate()
+
+            except:
+                olddir = "%s.%s" % (statedir, time.time())
+                p = pipeopen("/bin/mv '%s' '%s'" % (statedir, olddir))
+                p.communicate()
+
+        samba4_dataset = create_samba4_dataset()
+        try:
+            os.symlink(samba4_dataset, statedir)
+        except Exception as e:  
+            print >> sys.stderr, "Unable to create symlink '%s' -> '%s' (%s)" % (
+                samba4_dataset, statedir, e)
+
     smb4_mkdir("/var/run/samba")
     smb4_mkdir("/var/db/samba")
 
@@ -623,31 +694,6 @@ def smb4_setup():
 
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
-
-    role = get_server_role()
-    if role != 'dc':
-        smb4_mkdir(statedir)
-          
-    elif role == 'dc':
-        dc = DomainController.objects.all()[0]
-        if os.path.exists(statedir) and os.path.islink(statedir):
-            return
-
-        elif os.path.exists(statedir):
-            try:
-                p = pipeopen("/bin/rm -rf '%s'" % statedir)
-                p.communicate()
-
-            except:
-                olddir = "%s.%s" % (statedir, time.time())
-                p = pipeopen("/bin/mv '%s' '%s'" % (statedir, olddir))
-                p.communicate()
-
-        try:
-            os.symlink(dc.dc_storage, statedir)
-        except Exception as e:  
-            print "Unable to create symlink '%s' -> '%s' (%s)" % (
-                dc.dc_storage, statedir, e)
 
 
 def main():
