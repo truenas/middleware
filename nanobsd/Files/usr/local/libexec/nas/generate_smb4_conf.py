@@ -494,7 +494,7 @@ def generate_smb4_conf(smb4_conf):
         confset1(smb4_conf, "writable = yes")
         confset2(smb4_conf, "browseable = %s",
             "yes" if cifs.cifs_srv_homedir_browseable_enable else "no")
-        confset2(smb4_conf, "path = %s", cifs.cifs_srv_homedir)
+        confset2(smb4_conf, "path = %s", cifs_homedir_path)
 
         for line in cifs.cifs_srv_homedir_aux.split('\n'):
             confset1(smb4_conf, line)
