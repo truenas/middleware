@@ -1,35 +1,30 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
 
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Deleting field 'CARP.carp_v4netmaskbit'
+        db.delete_column('network_carp', 'carp_v4netmaskbit')
 
-        # Adding field 'CARP.carp_interface'
-        db.add_column('network_carp', 'carp_interface',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['network.Interfaces']),
-                      keep_default=False)
-
-        for o in orm['failover.CARP'].objects.all():
-            iface = orm['network.Interfaces'].objects.create(
-                int_interface='carp%d' % o.carp_vhid,
-                int_ipv4address=o.carp_v4address,
-                int_v4netmaskbit=o.carp_v4netmaskbit,
-            )
-            o.carp_interface = iface
-            o.save()
-
-        db.create_unique('network_carp', ['carp_interface_id'])
+        # Deleting field 'CARP.carp_v4address'
+        db.delete_column('network_carp', 'carp_v4address')
 
 
     def backwards(self, orm):
+        # Adding field 'CARP.carp_v4netmaskbit'
+        db.add_column('network_carp', 'carp_v4netmaskbit',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=3, blank=True),
+                      keep_default=False)
 
-        # Deleting field 'CARP.carp_interface'
-        db.delete_column('network_carp', 'carp_interface_id')
+        # Adding field 'CARP.carp_v4address'
+        db.add_column('network_carp', 'carp_v4address',
+                      self.gf('freenasUI.contrib.IPAddressField.IP4AddressField')(default='', blank=True),
+                      keep_default=False)
 
 
     models = {
@@ -39,8 +34,6 @@ class Migration(DataMigration):
             'carp_pass': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'carp_skew': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0', 'null': 'True', 'blank': 'True'}),
             'carp_vhid': ('django.db.models.fields.PositiveIntegerField', [], {'unique': 'True'}),
-            'carp_v4address': ('freenasUI.contrib.IPAddressField.IP4AddressField', [], {'default': "''", 'blank': 'True'}),
-            'carp_v4netmaskbit': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '3', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'failover.failover': {
