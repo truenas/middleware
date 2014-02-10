@@ -68,14 +68,12 @@ class Settings(Model):
     stg_guiport = models.IntegerField(
         verbose_name=_("WebGUI HTTP Port"),
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
-        blank=True,
-        null=True,
+        default=80,
     )
     stg_guihttpsport = models.IntegerField(
         verbose_name=_("WebGUI HTTPS Port"),
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
-        blank=True,
-        null=True,
+        default=443,
     )
     stg_language = models.CharField(
             max_length=120,
