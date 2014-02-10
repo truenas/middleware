@@ -399,7 +399,7 @@ _gen_conf()
 		echo "saver=\"daemon\""
 	fi
 
-	local nonroot mountdflags="-r" ip nfsips mountdport statdport lockdport
+	local nonroot mountdflags="-rS" ip nfsips mountdport statdport lockdport
 
 	nfsips=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_bindip FROM services_nfs ORDER BY -id LIMIT 1" | tr "," \\n | \
 	while read -r ip; do
