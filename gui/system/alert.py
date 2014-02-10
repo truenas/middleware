@@ -49,7 +49,7 @@ class Alert(object):
         self._level = level
         self._message = message
         if id is None:
-            self._id = hashlib.md5(message).hexdigest()
+            self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
             self._id = id
 
