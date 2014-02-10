@@ -76,7 +76,7 @@ _interface_config()
 {
 	local saved_ifs="${IFS}"
 	local IFS=\|
-	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options 
+	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
 	local vlan_vint vlan_pint vlan_tag
 
