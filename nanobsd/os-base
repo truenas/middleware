@@ -240,6 +240,8 @@ add_port dns/py-dnspython
 add_port devel/tevent
 add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port devel/libexecinfo
+add_port sysutils/lsof
+add_port sysutils/htop
 add_port devel/popt
 add_port databases/tdb MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port sysutils/libsunacl
@@ -758,6 +760,15 @@ add_data_to_fstab ( )
 	
 }
 customize_cmd add_data_to_fstab
+
+add_mountpoint_for_linprocfs ( )
+{
+	(
+	cd ${NANO_WORLDDIR}
+	mkdir -p /compat/linux/proc
+	)
+}
+customize_cmd add_mountpoint_for_linprocfs
 
 customize_cmd_truenas afpd_conf_symlink
 

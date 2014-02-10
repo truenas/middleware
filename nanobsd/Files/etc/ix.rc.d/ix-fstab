@@ -65,6 +65,7 @@ generate_fstab_real()
 			fi
 		fi
 	done
+	echo "linproc	/compat/linux/proc	linprocfs	rw	0	0"
 }
 
 generate_fstab_swap()
