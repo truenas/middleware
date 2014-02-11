@@ -601,3 +601,21 @@ make_conf_install ( ) (
 	chown root:wheel ${NANO_WORLDDIR}/usr/pbi
 )
 
+
+FREENAS_STRIP_EXCLUDE_FILE="${AVATAR_ROOT}/nanobsd/strip.exclude"
+FREENAS_STRIP_EXCLUDES="$(cat "${FREENAS_STRIP_EXCLUDE_FILE}")"
+
+dontstrip()
+{
+	local f="${1}"
+	for f in ${FREENAS_STRIP_EXCLUDES}
+	do
+		local fp="${NANO_WORLDDIR}/${f}"
+		if [ "${fp}" = "${f}" ]
+		then
+			return 0
+		fi
+	done
+
+	return 1
+}
