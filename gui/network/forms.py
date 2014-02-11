@@ -161,7 +161,9 @@ class InterfacesForm(ModelForm):
         if self.instance.id and self.instance.int_interface.startswith('carp'):
             return nw
         used_networks = []
-        qs = models.Interfaces.objects.all()
+        qs = models.Interfaces.objects.all().exclude(
+            int_interface__startswith='carp'
+        )
         if self.instance.id:
             qs = qs.exclude(id=self.instance.id)
         for iface in qs:
@@ -646,7 +648,9 @@ class AliasForm(ModelForm):
         ):
             return nw
         used_networks = []
-        qs = models.Interfaces.objects.all()
+        qs = models.Interfaces.objects.all().exclude(
+            int_interface__startswith='carp'
+        )
         if self.instance.id:
             qs = qs.exclude(id=self.instance.alias_interface.id)
         elif self.parent.instance.id:
