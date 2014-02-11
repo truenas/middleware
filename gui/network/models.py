@@ -249,6 +249,9 @@ class Interfaces(Model):
                 ))
         return ips
 
+    def get_media_status(self):
+        return notifier().iface_media_status(self.int_interface)
+
 
 class Alias(Model):
     alias_interface = models.ForeignKey(

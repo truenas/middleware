@@ -78,6 +78,7 @@ from django.db.models import Q
 from django.db.models.loading import cache
 cache.get_apps()
 
+from django.utils.translation import ugettext as _
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
@@ -3603,6 +3604,23 @@ class notifier:
 
     def iface_destroy(self, name):
         self._system("ifconfig %s destroy" % name)
+
+    def iface_media_status(self, name):
+
+        statusmap = {
+            'active': _('Active'),
+            'no carrier': _('No carrier'),
+        }
+
+        proc = self._pipeopen('/sbin/ifconfig %s' % name)
+        data = proc.communicate()[0]
+        reg = re.search(r'status: (.+)$', data)
+
+        if proc.returncode != 0 or not reg:
+            return _('Unknown')
+        status = reg.group(1)
+
+        return statusmap.get(status, status)
 
     def interface_mtu(self, iface, mtu):
         self._system("ifconfig %s mtu %s" % (iface, mtu))

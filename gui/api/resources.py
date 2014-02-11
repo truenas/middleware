@@ -1050,6 +1050,7 @@ class InterfacesResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(InterfacesResourceMixin, self).dehydrate(bundle)
+        bundle.data['int_media_status'] = bundle.obj.get_media_status()
         bundle.data['ipv4_addresses'] = bundle.obj.get_ipv4_addresses()
         bundle.data['ipv6_addresses'] = bundle.obj.get_ipv6_addresses()
         bundle.data['int_aliases'] = [
