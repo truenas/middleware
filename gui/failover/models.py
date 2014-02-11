@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.contrib.IPAddressField import IPAddressField
@@ -63,6 +63,22 @@ class CARP(Model):
             ).delete()
         self.carp_interface.delete()
         notifier().iface_destroy(self.carp_interface.int_interface)
+
+    def save(self, *args, **kwargs):
+        carpname = 'carp%d' % self.carp_number
+        with transaction.atomic():
+            if not self.id:
+                iface = Interfaces.objects.create(
+                    int_interface=carpname,
+                    int_v4netmaskbit='32',
+                )
+                self.carp_interface = iface
+            else:
+                iface = self.carp_interface
+                iface.int_interface = carpname
+                iface.int_v4netmaskbit = '32'
+                iface.save()
+            return super(CARP, self).save(*args, **kwargs)
 
 
 class Failover(Model):

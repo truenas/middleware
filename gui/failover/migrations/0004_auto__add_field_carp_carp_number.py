@@ -15,6 +15,9 @@ class Migration(DataMigration):
 
         for i, o in enumerate(orm['failover.CARP'].objects.order_by('id')):
             o.carp_number = i
+            iface = o.carp_interface
+            iface.int_interface = 'carp%d' % i
+            iface.save()
             o.save()
 
         # Adding unique constraint on 'CARP', fields ['carp_number']
