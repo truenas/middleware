@@ -228,7 +228,7 @@ fi
 add_port security/libgpg-error
 add_port security/libgcrypt
 add_port databases/db46
-add_port security/cyrus-sasl2
+add_port security/cyrus-sasl2-gssapi
 add_port net/openldap24-sasl-client
 add_port net/nss_ldap
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
@@ -439,8 +439,8 @@ add_port net/samba41 \
        OPTIONS_FILE_SET+=AIO_SUPPORT \
        OPTIONS_FILE_UNSET+=AVAHI \
        OPTIONS_FILE_UNSET+=CUPS \
-       OPTIONS_FILE_UNSET+=DEBUG \
-       OPTIONS_FILE_UNSET+=DEVELOPER \
+       OPTIONS_FILE_SET+=DEBUG \
+       OPTIONS_FILE_SET+=DEVELOPER \
        OPTIONS_FILE_SET+=DNSUPDATE \
        OPTIONS_FILE_SET+=EXP_MODULES \
        OPTIONS_FILE_SET+=FAM_SUPPORT \
