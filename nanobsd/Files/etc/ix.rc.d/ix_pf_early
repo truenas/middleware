@@ -17,7 +17,7 @@ stop_cmd=":"
 
 ix_pf_early_start()
 {
-	/sbin/pfctl -ef /etc/pf.conf.block
+	/bin/sh /etc/ipfw.conf.block
 }
 
 run_rc_command "$1"

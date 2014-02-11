@@ -17,12 +17,12 @@ stop_cmd=":"
 
 ix_pf_late_start()
 {
-	/sbin/pfctl -d
+	/sbin/ipfw -f flush
 }
 
 ix_pf_late_stop()
 {
-	/sbin/pfctl -e /etc/pf.conf.block
+	/bin/sh /etc/ipfw.conf.block
 }
 
 run_rc_command "$1"
