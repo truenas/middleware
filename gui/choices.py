@@ -175,6 +175,18 @@ CIFSAUTH_CHOICES = (
         )
 
 CIFS_SMB_PROTO_CHOICES = (
+       ('CORE', _('CORE')),
+       ('COREPLUS', _('COREPLUS')),
+       ('LANMAN1', _('LANMAN1')),
+       ('LANMAN2', _('LANMAN2')),
+       ('NT1', _('NT1')),
+       ('SMB2', _('SMB2')),
+       ('SMB2_02', _('SMB2_02')),
+       ('SMB2_10', _('SMB2_10')),
+       ('SMB2_22', _('SMB2_22')),
+       ('SMB2_24', _('SMB2_24')),
+       ('SMB3', _('SMB3')),
+       ('SMB3_00', _('SMB3_00')),
         )
 
 DOSCHARSET_CHOICES = (
