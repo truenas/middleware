@@ -996,7 +996,6 @@ last_orders() {
 				-C "$NANO_DISKIMGDIR" \
 					${firmware_img##*/} \
 				| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
-			) > "${gui_image_log}" 2>&1
 		else
 			tar -cpvf - \
 				-s '@^update$@bin/update@' \
@@ -1013,8 +1012,8 @@ last_orders() {
 				-C "$NANO_DISKIMGDIR" \
 					${firmware_img##*/} \
 				| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
-			) > "${gui_image_log}" 2>&1
 		fi
+		) > "${gui_image_log}" 2>&1
 		(
 		cd $NANO_DISKIMGDIR
 		sha256_signature=`sha256 ${NANO_IMGNAME}.GUI_Upgrade.txz`
