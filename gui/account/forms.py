@@ -688,7 +688,9 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             bsduser.save()
 
         else:
-            bsduser = super(bsdUsersForm, self).save(commit=True)
+            bsduser = super(bsdUsersForm, self).save(commit=False)
+            bsduser.bsdusr_group = self.cleaned_data['bsdusr_group']
+            bsduser.save()
 
             #
             # Check if updating password
