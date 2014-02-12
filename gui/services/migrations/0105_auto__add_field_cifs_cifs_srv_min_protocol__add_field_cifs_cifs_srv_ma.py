@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'CIFS.cifs_srv_max_protocol'
         db.add_column(u'services_cifs', 'cifs_srv_max_protocol',
-                      self.gf('django.db.models.fields.CharField')(default='SMB2', max_length=120),
+                      self.gf('django.db.models.fields.CharField')(default='SMB3', max_length=120),
                       keep_default=False)
 
 
@@ -78,7 +78,7 @@ class Migration(SchemaMigration):
             'cifs_srv_hostlookup': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'cifs_srv_localmaster': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_loglevel': ('django.db.models.fields.CharField', [], {'default': "'0'", 'max_length': '120'}),
-            'cifs_srv_max_protocol': ('django.db.models.fields.CharField', [], {'default': "'SMB2'", 'max_length': '120'}),
+            'cifs_srv_max_protocol': ('django.db.models.fields.CharField', [], {'default': "'SMB3'", 'max_length': '120'}),
             'cifs_srv_min_protocol': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'cifs_srv_netbiosname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'cifs_srv_nullpw': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
