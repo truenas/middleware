@@ -242,7 +242,7 @@ class CIFS(Model):
     cifs_srv_max_protocol = models.CharField(
             max_length=120,
             verbose_name=_("Server maximum protocol"),
-            default='SMB2',
+            default='SMB3',
             choices=choices.CIFS_SMB_PROTO_CHOICES,
             help_text=_("The highest protocol version that will be supported by the server")
             )
