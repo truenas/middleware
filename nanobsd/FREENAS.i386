@@ -291,9 +291,6 @@ options		NULLFS
 options		UNIONFS
 options		VFS_AIO
 device		carp
-device		pf
-device		pflog
-device		pfsync
 
 ## FreeNAS specific modifications
 # misc
