@@ -3609,12 +3609,19 @@ class notifier:
 
         statusmap = {
             'active': _('Active'),
+            'BACKUP': _('Backup'),
+            'INIT': _('Init'),
+            'MASTER': _('Master'),
             'no carrier': _('No carrier'),
         }
 
         proc = self._pipeopen('/sbin/ifconfig %s' % name)
         data = proc.communicate()[0]
-        reg = re.search(r'status: (.+)$', data)
+
+        if name.startswith('carp'):
+            reg = re.search(r'carp: (\S+)', data)
+        else:
+            reg = re.search(r'status: (.+)$', data)
 
         if proc.returncode != 0 or not reg:
             return _('Unknown')
