@@ -70,7 +70,7 @@ get_arch()
 
 get_release()
 {
-	uname -r
+	uname -r|cut -f1 -d-
 }
 
 get_ta()
@@ -134,7 +134,6 @@ migrate_warden_templates()
 		tv="$(get_tv "${template}")"
 
 		template="${jc_dataset}/.warden-template-${t}"
-
 		if [ "${tv}" = "${version}" -a \
 			"${ta}" = "${arch}" ]
 		then
@@ -196,7 +195,7 @@ get_tv()
 	version="$(file -b "${sysctl_path}"|cut -d ',' -f 5|awk '{ print $3 }')"
 	if [ -n "${version}" ]
 	then
-		echo "${version}-RELEASE"
+		echo "${version}"
 	fi
 	return 0
 }
