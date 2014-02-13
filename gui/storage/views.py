@@ -31,6 +31,7 @@ import os
 import re
 import signal
 import subprocess
+import urllib
 
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
@@ -512,6 +513,7 @@ def zfsvolume_edit(request, object_id):
 
 
 def mp_permission(request, path):
+    path = urllib.unquote_plus(path)
     if request.method == 'POST':
         form = forms.MountPointAccessForm(request.POST)
         if form.is_valid():

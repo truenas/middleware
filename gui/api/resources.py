@@ -775,7 +775,7 @@ class VolumeResourceMixin(NestedMixin):
             bundle.data['_permissions_url'] = reverse(
                 'storage_mp_permission',
                 kwargs={
-                    'path': mp.mp_path,
+                    'path': urllib.quote_plus(mp.mp_path),
                 })
             bundle.data['_status_url'] = "%s?id=%d" % (
                 reverse('freeadmin_storage_volumestatus_datagrid'),
