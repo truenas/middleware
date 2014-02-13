@@ -527,3 +527,30 @@ def get_samba4_path():
     volume = volume[0]
     basename = "%s/.samba4" % volume.vol_name
     return volume, basename
+
+
+def exclude_path(path, exclude):
+
+    fine_grained = []
+    for e in exclude:
+        if not e.startswith(path):
+            continue
+        fine_grained.append(e)
+
+    if fine_grained:
+        apply_paths = []
+        check_paths = [os.path.join(path, f) for f in os.listdir(path)]
+        while check_paths:
+            fpath = check_paths.pop()
+            if not os.path.isdir(fpath):
+                apply_paths.append(fpath)
+                continue
+            for fg in fine_grained:
+                if fg.startswith(fpath):
+                    if fg != fpath:
+                        check_paths.extend([os.path.join(fpath, f) for f in os.listdir(fpath)])
+                else:
+                    apply_paths.append(fpath)
+        return apply_paths
+    else:
+        return [path]

@@ -49,7 +49,7 @@ from freenasUI import choices
 from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
-from freenasUI.common.system import mount, umount
+from freenasUI.common.system import get_samba4_path, mount, umount
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect
@@ -1678,13 +1678,18 @@ class MountPointAccessForm(Form):
 
     def commit(self, path='/mnt/'):
 
+        exclude = [
+            '/mnt/%s' % get_samba4_path()[1],
+        ]
         notifier().mp_change_permission(
             path=path,
+            exclude=exclude,
             user=self.cleaned_data['mp_user'],
             group=self.cleaned_data['mp_group'],
             mode=self.cleaned_data['mp_mode'].__str__(),
             recursive=self.cleaned_data['mp_recursive'],
-            acl=self.cleaned_data['mp_acl'])
+            acl=self.cleaned_data['mp_acl'],
+        )
 
 
 class PeriodicSnapForm(ModelForm):

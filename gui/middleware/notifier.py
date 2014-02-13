@@ -94,7 +94,12 @@ from freenasUI.common.pbi import (
     PBI_MAKEPATCH_FLAGS_OUTDIR, PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
     PBI_PATCH_FLAGS_OUTDIR, PBI_PATCH_FLAGS_NOCHECKSIG
 )
-from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
+from freenasUI.common.system import (
+    exclude_path,
+    get_mounted_filesystems,
+    umount,
+    get_sw_name
+)
 from freenasUI.common.warden import (Warden, WardenJail,
     WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
     WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING)
@@ -2267,7 +2272,11 @@ class notifier:
         self.reload("cifs")
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
-                             mode='0755', recursive=False, acl='unix'):
+                             mode='0755', recursive=False, acl='unix',
+                             exclude=None):
+
+        if exclude is None:
+            exclude = []
 
         if type(group) is types.UnicodeType:
             group = group.encode('utf-8')
@@ -2292,22 +2301,33 @@ class notifier:
 
         if winexists:
             if not mode:
-                mode = '0755' 
+                mode = '0755'
             script = "/usr/local/www/freenasUI/tools/winacl.sh"
             args=" -o '%s' -g '%s' -d %s " % (user, group, mode)
             if recursive:
-                args += " -r "
-            args += " -p '%s'" % path
-            cmd = "%s %s" % (script, args)
-            log.debug("XXX: CMD = %s", cmd)
-            self._system(cmd)
+                apply_paths = exclude_path(path, exclude)
+                apply_paths = map(lambda y: (y, ' -r '), apply_paths)
+                if len(apply_paths) > 1:
+                    apply_paths.insert(0, (path, ''))
+            else:
+                apply_paths = [path]
+            for apath, flags in apply_paths:
+                fargs = args + "%s -p '%s'" % (flags, apath)
+                cmd = "%s %s" % (script, fargs)
+                log.debug("XXX: CMD = %s", cmd)
+                self._system(cmd)
 
         else:
-            flags = ""
             if recursive:
-                flags = "-R"
-            self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, path))
-            self._system("/bin/chmod %s %s '%s'" % (flags, mode, path))
+                apply_paths = exclude_path(path, exclude)
+                apply_paths = map(lambda y: (y, '-R'), apply_paths)
+                if len(apply_paths) > 1:
+                    apply_paths.insert(0, (path, ''))
+            else:
+                apply_paths = [path]
+            for apath, flags in apply_paths:
+                self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, apath))
+                self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
