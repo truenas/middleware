@@ -31,6 +31,7 @@ import re
 import smtplib
 import sqlite3
 import subprocess
+import sys
 import syslog
 import traceback
 from email.mime.multipart import MIMEMultipart
@@ -493,7 +494,7 @@ def nis_objects():
 
 
 def get_avatar_conf():
-    avatar_conf= {}
+    avatar_conf = {}
     avatar_vars = [
         'AVATAR_PROJECT',
         'AVATAR_PROJECT_SITE',
@@ -508,3 +509,21 @@ def get_avatar_conf():
         avatar_conf[av] = get_freenas_var_by_file("/etc/avatar.conf", av)
 
     return avatar_conf
+
+
+def get_samba4_path():
+    """
+    Returns the volume and path for the samba4 storage path
+    """
+    from freenasUI.storage.models import Volume
+
+    volume = Volume.objects.filter(vol_fstype='ZFS')
+    if not volume.exists():
+        volume = Volume.objects.filter(vol_fstype='UFS')
+        if not volume.exists():
+            print >> sys.stderr, "You need to create a volume to proceed!"
+            sys.exit(1)
+
+    volume = volume[0]
+    basename = "%s/.samba4" % volume.vol_name
+    return volume, basename

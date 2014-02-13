@@ -1,9 +1,6 @@
 #!/usr/local/bin/python
 
-import glob
 import os
-import platform
-import re
 import string
 import sys
 import tempfile
@@ -14,7 +11,6 @@ sys.path.extend([
     '/usr/local/www/freenasUI'
 ])
 
-from freenasUI import settings
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 # Make sure to load all modules
@@ -25,6 +21,7 @@ from django.db.models import Q
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.common.ssytem import get_samba4_path
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import list_datasets
 from freenasUI.services.models import (
@@ -33,32 +30,19 @@ from freenasUI.services.models import (
     CIFS,
     DomainController,
     LDAP,
-    NIS,
     NT4
 )
 
-from freenasUI.services.directoryservice import DirectoryService
 from freenasUI.sharing.models import CIFS_Share
-from freenasUI.storage.models import Task, Volume
+from freenasUI.storage.models import Task
 from freenasUI.system.models import Settings
 
 
 def create_samba4_dataset():
-    vol_fstype = 'ZFS'
     path = None
+    volume, basename = get_samba4_path()
 
-    volume = Volume.objects.filter(vol_fstype='ZFS')
-    if not volume.exists():
-        volume = Volume.objects.filter(vol_fstype='UFS')
-        if not volume.exists():
-            print >> sys.stderr, "You need to create a volume to proceed!"
-            sys.exit(1)
-        vol_fstype = 'UFS'
-
-    volume = volume[0]
-    basename = "%s/.samba4" % volume.vol_name
-
-    if vol_fstype == 'ZFS':
+    if volume.vol_fstype == 'ZFS':
         name = basename
         path = "/mnt/%s" % name
 
@@ -75,7 +59,7 @@ def create_samba4_dataset():
                 }
                 sys.exit(1)
 
-    elif vol_fstype == 'UFS':
+    elif volume.vol_fstype == 'UFS':
         path = "/mnt/%s" % basename
         if not os.path.exists(path):
             try:
@@ -83,8 +67,8 @@ def create_samba4_dataset():
 
             except Exception as e:
                 print >> sys.stderr, "Failed to create directory %(name)s: %(error)s" % {
-                   'name': path,
-                   'error': e
+                    'name': path,
+                    'error': e
                 }
                 sys.exit(1)
 
@@ -103,9 +87,8 @@ def is_within_zfs(mountpoint):
     if p.returncode != 0:
         return False
     if zfsout:
-        zfsout = zfsout[0] 
+        zfsout = zfsout[0]
 
-    fs = None
     for mp in zfsout.split('\n'):
         mp = mp.strip()
         if mp == '-':
@@ -121,27 +104,32 @@ def is_within_zfs(mountpoint):
 
     return False
 
+
 def get_server_services():
-    server_services = [ 'rpc', 'nbt', 'wrepl', 'ldap', 'cldap', 'kdc',
-        'drepl', 'winbind', 'ntp_signd', 'kcc', 'dnsupdate', 'dns', 'smb' ]
+    server_services = [
+        'rpc', 'nbt', 'wrepl', 'ldap', 'cldap', 'kdc', 'drepl', 'winbind',
+        'ntp_signd', 'kcc', 'dnsupdate', 'dns', 'smb'
+    ]
     return server_services
 
 
 def get_dcerpc_endpoint_servers():
-    dcerpc_endpoint_servers = [ 'epmapper', 'wkssvc', 'rpcecho', 'samr',
-        'netlogon', 'lsarpc', 'spoolss', 'drsuapi', 'dssetup', 'unixinfo',
-        'browser', 'eventlog6', 'backupkey', 'dnsserver', 'winreg', 'srvsvc' ]
+    dcerpc_endpoint_servers = [
+        'epmapper', 'wkssvc', 'rpcecho', 'samr', 'netlogon', 'lsarpc',
+        'spoolss', 'drsuapi', 'dssetup', 'unixinfo', 'browser', 'eventlog6',
+        'backupkey', 'dnsserver', 'winreg', 'srvsvc'
+    ]
     return dcerpc_endpoint_servers
 
 
 def directoryservice_enabled(ds=None):
     enabled = False
     if not ds:
-        return enabled  
+        return enabled
 
     try:
         if services.objects.filter(srv_service='directoryservice')[0].srv_enable:
-            settings = Settings.objects.all()[0]  
+            settings = Settings.objects.all()[0]
             if settings.stg_directoryservice == ds:
                 enabled = True
     except:
@@ -173,8 +161,8 @@ def nt4_enabled():
 def get_server_role():
     role = "standalone"
     if nt4_enabled() or activedirectory_enabled() or ldap_enabled():
-        role = "member"  
-    
+        role = "member"
+
     if domaincontroller_enabled():
         try:
             dc = DomainController.objects.all()[0]
@@ -184,16 +172,16 @@ def get_server_role():
 
     return role
 
-    
-def confset1(conf, line, space=4): 
+
+def confset1(conf, line, space=4):
     if not line:
         return
 
     i = 0
     str = ''
     while i < space:
-        str +=  ' '
-        i += 1 
+        str += ' '
+        i += 1
     line = str + line
 
     conf.append(line)
@@ -206,8 +194,8 @@ def confset2(conf, line, var, space=4):
     i = 0
     str = ''
     while i < space:
-        str +=  ' '
-        i += 1 
+        str += ' '
+        i += 1
     line = str + line
 
     if var:
@@ -217,8 +205,8 @@ def confset2(conf, line, var, space=4):
 def add_nt4_conf(smb4_conf):
     try:
         nt4 = NT4.objects.all()[0]
-    except:  
-        return  
+    except:
+        return
 
     with open("/usr/local/etc/lmhosts", "w") as f:
         f.write("%s\t%s\n" % (nt4.nt4_dcname, nt4.nt4_workgroup.upper()))
@@ -249,10 +237,13 @@ def add_ldap_conf(smb4_conf):
 
     confset1(smb4_conf, "security = user")
 
-    confset2(smb4_conf, "passdb backend = %s",
+    confset2(
+        smb4_conf,
+        "passdb backend = %s",
         "ldapsam:ldaps://%s" % ldap.ldap_hostname if \
         (ldap.ldap_ssl == 'on' or ldap.ldap_ssl == 'start_tls') else
-        "ldapsam:ldap://%s" % ldap.ldap_hostname)
+        "ldapsam:ldap://%s" % ldap.ldap_hostname
+    )
 
     confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_rootbasedn)
 
@@ -267,8 +258,11 @@ def add_ldap_conf(smb4_conf):
     confset2(smb4_conf, "ldap user suffix = %s", ldap.ldap_usersuffix)
     confset2(smb4_conf, "ldap group suffix = %s", ldap.ldap_groupsuffix)
     confset2(smb4_conf, "ldap machine suffix = %s", ldap.ldap_machinesuffix)
-    confset2(smb4_conf, "ldap ssl = %s",
-        "start tls" if (ldap.ldap_ssl == 'start_tls') else 'off')
+    confset2(
+        smb4_conf,
+        "ldap ssl = %s",
+        "start tls" if (ldap.ldap_ssl == 'start_tls') else 'off'
+    )
 
     confset1(smb4_conf, "ldap replication sleep = 1000")
     confset1(smb4_conf, "ldap passwd sync = yes")
@@ -315,7 +309,7 @@ def add_activedirectory_conf(smb4_conf):
     confset1(smb4_conf, "winbind enum groups = yes")
     confset1(smb4_conf, "winbind nested groups = yes")
     confset2(smb4_conf, "winbind use default domain = %s",
-        "yes" if ad.ad_use_default_domain else "no")  
+        "yes" if ad.ad_use_default_domain else "no")
     confset1(smb4_conf, "winbind refresh tickets = yes")
 
     confset2(smb4_conf, "allow trusted domains = %s",
@@ -329,10 +323,10 @@ def add_activedirectory_conf(smb4_conf):
         confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
         confset2(smb4_conf, "idmap config %s: range = 20000-20000000", ad.ad_workgroup)
 
-   
+
 def add_domaincontroller_conf(smb4_conf):
     try:
-        dc = DomainController.objects.all()[0] 
+        dc = DomainController.objects.all()[0]
         cifs = CIFS.objects.all()[0]
     except:
         return
@@ -351,12 +345,13 @@ def add_domaincontroller_conf(smb4_conf):
     confset2(smb4_conf, "dcerpc endpoint servers = %s",
         string.join(dcerpc_endpoint_servers, ',').rstrip(','))
 
+
 def generate_smb4_tdb(smb4_tdb):
     try:
         users = bsdUsers.objects.filter(bsdusr_smbhash__regex=r'^.+:.+:XXXX.+$',
             bsdusr_locked=0, bsdusr_password_disabled=0)
         for u in users:
-            smb4_tdb.append(u.bsdusr_smbhash)  
+            smb4_tdb.append(u.bsdusr_smbhash)
     except:
         return
 
@@ -407,7 +402,7 @@ def generate_smb4_conf(smb4_conf):
     confset2(smb4_conf, "ea support = %s",
         "yes" if cifs.cifs_srv_easupport else False)
     confset2(smb4_conf, "store dos attributes = %s",
-        "yes" if cifs.cifs_srv_dosattr else False) 
+        "yes" if cifs.cifs_srv_dosattr else False)
     confset2(smb4_conf, "hostname lookups = %s",
         "yes" if cifs.cifs_srv_hostlookup else False)
     confset2(smb4_conf, "unix extensions = %s",
@@ -443,10 +438,10 @@ def generate_smb4_conf(smb4_conf):
             add_nt4_conf(smb4_conf)
 
         elif ldap_enabled():
-            add_ldap_conf(smb4_conf)  
+            add_ldap_conf(smb4_conf)
 
         elif activedirectory_enabled():
-            add_activedirectory_conf(smb4_conf)  
+            add_activedirectory_conf(smb4_conf)
 
     elif role == 'standalone':
         confset1(smb4_conf, "server role = standalone")
@@ -459,7 +454,6 @@ def generate_smb4_conf(smb4_conf):
             confset2(smb4_conf, "force group = %s", cifs.cifs_srv_guest)
             confset1(smb4_conf, "passdb backend = tdbsam:/var/etc/private/passdb.tdb")
 
-
     if role != 'dc':
         confset1(smb4_conf, "pid directory = /var/run/samba")
         confset1(smb4_conf, "smb passwd file = /var/etc/private/smbpasswd")
@@ -470,8 +464,8 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "client ntlmv2 auth = yes")
     confset2(smb4_conf, "dos charset = %s", cifs.cifs_srv_doscharset)
     confset2(smb4_conf, "unix charset = %s", cifs.cifs_srv_unixcharset)
-    
-    if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel != True:
+
+    if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel is not True:
         confset2(smb4_conf, "log level = %s", cifs.cifs_srv_loglevel)
 
     for line in cifs.cifs_srv_smb_options.split('\n'):
@@ -484,9 +478,9 @@ def generate_smb4_conf(smb4_conf):
         if activedirectory_enabled():
             try:
                 ad = ActiveDirectory.objects.all()[0]
-                if not ad.ad_use_default_domain:  
-                    valid_users_path = "%D/%U"  
-                    valid_users = "%D\%U"  
+                if not ad.ad_use_default_domain:
+                    valid_users_path = "%D/%U"
+                    valid_users = "%D\%U"
             except:
                 pass
 
@@ -519,7 +513,7 @@ def generate_smb4_shares(smb4_shares):
         if p.returncode != 0:
             continue
         if zfsout:
-            zfsout = zfsout[0] 
+            zfsout = zfsout[0]
 
         fs = None
         task = None
@@ -630,7 +624,7 @@ def provision_smb4():
     if p.returncode != 0:
         return False
 
-    try: 
+    try:
         pfile = "/var/db/samba4/.provisioned"
         with open(pfile, 'w') as f:
             f.close()
@@ -682,7 +676,7 @@ def smb4_setup():
         samba4_dataset = create_samba4_dataset()
         try:
             os.symlink(samba4_dataset, statedir)
-        except Exception as e:  
+        except Exception as e:
             print >> sys.stderr, "Unable to create symlink '%s' -> '%s' (%s)" % (
                 samba4_dataset, statedir, e)
 
@@ -717,7 +711,7 @@ def main():
     role = get_server_role()
     if role == 'dc' and not smb4_domain_provisioned():
         provision_smb4()
-         
+
     with open(smb_conf_path, "w") as f:
         for line in smb4_conf:
             f.write(line + '\n')
