@@ -319,6 +319,15 @@ do_add_port ()
 		envargs="$envargs MAKEOBJDIRPREFIX=$makeobjdirprefix"
 	fi
 
+	local args debug
+	for arg in $*; do 
+		if echo $arg|grep -Eq 'WITH_DEBUG' ; then
+			debug="WITH_DEBUG=yes"
+		else
+			args="$args $arg"
+		fi
+	done
+
 	# Improvement: Don't know why package-recursive don't works here
 	CR "env \
 	    TARGET=${NANO_ARCH} \
@@ -328,8 +337,8 @@ do_add_port ()
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    SRC_BASE=/usr/src \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports_dir/$port_path \
-	    clean all install package BATCH=yes -DUSE_PACKAGE_DEPENDS \
-	    $* -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
+	    clean all install package BATCH=yes $debug -DUSE_PACKAGE_DEPENDS \
+	    $args -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	# XXX: this is removing needed artifacts for saved build environments
 	# can we remove the following 2 rm-rfs?
@@ -476,8 +485,13 @@ customize_cmd fetch_background
 # Add a port from the basic NANO_PORTS directory
 add_port ()
 {
-
    add_port_generic ${NANO_PORTS} $*
+}
+
+# Add a port from the basic NANO_PORTS directory with WITH_DEBUG set
+add_port_debug ()
+{
+   add_port_generic ${NANO_PORTS} $* WITH_DEBUG=yes
 }
 
 # Add a port from a specific repo!
