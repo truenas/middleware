@@ -401,6 +401,8 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "obey pam restrictions = Yes")
     confset1(smb4_conf, "directory name cache size = 0")
 
+    confset1(smb4_conf, "panic action = /usr/local/libexec/samba/samba-backtrace")
+
     confset2(smb4_conf, "server string = %s", cifs.cifs_srv_description)
     confset2(smb4_conf, "ea support = %s",
         "yes" if cifs.cifs_srv_easupport else False)
