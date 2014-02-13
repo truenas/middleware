@@ -7,7 +7,10 @@ smbd_pid="$(cat /var/run/samba/smbd.pid 2>/dev/null)"
 winbindd_pid="$(cat /var/run/samba/winbindd.pid 2>/dev/null)"
 tracefile="/var/log/samba4/samba.backtraces"
 
-rm -f "${tracefile}"
+if [ -f "${tracefile}" ]
+then
+	mv "${tracefile}" "${tracefile}.$(date +'%Y%m%d%H%M%S')"
+fi
 
 if [ -n "${nmbd_pid}" ]
 then
