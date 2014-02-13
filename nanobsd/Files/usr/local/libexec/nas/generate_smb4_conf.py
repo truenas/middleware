@@ -21,7 +21,7 @@ from django.db.models import Q
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.common.ssytem import get_samba4_path
+from freenasUI.common.system import get_samba4_path
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import list_datasets
 from freenasUI.services.models import (
