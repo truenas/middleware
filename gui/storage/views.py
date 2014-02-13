@@ -514,6 +514,9 @@ def zfsvolume_edit(request, object_id):
 
 def mp_permission(request, path):
     path = urllib.unquote_plus(path)
+    #FIXME: dojo cannot handle urls partially urlencoded %2F => /
+    if not path.startswith('/'):
+        path = '/' + path
     if request.method == 'POST':
         form = forms.MountPointAccessForm(request.POST)
         if form.is_valid():
