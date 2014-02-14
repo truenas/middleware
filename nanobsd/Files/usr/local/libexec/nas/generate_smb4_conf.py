@@ -445,14 +445,9 @@ def generate_smb4_conf(smb4_conf):
 
     elif role == 'standalone':
         confset1(smb4_conf, "server role = standalone")
-
         confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
         confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
-        confset2(smb4_conf, "security = %s", cifs.cifs_srv_authmodel)
-        if cifs.cifs_srv_authmodel == 'share':
-            confset2(smb4_conf, "force user = %s", cifs.cifs_srv_guest)
-            confset2(smb4_conf, "force group = %s", cifs.cifs_srv_guest)
-            confset1(smb4_conf, "passdb backend = tdbsam:/var/etc/private/passdb.tdb")
+        confset1(smb4_conf, "security = user")
 
     if role != 'dc':
         confset1(smb4_conf, "pid directory = /var/run/samba")

@@ -195,7 +195,6 @@ class CIFSResourceTest(APITestCase):
             u'cifs_srv_aio_enable': False,
             u'cifs_srv_aio_rs': 4096,
             u'cifs_srv_aio_ws': 4096,
-            u'cifs_srv_authmodel': u'user',
             u'cifs_srv_description': u'',
             u'cifs_srv_dirmask': u'',
             u'cifs_srv_dosattr': False,

@@ -71,14 +71,6 @@ class services(Model):
 
 
 class CIFS(Model):
-    cifs_srv_authmodel = models.CharField(
-            max_length=10,
-            choices=choices.CIFSAUTH_CHOICES,
-            default='user',
-            verbose_name=_("Authentication Model"),
-            help_text=_("Using Active Directory or LDAP authentication will "
-                "supersede this option"),
-            )
     cifs_srv_netbiosname = models.CharField(
             max_length=120,
             verbose_name=_("NetBIOS name")

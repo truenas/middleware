@@ -167,13 +167,6 @@ VolumeEncrypt_Choices = (
         (2, _('Encrypted, with passphrase')),
         )
 
-## Services|CIFS/SMB|Settings
-## This will be overrided if LDAP or ActiveDirectory is enabled.
-CIFSAUTH_CHOICES = (
-        ('share', _('Anonymous')),
-        ('user', _('Local User')),
-        )
-
 CIFS_SMB_PROTO_CHOICES = (
        ('CORE', _('CORE')),
        ('COREPLUS', _('COREPLUS')),
