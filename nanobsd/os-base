@@ -254,6 +254,7 @@ add_port security/pam_mkhomedir
 add_port shells/bash OPTIONS_FILE_UNSET+=NLS
 add_port shells/ksh93
 add_port shells/mksh
+add_port shells/zsh
 add_port shells/scponly
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-libs
