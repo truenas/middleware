@@ -375,6 +375,7 @@ def generate_smb4_conf(smb4_conf):
     confset2(smb4_conf, "server min protocol = %s", cifs.cifs_srv_min_protocol)
     confset2(smb4_conf, "server max protocol = %s", cifs.cifs_srv_max_protocol)
 
+    confset1(smb4_conf, "ea support = yes")
     confset1(smb4_conf, "encrypt passwords = yes")
     confset1(smb4_conf, "dns proxy = no")
     confset1(smb4_conf, "strict locking = no")
@@ -542,6 +543,7 @@ def generate_smb4_shares(smb4_shares):
             "yes" if share.cifs_inheritperms else "no")
 
         vfs_objects = []
+        #vfs_objects.append('vfs_aio_pthread')
         if share.cifs_recyclebin:
             vfs_objects.append('recycle')
         if task:
@@ -549,7 +551,7 @@ def generate_smb4_shares(smb4_shares):
         if is_within_zfs(share.cifs_path):
             vfs_objects.append('zfsacl')
         vfs_objects.append('streams_xattr')
-        vfs_objects.append('vfs_aio_pthread')
+        vfs_objects.append('aio_pthread')
 
         confset1(smb4_shares, "recycle:repository = .recycle/%U")
         confset1(smb4_shares, "recycle:keeptree = yes")
