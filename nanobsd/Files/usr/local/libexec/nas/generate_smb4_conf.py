@@ -542,8 +542,6 @@ def generate_smb4_shares(smb4_shares):
             "yes" if share.cifs_inheritperms else "no")
 
         vfs_objects = []
-        vfs_objects.append('vfs_aio_pthread')
-
         if share.cifs_recyclebin:
             vfs_objects.append('recycle')
         if task:
@@ -551,6 +549,7 @@ def generate_smb4_shares(smb4_shares):
         if is_within_zfs(share.cifs_path):
             vfs_objects.append('zfsacl')
         vfs_objects.append('streams_xattr')
+        vfs_objects.append('vfs_aio_pthread')
 
         confset1(smb4_shares, "recycle:repository = .recycle/%U")
         confset1(smb4_shares, "recycle:keeptree = yes")
