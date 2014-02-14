@@ -543,7 +543,6 @@ def generate_smb4_shares(smb4_shares):
             "yes" if share.cifs_inheritperms else "no")
 
         vfs_objects = []
-        #vfs_objects.append('vfs_aio_pthread')
         if share.cifs_recyclebin:
             vfs_objects.append('recycle')
         if task:
