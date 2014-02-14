@@ -391,7 +391,7 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "printcap name = /dev/null")
     confset1(smb4_conf, "disable spoolss = yes")
     confset1(smb4_conf, "getwd cache = yes")
-    confset2(smb4_conf, "guest account = %s", cifs.cifs_srv_guest)
+    confset2(smb4_conf, "guest account = %s", cifs.cifs_srv_guest.encode('utf8'))
     confset1(smb4_conf, "map to guest = Bad Password")
     confset1(smb4_conf, "obey pam restrictions = Yes")
     confset1(smb4_conf, "directory name cache size = 0")
@@ -532,11 +532,11 @@ def generate_smb4_shares(smb4_shares):
                 task = False
 
         confset1(smb4_shares, "\n")
-        confset2(smb4_shares, "[%s]", share.cifs_name, space=0)
-        confset2(smb4_shares, "path = %s", share.cifs_path)
+        confset2(smb4_shares, "[%s]", share.cifs_name.encode('utf8'), space=0)
+        confset2(smb4_shares, "path = %s", share.cifs_path.encode('utf8'))
         confset1(smb4_shares, "printable = no")
         confset1(smb4_shares, "veto files = /.snap/.windows/.zfs/")
-        confset2(smb4_shares, "comment = %s", share.cifs_comment)
+        confset2(smb4_shares, "comment = %s", share.cifs_comment.encode('utf8'))
         confset2(smb4_shares, "writeable = %s",
             "no" if share.cifs_ro else "yes")
         confset2(smb4_shares, "browseable = %s",
@@ -570,7 +570,7 @@ def generate_smb4_shares(smb4_shares):
             confset1(smb4_shares, "shadow: format = auto-%%Y%%m%%d.%%H%%M-%s%s" % (
                 task.task_ret_count, task.task_ret_unit[0]))
         if vfs_objects:
-            confset2(smb4_shares, "vfs objects = %s", string.join(vfs_objects, ' '))
+            confset2(smb4_shares, "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
 
         confset2(smb4_shares, "hide dot files = %s",
             "no" if share.cifs_showhiddenfiles else "yes")
