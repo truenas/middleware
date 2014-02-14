@@ -36,8 +36,8 @@ kerberos_start()
 			principals="$(ktutil -k "${keytab}" list |tail +4|awk '{ print $3 }')"
 			for p in ${principals}
 			do
-				AD_log "kerberos_start: kinit -t ${keytab} -k ${p}"
-				kinit -t "${keytab}" -k "${p}"
+				AD_log "kerberos_start: kinit --renewable -t ${keytab} -k ${p}"
+				kinit -t "${keytab}" --renewable -k "${p}"
 				if [ "$?" != "0" ]
 				then
 					res=1
@@ -63,10 +63,10 @@ kerberos_start()
 			pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"
 			echo -n "${bindpw}" > ${pwfile}
 
-			AD_log "kerberos_start: /usr/bin/kinit --password-file=${pwfile} " \
-			    "${bindname}@${domainname}"
-			__AD_tc ${timeout} /usr/bin/kinit --password-file="${pwfile}" \
-			    "${bindname}@${domainname}"
+			AD_log "kerberos_start: /usr/bin/kinit --renewable " \
+				"--password-file=${pwfile} ${bindname}@${domainname}"
+			__AD_tc ${timeout} /usr/bin/kinit --renewable \
+				--password-file="${pwfile}" "${bindname}@${domainname}"
 			res=$?
 
 			local ok="Failed"
@@ -122,10 +122,20 @@ kerberos_stop()
 	kdestroy
 }
 
+kerberos_renew()
+{
+	if dirsrv_enabled activedirectory
+	then
+		kinit -R
+	fi
+}
+
 name="ix-kinit"
 start_cmd='kerberos_start'
 status_cmd='kerberos_status'
 stop_cmd='kerberos_stop'
+renew_cmd="kerberos_renew"
+extra_commands="renew"
 
 load_rc_config $name
 run_rc_command "$1"
