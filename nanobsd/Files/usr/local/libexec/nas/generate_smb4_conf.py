@@ -340,10 +340,10 @@ def add_domaincontroller_conf(smb4_conf):
     confset2(smb4_conf, "dns forwarder = %s", dc.dc_dns_forwarder)
     confset1(smb4_conf, "idmap_ldb:use rfc2307 = yes")
 
-    confset2(smb4_conf, "server services = %s",
-        string.join(server_services, ',').rstrip(','))
-    confset2(smb4_conf, "dcerpc endpoint servers = %s",
-        string.join(dcerpc_endpoint_servers, ',').rstrip(','))
+    #confset2(smb4_conf, "server services = %s",
+    #    string.join(server_services, ',').rstrip(','))
+    #confset2(smb4_conf, "dcerpc endpoint servers = %s",
+    #    string.join(dcerpc_endpoint_servers, ',').rstrip(','))
 
 
 def generate_smb4_tdb(smb4_tdb):
@@ -560,10 +560,10 @@ def generate_smb4_shares(smb4_shares):
         confset1(smb4_shares, "recycle:subdir_mode = 0700")
 
         if task:
-            confset1(smb4_shares, "shadow: snapdir = .zfs/snapshot")
-            confset1(smb4_shares, "shadow: sort = desc")
-            confset1(smb4_shares, "shadow: localtime = yes")
-            confset1(smb4_shares, "shadow: format = auto-%%Y%%m%%d.%%H%%M-%s%s" % (
+            confset1(smb4_shares, "shadow:snapdir = .zfs/snapshot")
+            confset1(smb4_shares, "shadow:sort = desc")
+            confset1(smb4_shares, "shadow:localtime = yes")
+            confset1(smb4_shares, "shadow:format = auto-%%Y%%m%%d.%%H%%M-%s%s" % (
                 task.task_ret_count, task.task_ret_unit[0]))
         if vfs_objects:
             confset2(smb4_shares, "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
