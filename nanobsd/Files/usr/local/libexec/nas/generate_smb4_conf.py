@@ -656,8 +656,10 @@ def smb4_unlink(dir):
 
 def smb4_setup():
     statedir = "/var/db/samba4"
-
     volume, basename = get_samba4_path()
+
+    if os.path.islink(statedir) and not os.path.exists(statedir):
+        os.unlink(statedir)
     if volume.is_decrypted() and not os.path.islink(statedir):
         if os.path.exists(statedir):
             try:
