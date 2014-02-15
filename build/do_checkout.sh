@@ -170,7 +170,7 @@ generic_checkout_git()
             git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_name}
 	fi
 	echo $spl | grep -q x || set +x
-	echo "${my_repo}" `git rev-parse HEAD` >> ${SRCS_MANIFEST}
+	echo "${my_repo}" `cd ${checkout_name} && git rev-parse HEAD` >> ${SRCS_MANIFEST}
 	)
 }
 
