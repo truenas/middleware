@@ -559,11 +559,10 @@ def generate_smb4_shares(smb4_shares):
         confset1(smb4_shares, "recycle:directory_mode = 0777")
         confset1(smb4_shares, "recycle:subdir_mode = 0700")
 
-        confset1(smb4_shares, "shadow: snapdir = .zfs/snapshot")
-        confset1(smb4_shares, "shadow: sort = desc")
-        confset1(smb4_shares, "shadow: localtime = yes")
-
         if task:
+            confset1(smb4_shares, "shadow: snapdir = .zfs/snapshot")
+            confset1(smb4_shares, "shadow: sort = desc")
+            confset1(smb4_shares, "shadow: localtime = yes")
             confset1(smb4_shares, "shadow: format = auto-%%Y%%m%%d.%%H%%M-%s%s" % (
                 task.task_ret_count, task.task_ret_unit[0]))
         if vfs_objects:
