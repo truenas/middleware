@@ -375,7 +375,6 @@ def generate_smb4_conf(smb4_conf):
     confset2(smb4_conf, "server min protocol = %s", cifs.cifs_srv_min_protocol)
     confset2(smb4_conf, "server max protocol = %s", cifs.cifs_srv_max_protocol)
 
-    confset1(smb4_conf, "ea support = yes")
     confset1(smb4_conf, "encrypt passwords = yes")
     confset1(smb4_conf, "dns proxy = no")
     confset1(smb4_conf, "strict locking = no")
