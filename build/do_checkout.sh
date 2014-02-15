@@ -14,6 +14,8 @@ TOP="$(pwd)"
 # only checkout sources
 CHECKOUT_ONLY=false
 
+SRCS_MANIFEST="${AVATAR_ROOT}/FreeBSD/repo-manifest"
+
 # Using shallow "--depth 1" git checkouts is problematic, so we default
 # it to off.
 #  https://github.com/phinze/homebrew-cask/issues/1003
@@ -168,12 +170,8 @@ generic_checkout_git()
             git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_name}
 	fi
 	echo $spl | grep -q x || set +x
+	echo "${my_repo}" `git rev-parse HEAD` >> ${SRCS_MANIFEST}
 	)
-}
-
-freebsd_checkout_git()
-{
-    generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
 }
 
 checkout_freebsd_source()
@@ -204,7 +202,7 @@ checkout_freebsd_source()
 	mkdir -p ${AVATAR_ROOT}/FreeBSD
 
 	echo "Use git set!"
-	freebsd_checkout_git
+	generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
 
 # Nuke newly created files to avoid build errors.
 	git_status_ok="$AVATAR_ROOT/FreeBSD/.git_status_ok"
