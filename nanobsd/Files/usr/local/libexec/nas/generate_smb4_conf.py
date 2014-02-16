@@ -394,7 +394,7 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "disable spoolss = yes")
     confset1(smb4_conf, "getwd cache = yes")
     confset2(smb4_conf, "guest account = %s", cifs.cifs_srv_guest.encode('utf8'))
-    confset1(smb4_conf, "map to guest = Bad Password")
+    confset1(smb4_conf, "map to guest = Bad User")
     confset1(smb4_conf, "obey pam restrictions = Yes")
     confset1(smb4_conf, "directory name cache size = 0")
 
