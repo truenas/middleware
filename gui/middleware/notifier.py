@@ -2310,7 +2310,7 @@ class notifier:
                 if len(apply_paths) > 1:
                     apply_paths.insert(0, (path, ''))
             else:
-                apply_paths = [path]
+                apply_paths = [(path, '')]
             for apath, flags in apply_paths:
                 fargs = args + "%s -p '%s'" % (flags, apath)
                 cmd = "%s %s" % (script, fargs)
@@ -2324,7 +2324,7 @@ class notifier:
                 if len(apply_paths) > 1:
                     apply_paths.insert(0, (path, ''))
             else:
-                apply_paths = [path]
+                apply_paths = [(path, '')]
             for apath, flags in apply_paths:
                 self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, apath))
                 self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
