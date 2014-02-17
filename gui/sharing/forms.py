@@ -115,6 +115,8 @@ class AFP_ShareForm(ModelForm):
 
     def clean_afp_umask(self):
         umask = self.cleaned_data.get("afp_umask")
+        if umask in (None, ''):
+            return umask
         try:
             int(umask)
         except:

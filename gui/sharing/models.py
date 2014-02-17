@@ -167,10 +167,11 @@ class AFP_Share(Model):
             verbose_name=_("Default directory permission"),
             )
     afp_umask = models.CharField(
-            max_length=3,
-            default="000",
-            verbose_name=_("Default umask"),
-            )
+        max_length=3,
+        default="000",
+        blank=True,
+        verbose_name=_("Default umask"),
+    )
 
     def __unicode__(self):
         return unicode(self.afp_name)
