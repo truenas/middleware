@@ -480,6 +480,12 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 )
                 self.fields['bsdusr_mode'].widget.attrs['disabled'] = True
                 self.fields['bsdusr_mode'].required = False
+            if self.instance.bsdusr_locked is True:
+                self.fields['bsdusr_password_disabled'].widget.attrs[
+                    'disabled'
+                ] = True
+            if self.instance.bsdusr_password_disabled is True:
+                self.fields['bsdusr_locked'].widget.attrs['disabled'] = True
             try:
                 self.fields['bsdusr_sshpubkey'].initial = open(
                     '%s/.ssh/authorized_keys' % (
