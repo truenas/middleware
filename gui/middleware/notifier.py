@@ -1985,6 +1985,7 @@ class notifier:
                              % (vol_fstype, ))
 
         self._reload_disk()
+        self._encvolume_detach(volume)
         self.__rmdir_mountpoint(vol_mountpath)
 
     def _reload_disk(self):
@@ -3262,7 +3263,14 @@ class notifier:
                 stderr)
         return False
 
-    def volume_detach(self, vol_name, vol_fstype):
+    def _encvolume_detach(self, volume):
+        """Detach GELI providers after detaching volume."""
+        """See bug: #3964"""
+        if volume.vol_encrypt > 0:
+            for ed in volume.encrypteddisk_set.all():
+                n.geli_detach(ed.encrypted_provider)
+
+    def volume_detach(self, volume):
         """Detach a volume from the system
 
         This either executes exports a zpool or umounts a generic volume (e.g.
@@ -3294,6 +3302,9 @@ class notifier:
             MiddlewareError: the volume could not be detached cleanly.
             MiddlewareError: the volume's mountpoint couldn't be removed.
         """
+
+        vol_name = volume.vol_name
+        vol_fstype = volume.vol_fstype
 
         succeeded = False
         provider = None
@@ -3329,6 +3340,8 @@ class notifier:
             raise MiddlewareError('Failed to detach %s with "%s" (exited '
                                   'with %d): %s' %
                                   (vol_name, cmd, p1.returncode, stderr))
+
+        self._encvolume_detach(volume)
         self.__rmdir_mountpoint(vol_mountpath)
 
 

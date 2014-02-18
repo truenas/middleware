@@ -239,13 +239,7 @@ class Volume(Model):
         elif destroy:
             n.destroy("volume", self)
         else:
-            n.volume_detach(self.vol_name, self.vol_fstype)
-
-        # Detach geli providers
-        # TODO: Remove once ZFS bug has been fixed for detach -l
-        if self.vol_encrypt > 0:
-            for ed in self.encrypteddisk_set.all():
-                n.geli_detach(ed.encrypted_provider)
+            n.volume_detach(self)
 
         return (svcs, reloads)
 
