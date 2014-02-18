@@ -1753,7 +1753,8 @@ class SnapshotResource(DojoResource):
                     'storage_clonesnap',
                     kwargs={
                         'snapshot': bundle.obj.fullname,
-                    }),
+                    }
+                ) + ('?volume=true' if bundle.obj.parent_type == 'volume' else ''),
                 'rollback_url': reverse('storage_snapshot_rollback', kwargs={
                     'dataset': bundle.obj.filesystem,
                     'snapname': bundle.obj.name,
