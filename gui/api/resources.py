@@ -836,6 +836,9 @@ class VolumeResourceMixin(NestedMixin):
                     bundle.data['_change_passphrase_url'] = reverse(
                         'storage_volume_change_passphrase',
                         kwargs={'object_id': bundle.obj.id})
+                    bundle.data['_volume_lock_url'] = reverse(
+                        'storage_volume_lock',
+                        kwargs={'object_id': bundle.obj.id})
 
         attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
         for attr in attr_fields + ('status', ):

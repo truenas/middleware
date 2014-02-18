@@ -292,7 +292,13 @@ class VolumeFAdmin(BaseFreeAdmin):
             icon="zpool_status",
             fstype="ALL",
         )
-
+        actions['VolLock'] = self._action_builder(
+            "volume_lock",
+            label=_('Lock Volume'),
+            icon="key_change",
+            has_enc=True,
+            enc_level=2,
+        )
         actions['VolCreatePass'] = self._action_builder(
             "create_passphrase",
             label=_('Create Passphrase'),

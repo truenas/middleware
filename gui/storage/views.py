@@ -951,6 +951,15 @@ def volume_change_passphrase(request, object_id):
     })
 
 
+def volume_lock(request, object_id):
+    volume = models.Volume.objects.get(id=object_id)
+    assert(volume.vol_encrypt > 0)
+
+    if request.method == "POST":
+        notifier().volume_detach(volume)
+        return JsonResp(request, message=_("Volume locked"))
+    return render(request, "storage/lock.html")
+
 def volume_unlock(request, object_id):
 
     volume = models.Volume.objects.get(id=object_id)

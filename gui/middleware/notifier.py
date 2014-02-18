@@ -3268,7 +3268,7 @@ class notifier:
         """See bug: #3964"""
         if volume.vol_encrypt > 0:
             for ed in volume.encrypteddisk_set.all():
-                n.geli_detach(ed.encrypted_provider)
+                self.geli_detach(ed.encrypted_provider)
 
     def volume_detach(self, volume):
         """Detach a volume from the system
