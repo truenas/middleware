@@ -1,7 +1,6 @@
 #!/usr/local/bin/python
 
 import os
-import string
 import sys
 import tempfile
 import time
@@ -333,8 +332,8 @@ def add_domaincontroller_conf(smb4_conf):
     except:
         return
 
-    server_services = get_server_services()
-    dcerpc_endpoint_servers = get_dcerpc_endpoint_servers()
+    #server_services = get_server_services()
+    #dcerpc_endpoint_servers = get_dcerpc_endpoint_servers()
 
     confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
     confset2(smb4_conf, "workgroup = %s", dc.dc_domain.upper())
@@ -380,10 +379,7 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "encrypt passwords = yes")
     confset1(smb4_conf, "dns proxy = no")
     confset1(smb4_conf, "strict locking = no")
-    confset1(smb4_conf, "read raw = yes")
-    confset1(smb4_conf, "write raw = yes")
     confset1(smb4_conf, "oplocks = yes")
-    confset1(smb4_conf, "max xmit = 65535")
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 10")
     confset1(smb4_conf, "syslog only = yes")
@@ -405,6 +401,11 @@ def generate_smb4_conf(smb4_conf):
         "yes" if cifs.cifs_srv_easupport else False)
     confset2(smb4_conf, "store dos attributes = %s",
         "yes" if cifs.cifs_srv_dosattr else False)
+    if cifs.cifs_srv_dosattr:
+        confset1(smb4_conf, "map archive = no")
+        confset1(smb4_conf, "map readonly = no")
+        confset1(smb4_conf, "map hidden = no")
+        confset1(smb4_conf, "map system = no")
     confset2(smb4_conf, "hostname lookups = %s",
         "yes" if cifs.cifs_srv_hostlookup else False)
     confset2(smb4_conf, "unix extensions = %s",
@@ -579,8 +580,6 @@ def generate_smb4_shares(smb4_shares):
             "yes" if share.cifs_guestonly else False)
 
         confset1(smb4_shares, "inherit acls = Yes")
-        confset1(smb4_shares, "map archive = No")
-        confset1(smb4_shares, "map readonly = no")
         confset1(smb4_shares, "nfs4:mode = special")
         confset1(smb4_shares, "nfs4:acedup = merge")
         confset1(smb4_shares, "nfs4:chown = yes")
