@@ -254,8 +254,7 @@ class Advanced(Model):
     adv_system_pool = models.CharField(
         max_length=1024,
         verbose_name=_("System dataset pool"),
-        choices=(),
-        blank=True  
+        choices=()
     )
 
     class Meta:

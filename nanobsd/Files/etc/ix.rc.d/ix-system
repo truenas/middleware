@@ -1,0 +1,89 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-system
+# BEFORE: samba_server ix-syslogd
+
+. /etc/rc.freenas
+
+dataset_exists()
+{
+	local ds="${1}"
+
+	if [ -z "${ds}" ]
+	then
+		return 1
+	fi		
+
+	/sbin/zfs list -H "${ds}" >/dev/null 2>&1
+	if [ "$?" != "0" ]
+	then
+		return 1
+	fi
+
+	return 0
+}
+
+system_start()
+{
+	local system_datasets="samba4 syslog cores"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		adv_system_pool
+	FROM
+		system_advanced
+	ORDER BY
+		-id
+	LIMIT 1
+	" | \
+	while read -r system_pool
+	do
+		local system_dataset="${system_pool}/.system"
+
+		if ! dataset_exists "${system_dataset}"
+		then
+			/sbin/zfs create "${system_dataset}"
+			if ! dataset_exists "${system_dataset}"
+			then
+				echo "Unable to create ${system_dataset}"
+				exit 1
+			fi
+		fi
+
+		for ds in ${system_datasets}
+		do
+			if dataset_exists "${system_dataset}/${ds}"
+			then
+				continue
+			fi
+
+			/sbin/zfs create "${system_dataset}/${ds}"
+			if ! dataset_exists "${system_dataset}"
+			then
+				echo "Unable to create ${system_dataset}"
+				exit 1
+			fi
+			if [ "${ds}" = "cores" ]
+			then
+				local corepath="$(zfs list -H "${system_dataset}/cores"|awk '{ print $5 }')"
+				if [ -n "${corepath}" ]
+				then
+					chmod 775 "${corepath}"
+				fi
+			fi
+		done
+	done
+
+	return 0
+}
+
+name="ix-system"
+start_cmd='system_start'
+stop_cmd=':'
+status_cmd=':'
+            
+load_rc_config $name
+run_rc_command $*

@@ -4697,6 +4697,11 @@ class notifier:
         #)
         return rv
 
+    def create_system_datasets(self):
+        res = False
+        if self._system_nolog("/usr/sbin/service ix-system start") == 0:
+            res = True
+        return res
 
 def usage():
     usage_str = """usage: %s action command
