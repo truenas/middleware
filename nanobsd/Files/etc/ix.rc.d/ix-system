@@ -63,7 +63,7 @@ system_start()
 			/sbin/zfs create "${system_dataset}/${ds}"
 			if ! dataset_exists "${system_dataset}"
 			then
-				echo "Unable to create ${system_dataset}"
+				echo "Unable to create ${system_dataset}/${ds}"
 				exit 1
 			fi
 			if [ "${ds}" = "cores" ]
