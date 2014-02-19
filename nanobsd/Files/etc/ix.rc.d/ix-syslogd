@@ -7,7 +7,7 @@
 # REQUIRE: zfs
 # BEFORE: syslogd
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 generate_syslog_conf()
 {
@@ -37,103 +37,119 @@ generate_syslog_conf()
 	done
 }
 
+get_system_pool()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		adv_system_pool
+	FROM
+		system_advanced
+	ORDER BY
+		-id
+	LIMIT 1
+	" | \
+	while read -r system_pool
+	do
+		echo "${system_pool}"
+	done
+}
+
+get_system_dataset()
+{
+	local system_pool="$(get_system_pool)"
+
+	if [ -n "${system_pool}" ]
+	then
+		echo "${system_pool}/.system"
+	fi
+}
+
+get_syslog_dataset()
+{
+	local system_dataset="$(get_system_dataset)"
+
+	if [ -n "${system_dataset}" ]
+	then
+		echo "${system_dataset}/syslog"
+	fi
+}
+
 ix_syslogd_start()
 {
 	generate_syslog_conf
 
-	local syslog_volumes="$(zfs list -H -o name |grep -i syslog)"
-	if [ -z "${syslog_volumes}" ]
+	local system_dataset="$(get_system_dataset)"
+	local syslog_dataset="$(get_syslog_dataset)"
+
+	if [ -z "${syslog_dataset}" ]
 	then
 		return 0
 	fi
 
-	for sv in ${syslog_volumes}
-	do
-		zfs list -H|egrep -qw "^${sv}" >/dev/null 2>&1
-		if [ "$?" != "0" ]
-		then
-			continue
+	local mp="/mnt/${syslog_dataset}"
+
+	/etc/rc.d/syslogd status >/dev/null 2>&1
+	if [ "$?" = "0" ]
+	then
+		/etc/rc.d/syslogd forcestop
+	fi
+
+	#
+	#	log directory exists, pick up any new files or
+	#	directories and create them. Existing files will be
+	#	appended. This is done this way so that ownership and
+	#	permissions are always preserved.
+	#
+	if [ -d "${mp}/log" ]
+	then
+
+		#
+		#	Pick up any new directories and sync them
+		#
+		if [ ! -L /var/log ]; then
+			for dir in $(find /var/log/ -type d)
+			do
+				local dst="${mp}/log/${dir#/var/log/}"
+				if [ ! -d "${dst}" ]
+				then
+					/usr/local/bin/rsync -avz ${dir}/* ${dst}/ >/dev/null 2>&1
+				fi
+			done
 		fi
 
-		local bn="$(basename ${sv})"
-
-		echo "${bn}"|egrep -qi '^syslog$' >/dev/null 2>&1
-		if [ "$?" = "0" ]
-		then
-			local mp="$(zfs list -H|egrep -w "^${sv}"|awk '{ print $5 }')"
-			if [ -z "${mp}" ]
-			then
-				break
-			fi
-
-			/etc/rc.d/syslogd status >/dev/null 2>&1
-			if [ "$?" = "0" ]
-			then
-				/etc/rc.d/syslogd stop
-			fi
-
-			#
-			#	log directory exists, pick up any new files or
-			#	directories and create them. Existing files will be
-			#	appended. This is done this way so that ownership and
-			#	permissions are always preserved.
-			#
-			if [ -d "${mp}/log" ]
-			then
-
-				#
-				#	Pick up any new directories and sync them
-				#
-				if [ ! -L /var/log ]; then
-					for dir in $(find /var/log/ -type d)
-					do
-						local dst="${mp}/log/${dir#/var/log/}"
-
-						if [ ! -d "${dst}" ]
-						then
-							/usr/local/bin/rsync -avz ${dir}/* ${dst}/ >/dev/null 2>&1
-						fi
-					done
+		#
+		#	Find all files that are not a directory and see if
+		#	they exist. If the file exists already, append to
+		#	it, otherwise, copy it over.
+		#
+		if [ ! -L /var/log ]; then
+			for file in $(find /var/log/ ! -type d)
+			do
+				local dst="${mp}/log/${file#/var/log/}"
+				if [ ! -f "${dst}" ]
+				then
+					cp -p ${file} ${dst}
+				else
+					cat ${file} >> ${dst}
 				fi
-
-				#
-				#	Find all files that are not a directory and see if
-				#	they exist. If the file exists already, append to
-				#	it, otherwise, copy it over.
-				#
-				if [ ! -L /var/log ]; then
-					for file in $(find /var/log/ ! -type d)
-					do
-						local dst="${mp}/log/${file#/var/log/}"
-
-						if [ ! -f "${dst}" ]
-						then
-							cp -p ${file} ${dst}
-						else
-							cat ${file} >> ${dst}
-						fi
-					done
-				fi
-
-
-			#
-			#	This is the first time syslog is going to log to this
-			#	directory, so create the log directory and sync files.
-			#
-			else
-				mkdir -p ${mp}/log
-				chmod 755 ${mp}/log
-				chown root:wheel ${mp}/log
-
-				/usr/local/bin/rsync -avz /var/log/* ${mp}/log/ >/dev/null 2>&1
-			fi
-
-			mv /var/log /var/.log.old
-			ln -s ${mp}/log /var/log
-
-			break
+			done
 		fi
-	done
+
+	#
+	#	This is the first time syslog is going to log to this
+	#	directory, so create the log directory and sync files.
+	#
+	else
+		mkdir -p ${mp}/log
+		chmod 755 ${mp}/log
+		chown root:wheel ${mp}/log
+
+		/usr/local/bin/rsync -avz /var/log/* ${mp}/log/ >/dev/null 2>&1
+	fi
+
+	mv /var/log /var/.log.old >/dev/null 2>&1
+	ln -s ${mp}/log /var/log
+	/etc/rc.d/syslogd start
 
 	return 0
 }
