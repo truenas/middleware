@@ -49,7 +49,7 @@ from freenasUI import choices
 from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
-from freenasUI.common.system import get_samba4_path, mount, umount
+from freenasUI.common.system import get_system_volume, mount, umount
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect
@@ -1677,18 +1677,20 @@ class MountPointAccessForm(Form):
         return self.cleaned_data
 
     def commit(self, path='/mnt/'):
+        volume, basename = get_system_volume()
 
-        exclude = [
-            '/mnt/%s' % get_samba4_path()[1],
-        ]
+        exclude = []
+        if basename:
+             exclude = [ '/mnt/%s' % basename ]
+
         notifier().mp_change_permission(
-            path=path,
-            exclude=exclude,
-            user=self.cleaned_data['mp_user'],
-            group=self.cleaned_data['mp_group'],
-            mode=self.cleaned_data['mp_mode'].__str__(),
-            recursive=self.cleaned_data['mp_recursive'],
-            acl=self.cleaned_data['mp_acl'],
+             path=path,
+             exclude=exclude,
+             user=self.cleaned_data['mp_user'],
+             group=self.cleaned_data['mp_group'],
+             mode=self.cleaned_data['mp_mode'].__str__(),
+             recursive=self.cleaned_data['mp_recursive'],
+             acl=self.cleaned_data['mp_acl'],
         )
 
 

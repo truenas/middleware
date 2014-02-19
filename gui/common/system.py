@@ -511,6 +511,31 @@ def get_avatar_conf():
     return avatar_conf
 
 
+def get_system_volume():
+    from freenasUI.storage.models import Volume
+    from freenasUI.system.models import Advanced
+
+    try:  
+        adv = Advanced.objects.all()[0]
+    except:
+        log.error("No advanced settings!")
+        return None, None
+
+    system_pool = adv.adv_system_pool
+    if not system_pool:
+        log.error("No system pool configured!")
+        return None, None
+
+    volume = Volume.objects.filter(vol_name=system_pool)
+    if not volume:
+        log.error("You need to create a volume to proceed!")
+        return None, None
+
+    volume = volume[0]
+    basename = "%s/.system" % volume.vol_name
+    return volume, basename
+
+
 def get_samba4_path():
     """
     Returns the volume and path for the samba4 storage path
