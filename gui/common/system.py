@@ -516,16 +516,26 @@ def get_samba4_path():
     Returns the volume and path for the samba4 storage path
     """
     from freenasUI.storage.models import Volume
+    from freenasUI.system.models import Advanced
 
-    volume = Volume.objects.filter(vol_fstype='ZFS')
-    if not volume.exists():
-        volume = Volume.objects.filter(vol_fstype='UFS')
-        if not volume.exists():
-            print >> sys.stderr, "You need to create a volume to proceed!"
-            sys.exit(1)
+    try:  
+        adv = Advanced.objects.all()[0]
+    except Exception as e:  
+        print >> sys.stderr, "No advanced settings!"
+        sys.exit(1)
+
+    system_pool = adv.adv_system_pool
+    if not system_pool:
+        print >> sys.stderr, "No system pool configured!"
+        sys.exit(1)
+
+    volume = Volume.objects.filter(vol_name=system_pool)
+    if not volume:
+        print >> sys.stderr, "You need to create a volume to proceed!"
+        sys.exit(1)
 
     volume = volume[0]
-    basename = "%s/.samba4" % volume.vol_name
+    basename = "%s/.system/samba4" % volume.vol_name
     return volume, basename
 
 
