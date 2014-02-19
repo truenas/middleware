@@ -392,13 +392,8 @@ class AdvancedForm(ModelForm):
             notifier().reload("loader")
 
         if self.instance.adv_system_pool:
-            systemds = "%s/.system" % self.instance.adv_system_pool
-            p = pipeopen("zfs list -H %s" % systemds)
-            p.communicate()
-            if p.returncode != 0:
-                rv, err = notifier().create_zfs_dataset(systemds)
-                if rv != 0:
-                    raise MiddlewareError(_("Unable to create %s: %s" % (systemds, err)))
+            if not notifier().create_system_datasets():
+                raise MiddlewareError(_("Unable to create %s" % systemds))
 
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
