@@ -251,6 +251,12 @@ class Advanced(Model):
         verbose_name=_("MOTD banner"),
         default='Welcome',
     )
+    adv_system_pool = models.CharField(
+        max_length=1024,
+        verbose_name=_("System dataset pool"),
+        choices=(),
+        blank=True  
+    )
 
     class Meta:
         verbose_name = _("Advanced")
