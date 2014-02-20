@@ -511,7 +511,7 @@ def get_avatar_conf():
     return avatar_conf
 
 
-def get_system_volume():
+def get_system_dataset():
     from freenasUI.storage.models import Volume
     from freenasUI.system.models import Advanced
 

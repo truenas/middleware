@@ -49,7 +49,7 @@ from freenasUI import choices
 from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
-from freenasUI.common.system import get_system_volume, mount, umount
+from freenasUI.common.system import get_system_dataset, mount, umount
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect
@@ -1677,7 +1677,7 @@ class MountPointAccessForm(Form):
         return self.cleaned_data
 
     def commit(self, path='/mnt/'):
-        volume, basename = get_system_volume()
+        volume, basename = get_system_dataset()
 
         exclude = []
         if basename:
