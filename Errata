@@ -1,13 +1,5 @@
-Errata for FreeNAS 9.2.1-RELEASE
+Errata for FreeNAS 9.2.1.1-RELEASE
 
 - Enabling Time Machine on an AFP share with 32 bit
   FreeNAS will cause netatalk to crash.
   https://bugs.freenas.org/issues/4113
-
-- The Authentication Model drop down for the CIFS service
-  has two choices, Local User and Anonymous.  The Anonymous
-  choice no longer works with Samba.
-  https://bugs.freenas.org/issues/4132
-
-- Using VIMAGE jails can cause system instability.
-  https://bugs.freenas.org/issues/4141

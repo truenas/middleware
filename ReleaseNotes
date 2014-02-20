@@ -13,6 +13,8 @@ server-side copy support in Windows 2012 and later, along with multiple
 years worth of improvements over the version of Samba that shipped in 9.2.0.
 Samba4 also enables SMB protocol version 3.  Previous versions of FreeNAS
 limited samba to SMB2 because of random crashes that would occur using SMB3.
+We also fixed a number of Samba issues specific to FreeNAS in 9.2.1.1 - see
+the fixed bug list for details.
 
 * A system dataset (.system) is now created in a user-configurable pool,
 the default being the first pool found.  This can be changed in
@@ -22,6 +24,8 @@ and is also being leveraged for other purposes, like collecting core files
 (which otherwise might overflow the limited system partition space) and
 storing system log files.  It will be used for additional purposes as
 FreeNAS evolves.
+
+* A panic that occurred with VIMAGE jails has been fixed.
 
 * A bad bug with jail templates that caused them to be gratuitously downloaded
 has been fixed.  See the fixed bugs query above for details.
