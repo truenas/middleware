@@ -46,6 +46,7 @@ class VolumeStatusAlert(BaseAlert):
     def run(self):
         if not self.volumes_status_enabled():
             return
+        alerts = []
         for vol in Volume.objects.filter(vol_fstype__in=['ZFS', 'UFS']):
             if not vol.is_decrypted():
                 continue
@@ -81,14 +82,15 @@ class VolumeStatusAlert(BaseAlert):
                         message += msg
 
             if status == 'HEALTHY':
-                return [Alert(
+                alerts.append(Alert(
                     Alert.OK, _('The volume %s status is HEALTHY') % (vol, )
-                )]
+                ))
             elif status == 'DEGRADED':
-                return [self.on_volume_status_degraded(vol, status, message)]
+                alerts.append(self.on_volume_status_degraded(vol, status, message))
             else:
-                return [
+                alerts.append(
                     self.on_volume_status_not_healthy(vol, status, message)
-                ]
+                )
+        return alerts
 
 alertPlugins.register(VolumeStatusAlert)
