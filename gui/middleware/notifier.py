@@ -4707,9 +4707,18 @@ class notifier:
         path = "/mnt/%s" % dataset
 
     def dataset_init_windows(self, dataset):
+        acl = [
+            "owner@:rwxpDdaARWcCos:fd:allow",
+            "group@:rwxpDdaARWcCos:fd:allow",
+            "everyone@:rwxpDaRc:fd:allow"
+        ]  
+
         path = "/mnt/%s" % dataset
         with open("%s/.windows" % path, "w") as f:
             f.close()
+
+        for ace in acl:
+            self._pipeopen("/bin/setfacl -m '%s' '%s'" % (ace, path)).wait()
 
     def dataset_init_apple(self, dataset):
         path = "/mnt/%s" % dataset
@@ -4726,6 +4735,7 @@ class notifier:
             share_type = "apple"
 
         return share_type
+
 
 def usage():
     usage_str = """usage: %s action command
