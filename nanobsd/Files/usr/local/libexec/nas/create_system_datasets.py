@@ -16,6 +16,9 @@ cache.get_apps()
 from freenasUI.common.system import get_system_dataset
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.middleware.notifier import notifier
+from freenasUI.storage.models import Volume
+from freenasUI.system.models import Advanced
+
 
 def dataset_exists(dataset):
     res = False
@@ -76,10 +79,46 @@ def set_corefile_sysctl(corepath):
     return res
 
 
+def pick_default_volume():
+    volumes = Volume.objects.all()
+
+    for volume in volumes:
+        if volume.vol_fstype == 'ZFS' and volume.is_decrypted():
+            return volume
+
+    for volume in volumes:
+        if volume.vol_fstype == 'UFS' and volume.is_decrypted():
+            return volume
+
+    for volume in volumes:
+       if volume.vol_fstype == 'ZFS':
+            return volume
+
+    for volume in volumes:
+        if volume.vol_fstype == 'UFS':
+            return volume
+
+    return None
+
+
+def save_default_volume(volume):
+    advanced = Advanced.objects.all()
+    if advanced: 
+        advanced = advanced[0]
+        advanced.adv_system_pool = volume.vol_name
+        advanced.save()
+
+
 def main():
     system_datasets = [ 'samba4', 'syslog', 'cores' ]
 
     volume, basename = get_system_dataset()
+    if not volume:
+        volume = pick_default_volume()
+        if volume:
+            save_default_volume(volume)
+            basename = "%s/.system" % volume.vol_name
+
     if not volume:
         print >> sys.stderr, "No system volume configured!"
         sys.exit(1)
