@@ -1,12 +1,32 @@
-Release Notes for FreeNAS 9.2.1-RELEASE
+Release Notes for FreeNAS 9.2.1.1-RELEASE
 
-* Samba (SMB/CIFS support) upgraded to version 4.1.3.  This adds support for
-SMB3, the ability for FreeNAS to be a Windows Domain Controller, and advanced
-features like server-side copy support in Windows 2012 and later, along with
-multiple years worth of improvements over the version of Samba that shipped
-in 9.2.0.  It also enables SMB protocol version 3.  Previous versions of
-FreeNAS limited samba to SMB2 because of random crashes that would occur using
-SMB3.
+This point release for 9.2.1 fixes a few key issues found in 9.2.1 with Jails
+and CIFS, as well as a few miscelleneous problems that merited fixing (see
+below).  All bugs fixed in 9.2.1.1 can be found here:
+
+	https://bugs.freenas.org/projects/freenas/issues?query_id=35
+
+* Samba (SMB/CIFS support) upgraded to version 4.1.4, with select key fixes
+cherry-picked from 4.1.5.  This version adds support for SMB3, the ability
+for FreeNAS to be a Windows Domain Controller, and advanced features like
+server-side copy support in Windows 2012 and later, along with multiple
+years worth of improvements over the version of Samba that shipped in 9.2.0.
+Samba4 also enables SMB protocol version 3.  Previous versions of FreeNAS
+limited samba to SMB2 because of random crashes that would occur using SMB3.
+
+* A system dataset (.system) is now created in a user-configurable pool,
+the default being the first pool found.  This can be changed in
+System->Settings->Advanced, the .system dataset being created as needed.
+This dataset becamse necessary for storing persistent Samba permissions,
+and is also being leveraged for other purposes, like collecting core files
+(which otherwise might overflow the limited system partition space) and
+storing system log files.  It will be used for additional purposes as
+FreeNAS evolves.
+
+* A bad bug with jail templates that caused them to be gratuitously downloaded
+has been fixed.  See the fixed bugs query above for details.
+
+Release Notes for FreeNAS 9.2.1-RELEASE
 
 * Added the LSI 12G SAS driver as a module to the build.  This can be
 enabled by adding a tunable for mpslsi3_load with a value of YES.  This
