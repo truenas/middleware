@@ -381,9 +381,12 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "strict locking = no")
     confset1(smb4_conf, "oplocks = yes")
     confset1(smb4_conf, "deadtime = 15")
-    confset1(smb4_conf, "max log size = 10")
-    confset1(smb4_conf, "syslog only = yes")
-    confset1(smb4_conf, "syslog = 1")
+    confset1(smb4_conf, "max log size = 51200")
+
+    if cifs.cifs_srv_syslog:
+        confset1(smb4_conf, "syslog only = yes")
+        confset1(smb4_conf, "syslog = 1")
+
     confset1(smb4_conf, "load printers = no")
     confset1(smb4_conf, "printing = bsd")
     confset1(smb4_conf, "printcap name = /dev/null")
