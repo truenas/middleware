@@ -757,3 +757,9 @@ NULLMOUNTPOINT_CHOICES = (
     ('tmpfs', 'tmpfs'),
     ('unionfs', 'unionfs')
 )
+
+SHARE_TYPE_CHOICES = (
+    ('unix', 'UNIX'),
+    ('windows', 'Windows'),
+    ('apple', 'Apple')
+)

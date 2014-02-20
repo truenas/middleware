@@ -4703,6 +4703,30 @@ class notifier:
             res = True
         return res
 
+    def dataset_init_unix(self, dataset):
+        path = "/mnt/%s" % dataset
+
+    def dataset_init_windows(self, dataset):
+        path = "/mnt/%s" % dataset
+        with open("%s/.windows" % path, "w") as f:
+            f.close()
+
+    def dataset_init_apple(self, dataset):
+        path = "/mnt/%s" % dataset
+        with open("%s/.apple" % path, "w") as f:
+            f.close()
+
+    def get_dataset_share_type(self, dataset):
+        share_type = "unix"
+
+        path = "/mnt/%s" % dataset
+        if os.path.exists("%s/.windows" % path):
+            share_type = "windows"
+        elif os.path.exists("%s/.windows" % path):
+            share_type = "apple"
+
+        return share_type
+
 def usage():
     usage_str = """usage: %s action command
     Action is one of:

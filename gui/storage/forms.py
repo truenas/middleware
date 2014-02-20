@@ -1388,6 +1388,10 @@ class ZFSDataset(Form):
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
         label=_('Compression level'))
+    dataset_share_type = forms.ChoiceField(
+        choices=choices.SHARE_TYPE_CHOICES,
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Share type'))
     dataset_atime = forms.ChoiceField(
         choices=choices.ZFS_AtimeChoices,
         widget=forms.RadioSelect(attrs=attrs_dict),
@@ -1449,6 +1453,7 @@ class ZFSDataset(Form):
             del self.fields['dataset_recordsize']
             data = notifier().zfs_get_options(self._fs)
             self.fields['dataset_compression'].initial = data['compression']
+            self.fields['dataset_share_type'].initial = notifier().get_dataset_share_type(self._fs)
             self.fields['dataset_atime'].initial = data['atime']
 
             for attr in ('refquota', 'quota', 'reservation', 'refreservation'):

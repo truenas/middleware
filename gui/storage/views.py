@@ -301,6 +301,12 @@ def dataset_create(request, fs):
             cleaned_data = dataset_form.cleaned_data
             dataset_name = "%s/%s" % (fs, cleaned_data.get('dataset_name'))
             dataset_compression = cleaned_data.get('dataset_compression')
+            dataset_share_type = cleaned_data.get('dataset_share_type')
+            if dataset_share_type == "windows":
+                # XXXX
+                # Add windows case insensitive prop stuff here
+                # XXXX
+                pass
             props['compression'] = dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
             props['atime'] = dataset_atime.__str__()
@@ -326,6 +332,12 @@ def dataset_create(request, fs):
                 path=str(dataset_name),
                 props=props)
             if errno == 0:
+                if dataset_share_type == "unix":
+                    notifier().dataset_init_unix(dataset_name)
+                elif dataset_share_type == "windows":
+                    notifier().dataset_init_windows(dataset_name)
+                elif dataset_share_type == "apple":
+                    notifier().dataset_init_apple(dataset_name)
                 return JsonResp(
                     request,
                     message=_("Dataset successfully added."))
