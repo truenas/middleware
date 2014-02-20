@@ -52,37 +52,19 @@ winacl_reset()
 {
 	local path="${WINACL_PATH}"
 
-	local owner_access
-	local owner_inherit
-	if [ -d "${path}" ]
+	local owner_access="rwxpDdaARWcCos"
+	local owner_inherit="fd"
+
+	local group_access="rwxpDdaARWcCos"
+	local group_inherit="fd"
+
+	local everyone_access="rwxpDaRc"
+	local everyone_inherit="fd"
+
+	if [ ! -d "${path}" ]
 	then
-		owner_access="rwxpdDaARWcCo"
-		owner_inherit="fd"
-	else
-		owner_access="rwxpdDaARWcCo"
 		owner_inherit=""
-	fi
-
-
-	local group_access
-	local group_inherit
-	if [ -d "${path}" ]
-	then
-		group_access="rxs"
-		group_inherit="fd"
-	else
-		group_access="rxs"
 		group_inherit=""
-	fi
-
-	local everyone_access
-	local everyone_inherit
-	if [ -d "${path}" ]
-	then
-		everyone_access="rxaRcs"
-		everyone_inherit="fd"
-	else
-		everyone_access="rxaRcs"
 		everyone_inherit=""
 	fi
 
@@ -93,23 +75,9 @@ winacl_reset()
 	${WINACL_VFUNC} "${path}"
 	eval "setfacl -b ${path}"
 
-	eval "setfacl -a 0 ${group_entry} ${path}"
-	eval "setfacl -a 1 ${everyone_entry} ${path}"
-	eval "setfacl -a 2 ${owner_entry} ${path}"
-
-	local count="$(eval getfacl ${path}|awk '{ print $1 }'|grep -v '^#'|wc -l|xargs)"
-	if [ "${count}" -le "0" ]
-	then
-		return 1
-	fi
-
-	for i in $(jot ${count} 0)
-	do
-		if [ ${i} -gt 2 ]
-		then
-			eval "setfacl -x 3 ${path}"
-		fi
-	done
+	eval "setfacl -m ${owner_entry} ${path}"
+	eval "setfacl -m ${group_entry} ${path}"
+	eval "setfacl -m ${everyone_entry} ${path}"
 
 	return 0
 }
@@ -286,10 +254,10 @@ main()
 	export WINACL_VFUNC WINACL_FLAGS
 
 	change_owner_group
-	if [ "${major}" -le "8" ]
-	then
-		change_permissions
-	fi
+	#if [ "${major}" -le "8" ]
+	#then
+	#	change_permissions
+	#fi
 
 	if [ "${recursive}" = "1" ]
 	then
@@ -300,10 +268,10 @@ main()
 		winacl_reset
 	fi
 
-	if [ "${major}" -gt "8" ]
-	then
-		change_permissions
-	fi
+	#if [ "${major}" -gt "8" ]
+	#then
+	#	change_permissions
+	#fi
 }
 
 
