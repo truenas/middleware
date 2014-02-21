@@ -59,7 +59,7 @@ loader_serial()
 		serial_speed=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY -id LIMIT 1")
 		echo "comconsole_speed=\"${serial_speed}\""
 		echo 'boot_multicons="YES"'
-		echo 'console="vidconsole,comconsole"'
+		echo 'console="comconsole,vidconsole"'
 	fi
 }
 
