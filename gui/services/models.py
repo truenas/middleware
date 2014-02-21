@@ -879,6 +879,15 @@ class DynamicDNS(Model):
             blank=True,
             verbose_name=_("Provider")
             )
+    ddns_ipserver = models.CharField(
+        max_length=150,
+        verbose_name=_('IP Server'),
+        help_text=_(
+            'The client IP is detected by calling \'url\' from this '
+            '\'ip_server_name:port\'. Defaults to checkip.dyndns.org:80.'
+        ),
+        blank=True,
+    )
     ddns_domain = models.CharField(
             max_length=120,
             verbose_name=_("Domain name"),
