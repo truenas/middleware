@@ -47,7 +47,7 @@ netcli_disable()
 	fi
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	sed -E -e "s,^(sercons0.*)freenas_serial[0-9]+(.*)\$,\1std.${serspeed}\2," /etc/ttys > "${tmp}"
+	sed -E -e "s,^(sercons.*)freenas_serial[0-9]+(.*)\$,\1std.${serspeed}\2," /etc/ttys > "${tmp}"
 	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
 	else
