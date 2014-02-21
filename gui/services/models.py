@@ -884,7 +884,7 @@ class DynamicDNS(Model):
         verbose_name=_('IP Server'),
         help_text=_(
             'The client IP is detected by calling \'url\' from this '
-            '\'ip_server_name:port\'. Defaults to checkip.dyndns.org:80.'
+            '\'ip_server_name:port\'. Defaults to checkip.dyndns.org:80 /.'
         ),
         blank=True,
     )
