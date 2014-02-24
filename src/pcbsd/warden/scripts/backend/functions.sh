@@ -1660,7 +1660,7 @@ delete_template()
      tank=`getZFSTank "$tDir"`
      rp=`getZFSRelativePath "$tDir"`
      zfs destroy -fr $tank${rp}
-     rmdir ${tDir}
+     rmdir ${tDir} >/dev/null 2>&1
    else
      if [ ! -e "${tDir}.tbz" ] ; then
        warden_exit "No such template: ${1}"
