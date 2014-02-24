@@ -296,7 +296,6 @@ def add_activedirectory_conf(smb4_conf):
     confset1(smb4_conf, "domain master = no")
     confset1(smb4_conf, "preferred master = no")
 
-    confset1(smb4_conf, "inherit acls = yes")
     confset1(smb4_conf, "acl check permissions = true")
     confset1(smb4_conf, "acl map full control = true")
     confset1(smb4_conf, "dos filemode = yes")
@@ -585,7 +584,9 @@ def generate_smb4_shares(smb4_shares):
         confset2(smb4_shares, "guest only = %s",
             "yes" if share.cifs_guestonly else False)
 
-        confset1(smb4_shares, "inherit acls = Yes")
+        confset2(smb4_shares, "inherit acls = %s",
+            "yes" if share.cifs_inheritacls else "no")
+
         confset1(smb4_shares, "nfs4:mode = special")
         confset1(smb4_shares, "nfs4:acedup = merge")
         confset1(smb4_shares, "nfs4:chown = yes")

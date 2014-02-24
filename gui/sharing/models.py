@@ -53,6 +53,8 @@ class CIFS_Share(Model):
             verbose_name=_("Inherit Owner"), default=False)
     cifs_inheritperms = models.BooleanField(
             verbose_name=_("Inherit Permissions"))
+    cifs_inheritacls = models.BooleanField(
+            verbose_name=_("Inherit ACL's"), default=True)
     cifs_recyclebin = models.BooleanField(
             verbose_name=_("Export Recycle Bin"))
     cifs_showhiddenfiles = models.BooleanField(
