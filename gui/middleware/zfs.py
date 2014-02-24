@@ -677,11 +677,10 @@ def parse_status(name, doc, data):
                 re.X
             ).groups()
         except Exception:
-            spaces, word = re.search(
-                r'^(?P<spaces>[ ]*)(?P<word>\S+)',
+            spaces, word, status = re.search(
+                r'^(?P<spaces>[ ]*)(?P<word>\S+)(?:\s+(?P<status>\S+))?',
                 line[1:]
             ).groups()
-            status = None
             read, write, cksum = 0, 0, 0
         ident = len(spaces) / 2
         if ident < 2 and ident < lastident:
