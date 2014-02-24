@@ -58,10 +58,17 @@ get_system_dataset()
 {
 	local system_pool="$(get_system_pool)"
 
+	if [ ! -d "/mnt/${system_pool}" ]
+	then
+		return 1
+	fi
+
 	if [ -n "${system_pool}" ]
 	then
 		echo "${system_pool}/.system"
 	fi
+
+	return 0
 }
 
 get_syslog_dataset()
