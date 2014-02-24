@@ -37,6 +37,33 @@ generate_syslog_conf()
 	done
 }
 
+use_syslog_dataset()
+{
+	local use
+
+	use="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		adv_syslog_usedataset
+	FROM
+		system_advanced
+	ORDER BY
+		-id
+	LIMIT 1
+	" | \
+	while read -r syslog_usedataset
+	do
+		if [ "${syslog_usedataset}" = "0" ]
+		then
+			echo "1"
+		else
+			echo "0"
+		fi
+	done
+	)"
+
+	return ${use}
+}
+
 get_system_pool()
 {
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -84,6 +111,11 @@ get_syslog_dataset()
 ix_syslogd_start()
 {
 	generate_syslog_conf
+
+	if ! use_syslog_dataset
+	then
+		return 0
+	fi
 
 	local system_dataset="$(get_system_dataset)"
 	local syslog_dataset="$(get_syslog_dataset)"

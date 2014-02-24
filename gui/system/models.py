@@ -256,6 +256,10 @@ class Advanced(Model):
         verbose_name=_("System dataset pool"),
         choices=()
     )
+    adv_syslog_usedataset = models.BooleanField(
+        default=False,
+        verbose_name=_("Use system dataset for syslog")
+    )
 
     class Meta:
         verbose_name = _("Advanced")
