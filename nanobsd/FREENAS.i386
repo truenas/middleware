@@ -86,6 +86,8 @@ options		DDB			# Support DDB.
 options 	SMP			# Symmetric MultiProcessor Kernel
 device		apic
 
+device		zfs
+
 # CPU frequency control
 device		amdtemp
 device		coretemp

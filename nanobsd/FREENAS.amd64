@@ -87,6 +87,8 @@ options		DDB			# Support DDB.
 # Make an SMP-capable kernel by default
 options 	SMP			# Symmetric MultiProcessor Kernel
 
+device		zfs
+
 # CPU frequency control
 device		amdtemp
 device		coretemp
