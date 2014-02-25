@@ -689,7 +689,8 @@ def smb4_setup():
     statedir_realpath = os.path.realpath(statedir)
 
     if not volume.is_decrypted():
-        if basename_realpath == statedir_realpath and os.path.islink(statedir):
+        if (basename_realpath == statedir_realpath and os.path.islink(statedir)) or \
+            (os.path.islink(statedir) and not os.path.exists(statedir_realpath)):
             smb4_unlink(statedir)  
             smb4_mkdir(statedir)
         return
@@ -701,7 +702,11 @@ def smb4_setup():
         except Exception as e:
             print >> sys.stderr, "Unable to create symlink '%s' -> '%s' (%s)" % (
                 basename_realpath, statedir, e)
- 
+
+    if os.path.islink(statedir) and not os.path.exists(statedir_realpath):
+        smb4_unlink(statedir)  
+        smb4_mkdir(statedir)
+
 
 def main():
     smb_conf_path = "/usr/local/etc/smb4.conf"
