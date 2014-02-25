@@ -690,13 +690,18 @@ def smb4_setup():
 
     if not volume.is_decrypted():
         if (basename_realpath == statedir_realpath and os.path.islink(statedir)) or \
-            (os.path.islink(statedir) and not os.path.exists(statedir_realpath)):
+            os.path.islink(statedir):
             smb4_unlink(statedir)  
             smb4_mkdir(statedir)
         return
 
     if basename_realpath != statedir_realpath and os.path.exists(basename_realpath):
         smb4_unlink(statedir)  
+        if os.path.exists(statedir):
+            olddir = "%s.%s" % (statedir, time.strftime("%Y%m%d%H%M%S"))
+            p = pipeopen("/bin/mv '%s' '%s'" % (statedir, olddir))
+            p.communicate()
+
         try:
             os.symlink(basename_realpath, statedir)
         except Exception as e:

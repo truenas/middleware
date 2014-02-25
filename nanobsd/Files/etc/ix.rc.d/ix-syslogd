@@ -122,6 +122,22 @@ ix_syslogd_start()
 
 	if [ -z "${syslog_dataset}" ]
 	then
+		if [ -L "/var/log" ]
+		then
+			local rp="$(realpath -q /var/log)"
+			if [ -z "${rp}" ]
+			then
+				rm -f /var/log
+				mkdir -p /var/log
+			else
+				local datestr="$(date +'%Y%m%d%H%M%S')"
+				rm -f /var/log
+				mv "/var/log" "/var/log.${datestr}"
+				mkdir -p /var/log
+			fi
+			service syslogd restart 
+		fi
+
 		return 0
 	fi
 
@@ -154,6 +170,7 @@ ix_syslogd_start()
 					/usr/local/bin/rsync -avz ${dir}/* ${dst}/ >/dev/null 2>&1
 				fi
 			done
+
 		fi
 
 		#
@@ -186,10 +203,14 @@ ix_syslogd_start()
 		/usr/local/bin/rsync -avz /var/log/* ${mp}/log/ >/dev/null 2>&1
 	fi
 
-	mv /var/log /var/.log.old >/dev/null 2>&1
-	ln -s ${mp}/log /var/log
-	/etc/rc.d/syslogd start
+	if [ ! -L "/var/log" ]
+	then
+		local datestr="$(date +'%Y%m%d%H%M%S')"
+		mv "/var/log" "/var/log.${datestr}"
+		ln -s "${mp}/log" "/var/log"
+	fi
 
+	/etc/rc.d/syslogd start
 	return 0
 }
 
