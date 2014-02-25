@@ -1,3 +1,18 @@
+Release Notes for FreeNAS 9.2.1.2-RELEASE
+
+This point release for 9.2.1 fixes even more issues found in 9.2.1.1 in
+CIFS, NFS locking, the new .system dataset, ACLs, migration during upgrades,
+and a few smaller things. All bugs fixed in 9.2.1.2 can be found here:
+
+	https://bugs.freenas.org/projects/freenas/issues?query_id=39
+
+* Samba (SMB/CIFS support) upgraded to version 4.1.5
+
+* Linux Jails now work with UFS
+
+* NFS lockd now starts properly at boot time
+
+
 Release Notes for FreeNAS 9.2.1.1-RELEASE
 
 This point release for 9.2.1 fixes a few key issues found in 9.2.1 with Jails
