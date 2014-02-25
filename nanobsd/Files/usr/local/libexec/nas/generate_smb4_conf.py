@@ -746,11 +746,14 @@ def do_migration(old_samba4_datasets):
     if len(old_samba4_datasets) > 1:
         return False
     old_samba4_dataset = "/mnt/%s/" % old_samba4_datasets[0]
-    p = pipeopen("/usr/local/bin/rsync -avz '%s'* '/var/db/samba4/'" % old_samba4_dataset)
-    p.communicate()
-    if p.returncode != 0:
-        return False
 
+    try:
+        pipeopen("/usr/local/bin/rsync -avz '%s'* '/var/db/samba4/'" % old_samba4_dataset).wait()
+        notifier().destroy_zfs_dataset(old_samba4_datasets[0], True)
+
+    except Exception as e:
+        print >> sys.stderr, e
+    
     return True
 
 
