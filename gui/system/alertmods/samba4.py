@@ -8,8 +8,11 @@ class Samba4Alert(BaseAlert):
             return [
                 Alert(
                     Alert.WARN,
-                    'Multiple .samba4 datasets exist, unable to migrate, ' + 
-                    'please migrate manually then remove /var/db/samba4/.alert_cant_migrate'
+
+                    "Multiple legacy samba4 datasets detected. Auto-migration to " +
+                    "${poolname}/.system/samba4 cannot be done. Please perform this step " +
+                    "manually and then delete the now-obsolete samba4 datasets and " +
+                    "/var/db/samba4/.alert_cant_migrate"
                 ),
             ]
 
