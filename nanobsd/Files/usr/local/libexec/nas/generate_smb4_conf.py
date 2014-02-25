@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import os
+import re
 import sys
 import tempfile
 import time
@@ -704,16 +705,53 @@ def smb4_setup():
             except Exception as e:
                 print >> sys.stderr, "Unable to rename '%s' to '%s' (%s)" % (
                     statedir, olddir, e)
+                sys.exit(1)  
 
         try:
             os.symlink(basename_realpath, statedir)
         except Exception as e:
             print >> sys.stderr, "Unable to create symlink '%s' -> '%s' (%s)" % (
                 basename_realpath, statedir, e)
+            sys.exit(1)  
 
     if os.path.islink(statedir) and not os.path.exists(statedir_realpath):
         smb4_unlink(statedir)  
         smb4_mkdir(statedir)
+
+
+def get_old_samba4_datasets():
+    old_samba4_datasets = []
+
+    fsvols = notifier().list_zfs_fsvols()
+    for fsvol in fsvols:
+        if re.match('^.+/.samba4\/?$', fsvol):
+            old_samba4_datasets.append(fsvol)
+
+    return old_samba4_datasets
+
+
+def migration_available(old_samba4_datasets):
+    res = False
+
+    if old_samba4_datasets and len(old_samba4_datasets) == 1:
+        res = True
+    elif old_samba4_datasets:
+        with open("/var/db/samba4/.cantmigrate", "w") as f:
+            f.close()
+
+    return res
+
+
+def do_migration(old_samba4_datasets):
+    if len(old_samba4_datasets) > 1:
+        return False
+    old_samba4_dataset = "/mnt/%s/" % old_samba4_datasets[0]
+    p = pipeopen("/usr/local/bin/rsync -avz '%s'* '/var/db/samba4/'" % old_samba4_dataset)
+    p.communicate()
+    if p.returncode != 0:
+        return False
+
+    return True
 
 
 def main():
@@ -724,6 +762,10 @@ def main():
     smb4_shares = []
 
     smb4_setup()
+
+    old_samba4_datasets = get_old_samba4_datasets()
+    if migration_available(old_samba4_datasets):
+        do_migration(old_samba4_datasets)
 
     generate_smb4_tdb(smb4_tdb)
     generate_smb4_conf(smb4_conf)
