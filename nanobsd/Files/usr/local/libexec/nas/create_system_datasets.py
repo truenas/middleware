@@ -130,8 +130,9 @@ def main():
         create_system_datasets_ufs(basename, system_datasets)
 
     corepath = "/mnt/%s/cores" % basename
-    set_corefile_sysctl("%s/%%N.core" % corepath)
-    os.chmod(corepath, 0775)
+    if os.path.exists(corepath):
+        set_corefile_sysctl("%s/%%N.core" % corepath)
+        os.chmod(corepath, 0775)
 
 if __name__ == '__main__':
     main()
