@@ -699,8 +699,11 @@ def smb4_setup():
         smb4_unlink(statedir)  
         if os.path.exists(statedir):
             olddir = "%s.%s" % (statedir, time.strftime("%Y%m%d%H%M%S"))
-            p = pipeopen("/bin/mv '%s' '%s'" % (statedir, olddir))
-            p.communicate()
+            try:
+                os.rename(statedir, olddir)
+            except Exception as e:
+                print >> sys.stderr, "Unable to rename '%s' to '%s' (%s)" % (
+                    statedir, olddir, e)
 
         try:
             os.symlink(basename_realpath, statedir)
