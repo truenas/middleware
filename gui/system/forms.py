@@ -394,6 +394,8 @@ class AdvancedForm(ModelForm):
         if self.instance.adv_system_pool:
             if not notifier().create_system_datasets():
                 raise MiddlewareError(_("Unable to create system dataset!"))
+            if self.instance._original_adv_system_pool != self.instance.adv_system_pool:
+                notifier().restart("system_datasets")
 
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
