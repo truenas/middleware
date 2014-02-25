@@ -236,7 +236,7 @@ class InterfacePlugin(RRDBase):
             ident = entry.rsplit('-', 1)[-1]
             if ident not in ifaces:
                 continue
-            if re.match("usbus", ident):
+            if re.match(r'(usbus|pfsync|pflog|carp)', ident):
                 continue
             if os.path.exists(os.path.join(entry, 'if_octets.rrd')):
                 ids.append(ident)
