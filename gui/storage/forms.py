@@ -2421,6 +2421,7 @@ class UnlockPassphraseForm(Form):
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
             _notifier.restart(svc)
+        _notifier.restart("system_datasets")
 
 
 class KeyForm(Form):
