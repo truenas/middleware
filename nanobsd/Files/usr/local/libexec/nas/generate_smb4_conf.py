@@ -736,7 +736,7 @@ def migration_available(old_samba4_datasets):
     if old_samba4_datasets and len(old_samba4_datasets) == 1:
         res = True
     elif old_samba4_datasets:
-        with open("/var/db/samba4/.cantmigrate", "w") as f:
+        with open("/var/db/samba4/.alert_cant_migrate", "w") as f:
             f.close()
 
     return res
