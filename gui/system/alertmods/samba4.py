@@ -5,8 +5,18 @@ from freenasUI.system.models import Advanced
 
 class Samba4Alert(BaseAlert):
     def run(self):
+        advanced = Advanced.objects.all()[0]
+        if not advanced.adv_system_pool:
+            return [
+                Alert(
+                    Alert.WARN,
+                    "No system pool configured, please configure one in " \
+                    "Settings->Advanced->System dataset pool"
+                ),
+            ]
+          
+
         if os.path.exists('/var/db/samba4/.alert_cant_migrate'):
-            advanced = Advanced.objects.all()[0]
             return [
                 Alert(
                     Alert.WARN,
