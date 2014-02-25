@@ -39,42 +39,6 @@ from freenasUI.system.models import Settings
 SAMBA_PROVISIONED_FILE = "/var/db/samba4/.provisioned"
 SAMBA_TOOL = "/usr/local/bin/samba-tool"
 
-def create_samba4_dataset():
-    path = None
-    volume, basename = get_samba4_path()
-
-    if volume.vol_fstype == 'ZFS':
-        name = basename
-        path = "/mnt/%s" % name
-
-        datasets = list_datasets(
-            path=path,
-            recursive=False,
-        )
-        if not datasets:
-            rv, err = notifier().create_zfs_dataset(name)
-            if rv != 0:
-                print >> sys.stderr, "Failed to create dataset %(name)s: %(error)s" % {
-                    'name': name,
-                    'error': err,
-                }
-                sys.exit(1)
-
-    elif volume.vol_fstype == 'UFS':
-        path = "/mnt/%s" % basename
-        if not os.path.exists(path):
-            try:
-                os.makedirs(path)
-
-            except Exception as e:
-                print >> sys.stderr, "Failed to create directory %(name)s: %(error)s" % {
-                    'name': path,
-                    'error': e
-                }
-                sys.exit(1)
-
-    return path
-
 
 def is_within_zfs(mountpoint):
     try:
@@ -705,27 +669,6 @@ def smb4_unlink(dir):
 
 def smb4_setup():
     statedir = "/var/db/samba4"
-    volume, basename = get_samba4_path()
-
-    if os.path.islink(statedir) and not os.path.exists(statedir):
-        os.unlink(statedir)
-    if volume.is_decrypted() and not os.path.islink(statedir):
-        if os.path.exists(statedir):
-            try:
-                p = pipeopen("/bin/rm -rf '%s'" % statedir)
-                p.communicate()
-
-            except:
-                olddir = "%s.%s" % (statedir, time.time())
-                p = pipeopen("/bin/mv '%s' '%s'" % (statedir, olddir))
-                p.communicate()
-
-        samba4_dataset = create_samba4_dataset()
-        try:
-            os.symlink(samba4_dataset, statedir)
-        except Exception as e:
-            print >> sys.stderr, "Unable to create symlink '%s' -> '%s' (%s)" % (
-                samba4_dataset, statedir, e)
 
     smb4_mkdir("/var/run/samba")
     smb4_mkdir("/var/db/samba")
@@ -741,6 +684,24 @@ def smb4_setup():
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
 
+    volume, basename = get_samba4_path()
+    basename_realpath = "/mnt/%s" % basename
+    statedir_realpath = os.path.realpath(statedir)
+
+    if not volume.is_decrypted():
+        if basename_realpath == statedir_realpath and os.path.islink(statedir):
+            smb4_unlink(statedir)  
+            smb4_mkdir(statedir)
+        return
+
+    if basename_realpath != statedir_realpath and os.path.exists(basename_realpath):
+        smb4_unlink(statedir)  
+        try:
+            os.symlink(basename_realpath, statedir)
+        except Exception as e:
+            print >> sys.stderr, "Unable to create symlink '%s' -> '%s' (%s)" % (
+                basename_realpath, statedir, e)
+ 
 
 def main():
     smb_conf_path = "/usr/local/etc/smb4.conf"

@@ -4703,6 +4703,12 @@ class notifier:
             res = True
         return res
 
+    def _restart_system_datasets(self):
+        self.start("ix-syslogd")
+        self.restart("syslogd")
+        self.start("ix-samba")
+        self.restart("cifs")
+
     def dataset_init_unix(self, dataset):
         path = "/mnt/%s" % dataset
 

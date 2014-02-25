@@ -90,14 +90,6 @@ def pick_default_volume():
         if volume.vol_fstype == 'UFS' and volume.is_decrypted():
             return volume
 
-    for volume in volumes:
-       if volume.vol_fstype == 'ZFS':
-            return volume
-
-    for volume in volumes:
-        if volume.vol_fstype == 'UFS':
-            return volume
-
     return None
 
 
