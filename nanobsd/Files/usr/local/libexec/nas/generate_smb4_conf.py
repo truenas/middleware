@@ -685,6 +685,9 @@ def smb4_setup():
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
 
+    if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'BACKUP':
+        return
+
     volume, basename = get_samba4_path()
     basename_realpath = "/mnt/%s" % basename
     statedir_realpath = os.path.realpath(statedir)
