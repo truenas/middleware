@@ -1,4 +1,4 @@
-Errata for FreeNAS 9.2.1.2-RELEASE
+Errata for FreeNAS 9.2.1.2-RC
 
 - Enabling Time Machine on an AFP share with 32 bit
   FreeNAS will cause netatalk to crash.
