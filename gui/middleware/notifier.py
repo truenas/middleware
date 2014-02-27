@@ -4716,7 +4716,7 @@ class notifier:
         acl = [
             "owner@:rwxpDdaARWcCos:fd:allow",
             "group@:rwxpDdaARWcCos:fd:allow",
-            "everyone@:rwxpDaRc:fd:allow"
+            "everyone@:rxDaRc:fd:allow"
         ]  
 
         path = "/mnt/%s" % dataset
