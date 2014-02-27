@@ -179,6 +179,7 @@ class Volume(Model):
         We need to manually find all paths within this volume mount point
         """
         from freenasUI.services.models import iSCSITargetExtent
+        from freenasUI.system.models import Advanced
 
         # TODO: This is ugly.
         svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'jails')
@@ -240,6 +241,20 @@ class Volume(Model):
             n.destroy("volume", self)
         else:
             n.volume_detach(self)
+
+        # If there's a system dataset on this pool, stop using it.
+        try:
+            syspool = Advanced.objects.filter(adv_system_pool=self.vol_name)[0]
+        except IndexError:
+            # No system dataset on the pool being destroyed
+            pass
+        else:
+            syspool.adv_system_pool=""
+            syspool.save()
+            # If we are using the syslog dataset kick syslog.
+            syslog = Advanced.objects.all()[0]
+            if syslog.adv_syslog_usedataset:
+                n.reload("syslogd")
 
         return (svcs, reloads)
 
