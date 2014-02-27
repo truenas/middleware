@@ -459,6 +459,8 @@ class VolumeManagerForm(VolumeMixin, Form):
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
         notifier().reload("disk")
+        notifier().start("ix-system")
+        notifier().start("ix-syslogd")
         # For scrub cronjob
         if volume.vol_fstype == 'ZFS':
             notifier().restart("cron")
@@ -1052,6 +1054,8 @@ class AutoImportWizard(SessionWizardView):
             raise
 
         notifier().reload("disk")
+        notifier().start("ix-system")
+        notifier().start("ix-syslogd")
 
         return JsonResp(self.request, message=unicode(_("Volume imported")))
 
