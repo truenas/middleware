@@ -58,7 +58,7 @@ winacl_reset()
 	local group_access="rwxpDdaARWcCos"
 	local group_inherit="fd"
 
-	local everyone_access="rwxpDaRc"
+	local everyone_access="rxDaRc"
 	local everyone_inherit="fd"
 
 	if [ ! -d "${path}" ]
