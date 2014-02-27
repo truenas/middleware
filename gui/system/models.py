@@ -260,7 +260,7 @@ class Advanced(Model):
         choices=()
     )
     adv_syslog_usedataset = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name=_("Use system dataset for syslog")
     )
 
