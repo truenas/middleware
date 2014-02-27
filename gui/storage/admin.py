@@ -295,7 +295,7 @@ class VolumeFAdmin(BaseFreeAdmin):
         actions['VolLock'] = self._action_builder(
             "volume_lock",
             label=_('Lock Volume'),
-            icon="key_change",
+            icon="lock_volume",
             has_enc=True,
             enc_level=2,
         )
