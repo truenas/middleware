@@ -470,31 +470,30 @@ def generate_smb4_shares(smb4_shares):
     except:
         return
 
+    if len(shares) == 0:
+        return
+
+    p = pipeopen("zfs list -H -o mountpoint,name")
+    zfsout = p.communicate()[0].split('\n')
+    if p.returncode != 0:
+        zfsout = []
+
     for share in shares:
         if not os.path.isdir(share.cifs_path):
             continue
-        p = pipeopen("zfs list -H -o mountpoint,name")
-        zfsout = p.communicate()
-        if p.returncode != 0:
-            continue
-        if zfsout:
-            zfsout = zfsout[0]
 
-        fs = None
-        task = None
-        for line in zfsout.split('\n'):
-            parts = line.split()
-            if parts and parts[0] == share.cifs_path and len(parts) > 1:
-                fs = parts[1]
-                break
-        if fs:
-            task = Task.objects.filter(Q(task_filesystem=fs) |
-                (Q(task_filesystem__regex=r'^%s/.+$' % fs) & Q(task_recursive=True))
-            )
-            if task.exists():
-                task = task[0]
-            else:
-                task = False
+        task = False
+        for line in zfsout:
+            try:
+                zfs_mp, zfs_ds = line.split()
+                if share.cifs_path == zfs_mp or share.cifs_path.startswith("%s/" % zfs_mp):
+                    if share.cifs_path == zfs_mp:
+                        task = Task.objects.filter(task_filesystem = zfs_ds)[0]
+                    else:
+                        task = Task.objects.filter(Q(task_filesystem = zfs_ds) & Q(task_recursive=True))[0]
+                    break
+            except:
+                pass
 
         confset1(smb4_shares, "\n")
         confset2(smb4_shares, "[%s]", share.cifs_name.encode('utf8'), space=0)
