@@ -4034,7 +4034,7 @@ class notifier:
 
         in_disks = {}
         serials = []
-        for disk in Disk.objects.all():
+        for disk in Disk.objects.order_by('disk_enabled'):
 
             dskname = self.identifier_to_device(disk.disk_identifier)
             if not dskname or dskname in in_disks:
