@@ -329,7 +329,7 @@ class NTPForm(ModelForm):
 class AdvancedForm(ModelForm):
     adv_system_pool = forms.ChoiceField(
         label=_("System dataset pool"),
-        required=True
+        required=False
     )
 
     class Meta:
