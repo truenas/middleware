@@ -1,10 +1,13 @@
 import os
 
+from freenasUI.storage.models import Volume
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 from freenasUI.system.models import Advanced
 
 class Samba4Alert(BaseAlert):
     def run(self):
+        if not Volume.objects.all().exists():
+            return True
         advanced = Advanced.objects.all()[0]
         if not advanced.adv_system_pool:
             return [
