@@ -114,6 +114,21 @@ ix_syslogd_start()
 
 	if ! use_syslog_dataset
 	then
+		if [ -L "/var/log" ]
+		then
+			local rp="$(realpath -q /var/log)"
+			if [ -z "${rp}" ]
+			then
+				rm -f /var/log
+				mkdir -p /var/log
+			else
+				local datestr="$(date +'%Y%m%d%H%M%S')"
+				rm -f /var/log
+				mv "/var/log" "/var/log.${datestr}"
+				mkdir -p /var/log
+			fi
+			service syslogd restart 
+		fi
 		return 0
 	fi
 
