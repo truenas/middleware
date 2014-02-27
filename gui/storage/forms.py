@@ -461,6 +461,7 @@ class VolumeManagerForm(VolumeMixin, Form):
         notifier().reload("disk")
         notifier().start("ix-system")
         notifier().start("ix-syslogd")
+        notifier().restart("system_datasets")
         # For scrub cronjob
         if volume.vol_fstype == 'ZFS':
             notifier().restart("cron")
@@ -1056,6 +1057,7 @@ class AutoImportWizard(SessionWizardView):
         notifier().reload("disk")
         notifier().start("ix-system")
         notifier().start("ix-syslogd")
+        notifier().restart("system_datasets")
 
         return JsonResp(self.request, message=unicode(_("Volume imported")))
 
