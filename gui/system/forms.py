@@ -360,6 +360,7 @@ class AdvancedForm(ModelForm):
 
         self.fields['adv_system_pool'].choices = pool_choices
         self.instance._original_adv_system_pool = self.instance.adv_system_pool
+        self.instance._original_adv_syslog_usedataset = self.instance.adv_syslog_usedataset
 
     def save(self):
         super(AdvancedForm, self).save()
@@ -396,6 +397,9 @@ class AdvancedForm(ModelForm):
                 raise MiddlewareError(_("Unable to create system dataset!"))
             if self.instance._original_adv_system_pool != self.instance.adv_system_pool:
                 notifier().restart("system_datasets")
+
+        if self.instance._original_adv_syslog_usedataset != self.instance.adv_syslog_usedataset:
+            notifier().restart("syslogd")
 
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
