@@ -10,13 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Advanced.adv_syslog_usedataset'
         db.add_column(u'system_advanced', 'adv_syslog_usedataset',
-                      self.gf('django.db.models.fields.BooleanField')(default=0),
+                      self.gf('django.db.models.fields.BooleanField')(default=1),
                       keep_default=False)
 
         # south suckage
         if not db.dry_run:
             orm['system.Advanced'].objects.update(
-                adv_syslog_usedataset=False
+                adv_syslog_usedataset=True
             )
 
     def backwards(self, orm):
