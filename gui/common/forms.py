@@ -156,3 +156,7 @@ class Form(AdvMixin, F):
             row_ender=u'</td></tr>',
             help_text_html=u'<br />%s',
             errors_on_separate_row=False)
+
+    def done(self, request, events):
+        fname = str(type(self).__name__)
+        appPool.hook_form_done(fname, self, request, events)
