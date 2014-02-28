@@ -2619,6 +2619,8 @@ class notifier:
         if not out:
             if saved_tmpdir:
                 os.environ['TMPDIR'] = saved_tmpdir
+            else:
+                del os.environ['TMPDIR']
             raise MiddlewareError("This file was not identified as in PBI "
                 "format, it might as well be corrupt.")
 
@@ -2742,6 +2744,8 @@ class notifier:
         log.debug("install_pbi: everything went well, returning %s", ret)
         if saved_tmpdir:
             os.environ['TMPDIR'] = saved_tmpdir
+        else:
+            del os.environ['TMPDIR']
         return ret
 
     def _get_pbi_info(self, pbifile):
@@ -4034,7 +4038,7 @@ class notifier:
 
         in_disks = {}
         serials = []
-        for disk in Disk.objects.order_by('disk_enabled'):
+        for disk in Disk.objects.all():
 
             dskname = self.identifier_to_device(disk.disk_identifier)
             if not dskname or dskname in in_disks:
