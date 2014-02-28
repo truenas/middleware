@@ -75,7 +75,7 @@ else
     USER_OVERRIDE=0
 fi
 
-IPS=\`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select carp_v4address from network_carp;"\`
+IPS=\`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select int_ipv4address from network_interfaces where int_interface like 'carp%'"\`
 
 # Do we have a force seal?
 HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
