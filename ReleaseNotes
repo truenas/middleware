@@ -15,6 +15,12 @@ in 9.2.1.2-RC can be found here:
 
 * Serial console misconfiguration is now harder to do.
 
+* Logging to .system dataset is now optional.  If you have an old syslog
+dataset (which is how this was formerly done), you are strongly encouraged
+to transition to the new .system/syslog dataset by enabling it in
+System->Settings->Advanced and simply delete your old syslog dataset.
+
+
 Release Notes for FreeNAS 9.2.1.1-RELEASE
 
 This point release for 9.2.1 fixes a few key issues found in 9.2.1 with Jails
@@ -36,11 +42,11 @@ the fixed bug list for details.
 * A system dataset (.system) is now created in a user-configurable pool,
 the default being the first pool found.  This can be changed in
 System->Settings->Advanced, the .system dataset being created as needed.
-This dataset becamse necessary for storing persistent Samba permissions,
+This dataset became necessary for storing persistent Samba permissions,
 and is also being leveraged for other purposes, like collecting core files
 (which otherwise might overflow the limited system partition space) and
-storing system log files.  It will be used for additional purposes as
-FreeNAS evolves.
+optionally for storing system log files.  It will be used for additional
+purposes as FreeNAS evolves.
 
 * A panic that occurred with VIMAGE jails has been fixed.
 
