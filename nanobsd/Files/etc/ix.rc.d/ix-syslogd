@@ -41,6 +41,11 @@ use_syslog_dataset()
 {
 	local use
 
+	if ! is_freenas
+	then
+		return 1
+	fi
+
 	use="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		adv_syslog_usedataset
