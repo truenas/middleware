@@ -140,7 +140,13 @@ def volumemanager(request):
     if request.method == "POST":
         form = forms.VolumeManagerForm(request.POST)
         if form.is_valid() and form.save():
-            return JsonResp(request, message=_("Volume successfully added."))
+            events = []
+            form.done(request, events)
+            return JsonResp(
+                request,
+                message=_("Volume successfully added."),
+                events=events,
+            )
         else:
             return JsonResp(request, form=form, formsets={'layout': form._formset})
     disks = []
