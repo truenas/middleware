@@ -257,7 +257,7 @@ sub_FlashDevice () {
 	    page_size=`sysctl -n hw.pagesize`
 	    round_down=$(($x % $page_size))
 	    NANO_MEDIASIZE=$(($x - $round_down))
-	    if [ "$x" != "$NANO_MEDIASIZE" ] ; then 
+	    if [ "$x" != "$NANO_MEDIASIZE" ] ; then
 		echo "Nano media size rounded down for SWAP backing $x -> ${NANO_MEDIASIZE}"
 	    fi
 	fi
