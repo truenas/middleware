@@ -93,6 +93,12 @@ device		amdtemp
 device		coretemp
 device		cpufreq
 
+#
+# CPU control pseudo-device. Provides access to MSRs, CPUID info and
+# microcode update feature.
+#
+device		cpuctl
+
 # Bus support.
 device		acpi
 device		pci
