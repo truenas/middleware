@@ -80,6 +80,7 @@ main()
 	rm -f ${INSTALLUFSDIR}/usr/bin/* ${INSTALLUFSDIR}/usr/sbin/*
 
 	mkdir -p ${INSTALLUFSDIR}/usr/local/pre-install
+	mkdir -p ${INSTALLUFSDIR}/usr/local/firmware
 	mkdir -p ${INSTALLUFSDIR}/usr/local/install
 	mkdir -p ${INSTALLUFSDIR}/usr/local/sbin
 
@@ -91,6 +92,8 @@ main()
 			${INSTALLUFSDIR}/usr/local/sbin
 		cp -Rp ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/install/ \
 			${INSTALLUFSDIR}/usr/local/install/
+		cp -Rp ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/firmware/ \
+			${INSTALLUFSDIR}/usr/local/firmware/
 	fi
 	cp -p ${AVATAR_ROOT}/build/files/rc ${INSTALLUFSDIR}/etc
 

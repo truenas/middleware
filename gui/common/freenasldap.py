@@ -1888,7 +1888,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
 
             for g in ad_groups:
                 sAMAccountName = g[1]['sAMAccountName'][0]
-                if not self.trusted and not self.unix:
+                if self.default or self.unix:
                     sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, sAMAccountName))
 
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
