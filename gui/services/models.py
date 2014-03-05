@@ -1862,25 +1862,23 @@ class RsyncMod(Model):
                 "is 0 (unlimited)"),
             )
     rsyncmod_user = UserField(
-            max_length=120,
-            default="nobody",
-            verbose_name=_("User"),
-            help_text=_("This option specifies the user name that file "
-                "transfers to and from that module should take place. In "
-                "combination with the 'Group' option this determines what file"
-                " permissions are available. Leave this field empty to use "
-                "default settings"),
-            blank=True,
-            )
+        max_length=120,
+        default="nobody",
+        verbose_name=_("User"),
+        help_text=_("This option specifies the user name that file "
+            "transfers to and from that module should take place. In "
+            "combination with the 'Group' option this determines what file"
+            " permissions are available. Leave this field empty to use "
+            "default settings"),
+    )
     rsyncmod_group = GroupField(
-            max_length=120,
-            default="nobody",
-            verbose_name=_("Group"),
-            help_text=_("This option specifies the group name that file "
-                "transfers to and from that module should take place. Leave "
-                "this field empty to use default settings"),
-            blank=True,
-            )
+        max_length=120,
+        default="nobody",
+        verbose_name=_("Group"),
+        help_text=_("This option specifies the group name that file "
+            "transfers to and from that module should take place. Leave "
+            "this field empty to use default settings"),
+    )
     rsyncmod_hostsallow = models.TextField(
             verbose_name=_("Hosts allow"),
             help_text=_("This option is a comma, space, or tab delimited set "
