@@ -163,12 +163,6 @@ ix_syslogd_start()
 
 	local mp="/mnt/${syslog_dataset}"
 
-	/etc/rc.d/syslogd status >/dev/null 2>&1
-	if [ "$?" = "0" ]
-	then
-		/etc/rc.d/syslogd forcestop
-	fi
-
 	#
 	#	log directory exists, pick up any new files or
 	#	directories and create them. Existing files will be
@@ -230,7 +224,7 @@ ix_syslogd_start()
 		ln -s "${mp}/log" "/var/log"
 	fi
 
-	/etc/rc.d/syslogd start
+	/etc/rc.d/syslogd reload
 	return 0
 }
 
