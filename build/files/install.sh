@@ -455,13 +455,6 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
         mv /tmp/fstab.swap /tmp/data/
         umount /tmp/data
         rmdir /tmp/data
-
-        # Remove all existing swap partitions.  Note that we deal with ONLY partitons
-        # that is created by GUI, that is, with type of freebsd-swap and begin at
-        # sector 128.
-        #
-        # This is a hack and should be revisited when the installer gets rewritten.
-        gpart show -p | grep freebsd-swap | grep ' 128 ' | awk '{ print $3 }' | grep p1\$ | sed -e 's/^/gpart delete -i 1 /g' -e 's/p1$//g' | sh -x
     fi
 
     # End critical section.
