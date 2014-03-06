@@ -566,6 +566,14 @@ def get_samba4_path():
 
 def exclude_path(path, exclude):
 
+    if isinstance(path, unicode):
+        path = path.encode('utf8')
+
+    exclude = map(
+        lambda y: y.encode('utf8') if isinstance(y, unicode) else y,
+        exclude
+    )
+
     fine_grained = []
     for e in exclude:
         if not e.startswith(path):
