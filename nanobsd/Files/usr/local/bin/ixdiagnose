@@ -227,6 +227,17 @@ if [ -f /usr/local/etc/registration ] ; then
 	cp /usr/local/etc/registration "$dir/registration.json"
 fi
 
+ls /dev/ses* 2> /dev/null | while read -r ses; do
+	name=$(echo ${ses}|cut -d "/" -f 3)
+	/sbin/camcontrol smpphylist ${ses} > "$dir/smpphylist.${name}"
+	/usr/local/sbin/smp_rep_phy_err_log ${ses} > "$dir/smp_rep_phy_err_log.${name}"
+	cat $dir/smpphylist.${name} | tail -n +3 | while read -r num val desc; do
+		if [ -n "${desc}" ]; then
+			/usr/local/sbin/smp_rep_phy_err_log ${ses} -p ${num} > "$dir/smp_rep_phy_err_log.${name}.${num}"
+		fi
+	done
+done
+
 tar -C $dir/.. -cHzf $dir/../ixdiagnose.tgz ixdiagnose
 $mydir/crashuploader $topdir/ixdiagnose.tgz
 if [ "$actualdump" != "" ] ; then

@@ -76,7 +76,7 @@ _interface_config()
 {
 	local saved_ifs="${IFS}"
 	local IFS=\|
-	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options 
+	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
 	local vlan_vint vlan_pint vlan_tag
 
@@ -199,7 +199,7 @@ _host_config()
 			done) > /etc/resolv.conf
 		fi
 
-		if [ ${netwait_enabled} -eq 1 ]; then
+		if [ "${netwait_enabled}" = 1 ]; then
 			echo netwait_enable=\"YES\"
 			if [ -z "${netwait_ip}" ]; then
 				if [ -n "${ipv4gateway}" ]; then
@@ -356,7 +356,6 @@ _gen_conf()
 	_bool_svcconfig rpc_statd_enable nfs
 	_bool_svcconfig mountd_enable nfs
 	_bool_svcconfig nfsd_enable nfs
-	_bool_svcconfig samba_server_enable cifs
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig bsnmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
@@ -364,6 +363,13 @@ _gen_conf()
 	_bool_svcconfig istgt_enable iscsitarget
 	_bool_svcconfig inadynmt_enable dynamicdns
 	_bool_svcconfig smartd_enable smartd
+
+	_bool_svcconfig samba_server_enable cifs
+	if ! dirsrv_enabled domaincontroller ; then
+		_bool_svcconfig smbd_enable cifs
+		_bool_svcconfig nmbd_enable cifs
+		_bool_svcconfig winbindd_enable cifs
+	fi
 
 	if dirsrv_enabled nis; then
 		_nis_config
@@ -393,7 +399,7 @@ _gen_conf()
 		echo "saver=\"daemon\""
 	fi
 
-	local nonroot mountdflags="-r" ip nfsips mountdport statdport lockdport
+	local nonroot mountdflags="-l -rS" ip nfsips mountdport statdport lockdport
 
 	nfsips=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_bindip FROM services_nfs ORDER BY -id LIMIT 1" | tr "," \\n | \
 	while read -r ip; do

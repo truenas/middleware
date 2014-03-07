@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-system
+# BEFORE: samba_server ix-syslogd
+
+. /etc/rc.freenas
+
+system_start()
+{
+	/usr/local/libexec/nas/create_system_datasets.py
+}
+
+
+name="ix-system"
+start_cmd='system_start'
+stop_cmd=':'
+status_cmd=':'
+            
+load_rc_config $name
+run_rc_command $*

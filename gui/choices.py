@@ -167,14 +167,19 @@ VolumeEncrypt_Choices = (
         (2, _('Encrypted, with passphrase')),
         )
 
-## Services|CIFS/SMB|Settings
-## This will be overrided if LDAP or ActiveDirectory is enabled.
-CIFSAUTH_CHOICES = (
-        ('share', _('Anonymous')),
-        ('user', _('Local User')),
-        )
-
 CIFS_SMB_PROTO_CHOICES = (
+       ('CORE', _('CORE')),
+       ('COREPLUS', _('COREPLUS')),
+       ('LANMAN1', _('LANMAN1')),
+       ('LANMAN2', _('LANMAN2')),
+       ('NT1', _('NT1')),
+       ('SMB2', _('SMB2')),
+       ('SMB2_02', _('SMB2_02')),
+       ('SMB2_10', _('SMB2_10')),
+       ('SMB2_22', _('SMB2_22')),
+       ('SMB2_24', _('SMB2_24')),
+       ('SMB3', _('SMB3')),
+       ('SMB3_00', _('SMB3_00')),
         )
 
 DOSCHARSET_CHOICES = (
@@ -752,3 +757,24 @@ NULLMOUNTPOINT_CHOICES = (
     ('tmpfs', 'tmpfs'),
     ('unionfs', 'unionfs')
 )
+
+SHARE_TYPE_CHOICES = (
+    ('unix', 'UNIX'),
+    ('windows', 'Windows'),
+    ('apple', 'Apple')
+)
+
+
+class SERIAL_CHOICES(object):
+
+    def __iter__(self):
+        pipe = popen("/usr/sbin/devinfo -u | grep uart | grep 0x | cut -d- -f 1 | "
+              "awk '{print $1}'")
+        ports = filter(
+            lambda y: True if y else False,
+            pipe.read().strip().strip('\n').split('\n')
+        )
+        if not ports:
+            ports = ['0x2f8']
+        for p in ports:
+            yield (p, p)

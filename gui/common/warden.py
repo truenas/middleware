@@ -70,6 +70,7 @@ WARDEN_KEY_NAT            = "nat"
 WARDEN_KEY_MAC            = "mac"
 WARDEN_KEY_STATUS         = "status"
 WARDEN_KEY_TYPE           = "type"
+WARDEN_KEY_FLAGS          = "flags"
 
 #
 # Warden template dict keys
@@ -371,6 +372,7 @@ class WardenJail(object):
         self.mac = kwargs.get(WARDEN_KEY_MAC)
         self.status = kwargs.get(WARDEN_KEY_STATUS)
         self.type = kwargs.get(WARDEN_KEY_TYPE)
+        self.flags = kwargs.get(WARDEN_KEY_FLAGS)
 
 
 class WardenTemplate(object):
@@ -661,7 +663,8 @@ class warden_list(warden_base):
             'nat': WARDEN_KEY_NAT,
             'mac': WARDEN_KEY_MAC,
             'status': WARDEN_KEY_STATUS,
-            'type': WARDEN_KEY_TYPE
+            'type': WARDEN_KEY_TYPE,
+            'flags': WARDEN_KEY_FLAGS
         } 
 
         lines = thestuff[1].splitlines()
@@ -731,7 +734,6 @@ class warden_set(warden_base):
                     break
 
         super(warden_set, self).__init__(WARDEN_SET, WARDEN_SET_FLAGS, flags, **kwargs)
-
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " %s" % self.jail
@@ -739,7 +741,7 @@ class warden_set(warden_base):
         for wsf in WARDEN_SET_FLAGS:
             if saved_flags & wsf: 
                 if kwargs.has_key(wsf.argname) and kwargs[wsf.argname] is not None:
-                    self.args += " %s" % kwargs[wsf.string]
+                    self.args += " %s" % kwargs[wsf.argname]
                     break
 
 

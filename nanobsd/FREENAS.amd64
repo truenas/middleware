@@ -87,10 +87,18 @@ options		DDB			# Support DDB.
 # Make an SMP-capable kernel by default
 options 	SMP			# Symmetric MultiProcessor Kernel
 
+device		zfs
+
 # CPU frequency control
 device		amdtemp
 device		coretemp
 device		cpufreq
+
+#
+# CPU control pseudo-device. Provides access to MSRs, CPUID info and
+# microcode update feature.
+#
+device		cpuctl
 
 # Bus support.
 device		acpi
@@ -254,8 +262,8 @@ device		md		# Memory "disks"
 device		gif		# IPv6 and IPv4 tunneling
 device		faith		# IPv6-to-IPv4 relaying (translation)
 device		firmware	# firmware assist module
-device		crypto		# hardware crypto access driver
-device		cryptodev	# hardware crypto access driver
+device		crypto		# core crypto support
+device		cryptodev	# /dev/crypto for access to h/w
 
 # The `bpf' device enables the Berkeley Packet Filter.
 # Be aware of the administrative consequences of enabling this!
@@ -299,9 +307,6 @@ options		UNIONFS
 options		VFS_AIO
 device		aesni
 device		carp
-device		pf
-device		pflog
-device		pfsync
 
 ## FreeNAS specific modifications
 # misc
@@ -312,6 +317,8 @@ device		snp
 device		iscsi
 device		epair		# A pair of virtual back-to-back connected Ethernet interfaces
 device		if_bridge	# network bridge device
+#  The `tap' device is a pty-like virtual Ethernet interface
+device		tap
 options		GEOM_MIRROR
 
 # Watchdog support

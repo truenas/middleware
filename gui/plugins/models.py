@@ -35,9 +35,11 @@ from freenasUI.common.jail import Jls
 from freenasUI.common.pbi import pbi_delete
 from freenasUI.freeadmin.models import Model
 from freenasUI.jails.models import Jails, JailsConfiguration
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('plugins.models')
+
 
 class Plugins(Model):
     plugin_name = models.CharField(
@@ -124,8 +126,9 @@ class Plugins(Model):
                 jail = j
                 break
         if jail is None:
-            raise MiddlewareError("The plugins jail is not running, start "
-                "it before proceeding")
+            raise MiddlewareError(_(
+                "The plugins jail is not running, start it before proceeding"
+            ))
 
         notifier().umount_filesystems_within(pbi_path)
         p = pbi_delete(pbi=self.plugin_pbiname)

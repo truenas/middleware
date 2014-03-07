@@ -71,14 +71,6 @@ class services(Model):
 
 
 class CIFS(Model):
-    cifs_srv_authmodel = models.CharField(
-            max_length=10,
-            choices=choices.CIFSAUTH_CHOICES,
-            default='user',
-            verbose_name=_("Authentication Model"),
-            help_text=_("Using Active Directory or LDAP authentication will "
-                "supersede this option"),
-            )
     cifs_srv_netbiosname = models.CharField(
             max_length=120,
             verbose_name=_("NetBIOS name")
@@ -113,6 +105,10 @@ class CIFS(Model):
             default=choices.LOGLEVEL_CHOICES[0][0],
             verbose_name=_("Log level")
             )
+    cifs_srv_syslog = models.BooleanField(
+        verbose_name=_("Use syslog"),
+        default=False,
+    )
     cifs_srv_localmaster = models.BooleanField(
         verbose_name=_("Local Master"),
         default=False,
@@ -231,6 +227,20 @@ class CIFS(Model):
                 "hostname lookups or use the ip addresses instead. An example "
                 "place where hostname lookups are currently used is when "
                 "checking the hosts deny and hosts allow."),
+            )
+    cifs_srv_min_protocol = models.CharField(
+            max_length=120,
+            verbose_name=_("Server minimum protocol"),
+            choices=choices.CIFS_SMB_PROTO_CHOICES,
+            help_text=_("The minimum protocol version that will be supported by the server"),
+            blank=True
+            )
+    cifs_srv_max_protocol = models.CharField(
+            max_length=120,
+            verbose_name=_("Server maximum protocol"),
+            default='SMB3',
+            choices=choices.CIFS_SMB_PROTO_CHOICES,
+            help_text=_("The highest protocol version that will be supported by the server")
             )
 
     class Meta:
@@ -869,6 +879,15 @@ class DynamicDNS(Model):
             blank=True,
             verbose_name=_("Provider")
             )
+    ddns_ipserver = models.CharField(
+        max_length=150,
+        verbose_name=_('IP Server'),
+        help_text=_(
+            'The client IP is detected by calling \'url\' from this '
+            '\'ip_server_name:port\'. Defaults to checkip.dyndns.org:80 /.'
+        ),
+        blank=True,
+    )
     ddns_domain = models.CharField(
             max_length=120,
             verbose_name=_("Domain name"),
@@ -1622,7 +1641,7 @@ class ActiveDirectory(Model):
         from freenasUI.network.models import GlobalConfiguration
         gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
         if gc_hostname:
-            m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
+            m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
             if m:
                 self.ad_netbiosname = m.group(0).upper().strip()
 
@@ -1843,25 +1862,23 @@ class RsyncMod(Model):
                 "is 0 (unlimited)"),
             )
     rsyncmod_user = UserField(
-            max_length=120,
-            default="nobody",
-            verbose_name=_("User"),
-            help_text=_("This option specifies the user name that file "
-                "transfers to and from that module should take place. In "
-                "combination with the 'Group' option this determines what file"
-                " permissions are available. Leave this field empty to use "
-                "default settings"),
-            blank=True,
-            )
+        max_length=120,
+        default="nobody",
+        verbose_name=_("User"),
+        help_text=_("This option specifies the user name that file "
+            "transfers to and from that module should take place. In "
+            "combination with the 'Group' option this determines what file"
+            " permissions are available. Leave this field empty to use "
+            "default settings"),
+    )
     rsyncmod_group = GroupField(
-            max_length=120,
-            default="nobody",
-            verbose_name=_("Group"),
-            help_text=_("This option specifies the group name that file "
-                "transfers to and from that module should take place. Leave "
-                "this field empty to use default settings"),
-            blank=True,
-            )
+        max_length=120,
+        default="nobody",
+        verbose_name=_("Group"),
+        help_text=_("This option specifies the group name that file "
+            "transfers to and from that module should take place. Leave "
+            "this field empty to use default settings"),
+    )
     rsyncmod_hostsallow = models.TextField(
             verbose_name=_("Hosts allow"),
             help_text=_("This option is a comma, space, or tab delimited set "

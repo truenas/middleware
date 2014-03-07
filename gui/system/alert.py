@@ -49,7 +49,7 @@ class Alert(object):
         self._level = level
         self._message = message
         if id is None:
-            self._id = hashlib.md5(message).hexdigest()
+            self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
             self._id = id
 
@@ -133,14 +133,14 @@ class AlertPlugins(object):
             try:
                 rv = instance.run()
                 if rv:
-                    rvs.extend(rv)
+                    rvs.extend(filter(None, rv))
             except Exception, e:
                 log.error("Alert module '%s' failed: %s", instance, e)
 
-        crits = sorted([a for a in rvs if a.getLevel() == Alert.CRIT])
+        crits = sorted([a for a in rvs if a and a.getLevel() == Alert.CRIT])
         if obj and crits:
             lastcrits = sorted([
-                a for a in obj['alerts'] if a.getLevel() == Alert.CRIT
+                a for a in obj['alerts'] if a and a.getLevel() == Alert.CRIT
             ])
             if crits == lastcrits:
                 crits = []

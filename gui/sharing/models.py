@@ -53,6 +53,8 @@ class CIFS_Share(Model):
             verbose_name=_("Inherit Owner"), default=False)
     cifs_inheritperms = models.BooleanField(
             verbose_name=_("Inherit Permissions"))
+    cifs_inheritacls = models.BooleanField(
+            verbose_name=_("Inherit ACL's"), default=True)
     cifs_recyclebin = models.BooleanField(
             verbose_name=_("Export Recycle Bin"))
     cifs_showhiddenfiles = models.BooleanField(
@@ -167,10 +169,11 @@ class AFP_Share(Model):
             verbose_name=_("Default directory permission"),
             )
     afp_umask = models.CharField(
-            max_length=3,
-            default="000",
-            verbose_name=_("Default umask"),
-            )
+        max_length=3,
+        default="000",
+        blank=True,
+        verbose_name=_("Default umask"),
+    )
 
     def __unicode__(self):
         return unicode(self.afp_name)

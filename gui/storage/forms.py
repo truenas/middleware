@@ -49,7 +49,7 @@ from freenasUI import choices
 from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
-from freenasUI.common.system import mount, umount
+from freenasUI.common.system import get_system_dataset, mount, umount
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect
@@ -459,6 +459,9 @@ class VolumeManagerForm(VolumeMixin, Form):
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
         notifier().reload("disk")
+        notifier().start("ix-system")
+        notifier().start("ix-syslogd")
+        notifier().restart("system_datasets")
         # For scrub cronjob
         if volume.vol_fstype == 'ZFS':
             notifier().restart("cron")
@@ -1052,6 +1055,9 @@ class AutoImportWizard(SessionWizardView):
             raise
 
         notifier().reload("disk")
+        notifier().start("ix-system")
+        notifier().start("ix-syslogd")
+        notifier().restart("system_datasets")
 
         return JsonResp(self.request, message=unicode(_("Volume imported")))
 
@@ -1388,6 +1394,10 @@ class ZFSDataset(Form):
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
         label=_('Compression level'))
+    dataset_share_type = forms.ChoiceField(
+        choices=choices.SHARE_TYPE_CHOICES,
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Share type'))
     dataset_atime = forms.ChoiceField(
         choices=choices.ZFS_AtimeChoices,
         widget=forms.RadioSelect(attrs=attrs_dict),
@@ -1449,6 +1459,8 @@ class ZFSDataset(Form):
             del self.fields['dataset_recordsize']
             data = notifier().zfs_get_options(self._fs)
             self.fields['dataset_compression'].initial = data['compression']
+            self.fields['dataset_share_type'].initial = notifier().get_dataset_share_type(self._fs)
+            self.fields['dataset_share_type'].widget.attrs['readonly'] = True
             self.fields['dataset_atime'].initial = data['atime']
 
             for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
@@ -1677,14 +1689,21 @@ class MountPointAccessForm(Form):
         return self.cleaned_data
 
     def commit(self, path='/mnt/'):
+        volume, basename = get_system_dataset()
+
+        exclude = []
+        if basename:
+             exclude = [ '/mnt/%s' % basename ]
 
         notifier().mp_change_permission(
-            path=path,
-            user=self.cleaned_data['mp_user'],
-            group=self.cleaned_data['mp_group'],
-            mode=self.cleaned_data['mp_mode'].__str__(),
-            recursive=self.cleaned_data['mp_recursive'],
-            acl=self.cleaned_data['mp_acl'])
+             path=path,
+             exclude=exclude,
+             user=self.cleaned_data['mp_user'],
+             group=self.cleaned_data['mp_group'],
+             mode=self.cleaned_data['mp_mode'].__str__(),
+             recursive=self.cleaned_data['mp_recursive'],
+             acl=self.cleaned_data['mp_acl'],
+        )
 
 
 class PeriodicSnapForm(ModelForm):
@@ -2408,6 +2427,7 @@ class UnlockPassphraseForm(Form):
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
             _notifier.restart(svc)
+        _notifier.restart("system_datasets")
 
 
 class KeyForm(Form):

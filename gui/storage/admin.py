@@ -126,6 +126,18 @@ class VolumeFAdmin(BaseFreeAdmin):
         })
 
         columns.append({
+            'name': 'compression',
+            'label': _('Compression'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'compressratio',
+            'label': _('Compression Ratio'),
+            'sortable': False,
+        })
+
+        columns.append({
             'name': 'status',
             'label': _('Status'),
             'sortable': False,
@@ -280,7 +292,13 @@ class VolumeFAdmin(BaseFreeAdmin):
             icon="zpool_status",
             fstype="ALL",
         )
-
+        actions['VolLock'] = self._action_builder(
+            "volume_lock",
+            label=_('Lock Volume'),
+            icon="lock_volume",
+            has_enc=True,
+            enc_level=2,
+        )
         actions['VolCreatePass'] = self._action_builder(
             "create_passphrase",
             label=_('Create Passphrase'),
@@ -367,6 +385,7 @@ class VolumeFAdmin(BaseFreeAdmin):
 class VolumeStatusFAdmin(BaseFreeAdmin):
 
     app_label = "storage"
+    double_click = False
     module_name = "volumestatus"
     verbose_name = "Volume Status"
     resource = False

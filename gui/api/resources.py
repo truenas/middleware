@@ -59,7 +59,7 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
 from freenasUI.services.forms import iSCSITargetPortalIPForm
-from freenasUI.services.models import NFS, iSCSITargetPortal, iSCSITargetPortalIP
+from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
@@ -68,9 +68,9 @@ from freenasUI.storage.forms import (
 from freenasUI.system.alert import alertPlugins, Alert
 from freenasUI.storage.models import Disk
 from tastypie import fields
-from tastypie.bundle import Bundle
 from tastypie.http import (
-    HttpAccepted, HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
+    HttpAccepted,
+    HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
 )
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.utils import trailing_slash
@@ -650,7 +650,7 @@ class VolumeResourceMixin(NestedMixin):
         for name, dataset in datasets.items():
             if name.startswith('.'):
                 continue
- 
+
             data = {
                 'id': uid.next(),
                 'name': name,
@@ -659,6 +659,15 @@ class VolumeResourceMixin(NestedMixin):
                 'mountpoint': dataset.mountpoint,
                 'path': dataset.path,
             }
+            if self.is_webclient(bundle.request):
+                data['compression'] = self.__zfsopts.get(
+                    dataset.path,
+                    {},
+                ).get('compression', '-')
+                data['compressratio'] = self.__zfsopts.get(
+                    dataset.path,
+                    {},
+                ).get('compressratio', '-')
             for attr in attr_fields:
                 data[attr] = getattr(dataset, attr)
 
@@ -723,6 +732,17 @@ class VolumeResourceMixin(NestedMixin):
         bundle.data['layout-TOTAL_FORMS'] = i + 1
         return bundle
 
+    def dispatch_list(self, request, **kwargs):
+        # Only for webclient to do not break API
+        if self.is_webclient(request):
+            self.__zfsopts = notifier().zfs_get_options(
+                recursive=True,
+                props=['compression', 'compressratio'],
+            )
+        return super(VolumeResourceMixin, self).dispatch_list(
+            request, **kwargs
+        )
+
     def dehydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).dehydrate(bundle)
         mp = bundle.obj.mountpoint_set.all()[0]
@@ -732,6 +752,15 @@ class VolumeResourceMixin(NestedMixin):
                 del bundle.data[key]
 
         bundle.data['name'] = bundle.obj.vol_name
+        if self.is_webclient(bundle.request):
+            bundle.data['compression'] = self.__zfsopts.get(
+                bundle.obj.vol_name,
+                {},
+            ).get('compression', '-')
+            bundle.data['compressratio'] = self.__zfsopts.get(
+                bundle.obj.vol_name,
+                {},
+            ).get('compressratio', '-')
 
         is_decrypted = bundle.obj.is_decrypted()
         if bundle.obj.vol_fstype == 'ZFS':
@@ -746,7 +775,7 @@ class VolumeResourceMixin(NestedMixin):
             bundle.data['_permissions_url'] = reverse(
                 'storage_mp_permission',
                 kwargs={
-                    'path': mp.mp_path,
+                    'path': urllib.quote_plus(mp.mp_path),
                 })
             bundle.data['_status_url'] = "%s?id=%d" % (
                 reverse('freeadmin_storage_volumestatus_datagrid'),
@@ -806,6 +835,9 @@ class VolumeResourceMixin(NestedMixin):
                         kwargs={'object_id': bundle.obj.id})
                     bundle.data['_change_passphrase_url'] = reverse(
                         'storage_volume_change_passphrase',
+                        kwargs={'object_id': bundle.obj.id})
+                    bundle.data['_volume_lock_url'] = reverse(
+                        'storage_volume_lock',
                         kwargs={'object_id': bundle.obj.id})
 
         attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
@@ -1021,6 +1053,7 @@ class InterfacesResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(InterfacesResourceMixin, self).dehydrate(bundle)
+        bundle.data['int_media_status'] = bundle.obj.get_media_status()
         bundle.data['ipv4_addresses'] = bundle.obj.get_ipv4_addresses()
         bundle.data['ipv6_addresses'] = bundle.obj.get_ipv6_addresses()
         bundle.data['int_aliases'] = [
@@ -1702,7 +1735,7 @@ class SnapshotResource(DojoResource):
             notifier().destroy_zfs_dataset(path=kwargs['pk'].encode('utf8'))
         except MiddlewareError, e:
             raise ImmediateHttpResponse(
-                response=self.error_response(request, {
+                response=self.error_response(bundle.request, {
                     'error': e.value,
                 })
             )
@@ -1723,7 +1756,8 @@ class SnapshotResource(DojoResource):
                     'storage_clonesnap',
                     kwargs={
                         'snapshot': bundle.obj.fullname,
-                    }),
+                    }
+                ) + ('?volume=true' if bundle.obj.parent_type == 'volume' else ''),
                 'rollback_url': reverse('storage_snapshot_rollback', kwargs={
                     'dataset': bundle.obj.filesystem,
                     'snapname': bundle.obj.name,

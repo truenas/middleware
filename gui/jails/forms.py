@@ -75,7 +75,7 @@ from freenasUI.common.warden import (
     WARDEN_SET_FLAGS_NAT_ENABLE,
     WARDEN_SET_FLAGS_NAT_DISABLE,
     WARDEN_SET_FLAGS_MAC,
-    #WARDEN_SET_FLAGS_FLAGS,
+    WARDEN_SET_FLAGS_FLAGS,
     WARDEN_KEY_HOST,
 )
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -305,7 +305,7 @@ class JailCreateForm(ModelForm):
 
         for key in (
             'jail_bridge_ipv4', 'jail_bridge_ipv6', 'jail_defaultrouter_ipv4',
-            'jail_defaultrouter_ipv6', 'jail_mac'
+            'jail_defaultrouter_ipv6', 'jail_mac', 'jail_flags'
         ):
             jail_set_args = {}
             jail_set_args['jail'] = jail_host
@@ -333,6 +333,10 @@ class JailCreateForm(ModelForm):
                 elif key == 'jail_mac':
                     jail_flags |= WARDEN_SET_FLAGS_MAC
                     jail_set_args['mac'] = val
+
+                elif key == 'jail_flags':
+                    jail_flags |= WARDEN_SET_FLAGS_FLAGS
+                    jail_set_args['jflags'] = val
 
                 jail_set_args['flags'] = jail_flags
                 try:
@@ -589,6 +593,7 @@ class JailsEditForm(ModelForm):
             'jail_mac',
             'jail_vnet',
             'jail_nat',
+            'jail_flags',
         ]
 
         instance = getattr(self, 'instance', None)
@@ -716,6 +721,10 @@ class JailsEditForm(ModelForm):
                     else:
                         flags |= WARDEN_SET_FLAGS_NAT_DISABLE
                         args['nat-disable'] = self.cleaned_data.get(cf)
+
+                elif cf == 'jail_flags':
+                    flags |= WARDEN_SET_FLAGS_FLAGS
+                    args['jflags'] = self.cleaned_data.get(cf)
 
                 args['jail'] = jail_host
                 args['flags'] = flags

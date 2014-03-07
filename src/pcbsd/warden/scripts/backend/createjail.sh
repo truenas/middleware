@@ -223,11 +223,11 @@ if [ "$LINUXJAIL" = "YES" ] ; then
      if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base clone"; fi
    else
      mkdir -p "${JAILDIR}"
-     warden_print sh "${LINUX_JAIL_SCRIPT}" template_install "${JAILDIR}"
-     if [ $? -ne 0 ] ; then
-        find ${JAILDIR}|xargs chflags noschg
-        rm -rf ${JAILDIR}
-        warden_exit "Failed extracting UFS jail environment"
+     warden_print "Installing world..."
+     if [ -d "${WORLDCHROOT}" ] ; then
+       tar cvf - -C ${WORLDCHROOT} . 2>/dev/null | tar xpvf - -C "${JAILDIR}" 2>/dev/null
+     else
+       tar xvf ${WORLDCHROOT} -C "${JAILDIR}" 2>/dev/null
      fi
    fi
    setup_linux_jail

@@ -3,7 +3,7 @@
 .endif
 
 NANO_LABEL?=FreeNAS
-VERSION?=9.2.1-RC2
+VERSION?=9.2.2-ALPHA
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
 
@@ -43,13 +43,15 @@ save-build-env:
 	${ENV_SETUP} build/save_build.sh
 
 freenas: release
-release:
-	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} do-release
-
-do-release: git-verify
+release: git-verify
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
-	${ENV_SETUP} build/build_release.sh
+	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/build_release.sh
+
+rebuild:
+	@${ENV_SETUP} ${MAKE} checkout
+	@${ENV_SETUP} ${MAKE} all
+	@${ENV_SETUP) sh build/create_release_distribution.sh
 
 cdrom:
 	${ENV_SETUP} sh -x build/create_iso.sh

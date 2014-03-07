@@ -229,7 +229,7 @@ fi
 add_port security/libgpg-error
 add_port security/libgcrypt
 add_port databases/db46
-add_port security/cyrus-sasl2
+add_port security/cyrus-sasl2-gssapi
 add_port net/openldap24-sasl-client
 add_port net/nss_ldap
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
@@ -244,17 +244,12 @@ add_port devel/libexecinfo
 add_port devel/popt
 add_port databases/tdb MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port sysutils/libsunacl
-#add_port net/samba36	OPTIONS_FILE_UNSET+=CUPS \
-#	OPTIONS_FILE_SET+=ADS \
-#	OPTIONS_FILE_SET+=AIO_SUPPORT \
-#	OPTIONS_FILE_SET+=EXP_MODULES \
-#	OPTIONS_FILE_SET+=PAM_SMBPASS \
-#	OPTIONS_FILE_SET+=SYSLOG
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash OPTIONS_FILE_UNSET+=NLS
 add_port shells/ksh93
 add_port shells/mksh
+add_port shells/zsh
 add_port shells/scponly
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-libs
@@ -400,11 +395,9 @@ add_port www/py-requests
 add_port sysutils/smp_utils
 add_port net/trafshow
 
-# When we are ready to bring vbox back this fixes
-# an issue with bridging. Ticket #3701
-#if ! is_truenas ; then
-#	add_port emulators/virtualbox-ose-kmod OPTIONS_FILE_SET+=VIMAGE
-#fi
+if ! is_truenas ; then
+	add_port emulators/virtualbox-ose-kmod OPTIONS_FILE_SET+=VIMAGE
+fi
 
 #
 # These are all for SSSD
@@ -436,13 +429,13 @@ add_port security/nettle
 add_port devel/libinotify
 add_port dns/samba-nsupdate
 add_port security/gnutls
-add_port net/samba41 \
+add_port_debug net/samba41 \
        OPTIONS_FILE_SET+=ACL_SUPPORT \
        OPTIONS_FILE_SET+=ADS \
        OPTIONS_FILE_SET+=AIO_SUPPORT \
        OPTIONS_FILE_UNSET+=AVAHI \
        OPTIONS_FILE_UNSET+=CUPS \
-       OPTIONS_FILE_UNSET+=DEBUG \
+       OPTIONS_FILE_SET+=DEBUG \
        OPTIONS_FILE_UNSET+=DEVELOPER \
        OPTIONS_FILE_SET+=DNSUPDATE \
        OPTIONS_FILE_SET+=EXP_MODULES \
@@ -908,13 +901,16 @@ freenas_custom()
 		pprint 4 "Stripping binaries and libraries"
 		for dir in $(find ${NANO_WORLDDIR}/usr/local -name '*bin' -or -name 'libexec' -maxdepth 3); do
 			for f in $(find $dir -type f); do
-				strip 2>/dev/null $f || :
+				if ! dontstrip "$f"
+				then
+					strip 2>/dev/null $f || :
+				fi
 			done
 		done
 		# .so's are the only thing that need to be stripped. The rest
 		# should remain untouched.
 		for f in $(find ${NANO_WORLDDIR}/usr/local/lib -name '*.so' -or -name '*.so.*' -maxdepth 3); do
-			strip 2>/dev/null $f || :
+				strip 2>/dev/null $f || :
 		done
 	fi
 
@@ -978,21 +974,42 @@ last_orders() {
 
 		# the -s arguments map root's "update*" files into the
 		# gui image's bin directory.
-		tar -cpvf - \
-			-s '@^update$@bin/update@' \
-			-s '@^updatep1$@bin/updatep1@' \
-			-s '@^updatep2$@bin/updatep2@' \
-			-C "$AVATAR_ROOT/nanobsd/Files/root" \
-				update updatep1 updatep2 \
-			-C "$NANO_WORLDDIR" \
-				etc/avatar.conf \
-			-C "$AVATAR_ROOT/nanobsd/Installer" \
-				. \
-			-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
-				. \
-			-C "$NANO_DISKIMGDIR" \
-				${firmware_img##*/} \
-			| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
+
+		if is_truenas ; then
+			tar -cpvf - \
+				-s '@^update$@bin/update@' \
+				-s '@^updatep1$@bin/updatep1@' \
+				-s '@^updatep2$@bin/updatep2@' \
+				-C "$AVATAR_ROOT/nanobsd/Files/root" \
+					update updatep1 updatep2 \
+				-C "$NANO_WORLDDIR" \
+					etc/avatar.conf \
+				-C "$AVATAR_ROOT/nanobsd/Installer" \
+					. \
+				-C "${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer" \
+					. \
+				-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
+					. \
+				-C "$NANO_DISKIMGDIR" \
+					${firmware_img##*/} \
+				| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
+		else
+			tar -cpvf - \
+				-s '@^update$@bin/update@' \
+				-s '@^updatep1$@bin/updatep1@' \
+				-s '@^updatep2$@bin/updatep2@' \
+				-C "$AVATAR_ROOT/nanobsd/Files/root" \
+					update updatep1 updatep2 \
+				-C "$NANO_WORLDDIR" \
+					etc/avatar.conf \
+				-C "$AVATAR_ROOT/nanobsd/Installer" \
+					. \
+				-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
+					. \
+				-C "$NANO_DISKIMGDIR" \
+					${firmware_img##*/} \
+				| ${NANO_XZ} -9 -cz > "$gui_upgrade_bname.txz"
+		fi
 		) > "${gui_image_log}" 2>&1
 		(
 		cd $NANO_DISKIMGDIR
@@ -1008,6 +1025,7 @@ last_orders() {
 	set -x
 	if [ -f /usr/local/bin/VBoxManage ]; then
 		VBoxManage convertfromraw "$NANO_DISKIMGDIR/$NANO_IMGNAME" "${vmdk_image}" --format VMDK
+		chmod 644 "${vmdk_image}"
 		time ${NANO_XZ} --verbose -9 -f "${vmdk_image}"
 		sha256_signature=`sha256 ${vmdk_image_compressed}`
 		echo "${sha256_signature}" > ${vmdk_image_compressed}.sha256.txt

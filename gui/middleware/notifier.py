@@ -43,6 +43,7 @@ import grp
 import libxml2
 import logging
 import os
+import pipes
 import platform
 import pwd
 import re
@@ -77,6 +78,7 @@ from django.db.models import Q
 from django.db.models.loading import cache
 cache.get_apps()
 
+from django.utils.translation import ugettext as _
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
@@ -92,7 +94,12 @@ from freenasUI.common.pbi import (
     PBI_MAKEPATCH_FLAGS_OUTDIR, PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
     PBI_PATCH_FLAGS_OUTDIR, PBI_PATCH_FLAGS_NOCHECKSIG
 )
-from freenasUI.common.system import get_mounted_filesystems, umount, get_sw_name
+from freenasUI.common.system import (
+    exclude_path,
+    get_mounted_filesystems,
+    umount,
+    get_sw_name
+)
 from freenasUI.common.warden import (Warden, WardenJail,
     WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
     WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING)
@@ -1978,6 +1985,7 @@ class notifier:
                              % (vol_fstype, ))
 
         self._reload_disk()
+        self._encvolume_detach(volume)
         self.__rmdir_mountpoint(vol_mountpath)
 
     def _reload_disk(self):
@@ -2265,7 +2273,11 @@ class notifier:
         self.reload("cifs")
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
-                             mode='0755', recursive=False, acl='unix'):
+                             mode='0755', recursive=False, acl='unix',
+                             exclude=None):
+
+        if exclude is None:
+            exclude = []
 
         if type(group) is types.UnicodeType:
             group = group.encode('utf-8')
@@ -2290,22 +2302,33 @@ class notifier:
 
         if winexists:
             if not mode:
-                mode = '0755' 
+                mode = '0755'
             script = "/usr/local/www/freenasUI/tools/winacl.sh"
             args=" -o '%s' -g '%s' -d %s " % (user, group, mode)
             if recursive:
-                args += " -r "
-            args += " -p '%s'" % path
-            cmd = "%s %s" % (script, args)
-            log.debug("XXX: CMD = %s", cmd)
-            self._system(cmd)
+                apply_paths = exclude_path(path, exclude)
+                apply_paths = map(lambda y: (y, ' -r '), apply_paths)
+                if len(apply_paths) > 1:
+                    apply_paths.insert(0, (path, ''))
+            else:
+                apply_paths = [(path, '')]
+            for apath, flags in apply_paths:
+                fargs = args + "%s -p '%s'" % (flags, apath)
+                cmd = "%s %s" % (script, fargs)
+                log.debug("XXX: CMD = %s", cmd)
+                self._system(cmd)
 
         else:
-            flags = ""
             if recursive:
-                flags = "-R"
-            self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, path))
-            self._system("/bin/chmod %s %s '%s'" % (flags, mode, path))
+                apply_paths = exclude_path(path, exclude)
+                apply_paths = map(lambda y: (y, '-R'), apply_paths)
+                if len(apply_paths) > 1:
+                    apply_paths.insert(0, (path, ''))
+            else:
+                apply_paths = [(path, '')]
+            for apath, flags in apply_paths:
+                self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, apath))
+                self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
@@ -2596,6 +2619,8 @@ class notifier:
         if not out:
             if saved_tmpdir:
                 os.environ['TMPDIR'] = saved_tmpdir
+            else:
+                del os.environ['TMPDIR']
             raise MiddlewareError("This file was not identified as in PBI "
                 "format, it might as well be corrupt.")
 
@@ -2719,6 +2744,8 @@ class notifier:
         log.debug("install_pbi: everything went well, returning %s", ret)
         if saved_tmpdir:
             os.environ['TMPDIR'] = saved_tmpdir
+        else:
+            del os.environ['TMPDIR']
         return ret
 
     def _get_pbi_info(self, pbifile):
@@ -3240,7 +3267,14 @@ class notifier:
                 stderr)
         return False
 
-    def volume_detach(self, vol_name, vol_fstype):
+    def _encvolume_detach(self, volume):
+        """Detach GELI providers after detaching volume."""
+        """See bug: #3964"""
+        if volume.vol_encrypt > 0:
+            for ed in volume.encrypteddisk_set.all():
+                self.geli_detach(ed.encrypted_provider)
+
+    def volume_detach(self, volume):
         """Detach a volume from the system
 
         This either executes exports a zpool or umounts a generic volume (e.g.
@@ -3272,6 +3306,9 @@ class notifier:
             MiddlewareError: the volume could not be detached cleanly.
             MiddlewareError: the volume's mountpoint couldn't be removed.
         """
+
+        vol_name = volume.vol_name
+        vol_fstype = volume.vol_fstype
 
         succeeded = False
         provider = None
@@ -3307,6 +3344,8 @@ class notifier:
             raise MiddlewareError('Failed to detach %s with "%s" (exited '
                                   'with %d): %s' %
                                   (vol_name, cmd, p1.returncode, stderr))
+
+        self._encvolume_detach(volume)
         self.__rmdir_mountpoint(vol_mountpath)
 
 
@@ -3442,22 +3481,36 @@ class notifier:
 
         return True
 
-    def zfs_get_options(self, name):
-        data = {}
+    def zfs_get_options(self, name=None, recursive=False, props=None):
         noinherit_fields = ['quota', 'refquota', 'reservation', 'refreservation']
-        zfsname = str(name)
 
-        zfsproc = self._pipeopen("/sbin/zfs get -H -o property,value,source all %s" % (zfsname))
+        if props is None:
+            props = 'all'
+        else:
+            props = ','.join(props)
+
+        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source %s %s" % (
+            '-r' if recursive else '',
+            props,
+            str(name) if name else '',
+        ))
         zfs_output = zfsproc.communicate()[0]
-        zfs_output = zfs_output.split('\n')
         retval = {}
-        for line in zfs_output:
-            if line != "":
-                data = line.split('\t')
-                if (not data[0] in noinherit_fields) and (data[2] == 'default' or data[2].startswith('inherited')):
-                    retval[data[0]] = "inherit"
+        for line in zfs_output.split('\n'):
+            if not line:
+                continue
+            data = line.split('\t')
+            if recursive:
+                if data[0] not in retval:
+                    dval = retval[data[0]] = {}
                 else:
-                    retval[data[0]] = data[1]
+                    dval = retval[data[0]]
+            else:
+                dval = retval
+            if (not data[1] in noinherit_fields) and (data[3] == 'default' or data[3].startswith('inherited')):
+                dval[data[1]] = "inherit"
+            else:
+                dval[data[1]] = data[2]
         return retval
 
     def zfs_set_option(self, name, item, value):
@@ -3588,6 +3641,30 @@ class notifier:
 
     def iface_destroy(self, name):
         self._system("ifconfig %s destroy" % name)
+
+    def iface_media_status(self, name):
+
+        statusmap = {
+            'active': _('Active'),
+            'BACKUP': _('Backup'),
+            'INIT': _('Init'),
+            'MASTER': _('Master'),
+            'no carrier': _('No carrier'),
+        }
+
+        proc = self._pipeopen('/sbin/ifconfig %s' % name)
+        data = proc.communicate()[0]
+
+        if name.startswith('carp'):
+            reg = re.search(r'carp: (\S+)', data)
+        else:
+            reg = re.search(r'status: (.+)$', data)
+
+        if proc.returncode != 0 or not reg:
+            return _('Unknown')
+        status = reg.group(1)
+
+        return statusmap.get(status, status)
 
     def interface_mtu(self, iface, mtu):
         self._system("ifconfig %s mtu %s" % (iface, mtu))
@@ -3961,7 +4038,7 @@ class notifier:
 
         in_disks = {}
         serials = []
-        for disk in Disk.objects.all():
+        for disk in Disk.objects.order_by('disk_enabled'):
 
             dskname = self.identifier_to_device(disk.disk_identifier)
             if not dskname or dskname in in_disks:
@@ -4623,6 +4700,51 @@ class notifier:
         #    '/usr/local/bin/ipmitool sol set enabled true 1'
         #)
         return rv
+
+    def create_system_datasets(self):
+        res = False
+        if self._system_nolog("/usr/sbin/service ix-system start") == 0:
+            res = True
+        return res
+
+    def _restart_system_datasets(self):
+        self.start("ix-syslogd")
+        self.restart("syslogd")
+        self.start("ix-samba")
+        self.restart("cifs")
+
+    def dataset_init_unix(self, dataset):
+        path = "/mnt/%s" % dataset
+
+    def dataset_init_windows(self, dataset):
+        acl = [
+            "owner@:rwxpDdaARWcCos:fd:allow",
+            "group@:rwxpDdaARWcCos:fd:allow",
+            "everyone@:rxDaRc:fd:allow"
+        ]  
+
+        path = "/mnt/%s" % dataset
+        with open("%s/.windows" % path, "w") as f:
+            f.close()
+
+        for ace in acl:
+            self._pipeopen("/bin/setfacl -m '%s' '%s'" % (ace, path)).wait()
+
+    def dataset_init_apple(self, dataset):
+        path = "/mnt/%s" % dataset
+        with open("%s/.apple" % path, "w") as f:
+            f.close()
+
+    def get_dataset_share_type(self, dataset):
+        share_type = "unix"
+
+        path = "/mnt/%s" % dataset
+        if os.path.exists("%s/.windows" % path):
+            share_type = "windows"
+        elif os.path.exists("%s/.windows" % path):
+            share_type = "apple"
+
+        return share_type
 
 
 def usage():

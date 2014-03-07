@@ -179,6 +179,7 @@ class Volume(Model):
         We need to manually find all paths within this volume mount point
         """
         from freenasUI.services.models import iSCSITargetExtent
+        from freenasUI.system.models import Advanced
 
         # TODO: This is ugly.
         svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'jails')
@@ -239,13 +240,21 @@ class Volume(Model):
         elif destroy:
             n.destroy("volume", self)
         else:
-            n.volume_detach(self.vol_name, self.vol_fstype)
+            n.volume_detach(self)
 
-        # Detach geli providers
-        # TODO: Remove once ZFS bug has been fixed for detach -l
-        if self.vol_encrypt > 0:
-            for ed in self.encrypteddisk_set.all():
-                n.geli_detach(ed.encrypted_provider)
+        # If there's a system dataset on this pool, stop using it.
+        try:
+            syspool = Advanced.objects.filter(adv_system_pool=self.vol_name)[0]
+        except IndexError:
+            # No system dataset on the pool being destroyed
+            pass
+        else:
+            syspool.adv_system_pool=""
+            syspool.save()
+            # If we are using the syslog dataset kick syslog.
+            syslog = Advanced.objects.all()[0]
+            if syslog.adv_syslog_usedataset:
+                n.reload("syslogd")
 
         return (svcs, reloads)
 
@@ -830,8 +839,7 @@ class Replication(Model):
         default=True,
         verbose_name=_("Enabled"),
         help_text=_(
-            "Disabling will stop any new replications being queued. "
-            "It will not stop any replications which are queued or in progress."),
+            "Disabling will not stop any replications which are in progress. "),
     ) 
     repl_filesystem = models.CharField(
         max_length=150,

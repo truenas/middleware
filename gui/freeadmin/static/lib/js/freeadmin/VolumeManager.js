@@ -882,7 +882,7 @@ define([
               this.initialDisks[0].addToRow(this, Math.floor(i / div2), i % div2);
             }
 
-            this.rows = div2;
+            this.rows = mod2;
 
             // Remaining disks are spare
             if(this.initialDisks.length > 0) {
@@ -973,7 +973,8 @@ define([
           label: gettext("Drag and drop this to resize"),
           onHide: function() {
             var checkDragTooltip = function() {
-              if(!me._draggedOnce) {
+              var formStyle = domStyle.get(me.manager._form.domNode, "display");
+              if(!me._draggedOnce && formStyle != "none") {
                 me._dragTooltip.open(me.resize.domNode);
               }
             }
@@ -1065,7 +1066,7 @@ define([
         this.dapVolExtendLabel.innerHTML = gettext('Volume to extend');
         this.dapExtendEnc.innerHTML = gettext('Extending an encrypted volume will reset the passphrase and recovery key!');
         this.dapDiskEncLabel.innerHTML = gettext('Encryption');
-        this.dapDiskEncIniLabel.innerHTML = gettext('Initialize Safely');
+        //this.dapDiskEncIniLabel.innerHTML = gettext('Initialize Safely');
         this.dapAvailLabel.innerHTML = gettext('Available disks');
         this.dapLayoutLabel.innerHTML = gettext('Volume layout');
         this.dapLayoutEstimatedLabel.innerHTML = gettext('Estimated capacity');
@@ -1099,7 +1100,7 @@ define([
             if(val != '') {
               volume_name.set('disabled', true);
               enc.set('disabled', true);
-              encini.set('disabled', true);
+              //encini.set('disabled', true);
               okbtn.set('label', me.extend_label);
               var opt = this.getOptions(val);
               if(opt.enc) {
@@ -1110,7 +1111,7 @@ define([
             } else {
               volume_name.set('disabled', false);
               enc.set('disabled', false);
-              encini.set('disabled', false);
+              //encini.set('disabled', false);
               okbtn.set('label', me.add_label);
               domStyle.set(me.dapExtendEnc, "display", "none");
             }
@@ -1130,18 +1131,18 @@ define([
           name: "encryption"
         }, this.dapDiskEnc);
 
-        encini = new CheckBox({
-          name: "encryption_inirand",
-          disabled: true
-        }, this.dapDiskEncIni);
+        //encini = new CheckBox({
+        //  name: "encryption_inirand",
+        //  disabled: true
+        //}, this.dapDiskEncIni);
 
-        on(enc, "click", function() {
-          if(this.get("value") == "on") {
-            encini.set('disabled', false);
-          } else {
-            encini.set('disabled', true);
-          }
-        });
+        //on(enc, "click", function() {
+        //  if(this.get("value") == "on") {
+        //    encini.set('disabled', false);
+        //  } else {
+        //    encini.set('disabled', true);
+        //  }
+        //});
 
         /*
          * Sort disks by bytes DESC

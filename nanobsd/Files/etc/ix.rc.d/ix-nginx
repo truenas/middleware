@@ -234,7 +234,7 @@ __EOF__
 	listen ${addr}:80;
 	listen [${addr6}]:80;
 	server_name localhost;
-	rewrite ^ https://\$server_addr:${httpsport}\$request_uri? permanent;
+	return 307 https://\$host:${httpsport}\$request_uri;
     }
 __EOF__
 	fi

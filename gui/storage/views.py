@@ -31,6 +31,7 @@ import os
 import re
 import signal
 import subprocess
+import urllib
 
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
@@ -139,7 +140,13 @@ def volumemanager(request):
     if request.method == "POST":
         form = forms.VolumeManagerForm(request.POST)
         if form.is_valid() and form.save():
-            return JsonResp(request, message=_("Volume successfully added."))
+            events = []
+            form.done(request, events)
+            return JsonResp(
+                request,
+                message=_("Volume successfully added."),
+                events=events,
+            )
         else:
             return JsonResp(request, form=form, formsets={'layout': form._formset})
     disks = []
@@ -300,6 +307,12 @@ def dataset_create(request, fs):
             cleaned_data = dataset_form.cleaned_data
             dataset_name = "%s/%s" % (fs, cleaned_data.get('dataset_name'))
             dataset_compression = cleaned_data.get('dataset_compression')
+            dataset_share_type = cleaned_data.get('dataset_share_type')
+            if dataset_share_type == "windows":
+                # XXXX
+                # Add windows case insensitive prop stuff here
+                # XXXX
+                pass
             props['compression'] = dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
             props['atime'] = dataset_atime.__str__()
@@ -325,6 +338,12 @@ def dataset_create(request, fs):
                 path=str(dataset_name),
                 props=props)
             if errno == 0:
+                if dataset_share_type == "unix":
+                    notifier().dataset_init_unix(dataset_name)
+                elif dataset_share_type == "windows":
+                    notifier().dataset_init_windows(dataset_name)
+                elif dataset_share_type == "apple":
+                    notifier().dataset_init_apple(dataset_name)
                 return JsonResp(
                     request,
                     message=_("Dataset successfully added."))
@@ -512,6 +531,10 @@ def zfsvolume_edit(request, object_id):
 
 
 def mp_permission(request, path):
+    path = urllib.unquote_plus(path)
+    #FIXME: dojo cannot handle urls partially urlencoded %2F => /
+    if not path.startswith('/'):
+        path = '/' + path
     if request.method == 'POST':
         form = forms.MountPointAccessForm(request.POST)
         if form.is_valid():
@@ -945,6 +968,16 @@ def volume_change_passphrase(request, object_id):
         'form': form,
     })
 
+
+def volume_lock(request, object_id):
+    volume = models.Volume.objects.get(id=object_id)
+    assert(volume.vol_encrypt > 0)
+
+    if request.method == "POST":
+        notifier().volume_detach(volume)
+        notifier().restart("system_datasets")
+        return JsonResp(request, message=_("Volume locked"))
+    return render(request, "storage/lock.html")
 
 def volume_unlock(request, object_id):
 

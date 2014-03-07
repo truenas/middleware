@@ -35,6 +35,7 @@ class Migration(SchemaMigration):
             'afp_rw': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'afp_timemachine': ('django.db.models.fields.BooleanField', [], {}),
             'afp_upriv': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'afp_umask': ('django.db.models.fields.CharField', [], {'default': "'022'", 'max_length': '3'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'sharing.cifs_share': {

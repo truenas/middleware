@@ -29,6 +29,7 @@ ix_textdump_start()
 	sysctl debug.ddb.textdump.pending=1
         sysctl debug.debugger_on_panic=1
         mkdir -p "/data/crash"
+	chmod 775 "/data/crash"
 }
 
 ix_textdump_stop()

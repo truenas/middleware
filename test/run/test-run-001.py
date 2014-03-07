@@ -76,7 +76,11 @@ def runTest():
             extra_disks += " -s 31:%d,virtio-blk,%s" % (i, d)
             i=i+1
 
-    cmd = "bhyve -c 2 -m 2G -AI -H -P -g 0 -s 0:0,hostbridge -s 1:0,lpc -s 2:0,virtio-net,%s -s 31:0,virtio-blk,%s %s -l com1,stdio %s" % (test_config['tap'], test_config['disk_img'], extra_disks, test_config['vm_name'])
+    macaddress = ""
+    if test_config.has_key('mac'):
+        macaddress = ",mac=%s" % test_config['mac']
+
+    cmd = "bhyve -c 2 -m 2G -AI -H -P -g 0 -s 0:0,hostbridge -s 1:0,lpc -s 2:0,virtio-net,%s%s -s 31:0,virtio-blk,%s %s -l com1,stdio %s" % (test_config['tap'], macaddress, test_config['disk_img'], extra_disks, test_config['vm_name'])
     print cmd
     child6 = pexpect.spawn(cmd)
     child6.logfile = sys.stdout

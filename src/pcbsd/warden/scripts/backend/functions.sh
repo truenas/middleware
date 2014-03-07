@@ -49,6 +49,9 @@ if [ -z "${FREEBSD_RELEASE}" ] ; then
 fi
 export UNAME_r="${FREEBSD_RELEASE}"
 
+FREEBSD_MAJOR="$(echo ${FREEBSD_RELEASE}|sed -E 's|^([0-9]+).+|\1|g')"
+export FREEBSD_MAJOR
+
 # Temp file for dialog responses
 ATMP="/tmp/.wans"
 export ATMP
@@ -1116,13 +1119,23 @@ create_jail_pkgconf()
   local pkgsite="${2}"
   local arch="${3}"
 
-  : ${pkgsite:="http://pkg.FreeBSD.org/${arch}/latest"}
+  if [ "${arch}" = "amd64" ]
+  then
+    arch="64"
+  else
+    arch="32"
+  fi  
+
+  : ${pkgsite:="http://pkg.FreeBSD.org/freebsd:${FREEBSD_MAJOR}:x86:${arch}/latest"}
 
   if [ ! -d "${jaildir}" -o -z "${pkgsite}" ] ; then 
     return 1
   fi
 
-  cat<<__EOF__>"${jaildir}/usr/local/etc/pkg.conf"
+  rm -f "${jaildir}/usr/local/etc/pkg.conf"
+  mkdir -p "${jaildir}/usr/local/etc/pkg/repos"
+
+  cat<<__EOF__>"${jaildir}/usr/local/etc/pkg/repos/FreeBSD.conf"
 FreeBSD: {
   url: "pkg+${pkgsite}",
   mirror_type: "srv",
@@ -1647,7 +1660,7 @@ delete_template()
      tank=`getZFSTank "$tDir"`
      rp=`getZFSRelativePath "$tDir"`
      zfs destroy -fr $tank${rp}
-     rmdir ${tDir}
+     rmdir ${tDir} >/dev/null 2>&1
    else
      if [ ! -e "${tDir}.tbz" ] ; then
        warden_exit "No such template: ${1}"
@@ -1665,7 +1678,7 @@ get_next_id()
    if [ -d "${jdir}" ] ; then
       for i in `ls -d ${jdir}/.*.meta 2>/dev/null`
       do
-        id=`cat ${i}/id`
+        id="$(cat ${i}/id 2>/dev/null)"
         if [ "${id}" -gt "${meta_id}" ] ; then
           meta_id="${id}"
         fi

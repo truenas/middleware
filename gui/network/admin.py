@@ -35,11 +35,16 @@ class InterfacesFAdmin(BaseFreeAdmin):
     def get_datagrid_columns(self):
         columns = super(InterfacesFAdmin, self).get_datagrid_columns()
         columns.insert(3, {
+            'name': 'int_media_status',
+            'label': _('Media Status'),
+            'sortable': False,
+        })
+        columns.insert(4, {
             'name': 'ipv4_addresses',
             'label': _('IPv4 Addresses'),
             'sortable': False,
         })
-        columns.insert(4, {
+        columns.insert(5, {
             'name': 'ipv6_addresses',
             'label': _('IPv6 Addresses'),
             'sortable': False,

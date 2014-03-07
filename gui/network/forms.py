@@ -86,6 +86,13 @@ class InterfacesForm(ModelForm):
                 'disabled')
 
         if self.instance.id:
+            if self.instance.int_interface.startswith('carp'):
+                self.fields['int_v4netmaskbit'].widget.attrs['readonly'] = True
+                self.fields['int_v4netmaskbit'].widget.attrs['class'] = (
+                    'dijitDisabled dijitSelectDisabled'
+                )
+                self.fields['int_v4netmaskbit'].initial = '32'
+                self.instance.int_v4netmaskbit = '32'
             self.fields['int_interface'] = \
                 forms.CharField(
                     label=self.fields['int_interface'].label,
@@ -151,8 +158,12 @@ class InterfacesForm(ModelForm):
         if not nw or not ip:
             return nw
         network = IPNetwork('%s/%s' % (ip, nw))
+        if self.instance.id and self.instance.int_interface.startswith('carp'):
+            return nw
         used_networks = []
-        qs = models.Interfaces.objects.all()
+        qs = models.Interfaces.objects.all().exclude(
+            int_interface__startswith='carp'
+        )
         if self.instance.id:
             qs = qs.exclude(id=self.instance.id)
         for iface in qs:
@@ -631,8 +642,15 @@ class AliasForm(ModelForm):
         if not nw or not ip:
             return nw
         network = IPNetwork('%s/%s' % (ip, nw))
+        if (
+            self.instance.id and
+            self.instance.alias_interface.int_interface.startswith('carp')
+        ):
+            return nw
         used_networks = []
-        qs = models.Interfaces.objects.all()
+        qs = models.Interfaces.objects.all().exclude(
+            int_interface__startswith='carp'
+        )
         if self.instance.id:
             qs = qs.exclude(id=self.instance.alias_interface.id)
         elif self.parent.instance.id:

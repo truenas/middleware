@@ -69,6 +69,11 @@ do
   fi
 
   ID="`cat ${i}/id 2>/dev/null`"
+  if [ -z "${ID}" ]
+  then
+    continue
+  fi  
+
   HOST="`cat ${i}/host 2>/dev/null`"
   if [ -e "${i}/vnet" ] ; then
     VNET="Enabled"
@@ -170,6 +175,12 @@ do
     STATUS="Stopped"
   fi
 
+  FLAGS=
+  if [ -s "${i}/jail-flags" ]
+  then
+    FLAGS="$(cat "${i}/jail-flags"|tr ' ' ',')"
+  fi
+
   if [ "${VERBOSE}" = "YES" ] ; then
     out="$(mktemp  /tmp/.wjvXXXXXX)"
     cat<<__EOF__ >"${out}"
@@ -192,6 +203,7 @@ nat: ${NAT}
 mac: ${MAC}
 status: ${STATUS}
 type: ${TYPE}
+flags: ${FLAGS}
 
 __EOF__
 

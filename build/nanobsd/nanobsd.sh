@@ -133,7 +133,7 @@ NANO_BOOT2CFG="-h"
 
 # Backing type of md(4) device
 # Can be "file" or "swap"
-NANO_MD_BACKING="file"
+NANO_MD_BACKING="swap"
 
 # Progress Print level
 PPLEVEL=3
@@ -545,6 +545,7 @@ create_i386_diskimage ( ) (
 	mkdir -p ${MNT}
 
 	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
+		echo "Creating md via swap..."
 		MD=`mdconfig -a -t swap -s ${NANO_MEDIASIZE} -x ${NANO_SECTS} \
 			-y ${NANO_HEADS}`
 	else
@@ -600,7 +601,7 @@ create_i386_diskimage ( ) (
 
 	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
 		echo "Writing out ${NANO_IMGNAME}..."
-		dd if=/dev/${MD} of=${IMG} bs=64k
+		dd if=/dev/${MD} of=${IMG} bs=1m
 	fi
 
 	if ${do_copyout_partition} ; then

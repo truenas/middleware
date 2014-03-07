@@ -68,14 +68,12 @@ class Settings(Model):
     stg_guiport = models.IntegerField(
         verbose_name=_("WebGUI HTTP Port"),
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
-        blank=True,
-        null=True,
+        default=80,
     )
     stg_guihttpsport = models.IntegerField(
         verbose_name=_("WebGUI HTTPS Port"),
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
-        blank=True,
-        null=True,
+        default=443,
     )
     stg_language = models.CharField(
             max_length=120,
@@ -191,12 +189,14 @@ class Advanced(Model):
         default=False,
     )
     adv_serialport = models.CharField(
-            max_length=120,
-            default="0x2f8",
-            help_text=_("Set this to match your serial port address "
-		"(0x3f8, 0x2f8, etc.)"),
-            verbose_name=_("Serial Port Address")
-            )
+        max_length=120,
+        default="0x2f8",
+        help_text=_(
+            "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
+        ),
+        verbose_name=_("Serial Port Address"),
+        choices=choices.SERIAL_CHOICES(),
+    )
     adv_serialspeed = models.CharField(
             max_length=120,
             choices=choices.SERIAL_SPEED,
@@ -252,6 +252,16 @@ class Advanced(Model):
         max_length=1024,
         verbose_name=_("MOTD banner"),
         default='Welcome',
+    )
+    adv_system_pool = models.CharField(
+        max_length=1024,
+        blank=True,
+        verbose_name=_("System dataset pool"),
+        choices=()
+    )
+    adv_syslog_usedataset = models.BooleanField(
+        default=True,
+        verbose_name=_("Use system dataset for syslog")
     )
 
     class Meta:

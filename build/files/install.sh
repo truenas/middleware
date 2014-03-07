@@ -100,10 +100,38 @@ wait_keypress()
     read -p "Press ENTER to continue." _tmp
 }
 
+sort_disklist()
+{
+
+    sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '
+}
+
+# return 0 if no raid devices, or !0 if there are some.
+get_raid_present()
+{
+	local _cnt
+	local _dummy
+
+	if [ ! -d "/dev/raid" ] ; then
+		return 0;
+	fi
+
+	_cnt=0
+	ls /dev/raid/ > /tmp/raidfiles
+	while read _dummy ; do _cnt=$(($_cnt + 1));done < /tmp/raidfiles
+	return $_cnt
+}
+
 get_physical_disks_list()
 {
-    VAL=`sysctl -n kern.disks | tr ' ' '\n'| grep -v '^cd' \
-        | sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '`
+    VAL=`sysctl -n kern.disks`
+
+    get_raid_present
+    if [ $? -ne 0 ] ; then
+	VAL="$VAL `cd /dev ; ls -d raid/* | grep -v '[0-9][a-z]'`"
+    fi
+
+    VAL=`echo $VAL | tr ' ' '\n'| grep -v '^cd' | sort_disklist`
     export VAL
 }
 
@@ -118,6 +146,11 @@ get_media_description()
     if [ -n "${_media}" ]; then
         _description=`pc-sysinstall disk-list -c |grep "^${_media}"\
             | awk -F':' '{print $2}'|sed -E 's|.*<(.*)>.*$|\1|'`
+	# if pc-sysinstall doesn't know anything about the device
+	# (raid drives) then fill in for it.
+	if [ -z "$_description" ] ; then
+		_description="Unknown Device"
+	fi
         _cap=`diskinfo ${_media} | awk '{
             capacity = $3;
             if (capacity >= 1099511627776) {
@@ -422,13 +455,6 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
         mv /tmp/fstab.swap /tmp/data/
         umount /tmp/data
         rmdir /tmp/data
-
-        # Remove all existing swap partitions.  Note that we deal with ONLY partitons
-        # that is created by GUI, that is, with type of freebsd-swap and begin at
-        # sector 128.
-        #
-        # This is a hack and should be revisited when the installer gets rewritten.
-        gpart show -p | grep freebsd-swap | grep ' 128 ' | awk '{ print $3 }' | grep p1\$ | sed -e 's/^/gpart delete -i 1 /g' -e 's/p1$//g' | sh -x
     fi
 
     # End critical section.

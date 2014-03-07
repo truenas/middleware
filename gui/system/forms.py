@@ -46,10 +46,11 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.forms import CronMultiple
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import MountPoint
+from freenasUI.storage.models import MountPoint, Volume
 from freenasUI.system import models
 
 log = logging.getLogger('system.forms')
@@ -326,6 +327,10 @@ class NTPForm(ModelForm):
 
 
 class AdvancedForm(ModelForm):
+    adv_system_pool = forms.ChoiceField(
+        label=_("System dataset pool"),
+        required=False
+    )
 
     class Meta:
         fields = '__all__'
@@ -348,6 +353,14 @@ class AdvancedForm(ModelForm):
         )
         self.instance._original_adv_autotune = self.instance.adv_autotune
         self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
+
+        pool_choices = [('', '')]
+        for v in Volume.objects.all(): 
+            pool_choices.append((v.vol_name, v.vol_name))
+
+        self.fields['adv_system_pool'].choices = pool_choices
+        self.instance._original_adv_system_pool = self.instance.adv_system_pool
+        self.instance._original_adv_syslog_usedataset = self.instance.adv_syslog_usedataset
 
     def save(self):
         super(AdvancedForm, self).save()
@@ -378,6 +391,15 @@ class AdvancedForm(ModelForm):
             notifier().reload("loader")
         if self.instance._original_adv_debugkernel != self.instance.adv_debugkernel:
             notifier().reload("loader")
+
+        if self.instance.adv_system_pool:
+            if not notifier().create_system_datasets():
+                raise MiddlewareError(_("Unable to create system dataset!"))
+            if self.instance._original_adv_system_pool != self.instance.adv_system_pool:
+                notifier().restart("system_datasets")
+
+        if self.instance._original_adv_syslog_usedataset != self.instance.adv_syslog_usedataset:
+            notifier().restart("syslogd")
 
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:

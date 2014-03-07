@@ -23,7 +23,7 @@ generate_crontab()
 	while eval read -r $f; do
 		# Note that echo -e will do the wrong thing with certain characters. Read the commit
 		# history for more details.
-		echo -n "${cron_minute}	${cron_hour}	${cron_daymonth}	${cron_month}	${cron_dayweek}	${cron_user}	PATH=\"$cron_PATH\" ${cron_command}" | sed -e 's/%/\\%/'
+		echo -n "${cron_minute}	${cron_hour}	${cron_daymonth}	${cron_month}	${cron_dayweek}	${cron_user}	PATH=\"$cron_PATH\" ${cron_command}" | sed -e 's/%/\\%/' | tr -d "\n"
 		if [ ${cron_stdout} -eq 1 ]; then
 			echo -n " > /dev/null"
 		fi

@@ -1,0 +1,46 @@
+#!/bin/sh
+
+GDB="/usr/bin/gdb --batch --command /usr/local/etc/samba.gdb"
+
+nmbd_pid="$(cat /var/run/samba/nmbd.pid 2>/dev/null)"
+smbd_pid="$(cat /var/run/samba/smbd.pid 2>/dev/null)"
+winbindd_pid="$(cat /var/run/samba/winbindd.pid 2>/dev/null)"
+tracefile="/var/log/samba4/samba.backtraces"
+
+if [ -f "${tracefile}" ]
+then
+	mv "${tracefile}" "${tracefile}.$(date +'%Y%m%d%H%M%S')"
+fi
+
+if [ -n "${nmbd_pid}" ]
+then
+	cat<<__EOF__>>"${tracefile}"
++-----------------------+
+|  NMBD debugging info  |
++-----------------------+
+__EOF__
+
+	${GDB} /usr/local/sbin/nmbd "${nmbd_pid}"
+	echo >> "${tracefile}"
+fi
+if [ -n "${smbd_pid}" ]
+then
+	cat<<__EOF__>>"${tracefile}"
++-----------------------+
+|  SMBD debugging info  |
++-----------------------+
+__EOF__
+	${GDB} /usr/local/sbin/smbd "${smbd_pid}"
+	echo >> "${tracefile}"
+fi
+if [ -n "${winbindd_pid}" ]
+then
+	cat<<__EOF__>>"${tracefile}"
++---------------------------+
+|  WINBINDD debugging info  |
++---------------------------+
+__EOF__
+	${GDB} /usr/local/sbin/winbindd "${winbindd_pid}"
+	echo >> "${tracefile}"
+fi
+

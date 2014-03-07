@@ -13,5 +13,6 @@
     "password": "XXXXXXXX",
     "tap": "tap0", 
     "bridge": "bridge0", 
-    "interface": "em0"
+    "interface": "em0",
+    "mac": "58:9c:fc:00:00:00"
 }

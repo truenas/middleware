@@ -31,6 +31,7 @@ import re
 import smtplib
 import sqlite3
 import subprocess
+import sys
 import syslog
 import traceback
 from email.mime.multipart import MIMEMultipart
@@ -493,7 +494,7 @@ def nis_objects():
 
 
 def get_avatar_conf():
-    avatar_conf= {}
+    avatar_conf = {}
     avatar_vars = [
         'AVATAR_PROJECT',
         'AVATAR_PROJECT_SITE',
@@ -508,3 +509,91 @@ def get_avatar_conf():
         avatar_conf[av] = get_freenas_var_by_file("/etc/avatar.conf", av)
 
     return avatar_conf
+
+
+def get_system_dataset():
+    from freenasUI.storage.models import Volume
+    from freenasUI.system.models import Advanced
+
+    try:  
+        adv = Advanced.objects.all()[0]
+    except:
+        log.error("No advanced settings!")
+        return None, None
+
+    system_pool = adv.adv_system_pool
+    if not system_pool:
+        log.error("No system pool configured!")
+        return None, None
+
+    volume = Volume.objects.filter(vol_name=system_pool)
+    if not volume:
+        log.error("You need to create a volume to proceed!")
+        return None, None
+
+    volume = volume[0]
+    basename = "%s/.system" % volume.vol_name
+    return volume, basename
+
+
+def get_samba4_path():
+    """
+    Returns the volume and path for the samba4 storage path
+    """
+    from freenasUI.storage.models import Volume
+    from freenasUI.system.models import Advanced
+
+    try:  
+        adv = Advanced.objects.all()[0]
+    except Exception as e:  
+        print >> sys.stderr, "No advanced settings!"
+        sys.exit(1)
+
+    system_pool = adv.adv_system_pool
+    if not system_pool:
+        print >> sys.stderr, "No system pool configured!"
+        sys.exit(1)
+
+    volume = Volume.objects.filter(vol_name=system_pool)
+    if not volume:
+        print >> sys.stderr, "You need to create a volume to proceed!"
+        sys.exit(1)
+
+    volume = volume[0]
+    basename = "%s/.system/samba4" % volume.vol_name
+    return volume, basename
+
+
+def exclude_path(path, exclude):
+
+    if isinstance(path, unicode):
+        path = path.encode('utf8')
+
+    exclude = map(
+        lambda y: y.encode('utf8') if isinstance(y, unicode) else y,
+        exclude
+    )
+
+    fine_grained = []
+    for e in exclude:
+        if not e.startswith(path):
+            continue
+        fine_grained.append(e)
+
+    if fine_grained:
+        apply_paths = []
+        check_paths = [os.path.join(path, f) for f in os.listdir(path)]
+        while check_paths:
+            fpath = check_paths.pop()
+            if not os.path.isdir(fpath):
+                apply_paths.append(fpath)
+                continue
+            for fg in fine_grained:
+                if fg.startswith(fpath):
+                    if fg != fpath:
+                        check_paths.extend([os.path.join(fpath, f) for f in os.listdir(fpath)])
+                else:
+                    apply_paths.append(fpath)
+        return apply_paths
+    else:
+        return [path]
