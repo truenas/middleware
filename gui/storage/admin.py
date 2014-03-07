@@ -385,6 +385,7 @@ class VolumeFAdmin(BaseFreeAdmin):
 class VolumeStatusFAdmin(BaseFreeAdmin):
 
     app_label = "storage"
+    double_click = False
     module_name = "volumestatus"
     verbose_name = "Volume Status"
     resource = False
