@@ -198,6 +198,7 @@ def add_nt4_conf(smb4_conf):
 def add_ldap_conf(smb4_conf):
     try:
         ldap = LDAP.objects.all()[0]
+        cifs = CIFS.objects.all()[0]
     except:
         return
 
@@ -235,6 +236,9 @@ def add_ldap_conf(smb4_conf):
     confset1(smb4_conf, "ldapsam:trusted = yes")
     confset1(smb4_conf, "idmap uid = 10000-39999")
     confset1(smb4_conf, "idmap gid = 10000-39999")
+
+    confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
+    confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
 
 
 def add_activedirectory_conf(smb4_conf):
