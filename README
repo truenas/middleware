@@ -27,6 +27,7 @@ Building the System Quickstart Flow:
 - Build it
 
 % make git-external
+% make checkout
 % make release
 
 This will also fetch TrueOS and ports for the build from github.
