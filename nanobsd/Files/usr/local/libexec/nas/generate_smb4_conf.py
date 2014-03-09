@@ -23,7 +23,6 @@ from freenasUI.account.models import bsdUsers
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.system import get_samba4_path
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.zfs import list_datasets
 from freenasUI.services.models import (
     services,
     ActiveDirectory,
@@ -453,7 +452,10 @@ def generate_smb4_conf(smb4_conf):
             except:
                 pass
 
-        cifs_homedir_path = "%s/%s" % (cifs.cifs_srv_homedir, valid_users_path)
+        if cifs.cifs_srv_homedircifs.cifs_srv_homedir:
+            cifs_homedir_path = "%s/%s" % (cifs.cifs_srv_homedir, valid_users_path)
+        else:
+            cifs_homedir_path = False
 
         confset1(smb4_conf, "\n")
         confset1(smb4_conf, "[homes]", space=0)
@@ -462,7 +464,8 @@ def generate_smb4_conf(smb4_conf):
         confset1(smb4_conf, "writable = yes")
         confset2(smb4_conf, "browseable = %s",
             "yes" if cifs.cifs_srv_homedir_browseable_enable else "no")
-        confset2(smb4_conf, "path = %s", cifs_homedir_path)
+        if cifs_homedir_path:
+            confset2(smb4_conf, "path = %s", cifs_homedir_path)
 
         for line in cifs.cifs_srv_homedir_aux.split('\n'):
             confset1(smb4_conf, line)
