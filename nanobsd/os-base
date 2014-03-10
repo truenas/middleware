@@ -394,9 +394,9 @@ add_port www/py-requests
 add_port sysutils/smp_utils
 add_port net/trafshow
 
-if ! is_truenas ; then
-	add_port emulators/virtualbox-ose-kmod OPTIONS_FILE_SET+=VIMAGE
-fi
+#if ! is_truenas ; then
+#	add_port emulators/virtualbox-ose-kmod OPTIONS_FILE_SET+=VIMAGE
+#fi
 
 #
 # These are all for SSSD
