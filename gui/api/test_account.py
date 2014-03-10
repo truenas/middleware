@@ -172,7 +172,7 @@ class UsersResourceTest(APITestCase):
             bsdusr_shell='/usr/local/bin/bash',
             bsdusr_full_name='Juca Xunda',
         )
-        group = models.bsdGroups.objects.create(
+        models.bsdGroups.objects.create(
             bsdgrp_gid=100,
             bsdgrp_group='mail',
         )

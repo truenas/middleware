@@ -1732,7 +1732,7 @@ class iSCSITargetPortalResourceTest(APITestCase):
 
     def test_Retrieve(self):
         obj = models.iSCSITargetPortal.objects.create()
-        ip = models.iSCSITargetPortalIP.objects.create(
+        models.iSCSITargetPortalIP.objects.create(
             iscsi_target_portalip_portal=obj,
             iscsi_target_portalip_ip='0.0.0.0',
         )
@@ -1751,7 +1751,7 @@ class iSCSITargetPortalResourceTest(APITestCase):
 
     def test_Update(self):
         obj = models.iSCSITargetPortal.objects.create()
-        ip = models.iSCSITargetPortalIP.objects.create(
+        models.iSCSITargetPortalIP.objects.create(
             iscsi_target_portalip_portal=obj,
             iscsi_target_portalip_ip='0.0.0.0',
         )
@@ -1771,7 +1771,7 @@ class iSCSITargetPortalResourceTest(APITestCase):
 
     def test_Delete(self):
         obj = models.iSCSITargetPortal.objects.create()
-        ip = models.iSCSITargetPortalIP.objects.create(
+        models.iSCSITargetPortalIP.objects.create(
             iscsi_target_portalip_portal=obj,
             iscsi_target_portalip_ip='0.0.0.0',
         )

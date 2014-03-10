@@ -44,7 +44,6 @@ from freenasUI.freeadmin.tree import (
     tree_roots, TreeRoot, TreeNode, unserialize_tree
 )
 from freenasUI.jails.models import Jails
-from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
 

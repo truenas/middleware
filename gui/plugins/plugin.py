@@ -4,7 +4,6 @@ import os
 import platform
 import requests
 import re
-import time
 import urllib2
 
 from django.utils.translation import ugettext as _

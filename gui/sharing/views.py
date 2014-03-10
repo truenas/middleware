@@ -28,7 +28,6 @@
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.sharing import models
 
 
 def home(request):
