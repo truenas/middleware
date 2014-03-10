@@ -40,7 +40,6 @@ from freenasUI.jails import forms, models
 from freenasUI.jails.utils import get_jails_index
 from freenasUI.common.warden import (
     Warden,
-    WARDEN_DELETE_FLAGS_CONFIRM,
     WARDEN_EXPORT_FLAGS_DIR
 )
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -65,7 +64,7 @@ def jails_home(request):
     return render(request, 'jails/index.html', {
         'focus_form': request.GET.get('tab', 'jails.View'),
         'jailsconf': jailsconf,
-        'default_iface' : default_iface
+        'default_iface': default_iface
     })
 
 
@@ -225,6 +224,7 @@ jail_progress_estimated_time = 600
 jail_progress_start_time = 0
 jail_progress_percent = 0
 
+
 def jail_progress(request):
     global jail_progress_estimated_time
     global jail_progress_start_time
@@ -341,7 +341,7 @@ def jail_linuxprogress(request):
                 percent = int((nbytes / total) * 100)
         except:
             pass
-            
+
         if not percent:
             percent = 0
 

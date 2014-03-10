@@ -25,10 +25,7 @@
 #
 #####################################################################
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
 
-from freenasUI import choices
-from freenasUI.middleware.notifier import notifier
 from freenasUI.freeadmin.models import Model
 from freenasUI.services.models import (
     ActiveDirectory,
@@ -42,11 +39,12 @@ from freenasUI.system.models import Settings
 import logging
 log = logging.getLogger('services.directoryservice')
 
+
 class DirectoryServiceQuerySet(models.query.QuerySet):
     def __init__(self, model=None, query=None, using=None):
         settings = Settings.objects.order_by("-id")
         if settings:
-            settings = settings[0]  
+            settings = settings[0]
 
         type = settings.stg_directoryservice
 
@@ -81,7 +79,7 @@ class DirectoryServiceManager(models.Manager):
     def get_queryset(self):
         settings = Settings.objects.order_by("-id")
         if settings:
-            settings = settings[0]  
+            settings = settings[0]
 
         type = settings.stg_directoryservice
         if type in ('activedirectory', 'domaincontroller', 'ldap', 'nt4', 'nis'):
@@ -103,7 +101,7 @@ class DirectoryService(Model):
 
         settings = Settings.objects.order_by("-id")
         if settings:
-            settings = settings[0]  
+            settings = settings[0]
 
         type = settings.stg_directoryservice
 

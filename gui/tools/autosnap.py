@@ -42,7 +42,7 @@ from freenasUI.freeadmin.apppool import appPool
 from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
 
-from freenasUI.common.pipesubr import pipeopen, system
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.locks import mntlock
 

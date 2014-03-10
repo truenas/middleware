@@ -119,7 +119,7 @@ def get_ipv4_exclude_dict():
             ipv4_exclude_dict[str(sc)] = sc
 
         if j['alias_ipv4']:
-            amask = mask  
+            amask = mask
             aliases = j['alias_ipv4'].split(',')
             for a in aliases:
                 parts = a.split('/')
@@ -127,12 +127,12 @@ def get_ipv4_exclude_dict():
                     amask = int(parts[1])
                 sc = sipcalc_type("%s/%d" % (
                     parts[0],
-                    amask  
+                    amask
                 ))
                 ipv4_exclude_dict[str(sc)] = sc
 
         if j['alias_bridge_ipv4']:
-            amask = mask  
+            amask = mask
             aliases = j['alias_bridge_ipv4'].split(',')
             for a in aliases:
                 parts = a.split('/')
@@ -140,7 +140,7 @@ def get_ipv4_exclude_dict():
                     amask = int(parts[1])
                 sc = sipcalc_type("%s/%d" % (
                     parts[0],
-                    amask  
+                    amask
                 ))
                 ipv4_exclude_dict[str(sc)] = sc
 
@@ -167,7 +167,7 @@ def get_ipv6_exclude_dict():
                 prefix = int(parts[1])
             sc = sipcalc_type("%s/%d" % (
                 parts[0],
-                prefix 
+                prefix
             ))
             ipv6_exclude_dict[str(sc)] = sc
 
@@ -177,7 +177,7 @@ def get_ipv6_exclude_dict():
                 prefix = int(parts[1])
             sc = sipcalc_type("%s/%d" % (
                 parts[0],
-                prefix 
+                prefix
             ))
             ipv6_exclude_dict[str(sc)] = sc
 
@@ -225,9 +225,8 @@ def get_available_ipv4(ipv4_start, ipv4_end=None, ipv4_exclude_dict=None):
         mask = 0
         try:
             mask = int(str(addr).split('/')[1])
-            if not mask:  
+            if not mask:
                 mask = 24
-     
         except:
             mask = 24
 
@@ -240,7 +239,7 @@ def get_available_ipv4(ipv4_start, ipv4_end=None, ipv4_exclude_dict=None):
     while i <= naddrs:
         if not addr:
             break
- 
+
         if ipv4_exclude_dict and str(addr) in ipv4_exclude_dict:
             addr += 1
             continue
@@ -273,9 +272,9 @@ def get_available_ipv6(ipv6_start, ipv6_end=None, ipv6_exclude_dict=None):
         prefix = 0
         try:
             prefix = int(str(addr).split('/')[1])
-            if not prefix:  
+            if not prefix:
                 prefix = 64
-     
+
         except:
             prefix = 64
 
@@ -423,10 +422,10 @@ def guess_ipv4_address():
             st_ipv4_network_end = sipcalc_type("%s/%d" % (
                 st_ipv4_network.usable_range[1],
                 st_ipv4_network.network_mask_bits
-            ))  
+            ))
 
         ipv4_addr = get_available_ipv4(st_ipv4_network_start,
-            st_ipv4_network_end, 
+            st_ipv4_network_end,
             get_ipv4_exclude_dict()
         )
 
@@ -458,10 +457,10 @@ def guess_ipv6_address():
                 st_ipv6_network.prefix_length
             ))  
 
-        ipv6_addr = get_available_ipv6(st_ipv6_network_start,
-            st_ipv6_network_end,
-            get_ipv6_exclude_dict()
-        )
+        #ipv6_addr = get_available_ipv6(st_ipv6_network_start,
+        #    st_ipv6_network_end,
+        #    get_ipv6_exclude_dict()
+        #)
 
     return ipv4_addr
 
@@ -534,7 +533,7 @@ def guess_addresses():
     }
 
     ipv4_addr = guess_ipv4_address()
-    ipv4_host_network = get_host_ipv4_network()
+    #ipv4_host_network = get_host_ipv4_network()
     ipv4_jail_network = get_jail_ipv4_network()
 
     if ipv4_addr:
@@ -547,7 +546,7 @@ def guess_addresses():
         ))
 
     ipv6_addr = guess_ipv6_address()
-    ipv6_host_network = get_host_ipv6_network()
+    #ipv6_host_network = get_host_ipv6_network()
     ipv6_jail_network = get_jail_ipv6_network()
 
     if ipv6_addr:
@@ -580,7 +579,6 @@ def new_default_plugin_jail(basename):
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = "%s/warden.log" % jc.jc_path
 
-    template_flags = 0
     template_create_args = {}
 
     template = JailTemplate.objects.get(jt_name='pluginjail')
@@ -731,12 +729,11 @@ def jail_auto_configure():
         try:
             os.makedirs("/mnt/%s" % name)
 
-        except Exception as e:  
+        except Exception as e:
             raise MiddlewareError(_("Failed to create directory %(name)s: %(error)s") % {
-               'name': name,
-               'error': e
+                'name': name,
+                'error': e
             })
-
 
     try:
         jail = JailsConfiguration.objects.latest('id')

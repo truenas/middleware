@@ -26,7 +26,6 @@
 #####################################################################
 import crypt
 import logging
-import pwd
 
 
 from django.db import models
@@ -36,6 +35,7 @@ from freenasUI.freeadmin.models import Model, PathField
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.models')
+
 
 class bsdGroups(Model):
     bsdgrp_gid = models.IntegerField(

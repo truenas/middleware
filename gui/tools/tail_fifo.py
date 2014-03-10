@@ -26,7 +26,6 @@
 #
 
 import os
-import signal
 import sys
 import time
 
@@ -39,7 +38,6 @@ sys.path.append(FREENAS_PATH)
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
-from freenasUI.common.pipesubr import pipeopen
 from signal import (
     signal,
     SIGINT, 

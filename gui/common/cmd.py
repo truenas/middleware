@@ -25,12 +25,10 @@
 #
 # $FreeBSD$
 #####################################################################
-import os
 import logging
 
-from subprocess import Popen, PIPE
-
 log = logging.getLogger('common.cmd')
+
 
 class cmd_arg(object):
     def __init__(self, int, string, arg=False, argname=None):
@@ -165,7 +163,7 @@ class cmd_arg(object):
     def __imod__(self, other):
         return self.int % other
 
-    def __invert__(self): 
+    def __invert__(self):
         return ~self.int
 
     def __ipow__(self, other):
@@ -214,8 +212,10 @@ class cmd_pipe(object):
             log.debug("cmd_pipe.__init__: err = %s", line)
 
         if self.__pipe.returncode != 0:
-            self.error = 'The command %s failed: "%s"' % \
-                             (cmd, self.err or self.__out, )
+            self.error = 'The command %s failed: "%s"' % (
+                cmd,
+                self.err or self.__out,
+            )
 
         self.returncode = self.__pipe.returncode
         log.debug("cmd_pipe.__init__: leave")

@@ -113,7 +113,6 @@ class Plugins(Model):
 
     def _do_delete(self):
         jc = JailsConfiguration.objects.order_by('-id')[0]
-        jaildir = "%s/%s" % (jc.jc_path, self.plugin_jail)
         pbi_path = os.path.join(
             jc.jc_path,
             self.plugin_jail,
@@ -144,7 +143,10 @@ class Plugins(Model):
             jc = JailsConfiguration.objects.order_by('-id')[0]
             jaildir = "%s/%s" % (jc.jc_path, self.plugin_jail)
 
-            notifier()._stop_plugins(jail=self.plugin_jail, plugin=self.plugin_name)
+            notifier()._stop_plugins(
+                jail=self.plugin_jail,
+                plugin=self.plugin_name,
+            )
             if qs.count() > 0:
                 self._do_delete()
             else:

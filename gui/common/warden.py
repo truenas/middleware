@@ -27,8 +27,6 @@
 #####################################################################
 import logging
 import os
-import platform
-import string
 
 log = logging.getLogger('common.warden')
 
@@ -39,12 +37,18 @@ WARDEN = "/usr/local/bin/warden"
 WARDENCONF = "/usr/local/etc/warden.conf"
 
 from freenasUI.common.cmd import cmd_arg, cmd_pipe
+from freenasUI.common.jail import JEXEC_PATH
 from freenasUI.common.pipesubr import pipeopen
+
 
 class warden_arg(cmd_arg):
     pass
+
+
 class warden_pipe(cmd_pipe):
     pass
+
+
 class warden_exception(Exception):
     pass
 

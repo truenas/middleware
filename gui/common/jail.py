@@ -27,16 +27,19 @@
 #####################################################################
 import logging
 
-from subprocess import Popen, PIPE
-
 log = logging.getLogger('common.jail')
 
 from freenasUI.common.cmd import cmd_arg, cmd_pipe
 
+
 class jail_arg(cmd_arg):
     pass
+
+
 class jail_pipe(cmd_pipe):
     pass
+
+
 class jail_exception(Exception):
     pass
 

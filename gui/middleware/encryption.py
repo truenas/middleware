@@ -25,7 +25,6 @@
 # SUCH DAMAGE.
 #
 
-from cStringIO import StringIO
 import ctypes
 import logging
 import os

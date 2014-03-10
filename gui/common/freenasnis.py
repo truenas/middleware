@@ -25,25 +25,18 @@
 #
 #####################################################################
 import grp
-import hashlib
-import ldap
 import logging
 import os
 import pwd
-import sqlite3
-import types
-
-from dns import resolver
 
 from freenasUI.common.freenascache import *
-from freenasUI.common.system import get_freenas_var, get_freenas_var_by_file, \
-    nis_enabled, nis_objects
 from freenasUI.common.cmd import cmd_pipe
 
 log = logging.getLogger('common.freenasnis')
 
 YPCAT = "/usr/bin/ypcat"
 DOMAINNAME = "/bin/domainname"
+
 
 class nis_pipe(cmd_pipe):
     pass
@@ -74,7 +67,6 @@ class FreeNAS_NIS_Base(object):
         if self._settings:
             _s = self._settings.pop()
             self.__dict__.update(_s)
-
 
     def __ypcat(self, args):
         pobj = nis_pipe("%s %s" % (YPCAT, args))

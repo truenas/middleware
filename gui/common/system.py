@@ -515,7 +515,7 @@ def get_system_dataset():
     from freenasUI.storage.models import Volume
     from freenasUI.system.models import Advanced
 
-    try:  
+    try:
         adv = Advanced.objects.all()[0]
     except:
         log.error("No advanced settings!")
@@ -543,9 +543,9 @@ def get_samba4_path():
     from freenasUI.storage.models import Volume
     from freenasUI.system.models import Advanced
 
-    try:  
+    try:
         adv = Advanced.objects.all()[0]
-    except Exception as e:  
+    except Exception:
         print >> sys.stderr, "No advanced settings!"
         sys.exit(1)
 
@@ -591,7 +591,10 @@ def exclude_path(path, exclude):
             for fg in fine_grained:
                 if fg.startswith(fpath):
                     if fg != fpath:
-                        check_paths.extend([os.path.join(fpath, f) for f in os.listdir(fpath)])
+                        check_paths.extend([
+                            os.path.join(fpath, f)
+                            for f in os.listdir(fpath)
+                        ])
                 else:
                     apply_paths.append(fpath)
         return apply_paths

@@ -71,7 +71,6 @@ sys.path.append(FREENAS_PATH)
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
-from django.db import models
 from django.db.models import Q
 
 # Make sure to load all modules
@@ -81,16 +80,15 @@ cache.get_apps()
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
-from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
+from freenasUI.common.freenasacl import ACL
 from freenasUI.common.jail import Jls, Jexec
 from freenasUI.common.locks import mntlock
 from freenasUI.common.pbi import (
     pbi_add, pbi_delete, pbi_info, pbi_create, pbi_makepatch, pbi_patch,
     PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO,
-    PBI_ADD_FLAGS_EXTRACT_ONLY, PBI_ADD_FLAGS_OUTDIR,
-    PBI_ADD_FLAGS_OUTPATH, PBI_ADD_FLAGS_FORCE,
+    PBI_ADD_FLAGS_FORCE,
     PBI_INFO_FLAGS_VERBOSE, PBI_CREATE_FLAGS_OUTDIR,
-    PBI_CREATE_FLAGS_BACKUP, PBI_CREATE_FLAGS_NAME,
+    PBI_CREATE_FLAGS_BACKUP,
     PBI_MAKEPATCH_FLAGS_OUTDIR, PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
     PBI_PATCH_FLAGS_OUTDIR, PBI_PATCH_FLAGS_NOCHECKSIG
 )
@@ -101,7 +99,6 @@ from freenasUI.common.system import (
     get_sw_name
 )
 from freenasUI.common.warden import (Warden, WardenJail,
-    WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
     WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
@@ -159,7 +156,7 @@ class StartNotify(threading.Thread):
 
         tries = 1
         while tries < 4:
-            rv = kq.control(None, 2, 1)
+            kq.control(None, 2, 1)
             if self._verb in ('start', 'restart'):
                 if os.path.exists(self._pidfile):
                     # The file might have been created but it may take a little bit
@@ -1767,7 +1764,7 @@ class notifier:
             else:
                 from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_enabled=True)
                 if from_diskobj.exists():
-                    ed = EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
+                    EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].content, to_disk, volume, passphrase=passphrase)
 
         larger_ashift = 0
@@ -3560,7 +3557,7 @@ class notifier:
         else:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
         try:
-            with mntlock(blocking=False) as MNTLOCK:
+            with mntlock(blocking=False):
                 zfsproc = self._pipeopen(zfscmd)
                 output = zfsproc.communicate()[0]
                 if output != '':
@@ -4104,7 +4101,7 @@ class notifier:
         This syncs the EncryptedDisk table with the current state
         of a volume
         """
-        from freenasUI.storage.models import EncryptedDisk, Volume
+        from freenasUI.storage.models import Disk, EncryptedDisk, Volume
         if volume is not None:
             volumes = [volume]
         else:
@@ -4149,7 +4146,6 @@ class notifier:
         class_name = provider.xpathEval("../../name")[0].content
 
         items = []
-        uid = 1
         if class_name in ('MIRROR', 'RAID3', 'STRIPE'):
             if class_name == 'STRIPE':
                 statepath = "../config/State"
@@ -4714,14 +4710,15 @@ class notifier:
         self.restart("cifs")
 
     def dataset_init_unix(self, dataset):
-        path = "/mnt/%s" % dataset
+        """path = "/mnt/%s" % dataset"""
+        pass
 
     def dataset_init_windows(self, dataset):
         acl = [
             "owner@:rwxpDdaARWcCos:fd:allow",
             "group@:rwxpDdaARWcCos:fd:allow",
             "everyone@:rxDaRc:fd:allow"
-        ]  
+        ]
 
         path = "/mnt/%s" % dataset
         with open("%s/.windows" % path, "w") as f:

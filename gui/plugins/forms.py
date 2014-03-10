@@ -34,17 +34,9 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI.common import pbi
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.warden import (
-    Warden, WARDEN_KEY_HOST, WARDEN_KEY_TYPE, WARDEN_KEY_STATUS,
-    WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING,
-)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
-from freenasUI.system.forms import (
-    clean_path_execbit
-)
-from freenasUI.jails.models import JailsConfiguration
 from freenasUI.jails.utils import new_default_plugin_jail
 
 log = logging.getLogger('plugins.forms')

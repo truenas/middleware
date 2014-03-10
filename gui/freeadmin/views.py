@@ -184,7 +184,7 @@ def server_error(request, *args, **kwargs):
             return HttpResponse(html, content_type='text/html')
         else:
             raise
-    except Exception, e:
+    except Exception:
         return debug.technical_500_response(request, *sys.exc_info())
 
 

@@ -46,7 +46,6 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
-from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.forms import CronMultiple
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier

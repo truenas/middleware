@@ -30,15 +30,17 @@ import ldap
 import logging
 import os
 import pwd
-import sqlite3
 import types
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
 
-from freenasUI.common.system import get_freenas_var, get_freenas_var_by_file, \
-    ldap_enabled, ldap_objects, activedirectory_enabled, activedirectory_objects, \
-    FREENAS_DATABASE
+from freenasUI.common.system import (
+    get_freenas_var,
+    get_freenas_var_by_file,
+    ldap_objects,
+    activedirectory_objects,
+)
 from freenasUI.common.freenascache import *
 
 log = logging.getLogger('common.freenasldap')

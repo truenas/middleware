@@ -27,7 +27,7 @@
 import bisect
 
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext as _
+
 
 class TreeType(object):
     parent = None
@@ -106,8 +106,9 @@ class TreeType(object):
             if 'app' in self.kwargs:
                 if self.kwargs['app'].startswith('freenasUI.'):
                     self.kwargs['app'] = self.kwargs['app'].split('freenasUI.')[1]
-            self.url = reverse(self.view, args=self.args, kwargs=self.kwargs,
-                           prefix='/')
+            self.url = reverse(
+                self.view, args=self.args, kwargs=self.kwargs, prefix='/'
+            )
         elif not self.url and self.view:
             self.url = '#'
 

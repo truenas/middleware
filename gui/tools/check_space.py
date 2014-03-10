@@ -116,7 +116,7 @@ def main(argv):
 
     used = to_mbytes(o_used)
     avail = to_mbytes(o_avail)
-    refer = to_mbytes(o_refer)
+    #refer = to_mbytes(o_refer)
 
     if args.threshold[-1] == '%':
         threshold = (used + avail) * decimal.Decimal(args.threshold[:-1]) / 100

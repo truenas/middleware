@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-#- 
+#-
 # Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
 #
@@ -25,10 +25,8 @@
 # SUCH DAMAGE.
 #
 
-import errno
 import os
 import sys
-import stat
 
 from string import join
 
@@ -45,12 +43,14 @@ from freenasUI.common.freenasldap import *
 from freenasUI.common.freenasnt4 import *
 from freenasUI.common.freenasusers import *
 
+
 def usage(keys):
     print >> sys.stderr, "Usage: %s <%s>" % (sys.argv[0], join(keys, '|'))
     sys.exit(1)
 
+
 def _cachelen(cache):
-    cachelen = 0 
+    cachelen = 0
 
     try:
         cachelen = len(cache)
@@ -59,6 +59,7 @@ def _cachelen(cache):
         cachelen = 0
 
     return cachelen
+
 
 def cache_fill(**kwargs):
     uargs = { 'flags': FLAGS_DBINIT|FLAGS_CACHE_WRITE_USER }

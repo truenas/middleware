@@ -25,25 +25,18 @@
 #
 #####################################################################
 import grp
-import hashlib
-import ldap
 import logging
 import os
 import pwd
-import sqlite3
-import types
-
-from dns import resolver
 
 from freenasUI.common.freenascache import *
-from freenasUI.common.system import get_freenas_var, get_freenas_var_by_file, \
-    nt4_enabled, nt4_objects
 from freenasUI.common.cmd import cmd_pipe
 
 log = logging.getLogger('common.freenasnt4')
 
 WBINFO = "/usr/local/bin/wbinfo"
 FREENAS_NT4_SEPARATOR = '\\'
+
 
 class nt4_pipe(cmd_pipe):
     pass

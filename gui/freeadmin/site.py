@@ -3,7 +3,6 @@ from functools import update_wrapper
 import hashlib
 import json
 import logging
-import os
 import re
 
 from django.conf.urls import patterns, url, include
@@ -11,7 +10,6 @@ from django.core.urlresolvers import reverse
 from django.db.models.base import ModelBase
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 

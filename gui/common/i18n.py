@@ -23,12 +23,10 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #####################################################################
-
-import os
-
 from django.utils import translation
 
 from freenasUI.system.models import Settings
+
 
 def apply_language():
     language = Settings.objects.order_by('-id')[0].stg_language

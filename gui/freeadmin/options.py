@@ -40,7 +40,6 @@ from django.template.loader import get_template
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from dojango import forms
 from dojango.forms.models import BaseInlineFormSet, inlineformset_factory
 from freenasUI.api import v1_api
 from freenasUI.freeadmin.apppool import appPool
@@ -153,9 +152,9 @@ class BaseFreeAdmin(object):
         from freenasUI.freeadmin.navtree import navtree
         if self.resource is None and self._model:
             if self.resource_name is not None:
-                resource_name=self.resource_name
+                resource_name = self.resource_name
             else:
-                resource_name='%s/%s' % (
+                resource_name = '%s/%s' % (
                     self.app_label,
                     self.module_name,
                 )

@@ -31,6 +31,7 @@ from freenasUI.common.pipesubr import pipeopen
 
 SIPCALC_PATH = "/usr/local/bin/sipcalc"
 
+
 class sipcalc_base_type(object):
     def __init__(self, *args, **kwargs):
         self.sipcalc = SIPCALC_PATH
@@ -50,7 +51,6 @@ class sipcalc_base_type(object):
             self.sipcalc_args.append(str(iface))
             self.iface = iface
 
-        obj = None
         p1 = pipeopen(
             string.join(self.sipcalc_args, ' '),
             allowfork=True,

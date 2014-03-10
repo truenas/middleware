@@ -79,7 +79,6 @@ from freenasUI.common.warden import (
     WARDEN_KEY_HOST,
 )
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import MountPoint
 from freenasUI.system.forms import clean_path_execbit
 
@@ -813,7 +812,6 @@ class NullMountPointForm(ModelForm):
         return src
 
     def clean_destination(self):
-        create = self.cleaned_data.get("create")
         dest = self.cleaned_data.get("destination")
         dest = os.path.abspath(dest.strip().replace("..", ""))
 

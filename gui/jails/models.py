@@ -42,7 +42,6 @@ from freenasUI.common.warden import (
     WARDEN_VNET_ENABLED, WARDEN_VNET_DISABLED,
     WARDEN_NAT_ENABLED, WARDEN_NAT_DISABLED,
     WARDEN_DELETE_FLAGS_CONFIRM,
-    WARDEN_TEMPLATE_FLAGS_LIST,
     WARDEN_TEMPLATE_FLAGS_DELETE
 )
 from freenasUI.freeadmin.models import Model, Network4Field, Network6Field

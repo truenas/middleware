@@ -34,7 +34,6 @@ import cProfile
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, get_backends
 from django.http import HttpResponse
 from django.utils import translation
 from django.utils.cache import patch_vary_headers
@@ -42,7 +41,6 @@ from django.utils.translation import ugettext as _
 import oauth2 as oauth
 
 from freenasUI import settings as mysettings
-from freenasUI.account.models import bsdUsers
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
@@ -109,7 +107,7 @@ def http_oauth(func):
 
                 if method in (
                     'plugins.is_authenticated',
-                    ):
+                ):
                     authorized = True
 
             if authorized:
@@ -244,8 +242,9 @@ class ProfileMiddleware(object):
         # Construct an HTML/XML or Javascript comment, with
         # the formatted stats, written to the StringIO object
         # and attach it to the content of the response.
-        comment = '\n%s\n\n%s\n\n%s\n' % (begin_comment, content,
-            end_comment)
+        comment = '\n%s\n\n%s\n\n%s\n' % (
+            begin_comment, content, end_comment,
+        )
         response.content += comment
 
         # If the Content-Length header is given, add the

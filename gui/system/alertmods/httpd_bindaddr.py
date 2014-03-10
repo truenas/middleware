@@ -1,5 +1,3 @@
-import os
-
 from django.utils.translation import ugettext as _
 
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert

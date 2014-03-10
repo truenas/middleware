@@ -247,7 +247,7 @@ def top(request):
 def reboot_dialog(request):
     if request.method == "POST":
         if notifier().zpool_scrubbing():
-            if not request.session.has_key('scrub_asked'):
+            if 'scrub_asked' not in request.session:
                 request.session['scrub_asked'] = True
                 return render(request, 'system/reboot_dialog2.html')
         request.session['allow_reboot'] = True
@@ -278,7 +278,7 @@ def reboot_run(request):
 def shutdown_dialog(request):
     if request.method == "POST":
         if notifier().zpool_scrubbing():
-            if not request.session.has_key('scrub_asked'):
+            if 'scrub_asked' not in request.session:
                 request.session['scrub_asked'] = True
                 return render(request, 'system/shutdown_dialog2.html')
         request.session['allow_shutdown'] = True
@@ -536,12 +536,8 @@ def debug(request):
 
     opts = ["/usr/local/bin/ixdiagnose", "-d", dir, "-s", "-F"]
     p1 = pipeopen(string.join(opts, ' '), allowfork=True)
-    debug = p1.communicate()[0]
+    p1.communicate()[0]
     p1.wait()
-
-    with open(dump, "r") as f:
-        freenas_dump = f.read().strip()
-        f.close()  
 
     wrapper = FileWrapper(file(dump))
     response = HttpResponse(wrapper, content_type='application/octet-stream')

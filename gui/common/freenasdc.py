@@ -25,27 +25,18 @@
 #
 #####################################################################
 import grp
-import hashlib
-import ldap
 import logging
 import os
 import pwd
-import sqlite3
-import types
-
-from dns import resolver
 
 from freenasUI.common.freenascache import *
-from freenasUI.common.system import (
-    get_freenas_var,
-    get_freenas_var_by_file
-)
 from freenasUI.common.cmd import cmd_pipe
 
 log = logging.getLogger('common.freenasdc')
 
 WBINFO = "/usr/local/bin/wbinfo"
 FREENAS_DOMAINCONTROLLER_SEPARATOR = '\\'
+
 
 class dc_pipe(cmd_pipe):
     pass
