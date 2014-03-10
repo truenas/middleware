@@ -1,17 +1,41 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Adding field 'Settings.stg_directoryservice'
         db.add_column('system_settings', 'stg_directoryservice',
                       self.gf('django.db.models.fields.CharField')(default='', max_length=120, blank=True),
                       keep_default=False)
+
+        try:
+            settings = orm['system.Settings'].objects.order_by('-id')[0]
+        except:
+            return
+
+        service = orm['services.services'].objects.filter(srv_service='directoryservice')
+        if service.exists():
+            service = service[0]
+        else:
+            service = None
+
+        for o in orm['services.services'].objects.filter(srv_service__in=[
+            'activedirectory',
+            'ldap',
+            'nt4',
+            'nis',
+        ], srv_enable=True):
+            settings.stg_directoryservice = o.srv_service
+            settings.save()
+            if service:
+                service.srv_enable = True
+                service.save()
+
 
 
     def backwards(self, orm):
@@ -187,7 +211,13 @@ class Migration(SchemaMigration):
             'tun_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'tun_value': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'tun_var': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'})
-        }
+        },
+        u'services.services': {
+            'Meta': {'object_name': 'services'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'srv_enable': ('django.db.models.fields.BooleanField', [], {}),
+            'srv_service': ('django.db.models.fields.CharField', [], {'max_length': '120'})
+        },
     }
 
     complete_apps = ['system']
