@@ -102,6 +102,13 @@ def save_default_volume(volume):
 
 
 def main():
+
+    if (
+        hasattr(notifier, 'failover_status') and
+        notifier().failover_status() == 'BACKUP'
+    ):
+        return
+
     system_datasets = [ 'samba4', 'syslog', 'cores' ]
 
     volume, basename = get_system_dataset()
