@@ -50,10 +50,10 @@ if [ "${GIT_LOCATION}" = "EXTERNAL" ] ; then
     : ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
 fi
 
-: ${GIT_FREEBSD_BRANCH=feature/unified_freebsd}
+: ${GIT_FREEBSD_BRANCH=9.2.1-BRANCH}
 : ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
 
-: ${GIT_PORTS_BRANCH=freenas/9-stable}
+: ${GIT_PORTS_BRANCH=9.2.1-BRANCH}
 : ${GIT_PORTS_REPO=git@gitserver:/git/repos/freenas-build/ports.git}
 
 

@@ -3,7 +3,7 @@
 .endif
 
 NANO_LABEL?=FreeNAS
-VERSION?=9.2.1.2-RELEASE
+VERSION?=9.2.1.3-RC
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
 
@@ -13,7 +13,7 @@ RELEASE_LOGFILE?=${SCRIPT}
 RELEASE_LOGFILE?=release.build.log
 .endif
 
-GIT_REPO_SETTING=.git-repo-setting
+GIT_REPO_SETTING=${.CURDIR}/.git-repo-setting
 .if exists(${GIT_REPO_SETTING})
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
