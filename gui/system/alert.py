@@ -107,8 +107,7 @@ class AlertPlugins(object):
 
     def email(self, alerts):
         dismisseds = [a.message_id
-            for a in mAlert.objects.filter(dismiss=True)
-        ]
+                      for a in mAlert.objects.filter(dismiss=True)]
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:

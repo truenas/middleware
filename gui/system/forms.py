@@ -354,7 +354,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
 
         pool_choices = [('', '')]
-        for v in Volume.objects.all(): 
+        for v in Volume.objects.all():
             pool_choices.append((v.vol_name, v.vol_name))
 
         self.fields['adv_system_pool'].choices = pool_choices
@@ -687,7 +687,7 @@ class SMARTTestForm(ModelForm):
         self.fields.keyOrder.remove('smarttest_disks')
         self.fields.keyOrder.insert(0, 'smarttest_disks')
         mchoicefield(self, 'smarttest_month', [
-            1, 2, 3, 4, 5, 6, 7, 8 ,9, 10, 11, 12
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         ])
         mchoicefield(self, 'smarttest_dayweek', [
             1, 2, 3, 4, 5, 6, 7
@@ -822,7 +822,7 @@ class CronJobForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(CronJobForm, self).__init__(*args, **kwargs)
         mchoicefield(self, 'cron_month', [
-                1, 2, 3, 4, 5, 6, 7 ,8 ,9, 10, 11, 12
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         ])
         mchoicefield(self, 'cron_dayweek', [
                 1, 2, 3, 4, 5, 6, 7
@@ -890,7 +890,7 @@ class RsyncForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(RsyncForm, self).__init__(*args, **kwargs)
         mchoicefield(self, 'rsync_month', [
-                1, 2, 3, 4, 5, 6, 7 ,8 ,9, 10, 11, 12
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         ])
         mchoicefield(self, 'rsync_dayweek', [
                 1, 2, 3, 4, 5, 6, 7

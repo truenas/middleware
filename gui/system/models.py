@@ -106,7 +106,6 @@ class Settings(Model):
             verbose_name=_("Directory Service"),
             )
 
-
     class Meta:
         verbose_name = _("Settings")
 

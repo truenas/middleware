@@ -15,7 +15,7 @@ class Samba4Alert(BaseAlert):
             return [
                 Alert(
                     Alert.WARN,
-                    "No system pool configured, please configure one in " \
+                    "No system pool configured, please configure one in "
                     "Settings->Advanced->System dataset pool"
                 ),
             ]
@@ -24,10 +24,11 @@ class Samba4Alert(BaseAlert):
             return [
                 Alert(
                     Alert.WARN,
-                    "Multiple legacy samba4 datasets detected. Auto-migration to " \
-                    "/mnt/%s/.system/samba4 cannot be done. Please perform this step " \
-                    "manually and then delete the now-obsolete samba4 datasets and " \
-                    "/var/db/samba4/.alert_cant_migrate" % advanced.adv_system_pool
+                    "Multiple legacy samba4 datasets detected. Auto-migration "
+                    "to /mnt/%s/.system/samba4 cannot be done. Please perform "
+                    "this step manually and then delete the now-obsolete "
+                    "samba4 datasets and /var/db/samba4/.alert_cant_migrate"
+                    % advanced.adv_system_pool
                 ),
             ]
 
