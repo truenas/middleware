@@ -293,6 +293,26 @@ class IPMIForm(Form):
             '"id_dhcp", ["id_ipv4address", "id_ipv4netmaskbit"]);'
         )
 
+        channels = []
+        _n = notifier()
+        for i in range(1, 17):
+            try:
+                data = _n.ipmi_get_lan(channel=i)
+            except:
+                continue
+
+            if not data:
+                continue
+
+            channels.append((i, i))
+
+        self.fields['channel'] = forms.ChoiceField(
+            choices=channels,
+            label=_('Channel'),
+        )
+        self.fields.keyOrder.remove('channel')
+        self.fields.keyOrder.insert(0, 'channel')
+
     def clean_ipmi_password2(self):
         ipmi_password1 = self.cleaned_data.get("ipmi_password1", "")
         ipmi_password2 = self.cleaned_data["ipmi_password2"]
