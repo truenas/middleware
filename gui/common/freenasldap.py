@@ -24,13 +24,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import asyncore
 import grp
 import hashlib
 import ldap
 import logging
 import os
 import pwd
+import socket
 import sqlite3
+import time
 import types
 
 from dns import resolver
@@ -227,7 +230,7 @@ class FreeNAS_LDAP_Directory(object):
 
                 except ldap.LDAPError, e:
                     log.debug("FreeNAS_LDAP_Directory.open: "
-                        "coud not bind to %s:%d", self.host, self.port)
+                        "coud not bind to %s:%d (%s)", self.host, self.port, e)
                     self._logex(e)
                     res = None
             else:
@@ -642,92 +645,183 @@ class FreeNAS_LDAP(FreeNAS_LDAP_Base):
 
 
 class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
+    class AsyncConnect(asyncore.dispatcher):
+        def __init__(self, host, port, callback):
+            asyncore.dispatcher.__init__(self)  
+            self._host = host
+            self._port = port
+            self._callback = callback
+            self._start_time = time.time()
+            self.buffer = ""  
+
+            self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                self.connect((self._host, self._port))  
+            except socket.gaierror:
+                callback(self._host, self._port, 1000)
+                self.close()
+
+        def handle_connect(self):
+            pass
+        def handle_read(self):
+            pass
+        def handle_error(self):
+            pass
+
+        def handle_write(self):
+            duration = time.time() - self._start_time
+            self._callback(self._host, self._port, duration)
+            self.close()
 
     @staticmethod
-    def get_domain_controllers(domain):
-        log.debug("FreeNAS_ActiveDirectory_Base.get_domain_controllers: enter")
-        dcs = []
+    def get_best_host(srv_hosts):
+        if not srv_hosts:
+            return None
 
+        best_host = None
+        latencies = {}
+
+        def callback(host, port, duration):
+            latencies.setdefault(host, 0)
+            latencies[host] += duration
+
+        for srv_host in srv_hosts:
+            host = srv_host.target.to_text(True)
+            port = long(srv_host.port)
+            FreeNAS_ActiveDirectory_Base.AsyncConnect(host, long(port), callback)
+
+        count = len(srv_hosts)
+        asyncore.loop(timeout=1, count=count)
+        if not latencies:
+            asyncore.loop(timeout=60)
+
+        asyncore.close_all()
+        latency_list = sorted(latencies.iteritems(), key=lambda (a,b): (b,a))
+        if latency_list:
+            best_host = map(lambda x: (x.target.to_text(True), long(x.port)) \
+                if x.target.to_text(True) == latency_list[0][0] else None, srv_hosts)[0]
+
+        return best_host
+
+    @staticmethod
+    def get_SRV_records(host):
+        srv_records = []
+
+        if not host:
+            return srv_records
+  
+        try:
+            log.debug("FreeNAS_ActiveDirectory_Base.get_SRV_records: "
+                "looking up SRV records for %s", host)
+            answers = resolver.query(host, 'SRV')
+            srv_records = sorted(answers, key=lambda a: (int(a.priority), int(a.weight)))
+
+        except:
+            log.debug("FreeNAS_ActiveDirectory_Base.get_SRV_records: "
+                "no SRV records for %s found, fail!", host)
+            srv_records = []
+
+        return srv_records
+
+    @staticmethod
+    def get_ldap_servers(domain, site=None):
+        dcs = []
         if not domain:
             return dcs
 
         host = "_ldap._tcp.%s" % domain
+        if site:
+            host = "_ldap._tcp.%s._sites.%s" % (site, domain)
 
-        try:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_domain_controllers: "
-                "looking up SRV records for %s", host)
-            answers = resolver.query(host, 'SRV')
-            dcs = sorted(answers, key=lambda a: (int(a.priority), int(a.weight)))
-
-        except:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_domain_controllers: "
-                "no SRV records for %s found, fail!", host)
-            dcs = []
-
-        log.debug("FreeNAS_ActiveDirectory_Base.get_domain_controllers: leave")
+        dcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
         return dcs
 
     @staticmethod
-    def get_global_catalogs(domain):
-        log.debug("FreeNAS_ActiveDirectory_Base.get_global_catalogs: enter")
-        gcs = []
+    def get_domain_controllers(domain, site=None):
+        dcs = []
+        if not domain:
+            return dcs
 
+        host = "_ldap._tcp.dc._msdcs.%s" % domain
+        if site:
+            host = "_ldap._tcp.%s._sites.dc._msdcs.%s" % (site, domain)
+
+        dcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+        return dcs
+
+    @staticmethod
+    def get_primary_domain_controllers(domain):
+        pdcs = []
+        if not domain:
+            return pdcs
+
+        host = "_ldap._tcp.pdc._msdcs.%s"
+
+        pdcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+        return pdcs
+
+    @staticmethod
+    def get_global_catalog_servers(domain, site=None):
+        gcs = []
         if not domain:
             return gcs
 
         host = "_gc._tcp.%s" % domain
+        if site:
+            host = "_gc._tcp.%s._sites.%s" % (site, domain)
 
-        try:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_global_catalogs: "
-                "looking up SRV records for %s", host)
-            answers = resolver.query(host, 'SRV')
-            gcs = sorted(answers, key=lambda a: (int(a.priority), int(a.weight)))
-
-        except:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_global_catalogs: "
-                "no SRV records for %s found, fail!", host)
-            gcs = []
-
-        log.debug("FreeNAS_ActiveDirectory_Base.get_global_catalogs: leave")
+        gcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
         return gcs
 
     @staticmethod
-    def dc_connect(domain, binddn, bindpw):
-        log.debug("FreeNAS_ActiveDirectory_Base.dc_connect: enter")
-        log.debug("FreeNAS_ActiveDirectory_Base.dc_connect: domain = %s",
-            domain)
+    def get_forest_global_catalog_servers(forest, site=None):
+        fgcs = []
+        if not forest:
+            return fgcs
 
-        ret = False
-        args = {'binddn': binddn, 'bindpw': bindpw}
+        host = "_ldap._tcp.gc._msdcs.%s" % forest
+        if site:
+            host = "_ldap._tcp.%s._sites.gc._msdcs.%s" % (site, forest)
 
-        host = port = None
-        dcs = FreeNAS_ActiveDirectory_Base.get_domain_controllers(domain)
-        for dc in dcs:
-            log.debug("FreeNAS_ActiveDirectory_Base.dc_connect: "
-                "trying [%s]...", dc)
+        fgcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+        return fgcs
 
-            args['domain'] = domain
-            args['host'] = dc.target.to_text(True)
-            args['port'] = long(dc.port)
+    @staticmethod
+    def get_kerberos_servers(domain, site=None):
+        kdcs = []
+        if not domain:
+            return kdcs
 
-            ad = FreeNAS_ActiveDirectory_Base(**args)
+        host = "_kerberos._tcp.%s" % domain
+        if site:
+            host = "_kerberos._tcp.%s._sites.%s" % (site, domain)
 
-            ret = ad.open()
-            if ret == True:
-                host = ad.host
-                port = ad.port
-                ret = (host, port)
-                break
+        kdcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+        return kdcs
 
-            ad.close()
+    @staticmethod
+    def get_kerberos_domain_controllers(domain, site=None):
+        kdcs = []
+        if not domain:
+            return kdcs
 
-        if not ret:
-            ret = (None, None)
-            log.debug("FreeNAS_ActiveDirectory_Base.dc_connect: "
-                "unable to connect to a domain controller")
+        host = "_kerberos._tcp.dc._msdcs.%s" % domain
+        if site:
+            host = "_kerberos._tcp.%s._sites.dc._msdcs.%s" % (site, domain)
 
-        log.debug("FreeNAS_ActiveDirectory_Base.dc_connect: leave")
-        return ret
+        kdcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+        return kdcs
+
+    @staticmethod
+    def get_kpasswd_servers(domain):
+        kpws = []
+        if not domain:
+            return kpws
+
+        host = "_kpasswd._tcp.%s" % domain
+
+        kpws = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+        return kpws
 
     @staticmethod
     def adset(val, default=None):
@@ -828,7 +922,6 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         log.debug("FreeNAS_ActiveDirectory_Base.__get_config: leave")
         return res
 
-
     def __db_init__(self, **kwargs):
         log.debug("FreeNAS_ActiveDirectory_Base.__db_init__: enter")
 
@@ -853,7 +946,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         args = {'binddn': self.binddn, 'bindpw': self.bindpw}
 
         if not self.dchost:
-            (host, port) = self.dc_connect(self.domain, self.binddn, self.bindpw)
+            dcs = self.get_domain_controllers(self.domain)  
+            (host, port) = self.get_best_host(dcs)
         else:
             host = self.dchost
             port = self.dcport
@@ -917,7 +1011,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
                 self.dcport = parts[1]
 
         if not self.dchost:
-            (host, port) = self.dc_connect(self.domain, self.binddn, self.bindpw)
+            dcs = self.get_domain_controllers(self.domain)  
+            (host, port) = self.get_best_host(dcs)
         else:
             host = self.dchost
             port = self.dcport
@@ -1122,22 +1217,11 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         root = self.get_root_domain()
         if not self.gchost:
-            gcs = self.get_global_catalogs(root)
+            gcs = self.get_global_catalog_servers(root)
+            (gc_args['host'], gc_args['port']) = self.get_best_host(gcs)
 
-            for g in gcs:
-                log.debug("FreeNAS_ActiveDirectory_Base.get_domains: trying [%s]...", g)
-
-                gc_args['host'] = g.target.to_text(True)
-                gc_args['port'] = long(g.port)
-
-                gc = FreeNAS_LDAP_Directory(**gc_args)
-                gc.open()
-
-                if gc._isopen:
-                    break
-
-                gc.close()
-                gc = None
+            gc = FreeNAS_LDAP_Directory(**gc_args)
+            gc.open()
 
         else:
             gc_args['host'] = self.gchost
@@ -1601,7 +1685,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
             self.__users[n] = []
 
             dcs = self.get_domain_controllers(d['dnsRoot'])
-            (self.host, self.port) = self.dc_connect(d['dnsRoot'], self.binddn, self.bindpw)
+            (self.host, self.port) = self.get_best_host(dcs)
 
             self.basedn = d['nCName']
             self.attributes = ['sAMAccountName']
@@ -1867,7 +1951,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
             self.__groups[n] = []
 
             dcs = self.get_domain_controllers(d['dnsRoot'])
-            (self.host, self.port) = self.dc_connect(d['dnsRoot'], self.binddn, self.bindpw)
+            (self.host, self.port) = self.get_best_host(dcs)
 
             self.basedn = d['nCName']
             self.attributes = ['sAMAccountName']
@@ -1888,7 +1972,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
 
             for g in ad_groups:
                 sAMAccountName = g[1]['sAMAccountName'][0]
-                if not self.trusted and not self.unix:
+                if self.default or self.unix:
                     sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, sAMAccountName))
 
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
