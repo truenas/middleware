@@ -1,0 +1,64 @@
+$Header: /cvsroot/druidbsd/pxe-config/netboot/README,v 1.2 2014/03/02 04:48:18 devinteske Exp $
+
+The Makefile in this directory facilitates production of a `netboot.gz' boot
+image which -- when booted -- performs the following actions (in order):
+
+	1. Obtain a DHCP address
+	2. Mount a path configured in (loader.conf(5)) from the DHCP server
+	   NB: If `boot.nfsroot.path' is set, NFS is used, otherwise...
+	   NB: If `boot.smbroot.share' is set, SMB is used
+	3. `chroot' into the mounted directory, executing `/bin/sh /etc/rc'
+
+This allows you to build miniaturized ISO files that boot via CD, DVD, HDD, USB
+Thumb drive, or (most notably) PXE that -- when booted -- can use this
+`netboot.gz' to chain-load to an NFS or SMB exported media (such as installer)
+using the native networking framework (opposed to using the UNDI framework).
+
+The `netboot.gz' is built from scratch by the code contained within `Makefile'.
+How to make `netboot.gz'...
+
+	First, create the file `static.conf'. You can copy `static.conf.sample'
+	if you like, or alternatively execute the following command to create a
+	minimal `static.conf' file:
+
+		sysrc -f static.conf \
+			STATIC_BASE=/ OUTPUT=netboot.gz DESTDIR=/boot
+
+	This configures where the binaries for `static/' are pulled from
+	(STATIC_BASE), the name of the boot image (OUTPUT), and also the
+	destination to copy the boot image during `make install' (DESTDIR).
+	NB: Only base system utils and config files are pulled into `static/'.
+	NB: Ideally, you'd set STATIC_BASE to an unpacked ISO directory.
+	NB: DESTDIR is usually `STATIC_BASE/boot'.
+
+	Execute `make' which performs the following:
+	1. Reads config file `./static.conf'
+	2. Copies required binaries, libraries, and configuration files to
+	   `static/' from the path configured in `./static.conf' as
+	   STATIC_BASE="..."
+	3. Creates an empty `dep/mfsroot.gz' to build `netboot.gz' from
+	4. Copies `dep/mfsroot.gz' to `./netboot.gz' (./OUTPUT)
+	5. Uncompresses and mounts `netboot.gz' (OUTPUT) on `./mnt'
+	6. Copies the contents of `./static' into `./mnt'
+	7. Copies the contents of `./src' into `./mnt'
+	8. Unmounts and re-compresses `netboot.gz' (OUTPUT)
+
+The compiled `netboot.gz' (OUTPUT) is suitable for use as an `mfs_root' module
+providing a root filesystem that will chain-load a new root via NFS or SMB. To
+tell your kernel to automatically load `netboot.gz' as your boot image during
+startup, place the following directives in `/boot/loader.conf':
+
+	mfsroot_load="YES"
+	mfsroot_type="mfs_root"
+	mfsroot_name="boot/netboot"
+	vfs.root.mountfrom="ufs:/dev/md0"
+	vfs.root.mountfrom.options="rw"
+
+Then configure (in the same `/boot/loader.conf') one of the following:
+
+	# To mount an NFS share from the DHCP server
+	boot.nfsroot.path="/path/to/root"
+
+	# To mount an SMB share from the DHCP server
+	boot.smbroot.share="sharename"
+
