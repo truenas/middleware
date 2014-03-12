@@ -4596,7 +4596,7 @@ class notifier:
         """
         return os.path.exists('/dev/ipmi0')
 
-    def ipmi_get_lan(self):
+    def ipmi_get_lan(self, channel=1):
         """Get lan info from ipmitool
 
         Returns:
@@ -4612,7 +4612,7 @@ class notifier:
 
         RE_ATTRS = re.compile(r'^(?P<key>^.+?)\s+?:\s+?(?P<val>.+?)\r?$', re.M)
 
-        p1 = self._pipeopen('/usr/local/bin/ipmitool lan print')
+        p1 = self._pipeopen('/usr/local/bin/ipmitool lan print %d' % channel)
         ipmi = p1.communicate()[0]
         if p1.returncode != 0:
             raise AssertionError(
@@ -4627,7 +4627,7 @@ class notifier:
                 data[dkey] = val.strip()
         return data
 
-    def ipmi_set_lan(self, data):
+    def ipmi_set_lan(self, data, channel=1):
         """Set lan info from ipmitool
 
         Returns:
@@ -4642,46 +4642,57 @@ class notifier:
 
         if data['dhcp']:
             rv = self._system_nolog(
-                '/usr/local/bin/ipmitool lan set 1 ipsrc dhcp'
+                '/usr/local/bin/ipmitool lan set %d ipsrc dhcp' % channel
             )
         else:
             rv = self._system_nolog(
-                '/usr/local/bin/ipmitool lan set 1 ipsrc static'
+                '/usr/local/bin/ipmitool lan set %d ipsrc static' % channel
             )
             rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool lan set 1 ipaddr %s' % (
+                '/usr/local/bin/ipmitool lan set %d ipaddr %s' % (
+                    channel,
                     data['ipv4address'],
                 )
             )
             rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool lan set 1 netmask %s' % (
+                '/usr/local/bin/ipmitool lan set %d netmask %s' % (
+                    channel,
                     data['ipv4netmaskbit'],
                 )
             )
             rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool lan set 1 defgw ipaddr %s' % (
+                '/usr/local/bin/ipmitool lan set %d defgw ipaddr %s' % (
+                    channel,
                     data['ipv4gw'],
                 )
             )
 
-        rv |= self._system_nolog('/usr/local/bin/ipmitool lan set 1 access on')
         rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set 1 auth USER "MD2,MD5"'
+            '/usr/local/bin/ipmitool lan set %d access on' % channel
         )
         rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set 1 auth OPERATOR "MD2,MD5"'
+            '/usr/local/bin/ipmitool lan set %d auth USER "MD2,MD5"'  % channel
         )
         rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set 1 auth ADMIN "MD2,MD5"'
+            '/usr/local/bin/ipmitool lan set %d auth OPERATOR "MD2,MD5"' % (
+                channel,
+            )
         )
         rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set 1 auth CALLBACK "MD2,MD5"'
+            '/usr/local/bin/ipmitool lan set %d auth ADMIN "MD2,MD5"'  % (
+                channel,
+            )
         )
         rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set 1 arp respond on'
+            '/usr/local/bin/ipmitool lan set %d auth CALLBACK "MD2,MD5"' % (
+                channel,
+            )
         )
         rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set 1 arp generate on'
+            '/usr/local/bin/ipmitool lan set %d arp respond on' % channel
+        )
+        rv |= self._system_nolog(
+            '/usr/local/bin/ipmitool lan set %d arp generate on' % channel
         )
         if data.get("ipmi_password1"):
             rv |= self._system_nolog(
