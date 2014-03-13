@@ -1029,6 +1029,11 @@ class SysctlForm(ModelForm):
 
     def clean_sysctl_mib(self):
         value = self.cleaned_data.get('sysctl_mib').strip()
+        qs = models.Sysctl.objects.filter(sysctl_mib=value)
+        if qs.exists():
+            raise forms.ValidationError(_(
+                'This variable already exists'
+            ))
         if SYSCTL_VARNAME_FORMAT_RE.match(value):
             return value
         raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
