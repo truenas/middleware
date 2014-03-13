@@ -380,15 +380,10 @@ add_port devel/py-daemon
 add_port devel/py-polib
 add_port devel/py-ujson
 add_port devel/py-simplejson
-if ! is_truenas ; then
-	add_port sysutils/bsdstats
-fi
 add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
-if is_truenas ; then
-	add_port sysutils/sg3_utils
-fi
+add_port sysutils/sg3_utils
 add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
@@ -456,17 +451,9 @@ add_port_debug net/samba41 \
 
 if [ "${DEBUG}" = 1 ]; then
 
-	add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
-	add_port ftp/curl
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
 	add_port devel/ipython OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=ZMQ
-	add_port devel/git OPTIONS_FILE_UNSET+=SVN \
-			OPTIONS_FILE_UNSET+=CVS \
-			OPTIONS_FILE_UNSET+=P4 \
-			OPTIONS_FILE_UNSET+=PERL \
-			OPTIONS_FILE_UNSET+=CONTRIB \
-			OPTIONS_FILE_UNSET+=NLS
 	add_port devel/ctags
 fi
 
