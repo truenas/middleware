@@ -305,7 +305,7 @@ Hello,
                 stderr=subprocess.PIPE,
             )
             replcmd = '%s/bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
-        with open(templog, 'wr') as f:
+        with open(templog, 'w+') as f:
             proc = subprocess.Popen(
                 replcmd,
                 shell=True,
@@ -319,6 +319,7 @@ Hello,
             zfssend.stdout.close()
             proc.communicate()
             os.remove(progressfile)
+            f.seek(0)
             msg = f.read()
         os.remove(templog)
         log.debug("Replication result: %s" % (msg))
