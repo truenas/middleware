@@ -630,7 +630,6 @@ class ReplicationFAdmin(BaseFreeAdmin):
     resource_mixin = ReplicationResourceMixin
     exclude_fields = (
         'id',
-        'repl_lastsnapshot',
         'repl_remote',
         'repl_userepl',
         'repl_resetonce',

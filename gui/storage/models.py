@@ -852,9 +852,8 @@ class Replication(Model):
     repl_lastsnapshot = models.CharField(
         max_length=120,
         blank=True,
-        verbose_name=_(
-            "Last snapshot sent to remote side (leave blank "
-            "for full replication)"),
+        editable=False,
+        verbose_name=_('Last snapshot sent to remote side'),
     )
     repl_remote = models.ForeignKey(
         ReplRemote,
