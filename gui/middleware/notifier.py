@@ -4755,7 +4755,7 @@ class notifier:
         return share_type
 
     def get_proc_title(self, pid):
-        proc = self._pipeopen('/bin/ps -aww -o pid,command | /usr/bin/grep ^%s' % pid)
+        proc = self._pipeopen('/bin/ps -a -x -w -w -o pid,command | /usr/bin/grep ^%s' % pid)
         data = proc.communicate()[0]
         if proc.returncode != 0:
             return None
