@@ -535,6 +535,8 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         basedn = None
         if self.usersuffix and self.basedn:
             basedn = "%s,%s" % (self.usersuffix, self.basedn)
+        elif self.basedn:
+            basedn = "%s" % self.basedn
 
         args = {'scope': scope, 'filter': filter}
         if basedn:
@@ -564,7 +566,11 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(|(objectclass=person)(objectclass=account))(uid=*))'
 
-        basedn = "%s,%s" % (self.usersuffix, self.basedn)
+        if self.usersuffix:
+            basedn = "%s,%s" % (self.usersuffix, self.basedn)
+        else:
+            basedn = "%s" % self.basedn
+	
         results = self._search(basedn, scope, filter, self.attributes)
         if results:
             for r in results:
@@ -597,7 +603,11 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         else:
             filter = '(&(objectclass=posixgroup)(cn=%s))' % group
 
-        basedn = "%s,%s" % (self.groupsuffix, self.basedn)
+        if self.groupsuffix:
+            basedn = "%s,%s" % (self.groupsuffix, self.basedn)
+        else:
+            basedn = "%s" % self.basedn
+
         results = self._search(basedn, scope, filter, self.attributes)
         if results:
             for r in results:
@@ -620,7 +630,11 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(objectclass=posixgroup)(gidnumber=*))'
 
-        basedn = "%s,%s" % (self.groupsuffix, self.basedn)
+        if self.groupsuffix:
+            basedn = "%s,%s" % (self.groupsuffix, self.basedn)
+        else:
+            basedn = "%s" % self.basedn
+	
         results = self._search(basedn, scope, filter, self.attributes)
         if results:
             for r in results:
@@ -1951,6 +1965,8 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
             self.__dgcache = FreeNAS_Directory_GroupCache()
             if self.groupsuffix and self.basedn:
                 self.__key = str("cn=%s,%s,%s" % (group, self.groupsuffix, self.basedn))
+            elif self.basedn:
+                self.__key = str("cn=%s,%s" % (group, self.basedn))
 
         self._gr = None
         if group:
@@ -2125,6 +2141,8 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
             self.__ducache = FreeNAS_Directory_UserCache()
             if self.usersuffix and self.basedn:
                 self.__key = str("uid=%s,%s,%s" % (user, self.usersuffix, self.basedn))
+            elif self.basedn:
+                self.__key = str("uid=%s,%s" % (user, self.basedn))
 
         self._pw = None
         if user:
