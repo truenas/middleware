@@ -924,6 +924,8 @@ class Replication(Model):
                 return _('Sending %s (%s%%)') % reg.groups()
             else:
                 return _('Sending')
+        if self.repl_lastresult:
+            return self.repl_lastresult
 
     def delete(self):
         try:
