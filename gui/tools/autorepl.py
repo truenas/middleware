@@ -28,6 +28,7 @@
 import datetime
 import logging
 import os
+import subprocess
 import sys
 
 sys.path.extend([
@@ -282,15 +283,42 @@ Hello,
     for snapname in wanted_list:
         local_fs, local_snap = snapname.split('@')
         if replication.repl_limit != 0:
-            limit = ' | /usr/local/bin/throttle -K %d' % replication.repl_limit
+            limit = '/usr/local/bin/throttle -K %d | ' % replication.repl_limit
         else:
             limit = ''
+        cmd = ['/sbin/zfs', 'send', '-V']
+        if replication.repl_userepl:
+            cmd.append('-R')
         if last_snapshot == '':
-            replcmd = '(/sbin/zfs send -V %s%s%s | /bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded.") > %s 2>&1' % (Rflag, snapname, limit, sshcmd, remote_port, remote, remotefs, templog)
+            cmd.append(snapname)
+            zfssend = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            replcmd = '%s/bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded."' % (limit, sshcmd, remote_port, remote, remotefs)
         else:
-            replcmd = '(/sbin/zfs send -V %s-I %s %s%s | /bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded.") > %s 2>&1' % (Rflag, last_snapshot, snapname, limit, sshcmd, remote_port, remote, remotefs, templog)
-        system(replcmd)
-        with open(templog) as f:
+            cmd.extend(['-I', last_snapshot, snapname])
+            zfssend = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            replcmd = '%s/bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded."' % (limit, sshcmd, remote_port, remote, remotefs)
+        with open(templog, 'wr') as f:
+            proc = subprocess.Popen(
+                replcmd,
+                shell=True,
+                stdin=zfssend.stdout,
+                stdout=f,
+                stderr=subprocess.STDOUT,
+            )
+            progressfile = '/tmp/.repl_progress_%d' % replication.id
+            with open(progressfile, 'w') as f2:
+                f2.write(str(zfssend.pid))
+            zfssend.stdout.close()
+            proc.communicate()
+            os.remove(progressfile)
             msg = f.read()
         os.remove(templog)
         log.debug("Replication result: %s" % (msg))
