@@ -643,6 +643,11 @@ class ReplicationFAdmin(BaseFreeAdmin):
             'label': _('Remote Hostname'),
             'sortable': False,
         })
+        columns.insert(3, {
+            'name': 'repl_status',
+            'label': _('Status'),
+            'sortable': False,
+        })
         return columns
 
 
