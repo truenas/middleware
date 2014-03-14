@@ -296,7 +296,7 @@ Hello,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            replcmd = '%s/bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded."' % (limit, sshcmd, remote_port, remote, remotefs)
+            replcmd = '%s/bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         else:
             cmd.extend(['-I', last_snapshot, snapname])
             zfssend = subprocess.Popen(
@@ -304,7 +304,7 @@ Hello,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            replcmd = '%s/bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded."' % (limit, sshcmd, remote_port, remote, remotefs)
+            replcmd = '%s/bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         with open(templog, 'wr') as f:
             proc = subprocess.Popen(
                 replcmd,
@@ -322,6 +322,8 @@ Hello,
             msg = f.read()
         os.remove(templog)
         log.debug("Replication result: %s" % (msg))
+        replication.repl_lastresult = msg
+        replication.save()
 
         # Determine if the remote side have the snapshot we have now.
         rzfscmd = '"zfs list -Hr -o name -t snapshot -d 1 %s | tail -n 1 | cut -d@ -f2"' % (remotefs_final)

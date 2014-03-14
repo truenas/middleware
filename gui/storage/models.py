@@ -855,6 +855,11 @@ class Replication(Model):
         editable=False,
         verbose_name=_('Last snapshot sent to remote side'),
     )
+    repl_lastresult = models.CharField(
+        max_length=500,
+        blank=True,
+        editable=False,
+    )
     repl_remote = models.ForeignKey(
         ReplRemote,
         verbose_name=_("Remote Host"),
