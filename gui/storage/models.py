@@ -919,7 +919,7 @@ class Replication(Model):
             with open(progressfile, 'r') as f:
                 pid = int(f.read())
             title = notifier().get_proc_title(pid)
-            reg = re.search(r'sending (\S+) \((\d)%', title)
+            reg = re.search(r'sending (\S+) \((\d+)%', title)
             if reg:
                 return _('Sending %s (%s%%)') % reg.groups()
             else:
