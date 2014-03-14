@@ -4754,6 +4754,18 @@ class notifier:
 
         return share_type
 
+    def get_proc_title(self, pid):
+        proc = self._pipeopen('/bin/ps -aww -o pid,command | /usr/bin/grep ^%s' % pid)
+        data = proc.communicate()[0]
+        if proc.returncode != 0:
+            return None
+        data = data.strip('\n')
+        title = data.split(' ', 1)
+        if len(title) > 1:
+            return title[1]
+        else:
+            return False
+
 
 def usage():
     usage_str = """usage: %s action command
