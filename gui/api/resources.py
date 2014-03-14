@@ -906,6 +906,7 @@ class ReplicationResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(ReplicationResourceMixin, self).dehydrate(bundle)
+        bundle.data['repl_status'] = bundle.obj.status
         bundle.data['repl_remote_hostname'] = (
             bundle.obj.repl_remote.ssh_remote_hostname
         )

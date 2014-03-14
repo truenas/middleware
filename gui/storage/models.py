@@ -28,6 +28,7 @@
 from datetime import time
 import logging
 import os
+import re
 import uuid
 
 from django.db import models, transaction
@@ -106,10 +107,12 @@ class Volume(Model):
         Helper method for template call
         """
         if self.vol_fstype == 'ZFS':
-            return zfs.list_datasets(path=self.vol_name,
+            return zfs.list_datasets(
+                path=self.vol_name,
                 recursive=True,
                 hierarchical=hierarchical,
-                include_root=True)
+                include_root=True,
+            )
 
     def get_zvols(self):
         if self.vol_fstype == 'ZFS':
@@ -249,7 +252,7 @@ class Volume(Model):
             # No system dataset on the pool being destroyed
             pass
         else:
-            syspool.adv_system_pool=""
+            syspool.adv_system_pool = ""
             syspool.save()
             # If we are using the syslog dataset kick syslog.
             syslog = Advanced.objects.all()[0]
@@ -840,7 +843,7 @@ class Replication(Model):
         verbose_name=_("Enabled"),
         help_text=_(
             "Disabling will not stop any replications which are in progress. "),
-    ) 
+    )
     repl_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),
@@ -905,6 +908,19 @@ class Replication(Model):
             self.repl_filesystem,
             self.repl_remote.ssh_remote_hostname)
 
+    @property
+    def status(self):
+        progressfile = '/tmp/.repl_progress_%d' % self.id
+        if os.path.exists(progressfile):
+            with open(progressfile, 'r') as f:
+                pid = int(f.read())
+            title = notifier().get_proc_title(pid)
+            reg = re.search(r'sending (\S+) \((\d)%', title)
+            if reg:
+                return _('Sending %s (%s%%)') % reg.groups()
+            else:
+                return _('Sending')
+
     def delete(self):
         try:
             if self.repl_lastsnapshot != "":
@@ -919,7 +935,7 @@ class Task(Model):
     task_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
-    ) 
+    )
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),
