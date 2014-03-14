@@ -132,7 +132,6 @@ ix_syslogd_start()
 				mv "/var/log" "/var/log.${datestr}"
 				mkdir -p /var/log
 			fi
-			service syslogd restart 
 		fi
 		return 0
 	fi
@@ -155,7 +154,6 @@ ix_syslogd_start()
 				mv "/var/log" "/var/log.${datestr}"
 				mkdir -p /var/log
 			fi
-			service syslogd restart 
 		fi
 
 		return 0
@@ -224,7 +222,6 @@ ix_syslogd_start()
 		ln -s "${mp}/log" "/var/log"
 	fi
 
-	/etc/rc.d/syslogd reload
 	return 0
 }
 
