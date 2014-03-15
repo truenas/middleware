@@ -452,7 +452,7 @@ def generate_smb4_conf(smb4_conf):
             except:
                 pass
 
-        if cifs.cifs_srv_homedircifs.cifs_srv_homedir:
+        if cifs.cifs_srv_homedir:
             cifs_homedir_path = "%s/%s" % (cifs.cifs_srv_homedir, valid_users_path)
         else:
             cifs_homedir_path = False
