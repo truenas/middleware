@@ -37,11 +37,11 @@ update_persistent_file()
 		rm -f "$new"
 	else
 		rc=2
-		if mount -uw -onoatime /; then
+		if mount_root_rw -onoatime ; then
 			if mv "$new" "$old"; then
 				rc=0
 			fi
-			mount -ur /
+			mount_root_restore
 		fi
 	fi
 	return $rc
