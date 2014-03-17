@@ -1030,6 +1030,8 @@ class SysctlForm(ModelForm):
     def clean_sysctl_mib(self):
         value = self.cleaned_data.get('sysctl_mib').strip()
         qs = models.Sysctl.objects.filter(sysctl_mib=value)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
         if qs.exists():
             raise forms.ValidationError(_(
                 'This variable already exists'
