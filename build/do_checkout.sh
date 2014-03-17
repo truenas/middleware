@@ -39,7 +39,7 @@ if is_truenas ; then
     ADDL_REPOS="$ADDL_REPOS ZFSD TRUENAS-COMPONENTS"
 
     : ${GIT_ZFSD_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git}
-    : ${GIT_TRUENAS_COMPONENTS_REPO=git@gitserver:/git/repos/truenas-build/truenas.git}
+    : ${GIT_TRUENAS_COMPONENTS_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/truenas.git}
 
 	export NAS_PORTS_DIRECT=1
 
@@ -51,10 +51,10 @@ if [ "${GIT_LOCATION}" = "EXTERNAL" ] ; then
 fi
 
 : ${GIT_FREEBSD_BRANCH=feature/unified_freebsd}
-: ${GIT_FREEBSD_REPO=git@gitserver:/git/repos/freenas-build/trueos.git}
+: ${GIT_FREEBSD_REPO=git@gitserver.ixsystems.com:/git/repos/freenas-build/trueos.git}
 
 : ${GIT_PORTS_BRANCH=freenas/9-stable}
-: ${GIT_PORTS_REPO=git@gitserver:/git/repos/freenas-build/ports.git}
+: ${GIT_PORTS_REPO=git@gitserver.ixsystems.com:/git/repos/freenas-build/ports.git}
 
 
 do_git_update()
