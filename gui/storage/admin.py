@@ -633,7 +633,6 @@ class ReplicationFAdmin(BaseFreeAdmin):
         'repl_remote',
         'repl_userepl',
         'repl_resetonce',
-        'repl_lastresult',
     )
 
     def get_datagrid_columns(self):
