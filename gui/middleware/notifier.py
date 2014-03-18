@@ -1584,6 +1584,24 @@ class notifier:
                 return True
         return False
 
+    def repl_remote_snapshots(self, repl):
+        """
+        Get a list of snapshots in the remote side
+        """
+        if repl.repl_remote.ssh_remote_dedicateduser_enabled:
+            user = repl.repl_remote.ssh_remote_dedicateduser
+        else:
+            user = 'root'
+        proc = self._pipeopen('/usr/bin/ssh -i /data/ssh/replication -o ConnectTimeout=3 -p %s %s@%s "zfs list -Ht snapshot -o name"' % (
+            repl.repl_remote.ssh_remote_port,
+            user,
+            repl.repl_remote.ssh_remote_hostname,
+        ))
+        data = proc.communicate()[0]
+        if proc.returncode != 0:
+            return []
+        return data.strip('\n').split('\n')
+
     def destroy_zfs_dataset(self, path, recursive=False):
         retval = None
         if '@' in path:
