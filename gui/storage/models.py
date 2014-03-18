@@ -838,12 +838,6 @@ class ReplRemote(Model):
 
 
 class Replication(Model):
-    repl_enabled = models.BooleanField(
-        default=True,
-        verbose_name=_("Enabled"),
-        help_text=_(
-            "Disabling will not stop any replications which are in progress. "),
-    )
     repl_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),
@@ -900,6 +894,13 @@ class Replication(Model):
         default=time(hour=23, minute=59),
         verbose_name=_("End"),
         help_text=_("Do not start replication after"),
+    )
+    repl_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+        help_text=_(
+            'Disabling will not stop any replications which are in progress.'
+        ),
     )
 
     class Meta:
