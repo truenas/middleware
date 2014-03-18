@@ -26,6 +26,7 @@
 #####################################################################
 
 from datetime import time
+import cPickle
 import logging
 import os
 import re
@@ -41,6 +42,7 @@ from freenasUI.common import humanize_size
 from freenasUI.freeadmin.models import Model, UserField
 
 log = logging.getLogger('storage.models')
+REPL_RESULTFILE = '/tmp/.repl-result'
 
 
 class Volume(Model):
@@ -849,11 +851,6 @@ class Replication(Model):
         editable=False,
         verbose_name=_('Last snapshot sent to remote side'),
     )
-    repl_lastresult = models.CharField(
-        max_length=500,
-        blank=True,
-        editable=False,
-    )
     repl_remote = models.ForeignKey(
         ReplRemote,
         verbose_name=_("Remote Host"),
@@ -912,6 +909,18 @@ class Replication(Model):
         return '%s -> %s' % (
             self.repl_filesystem,
             self.repl_remote.ssh_remote_hostname)
+
+    @property
+    def repl_lastresult(self):
+        if not os.path.exists(REPL_RESULTFILE):
+            return None
+        with open(REPL_RESULTFILE, 'rb') as f:
+            data = f.read()
+        try:
+            results = cPickle.loads(data)
+            return results[self.id]
+        except:
+            return None
 
     @property
     def status(self):

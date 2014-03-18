@@ -25,6 +25,7 @@
 # SUCH DAMAGE.
 #
 
+import cPickle
 import datetime
 import logging
 import os
@@ -43,7 +44,7 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.storage.models import Replication
+from freenasUI.storage.models import Replication, REPL_RESULTFILE
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.pipesubr import pipeopen, system
 from freenasUI.common.locks import mntlock
@@ -115,6 +116,13 @@ MNTLOCK.unlock()
 
 log.debug("Autosnap replication started")
 log.debug("temp log file: %s" % (templog, ))
+
+try:
+    with open(REPL_RESULTFILE, 'rb') as f:
+        data = f.read()
+    results = cPickle.loads(data)
+except:
+    results = {}
 
 # Traverse all replication tasks
 replication_tasks = Replication.objects.all()
@@ -323,8 +331,7 @@ Hello,
             msg = f.read().strip('\n')
         os.remove(templog)
         log.debug("Replication result: %s" % (msg))
-        replication.repl_lastresult = msg
-        replication.save()
+        results[replication.id] = msg
 
         # Determine if the remote side have the snapshot we have now.
         rzfscmd = '"zfs list -Hr -o name -t snapshot -d 1 %s | tail -n 1 | cut -d@ -f2"' % (remotefs_final)
@@ -373,5 +380,7 @@ Hello,
             """ % (localfs, remote, msg), interval=datetime.timedelta(hours=2), channel='autorepl')
         break
 
+with open(REPL_RESULTFILE, 'w') as f:
+    f.write(cPickle.dumps(results))
 os.remove('/var/run/autorepl.pid')
 log.debug("Autosnap replication finished")
