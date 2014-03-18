@@ -14,7 +14,7 @@ class ReplicationStatusAlert(BaseAlert):
         alerts = []
         for repl in qs:
             alerts.append(Alert(
-                Alert.ERROR,
+                Alert.CRIT,
                 _('Replication %s failed: %s') % (repl, repl.repl_lastresult),
             ))
         return alerts
