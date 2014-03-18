@@ -65,8 +65,8 @@ from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
     ReKeyForm, UnlockPassphraseForm, VolumeManagerForm, ZFSDiskReplacementForm
 )
+from freenasUI.storage.models import Disk, Replication
 from freenasUI.system.alert import alertPlugins, Alert
-from freenasUI.storage.models import Disk
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
@@ -1644,6 +1644,13 @@ class SnapshotResource(DojoResource):
             'refer': 'refer_bytes',
             'extra': 'mostrecent',
         }
+
+        # Get a list of snapshots in remote sides to show whether it has been
+        # transfered already or not
+        self._repl = {}
+        for repl in Replication.objects.all():
+            self._repl[repl] = notifier().repl_remote_snapshots(repl)
+
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
                 field = sfield[1:]
@@ -1768,6 +1775,19 @@ class SnapshotResource(DojoResource):
                     'snapname': bundle.obj.name,
                 }),
             }
+        if self._repl:
+            for repl, snaps in self._repl.iteritems():
+                remotename = '%s@%s' % (
+                    bundle.obj.filesystem.replace(
+                        repl.repl_filesystem,
+                        repl.repl_zfs,
+                    ),
+                    bundle.obj.name,
+                )
+                if remotename in snaps:
+                    bundle.data['replication'] = 'OK'
+                    #TODO: Multiple replication tasks
+                    break
         return bundle
 
 
