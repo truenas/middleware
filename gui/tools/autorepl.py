@@ -320,7 +320,7 @@ Hello,
             proc.communicate()
             os.remove(progressfile)
             f.seek(0)
-            msg = f.read()
+            msg = f.read().strip('\n')
         os.remove(templog)
         log.debug("Replication result: %s" % (msg))
         replication.repl_lastresult = msg
