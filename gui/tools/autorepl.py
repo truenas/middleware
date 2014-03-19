@@ -146,10 +146,16 @@ for replication in replication_tasks:
     if fast_cipher:
         sshcmd = ('/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
                   'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
-                  ' -o BatchMode=yes -o StrictHostKeyChecking=yes')
+                  ' -o BatchMode=yes -o StrictHostKeyChecking=yes'
+                  # There's nothing magical about ConnectTimeout, it's an average
+                  # of wiliam and josh's thoughts on a Wednesday morning.
+                  # It will prevent hunging in the status of "Sending".
+                  ' -o ConnectTimeout=7'
+                 )
     else:
         sshcmd = ('/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
-                  ' -o StrictHostKeyChecking=yes')
+                  ' -o StrictHostKeyChecking=yes'
+                  ' -o ConnectTimeout=7')
 
     if dedicateduser:
         sshcmd = "%s -l %s" % (
