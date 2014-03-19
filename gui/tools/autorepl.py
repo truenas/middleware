@@ -146,10 +146,10 @@ for replication in replication_tasks:
     if fast_cipher:
         sshcmd = ('/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
                   'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
-                  ' -o BatchMode=yes -o StrictHostKeyChecking=yes -q')
+                  ' -o BatchMode=yes -o StrictHostKeyChecking=yes')
     else:
         sshcmd = ('/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
-                  ' -o StrictHostKeyChecking=yes -q')
+                  ' -o StrictHostKeyChecking=yes')
 
     if dedicateduser:
         sshcmd = "%s -l %s" % (
@@ -328,7 +328,7 @@ Hello,
             proc.communicate()
             os.remove(progressfile)
             f.seek(0)
-            msg = f.read().strip('\n')
+            msg = f.read().strip('\n').strip('\r')
         os.remove(templog)
         log.debug("Replication result: %s" % (msg))
         results[replication.id] = msg
