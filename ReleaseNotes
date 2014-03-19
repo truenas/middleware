@@ -1,3 +1,22 @@
+Release Notes for FreeNAS 9.2.1.3-RELEASE
+
+This point release for 9.2.1 adds ZFS replication status, fixes various issues
+found in 9.2.1.2 in CIFS, AFP, FTP, serial console support, and other areas.
+All bugs fixed in 9.2.1.3-RELEASE can be found here:
+
+	https://bugs.freenas.org/projects/freenas/issues?query_id=35
+
+High level features for 9.2.1.3:
+
+* Samba (SMB/CIFS support) upgraded to version 4.1.6
+
+* Netatalk (AFP support) upgraded to version 3.1.1
+
+* ZFS replication status is now provided in ZFS Replication UI
+
+* The bug preventing FTP from starting when logging to system dataset has been fixed.
+
+
 Release Notes for FreeNAS 9.2.1.2-RELEASE
 
 This point release for 9.2.1 fixes even more issues found in 9.2.1.1 in
