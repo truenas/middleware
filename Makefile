@@ -44,6 +44,7 @@ save-build-env:
 
 freenas: release
 release: git-verify
+	${ENV_SETUP} build/do_checkout.sh check-sandbox
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/build_release.sh
