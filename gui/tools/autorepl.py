@@ -277,6 +277,7 @@ Hello,
     have diverged snapshot with us.
                         """ % (localfs), interval=datetime.timedelta(hours=2), channel='autorepl')
                     MNTLOCK.unlock()
+                    results[replication.id] = 'Remote system have diverged snapshot with us'
                     continue
                 MNTLOCK.unlock()
         else:
