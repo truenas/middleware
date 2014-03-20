@@ -30,6 +30,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import validate_email
@@ -43,6 +44,10 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.samba import (
+    SAMBA_PROVISIONED_FILE,
+    Samba4
+)
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -1693,6 +1698,42 @@ class DomainControllerForm(ModelForm):
             'dc_passwd': forms.widgets.PasswordInput(render_value=False),
         }
 
+    def __original_save(self):
+        for name in ('dc_realm', 'dc_domain', 'dc_role', 'dc_passwd', 'dc_forest_level'):
+            setattr(self.instance, "_original_%s" % name,
+                getattr(self.instance, name)
+            )
+
+    def __original_changed(self):
+        for name in ('dc_realm', 'dc_domain'):
+            original_value = getattr(self.instance, "_original_%s" % name)
+            instance_value = getattr(self.instance, name)
+            if original_value != instance_value:
+                return True
+        return False
+
+    def __dc_passwd_changed(self):
+        if self.instance._original_dc_passwd != self.instance.dc_passwd:
+            return True
+        return False
+
+    def __dc_forest_level_changed(self):
+        if self.instance._original_dc_forest_level != self.instance.dc_forest_level:
+            return True
+        return False
+
+    def __dc_domain_level_changed(self):
+        return False
+
+    def __init__(self, *args, **kwargs):
+        super(DomainControllerForm, self).__init__(*args, **kwargs)
+        if self.instance.dc_passwd:
+            self.fields['dc_passwd'].required = False
+        if self._api is True:
+            del self.fields['dc_passwd2']
+
+        self.__original_save()
+
     def clean_dc_passwd2(self):
         password1 = self.cleaned_data.get("dc_passwd")
         password2 = self.cleaned_data.get("dc_passwd2")
@@ -1708,11 +1749,14 @@ class DomainControllerForm(ModelForm):
 
     def save(self):
         super(DomainControllerForm, self).save()
+
+        if self.__original_changed():
+            Samba4().sentinel_file_remove()
+
         notifier().restart("domaincontroller")
 
-    def __init__(self, *args, **kwargs):
-        super(DomainControllerForm, self).__init__(*args, **kwargs)
-        if self.instance.dc_passwd:
-            self.fields['dc_passwd'].required = False
-        if self._api is True:
-            del self.fields['dc_passwd2']
+        if self.__dc_forest_level_changed():
+            Samba4().change_forest_level(self.instance.dc_forest_level)
+
+        if self.__dc_passwd_changed():
+            Samba4().set_administrator_password()

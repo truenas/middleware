@@ -21,6 +21,7 @@ from django.db.models import Q
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.common.samba import Samba4
 from freenasUI.common.system import get_samba4_path
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
@@ -35,9 +36,6 @@ from freenasUI.services.models import (
 from freenasUI.sharing.models import CIFS_Share
 from freenasUI.storage.models import Task
 from freenasUI.system.models import Settings
-
-SAMBA_PROVISIONED_FILE = "/var/db/samba4/.provisioned"
-SAMBA_TOOL = "/usr/local/bin/samba-tool"
 
 
 def is_within_zfs(mountpoint):
@@ -567,97 +565,23 @@ def generate_smb4_shares(smb4_shares):
             confset1(smb4_shares, line)
 
 
-def run_samba_tool(cmd, args, nonargs=None):
-    samba_tool_args = cmd
-
-    if args:
-        for key in args:
-            if args[key]:
-                samba_tool_args = "%s --%s '%s'" % (samba_tool_args, key, args[key])
-            else:
-                samba_tool_args = "%s --%s" % (samba_tool_args, key)
-
-    if nonargs:
-        for key in nonargs:
-            samba_tool_args = "%s '%s'" % (samba_tool_args, key)
-
-    p = pipeopen("%s %s" % (SAMBA_TOOL, samba_tool_args), quiet=True)
-    out = p.communicate()
-    if out and out[1]:
-        for line in out[1].split('\n'):
-            print line
-
-    if p.returncode != 0:
-        return False
-
-    return True
-
-
-def smb4_provision_domain():
-    try:
-        dc = DomainController.objects.all()[0]
-    except:
-        pass
-
-    args = {
-        'realm': dc.dc_realm,
-        'domain': dc.dc_domain,
-        'dns-backend': dc.dc_dns_backend,
-        'server-role': dc.dc_role,
-        'function-level': dc.dc_forest_level,
-        'use-ntvfs': None,
-        'use-rfc2307': None
-    }
-
-    return run_samba_tool("domain provision", args)
-
-
-def smb4_disable_password_complexity():
-    return run_samba_tool("domain passwordsettings set", { 'complexity': 'off'})
-
-
-def smb4_set_administrator_password():
-    try:
-        dc = DomainController.objects.all()[0]
-    except:
-        pass
-
-    return run_samba_tool("user setpassword",
-        {'newpassword': dc.dc_passwd}, ['Administrator'])
-
-
 def provision_smb4():
-    if not smb4_provision_domain():
+    if not Samba4().domain_provision():
         print >> sys.stderr, "Failed to provision domain"
         return False
 
-    if not smb4_disable_password_complexity():
+    if not Samba4().disable_password_complexity():
         print >> sys.stderr, "Failed to disable password complexity"
         return False
 
-    if not smb4_set_administrator_password():
+    if not Samba4().set_administrator_password():
         print >> sys.stderr, "Failed to set administrator password"
         return False
 
-    try:
-        pfile = SAMBA_PROVISIONED_FILE
-        with open(pfile, 'w') as f:
-            f.close()
-        os.chmod(pfile, 0400)
-        return True
+    if not Samba4().sentinel_file_create():
+        return False
 
-    except Exception as e:
-        print >> sys.stderr, e
-
-    return False
-
-
-def smb4_domain_provisioned():
-    pfile = SAMBA_PROVISIONED_FILE
-    if os.path.exists(pfile) and os.path.isfile(pfile):
-        return True
-
-    return False
+    return True
 
 
 def smb4_mkdir(dir):
@@ -784,7 +708,7 @@ def main():
     generate_smb4_shares(smb4_shares)
 
     role = get_server_role()
-    if role == 'dc' and not smb4_domain_provisioned():
+    if role == 'dc' and not Samba4().domain_provisioned():
         provision_smb4()
 
     with open(smb_conf_path, "w") as f:
