@@ -929,11 +929,12 @@ class Replication(Model):
             with open(progressfile, 'r') as f:
                 pid = int(f.read())
             title = notifier().get_proc_title(pid)
-            reg = re.search(r'sending (\S+) \((\d+)%', title)
-            if reg:
-                return _('Sending %s (%s%%)') % reg.groups()
-            else:
-                return _('Sending')
+            if title:
+                reg = re.search(r'sending (\S+) \((\d+)%', title)
+                if reg:
+                    return _('Sending %s (%s%%)') % reg.groups()
+                else:
+                    return _('Sending')
         if self.repl_lastresult:
             return self.repl_lastresult
 
