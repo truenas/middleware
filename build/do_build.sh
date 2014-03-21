@@ -11,9 +11,6 @@ TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
 
-# Should we build?
-BUILD=true
-
 # Number of jobs to pass to make. Only applies to src so far.
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
 if [ ${MAKE_JOBS} -gt 10 ]; then
@@ -35,11 +32,9 @@ NANO_ARGS=""
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-aBfJsx] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-- nanobsd-options]
+usage: ${0##*/} [-afJsx] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-- nanobsd-options]
 
 -a		- Build all targets
--B		- don't build. Will pull the sources and show you the
-		  nanobsd.sh invocation string instead. 
 -j make-jobs	- number of make jobs to run; defaults to ${MAKE_JOBS}.
 -s		- show build targets
 -t target	- target to build (os-base, <plugin-name>, etc).
@@ -93,14 +88,11 @@ show_build_targets()
 
 parse_cmdline()
 {
-	while getopts 'aBfj:st:xz' _optch
+	while getopts 'afj:st:xz' _optch
 	do
 		case "${_optch}" in
 		a)
 			TARGETS="${BUILD_TARGETS}"
-			;;
-		B)
-			BUILD=false
 			;;
 		j)
 			echo ${OPTARG} | egrep -q '^[[:digit:]]+$' && [ ${OPTARG} -gt 0 ]
@@ -181,16 +173,7 @@ build_target()
 	export "${_c}_FORCE=1"
 
 	local _cmd="${_nanobsd} -c ${_target} ${_args} -j ${MAKE_JOBS}"
-
-	if ! $BUILD
-	then
-		echo ${_cmd}
-		exit 0
-	fi
-
-	if [ -n "${TRACE}" ] ; then
-		echo ${_cmd}
-	fi
+	echo ${_cmd}
 
 	if sh ${TRACE} ${_cmd}
 	then
@@ -262,10 +245,7 @@ main()
 	# You must be root to build FreeNAS
 	#
 	set -e
-	if $BUILD
-	then
-		requires_root
-	fi
+	requires_root
 
     #
     # Do extra checks to make sure the build will succeed.
