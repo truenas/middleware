@@ -202,6 +202,12 @@ checkout_freebsd_source()
 	mkdir -p ${AVATAR_ROOT}/FreeBSD
 
 	echo "Use git set!"
+
+	# First try to get the freenas repo which we're building from
+	if [ -f .git/config ]; then
+		echo `awk '/url = / {print $3}' .git/config` `git log -1 --format="%H"` > ${SRCS_MANIFEST}
+	fi
+
 	generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
 
 # Nuke newly created files to avoid build errors.
