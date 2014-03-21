@@ -339,7 +339,6 @@ Hello,
                 proc.stdin.write(read)
             zfssend.stdout.close()
             proc.stdin.close()
-            proc.stdout.close()
             proc.wait()
             os.remove(progressfile)
             f.seek(0)
