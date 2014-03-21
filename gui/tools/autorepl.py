@@ -309,7 +309,6 @@ Hello,
             zfssend = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
             )
             replcmd = '%s/bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         else:
@@ -317,7 +316,6 @@ Hello,
             zfssend = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
             )
             replcmd = '%s/bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         with open(templog, 'w+') as f:
