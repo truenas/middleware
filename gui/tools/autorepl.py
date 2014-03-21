@@ -311,16 +311,15 @@ Hello,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
-            replcmd = '%s%s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
+            replcmd = '%s/bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         else:
             cmd.extend(['-I', last_snapshot, snapname])
             zfssend = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                close_fds=True,
             )
-            replcmd = '%s%s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
+            replcmd = '%s/bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         with open(templog, 'w+') as f:
             proc = subprocess.Popen(
                 replcmd,
@@ -335,9 +334,12 @@ Hello,
                 f2.write(str(zfssend.pid))
             # subprocess.Popen does not handle large stream of data between
             # processes very well, do it on our own
-            while zfssend.poll() is None:
+            while zfssend.poll() is None and proc.poll() is None:
                 read = zfssend.stdout.read(1048576)
-                proc.stdin.write(read)
+                try:
+                    proc.stdin.write(read)
+                except IOError:
+                    break
             zfssend.stdout.close()
             proc.stdin.close()
             proc.wait()
