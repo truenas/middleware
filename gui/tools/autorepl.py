@@ -309,30 +309,39 @@ Hello,
             zfssend = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
             )
-            replcmd = '%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
+            replcmd = '%s%s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         else:
             cmd.extend(['-I', last_snapshot, snapname])
             zfssend = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                close_fds=True,
             )
-            replcmd = '%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
+            replcmd = '%s%s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         with open(templog, 'w+') as f:
             proc = subprocess.Popen(
                 replcmd,
                 shell=True,
-                stdin=zfssend.stdout,
+                stdin=subprocess.PIPE,
                 stdout=f,
                 stderr=subprocess.STDOUT,
+                close_fds=True,
             )
             progressfile = '/tmp/.repl_progress_%d' % replication.id
             with open(progressfile, 'w') as f2:
                 f2.write(str(zfssend.pid))
+            # subprocess.Popen does not handle large stream of data between
+            # processes very well, do it on our own
+            while zfssend.poll() is None:
+                read = zfssend.stdout.read(1048576)
+                proc.stdin.write(read)
             zfssend.stdout.close()
-            proc.communicate()
+            proc.stdin.close()
+            proc.stdout.close()
+            proc.wait()
             os.remove(progressfile)
             f.seek(0)
             msg = f.read().strip('\n').strip('\r')
