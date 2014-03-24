@@ -1647,7 +1647,6 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                     sAMAccountName = u['sAMAccountName'][0]
                 else:
                     sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, u['sAMAccountName'][0]))
-
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
 
@@ -1903,9 +1902,12 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                 ad_groups = self.get_groups()
 
             for g in ad_groups:
-                sAMAccountName = g[1]['sAMAccountName'][0]
+
                 if self.default or self.unix:
-                    sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, sAMAccountName))
+                    sAMAccountName = g[1]['sAMAccountName'][0]
+                else:
+                    sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, g[1][
+'sAMAccountName'][0]))
 
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
                     self.__dgcache[n][sAMAccountName.upper()] = g
@@ -1913,7 +1915,8 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                 try:
                     gr = grp.getgrnam(sAMAccountName)
 
-                except:
+                except Exception as e:
+                    log.debug("Error on getgrnam: %s", e)
                     continue
 
                 self.__groups[n].append(gr)
