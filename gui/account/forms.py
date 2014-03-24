@@ -232,7 +232,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             <br />
             <br />
             <br />
-            <a href="#" onClick="
+            <a href="#" aria-label="%s" onClick="
             var s=dijit.byId('%s');
             var s2=dijit.byId('select_from');
             s.getSelected().forEach(function(i){
@@ -247,7 +247,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             <br />
             <br />
             <br />
-            <a href="#" onClick="
+            <a href="#" aria-label="%s" onClick="
             var s2=dijit.byId('%s');
             var s=dijit.byId('select_from');
             s.getSelected().forEach(function(i){
@@ -262,7 +262,13 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             </div>
             <div class="select-selected">
             %s<br/>
-        ''' % (attrs['id'], attrs['id'], __('Selected')))
+        ''' % (
+            __('Remove from group'),
+            attrs['id'],
+            __('Add to group'),
+            attrs['id'],
+            __('Selected'),
+        ))
 
         _from = forms.widgets.SelectMultiple().render(
             name, value, attrs, selected
