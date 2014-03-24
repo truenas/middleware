@@ -111,7 +111,7 @@ class AlertPlugins(object):
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
-                msgs.append(unicode(alert))
+                msgs.append(unicode(alert).encode('utf8'))
         if len(msgs) == 0:
             return
         send_mail(subject=_("Critical Alerts"),
