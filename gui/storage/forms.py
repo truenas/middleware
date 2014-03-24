@@ -1979,6 +1979,7 @@ class ReplicationForm(ModelForm):
         label=_("Remote port"),
         initial=22,
         required=False,
+        widget=forms.widgets.TextInput(),
     )
     repl_remote_dedicateduser_enabled = forms.BooleanField(
         label=_("Dedicated User Enabled"),
