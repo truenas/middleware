@@ -949,10 +949,6 @@ class Replication(Model):
 
 
 class Task(Model):
-    task_enabled = models.BooleanField(
-        default=True,
-        verbose_name=_("Enabled"),
-    )
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),
@@ -1013,6 +1009,10 @@ class Task(Model):
 #            verbose_name = _("Day"),
 #            blank = True,
 #            )
+    task_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+    )
 
     def __unicode__(self):
         return '%s - every %s - %d%s' % (
