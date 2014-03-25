@@ -65,6 +65,21 @@ class Alert(object):
     def __eq__(self, other):
         return self.getId() == other.getId()
 
+    def __ne__(self, other):
+        return self.getId() != other.getId()
+
+    def __gt__(self, other):
+        return self.getId() > other.getId()
+
+    def __ge__(self, other):
+        return self.getId() >= other.getId()
+
+    def __lt__(self, other):
+        return self.getId() < other.getId()
+
+    def __le__(self, other):
+        return self.getId() <= other.getId()
+
     def getId(self):
         return self._id
 
