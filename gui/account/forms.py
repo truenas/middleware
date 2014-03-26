@@ -492,14 +492,9 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 ] = True
             if self.instance.bsdusr_password_disabled is True:
                 self.fields['bsdusr_locked'].widget.attrs['disabled'] = True
-            try:
-                self.fields['bsdusr_sshpubkey'].initial = open(
-                    '%s/.ssh/authorized_keys' % (
-                        self.instance.bsdusr_home,
-                    )
-                ).read()
-            except:
-                self.fields['bsdusr_sshpubkey'].initial = ''
+            self.fields['bsdusr_sshpubkey'].initial = (
+                self.instance.bsdusr_sshpubkey
+            )
 
     def clean_bsdusr_username(self):
         if self.instance.id is None:
