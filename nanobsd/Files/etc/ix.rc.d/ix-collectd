@@ -7,12 +7,72 @@
 # REQUIRE: var
 # BEFORE: collectd
 
-. /etc/rc.subr
+. /etc/rc.freenas
+
+get_system_pool()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		adv_system_pool
+	FROM
+		system_advanced
+	ORDER BY
+		-id
+	LIMIT 1
+	" | \
+	while read -r system_pool
+	do
+		echo "${system_pool}"
+	done
+}
+
+get_system_dataset()
+{
+	local system_pool="$(get_system_pool)"
+
+	if [ ! -d "/mnt/${system_pool}" ]
+	then
+		return 1
+	fi
+
+	if [ -n "${system_pool}" ]
+	then
+		echo "${system_pool}/.system"
+	fi
+
+	return 0
+}
+
+get_rrd_dataset()
+{
+	local system_dataset="$(get_system_dataset)"
+
+	if [ -n "${system_dataset}" ]
+	then
+		echo "${system_dataset}/rrd"
+	fi
+}
 
 generate_collectd()
 {
+    local datadir
+    local rrdds
+    local rrdmnt
+
+    datadir="/var/db/collectd/rrd"
+    rrdds="$(get_rrd_dataset)"
+    rrdmnt="/mnt/${rrdds}"
+
+    if [ -n "${rrdds}" -a -d "/mnt/${rrdds}" ]; then
+        datadir="/mnt/${rrdds}"
+    fi
+
     if [ -f "/data/rrd_dir.tar.bz2" ]; then
-        if [ -d "/var/db" -a ! -d /var/db/collectd/rrd ]; then
+        if [ -n "${rrdds}" -a -d "${rrdmnt}" ]; then
+            (cd "${rrdmnt}" && tar jxf /data/rrd_dir.tar.bz2 && \
+                mv collectd/rrd/* "${rrdmnt}" && mv /data/rrd_dir.tar.bz2 "${rrdmnt}" && \
+                rm -rf collectd)
+        elif [ -d "/var/db" -a ! -d /var/db/collectd/rrd ]; then
             (cd /var/db && tar jxf /data/rrd_dir.tar.bz2)
         fi
     fi
@@ -63,7 +123,7 @@ LoadPlugin uptime
 </Plugin>
 
 <Plugin "rrdtool">
-    DataDir "/var/db/collectd/rrd"
+    DataDir "${datadir}"
     CacheTimeout 120
     CacheFlush 900
 </Plugin>
