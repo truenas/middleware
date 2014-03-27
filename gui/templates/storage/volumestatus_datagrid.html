@@ -14,6 +14,7 @@
     <p style="padding: 3px;">
       {% if pool.scrub.errors %}{% trans "Errors" %}: {{ pool.scrub.errors }} &nbsp; &nbsp; {% endif %}
       {% if pool.scrub.repaired %}{% trans "Repaired" %}: {{ pool.scrub.repaired }} &nbsp; &nbsp; {% endif %}
+      {% if pool.scrub.date %}{% trans "Date" %}: {{ pool.scrub.date }} &nbsp; &nbsp; {% endif %}
     </p>
     {% endif %}
   </div>

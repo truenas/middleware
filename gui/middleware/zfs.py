@@ -629,6 +629,7 @@ def parse_status(name, doc, data):
             scrub.update({
                 'repaired': None,
                 'errors': None,
+                'date': None,
             })
             scrub_status = 'COMPLETED'
             scrub_statusv = _('Completed')
@@ -639,6 +640,10 @@ def parse_status(name, doc, data):
             reg = re.search(r'repaired (\S+) in', scan)
             if reg:
                 scrub['repaired'] = reg.group(1)
+
+            reg = re.search(r'on (.+\d{2} \d{4})', scan)
+            if reg:
+                scrub['date'] = reg.group(1)
 
         elif scan.find('scrub canceled') != -1:
             scrub_status = 'CANCELED'
