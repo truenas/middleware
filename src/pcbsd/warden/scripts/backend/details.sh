@@ -33,14 +33,14 @@ fi
 
 set_warden_metadir
 
-IP4="`cat ${JMETADIR}/ipv4 2>/dev/null`"
+IP4="`cat "${JMETADIR}/ipv4" 2>/dev/null`"
 if [ -n "${IP4}" ] ; then
   get_ip_and_netmask "${IP4}"
   IP4="${JIP}"
   MASK4="${JMASK}"
 fi
 
-IP6="`cat ${JMETADIR}/ipv6 2>/dev/null`"
+IP6="`cat "${JMETADIR}/ipv6" 2>/dev/null`"
 if [ -n "${IP6}" ] ; then
   get_ip_and_netmask "${IP6}"
   IP6="${JIP}"
@@ -52,10 +52,10 @@ fi
 echo "Details for jail: ${JAILNAME}"
 isDirZFS "${JAILDIR}" "1"
 if [ $? -eq 0 ] ; then 
-   tank=`getZFSDataset "${JAILDIR}"`
-   diskUsage=`df -m | grep -w "^${tank} " | awk '{print $3}'`
+   tank="`getZFSDataset "${JAILDIR}"`"
+   diskUsage="`df -m | grep -w "^${tank} " | awk '{print $3}'`"
 else
-   diskUsage=`du -c -x -m ${JAILDIR} 2>/dev/null | grep total | tail -n 1 | awk '{print $1}'`
+   diskUsage="`du -c -x -m "${JAILDIR}" 2>/dev/null | grep total | tail -n 1 | awk '{print $1}'`"
 fi
 
 portList4=

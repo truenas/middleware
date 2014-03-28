@@ -27,6 +27,7 @@
 #####################################################################
 import logging
 import os
+import string
 
 log = logging.getLogger('common.warden')
 
@@ -429,7 +430,7 @@ class warden_base(object):
         log.debug("warden_base.__init__: leave")
 
     def ass(self, key, val):
-        return "%s=%s" % (key, val)
+        return "%s='%s'" % (key, val)
 
     def run(self, jail=False, jid=0):
         log.debug("warden_base.run: enter")
@@ -517,7 +518,7 @@ class warden_auto(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_auto, self).__init__(WARDEN_AUTO,
             WARDEN_AUTO_FLAGS, flags, **kwargs)
@@ -538,7 +539,7 @@ class warden_bspkgng(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_bspkgng, self).__init__(WARDEN_BSPKGNG,
             WARDEN_BSPKGNG_FLAGS, flags, **kwargs)
@@ -560,7 +561,7 @@ class warden_chroot(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_chroot, self).__init__(WARDEN_CHROOT,
             WARDEN_CHROOT_FLAGS, flags, **kwargs)
@@ -574,13 +575,13 @@ class warden_create(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_create, self).__init__(WARDEN_CREATE,
             WARDEN_CREATE_FLAGS, flags, **kwargs)
 
     def ass(self, key, val):
-        return "%s %s" % (key, val)
+        return "%s '%s'" % (key, val)
 
 
 class warden_details(warden_base):
@@ -590,7 +591,7 @@ class warden_details(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_details, self).__init__(WARDEN_DETAILS,
             WARDEN_DETAILS_FLAGS, flags, **kwargs)
@@ -603,7 +604,7 @@ class warden_delete(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_delete, self).__init__(WARDEN_DELETE,
             WARDEN_DELETE_FLAGS, flags, **kwargs)
@@ -616,7 +617,7 @@ class warden_export(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_export, self).__init__(WARDEN_EXPORT,
             WARDEN_EXPORT_FLAGS, flags, **kwargs)
@@ -628,7 +629,7 @@ class warden_get(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
 
 class warden_import(warden_base):
@@ -637,7 +638,7 @@ class warden_import(warden_base):
 
         if kwargs.has_key("file") and kwargs["file"] is not None:
             self.file = kwargs["file"]
-            self.args += " %s" % self.file
+            self.args += " '%s'" % self.file
 
         super(warden_export, self).__init__(WARDEN_EXPORT,
             WARDEN_EXPORT_FLAGS, flags, **kwargs)
@@ -687,7 +688,7 @@ class warden_list(warden_base):
                         val = None
                         parts = line.split()
                         if len(parts) > 1:
-                            val = parts[1].strip()
+                            val = string.join(parts[1:], ' ').strip()
                         jail[themap[k]] = val
         if jail:
             jails.append(jail) 
@@ -701,7 +702,7 @@ class warden_pkgs(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_pkgs, self).__init__(WARDEN_PKGS,
             WARDEN_PKGS_FLAGS, flags, **kwargs)
@@ -714,7 +715,7 @@ class warden_pbis(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_pbis, self).__init__(WARDEN_PBIS,
             WARDEN_PBIS_FLAGS, flags, **kwargs)
@@ -740,7 +741,7 @@ class warden_set(warden_base):
         super(warden_set, self).__init__(WARDEN_SET, WARDEN_SET_FLAGS, flags, **kwargs)
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         for wsf in WARDEN_SET_FLAGS:
             if saved_flags & wsf: 
@@ -756,7 +757,7 @@ class warden_start(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_start, self).__init__(WARDEN_START,
             WARDEN_START_FLAGS, flags, **kwargs)
@@ -769,7 +770,7 @@ class warden_stop(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_stop, self).__init__(WARDEN_STOP,
             WARDEN_STOP_FLAGS, flags, **kwargs)
@@ -782,7 +783,7 @@ class warden_type(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_type, self).__init__(WARDEN_TYPE,
             WARDEN_TYPE_FLAGS, flags, **kwargs)
@@ -807,14 +808,14 @@ class warden_template(warden_base):
             tflags = WARDEN_TEMPLATE_LIST_FLAGS
 
         if kwargs.has_key("template") and kwargs["template"] is not None:
-            self.args += " %s" % kwargs['template']
+            self.args += " '%s'" % kwargs['template']
 
         cmd = "%s %s" % (WARDEN_TEMPLATE, type)
         super(warden_template, self).__init__(cmd,
             tflags, flags | WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE, **kwargs)
 
     def ass(self, key, val):
-        return "%s %s" % (key, val)
+        return "%s '%s'" % (key, val)
 
     def parse(self, thestuff):
         themap = {
@@ -841,7 +842,7 @@ class warden_template(warden_base):
                         val = None
                         parts = line.split()
                         if len(parts) > 1:
-                            val = parts[1].strip()
+                            val = string.join(parts[1:], ' ').strip()
                         template[themap[k]] = val
         if template:
             templates.append(template) 
@@ -855,7 +856,7 @@ class warden_zfsmksnap(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_zfsmksnap, self).__init__(WARDEN_ZFSMKSNAP, 
             WARDEN_ZFSMKSNAP_FLAGS, flags, **kwargs)
@@ -868,7 +869,7 @@ class warden_zfslistclone(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_zfslistclone, self).__init__(WARDEN_ZFSLISTCLONE, 
             WARDEN_ZFSLISTCLONE_FLAGS, flags, **kwargs)
@@ -881,7 +882,7 @@ class warden_zfslistsnap(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         super(warden_zfslistsnap, self).__init__(WARDEN_ZFSLISTSNAP, 
             WARDEN_ZFSLISTSNAP_FLAGS, flags, **kwargs)
@@ -895,11 +896,11 @@ class warden_zfsclonesnap(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         if kwargs.has_key("snap") and kwargs["snap"] is not None:
             self.snap = kwargs["snap"]
-            self.args += " %s" % self.snap
+            self.args += " '%s'" % self.snap
 
         super(warden_zfsclonesnap, self).__init__(WARDEN_ZFSCLONESNAP, 
             WARDEN_ZFSCLONESNAP_FLAGS, flags, **kwargs)
@@ -915,19 +916,19 @@ class warden_zfscronsnap(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         if kwargs.has_key("action") and kwargs["action"] is not None:
             self.action = kwargs["action"]
-            self.args += " %s" % self.action
+            self.args += " '%s'" % self.action
 
         if kwargs.has_key("freq") and kwargs["freq"] is not None:
             self.freq = kwargs["freq"]
-            self.args += " %s" % self.freq
+            self.args += " '%s'" % self.freq
 
         if kwargs.has_key("days") and kwargs["days"] is not None:
             self.days = kwargs["days"]
-            self.args += " %s" % self.days
+            self.args += " '%s'" % self.days
 
         super(warden_zfscronsnap, self).__init__(WARDEN_ZFSCRONSNAP, 
             WARDEN_ZFSCRONSNAP_FLAGS, flags, **kwargs)
@@ -941,11 +942,11 @@ class warden_zfsrevertsnap(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         if kwargs.has_key("snap") and kwargs["snap"] is not None:
             self.snap = kwargs["snap"]
-            self.args += " %s" % self.snap
+            self.args += " '%s'" % self.snap
 
         super(warden_zfsrevertsnap, self).__init__(WARDEN_ZFSREVERTSNAP, 
             WARDEN_ZFSREVERTSNAP_FLAGS, flags, **kwargs)
@@ -959,11 +960,11 @@ class warden_zfsrmclone(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         if kwargs.has_key("clone") and kwargs["clone"] is not None:
             self.clone = kwargs["clone"]
-            self.args += " %s" % self.clone
+            self.args += " '%s'" % self.clone
 
         super(warden_zfsrmclone, self).__init__(WARDEN_ZFSRMCLONE, 
             WARDEN_ZFSRMCLONE_FLAGS, flags, **kwargs)
@@ -977,11 +978,11 @@ class warden_zfsrmsnap(warden_base):
 
         if kwargs.has_key("jail") and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
-            self.args += " %s" % self.jail
+            self.args += " '%s'" % self.jail
 
         if kwargs.has_key("snap") and kwargs["snap"] is not None:
             self.snap = kwargs["snap"]
-            self.args += " %s" % self.snap
+            self.args += " '%s'" % self.snap
 
         super(warden_zfsrmsnap, self).__init__(WARDEN_ZFSRMSNAP, 
             WARDEN_ZFSRMSNAP, flags, **kwargs)
@@ -1121,7 +1122,7 @@ def get_warden_template_abi_arch(template_path):
     abi_arch = None
 
     sysctl_path = "%s/sbin/sysctl" % template_path
-    p = pipeopen("file -b %s" % sysctl_path, important=False)
+    p = pipeopen("file -b '%s'" % sysctl_path, important=False)
     out = p.communicate()
     if p.returncode != 0:
         return None
@@ -1145,7 +1146,7 @@ def get_warden_template_abi_version(template_path):
     abi_version = None
 
     sysctl_path = "%s/sbin/sysctl" % template_path
-    p = pipeopen("file -b %s" % sysctl_path, important=False)
+    p = pipeopen("file -b '%s'" % sysctl_path, important=False)
     out = p.communicate()
     if p.returncode != 0:
         return None

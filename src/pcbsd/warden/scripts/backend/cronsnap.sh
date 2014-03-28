@@ -14,40 +14,40 @@ then
   exit 0
 fi
 
-cd ${JDIR}
+cd "${JDIR}"
 
 for i in `ls -d .*.meta 2>/dev/null`
 do
   if [ ! -e "${i}/cron" ] ; then continue ; fi
   if [ ! -e "${i}/cron-keep" ] ; then continue ; fi
 
-  jHOST="`cat ${i}/host`"
+  jHOST="`cat "${i}/host"`"
   JAILDIR="${JDIR}/${jHOST}"
 
   if [ ! -d "${JAILDIR}" ] ; then continue ; fi
 
-  CRONFREQ="`cat ${i}/cron`"
-  CRONKEEPDAYS="`cat ${i}/cron-keep`"
+  CRONFREQ="`cat "${i}/cron"`"
+  CRONKEEPDAYS="`cat "${i}/cron-keep"`"
 
   # Figure out if we need to create a new snapshot
-  snaps=$(listZFSSnap "${JAILDIR}")
-  lastsnap=`echo $snaps | rev | cut -d " " -f 1 | rev`
+  snaps="$(listZFSSnap "${JAILDIR}")"
+  lastsnap="`echo $snaps | rev | cut -d " " -f 1 | rev`"
   needSnap=0
   zdate=`date +%Y%m%d-%H%M%S`
   if [ "$CRONFREQ" = "daily" ] ; then
      warden_print "Checking for daily snapshots to ${jHOST}..."
-     today=`date +%Y%m%d`
-     lastsnap=`echo $lastsnap | cut -d '-' -f 1`
+     today="`date +%Y%m%d`"
+     lastsnap="`echo $lastsnap | cut -d '-' -f 1`"
      if [ "$today" != "$lastsnap" ] ; then
         needSnap=1
      fi
   else
   # Hourly
      warden_print "Checking for hourly snapshots to ${jHOST}..."
-     today=`date +%Y%m%d`
-     hour=`date +%H`
-     lastday=`echo $lastsnap | cut -d '-' -f 1`
-     lasthour=`echo $lastsnap | cut -d '-' -f 2 | cut -c 1-2`
+     today="`date +%Y%m%d`"
+     hour="`date +%H`"
+     lastday="`echo $lastsnap | cut -d '-' -f 1`"
+     lasthour="`echo $lastsnap | cut -d '-' -f 2 | cut -c 1-2`"
      if [ "$today" != "$lastday" -o "$hour" != "$lasthour" ] ; then
         needSnap=1
      fi

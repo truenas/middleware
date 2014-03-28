@@ -75,7 +75,7 @@ warden_log() {
     logger -t warden $*
   fi
   if [ -n "${WARDEN_LOGFILE}" ] ; then
-    echo $* >> ${WARDEN_LOGFILE}
+    echo $* >> "${WARDEN_LOGFILE}"
   fi
 };
 
@@ -84,7 +84,7 @@ warden_printf() {
     logger -t warden $*
   fi
   if [ -n "${WARDEN_LOGFILE}" ] ; then
-    printf $* >> ${WARDEN_LOGFILE}
+    printf $* >> "${WARDEN_LOGFILE}"
   fi
   printf $*
 };
@@ -94,7 +94,7 @@ warden_cat() {
     cat "$*" | logger -t warden
   fi
   if [ -n "${WARDEN_LOGFILE}" ] ; then
-    cat "$*" >> ${WARDEN_LOGFILE}
+    cat "$*" >> "${WARDEN_LOGFILE}"
   fi
   cat "$*"
 };
@@ -106,7 +106,7 @@ warden_pipe() {
       logger -t warden "${val}"
     fi
     if [ -n "${WARDEN_LOGFILE}" ] ; then
-      echo ${val} >> ${WARDEN_LOGFILE}
+      echo ${val} >> "${WARDEN_LOGFILE}"
     fi
     echo ${val}
   done
@@ -117,7 +117,7 @@ warden_print() {
     logger -t warden $*
   fi
   if [ -n "${WARDEN_LOGFILE}" ] ; then
-    echo $* >> ${WARDEN_LOGFILE}
+    echo $* >> "${WARDEN_LOGFILE}"
   fi
   echo "$*"
 };
@@ -127,7 +127,7 @@ warden_error() {
     logger -t warden "ERROR: $*"
   fi
   if [ -n "${WARDEN_LOGFILE}" ] ; then
-    echo "ERROR: $*" >> ${WARDEN_LOGFILE}
+    echo "ERROR: $*" >> "${WARDEN_LOGFILE}"
   fi
   echo >&2 "ERROR: $*" 
 };
@@ -137,7 +137,7 @@ warden_warn() {
     logger -t warden "WARN: $*"
   fi
   if [ -n "${WARDEN_LOGFILE}" ] ; then
-    echo "WARN: $*" >> ${WARDEN_LOGFILE}
+    echo "WARN: $*" >> "${WARDEN_LOGFILE}"
   fi
   echo >&2 "ERROR: $*" 
 };
@@ -149,7 +149,7 @@ warden_run() {
   if [ -n "${args}" ]
   then
     warden_print "${args}"
-    ${args}
+    eval ${args}
     return $?
   fi
 
@@ -177,7 +177,7 @@ downloadchroot() {
   fi
 
   if [ ! -d "${JDIR}" ] ; then mkdir -p "${JDIR}" ; fi
-  cd ${JDIR}
+  cd "${JDIR}"
 
   warden_print "Fetching jail environment. This may take a while..."
   warden_print "Downloading ${MIRRORURL}/${SYSVER}/${ARCH}/netinstall/${FBSD_TARBALL} ..."
@@ -202,7 +202,7 @@ downloadchroot() {
      trap INT QUIT ABRT KILL TERM EXIT
   fi
 
-  [ "$(md5 -q ${FBSD_TARBALL})" != "$(cat ${FBSD_TARBALL_CKSUM})" ] &&
+  [ "$(md5 -q ${FBSD_TARBALL})" != "$(cat "${FBSD_TARBALL_CKSUM})"" ] &&
     warden_error "Error in download data, checksum mismatch. Please try again later."
 
   # Creating ZFS dataset?
@@ -210,37 +210,37 @@ downloadchroot() {
   if [ $? -eq 0 ] ; then
     trap "rmchroot ${CHROOT}" INT QUIT ABRT KILL TERM EXIT
 
-    local zfsp=`getZFSRelativePath "${CHROOT}"`
+    local zfsp="`getZFSRelativePath "${CHROOT}"`"
 
     # Use ZFS base for cloning
     warden_print "Creating ZFS ${CHROOT} dataset..."
-    tank=`getZFSTank "${JDIR}"`
+    tank="`getZFSTank "${JDIR}"`"
     isDirZFS "${CHROOT}" "1"
     if [ $? -ne 0 ] ; then
-       warden_print zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
+       warden_print zfs create -o mountpoint="'/${tank}${zfsp}'" -p "'${tank}${zfsp}'"
 
-       zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
+       zfs create -o mountpoint="'/${tank}${zfsp}'" -p "'${tank}${zfsp}'"
        if [ $? -ne 0 ] ; then warden_exit "Failed creating ZFS base dataset"; fi
     fi
 
-    warden_print tar xvpf ${FBSD_TARBALL} -C ${CHROOT}
+    warden_print tar xvpf "${FBSD_TARBALL}" -C "${CHROOT}"
 
-    tar xvpf ${FBSD_TARBALL} -C ${CHROOT} 2>/dev/null
+    tar xvpf "${FBSD_TARBALL}" -C "${CHROOT}" 2>/dev/null
     if [ $? -ne 0 ] ; then warden_exit "Failed extracting ZFS chroot environment"; fi
 
-    warden_print zfs snapshot ${tank}${zfsp}@clean
+    warden_print zfs snapshot "${tank}${zfsp}@clean"
 
-    zfs snapshot ${tank}${zfsp}@clean
+    zfs snapshot "${tank}${zfsp}@clean"
     if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base snapshot"; fi
-    rm ${FBSD_TARBALL}
+    rm "${FBSD_TARBALL}"
 
     trap INT QUIT ABRT KILL TERM EXIT
 
   else
     # Save the chroot tarball
-    mv ${FBSD_TARBALL} ${CHROOT}
+    mv "${FBSD_TARBALL}" "${CHROOT}"
   fi
-  rm ${FBSD_TARBALL_CKSUM}
+  rm "${FBSD_TARBALL_CKSUM}"
 };
 
 
@@ -250,15 +250,15 @@ rmchroot()
 
   isDirZFS "${JDIR}"
   if [ $? -eq 0 ] ; then
-    local zfsp=`getZFSRelativePath "${CHROOT}"`
-    tank=`getZFSTank "${JDIR}"`
+    local zfsp="`getZFSRelativePath "${CHROOT}"`"
+    tank="`getZFSTank "${JDIR}"`"
 
     warden_print "Destroying dataset ${tank}${zfsp}"
-    zfs destroy -fr ${tank}${zfsp}
+    zfs destroy -fr "${tank}${zfsp}"
     if [ $? -ne 0 ] ; then warden_error "Failed to destroy ZFS base dataset"; fi
 
     warden_print "Removing ${CHROOT}"
-    rm -rf ${CHROOT} >/dev/null 2>&1
+    rm -rf "${CHROOT}" >/dev/null 2>&1
     if [ $? -ne 0 ] ; then warden_error "Failed to remove chroot directory"; fi
   fi
 };
@@ -270,41 +270,41 @@ mountjailxfs() {
     if [ ! -d "${JDIR}/${1}${nullfs_mount}" ] ; then
       mkdir -p "${JDIR}/${1}${nullfs_mount}"
     fi
-    if is_symlinked_mountpoint ${nullfs_mount}; then
+    if is_symlinked_mountpoint "${nullfs_mount}"; then
       warden_print "${nullfs_mount} has symlink as parent, not mounting"
       continue
     fi
 
     warden_print "Mounting ${JDIR}/${1}${nullfs_mount}"
-    mount_nullfs ${nullfs_mount} ${JDIR}/${1}${nullfs_mount}
+    mount_nullfs "${nullfs_mount}" "${JDIR}/${1}${nullfs_mount}"
   done
 
   # Add support for linprocfs for ports that need linprocfs to build/run
   if [  ! -d "${JDIR}/${1}/compat/linux/proc" ]; then
-    mkdir -p ${JDIR}/${1}/compat/linux/proc
+    mkdir -p "${JDIR}/${1}/compat/linux/proc"
   fi
-  if is_symlinked_mountpoint ${JDIR}/${1}/compat/linux/proc; then
+  if is_symlinked_mountpoint "${JDIR}/${1}/compat/linux/proc"; then
     warden_print "${JDIR}/${1}/compat/linux/proc has symlink as parent, not mounting"
     return
   fi
   warden_print "Enabling linprocfs support."
-  mount -t linprocfs linprocfs ${JDIR}/${1}/compat/linux/proc
+  mount -t linprocfs linprocfs "${JDIR}/${1}/compat/linux/proc"
 }
 
 ### Umount all the jail's filesystems
 umountjailxfs() {
   status="0"
   # Umount all filesystems that are mounted into the portsjail
-  for mountpoint in $(mount | grep ${JDIR}/${1}/ | cut -d" " -f3); do
+  for mountpoint in $(mount | grep "${JDIR}/${1}/" | cut -d" " -f3); do
     if [ "$mountpoint" = "${JDIR}/${1}/dev" ] ; then continue ; fi
     if [ "$mountpoint" = "${JDIR}/${1}/" ] ; then continue ; fi
     if [ "$mountpoint" = "${JDIR}/${1}" ] ; then continue ; fi
     echo "Unmounting $mountpoint"
-    umount -f ${mountpoint}
+    umount -f "${mountpoint}"
     if [ $? -ne 0 ] ; then status="1" ; fi
   done
   # Now try to umount /dev
-  umount -f ${JDIR}/${1}/dev 2>/dev/null >/dev/null
+  umount -f "${JDIR}/${1}/dev" 2>/dev/null >/dev/null
   return $status
 }
 
@@ -317,16 +317,16 @@ checkpbiscripts() {
 # Copy PBI scripts to jail
 copypbiscripts() {
   if [ -z "${1}" ] ; then return ; fi
-  mkdir -p ${1}/usr/local/sbin >/dev/null 2>/dev/null
+  mkdir -p "${1}/usr/local/sbin" >/dev/null 2>/dev/null
   for p in /usr/local/sbin/pbi*
   do
     sed 's|PBI_APPDIR="/var/pbi"|PBI_APPDIR="/usr/pbi"|g' "${p}" > "${1}/${p}"
   done
-  chmod 755 ${1}/usr/local/sbin/pbi*
+  chmod 755 "${1}/usr/local/sbin"/pbi*
 
   # Copy rc.d pbid script
-  mkdir -p ${1}/usr/local/etc/rc.d >/dev/null 2>/dev/null
-  cp /usr/local/etc/rc.d/pbid ${1}/usr/local/etc/rc.d/
+  mkdir -p "${1}/usr/local/etc/rc.d" >/dev/null 2>/dev/null
+  cp /usr/local/etc/rc.d/pbid "${1}/usr/local/etc/rc.d/"
 
   # Copy any PBI manpages
   for man in `find /usr/local/man 2>/dev/null| grep pbi`
@@ -338,14 +338,14 @@ copypbiscripts() {
   done
 
   # Copy libsh
-  mkdir -p ${1}/usr/local/share/pcbsd/scripts >/dev/null 2>/dev/null
-  cp /usr/local/share/pcbsd/scripts/functions.sh ${1}/usr/local/share/pcbsd/scripts/functions.sh
+  mkdir -p "${1}/usr/local/share/pcbsd/scripts" >/dev/null 2>/dev/null
+  cp /usr/local/share/pcbsd/scripts/functions.sh "${1}/usr/local/share/pcbsd/scripts/functions.sh"
 
   # Install PC-BSD PBI repo
   out="$(chroot "${1}" /usr/local/sbin/pbi_listrepo|tail +3)"
   if [ -z "${out}" ]  
   then
-    cp /usr/local/share/pcbsd/distfiles/pcbsd.rpo ${1}/var/tmp/pcbsd.rpo
+    cp /usr/local/share/pcbsd/distfiles/pcbsd.rpo "${1}/var/tmp/pcbsd.rpo"
     chroot "${1}" /usr/local/sbin/pbi_addrepo /var/tmp/pcbsd.rpo
     chroot "${1}" chmod 755 /var/db/pbi/keys
     chroot "${1}" /usr/local/sbin/pbi_info >/dev/null 2>&1
@@ -356,58 +356,58 @@ mkportjail() {
   if [ -z "${1}" ] ; then return ; fi
   ETCFILES="resolv.conf passwd master.passwd spwd.db pwd.db group localtime"
   for file in ${ETCFILES}; do
-    rm ${1}/etc/${file} >/dev/null 2>&1
-    cp /etc/${file} ${1}/etc/${file}
+    rm "${1}/etc/${file}" >/dev/null 2>&1
+    cp "/etc/${file}" "${1}/etc/${file}"
   done
   
   # Need to symlink /home
-  chroot ${1} ln -fs /usr/home /home
+  chroot "${1}" ln -fs /usr/home /home
 
   # Make sure we remove our cleartmp rc.d script, causes issues
-  [ -e "${1}/etc/rc.d/cleartmp" ] && rm ${1}/etc/rc.d/cleartmp
+  [ -e "${1}/etc/rc.d/cleartmp" ] && rm "${1}/etc/rc.d/cleartmp"
   # Flag this type
-  echo portjail > ${JMETADIR}/jailtype
+  echo portjail > "${JMETADIR}/jailtype"
 }
 
 mkpluginjail() {
   if [ -z "${1}" ] ; then return ; fi
   ETCFILES="resolv.conf passwd master.passwd spwd.db pwd.db group localtime"
   for file in ${ETCFILES}; do
-    rm ${1}/etc/${file} >/dev/null 2>&1
-    cp /etc/${file} ${1}/etc/${file}
+    rm "${1}/etc/${file}" >/dev/null 2>&1
+    cp "/etc/${file}" "${1}/etc/${file}"
   done
   
   # Need to symlink /home
-  chroot ${1} ln -fs /usr/home /home
+  chroot "${1}" ln -fs /usr/home /home
 
   # Make sure we remove our cleartmp rc.d script, causes issues
-  [ -e "${1}/etc/rc.d/cleartmp" ] && rm ${1}/etc/rc.d/cleartmp
+  [ -e "${1}/etc/rc.d/cleartmp" ] && rm "${1}/etc/rc.d/cleartmp"
   # Flag this type
-  echo pluginjail > ${JMETADIR}/jailtype
+  echo pluginjail > "${JMETADIR}/jailtype"
 }
 
 mkZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
-  tank=`getZFSTank "$1"`
-  rp=`getZFSRelativePath "$1"`
-  zdate=`date +%Y-%m-%d-%H-%M-%S`
-  zfs snapshot $tank${rp}@$zdate
+  tank="`getZFSTank "$1"`"
+  rp="`getZFSRelativePath "$1"`"
+  zdate="`date +%Y-%m-%d-%H-%M-%S`"
+  zfs snapshot "$tank${rp}@$zdate"
 }
 
 listZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
-  tank=`getZFSTank "$1"`
-  rp=`getZFSRelativePath "$1"`
+  tank="`getZFSTank "$1"`"
+  rp="`getZFSRelativePath "$1"`"
   zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}'
 }
 
 listZFSClone() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
-  tank=`getZFSTank "$1"`
-  cdir=`getZFSRelativePath "${CDIR}"` 
+  tank="`getZFSTank "$1"`"
+  cdir="`getZFSRelativePath "${CDIR}"` "
   warden_print "Clone Directory: ${CDIR}"
   warden_print "-----------------------------------"
   zfs list | grep -w "^${tank}${cdir}/${2}" | awk '{print $5}' | sed "s|${CDIR}/${2}-||g"
@@ -417,24 +417,24 @@ rmZFSClone() {
   CLONEDIR="${CDIR}/${3}-${2}"
   isDirZFS "${CLONEDIR}" "1"
   if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${CLONEDIR}" ; fi
-  tank=`getZFSTank "${CLONEDIR}"`
-  rp=`getZFSRelativePath "${CLONEDIR}"`
-  zfs destroy ${tank}${rp}
+  tank="`getZFSTank "${CLONEDIR}"`"
+  rp="`getZFSRelativePath "${CLONEDIR}"`"
+  zfs destroy "${tank}${rp}"
 }
 
 rmZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
-  tank=`getZFSTank "$1"`
-  rp=`getZFSRelativePath "$1"`
-  zfs destroy $tank${rp}@$2
+  tank="`getZFSTank "$1"`"
+  rp="`getZFSRelativePath "$1"`"
+  zfs destroy "$tank${rp}@$2"
 }
 
 revertZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
-  tank=`getZFSTank "$1"`
-  rp=`getZFSRelativePath "$1"`
+  tank="`getZFSTank "$1"`"
+  rp="`getZFSRelativePath "$1"`"
 
   # Make sure this is a valid snapshot
   zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}' | grep -q ${2}
@@ -453,7 +453,7 @@ revertZFSSnap() {
   fi
 
   # Rollback the snapshot
-  zfs rollback -R -f ${tank}${rp}@$2
+  zfs rollback -R -f "${tank}${rp}@$2"
 
   # If it was started, restart the jail now
   if [ "$restartJail" = "YES" ]; then
@@ -465,12 +465,12 @@ revertZFSSnap() {
 cloneZFSSnap() {
   isDirZFS "${1}" "1"
   if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${1}" ; fi
-  tank=`getZFSTank "$1"`
-  rp=`getZFSRelativePath "$1"`
-  cdir=`getZFSRelativePath "${CDIR}"`
+  tank="`getZFSTank "$1"`"
+  rp="`getZFSRelativePath "$1"`"
+  cdir="`getZFSRelativePath "${CDIR}"`"
 
   # Make sure this is a valid snapshot
-  zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}' | grep -q ${2}
+  zfs list -t snapshot | grep -w "^${tank}${rp}" | cut -d '@' -f 2 | awk '{print $1}' | grep -q "${2}"
   if [ $? -ne 0 ] ; then warden_error "Invalid ZFS snapshot!" ; fi
 
   if [ -d "${CDIR}/${3}-${2}" ] ; then
@@ -478,7 +478,7 @@ cloneZFSSnap() {
   fi
 
   # Clone the snapshot
-  zfs clone -p ${tank}${rp}@$2 ${tank}${cdir}/${3}-${2}
+  zfs clone -p "${tank}${rp}@$2 ${tank}${cdir}/${3}-${2}"
 
   warden_print "Snapshot cloned and mounted to: ${CDIR}/${3}-${2}"
 }
@@ -506,7 +506,7 @@ get_interface_addresses()
       jexec="" 
    fi
 
-   ${jexec} ifconfig ${iface} | grep -w inet | awk '{ print $2 }'
+   ${jexec} ifconfig "${iface}" | grep -w inet | awk '{ print $2 }'
 }
 
 get_interface_ipv4_addresses()
@@ -520,7 +520,7 @@ get_interface_ipv4_addresses()
       jexec="" 
    fi
 
-   ${jexec} ifconfig ${iface} | grep -w inet | awk '{ print $2 }'
+   ${jexec} ifconfig "${iface}" | grep -w inet | awk '{ print $2 }'
 }
 
 get_interface_ipv6_addresses()
@@ -535,9 +535,9 @@ get_interface_ipv6_addresses()
       jexec=""
    fi
 
-   addrs="$(${jexec} ifconfig ${iface} | grep -w inet6 | awk '{ print $2 }')"
+   addrs="$(${jexec} ifconfig "${iface}" | grep -w inet6 | awk '{ print $2 }')"
    for addr in ${addrs} ; do
-      echo ${addr} | cut -f1 -d'%'
+      echo "${addr}" | cut -f1 -d'%'
    done
 }
 
@@ -552,7 +552,7 @@ get_interface_address()
       jexec=""
    fi
 
-   ${jexec} ifconfig ${iface} | grep -w inet | head -1 | awk '{ print $2 }'
+   ${jexec} ifconfig "${iface}" | grep -w inet | head -1 | awk '{ print $2 }'
 }
 
 get_interface_ipv4_address()
@@ -566,7 +566,7 @@ get_interface_ipv4_address()
       jexec=""
    fi
 
-   ${jexec} ifconfig ${iface} | grep -w inet | head -1 | awk '{ print $2 }'
+   ${jexec} ifconfig "${iface}" | grep -w inet | head -1 | awk '{ print $2 }'
 }
 
 get_interface_ipv6_address()
@@ -580,7 +580,7 @@ get_interface_ipv6_address()
       jexec=""
    fi
 
-   ${jexec} ifconfig ${iface} | grep -w inet6 | head -1 | awk '{ print $2 }' | cut -f1 -d'%'
+   ${jexec} ifconfig "${iface}" | grep -w inet6 | head -1 | awk '{ print $2 }' | cut -f1 -d'%'
 }
 
 get_interface_aliases()
@@ -595,14 +595,14 @@ get_interface_aliases()
       jexec=""
    fi
 
-   count=`${jexec} ifconfig ${iface} | grep -w inet | wc -l`
+   count=`${jexec} ifconfig "${iface}" | grep -w inet | wc -l`
    count="$(echo "${count} - 1" | bc)"
    if [ "${count}" -lt "0" ]
    then
       return
    fi
 
-   ${jexec} ifconfig ${iface} | grep -w inet | tail -${count} | awk '{ print $2 }'
+   ${jexec} ifconfig "${iface}" | grep -w inet | tail -${count} | awk '{ print $2 }'
 }
 
 get_interface_ipv4_aliases()
@@ -617,14 +617,14 @@ get_interface_ipv4_aliases()
       jexec=""
    fi
 
-   count=`${jexec} ifconfig ${iface} | grep -w inet | wc -l`
+   count=`${jexec} ifconfig "${iface}" | grep -w inet | wc -l`
    count="$(echo "${count} - 1" | bc)"
    if [ "${count}" -lt "0" ]
    then
       return
    fi
 
-   ${jexec} ifconfig ${iface} | grep -w inet | tail -${count} | awk '{ print $2 }'
+   ${jexec} ifconfig "${iface}" | grep -w inet | tail -${count} | awk '{ print $2 }'
 }
 
 get_interface_ipv6_aliases()
@@ -639,14 +639,14 @@ get_interface_ipv6_aliases()
       jexec=""
    fi
 
-   count=`${jexec} ifconfig ${iface} | grep -w inet | wc -l`
+   count=`${jexec} ifconfig "${iface}" | grep -w inet | wc -l`
    count="$(echo "${count} - 1" | bc)"
    if [ "${count}" -lt "0" ]
    then
       return
    fi
 
-   ${jexec} ifconfig ${iface} | grep -w inet6 | tail -${count} | awk '{ print $2 }'
+   ${jexec} ifconfig "${iface}" | grep -w inet6 | tail -${count} | awk '{ print $2 }'
 }
 
 get_default_route()
@@ -684,7 +684,7 @@ get_bridge_interfaces()
 
 get_bridge_members()
 {
-   ifconfig ${1} | grep -w member | awk '{ print $2 }'
+   ifconfig "${1}" | grep -w member | awk '{ print $2 }'
 }
 
 get_bridge_interface_by_ipv4_network()
@@ -792,7 +792,7 @@ jail_interfaces_down()
                ipfw delete "${rule}"
             done
          fi
-	 /usr/sbin/arp -d ${_ip4}
+	 /usr/sbin/arp -d "${_ip4}"
       done
 
       _addresses="$(get_interface_ipv6_addresses ${_epairb} ${_jid})"
@@ -816,21 +816,21 @@ jail_interfaces_down()
          local _member
          local _instances
 
-         _member=`ifconfig ${_bridgeif}|grep member|awk '{ print $2 }'`
+         _member="`ifconfig "${_bridgeif}"|grep member|awk '{ print $2 }'`"
 
-         _instances=`get_ipfw_nat_instance ${_member}`
+         _instances="`get_ipfw_nat_instance ${_member}`"
          if [ -n "${_instances}" ]
          then
             for _instance in ${_instances}  
             do
-               ipfw nat ${_instance} delete
+               ipfw nat "${_instance}" delete
             done
          fi
 
          _addresses="$(get_interface_ipv4_addresses ${_member})"
          for _ip4 in ${_addresses}
          do
-            rules="$(ipfw list|egrep "from any to ${_ip4} in recv"|awk '{ print $1 }')"
+            rules="$(ipfw list|egrep "from any to "${_ip4}" in recv"|awk '{ print $1 }')"
             if [ -n "${rules}" ] 
             then
                for rule in ${rules}
@@ -843,7 +843,7 @@ jail_interfaces_down()
          _addresses="$(get_interface_ipv6_addresses ${_member})"
          for _ip6 in ${_addresses}
          do
-            rules="$(ipfw list|egrep "from any to ${_ip6} in recv"|awk '{ print $1 }')"
+            rules="$(ipfw list|egrep "from any to "${_ip6}" in recv"|awk '{ print $1 }')"
             if [ -n "${rules}" ] 
             then
                for rule in ${rules}
@@ -853,7 +853,7 @@ jail_interfaces_down()
             fi
          done
 
-         ifconfig ${_bridgeif} destroy
+         ifconfig "${_bridgeif}" destroy
       fi
    fi
 }
@@ -870,13 +870,13 @@ enable_cron()
 
 fix_old_meta()
 {
-   for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+   for i in `ls -d "${JDIR}"/.*.meta 2>/dev/null`
    do
       if [ -e "${i}/xjail" ] ; then
-         touch ${i}/jail-portjail 2>/dev/null
+         touch "${i}/jail-portjail" 2>/dev/null
       fi
       if [ -e "${i}/linuxjail" ] ; then
-         touch ${i}/jail-linux 2>/dev/null
+         touch "${i}/jail-linux" 2>/dev/null
       fi
    done
 }
@@ -990,17 +990,17 @@ install_pc_extractoverlay()
     return 1 
   fi 
 
-  mkdir -p ${1}/usr/local/bin
-  mkdir -p ${1}/usr/local/share/pcbsd/conf
-  mkdir -p ${1}/usr/local/share/pcbsd/distfiles
+  mkdir -p "${1}/usr/local/bin"
+  mkdir -p "${1}/usr/local/share/pcbsd/conf"
+  mkdir -p "${1}/usr/local/share/pcbsd/distfiles"
 
-  cp /usr/local/bin/pc-extractoverlay ${1}/usr/local/bin/
-  chmod 755 ${1}/usr/local/bin/pc-extractoverlay
+  cp /usr/local/bin/pc-extractoverlay "${1}/usr/local/bin/"
+  chmod 755 "${1}/usr/local/bin/pc-extractoverlay"
 
   cp /usr/local/share/pcbsd/conf/server-excludes \
-    ${1}/usr/local/share/pcbsd/conf
+    "${1}/usr/local/share/pcbsd/conf"
   cp /usr/local/share/pcbsd/distfiles/server-overlay.txz \
-    ${1}/usr/local/share/pcbsd/distfiles
+    "${1}/usr/local/share/pcbsd/distfiles"
 
   return 0
 }
@@ -1011,9 +1011,9 @@ CR()
     local jaildir="${1}"
     shift
 
-    mount -t devfs none ${jaildir}/dev
-    chroot ${jaildir} /bin/sh -exc "$@" | warden_pipe
-    umount ${jaildir}/dev
+    mount -t devfs none "${jaildir}/dev"
+    chroot "${jaildir}" /bin/sh -exc "$@" | warden_pipe
+    umount "${jaildir}/dev"
 }
 
 get_dependencies_port_list()
@@ -1071,8 +1071,8 @@ get_package_install_list()
   exec 3<&0
   exec 0<"${pkginfo}"
   while read -r pi ; do
-    local pkg="$(echo ${pi} | cut -f1 -d' ' -d':' | awk '{ print $1 }')"
-    local port="$(echo ${pi} | cut -f2 -d' ' | awk '{ print $1 }')"
+    local pkg="$(echo "${pi}" | cut -f1 -d' ' -d':' | awk '{ print $1 }')"
+    local port="$(echo "${pi}" | cut -f2 -d' ' | awk '{ print $1 }')"
 
     grep -qw "${port}" "${list}" 2>/dev/null
     if [ "$?" = "0" ] ; then
@@ -1177,7 +1177,7 @@ get_packages_by_port_list()
     return 1
   fi
 
-  local pkgs="$(${CR} "pkg rquery '%n-%v.txz\n%dn-%dv.txz' $(cat ${list} | tr -s '\n' ' ')")"
+  local pkgs="$(${CR} "pkg rquery '%n-%v.txz\n%dn-%dv.txz' $(cat "${list}" | tr -s '\n' ' ')")"
   pkgs=$(echo ${pkgs} | tr -s " " "\n" | sort | uniq)
 
   ${CR} "mkdir -p /var/tmp/pkgs"
@@ -1225,7 +1225,7 @@ bootstrap_pkgng()
     jailtype="standard"
   fi
 
-  CR="CR ${jaildir}"
+  CR="CR "${jaildir}""
   export CR
 
   local arch="${ARCH}"
@@ -1259,14 +1259,14 @@ bootstrap_pkgng()
 
   local pkgdir="${CACHEDIR}/packages/${release}/${arch}"
 
-  cd ${jaildir} 
+  cd "${jaildir}"
   warden_print "Boot-strapping pkgng"
 
-  mkdir -p ${jaildir}/usr/local/etc
-  mkdir -p ${jaildir}/usr/local/tmp
+  mkdir -p "${jaildir}/usr/local/etc"
+  mkdir -p "${jaildir}/usr/local/tmp"
   pubcert="/usr/local/etc/pkg-pubkey.cert"
 
-  cp "${pubcert}" ${jaildir}/usr/local/etc
+  cp "${pubcert}" "${jaildir}/usr/local/etc"
   install_pc_extractoverlay "${jaildir}"
 
   create_jail_pkgconf "${jaildir}" "${mirror}${rpath##/packages}" "${arch}"
@@ -1276,20 +1276,20 @@ bootstrap_pkgng()
   fi
 
   if [ -f "${pkgdir}/pkg.txz" ] ; then
-    cp ${pkgdir}/pkg.txz ${jaildir}/usr/local/tmp
+    cp "${pkgdir}/pkg.txz" "${jaildir}/usr/local/tmp"
   else
     get_file_from_mirrors "${rpath}/Latest/pkg.txz" \
       "${pkgdir}/pkg.txz" "pkg"
-    cp ${pkgdir}/pkg.txz ${jaildir}/usr/local/tmp
+    cp "${pkgdir}/pkg.txz" "${jaildir}/usr/local/tmp"
   fi
   local pres=$? 
 
   if [ -f "${pkgdir}/repo.txz" ] ; then
-    cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
+    cp "${pkgdir}/repo.txz" "${jaildir}/usr/local/tmp"
   else
     get_file_from_mirrors "${rpath}/repo.txz" \
       "${pkgdir}/repo.txz" "pkg"
-    cp ${pkgdir}/repo.txz ${jaildir}/usr/local/tmp
+    cp "${pkgdir}/repo.txz" "${jaildir}/usr/local/tmp"
   fi
   local rres=$? 
 
@@ -1301,17 +1301,17 @@ bootstrap_pkgng()
     ${CR} "pkg add /usr/local/tmp/pkg.txz"
 
     if [ -f "${pkgdir}/repo.sqlite" ] ; then
-      cp ${pkgdir}/repo.sqlite ${jaildir}/var/db/pkg
+      cp "${pkgdir}/repo.sqlite" "${jaildir}/var/db/pkg"
     else
       ${CR} "tar -xvf /usr/local/tmp/repo.txz -C /var/db/pkg/"
     fi
 
     if [ -f "${pkgdir}/local.sqlite" ] ; then
-      cp ${pkgdir}/local.sqlite ${jaildir}/var/db/pkg
+      cp "${pkgdir}/local.sqlite" "${jaildir}/var/db/pkg"
     fi
 
     if [ -f "${pkgdir}/repo-packagesite.sqlite" ] ; then
-      cp ${pkgdir}/repo-packagesite.sqlite ${jaildir}/var/db/pkg
+      cp "${pkgdir}/repo-packagesite.sqlite" "${jaildir}/var/db/pkg"
     fi
 
     chroot "${jaildir}" /bin/sh -exc "pkg rquery '%n' pkg" 2>/dev/null
@@ -1575,19 +1575,34 @@ get_template_instances()
    rp="$(getZFSRelativePath "${tpath}")"
    td="${tank}${rp}"
 
+   local ifs="${IFS}"
+   IFS=$'\n'
+
    count=0
-   for i in $(ls -d ${JDIR}/.*.meta) ; do
+   for i in $(ls -d "${JDIR}"/.*.meta) ; do
      jail="$(basename "${i}"|sed -E 's/(^\.|\.meta)//g')"
      tank="$(getZFSTank "${JDIR}")"
      rp="$(getZFSRelativePath "${JDIR}")"
      jd="${tank}${rp}/${jail}"
 
-     origin="$(zfs get -H origin "${jd}"|awk '{ print $3 }'|cut -f1 -d'@')"
+     origin="$(zfs get -H origin "${jd}")"
+     if [ -z "${origin}" ]; then continue; fi
+
+     origin="${origin##"${jd}"}"
+     if [ -z "${origin}" ]; then continue; fi
+
+     origin="$(echo "${origin}" | sed -E 's|^([[:space:]]+origin[[:space:]]+)||')"
+     if [ -z "${origin}" ]; then continue; fi
+
+     origin="$(echo "${origin}" | sed -E 's|@.+$||')"
+     if [ -z "${origin}" ]; then continue; fi
+
      if [ "${origin}" = "${td}" ] ; then
        : $(( count += 1 ))
      fi
    done
 
+   IFS="${ifs}"
    echo "${count}"
    return 0
 }
@@ -1604,6 +1619,8 @@ list_templates()
      warden_print "------------------------------"
    fi
 
+   local ifs="${IFS}"
+   IFS=$'\n'
    for i in `ls -d ${JDIR}/.warden-template* 2>/dev/null`
    do
       if [ ! -e "$i/bin/sh" ] ; then continue ; fi
@@ -1647,6 +1664,7 @@ __EOF__
         fi
      fi
    done
+   IFS="${ifs}"
    exit 0
 }
 
@@ -1659,13 +1677,13 @@ delete_template()
      if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${tDir}" ; fi
      tank=`getZFSTank "$tDir"`
      rp=`getZFSRelativePath "$tDir"`
-     zfs destroy -fr $tank${rp}
+     zfs destroy -fr "$tank${rp}"
      rmdir ${tDir} >/dev/null 2>&1
    else
      if [ ! -e "${tDir}.tbz" ] ; then
        warden_exit "No such template: ${1}"
      fi
-     rm ${tDir}.tbz
+     rm "${tDir}.tbz"
    fi
    exit 0
 }
@@ -1674,17 +1692,22 @@ get_next_id()
 {
    local jdir="${1}"
    local meta_id=0
+   local ifs=${IFS}
 
+   IFS=$'\n'
    if [ -d "${jdir}" ] ; then
       for i in `ls -d ${jdir}/.*.meta 2>/dev/null`
       do
-        id="$(cat ${i}/id 2>/dev/null)"
+        if [ ! -f "${i}/id" ] ; then continue ; fi
+
+        id="$(cat "${i}/id" 2>/dev/null)"
         if [ "${id}" -gt "${meta_id}" ] ; then
           meta_id="${id}"
         fi
       done
    fi
 
+   IFS="${ifs}"
    : $(( meta_id += 1 ))
    echo ${meta_id}
 }
@@ -1741,28 +1764,28 @@ get_freebsd_file()
    local _rf="${1}"
    local _lf="${2}"
 
-   local aDir="$(dirname $_lf)"
-   local aFile="$(basename $_lf)"
+   local aDir="$(dirname "$_lf")"
+   local aFile="$(basename "$_lf")"
 
    local astatfile="${HOME}/.fbsd-aria-stat-${ARCH}"
    if [ -e "${astatfile}" ] ; then
-     local astat="--server-stat-of=${astatfile}
-        --server-stat-if=${astatfile}
+     local astat="--server-stat-of="${astatfile}"
+        --server-stat-if="${astatfile}"
         --uri-selector=adaptive
         --server-stat-timeout=864000"
    else
-     local astat=" --server-stat-of=${astatfile} --uri-selector=adaptive "
+     local astat=" --server-stat-of="${astatfile}" --uri-selector=adaptive "
    fi
-   touch $astatfile
+   touch "$astatfile"
 
-   local mirrors="$(get_freebsd_mirror_list ${1})"
+   local mirrors="$(get_freebsd_mirror_list "${1}")"
 
    aria2c -k 5M \
       ${astat} \
       --check-certificate=false \
       --file-allocation=none \
-      -d ${aDir} \
-      -o ${aFile} \
+      -d "${aDir}" \
+      -o "${aFile}" \
       ${mirrors}
 
    return $?
@@ -1786,7 +1809,7 @@ is_linux_jail()
 warden_set_ipv4()
 {
    local newip="${1}"
-   local oldip="$(cat ${JMETADIR}/ipv4)"
+   local oldip="$(cat "${JMETADIR}/ipv4")"
    local jaildir="${JDIR}/${JAILNAME}"
    local hosts="${jaildir}/etc/hosts"
    local tmp="$(mktemp /tmp/.wipXXXXXX)"
@@ -1826,7 +1849,7 @@ warden_set_ipv4()
 warden_set_ipv6()
 {
    local newip="${1}"
-   local oldip="$(cat ${JMETADIR}/ipv6)"
+   local oldip="$(cat "${JMETADIR}/ipv6")"
    local jaildir="${JDIR}/${JAILNAME}"
    local hosts="${jaildir}/etc/hosts"
    local tmp="$(mktemp /tmp/.wipXXXXXX)"

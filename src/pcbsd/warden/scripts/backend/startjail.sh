@@ -22,7 +22,7 @@ start_jail_vimage()
         for _member in ${_members}
         do 
            if [ "${_member}" = "${IFACE}" ] ; then
-              BRIDGE=${_bridge}
+              BRIDGE="${_bridge}"
               break
            fi
         done
@@ -33,20 +33,20 @@ start_jail_vimage()
   fi
 
   if [ -z "${BRIDGE}" ] ; then
-     BRIDGE=`ifconfig bridge create mtu ${MTU}`
+     BRIDGE="`ifconfig bridge create mtu ${MTU}`"
   fi 
   if [ -n "${IFACE}" ] ; then
      if ! is_bridge_member "${BRIDGE}" "${IFACE}" ; then
-        ifconfig ${BRIDGE} addm ${IFACE}
+        ifconfig "${BRIDGE}" addm "${IFACE}"
      fi
   fi
 
   # create epair for vimage jail
-  EPAIRA=`ifconfig epair create mtu ${MTU}`
-  ifconfig ${EPAIRA} up
+  EPAIRA="`ifconfig epair create mtu ${MTU}`"
+  ifconfig "${EPAIRA}" up
 
-  EPAIRB=`echo ${EPAIRA}|sed -E "s/([0-9])a$/\1b/g"`
-  ifconfig ${BRIDGE} addm ${EPAIRA} up
+  EPAIRB="`echo "${EPAIRA}"|sed -E "s/([0-9])a$/\1b/g"`"
+  ifconfig "${BRIDGE}" addm "${EPAIRA}" up
 
   # If no bridge specified, and IP4 is enabled, lets suggest one
   if [ -z "$BRIDGEIP4" -a -n "$IP4" -a "${NATENABLE}" = "YES" ] ; then
@@ -55,63 +55,63 @@ start_jail_vimage()
 
   if [ -n "${BRIDGEIP4}" ] ; then
      if ! ipv4_configured "${BRIDGE}" ; then
-        ifconfig ${BRIDGE} inet "${BRIDGEIP4}"
+        ifconfig "${BRIDGE}" inet "${BRIDGEIP4}"
 
      elif ! ipv4_address_configured "${BRIDGE}" "${BRIDGEIP4}" ; then
-        ifconfig ${BRIDGE} inet alias "${BRIDGEIP4}"
+        ifconfig "${BRIDGE}" inet alias "${BRIDGEIP4}"
      fi
   fi
   if [ -n "${BRIDGEIPS4}" ] ; then
      for _ip in ${BRIDGEIPS4}
      do
         if ! ipv4_address_configured "${BRIDGE}" "${_ip}" ; then
-           ifconfig ${BRIDGE} inet alias "${_ip}"
+           ifconfig "${BRIDGE}" inet alias "${_ip}"
         fi 
      done
   fi
 
   if [ -n "${BRIDGEIP6}" ] ; then
      if ! ipv6_configured "${BRIDGE}" ; then
-        ifconfig ${BRIDGE} inet6 "${BRIDGEIP6}"
+        ifconfig "${BRIDGE}" inet6 "${BRIDGEIP6}"
 
      elif ! ipv6_address_configured "${BRIDGE}" "${BRIDGEIP6}" ; then
-        ifconfig ${BRIDGE} inet6 alias "${BRIDGEIP6}"
+        ifconfig "${BRIDGE}" inet6 alias "${BRIDGEIP6}"
      fi
   fi
   if [ -n "${BRIDGEIPS6}" ] ; then
      for _ip in ${BRIDGEIPS6}
      do
         if ! ipv6_address_configured "${BRIDGE}" "${_ip}" ; then
-           ifconfig ${BRIDGE} inet6 alias "${_ip}"
+           ifconfig "${BRIDGE}" inet6 alias "${_ip}"
         fi
      done
   fi
 
   # Start the jail now
   warden_print "jail -c path=${JAILDIR} name=${HOST} host.hostname=${HOST} ${jFlags} persist vnet"
-  jail -c path=${JAILDIR} name=${HOST} host.hostname=${HOST} ${jFlags} persist vnet
+  jail -c path="${JAILDIR}" name="${HOST}" host.hostname="${HOST}" ${jFlags} persist vnet
   if [ $? -ne 0 ] ; then
      echo "ERROR: Failed starting jail with above command..."
      umountjailxfs "${JAILNAME}"
      exit 1
   fi
 
-  JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
+  JID="`jls | grep "${JAILDIR}"$ | tr -s " " | cut -d " " -f 2`"
 
   if [ -e "${JMETADIR}/mac" ] ; then
     MAC="$(cat "${JMETADIR}/mac")"
     if [ -n "${MAC}" ] ; then
-      ifconfig ${EPAIRB} ether "${MAC}"
+      ifconfig "${EPAIRB}" ether "${MAC}"
     fi
   else  
-    MAC="$(ifconfig ${EPAIRB}|egrep ether|awk '{ print $2 }')"
+    MAC="$(ifconfig "${EPAIRB}"|egrep ether|awk '{ print $2 }')"
     if [ -n "${MAC}" ] ; then
       echo "${MAC}" > "${JMETADIR}/mac"
     fi
   fi
 
   # Move epairb into jail
-  ifconfig ${EPAIRB} vnet ${JID}
+  ifconfig "${EPAIRB}" vnet ${JID}
 
   # Configure the IPv4 addresses
   if [ -n "${IP4}" ] ; then
@@ -125,12 +125,12 @@ start_jail_vimage()
      ipv4_configured ${EPAIRB} ${JID}
      if [ "$?" = "0" ] ; then
         if ! ipv4_address_configured "${EPAIRB}" "${ip4}" "${JID}" ; then
-           jexec ${JID} ifconfig ${EPAIRB} inet alias ${ip4}
+           jexec ${JID} ifconfig "${EPAIRB}" inet alias "${ip4}"
            get_ip_and_netmask "${ip4}"
            arp -s "${JIP}" "${MAC}"
         fi
      else
-        jexec ${JID} ifconfig ${EPAIRB} inet ${ip4}
+        jexec ${JID} ifconfig "${EPAIRB}" inet "${ip4}"
         get_ip_and_netmask "${ip4}"
         arp -s "${JIP}" "${MAC}"
      fi
@@ -139,17 +139,17 @@ start_jail_vimage()
   # Configure the IPv6 addresses
   if [ -n "${IP6}" ] ; then
      warden_print "Setting IP6 address: ${IP6}"
-     jexec ${JID} ifconfig ${EPAIRB} inet6 "${IP6}"
+     jexec ${JID} ifconfig "${EPAIRB}" inet6 "${IP6}"
   fi
   for ip6 in ${IPS6}
   do
      ipv6_configured ${EPAIRB} ${JID}
      if [ "$?" = "0" ] ; then
         if ! ipv6_address_configured "${EPAIRB}" "${ip6}" "${JID}" ; then
-           jexec ${JID} ifconfig ${EPAIRB} inet6 alias ${ip6}
+           jexec ${JID} ifconfig "${EPAIRB}" inet6 alias "${ip6}"
         fi
      else
-        jexec ${JID} ifconfig ${EPAIRB} inet6 ${ip6}
+        jexec ${JID} ifconfig "${EPAIRB}" inet6 "${ip6}"
      fi
   done
 
@@ -159,9 +159,9 @@ start_jail_vimage()
   if [ -n "${GATEWAY4}" ] ; then
      local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        jexec ${JID} route add -inet default ${GATEWAY4}
+        jexec ${JID} route add -inet default "${GATEWAY4}"
      else
-        jexec ${JID} route add default gateway ${GATEWAY4}
+        jexec ${JID} route add default gateway "${GATEWAY4}"
      fi  
      if [ -n "${ether}" ] ; then
         get_ip_and_netmask "${GATEWAY4}:
@@ -175,9 +175,9 @@ start_jail_vimage()
      local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
      get_ip_and_netmask "${BRIDGEIP4}"
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        jexec ${JID} route add -inet default ${JIP}
+        jexec ${JID} route add -inet default "${JIP}"
      else
-        jexec ${JID} route add default gateway ${JIP}
+        jexec ${JID} route add default gateway "${JIP}"
      fi
      if [ -n "${ether}" ] ; then
         get_ip_and_netmask "${BRIDGEIP4}:
@@ -190,9 +190,9 @@ start_jail_vimage()
   #
   if [ -n "${GATEWAY6}" ] ; then
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        jexec ${JID} route add -inet6 default ${GATEWAY6}
+        jexec ${JID} route add -inet6 default "${GATEWAY6}"
      else
-        jexec ${JID} route -A inet6 add default gateway ${GATEWAY6}
+        jexec ${JID} route -A inet6 add default gateway "${GATEWAY6}"
      fi 
 
   #
@@ -202,9 +202,9 @@ start_jail_vimage()
   elif [ -n "${BRIDGEIP6}" ] ; then
      get_ip_and_netmask "${BRIDGEIP6}"
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        jexec ${JID} route add -inet6 default ${JIP}
+        jexec ${JID} route add -inet6 default "${JIP}"
      else
-        jexec ${JID} route -A inet6 add default gateway ${JIP}
+        jexec ${JID} route -A inet6 add default gateway "${JIP}"
      fi
   fi
 
@@ -223,9 +223,9 @@ start_jail_vimage()
      if [ -n "${GATEWAY4}" ] ; then 
         local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
         if [ "${LINUXJAIL}" != "YES" ] ; then
-           jexec ${JID} route add -inet default ${GATEWAY4}
+           jexec ${JID} route add -inet default "${GATEWAY4}"
         else
-           jexec ${JID} route add default gateway ${GATEWAY4}
+           jexec ${JID} route add default gateway "${GATEWAY4}"
         fi 
         if [ -n "${ether}" ] ; then
            get_ip_and_netmask "${GATEWAY4}"
@@ -289,42 +289,42 @@ __EOF__
 
   warden_run ipfw nat "${instance}" config if "${IFACE}" reset same_ports unreg_only log
   if [ -n "${ext_ip4}" ] ; then
-     ipfw list | grep -q "from any to ${ext_ip4} in recv ${IFACE}"
+     ipfw list | grep -q "from any to "${ext_ip4}" in recv "${IFACE}""
      if [ "$?" != "0" ] ; then
         warden_run ipfw add nat "${instance}" \
-           all from any to ${ext_ip4} in recv ${IFACE}
+           all from any to "${ext_ip4}" in recv "${IFACE}"
      fi
   fi
   if [ -n "${ext_ip6}" ] ; then
-     ipfw list | grep -q "from any to ${ext_ip6} in recv ${IFACE}"
+     ipfw list | grep -q "from any to "${ext_ip6}" in recv "${IFACE}""
      if [ "$?" != "0" ] ; then
         warden_run ipfw add nat "${instance}" \
-           all from any to ${ext_ip6} in recv ${IFACE}
+           all from any to "${ext_ip6}" in recv "${IFACE}"
      fi
   fi
 
   if [ -n "${IP4}" ] ; then
      get_ip_and_netmask "${IP4}"
      warden_run ipfw add nat "${instance}" \
-        all from ${JIP} to any out xmit ${IFACE}
+        all from "${JIP}" to any out xmit "${IFACE}"
   fi
   for ip4 in ${IPS4}
   do
      get_ip_and_netmask "${ip4}"
      warden_run ipfw add nat "${instance}" \
-        all from ${JIP} to any out xmit ${IFACE}
+        all from "${JIP}" to any out xmit "${IFACE}"
   done
 
   if [ -n "${IP6}" ] ; then
      get_ip_and_netmask "${IP6}"
      warden_run ipfw add nat "${instance}" \
-        all from ${JIP} to any out xmit ${IFACE}
+        all from "${JIP}" to any out xmit "${IFACE}"
   fi
   for ip6 in ${IPS6}
   do
      get_ip_and_netmask "${ip6}"
      warden_run ipfw add nat "${instance}" \
-        all from ${JIP} to any out xmit ${IFACE}
+        all from "${JIP}" to any out xmit "${IFACE}"
   done
 
 # End of jail VIMAGE startup function
@@ -336,36 +336,36 @@ start_jail_standard()
   # Check for primary IPV4 / IPV6
   if [ -n "$IP4" ] ; then
     _ipflags="ip4.addr=${IP4}"
-    ifconfig $IFACE inet alias ${IP4}
+    ifconfig "$IFACE" inet alias "${IP4}"
   fi
   if [ -n "$IP6" ] ; then
     _ipflags="${_ipflags} ip6.addr=${IP6}"
-    ifconfig $IFACE inet6 alias ${IP6}
+    ifconfig "$IFACE" inet6 alias "${IP6}"
   fi
 
   # Setup the extra IP4s for this jail
   for _ip in $IPS4
   do
-    ifconfig $IFACE inet alias ${_ip}
+    ifconfig "$IFACE" inet alias "${_ip}"
     _ipflags="${_ipflags} ip4.addr=${_ip}"
   done
 
   # Setup the extra IP6s for this jail
   for _ip in $IPS6
   do
-    ifconfig $IFACE inet6 alias ${_ip}
+    ifconfig "$IFACE" inet6 alias "${_ip}"
     _ipflags="${_ipflags} ip6.addr=${_ip}"
   done
 
   warden_print "jail -c path=${JAILDIR} ${_ipflags} host.hostname=${HOST} ${jFlags} persist"
-  jail -c path=${JAILDIR} ${_ipflags} name=${HOST} host.hostname=${HOST} ${jFlags} persist
+  jail -c path="${JAILDIR}" ${_ipflags} name="${HOST}" host.hostname="${HOST}" ${jFlags} persist
   if [ $? -ne 0 ] ; then
      warden_error "Failed starting jail with above command..."
      umountjailxfs "${JAILNAME}"
      exit 1
   fi
 
-  JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
+  JID="`jls | grep "${JAILDIR}"$ | tr -s " " | cut -d " " -f 2`"
 }
 
 load_linux_modules()
@@ -417,7 +417,7 @@ then
 fi
 
 # Make sure the jail is NOT already running
-jls | grep ${JAILDIR}$ >/dev/null 2>/dev/null
+jls | grep "${JAILDIR}"$ >/dev/null 2>/dev/null
 if [ "$?" = "0" ]
 then
   warden_error "Jail appears to be running already!"
@@ -434,30 +434,30 @@ DEFAULT=0
 
 # Make sure jail uses special interface if specified
 if [ -e "${JMETADIR}/iface" ] ; then
-  IFACE=`cat "${JMETADIR}/iface"`
+  IFACE="`cat "${JMETADIR}/iface"`"
 fi
 if [ -z "${IFACE}" ] ; then
-   IFACE=`get_default_interface`
+   IFACE="`get_default_interface`"
    DEFAULT=1
 fi
 if [ -z "${IFACE}" ] ; then
   warden_warn "no interface specified and a default doesn't exist!"
 fi
 
-MTU=`ifconfig ${IFACE} | head -1 | sed -E 's/.*mtu ([0-9]+)/\1/g'`
+MTU=`ifconfig "${IFACE}" | head -1 | sed -E 's/.*mtu ([0-9]+)/\1/g'`
 
 GATEWAY4=
 if [ -e "${JMETADIR}/defaultrouter-ipv4" ] ; then
-  GATEWAY4=`cat "${JMETADIR}/defaultrouter-ipv4"`
+  GATEWAY4="`cat "${JMETADIR}/defaultrouter-ipv4"`"
 fi
 GATEWAY6=
 if [ -e "${JMETADIR}/defaultrouter-ipv6" ] ; then
-  GATEWAY6=`cat "${JMETADIR}/defaultrouter-ipv6"`
+  GATEWAY6="`cat "${JMETADIR}/defaultrouter-ipv6"`"
 fi
 
 BRIDGEIP4=
 if [ -e "${JMETADIR}/bridge-ipv4" ] ; then
-  BRIDGEIP4=`cat "${JMETADIR}/bridge-ipv4"`
+  BRIDGEIP4="`cat "${JMETADIR}/bridge-ipv4"`"
 fi
 
 BRIDGEIPS4=
@@ -465,12 +465,12 @@ if [ -e "${JMETADIR}/alias-bridge-ipv4" ] ; then
   while read line
   do
     BRIDGEIPS4="${BRIDGEIPS4} $line" 
-  done < ${JMETADIR}/alias-bridge-ipv4
+  done < "${JMETADIR}/alias-bridge-ipv4"
 fi
 
 BRIDGEIP6=
 if [ -e "${JMETADIR}/bridge-ipv6" ] ; then
-  BRIDGEIP6=`cat "${JMETADIR}/bridge-ipv6"`
+  BRIDGEIP6="`cat "${JMETADIR}/bridge-ipv6"`"
 fi
 
 BRIDGEIPS6=
@@ -478,7 +478,7 @@ if [ -e "${JMETADIR}/alias-bridge-ipv6" ] ; then
   while read line
   do
     BRIDGEIPS6="${BRIDGEIPS6} $line" 
-  done < ${JMETADIR}/alias-bridge-ipv6
+  done < "${JMETADIR}/alias-bridge-ipv6"
 fi
 
 # Check if we need to enable vnet
@@ -499,9 +499,9 @@ if is_linux_jail ; then
    LINUXJAIL="YES"
 fi
 
-HOST="`cat ${JMETADIR}/host`"
+HOST="`cat "${JMETADIR}/host"`"
 
-if is_symlinked_mountpoint ${JAILDIR}/dev; then
+if is_symlinked_mountpoint "${JAILDIR}/dev"; then
    warden_print "${JAILDIR}/dev has symlink as parent, not mounting"
 else
    mount -t devfs devfs "${JAILDIR}/dev"
@@ -512,23 +512,23 @@ if [ "$LINUXJAIL" = "YES" ] ; then
   # Linux Jail
   load_linux_modules
 
-  if is_symlinked_mountpoint ${JAILDIR}/proc; then
+  if is_symlinked_mountpoint "${JAILDIR}/proc"; then
      warden_print "${JAILDIR}/proc has symlink as parent, not mounting"
   else
      mount -t linprocfs linproc "${JAILDIR}/proc"
   fi
-  if is_symlinked_mountpoint ${JAILDIR}/dev/fd; then
+  if is_symlinked_mountpoint "${JAILDIR}/dev/fd"; then
      warden_print "${JAILDIR}/dev/fd has symlink as parent, not mounting"
   else
      mount -t fdescfs null "${JAILDIR}/dev/fd"
   fi
-  if is_symlinked_mountpoint ${JAILDIR}/sys; then
+  if is_symlinked_mountpoint "${JAILDIR}/sys"; then
      warden_print "${JAILDIR}/sys has symlink as parent, not mounting"
   else
      mount -t linsysfs linsys "${JAILDIR}/sys"
   fi
   if [ -e "${JAILDIR}/lib/init/rw" ] ; then
-    if is_symlinked_mountpoint ${JAILDIR}/lib/init/rw; then
+    if is_symlinked_mountpoint "${JAILDIR}/lib/init/rw"; then
        warden_print "${JAILDIR}/lib/init/rw has symlink as parent, not mounting"
     else
        mount -t tmpfs tmpfs "${JAILDIR}/lib/init/rw"
@@ -536,19 +536,19 @@ if [ "$LINUXJAIL" = "YES" ] ; then
   fi
 else
   # FreeBSD Jail
-  if is_symlinked_mountpoint ${JAILDIR}/proc; then
+  if is_symlinked_mountpoint "${JAILDIR}/proc"; then
      warden_print "${JAILDIR}/proc has symlink as parent, not mounting"
   else
      mount -t procfs proc "${JAILDIR}/proc"
   fi
 
-  if [ -e "${JMETADIR}/jail-portjail" ] ; then mountjailxfs ${JAILNAME} ; fi
+  if [ -e "${JMETADIR}/jail-portjail" ] ; then mountjailxfs "${JAILNAME}" ; fi
 fi
 
 # Check for user-supplied mounts
 if [ -e "${JMETADIR}/fstab" ] ; then
    warden_print "Mounting user-supplied file-systems"
-   cat ${JMETADIR}/fstab \
+   cat "${JMETADIR}/fstab" \
      | sed "s|%%JAILDIR%%|${JAILDIR}|g" \
      | sort -k 2 > /tmp/.wardenfstab.$$
    mount -a -F /tmp/.wardenfstab.$$
@@ -571,7 +571,7 @@ if [ -e "${JMETADIR}/alias-ipv4" ] ; then
   while read line
   do
     IPS4="${IPS4} $line" 
-  done < ${JMETADIR}/alias-ipv4
+  done < "${JMETADIR}/alias-ipv4"
 fi
 
 IP6=
@@ -590,13 +590,13 @@ if [ -e "${JMETADIR}/alias-ipv6" ] ; then
   while read line
   do
     IPS6="${IPS6} $line" 
-  done < ${JMETADIR}/alias-ipv6
+  done < "${JMETADIR}/alias-ipv6"
 fi
 
 jFlags=""
 # Grab any additional jail flags
 if [ -e "${JMETADIR}/jail-flags" ] ; then
-  jFlags=`cat ${JMETADIR}/jail-flags`
+  jFlags=`cat "${JMETADIR}/jail-flags"`
 fi
 
 # Are we using VIMAGE, if so start it up!
@@ -612,7 +612,7 @@ fi
 if [ "$LINUXJAIL" = "YES" ] ; then
   # If we have a custom start script
   if [ -e "${JMETADIR}/jail-start" ] ; then
-    sCmd=`cat ${JMETADIR}/jail-start`
+    sCmd=`cat "${JMETADIR}/jail-start"`
     warden_print "Starting jail with: ${sCmd}"
     jexec ${JID} ${sCmd} 2>&1
   else
@@ -626,7 +626,7 @@ if [ "$LINUXJAIL" = "YES" ] ; then
 else
   # If we have a custom start script
   if [ -e "${JMETADIR}/jail-start" ] ; then
-    sCmd=`cat ${JMETADIR}/jail-start`
+    sCmd=`cat "${JMETADIR}/jail-start"`
     warden_print "Starting jail with: ${sCmd}"
     jexec ${JID} ${sCmd} 2>&1
   else

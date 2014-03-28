@@ -42,7 +42,7 @@ if [ -x "${JMETADIR}/jail-pre-stop" ] ; then
   "${JMETADIR}/jail-pre-stop"
 fi
 
-HOST="`cat ${JMETADIR}/host`"
+HOST="`cat "${JMETADIR}/host"`"
 
 # Check if we need to enable vnet
 VIMAGEENABLE="NO"
@@ -55,10 +55,10 @@ DEFAULT=0
 
 # Make sure jail uses special interface if specified
 if [ -e "${JMETADIR}/iface" ] ; then
-  IFACE=`cat "${JMETADIR}/iface"`
+  IFACE="`cat "${JMETADIR}/iface"`"
 fi
 if [ -z "${IFACE}" ] ; then
-   IFACE=`get_default_interface`
+   IFACE="`get_default_interface`"
    DEFAULT=1
 fi
 
@@ -68,7 +68,7 @@ fi
 warden_printf "%s" "Stopping the jail..."
 
 # Get the JailID for this jail
-JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
+JID="`jls | grep "${JAILDIR}"$ | tr -s " " | cut -d " " -f 2`"
 
 warden_printf "%s" "."
 
@@ -78,24 +78,24 @@ if [ "$VIMAGEENABLE" = "YES" ] ; then
 else
   # Get list of IP4s for this jail
   if [ -e "${JMETADIR}/ipv4" ] ; then
-    IP4S="`cat ${JMETADIR}/ipv4 | cut -d '/' -f 1`"
+    IP4S="`cat "${JMETADIR}/ipv4" | cut -d '/' -f 1`"
   fi
   if [ -e "${JMETADIR}/alias-ipv4" ] ; then
     while read line
     do
       IP4S="${IP4S} `echo $line | cut -d '/' -f 1`"
-    done < ${JMETADIR}/alias-ipv4
+    done < "${JMETADIR}/alias-ipv4"
   fi
 
   # Get list of IP6s for this jail
   if [ -e "${JMETADIR}/ipv6" ] ; then
-    IP6S="`cat ${JMETADIR}/ipv6 | cut -d '/' -f 1`"
+    IP6S="`cat "${JMETADIR}/ipv6" | cut -d '/' -f 1`"
   fi
   if [ -e "${JMETADIR}/alias-ipv6" ] ; then
     while read line
     do
       IP6S="${IP6S} `echo $line | cut -d '/' -f 1`"
-    done < ${JMETADIR}/alias-ipv6
+    done < "${JMETADIR}/alias-ipv6"
   fi
 
   # Check if we need to remove the IP aliases from this jail
@@ -104,10 +104,10 @@ else
     # See if active alias
     if [ -n "${IFACE}" ]
     then
-      ifconfig $IFACE | grep -q "${_ip}"
+      ifconfig "$IFACE" | grep -q "${_ip}"
       if [ $? -ne 0 ] ; then continue ; fi
 
-      ifconfig $IFACE inet -alias ${_ip}
+      ifconfig "$IFACE" inet -alias "${_ip}"
     fi
   done
 
@@ -116,10 +116,10 @@ else
     # See if active alias
     if [ -n "${IFACE}" ]
     then
-      ifconfig $IFACE | grep -q "${_ip}"
+      ifconfig "$IFACE" | grep -q "${_ip}"
       if [ $? -ne 0 ] ; then continue ; fi
 
-      ifconfig $IFACE inet6 ${_ip} delete
+      ifconfig "$IFACE" inet6 "${_ip}" delete
     fi
   done
 fi
@@ -130,7 +130,7 @@ if [ -e "${JMETADIR}/jail-linux" ] ; then LINUXJAIL="YES" ; fi
 # Check for user-supplied mounts
 if [ -e "${JMETADIR}/fstab" ] ; then
    warden_print "Unmounting user-supplied file-systems"
-   cat ${JMETADIR}/fstab \
+   cat "${JMETADIR}/fstab" \
      | sed "s|%%JAILDIR%%|${JAILDIR}|g" \
      | sort -r -k 2 > /tmp/.wardenfstab.$$
    umount -a -F /tmp/.wardenfstab.$$
@@ -140,7 +140,7 @@ fi
 if [ "$LINUXJAIL" = "YES" ] ; then
   # If we have a custom stop script
   if [ -e "${JMETADIR}/jail-stop" ] ; then
-    sCmd=`cat ${JMETADIR}/jail-stop`
+    sCmd=`cat "${JMETADIR}/jail-stop"`
     warden_print "Stopping jail with: ${sCmd}"
     if [ -n "${JID}" ] ; then
       jexec ${JID} ${sCmd} 2>&1
@@ -159,15 +159,15 @@ if [ "$LINUXJAIL" = "YES" ] ; then
   fi
   sleep 3
 
-  umount -f ${JAILDIR}/sys 2>/dev/null
-  umount -f ${JAILDIR}/dev/fd 2>/dev/null
-  umount -f ${JAILDIR}/dev 2>/dev/null
-  umount -f ${JAILDIR}/lib/init/rw 2>/dev/null
+  umount -f "${JAILDIR}/sys" 2>/dev/null
+  umount -f "${JAILDIR}/dev/fd" 2>/dev/null
+  umount -f "${JAILDIR}/dev" 2>/dev/null
+  umount -f "${JAILDIR}/lib/init/rw" 2>/dev/null
 else
   # If we have a custom stop script
   if [ -e "${JMETADIR}/jail-stop" ] ; then
     if [ -n "${JID}" ] ; then
-      sCmd=`cat ${JMETADIR}/jail-stop`
+      sCmd=`cat "${JMETADIR}/jail-stop"`
       warden_print "Stopping jail with: ${sCmd}"
       jexec ${JID} ${sCmd} 2>&1
     fi
@@ -179,7 +179,7 @@ else
   fi
 fi
 
-umount -f ${JAILDIR}/dev >/dev/null 2>/dev/null
+umount -f "${JAILDIR}/dev" >/dev/null 2>/dev/null
 
 warden_printf "%s" "."
 

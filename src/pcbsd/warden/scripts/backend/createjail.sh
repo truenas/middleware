@@ -12,14 +12,14 @@ setup_linux_jail()
 {
   warden_print "Setting up linux jail..."
 
-  mkdir -p ${JMETADIR} >/dev/null 2>&1
-  echo "${HOST}" > ${JMETADIR}/host
+  mkdir -p "${JMETADIR}" >/dev/null 2>&1
+  echo "${HOST}" > "${JMETADIR}/host"
 
   if [ "${IP4}" != "OFF" ] ; then
-    echo "${IP4}/${MASK4}" > ${JMETADIR}/ipv4
+    echo "${IP4}/${MASK4}" > "${JMETADIR}/ipv4"
   fi
   if [ "${IP6}" != "OFF" ] ; then
-    echo "${IP6}/${MASK6}" > ${JMETADIR}/ipv6
+    echo "${IP6}/${MASK6}" > "${JMETADIR}/ipv6"
   fi
 
   if [ "$AUTOSTART" = "YES" ] ; then
@@ -28,10 +28,10 @@ setup_linux_jail()
 
   if [ -n "$LINUXARCHIVE_FILE" ] ; then
     warden_print "Extracting ${LINUXARCHIVE_FILE}..."
-    tar xvf ${LINUXARCHIVE_FILE} -C "${JAILDIR}" 2>/dev/null
+    tar xvf "${LINUXARCHIVE_FILE}" -C "${JAILDIR}" 2>/dev/null
     if [ $? -ne 0 ] ; then
        warden_error "Failed Extracting ${LINUXARCHIVE_FILE}"
-       warden delete --confirm ${JAILNAME} 2>/dev/null
+       warden delete --confirm "${JAILNAME}" 2>/dev/null
        exit 1
     fi
 #  else
@@ -45,12 +45,12 @@ setup_linux_jail()
   fi
   
   # Create the master.passwd
-  echo "root::0:0::0:0:Charlie &:/root:/bin/bash" > ${JAILDIR}/etc/master.passwd
-  pwd_mkdb -d ${JAILDIR}/tmp -p ${JAILDIR}/etc/master.passwd 2>/dev/null
-  mv ${JAILDIR}/tmp/master.passwd ${JAILDIR}/etc/
-  mv ${JAILDIR}/tmp/pwd.db ${JAILDIR}/etc/
-  mv ${JAILDIR}/tmp/spwd.db ${JAILDIR}/etc/
-  rm ${JAILDIR}/tmp/passwd
+  echo "root::0:0::0:0:Charlie &:/root:/bin/bash" > "${JAILDIR}/etc/master.passwd"
+  pwd_mkdb -d "${JAILDIR}/tmp" -p "${JAILDIR}/etc/master.passwd" 2>/dev/null
+  mv "${JAILDIR}/tmp/master.passwd" "${JAILDIR}/etc/"
+  mv "${JAILDIR}/tmp/pwd.db" "${JAILDIR}/etc/"
+  mv "${JAILDIR}/tmp/spwd.db" "${JAILDIR}/etc/"
+  rm "${JAILDIR}/tmp/passwd"
 
   # Copy resolv.conf
   rm -f "${JAILDIR}/etc/resolv.conf"
@@ -63,10 +63,10 @@ pwconv
 grpconv
 touch /etc/fstab
 touch /etc/mtab
-' > ${JAILDIR}/.fixSH
-  chmod 755 ${JAILDIR}/.fixSH
-  chroot ${JAILDIR} /.fixSH
-  rm ${JAILDIR}/.fixSH
+' > "${JAILDIR}/.fixSH"
+  chmod 755 "${JAILDIR}/.fixSH"
+  chroot "${JAILDIR} /.fixSH"
+  rm "${JAILDIR}/.fixSH"
 
   #
   # Yum is dumb. Trick it to know we have space.
@@ -122,7 +122,7 @@ if [ -z "$TEMPLATE" -a -z "$ARCHIVEFILE" ] ; then
   fi
 
   if [ ! -e "$TDIR" ] ; then
-      FLAGS="-arch $ARCH -nick $DEFTEMPLATE"
+      FLAGS="-arch $ARCH -nick "$DEFTEMPLATE""
 
       uname -r 2>&1 | grep -q "TRUEOS"
       if [ $? -eq 0 ] ; then
@@ -194,10 +194,10 @@ then
 fi
 
 # Make sure we don't have a host already with this name
-for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+for i in `ls -d "${JDIR}"/.*.meta 2>/dev/null`
 do
   if [ ! -e "${i}/host" ] ; then continue ; fi
-  if [ "`cat ${i}/host`" = "$HOST" ] ; then
+  if [ "`cat "${i}/host"`" = "$HOST" ] ; then
     warden_error "A jail with this hostname already exists!"
     exit 5
   fi
@@ -212,29 +212,29 @@ if [ "$LINUXJAIL" = "YES" ] ; then
    isDirZFS "${JDIR}"
    if [ $? -eq 0 ] ; then
      # Create ZFS mount
-     tank=`getZFSTank "$JDIR"`
+     tank="`getZFSTank "$JDIR"`"
      if [ -z "$tank" ] ; then
        warden_exit "Failed getting ZFS dataset for $JDIR..";
      fi
-     zfsp=`getZFSRelativePath "${WORLDCHROOT}"`
-     jailp=`getZFSRelativePath "${JAILDIR}"`
-     warden_print zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
-     zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
+     zfsp="`getZFSRelativePath "${WORLDCHROOT}"`"
+     jailp="`getZFSRelativePath "${JAILDIR}"`"
+     warden_print zfs clone "${tank}${zfsp}@clean" "${tank}${jailp}"
+     zfs clone "${tank}${zfsp}@clean" "${tank}${jailp}"
      if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base clone"; fi
    else
      mkdir -p "${JAILDIR}"
      warden_print "Installing world..."
      if [ -d "${WORLDCHROOT}" ] ; then
-       tar cvf - -C ${WORLDCHROOT} . 2>/dev/null | tar xpvf - -C "${JAILDIR}" 2>/dev/null
+       tar cvf - -C "${WORLDCHROOT}" . 2>/dev/null | tar xpvf - -C "${JAILDIR}" 2>/dev/null
      else
-       tar xvf ${WORLDCHROOT} -C "${JAILDIR}" 2>/dev/null
+       tar xvf "${WORLDCHROOT}" -C "${JAILDIR}" 2>/dev/null
      fi
    fi
    setup_linux_jail
 
    set_unique_id "${JDIR}"
    if [ -d "${PROGDIR}/scripts/hooks" ] ; then
-     cp ${PROGDIR}/scripts/hooks/jail-* "${JMETADIR}"
+     cp "${PROGDIR}"/scripts/hooks/jail-* "${JMETADIR}"
    fi
 
    exit 0
@@ -245,20 +245,20 @@ warden_print "Building new Jail... Please wait..."
 isDirZFS "${JDIR}"
 if [ $? -eq 0 ] ; then
    # Create ZFS CLONE
-   tank=`getZFSTank "$JDIR"`
-   zfsp=`getZFSRelativePath "${WORLDCHROOT}"`
-   jailp=`getZFSRelativePath "${JAILDIR}"`
-   warden_print zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
-   zfs clone ${tank}${zfsp}@clean ${tank}${jailp}
+   tank="`getZFSTank "$JDIR"`"
+   zfsp="`getZFSRelativePath "${WORLDCHROOT}"`"
+   jailp="`getZFSRelativePath "${JAILDIR}"`"
+   warden_print zfs clone "${tank}${zfsp}@clean" "${tank}${jailp}"
+   zfs clone "${tank}${zfsp}@clean" "${tank}${jailp}"
    if [ $? -ne 0 ] ; then warden_exit "Failed creating clean ZFS base clone"; fi
 else
    # Running on UFS
    mkdir -p "${JAILDIR}"
    warden_print "Installing world..."
    if [ -d "${WORLDCHROOT}" ] ; then
-     tar cvf - -C ${WORLDCHROOT} . 2>/dev/null | tar xpvf - -C "${JAILDIR}" 2>/dev/null
+     tar cvf - -C "${WORLDCHROOT}" . 2>/dev/null | tar xpvf - -C "${JAILDIR}" 2>/dev/null
    else
-     tar xvf ${WORLDCHROOT} -C "${JAILDIR}" 2>/dev/null
+     tar xvf "${WORLDCHROOT}" -C "${JAILDIR}" 2>/dev/null
    fi
 
    # If this is a pluginjail on UFS :-( Do things the hard way.
@@ -274,12 +274,12 @@ if [ "$VANILLA" != "YES" -a "${PLUGINJAIL}" != "YES" ] ; then
 fi
 
 mkdir -p "${JMETADIR}" >/dev/null 2>&1
-echo "${HOST}" > ${JMETADIR}/host
+echo "${HOST}" > "${JMETADIR}/host"
 if [ "${IP4}" != "OFF" ] ; then
-   echo "${IP4}/${MASK4}" > ${JMETADIR}/ipv4
+   echo "${IP4}/${MASK4}" > "${JMETADIR}/ipv4"
 fi
 if [ "${IP6}" != "OFF" ] ; then
-   echo "${IP6}/${MASK6}" > ${JMETADIR}/ipv6
+   echo "${IP6}/${MASK6}" > "${JMETADIR}/ipv6"
 fi
 set_unique_id "${JDIR}"
 
@@ -287,7 +287,7 @@ if [ "$SOURCE" = "YES" ]
 then
   warden_print "Installing source..."
   mkdir -p "${JAILDIR}/usr/src"
-  cd ${JAILDIR}
+  cd "${JAILDIR}"
   SYSVER="$(uname -r)"
   get_file_from_mirrors "/${SYSVER}/${ARCH}/dist/src.txz" "src.txz" "iso"
   if [ $? -ne 0 ] ; then
@@ -376,11 +376,11 @@ if [ "$AUTOSTART" = "YES" ] ; then
 fi
 
 # Allow pinging by default
-echo "allow.raw_sockets=true" > ${JMETADIR}/jail-flags
+echo "allow.raw_sockets=true" > "${JMETADIR}/jail-flags"
 
 # Check if we need to copy the timezone file
 if [ -e "/etc/localtime" ] ; then
-   cp /etc/localtime ${JAILDIR}/etc/localtime
+   cp /etc/localtime "${JAILDIR}/etc/localtime"
 fi
 
 # Setup TrueOS PKGNG repo / utilities only if on TRUEOS
@@ -392,14 +392,14 @@ if [ "$VANILLA" != "YES" -a -e "${JAILDIR}/etc/rc.delay" ] ; then
 fi
 
 # Set the default meta-pkg set
-mkdir -p ${JAILDIR}/usr/local/etc >/dev/null 2>/dev/null
-echo "PCBSD_METAPKGSET: warden" > ${JAILDIR}/usr/local/etc/pcbsd.conf
+mkdir -p "${JAILDIR}/usr/local/etc" >/dev/null 2>/dev/null
+echo "PCBSD_METAPKGSET: warden" > "${JAILDIR}/usr/local/etc/pcbsd.conf"
 
 # Copy over the pbid scripts
 checkpbiscripts "${JAILDIR}"
 
 if [ -d "${PROGDIR}/scripts/hooks" ] ; then
-  cp ${PROGDIR}/scripts/hooks/jail-* "${JMETADIR}"
+  cp "${PROGDIR}"/scripts/hooks/jail-* "${JMETADIR}"
 fi
 
 # setup pkgng

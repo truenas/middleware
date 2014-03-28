@@ -59,10 +59,10 @@ echo -e "Deleting Jail...\c"
 isDirZFS "${JAILDIR}" "1"
 if [ $? -eq 0 ] ; then
   # Create ZFS mount
-  tank=`getZFSTank "$JDIR"`
-  jailp=`getZFSRelativePath "${JAILDIR}"`
-  zfs destroy -fr ${tank}${jailp}
-  rmdir ${JAILDIR} 2>/dev/null
+  tank="`getZFSTank "$JDIR"`"
+  jailp="`getZFSRelativePath "${JAILDIR}"`"
+  zfs destroy -fr "${tank}${jailp}"
+  rmdir "${JAILDIR}" 2>/dev/null
 else
   chflags -R noschg "${JAILDIR}"
   rm -rf "${JAILDIR}"

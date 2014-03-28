@@ -42,9 +42,9 @@ fi
 
 if [ "${IP4}" != "OFF" ]
 then
-  for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+  for i in `ls -d "${JDIR}"/.*.meta 2>/dev/null`
   do
-    if [ "`cat ${i}/ipv4 2>/dev/null`" = "${IP4}/${MASK4}" ] ; then
+    if [ "`cat "${i}/ipv4" 2>/dev/null`" = "${IP4}/${MASK4}" ] ; then
       warden_error "A Jail exists with IP: ${IP4}"
       exit 5
     fi
@@ -52,9 +52,9 @@ then
 fi
 if [ "${IP6}" != "OFF" ]
 then
-  for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+  for i in `ls -d "${JDIR}"/.*.meta 2>/dev/null`
   do
-    _ipv6=`cat ${i}/ipv6 2>/dev/null|tr a-z A-Z`
+    _ipv6="`cat "${i}/ipv6" 2>/dev/null|tr a-z A-Z`"
     _nipv6="`echo ${IP6}|tr a-z A-Z`/${MASK6}"
     if [ "${ipv6}" = "${_nipv6}" ] ; then
       warden_error "A Jail exists with IP: ${IP6}"
@@ -76,12 +76,12 @@ fi
 
 
 # Extract the header info of the file
-cd ${WTMP}
+cd "${WTMP}"
 rm -rf tmp.$$ >/dev/null
 mkdir tmp.$$
 cd tmp.$$
 
-tar xvzf ${IFILE} >/dev/null 2>/dev/null
+tar xvzf "${IFILE}" >/dev/null 2>/dev/null
 if [ "${?}" != "0" ]
 then
     warden_error "Extracting header info failed! "
@@ -138,7 +138,7 @@ do
     FHOST="`echo $line | cut -d ' ' -f 2-10`"
   fi
 
-done < $HEADER 
+done < "$HEADER "
 
 cd ..
 
@@ -158,10 +158,10 @@ fi
 
 if [ "${IP4}" = "OFF" ]
 then
-  for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+  for i in `ls -d "${JDIR}"/.*.meta 2>/dev/null`
   do
     if [ -n "${FIP4}" ] ; then
-      if [ "`cat ${i}/ipv4`" = "${FIP4}" ] ; then
+      if [ "`cat "${i}/ipv4"`" = "${FIP4}" ] ; then
         warden_error "A Jail already exists with IP: $FIP4"
         rm -rf tmp.$$ 2>/dev/null
         exit 7
@@ -177,11 +177,11 @@ fi
 
 if [ "${IP6}" = "OFF" ]
 then
-  for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+  for i in `ls -d "${JDIR}"/.*.meta 2>/dev/null`
   do
     if [ -n "${FIP6}" ] ; then
 
-      _ipv6=`cat ${i}/ipv6 2>/dev/null|tr a-z A-Z`
+      _ipv6=`cat "${i}/ipv6" 2>/dev/null|tr a-z A-Z`
       _nipv6=`echo ${FIP6}|tr a-z A-Z`
       if [ "${ipv6}" = "${_nipv6}" ] ; then
         warden_error "A Jail already exists with IP: $FIP6"
@@ -209,19 +209,19 @@ JAILDIR="${JDIR}/${HOST}"
 isDirZFS "${JDIR}"
 if [ $? -eq 0 ] ; then
   # Create ZFS mount
-  tank=`getZFSTank "$JDIR"`
-  rp=`getZFSRelativePath "${JAILDIR}"`
-  zfs create -p ${tank}${rp}
+  tank="`getZFSTank "$JDIR"`"
+  rp="`getZFSRelativePath "${JAILDIR}"`"
+  zfs create -p "${tank}${rp}"
 else
   mkdir -p "${JAILDIR}"
 fi
 
 # Create the meta-dir
 set_warden_metadir
-mkdir ${JMETADIR}
+mkdir "${JMETADIR}"
 
 # Copy over extra jail flags
-cp tmp.$$/jail-* ${JMETADIR}/ 2>/dev/null
+cp tmp.$$/jail-* "${JMETADIR}/" 2>/dev/null
 
 # give new jail an id
 set_unique_id "${JDIR}"
@@ -230,7 +230,7 @@ set_unique_id "${JDIR}"
 rm -rf tmp.$$ 2>/dev/null
 
 # Extract the jail contents
-tail +${SKIP} ${IFILE} | tar xpf - -C "${JAILDIR}" 2>/dev/null
+tail +${SKIP} "${IFILE}" | tar xpf - -C "${JAILDIR}" 2>/dev/null
 
 # Make sure we have an IP address saved
 if [ -n "${IP4}" ] ; then
@@ -256,7 +256,7 @@ if [ "${HOST}" != "OFF" -a ! -z "${HOST}" ]; then
 
   # Change the hostname in rc.conf
   if [ -e "${JAILDIR}/etc/rc.conf" ] ; then
-    cat "${JAILDIR}/etc/rc.conf" | grep -v "hostname=" >${JAILDIR}/.rc.conf
+    cat "${JAILDIR}/etc/rc.conf" | grep -v "hostname=" >"${JAILDIR}/.rc.conf"
     echo "hostname=\"${HOST}\"" >>"${JAILDIR}/.rc.conf"
     mv "${JAILDIR}/.rc.conf" "${JAILDIR}/etc/rc.conf"
   fi
