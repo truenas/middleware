@@ -69,7 +69,7 @@ esac
 
 # XX: Remove conditional when we switch to USE_NEW_LAYOUT
 if [ "$USE_NEW_LAYOUT" ]; then
-	NANO_OBJ=${AVATAR_ROOT}/obj/${AVATAR_COMPONENT}/${NANO_ARCH}
+	NANO_OBJ=${AVATAR_ROOT}/../obj/${AVATAR_COMPONENT}/${NANO_ARCH}
 else
 	NANO_OBJ=${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}
 fi

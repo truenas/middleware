@@ -74,7 +74,11 @@ truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
 	env NANO_LABEL=TrueNAS script -a ${RELEASE_LOGFILE} ${MAKE} build
 	mkdir -p TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+.if defined(USE_NEW_LAYOUT)
+	mv ../obj/os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+.else
 	mv os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+.endif
 
 # Build truenas using all sources 
 truenas-all-direct:
