@@ -34,10 +34,23 @@ update: checkout
 
 clean:
 	${ENV_SETUP} build/build_cleanup.py
+.if defined(USE_NEW_LAYOUT)
+	rm -rf ../obj
+.else
 	rm -rf FreeBSD ${NANO_LABEL}-${VERSION}-* release.build.log nas_source
+.endif
 
 clean-packages:
+.if defined(USE_NEW_LAYOUT)
+	find ../obj/os-base -name "*.tbz" -delete
+.else
 	find os-base -name "*.tbz" -delete
+.endif
+
+distclean: clean
+.if defined(USE_NEW_LAYOUT)
+	rm -fr ../extra-src
+.endif
 
 save-build-env:
 	${ENV_SETUP} build/save_build.sh
