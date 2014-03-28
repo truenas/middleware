@@ -11,9 +11,6 @@ TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
 
-# only checkout sources
-CHECKOUT_ONLY=false
-
 SRCS_MANIFEST="${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/repo-manifest"
 
 # Using shallow "--depth 1" git checkouts is problematic, so we default
