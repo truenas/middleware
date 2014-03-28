@@ -34,10 +34,11 @@ update: checkout
 
 clean:
 	${ENV_SETUP} build/build_cleanup.py
+	rm -rf ${NANO_LABEL}-${VERSION}-* release.build.log
 .if defined(USE_NEW_LAYOUT)
 	rm -rf ../obj
 .else
-	rm -rf FreeBSD ${NANO_LABEL}-${VERSION}-* release.build.log nas_source
+	rm -rf FreeBSD nas_source
 .endif
 
 clean-packages:
