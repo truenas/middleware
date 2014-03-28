@@ -173,38 +173,12 @@ generic_checkout_git()
 
 checkout_source()
 {
-    if  ! ${UPDATE} ; then
-        return
-    fi
-
-    # Don't update unless forced to or if we are building a different
-    # project.
-    # The file ${AVATAR_ROOT}/FreeBSD/.pulled should contain our
-    # NANO_LABEL, otherwise we need to pull sources.
-    if ! $FORCE_UPDATE && [ -f ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled ]
-    then
-        if [ "`cat ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled`" = "$NANO_LABEL" ]
-        then
-            echo "skipping source update because  (${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled = NANO_LABEL($NANO_LABEL))"
-            return
-        else
-            echo "updating because (${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled != NANO_LABEL($NANO_LABEL))"
-        fi
-    fi
-
-    if  ! ${UPDATE} ; then
-        return
-    fi
-
-    mkdir -p ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD
-
-    echo "Use git set!"
-
     # First try to get the freenas repo which we're building from
     if [ -f .git/config ]; then
         echo `awk '/url = / {print $3}' .git/config` `git log -1 --format="%H"` > ${SRCS_MANIFEST}
     fi
 
+    mkdir -p ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD
     generic_checkout_git FREEBSD "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD" src
 
 # Nuke newly created files to avoid build errors.
