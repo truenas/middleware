@@ -61,6 +61,12 @@ class CIFS_ShareForm(ModelForm):
         fields = '__all__'
         model = models.CIFS_Share
 
+    def clean_cifs_path(self):
+        path = self.cleaned_data.get('cifs_path')
+        if path and not os.path.exists(path):
+            raise forms.ValidationError(_('The path %s does not exist') % path)
+        return path
+
     def clean_cifs_hostsallow(self):
         net = self.cleaned_data.get("cifs_hostsallow")
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()
