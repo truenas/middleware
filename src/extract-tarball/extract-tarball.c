@@ -235,7 +235,7 @@ main(int argc, char **argv)
 			warn("close");
 	}
 
-	asprintf(&cmd, "/usr/bin/tar -C %s -%s -", dir, tflags);
+	asprintf(&cmd, "/usr/bin/tar -C '%s' -%s -", dir, tflags);
 	if ((fp = popen(cmd, "w")) == NULL) {
 		perror("popen");
 		exit(1);
