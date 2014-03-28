@@ -171,7 +171,7 @@ generic_checkout_git()
     )
 }
 
-checkout_freebsd_source()
+checkout_source()
 {
     if  ! ${UPDATE} ; then
         return
@@ -275,7 +275,7 @@ main()
         ;;
     esac
 
-    checkout_freebsd_source
+    checkout_source
 }
 
 main "$@"
