@@ -14,7 +14,7 @@ TOP="$(pwd)"
 # only checkout sources
 CHECKOUT_ONLY=false
 
-SRCS_MANIFEST="${AVATAR_ROOT}/FreeBSD/repo-manifest"
+SRCS_MANIFEST="${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/repo-manifest"
 
 # Using shallow "--depth 1" git checkouts is problematic, so we default
 # it to off.
@@ -83,7 +83,7 @@ do_git_update()
 #       rest of the information for branch, repo, cache, etc.
 #  $2 - checkout_path where to checkout the code under the build dir.
 #       You probably want to prefix with ${AVATAR_ROOT}
-#       (example "${AVATAR_ROOT}/FreeBSD")
+#       (example "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD")
 #  $3 - Actual name the git checkout should be done under.
 # Globals:
 #  ${GIT_${repo_name}_REPO} - authoritive repo path
@@ -93,7 +93,7 @@ do_git_update()
 #                            this is on by default right now.
 # example:
 #
-#    generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
+#    generic_checkout_git FREEBSD "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD" src
 # This will checkout into the top level the repo under $GIT_FREEBSD_REPO
 # into the directory FreeBSD/src under your build directory.
 #
@@ -184,14 +184,14 @@ checkout_freebsd_source()
 	# project.
 	# The file ${AVATAR_ROOT}/FreeBSD/.pulled should contain our
 	# NANO_LABEL, otherwise we need to pull sources.
-	if ! $FORCE_UPDATE && [ -f ${AVATAR_ROOT}/FreeBSD/.pulled ]
+	if ! $FORCE_UPDATE && [ -f ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled ]
 	then
-		if [ "`cat ${AVATAR_ROOT}/FreeBSD/.pulled`" = "$NANO_LABEL" ]
+		if [ "`cat ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled`" = "$NANO_LABEL" ]
 		then
-			echo "skipping source update because  (${AVATAR_ROOT}/FreeBSD/.pulled = NANO_LABEL($NANO_LABEL))"
+			echo "skipping source update because  (${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled = NANO_LABEL($NANO_LABEL))"
 			return
 		else
-			echo "updating because (${AVATAR_ROOT}/FreeBSD/.pulled != NANO_LABEL($NANO_LABEL))"
+			echo "updating because (${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled != NANO_LABEL($NANO_LABEL))"
 		fi
 	fi
 
@@ -199,7 +199,7 @@ checkout_freebsd_source()
 		return
 	fi
 
-	mkdir -p ${AVATAR_ROOT}/FreeBSD
+	mkdir -p ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD
 
 	echo "Use git set!"
 
@@ -208,28 +208,28 @@ checkout_freebsd_source()
 		echo `awk '/url = / {print $3}' .git/config` `git log -1 --format="%H"` > ${SRCS_MANIFEST}
 	fi
 
-	generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD" src
+	generic_checkout_git FREEBSD "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD" src
 
 # Nuke newly created files to avoid build errors.
-	git_status_ok="$AVATAR_ROOT/FreeBSD/.git_status_ok"
+	git_status_ok="${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.git_status_ok"
 	rm -rf "$git_status_ok"
 	(
-	 cd $AVATAR_ROOT/FreeBSD/src && git status --porcelain
+	 cd ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/src && git status --porcelain
 	) | tee "$git_status_ok"
 	awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
 
 # Checkout git ports
-	generic_checkout_git PORTS "${AVATAR_ROOT}/FreeBSD" ports
+	generic_checkout_git PORTS "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD" ports
 
 	for proj in $ADDL_REPOS ; do
 		generic_checkout_git \
 			"`echo $proj|tr '-' '_'`" \
-			"${AVATAR_ROOT}/nas_source" \
+			"${AVATAR_ROOT}/${EXTRA_SRC}/nas_source" \
                    `echo $proj | tr 'A-Z' 'a-z'`
 	done
 
 	# Mark git clone/pull as being done already.
-	echo "$NANO_LABEL" > ${AVATAR_ROOT}/FreeBSD/.pulled
+	echo "$NANO_LABEL" > ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled
 }
 
 check_sandbox()
@@ -237,22 +237,22 @@ check_sandbox()
 	local status=0
 	local checkout_proj_dir
 
-	if [ ! -e ${AVATAR_ROOT}/FreeBSD/.pulled ]; then
+	if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled ]; then
 		status=1
 	fi
 
-	if [ ! -e ${AVATAR_ROOT}/FreeBSD/src/.git ]; then
+	if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/src/.git ]; then
 		status=1
 	fi
 
-	if [ ! -e ${AVATAR_ROOT}/FreeBSD/ports/.git ]; then
+	if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/ports/.git ]; then
 		status=1
 	fi
 
 
 	for proj in $ADDL_REPOS; do
 		checkout_proj_dir=`echo $proj | tr 'A-Z' 'a-z'`
-		if [ ! -e ${AVATAR_ROOT}/nas_source/${checkout_proj_dir} ]; then
+		if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/nas_source/${checkout_proj_dir} ]; then
 			status=1
 		fi
 	done
