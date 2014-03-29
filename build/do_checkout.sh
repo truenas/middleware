@@ -105,6 +105,17 @@ generic_checkout_git()
     eval local my_branch=\${GIT_${repo_name}_BRANCH}
     eval local my_tag=\${GIT_${repo_name}_TAG}
     echo "Checkout: $repo_name -> $my_repo"
+
+    if [ "$BRANCH" ]; then
+        echo "Overrding branch: ${my_branch}, using branch: ${BRANCH}"
+        my_branch=${BRANCH}
+    fi
+
+    if [ "$TAG" ]; then
+        echo "Overrding tag: ${my_tag}, using branch: ${TAG}"
+        my_tag=${TAG}
+    fi
+
     if [ -z "$my_branch" -a -z "$my_tag" ] ; then
         my_branch=master
     fi
