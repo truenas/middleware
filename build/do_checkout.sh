@@ -223,7 +223,7 @@ check_sandbox()
 
     for proj in $ADDL_REPOS; do
         checkout_proj_dir=`echo $proj | tr 'A-Z' 'a-z'`
-        if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/nas_source/${checkout_proj_dir} ]; then
+        if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/nas_source/${checkout_proj_dir}/.git ]; then
             status=1
         fi
     done
