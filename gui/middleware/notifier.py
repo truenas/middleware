@@ -1521,7 +1521,7 @@ class notifier:
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
-        zfsproc = self._pipeopen("/sbin/zfs create %s -V %s %s" % (options, size, name))
+        zfsproc = self._pipeopen("/sbin/zfs create '%s' -V '%s' '%s'" % (options, size, name))
         zfs_err = zfsproc.communicate()[1]
         zfs_error = zfsproc.wait()
         return zfs_error, zfs_err
@@ -1534,7 +1534,7 @@ class notifier:
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
-        zfsproc = self._pipeopen("/sbin/zfs create %s %s" % (options, path))
+        zfsproc = self._pipeopen("/sbin/zfs create '%s' '%s'" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
         if zfs_error == 0:
@@ -1543,7 +1543,7 @@ class notifier:
 
     def list_zfs_vols(self, volname):
         """Return a dictionary that contains all ZFS volumes list"""
-        zfsproc = self._pipeopen("/sbin/zfs list -H -o name,volsize,used,avail,refer -t volume -r %s" % (str(volname),))
+        zfsproc = self._pipeopen("/sbin/zfs list -H -o name,volsize,used,avail,refer -t volume -r '%s'" % (str(volname),))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_output = zfs_output.split('\n')
         retval = {}
@@ -1576,7 +1576,7 @@ class notifier:
         Check if a given snapshot is being hold by the replication system
         DISCLAIMER: mntlock has to be acquired before this call
         """
-        zfsproc = self._pipeopen("zfs get -H freenas:state %s" % (name))
+        zfsproc = self._pipeopen("zfs get -H freenas:state '%s'" % (name))
         output = zfsproc.communicate()[0]
         if output != '':
             fsname, attrname, value, source = output.split('\n')[0].split('\t')
@@ -1614,7 +1614,7 @@ class notifier:
         elif recursive:
             try:
                 with mntlock(blocking=False):
-                    zfsproc = self._pipeopen("/sbin/zfs list -Hr -t snapshot -o name %s" % (path))
+                    zfsproc = self._pipeopen("/sbin/zfs list -Hr -t snapshot -o name '%s'" % (path))
                     snaps = zfsproc.communicate()[0]
                     for snap in filter(None, snaps.splitlines()):
                         if self.__snapshot_hold(snap):
@@ -1624,9 +1624,9 @@ class notifier:
                 retval = 'Try again later.'
         if retval is None:
             if recursive:
-                zfsproc = self._pipeopen("zfs destroy -r %s" % (path))
+                zfsproc = self._pipeopen("zfs destroy -r '%s'" % (path))
             else:
-                zfsproc = self._pipeopen("zfs destroy %s" % (path))
+                zfsproc = self._pipeopen("zfs destroy '%s'" % (path))
             retval = zfsproc.communicate()[1]
             if zfsproc.returncode == 0:
                 from freenasUI.storage.models import Task, Replication
@@ -1641,7 +1641,7 @@ class notifier:
         return retval
 
     def destroy_zfs_vol(self, name):
-        zfsproc = self._pipeopen("zfs destroy %s" % (str(name),))
+        zfsproc = self._pipeopen("zfs destroy '%s'" % (str(name),))
         retval = zfsproc.communicate()[1]
         return retval
 
@@ -1937,7 +1937,7 @@ class notifier:
             the absolute path for the volume on the system.
         """
         if fstype == 'ZFS':
-            p1 = self._pipeopen('zfs list -H -o mountpoint %s' % (name, ))
+            p1 = self._pipeopen('zfs list -H -o mountpoint '%s'' % (name, ))
             stdout = p1.communicate()[0]
             if not p1.returncode:
                 return stdout.strip()
@@ -3271,8 +3271,8 @@ class notifier:
             # Remember the pool cache
             self._system("zpool set cachefile=/data/zfs/zpool.cache %s" % (name))
             # These should probably be options that are configurable from the GUI
-            self._system("zfs set aclmode=passthrough %s" % name)
-            self._system("zfs set aclinherit=passthrough %s" % name)
+            self._system("zfs set aclmode=passthrough '%s'" % name)
+            self._system("zfs set aclinherit=passthrough '%s'" % name)
             self.restart("collectd")
             return True
         else:
@@ -3446,21 +3446,21 @@ class notifier:
 
     def zfs_mksnap(self, dataset, name, recursive=False):
         if recursive:
-            p1 = self._pipeopen("/sbin/zfs snapshot -r %s@%s" % (dataset, name))
+            p1 = self._pipeopen("/sbin/zfs snapshot -r '%s'@'%s'" % (dataset, name))
         else:
-            p1 = self._pipeopen("/sbin/zfs snapshot %s@%s" % (dataset, name))
+            p1 = self._pipeopen("/sbin/zfs snapshot '%s'@'%s'" % (dataset, name))
         if p1.wait() != 0:
             err = p1.communicate()[1]
             raise MiddlewareError("Snapshot could not be taken: %s" % err)
         return True
 
     def zfs_clonesnap(self, snapshot, dataset):
-        zfsproc = self._pipeopen('zfs clone %s %s' % (snapshot, dataset))
+        zfsproc = self._pipeopen("zfs clone '%s' '%s'" % (snapshot, dataset))
         retval = zfsproc.communicate()[1]
         return retval
 
     def rollback_zfs_snapshot(self, snapshot):
-        zfsproc = self._pipeopen('zfs rollback %s' % (snapshot))
+        zfsproc = self._pipeopen("zfs rollback '%s'" % (snapshot))
         retval = zfsproc.communicate()[1]
         return retval
 
@@ -3504,7 +3504,7 @@ class notifier:
         else:
             props = ','.join(props)
 
-        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source '%s' '%s'" % (
+        zfsproc = self._pipeopen("/sbin/zfs get '%s' -H -o name,property,value,source '%s' '%s'" % (
             '-r' if recursive else '',
             props,
             str(name) if name else '',
@@ -3571,9 +3571,9 @@ class notifier:
         name = str(name)
         retval = None
         if recursive:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r %s" % (name)
+            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r '%s'" % (name)
         else:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
+            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 '%s'" % (name)
         try:
             with mntlock(blocking=False):
                 zfsproc = self._pipeopen(zfscmd)
@@ -3593,9 +3593,9 @@ class notifier:
         name = str(name)
         retval = None
         if recursive:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r %s" % (name)
+            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r '%s'" % (name)
         else:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
+            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 '%s'" % (name)
         try:
             with mntlock(blocking=False):
                 zfsproc = self._pipeopen(zfscmd)
