@@ -3540,7 +3540,7 @@ class notifier:
         name = str(name)
         item = str(item)
         value = str(value)
-        zfsproc = self._pipeopen('zfs set %s=%s "%s"' % (item, value, name))
+        zfsproc = self._pipeopen("zfs set '%s'='%s' '%s'" % (item, value, name))
         err = zfsproc.communicate()[1]
         if zfsproc.returncode == 0:
             return True, None
@@ -3558,9 +3558,9 @@ class notifier:
         name = str(name)
         item = str(item)
         if recursive:
-            zfscmd = 'zfs inherit -r %s %s' % (item, name)
+            zfscmd = "zfs inherit -r '%s' '%s'" % (item, name)
         else:
-            zfscmd = 'zfs inherit %s %s' % (item, name)
+            zfscmd = "zfs inherit '%s' '%s'" % (item, name)
         zfsproc = self._pipeopen(zfscmd)
         err = zfsproc.communicate()[1]
         if zfsproc.returncode == 0:
