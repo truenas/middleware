@@ -53,9 +53,10 @@ def _get_rrd_path():
 
 def plugin2graphs(name):
 
+    rrdpath = _get_rrd_path()
     graphs = []
     if name in rrd.name2plugin:
-        ins = rrd.name2plugin[name](RRD_BASE_PATH)
+        ins = rrd.name2plugin[name](rrdpath)
         ids = ins.get_identifiers()
         if ids is not None:
             if len(ids) > 0:
@@ -65,9 +66,9 @@ def plugin2graphs(name):
                         'identifier': ident,
                     })
         else:
-           graphs.append({
-               'plugin': ins.plugin,
-           })
+            graphs.append({
+                'plugin': ins.plugin,
+            })
 
     return graphs
 
@@ -100,11 +101,11 @@ def generate(request):
         identifier = request.GET.get("identifier")
 
         plugin = plugin(
-            base_path=RRD_BASE_PATH,
+            base_path=_get_rrd_path(),
             unit=unit,
             step=step,
             identifier=identifier
-            )
+        )
         fd, path = plugin.generate()
         with open(path, 'rb') as f:
             data = f.read()
