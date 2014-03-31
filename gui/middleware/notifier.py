@@ -1521,7 +1521,7 @@ class notifier:
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
-        zfsproc = self._pipeopen("/sbin/zfs create '%s' -V '%s' '%s'" % (options, size, name))
+        zfsproc = self._pipeopen("/sbin/zfs create %s -V '%s' '%s'" % (options, size, name))
         zfs_err = zfsproc.communicate()[1]
         zfs_error = zfsproc.wait()
         return zfs_error, zfs_err
@@ -1534,7 +1534,7 @@ class notifier:
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
-        zfsproc = self._pipeopen("/sbin/zfs create '%s' '%s'" % (options, path))
+        zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
         if zfs_error == 0:
@@ -1592,7 +1592,7 @@ class notifier:
             user = repl.repl_remote.ssh_remote_dedicateduser
         else:
             user = 'root'
-        proc = self._pipeopen('/usr/bin/ssh -i /data/ssh/replication -o ConnectTimeout=3 -p %s %s@%s "zfs list -Ht snapshot -o name"' % (
+        proc = self._pipeopen('/usr/bin/ssh -i /data/ssh/replication -o ConnectTimeout=3 -p %s '%s'@'%s' "zfs list -Ht snapshot -o name"' % (
             repl.repl_remote.ssh_remote_port,
             user,
             repl.repl_remote.ssh_remote_hostname,
@@ -3415,7 +3415,7 @@ class notifier:
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
 
         if path:
-            zfsproc = self._pipeopen("/sbin/zfs list -r -t snapshot -H -S creation %s" % path)
+            zfsproc = self._pipeopen("/sbin/zfs list -r -t snapshot -H -S creation '%s'" % path)
         else:
             zfsproc = self._pipeopen("/sbin/zfs list -t snapshot -H -S creation")
         lines = zfsproc.communicate()[0].split('\n')
@@ -3504,7 +3504,7 @@ class notifier:
         else:
             props = ','.join(props)
 
-        zfsproc = self._pipeopen("/sbin/zfs get '%s' -H -o name,property,value,source '%s' '%s'" % (
+        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source %s '%s'" % (
             '-r' if recursive else '',
             props,
             str(name) if name else '',
@@ -3558,9 +3558,9 @@ class notifier:
         name = str(name)
         item = str(item)
         if recursive:
-            zfscmd = "zfs inherit -r '%s' '%s'" % (item, name)
+            zfscmd = "zfs inherit -r %s '%s'" % (item, name)
         else:
-            zfscmd = "zfs inherit '%s' '%s'" % (item, name)
+            zfscmd = "zfs inherit %s '%s'" % (item, name)
         zfsproc = self._pipeopen(zfscmd)
         err = zfsproc.communicate()[1]
         if zfsproc.returncode == 0:
