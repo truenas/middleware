@@ -1592,7 +1592,7 @@ class notifier:
             user = repl.repl_remote.ssh_remote_dedicateduser
         else:
             user = 'root'
-        proc = self._pipeopen('/usr/bin/ssh -i /data/ssh/replication -o ConnectTimeout=3 -p %s '%s'@'%s' "zfs list -Ht snapshot -o name"' % (
+        proc = self._pipeopen('/usr/bin/ssh -i /data/ssh/replication -o ConnectTimeout=3 -p %s "%s"@"%s" "zfs list -Ht snapshot -o name"' % (
             repl.repl_remote.ssh_remote_port,
             user,
             repl.repl_remote.ssh_remote_hostname,
