@@ -1937,7 +1937,7 @@ class notifier:
             the absolute path for the volume on the system.
         """
         if fstype == 'ZFS':
-            p1 = self._pipeopen('zfs list -H -o mountpoint '%s'' % (name, ))
+            p1 = self._pipeopen("zfs list -H -o mountpoint '%s'" % (name, ))
             stdout = p1.communicate()[0]
             if not p1.returncode:
                 return stdout.strip()
