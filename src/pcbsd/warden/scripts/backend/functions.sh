@@ -202,7 +202,7 @@ downloadchroot() {
      trap INT QUIT ABRT KILL TERM EXIT
   fi
 
-  [ "$(md5 -q ${FBSD_TARBALL})" != "$(cat "${FBSD_TARBALL_CKSUM})"" ] &&
+  [ "$(md5 -q "${FBSD_TARBALL}")" != "$(cat "${FBSD_TARBALL_CKSUM}")" ] &&
     warden_error "Error in download data, checksum mismatch. Please try again later."
 
   # Creating ZFS dataset?
