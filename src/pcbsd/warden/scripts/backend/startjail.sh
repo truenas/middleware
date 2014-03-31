@@ -274,7 +274,7 @@ __EOF__
      warden_run ipfw add allow all from any to any via lo0
   fi
 
-  prioroty=0
+  priority=0
   instance=`get_ipfw_nat_instance "${IFACE}"`
   if [ -z "${instance}" ] ; then
      priority=`get_ipfw_nat_priority`
