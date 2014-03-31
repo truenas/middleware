@@ -3704,6 +3704,19 @@ class notifier:
         self.__diskserial = {}
         self.__twcli = {}
 
+    def __del__(self):
+        self.__confxml = None
+
+    @property
+    def __confxml(self):
+        return self.__confxml_real
+    @__confxml.setter
+    def __confxml(self, value):
+        if hasattr(self, '__confxml_real'):
+            if self.__confxml_real is not None:
+                self.__confxml_real.freeDoc()
+        self.__confxml_real = value
+
     def _geom_confxml(self):
         if self.__confxml is None:
             self.__confxml = libxml2.parseDoc(self.sysctl('kern.geom.confxml'))
