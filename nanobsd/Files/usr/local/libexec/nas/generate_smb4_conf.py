@@ -22,7 +22,14 @@ from django.db.models import Q
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.samba import Samba4
-from freenasUI.common.system import get_samba4_path
+from freenasUI.common.system import (
+    get_samba4_path,
+    activedirectory_enabled,
+    domaincontroller_enabled,
+    ldap_enabled,
+    nis_enabled,
+    nt4_enabled
+)
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
     services,
@@ -83,42 +90,6 @@ def get_dcerpc_endpoint_servers():
         'backupkey', 'dnsserver', 'winreg', 'srvsvc'
     ]
     return dcerpc_endpoint_servers
-
-
-def directoryservice_enabled(ds=None):
-    enabled = False
-    if not ds:
-        return enabled
-
-    try:
-        if services.objects.filter(srv_service='directoryservice')[0].srv_enable:
-            settings = Settings.objects.all()[0]
-            if settings.stg_directoryservice == ds:
-                enabled = True
-    except:
-        pass
-
-    return enabled
-
-
-def activedirectory_enabled():
-    return directoryservice_enabled('activedirectory')
-
-
-def domaincontroller_enabled():
-    return directoryservice_enabled('domaincontroller')
-
-
-def ldap_enabled():
-    return directoryservice_enabled('ldap')
-
-
-def nis_enabled():
-    return directoryservice_enabled('nis')
-
-
-def nt4_enabled():
-    return directoryservice_enabled('nt4')
 
 
 def get_server_role():
