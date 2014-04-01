@@ -59,8 +59,8 @@ do_git_update()
     local my_branch=$1
     local my_tag=$2
 
-        git fetch origin
-    if [ ! -z "$my_tag" ] ; then
+    git fetch origin
+    if [ "$my_tag" ] ; then
         git checkout "$my_tag"
     else
     # if "my branch doesn't exist" then create it.
@@ -91,6 +91,7 @@ do_git_update()
 # example:
 #
 #    generic_checkout_git FREEBSD "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD" src
+#
 # This will checkout into the top level the repo under $GIT_FREEBSD_REPO
 # into the directory FreeBSD/src under your build directory.
 #
@@ -112,7 +113,7 @@ generic_checkout_git()
     fi
 
     if [ "$TAG" ]; then
-        echo "Overrding tag: ${my_tag}, using branch: ${TAG}"
+        echo "Overrding tag: ${my_tag}, using tag: ${TAG}"
         my_tag=${TAG}
     fi
 
@@ -141,6 +142,7 @@ generic_checkout_git()
     #  git remote add -t remote-branch remote-name remote-url  ?
     #  instead of a fetch of all of origin?
     if [ -d ${checkout_name}/.git ] ; then
+        ## do stuff if there is already a checkout...
         cd ${checkout_name}
         local old_branch=`git rev-parse --abbrev-ref HEAD`
         if [ "x${old_branch}" != "x${my_branch}" ]; then
@@ -163,19 +165,24 @@ generic_checkout_git()
                 "+refs/heads/*:refs/remotes/origin/*"
             else
               git config --unset remote.origin.fetch '.*'
-            git config --add remote.origin.fetch \
+              git config --add remote.origin.fetch \
                 "+refs/heads/${my_branch}:refs/remotes/origin/${my_branch}"
             fi
 
-                    git remote set-url origin "${my_repo}"
+            git remote set-url origin "${my_repo}"
             git fetch origin
             do_git_update "${my_branch}" "${my_tag}"
         fi
         git pull $_depth_arg
         cd ..
     else
-
-            git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_name}
+        # do a fresh checkout...
+        git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_name}
+        if [ "$my_tag" ]; then
+            cd ${checkout_name}
+            git checkout "$my_tag"
+            cd ..
+        fi
     fi
     echo $spl | grep -q x || set +x
     echo "${my_repo}" `cd ${checkout_name} && git rev-parse HEAD` >> ${SRCS_MANIFEST}
@@ -184,12 +191,13 @@ generic_checkout_git()
 
 checkout_source()
 {
+    mkdir -p ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD
+
     # First try to get the freenas repo which we're building from
     if [ -f .git/config ]; then
         echo `awk '/url = / {print $3}' .git/config` `git log -1 --format="%H"` > ${SRCS_MANIFEST}
     fi
 
-    mkdir -p ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD
     generic_checkout_git FREEBSD "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD" src
 
 # Nuke newly created files to avoid build errors.
@@ -260,6 +268,7 @@ main()
         ;;
     esac
 
+    set -e
     checkout_source
 }
 
