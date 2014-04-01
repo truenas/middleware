@@ -371,22 +371,27 @@ class Dev(Tnode):
             )
 
         name = self.name
-        search = self._doc.xpathEval("//class[name = 'ELI']"
-                                     "//provider[name = '%s']/../consumer"
-                                     "/provider/@ref" % name)
+        search = self._doc.xpath(
+            "//class[name = 'ELI']"
+            "//provider[name = '%s']/../consumer"
+            "/provider/@ref" % name
+        )
         if len(search) > 0:
-            search = self._doc.xpathEval("//provider[@id = '%s']"
-                                         "/name" % search[0].content)
-            name = search[0].content
+            search = self._doc.xpath(
+                "//provider[@id = '%s']/name" % search[0]
+            )
+            name = search[0].text
 
-        search = self._doc.xpathEval("//class[name = 'LABEL']"
-                                     "//provider[name = '%s']/../consumer"
-                                     "/provider/@ref" % name)
+        search = self._doc.xpath(
+            "//class[name = 'LABEL']"
+            "//provider[name = '%s']/../consumer"
+            "/provider" % name
+        )
 
         provider = None
         if len(search) > 0:
-            self.devname = search[0].xpathEval("../../../name")[0].content
-            provider = search[0].content
+            self.devname = search[0].xpath("../../../name")[0].text
+            provider = search[0].attrib.get('ref')
         else:
 
             # Treat .nop as a regular dev (w/o .nop)
@@ -394,11 +399,13 @@ class Dev(Tnode):
                 self.devname = self.name[:-4]
             else:
                 self.devname = self.name
-            search = self._doc.xpathEval("//class[name = 'DEV']"
-                                         "/geom[name = '%s']"
-                                         "//provider/@ref" % self.devname)
+            search = self._doc.xpath(
+                "//class[name = 'DEV']"
+                "/geom[name = '%s']"
+                "//provider/@ref" % self.devname
+            )
             if len(search) > 0:
-                provider = search[0].content
+                provider = search[0]
             elif self.status == 'ONLINE':
                 log.warn("It should be a valid device: %s", self.name)
                 self.disk = self.name
@@ -419,9 +426,10 @@ class Dev(Tnode):
                         self.path = reg.group("path")
 
         if provider:
-            search = self._doc.xpathEval("//provider[@id = '%s']"
-                                         "/../name" % provider)
-            self.disk = search[0].content
+            search = self._doc.xpath(
+                "//provider[@id = '%s']/../name" % provider
+            )
+            self.disk = search[0].text
 
 
 class ZFSList(SortedDict):
