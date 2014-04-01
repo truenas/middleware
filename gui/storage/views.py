@@ -867,7 +867,7 @@ def disk_wipe(request, devname):
         if form.is_valid():
             mounted = []
             for geom in notifier().disk_get_consumers(devname):
-                gname = geom.xpathEval("./name")[0].content
+                gname = geom.xpath("./name")[0].text
                 dev = "/dev/%s" % (gname, )
                 if dev not in mounted and is_mounted(device=dev):
                     mounted.append(dev)
