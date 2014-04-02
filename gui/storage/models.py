@@ -913,7 +913,7 @@ class Replication(Model):
     @property
     def repl_lastresult(self):
         if not os.path.exists(REPL_RESULTFILE):
-            return None
+            return 'Waiting'
         with open(REPL_RESULTFILE, 'rb') as f:
             data = f.read()
         try:
