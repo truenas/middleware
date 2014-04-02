@@ -124,7 +124,7 @@ my_check_call("git checkout %s" % args.build_branch, shell=True)
 
 # go back to sandbox level
 os.chdir("..")
-f = open(".sb-vars", "w")
+f = open(".sandbox-env", "w")
 
 def write_sb_var(f, var, val):
     if val is None:
