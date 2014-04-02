@@ -906,9 +906,10 @@ class Replication(Model):
         ordering = ["repl_filesystem"]
 
     def __unicode__(self):
-        return '%s -> %s' % (
+        return '%s -> %s:%s' % (
             self.repl_filesystem,
-            self.repl_remote.ssh_remote_hostname)
+            self.repl_remote.ssh_remote_hostname,
+            self.repl_zfs)
 
     @property
     def repl_lastresult(self):
