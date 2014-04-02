@@ -254,7 +254,7 @@ def add_activedirectory_conf(smb4_conf):
 
     confset1(smb4_conf, "template shell = /bin/sh")
     confset2(smb4_conf, "template homedir = %s",
-        "/home/%D/%U" if ad.ad_use_default_domain else "/home/%U")
+        "/home/%D/%U" if not ad.ad_use_default_domain else "/home/%U")
 
     if not ad.ad_unix_extensions:
         confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
