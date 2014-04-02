@@ -40,9 +40,6 @@ usage: ${0##*/} [-afJsx] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-- 
 -t target	- target to build (os-base, <plugin-name>, etc).
 		  This switch can be used more than once to specify multiple targets.
 -x		- enable sh -x debugging
--z		- End script before images are built.  This is useful for
-		  preloading a package build so you can do a full build after this
-		  and compress the resulting thin image.
 
 EOF
 	exit 1
@@ -88,7 +85,7 @@ show_build_targets()
 
 parse_cmdline()
 {
-	while getopts 'afj:st:xz' _optch
+	while getopts 'afj:st:x' _optch
 	do
 		case "${_optch}" in
 		a)
@@ -109,9 +106,6 @@ parse_cmdline()
 			;;
 		x)
 			TRACE="-x"
-			;;
-		z)
-			export PACKAGE_PREP_BUILD=1
 			;;
 		\?)
 			usage
