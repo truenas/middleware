@@ -14,6 +14,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
+
 def main():
     """Use the django ORM to generate a config file.  We'll build the
     config file as a series of lines, and once that is done write it
@@ -22,11 +23,20 @@ def main():
     afp_config = "/usr/local/etc/afp.conf"
     cf_contents = []
 
+    # We do this early to set vol dbnest in the global section
+    # based on whether a share path has been set.
+    from freenasUI.sharing.models import AFP_Share
+    afp_share = AFP_Share.objects.all()
+    dbpath = False
+    for share in afp_share:
+        if share.afp_dbpath:
+            dbpath = True
+
     from freenasUI.services.models import AFP
     afp = AFP.objects.order_by('id')[0]
 
     cf_contents.append("[Global]\n")
-    
+
     if afp.afp_srv_guest:
         cf_contents.append("\tuam list = uams_dhx.so uams_dhx2.so"
                            " uams_guest.so\n")
@@ -36,16 +46,17 @@ def main():
 
     cf_contents.append("\tmax connections = %s\n" % afp.afp_srv_connections_limit)
     cf_contents.append("\tmimic model = RackMac\n")
-    cf_contents.append("\tvol dbnest = yes\n")
+    if dbpath:
+        cf_contents.append("\tvol dbnest = no\n")
+    else:
+        cf_contents.append("\tvol dbnest = yes\n")
     cf_contents.append("\n")
 
     if afp.afp_srv_homedir_enable:
         cf_contents.append("[Homes]\n")
-	cf_contents.append("\tbasedir regex = %s\n" % afp.afp_srv_homedir)
+        cf_contents.append("\tbasedir regex = %s\n" % afp.afp_srv_homedir)
         cf_contents.append("\n")
 
-    from freenasUI.sharing.models import AFP_Share
-    afp_share = AFP_Share.objects.all()
     for share in afp_share:
         cf_contents.append("[%s]\n" % share.afp_name)
         cf_contents.append("\tpath = %s\n" % share.afp_path)
