@@ -14,7 +14,7 @@ export SB_ROOT=$(realpath .)
 
 cd $SB_BUILD_DIR
 echo "======================================================="
-echo "-->> Now run:    make checkout all"
+echo "-->> Now run:    make"
 echo "======================================================="
 
 if [ $# -gt 0 ] ; then
