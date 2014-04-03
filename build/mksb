@@ -5,6 +5,7 @@ from subprocess import call
 import argparse
 import importlib
 import os
+import re
 import subprocess
 import sys
 
@@ -28,17 +29,17 @@ def my_check_call(*args, **kwargs):
     subprocess.check_call(*args, **kwargs)
 
 def add_second_options(parser):
-    parser.add_argument('--avatar-project',
-        dest='avatar_project',
+    parser.add_argument('--project',
         help='specify product (FreeNAS/TrueNAS)',
-        default='freenas')
+        default='FreeNAS')
 
     parser.add_argument('--sandbox-name', '-n', help='checkout name',
                         required=True)
 
     parser.add_argument('--repo-url',
-    help='specify the main repo url (eg: https://github.com/freenas/freenas',
-        default='git@gitserver.ixsystems.com:/git/repos/freenas-build/freenas.git')
+    help='specify the main repo url (eg: https://github.com/freenas/freenas OR\n'
+         'git@gitserver.ixsystems.com:/git/repos/freenas-build/freenas.git',
+         required=True)
 
     parser.add_argument('--repo-cache',
         help='specify a local cache to speed up initial checkout')
@@ -49,54 +50,10 @@ def add_second_options(parser):
     parser.add_argument('--tag', '-t',
         help='specify the checkout tag')
 
-    # XXX: this should be inside the per-avatar modules.
-    # we can fix this later by forcing --avatar-project first.
-
-    parser.add_argument('--freebsd-branch',
-	help='specify branch of freebsd to pull')
-    parser.add_argument('--freebsd-repo',
-	help='specify path to freebsd repo')
-    parser.add_argument('--freebsd-repo-cache',
-	help='specify path to freebsd repo cache')
-
-    parser.add_argument('--ports-branch',
-	help='specify branch of ports to pull')
-    parser.add_argument('--ports-repo',
-	help='specify path to ports repo')
-    parser.add_argument('--ports-repo-cache',
-	help='specify path to ports repo')
-
 
 def main():
-    # Since we derive the "avatar_project" from the command line which THEN
-    # sets defaults for some common arguments we then need to parse the arguments
-    # twice, because it seems like defaults are set at the time of the actual
-    # argparse not based defaults in the backing parser object.
-    
-    
-    # Make our first parser to get the "avatar_project"
-    avatar_parser = argparse.ArgumentParser(description='Checkout a sandbox.')
-    add_second_options(avatar_parser)
-    avatar_arg = avatar_parser.parse_args()
-    avatar_project = avatar_arg.avatar_project
-    
-    # OK, now make a second that we will set defaults and other thigns via
-    # the module we load for that avatar
     parser = argparse.ArgumentParser(description='Checkout a sandbox.')
     add_second_options(parser)
-    
-    # our default is FreeNAS, but if an alternate avatar project is specified then
-    # bring in those defaults instead.
-    '''
-    if True:
-        args = parser.parse_args()
-        avatar_project=args.avatar_project.lower()
-    else:
-        args= argparse.Namespace()
-        avatar_project='freenas'
-    '''
-    avatar_conf = importlib.import_module('avatar.%s' % avatar_project) #, 'avatar')
-    avatar_conf.setup_arg_parser(parser)
     
     args = parser.parse_args()
     
@@ -118,31 +75,38 @@ def main():
     # do the initial clone
     sandbox_name = args.sandbox_name
     if sandbox_name is None:
-        sandbox_name = avatar_project
+        sandbox_name = project.lower()
 
     if os.path.exists(sandbox_name):
         print("Cannot create sandbox %s because it already exists."
               % (sandbox_name))
+        print("Try removing %s and running %s again.\n" 
+              % (sandbox_name, sys.argv[0]))
+        sys.exit(1)
+
+    sb_build_dir = os.path.basename(url)
+    sb_build_dir = re.sub('\.git$', '', sb_build_dir)
     os.mkdir(sandbox_name)
     os.chdir(sandbox_name)
     f = open(".sandbox-env", "w")
     
-    write_sb_var(f, "GIT_FREEBSD_BRANCH", args.freebsd_branch)
-    write_sb_var(f, "GIT_FREEBSD_REPO", args.freebsd_repo)
-    write_sb_var(f, "GIT_FREEBSD_CACHE", args.freebsd_repo_cache)
-    write_sb_var(f, "GIT_PORTS_BRANCH", args.ports_branch)
-    write_sb_var(f, "GIT_PORTS_REPO", args.ports_repo)
-    write_sb_var(f, "GIT_PORTS_CACHE", args.ports_repo_cache)
-    write_sb_var(f, "SB_BUILD_DIR", avatar_project)
+    #write_sb_var(f, "GIT_FREEBSD_BRANCH", args.freebsd_branch)
+    #write_sb_var(f, "GIT_FREEBSD_REPO", args.freebsd_repo)
+    #write_sb_var(f, "GIT_FREEBSD_CACHE", args.freebsd_repo_cache)
+    #write_sb_var(f, "GIT_PORTS_BRANCH", args.ports_branch)
+    #write_sb_var(f, "GIT_PORTS_REPO", args.ports_repo)
+    #write_sb_var(f, "GIT_PORTS_CACHE", args.ports_repo_cache)
+    write_sb_var(f, "SB_BUILD_DIR", sb_build_dir)
     
     f.close()
     
     
-    my_check_call("git clone %s %s" % (url, avatar_project), shell=True)
+    my_check_call("git clone %s" % (url), shell=True)
 
-    # XX: This .git-repo-setting should later move out of avatar_project
+    # XX: This .git-repo-setting should later move out of the
+    #     freenas source checkout directory
     #     and into the sandbox root.
-    f = open(avatar_project + "/.git-repo-setting", "w")
+    f = open(sb_build_dir + "/.git-repo-setting", "w")
     if is_internal_repo(url):
         f.write("INTERNAL")
     else:
@@ -150,10 +114,7 @@ def main():
 
     f.close() 
     
-    # update the origin to point to actual repo
-    os.chdir(avatar_project)
-    if url != args.build_repo:
-        my_check_call("git remote set-url origin %s" % args.build_repo, shell=True)
+    os.chdir(sb_build_dir)
     
     # get any missing tags or branches from the repo
     my_check_call("git fetch --all", shell=True)
@@ -162,13 +123,16 @@ def main():
         my_check_call("git checkout %s" % args.branch, shell=True)
 
     checkout_cmd="make checkout "
+
+    if args.project:
+        checkout_cmd += ('NANO_LABEL="%s" ' % (args.project))
+  
     if args.branch:
         checkout_cmd += ('BRANCH="%s" ' % (args.branch))
 
     if args.branch:
         checkout_cmd += ('TAG="%s" ' % (args.tag))
 
-    print(os.getcwd())
     my_check_call(checkout_cmd, shell=True)
  
     # go back to sandbox level
