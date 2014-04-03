@@ -83,16 +83,18 @@ class Pool(object):
     id = None
     name = None
     scrub = None
+    resilver = None
 
     data = None
     cache = None
     spares = None
     logs = None
 
-    def __init__(self, pid, name, scrub):
+    def __init__(self, pid, name, scrub, resilver=None):
         self.id = pid
         self.name = name
         self.scrub = scrub
+        self.resilver = resilver
 
     def __getitem__(self, name):
         if hasattr(self, name):
@@ -667,13 +669,72 @@ def parse_status(name, doc, data):
         scrub['status'] = 'NONE'
         scrub['status_verbose'] = _('None requested')
 
+
+    """
+    Parse the resilver statistics from zpool status
+    """
+    scan = re.search(r'scan: (resilver.+?)\b[a-z]+:', data, re.M|re.S)
+    resilver = {}
+    if scan:
+        scan = scan.group(1)
+        if scan.find('in progress') != -1:
+            resilver.update({
+                'progress': None,
+                'scanned': None,
+                'total': None,
+                'togo': None,
+            })
+            resilver_status = 'IN_PROGRESS'
+            resilver_statusv = _('In Progress')
+            reg = re.search(r'(\S+)% done', scan)
+            if reg:
+                resilver['progress'] = Decimal(reg.group(1))
+
+            reg = re.search(r'(\S+) scanned out of (\S+)', scan)
+            if reg:
+                resilver['scanned'] = reg.group(1)
+                resilver['total'] = reg.group(2)
+
+            reg = re.search(r'(\S+) to go', scan)
+            if reg:
+                resilver['togo'] = reg.group(1)
+
+        elif scan.find('resilvered') != -1:
+            resilver.update({
+                'errors': None,
+                'date': None,
+            })
+            resilver_status = 'COMPLETED'
+            resilver_statusv = _('Completed')
+            reg = re.search(r'with (\S+) errors', scan)
+            if reg:
+                resilver['errors'] = reg.group(1)
+
+            reg = re.search(r'on (.+\d{2} \d{4})', scan)
+            if reg:
+                resilver['date'] = reg.group(1)
+
+        elif scan.find('resilver canceled') != -1:
+            resilver_status = 'CANCELED'
+            resilver_statusv = _('Canceled')
+
+        else:
+            resilver_status = 'UNKNOWN'
+            resilver_statusv = _('Unknown')
+
+        resilver['status'] = resilver_status
+        resilver['status_verbose'] = resilver_statusv
+    else:
+        resilver['status'] = 'NONE'
+        resilver['status_verbose'] = _('None requested')
+
     status = data.split('config:')[1]
     pid = re.search(r'id: (?P<id>\d+)', data)
     if pid:
         pid = pid.group("id")
     else:
         pid = None
-    pool = Pool(pid=pid, name=name, scrub=scrub)
+    pool = Pool(pid=pid, name=name, scrub=scrub, resilver=resilver)
     lastident = None
     pnode = None
     for line in status.split('\n'):
