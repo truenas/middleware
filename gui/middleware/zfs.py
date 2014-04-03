@@ -390,7 +390,7 @@ class Dev(Tnode):
 
         provider = None
         if len(search) > 0:
-            self.devname = search[0].xpath("../../../name")[0].text
+            self.devname = search[0].xpath("../../name")[0].text
             provider = search[0].attrib.get('ref')
         else:
 
