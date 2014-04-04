@@ -75,7 +75,7 @@ def main():
     # do the initial clone
     sandbox_name = args.sandbox_name
     if sandbox_name is None:
-        sandbox_name = project.lower()
+        sandbox_name = args.project.lower()
 
     if os.path.exists(sandbox_name):
         print("Cannot create sandbox %s because it already exists."
