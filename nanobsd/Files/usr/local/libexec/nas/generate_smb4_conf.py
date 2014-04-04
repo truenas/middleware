@@ -331,7 +331,7 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
 
-    confset2(smb4_conf, "max open files = %s", get_sysctl('kern.maxfilesperproc'))
+    confset2(smb4_conf, "max open files = %d", long(get_sysctl('kern.maxfilesperproc')) - 25)
 
     if cifs.cifs_srv_syslog:
         confset1(smb4_conf, "syslog only = yes")
@@ -368,6 +368,9 @@ def generate_smb4_conf(smb4_conf):
         "yes" if cifs.cifs_srv_timeserver else False)
     confset2(smb4_conf, "null passwords = %s",
         "yes" if cifs.cifs_srv_nullpw else False)
+
+    confset2(smb4_conf, "acl allow execute always = %s",
+        "true" if cifs.cifs_srv_allow_execute_always else "false")
 
     role = get_server_role()
     if cifs.cifs_srv_localmaster and not nt4_enabled() \
