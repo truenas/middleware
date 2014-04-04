@@ -10,8 +10,7 @@ TOP="$(pwd)"
 
 . build/nano_env
 . build/functions.sh
-
-SRCS_MANIFEST="${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/repo-manifest"
+. build/repos.sh
 
 # Using shallow "--depth 1" git checkouts is problematic, so we default
 # it to off.
@@ -30,29 +29,6 @@ SRCS_MANIFEST="${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/repo-manifest"
 if [ "x$GIT_SHALLOW" != "xyes" ] ; then
     GIT_DEEP=yes
 fi
-
-if is_truenas ; then
-    # Additional repos to checkout for build
-    ADDL_REPOS="$ADDL_REPOS ZFSD TRUENAS-COMPONENTS"
-
-    : ${GIT_ZFSD_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git}
-    : ${GIT_TRUENAS_COMPONENTS_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/truenas.git}
-
-    export NAS_PORTS_DIRECT=1
-
-fi
-
-if [ "${GIT_LOCATION}" = "EXTERNAL" ] ; then
-    : ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos}
-    : ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
-fi
-
-: ${GIT_FREEBSD_BRANCH=feature/unified_freebsd}
-: ${GIT_FREEBSD_REPO=git@gitserver.ixsystems.com:/git/repos/freenas-build/trueos.git}
-
-: ${GIT_PORTS_BRANCH=freenas/9-stable}
-: ${GIT_PORTS_REPO=git@gitserver.ixsystems.com:/git/repos/freenas-build/ports.git}
-
 
 do_git_update()
 {
@@ -222,52 +198,8 @@ checkout_source()
     echo "$NANO_LABEL" > ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled
 }
 
-check_sandbox()
-{
-    local status=0
-    local checkout_proj_dir
-
-    if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled ]; then
-        status=1
-    fi
-
-    if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/src/.git ]; then
-        status=1
-    fi
-
-    if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/ports/.git ]; then
-        status=1
-    fi
-
-
-    for proj in $ADDL_REPOS; do
-        checkout_proj_dir=`echo $proj | tr 'A-Z' 'a-z'`
-        if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/nas_source/${checkout_proj_dir}/.git ]; then
-            status=1
-        fi
-    done
-
-    if [ $status -ne 0 ]; then
-        echo ""
-        echo "ERROR: sandbox is not fully checked out"
-        echo "       Type 'env NANO_LABEL=${NANO_LABEL} make checkout' or 'env NANO_LABEL=${NANO_LABEL} make update'"
-        echo "       to get all the sources from the SCM."
-        echo ""
-    fi
-
-    return $status
-}
-
-
 main()
 {
-    case "$1" in
-    check-sandbox)
-        check_sandbox
-        exit $?
-        ;;
-    esac
-
     set -e
     checkout_source
 }
