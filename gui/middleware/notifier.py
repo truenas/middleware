@@ -3510,10 +3510,10 @@ class notifier:
         else:
             props = ','.join(props)
 
-        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source %s '%s'" % (
+        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source %s %s" % (
             '-r' if recursive else '',
             props,
-            str(name) if name else '',
+            "'%s'" % str(name) if name else '',
         ))
         zfs_output = zfsproc.communicate()[0]
         retval = {}
