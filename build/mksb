@@ -82,17 +82,10 @@ def main():
     url = args.repo_cache
     if url is None:
         url = args.repo_url
-    
-    # Workflow is:
-    # Clone from cache if it exists.  If no cache, then just use the actual repo.
-    # Update the remote 'origin' to point to the actual repo.
-    # Git pull any refs to get up to date in case the cache is out of date in respect to
-    #   the actual repo.
-    # Checkout the branch.
-    #
-    # If we use a cache we do not do a -b branch to checkout initially because the specified
-    # branch may not be in the cache.  For now we actually never '-b branch' to save time 
-    # writing this script!  XXX: someone fix that?
+
+    if args.repo_cache:
+        print("--repo-cache not implemented yet")
+        sys.exit(1)
     
     # do the initial clone
     sandbox_name = args.sandbox_name
