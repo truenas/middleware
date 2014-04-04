@@ -45,10 +45,13 @@ def add_second_options(parser):
         help='specify a local cache to speed up initial checkout')
 
     parser.add_argument('--branch', '-b',
-        help='specify the checkout branch')
+        help='specify the checkout branch for all repositories')
 
     parser.add_argument('--tag', '-t',
-        help='specify the checkout tag')
+        help='specify the checkout tag for all repositories')
+
+    parser.add_argument('--initial-branch',
+        help='specify the checkout branch for the initial repo only')
 
 
 def parse_environment_args(extra_args):
@@ -136,7 +139,9 @@ def main():
     # get any missing tags or branches from the repo
     my_check_call("git fetch --all", shell=True)
     # get the branch
-    if args.branch:
+    if args.initial_branch:
+        my_check_call("git checkout %s" % args.initial_branch, shell=True)
+    elif args.branch:
         my_check_call("git checkout %s" % args.branch, shell=True)
 
     checkout_cmd="make checkout "
