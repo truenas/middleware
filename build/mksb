@@ -51,11 +51,30 @@ def add_second_options(parser):
         help='specify the checkout tag')
 
 
+def parse_environment_args(extra_args):
+    env = []
+    for arg in extra_args:
+        if arg and arg[0].isalpha() and arg.find('=') != -1:
+            env.append(arg)
+
+    return env
+
+
 def main():
     parser = argparse.ArgumentParser(description='Checkout a sandbox.')
     add_second_options(parser)
     
-    args = parser.parse_args()
+    (args, extra_args) = parser.parse_known_args()
+    env_args = parse_environment_args(extra_args)
+    if args.project:
+        env_args.append('NANO_LABEL="%s" ' % (args.project))
+  
+    if args.branch:
+        env_args.append('BRANCH="%s" ' % (args.branch))
+
+    if args.branch:
+        env_args.append('TAG="%s" ' % (args.tag))
+
     
     url = args.repo_cache
     if url is None:
@@ -88,14 +107,12 @@ def main():
     sb_build_dir = re.sub('\.git$', '', sb_build_dir)
     os.mkdir(sandbox_name)
     os.chdir(sandbox_name)
+
     f = open(".sandbox-env", "w")
     
-    #write_sb_var(f, "GIT_FREEBSD_BRANCH", args.freebsd_branch)
-    #write_sb_var(f, "GIT_FREEBSD_REPO", args.freebsd_repo)
-    #write_sb_var(f, "GIT_FREEBSD_CACHE", args.freebsd_repo_cache)
-    #write_sb_var(f, "GIT_PORTS_BRANCH", args.ports_branch)
-    #write_sb_var(f, "GIT_PORTS_REPO", args.ports_repo)
-    #write_sb_var(f, "GIT_PORTS_CACHE", args.ports_repo_cache)
+    for env_arg in env_args:
+        f.write(env_arg + "\n")
+
     write_sb_var(f, "SB_BUILD_DIR", sb_build_dir)
     
     f.close()
@@ -123,15 +140,8 @@ def main():
         my_check_call("git checkout %s" % args.branch, shell=True)
 
     checkout_cmd="make checkout "
-
-    if args.project:
-        checkout_cmd += ('NANO_LABEL="%s" ' % (args.project))
-  
-    if args.branch:
-        checkout_cmd += ('BRANCH="%s" ' % (args.branch))
-
-    if args.branch:
-        checkout_cmd += ('TAG="%s" ' % (args.tag))
+    for env_arg in env_args:
+        checkout_cmd += " " + env_arg 
 
     my_check_call(checkout_cmd, shell=True)
  
