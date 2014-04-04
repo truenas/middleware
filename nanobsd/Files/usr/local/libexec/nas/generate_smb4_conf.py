@@ -75,6 +75,18 @@ def is_within_zfs(mountpoint):
     return False
 
 
+def get_sysctl(name):
+    p = pipeopen("/sbin/sysctl -n '%s'" % name)
+    out = p.communicate()
+    if p.returncode != 0:
+        return None
+    try:
+        out = out[0].strip()
+    except: 
+        pass
+    return out
+
+
 def get_server_services():
     server_services = [
         'rpc', 'nbt', 'wrepl', 'ldap', 'cldap', 'kdc', 'drepl', 'winbind',
@@ -318,6 +330,8 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "oplocks = yes")
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
+
+    confset2(smb4_conf, "max open files = %s", get_sysctl('kern.maxfilesperproc'))
 
     if cifs.cifs_srv_syslog:
         confset1(smb4_conf, "syslog only = yes")
