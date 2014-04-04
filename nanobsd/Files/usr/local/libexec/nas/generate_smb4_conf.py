@@ -332,6 +332,7 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "map to guest = Bad User")
     confset1(smb4_conf, "obey pam restrictions = Yes")
     confset1(smb4_conf, "directory name cache size = 0")
+    confset1(smb4_conf, "kernel change notify = no")
 
     confset1(smb4_conf, "panic action = /usr/local/libexec/samba/samba-backtrace")
 
