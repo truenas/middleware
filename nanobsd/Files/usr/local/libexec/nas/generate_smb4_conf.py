@@ -175,6 +175,20 @@ def add_nt4_conf(smb4_conf):
     confset1(smb4_conf, "preferred master = no")
 
 
+def set_ldap_password():
+    try:
+        ldap = LDAP.objects.all()[0]
+    except:
+        return
+
+    if ldap.ldap_rootbindpw:
+        p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_rootbindpw)
+        out = p.communicate()
+        if out and out[1]:
+            for line in out[1].split('\n'):
+                print line
+
+
 def add_ldap_conf(smb4_conf):
     try:
         ldap = LDAP.objects.all()[0]
@@ -193,14 +207,6 @@ def add_ldap_conf(smb4_conf):
     )
 
     confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_rootbasedn)
-
-    if ldap.ldap_rootbindpw:
-        p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_rootbindpw)
-        out = p.communicate()
-        if out and out[1]:
-            for line in out[1].split('\n'):
-                print line
-
     confset2(smb4_conf, "ldap suffix = %s", ldap.ldap_basedn)
     confset2(smb4_conf, "ldap user suffix = %s", ldap.ldap_usersuffix)
     confset2(smb4_conf, "ldap group suffix = %s", ldap.ldap_groupsuffix)
@@ -711,6 +717,9 @@ def main():
     for line in smb4_tdb:
         os.write(fd, line + '\n')
     os.close(fd)
+
+    if role == 'member' and ldap_enabled():
+        set_ldap_password()
 
     if role != 'dc':
         p = pipeopen("/usr/local/bin/pdbedit -d 0 -i smbpasswd:%s -e %s -s %s" % (
