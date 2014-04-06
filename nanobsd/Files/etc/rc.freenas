@@ -88,6 +88,10 @@
 : ${NSS_LDAP_SECRET:="/usr/local/etc/nss_ldap.secret"}
 : ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
 : ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
+: ${LDAPSSLDIR:="${SSLDIR}/ldap"}
+: ${LDAPKEY:="${LDAPSSLDIR}/ldap.key"}
+: ${LDAPCERT:="${LDAPSSLDIR}/ldap.crt"}
+: ${LDAPCACERT:="${LDAPSSLDIR}/ldapca.crt"}
 : ${LDAP_TIMEOUT:="0"}
 
 #

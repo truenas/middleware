@@ -862,6 +862,7 @@ class NIS(ModelForm):
 
 
 class LDAPForm(ModelForm):
+    ldap_tls_cacertfile = FileField(label=_("Self signed certificate"), required=False)
 
     class Meta:
         fields = '__all__'
@@ -869,6 +870,24 @@ class LDAPForm(ModelForm):
         widgets = {
             'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True),
         }
+
+    def clean_ldap_tls_cacertfile(self):
+        filename = "/data/ldap_tls_cacertfile"
+
+        ldap_tls_cacertfile = self.cleaned_data.get("ldap_tls_cacertfile", None)
+        if ldap_tls_cacertfile and ldap_tls_cacertfile != filename:  
+            if hasattr(ldap_tls_cacertfile, 'temporary_file_path'):
+                shutil.move(ldap_tls_cacertfile.temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as f:
+                    for c in ldap_tls_cacertfile.chunks():
+                        f.write(c)
+                    f.close()
+
+            os.chmod(filename, 0400)
+            self.instance.ldap_tls_cacertfile = filename
+
+        return filename
 
     def save(self):
         super(LDAPForm, self).save()
