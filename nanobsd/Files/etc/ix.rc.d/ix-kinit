@@ -33,11 +33,11 @@ kerberos_start()
 
 			domainname="$(echo "${domainname}" | tr a-z A-Z)"
 
-			principals="$(ktutil -k "${keytab}" list |tail +4|awk '{ print $3 }')"
+			principals="$(/usr/sbin/ktutil -k "${keytab}" list|tail +4|awk '{ print $3 }')"
 			for p in ${principals}
 			do
-				AD_log "kerberos_start: kinit --renewable -t ${keytab} -k ${p}"
-				kinit -t "${keytab}" --renewable -k "${p}"
+				AD_log "kerberos_start: /usr/bin/kinit --renewable -t ${keytab} -k ${p}"
+				/usr/bin/kinit -t "${keytab}" --renewable -k "${p}"
 				if [ "$?" != "0" ]
 				then
 					res=1
@@ -101,7 +101,7 @@ kerberos_status()
 			domainname=$(echo "${domainname}"|tr a-z A-Z)
 
 			AD_log "kerberos_status: klist -t"
-			klist -t
+			/usr/bin/klist -t
 			res=$?
 
 			local ok="Failed"
@@ -119,14 +119,98 @@ kerberos_status()
 
 kerberos_stop()
 {
-	kdestroy
+	/usr/bin/kdestroy
 }
 
 kerberos_renew()
 {
-	if dirsrv_enabled activedirectory
+	if ! dirsrv_enabled activedirectory
 	then
-		kinit -R
+		return
+	fi
+
+	local klist_out="$(/usr/bin/mktemp /tmp/XXXXXX)"
+
+	/usr/bin/klist -v > "${klist_out}"
+
+	local krbtgt_ticket=false
+	local auth_time=
+	local end_time=
+	local renew_until=
+	local cur_time=
+
+	local time_regex='[a-zA-Z]{3,4} +[0-9]{1,2} +[0-9]{2}:[0-9]{2}:[0-9]{2} +[0-9]{4}'
+
+	exec 3<& 0
+	exec 0< "${klist_out}"
+	while read line
+	do
+		if [ -z "${line}" ]; then continue; fi
+
+		if echo "${line}"|egrep -q '^Server: +' &&
+			echo "${line}"|egrep -q '^Server: +krbtgt\/.+'
+		then
+			krbtgt_ticket=true
+		elif echo "${line}"|egrep -q '^Server: +' &&
+			! echo "${line}"|egrep -iq '^Server: +krbtgt\/.+'
+		then
+			krbtgt_ticket=false
+		fi
+
+		if ${krbtgt_ticket} && echo "${line}"|egrep -iq '^Auth time: +'
+		then
+			strtime="$(echo "${line}"|sed -E 's|^(Auth time: +)||I')"
+			strtime="$(echo "${strtime}"|sed -E 's|^(${time_regex})|\1|')"
+			if [ -z "${strtime}" ]; then continue; fi
+
+			auth_time="$(date -j -f '%b %d %H:%M:%S %Y' \
+				"${strtime}" '+%s' 2>/dev/null)"
+
+		elif ${krbtgt_ticket} && echo "${line}"|egrep -iq '^End time: +'
+		then
+			strtime="$(echo "${line}"|sed -E 's|^(End time: +)||I')"
+			strtime="$(echo "${strtime}"|sed -E 's|^(${time_regex})|\1|')"
+			if [ -z "${strtime}" ]; then continue; fi
+
+			end_time="$(date -j -f '%b %d %H:%M:%S %Y' \
+				"${strtime}" '+%s' 2>/dev/null)"
+
+		elif ${krbtgt_ticket} && echo "${line}"|egrep -iq '^Renew till: +'
+		then
+			strtime="$(echo "${line}"|sed -E 's|^(Renew till: +)||I')"
+			strtime="$(echo "${strtime}"|sed -E 's|^(${time_regex})|\1|')"
+			if [ -z "${strtime}" ]; then continue; fi
+
+			renew_until="$(date -j -f '%b %d %H:%M:%S %Y' \
+				"${strtime}" '+%s' 2>/dev/null)"
+		fi
+
+		if [ -n "${auth_time}" -a -n "${end_time}" -a -n "${renew_until}" ]
+		then
+			break
+		fi
+	done
+	exec 0<& 3
+	rm -f "${klist_out}"
+
+	if [ -z "${auth_time}" -o -z "${end_time}" -o -z "${renew_until}" ]
+	then
+		kerberos_start
+		return $?
+	fi
+
+	local cur_time="$(date -j -f '%b %d %H:%M:%S %Y' \
+		"$(date -j '+%b %d %H:%M:%S %Y')" '+%s' 2>/dev/null)"
+
+	#
+	# 5 minute fudge factor
+	#
+	: $(( cur_time +=  300 ))
+	if [ "${cur_time}" -lt "${end_time}" -a "${cur_time}" -lt "${renew_until}" ]
+	then
+		/usr/bin/kinit -R
+	else
+		kerberos_start
 	fi
 }
 
