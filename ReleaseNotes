@@ -1,10 +1,14 @@
+Release Notes for FreeNAS 9.2.1.4-BETA
+
+This point release for 9.2.1 fixes performance issues with ZFS replication,
+SMB spins / hangs under certain circumstances, and a variety of smaller
+issues.
+
+All bugs fixed in 9.2.1.4-BETA can be found here:
+
+	https://bugs.freenas.org/projects/freenas/issues?query_id=60
+
 Release Notes for FreeNAS 9.2.1.3-RELEASE
-
-This point release for 9.2.1 adds ZFS replication status, fixes various issues
-found in 9.2.1.2 in CIFS, AFP, FTP, serial console support, and other areas.
-All bugs fixed in 9.2.1.3-RELEASE can be found here:
-
-	https://bugs.freenas.org/projects/freenas/issues?query_id=35
 
 High level features for 9.2.1.3:
 
@@ -14,8 +18,8 @@ High level features for 9.2.1.3:
 
 * ZFS replication status is now provided in ZFS Replication UI
 
-* The bug preventing FTP from starting when logging to system dataset has been fixed.
-
+* The bug preventing FTP from starting when logging to system dataset has
+been fixed.
 
 Release Notes for FreeNAS 9.2.1.2-RELEASE
 
