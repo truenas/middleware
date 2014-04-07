@@ -10,7 +10,7 @@ TOP="$(pwd)"
 . build/functions.sh
 . build/repos.sh
 
-create_tag()
+apply_tag()
 {
     local repo
     local repo_checkout_path
@@ -40,7 +40,7 @@ create_tag()
 
 main()
 {
-    create_tag "$@"
+    apply_tag "$@"
 }
 
 main "$@"
