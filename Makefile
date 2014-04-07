@@ -112,3 +112,6 @@ git-external:
 	@echo "EXTERNAL" > ${GIT_REPO_SETTING}
 	@echo "You are set up for external (github) development.  You can use"
 	@echo "the standard make targets (e.g. build or release) now."
+
+tag:
+	${ENV_SETUP} build/apply_tag.sh
