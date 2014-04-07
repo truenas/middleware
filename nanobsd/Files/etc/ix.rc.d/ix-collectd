@@ -70,7 +70,7 @@ generate_collectd()
     if [ -f "/data/rrd_dir.tar.bz2" ]; then
         if [ -n "${rrdds}" -a -d "${rrdmnt}" ]; then
             (cd "${rrdmnt}" && tar jxf /data/rrd_dir.tar.bz2 && \
-                mv collectd/rrd/* "${rrdmnt}" && mv /data/rrd_dir.tar.bz2 "${rrdmnt}" && \
+                mv collectd/rrd/* "${rrdmnt}/" && mv /data/rrd_dir.tar.bz2 "${rrdmnt}/" && \
                 rm -rf collectd)
         elif [ -d "/var/db" -a ! -d /var/db/collectd/rrd ]; then
             (cd /var/db && tar jxf /data/rrd_dir.tar.bz2)
