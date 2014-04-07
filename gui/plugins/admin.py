@@ -28,6 +28,7 @@ import logging
 
 from collections import OrderedDict
 
+from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import AvailablePluginsResource
@@ -67,9 +68,9 @@ class AvailableFAdmin(BaseFreeAdmin):
                 var mybtn = this;
                 for (var i in grid.selection) {
                     var data = grid.row(i).data;
-                    editObject('Install plugin', data._install_url, [mybtn,]);
+                    editObject('%s', data._install_url, [mybtn,]);
                 }
-            }""",
+            }""" % (escapejs(_('Install plugin')), ),
         }
         return actions
 
