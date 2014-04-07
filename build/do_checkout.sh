@@ -54,10 +54,6 @@ do_git_update()
 #  $1 - repo_name, (example: FREEBSD, PORTS, ZFSD) this variable will be
 #       expanded for globals below.  "${GIT_${repo_name}_REPO}" to get the
 #       rest of the information for branch, repo, cache, etc.
-#  $2 - checkout_path where to checkout the code under the build dir.
-#       You probably want to prefix with ${AVATAR_ROOT}
-#       (example "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD")
-#  $3 - Actual name the git checkout should be done under.
 # Globals:
 #  ${GIT_${repo_name}_REPO} - authoritive repo path
 #  ${GIT_${repo_name}_BRANCH} - which branch to pull
@@ -66,7 +62,7 @@ do_git_update()
 #                            this is on by default right now.
 # example:
 #
-#    generic_checkout_git FREEBSD "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD" src
+#    generic_checkout_git FREEBSD "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/src"
 #
 # This will checkout into the top level the repo under $GIT_FREEBSD_REPO
 # into the directory FreeBSD/src under your build directory.
@@ -74,13 +70,18 @@ do_git_update()
 generic_checkout_git()
 {
     local repo_name=$1
-    local checkout_path=$2
-    local checkout_name=$3
+    eval local checkout_path=\${GIT_${repo_name}_CHECKOUT_PATH}
     eval local my_deep=\${GIT_${repo_name}_DEEP}
     eval local my_deep=\${GIT_${repo_name}_SHALLOW}
     eval local my_repo=\${GIT_${repo_name}_REPO}
     eval local my_branch=\${GIT_${repo_name}_BRANCH}
     eval local my_tag=\${GIT_${repo_name}_TAG}
+
+    if [ -z "$my_repo" ]; then
+        echo "repo not specified!"
+        exit 1
+    fi
+
     echo "Checkout: $repo_name -> $my_repo"
 
     if [ "$BRANCH" ]; then
@@ -117,9 +118,9 @@ generic_checkout_git()
     #  can we optimize by using
     #  git remote add -t remote-branch remote-name remote-url  ?
     #  instead of a fetch of all of origin?
-    if [ -d ${checkout_name}/.git ] ; then
+    if [ -d ${checkout_path}/.git ] ; then
         ## do stuff if there is already a checkout...
-        cd ${checkout_name}
+        cd ${checkout_path}
         local old_branch=`git rev-parse --abbrev-ref HEAD`
         if [ "x${old_branch}" != "x${my_branch}" ]; then
 
@@ -153,46 +154,40 @@ generic_checkout_git()
         cd ..
     else
         # do a fresh checkout...
-        git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_name}
+        git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_path}
         if [ "$my_tag" ]; then
-            cd ${checkout_name}
+            cd ${checkout_path}
             git checkout "$my_tag"
             cd ..
         fi
     fi
     echo $spl | grep -q x || set +x
-    echo "${my_repo}" `cd ${checkout_name} && git rev-parse HEAD` >> ${SRCS_MANIFEST}
+    mkdir -p $(dirname ${SRCS_MANIFEST})
+    echo "${my_repo}" `cd ${checkout_path} && git rev-parse HEAD` >> ${SRCS_MANIFEST}
     )
 }
 
 checkout_source()
 {
-    mkdir -p ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD
+    local repo
 
     # First try to get the freenas repo which we're building from
     if [ -f .git/config ]; then
+        mkdir -p $(dirname ${SRCS_MANIFEST})
         echo `awk '/url = / {print $3}' .git/config` `git log -1 --format="%H"` > ${SRCS_MANIFEST}
     fi
 
-    generic_checkout_git FREEBSD "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD" src
+    for repo in ${REPOS}; do
+        generic_checkout_git ${repo}
+    done
 
-# Nuke newly created files to avoid build errors.
+    # Nuke newly created files to avoid build errors.
     git_status_ok="${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.git_status_ok"
     rm -rf "$git_status_ok"
     (
-     cd ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/src && git status --porcelain
+     cd $GIT_FREEBSD_CHECKOUT_PATH && git status --porcelain
     ) | tee "$git_status_ok"
     awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
-
-# Checkout git ports
-    generic_checkout_git PORTS "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD" ports
-
-    for proj in $ADDL_REPOS ; do
-        generic_checkout_git \
-            "`echo $proj|tr '-' '_'`" \
-            "${AVATAR_ROOT}/${EXTRA_SRC}/nas_source" \
-                   `echo $proj | tr 'A-Z' 'a-z'`
-    done
 
     # Mark git clone/pull as being done already.
     echo "$NANO_LABEL" > ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled
