@@ -3414,7 +3414,7 @@ class notifier:
             raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
         return True
 
-    def zfs_snapshot_list(self, path=None):
+    def zfs_snapshot_list(self, path=None, replications=None):
         fsinfo = dict()
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name -H")
@@ -3438,6 +3438,21 @@ class notifier:
                 except:
                     snaplist = []
                     mostrecent = True
+                replication = None
+                if replications:
+                    for repl, snaps in replications.iteritems():
+                        remotename = '%s@%s' % (
+                            bundle.obj.filesystem.replace(
+                                repl.repl_filesystem,
+                                repl.repl_zfs,
+                            ),
+                            bundle.obj.name,
+                        )
+                        if remotename in snaps:
+                            replication = 'OK'
+                            #TODO: Multiple replication tasks
+                            break
+
                 snaplist.insert(0,
                     zfs.Snapshot(
                         name=name,
@@ -3445,7 +3460,8 @@ class notifier:
                         used=used,
                         refer=refer,
                         mostrecent=mostrecent,
-                        parent_type='filesystem' if fs not in zvols else 'volume'
+                        parent_type='filesystem' if fs not in zvols else 'volume',
+                        replication=replication
                     ))
                 fsinfo[fs] = snaplist
         return fsinfo

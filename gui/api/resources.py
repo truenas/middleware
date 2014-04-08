@@ -1629,6 +1629,7 @@ class SnapshotResource(DojoResource):
     used = fields.CharField(attribute='used')
     mostrecent = fields.BooleanField(attribute='mostrecent')
     parent_type = fields.CharField(attribute='parent_type')
+    replication = fields.CharField(attribute='replication', null=True)
 
     class Meta:
         allowed_methods = ['delete', 'get', 'post']
@@ -1636,7 +1637,15 @@ class SnapshotResource(DojoResource):
         resource_name = 'storage/snapshot'
 
     def get_list(self, request, **kwargs):
-        snapshots = notifier().zfs_snapshot_list()
+
+        # Get a list of snapshots in remote sides to show whether it has been
+        # transfered already or not
+        repli = {}
+        for repl in Replication.objects.all():
+            repli[repl] = notifier().repl_remote_snapshots(repl)
+
+        snapshots = notifier().zfs_snapshot_list(replications=repli)
+
         results = []
         for snaps in snapshots.values():
             results.extend(snaps)
@@ -1645,12 +1654,6 @@ class SnapshotResource(DojoResource):
             'refer': 'refer_bytes',
             'extra': 'mostrecent',
         }
-
-        # Get a list of snapshots in remote sides to show whether it has been
-        # transfered already or not
-        self._repl = {}
-        for repl in Replication.objects.all():
-            self._repl[repl] = notifier().repl_remote_snapshots(repl)
 
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
@@ -1776,19 +1779,6 @@ class SnapshotResource(DojoResource):
                     'snapname': bundle.obj.name,
                 }),
             }
-        if self._repl:
-            for repl, snaps in self._repl.iteritems():
-                remotename = '%s@%s' % (
-                    bundle.obj.filesystem.replace(
-                        repl.repl_filesystem,
-                        repl.repl_zfs,
-                    ),
-                    bundle.obj.name,
-                )
-                if remotename in snaps:
-                    bundle.data['replication'] = 'OK'
-                    #TODO: Multiple replication tasks
-                    break
         return bundle
 
 
