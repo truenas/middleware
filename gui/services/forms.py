@@ -506,16 +506,7 @@ class DynamicDNSForm(ModelForm):
         widgets = {
             'ddns_password': forms.widgets.PasswordInput(render_value=False),
         }
-        fields = (
-            'ddns_provider',
-            'ddns_domain',
-            'ddns_username',
-            'ddns_password',
-            'ddns_password2',
-            'ddns_updateperiod',
-            'ddns_fupdateperiod',
-            'ddns_options',
-        )
+        fields = '__all__'
 
     def __init__(self, *args, **kwargs):
         super(DynamicDNSForm, self).__init__(*args, **kwargs)
@@ -550,6 +541,8 @@ class DynamicDNSForm(ModelForm):
             raise ServiceFailed(
                 "dynamicdns", _("The DynamicDNS service failed to reload.")
             )
+DynamicDNSForm.base_fields.keyOrder.remove('ddns_password2')
+DynamicDNSForm.base_fields.keyOrder.insert(5, 'ddns_password2')
 
 
 class SNMPForm(ModelForm):
