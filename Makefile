@@ -22,9 +22,9 @@ ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOC
 all:	build
 
 build: git-verify
-	${ENV_SETUP} build/do_checkout.sh check-sandbox
+	${ENV_SETUP} build/check_sandbox.sh
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
-	${ENV_SETUP} build/do_build.sh -z
+	env ${ENV_SETUP} PACKAGE_PREP_BUILD=1 build/do_build.sh
 	${ENV_SETUP} build/do_build.sh
 
 checkout: git-verify
@@ -34,17 +34,31 @@ update: checkout
 
 clean:
 	${ENV_SETUP} build/build_cleanup.py
-	rm -rf FreeBSD ${NANO_LABEL}-${VERSION}-* release.build.log nas_source
+	rm -rf ${NANO_LABEL}-${VERSION}-* release.build.log
+.if defined(USE_NEW_LAYOUT)
+	rm -rf ../obj
+.else
+	rm -rf FreeBSD nas_source
+.endif
 
 clean-packages:
+.if defined(USE_NEW_LAYOUT)
+	find ../obj/os-base -name "*.tbz" -delete
+.else
 	find os-base -name "*.tbz" -delete
+.endif
+
+distclean: clean
+.if defined(USE_NEW_LAYOUT)
+	rm -fr ../extra-src
+.endif
 
 save-build-env:
 	${ENV_SETUP} build/save_build.sh
 
 freenas: release
 release: git-verify
-	${ENV_SETUP} build/do_checkout.sh check-sandbox
+	${ENV_SETUP} build/check_sandbox.sh
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/build_release.sh
@@ -61,7 +75,11 @@ truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
 	env NANO_LABEL=TrueNAS script -a ${RELEASE_LOGFILE} ${MAKE} build
 	mkdir -p TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+.if defined(USE_NEW_LAYOUT)
+	mv ../obj/os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+.else
 	mv os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+.endif
 
 # Build truenas using all sources 
 truenas-all-direct:
@@ -94,3 +112,6 @@ git-external:
 	@echo "EXTERNAL" > ${GIT_REPO_SETTING}
 	@echo "You are set up for external (github) development.  You can use"
 	@echo "the standard make targets (e.g. build or release) now."
+
+tag:
+	${ENV_SETUP} build/apply_tag.sh

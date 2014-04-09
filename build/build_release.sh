@@ -9,6 +9,6 @@ set -e
 
 mydir=`dirname $0`
 
-sh $mydir/do_build.sh -z
+env PACKAGE_PREP_BUILD=1 sh $mydir/do_build.sh
 sh $mydir/do_build.sh -a
 sh $mydir/create_release_distribution.sh
