@@ -746,6 +746,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 bsdusr_sshpubkey,
                 bsduser.bsdusr_username,
                 bsduser.bsdusr_group.bsdgrp_group)
+        else:
+            _notifier.delete_pubkey(bsduser.bsdusr_home)
         return bsduser
 
 
