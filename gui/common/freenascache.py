@@ -107,7 +107,7 @@ class FreeNAS_BaseCache(object):
             db.DB_INIT_CDB | db.DB_INIT_MPOOL | db.DB_CREATE, 0700)
 
         self.__cache = db.DB(self.__dbenv)
-        self.__cache.open(self.__cachefile, None, db.DB_BTREE, db.DB_CREATE)
+        self.__cache.open(self.__cachefile, None, db.DB_HASH, db.DB_CREATE)
 
         log.debug("FreeNAS_BaseCache._init__: cachedir = %s", self.cachedir)
         log.debug("FreeNAS_BaseCache._init__: cachefile = %s",
