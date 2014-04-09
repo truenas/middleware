@@ -142,6 +142,7 @@ for replication in replication_tasks:
     localfs = replication.repl_filesystem.__str__()
     last_snapshot = replication.repl_lastsnapshot.__str__()
     resetonce = replication.repl_resetonce
+    compression = replication.repl_compression.__str__()
 
     if fast_cipher:
         sshcmd = ('/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
@@ -322,7 +323,21 @@ Hello,
             os.execv('/sbin/zfs', cmd)
         os.close(writefd)
 
-        replcmd = '%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
+        if compression == 'pigz':
+            compress = '/usr/local/bin/pigz | '
+            decompress = '/usr/local/bin/pigz -d | '
+        elif compression == 'plzip':
+            compress = '/usr/local/bin/plzip | '
+            decompress = '/usr/local/bin/plzip -d | '
+        elif compression == 'lz4':
+            compress = '/usr/local/bin/lz4c | '
+            decompress = '/usr/local/bin/lz4c -d | '
+        else: #off
+            compress = ''
+            decompress = ''
+
+
+        replcmd = '%s%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s -p %d %s "%s/sbin/zfs receive -F -d %s && echo Succeeded"' % (compress, limit, sshcmd, remote_port, remote, decompress, remotefs)
         with open(templog, 'w+') as f:
             readobj = os.fdopen(readfd, 'r', 0)
             proc = subprocess.Popen(

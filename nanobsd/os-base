@@ -203,7 +203,10 @@ add_port net/mDNSResponder
 add_port dns/py-bonjour
 add_port textproc/libxml2
 add_port devel/libffi
+add_port archivers/lz4
 add_port archivers/lzo2
+add_port archivers/pigz
+add_port archivers/plzip
 add_port security/easy-rsa
 add_port security/openvpn
 add_port converters/libiconv
