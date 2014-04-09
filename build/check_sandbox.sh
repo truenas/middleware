@@ -13,24 +13,15 @@ TOP="$(pwd)"
 check_sandbox()
 {
     local status=0
-    local checkout_proj_dir
+    local repo_name
 
     if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled ]; then
         status=1
     fi
 
-    if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/src/.git ]; then
-        status=1
-    fi
-
-    if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/ports/.git ]; then
-        status=1
-    fi
-
-
-    for proj in $ADDL_REPOS; do
-        checkout_proj_dir=`echo $proj | tr 'A-Z' 'a-z'`
-        if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/nas_source/${checkout_proj_dir}/.git ]; then
+    for repo_name in $REPOS; do
+        eval local checkout_path=\${GIT_${repo_name}_CHECKOUT_PATH}
+        if [ ! -e "${checkout_path}/.git" ]; then
             status=1
         fi
     done
