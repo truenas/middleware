@@ -1509,6 +1509,7 @@ class NT4(Model):
             max_length=120,
             verbose_name=_("NetBIOS Name"),
             help_text=_("System hostname"),
+            blank=True
             )
     nt4_workgroup = models.CharField(
             max_length=120,
@@ -1530,12 +1531,13 @@ class NT4(Model):
         super(NT4, self).__init__(*args, **kwargs)
         self.svc = 'nt4'
 
-        from freenasUI.network.models import GlobalConfiguration
-        gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
-        if gc_hostname:
-            m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
-            if m:
-                self.nt4_netbiosname = m.group(0).upper().strip()
+        if not self.nt4_netbiosname:
+            from freenasUI.network.models import GlobalConfiguration
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            if gc_hostname:
+                m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
+                if m:
+                    self.nt4_netbiosname = m.group(0).upper().strip()
 
     class Meta:
         verbose_name = _("NT4 Domain")
@@ -1554,7 +1556,8 @@ class ActiveDirectory(Model):
     ad_netbiosname = models.CharField(
             max_length=120,
             verbose_name=_("NetBIOS Name"),
-            help_text=_("System hostname")
+            help_text=_("System hostname"),
+            blank=True
             )
     ad_workgroup = models.CharField(
             max_length=120,
@@ -1643,12 +1646,13 @@ class ActiveDirectory(Model):
         super(ActiveDirectory, self).__init__(*args, **kwargs)
         self.svc = 'activedirectory'
 
-        from freenasUI.network.models import GlobalConfiguration
-        gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
-        if gc_hostname:
-            m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
-            if m:
-                self.ad_netbiosname = m.group(0).upper().strip()
+        if not self.ad_netbiosname:  
+            from freenasUI.network.models import GlobalConfiguration
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            if gc_hostname:
+                m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
+                if m:
+                    self.ad_netbiosname = m.group(0).upper().strip()
 
 
     class Meta:
