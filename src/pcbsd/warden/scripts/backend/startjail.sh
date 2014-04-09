@@ -164,7 +164,7 @@ start_jail_vimage()
         jexec ${JID} route add default gateway "${GATEWAY4}"
      fi  
      if [ -n "${ether}" ] ; then
-        get_ip_and_netmask "${GATEWAY4}:
+        get_ip_and_netmask "${GATEWAY4}"
         jexec ${JID} arp -s "${JIP}" "${ether}"
      fi
   #
@@ -180,7 +180,7 @@ start_jail_vimage()
         jexec ${JID} route add default gateway "${JIP}"
      fi
      if [ -n "${ether}" ] ; then
-        get_ip_and_netmask "${BRIDGEIP4}:
+        get_ip_and_netmask "${BRIDGEIP4}"
         jexec ${JID} arp -s "${JIP}" "${ether}"
      fi
   fi
