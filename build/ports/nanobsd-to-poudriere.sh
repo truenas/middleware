@@ -19,10 +19,6 @@ customize_cmd()
 {
 }
 
-FlashDevice()
-
-. nanobsd/os-base
-
 add_port()
 {
     local PORT
@@ -46,14 +42,5 @@ add_port_debug()
     add_port $@
 }
 
-echo "" > ${TMP}
-echo "NANO_PACKAGE_ONLY=0" >> ${TMP} 
-echo "if true; then" >> ${TMP}
-grep -A 25  add_port nanobsd/os-base   | sed -e 's/^\-\-//' >> ${TMP}
-sed -i "" -e 's|add_port editors/vim-lite|if [ \"${DEBUG}\" = \"1\" ]; then add_port editors/vim-lite|' ${TMP}
-echo "fi" >> ${TMP}
-echo "" >> ${TMP}
+. ${AVATAR_ROOT}/nanobsd/os-ports
 
-. ${TMP}
-
-rm -f ${TMP}
