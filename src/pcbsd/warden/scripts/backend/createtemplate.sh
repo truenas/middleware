@@ -12,11 +12,11 @@ PROGDIR="/usr/local/share/warden"
 download_template_files() {
 
   # Create the download directory
-  if [ -d "${JDIR}/.download" ] ; then rm -rf ${JDIR}/.download; fi
-  mkdir ${JDIR}/.download
+  if [ -d "${JDIR}/.download" ] ; then rm -rf "${JDIR}/.download"; fi
+  mkdir "${JDIR}/.download"
 
   if [ ! -d "${JDIR}" ] ; then mkdir -p "${JDIR}" ; fi
-  cd ${JDIR}
+  cd "${JDIR}"
 
   warden_print "Fetching jail environment. This may take a while..."
   if [ -n "$TRUEOSVER" ] ; then
@@ -46,7 +46,7 @@ download_template_files() {
 	    if [ $? -ne 0 ] ; then
               warden_exit "Failed downloading: FreeBSD ${FBSDVER} - $fName"
 	    fi
-	 done < ${JDIR}/.download/${oldStr}.inf
+	 done < "${JDIR}/.download/${oldStr}.inf"
 	 return
      fi
 
@@ -75,12 +75,12 @@ create_template()
   # Creating ZFS dataset?
   isDirZFS "${JDIR}"
   if [ $? -eq 0 ] ; then
-    local zfsp=`getZFSRelativePath "${TDIR}"`
+    local zfsp="`getZFSRelativePath "${TDIR}"`"
 
     # Use ZFS base for cloning
-    tank=`getZFSTank "${JDIR}"`
+    tank="`getZFSTank "${JDIR}"`"
 
-    mnt=`getZFSMountpoint ${tank}`
+    mnt="`getZFSMountpoint ${tank}`"
     tdir="${mnt}${zfsp}"
 
     clean_exit()
@@ -97,7 +97,7 @@ create_template()
     isDirZFS "${TDIR}" "1"
     if [ $? -ne 0 ] ; then
        warden_print "Creating ZFS ${TDIR} dataset..."
-       warden_run zfs create -o mountpoint=/${tank}${zfsp} -p ${tank}${zfsp}
+       warden_run zfs create -o mountpoint="'/${tank}${zfsp}'" -p "'${tank}${zfsp}'"
        if [ $? -ne 0 ] ; then
          zfs destroy -fr "${tank}${zfsp}" >/dev/null 2>&1
          rm -rf "${tdir}" >/dev/null 2>&1
@@ -117,9 +117,9 @@ create_template()
       rm -rf /var/tmp/.extract
 
     elif [ "$oldFBSD" = "YES" ] ; then
-      cd ${JDIR}/.download/
-      cat ${oldStr}.?? | tar --unlink -xpzf - -C ${TDIR} 2>/dev/null
-      cd ${JDIR}
+      cd "${JDIR}/.download/"
+      cat "${oldStr}".?? | tar --unlink -xpzf - -C "${TDIR}" 2>/dev/null
+      cd "${JDIR}"
 
     elif [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
       warden_print sh "${LINUX_JAIL_SCRIPT}" template_install "${TDIR}"
@@ -135,17 +135,17 @@ create_template()
       # Extract the dist files
       for f in $DFILES
       do
-        tar xvpf ${DISTFILESDIR}/$f -C ${TDIR} 2>/dev/null
+        tar xvpf "${DISTFILESDIR}/$f" -C "${TDIR}" 2>/dev/null
         if [ $? -ne 0 ] ; then
           zfs destroy -fr "${tank}${zfsp}"
           rm -rf "${tdir}" >/dev/null 2>&1
           warden_exit "Failed extracting ZFS template environment"
         fi
-        rm -f ${JDIR}/.download/${f}
+        rm -f "${JDIR}/.download/${f}"
       done
     fi
 
-    cp /etc/resolv.conf ${TDIR}/etc/resolv.conf
+    cp /etc/resolv.conf "${TDIR}/etc/resolv.conf"
 
     # Creating a plugin jail?
     if [ "$TPLUGJAIL" = "YES" ] ; then
@@ -158,7 +158,7 @@ create_template()
       fi
     fi
 
-    warden_run zfs snapshot ${tank}${zfsp}@clean
+    warden_run zfs snapshot "'${tank}${zfsp}@clean'"
     if [ $? -ne 0 ] ; then
       warden_exit "Failed creating clean ZFS base snapshot"
     fi
@@ -170,8 +170,8 @@ create_template()
 
     clean_exit()
     {
-       find ${TDIR} |xargs chflags noschg
-       rm -rf ${TDIR}
+       find "${TDIR}" | xargs chflags noschg
+       rm -rf "${TDIR}"
        warden_exit "Failed to create UFS template directory"
     }
 
@@ -179,8 +179,8 @@ create_template()
 
     # Sigh, still on UFS??
     if [ -d "${TDIR}" ]; then
-       find ${TDIR} |xargs chflags noschg
-       rm -rf ${TDIR}
+       find "${TDIR}" | xargs chflags noschg
+       rm -rf "${TDIR}"
     fi
 
     if [ -n "$FBSDTAR" ] ; then
@@ -188,13 +188,13 @@ create_template()
       "${EXTRACT_TARBALL}" -u "${FBSDTAR}" -d "${TDIR}" -s "${EXTRACT_TARBALL_STATUSFILE}"
 
     elif [ "$oldFBSD" = "YES" ] ; then
-      mkdir -p ${TDIR}
-      cd ${JDIR}/.download/
+      mkdir -p "${TDIR}"
+      cd "${JDIR}/.download/"
       warden_print "Extrating FreeBSD..."
-      cat ${oldStr}.?? | tar --unlink -xpzf - -C ${TDIR} 2>/dev/null
-      cd ${JDIR}
+      cat "${oldStr}".?? | tar --unlink -xpzf - -C "${TDIR}" 2>/dev/null
+      cd "${JDIR}"
 
-      cp /etc/resolv.conf ${TDIR}/etc/resolv.conf
+      cp /etc/resolv.conf "${TDIR}/etc/resolv.conf"
 
       # Creating a plugin jail?
       if [ "$TPLUGJAIL" = "YES" ] ; then
@@ -202,34 +202,34 @@ create_template()
       fi
 
       warden_print "Creating template archive..."
-      tar cvjf ${TDIR} -C ${TDIR} 2>/dev/null
-      rm -rf ${TDIR}
+      tar cvjf "${TDIR}" -C "${TDIR}" 2>/dev/null
+      rm -rf "${TDIR}"
 
     elif [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
       warden_print sh "${LINUX_JAIL_SCRIPT}" template_install "${TDIR}"
       sh "${LINUX_JAIL_SCRIPT}" template_install "${TDIR}" 2>&1 | warden_pipe
       sh "${LINUX_JAIL_SCRIPT}" error
       if [ $? -ne 0 ] ; then
-         find ${TDIR}|xargs chflags noschg
-         rm -rf ${TDIR}
+         find "${TDIR}"|xargs chflags noschg
+         rm -rf "${TDIR}"
          warden_exit "Failed extracting UFS template environment"
       fi
 
     else
       # Extract the dist files
-      mkdir -p ${TDIR}
+      mkdir -p "${TDIR}"
       for f in $DFILES
       do
-        tar xvpf ${DISTFILESDIR}/$f -C ${TDIR} 2>/dev/null
+        tar xvpf "${DISTFILESDIR}/$f" -C "${TDIR}" 2>/dev/null
         if [ $? -ne 0 ] ; then 
-           find ${TDIR}|xargs chflags noschg
-           rm -rf ${TDIR}
+           find "${TDIR}"|xargs chflags noschg
+           rm -rf "${TDIR}"
            warden_exit "Failed extracting UFS template environment"
         fi
-        rm -f ${JDIR}/.download/${f}
+        rm -f "${JDIR}/.download/${f}"
       done
 
-      cp /etc/resolv.conf ${TDIR}/etc/resolv.conf
+      cp /etc/resolv.conf "${TDIR}/etc/resolv.conf"
 
       # Creating a plugin jail?
       if [ "$TPLUGJAIL" = "YES" ] ; then
@@ -237,23 +237,25 @@ create_template()
       fi
 
       warden_print "Creating template archive..."
-      tar -cvjf - -C ${TDIR} > ${TDIR} 2>/dev/null
-      find ${TDIR}|xargs chflags noschg
-      rm -rf ${TDIR}
+      tar -cvjf - -C "${TDIR}" > "${TDIR}" 2>/dev/null
+      find "${TDIR}"|xargs chflags noschg
+      rm -rf "${TDIR}"
     fi
   fi
 
   trap INT QUIT ABRT KILL TERM EXIT
 
-  rm -rf ${JDIR}/.download
+  rm -rf "${JDIR}/.download"
   warden_print "Created jail template: $TNICK"
   exit 0
 };
 
+ifs="${IFS}"
+IFS=$'\n'
 
 # Read our flags
 while [ $# -gt 0 ]; do
-   case $1 in
+   case "$1" in
     -fbsd) shift
            if [ -z "$1" ] ; then warden_exit "No FreeBSD version specified"; fi
            FBSDVER="${1}"
@@ -288,6 +290,8 @@ while [ $# -gt 0 ]; do
    esac
    shift
 done
+
+IFS="${ifs}"
 
 if [ -z "$TNICK" ] ; then
   warden_exit "No nickname specified, use -nick <nickname>"
@@ -328,15 +332,15 @@ then
 fi
 
 if [ -d "${PROGDIR}/${DISTFILES}" ] ; then
-  diff -urN ${PROGDIR}/${DISTFILES}/ "${DISTFILESDIR}/" >/dev/null 2>&1
+  diff -urN "${PROGDIR}/${DISTFILES}/" "${DISTFILESDIR}/" >/dev/null 2>&1
   if [ "$?" != "0" ] ; then
-    cp ${PROGDIR}/${DISTFILES}/* "${DISTFILESDIR}/"
+    cp "${PROGDIR}/${DISTFILES}"/* "${DISTFILESDIR}/"
   fi
 fi
 if [ -d "${PROGDIR}/${PACKAGES}" ] ; then
-  diff -urN ${PROGDIR}/${PACKAGES}/ "${PACKAGESDIR}/" >/dev/null 2>&1
+  diff -urN "${PROGDIR}/${PACKAGES}/" "${PACKAGESDIR}/" >/dev/null 2>&1
   if [ "$?" != "0" ] ; then
-    cp ${PROGDIR}/${PACKAGES}/* "${PACKAGESDIR}/"
+    cp "${PROGDIR}/${PACKAGES}"/* "${PACKAGESDIR}/"
   fi
 fi
 

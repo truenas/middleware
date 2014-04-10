@@ -413,7 +413,7 @@ isDirZFS() {
      if [ "$2" = "1" ] ; then return 1 ; fi
   
      if [ "$_chkDir" = "/" ] ; then break ; fi
-     _chkDir=`dirname $_chkDir`
+     _chkDir=`dirname "$_chkDir"`
   done
   
   return 1
@@ -434,7 +434,7 @@ getZFSMount() {
 # Get the ZFS tank name for a directory
 # Arg1 = Directory to check
 getZFSTank() {
-  local _chkDir="$(realpath $1 2>/dev/null)"
+  local _chkDir="$(realpath "$1" 2>/dev/null)"
   if [ -z "${_chkDir}" ] ; then
      _chkDir="${1}"
   fi
@@ -443,26 +443,26 @@ getZFSTank() {
   while :
   do
      if [ -d "${_chkDir}" ] ; then
-        _chkDir="$(realpath ${_chkDir})"
+        _chkDir="$(realpath "${_chkDir}")"
      fi
 
      zpath=`zfs list | awk -v path="${_chkDir}" '$5 == path { print $1 }'`
      if [ -n "${zpath}" ] ; then
-        echo $zpath | cut -f1 -d '/'
+        echo "$zpath" | cut -f1 -d '/'
         return 0
      fi
 
      if [ "$_chkDir" = "/" ] ; then return 1 ; fi
-     _chkDir=`dirname $_chkDir`
+     _chkDir=`dirname "$_chkDir"`
   done
 
   return 1
 }
 
 getZFSDataset() {
-  local _chkDir="$(realpath $1)"
+  local _chkDir="$(realpath "$1")"
   if [ -n "${_chkDir}" ] ; then
-     _chkDir=${_chkDir%/}
+     _chkDir="${_chkDir%/}"
   fi
 
   while :
@@ -473,7 +473,7 @@ getZFSDataset() {
        return 0
     fi
     if [ "$_chkDir" = "/" ] ; then return 1 ; fi
-    _chkDir=`dirname $_chkDir`
+    _chkDir=`dirname "$_chkDir"`
   done
   return 1
 }
@@ -496,9 +496,9 @@ getZFSRelativePath() {
 
    if [ -z "${_tank}" ] ; then return 1 ; fi
 
-   local _name="${_chkDir#${_mp}}"
+   local _name="${_chkDir#"${_mp}"}"
    if [ -z "${_name}" ] ; then
-       _name="/`basename ${_chkDir}`"
+       _name="/`basename "${_chkDir}"`"
    fi
 
    echo "${_name}"

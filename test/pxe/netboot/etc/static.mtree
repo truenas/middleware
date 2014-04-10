@@ -1,0 +1,89 @@
+# $Header: /cvsroot/druidbsd/pxe-config/netboot/etc/static.mtree,v 1.1 2014/03/01 02:14:35 devinteske Exp $
+#	   user: devin
+#	machine: blackford.shxd.cx
+#	   tree: /usr/opshome/pxe-config/src/netboot/static
+#	   date: Tue Feb 25 09:33:44 2014
+
+# .
+/set type=file uname=root gname=wheel mode=0755
+.               type=dir
+    bin             type=link mode=0755 link=stand
+    sbin            type=link mode=0755 link=stand
+
+# ./.snap
+    .snap           type=dir
+    # ./.snap
+    ..
+
+
+# ./dev
+    dev             type=dir
+    # ./dev
+    ..
+
+
+# ./etc
+    etc             type=dir
+
+# ./etc/defaults
+        defaults        type=dir
+        # ./etc/defaults
+        ..
+
+    # ./etc
+    ..
+
+
+# ./lib
+    lib             type=dir
+    # ./lib
+    ..
+
+
+# ./libexec
+    libexec         type=dir
+    # ./libexec
+    ..
+
+
+# ./stand
+    stand           type=dir
+    # ./stand
+    ..
+
+
+# ./usr
+/set type=file uname=root gname=wheel mode=0755
+    usr             type=dir mode=0755
+        bin             type=link link=../stand
+        sbin            type=link link=../stand
+    # ./usr
+    ..
+
+
+# ./var
+/set type=file uname=root gname=wheel mode=0755
+    var             type=dir
+
+# ./var/db
+        db              type=dir
+        # ./var/db
+        ..
+
+
+# ./var/empty
+        empty           type=dir
+        # ./var/empty
+        ..
+
+
+# ./var/run
+        run             type=dir
+        # ./var/run
+        ..
+
+    # ./var
+    ..
+
+..
+

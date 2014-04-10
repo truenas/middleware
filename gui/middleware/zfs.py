@@ -83,16 +83,18 @@ class Pool(object):
     id = None
     name = None
     scrub = None
+    resilver = None
 
     data = None
     cache = None
     spares = None
     logs = None
 
-    def __init__(self, pid, name, scrub):
+    def __init__(self, pid, name, scrub, resilver=None):
         self.id = pid
         self.name = name
         self.scrub = scrub
+        self.resilver = resilver
 
     def __getitem__(self, name):
         if hasattr(self, name):
@@ -371,22 +373,27 @@ class Dev(Tnode):
             )
 
         name = self.name
-        search = self._doc.xpathEval("//class[name = 'ELI']"
-                                     "//provider[name = '%s']/../consumer"
-                                     "/provider/@ref" % name)
+        search = self._doc.xpath(
+            "//class[name = 'ELI']"
+            "//provider[name = '%s']/../consumer"
+            "/provider/@ref" % name
+        )
         if len(search) > 0:
-            search = self._doc.xpathEval("//provider[@id = '%s']"
-                                         "/name" % search[0].content)
-            name = search[0].content
+            search = self._doc.xpath(
+                "//provider[@id = '%s']/name" % search[0]
+            )
+            name = search[0].text
 
-        search = self._doc.xpathEval("//class[name = 'LABEL']"
-                                     "//provider[name = '%s']/../consumer"
-                                     "/provider/@ref" % name)
+        search = self._doc.xpath(
+            "//class[name = 'LABEL']"
+            "//provider[name = '%s']/../consumer"
+            "/provider" % name
+        )
 
         provider = None
         if len(search) > 0:
-            self.devname = search[0].xpathEval("../../../name")[0].content
-            provider = search[0].content
+            self.devname = search[0].xpath("../../name")[0].text
+            provider = search[0].attrib.get('ref')
         else:
 
             # Treat .nop as a regular dev (w/o .nop)
@@ -394,11 +401,13 @@ class Dev(Tnode):
                 self.devname = self.name[:-4]
             else:
                 self.devname = self.name
-            search = self._doc.xpathEval("//class[name = 'DEV']"
-                                         "/geom[name = '%s']"
-                                         "//provider/@ref" % self.devname)
+            search = self._doc.xpath(
+                "//class[name = 'DEV']"
+                "/geom[name = '%s']"
+                "//provider/@ref" % self.devname
+            )
             if len(search) > 0:
-                provider = search[0].content
+                provider = search[0]
             elif self.status == 'ONLINE':
                 log.warn("It should be a valid device: %s", self.name)
                 self.disk = self.name
@@ -419,9 +428,10 @@ class Dev(Tnode):
                         self.path = reg.group("path")
 
         if provider:
-            search = self._doc.xpathEval("//provider[@id = '%s']"
-                                         "/../name" % provider)
-            self.disk = search[0].content
+            search = self._doc.xpath(
+                "//provider[@id = '%s']/../name" % provider
+            )
+            self.disk = search[0].text
 
 
 class ZFSList(SortedDict):
@@ -555,6 +565,7 @@ class Snapshot(object):
     refer = None
     mostrecent = False
     parent_type = None
+    replciation = None
 
     def __init__(
         self,
@@ -563,7 +574,8 @@ class Snapshot(object):
         used,
         refer,
         mostrecent=False,
-        parent_type=None
+        parent_type=None,
+        replication=None
     ):
         self.name = name
         self.filesystem = filesystem
@@ -571,6 +583,7 @@ class Snapshot(object):
         self.refer = refer
         self.mostrecent = mostrecent
         self.parent_type = parent_type
+        self.replication = replication
 
     def __repr__(self):
         return u"<Snapshot: %s>" % self.fullname
@@ -629,6 +642,7 @@ def parse_status(name, doc, data):
             scrub.update({
                 'repaired': None,
                 'errors': None,
+                'date': None,
             })
             scrub_status = 'COMPLETED'
             scrub_statusv = _('Completed')
@@ -639,6 +653,10 @@ def parse_status(name, doc, data):
             reg = re.search(r'repaired (\S+) in', scan)
             if reg:
                 scrub['repaired'] = reg.group(1)
+
+            reg = re.search(r'on (.+\d{2} \d{4})', scan)
+            if reg:
+                scrub['date'] = reg.group(1)
 
         elif scan.find('scrub canceled') != -1:
             scrub_status = 'CANCELED'
@@ -654,13 +672,72 @@ def parse_status(name, doc, data):
         scrub['status'] = 'NONE'
         scrub['status_verbose'] = _('None requested')
 
+
+    """
+    Parse the resilver statistics from zpool status
+    """
+    scan = re.search(r'scan: (resilver.+?)\b[a-z]+:', data, re.M|re.S)
+    resilver = {}
+    if scan:
+        scan = scan.group(1)
+        if scan.find('in progress') != -1:
+            resilver.update({
+                'progress': None,
+                'scanned': None,
+                'total': None,
+                'togo': None,
+            })
+            resilver_status = 'IN_PROGRESS'
+            resilver_statusv = _('In Progress')
+            reg = re.search(r'(\S+)% done', scan)
+            if reg:
+                resilver['progress'] = Decimal(reg.group(1))
+
+            reg = re.search(r'(\S+) scanned out of (\S+)', scan)
+            if reg:
+                resilver['scanned'] = reg.group(1)
+                resilver['total'] = reg.group(2)
+
+            reg = re.search(r'(\S+) to go', scan)
+            if reg:
+                resilver['togo'] = reg.group(1)
+
+        elif scan.find('resilvered') != -1:
+            resilver.update({
+                'errors': None,
+                'date': None,
+            })
+            resilver_status = 'COMPLETED'
+            resilver_statusv = _('Completed')
+            reg = re.search(r'with (\S+) errors', scan)
+            if reg:
+                resilver['errors'] = reg.group(1)
+
+            reg = re.search(r'on (.+\d{2} \d{4})', scan)
+            if reg:
+                resilver['date'] = reg.group(1)
+
+        elif scan.find('resilver canceled') != -1:
+            resilver_status = 'CANCELED'
+            resilver_statusv = _('Canceled')
+
+        else:
+            resilver_status = 'UNKNOWN'
+            resilver_statusv = _('Unknown')
+
+        resilver['status'] = resilver_status
+        resilver['status_verbose'] = resilver_statusv
+    else:
+        resilver['status'] = 'NONE'
+        resilver['status_verbose'] = _('None requested')
+
     status = data.split('config:')[1]
     pid = re.search(r'id: (?P<id>\d+)', data)
     if pid:
         pid = pid.group("id")
     else:
         pid = None
-    pool = Pool(pid=pid, name=name, scrub=scrub)
+    pool = Pool(pid=pid, name=name, scrub=scrub, resilver=resilver)
     lastident = None
     pnode = None
     for line in status.split('\n'):

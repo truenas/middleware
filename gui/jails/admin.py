@@ -73,13 +73,11 @@ class JailsFAdmin(BaseFreeAdmin):
         columns.append({
             'name': 'jail_host',
             'label': _('Jail'),
-            'sortable': False,
         })
 
         columns.append({
             'name': 'jail_ipv4',
             'label': _('IPv4 Address'),
-            'sortable': False,
         })
 
         #
@@ -89,19 +87,16 @@ class JailsFAdmin(BaseFreeAdmin):
         columns.append({
             'name': 'jail_autostart',
             'label': _('Autostart'),
-            'sortable': False,
         })
 
         columns.append({
             'name': 'jail_status',
             'label': _('Status'),
-            'sortable': False,
         })
 
         columns.append({
             'name': 'jail_type',
             'label': _('Type'),
-            'sortable': False,
         })
 
         return columns

@@ -46,14 +46,14 @@ class Multipath(object):
         return devs
 
     def __init__(self, doc, xmlnode):
-        self.name = xmlnode.xpathEval("./name")[0].content
+        self.name = xmlnode.xpath("./name")[0].text
         self.devname = "multipath/%s" % self.name
-        self._status =  xmlnode.xpathEval("./config/State")[0].content
+        self._status =  xmlnode.xpath("./config/State")[0].text
         self.consumers = []
-        for consumer in xmlnode.xpathEval("./consumer"):
-            status = consumer.xpathEval("./config/State")[0].content
-            provref = consumer.xpathEval("./provider/@ref")[0].content
-            prov = doc.xpathEval("//provider[@id = '%s']" % provref)[0]
+        for consumer in xmlnode.xpath("./consumer"):
+            status = consumer.xpath("./config/State")[0].text
+            provref = consumer.xpath("./provider/@ref")[0]
+            prov = doc.xpath("//provider[@id = '%s']" % provref)[0]
             self.consumers.append(Consumer(status, prov))
 
         self.__xml = xmlnode
@@ -67,9 +67,9 @@ class Consumer(object):
 
     def __init__(self, status, xmlnode):
         self.status = status
-        self.devname = xmlnode.xpathEval("./name")[0].content
+        self.devname = xmlnode.xpath("./name")[0].text
         try:
-            self.lunid = xmlnode.xpathEval("./config/lunid")[0].content
+            self.lunid = xmlnode.xpath("./config/lunid")[0].text
         except:
             self.lunid = ''
         self.__xml = xmlnode

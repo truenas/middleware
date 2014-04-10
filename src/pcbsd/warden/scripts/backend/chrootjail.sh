@@ -34,7 +34,7 @@ fi
 set_warden_metadir
 
 # Make sure the jail is running
-jls | grep ${JAILDIR}$ >/dev/null 2>/dev/null
+jls | grep "${JAILDIR}"$ >/dev/null 2>/dev/null
 if [ "$?" != "0" ]
 then
   warden_error "Jail is not running!"
@@ -42,11 +42,11 @@ then
 fi
 
 # Get the JailID for this jail
-JID="`jls | grep ${JAILDIR}$ | tr -s " " | cut -d " " -f 2`"
+JID="`jls | grep "${JAILDIR}"$ | tr -s " " | cut -d " " -f 2`"
 
 # If on an portjail, make display available
 if [ -e "${JMETADIR}/jail-portjail" ] ; then
-  HOST="`cat ${JMETADIR}/host`"
+  HOST="`cat "${JMETADIR}/host"`"
   xhost + 2>/dev/null >/dev/null
 else
  if [ "`whoami`" != "root" ] ; then

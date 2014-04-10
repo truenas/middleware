@@ -50,6 +50,7 @@ from freenasUI.account.forms import bsdUserToGroupForm
 from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_number_si
+from freenasUI.common.warden import Warden
 from freenasUI.jails.forms import JailCreateForm
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -1495,6 +1496,7 @@ class BsdUserResourceMixin(NestedMixin):
 
     def dehydrate(self, bundle):
         bundle = super(BsdUserResourceMixin, self).dehydrate(bundle)
+        bundle.data['bsdusr_sshpubkey'] = bundle.obj.bsdusr_sshpubkey
         bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
         if self.is_webclient(bundle.request):
             bundle.data['_edit_url'] += 'bsdUsersForm'
@@ -1538,10 +1540,39 @@ class NullMountPointResourceMixin(object):
         return bundle
 
 
-class JailsResourceMixin(object):
+class JailsResourceMixin(NestedMixin):
 
     class Meta:
         validation = FormValidation(form_class=JailCreateForm)
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('jail_start'),
+                name="api_jails_jails_start"
+            ),
+        ]
+
+    def jail_start(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        #TODO: Duplicated code - jails.views.jail_start
+        notifier().reload("http")
+        try:
+            Warden().start(jail=obj.jail_host)
+        except Exception, e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error': e,
+                })
+            )
+
+        return HttpResponse('Jail started.', status=202)
 
     def dispatch_list(self, request, **kwargs):
         proc = subprocess.Popen(
@@ -1628,6 +1659,7 @@ class SnapshotResource(DojoResource):
     used = fields.CharField(attribute='used')
     mostrecent = fields.BooleanField(attribute='mostrecent')
     parent_type = fields.CharField(attribute='parent_type')
+    replication = fields.CharField(attribute='replication', null=True)
 
     class Meta:
         allowed_methods = ['delete', 'get', 'post']
@@ -1635,7 +1667,15 @@ class SnapshotResource(DojoResource):
         resource_name = 'storage/snapshot'
 
     def get_list(self, request, **kwargs):
-        snapshots = notifier().zfs_snapshot_list()
+
+        # Get a list of snapshots in remote sides to show whether it has been
+        # transfered already or not
+        repli = {}
+        for repl in Replication.objects.all():
+            repli[repl] = notifier().repl_remote_snapshots(repl)
+
+        snapshots = notifier().zfs_snapshot_list(replications=repli)
+
         results = []
         for snaps in snapshots.values():
             results.extend(snaps)
@@ -1644,12 +1684,6 @@ class SnapshotResource(DojoResource):
             'refer': 'refer_bytes',
             'extra': 'mostrecent',
         }
-
-        # Get a list of snapshots in remote sides to show whether it has been
-        # transfered already or not
-        self._repl = {}
-        for repl in Replication.objects.all():
-            self._repl[repl] = notifier().repl_remote_snapshots(repl)
 
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
@@ -1775,19 +1809,6 @@ class SnapshotResource(DojoResource):
                     'snapname': bundle.obj.name,
                 }),
             }
-        if self._repl:
-            for repl, snaps in self._repl.iteritems():
-                remotename = '%s@%s' % (
-                    bundle.obj.filesystem.replace(
-                        repl.repl_filesystem,
-                        repl.repl_zfs,
-                    ),
-                    bundle.obj.name,
-                )
-                if remotename in snaps:
-                    bundle.data['replication'] = 'OK'
-                    #TODO: Multiple replication tasks
-                    break
         return bundle
 
 

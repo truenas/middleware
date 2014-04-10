@@ -71,6 +71,7 @@ class UsersResourceTest(APITestCase):
             u'bsdusr_password_disabled': False,
             u'bsdusr_locked': False,
             u'bsdusr_sudo': False,
+            u'bsdusr_sshpubkey': u'',
         } in data)
 
     def test_Update(self):

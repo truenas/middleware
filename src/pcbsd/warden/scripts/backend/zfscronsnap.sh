@@ -51,8 +51,8 @@ if [ "$ACTION" = "start" ] ; then
 
   enable_cron
 
-  echo "${TIME}" >${JMETADIR}/cron
-  echo "${COUNT}" >${JMETADIR}/cron-keep
+  echo "${TIME}" > "${JMETADIR}/cron"
+  echo "${COUNT}" > "${JMETADIR}/cron-keep"
 
   warden_print "Snapshot frequency set: $TIME"
   warden_print "Snapshot days to keep set: $COUNT"
@@ -61,8 +61,8 @@ if [ "$ACTION" = "start" ] ; then
 fi
 
 if [ "$ACTION" = "stop" ] ; then
-   rm ${JMETADIR}/cron 2>/dev/null >/dev/null
-   rm ${JMETADIR}/cron-keep 2>/dev/null >/dev/null
+   rm "${JMETADIR}/cron" 2>/dev/null >/dev/null
+   rm "${JMETADIR}/cron-keep" 2>/dev/null >/dev/null
    exit 0
 fi
 

@@ -232,7 +232,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             <br />
             <br />
             <br />
-            <a href="#" onClick="
+            <a href="#" aria-label="%s" onClick="
             var s=dijit.byId('%s');
             var s2=dijit.byId('select_from');
             s.getSelected().forEach(function(i){
@@ -247,7 +247,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             <br />
             <br />
             <br />
-            <a href="#" onClick="
+            <a href="#" aria-label="%s" onClick="
             var s2=dijit.byId('%s');
             var s=dijit.byId('select_from');
             s.getSelected().forEach(function(i){
@@ -262,7 +262,13 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             </div>
             <div class="select-selected">
             %s<br/>
-        ''' % (attrs['id'], attrs['id'], __('Selected')))
+        ''' % (
+            __('Remove from group'),
+            attrs['id'],
+            __('Add to group'),
+            attrs['id'],
+            __('Selected'),
+        ))
 
         _from = forms.widgets.SelectMultiple().render(
             name, value, attrs, selected
@@ -486,14 +492,9 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 ] = True
             if self.instance.bsdusr_password_disabled is True:
                 self.fields['bsdusr_locked'].widget.attrs['disabled'] = True
-            try:
-                self.fields['bsdusr_sshpubkey'].initial = open(
-                    '%s/.ssh/authorized_keys' % (
-                        self.instance.bsdusr_home,
-                    )
-                ).read()
-            except:
-                self.fields['bsdusr_sshpubkey'].initial = ''
+            self.fields['bsdusr_sshpubkey'].initial = (
+                self.instance.bsdusr_sshpubkey
+            )
 
     def clean_bsdusr_username(self):
         if self.instance.id is None:
@@ -745,6 +746,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 bsdusr_sshpubkey,
                 bsduser.bsdusr_username,
                 bsduser.bsdusr_group.bsdgrp_group)
+        else:
+            _notifier.delete_pubkey(bsduser.bsdusr_home)
         return bsduser
 
 

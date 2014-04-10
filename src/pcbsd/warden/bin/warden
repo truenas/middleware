@@ -743,8 +743,8 @@ details) JAILNAME="${2}"
  template) require_root
          OPT="$2"
          case $OPT in
-           create) shift ; shift; ${PROGDIR}/scripts/backend/createtemplate.sh $* ;;
-           delete) delete_template $3 ;;
+           create) shift ; shift; ${PROGDIR}/scripts/backend/createtemplate.sh "$@" ;;
+           delete) delete_template "$3" ;;
              list) shift ; shift; list_templates $* ;;
                 *) help_template ; exit 1 ;;
         esac
@@ -853,12 +853,12 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 
 	 case $TYPE in
 	   portjail)
-              rm ${JMETADIR}/jail-pluginjail > /dev/null 2>/dev/null
+              rm "${JMETADIR}/jail-pluginjail" > /dev/null 2>/dev/null
               mkportjail "${JAILDIR}"
               ;;
 	   standard)
-              rm ${JMETADIR}/jail-pluginjail > /dev/null 2>/dev/null
-              rm ${JMETADIR}/jail-portjail >/dev/null 2>/dev/null
+              rm "${JMETADIR}/jail-pluginjail" > /dev/null 2>/dev/null
+              rm "${JMETADIR}/jail-portjail" >/dev/null 2>/dev/null
               ;;
 	   pluginjail)
               mkpluginjail "${JAILDIR}"
@@ -973,9 +973,9 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
                  warden_exit "Invalid IPv4 address!"
               fi
 
-              for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+              for i in `ls -d "${JDIR}"/.*.meta 2>/dev/null`
               do
-                if [ "`cat ${i}/ipv4 2>/dev/null`" = "${IP4}/${MASK4}" ] ; then
+                if [ "`cat "${i}/ipv4" 2>/dev/null`" = "${IP4}/${MASK4}" ] ; then
                   warden_exit "A jail with this IPv4 address already exists!"
                 fi 
               done 
@@ -994,9 +994,9 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
                  warden_exit "Invalid IPv6 address!"
               fi
 
-              for i in `ls -d ${JDIR}/.*.meta 2>/dev/null`
+              for i in `ls -d "${JDIR}"/.*.meta 2>/dev/null`
               do
-                _ipv6=`cat ${i}/ipv6 2>/dev/null | tr a-z A-Z`
+                _ipv6=`cat "${i}/ipv6" 2>/dev/null | tr a-z A-Z`
                 _nipv6="`echo ${IP6}|tr a-z A-Z`/${MASK6}"
                 
                 if [ "${_ipv6}" = "${_nipv6}" ] ; then
@@ -1269,7 +1269,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           if [ "$?" = "0" ] ; then warden_exit "Jail still is running or has leftovers.."; fi
 
           # Delete it now
-          lockf /var/tmp/.${JAILNAME} \
+          lockf "/var/tmp/.${JAILNAME}" \
           ${PROGDIR}/scripts/backend/deletejail.sh "${JAILNAME}"
           ;;
    *) help_main ;;

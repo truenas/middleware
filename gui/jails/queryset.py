@@ -108,8 +108,12 @@ class JailsQuerySet(QuerySet):
 
         wlist = self.__wlist
         for fn in fields:
+            reverse = False
+            if fn.startswith('-'):
+                reverse = True
+                fn = fn[1:]
             fn = self.__key(fn)
-            wlist = sorted(wlist, key=lambda k: k[fn])
+            wlist = sorted(wlist, key=lambda k: k[fn], reverse=reverse)
 
         for wj in wlist:
             models.append(self.model(**wj))

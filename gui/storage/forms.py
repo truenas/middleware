@@ -1479,11 +1479,11 @@ class ZFSDataset(Form):
 
     def clean_dataset_name(self):
         name = self.cleaned_data["dataset_name"]
-        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
+        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:. ]*$', name):
             raise forms.ValidationError(_(
                 "Dataset names must begin with an "
                 "alphanumeric character and may only contain "
-                "\"-\", \"_\", \":\" and \".\"."))
+                "\"-\", \"_\", \":\", \" \" and \".\"."))
         return name
 
     def clean_dataset_recordsize(self):
@@ -1775,10 +1775,10 @@ class ManualSnapshotForm(Form):
             'manual-%Y%m%d')
 
     def clean_ms_name(self):
-        regex = re.compile('^[-a-zA-Z0-9_.]+$')
+        regex = re.compile('^[-a-zA-Z0-9_. ]+$')
         if regex.match(self.cleaned_data['ms_name'].__str__()) is None:
             raise forms.ValidationError(
-                _("Only [-a-zA-Z0-9_.] permitted as snapshot name")
+                _("Only [-a-zA-Z0-9_. ] permitted as snapshot name")
             )
         return self.cleaned_data['ms_name']
 
@@ -1818,10 +1818,10 @@ class CloneSnapshotForm(Form):
         return self.fields['cs_snapshot'].initial
 
     def clean_cs_name(self):
-        regex = re.compile('^[-a-zA-Z0-9_./]+$')
+        regex = re.compile('^[-a-zA-Z0-9_./ ]+$')
         if regex.match(self.cleaned_data['cs_name'].__str__()) is None:
             raise forms.ValidationError(
-                _("Only [-a-zA-Z0-9_./] permitted as clone name")
+                _("Only [-a-zA-Z0-9_./ ] permitted as clone name")
             )
         if '/' in self.fields['cs_snapshot'].initial:
             volname = self.fields['cs_snapshot'].initial.split('/')[0]
@@ -1979,6 +1979,7 @@ class ReplicationForm(ModelForm):
         label=_("Remote port"),
         initial=22,
         required=False,
+        widget=forms.widgets.TextInput(),
     )
     repl_remote_dedicateduser_enabled = forms.BooleanField(
         label=_("Dedicated User Enabled"),

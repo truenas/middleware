@@ -109,7 +109,7 @@ def main():
     ):
         return
 
-    system_datasets = [ 'samba4', 'syslog', 'cores' ]
+    system_datasets = [ 'samba4', 'syslog', 'cores', 'rrd' ]
 
     volume, basename = get_system_dataset()
     if not volume:

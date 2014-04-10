@@ -43,6 +43,7 @@ List resource
                 "bsdusr_shell": "/bin/csh",
                 "bsdusr_smbhash": "root:0:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:E6FCEFB62A365065CE5B5F04AB12B455:[U          ]:LCT-52272D9E:",
                 "bsdusr_uid": 0,
+                "bsdusr_sshpubkey": "",
                 "bsdusr_unixhash": "$6$d8doVGxjhDhL4feI$YpTtmlhCmbc6BJ4MQcBsPvZA0Ge4SMnAyZn9CfZLpkuP71g8bPq6DkKJBmcN61z2oQSj0K8RtaqmKltc9HsMg0",
                 "bsdusr_username": "root",
                 "bsdusr_sudo": false,
@@ -97,6 +98,7 @@ Create resource
                 "bsdusr_shell": "/bin/csh",
                 "bsdusr_smbhash": "myuser:0:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:E6FCEFB62A365065CE5B5F04AB12B455:[U          ]:LCT-52272D9E:",
                 "bsdusr_uid": 1111,
+                "bsdusr_sshpubkey": "",
                 "bsdusr_unixhash": "$6$d8doVGxjhDhL4feI$YpTtmlhCmbc6BJ4MQcBsPvZA0Ge4SMnAyZn9CfZLpkuP71g8bPq6DkKJBmcN61z2oQSj0K8RtaqmKltc9HsMg0",
                 "bsdusr_username": "myuser",
                 "bsdusr_sudo": false,
@@ -114,6 +116,7 @@ Create resource
    :json boolean bsdusr_password_disabled: disabled password login
    :json boolean bsdusr_locked: lock user login
    :json boolean bsdusr_sudo: enable sudo for the user
+   :json string bsdusr_sshpubkey: SSH authorized keys file content
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -157,6 +160,7 @@ Update resource
                 "bsdusr_shell": "/bin/bash",
                 "bsdusr_smbhash": "myuser:0:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:E6FCEFB62A365065CE5B5F04AB12B455:[U          ]:LCT-52272D9E:",
                 "bsdusr_uid": 1111,
+                "bsdusr_sshpubkey": "",
                 "bsdusr_unixhash": "$6$d8doVGxjhDhL4feI$YpTtmlhCmbc6BJ4MQcBsPvZA0Ge4SMnAyZn9CfZLpkuP71g8bPq6DkKJBmcN61z2oQSj0K8RtaqmKltc9HsMg0",
                 "bsdusr_username": "myuser",
                 "bsdusr_sudo": false,
@@ -172,6 +176,7 @@ Update resource
    :json boolean bsdusr_password_disabled: disabled password login
    :json boolean bsdusr_locked: lock user login
    :json boolean bsdusr_sudo: enable sudo for the user
+   :json string bsdusr_sshpubkey: SSH authorized keys file content
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error

@@ -1,0 +1,845 @@
+# vim: syntax=sh
+############################################################ COPYRIGHT
+#
+# Copyright (c) 2006-2014 Devin Teske
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+# $Header: /cvsroot/druidbsd/pxe-config/netboot/src/etc/rc.subr,v 1.2 2014/03/02 04:39:56 devinteske Exp $
+#
+############################################################ CONFIGURATION
+
+#
+# Contact information to be displayed on fatal-error
+#
+contact="
+
+Please contact your local/preferred BSD expert!
+The mailing-lists and forums @ freebsd.org are a good place to start.
+"
+
+#
+# Humans like delays. So they can read things. It also adds a nice dramatic
+# effect... rather than blowing through things, if a delay seems reasonable,
+# this variable is used as a tunable ``slowness-factor'' where necessary.
+#
+# Value is in seconds. A positive number value (with or without decimals) to
+# be passed to sleep(1). Set to the NULL string ("")  or comment-out entirely
+# to disable delays.
+#
+export HUMAN_DELAY=1
+
+#
+# Final command to be executed on fatal-error before exit
+#
+export ERR_CMD="while true;do sleep 10; done"
+
+############################################################ GLOBALS
+
+#
+# [Optional] ANSI color-code definitions
+#
+case "$ANSI_COLOR" in
+[Yy][Ee][Ss])
+	export ANSI_NON="[0m"        # Reset/Normal
+	export ANSI_BLD="[1m"        # Bold
+	export ANSI_UND="[4m"        # Underline
+	export ANSI_INV="[7m"        # Inverse FG/BG
+	export ANSI_BLD_OFF="[22m"   # Bold disable
+	export ANSI_UND_OFF="[24m"   # Underline disable
+	export ANSI_INV_OFF="[27m"   # Inverse disable
+	export ANSI_BLK="[30m"       # Black text
+	export ANSI_RED="[31m"       # Red text
+	export ANSI_GRN="[32m"       # Green text
+	export ANSI_YEL="[33m"       # Yellow text
+	export ANSI_BLU="[34m"       # Blue text
+	export ANSI_MAG="[35m"       # Magenta text
+	export ANSI_CYN="[36m"       # Cyan text
+	export ANSI_WHT="[37m"       # White text
+	export ANSI_NRM="[39m"       # Default/Normal text
+	export ANSI_BLK_BG="[40m"    # Black background
+	export ANSI_RED_BG="[41m"    # Red background
+	export ANSI_GRN_BG="[42m"    # Green background
+	export ANSI_YEL_BG="[43m"    # Yellow background
+	export ANSI_BLU_BG="[44m"    # Blue background
+	export ANSI_MAG_BG="[45m"    # Magenta background
+	export ANSI_CYN_BG="[46m"    # Cyan background
+	export ANSI_WHT_BG="[47m"    # White background
+	export ANSI_NRM_BG="[49m"    # Default/Normal background
+	: [0m ;; # terminate ANSI -- in case we get dumped to screen
+esac
+
+# exit status variables
+export SUCCESS=0
+export FAILURE=1
+
+# Status indicator message formats for task_begin/task_end
+export FMT_COLS=70
+export FMT_HEAD="%-${FMT_COLS}s"
+export FMT_STAT=" [$ANSI_BLD%s$ANSI_BLD_OFF]\n"
+export MSG_GOOD="${ANSI_GRN}  OK  $ANSI_NRM"
+export MSG_FAIL="${ANSI_RED}FAILED$ANSI_NRM"
+
+# Standard error prefixes
+export ANSI_RED_BLD="$ANSI_RED$ANSI_BLD"
+export ANSI_YEL_BLD="$ANSI_YEL$ANSI_BLD"
+export ANSI_BLD_OFF_NRM="$ANSI_BLD_OFF$ANSI_NRM"
+export CONFIG_ERROR="${ANSI_RED_BLD}CONFIGURATION ERROR!$ANSI_BLD_OFF_NRM"
+export DISK_ERROR="${ANSI_RED_BLD}DISK ERROR!$ANSI_BLD_OFF_NRM"
+export FATAL_ERROR="${ANSI_RED_BLD}FATAL ERROR!$ANSI_BLD_OFF_NRM"
+export FILE_ERROR="${ANSI_RED_BLD}FILE ERROR!$ANSI_BLD_OFF_NRM"
+export NETWORK_ERROR="${ANSI_RED_BLD}NETWORK ERROR!$ANSI_BLD_OFF_NRM"
+export UNKNOWN_ERROR="${ANSI_RED_BLD}UNKNOWN ERROR!$ANSI_BLD_OFF_NRM"
+export WARNING="${ANSI_YEL_BLD}WARNING!$ANSI_BLD_OFF_NRM"
+
+
+__cp=0 # reserved for internal use
+
+############################################################ FUNCTIONS
+
+# die [ $format [ $arguments ... ] ]
+#
+# Abrubtly terminate due to an error.
+#
+die()
+{
+	local format="$1"
+	task_end $FAILURE # end the previous task (if any)
+
+	[ $# -gt 0 ] && shift 1
+	[ "$format" ] && printf "$format\n" "$@" >&2
+
+	echo -n "$contact" # should be set by the calling script
+
+	# Reset interrupt signal to allow Ctrl-C in death-throw
+	trap - SIGINT
+
+	# [Optionally] clean up before [potentially] blocking on ERR_CMD
+	type die_cleanup > /dev/null 2>&1 && die_cleanup
+	eval $ERR_CMD
+	exit $FAILURE
+}
+
+# strip_ansi $text ...
+#
+# Remove ANSI coloring from string arguments or stdin.
+#
+strip_ansi()
+{
+	if [ $# -gt 0 ]; then
+		echo "$@" | sed -e 's/[^m]*m//g'
+	else
+		sed -e 's/[^m]*m//g'
+	fi
+}
+
+# task_begin [ $caption ]
+#
+# Inform the user that you have started a task.
+#
+task_begin()
+{
+	local caption="$1"
+	local colorless_caption="$( strip_ansi "$caption" )"
+
+	task_end $SUCCESS # end the previous task
+
+	# Padded strings in printf (e.g., "%-70s") do not work properly if the
+	# string contains invisibles, such as ANSI color codes. Compensate for
+	# ANSI color codes if any.
+	#
+	local color_gap=$(( ${#caption} - ${#colorless_caption} ))
+	local FMT_COLS2=$(( $FMT_COLS + $color_gap ))
+	printf "%-${FMT_COLS2}s" "$caption"
+
+	export __task_running=YES
+	export __cp=${#colorless_caption}
+}
+
+# task_end [ $exit_status ]
+#
+# End the currently running task (if any) and display the given exit status.
+#
+task_end()
+{
+	local status="$1"
+
+	[ "$__task_running" ] || return # nothing to do
+
+	if [ "$status" ]; then
+		#
+		# If the caption last-used with task_begin is wider than our
+		# preset-limit, output a new header with blank caption, vert-
+		# ically aligning the cursor to the column where we need to
+		# print the status.
+		#
+		if [ ${__cp:-0} -ge $FMT_COLS ]; then
+			printf "\n$FMT_HEAD"
+			export __cp=0
+		fi
+
+		case "$status" in
+		$SUCCESS) printf "$FMT_STAT" "$MSG_GOOD";;
+		       *) printf "$FMT_STAT" "$MSG_FAIL";;
+		esac
+	fi
+
+	export __task_running= # clear task state
+}
+
+# print_bold $format [ $arguments ... ]
+#
+# Print something to the screen in bold letters.
+#
+print_bold()
+{
+	local format="$1"
+	shift 1
+	printf "$ANSI_BLD$format$ANSI_BLD_OFF" "$@"
+}
+
+# print_red $format [ $arguments ... ]
+#
+# Print something to the screen in red, bold letters.
+#
+print_red()
+{
+	local format="$1"
+	shift 1
+	print_bold "$ANSI_RED$format$ANSI_NRM" "$@"
+}
+
+# print_green $format [ $arguments ... ]
+#
+# Print something to the screen in green, bold letters.
+#
+print_green()
+{
+	local format="$1"
+	shift 1
+	print_bold "$ANSI_GRN$format$ANSI_NRM" "$@"
+}
+
+# die_if_missing $path [ $format [ $arguments ... ] ]
+#
+# Make sure that a file/directory exists (or else, die).
+#
+die_if_missing()
+{
+	local path="$1" format="$2"
+
+	# Return immediately if the path exists
+	[ -e "$path" ] && return $SUCCESS
+
+	# If passed a custom format, use it
+	if [ $# -ge 2 ]; then
+		shift 2
+		die "$format" "$@"
+	else
+		die "$FILE_ERROR No such file or directory \`%s'" "$path"
+	fi
+}
+
+# die_if_null $text [ $format [ $arguments ... ] ]
+#
+# Make sure that a particular string is non-NULL (or else, die).
+#
+die_if_null()
+{
+	local text="$1" format="$2"
+
+	# Return immediately if non-NULL
+	[ "$text" ] && return $SUCCESS
+
+	# If passed a custom format, use it
+	if [ $# -ge 2 ]; then
+		shift 2
+		die "$format" "$@"
+	else
+		die "$UNKNOWN_ERROR Unset/null value for non-optional variable"
+	fi
+}
+
+# trunc_safe $file
+#
+# Truncate a file to zero bytes and test for error.
+#
+trunc_safe()
+{
+	local file="$1"
+
+	# Return immediately if null/missing file argument
+	[ "$file" ] || return
+
+	( eval ': > "$file"' > /dev/null 2>&1 ) \
+		|| die "Couldn't create/truncate file \`%s'" "$file"
+}
+
+# spinner
+#
+# Throw up a spinner. Spin spin spin until we receive "EXIT:###:" on stdin.
+# Returns the exit status as specified in the "###" portion above.
+#
+spinner()
+{
+	local spin="/-\\|"
+	local init=${__task_running:+1} n=1 DONE=
+	local line_format="[A\n%s[K\n${__task_running:+$FMT_HEAD }"
+
+	printf " "
+	while [ ! "$DONE" ]; do
+		local LINE="$( sh -c 'IFS=;read -t0 L;echo "$L"' )"
+		case "$LINE" in
+		*EXIT:*:*)
+			DONE="$( echo "$LINE" | sed -e \
+				"s/.*EXIT:\([[:digit:]]*\):.*/\1/" )"
+			LINE="$( echo "$LINE" | sed -e \
+				"s/EXIT:[[:digit:]]*://g" )"
+		esac
+		if [ "$LINE" ]; then
+			printf "${init:+\b \n}$line_format" "$LINE"
+			init=
+		fi
+		printf "\b%s" "$( echo "$spin" | sed -e \
+			"s/.\{0,$(( $n % ${#spin} ))\}\(.\).*/\1/" )"
+		n=$(( $n + 1 ))
+	done
+
+	printf "\b \b"
+	return $DONE
+}
+
+# eval_spin $command [ $arguments ... ]
+#
+# Execute a command and display a spinner while said command is executing.
+#
+eval_spin()
+{
+	# Execute a command w/ spinner
+	(
+		ERR_CMD= # die a quick death if our die() is called
+
+		if [ $# -gt 0 ]; then
+			# Take commands from positional arguments
+			( eval "$@" ) 2>&1
+			echo EXIT:$?:
+		else
+			# Take commands from standard input
+			( eval "$( cat )" ) 2>&1
+			echo EXIT:$?:
+		fi
+	) | spinner
+}
+
+# ifs_clear
+#
+# Instruct shell to not split words.
+#
+ifs_clear()
+{
+	export __IFS="$IFS"
+	export IFS=
+}
+
+# ifs_append $delim
+#
+# Append delimiter to IFS.
+#
+ifs_append()
+{
+	case "$1" in
+	\\n) export IFS="$IFS
+";;
+	\\t) export IFS="$IFS	";;
+	*)   export IFS="$IFS$1";;
+	esac
+}
+
+# ifs_restore
+#
+# Restore IFS to original value (pre- ifs_clear).
+#
+ifs_restore()
+{
+	export IFS="${__IFS:-$IFS}"
+}
+
+# isinteger $arg
+#
+# Returns true if argument is a positive/negative whole integer.
+#
+isinteger()
+{
+	local arg="$1"
+
+	# Prevent division-by-zero
+	[ "$arg" = "0" ] && return $SUCCESS
+
+	# Attempt to perform arithmetic division (an operation which will exit
+	# with error unless arg is a valid positive/negative whole integer).
+	#
+	( : $((0/$arg)) ) > /dev/null 2>&1
+}
+
+# print_word $pos|NF [ $arguments ... ]
+#
+# Print a positional argument. If the first argument is 'NF' instead of a
+# number, the number of arguments is printed. If the position is negative,
+# reverse argument positions (-1 will print the last word, -2 the second-
+# to-last word, ad nauseum).
+#
+print_word()
+{
+	local pos="$1"
+
+	shift 1 # remove integer (position) argument
+
+	# Return if the first argument is neither a number nor 'NF'
+	isinteger "$pos" || [ "$pos" = "NF" ] || return $FAILURE
+
+	if [ "${pos}" = "NF" ]; then
+		# Print the Number of Fields and return
+		echo "$#"
+		return $SUCCESS
+	elif [ ${pos} -lt 0 ]; then
+		# Repurpose the negative sign as subtraction
+		pos=$(($# $pos + 1))
+	fi
+
+	# Print the positional argument
+	eval echo \"\$$pos\"
+}
+
+# list_active_ethernet
+#
+# List active Ethernet interfaces. Note that to list active interfaces, we
+# may have to say `ifconfig up' and wait a few seconds.
+#
+# This function is a two-parter. First part is some awk(1) code to tell when
+# an interface is both Ethernet and capable of either inet or inet6. Second
+# part is the sh(1) code which makes use of the awk(1) code multiple times.
+#
+usable_ethernet_awk='
+# Usage: ifconfig em0 | awk [-v inactive_ok=1] "$active_ethernet_awk" && ...
+BEGIN {
+	is_ethernet = 0
+	is_usable = 1
+}
+( $1 == "status:" && $2 != "active" && !inactive_ok) { is_usable = 0; exit }
+( $1 == "media:" ) {
+	if ($2 != "Ethernet") { is_usable = 0; exit }
+	is_ethernet = 1
+}
+END {
+	if (!is_ethernet) is_usable = 0
+	exit ! is_usable
+}'
+list_active_ethernet()
+{
+	local iface active=
+
+	for iface in $( ifconfig -l ); do
+		ifconfig $iface | awk "$usable_ethernet_awk" || continue
+		active="$active $iface"
+	done
+	active="${active# }"
+	if [ "$active" ]; then
+		echo "$active"
+		return $SUCCESS
+	fi
+
+	#
+	# Looks like we have to `ifconfig up' an interface and wait a few
+	# seconds to find a usable [active] interface. To avoid overflowing
+	# mbufs by blindly upping all the [Ethernet] interfaces, let's stop
+	# at each interface and return only a single interface whence found.
+	#
+
+	for iface in $( ifconfig -l ); do
+		ifconfig $iface |
+			awk -v inactive_ok=1 "$usable_ethernet_awk" || continue
+		ifconfig $iface up
+		sleep 3 # Some broadcom cards take this long
+		ifconfig $iface | awk "$usable_ethernet_awk" || continue
+		echo $iface
+		return $SUCCESS
+	done
+	return $FAILURE
+}
+
+# dhcp_activate [$interface]
+#
+# Activate DHCP on the first active Ethernet interface.
+#
+dhcp_activate()
+{
+	local interface="$1"
+	if [ ! "$interface" ]; then
+		interface=$( list_active_ethernet )
+	fi
+	interface="${interface%%[$IFS]*}"
+	[ "$interface" ] && dhclient $interface > /dev/null 2>&1
+	# Return if either no interface or dhclient failed
+	[ $? -eq $SUCCESS ] || return $FAILURE
+
+	# Initialize resolv.conf(5) (non-fatal to boot on error)
+	resolvconf -l $interface > /etc/resolv.conf
+
+	return $SUCCESS
+}
+
+# dhclient_lease_getid [$interface]
+#
+# Obtain the IP address of most-recently used DHCP server.
+#
+dhclient_lease_getid()
+{
+	local interface="$1" leases=
+
+	if [ "$interface" ]; then
+		leases="/var/db/dhclient.leases.$interface"
+	else
+		for interface in $( list_active_ethernet ); do
+			leases="$leases /var/db/dhclient.leases.$interface"
+		done
+	fi
+
+	local leasefile
+	for leasefile in $leases; do
+		[ -f "$leasefile" ] || continue
+		tail -r "$leasefile" | awk '
+			BEGIN { found = 0 }
+			($1 == "option" && $2 == "dhcp-server-identifier") {
+				found = 1
+				sub(/;.*/, "")
+				print $3
+				exit
+			}
+			END { exit ! found }
+		' && return $SUCCESS
+	done
+
+	return $FAILURE
+}
+
+# mount_malloc $size $local_dir
+#
+# Create a malloc(9)-backed md(4) device of $size storage mounted and then
+# mount it on $local_dir.
+#
+mount_malloc()
+{
+	local size="$1" local_dir="$2"
+
+	# Perform sanity checks
+	[ "$size" -a "$local_dir" ] || return $FAILURE
+
+	#
+	# Prepare the md(4) device
+	#
+	md=$( mdconfig -a -t malloc -s "$size" ) || return $FAILURE
+
+	#
+	# newfs(8) the newly created md(4) device
+	#
+	newfs -O1 -b 4096 -f 512 -i 8192 -o space -m 0 /dev/$md > /dev/null ||
+		return $FAILURE
+
+	#
+	# Attempt to mount the [formatted] md(4) device on $local_dir
+	#
+	mount /dev/$md "$local_dir"
+}
+
+# mount_nfs_dhcp $remote_dir $local_dir
+#
+# Mount a remote path from the most-recently used DHCP server via NFS.
+#
+mount_nfs_dhcp()
+{
+	local remote_dir="$1" local_dir="$2"
+	local ip="$( dhclient_lease_getid )"
+
+	# Perform sanity checks
+	[ "$remote_dir" -a "$local_dir" -a "$ip" ] || return $FAILURE
+
+	#
+	# Mount the remote path
+	#
+	mount_nfs "$ip:$remote_dir" "$local_dir" \
+		|| die "Could not mount NFS path \`%s'" "$ip:$remote_dir"
+}
+
+# mount_smbfs_dhcp $remote_share $local_dir
+#
+# Mount a remote share from the most-recently used DHCP server via SMB.
+#
+mount_smbfs_dhcp()
+{
+	local remote_share="$1" local_dir="$2"
+	local ip="$( dhclient_lease_getid )"
+
+	# Perform sanity checks
+	[ "$remote_share" -a "$local_dir" -a "$ip" ] || return $FAILURE
+
+	#
+	# Mount the remote path
+	#
+	mount_smbfs -NI "$ip" "//-/$remote_share" "$local_dir" \
+		|| die "Could not mount SMB share \`%s'" "//$ip/$remote_share"
+}
+
+# interrupt
+#
+# Process a Ctrl-C interrupt event, asking the user if they want to continue.
+#
+interrupt()
+{
+	local REPLY
+
+	printf "\nInterrupt. Abort? [Y=Yes/N=No]: "
+	read REPLY || REPLY=NO
+
+	case "$REPLY" in
+	[Nn]|[Nn][Oo])
+		export interrupted=1
+		return $SUCCESS;;
+	esac
+
+	exit $FAILURE
+}
+
+# retry
+#
+# Ask the user if they would like to retry something. Return with error status
+# if the user does not want to retry.
+#
+retry()
+{
+	[ "$auto_retry" ] && return $SUCCESS
+
+	local REPLY
+	printf "\nDo you want to retry? [Y=Yes/N=No/A=Always/E=Exit]: "
+	read REPLY || REPLY=NO
+
+	case "$REPLY" in
+	[Nn]|[Nn][Oo]) return $FAILURE;;
+	[Aa]|[Aa][Ll][Ww][Aa][Yy][Ss])
+		export auto_retry=YES;;
+	[Ee]|[Ee][Xx][Ii][Tt])
+		export retry_exit=YES
+		return $FAILURE;;
+	esac
+
+	return $SUCCESS
+}
+
+# copy_file $src_file $dest_file
+#
+# Copy file interactively (prompt the user to retry on failure).
+#
+copy_file()
+{
+	local src_file="$1" dest_file="$2"
+
+	# Perform sanity checks
+	[ "$src_file" -a "$dest_file" ] || return $FAILURE
+
+	#
+	# Attempt to copy the file, prompt user on failure
+	#
+	while ! cp -RPpf "$src_file" "$dest_file"; do
+		printf "$FILE_ERROR %s \`%s' to \`%s'" \
+		       "An error occurred while trying to copy" \
+		       "$src_file" "$dest_file"
+		retry || return $FAILURE
+	done
+}
+
+# copy_directory [FIND_FLAGS] $src_dir $dest_dir
+#
+# Copy directory interactively (prompt the user to retry on failure).
+# An optional set of flags may be specified to be passed to find(1):
+#
+# 	-H   Cause the file information and file type (see stat(2)) returned
+# 	     for each symbolic link specified on the command line to be those
+# 	     of the file referenced by the link, not the link itself.  If the
+# 	     referenced file does not exist, the file information and type
+# 	     will be for the link itself.  File information of all symbolic
+# 	     links not on the command line is that of the link itsef.
+# 
+# 	-L   Cause the file information and file type (see stat(2)) returned
+# 	     for each symbolic link to be those of the file referenced by the
+# 	     link, not the link itself.  If the referenced file does not
+# 	     exist, the file information and type will be for the link itself.
+#
+# 	     This option is equivalent to the deprecated -follow primary.
+# 
+# 	-P   Cause the file information and file type (see stat(2)) returned
+# 	     for each symbolic link to be those of the link itself.  This is
+# 	     the default.
+#
+# 	-d   Cause find to perform a depth-first traversal, i.e., directories
+# 	     are visited in post-order and all entries in a directory will be
+# 	     acted on before the directory itself. By default, find visits
+# 	     directories in pre-order, i.e., before their contents.  Note, the
+# 	     default is not a breadth-first traverasl.
+# 
+# 	     This option is equivalent to the -depth primary of IEEE Std
+# 	     1003.1-2001 (``POSIX.1'').  The -d option can be useful when find
+# 	     is used with cpio(1) to process files that are contained in
+# 	     directories with unusual permissions.  It ensures that you have
+# 	     write permission while you are placing files in a directory, then
+# 	     sets the directory's permissions as the last thing.
+# 
+# 	-s   Cause find to traverse the file hierarchies in lexicographical
+# 	     order, i.e., alphabetic order within each directory.  Note:
+# 	     `find -s' and `find | sort' may give different results.
+# 
+# 	-x   Prevent find from descending into directories that have a device
+# 	     number different than that of the file from which the descent
+# 	     began.
+# 
+# 	     This option is equivalent to the deprecated -xdev primary.
+#
+copy_directory()
+{
+	#
+	# Read [limited] list of optional flags to pass to find(1)
+	#
+	local flag find_flags=
+	while getopts HLPdsx flag; do
+		case "$flag" in
+		[HLPdsx]) find_flags="$find_flags${find_flags:+ }-$flag"
+		esac
+	done
+	shift $(( $OPTIND - 1 ))
+
+	#
+	# Perform sanity checks
+	#
+	local src_dir="$1" dest_dir="$2"
+	[ "$src_dir" -a "$dest_dir" ] || return $FAILURE
+
+	#
+	# Initialize error string formats
+	#
+	mkdir_err="\n$FILE_ERROR Unable to create directory \`%s'\n"
+	copy_err="\n$FILE_ERROR Could not copy \`%s' to \`%s'\n"
+
+	( # Execute within sub-shell to protect parent environment
+
+	  ifs_clear; ifs_append '\n'
+	  set -T; trap 'interrupt' SIGINT
+
+	  for src_path in $( find $find_flags "$src_dir" -mindepth 1 \
+	  	-type d -o -type f -o -type l ); do
+
+	  	# Skip to next if destination already exists
+	  	dest_path="$dest_dir${src_path#$src_dir}"
+	  	[ -e "$dest_path" ] && continue
+
+	  	if [ -d "$src_path" ]; then
+	  		#
+	  		# Copy one directory
+	  		#
+	  		while :; do
+	  			print_bold "$ANSI_BLU$dest_path$ANSI_NRM: "
+	  			_(){
+	  				trap 'exit $FAILURE' SIGINT
+	  				perms=$( stat -f '%#Lp' "$src_path" )
+	  				owner=$( stat -f '%u:%g' "$src_path" )
+
+	  				mkdir -p "$dest_path"
+	  				chmod "$perms" "$dest_path"
+	  				chown "$owner" "$dest_path"
+	  			}
+	  			eval_spin _
+	  			if [ $? -eq $SUCCESS ]; then
+	  				echo
+	  				break
+	  			fi
+
+	  			if [ ! "$interrupted" ]; then
+	  				printf "$mkdir_err" "$dest_path"
+	  				retry || break
+	  			fi
+	  			interrupted=
+	  		done
+	  		[ "$retry_exit" ] && break
+	  	else
+	  		#
+	  		# Copy one regular file or symbolic-link
+	  		#
+	  		while :; do
+	  			[ -L "$src_path" ] \
+					&& echo -n "$ANSI_BLD$ANSI_CYN"
+	  			echo -n "$dest_path$ANSI_NRM$ANSI_BLD_OFF "
+	  			_(){
+	  				trap 'exit $FAILURE' SIGINT
+	  				mkdir -p "${dest_path%/*}"
+	  				cp -RPpf "$src_path" "$dest_path"
+	  			}
+	  			eval_spin _
+	  			if [ $? -eq $SUCCESS ]; then
+	  				echo
+	  				break
+	  			fi
+
+	  			if [ ! "$interrupted" ]; then
+	  				printf "$copy_err" \
+	  					"$src_path" "$dest_path"
+	  				retry || break
+	  			fi
+	  			interrupted=
+	  		done
+	  		[ "$retry_exit" ] && break
+	  	fi
+	  done
+	)
+}
+
+# ispid $arg
+#
+# Returns true if argument is a positive whole integer.
+# 
+ispid()
+{
+	local arg="$1"
+
+	# Loop over string, break on any invalid characters
+	while [ "$arg" ]; do
+		case "$arg" in
+		[0-9]*) ;;    # begins with numeric digit
+		     *) break # begins with invalid character
+		esac
+		arg="${arg#?}" # remove character, proceed to next
+	done
+
+	# If argument is non-null and all digits removed, str is a valid pid
+	[ "$1" -a ! "$arg" ]
+}
+
+################################################################################
+# END
+################################################################################

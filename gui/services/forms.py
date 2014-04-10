@@ -506,16 +506,7 @@ class DynamicDNSForm(ModelForm):
         widgets = {
             'ddns_password': forms.widgets.PasswordInput(render_value=False),
         }
-        fields = (
-            'ddns_provider',
-            'ddns_domain',
-            'ddns_username',
-            'ddns_password',
-            'ddns_password2',
-            'ddns_updateperiod',
-            'ddns_fupdateperiod',
-            'ddns_options',
-        )
+        fields = '__all__'
 
     def __init__(self, *args, **kwargs):
         super(DynamicDNSForm, self).__init__(*args, **kwargs)
@@ -550,6 +541,8 @@ class DynamicDNSForm(ModelForm):
             raise ServiceFailed(
                 "dynamicdns", _("The DynamicDNS service failed to reload.")
             )
+DynamicDNSForm.base_fields.keyOrder.remove('ddns_password2')
+DynamicDNSForm.base_fields.keyOrder.insert(5, 'ddns_password2')
 
 
 class SNMPForm(ModelForm):
@@ -862,6 +855,7 @@ class NIS(ModelForm):
 
 
 class LDAPForm(ModelForm):
+    ldap_tls_cacertfile = FileField(label=_("Self signed certificate"), required=False)
 
     class Meta:
         fields = '__all__'
@@ -869,6 +863,24 @@ class LDAPForm(ModelForm):
         widgets = {
             'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True),
         }
+
+    def clean_ldap_tls_cacertfile(self):
+        filename = "/data/ldap_tls_cacertfile"
+
+        ldap_tls_cacertfile = self.cleaned_data.get("ldap_tls_cacertfile", None)
+        if ldap_tls_cacertfile and ldap_tls_cacertfile != filename:  
+            if hasattr(ldap_tls_cacertfile, 'temporary_file_path'):
+                shutil.move(ldap_tls_cacertfile.temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as f:
+                    for c in ldap_tls_cacertfile.chunks():
+                        f.write(c)
+                    f.close()
+
+            os.chmod(filename, 0400)
+            self.instance.ldap_tls_cacertfile = filename
+
+        return filename
 
     def save(self):
         super(LDAPForm, self).save()

@@ -44,11 +44,13 @@ if [ "${VERBOSE}" != "YES" ] ; then
   warden_printf "%s\n" $(line "75")
 fi
 
-cd ${JDIR}
+cd "${JDIR}"
 if [ -z "${JAILS}" ] ; then
   JAILS=`ls -d .*.meta 2>/dev/null`
 fi
 
+ifs="${IFS}"
+IFS=$'\n'
 for i in ${JAILS}
 do
   AUTO="Disabled" 
@@ -68,13 +70,13 @@ do
 
   fi
 
-  ID="`cat ${i}/id 2>/dev/null`"
+  ID="`cat "${i}/id" 2>/dev/null`"
   if [ -z "${ID}" ]
   then
     continue
   fi  
 
-  HOST="`cat ${i}/host 2>/dev/null`"
+  HOST="`cat "${i}/host" 2>/dev/null`"
   if [ -e "${i}/vnet" ] ; then
     VNET="Enabled"
   else
@@ -89,14 +91,14 @@ do
 
   MAC=
   if [ -e "${i}/mac" ] ; then
-     MAC=`cat ${i}/mac`
+     MAC="`cat "${i}/mac"`"
   fi 
 
   #
   # IPv4 networking
   # 
   IPS4=
-  IP4=`cat ${i}/ipv4 2>/dev/null`
+  IP4=`cat "${i}/ipv4" 2>/dev/null`
   if [ -e "${i}/alias-ipv4" ] ; then
     while read line
     do
@@ -105,7 +107,7 @@ do
   fi
 
   BRIDGEIPS4=
-  BRIDGEIP4=`cat ${i}/bridge-ipv4 2>/dev/null`
+  BRIDGEIP4=`cat "${i}/bridge-ipv4" 2>/dev/null`
   if [ -e "${i}/alias-bridge-ipv4" ] ; then
     while read line
     do
@@ -113,13 +115,13 @@ do
     done < "${i}/alias-bridge-ipv4"
   fi
 
-  GATEWAY4=`cat ${i}/defaultrouter-ipv4 2>/dev/null`
+  GATEWAY4=`cat "${i}/defaultrouter-ipv4" 2>/dev/null`
 
   #
   # IPv6 networking
   # 
   IPS6=
-  IP6=`cat ${i}/ipv6 2>/dev/null`
+  IP6=`cat "${i}/ipv6" 2>/dev/null`
   if [ -e "${i}/alias-ipv6" ] ; then
     while read line
     do
@@ -128,7 +130,7 @@ do
   fi
 
   BRIDGEIPS6=
-  BRIDGEIP6=`cat ${i}/bridge-ipv6 2>/dev/null`
+  BRIDGEIP6=`cat "${i}/bridge-ipv6" 2>/dev/null`
   if [ -e "${i}/alias-bridge-ipv6" ] ; then
     while read line
     do
@@ -136,7 +138,7 @@ do
     done < "${i}/alias-bridge-ipv6"
   fi
 
-  GATEWAY6=`cat ${i}/defaultrouter-ipv6 2>/dev/null`
+  GATEWAY6=`cat "${i}/defaultrouter-ipv6" 2>/dev/null`
 
   # Check if we are autostarting this jail
   if [ -e "${i}/autostart" ] ; then
@@ -167,7 +169,7 @@ do
 
   JAILNAME=`echo ${i}|sed 's|.meta$||'|sed 's|^.||'`
 
-  ${PROGDIR}/scripts/backend/checkstatus.sh ${JAILNAME} 2>/dev/null
+  ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}" 2>/dev/null
   if [ "$?" = "0" ]
   then
     STATUS="Running"
@@ -211,7 +213,7 @@ __EOF__
     rm -f "${out}"
 
   else
-    warden_printf "%-24s%-12s%-12s%-12s\n" ${JAILNAME} ${AUTO} ${STATUS} ${TYPE}
+    warden_printf "%-24s%-12s%-12s%-12s\n" "${JAILNAME}" ${AUTO} ${STATUS} ${TYPE}
   fi
 done
-
+IFS="${ifs}"

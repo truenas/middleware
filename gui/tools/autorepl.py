@@ -306,33 +306,34 @@ Hello,
             cmd.append('-R')
         if last_snapshot == '':
             cmd.append(snapname)
-            zfssend = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            replcmd = '%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         else:
             cmd.extend(['-I', last_snapshot, snapname])
-            zfssend = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            replcmd = '%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
+
+        progressfile = '/tmp/.repl_progress_%d' % replication.id
+        # subprocess.Popen does not handle large stream of data between
+        # processes very well, do it on our own
+        readfd, writefd = os.pipe()
+        if os.fork() == 0:
+            with open(progressfile, 'w') as f2:
+                f2.write(str(os.getpid()))
+            os.close(readfd)
+            os.dup2(writefd, 1)
+            os.close(writefd)
+            os.execv('/sbin/zfs', cmd)
+        os.close(writefd)
+
+        replcmd = '%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
         with open(templog, 'w+') as f:
+            readobj = os.fdopen(readfd, 'r', 0)
             proc = subprocess.Popen(
                 replcmd,
                 shell=True,
-                stdin=zfssend.stdout,
+                stdin=readobj,
                 stdout=f,
                 stderr=subprocess.STDOUT,
             )
-            progressfile = '/tmp/.repl_progress_%d' % replication.id
-            with open(progressfile, 'w') as f2:
-                f2.write(str(zfssend.pid))
-            zfssend.stdout.close()
-            proc.communicate()
+            proc.wait()
+            readobj.close()
             os.remove(progressfile)
             f.seek(0)
             msg = f.read().strip('\n').strip('\r')

@@ -242,6 +242,20 @@ class CIFS(Model):
             choices=choices.CIFS_SMB_PROTO_CHOICES,
             help_text=_("The highest protocol version that will be supported by the server")
             )
+    cifs_srv_allow_execute_always = models.BooleanField(
+            verbose_name=_("Allow execute always"),
+            default=True,
+            help_text=_("This boolean parameter controls the behaviour of smbd(8) when "
+                "receiving a protocol request of \"open for execution\" from a Windows "
+                "client. With Samba 3.6 and older, the execution right in the ACL "
+                "was not checked, so a client could execute a file even if it did "
+                "not have execute rights on the file. In Samba 4.0, this has been "
+                "fixed, so that by default, i.e. when this parameter is set to "
+                "\"False\", \"open for execution\" is now denied when execution "
+                "permissions are not present. If this parameter is set to \"True\", "
+                "Samba does not check execute permissions on \"open for execution\", "
+                "thus re-establishing the behaviour of Samba 3.6 ")
+           )
 
     class Meta:
         verbose_name = _(u"CIFS")
@@ -1504,6 +1518,7 @@ class NT4(Model):
             max_length=120,
             verbose_name=_("NetBIOS Name"),
             help_text=_("System hostname"),
+            blank=True
             )
     nt4_workgroup = models.CharField(
             max_length=120,
@@ -1525,12 +1540,13 @@ class NT4(Model):
         super(NT4, self).__init__(*args, **kwargs)
         self.svc = 'nt4'
 
-        from freenasUI.network.models import GlobalConfiguration
-        gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
-        if gc_hostname:
-            m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
-            if m:
-                self.nt4_netbiosname = m.group(0).upper().strip()
+        if not self.nt4_netbiosname:
+            from freenasUI.network.models import GlobalConfiguration
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            if gc_hostname:
+                m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
+                if m:
+                    self.nt4_netbiosname = m.group(0).upper().strip()
 
     class Meta:
         verbose_name = _("NT4 Domain")
@@ -1549,7 +1565,8 @@ class ActiveDirectory(Model):
     ad_netbiosname = models.CharField(
             max_length=120,
             verbose_name=_("NetBIOS Name"),
-            help_text=_("System hostname")
+            help_text=_("System hostname"),
+            blank=True
             )
     ad_workgroup = models.CharField(
             max_length=120,
@@ -1638,12 +1655,13 @@ class ActiveDirectory(Model):
         super(ActiveDirectory, self).__init__(*args, **kwargs)
         self.svc = 'activedirectory'
 
-        from freenasUI.network.models import GlobalConfiguration
-        gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
-        if gc_hostname:
-            m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
-            if m:
-                self.ad_netbiosname = m.group(0).upper().strip()
+        if not self.ad_netbiosname:  
+            from freenasUI.network.models import GlobalConfiguration
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            if gc_hostname:
+                m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
+                if m:
+                    self.ad_netbiosname = m.group(0).upper().strip()
 
 
     class Meta:

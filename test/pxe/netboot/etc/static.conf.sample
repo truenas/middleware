@@ -1,0 +1,16 @@
+# vim: syntax=sh
+
+#
+# Location of unpacked ISO file to pull `static/' binaries from (or simply `/')
+#
+STATIC_BASE="/pxe/FreeBSD-10.0-RELEASE-amd64-disc1"
+
+#
+# Name of output file to create and install to `$STATIC_BASE/boot/'
+#
+OUTPUT="netboot.gz"
+
+#
+# Path to directory we should copy $OUTPUT to during `make install'
+#
+DESTDIR="$STATIC_BASE/boot"

@@ -37,11 +37,11 @@ fi
 
 # Check for updates
 if [ "${JAILNAME}" = "all" ] ; then
-  cd ${JDIR}
+  cd "${JDIR}"
   for i in `ls -d .*.meta`
   do
-    JAILNAME=`echo ${i}|sed 's|.meta$||'|sed 's|^.||'`
-    HOST="`cat ${i}/host`"
+    JAILNAME="`echo "${i}"|sed 's|.meta$||'|sed 's|^.||'`"
+    HOST="`cat "${i}/host"`"
     set_warden_metadir
     if [ -e "${JMETADIR}/jail-linux" ] ; then continue; fi
 
@@ -54,7 +54,7 @@ if [ "${JAILNAME}" = "all" ] ; then
     fi
 
     # Check for system-updates
-    chroot ${JDIR}/${JAILNAME} cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
+    chroot "${JDIR}/${JAILNAME}" cat /usr/sbin/freebsd-update | sed 's|! -t 0|-z '1'|g' | /bin/sh -s 'fetch'
   done
 else
   set_warden_metadir
@@ -73,5 +73,5 @@ else
    fi
 
    # Check for system-updates
-   chroot ${JDIR}/${JAILNAME} cat /usr/sbin/freebsd-update | sed 's|!  -t 0|-z '1'|g' | /bin/sh -s 'fetch'
+   chroot "${JDIR}/${JAILNAME}" cat /usr/sbin/freebsd-update | sed 's|!  -t 0|-z '1'|g' | /bin/sh -s 'fetch'
 fi

@@ -26,7 +26,7 @@
 #####################################################################
 import crypt
 import logging
-
+import os
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -154,6 +154,18 @@ class bsdUsers(Model):
     is_active = True
     is_staff = True
     objects = UserManager()
+
+    @property
+    def bsdusr_sshpubkey(self):
+        keysfile = '%s/.ssh/authorized_keys' % self.bsdusr_home
+        if not os.path.exists(keysfile):
+            return ''
+        try:
+            with open(keysfile, 'r') as f:
+                keys = f.read()
+            return keys
+        except:
+            return ''
 
     class Meta:
         verbose_name = _("User")

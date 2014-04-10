@@ -1,0 +1,193 @@
+#!/bin/sh
+#-
+############################################################ COPYRIGHT
+#
+# Copyright (c) 2006-2014 Devin Teske
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+# $Header: /cvsroot/druidbsd/pxe-config/netboot/src/etc/rc,v 1.1 2014/03/01 02:14:35 devinteske Exp $
+#
+############################################################ CONFIGURATION
+
+# Whether to use ANSI color or not
+ANSI_COLOR=YES
+
+# Local mount point to use when mounting the boot media
+MOUNT_POINT=/netroot
+
+# How long to sleep for USB device discovery (`0' or NULL to disable)
+USB_SLEEP=5
+
+############################################################ FUNCTIONS
+
+# Include standard functions
+. /etc/rc.subr || exit 1
+
+############################################################ MAIN SOURCE
+
+#
+# Sleep for USB device discovery (e.g., keyboard/mouse)
+#
+n=${USB_SLEEP:-0}
+if [ $n -gt 0 -a "$( type sleep 2> /dev/null )" ]; then
+	echo -n "Sleeping $USB_SLEEP seconds for USB device discovery... "
+	while [ $n -gt 0 ]; do
+		echo -n .
+		sleep 1
+		n=$(( $n - 1 ))
+	done
+	echo
+fi
+
+#
+# Perform sanity checks
+#
+task_begin "Verifying installation environment sanity..."
+die_if_missing "/stand/arp"         # required by dhclient-script(8)
+die_if_missing "/stand/awk"         # .. by the following sh.subr functions:
+                                    #    list_active_ethernet()
+                                    #    dhclient_lease_getid()
+die_if_missing "/stand/cat"         # .. by eval_spin(), dhclient-script(8),
+                                    #    resolvconf(8), herein
+die_if_missing "/stand/chmod"       # .. by dhclient-script(8)
+die_if_missing "/stand/chown"       # .. by dhclient-script(8)
+die_if_missing "/stand/chroot"      # .. herein
+die_if_missing "/stand/cmp"         # .. by dhclient-script(8)
+die_if_missing "/stand/dhclient"    # .. by dhcp_activate()
+die_if_missing "/stand/dhclient-script" # .. by dhclient(8)
+die_if_missing "/stand/hostname"    # .. by dhclient-script(8)
+die_if_missing "/stand/ifconfig"    # .. by the following:
+                                    #    dhclient-script(8)
+                                    #    list_active_ethernet() (sh.subr)
+die_if_missing "/stand/kenv"        # .. herein
+die_if_missing "/stand/mdconfig"    # .. by mount_malloc()
+die_if_missing "/stand/mkdir"       # .. by resolvconf(8)
+die_if_missing "/stand/mount"       # .. herein
+die_if_missing "/stand/mount_nfs"   # .. by mount_nfs_dhcp()
+die_if_missing "/stand/mount_smbfs" # .. by mount_smbfs_dhcp()
+die_if_missing "/stand/newfs"       # .. by mount_malloc()
+case "$( type printf )" in *builtin) : good ;; *)
+die_if_missing "/stand/printf"      # .. by sh.subr in-general
+esac
+die_if_missing "/stand/resolvconf"  # .. by dhclient-script(8)
+die_if_missing "/stand/route"       # .. by dhclient-script(8)
+die_if_missing "/stand/rm"          # .. by dhclient-script(8), resolvconf(8)
+die_if_missing "/stand/sed"         # .. by sh.subr internally
+die_if_missing "/stand/sleep"       # .. by the following:
+                                    #    herein, dhclient-script(8)
+                                    #    die() and list_active_ethernet()
+die_if_missing "/stand/tail"        # .. by dhclient_lease_getid()
+die_if_missing "$MOUNT_POINT"
+task_end $SUCCESS
+
+#
+# 1. Re-mount root filesystem as read/write
+#
+task_begin "Re-mounting root (md) filesystem to R/W..."
+eval_spin mount -uw / || die "$FATAL_ERROR Unable to update root filesystem"
+task_end $SUCCESS
+
+#
+# 2. Re-obtain DHCP information so that we can perform a network mount
+#
+echo "Re-obtaining DHCP lease to activate networking..."
+dhcp_activate ||
+	die "$FATAL_ERROR dhclient exited with error or no active interfaces"
+task_begin
+task_end $SUCCESS
+
+#
+# 3. Get loader.conf(5) variables
+#
+task_begin "Catching loader.conf(5) values from netboot ISO..."
+NFSROOTPATH=$( kenv boot.nfsroot.path 2> /dev/null )
+SMBROOTSHARE=$( kenv boot.smbroot.share 2> /dev/null )
+task_end $SUCCESS
+
+#
+# 4. Mount the exported media
+#
+ip=$( dhclient_lease_getid )
+if [ "$NFSROOTPATH" ]; then
+	task_begin "Mounting NFS root $ip:$NFSROOTPATH"
+	eval_spin mount_nfs_dhcp "$NFSROOTPATH" "$MOUNT_POINT" ||
+		die "$FATAL_ERROR Could not mount NFS filesystem"
+elif [ "$SMBROOTSHARE" ]; then
+	task_begin "Mounting SMB root //$ip/$SMBROOTSHARE"
+	eval_spin mount_smbfs_dhcp "$SMBROOTSHARE" "$MOUNT_POINT" ||
+		die "$FATAL_ERROR Could not mount SMB filesystem"
+else
+	die "$FATAL_ERROR Network root path/share unspecified"
+fi
+task_end $SUCCESS
+
+#
+# 5. Mount devfs(5) within netroot
+#
+task_begin "Mounting devfs(5) within mounted netroot..."
+eval_spin mount -t devfs devfs "$MOUNT_POINT/dev" ||
+	die "$UNKNOWN_ERROR Could not mount devfs(5) filesystem"
+task_end $SUCCESS
+
+#
+# 6. Mount malloc(9)-backed `/tmp' within netroot
+#
+task_begin "Mounting malloc(9)-backed \`/tmp' within mounted netroot..."
+eval_spin mount_malloc 16m "$MOUNT_POINT/tmp" ||
+	die "$UNKNOWN_ERROR Could not mount \`/tmp' filesystem"
+task_end $SUCCESS
+
+#
+# 7. Copy resolv.conf(5) into `/netroot/tmp' where it can be useful
+#
+# NB: Making a symlink in the exported root directory (unpacked ISO) that
+#     points from `etc/resolv.conf' to `/tmp/resolv.conf' will allow you to
+#     inherit DHCP provided resolv.conf(5) despite the fact that the netroot
+#     mounted `/etc/resolv.conf' is on a read-only filesystem.
+#
+if [ -f "/etc/resolv.conf" ]; then
+	task_begin "Copying resolv.conf(5) to \`$MOUNT_POINT/tmp'..."
+	eval_spin cat /etc/resolv.conf \> "$MOUNT_POINT/tmp/resolv.conf" ||
+		die "$UNKNOWN_ERROR Could not copy resolv.conf(5) file"
+	task_end $SUCCESS
+fi
+
+#
+# 7. Start the installation media
+#
+print_bold "Launching installation media..."
+sleep 1.5
+die_if_missing "$MOUNT_POINT/bin/sh"
+die_if_missing "$MOUNT_POINT/etc/rc"
+echo
+chroot "$MOUNT_POINT" /bin/sh /etc/rc || exit $FAILURE
+
+#
+# Never reached
+#
+exit $SUCCESS
+
+################################################################################
+# END
+################################################################################

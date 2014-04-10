@@ -2,7 +2,7 @@
 
 sb=$1
 shift
-sbrc=".sb-vars"
+sbrc=".sandbox-env"
 
 cd $sb
 # put all vars from the sb file into the environment
@@ -14,7 +14,7 @@ export SB_ROOT=$(realpath .)
 
 cd $SB_BUILD_DIR
 echo "======================================================="
-echo "-->> Now run:    make checkout all"
+echo "-->> Now run:    make"
 echo "======================================================="
 
 if [ $# -gt 0 ] ; then

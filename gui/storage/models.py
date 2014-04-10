@@ -906,14 +906,15 @@ class Replication(Model):
         ordering = ["repl_filesystem"]
 
     def __unicode__(self):
-        return '%s -> %s' % (
+        return '%s -> %s:%s' % (
             self.repl_filesystem,
-            self.repl_remote.ssh_remote_hostname)
+            self.repl_remote.ssh_remote_hostname,
+            self.repl_zfs)
 
     @property
     def repl_lastresult(self):
         if not os.path.exists(REPL_RESULTFILE):
-            return None
+            return 'Waiting'
         with open(REPL_RESULTFILE, 'rb') as f:
             data = f.read()
         try:
@@ -949,10 +950,6 @@ class Replication(Model):
 
 
 class Task(Model):
-    task_enabled = models.BooleanField(
-        default=True,
-        verbose_name=_("Enabled"),
-    )
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),
@@ -1013,6 +1010,10 @@ class Task(Model):
 #            verbose_name = _("Day"),
 #            blank = True,
 #            )
+    task_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+    )
 
     def __unicode__(self):
         return '%s - every %s - %d%s' % (

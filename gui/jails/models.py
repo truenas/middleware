@@ -447,7 +447,7 @@ class JailTemplate(Model):
         if not os.path.exists(tdir):
             return 0
 
-        p = pipeopen("/sbin/zfs list -H -o name %s" % tdir)
+        p = pipeopen("/sbin/zfs list -H -o name '%s'" % tdir)
         zfsout = p.communicate()
         if p.returncode != 0:
             return 0
@@ -460,7 +460,7 @@ class JailTemplate(Model):
             jail = re.sub('\.meta|\.', '', metadir)
             rp = os.path.realpath("%s/%s" % (jc.jc_path, jail))
 
-            p = pipeopen("/sbin/zfs get -H origin %s" % rp)
+            p = pipeopen("/sbin/zfs get -H origin '%s'" % rp)
             zfsout = p.communicate()
             if p.returncode != 0:
                 continue

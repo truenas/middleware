@@ -30,6 +30,7 @@ import os
 from django.http import HttpResponse
 from django.shortcuts import render
 
+from freenasUI.system.models import Advanced
 from freenasUI.reporting import rrd
 
 RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
@@ -37,11 +38,25 @@ RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
 log = logging.getLogger('reporting.views')
 
 
+def _get_rrd_path():
+
+    try:
+        system_pool = Advanced.objects.order_by('-id')[0].adv_system_pool
+    except:
+        system_pool = None
+
+    rrdpath = '/mnt/%s/.system/rrd/localhost' % system_pool
+    if not(system_pool and os.path.exists(rrdpath)):
+        rrdpath = RRD_BASE_PATH
+    return rrdpath
+
+
 def plugin2graphs(name):
 
+    rrdpath = _get_rrd_path()
     graphs = []
     if name in rrd.name2plugin:
-        ins = rrd.name2plugin[name](RRD_BASE_PATH)
+        ins = rrd.name2plugin[name](rrdpath)
         ids = ins.get_identifiers()
         if ids is not None:
             if len(ids) > 0:
@@ -51,9 +66,9 @@ def plugin2graphs(name):
                         'identifier': ident,
                     })
         else:
-           graphs.append({
-               'plugin': ins.plugin,
-           })
+            graphs.append({
+                'plugin': ins.plugin,
+            })
 
     return graphs
 
@@ -86,11 +101,11 @@ def generate(request):
         identifier = request.GET.get("identifier")
 
         plugin = plugin(
-            base_path=RRD_BASE_PATH,
+            base_path=_get_rrd_path(),
             unit=unit,
             step=step,
             identifier=identifier
-            )
+        )
         fd, path = plugin.generate()
         with open(path, 'rb') as f:
             data = f.read()

@@ -65,6 +65,21 @@ class Alert(object):
     def __eq__(self, other):
         return self.getId() == other.getId()
 
+    def __ne__(self, other):
+        return self.getId() != other.getId()
+
+    def __gt__(self, other):
+        return self.getId() > other.getId()
+
+    def __ge__(self, other):
+        return self.getId() >= other.getId()
+
+    def __lt__(self, other):
+        return self.getId() < other.getId()
+
+    def __le__(self, other):
+        return self.getId() <= other.getId()
+
     def getId(self):
         return self._id
 
@@ -111,7 +126,7 @@ class AlertPlugins(object):
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
-                msgs.append(unicode(alert))
+                msgs.append(unicode(alert).encode('utf8'))
         if len(msgs) == 0:
             return
         send_mail(subject=_("Critical Alerts"),
