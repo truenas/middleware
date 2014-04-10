@@ -146,6 +146,35 @@ Create resource
    :statuscode 201: no error
 
 
+Start jail
++++++++++++++++
+
+.. http:post:: /api/v1.0/jails/jails/(int:id)/start/
+
+   Starts a jail.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/jails/jails/1/start HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Jail started.
+
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
 Delete resource
 +++++++++++++++
 
