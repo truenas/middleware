@@ -50,6 +50,7 @@ from freenasUI.account.forms import bsdUserToGroupForm
 from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_number_si
+from freenasUI.common.warden import Warden
 from freenasUI.jails.forms import JailCreateForm
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -1539,10 +1540,38 @@ class NullMountPointResourceMixin(object):
         return bundle
 
 
-class JailsResourceMixin(object):
+class JailsResourceMixin(NestedMixin):
 
     class Meta:
         validation = FormValidation(form_class=JailCreateForm)
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('jail_start'),
+                name="api_jails_jails_start"
+            ),
+        ]
+
+    def jail_start(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        notifier().reload("http")
+        try:
+            Warden().start(jail=obj.jail_host)
+        except Exception, e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error': e,
+                })
+            )
+
+        return HttpResponse('Jail started.', status=202)
 
     def dispatch_list(self, request, **kwargs):
         proc = subprocess.Popen(
