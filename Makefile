@@ -24,7 +24,7 @@ all:	build
 build: git-verify
 	${ENV_SETUP} build/check_sandbox.sh
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
-	env ${ENV_SETUP} PACKAGE_PREP_BUILD=1 build/do_build.sh
+	${ENV_SETUP} PACKAGE_PREP_BUILD=1 build/do_build.sh
 	${ENV_SETUP} build/do_build.sh
 
 checkout: git-verify
