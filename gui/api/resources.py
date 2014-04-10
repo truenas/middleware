@@ -1561,6 +1561,7 @@ class JailsResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
+        #TODO: Duplicated code - jails.views.jail_start
         notifier().reload("http")
         try:
             Warden().start(jail=obj.jail_host)
