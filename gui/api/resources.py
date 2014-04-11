@@ -1554,6 +1554,13 @@ class JailsResourceMixin(NestedMixin):
                 self.wrap_view('jail_start'),
                 name="api_jails_jails_start"
             ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/stop%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('jail_stop'),
+                name="api_jails_jails_stop"
+            ),
         ]
 
     def jail_start(self, request, **kwargs):
@@ -1573,6 +1580,24 @@ class JailsResourceMixin(NestedMixin):
             )
 
         return HttpResponse('Jail started.', status=202)
+
+    def jail_stop(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        #TODO: Duplicated code - jails.views.jail_stop
+        notifier().reload("http")
+        try:
+            Warden().stop(jail=obj.jail_host)
+        except Exception, e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error': e,
+                })
+            )
+
+        return HttpResponse('Jail stopped.', status=202)
 
     def dispatch_list(self, request, **kwargs):
         proc = subprocess.Popen(
