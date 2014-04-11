@@ -858,16 +858,20 @@ class iSCSITarget(Model):
 
 
 class iSCSITargetToExtent(Model):
+    iscsi_lunid = models.IntegerField(
+        verbose_name=_('LUN ID'),
+        null=True,
+    )
     iscsi_target = models.ForeignKey(
-            iSCSITarget,
-            verbose_name=_("Target"),
-            help_text=_("Target this extent belongs to"),
-            )
+        iSCSITarget,
+        verbose_name=_("Target"),
+        help_text=_("Target this extent belongs to"),
+    )
     iscsi_extent = models.ForeignKey(
-            iSCSITargetExtent,
-            unique=True,
-            verbose_name=_("Extent"),
-            )
+        iSCSITargetExtent,
+        unique=True,
+        verbose_name=_("Extent"),
+    )
 
     class Meta:
         verbose_name = _("Target / Extent")
