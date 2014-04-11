@@ -1028,7 +1028,7 @@ class iSCSITargetToExtentForm(ModelForm):
         used = [o.iscsi_lunid for o in qs]
         total = len(used) + 15
         choices = tuple(
-            [('', 'Auto')] + [(x, x) for x in xrange(1, total + 1) if x not in used]
+            [('', 'Auto')] + [(x, x) for x in xrange(total) if x not in used]
         )
         self.fields['iscsi_lunid'] = forms.ChoiceField(
             label=self.fields['iscsi_lunid'].label,
