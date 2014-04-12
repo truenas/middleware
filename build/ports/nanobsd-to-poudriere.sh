@@ -5,19 +5,13 @@ umask 022
 cd "$(dirname "$0")/../.."
 TOP="$(pwd)"
 . build/nano_env
-#. build/functions.sh
 
-TMP=`mktemp -t nanopoud`
+PORTSLIST=${NANO_OBJ}/poudriere/etc/ports.txt
+MAKECONF=${NANO_OBJ}/poudriere/etc/make.conf
 
-BUILDFILE=${NANO_OBJ}/poudriere.build.txt
-MAKECONF=${NANO_OBJ}/poudriere.make.conf
-
-rm -f ${BUILDFILE}
-rm -f ${MAKECONF}
-
-customize_cmd()
-{
-}
+# Take the old add_port invocations from
+# the nanobsd script, and create input files
+# which can be passed to poudriere.
 
 add_port()
 {
@@ -29,7 +23,7 @@ add_port()
         if [ -z "$PORT" ]; then
             PORT=$var
             PORT_UND=$(echo $var|sed -e 's|/|_|g')
-            echo $PORT >> $BUILDFILE
+            echo $PORT >> $PORTSLIST
             
         else
             echo "${PORT_UND}_SET += ${var}" >> $MAKECONF
@@ -41,6 +35,10 @@ add_port_debug()
 {
     add_port $@
 }
+
+mkdir -p $(basename ${PORTSLIST})
+rm -f ${PORTSLIST}
+rm -f ${MAKECONF}
 
 . ${AVATAR_ROOT}/nanobsd/os-ports
 
