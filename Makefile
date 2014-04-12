@@ -115,3 +115,13 @@ git-external:
 
 tag:
 	${ENV_SETUP} build/apply_tag.sh
+
+prepare-ports-env:
+	${ENV_SETUP} build/ports/create-poudriere-conf.sh
+	${ENV_SETUP} build/ports/prepare-jail.sh
+	${ENV_SETUP} build/ports/fetch-ports-srcs.sh
+	
+ports:
+	${ENV_SETUP} build/ports/create-poudriere-conf.sh
+	${ENV_SETUP} build/ports/create-ports-list.sh
+	${ENV_SETUP} build/ports/build-ports.sh
