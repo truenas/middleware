@@ -427,6 +427,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
 
         if not self.instance.id:
             self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
+            self.fields['bsdusr_home'].label = _('Create Home Directory In')
             self.fields['bsdusr_creategroup'].widget.attrs['onChange'] = (
                 'javascript:toggleGeneric("id_bsdusr_creategroup", '
                 '["id_bsdusr_group"], false);')
