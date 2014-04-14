@@ -150,25 +150,26 @@ generate_istgt_config()
 		echo "  UnitOnline yes"
 		echo "  BlockLength ${iscsi_target_logical_blocksize}"
 		echo "  QueueDepth ${iscsi_target_queue_depth}"
-		local iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_lun iscsi_target_extent_type iscsi_lunid curr_lunid
+		local iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_lun iscsi_target_extent_type iscsi_lunid curr_lunid iscsi_target_id
 		iscsi_target_lun=0
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		    "SELECT
 			e.iscsi_target_extent_path,
 			e.iscsi_target_extent_filesize,
 			iscsi_target_extent_type,
-			t.iscsi_lunid
+			t.iscsi_lunid,
+                        t.iscsi_target_id
 		    FROM
 			services_iscsitargetextent
 			    AS e LEFT OUTER JOIN services_iscsitargettoextent
 			    AS t ON e.id = t.iscsi_extent_id
 		    WHERE t.iscsi_target_id = ${id}
 		    ORDER BY t.iscsi_lunid IS NULL" | \
-		while read iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_extent_type iscsi_lunid; do
+		while read iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_extent_type iscsi_lunid iscsi_target_id; do
 			if [ -z "${iscsi_lunid}" ]; then
 				curr_lunid=${iscsi_target_lun}
 				while true; do
-					if [ "`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT 1 FROM services_iscsitargettoextent WHERE iscsi_lunid = ${curr_lunid}"`" = "1" ]; then
+					if [ "`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT 1 FROM services_iscsitargettoextent WHERE iscsi_lunid = ${curr_lunid}"` AND iscsi_target_id = ${iscsi_target_id}" = "1" ]; then
 						curr_lunid=$((${curr_lunid}+1))
 					else
 						break
