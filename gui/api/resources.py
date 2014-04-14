@@ -51,7 +51,7 @@ from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_number_si
 from freenasUI.common.warden import Warden
-from freenasUI.jails.forms import JailCreateForm
+from freenasUI.jails.forms import JailCreateForm, JailsEditForm
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -1544,6 +1544,7 @@ class JailsResourceMixin(NestedMixin):
 
     class Meta:
         validation = FormValidation(form_class=JailCreateForm)
+        put_validation = FormValidation(form_class=JailsEditForm)
 
     def prepend_urls(self):
         return [

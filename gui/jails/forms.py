@@ -595,6 +595,8 @@ class JailsEditForm(ModelForm):
             'jail_flags',
         ]
 
+        if self._api and self.instance and self.instance.id:
+            self.instance = Jails.objects.get(id=self.instance.id)
         instance = getattr(self, 'instance', None)
         self.__instance_save(instance, self.__myfields)
 
