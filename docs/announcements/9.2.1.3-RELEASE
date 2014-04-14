@@ -1,0 +1,30 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1265\cocoasubrtf190
+{\fonttbl\f0\fnil\fcharset0 Georgia;}
+{\colortbl;\red255\green255\blue255;\red16\green16\blue16;\red251\green251\blue255;\red21\green76\blue128;
+}
+\margl1440\margr1440\vieww16460\viewh11220\viewkind0
+\deftab720
+\pard\pardeftab720
+
+\f0\fs30 \cf2 \cb3 Hey folks!\
+\
+In our never(?)-ending quest to continue to add polish to the\'a0{\field{\*\fldinst{HYPERLINK "https://github.com/freenas/freenas/tree/9.2.1-BRANCH"}}{\fldrslt \cf4 9.2.1-BRANCH}}\'a0of FreeNAS, we are very pleased to announce\'a0{\field{\*\fldinst{HYPERLINK "http://download.freenas.org/9.2.1.3/RELEASE/"}}{\fldrslt \cf4 9.2.1.3-RELEASE}}! \'a0 It's\'a0now up on\'a0{\field{\*\fldinst{HYPERLINK "http://download.freenas.org/"}}{\fldrslt \cf4 http://download.freenas.org}}\'a0- come and get it!\
+\
+This point release for 9.2.1 adds ZFS replication status, fixes various issues\'a0found in 9.2.1.2 in CIFS, AFP, FTP, serial console support, and other areas.\
+\
+A list of all bugs fixed in 9.2.1.3-RELEASE can be found\'a0{\field{\*\fldinst{HYPERLINK "https://bugs.freenas.org/projects/freenas/issues?query_id=35"}}{\fldrslt \cf4 here}}.\
+\
+High level features for 9.2.1.3:\
+\
+* Samba (SMB/CIFS support) upgraded to version 4.1.6\
+\
+* Netatalk (AFP support) upgraded to version 3.1.1\
+\
+* ZFS replication status is now provided in ZFS Replication UI\
+\
+* The bug preventing FTP from starting when logging to system dataset has\
+been fixed.\
+\
+We've worked very hard to nail all sorts of issues in this series of 9.2.1.x point releases, hopefully without doing anything destabilizing at the same time, and are confident that we've managed to polish this branch to a pretty high gloss (which is what you want in a NAS!). \'a0We certainly could not have done so without all of your testing and feedback over the last couple of months, so thanks!\
+\
+- The FreeNAS Engineering Team}

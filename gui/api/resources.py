@@ -65,8 +65,8 @@ from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
     ReKeyForm, UnlockPassphraseForm, VolumeManagerForm, ZFSDiskReplacementForm
 )
+from freenasUI.storage.models import Disk, Replication
 from freenasUI.system.alert import alertPlugins, Alert
-from freenasUI.storage.models import Disk
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
@@ -906,6 +906,7 @@ class ReplicationResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(ReplicationResourceMixin, self).dehydrate(bundle)
+        bundle.data['repl_status'] = bundle.obj.status
         bundle.data['repl_remote_hostname'] = (
             bundle.obj.repl_remote.ssh_remote_hostname
         )
@@ -1627,6 +1628,7 @@ class SnapshotResource(DojoResource):
     used = fields.CharField(attribute='used')
     mostrecent = fields.BooleanField(attribute='mostrecent')
     parent_type = fields.CharField(attribute='parent_type')
+    replication = fields.CharField(attribute='replication', null=True)
 
     class Meta:
         allowed_methods = ['delete', 'get', 'post']
@@ -1634,7 +1636,15 @@ class SnapshotResource(DojoResource):
         resource_name = 'storage/snapshot'
 
     def get_list(self, request, **kwargs):
-        snapshots = notifier().zfs_snapshot_list()
+
+        # Get a list of snapshots in remote sides to show whether it has been
+        # transfered already or not
+        repli = {}
+        for repl in Replication.objects.all():
+            repli[repl] = notifier().repl_remote_snapshots(repl)
+
+        snapshots = notifier().zfs_snapshot_list(replications=repli)
+
         results = []
         for snaps in snapshots.values():
             results.extend(snaps)
@@ -1643,6 +1653,7 @@ class SnapshotResource(DojoResource):
             'refer': 'refer_bytes',
             'extra': 'mostrecent',
         }
+
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
                 field = sfield[1:]

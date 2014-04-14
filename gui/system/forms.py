@@ -156,7 +156,7 @@ class FirmwareWizard(FileWizard):
         # Verify integrity of uploaded image.
         assert ('sha256' in cleaned_data)
         checksum = notifier().checksum(path)
-        if checksum != str(cleaned_data['sha256']).strip():
+        if checksum != str(cleaned_data['sha256']).lower().strip():
             self.file_storage.delete(firmware.name)
             raise MiddlewareError("Invalid firmware, wrong checksum")
 
@@ -1030,6 +1030,13 @@ class SysctlForm(ModelForm):
 
     def clean_sysctl_mib(self):
         value = self.cleaned_data.get('sysctl_mib').strip()
+        qs = models.Sysctl.objects.filter(sysctl_mib=value)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_(
+                'This variable already exists'
+            ))
         if SYSCTL_VARNAME_FORMAT_RE.match(value):
             return value
         raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))

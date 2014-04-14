@@ -630,7 +630,6 @@ class ReplicationFAdmin(BaseFreeAdmin):
     resource_mixin = ReplicationResourceMixin
     exclude_fields = (
         'id',
-        'repl_lastsnapshot',
         'repl_remote',
         'repl_userepl',
         'repl_resetonce',
@@ -641,6 +640,11 @@ class ReplicationFAdmin(BaseFreeAdmin):
         columns.insert(2, {
             'name': 'repl_remote_hostname',
             'label': _('Remote Hostname'),
+            'sortable': False,
+        })
+        columns.insert(3, {
+            'name': 'repl_status',
+            'label': _('Status'),
             'sortable': False,
         })
         return columns

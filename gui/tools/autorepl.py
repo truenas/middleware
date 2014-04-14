@@ -25,9 +25,11 @@
 # SUCH DAMAGE.
 #
 
+import cPickle
 import datetime
 import logging
 import os
+import subprocess
 import sys
 
 sys.path.extend([
@@ -42,7 +44,7 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.storage.models import Replication
+from freenasUI.storage.models import Replication, REPL_RESULTFILE
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.pipesubr import pipeopen, system
 from freenasUI.common.locks import mntlock
@@ -115,6 +117,13 @@ MNTLOCK.unlock()
 log.debug("Autosnap replication started")
 log.debug("temp log file: %s" % (templog, ))
 
+try:
+    with open(REPL_RESULTFILE, 'rb') as f:
+        data = f.read()
+    results = cPickle.loads(data)
+except:
+    results = {}
+
 # Traverse all replication tasks
 replication_tasks = Replication.objects.all()
 for replication in replication_tasks:
@@ -137,10 +146,16 @@ for replication in replication_tasks:
     if fast_cipher:
         sshcmd = ('/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
                   'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
-                  ' -o BatchMode=yes -o StrictHostKeyChecking=yes -q')
+                  ' -o BatchMode=yes -o StrictHostKeyChecking=yes'
+                  # There's nothing magical about ConnectTimeout, it's an average
+                  # of wiliam and josh's thoughts on a Wednesday morning.
+                  # It will prevent hunging in the status of "Sending".
+                  ' -o ConnectTimeout=7'
+                 )
     else:
         sshcmd = ('/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
-                  ' -o StrictHostKeyChecking=yes -q')
+                  ' -o StrictHostKeyChecking=yes'
+                  ' -o ConnectTimeout=7')
 
     if dedicateduser:
         sshcmd = "%s -l %s" % (
@@ -262,6 +277,7 @@ Hello,
     have diverged snapshot with us.
                         """ % (localfs), interval=datetime.timedelta(hours=2), channel='autorepl')
                     MNTLOCK.unlock()
+                    results[replication.id] = 'Remote system have diverged snapshot with us'
                     continue
                 MNTLOCK.unlock()
         else:
@@ -282,18 +298,48 @@ Hello,
     for snapname in wanted_list:
         local_fs, local_snap = snapname.split('@')
         if replication.repl_limit != 0:
-            limit = ' | /usr/local/bin/throttle -K %d' % replication.repl_limit
+            limit = '/usr/local/bin/throttle -K %d | ' % replication.repl_limit
         else:
             limit = ''
+        cmd = ['/sbin/zfs', 'send', '-V']
+        if replication.repl_userepl:
+            cmd.append('-R')
         if last_snapshot == '':
-            replcmd = '(/sbin/zfs send -V %s%s%s | /bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded.") > %s 2>&1' % (Rflag, snapname, limit, sshcmd, remote_port, remote, remotefs, templog)
+            cmd.append(snapname)
         else:
-            replcmd = '(/sbin/zfs send -V %s-I %s %s%s | /bin/dd obs=1m | /bin/dd obs=1m | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded.") > %s 2>&1' % (Rflag, last_snapshot, snapname, limit, sshcmd, remote_port, remote, remotefs, templog)
-        system(replcmd)
-        with open(templog) as f:
-            msg = f.read()
+            cmd.extend(['-I', last_snapshot, snapname])
+
+        progressfile = '/tmp/.repl_progress_%d' % replication.id
+        # subprocess.Popen does not handle large stream of data between
+        # processes very well, do it on our own
+        readfd, writefd = os.pipe()
+        if os.fork() == 0:
+            with open(progressfile, 'w') as f2:
+                f2.write(str(os.getpid()))
+            os.close(readfd)
+            os.dup2(writefd, 1)
+            os.close(writefd)
+            os.execv('/sbin/zfs', cmd)
+        os.close(writefd)
+
+        replcmd = '%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s -p %d %s "/sbin/zfs receive -F -d %s && echo Succeeded"' % (limit, sshcmd, remote_port, remote, remotefs)
+        with open(templog, 'w+') as f:
+            readobj = os.fdopen(readfd, 'r', 0)
+            proc = subprocess.Popen(
+                replcmd,
+                shell=True,
+                stdin=readobj,
+                stdout=f,
+                stderr=subprocess.STDOUT,
+            )
+            proc.wait()
+            readobj.close()
+            os.remove(progressfile)
+            f.seek(0)
+            msg = f.read().strip('\n').strip('\r')
         os.remove(templog)
         log.debug("Replication result: %s" % (msg))
+        results[replication.id] = msg
 
         # Determine if the remote side have the snapshot we have now.
         rzfscmd = '"zfs list -Hr -o name -t snapshot -d 1 %s | tail -n 1 | cut -d@ -f2"' % (remotefs_final)
@@ -342,5 +388,7 @@ Hello,
             """ % (localfs, remote, msg), interval=datetime.timedelta(hours=2), channel='autorepl')
         break
 
+with open(REPL_RESULTFILE, 'w') as f:
+    f.write(cPickle.dumps(results))
 os.remove('/var/run/autorepl.pid')
 log.debug("Autosnap replication finished")

@@ -1000,25 +1000,11 @@ AD_generate_config()
 
 AD_init()
 {
-	local config_exists=0
 	local verbose=0
 
 	AD_load_database_values
 
 	verbose=$(AD_get ad_verbose_logging)
-
-	if [ -f "${AD_CONFIG_FILE}" ]
-	then
-		AD_log "AD_init: config exists, loading values from ${AD_CONFIG_FILE}"
-
-		. "${AD_CONFIG_FILE}"
-		config_exists=1
-	fi
-
-	if [ "${config_exists}" = "1" ]
-	then
-		return 0
-	fi
 
 	timeout=$(AD_get ad_timeout)
 	if [ -z "${timeout}" ]

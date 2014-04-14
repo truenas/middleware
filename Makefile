@@ -3,7 +3,7 @@
 .endif
 
 NANO_LABEL?=FreeNAS
-VERSION?=9.2.2-ALPHA
+VERSION?=9.2.1.4-BETA
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
 
@@ -13,7 +13,7 @@ RELEASE_LOGFILE?=${SCRIPT}
 RELEASE_LOGFILE?=release.build.log
 .endif
 
-GIT_REPO_SETTING=.git-repo-setting
+GIT_REPO_SETTING=${.CURDIR}/.git-repo-setting
 .if exists(${GIT_REPO_SETTING})
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
@@ -44,6 +44,7 @@ save-build-env:
 
 freenas: release
 release: git-verify
+	${ENV_SETUP} build/do_checkout.sh check-sandbox
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/build_release.sh

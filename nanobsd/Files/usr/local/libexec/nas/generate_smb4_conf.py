@@ -23,7 +23,6 @@ from freenasUI.account.models import bsdUsers
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.system import get_samba4_path
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.zfs import list_datasets
 from freenasUI.services.models import (
     services,
     ActiveDirectory,
@@ -69,6 +68,18 @@ def is_within_zfs(mountpoint):
             return True
 
     return False
+
+
+def get_sysctl(name):
+    p = pipeopen("/sbin/sysctl -n '%s'" % name)
+    out = p.communicate()
+    if p.returncode != 0:
+        return None
+    try:
+        out = out[0].strip()
+    except: 
+        pass
+    return out
 
 
 def get_server_services():
@@ -195,9 +206,24 @@ def add_nt4_conf(smb4_conf):
     confset1(smb4_conf, "preferred master = no")
 
 
+def set_ldap_password():
+    try:
+        ldap = LDAP.objects.all()[0]
+    except:
+        return
+
+    if ldap.ldap_rootbindpw:
+        p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_rootbindpw)
+        out = p.communicate()
+        if out and out[1]:
+            for line in out[1].split('\n'):
+                print line
+
+
 def add_ldap_conf(smb4_conf):
     try:
         ldap = LDAP.objects.all()[0]
+        cifs = CIFS.objects.all()[0]
     except:
         return
 
@@ -212,14 +238,6 @@ def add_ldap_conf(smb4_conf):
     )
 
     confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_rootbasedn)
-
-    if ldap.ldap_rootbindpw:
-        p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_rootbindpw)
-        out = p.communicate()
-        if out and out[1]:
-            for line in out[1].split('\n'):
-                print line
-
     confset2(smb4_conf, "ldap suffix = %s", ldap.ldap_basedn)
     confset2(smb4_conf, "ldap user suffix = %s", ldap.ldap_usersuffix)
     confset2(smb4_conf, "ldap group suffix = %s", ldap.ldap_groupsuffix)
@@ -235,6 +253,9 @@ def add_ldap_conf(smb4_conf):
     confset1(smb4_conf, "ldapsam:trusted = yes")
     confset1(smb4_conf, "idmap uid = 10000-39999")
     confset1(smb4_conf, "idmap gid = 10000-39999")
+
+    confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
+    confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
 
 
 def add_activedirectory_conf(smb4_conf):
@@ -282,7 +303,7 @@ def add_activedirectory_conf(smb4_conf):
 
     confset1(smb4_conf, "template shell = /bin/sh")
     confset2(smb4_conf, "template homedir = %s",
-        "/home/%D/%U" if ad.ad_use_default_domain else "/home/%U")
+        "/home/%D/%U" if not ad.ad_use_default_domain else "/home/%U")
 
     if not ad.ad_unix_extensions:
         confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
@@ -347,6 +368,8 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "deadtime = 15")
     confset1(smb4_conf, "max log size = 51200")
 
+    confset2(smb4_conf, "max open files = %d", long(get_sysctl('kern.maxfilesperproc')) - 25)
+
     if cifs.cifs_srv_syslog:
         confset1(smb4_conf, "syslog only = yes")
         confset1(smb4_conf, "syslog = 1")
@@ -360,6 +383,7 @@ def generate_smb4_conf(smb4_conf):
     confset1(smb4_conf, "map to guest = Bad User")
     confset1(smb4_conf, "obey pam restrictions = Yes")
     confset1(smb4_conf, "directory name cache size = 0")
+    confset1(smb4_conf, "kernel change notify = no")
 
     confset1(smb4_conf, "panic action = /usr/local/libexec/samba/samba-backtrace")
 
@@ -381,6 +405,9 @@ def generate_smb4_conf(smb4_conf):
         "yes" if cifs.cifs_srv_timeserver else False)
     confset2(smb4_conf, "null passwords = %s",
         "yes" if cifs.cifs_srv_nullpw else False)
+
+    confset2(smb4_conf, "acl allow execute always = %s",
+        "true" if cifs.cifs_srv_allow_execute_always else "false")
 
     role = get_server_role()
     if cifs.cifs_srv_localmaster and not nt4_enabled() \
@@ -449,7 +476,10 @@ def generate_smb4_conf(smb4_conf):
             except:
                 pass
 
-        cifs_homedir_path = "%s/%s" % (cifs.cifs_srv_homedir, valid_users_path)
+        if cifs.cifs_srv_homedir:
+            cifs_homedir_path = "%s/%s" % (cifs.cifs_srv_homedir, valid_users_path)
+        else:
+            cifs_homedir_path = False
 
         confset1(smb4_conf, "\n")
         confset1(smb4_conf, "[homes]", space=0)
@@ -458,7 +488,8 @@ def generate_smb4_conf(smb4_conf):
         confset1(smb4_conf, "writable = yes")
         confset2(smb4_conf, "browseable = %s",
             "yes" if cifs.cifs_srv_homedir_browseable_enable else "no")
-        confset2(smb4_conf, "path = %s", cifs_homedir_path)
+        if cifs_homedir_path:
+            confset2(smb4_conf, "path = %s", cifs_homedir_path)
 
         for line in cifs.cifs_srv_homedir_aux.split('\n'):
             confset1(smb4_conf, line)
@@ -791,6 +822,9 @@ def main():
     for line in smb4_tdb:
         os.write(fd, line + '\n')
     os.close(fd)
+
+    if role == 'member' and ldap_enabled():
+        set_ldap_password()
 
     if role != 'dc':
         p = pipeopen("/usr/local/bin/pdbedit -d 0 -i smbpasswd:%s -e %s -s %s" % (

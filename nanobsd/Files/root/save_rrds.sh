@@ -22,6 +22,7 @@ then
 			logger Not enough space on /data to save collectd data
 			touch /var/tmp/.rrd_enospace
 		else
+			rm -f ${PERSIST_FILE}
 			mv ${PERSIST_FILE##*/}.$$ $PERSIST_FILE
 		fi
 	else

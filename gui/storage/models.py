@@ -26,8 +26,10 @@
 #####################################################################
 
 from datetime import time
+import cPickle
 import logging
 import os
+import re
 import uuid
 
 from django.db import models, transaction
@@ -40,6 +42,7 @@ from freenasUI.common import humanize_size
 from freenasUI.freeadmin.models import Model, UserField
 
 log = logging.getLogger('storage.models')
+REPL_RESULTFILE = '/tmp/.repl-result'
 
 
 class Volume(Model):
@@ -106,10 +109,12 @@ class Volume(Model):
         Helper method for template call
         """
         if self.vol_fstype == 'ZFS':
-            return zfs.list_datasets(path=self.vol_name,
+            return zfs.list_datasets(
+                path=self.vol_name,
                 recursive=True,
                 hierarchical=hierarchical,
-                include_root=True)
+                include_root=True,
+            )
 
     def get_zvols(self):
         if self.vol_fstype == 'ZFS':
@@ -249,7 +254,7 @@ class Volume(Model):
             # No system dataset on the pool being destroyed
             pass
         else:
-            syspool.adv_system_pool=""
+            syspool.adv_system_pool = ""
             syspool.save()
             # If we are using the syslog dataset kick syslog.
             syslog = Advanced.objects.all()[0]
@@ -849,9 +854,8 @@ class Replication(Model):
     repl_lastsnapshot = models.CharField(
         max_length=120,
         blank=True,
-        verbose_name=_(
-            "Last snapshot sent to remote side (leave blank "
-            "for full replication)"),
+        editable=False,
+        verbose_name=_('Last snapshot sent to remote side'),
     )
     repl_remote = models.ForeignKey(
         ReplRemote,
@@ -905,6 +909,34 @@ class Replication(Model):
             self.repl_filesystem,
             self.repl_remote.ssh_remote_hostname)
 
+    @property
+    def repl_lastresult(self):
+        if not os.path.exists(REPL_RESULTFILE):
+            return 'Waiting'
+        with open(REPL_RESULTFILE, 'rb') as f:
+            data = f.read()
+        try:
+            results = cPickle.loads(data)
+            return results[self.id]
+        except:
+            return None
+
+    @property
+    def status(self):
+        progressfile = '/tmp/.repl_progress_%d' % self.id
+        if os.path.exists(progressfile):
+            with open(progressfile, 'r') as f:
+                pid = int(f.read())
+            title = notifier().get_proc_title(pid)
+            if title:
+                reg = re.search(r'sending (\S+) \((\d+)%', title)
+                if reg:
+                    return _('Sending %s (%s%%)') % reg.groups()
+                else:
+                    return _('Sending')
+        if self.repl_lastresult:
+            return self.repl_lastresult
+
     def delete(self):
         try:
             if self.repl_lastsnapshot != "":
@@ -919,7 +951,7 @@ class Task(Model):
     task_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
-    ) 
+    )
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),

@@ -70,7 +70,10 @@ serial_enable()
 		rm -f "$tmp"
 	fi
 
-	conscontrol | grep Configured | cut -f 2 -d \  | tr , \\n | grep -qvE 'ttyv[0-9]+' && sercons="ttyu0"
+	sercons=`conscontrol | grep Configured | cut -f 2 -d \  | tr , \\\\n | grep -vE 'ttyv[0-9]+' |head -n 1`
+	if [ "${sercons}ZZZ" == "ZZZ" ] ; then
+		sercons="ttyu0"
+	fi
 
 	ln -sf ${sercons} /dev/sercons
 }

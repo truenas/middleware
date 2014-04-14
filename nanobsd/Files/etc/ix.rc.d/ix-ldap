@@ -9,16 +9,11 @@
 
 . /etc/rc.freenas
     
-: ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
-: ${NSS_LDAP_SECRET:="/usr/local/etc/nss_ldap.secret"}
-: ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
-: ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
-
 save_certificate()
 {
 	local ldap_id="${1}"
 
-	mkdir -p "$(dirname ${CERT_FILE})"
+	mkdir -p "$(dirname ${LDAPCACERT})"
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -30,7 +25,15 @@ save_certificate()
 	WHERE
 		id = ${ldap_id}
 
-	" > "${CERT_FILE}"
+	" | while read -r ldap_tls_cacertfile
+	do
+		if [ -f "${ldap_tls_cacertfile}" ]
+		then
+			cp "${ldap_tls_cacertfile}" "${LDAPCACERT}"
+			break
+		fi
+
+	done
 }
 
 generate_ldapconf()
@@ -104,12 +107,13 @@ EOF
 EOF
 		fi
 	
+		ldap_ssl="start_tls"
 		if [ "${ldap_ssl}" = "start_tls" ]; then
 			save_certificate "${ldap_id}"
 
 			cat >>"${nssconf}" <<-EOF
 			ssl ${ldap_ssl}
-			tls_cacertfile ${CERT_FILE}
+			tls_cacertfile ${LDAPCACERT}
 EOF
 		elif [ "${ldap_ssl}" = "on" ]; then
 			save_certificate "${ldap_id}"
@@ -117,7 +121,7 @@ EOF
 			cat >>"${nssconf}" <<-EOF
 			uri ldaps://${ldap_hostname}
 			ssl ${ldap_ssl}
-			tls_cacertfile ${CERT_FILE}
+			tls_cacertfile ${LDAPCACERT}
 EOF
 		fi
 
@@ -140,14 +144,14 @@ EOF
 		case "$ldap_ssl" in
 		start_tls)
 			cat >> "${ldapconf}" <<-EOF
-			TLS_CACERT ${CERT_FILE}
+			TLS_CACERT ${LDAPCACERT}
 			TLS_REQCERT allow
 EOF
 			;;
 		on)
 			cat >> "${ldapconf}" <<-EOF
 			URI ldaps://${ldap_hostname}
-			TLS_CACERT ${CERT_FILE}
+			TLS_CACERT ${LDAPCACERT}
 			TLS_REQCERT allow
 EOF
 			;;

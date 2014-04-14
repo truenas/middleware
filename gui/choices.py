@@ -621,9 +621,13 @@ class UPSDRIVER_CHOICES(object):
             for row in reader:
                 if len(row) == 0 or row[0].startswith('#'):
                     continue
-                if row[-1].find(' (experimental)') != -1:
-                    row[-1] = row[-1].replace(' (experimental)', '').strip()
-                yield ("$".join([row[-1], row[3]]), "%s (%s)" % (" ".join(row[0:-1]), row[-1]))
+                if row[-2] == '#':
+                    last = -3
+                else:
+                    last = -1
+                if row[last].find(' (experimental)') != -1:
+                    row[last] = row[last].replace(' (experimental)', '').strip()
+                yield ("$".join([row[last], row[3]]), "%s (%s)" % (" ".join(row[0:last]), row[last]))
 
 
 LDAP_SSL_CHOICES = (
