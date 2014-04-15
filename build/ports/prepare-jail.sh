@@ -20,3 +20,11 @@ echo "${NANO_OBJ}/_.w" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/mnt
 echo "git" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/method
 echo "${FREEBSD_RELEASE_VERSION}" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/version
 echo "${NANO_ARCH}" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/arch
+
+mkdir -p ${NANO_OBJ}/_.w/wrkdirs
+
+cat >> ${NANO_OBJ}/_.w/etc/make.conf << EOF
+USE_PACKAGE_DEPENDS=yes
+BATCH=yes
+WRKDIRPREFIX=/wrkdirs
+EOF
