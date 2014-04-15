@@ -14,7 +14,7 @@ TOP="$(pwd)"
 # Create the metadata which tells poudriere where the ports
 # building jail.  Use the world tree that was built by the FreeNAS build.
 #
-JAIL=freebsd:9:${NANO_ARCH}
+JAIL=j
 mkdir -p ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}
 echo "${NANO_OBJ}/_.w" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/mnt
 echo "git" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/method

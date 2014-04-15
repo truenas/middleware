@@ -18,10 +18,10 @@ create_poudriere_conf()
 NO_ZFS=yes
 RESOLV_CONF=/etc/resolv.conf
 BASEFS=${NANO_OBJ}/poudriere
-DISTFILES_CACHE=${NANO_OBJ}/poudriere/ports/distfiles
+DISTFILES_CACHE=${NANO_OBJ}/ports/distfiles
 POUDRIERE_DATA=${NANO_OBJ}/d
 USE_PORTLINT=no
-USE_TMPFS=yes
+USE_TMPFS="wrkdir data"
 GIT_URL=${GIT_PORTS_REPO}
 GIT_BRANCH=${GIT_PORTS_BRANCH}
 EOF
