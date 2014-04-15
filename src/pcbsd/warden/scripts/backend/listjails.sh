@@ -27,13 +27,21 @@ line()
   echo 
 }
 
+ifs="${IFS}"
+IFS=$'\n'
+
 lineline=0
 VERBOSE="NO"
-JAILS=
+
+NJAILS=0
 while [ "$#" -gt "0" ] ; do
   case "$1" in
     -v) VERBOSE="YES" ;; 
-     *) JAILS="${JAILS} .$1.meta" ;;
+     *) var="jail_${NJAILS}"
+        val=".${1}.meta"
+        eval "${var}='${val}'"
+        : $(( NJAILS += 1 ))
+        ;;  
   esac
   shift 
 done
@@ -45,129 +53,138 @@ if [ "${VERBOSE}" != "YES" ] ; then
 fi
 
 cd "${JDIR}"
-if [ -z "${JAILS}" ] ; then
-  JAILS=`ls -d .*.meta 2>/dev/null`
+if [ -z "${NJAILS}" -o "${NJAILS}" = "0" ]; then
+  NJAILS=0
+  for j in $(ls -d .*.meta 2>/dev/null)
+  do
+     var="jail_${NJAILS}"
+     eval "${var}='${j}'"
+     : $(( NJAILS += 1 ))
+  done
 fi
 
-ifs="${IFS}"
-IFS=$'\n'
-for i in ${JAILS}
+i=0
+while [ "${i}" -lt "${NJAILS}" ]
 do
+  var=\$$(printf "jail_${i}")
+  jail="$(eval "echo ${var} 2>/dev/null")"
+  : $(( i += 1 ))
+
   AUTO="Disabled" 
   STATUS="<unknown>"
 
-  if [ ! -e "${i}/id" ] ; then
+  if [ ! -e "${jail}/id" ] ; then
      # Check if its an old-style jail
-     if [ ! -e "${i}/ip" ] ; then
-       continue
+     if [ ! -e "${jail}/ip" ] ; then
+        continue 
      fi
+
      # This is an old style jail, lets convert it
-     cp ${i}/ip ${i}/ipv4
+     cp ${jail}/ip ${jail}/ipv4
 
      # Get next unique ID
      META_ID="$(get_next_id "${JDIR}")"
-     echo "$META_ID" > ${i}/id
-
+     echo "$META_ID" > ${jail}/id
   fi
 
-  ID="`cat "${i}/id" 2>/dev/null`"
+  ID="`cat "${jail}/id" 2>/dev/null`"
   if [ -z "${ID}" ]
   then
     continue
   fi  
 
-  HOST="`cat "${i}/host" 2>/dev/null`"
-  if [ -e "${i}/vnet" ] ; then
+  HOST="`cat "${jail}/host" 2>/dev/null`"
+  if [ -e "${jail}/vnet" ] ; then
     VNET="Enabled"
   else
     VNET="Disabled"
   fi
 
-  if [ -e "${i}/nat" ] ; then
+  if [ -e "${jail}/nat" ] ; then
     NAT="Enabled"
   else
     NAT="Disabled"
   fi
 
   MAC=
-  if [ -e "${i}/mac" ] ; then
-     MAC="`cat "${i}/mac"`"
+  if [ -e "${jail}/mac" ] ; then
+     MAC="`cat "${jail}/mac"`"
   fi 
 
   #
   # IPv4 networking
   # 
   IPS4=
-  IP4=`cat "${i}/ipv4" 2>/dev/null`
-  if [ -e "${i}/alias-ipv4" ] ; then
+  IP4=`cat "${jail}/ipv4" 2>/dev/null`
+  if [ -e "${jail}/alias-ipv4" ] ; then
     while read line
     do
       IPS4="${IPS4} ${line}" 
-    done < "${i}/alias-ipv4"
+    done < "${jail}/alias-ipv4"
   fi
 
   BRIDGEIPS4=
-  BRIDGEIP4=`cat "${i}/bridge-ipv4" 2>/dev/null`
-  if [ -e "${i}/alias-bridge-ipv4" ] ; then
+  BRIDGEIP4=`cat "${jail}/bridge-ipv4" 2>/dev/null`
+  if [ -e "${jail}/alias-bridge-ipv4" ] ; then
     while read line
     do
       BRIDGEIPS4="${BRIDGEIPS4} ${line}" 
-    done < "${i}/alias-bridge-ipv4"
+    done < "${jail}/alias-bridge-ipv4"
   fi
 
-  GATEWAY4=`cat "${i}/defaultrouter-ipv4" 2>/dev/null`
+  GATEWAY4=`cat "${jail}/defaultrouter-ipv4" 2>/dev/null`
 
   #
   # IPv6 networking
   # 
   IPS6=
-  IP6=`cat "${i}/ipv6" 2>/dev/null`
-  if [ -e "${i}/alias-ipv6" ] ; then
+  IP6=`cat "${jail}/ipv6" 2>/dev/null`
+  if [ -e "${jail}/alias-ipv6" ] ; then
     while read line
     do
       IPS6="${IPS6} ${line}" 
-    done < "${i}/alias-ipv6"
+    done < "${jail}/alias-ipv6"
   fi
 
   BRIDGEIPS6=
-  BRIDGEIP6=`cat "${i}/bridge-ipv6" 2>/dev/null`
-  if [ -e "${i}/alias-bridge-ipv6" ] ; then
+  BRIDGEIP6=`cat "${jail}/bridge-ipv6" 2>/dev/null`
+  if [ -e "${jail}/alias-bridge-ipv6" ] ; then
     while read line
     do
       BRIDGEIPS6="${BRIDGEIPS6} ${line}" 
-    done < "${i}/alias-bridge-ipv6"
+    done < "${jail}/alias-bridge-ipv6"
   fi
 
-  GATEWAY6=`cat "${i}/defaultrouter-ipv6" 2>/dev/null`
+  GATEWAY6=`cat "${jail}/defaultrouter-ipv6" 2>/dev/null`
 
   # Check if we are autostarting this jail
-  if [ -e "${i}/autostart" ] ; then
+  if [ -e "${jail}/autostart" ] ; then
     AUTO="Enabled"
   fi
  
   # Figure out the type of jail
-  if [ -e "${i}/jail-portjail" ] ; then
-    echo portjail > "${i}/jailtype"
-    rm -f "${i}/jail-portjail"
-  elif [ -e "${i}/jail-pluginjail" ] ; then
-    echo pluginjail > "${i}/jailtype"
-    rm -f "${i}/jail-pluginjail"
-  elif [ -e "${i}/jail-linux" ] ; then
-    TYPE="$(cat "${i}/jail-linux")"
+  if [ -e "${jail}/jail-portjail" ] ; then
+    echo portjail > "${jail}/jailtype"
+    rm -f "${jail}/jail-portjail"
+  elif [ -e "${jail}/jail-pluginjail" ] ; then
+    echo pluginjail > "${jail}/jailtype"
+    rm -f "${jail}/jail-pluginjail"
+  elif [ -e "${jail}/jail-linux" ] ; then
+    TYPE="$(cat "${jail}/jail-linux")"
     if [ -z "${TYPE}" ] ; then
       TYPE="linuxjail"
     fi
-    echo "${TYPE}" > "${i}/jailtype"
-    rm -f "${i}/jail-linux"
+    echo "${TYPE}" > "${jail}/jailtype"
+    rm -f "${jail}/jail-linux"
   fi
 
-  TYPE="$(cat "${i}/jailtype")"
+  TYPE="$(cat "${jail}/jailtype")"
   if [ -z "${TYPE}" ] ; then 
     TYPE="standard"
-    echo "${TYPE}" > "${i}/jailtype"
+    echo "${TYPE}" > "${jail}/jailtype"
   fi
 
-  JAILNAME=`echo ${i}|sed 's|.meta$||'|sed 's|^.||'`
+  JAILNAME=`echo ${jail}|sed 's|.meta$||'|sed 's|^.||'`
 
   ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}" 2>/dev/null
   if [ "$?" = "0" ]
@@ -178,9 +195,9 @@ do
   fi
 
   FLAGS=
-  if [ -s "${i}/jail-flags" ]
+  if [ -s "${jail}/jail-flags" ]
   then
-    FLAGS="$(cat "${i}/jail-flags"|tr ' ' ',')"
+    FLAGS="$(cat "${jail}/jail-flags"|tr ' ' ',')"
   fi
 
   if [ "${VERBOSE}" = "YES" ] ; then
@@ -215,5 +232,6 @@ __EOF__
   else
     warden_printf "%-24s%-12s%-12s%-12s\n" "${JAILNAME}" ${AUTO} ${STATUS} ${TYPE}
   fi
+
 done
 IFS="${ifs}"

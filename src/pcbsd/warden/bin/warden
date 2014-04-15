@@ -898,7 +898,7 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
 
     list) require_root
         shift
-        lockf "/var/tmp/.wlist" ${PROGDIR}/scripts/backend/listjails.sh $* ;;
+        lockf "/var/tmp/.wlist" ${PROGDIR}/scripts/backend/listjails.sh "$@" ;;
     
    start) require_root
 	  # Time to startup the jail
