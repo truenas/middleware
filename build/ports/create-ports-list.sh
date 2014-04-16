@@ -8,6 +8,7 @@ TOP="$(pwd)"
 
 PORTSLIST=${NANO_OBJ}/poudriere/etc/ports.txt
 MAKECONF=${NANO_OBJ}/poudriere/etc/make.conf
+PORTOPTIONS=${NANO_OBJ}/poudriere/etc/poudriere.d/options
 
 # Take the old add_port invocations from
 # the nanobsd script, and create input files
@@ -24,9 +25,10 @@ add_port()
             PORT=$var
             PORT_UND=$(echo $var|sed -e 's|/|_|g')
             echo $PORT >> $PORTSLIST
-            
+            mkdir -p ${PORTOPTIONS}/${PORT_UND} 
+            rm -f ${PORTOPTIONS}/${PORT_UND}/options 
         else
-            echo "${PORT_UND}_SET += ${var}" >> $MAKECONF
+            echo "$var" >> ${PORTOPTIONS}/${PORT_UND}/options 
         fi
     done
 }
@@ -37,6 +39,7 @@ add_port_debug()
 }
 
 mkdir -p $(dirname ${PORTSLIST})
+mkdir -p ${PORTOPTIONS}
 rm -f ${PORTSLIST}
 rm -f ${MAKECONF}
 
