@@ -47,6 +47,7 @@
 						{label:"Population", field:"population"},
 						{label:"Timezone", field:"timezone"}
 					],
+					sort: "id",
 					store: testCountryStore,
 					dndParams: {
 						allowNested: true, // also pick up indirect children w/ dojoDndItem class
@@ -58,6 +59,7 @@
 				
 				// Create the target list.
 				window.targetgrid = new DnDList({
+					sort: "order",
 					store: createOrderedStore(),
 					renderRow: function(object) {
 						return put("div", object.name);

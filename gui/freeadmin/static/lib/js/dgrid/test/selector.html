@@ -64,12 +64,14 @@
 					var SelectionGrid = declare([Grid, Selection, Keyboard]);
 					
 					window.grid = new SelectionGrid({
+						sort: "id",
 						store: testStore,
 						selectionMode: "none",
 						columns: getColumns(),
 						allowSelectAll: true
 					}, "grid");
 					window.grid2 = new SelectionGrid({
+						sort: "id",
 						store: testStore,
 						selectionMode: "none",
 						columns: {
@@ -82,6 +84,7 @@
 					}, "grid2");
 
 					window.gridRadio = new SelectionGrid({
+						sort: "id",
 						store: testStore,
 						selectionMode: "none",
 						allowSelect: function(row){ return row.data.col3 == "read"; },
@@ -94,12 +97,14 @@
 					}, "grid-radio");
 					
 					window.gridNoSelector = new SelectionGrid({
+						sort: "id",
 						store: testStore,
 						selectionMode: "none",
 						columns: getColumnsWithoutSelector()
 					}, "gridNoSelector");
 					
 					window.gridComplex = new (declare([Grid, ColumnSet, Selection, Keyboard]))({
+						sort: "id",
 						store: testStore,
 						columnSets: [
 							[

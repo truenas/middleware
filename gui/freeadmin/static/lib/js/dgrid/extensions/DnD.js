@@ -170,7 +170,7 @@ define([
 		
 		onMouseMove: function(evt){
 			// If we're handling touchmove, only respond to single-contact events.
-			if(!has("touch") || touchUtil.countCurrentTouches(evt, this.grid.touchNode) === 1){
+			if(!has("touch") || touchUtil.countCurrentTouches(evt, this.grid.touchNode) <= 1){
 				this.inherited(arguments);
 			}
 		},

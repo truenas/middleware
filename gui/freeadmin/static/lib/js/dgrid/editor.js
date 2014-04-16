@@ -48,12 +48,12 @@ function dataFromEditor(column, cmp){
 	}
 }
 
-function setProperty(grid, cellElement, oldValue, value, triggerEvent){
+function setProperty(grid, cell, oldValue, value, triggerEvent){
 	// Updates dirty hash and fires dgrid-datachange event for a changed value.
-	var cell, row, column, eventObject;
+	var cellElement, row, column, eventObject;
 	// test whether old and new values are inequal, with coercion (e.g. for Dates)
 	if((oldValue && oldValue.valueOf()) != (value && value.valueOf())){
-		cell = grid.cell(cellElement);
+		cellElement = cell.element;
 		row = cell.row;
 		column = cell.column;
 		if(column.field && row){
@@ -87,14 +87,14 @@ function setProperty(grid, cellElement, oldValue, value, triggerEvent){
 				// Otherwise keep the value the same
 				// For the sake of always-on editors, need to manually reset the value
 				var cmp;
-				if(cmp = cellElement.widget){
+				if((cmp = cellElement.widget)){
 					// set _dgridIgnoreChange to prevent an infinite loop in the
 					// onChange handler and prevent dgrid-datachange from firing
 					// a second time
 					cmp._dgridIgnoreChange = true;
 					cmp.set("value", oldValue);
 					setTimeout(function(){ cmp._dgridIgnoreChange = false; }, 0);
-				}else if(cmp = cellElement.input){
+				}else if((cmp = cellElement.input)){
 					updateInputValue(cmp, oldValue);
 				}
 				
@@ -106,10 +106,15 @@ function setProperty(grid, cellElement, oldValue, value, triggerEvent){
 }
 
 // intermediary frontend to setProperty for HTML and widget editors
-function setPropertyFromEditor(grid, column, cmp, triggerEvent) {
-	var value, id, editedRow;
+function setPropertyFromEditor(grid, cmp, triggerEvent) {
+	var cell = grid.cell(cmp.domNode || cmp),
+		column = cell.column,
+		value,
+		id,
+		editedRow;
+	
 	if(!cmp.isValid || cmp.isValid()){
-		value = setProperty(grid, (cmp.domNode || cmp).parentNode,
+		value = setProperty(grid, cell,
 			activeCell ? activeValue : cmp._dgridLastValue,
 			dataFromEditor(column, cmp), triggerEvent);
 		
@@ -173,14 +178,14 @@ function createEditor(column){
 		// the latter is delayed by setTimeouts in Dijit and will fire too late.
 		cmp.connect(cmp, editOn ? "onBlur" : "onChange", function(){
 			if(!cmp._dgridIgnoreChange){
-				setPropertyFromEditor(grid, column, this, {type: "widget"});
+				setPropertyFromEditor(grid, this, {type: "widget"});
 			}
 		});
 	}else{
 		handleChange = function(evt){
 			var target = evt.target;
 			if("_dgridLastValue" in target && target.className.indexOf("dgrid-input") > -1){
-				setPropertyFromEditor(grid, column, target, evt);
+				setPropertyFromEditor(grid, target, evt);
 			}
 		};
 
@@ -228,7 +233,7 @@ function createSharedEditor(column, originalRenderCell){
 			function(){
 				updateInputValue(cmp, cmp._dgridLastValue);
 				// call setProperty again in case we need to revert a previous change
-				setPropertyFromEditor(column.grid, column, cmp);
+				setPropertyFromEditor(column.grid, cmp);
 			},
 		keyHandle;
 	
@@ -368,29 +373,33 @@ function edit(cell) {
 	cellElement = cell.element.contents || cell.element;
 	
 	if((cmp = column.editorInstance)){ // shared editor (editOn used)
-		if(activeCell != cellElement &&
-				(!column.canEdit || column.canEdit(cell.row.data, value))){
-			activeCell = cellElement;
+		if(activeCell != cellElement){
+			// get the cell value
 			row = cell.row;
 			dirty = this.dirty && this.dirty[row.id];
 			value = (dirty && field in dirty) ? dirty[field] :
 				column.get ? column.get(row.data) : row.data[field];
-			
-			showEditor(column.editorInstance, column, cellElement, value);
-			
-			// focus / blur-handler-resume logic is surrounded in a setTimeout
-			// to play nice with Keyboard's dgrid-cellfocusin as an editOn event
-			dfd = new Deferred();
-			setTimeout(function(){
-				// focus the newly-placed control (supported by form widgets and HTML inputs)
-				if(cmp.focus){ cmp.focus(); }
-				// resume blur handler once editor is focused
-				if(column._editorBlurHandle){ column._editorBlurHandle.resume(); }
-				dfd.resolve(cmp);
-			}, 0);
-			
-			return dfd.promise;
+			// check to see if the cell can be edited
+			if(!column.canEdit || column.canEdit(cell.row.data, value)){
+				activeCell = cellElement;
+
+				showEditor(column.editorInstance, column, cellElement, value);
+
+				// focus / blur-handler-resume logic is surrounded in a setTimeout
+				// to play nice with Keyboard's dgrid-cellfocusin as an editOn event
+				dfd = new Deferred();
+				setTimeout(function(){
+					// focus the newly-placed control (supported by form widgets and HTML inputs)
+					if(cmp.focus){ cmp.focus(); }
+					// resume blur handler once editor is focused
+					if(column._editorBlurHandle){ column._editorBlurHandle.resume(); }
+					dfd.resolve(cmp);
+				}, 0);
+
+				return dfd.promise;
+			}
 		}
+
 	}else if(column.editor){ // editor but not shared; always-on
 		cmp = cellElement.widget || cellElement.input;
 		if(cmp){

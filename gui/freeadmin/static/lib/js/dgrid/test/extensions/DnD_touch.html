@@ -62,6 +62,7 @@
 					return {
 						bufferRows: 5,
 						farOffRemoval: 400,
+						sort: "order",
 						store: createOrderedStore(orderedData, { idProperty: "id" }),
 						getObjectDndType: function(item){
 							return [item.type ? item.type : this.dndSourceType];

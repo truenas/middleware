@@ -1,8 +1,13 @@
 define(["dojo/_base/kernel", "dojo/_base/declare", "dojo/_base/Deferred", "dojo/on", "dojo/has", "dojo/aspect", "./List", "dojo/has!touch?./util/touch", "put-selector/put", "dojo/query", "dojo/_base/sniff"],
 function(kernel, declare, Deferred, on, has, aspect, List, touchUtil, put){
 
-has.add("mspointer", function(global, doc, element){
-	return "onmspointerdown" in element;
+has.add("dom-comparedocumentposition", function(global, doc, element){
+	return !!element.compareDocumentPosition;
+});
+
+has.add("pointer", function(global, doc, element){
+	return "onpointerdown" in element ? "pointer" :
+		"onmspointerdown" in element ? "MSPointer" : false;
 });
 
 // Add feature test for user-select CSS property for optionally disabling
@@ -32,8 +37,10 @@ has.add("dom-selectstart", typeof document.onselectstart !== "undefined");
 
 var ctrlEquiv = has("mac") ? "metaKey" : "ctrlKey",
 	hasUserSelect = has("css-user-select"),
-	downType = has("mspointer") ? "MSPointerDown" : "mousedown",
-	upType = has("mspointer") ? "MSPointerUp" : "mouseup";
+	hasPointer = has("pointer"),
+	hasMSPointer = hasPointer && hasPointer.slice(0, 2) === "MS",
+	downType = hasPointer ? hasPointer + (hasMSPointer ? "Down" : "down") : "mousedown",
+	upType = hasPointer ? hasPointer + (hasMSPointer ? "Up" : "up") : "mouseup";
 
 function makeUnselectable(node, unselectable){
 	// Utility function used in fallback path for recursively setting unselectable
@@ -106,10 +113,15 @@ return declare(null, {
 	//		Selector to delegate to as target of selection events.
 	selectionDelegate: ".dgrid-row",
 	
-	// selectionEvents: String
-	//		Event (or events, comma-delimited) to listen on to trigger select logic.
-	//		Note: this is ignored in the case of touch devices.
+	// selectionEvents: String|Function
+	//		Event (or comma-delimited events, or extension event) to listen on
+	//		to trigger select logic.
 	selectionEvents: downType + "," + upType + ",dgrid-cellfocusin",
+	
+	// selectionTouchEvents: String|Function
+	//		Event (or comma-delimited events, or extension event) to listen on
+	//		in addition to selectionEvents for touch devices.
+	selectionTouchEvents: has("touch") ? touchUtil.tap : null,
 	
 	// deselectOnRefresh: Boolean
 	//		If true, the selection object will be cleared when refresh is called.
@@ -289,6 +301,7 @@ return declare(null, {
 		//		required for selection to operate.
 		
 		var grid = this,
+			contentNode = this.contentNode,
 			selector = this.selectionDelegate;
 		
 		this._selectionEventQueues = {
@@ -296,14 +309,23 @@ return declare(null, {
 			select: []
 		};
 		
-		if(has("touch") && !has("mspointer")){
-			// listen for touch taps if available
-			on(this.contentNode, touchUtil.selector(selector, touchUtil.tap), function(evt){
+		if(has("touch") && !has("pointer") && this.selectionTouchEvents){
+			// Listen for taps, and also for mouse/keyboard, making sure not
+			// to trigger both for the same interaction
+			on(contentNode, touchUtil.selector(selector, this.selectionTouchEvents), function(evt){
 				grid._handleSelect(evt, this);
+				grid._ignoreMouseSelect = this;
+			});
+			on(contentNode, on.selector(selector, this.selectionEvents), function(event){
+				if(grid._ignoreMouseSelect !== this){
+					grid._handleSelect(event, this);
+				}else if(event.type === upType){
+					grid._ignoreMouseSelect = null;
+				}
 			});
 		}else{
-			// listen for actions that should cause selections
-			on(this.contentNode, on.selector(selector, this.selectionEvents), function(event){
+			// Listen for mouse/keyboard actions that should cause selections
+			on(contentNode, on.selector(selector, this.selectionEvents), function(event){
 				grid._handleSelect(event, this);
 			});
 		}
@@ -456,7 +478,7 @@ return declare(null, {
 			previousValue,
 			element,
 			toElement,
-			traverser;
+			direction;
 		
 		if(typeof value === "undefined"){
 			// default to true
@@ -472,7 +494,7 @@ return declare(null, {
 		// rows shouldn't ever be selected anyway.
 		if(value === false || this.allowSelect(row)){
 			selection = this.selection;
-			previousValue = selection[row.id];
+			previousValue = !!selection[row.id];
 			if(value === null){
 				// indicates a toggle
 				value = !previousValue;
@@ -486,7 +508,8 @@ return declare(null, {
 			if(element){
 				// add or remove classes as appropriate
 				if(value){
-					put(element, ".dgrid-selected.ui-state-active");
+					put(element, ".dgrid-selected" +
+						(this.addUiClasses ? ".ui-state-active" : ""));
 				}else{
 					put(element, "!dgrid-selected!ui-state-active");
 				}
@@ -500,16 +523,46 @@ return declare(null, {
 				if(!toRow.element){
 					toRow = this.row(toRow);
 				}
+				
+				if(!toRow){
+					this._lastSelected = element;
+					console.warn("The selection range has been reset because the " +
+						"beginning of the selection is no longer in the DOM. " +
+						"If you are using OnDemandList, you may wish to increase " +
+						"farOffRemoval to avoid this, but note that keeping more nodes " +
+						"in the DOM may impact performance.");
+					return;
+				}
+				
 				toElement = toRow.element;
-				// find if it is earlier or later in the DOM
-				traverser = (toElement && (toElement.compareDocumentPosition ? 
-					toElement.compareDocumentPosition(element) == 2 :
-					toElement.sourceIndex > element.sourceIndex)) ? "down" : "up";
-				while(row.element != toElement && (row = this[traverser](row))){
-					this._select(row, null, value);
+				if(toElement){
+					direction = this._determineSelectionDirection(element, toElement);
+					if(!direction){
+						// The original element was actually replaced
+						toElement = document.getElementById(toElement.id);
+						direction = this._determineSelectionDirection(element, toElement);
+					}
+					while(row.element != toElement && (row = this[direction](row))){
+						this._select(row, null, value);
+					}
 				}
 			}
 		}
+	},
+	
+	// Implement _determineSelectionDirection differently based on whether the
+	// browser supports element.compareDocumentPosition; use sourceIndex for IE<9
+	_determineSelectionDirection: has("dom-comparedocumentposition") ? function (from, to) {
+		var result = to.compareDocumentPosition(from);
+		if(result & 1){
+			return false; // Out of document
+		}
+		return result === 2 ? "down" : "up";
+	} : function(from, to) {
+		if(to.sourceIndex < 1){
+			return false; // Out of document
+		}
+		return to.sourceIndex > from.sourceIndex ? "down" : "up";
 	},
 	
 	select: function(row, toRow, value){

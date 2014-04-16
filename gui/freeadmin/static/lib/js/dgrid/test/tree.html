@@ -9,6 +9,7 @@
 			@import "../css/skins/claro.css";
 			.dgrid {
 				width: 700px;
+				margin: 10px;
 			}
 			
 			.field-bool {
@@ -21,10 +22,6 @@
 			
 			#treeSelector .selector {
 				width: 2em;
-			}
-			
-			.ui-widget{
-				margin: 10px;
 			}
 		</style>
 		<script src="../../dojo/dojo.js" 
@@ -48,6 +45,7 @@
 					var StandardGrid = declare([Grid, Keyboard, Selection]);
 					
 					var treeGrid = window.treeGrid = new StandardGrid({
+						sort: "id",
 						store: testCountryStore,
 						columns: [
 							tree({label: "Name", field:"name", sortable: false}),
@@ -117,6 +115,7 @@
 					}
 					
 					window.treeSelector = new StandardGrid({
+						sort: "id",
 						store: testCountryStore,
 						selectionMode: "none",
 						allowSelectAll: true,
@@ -130,6 +129,7 @@
 					});
 					
 					window.treeTopHeavy = new StandardGrid({
+						sort: "abbreviation",
 						store: testTopHeavyStore,
 						query: { parent: undefined },
 						columns: {
@@ -139,6 +139,7 @@
 					}, "treeTopHeavy");
 					
 					window.treeSubRows = new StandardGrid({
+						sort: "id",
 						store: testCountryStore,
 						subRows: [[
 							tree({label:"Name", field:"name", sortable: false}),
@@ -150,6 +151,7 @@
 					}, "treeSubRows");
 					
 					window.treeColumnSets = new (declare([Grid, Keyboard, Selection, ColumnSet]))({
+						sort: "id",
 						store: testCountryStore,
 						columnSets: [[
 							[ tree({label:"Name", field:"name", sortable: false}) ],

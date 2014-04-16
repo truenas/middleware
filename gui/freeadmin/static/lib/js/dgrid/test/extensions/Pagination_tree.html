@@ -22,21 +22,6 @@
 				text-overflow: ellipsis;
 				white-space: nowrap;
 			}
-			/* styles for establishing automatic height on the 2nd grid */
-			#grid2 {
-				height: auto;
-			}
-			#grid2 .dgrid-scroller {
-				position: relative;
-				overflow-y: hidden;
-			}
-			#grid2 .dgrid-header-scroll {
-				display: none;
-			}
-			#grid2 .dgrid-header {
-				right: 0;
-			}
-			
 		</style>
 		<script src="../../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
@@ -82,6 +67,8 @@
 					document.body.className = skin;
 					
 					window.grid2 = new CustomGrid({
+						className: "dgrid-autoheight",
+						sort: "id",
 						store: testStore,
 						columns: getColumns(),
 						pagingLinks: false,
@@ -92,6 +79,7 @@
 					
 					function createGrid(args){
 						window.grid = new CustomGrid(lang.mixin({
+									sort: "id",
 									store: testStore,
 									columns: getColumns()
 								}, args),

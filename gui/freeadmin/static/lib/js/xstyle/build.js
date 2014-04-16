@@ -160,6 +160,7 @@ function processCss(cssText, basePath, inlineAllResources){
 				this.xstyleCss.push(name + ':' + value + ';');
 			}
 		},
+		onCall: function(){},
 		toString: function(mode){
 			var str = ''
 			str += this.xstyleCss ? this.xstyleCss.join('') : '';

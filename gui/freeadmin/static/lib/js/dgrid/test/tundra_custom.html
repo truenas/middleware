@@ -14,7 +14,7 @@
 				font-weight: bold;
 				padding-bottom: 0.25em;
 			}
-			.ui-widget{
+			.dgrid {
 				margin: 10px;
 			}
 			/* this is not part of theme, but you can add odd-even coloring this way*/
@@ -45,6 +45,7 @@
 			require(["dgrid/List", "dgrid/OnDemandGrid","dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"], 
 				function(List, Grid, Selection, Keyboard, declare){
 					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						sort: "id",
 						store: testStore,
 						columns: {
 							col1: "Column 1",

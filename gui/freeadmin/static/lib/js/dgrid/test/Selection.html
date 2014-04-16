@@ -13,8 +13,6 @@
 			}
 			.dgrid { 
 				width: 70%;
-			}
-			.ui-widget {
 				margin: 10px;
 			}
 		</style>
@@ -43,6 +41,7 @@
 					var CellSelectionGrid = declare([Grid, CellSelection, Keyboard]);
 
 					gridRowNavigation = new SelectionGrid({
+						sort: "id",
 						store: testStore,
 						cellNavigation: false,
 						columns: {
@@ -61,20 +60,24 @@
 						col4: 'Column 4'
 					};
 					gridCellNavigation = new CellSelectionGrid({
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(columns2)
 					}, "grid-cell-navigation");
 					gridCellNavigationSingle = new CellSelectionGrid({
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(columns2),
 						selectionMode: "single"
 					}, "grid-cell-navigation-single");
 					gridCellNavigationMultiple = new CellSelectionGrid({
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(columns2),
 						selectionMode: "multiple"
 					}, "grid-cell-navigation-multiple");
 					gridCellNavigationNone = new CellSelectionGrid({
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(columns2),
 						selectionMode: "none",
@@ -83,6 +86,7 @@
 					
 					// cell navigation + row selection
 					gridMixed = new SelectionGrid({
+						sort: "id",
 						store: testStore,
 						columns: { // same as columns in very first grid
 							col1: 'Column 1',

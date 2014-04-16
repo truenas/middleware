@@ -27,7 +27,7 @@
 			.grid .field-col4 {
 				width: 500px;
 			}
-			.ui-widget{
+			.dgrid {
 				margin: 10px;
 			}
 			.dgrid-sort-arrow {
@@ -109,16 +109,19 @@
 					var ComplexGrid = declare([OnDemandGrid, ColumnSet, Selection, Keyboard]);
 
 					window.gridNoColumnSets = new (declare([OnDemandGrid, Selection, Keyboard]))({
+						sort: "id",
 						store: DeferredWrapper(testStore),
 						subRows: subRows1
 					}, "gridNoColumnSets");
 					
 					window.gridSingleRow = new ComplexGrid({
+						sort: "id",
 						store: DeferredWrapper(testStore),
 						columnSets: columnSetsSingleRow
 					}, "gridSingleRow");
 					
 					window.grid = new ComplexGrid({
+						sort: "id",
 						store: DeferredWrapper(testStore),
 						columnSets: columnSets1
 					}, "grid");
@@ -144,9 +147,11 @@
 					var HtmlGrid = declare([OnDemandGrid, GridFromHtml, Selection, Keyboard]);
 
 					window.gridFromHtml = new HtmlGrid({
+						sort: "id",
 						store: DeferredWrapper(testStore)
 					}, "gridFromHtml");
 					window.gridFromHtml2 = new HtmlGrid({
+						sort: "id",
 						store: testStore
 					}, "gridFromHtml2");
 					
@@ -219,7 +224,7 @@
 		<hr>
 		<h2>Same as previous two tables, instantiated declaratively</h2>
 		<table id="gridFromHtmlDecl" class="grid" data-dojo-type="dgrid.GridFromHtml"
-			data-dojo-props="store:testStore">
+			data-dojo-props="sort: 'id', store: testStore">
 			<colgroup span="2"></colgroup>
 			<colgroup span="2"></colgroup>
 			<thead>
@@ -236,7 +241,7 @@
 			</thead>
 		</table>
 		<table id="gridFromHtmlDecl2" data-dojo-type="dgrid.GridFromHtml"
-			data-dojo-props="store:testStore">
+			data-dojo-props="sort: 'id', store: testStore">
 			<colgroup span="3"></colgroup>
 			<colgroup span="4"></colgroup>
 			<thead>

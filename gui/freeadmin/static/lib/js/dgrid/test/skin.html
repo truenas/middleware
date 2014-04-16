@@ -25,15 +25,18 @@
 		</style>
 	</head>
 	<body>
-		<h2>A basic grid using the <span id="skin"></span> skin</h2>
-		<div id="grid"></div>
+		<h2 id="gridHeading">A basic grid using the <span id="skin"></span> skin</h2>
 		<div><button type="button" onclick="grid.save();">Save</button>
 			(for testing highlight color)</div>
+		<div><button id="toggleUi" type="button" onclick="toggleUiClasses();">
+			Render without ui- classes
+		</button></div>
 		<h2>Test more skins!</h2>
 		<p>Loading dgrid.css before skin:<span id="skinlast"></span></p>
 		<p>Loading dgrid.css after skin:<span id="skinfirst"></span></p>
 		<script src="../../dojo/dojo.js" data-dojo-config="async: true"></script>
 		<script>
+			var toggleUiClasses; // Function, defined later
 			require(["dojo/io-query"], function(ioq){
 				var
 					// retrieve query parameters
@@ -63,7 +66,7 @@
 				
 				require(deps, 
 				function(css1, css2, css3, List, Grid, tree, Selection, Keyboard, editor, declare, domConstruct, testStore){
-					var
+					var grid,
 						columns = {
 							col1: "Column 1",
 							col2: editor({label: 'Column 2', sortable: false, editor: "checkbox"}),
@@ -73,12 +76,37 @@
 						},
 						skins = ["claro", "tundra", "nihilo", "soria",
 							"slate", "sage", "cactus", "squid"],
-						i, l = skins.length,
-						href, slhtml = [], sfhtml = [];
+						i,
+						l = skins.length,
+						href,
+						slhtml = [],
+						sfhtml = [];
 					
 					function byId(id){
 						return document.getElementById(id);
 					}
+					
+					function createGrid(addUiClasses){
+						if(grid){
+							grid.destroy();
+						}
+						grid = window.grid = new (declare([Grid, Selection, Keyboard]))({
+							id: "grid",
+							sort: "id",
+							store: testStore,
+							columns: columns,
+							addUiClasses: addUiClasses
+						});
+						domConstruct.place(grid.domNode, "gridHeading", "after");
+						grid.startup();
+						
+						byId("toggleUi").innerHTML = "Render with" +
+							(addUiClasses ? "out" : "") + " ui- classes";
+					}
+					
+					toggleUiClasses = function(){
+						createGrid(!grid.addUiClasses);
+					};
 					
 					// mention (in heading) which skin is being displayed
 					byId("skin").innerHTML = skin;
@@ -94,10 +122,7 @@
 					byId("skinlast").innerHTML = slhtml.join(" / ");
 					byId("skinfirst").innerHTML = sfhtml.join(" / ");
 					
-					window.grid = new (declare([Grid, Selection, Keyboard]))({
-						store: testStore,
-						columns: columns
-					}, "grid");
+					createGrid(true);
 				}); // end of inner require (dgrid, etc.)
 			}); // end of outer require (io-query)
 		</script>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Test Cell Editors</title>
+		<style>
+			@import "../../../../dojo/resources/dojo.css";
+			@import "../../../../dijit/themes/claro/claro.css";
+			@import "../../../css/skins/claro.css";
+		</style>
+	</head>
+
+	<body class="claro">
+		<h2>Grid with editors</h2>
+		<div id="grid"></div>
+
+		<script src="../../../../dojo/dojo.js" data-dojo-config="async: 1"></script>
+
+		<script>
+			var grid,
+				datachangeStack = [],
+				ready = false,
+				setEditorToTextBox;
+
+			require([
+				"dojo/_base/declare",
+				"dgrid/Grid",
+				"dgrid/editor",
+				"dijit/form/TextBox"
+			], function (declare, Grid, editor, TextBox) {
+				function createColumnConfig(editorType) {
+					return {
+						id: "ID",
+						name: editor({
+							label: "Name",
+							editor: editorType || "text"
+						}),
+						description: editor({
+							label: "Description",
+							editor: editorType || "text",
+							editOn: "click"
+						})
+					};
+				}
+
+				grid = new Grid({
+					columns: createColumnConfig("text")
+				}, "grid");
+
+				grid.renderArray([
+					{ id: 0, name: "1", description: "one" },
+					{ id: 1, name: "2", description: "two" },
+					{ id: 2, name: "3", description: "three" }
+				]);
+
+				// Push values received by the "dgrid-datachange" event into a global stack.
+				// The functional test can read from this stack to verify the values it is
+				// inputting are being emitted by the "dgrid-datachange" event.
+				grid.on("dgrid-datachange", function (event) {
+					datachangeStack.push(event.value);
+				});
+
+				setEditorToTextBox = function () {
+					grid.set("columns", createColumnConfig(TextBox));
+				};
+
+				ready = true;
+			});
+		</script>
+	</body>
+</html>

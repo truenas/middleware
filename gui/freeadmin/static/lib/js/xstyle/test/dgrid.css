@@ -1,0 +1,29 @@
+@import '../ext/dgrid.css';
+body {
+	=>
+		h1 'Simple Grid',
+		div {
+			width: 450px;
+			height: 300px;
+			dgrid: {
+				selectionMode: single;
+				keyboard: row;
+				store: module('xstyle/test/dgridStore');
+				columns: {
+					col1: {
+						label: Column Header;
+						width: 200px;
+						color: blue;
+						editor: text, click;
+					};
+					col2: {
+						label: Another Column;
+						sortable: false;
+						editor: number, dblclick;
+					};
+					
+				}
+			};
+		};
+	font-family: "Segoe UI Light", "Helvetica Neue", RobotoLight, "Segoe UI", "Segoe WP", sans-serif;
+}

@@ -21,7 +21,7 @@
 			#grid .field-bool {
 				width: 6em;
 			}
-			.ui-widget{
+			.dgrid {
 				margin: 10px;
 			}
 		</style>
@@ -76,6 +76,7 @@
 
 
 					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						sort: "id",
 						store: testTypesStore,
 						columns: columns,
 						selectionMode: "none"

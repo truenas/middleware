@@ -138,7 +138,7 @@
 		
 		<h2>2a: same as 1a, parsed from declarative markup (using a store)</h2>
 		<table id="gridDeclarativeLegacyFormatter" data-dojo-id="gridDeclarativeLegacyFormatter"
-			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="store: store">
+			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="sort: 'order', store: store">
 			<thead>
 				<tr>
 					<th data-dgrid-column="{field:'_item', sortable:false, formatter:testFormatter}">Step</th>
@@ -147,7 +147,7 @@
 		</table>
 		<h2>2b: same as 1b, parsed from declarative markup (using a store)</h2>
 		<table id="gridDeclarativeLegacyGet" data-dojo-id="gridDeclarativeLegacyGet"
-			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="store: store">
+			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="sort: 'order', store: store">
 			<tbody>
 				<tr>
 					<th data-dgrid-column="{field:'order', get:testGet}">Step</th>
@@ -158,7 +158,7 @@
 		</table>
 		<h2>2c: same as 1c, parsed from declarative markup (using a store)</h2>
 		<table id="gridDeclarativeNew" data-dojo-id="gridDeclarativeNew"
-			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="store: store">
+			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="sort: 'order', store: store">
 			<tr>
 				<th data-dgrid-column="{field:'order',
 					renderCell:testRenderCell, renderHeaderCell:testRenderHeaderCell}">Step</th>

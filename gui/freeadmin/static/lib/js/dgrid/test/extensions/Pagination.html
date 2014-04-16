@@ -22,20 +22,6 @@
 				text-overflow: ellipsis;
 				white-space: nowrap;
 			}
-			/* styles for establishing automatic height on the 2nd grid */
-			#grid2 {
-				height: auto;
-			}
-			#grid2 .dgrid-scroller {
-				position: relative;
-				overflow-y: hidden;
-			}
-			#grid2 .dgrid-header-scroll {
-				display: none;
-			}
-			#grid2 .dgrid-header {
-				right: 0;
-			}
 			
 			/* styles for columnset grid */
 			#gridColumnSet .dgrid-cell {
@@ -90,6 +76,7 @@
 					
 					function createGrid(args){
 						window.grid = new CustomGrid(lang.mixin({
+									sort: "id",
 									store: testAsyncStore,
 									columns: getColumns(),
 									noDataMessage: "No results.",
@@ -121,6 +108,8 @@
 					
 					// auto-height grid
 					var grid2 = window.grid2 = new CustomGrid({
+						className: "dgrid-autoheight",
+						sort: "id",
 						store: testStore,
 						columns: getColumns2(),
 						pagingLinks: false,
@@ -142,11 +131,13 @@
 					
 					// GridFromHtml
 					window.gridfromhtml = new (declare([GridFromHtml, Keyboard, Selection, Pagination]))({
+						sort: "id",
 						store: testStore
 					}, "gridfromhtml");
 					
 					// ColumnSet grid
 					window.gridColumnSet = new (declare([Grid, Keyboard, Selection, ColumnSet, Pagination]))({
+						sort: "id",
 						store: testStore,
 						columnSets: [
 							[[

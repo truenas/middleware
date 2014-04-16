@@ -75,25 +75,25 @@
 			</div>
 			<!-- left: dgrid as direct child -->
 			<div data-dojo-type="dgrid.Grid" id="gridBCCP" class="bcLeft"
-				data-dojo-props="region: 'left', splitter: true, store: testStore, columns: getGridCols()">
+				data-dojo-props="region: 'left', splitter: true, sort: 'id', store: testStore, columns: getGridCols()">
 			</div>
 			<!-- center: tabcontainer -->
 			<div data-dojo-type="dijit.layout.TabContainer" class="bcCenter" id="tc"
 				data-dojo-props="region: 'center'">
 				<!-- initial tab: dgrid as direct child -->
 				<div data-dojo-type="dgrid.Grid" id="gridTab1" class="gridTab"
-					data-dojo-props="title: 'Tab 1', store: testStore, columns: getGridCols()">
+					data-dojo-props="title: 'Tab 1', sort: 'id', store: testStore, columns: getGridCols()">
 				</div>
 				<!-- tab 2: dgrid as direct child again, but not initially visible -->
 				<div data-dojo-type="dgrid.Grid" id="gridTab2" class="gridTab"
-					data-dojo-props="title: 'Tab 2', store: testStore, columns: getGridCols()">
+					data-dojo-props="title: 'Tab 2', sort: 'id', store: testStore, columns: getGridCols()">
 				</div>
 			</div>
 		</div>
 		<!-- declarative dialog w/ dgrid inside -->
 		<div data-dojo-type="dijit.Dialog" id="dlgDecl" data-dojo-id="dlgDecl">
 			<div data-dojo-type="dgrid.Grid" id="gridDlgDecl"
-				data-dojo-props="store: testStore, columns: getGridCols()"></div>
+				data-dojo-props="sort: 'id', store: testStore, columns: getGridCols()"></div>
 		</div>
 	</body>
 </html>

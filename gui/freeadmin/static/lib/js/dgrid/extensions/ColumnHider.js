@@ -65,7 +65,7 @@ function(declare, has, listen, miscUtil, put, i18n){
 			
 			var subRows = this.subRows,
 				first = true,
-				srLength, cLength, sr, c, checkbox;
+				srLength, cLength, sr, c;
 			
 			delete this._columnHiderFirstCheckbox;
 			
@@ -83,11 +83,17 @@ function(declare, has, listen, miscUtil, put, i18n){
 		
 		_renderHiderMenuEntry: function(col){
 			var id = col.id,
-				div, checkId, checkbox;
+				replacedId = miscUtil.escapeCssIdentifier(id, "-"),
+				div,
+				checkId,
+				checkbox,
+				label;
 			
 			if(col.hidden){
-				// Hidden state is true; hide the column.
+				// Hide the column (reset first to avoid short-circuiting logic)
+				col.hidden = false;
 				this._hideColumn(id);
+				col.hidden = true;
 			}
 			
 			// Allow cols to opt out of the hider (e.g. for selector column).
@@ -95,12 +101,17 @@ function(declare, has, listen, miscUtil, put, i18n){
 			
 			// Create the checkbox and label for each column selector.
 			div = put("div.dgrid-hider-menu-row");
-			checkId = this.domNode.id + "-hider-menu-check-" + id;
+			checkId = this.domNode.id + "-hider-menu-check-" + replacedId;
 			
-			this._columnHiderCheckboxes[id] = checkbox = put(div, "input#" + checkId +
-					".dgrid-hider-menu-check.hider-menu-check-" + id + "[type=checkbox]");
-			put(div, "label.dgrid-hider-menu-label.hider-menu-label" + id +
-				"[" + forAttr + "=" + checkId + "]", col.label || col.field || "");
+			// put-selector can't handle invalid selector characters, and the
+			// ID could have some, so add it directly
+			checkbox = this._columnHiderCheckboxes[id] =
+				put(div, "input.dgrid-hider-menu-check.hider-menu-check-" + replacedId + "[type=checkbox]");
+			checkbox.id = checkId;
+			
+			label = put(div, "label.dgrid-hider-menu-label.hider-menu-label-" + replacedId +
+				"[" + forAttr + "=" + checkId + "]",
+				col.label || col.field || "");
 			
 			put(this.hiderMenuNode, div);
 			
@@ -127,7 +138,7 @@ function(declare, has, listen, miscUtil, put, i18n){
 				// Assume that if this plugin is used, then columns are hidable.
 				// Create the toggle node.
 				hiderToggleNode = this.hiderToggleNode =
-					put(this.headerScrollNode, "button.ui-icon.dgrid-hider-toggle[type=button]");
+					put(this.domNode, "button.ui-icon.dgrid-hider-toggle[type=button]");
 				
 				this._listeners.push(listen(hiderToggleNode, "click", function(e){
 					grid._toggleColumnHiderMenu(e);
@@ -135,8 +146,9 @@ function(declare, has, listen, miscUtil, put, i18n){
 	
 				// Create the column list, with checkboxes.
 				hiderMenuNode = this.hiderMenuNode =
-					put("div#dgrid-hider-menu-" + this.id +
-						".dgrid-hider-menu[role=dialog][aria-label=" + this.i18nColumnHider.popupLabel + "]");
+					put("div.dgrid-hider-menu[role=dialog][aria-label=" +
+						this.i18nColumnHider.popupLabel + "]");
+				hiderMenuNode.id = this.id + "-hider-menu";
 
 				this._listeners.push(listen(hiderMenuNode, "keyup", function (e) {
 					var charOrCode = e.charCode || e.keyCode;
@@ -199,6 +211,29 @@ function(declare, has, listen, miscUtil, put, i18n){
 			}
 		},
 		
+		left: function(cell, steps){
+			return this.right(cell, -steps);
+		},
+		
+		right: function(cell, steps){
+			if(!cell.element){
+				cell = this.cell(cell);
+			}
+			var nextCell = this.inherited(arguments),
+				prevCell = cell;
+			
+			// Skip over hidden cells
+			while(nextCell.column.hidden){
+				nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
+				if(prevCell.element === nextCell.element){
+					// No further visible cell found - return original
+					return cell;
+				}
+				prevCell = nextCell;
+			}
+			return nextCell;
+		},
+		
 		isColumnHidden: function(id){
 			// summary:
 			//		Convenience method to determine current hidden state of a column
@@ -247,7 +282,8 @@ function(declare, has, listen, miscUtil, put, i18n){
 			//		Hides the column indicated by the given id.
 			
 			// Use miscUtil function directly, since we clean these up ourselves anyway
-			var selectorPrefix = "#" + miscUtil.escapeCssIdentifier(this.domNode.id) + " .dgrid-column-",
+			var grid = this,
+				selectorPrefix = "#" + miscUtil.escapeCssIdentifier(this.domNode.id) + " .dgrid-column-",
 				tableRule; // used in IE8 code path
 
 			if (this._columnHiderRules[id]) {
@@ -255,14 +291,27 @@ function(declare, has, listen, miscUtil, put, i18n){
 			}
 
 			this._columnHiderRules[id] =
-				miscUtil.addCssRule(selectorPrefix + id, "display: none;");
+				miscUtil.addCssRule(selectorPrefix + miscUtil.escapeCssIdentifier(id, "-"),
+					"display: none;");
 
 			if(has("ie") === 8 && !has("quirks")){
 				tableRule = miscUtil.addCssRule(".dgrid-row-table", "display: inline-table;");
 
 				window.setTimeout(function(){
 					tableRule.remove();
+					grid.resize();
 				}, 0);
+			}
+		},
+		
+		_showColumn: function(id){
+			// summary:
+			//		Shows the column indicated by the given id
+			//		(by removing the rule responsible for hiding it).
+			
+			if(this._columnHiderRules[id]){
+				this._columnHiderRules[id].remove();
+				delete this._columnHiderRules[id];
 			}
 		},
 		
@@ -271,12 +320,7 @@ function(declare, has, listen, miscUtil, put, i18n){
 			//		Performs internal work for toggleColumnHiddenState; see the public
 			//		method for more information.
 			
-			if(!hidden){
-				this._columnHiderRules[id] && this._columnHiderRules[id].remove();
-				delete this._columnHiderRules[id];
-			}else{
-				this._hideColumn(id);
-			}
+			this[hidden ? '_hideColumn' : '_showColumn'](id);
 			
 			// Update hidden state in actual column definition,
 			// in case columns are re-rendered.

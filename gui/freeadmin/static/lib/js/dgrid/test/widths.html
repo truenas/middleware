@@ -79,16 +79,19 @@
 					var StandardGrid = declare([Grid, Selection, Keyboard]);
 					
 					window.grid = new StandardGrid({
+						sort: "id",
 						store: testStore,
 						columns: getColumns()
 					}, "grid");
 					
 					window.scrollgrid = new StandardGrid({
+						sort: "id",
 						store: testStore,
 						columns: getColumns()
 					}, "scrollgrid");
 					
 					window.headerlessgrid = new StandardGrid({
+						sort: "id",
 						store: testStore,
 						columns: getColumns(),
 						showHeader: false

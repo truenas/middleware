@@ -1,7 +1,166 @@
 This document outlines changes since 0.3.0.  For older changelogs, see the
 [dgrid wiki](https://github.com/SitePen/dgrid/wiki).
 
-# master (0.3.12-dev)
+# master (0.3.15-dev)
+
+## Significant changes
+
+### Mixins
+
+* The `Selection` mixin no longer emits superfluous `dgrid-deselect` events
+  for rows which were already deselected. (#889)
+
+### Extensions
+
+* Fixed a regression in `ColumnHider` where the node to open the menu became
+  invisible on platforms with hidden scrollbars. (#886)
+* `ColumnHider` now assigns its menu node an ID in the format
+  `{id}-hider-menu`, not `dgrid-hider-menu-{id}`.
+
+## Other changes and fixes
+
+### General/Core
+
+* Fixed issues related to special characters in column IDs in `Grid`, `ColumnSet`,
+  and the `ColumnHider` and `ColumnResizer` extensions. (#885)
+
+# 0.3.14
+
+## Significant changes
+
+### General/Core
+
+* Added a `List#addUiClasses` property which can be set to `false` on any
+  instance to prevent it from adding `ui-` classes to various elements, which
+  can help when using disparate jQuery UI and dgrid themes/skins on the same page.
+  The option defaults to `true` for consistency with previous versions.
+  Note that some selectors in various dgrid skins have been updated to not use
+  `ui-` classes, to prevent undesired overriding of jQuery UI themes.  (#873)
+* Added styles for a `dgrid-autoheight` class, which can be added to any list/grid
+  via the `className` property to make the grid automatically size based on its
+  contents.
+* Fixed an issue where `List#destroy` would throw an error if `useTouchScroll` is
+  set to `false` on a device with touch support. (#867)
+* Fixed a regression in `List` which would cause observed modifications to tree
+  children to throw errors. (#862)
+* Fixed a regression in `OnDemandList` where items added to an empty list or
+  grid would be inserted in the wrong position. (#840)
+* Fixed ordering of inserted preload nodes in the linked list in `OnDemandList`,
+  particularly affecting `tree`. (#817)
+* `List#useTouchScroll` now defaults to `false` on platforms which render tangible
+  scrollbars (namely, desktop browsers on touch-enabled devices such as the Surface).
+* Fixed feature detection in `util/has-css3` to be more accurate and avoid causing
+  errors in some situations. (#775)
+
+### Mixins
+
+* Fixed a regression in the `Keyboard` mixin which would cause errors when
+  attempting to re-focus an updated row/cell when it (or the entire grid) is
+  currently hidden. (#866)
+* The `Selection` mixin will now listen for both touch and mouse events, rather
+  than one or the other exclusively. (#757)
+* The touch event(s) that `Selection` listens for can now be overridden via the
+  `selectionTouchEvents` property. (#846)
+
+### Extensions
+
+* Fixed a regression in `CompoundColumns` involving the ability to look up
+  columns by their originally-specified IDs. (#820)
+* The `CompoundColumns` extension is now capable of interoperating with the
+  `ColumnHider` and `ColumnResizer` extensions; note that it must be mixed in
+  after these extensions in order to work properly. (#834)
+* The `ColumnHider` and `Pagination` extensions now include Romanian localization
+  bundles. (#850, thanks websoftix)
+
+## Other changes and fixes
+
+### General/Core
+
+* Fixed an RTL issue that caused the column headers to misalign with the body
+  on Chrome.
+
+### Mixins
+
+* Fixed issues in the `Selection` and `CellSelection` mixins when the row
+  representing the starting point of a ranged selection is replaced (due to an
+  observed store modification) prior to the end point being selected. (#858)
+* The `ColumnSet` mixin no longer excludes touch devices when registering
+  wheel listener logic (for combination mouse+touch devices).
+
+### Column Plugins
+
+* Fixed an issue in `editor` where the wrong column would be referenced from
+  the `change` event handler for native inputs, particularly affecting radio
+  buttons. (#876)
+
+### Extensions
+
+* Added logic to `ColumnHider` to skip hidden columns when calling `left` and
+  `right` (which affects e.g. `Keyboard` navigation).
+* Improved performance of first resize with `ColumnResizer`. (#832)
+* Fixed errors in the `DnD` extension when using a mouse on a mouse+touch device.
+* The `Pagination` extension will no longer cancel an ongoing async request if
+  another call is performed with the same request promise. (#847, thanks jandppw)
+
+# 0.3.13
+
+## Significant changes
+
+### General/Core
+
+* `List#destroy` now resets `_started` to `false` to safeguard against debounced
+  rendering-sensitive code running after the instance's DOM is no longer relevant. (#792)
+* Added logic to account for `dojo/store/Observable`'s propensity to drop items
+  at page boundaries, primarily in the `List` module. (#701, #714)
+* Items added to stores which should appear at the end of a list or grid will now
+  appear correctly. (#363)
+* Fixed a long-standing regression in the `util/has-css3` module's
+  `css-transforms3d` test due to a modified classname. (#776, thanks amuraco)
+
+### Mixins
+
+* Updated `Selection` to prefer `pointer` over `MSPointer` where available.
+  This fixes ctrl+clicking behavior in IE11. Note that this change replaces the
+  `has("mspointer")` feature with `has("pointer")`, which returns `"pointer"`,
+  `"MSPointer"`, or `false`. (#794)
+
+### Column Plugins
+
+* The `expand` method added by the `tree` plugin will now return a promise,
+  resolving after child data has loaded. (#739)
+* The `canEdit` function supported by `editor` columns is now passed the proper
+  up-to-date `value`. (#751)
+
+### Extensions
+
+* The `CompoundColumns` extension is now capable of interoperating with the
+  `ColumnSet` mixin; see `test/extensions/CompoundColumns.html` for examples.
+  (#383)
+
+## Other changes and fixes
+
+### General/Core
+
+* Fixed an issue where `sort` would be ignored if it was a function with 0 arity,
+  such as a hitched function being passed to a Memory store. (#771)
+* Fixed an accessibility bug in non-Firefox browsers by only overriding
+  `bodyNode.tabIndex` specifically for Firefox. (#823)
+* Fixed a `loadingMessage` regression in `OnDemandList` which manifested
+  particularly when `total` is not properly set in `QueryResults`. (#769)
+
+### Mixins
+
+* Fixed an issue in `Selection` and `CellSelection` which would cause errors when
+  selecting very long ranges spanning beyond the currently-rendered rows in an
+  OnDemandList. Note that while errors will no longer be thrown, the selection
+  range will still be reset. (#705)
+
+### Extensions
+
+* The `Pagination` extension now includes an Arabic localization bundle.
+  (#770, thanks elombashy)
+
+# 0.3.12
 
 ## Significant changes
 

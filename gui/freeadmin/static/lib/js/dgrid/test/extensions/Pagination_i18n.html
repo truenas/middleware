@@ -14,29 +14,6 @@
 				width: 750px;
 				margin: 10px;
 			}
-			
-			#grid2 .dgrid-row {
-				height: 22px;
-			}
-			#grid2 .dgrid-cell {
-				text-overflow: ellipsis;
-				white-space: nowrap;
-			}
-			/* styles for establishing automatic height on the 2nd grid */
-			#grid2 {
-				height: auto;
-			}
-			#grid2 .dgrid-scroller {
-				position: relative;
-				overflow-y: hidden;
-			}
-			#grid2 .dgrid-header-scroll {
-				display: none;
-			}
-			#grid2 .dgrid-header {
-				right: 0;
-			}
-			
 		</style>
 		<script src="../../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
@@ -71,6 +48,7 @@
 					document.body.className = skin;
 					
 					window.grid = new CustomGrid({
+						sort: "id",
 						store: testAsyncStore,
 						columns: {
 							col1: 'Column 1',

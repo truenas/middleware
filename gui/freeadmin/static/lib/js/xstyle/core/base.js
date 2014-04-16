@@ -24,7 +24,7 @@ function(elemental, evaluateExpression, utils, put, Rule){
 		// definition bound to an element's property
 		// TODO: allow it be bound to other names, and use prefixing to not collide with element names
 		return {
-			forElement: function(element){
+			forElement: function(element, directReference){
 				var contentElement = element;
 				// we find the parent element with an item property, and key off of that 
 				while(!(property in element)){
@@ -35,7 +35,9 @@ function(elemental, evaluateExpression, utils, put, Rule){
 				}
 				// provide a means for being able to reference the target node,
 				// this primarily used by the generate model to nest content properly
-				element['_' + property + 'Node'] = contentElement; 
+				if(directReference){
+					element['_' + property + 'Node'] = contentElement;
+				} 
 				return {
 					element: element, // indicates the key element
 					receive: function(callback, rule){// handle requests for the data

@@ -41,6 +41,7 @@
 					});
 				// GridFromHtml tests
 				window.gridProgrammatic = new dgrid.GridFromHtml({
+					sort: "id",
 					store: testTypesStore
 				}, "gridProgrammatic");
 				parser.parse();
@@ -72,7 +73,7 @@
 	<h2>2: Fully declarative GridFromHtml,
 		with columns using editor plugin</h2>
 	<table id="gridDeclarative" data-dojo-id="gridDeclarative"
-			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="store: testTypesStore">
+			data-dojo-type="dgrid.GridFromHtml" data-dojo-props="store: testTypesStore, sort: 'id'">
 			<tr>
 				<th data-dgrid-column="dgrid.editor({field:'date'}, dijit.form.DateTextBox)">Date</th>
 				<th data-dgrid-column="dgrid.editor({field: 'text'}, 'text', 'dblclick')">Text editable on dblclick</th>

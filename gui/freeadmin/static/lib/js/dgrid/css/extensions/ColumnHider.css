@@ -8,6 +8,11 @@
 	top: 0;
 }
 
+.dgrid-rtl-swap .dgrid-hider-toggle {
+	right: auto;
+	left: 0;
+}
+
 .dgrid-hider-menu {
 	position: absolute;
 	top: 0;
@@ -19,6 +24,11 @@
 	padding: 4px;
 	overflow-x: hidden;
 	overflow-y: auto;
+}
+
+.dgrid-rtl-swap .dgrid-hider-menu {
+	right: auto;
+	left: 17px;
 }
 
 .dgrid-hider-menu-row {

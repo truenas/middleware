@@ -1,4 +1,4 @@
-define(["dojo/has", "xstyle/css!../css/has-transforms3d.css"],
+define(["dojo/has"],
 function(has){
 	// This module defines feature tests for CSS3 features such as transitions.
 	// The css-transitions, css-transforms, and css-transforms3d has-features
@@ -9,20 +9,36 @@ function(has){
 
 	var cssPrefixes = ["ms", "O", "Moz", "Webkit"];
 	
-	has.add("css-transitions", function(global, doc, element){
+	function testStyle(element, property) {
 		var style = element.style,
 			i;
 		
-		if(style.transitionProperty !== undefined){ // standard, no vendor prefix
+		if (property in style) {
+			// Standard, no prefix
 			return true;
 		}
+		property = property.slice(0, 1).toUpperCase() + property.slice(1);
 		for (i = cssPrefixes.length; i--;) {
-			if (style[cssPrefixes[i] + "TransitionProperty"] !== undefined) {
-				return cssPrefixes[i]; // vendor-specific css property prefix
+			if ((cssPrefixes[i] + property) in style) {
+				// Vendor-specific css property prefix
+				return cssPrefixes[i];
 			}
 		}
 		
-		return false; // otherwise, not supported
+		// Otherwise, not supported
+		return false;
+	}
+	
+	has.add("css-transitions", function(global, doc, element){
+		return testStyle(element, "transitionProperty");
+	});
+	
+	has.add("css-transforms", function(global, doc, element){
+		return testStyle(element, "transform");
+	});
+	
+	has.add("css-transforms3d", function(global, doc, element){
+		return testStyle(element, "perspective");
 	});
 	
 	has.add("transitionend", function(){
@@ -36,42 +52,6 @@ function(has){
 			Moz: "transitionend",
 			Webkit: "webkitTransitionEnd"
 		}[tpfx];
-	});
-	
-	has.add("css-transforms", function(global, doc, element){
-		var style = element.style, i;
-		if (style.transformProperty !== undefined) {
-			return true; // standard, no vendor prefix
-		}
-		for (i = cssPrefixes.length; i--;) {
-			if (style[cssPrefixes[i] + "Transform"] !== undefined) {
-				return cssPrefixes[i];
-			}
-		}
-		
-		return false; // otherwise, not supported
-	});
-	
-	has.add("css-transforms3d", function(global, doc, element){
-		var left, prefix;
-		
-		// Apply csstransforms3d class to test transform-3d media queries.
-		element.className = "has-csstransforms3d";
-		// Add to body to allow measurement.
-		document.body.appendChild(element);
-		left = element.offsetLeft;
-		
-		if (left === 9) {
-			return true; // standard, no prefix
-		} else if (left > 9){
-			// Matched one of the vendor prefixes; offset indicates which.
-			prefix = cssPrefixes[left - 10];
-			return prefix || false;
-		}
-		document.body.removeChild(element);
-		element.className = "";
-		
-		return false; // otherwise, not supported
 	});
 	
 	return has;

@@ -95,29 +95,34 @@
 					};
 					columns1 = lang.clone(columns);
 
-					// columns2 tests using an array of columns with explicit IDs
+					// columns2 tests using an array of columns with explicit IDs,
+					// including special characters to test replacement
 					columns2 = [
-						{ id: "col2", field: "col2", label: "Column 2" },
-						{ id: "col4", field: "col4", label: "Column 4", sortable: false },
-						{ id: "col1", field: "col1", label: "Column 1" },
-						{ id: "col5", field: "col5", label: "Column 5" }
+						{ id: "col:2", field: "col2", label: "Column 2" },
+						{ id: "col:4", field: "col4", label: "Column 4", sortable: false },
+						{ id: "col:1", field: "col1", label: "Column 1" },
+						{ id: "col:5", field: "col5", label: "Column 5" }
 					];
 
 					var ResizeGrid = declare([Grid, Selection, ColumnResizer]);
 					window.grid = new ResizeGrid({
+						sort: "id",
 						store: testStore,
 						columns: columns1
 					}, "grid");
 					window.gridPeriod = new ResizeGrid({
 						id: "gridPeriod",
+						sort: "id",
 						store: testStore,
 						columns: columns1
 					}, "grid.period");
 					window.gridWide = new ResizeGrid({
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(columns)
 					}, "gridWide");
 					window.gridPrevent = new ResizeGrid({
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(columns)
 					}, "gridPrevent");
@@ -135,6 +140,7 @@
 						}
 					}
 					window.gridPersist = new ResizeGrid({
+						sort: "id",
 						store: testStore,
 						columns: persistentColumns
 					}, "gridPersist");

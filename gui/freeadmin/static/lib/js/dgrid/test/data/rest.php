@@ -3,7 +3,7 @@ header("Content-Type: application/json");
 $total = 500;
 $id_prefix = "";
 if(isset($_GET["parent"])){
-	$id_prefix = $_GET["parent"]."-";
+	$id_prefix = ($_GET["parent"] + 1) * 1000;
 }
 usleep(rand(0,500000));
 $range = "";
@@ -30,7 +30,7 @@ for ($i = $start; $i <= $end; $i++) {
 	if($i != $start){
 		echo ',';
 	}
-    echo '{"id":"'.$id_prefix.$i.'","name":"Item '.$i.'","comment":"hello"}';
+    echo '{"id":'.($id_prefix+$i).',"name":"Item '.$i.'","comment":"hello"}';
 }
 echo ']';
 ?>

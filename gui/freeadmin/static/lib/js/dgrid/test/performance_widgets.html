@@ -65,6 +65,7 @@
 					
 					console.time("grid construction");
 					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						sort: "id",
 						store: testPerfStore,
 						columns: columns
 					}, "grid");

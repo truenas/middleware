@@ -72,6 +72,7 @@
 					var StandardGrid = declare([Grid, Selection, Keyboard]);
 
 					window.grid = new StandardGrid({
+						sort: "id",
 						store: testStore,
 						columns: { // you can declare columns as an object hash (key translates to field)
 							col1: editor({label: 'Column 1 column 1 column 1'}, "text", "dblclick"),
@@ -84,6 +85,7 @@
 					}, "grid");
 					
 					window.scrollgrid = new StandardGrid({
+						sort: "id",
 						store: testStore,
 						columns: { // same as previous, repeated to keep objects/plugins unique
 							col1: editor({label: 'Column 1 column 1 column 1'}, "text", "dblclick"),
@@ -96,6 +98,7 @@
 					}, "scrollgrid");
 					
 					window.tree = new StandardGrid({
+						sort: "id",
 						store: testCountryStore,
 						selectionMode: "single",
 						columns: {
@@ -109,6 +112,7 @@
 					}, "tree");
 					
 					window.editGrid = new StandardGrid({
+						sort: "id",
 						store: testTypesStore,
 						columns: [ // columns specified as array, with field in each item
 							editor({label: 'A Date', field: 'date'}, DateTextBox),

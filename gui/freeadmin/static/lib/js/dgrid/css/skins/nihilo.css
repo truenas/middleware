@@ -2,11 +2,11 @@
 	border-color: #bba;
 }
 
-.nihilo .ui-widget-content {
+.nihilo .dgrid-content {
 	background: #fff;
 	color: #000;
 }
-.nihilo .ui-widget-header {
+.nihilo .dgrid-header {
 	background: #fff;
 	border-bottom-color: #919191;
 }
@@ -18,14 +18,14 @@
 	border-right-color: #acab99;
 }
 
-.nihilo .ui-state-active {
+.nihilo .dgrid-selected {
 	background-color: #aec7e3;
 }
-.nihilo .ui-state-default:hover {
+.nihilo .dgrid-row:hover {
 	background-color: #ffe284;
 }
 
-.nihilo .ui-state-highlight {
+.nihilo .dgrid-highlight {
 	background-color: #ff6;
 }
 
@@ -33,6 +33,6 @@
 	border-color: #ddc;
 }
 
-.nihilo .ui-widget-header .dgrid-cell {
+.nihilo .dgrid-header .dgrid-cell {
 	border-color: #bba;
 }

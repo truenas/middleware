@@ -34,6 +34,7 @@
 					var StandardGrid = declare([Grid, Keyboard]);
 					
 					window.grid = new StandardGrid({
+						sort: "id",
 						store: testCountryStore,
 						columns: [
 							tree(editor({label: "Name", field:"name", sortable: false, editOn: "dblclick"})),

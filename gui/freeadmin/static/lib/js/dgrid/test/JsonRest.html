@@ -14,7 +14,7 @@
 				font-weight: bold;
 				padding-bottom: 0.25em;
 			}
-			.ui-widget{
+			.dgrid {
 				margin: 10px;
 			}
 		</style>
@@ -32,6 +32,9 @@
 								query = "parent=" + query.parent;
 							}
 							return JsonRest.prototype.query.call(this, query, options);
+						},
+						put: function(object){
+							return object;
 						}
 					}), Memory()));
 					testStore.getChildren = function(parent, options){
@@ -39,12 +42,13 @@
 					};
 					var columns = [
 						tree({label:'Name', field:'name', sortable: false}),
-						{label:'Id', field:'id', sortable: false},
+						{label:'Id', field:'id'},
 						editor({label:'Comment', field:'comment', sortable: false}, "text"),
 						editor({label:'Boolean', field:'boo', sortable: false, autoSave: true}, "checkbox")
 					];
 
 					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						sort: "id",
 						store: testStore,
 						getBeforePut: false,
 						columns: columns
@@ -54,6 +58,13 @@
 							testStore.remove(i);
 						}
 					}
+					addPage = function(){
+						var selectedId = 0;
+						for(var i in grid.selection){
+							selectedId = +i;
+						}
+						testStore.put({name:"new item", id: selectedId + Math.random()});
+					}
 				});
 				
 		</script>
@@ -62,6 +73,7 @@
 		<h2>A basic grid with JsonRest store</h2>
 		<div id="grid"></div>
 		<button onclick='deleteSelected()'>Delete Page</div>
+		<button onclick='addPage()'>Add Page</div>
 		<button onclick='grid.save();'>Save</div>
 		<button onclick='grid.revert();'>Revert</div>
 	</body>

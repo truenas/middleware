@@ -54,6 +54,7 @@
 				];
 
 				var grid = window.grid = new (declare([Grid, Selection, Keyboard]))({
+					sort: "id",
 					store: testStore,
 					getBeforePut: false,
 					columns: columns
