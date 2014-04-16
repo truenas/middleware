@@ -320,10 +320,10 @@ do_add_port ()
 
 	# Improvement: Don't know why package-recursive don't works here
 	CR "env \
-	    $envargs \
-	    make \
 	    TARGET=${NANO_ARCH} \
 	    TARGET_ARCH=${NANO_ARCH} \
+	    $envargs \
+	    make \
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    SRC_BASE=/usr/src \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports_dir/$port_path \
