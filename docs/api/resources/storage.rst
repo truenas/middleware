@@ -768,6 +768,7 @@ List resource
                 "repl_remote_hostkey": "AAAA",
                 "repl_enabled": true,
                 "repl_resetonce": false,
+                "repl_compression": "lz4",
                 "repl_remote_hostname": "testhost",
                 "repl_lastsnapshot": "",
                 "id": 1,
@@ -823,6 +824,7 @@ Create resource
                 "repl_remote_hostkey": "AAAA",
                 "repl_enabled": true,
                 "repl_resetonce": false,
+                "repl_compression": "lz4",
                 "repl_remote_hostname": "testhost",
                 "repl_lastsnapshot": "",
                 "id": 1,
@@ -840,6 +842,7 @@ Create resource
    :json string repl_remote_dedicateduser: dedicated user to replicate
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
    :json boolean repl_resetonce: initialize remote side for once
+   :json string repl_compression: replication stream compression
    :json integer repl_limit: limit the replication speed in KB/s
    :json string repl_begin: do not start replication before
    :json string repl_end: do not start replication after
@@ -887,6 +890,7 @@ Update resource
                 "repl_remote_hostkey": "AAAA",
                 "repl_enabled": false,
                 "repl_resetonce": false,
+                "repl_compression": "lz4",
                 "repl_remote_hostname": "testhost",
                 "repl_lastsnapshot": "",
                 "id": 1,
@@ -904,6 +908,7 @@ Update resource
    :json string repl_remote_dedicateduser: dedicated user to replicate
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
    :json boolean repl_resetonce: initialize remote side for once
+   :json string repl_compression: replication stream compression
    :json integer repl_limit: limit the replication speed in KB/s
    :json string repl_begin: do not start replication before
    :json string repl_end: do not start replication after

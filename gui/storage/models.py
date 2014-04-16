@@ -875,6 +875,12 @@ class Replication(Model):
             "Initialize remote side for once. (May cause data"
             " loss on remote side!)"),
     )
+    repl_compression = models.CharField(
+        max_length=5,
+        choices=choices.Repl_CompressionChoices,
+        default="lz4",
+        verbose_name=_("Replication Stream Compression"),
+    )
     repl_limit = models.IntegerField(
         default=0,
         verbose_name=_("Limit (kB/s)"),
