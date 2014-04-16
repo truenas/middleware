@@ -36,7 +36,7 @@ add_port_debug()
     add_port $@
 }
 
-mkdir -p $(basename ${PORTSLIST})
+mkdir -p $(dirname ${PORTSLIST})
 rm -f ${PORTSLIST}
 rm -f ${MAKECONF}
 
