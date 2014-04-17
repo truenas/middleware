@@ -1,6 +1,6 @@
 #!/bin/sh
 #-
-# Copyright (c) 2010-2011 iXsystems, Inc., All rights reserved.
+# Copyright (c) 2010-2014 iXsystems, Inc., All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -108,10 +108,13 @@ add_port www/dojo
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
-add_port www/nginx OPTIONS_FILE_SET+=HTTP_DAV \
+add_port security/openssl
+add_port www/nginx WITH_OPENSSL_PORT=yes \
+		OPTIONS_FILE_SET+=HTTP_DAV \
 		OPTIONS_FILE_SET+=HTTP_SSL \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
+		OPTIONS_FILE_SET+=SPDY \
 		OPTIONS_FILE_SET+=STATUS
 add_port net-mgmt/net-snmp OPTIONS_FILE_UNSET+=PERL OPTIONS_FILE_UNSET+=PERL_EMBEDDED
 add_port sysutils/nut OPTIONS_FILE_UNSET+="NEON"
