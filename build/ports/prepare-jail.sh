@@ -15,15 +15,17 @@ TOP="$(pwd)"
 # building jail.  Use the world tree that was built by the FreeNAS build.
 #
 JAIL=j
+JAILMNT=${NANO_OBJ}/_.w
 mkdir -p ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}
 echo "${NANO_OBJ}/_.w" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/mnt
 echo "git" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/method
 echo "${FREEBSD_RELEASE_VERSION}" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/version
 echo "${NANO_ARCH}" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/arch
 
-mkdir -p ${NANO_OBJ}/_.w/wrkdirs
+mkdir -p ${JAILMNT}/wrkdirs
+jail -U root -c path=${JAILMNT} command=/sbin/ldconfig -m /lib /usr/lib /usr/lib/compat
 
-cat >> ${NANO_OBJ}/_.w/etc/make.conf << EOF
+cat > ${NANO_OBJ}/poudriere/etc/poudriere.d/make.conf << EOF
 USE_PACKAGE_DEPENDS=yes
 BATCH=yes
 WRKDIRPREFIX=/wrkdirs
