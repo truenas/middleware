@@ -153,14 +153,7 @@ build_target()
 	#
 	export NANO_OBJ=${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}
 
-	local _required_logs="_.iw"
-	if [ "${AVATAR_COMPONENT}" = "os-base" ]
-	then
-		#
-		# The base OS distro requires a kernel build.
-		#
-		_required_logs="_.ik _.iw"
-	fi
+	local _required_logs="_.ik _.iw"
 
 	_c=$(echo ${AVATAR_COMPONENT} | tr '-' '_')
 		
