@@ -221,6 +221,7 @@ check_build_tools()
 	check_for_command_from_port python lang/python
 	check_for_command_from_port python2 lang/python2
 	check_for_command_from_port VBoxManage emulators/virtualbox-ose
+	check_for_command_from_port poudriere ports-mgmt/poudriere-devel
 }
 
 main()
