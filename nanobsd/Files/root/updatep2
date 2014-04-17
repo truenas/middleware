@@ -76,6 +76,7 @@ do
 		tar cpf - $dir | tar -xpvf - -C $tmpdir
 	fi
 done
+cp /boot/loader.conf.local ${tmpdir}/boot/loader.conf.local || true
 
 umount $tmpdir
 
