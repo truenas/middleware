@@ -1702,6 +1702,8 @@ class SMARTForm(ModelForm):
                     len(invalids)) % {
                         'email': ", ".join(invalids),
                     })
+            else:
+                email = email.replace(' ', '')
         return email
 
     def save(self):
