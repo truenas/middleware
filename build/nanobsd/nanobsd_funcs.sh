@@ -840,6 +840,7 @@ for nano_conf in $nano_confs; do
 	. "$nano_conf"
 done
 
+# If nano_confs is empty, pull in os-base by default 
 if [ -z "$nano_confs" ]; then
 	echo "Sourcing ${NANO_CFG_BASE}/os-base"
 	. ${NANO_CFG_BASE}/os-base
