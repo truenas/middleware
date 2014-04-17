@@ -228,21 +228,7 @@ unset PACKAGESITE
 
 # Can be overriden with env when calling, but use pxz by default
 # if it's installed.
-# Since the only valid values are pxz and xz setting env XZ=whatever
-# will cause the build to fall back to using xz.
-# TODO: If NANO_XZ is set to something other than pxz or xz and pxz is installed
-# we may as well use pxz here.
-
-if [ $(which pxz) ]; then
-	if [ x"${NANO_XZ}" == "xpxz" -o -z ${XZ} ]; then
-		NANO_XZ=pxz
-	else
-		NANO_XZ=xz
-	fi
-else
-	NANO_XZ=xz
-fi
-export NANO_XZ
+NANO_XZ=pxz
 
 : ${DISTCACHE:="/freenas-build/freenas-distfiles"}
 export DISTCACHE
