@@ -22,6 +22,15 @@ pprint 1 "NanoBSD image ${NANO_NAME} build starting"
 
 trap on_exit EXIT
 
+# Number of jobs to pass to make. Only applies to src so far.
+MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
+if [ ${MAKE_JOBS} -gt 10 ]; then
+        MAKE_JOBS=10
+fi
+export MAKE_JOBS
+
+NANO_PMAKE="${NANO_PMAKE} -j ${MAKE_JOBS}"
+
 mkdir -p ${MAKEOBJDIRPREFIX}
 printenv > ${MAKEOBJDIRPREFIX}/_.env
 make_conf_build
