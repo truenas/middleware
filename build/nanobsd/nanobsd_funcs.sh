@@ -64,13 +64,13 @@ NANO_PMAKE="make"
 NANO_IMGNAME="_.disk.full"
 
 # Options to put in make.conf during buildworld only
-CONF_BUILD=' '
+#CONF_BUILD=' '
 
 # Options to put in make.conf during installworld only
-CONF_INSTALL=' '
+#CONF_INSTALL=' '
 
 # Options to put in make.conf during both build- & installworld.
-CONF_WORLD=' '
+#CONF_WORLD=' '
 
 # Kernel config file to use
 NANO_KERNEL=GENERIC
