@@ -432,7 +432,7 @@ newfs_part ( ) (
 
 # filter to filter out "workdir" from the disk image
 workdir_filter ( ) (
-	grep -v '^./usr/workdir/' | grep -v '^./usr/obj/'
+	grep -v '^./usr/workdir/' | grep -v '^./usr/obj/' | grep -v '^./usr/src/'
 )
 
 populate_slice ( ) (
