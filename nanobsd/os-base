@@ -55,6 +55,8 @@ customize_cmd_truenas()
 	fi
 }
 
+FlashDevice generic 2g
+
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common
 
