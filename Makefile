@@ -123,3 +123,6 @@ ports:
 	${ENV_SETUP} build/ports/create-poudriere-conf.sh
 	${ENV_SETUP} build/ports/create-ports-list.sh
 	${ENV_SETUP} build/ports/build-ports.sh
+
+portsjail:
+	${ENV_SETUP} build/build_jail.sh
