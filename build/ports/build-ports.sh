@@ -10,7 +10,6 @@ TOP="$(pwd)"
 
 cleanup()
 {
-        set -x
 	umountfs ${NANO_OBJ}/_.w/usr/src
 }
 
