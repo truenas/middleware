@@ -21,3 +21,25 @@ requires_root() {
 		error "You must be root when running $0"
 	fi
 }
+
+umountfs() {
+	[ $# -lt 1 ]
+	local mnt=$1
+	local childonly=$2
+	local pattern
+
+	[ -n "${childonly}" ] && pattern="/"
+
+	[ -d "${mnt}" ] || return 0
+	mnt=$(realpath ${mnt})
+	mount | sort -r -k 2 | while read dev on pt opts; do
+		case ${pt} in
+		${mnt}${pattern}*)
+			umount -f ${pt} || :
+			[ "${dev#/dev/md*}" != "${dev}" ] && mdconfig -d -u ${dev#/dev/md*}
+		;;
+		esac
+	done
+
+	return 0
+}
