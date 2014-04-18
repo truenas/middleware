@@ -1,10 +1,10 @@
-Release Notes for FreeNAS 9.2.1.4-BETA
+Release Notes for FreeNAS 9.2.1.4-RELEASE
 
 This point release for 9.2.1 fixes performance issues with ZFS replication,
-SMB spins / hangs under certain circumstances, and a variety of smaller
-issues.
+ZFS locking issues, SMB spins / hangs under certain circumstances, and a
+variety of smaller issues.
 
-All bugs fixed in 9.2.1.4-BETA can be found here:
+All bugs fixed in 9.2.1.4-RELEASE can be found here:
 
 	https://bugs.freenas.org/projects/freenas/issues?query_id=60
 
