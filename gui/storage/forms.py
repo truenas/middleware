@@ -1589,7 +1589,7 @@ class ZVol_CreateForm(Form):
     zvol_sparse = forms.BooleanField(
         label=_('Sparse volume'),
         help_text=_(
-            'Creates a sparse volume with no reservation, also kown '
+            'Creates a sparse volume with no reservation, also known '
             'as "thin provisioning". A "sparse volume" is a volume where the '
             'reservation is less than the volume size. Consequently, writes '
             'to a sparse volume can fail with ENOSPC when the pool is low on '
