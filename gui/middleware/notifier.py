@@ -3454,11 +3454,11 @@ class notifier:
                 if replications:
                     for repl, snaps in replications.iteritems():
                         remotename = '%s@%s' % (
-                            bundle.obj.filesystem.replace(
-                                repl.repl_filesystem,
-                                repl.repl_zfs,
+                            fs.replace(
+                                repl.repl_filesystem + '@',
+                                repl.repl_zfs + '@',
                             ),
-                            bundle.obj.name,
+                            name,
                         )
                         if remotename in snaps:
                             replication = 'OK'
