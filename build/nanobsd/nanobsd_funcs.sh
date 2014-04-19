@@ -37,13 +37,13 @@ set -e
 #######################################################################
 
 # Name of this NanoBSD build.  (Used to construct workdir names)
-NANO_NAME=full
+: ${NANO_NAME=full}
 
 # Source tree directory
-NANO_SRC=/usr/src
+: ${NANO_SRC=/usr/src}
 
 # Where nanobsd additional files live under the source tree
-NANO_TOOLS=tools/tools/nanobsd
+: ${NANO_TOOLS=tools/tools/nanobsd}
 
 # Where cust_pkg() finds packages to install
 NANO_PACKAGE_DIR=${NANO_SRC}/${NANO_TOOLS}/Pkg
@@ -61,40 +61,40 @@ NANO_PACKAGE_LIST="*"
 NANO_PMAKE="make"
 
 # The default name for any image we create.
-NANO_IMGNAME="_.disk.full"
+: ${NANO_IMGNAME="_.disk.full"}
 
 # Options to put in make.conf during buildworld only
-#CONF_BUILD=' '
+: ${CONF_BUILD=' '}
 
 # Options to put in make.conf during installworld only
-#CONF_INSTALL=' '
+: ${CONF_INSTALL=' '}
 
 # Options to put in make.conf during both build- & installworld.
-#CONF_WORLD=' '
+: ${CONF_WORLD=' '}
 
 # Kernel config file to use
-NANO_KERNEL=GENERIC
+: ${NANO_KERNEL=GENERIC}
 
 # Kernel modules to build; default is none
-NANO_MODULES=""
+: ${NANO_MODULES=""}
 
 # Customize commands.
-NANO_CUSTOMIZE=""
+: ${NANO_CUSTOMIZE=""}
 
 # Late customize commands.
-NANO_LATE_CUSTOMIZE=""
+: ${NANO_LATE_CUSTOMIZE=""}
 
 # Newfs paramters to use
-NANO_NEWFS="-b 4096 -f 512 -i 8192 -O1 -U"
+: ${NANO_NEWFS="-b 4096 -f 512 -i 8192 -O1 -U"}
 
 # The drive name of the media at runtime
-NANO_DRIVE=ad0
+: ${NANO_DRIVE=ad0}
 
 # Target media size in 512 bytes sectors
-NANO_MEDIASIZE=1500000
+: ${NANO_MEDIASIZE=1500000}
 
 # Number of code images on media (1 or 2)
-NANO_IMAGES=2
+: ${NANO_IMAGES=2}
 
 # 0 -> Leave second image all zeroes so it compresses better.
 # 1 -> Initialize second image with a copy of the first
@@ -124,8 +124,8 @@ NANO_SECTS=63
 NANO_HEADS=16
 
 # boot0 flags/options and configuration
-NANO_BOOT0CFG="-o packet -s 1 -m 3"
-NANO_BOOTLOADER="boot/boot0sio"
+: ${NANO_BOOT0CFG="-o packet -s 1 -m 3"}
+: ${NANO_BOOTLOADER="boot/boot0sio"}
 
 # boot2 flags/options
 # default force serial console
