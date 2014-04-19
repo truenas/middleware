@@ -4144,7 +4144,7 @@ class notifier:
         This syncs the EncryptedDisk table with the current state
         of a volume
         """
-        from freenasUI.storage.models import Disk EncryptedDisk, Volume
+        from freenasUI.storage.models import Disk, EncryptedDisk, Volume
         if volume is not None:
             volumes = [volume]
         else:
