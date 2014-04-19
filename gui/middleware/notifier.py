@@ -4566,7 +4566,7 @@ class notifier:
             devname,
         ))
         if geom:
-            provid = geom[0].xpath("./provider/@id")[0].text
+            provid = geom[0].xpath("./provider/@id")[0]
         else:
             raise ValueError("Unknown disk %s" % (devname, ))
         return self.__get_geoms_recursive(provid)
