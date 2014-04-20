@@ -1,8 +1,11 @@
-Release Notes for FreeNAS 9.2.1.4-RELEASE
+Release Notes for FreeNAS 9.2.1.4.1-RELEASE
 
-This point release for 9.2.1 fixes performance issues with ZFS replication,
-ZFS locking issues, SMB spins / hangs under certain circumstances, and a
-variety of smaller issues.
+What's new for 9.2.1.4.1?  ZFS Snapshot GUI was, in very specific
+circumstances, broken (bug #4836).  This is otherwise identical to 9.2.1.4:
+
+The 9.2.1.4 point release for 9.2.1 fixes performance issues with ZFS
+replication, ZFS locking issues, SMB spins / hangs under certain
+circumstances, and a variety of smaller issues.
 
 All bugs fixed in 9.2.1.4-RELEASE can be found here:
 
