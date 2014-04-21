@@ -33,7 +33,6 @@ if is_truenas ; then
 fi
 
 add_port net/mDNSResponder
-add_port dns/py-bonjour
 add_port textproc/libxml2
 add_port devel/libffi
 add_port archivers/lz4
@@ -72,6 +71,7 @@ add_port lang/python27 OPTIONS_FILE_UNSET+=NLS
 add_port lang/python2
 add_port lang/python
 add_port devel/py-setuptools
+add_port dns/py-bonjour
 add_port dns/py-dnspython
 add_port devel/tevent
 add_port devel/talloc MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
