@@ -107,7 +107,6 @@ EOF
 EOF
 		fi
 	
-		ldap_ssl="start_tls"
 		if [ "${ldap_ssl}" = "start_tls" ]; then
 			save_certificate "${ldap_id}"
 
