@@ -284,6 +284,12 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_UNSET+=BIND98 \
        OPTIONS_FILE_UNSET+=BIND99
 
+# These are for webcam / security cam recording
+if ! is_truenas ; then
+	add_port multimedia/cuse4bsd-kmod
+	add_port multimedia/libv4l MAKE_JOBS_UNSAFE=yes
+	add_port multimedia/webcamd WITHOUT_HAL=y
+fi
 
 if [ "${DEBUG}" = 1 ]; then
 
