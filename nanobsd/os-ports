@@ -182,8 +182,8 @@ add_port devel/dbus-glib
 add_port devel/libdaemon
 add_port databases/gdbm
 add_port devel/py-lxml
-# add_port sysutils/throttle
 add_port textproc/py-xml
+add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port devel/libevent2
@@ -200,7 +200,7 @@ add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
 add_port benchmarks/netperf
-# add_port benchmarks/xdd
+add_port benchmarks/xdd
 add_port security/sudo
 add_port sysutils/ipmitool
 add_port www/py-django-json-rpc
