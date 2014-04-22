@@ -192,7 +192,7 @@ def send_mail(subject=None,
         errmsg = str(ve)
         error = True
     except Exception, e:
-        syslog.openlog(channel, syslog.LOG_CONS | syslog.LOG_PID,
+        syslog.openlog(channel, syslog.LOG_PID,
                        facility=syslog.LOG_MAIL)
         try:
             for line in traceback.format_exc().splitlines():
