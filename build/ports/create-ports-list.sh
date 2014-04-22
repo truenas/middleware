@@ -35,7 +35,7 @@ add_port()
 
 add_port_debug()
 {
-    add_port $@
+    add_port $* WITH_DEBUG=yes
 }
 
 mkdir -p $(dirname ${PORTSLIST})
