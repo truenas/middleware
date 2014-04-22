@@ -14,6 +14,8 @@ TOP="$(pwd)"
 
 . build/nanobsd/nanobsd_funcs.sh
 
+setup_and_export_internal_variables
+
 # File descriptor 3 is used for logging output, see pprint
 exec 3>&1
 
