@@ -831,60 +831,61 @@ on_exit()
 	fi
 }
 
-
-#######################################################################
-# Setup and Export Internal variables
-#
-for nano_conf in $nano_confs; do
-	echo "Sourcing $nano_conf"
-	. "$nano_conf"
-done
-
-test -n "${NANO_OBJ}" || NANO_OBJ=/usr/obj/nanobsd.${NANO_NAME}/
-test -n "${MAKEOBJDIRPREFIX}" || MAKEOBJDIRPREFIX=${NANO_OBJ}
-test -n "${NANO_DISKIMGDIR}" || NANO_DISKIMGDIR=${NANO_OBJ}
-
-NANO_WORLDDIR=${NANO_OBJ}/_.w
-NANO_MAKE_CONF_BUILD=${MAKEOBJDIRPREFIX}/make.conf.build
-NANO_MAKE_CONF_INSTALL=${NANO_OBJ}/make.conf.install
-
-if [ -d ${NANO_TOOLS} ] ; then
-	true
-elif [ -d ${NANO_SRC}/${NANO_TOOLS} ] ; then
-	NANO_TOOLS=${NANO_SRC}/${NANO_TOOLS}
-else
-	echo "NANO_TOOLS directory does not exist" 1>&2
-	exit 1
-fi
-
-# Override user's NANO_DRIVE if they specified a NANO_LABEL
-if [ ! -z "${NANO_LABEL}" ]; then
-	NANO_DRIVE=ufs/${NANO_LABEL}
-fi
-
-export MAKEOBJDIRPREFIX
-
-export NANO_ARCH
-export NANO_CODESIZE
-export NANO_CONFSIZE
-export NANO_CUSTOMIZE
-export NANO_DATASIZE
-export NANO_DRIVE
-export NANO_HEADS
-export NANO_IMAGES
-export NANO_IMGNAME
-export NANO_MAKE_CONF_BUILD
-export NANO_MAKE_CONF_INSTALL
-export NANO_MEDIASIZE
-export NANO_NAME
-export NANO_NEWFS
-export NANO_OBJ
-export NANO_PMAKE
-export NANO_SECTS
-export NANO_SRC
-export NANO_TOOLS
-export NANO_WORLDDIR
-export NANO_BOOT0CFG
-export NANO_BOOTLOADER
-export NANO_LABEL
-
+setup_and_export_internal_variables()
+{
+	#######################################################################
+	# Setup and Export Internal variables
+	#
+	for nano_conf in $nano_confs; do
+		echo "Sourcing $nano_conf"
+		. "$nano_conf"
+	done
+	
+	test -n "${NANO_OBJ}" || NANO_OBJ=/usr/obj/nanobsd.${NANO_NAME}/
+	test -n "${MAKEOBJDIRPREFIX}" || MAKEOBJDIRPREFIX=${NANO_OBJ}
+	test -n "${NANO_DISKIMGDIR}" || NANO_DISKIMGDIR=${NANO_OBJ}
+	
+	NANO_WORLDDIR=${NANO_OBJ}/_.w
+	NANO_MAKE_CONF_BUILD=${MAKEOBJDIRPREFIX}/make.conf.build
+	NANO_MAKE_CONF_INSTALL=${NANO_OBJ}/make.conf.install
+	
+	if [ -d ${NANO_TOOLS} ] ; then
+		true
+	elif [ -d ${NANO_SRC}/${NANO_TOOLS} ] ; then
+		NANO_TOOLS=${NANO_SRC}/${NANO_TOOLS}
+	else
+		echo "NANO_TOOLS directory does not exist" 1>&2
+		exit 1
+	fi
+	
+	# Override user's NANO_DRIVE if they specified a NANO_LABEL
+	if [ ! -z "${NANO_LABEL}" ]; then
+		NANO_DRIVE=ufs/${NANO_LABEL}
+	fi
+	
+	export MAKEOBJDIRPREFIX
+	
+	export NANO_ARCH
+	export NANO_CODESIZE
+	export NANO_CONFSIZE
+	export NANO_CUSTOMIZE
+	export NANO_DATASIZE
+	export NANO_DRIVE
+	export NANO_HEADS
+	export NANO_IMAGES
+	export NANO_IMGNAME
+	export NANO_MAKE_CONF_BUILD
+	export NANO_MAKE_CONF_INSTALL
+	export NANO_MEDIASIZE
+	export NANO_NAME
+	export NANO_NEWFS
+	export NANO_OBJ
+	export NANO_PMAKE
+	export NANO_SECTS
+	export NANO_SRC
+	export NANO_TOOLS
+	export NANO_WORLDDIR
+	export NANO_BOOT0CFG
+	export NANO_BOOTLOADER
+	export NANO_LABEL
+}

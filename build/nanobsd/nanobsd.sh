@@ -114,6 +114,8 @@ if [ $# -gt 0 ] ; then
 	usage
 fi
 
+setup_and_export_internal_variables
+
 NANO_PMAKE="$NANO_PMAKE -j $make_jobs"
 
 set -e
