@@ -380,4 +380,7 @@ WITHOUT_BINUTILS=true
 "
 fi
 
+export CONF_BUILD
+export CONF_INSTALL
+
 # vim: syntax=sh
