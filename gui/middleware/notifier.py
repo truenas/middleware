@@ -4056,7 +4056,7 @@ class notifier:
         self.__camcontrol = None
 
         ident = self.device_to_identifier(devname)
-        qs = Disk.objects.filter(disk_identifier=ident)
+        qs = Disk.objects.filter(disk_identifier=ident).order_by('disk_enabled')
         if ident and qs.exists():
             disk = qs[0]
         else:
