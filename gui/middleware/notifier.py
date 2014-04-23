@@ -3704,6 +3704,27 @@ class notifier:
         proc = self._pipeopen('/sbin/ifconfig %s' % name)
         data = proc.communicate()[0]
 
+        if name.startswith('lagg'):
+            proto = re.search(r'laggproto (\S+)', data)
+            if not proto:
+                return _('Unknown')
+            proto = proto.group(1)
+            ports = re.findall(r'laggport.+<(.*?)>', data, re.M|re.S)
+            if proto == 'lacp':
+                # Only if all ports are ACTIVE,COLLECTING,DISTRIBUTING
+                # it is considered active
+
+                portsok = len(filter(
+                    lambda y: y == 'ACTIVE,COLLECTING,DISTRIBUTING',
+                    ports
+                ))
+                if portsok == len(ports):
+                    return _('Active')
+                elif portsok > 0:
+                    return _('Degraded')
+                else:
+                    return _('Down')
+
         if name.startswith('carp'):
             reg = re.search(r'carp: (\S+)', data)
         else:
