@@ -155,10 +155,6 @@ build_target()
 
 	local _required_logs="_.ik _.iw"
 
-	_c=$(echo ${AVATAR_COMPONENT} | tr '-' '_')
-		
-	export "${_c}_FORCE=1"
-
 	local _cmd="${_nanobsd} -c ${_target} ${_args} -j ${MAKE_JOBS}"
 	echo ${_cmd}
 
