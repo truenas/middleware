@@ -6,6 +6,7 @@
 # PROVIDE: ix-jail
 # REQUIRE: ix-warden
 # BEFORE: jail
+# KEYWORD: shutdown
 
 . /etc/rc.freenas
 
