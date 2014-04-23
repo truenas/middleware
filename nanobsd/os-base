@@ -65,12 +65,18 @@ customize_cmd install_debug_kernel
 
 customize_cmd build_nas_source2
 
-. ${AVATAR_ROOT}/nanobsd/os-ports
+if [ -z "$USE_POUDRIERE" ]; then
+	. ${AVATAR_ROOT}/nanobsd/os-ports
+else
+	customize_cmd install_ports
+fi
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
+    if [ -z "$USE_POUDRIERE" ]; then
  	CONF_INSTALL="${CONF_INSTALL}
 ${PKG_ONLY_MAKE_CONF}
 "
+    fi
 	echo "Automatically building a thin image with packages"
 else
 	echo "Automatically building a * * F A T * * image so we can build ports"
@@ -797,4 +803,9 @@ build_nas_source2 ( )
         )
 	umount -f ${NANO_WORLDDIR}/usr/nas_source2
 	umount -f ${NANO_WORLDDIR}/usr/src
+}
+
+install_ports()
+{
+	${AVATAR_ROOT}/build/ports/install-ports.sh
 }

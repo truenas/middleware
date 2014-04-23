@@ -10,7 +10,7 @@ TOP="$(pwd)"
 
 cleanup()
 {
-	umountfs ${NANO_OBJ}/_.w/usr/src
+	umountfs ${NANO_OBJ}/_.j/usr/src
 }
 
 # XX: Uncomment to debug
@@ -18,7 +18,7 @@ cleanup()
 
 trap cleanup EXIT
 
-mount -t nullfs ${GIT_FREEBSD_CHECKOUT_PATH} ${NANO_OBJ}/_.w/usr/src  || exit 1
+mount -t nullfs ${GIT_FREEBSD_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/src  || exit 1
 
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
 if [ ${MAKE_JOBS} -gt 10 ]; then

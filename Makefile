@@ -19,12 +19,22 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION} BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
 
+USE_POUDRIERE=yes
+.if defined(USE_POUDRIERE)
+ENV_SETUP+= USE_POUDRIERE=${USE_POUDRIERE}
+.endif
+
 all:	build
 
 build: git-verify
 	${ENV_SETUP} build/check_sandbox.sh
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
+.if defined(USE_POUDRIERE)
+	@${ENV_SETUP} ${MAKE} portsjail
+	@${ENV_SETUP} ${MAKE} ports
+.else
 	${ENV_SETUP} PACKAGE_PREP_BUILD=1 build/do_build.sh
+.endif
 	${ENV_SETUP} build/do_build.sh
 
 checkout: git-verify

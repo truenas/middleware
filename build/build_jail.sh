@@ -39,6 +39,12 @@ make_conf_build
 build_world
 build_kernel
 
+# Override NANO_WORLDDIR, so that we create
+# the jail for building ports in a different
+# place from the directory used for creating
+# the final package.
+NANO_WORLDDIR=${NANO_OBJ}/_.j
+rm -fr ${NANO_WORLDDIR}
 mkdir -p ${NANO_OBJ} ${NANO_WORLDDIR}
 printenv > ${NANO_OBJ}/_.env
 make_conf_install
@@ -46,4 +52,3 @@ install_world
 install_etc
 setup_nanobsd_etc
 install_kernel
-

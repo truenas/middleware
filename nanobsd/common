@@ -624,3 +624,33 @@ dontstrip()
 
 	return 1
 }
+
+[ -n "$USE_POUDRIERE" ] && \
+do_add_pkg()
+{
+}
+
+[ -n "$USE_POUDRIERE" ] && \
+do_add_port()
+{
+}
+
+[ -n "$USE_POUDRIERE" ] && \
+do_add_port_generic()
+{
+}
+
+[ -n "$USE_POUDRIERE" ] && \
+add_port()
+{
+}
+
+[ -n "$USE_POUDRIERE" ] && \
+add_port()
+{
+}
+
+[ -n "$USE_POUDRIERE" ] && \
+add_port_with_repo()
+{
+}
