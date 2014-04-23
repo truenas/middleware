@@ -307,6 +307,7 @@ install_kernel ( ) (
 run_customize() (
 
 	pprint 2 "run customize scripts"
+	pprint 2 "NANO_CUSTOMIZE: $NANO_CUSTOMIZE"
 	set -- $NANO_CUSTOMIZE
 	i=1
 	num_steps=$#
@@ -325,6 +326,7 @@ run_customize() (
 run_late_customize() (
 
 	pprint 2 "run late customize scripts"
+	pprint 2 "NANO_LATE_CUSTOMIZE: $NANO_LATE_CUSTOMIZE"
 	set -- $NANO_LATE_CUSTOMIZE
 	i=1
 	num_steps=$#
