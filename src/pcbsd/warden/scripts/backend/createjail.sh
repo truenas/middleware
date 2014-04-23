@@ -315,8 +315,7 @@ fi
 # Create an empty fstab
 touch "${JAILDIR}/etc/fstab"
 
-# If this isn't a fresh jail, we can skip to not clobber existing setup
-if [ -z "$ARCHIVEFILE" ] ; then
+if [ ! -s "${JAILDIR}/etc/rc.conf" ] ; then
   # Setup rc.conf
   echo "portmap_enable=\"NO\"
 sshd_enable=\"NO\"
