@@ -802,5 +802,16 @@ install_debug_kernel ( )
 
 install_ports()
 {
+	local install_info_hack=0
+	if [ ! -e ${NANO_WORLDDIR}/usr/bin/install-info ]; then
+		touch ${NANO_WORLDDIR}/usr/bin/install-info
+		chmod +x ${NANO_WORLDDIR}/usr/bin/install-info
+		install_info_hack=1
+	fi
+
 	${AVATAR_ROOT}/build/ports/install-ports.sh
+
+	if [ $install_info_hack -eq 1 ]; then
+		rm -f ${NANO_WORLDDIR}/usr/bin/install-info
+	fi
 }
