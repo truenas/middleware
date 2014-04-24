@@ -87,7 +87,7 @@ class Volume(Model):
                         self.vol_fstype.lower(),
                         self.vol_name)
                     self._disks = n.get_disks_from_provider(prov) \
-                        if prov else []
+                        if prov is not None else []
             return self._disks
         except Exception, e:
             log.debug(

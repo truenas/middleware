@@ -1702,7 +1702,7 @@ class notifier:
 
         disks = volume.get_disks()
         provider = self.get_label_consumer('ufs', u_name)
-        if not provider:
+        if provider is None:
             return None
         geom_type = provider.xpath("../../name")[0].text.lower()
 
@@ -3065,7 +3065,7 @@ class notifier:
         elif fs == 'UFS':
 
             provider = self.get_label_consumer('ufs', name)
-            if provider is not None:
+            if provider is None:
                 return 'UNKNOWN'
             gtype = provider.xpath("../../name")[0].text
 
@@ -3648,7 +3648,7 @@ class notifier:
         assert volume.vol_fstype == 'UFS'
 
         provider = self.get_label_consumer('ufs', volume.vol_name)
-        if not provider:
+        if provider is None:
             raise ValueError("UFS Volume %s not found" % (volume.vol_name,))
         class_name = provider.xpath("../../name")[0].text
         geom_name = provider.xpath("../name")[0].text
@@ -4184,7 +4184,7 @@ class notifier:
             ValueError: UFS volume not found
         """
         provider = self.get_label_consumer('ufs', volume.vol_name)
-        if not provider:
+        if provider is None:
             raise ValueError("UFS Volume %s not found" % (volume,))
         class_name = provider.xpath("../../name")[0].text
 
@@ -4522,7 +4522,7 @@ class notifier:
 
         prov = self.get_label_consumer(volume.vol_fstype.lower(),
             str(volume.vol_name))
-        if not prov:
+        if prov is None:
             return False
 
         proc = self._pipeopen("mount /dev/%s/%s" % (
