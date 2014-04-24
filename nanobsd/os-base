@@ -69,11 +69,9 @@ else
 fi
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
-    if [ -z "$USE_POUDRIERE" ]; then
  	CONF_INSTALL="${CONF_INSTALL}
 ${PKG_ONLY_MAKE_CONF}
 "
-    fi
 	echo "Automatically building a thin image with packages"
 else
 	echo "Automatically building a * * F A T * * image so we can build ports"
