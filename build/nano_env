@@ -253,6 +253,12 @@ export FREEBSD_PACKAGE_MIRROR
 : ${FREEBSD_PACKAGE_MIRROR_32="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"}
 export FREEBSD_PACKAGE_MIRROR_32
 
+if is_truenas ; then
+	: ${MASTER_SITE_OVERRIDE='http://gitserver/truenas/distfiles/${DIST_SUBDIR}/'}
+else
+	: ${MASTER_SITE_OVERRIDE='http://gitserver/freenas/distfiles/${DIST_SUBDIR}/'}
+fi
+export MASTER_SITE_OVERRIDE
 
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 
