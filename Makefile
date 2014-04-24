@@ -133,9 +133,9 @@ tag:
 
 ports:
 	${ENV_SETUP} build/ports/create-poudriere-conf.sh
+	${ENV_SETUP} build/ports/create-poudriere-make.conf.sh
 	${ENV_SETUP} build/ports/prepare-jail.sh
 	${ENV_SETUP} build/ports/fetch-ports-srcs.sh
-	${ENV_SETUP} build/ports/create-poudriere-conf.sh
 	${ENV_SETUP} build/ports/create-ports-list.sh
 	${ENV_SETUP} build/ports/build-ports.sh
 
