@@ -25,9 +25,9 @@ add_port()
             PORT=$var
             PORT_UND=$(echo $var|sed -e 's|/|_|g')
             echo $PORT >> $PORTSLIST
-            mkdir -p ${PORTOPTIONS}/${PORT_UND} 
-            rm -f ${PORTOPTIONS}/${PORT_UND}/options 
+            rm -fr ${PORTOPTIONS}/${PORT_UND} 
         else
+            mkdir -p ${PORTOPTIONS}/${PORT_UND} 
             echo "$var" >> ${PORTOPTIONS}/${PORT_UND}/options 
         fi
     done
