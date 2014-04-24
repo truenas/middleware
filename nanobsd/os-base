@@ -63,7 +63,9 @@ FlashDevice generic 2g
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
-customize_cmd build_nas_source2
+if [ -z "$USE_POUDRIERE" ]; then
+	customize_cmd build_nas_source2
+fi
 
 if [ -z "$USE_POUDRIERE" ]; then
 	. ${AVATAR_ROOT}/nanobsd/os-ports
@@ -768,7 +770,7 @@ install_debug_kernel ( )
 	install_kernel2  ${NANO_OBJ}/${_kernconf}-DEBUG  /boot/kernel-debug
 }
 
-build_nas_source2 ( )
+[ -z "$USE_POUDRIERE" ] && build_nas_source2 ( )
 {
 	mkdir -p ${NANO_WORLDDIR}/usr/src
 	mkdir -p ${NANO_WORLDDIR}/usr/nas_source2
