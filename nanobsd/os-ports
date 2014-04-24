@@ -32,6 +32,10 @@ if is_truenas ; then
 	add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
 fi
 
+if [ -n "$USE_POUDRIERE" ]; then
+	add_port misc/freenas-files
+fi
+
 add_port net/mDNSResponder
 add_port dns/py-bonjour
 add_port textproc/libxml2
