@@ -3445,11 +3445,11 @@ class notifier:
                 if replications:
                     for repl, snaps in replications.iteritems():
                         remotename = '%s@%s' % (
-                            bundle.obj.filesystem.replace(
-                                repl.repl_filesystem,
-                                repl.repl_zfs,
+                            fs.replace(
+                                repl.repl_filesystem + '@',
+                                repl.repl_zfs + '@',
                             ),
-                            bundle.obj.name,
+                            name,
                         )
                         if remotename in snaps:
                             replication = 'OK'
@@ -4144,7 +4144,7 @@ class notifier:
         This syncs the EncryptedDisk table with the current state
         of a volume
         """
-        from freenasUI.storage.models import EncryptedDisk, Volume
+        from freenasUI.storage.models import Disk, EncryptedDisk, Volume
         if volume is not None:
             volumes = [volume]
         else:
@@ -4555,7 +4555,7 @@ class notifier:
             devname,
         ))
         if geom:
-            provid = geom[0].xpath("./provider/@id")[0].text
+            provid = geom[0].xpath("./provider/@id")[0]
         else:
             raise ValueError("Unknown disk %s" % (devname, ))
         return self.__get_geoms_recursive(provid)
