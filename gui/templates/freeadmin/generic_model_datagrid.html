@@ -178,6 +178,27 @@ require([
         }, griddiv);
     griddiv.grid = grid;
 
+    {% if refresh_time %}
+    grid.on("dgrid-refresh-complete", function(evt) {
+
+      setTimeout(function() {
+        var selected = [];
+        var rows = [];
+        for(var id in grid.selection){
+          selected.push(id);
+          rows.push(grid.row(id));
+        }
+        grid.refresh();
+        grid.clearSelection();
+        for(var id in selected) {
+            grid.select(selected[id]);
+        }
+        selectionCheck({rows: rows, grid: grid});
+      }, {{ refresh_time }});
+
+    });
+    {% endif %}
+
     {% if double_click %}
 {{ double_click|safe }}
     {% endif %}
