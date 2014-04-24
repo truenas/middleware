@@ -71,7 +71,12 @@ release: git-verify
 	${ENV_SETUP} build/check_sandbox.sh
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
+.if defined(USE_POUDRIERE)
+	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
+	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
+.else
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/build_release.sh
+.endif
 
 rebuild:
 	@${ENV_SETUP} ${MAKE} checkout
