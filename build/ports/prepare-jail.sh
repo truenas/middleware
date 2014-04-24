@@ -22,7 +22,6 @@ echo "git" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/method
 echo "${FREEBSD_RELEASE_VERSION}" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/version
 echo "${NANO_ARCH}" > ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}/arch
 
-mkdir -p ${JAILMNT}/wrkdirs
 jail -U root -c path=${JAILMNT} command=/sbin/ldconfig -m /lib /usr/lib /usr/lib/compat
 
 cat > ${NANO_OBJ}/poudriere/etc/poudriere.d/make.conf << EOF
