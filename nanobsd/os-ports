@@ -68,7 +68,7 @@ add_port security/libgcrypt
 add_port databases/db46
 add_port security/cyrus-sasl2-gssapi
 add_port net/openldap24-sasl-client
-add_port net/nss_ldap WANT_OPENLDAP_SASL=yes
+add_port net/nss_ldap
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV
 add_port lang/python27 OPTIONS_FILE_UNSET+=NLS
 add_port lang/python2
@@ -81,7 +81,7 @@ add_port devel/libexecinfo
 add_port devel/popt
 add_port databases/tdb MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
 add_port sysutils/libsunacl
-add_port security/pam_ldap WANT_OPENLDAP_SASL=yes
+add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash OPTIONS_FILE_UNSET+=NLS
 add_port shells/ksh93
@@ -114,8 +114,7 @@ add_port www/nginx OPTIONS_FILE_SET+=HTTP_DAV \
 		OPTIONS_FILE_SET+=HTTP_SSL \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
-		OPTIONS_FILE_SET+=STATUS \
-		WANT_OPENLDAP_SASL=yes
+		OPTIONS_FILE_SET+=STATUS
 add_port net-mgmt/net-snmp OPTIONS_FILE_UNSET+=PERL OPTIONS_FILE_UNSET+=PERL_EMBEDDED
 add_port sysutils/nut OPTIONS_FILE_UNSET+="NEON"
 add_port textproc/py-libxml2
@@ -179,7 +178,7 @@ if ! is_truenas ; then
 	add_port sysutils/areca-cli
 	add_port sysutils/hptcli
 fi
-add_port net/py-ldap2 OPTIONS_FILE_SET+=SASL WANT_OPENLDAP_SASL=yes
+add_port net/py-ldap2 OPTIONS_FILE_SET+=SASL
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
 add_port devel/dbus OPTIONS_FILE_UNSET+=X11
@@ -198,8 +197,7 @@ add_port net/netatalk3 OPTIONS_FILE_SET+=PAM \
 	OPTIONS_FILE_SET+=SENDFILE \
 	OPTIONS_FILE_SET+=MDNSRESPONDER \
 	OPTIONS_FILE_UNSET+=AVAHI \
-	OPTIONS_FILE_SET+=LDAP \
-	WANT_OPENLDAP_SASL=yes
+	OPTIONS_FILE_SET+=LDAP
 
 add_port dns/libidn
 add_port ftp/wget
@@ -207,7 +205,7 @@ add_port benchmarks/iozone
 add_port benchmarks/iperf
 add_port benchmarks/netperf
 add_port benchmarks/xdd
-add_port security/sudo WANT_OPENLDAP_SASL=yes
+add_port security/sudo
 add_port sysutils/ipmitool
 add_port www/py-django-json-rpc
 add_port devel/py-mimeparse
@@ -239,16 +237,16 @@ fi
 add_port textproc/xmlcatmgr
 add_port textproc/libxslt
 add_port dns/c-ares
-add_port databases/ldb WANT_OPENLDAP_SASL=yes
+add_port databases/ldb
 add_port devel/libunistring
 add_port devel/ding-libs
 add_port devel/nspr
 add_port security/nss
-add_port security/krb5 WANT_OPENLDAP_SASL=yes
-add_port security/sssd WANT_OPENLDAP_SASL=yes
+add_port security/krb5
+add_port security/sssd
 
 add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
-add_port ftp/curl WANT_OPENLDAP_SASL=yes
+add_port ftp/curl
 add_port devel/git OPTIONS_FILE_UNSET+=SVN \
        OPTIONS_FILE_UNSET+=CVS \
        OPTIONS_FILE_UNSET+=P4 \
@@ -286,8 +284,7 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_SET+=WINBIND \
        OPTIONS_FILE_SET+=NSUPDATE \
        OPTIONS_FILE_UNSET+=BIND98 \
-       OPTIONS_FILE_UNSET+=BIND99 \
-       WANT_OPENLDAP_SASL=yes 
+       OPTIONS_FILE_UNSET+=BIND99
 
 
 if [ "${DEBUG}" = 1 ]; then
