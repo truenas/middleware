@@ -37,9 +37,9 @@ cp -a ${AVATAR_ROOT}/nas_ports/sysutils/zfsd ${GIT_PORTS_CHECKOUT_PATH}/sysutils
 cp -a ${AVATAR_ROOT}/nas_ports/misc/truenas-files ${GIT_PORTS_CHECKOUT_PATH}/misc 
 cp -a ${AVATAR_ROOT}/nas_ports/misc/freenas-files ${GIT_PORTS_CHECKOUT_PATH}/misc
 
-MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
+MAKE_JOBS=$(sysctl -n kern.smp.cpus)
 if [ ${MAKE_JOBS} -gt 10 ]; then
-        MAKE_JOBS=10
+        MAKE_JOBS=$((${MAKE_JOBS} - 3 ))
 fi
 
 mkdir -p ${NANO_OBJ}/ports/distfiles
