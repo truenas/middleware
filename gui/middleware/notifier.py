@@ -3074,7 +3074,7 @@ class notifier:
         elif fs == 'UFS':
 
             provider = self.get_label_consumer('ufs', name)
-            if not provider:
+            if provider is not None:
                 return 'UNKNOWN'
             gtype = provider.xpath("../../name")[0].text
 
