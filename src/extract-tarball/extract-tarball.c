@@ -165,7 +165,7 @@ get_the_stuff_we_need(int argc, char **argv,
 	}
 
 	if (*tflags == NULL)
-		*tflags = strdup("opzxvf");
+		*tflags = strdup("pzxvf");
 	if (*dir == NULL) {
 		char *p1, *p2;
 
