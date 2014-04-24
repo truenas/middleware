@@ -41,11 +41,6 @@ if is_truenas ; then
 	. ${TRUENAS_COMPONENTS_ROOT}/nanobsd/os-base.truenas
 fi
 
-# DEBUG=1, etc.
-for feature in $SW_FEATURES; do
-	eval "$(echo "$feature")=1"
-done
-
 customize_cmd_truenas()
 {
 	if is_truenas ; then
