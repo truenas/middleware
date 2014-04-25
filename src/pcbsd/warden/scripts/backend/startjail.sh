@@ -110,6 +110,9 @@ start_jail_vimage()
     fi
   fi
 
+  # Set epairb's MTU
+  ifconfig ${EPAIRB} mtu ${MTU}
+
   # Move epairb into jail
   ifconfig "${EPAIRB}" vnet ${JID}
 

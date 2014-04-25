@@ -2,5 +2,6 @@ define({
 	root: {
 		popupLabel: 'Show or hide columns'
 	},
-	es: true
+	es: true,
+	ro: true
 });

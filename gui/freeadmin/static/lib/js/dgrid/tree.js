@@ -175,7 +175,14 @@ function tree(column){
 			//		if unspecified, toggles the current state.
 			
 			var row = target.element ? target : grid.row(target),
-				hasTransitionend = has("transitionend");
+				hasTransitionend = has("transitionend"),
+				dfd = new Deferred(),
+				promise = dfd.promise;
+			
+			// Resolve initial promise immediately;
+			// promise will be reassigned later if necessary to only resolve
+			// after data is retrieved
+			dfd.resolve();
 			
 			target = row.element;
 			target = target.className.indexOf("dgrid-expando-icon") > -1 ? target :
@@ -217,21 +224,19 @@ function tree(column){
 					if("level" in target){
 						query.level = target.level;
 					}
-					Deferred.when(
-						grid.renderQuery ?
-							grid._trackError(function(){
-								return grid.renderQuery(query, preloadNode, options);
-							}) :
+					// Add the query to the promise chain.
+					promise = promise.then(function(){
+						return grid.renderQuery ?
+							grid.renderQuery(query, preloadNode, options) :
 							grid.renderArray(query(options), preloadNode,
-								"level" in query ? { queryLevel: query.level } : {}),
-						function(){
-							// Expand once results are retrieved, if the row is still expanded.
-							if(grid._expanded[row.id] && hasTransitionend){
-								var scrollHeight = container.scrollHeight;
-								container.style.height = scrollHeight ? scrollHeight + "px" : "auto";
-							}
+								"level" in query ? { queryLevel: query.level } : {});
+					}).then(function(){
+						// Expand once results are retrieved, if the row is still expanded.
+						if(grid._expanded[row.id] && hasTransitionend){
+							var scrollHeight = container.scrollHeight;
+							container.style.height = scrollHeight ? scrollHeight + "px" : "auto";
 						}
-					);
+					});
 					
 					if(hasTransitionend){
 						on(container, hasTransitionend, ontransitionend);
@@ -277,6 +282,7 @@ function tree(column){
 					delete this._expanded[row.id];
 				}
 			}
+			return promise;
 		}; // end function grid.expand
 		
 		// Set up a destroy function on column to tear down the listeners/aspects

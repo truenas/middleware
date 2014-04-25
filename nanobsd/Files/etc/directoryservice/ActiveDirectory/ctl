@@ -77,7 +77,6 @@ adctl_start()
 	adctl_cmd ${service} ix-kerberos quietstart
 
 	adctl_cmd ${service} ix-nsswitch quietstart
-	adctl_cmd ${service} ix-pam quietstart
 
 	adctl_cmd ${service} ix-kinit quietstart
 	if ! adctl_cmd ${service} ix-kinit status
@@ -102,6 +101,7 @@ adctl_start()
 
 	cifs_restart
 
+	adctl_cmd ${service} ix-pam quietstart
 	adctl_cmd "${service} ix-cache quietstart &"
 
 	return 0

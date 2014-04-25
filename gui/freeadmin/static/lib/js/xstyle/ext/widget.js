@@ -1,5 +1,10 @@
 define([], function(){
 	var nextId = 0;
+	var literals = {
+		'true': true,
+		'false': false,
+		'null': null
+	}
 	function parse(value, callback, type, rule){
 		var Class, prototype;
 		if(rule){
@@ -49,7 +54,9 @@ define([], function(){
 					}
 					callback(function(element){
 						var widget = new Class(props, element);
-						widget.domNode.className += widgetCssClass;
+						if(widgetCssClass){
+							widget.domNode.className += ' ' + widgetCssClass;
+						}
 					});
 				}
 			}else if(callback){
@@ -61,6 +68,8 @@ define([], function(){
 			value = eval(value);
 		}else if(!isNaN(value)){
 			value = +value;
+		}else if(literals.hasOwnProperty(value)){
+			value = literals[value];
 		}
 		return value;
 	}

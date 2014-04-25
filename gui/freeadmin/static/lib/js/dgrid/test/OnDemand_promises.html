@@ -43,6 +43,7 @@ function(Grid, Memory, Observable, QueryResults, ItemFileWriteStore, DataStore, 
 	
 	var grid = window.grid = new Grid({
 		columns: { id: "id", name: "name" },
+		sort: "id",
 		store: datastore
 	}, "grid");
 	
@@ -63,6 +64,7 @@ function(Grid, Memory, Observable, QueryResults, ItemFileWriteStore, DataStore, 
 	
 	var grid2 = window.grid2 = new Grid({
 		columns: { id: "id", name: "name" },
+		sort: "id",
 		store: asyncstore
 	}, "grid2");
 });

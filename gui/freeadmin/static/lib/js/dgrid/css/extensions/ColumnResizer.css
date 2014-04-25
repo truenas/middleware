@@ -20,6 +20,12 @@ html.has-ie-6 .dgrid-resize-handle {
 	border-color: pink;
 	filter: chroma(color=pink);
 }
+html.has-mozilla .dgrid .dgrid-resize-handle:focus,
+html.has-opera .dgrid .dgrid-resize-handle:focus {
+	/* Override focus outline style set in dgrid.css */
+	outline: none;
+}
+
 .dgrid-resize-header-container {
 	height:100%;
 }

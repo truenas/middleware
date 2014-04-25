@@ -111,7 +111,9 @@ generate_nginx_conf()
 	local httpsport="${5}"
 	local working_ssl=false
 	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print settings.DOJANGO_DOJO_VERSION')
-	
+
+	[ -f /data/dhparam.pem ] || openssl dhparam -rand - 2048 > /data/dhparam.pem
+
 	{
 	cat << __EOF__
 #
@@ -157,12 +159,27 @@ __EOF__
 
 		if [ ${validcert} -eq 0 ]; then
 			working_ssl=true
-			cat << __EOF__
-        listen       ${addr}:${httpsport} default_server ssl;
-        listen       [${addr6}]:${httpsport} default_server ssl;
 
-        ssl_certificate      ${HTTPDCERT};
-        ssl_certificate_key  ${HTTPDKEY};
+			cat << __EOF__
+	listen			${addr}:${httpsport} default_server ssl spdy;
+	listen			[${addr6}]:${httpsport} default_server ssl spdy;
+
+	ssl_certificate		${HTTPDCERT};
+	ssl_certificate_key	${HTTPDKEY};
+	ssl_dhparam /data/dhparam.pem;
+
+	ssl_session_timeout	120m;
+	ssl_session_cache	shared:ssl:16m;
+
+	ssl_prefer_server_ciphers on;
+	ssl_ciphers EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA+SHA256:EECDH+aRSA+RC4:EDH+aRSA:EECDH:RC4:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS;
+	add_header Strict-Transport-Security max-age=31536000;
+
+	## TODO: OCSP Stapling
+	#ssl_stapling on;
+	#ssl_stapling_verify on;
+	#resolver ${resolver};
+	#ssl_trusted_certificate ${ca_chain};
 __EOF__
 		else
 			port=80
@@ -176,10 +193,6 @@ __EOF__
 	fi
 
 	cat << __EOF__
-        #ssl_session_timeout  5m;
-        #ssl_protocols  SSLv2 SSLv3 TLSv1;
-        #ssl_ciphers  HIGH:!aNULL:!MD5;
-        #ssl_prefer_server_ciphers   on;
 
         location / {
             include fastcgi_params;

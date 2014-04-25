@@ -53,6 +53,7 @@
 				// Add grids to TabContainer parsed within page
 				grid1 = window.grid1 = new CustomGrid({
 					id: "grid1",
+					sort: "id",
 					store: testStore,
 					columns: lang.clone(gridCols),
 					selectionMode: "single",
@@ -62,6 +63,7 @@
 				
 				grid2 = window.grid2 = new CustomGrid({
 					id: "grid2",
+					sort: "id",
 					store: testStore,
 					columns: lang.clone(gridCols),
 					selectionMode: "single",

@@ -144,6 +144,7 @@
 				
 				// Test 2a: srcNodeRef + no id, specify id to dgrid
 				window.grid2a = new OnDemandGrid({
+					sort: "order",
 					store: store,
 					columns: lang.clone(columnsNew),
 					id: "test2a"
@@ -151,12 +152,14 @@
 				
 				// Test 2b: srcNodeRef + no id - should end up with id=dgrid_0
 				window.grid2b = new OnDemandGrid({
+					sort: "order",
 					store: store,
 					columns: lang.clone(columnsNew)
 				}, query(".test2b")[0]);
 				
 				// Test 2c: no srcNodeRef, specify id to dgrid
 				window.grid2c = new OnDemandGrid({
+					sort: "order",
 					store: store,
 					columns: lang.clone(columnsNew),
 					id: "test2c"
@@ -167,6 +170,7 @@
 				
 				// Test 2d: no srcNodeRef, no id - should end up with id=dgrid_1
 				window.grid2d = new OnDemandGrid({
+					sort: "order",
 					store: store,
 					columns: lang.clone(columnsNew)
 				});

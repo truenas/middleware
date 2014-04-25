@@ -38,12 +38,10 @@
 				}, "list");
 				list.renderArray(data.items);
 				grid = new KeyboardGrid({
-					store: testStore,
 					columns: columns
 				}, "grid");
 				grid.renderArray(data.items);
 				rowGrid = new KeyboardGrid({
-					store: testStore,
 					columns: columns,
 					cellNavigation: false
 				}, "rowGrid");
@@ -51,14 +49,17 @@
 
 				// OnDemand Grid, List, and cell navigation Grid
 				onDemandList = new KeyboardOnDemandList({
+					sort: "id",
 					store: testStore,
 					renderRow: function(item){ return put("div", item.col5); }
 				}, "list-ondemand");
 				onDemandGrid = new KeyboardOnDemandGrid({
+					sort: "id",
 					store: testStore,
 					columns: columns
 				}, "grid-ondemand");
 				onDemandRowGrid = new KeyboardOnDemandGrid({
+					sort: "id",
 					store: testStore,
 					columns: columns,
 					cellNavigation: false

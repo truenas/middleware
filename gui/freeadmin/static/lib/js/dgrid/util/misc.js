@@ -148,14 +148,17 @@ define(["put-selector/put"], function(put){
 			};
 		},
 		
-		escapeCssIdentifier: function(id){
+		escapeCssIdentifier: function(id, replace){
 			// summary:
-			//		Escapes normally-invalid characters in a CSS identifier (such as .);
+			//		Escapes normally-invalid characters in a CSS identifier (such as . or :);
 			//		see http://www.w3.org/TR/CSS2/syndata.html#value-def-identifier
 			// id: String
 			//		CSS identifier (e.g. tag name, class, or id) to be escaped
+			// replace: String?
+			//		If specified, indicates that invalid characters should be
+			//		replaced by the given string rather than being escaped
 			
-			return id.replace(invalidCssChars, "\\$1");
+			return id.replace(invalidCssChars, replace || "\\$1");
 		}
 	};
 	return util;

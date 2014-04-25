@@ -150,32 +150,47 @@ generate_istgt_config()
 		echo "  UnitOnline yes"
 		echo "  BlockLength ${iscsi_target_logical_blocksize}"
 		echo "  QueueDepth ${iscsi_target_queue_depth}"
-		local iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_lun iscsi_target_extent_type
+		local iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_lun iscsi_target_extent_type iscsi_lunid curr_lunid iscsi_target_id
 		iscsi_target_lun=0
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		    "SELECT
 			e.iscsi_target_extent_path,
 			e.iscsi_target_extent_filesize,
-			iscsi_target_extent_type
+			iscsi_target_extent_type,
+			t.iscsi_lunid,
+                        t.iscsi_target_id
 		    FROM
 			services_iscsitargetextent
 			    AS e LEFT OUTER JOIN services_iscsitargettoextent
 			    AS t ON e.id = t.iscsi_extent_id
-		    WHERE t.iscsi_target_id = ${id}" | \
-		while read iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_extent_type; do
+		    WHERE t.iscsi_target_id = ${id}
+		    ORDER BY t.iscsi_lunid IS NULL" | \
+		while read iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_extent_type iscsi_lunid iscsi_target_id; do
+			if [ -z "${iscsi_lunid}" ]; then
+				curr_lunid=${iscsi_target_lun}
+				while true; do
+					if [ "`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT 1 FROM services_iscsitargettoextent WHERE iscsi_lunid = ${curr_lunid}"` AND iscsi_target_id = ${iscsi_target_id}" = "1" ]; then
+						curr_lunid=$((${curr_lunid}+1))
+					else
+						break
+					fi
+				done
+			else
+				curr_lunid=${iscsi_lunid}
+			fi
 			if [ "${iscsi_target_extent_type}" = "Disk" ]; then
 				mpname=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_multipath_name FROM storage_disk WHERE id = ${iscsi_target_extent_path}")
 				ident=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE id = ${iscsi_target_extent_path}"|sed 's/{label}/{devicename}/')
 				diskname=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py identifier_to_device "${ident}")
 				if [ -n "${mpname}" ]; then
-					echo -n "  LUN${iscsi_target_lun} Storage /dev/multipath/${mpname}"
+					echo -n "  LUN${curr_lunid} Storage /dev/multipath/${mpname}"
 				else
-					echo -n "  LUN${iscsi_target_lun} Storage /dev/${diskname}"
+					echo -n "  LUN${curr_lunid} Storage /dev/${diskname}"
 				fi
 			elif [ "${iscsi_target_extent_type}" = "ZVOL" ]; then
-				echo -n "  LUN${iscsi_target_lun} Storage /dev/${iscsi_target_extent_path}"
+				echo -n "  LUN${curr_lunid} Storage /dev/${iscsi_target_extent_path}"
 			else
-				echo -n "  LUN${iscsi_target_lun} Storage ${iscsi_target_extent_path}"
+				echo -n "  LUN${curr_lunid} Storage ${iscsi_target_extent_path}"
 			fi
 			if [ -c "${iscsi_target_extent_path}" ]; then
 				echo " auto"
@@ -184,8 +199,10 @@ generate_istgt_config()
 			else
 				echo " ${iscsi_target_extent_filesize}"
 			fi
-			echo "  LUN${iscsi_target_lun} Option Serial ${iscsi_target_serial}${iscsi_target_lun}"
-			iscsi_target_lun=$((${iscsi_target_lun}+1))
+			echo "  LUN${curr_lunid} Option Serial ${iscsi_target_serial}${curr_lunid}"
+			if [ -z "${iscsi_lunid}" ]; then
+				iscsi_target_lun=$((${curr_lunid}+1))
+			fi
 		done
 	done
 }

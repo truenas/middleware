@@ -43,14 +43,17 @@
 					KeyboardList = declare([OnDemandList, Keyboard]),
 					KeyboardGrid = declare([OnDemandGrid, Keyboard]),
 					list = window.list = new KeyboardList({
+						sort: "id",
 						store: testStore,
 						renderRow: function(item){ return put("div", item.col5); }
 					}, "list"),
 					grid = window.grid = new KeyboardGrid({
+						sort: "id",
 						store: testStore,
 						columns: columns
 					}, "grid"),
 					rowGrid = window.rowGrid = new KeyboardGrid({
+						sort: "id",
 						store: testStore,
 						columns: columns,
 						cellNavigation: false

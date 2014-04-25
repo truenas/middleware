@@ -1,3 +1,7 @@
+.dgrid-spacer-row {
+	height: 0;
+}
+
 .dgrid-spacer-row th { /* Need to make these cells zero height/invisible, but still force the table layout */
 	padding-top: 0;
 	padding-bottom: 0;

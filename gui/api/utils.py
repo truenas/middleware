@@ -284,7 +284,12 @@ class DojoModelResource(ResourceMixin, ModelResource):
             if val is None:
                 del querydict[key]
         querydict = QueryDict(urllib.urlencode(querydict, doseq=True))
-        form = self._meta.validation.form_class(
+
+        # Allow one form validation for each method
+        method_validation = '%s_validation' % bundle.request.method.lower()
+        validation = getattr(self._meta, method_validation, self._meta.validation)
+
+        form = validation.form_class(
             querydict,
             instance=bundle.obj,
             api_validation=True,

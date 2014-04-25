@@ -205,7 +205,7 @@ define("xstyle/core/expression", ["xstyle/core/utils"], function(utils){
 					var target = variable[0];
 					// now find the element that is keyed on
 					if(target.forElement){
-						target = variable[0] = target.forElement(element);
+						target = variable[0] = target.forElement(element, variable.length == 1);
 					}
 					// we need to find the most parent element that we need to vary on for this computation 
 					var varyOnElement = parentElement = target.element;

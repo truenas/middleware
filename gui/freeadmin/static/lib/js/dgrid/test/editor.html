@@ -260,6 +260,7 @@
 							
 							if(!grid){
 								grid = new CustomGrid({
+									sort: "id",
 									store: store,
 									columns: {
 										"editor": editor(lang.mixin({}, options.column, columnArgs))

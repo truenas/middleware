@@ -9,7 +9,7 @@
 			@import "../../dijit/themes/claro/claro.css";
 			@import "../css/skins/claro.css";
 			
-			.ui-widget {
+			.dgrid {
 				margin: 10px;
 			}
 			
@@ -144,6 +144,7 @@
 				};
 				var StandardGrid = declare([Grid, Selection, Keyboard]);
 				var grid = window.grid = new StandardGrid({
+					sort: "id",
 					store: testStore,
 					columns: columns,
 					sort: "col3", // initially sort by col3 ascending
@@ -152,17 +153,20 @@
 				}, "grid");
 
 				var grid2 = window.grid2 = new StandardGrid({
+					sort: "id",
 					store: testTypesStore,
 					columns: columns2,
 					selectionMode: "single"
 				},"grid2");
 
 				var grid3 = window.grid3 = new StandardGrid({
+					sort: "id",
 					store: testTypesStore,
 					columns: columns3
 				}, "grid3");
 
 				var gridAddDel = window.gridAddDel = new StandardGrid({
+					sort: "id",
 					store: smallColorStore,
 					columns: lang.clone(columns4)
 				}, "gridAddDel");
@@ -170,6 +174,7 @@
 				// also throw in a List connected to the same store
 				// (so additions/deletions should show up in both)
 				window.listAddDel = new (declare([List, Keyboard, Selection]))({
+					sort: "id",
 					store: smallColorStore,
 					columns: lang.clone(columns4),
 					renderRow: function(object, options){
@@ -179,6 +184,7 @@
 				}, "listAddDel");
 				
 				window.statefulGrid = new StandardGrid({
+					sort: "abbreviation",
 					store: createStatefulStore(),
 					columns: [
 						editor({

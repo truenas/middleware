@@ -316,12 +316,6 @@
         "parent": ""
     },
     {
-        "name": "tree_expand_hidden.html",
-        "url": "tree_expand_hidden.html",
-        "title": "Test Tree Grid Expanding while Hidden",
-        "parent": ""
-    },
-    {
         "name": "tundra_custom.html",
         "url": "tundra_custom.html",
         "title": "Test Tundra Theme",

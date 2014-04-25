@@ -95,6 +95,7 @@ function(kernel, declare, lang, Deferred, listen, aspect, put){
 			if (column.set){
 				this._columnsWithSet[column.field] = column;
 			}
+			this.inherited(arguments);
 		},
 		
 		_updateNotifyHandle: function(store){
@@ -110,6 +111,13 @@ function(kernel, declare, lang, Deferred, listen, aspect, put){
 			if(store && typeof store.notify === "function"){
 				this._notifyHandle = aspect.after(store, "notify",
 					lang.hitch(this, "_onNotify"), true);
+				
+				var sort = this.get("sort");
+				if (!sort || !sort.length) {
+					console.warn("Observable store detected, but no sort order specified. " +
+						"You may experience quirks when adding/updating items.  " +
+						"These can be resolved by setting a sort order on the list or grid.");
+				}
 			}
 		},
 		
@@ -152,7 +160,7 @@ function(kernel, declare, lang, Deferred, listen, aspect, put){
 			// summary:
 			//		Get a fresh queryOptions object, also including the current sort
 			var options = lang.delegate(this.queryOptions, {});
-			if(this._sort.length){
+			if(typeof(this._sort) === "function" || this._sort.length){
 				// Prevents SimpleQueryEngine from doing unnecessary "null" sorts (which can
 				// change the ordering in browsers that don't use a stable sort algorithm, eg Chrome)
 				options.sort = this._sort;

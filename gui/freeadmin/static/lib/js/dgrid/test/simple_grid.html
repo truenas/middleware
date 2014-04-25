@@ -11,7 +11,7 @@
 				font-weight: bold;
 				padding-bottom: 0.25em;
 			}
-			.ui-widget{
+			.dgrid {
 				margin: 10px;
 			}
 
@@ -68,8 +68,8 @@
 			<button onclick="grid.set('columns', columns2);">name, description</button>
 		</div>
 		<div>Buttons to test programmatic sort (on order field):
-			<button onclick="grid.sort('order');">Sort Asc</button>
-			<button onclick="grid.sort('order', true);">Sort Desc</button>
+			<button onclick="grid.set('sort', 'order');">Sort Asc</button>
+			<button onclick="grid.set('sort', 'order', true);">Sort Desc</button>
 		</div>
 	</body>
 </html>

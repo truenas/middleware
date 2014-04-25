@@ -362,7 +362,7 @@ function(_StoreMixin, declare, arrayUtil, lang, Deferred, on, query, string, has
 			this._lastCollection = null;
 			
 			if(!beforeNode){
-				if(this._topLevelRequest){
+				if(this._topLevelRequest && this._topLevelRequest !== results){
 					// Cancel previous async request that didn't finish
 					this._topLevelRequest.cancel();
 					delete this._topLevelRequest;

@@ -31,6 +31,7 @@
 							{ label: "Number", field: "integer", editor: NumberSpinner },
 							{ label: "Checkbox Widget", field: "bool", editor: CheckBox },
 							{ label: "Text", field: "text", editor: "text" },
+							{ label: "Radio", field: "radio", editor: "radio" },
 							{ label: "Checkbox", field: "bool", editor: "checkbox" }
 						], function (column) {
 							column.autoSave = true;
@@ -42,6 +43,7 @@
 					}
 
 					window.grid = new (declare([Grid, Keyboard]))({
+						sort: "id",
 						store: testTypesStore,
 						columns: getColumns()
 					}, "grid");

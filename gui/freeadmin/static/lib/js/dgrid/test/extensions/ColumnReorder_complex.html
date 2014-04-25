@@ -79,18 +79,22 @@
 				"dojo/_base/declare", "dojo/on", "dgrid/test/data/base", "dojo/domReady!"],
 			function(OnDemandGrid, ColumnSet, ColumnReorder, declare, on, testStore){
 				var grid = window.grid = new (declare([OnDemandGrid, ColumnReorder]))({
+						sort: "id",
 						store: testStore,
 						columns: getColumns()
 					}, "grid"),
 					grid2 = window.grid2 = new (declare([OnDemandGrid, ColumnReorder]))({
+						sort: "id",
 						store: testStore,
 						subRows: getSubRows()
 					}, "grid-99"),
 					gridColumnSets = window.gridColumnSets = new (declare([OnDemandGrid, ColumnSet, ColumnReorder]))({
+						sort: "id",
 						store: testStore,
 						columnSets: getColumnSets()
 					}, "gridColumnSets"),
 					gridColumnSets2 = window.gridColumnSets2 = new (declare([OnDemandGrid, ColumnSet, ColumnReorder]))({
+						sort: "id",
 						store: testStore,
 						columnSets: getColumnSets()
 					}, "gridColumnSets-99");

@@ -87,7 +87,7 @@ class Volume(Model):
                         self.vol_fstype.lower(),
                         self.vol_name)
                     self._disks = n.get_disks_from_provider(prov) \
-                        if prov else []
+                        if prov is not None else []
             return self._disks
         except Exception, e:
             log.debug(
@@ -874,6 +874,12 @@ class Replication(Model):
         verbose_name=_(
             "Initialize remote side for once. (May cause data"
             " loss on remote side!)"),
+    )
+    repl_compression = models.CharField(
+        max_length=5,
+        choices=choices.Repl_CompressionChoices,
+        default="lz4",
+        verbose_name=_("Replication Stream Compression"),
     )
     repl_limit = models.IntegerField(
         default=0,

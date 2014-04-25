@@ -74,6 +74,7 @@
 				grid.on(mouseUtil.leaveHeaderCell, makeHeaderCellHandler(grid, "left"));
 				
 				var treegrid = window.treegrid = new OnDemandGrid({
+					sort: "id",
 					store: testCountryStore,
 					columns: [
 						tree({label: "Name", field:"name", sortable: false}),

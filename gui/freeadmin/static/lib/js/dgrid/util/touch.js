@@ -44,6 +44,12 @@ function(on, query){
 			//		count is needed but tracking changedTouches won't suffice because
 			//		other handlers stop events from bubbling high enough.
 			
+			if(!("touches" in evt)){
+				// Not a touch event (perhaps called from a mouse event on a
+				// platform supporting touch events)
+				return -1;
+			}
+			
 			var i, numTouches, touch;
 			for(i = 0, numTouches = 0; (touch = evt.touches[i]); ++i){
 				if(node.contains(touch.target)){

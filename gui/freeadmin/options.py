@@ -83,6 +83,7 @@ class BaseFreeAdmin(object):
     resource_mixin = None
     resource_name = None
     double_click = True
+    refresh_time = None
 
     advanced_fields = []
 
@@ -747,6 +748,9 @@ class BaseFreeAdmin(object):
     def get_datagrid_filters(self, request):
         return {}
 
+    def get_refresh_time(self, request):
+        return self.refresh_time
+
     def get_datagrid_dblclick(self, request=None):
         if self.double_click is False:
             return False
@@ -791,6 +795,7 @@ grid.on(".dgrid-row:dblclick", function(evt) {
             'datagrid_filters': filters,
             'verbose_name': self.verbose_name,
             'module_name': self.module_name,
+            'refresh_time': self.get_refresh_time(request=request),
             'resource_url': self.get_resource_url(request),
             'structure_url': reverse('freeadmin_%s_%s_structure' % info),
             'actions_url': reverse('freeadmin_%s_%s_actions' % info),

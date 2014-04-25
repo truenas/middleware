@@ -59,6 +59,7 @@ generate_collectd()
     local rrdds
     local rrdmnt
 
+    rrdfile="/data/rrd_dir.tar.bz2"
     datadir="/var/db/collectd/rrd"
     rrdds="$(get_rrd_dataset)"
     rrdmnt="/mnt/${rrdds}"
@@ -67,13 +68,16 @@ generate_collectd()
         datadir="/mnt/${rrdds}"
     fi
 
-    if [ -f "/data/rrd_dir.tar.bz2" ]; then
+    if [ -f "${rrdfile}" ]; then
         if [ -n "${rrdds}" -a -d "${rrdmnt}" ]; then
-            (cd "${rrdmnt}" && tar jxf /data/rrd_dir.tar.bz2 && \
-                mv collectd/rrd/* "${rrdmnt}/" && mv /data/rrd_dir.tar.bz2 "${rrdmnt}/" && \
-                rm -rf collectd)
-        elif [ -d "/var/db" -a ! -d /var/db/collectd/rrd ]; then
-            (cd /var/db && tar jxf /data/rrd_dir.tar.bz2)
+            if tar -tf "${rrdfile}"|egrep -q '^collectd/rrd/$'; then
+                (cd "${rrdmnt}" && tar jxf "${rrdfile}" && \
+                    mv collectd/rrd/* "${rrdmnt}/" && \
+		    mv /data/rrd_dir.tar.bz2 "${rrdmnt}/" && \
+                    rm -rf collectd)
+            fi
+        elif [ -d "/var/db" -a ! -d "${datadir}" ]; then
+            (cd /var/db && tar jxf "${rrdfile}")
         fi
     fi
 

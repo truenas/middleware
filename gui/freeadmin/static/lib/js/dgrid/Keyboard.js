@@ -221,7 +221,8 @@ var Keyboard = declare(null, {
 		//		previously removed row, or to the nearest sibling otherwise.
 		
 		var focusInfo = this._removedFocus,
-			newTarget;
+			newTarget,
+			cell;
 		
 		row = row && this.row(row);
 		newTarget = row && row.element && row.id === focusInfo.rowId ? row :
@@ -235,13 +236,18 @@ var Keyboard = declare(null, {
 				focusInfo.wait = true;
 				return;
 			}
-			newTarget = typeof focusInfo.columnId !== "undefined" ?
-				this.cell(newTarget, focusInfo.columnId) : newTarget;
-			if(focusInfo.active){
-				// Row/cell was previously focused, so focus the new one immediately
+			// Should focus be on a cell?
+			if(typeof focusInfo.columnId !== "undefined"){
+				cell = this.cell(newTarget, focusInfo.columnId);
+				if(cell && cell.element){
+					newTarget = cell;
+				}
+			}
+			if(focusInfo.active && newTarget.element.offsetHeight !== 0){
+				// Row/cell was previously focused and is visible, so focus the new one immediately
 				this.focus(newTarget);
 			}else{
-				// Row/cell was not focused, but we still need to update tabIndex
+				// Row/cell was not focused or is not visible, but we still need to update tabIndex
 				// and the element's class to be consistent with the old one
 				put(newTarget.element, ".dgrid-focus");
 				newTarget.element.tabIndex = this.tabIndex;

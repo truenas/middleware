@@ -60,6 +60,7 @@
 					gridLeft = new CustomGrid({
 						id: "gridLeft",
 						className: "bcLeft",
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(gridCols),
 						selectionMode: "single",
@@ -68,6 +69,7 @@
 					}),
 					gridTab1 = new CustomGrid({
 						id: "gridTab1",
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(gridCols),
 						selectionMode: "single",
@@ -75,6 +77,7 @@
 					}),
 					gridTab2 = new CustomGrid({
 						id: "gridTab2",
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(gridCols),
 						selectionMode: "single",
@@ -117,6 +120,7 @@
 				window.dlgProgContent = new Dialog({
 					content: new CustomGrid({
 						id: "gridDlgProgContent",
+						sort: "id",
 						store: testStore,
 						columns: lang.clone(gridCols),
 						selectionMode: "single"

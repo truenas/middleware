@@ -15,25 +15,6 @@
 			#grid {
 				width: 400px;
 			}
-			
-			/* styles for autoheight */
-			#grid {
-				height: auto;
-			}
-			#grid .dgrid-scroller {
-				position: relative;
-				overflow-y: hidden;
-			}
-			.has-ie-6 #grid .dgrid-scroller {
-				/* IE6 doesn't react properly to hidden on this page for some reason */
-				overflow-y: visible;
-			}
-			#grid .dgrid-header-scroll {
-				display: none;
-			}
-			#grid .dgrid-header {
-				right: 0;
-			}
 		</style>
 		<script src="../../dojo/dojo.js" 
 			data-dojo-config="async: true"></script>
@@ -41,6 +22,8 @@
 			require(["dgrid/List", "dgrid/OnDemandGrid","dgrid/Selection", "dgrid/Keyboard", "dojo/_base/declare", "dgrid/test/data/base", "dojo/domReady!"], 
 				function(List, Grid, Selection, Keyboard, declare){
 					window.grid = new (declare([Grid, Selection, Keyboard]))({
+						className: "dgrid-autoheight",
+						sort: "id",
 						store: testCountryStore,
 						columns: {
 							name: "Name",

@@ -22,6 +22,8 @@ define([
 	// Common functions run after each test and suite
 	
 	function afterEach(){
+		grid.domNode.style.display = "";
+
 		for(var i = handles.length; i--;){
 			handles[i].remove && handles[i].remove();
 		}
@@ -251,7 +253,7 @@ define([
 		});
 		
 		test.test("grid.focus + item update", function(){
-			var element, elementId;
+			var element;
 			// Focus a row based on a store ID + column ID,
 			// then issue an update and make sure the same id is still focused
 			grid.focus(grid.cell(1, "col1"));
@@ -260,14 +262,32 @@ define([
 			assert.ok(element && element.className && element.className.indexOf("dgrid-cell") > -1,
 				"focus(id) call focused a cell");
 			
-			elementId = element.id;
 			grid.store.put(item);
 			assert.notStrictEqual(element, document.activeElement,
 				"A different DOM element is focused after updating the item");
 			assert.strictEqual(grid.cell(1, "col1").element, document.activeElement,
 				"The item's new cell is focused after updating the item");
 		});
-		
+
+		test.test("grid.focus + item update on hidden grid", function(){
+			var element;
+			// Focus a row based on a store ID + column ID,
+			// then issue an update and make sure the same id is still focused
+			grid.focus(grid.cell(1, "col1"));
+
+			element = document.activeElement;
+			assert.ok(element && element.className && element.className.indexOf("dgrid-cell") > -1,
+				"focus(id) call focused a cell");
+
+			// Hide the grid
+			put(grid.domNode, "[style='display:none;']");
+
+			// Modify the item in the store
+			grid.store.put(item);
+			assert.notStrictEqual(element, document.activeElement,
+				"A different or no DOM element is focused after updating the item");
+		});
+
 		test.test("grid.focus + item removal", function(){
 			var dfd = this.async(1000),
 				element,

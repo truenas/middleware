@@ -51,7 +51,7 @@ from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_number_si
 from freenasUI.common.warden import Warden
-from freenasUI.jails.forms import JailCreateForm
+from freenasUI.jails.forms import JailCreateForm, JailsEditForm
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -1544,6 +1544,7 @@ class JailsResourceMixin(NestedMixin):
 
     class Meta:
         validation = FormValidation(form_class=JailCreateForm)
+        put_validation = FormValidation(form_class=JailsEditForm)
 
     def prepend_urls(self):
         return [
@@ -1553,6 +1554,13 @@ class JailsResourceMixin(NestedMixin):
                 ),
                 self.wrap_view('jail_start'),
                 name="api_jails_jails_start"
+            ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/stop%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('jail_stop'),
+                name="api_jails_jails_stop"
             ),
         ]
 
@@ -1573,6 +1581,24 @@ class JailsResourceMixin(NestedMixin):
             )
 
         return HttpResponse('Jail started.', status=202)
+
+    def jail_stop(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        #TODO: Duplicated code - jails.views.jail_stop
+        notifier().reload("http")
+        try:
+            Warden().stop(jail=obj.jail_host)
+        except Exception, e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error': e,
+                })
+            )
+
+        return HttpResponse('Jail stopped.', status=202)
 
     def dispatch_list(self, request, **kwargs):
         proc = subprocess.Popen(

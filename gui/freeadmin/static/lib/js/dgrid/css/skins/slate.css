@@ -1,4 +1,4 @@
-.slate .ui-widget-content {
+.slate .dgrid-content {
 	background: #fff; 
 	color: #000;
 	text-shadow: 0 1px 0 rgba(255,255,255,.9);
@@ -8,7 +8,8 @@
 	border-bottom: none;
 }
 
-.slate .ui-widget-header, .slate .dgrid-footer {
+.slate .dgrid-header,
+.slate .dgrid-footer {
 	color: #fff;
 	background: #333; /* Old browsers */
 	background: -moz-linear-gradient(top, #4e4e4e 0%, #555555 12%, #636363 25%, #505050 39%, #303030 49%, #000000 50%, #1c1c1c 60%, #292929 76%, #1e1e1e 91%, #141414 100%); /* FF3.6+ */
@@ -20,7 +21,7 @@
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4e4e4e', endColorstr='#141414',GradientType=0 ); /* IE6-9 */
 }
 
-.slate .ui-widget-header th {
+.slate .dgrid-header th {
 	padding: 7px 3px;
 	font-weight: bold;
 	color: #FFF;
@@ -37,20 +38,20 @@
 	background-color: #ddd;
 }
 
-.slate .ui-state-active,
-.slate .ui-state-active:hover {
+.slate .dgrid-selected,
+.slate .dgrid-selected:hover {
 	background-color: #555;
 	color: #fff;
 	text-shadow: 0 -1px 0 rgba(0,0,0,.5);	
 }
 
-.slate .ui-state-highlight {
+.slate .dgrid-highlight {
 	background-color: #999;
 }
 
 /* need to use white-based image for sort arrow */
 .slate .dgrid-sort-arrow {
-	background-image: url("../images/ui-icons_222222_256x240_white.png");
+	background-image: url("../images/ui-icons_ffffff_256x240.png");
 }
 
 /* for ColumnReorder */

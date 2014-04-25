@@ -678,44 +678,58 @@ class notifier:
     def _start_activedirectory(self):
         res = False
         if self._get_stg_directoryservice() == 'activedirectory':
-            res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
+            if not ret:
+                res = True
+        return res
 
     def _stop_activedirectory(self):
         res = False
         if self._get_stg_directoryservice() == 'activedirectory':
-            res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
+            if not ret:
+                res = True
+        return res
 
     def _restart_activedirectory(self):
         res = False
         if self._get_stg_directoryservice() == 'activedirectory':
-            res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
+            if not ret:
+                res = True
+        return res
 
     def _started_domaincontroller(self):
         res = False
         if self._get_stg_directoryservice() == 'domaincontroller':
-            res = self._system_nolog("/etc/directoryservice/DomainController/ctl status")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/DomainController/ctl status")
+            if not ret:
+                res = True
+        return res
 
     def _start_domaincontroller(self):
         res = False
         if self._get_stg_directoryservice() == 'domaincontroller':
-            res = self._system_nolog("/etc/directoryservice/DomainController/ctl start")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/DomainController/ctl start")
+            if not ret:
+                res = True
+        return res
 
     def _stop_domaincontroller(self):
         res = False
         if self._get_stg_directoryservice() == 'domaincontroller':
-            res = self._system_nolog("/etc/directoryservice/DomainController/ctl stop")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/DomainController/ctl stop")
+            if not ret:
+                res = True
+        return res
 
     def _restart_domaincontroller(self):
         res = False
         if self._get_stg_directoryservice() == 'domaincontroller':
-            res = self._system_nolog("/etc/directoryservice/DomainController/ctl restart")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/DomainController/ctl restart")
+            if not ret:
+                res = True
+        return res
 
     def _restart_syslogd(self):
         self._system("/usr/sbin/service ix-syslogd quietstart")
@@ -1699,7 +1713,7 @@ class notifier:
 
         disks = volume.get_disks()
         provider = self.get_label_consumer('ufs', u_name)
-        if not provider:
+        if provider is None:
             return None
         geom_type = provider.xpath("../../name")[0].text.lower()
 
@@ -2332,11 +2346,11 @@ class notifier:
         if winexists:
             if not mode:
                 mode = '0755'
-            script = "/usr/local/www/freenasUI/tools/winacl.sh"
-            args=" -o '%s' -g '%s' -d %s " % (user, group, mode)
+            script = "/usr/local/www/freenasUI/tools/setacl.py"
+            args=" -O '%s' -G '%s' -u -x " % (user, group)
             if recursive:
                 apply_paths = exclude_path(path, exclude)
-                apply_paths = map(lambda y: (y, ' -r '), apply_paths)
+                apply_paths = map(lambda y: (y, ' -R '), apply_paths)
                 if len(apply_paths) > 1:
                     apply_paths.insert(0, (path, ''))
             else:
@@ -3074,7 +3088,7 @@ class notifier:
         elif fs == 'UFS':
 
             provider = self.get_label_consumer('ufs', name)
-            if not provider:
+            if provider is None:
                 return 'UNKNOWN'
             gtype = provider.xpath("../../name")[0].text
 
@@ -3454,11 +3468,11 @@ class notifier:
                 if replications:
                     for repl, snaps in replications.iteritems():
                         remotename = '%s@%s' % (
-                            bundle.obj.filesystem.replace(
-                                repl.repl_filesystem,
-                                repl.repl_zfs,
+                            fs.replace(
+                                repl.repl_filesystem + '@',
+                                repl.repl_zfs + '@',
                             ),
-                            bundle.obj.name,
+                            name,
                         )
                         if remotename in snaps:
                             replication = 'OK'
@@ -3657,7 +3671,7 @@ class notifier:
         assert volume.vol_fstype == 'UFS'
 
         provider = self.get_label_consumer('ufs', volume.vol_name)
-        if not provider:
+        if provider is None:
             raise ValueError("UFS Volume %s not found" % (volume.vol_name,))
         class_name = provider.xpath("../../name")[0].text
         geom_name = provider.xpath("../name")[0].text
@@ -3703,6 +3717,27 @@ class notifier:
 
         proc = self._pipeopen('/sbin/ifconfig %s' % name)
         data = proc.communicate()[0]
+
+        if name.startswith('lagg'):
+            proto = re.search(r'laggproto (\S+)', data)
+            if not proto:
+                return _('Unknown')
+            proto = proto.group(1)
+            ports = re.findall(r'laggport.+<(.*?)>', data, re.M|re.S)
+            if proto == 'lacp':
+                # Only if all ports are ACTIVE,COLLECTING,DISTRIBUTING
+                # it is considered active
+
+                portsok = len(filter(
+                    lambda y: y == 'ACTIVE,COLLECTING,DISTRIBUTING',
+                    ports
+                ))
+                if portsok == len(ports):
+                    return _('Active')
+                elif portsok > 0:
+                    return _('Degraded')
+                else:
+                    return _('Down')
 
         if name.startswith('carp'):
             reg = re.search(r'carp: (\S+)', data)
@@ -4056,7 +4091,7 @@ class notifier:
         self.__camcontrol = None
 
         ident = self.device_to_identifier(devname)
-        qs = Disk.objects.filter(disk_identifier=ident)
+        qs = Disk.objects.filter(disk_identifier=ident).order_by('disk_enabled')
         if ident and qs.exists():
             disk = qs[0]
         else:
@@ -4196,7 +4231,7 @@ class notifier:
             ValueError: UFS volume not found
         """
         provider = self.get_label_consumer('ufs', volume.vol_name)
-        if not provider:
+        if provider is None:
             raise ValueError("UFS Volume %s not found" % (volume,))
         class_name = provider.xpath("../../name")[0].text
 
@@ -4533,7 +4568,7 @@ class notifier:
 
         prov = self.get_label_consumer(volume.vol_fstype.lower(),
             str(volume.vol_name))
-        if not prov:
+        if prov is None:
             return False
 
         proc = self._pipeopen("mount /dev/%s/%s" % (
@@ -4566,7 +4601,7 @@ class notifier:
             devname,
         ))
         if geom:
-            provid = geom[0].xpath("./provider/@id")[0].text
+            provid = geom[0].xpath("./provider/@id")[0]
         else:
             raise ValueError("Unknown disk %s" % (devname, ))
         return self.__get_geoms_recursive(provid)

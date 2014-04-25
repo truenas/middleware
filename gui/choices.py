@@ -312,6 +312,12 @@ ZFS_CompressionChoices = (
         ('lzjb',    _('lzjb (legacy, not recommended)')),
         )
 
+Repl_CompressionChoices = (
+        ('off',     _('Off')),
+        ('lz4',     _('lz4 (fastest)')),
+        ('pigz',    _('pigz (all rounder)')),
+        ('plzip',   _('plzip (best compression)')),
+        )
 
 class whoChoices:
     """Populate a list of system user choices"""
