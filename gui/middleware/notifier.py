@@ -678,20 +678,26 @@ class notifier:
     def _start_activedirectory(self):
         res = False
         if self._get_stg_directoryservice() == 'activedirectory':
-            res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl start")
+            if not ret:
+                res = True
+        return res
 
     def _stop_activedirectory(self):
         res = False
         if self._get_stg_directoryservice() == 'activedirectory':
-            res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop")
+            if not ret:
+                res = True
+        return res
 
     def _restart_activedirectory(self):
         res = False
         if self._get_stg_directoryservice() == 'activedirectory':
-            res = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart")
+            if not ret:
+                res = True
+        return res
 
     def _started_domaincontroller(self):
         res = False
@@ -704,20 +710,26 @@ class notifier:
     def _start_domaincontroller(self):
         res = False
         if self._get_stg_directoryservice() == 'domaincontroller':
-            res = self._system_nolog("/etc/directoryservice/DomainController/ctl start")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/DomainController/ctl start")
+            if not ret:
+                res = True
+        return res
 
     def _stop_domaincontroller(self):
         res = False
         if self._get_stg_directoryservice() == 'domaincontroller':
-            res = self._system_nolog("/etc/directoryservice/DomainController/ctl stop")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/DomainController/ctl stop")
+            if not ret:
+                res = True
+        return res
 
     def _restart_domaincontroller(self):
         res = False
         if self._get_stg_directoryservice() == 'domaincontroller':
-            res = self._system_nolog("/etc/directoryservice/DomainController/ctl restart")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/DomainController/ctl restart")
+            if not ret:
+                res = True
+        return res
 
     def _restart_syslogd(self):
         self._system("/usr/sbin/service ix-syslogd quietstart")
