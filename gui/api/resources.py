@@ -867,12 +867,16 @@ class VolumeResourceMixin(NestedMixin):
 
             zvols = bundle.obj.get_zvols() or {}
             for name, zvol in zvols.items():
+                total_si = '%s %siB' % (
+                    zvol['volsize'][:-1],
+                    zvol['volsize'][-1],
+                )
                 data = {
                     'id': uid.next(),
                     'name': name,
                     'status': mp.status,
                     'type': 'zvol',
-                    'total_si': zvol['volsize'],
+                    'total_si': total_si,
                 }
 
                 if self.is_webclient(bundle.request):
