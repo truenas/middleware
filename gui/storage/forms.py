@@ -1614,7 +1614,7 @@ class ZVol_CreateForm(Form):
         self.vol_name = kwargs.pop('vol_name')
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
 
-    def clean_dataset_name(self):
+    def clean_zvol_name(self):
         name = self.cleaned_data["zvol_name"]
         if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
             raise forms.ValidationError(_(
