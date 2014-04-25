@@ -27,6 +27,7 @@ ENV_SETUP+= USE_POUDRIERE=${USE_POUDRIERE}
 all:	build
 
 build: git-verify
+	${ENV_SETUP} build/check_build_host.sh
 	${ENV_SETUP} build/check_sandbox.sh
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
 .if defined(USE_POUDRIERE)
@@ -68,6 +69,7 @@ save-build-env:
 
 freenas: release
 release: git-verify
+	${ENV_SETUP} build/check_build_host.sh
 	${ENV_SETUP} build/check_sandbox.sh
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
@@ -132,6 +134,8 @@ tag:
 	${ENV_SETUP} build/apply_tag.sh
 
 ports:
+	${ENV_SETUP} build/check_build_host.sh
+	${ENV_SETUP} build/check_sandbox.sh
 	${ENV_SETUP} build/ports/create-poudriere-conf.sh
 	${ENV_SETUP} build/ports/create-poudriere-make.conf.sh
 	${ENV_SETUP} build/ports/prepare-jail.sh
@@ -140,4 +144,6 @@ ports:
 	${ENV_SETUP} build/ports/build-ports.sh
 
 portsjail:
+	${ENV_SETUP} build/check_build_host.sh
+	${ENV_SETUP} build/check_sandbox.sh
 	${ENV_SETUP} build/build_jail.sh
