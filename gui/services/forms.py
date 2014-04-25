@@ -76,12 +76,7 @@ class servicesForm(ModelForm):
         self.enabled_svcs = []
         self.disabled_svcs = []
         directory_services = ['activedirectory', 'domaincontroller', 'ldap', 'nt4', 'nis']
-        if obj.srv_service == 'cifs' and _notifier._started_domaincontroller():
-            obj.srv_enable = True
-            obj.save()
-            started = True
-
-        elif obj.srv_service == "directoryservice":
+        if obj.srv_service == "directoryservice":
             directoryservice = DirectoryService.objects.order_by("-id")[0]
             for ds in directory_services:
                 if ds != directoryservice.svc:
