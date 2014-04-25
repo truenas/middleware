@@ -463,7 +463,9 @@ fetch_background ()
 	echo ${NANO_FETCH_PORTS_BG} | tr -s " " "\n" > ${fetch_list}
 	do_fetch_background ${fetch_list} &
 }
-customize_cmd fetch_background
+if [ -z "$USE_POUDRIERE" ]; then
+	customize_cmd fetch_background
+fi
 
 # Add a port from the basic NANO_PORTS directory
 add_port ()
