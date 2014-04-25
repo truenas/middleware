@@ -696,8 +696,10 @@ class notifier:
     def _started_domaincontroller(self):
         res = False
         if self._get_stg_directoryservice() == 'domaincontroller':
-            res = self._system_nolog("/etc/directoryservice/DomainController/ctl status")
-        return (True if res == 0 else False)
+            ret = self._system_nolog("/etc/directoryservice/DomainController/ctl status")
+            if not ret:
+                res = True
+        return res
 
     def _start_domaincontroller(self):
         res = False
