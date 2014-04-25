@@ -9,7 +9,8 @@ TOP="$(pwd)"
 #
 # Create a global make.conf file that poudriere will use
 # when building packages
-cat > ${NANO_OBJ}/poudriere/etc/poudriere.d/make.conf << EOF
+POUDRIERE_MAKE_CONF=${NANO_OBJ}/poudriere/etc/poudriere.d/make.conf
+cat > ${POUDRIERE_MAKE_CONF} << EOF
 USE_PACKAGE_DEPENDS=yes
 BATCH=yes
 WRKDIRPREFIX=/wrkdirs
@@ -17,3 +18,12 @@ WRKDIRPREFIX=/wrkdirs
 WANT_OPENLDAP_SASL=yes
 
 EOF
+
+VARS="MASTER_SITE_BACKUP MASTER_SITE_OVERRIDE PACKAGEROOT PACKAGESITE"
+
+for var in $VARS; do
+        val=$(eval echo "\$$var")
+        if [ -n "$val" ]; then
+                echo "$var=$val" >> "$POUDRIERE_MAKE_CONF"
+        fi
+done
