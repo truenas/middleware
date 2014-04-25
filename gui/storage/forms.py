@@ -1581,7 +1581,8 @@ class ZVol_CreateForm(Form):
     zvol_size = forms.CharField(
         max_length=128,
         label=_('Size for this zvol'),
-        help_text=_('Example: 1g'))
+        help_text=_('Example: 1 GiB'),
+    )
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
@@ -1622,6 +1623,19 @@ class ZVol_CreateForm(Form):
                 "an alphanumeric character and may only contain "
                 "(-), (_), (:) and (.)."))
         return name
+
+    def clean_zvol_size(self):
+        size = self.cleaned_data.get('zvol_size')
+        size = size.replace(' ', '')
+        reg = re.search(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', size, re.I)
+        if not reg:
+            raise forms.ValidationError(
+                _('Specify the size with IEC suffixes, e.g. 10 GiB')
+            )
+        number, suffix = reg.groups()
+        if suffix.lower().endswith('ib'):
+            return '%s%s' % (number, suffix[0])
+        return size
 
     def clean(self):
         cleaned_data = self.cleaned_data
