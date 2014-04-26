@@ -60,10 +60,6 @@ generate_crontab()
 				echo -n "-a "
 			fi
 
-			if [ ${rsync_delete} -gt 0 ]; then
-				echo -n "--delete "
-			fi
-
 			if [ ${rsync_preserveperm} -gt 0 ]; then
 				echo -n "-p "
 			fi
@@ -71,6 +67,12 @@ generate_crontab()
 			if [ ${rsync_preserveattr} -gt 0 ]; then
 				echo -n "-X "
 			fi
+
+			if [ ${rsync_delete} -gt 0 ]; then
+				echo -n "--delete-delay "
+			fi
+
+			echo -n "--delay-updates "
 
 			echo -n "${rsync_extra} "
 
