@@ -237,13 +237,17 @@ unset PACKAGESITE
 if [ $(which pxz) ]; then
 	if [ x"${NANO_XZ}" == "xpxz" -o -z ${XZ} ]; then
 		NANO_XZ=pxz
+		PXZ_ACCEL="-T 16"
 	else
 		NANO_XZ=xz
+		PXZ_ACCEL=""
 	fi
 else
 	NANO_XZ=xz
+	PXZ_ACCEL=""
 fi
 export NANO_XZ
+export PXZ_ACCEL
 
 : ${DISTCACHE:="/freenas-build/freenas-distfiles"}
 export DISTCACHE
