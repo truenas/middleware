@@ -24,34 +24,40 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from collections import OrderedDict
+
+IEC_MAP = OrderedDict((
+    ('PiB', 1125899906842624.0),
+    ('TiB', 1099511627776.0),
+    ('GiB', 1073741824.0),
+    ('MiB', 1048576.0),
+    ('KiB', 1024.0),
+    ('B', 1),
+))
+
+
+SI_MAP = OrderedDict((
+    ('PB', 1000000000000000.0),
+    ('TB', 1000000000000.0),
+    ('GB', 1000000000.0),
+    ('MB', 1000000.0),
+    ('kB', 1000.0),
+    ('B', 1),
+))
+
 
 def __humanize_number_common(number, maptbl):
     number = int(number)
-    for suffix, factor in maptbl:
+    for suffix, factor in maptbl.items():
         if number > factor:
-            return ('%.1f %s' % (number/factor, suffix))
+            return ('%.1f %s' % (number / factor, suffix))
     return number
+
 
 # The hard drive industry is using SI (10^n) rather than 2^n
 def humanize_number_si(number):
-    number = int(number)
-    humanize_si_map = (
-        ('PB', 1000000000000000.0),
-        ('TB', 1000000000000.0),
-        ('GB', 1000000000.0),
-        ('MB', 1000000.0),
-        ('kB', 1000.0),
-        ('B', 1),
-        )
-    return (__humanize_number_common(number, humanize_si_map))
+    return (__humanize_number_common(int(number), SI_MAP))
+
 
 def humanize_size(number):
-    humanize_iec_map = (
-        ('PiB', 1125899906842624.0),
-        ('TiB', 1099511627776.0),
-        ('GiB', 1073741824.0),
-        ('MiB', 1048576.0),
-        ('KiB', 1024.0),
-        ('B', 1),
-        )
-    return (__humanize_number_common(number, humanize_iec_map))
+    return (__humanize_number_common(int(number), IEC_MAP))
