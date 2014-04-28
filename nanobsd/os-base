@@ -924,6 +924,18 @@ build_nas_source2 ( )
 	             -C /usr/nas_source2/extract-tarball \
 	            ${_target}"
             done
+
+	    # Build winacl
+            for _target in obj all install; do
+	        CR "unset MAKEOBJDIRPREFIX;
+	            env \
+	            TARGET=${NANO_ARCH} \
+	            TARGET_ARCH=${NANO_ARCH} \
+	            ${NANO_PMAKE} \
+	            BINDIR=/usr/local/bin \
+	             -C /usr/nas_source2/winacl \
+	            ${_target}"
+            done
         )
 	umount -f ${NANO_WORLDDIR}/usr/nas_source2
 	umount -f ${NANO_WORLDDIR}/usr/src
