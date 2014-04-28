@@ -360,7 +360,7 @@ remove_inherit_flags(acl_t *acl)
 
 
 /* update an existing ACL */
-int
+static int
 windows_acl_update(struct windows_acl_info *w, const char *path)
 {
 	struct stat st;
@@ -389,7 +389,7 @@ windows_acl_update(struct windows_acl_info *w, const char *path)
 
 
 /* append an ACL */
-int
+static int
 windows_acl_append(struct windows_acl_info *w, const char *path)
 {
 	struct stat st;
@@ -418,7 +418,7 @@ windows_acl_append(struct windows_acl_info *w, const char *path)
 
 
 /* remove an ACL */
-int
+static int
 windows_acl_remove(struct windows_acl_info *w, const char *path)
 {
 	acl_t acl;
@@ -440,7 +440,7 @@ windows_acl_remove(struct windows_acl_info *w, const char *path)
 
 
 /* reset an ACL */
-int
+static int
 windows_acl_reset(struct windows_acl_info *w, const char *path)
 {
 	char *buf;
