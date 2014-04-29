@@ -240,8 +240,15 @@ make_conf_install ( ) (
 )
 
 install_world ( ) (
+	local arg
+	local LOG="_.iw"
 	pprint 2 "installworld"
-	log_file "${NANO_OBJ}/_.iw"
+
+	for arg in $*; do
+		eval $arg
+	done
+
+	log_file "${NANO_OBJ}/${LOG}"
 
 	cd ${NANO_SRC}
 	env \
@@ -252,7 +259,7 @@ install_world ( ) (
 		DESTDIR=${NANO_WORLDDIR} \
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
-		> ${NANO_OBJ}/_.iw 2>&1
+		> ${NANO_OBJ}/${LOG} 2>&1
 	chflags -R noschg ${NANO_WORLDDIR}
 )
 

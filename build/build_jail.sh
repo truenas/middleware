@@ -48,7 +48,7 @@ rm -fr ${NANO_WORLDDIR}
 mkdir -p ${NANO_OBJ} ${NANO_WORLDDIR}
 printenv > ${NANO_OBJ}/_.env
 make_conf_install
-install_world
+install_world LOG=_.ij
 install_etc
 setup_nanobsd_etc
 install_kernel
