@@ -66,7 +66,7 @@ if [ -n "$JAIL" ]; then
 		rm -fr ${NANO_OBJ}/poudriere/etc/poudriere.d/jail/${JAIL}
 		for d in build cache packages; do
 			rm -fr ${NANO_OBJ}/ports/${d}/${JAIL}-p
-			mv ${NANO_OBJ}/ports/${d}/${OLDJAILNAME}-p ${NANO_OBJ}/ports/${d}/${JAIL}-p
+			mv ${NANO_OBJ}/ports/${d}/${OLD_JAILNAME}-p ${NANO_OBJ}/ports/${d}/${JAIL}-p
 		done
 	fi
 fi
