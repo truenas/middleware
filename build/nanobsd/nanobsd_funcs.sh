@@ -418,11 +418,6 @@ setup_nanobsd ( ) (
 	echo "$NANO_RAM_ETCSIZE" > conf/base/etc/md_size
 	echo "$NANO_RAM_TMPVARSIZE" > conf/base/var/md_size
 
-	if ! is_truenas ; then
-		# pick up config files from the special partition
-		# echo "mount -o ro /dev/${NANO_DRIVE}s3" > conf/default/etc/remount
-	fi
-
 	# Put /tmp on the /var ramdisk (could be symlink already)
 	rm -f tmp || :
 	rm -Rf tmp

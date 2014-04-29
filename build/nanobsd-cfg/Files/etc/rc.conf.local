@@ -509,12 +509,6 @@ _gen_conf()
 	done
 }
 
-# If we're running really early, then mount /data read-only
-if [ ! -f ${FREENAS_CONFIG} ]; then
-	mount -o ro /data
-	_doumount=1
-fi
-
 # Regenerate stale caches of rc.conf data.  We run multiple time
 # as part of the boot process, and this helps.  It also provides
 # a useful file to look at for debugging.
@@ -526,10 +520,6 @@ _OLDSUM=$(cat ${FREENAS_CONFIG_MD5} 2> /dev/null)
 if [ ! "${_NEWSUM}" = "${_OLDSUM}" -a ! -f "${NEED_UPDATE_SENTINEL}" ]; then
 	_gen_conf > ${FREENAS_RC}
 	echo ${_NEWSUM} > ${FREENAS_CONFIG_MD5}
-fi
-
-if [ -n "${_doumount}" ]; then
-	umount /data
 fi
 
 if [ -f ${FREENAS_RC} ]; then
