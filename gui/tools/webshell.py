@@ -51,6 +51,8 @@ sys.path.append(os.path.join(HERE, "../.."))
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
 
+os.environ['DJANGO_SETTINGS_MODULE'] = 'freenasUI.settings'
+
 from freenasUI.settings import LOGGING
 
 log = logging.getLogger('tools.webshell')
@@ -67,9 +69,19 @@ def set_proc_name(newname):
 class XMLRPCHandler(SocketServer.BaseRequestHandler):
 
     def handle(self):
-        self.data = self.request.recv(1024).strip()
+        buff = ''
+        while True:
+            data = self.request.recv(1024)
+            if not data:
+                break
+            buff += data
+
+            fds = select.select([self.request], [], [], 0)
+            if not fds[0]:
+                break
+
         self.request.send(self.server.dispatcher._marshaled_dispatch(
-            self.data
+            buff
         ))
 
 
