@@ -41,11 +41,14 @@ do-build:
 	${MAKE} -C ${WRKSRC}/pcbsd/pbi-wrapper all
 	${MAKE} -C ${WRKSRC}/extract-tarball   obj
 	${MAKE} -C ${WRKSRC}/extract-tarball  all
+	${MAKE} -C ${WRKSRC}/winacl   obj
+	${MAKE} -C ${WRKSRC}/winacl  all
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/pbi
 	${MAKE} -C ${WRKSRC}/pcbsd/pbi-wrapper BINDIR=${STAGEDIR}${PREFIX}/usr/pbi install
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
+	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 
 .include <bsd.port.mk>

@@ -1,2 +1,3 @@
 usr/pbi/.pbiwrapper-%%MACHINE_ARCH%%
 usr/local/bin/extract-tarball
+usr/local/bin/winacl
