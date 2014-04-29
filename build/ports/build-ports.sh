@@ -61,12 +61,12 @@ if [ -n "$JAIL" ]; then
 			echo "ERROR: No available jail name"
 			exit 1
 		fi
-		rm -fr ${NANO_OBJ}/poudriere/etc/poudriere.d/jail/${JAIL}
-		mv ${NANO_OBJ}/poudriere/etc/poudriere.d/jail/${OLD_JAILNAME} ${NANO_OBJ}/poudriere/etc/poudriere.d/jail/${JAIL}
+		rm -fr ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}
+		mv ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${OLD_JAILNAME} ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/${JAIL}
 		rm -fr ${NANO_OBJ}/poudriere/etc/poudriere.d/jail/${JAIL}
 		for d in build cache packages; do
 			rm -fr ${NANO_OBJ}/ports/${d}/${JAIL}-p
-			mv ${NANO_OBJ}/ports/${d}/${OLD_JAILNAME}-p ${NANO_OBJ}/ports/${d}/${JAIL}-p
+			[ -d ${NANO_OBJ}/ports/${d}/${OLD_JAILNAME}-p ] && mv ${NANO_OBJ}/ports/${d}/${OLD_JAILNAME}-p ${NANO_OBJ}/ports/${d}/${JAIL}-p
 		done
 	fi
 fi
