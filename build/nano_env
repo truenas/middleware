@@ -235,6 +235,9 @@ unset PACKAGESITE
 # Can be overriden with env when calling, but use pxz by default
 # if it's installed.
 NANO_XZ=pxz
+PXZ_ACCEL="-T 16"
+export NANO_XZ
+export PXZ_ACCEL
 
 if [ -z "$USE_POUDRIERE" ]; then
 	# Delete this block when we move to poudriere

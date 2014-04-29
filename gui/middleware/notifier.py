@@ -2346,11 +2346,11 @@ class notifier:
         if winexists:
             if not mode:
                 mode = '0755'
-            script = "/usr/local/www/freenasUI/tools/setacl.py"
-            args=" -O '%s' -G '%s' -u -x " % (user, group)
+            script = "/usr/local/bin/winacl"
+            args=" -O '%s' -G '%s' -a reset " % (user, group)
             if recursive:
                 apply_paths = exclude_path(path, exclude)
-                apply_paths = map(lambda y: (y, ' -R '), apply_paths)
+                apply_paths = map(lambda y: (y, ' -r '), apply_paths)
                 if len(apply_paths) > 1:
                     apply_paths.insert(0, (path, ''))
             else:

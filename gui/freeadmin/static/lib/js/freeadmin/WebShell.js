@@ -186,6 +186,7 @@ define([
       this._stopConnections();
     },
     paste: function(string) {
+      string = string.replace('~', '~~');
       for(chr in string) {
         this.queue(string[chr]);
       }

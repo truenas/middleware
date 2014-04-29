@@ -75,6 +75,14 @@ class Settings(Model):
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
         default=443,
     )
+    stg_guihttpsredirect = models.BooleanField(
+        verbose_name=_('WebGUI HTTP -> HTTPS Redirect'),
+        default=True,
+        help_text=_(
+            'Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is '
+            'enabled'
+        ),
+    )
     stg_language = models.CharField(
             max_length=120,
             choices=settings.LANGUAGES,
