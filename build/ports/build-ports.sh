@@ -7,6 +7,7 @@ TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
 . build/repos.sh
+. build/ports/ports_funcs.sh
 
 cleanup()
 {
@@ -43,4 +44,32 @@ if [ ${MAKE_JOBS} -gt 10 ]; then
 fi
 
 mkdir -p ${NANO_OBJ}/ports/distfiles
-poudriere ${TRACE} -e ${NANO_OBJ}/poudriere/etc bulk -w -J ${MAKE_JOBS} -f ${NANO_OBJ}/poudriere/etc/ports.txt -j j -p p
+JAIL=$(basename $(realpath ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/j 2> /dev/null))
+
+if [ -z "$JAIL" ]; then
+	echo "ERROR: jail does not exist"
+	exit 1
+fi
+
+if [ -n "$JAIL" ]; then
+	jls -n -q -j "${JAIL}-p" 2> /dev/null
+	if [ $? -eq 0 ]; then
+		# Jail named ${JAIL}-p is running, we need to choose another jail name
+		OLD_JAILNAME="$JAIL"
+		JAIL=$(get_unique_jailname)
+		if [ -z "$JAIL" ]; then
+			echo "ERROR: No available jail name"
+			exit 1
+		fi
+		rm -fr ${NANO_OBJ}/poudriere/etc/poudriere.d/jail/${JAIL}
+		mv ${NANO_OBJ}/poudriere/etc/poudriere.d/jail/${OLD_JAILNAME} ${NANO_OBJ}/poudriere/etc/poudriere.d/jail/${JAIL}
+		rm -fr ${NANO_OBJ}/poudriere/etc/poudriere.d/jail/${JAIL}
+		for d in build cache packages; do
+			rm -fr ${NANO_OBJ}/ports/${d}/${JAIL}-p
+			mv ${NANO_OBJ}/ports/${d}/${OLDJAILNAME}-p ${NANO_OBJ}/ports/${d}/${JAIL}-p
+		done
+	fi
+fi
+
+
+poudriere ${TRACE} -e ${NANO_OBJ}/poudriere/etc bulk -w -J ${MAKE_JOBS} -f ${NANO_OBJ}/poudriere/etc/ports.txt -j "$JAIL" -p p
