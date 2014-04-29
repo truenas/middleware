@@ -92,7 +92,7 @@ define([
 
           var pasteDialog;
           var text = new Textarea({
-            style: {width: "200px", marginBottom: "8px", marginLeft: "8px"}
+            style: {width: "300px", marginBottom: "8px", marginLeft: "8px", maxHeight: "200px", overflow: "auto"}
           });
 
           var ok = new Button({
