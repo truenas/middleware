@@ -26,9 +26,11 @@ ENV_SETUP+= USE_POUDRIERE=${USE_POUDRIERE}
 
 all:	build
 
-build: git-verify
+.BEGIN:
 	${ENV_SETUP} build/check_build_host.sh
 	${ENV_SETUP} build/check_sandbox.sh
+
+build: git-verify
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
 .if defined(USE_POUDRIERE)
 	@${ENV_SETUP} ${MAKE} portsjail
@@ -134,6 +136,7 @@ tag:
 	${ENV_SETUP} build/apply_tag.sh
 
 ports:
+	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
 	${ENV_SETUP} build/check_build_host.sh
 	${ENV_SETUP} build/check_sandbox.sh
 	${ENV_SETUP} build/ports/create-poudriere-conf.sh
@@ -144,6 +147,4 @@ ports:
 	${ENV_SETUP} build/ports/build-ports.sh
 
 portsjail:
-	${ENV_SETUP} build/check_build_host.sh
-	${ENV_SETUP} build/check_sandbox.sh
 	${ENV_SETUP} build/build_jail.sh
