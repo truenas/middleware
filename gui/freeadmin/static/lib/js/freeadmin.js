@@ -1856,6 +1856,7 @@ require([
             }
         });
         registry.byId("menupane").set('content', mytree);
+        editObject(gettext("Initial Wizard"), wizardUrl, []);
 
     });
 });
