@@ -287,7 +287,7 @@ def add_activedirectory_conf(smb4_conf):
             ad.ad_workgroup, ad_range_start, ad_range_end
         ))
     else:
-        confset1(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
         confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
             ad.ad_workgroup, rid_range_start, rid_range_end
         ))
