@@ -86,13 +86,13 @@ def clean_path_locked(mp):
             )
 
 
-class FileWizard(SessionWizardView):
+class CommonWizard(SessionWizardView):
 
-    file_storage = FileSystemStorage(location='/var/tmp/firmware')
+    template_done = 'system/done.html'
 
     def done(self, form_list, **kwargs):
-        response = render_to_response('system/done.html', {
-            # 'form_list': form_list,
+        response = render_to_response(self.template_done, {
+            #'form_list': form_list,
             'retval': getattr(self, 'retval', None),
         })
         if not self.request.is_ajax():
@@ -103,14 +103,8 @@ class FileWizard(SessionWizardView):
             )
         return response
 
-    def get_template_names(self):
-        return [
-            'system/wizard_%s.html' % self.get_step_index(),
-            'system/wizard.html',
-        ]
-
     def process_step(self, form):
-        proc = super(FileWizard, self).process_step(form)
+        proc = super(CommonWizard, self).process_step(form)
         """
         We execute the form done method if there is one, for each step
         """
@@ -124,7 +118,7 @@ class FileWizard(SessionWizardView):
         return proc
 
     def render_to_response(self, context, **kwargs):
-        response = super(FileWizard, self).render_to_response(
+        response = super(CommonWizard, self).render_to_response(
             context,
             **kwargs)
         # This is required for the workaround dojo.io.frame for file upload
@@ -135,6 +129,20 @@ class FileWizard(SessionWizardView):
                 "</textarea></boby></html>"
             )
         return response
+
+
+class FileWizard(CommonWizard):
+
+    file_storage = FileSystemStorage(location='/var/tmp/firmware')
+
+
+class InitialWizard(FileWizard):
+
+    def get_template_names(self):
+        return [
+            'system/wizard_%s.html' % self.get_step_index(),
+            'system/wizard.html',
+        ]
 
 
 class FirmwareWizard(FileWizard):
@@ -835,3 +843,19 @@ class SystemDatasetForm(ModelForm):
             notifier().restart("syslogd")
         if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
             notifier().restart("collectd")
+
+
+class VolumeInitialWizardForm(Form):
+
+    volume_name = forms.CharField(
+        label=_('Volume Name'),
+        max_length=200,
+    )
+    volume_type = forms.ChoiceField(
+        label=_('Type'),
+        choices=(
+            ('performance', _('Performance')),
+            ('size', _('Size')),
+        ),
+        widget=forms.RadioSelect,
+    )
