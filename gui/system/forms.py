@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+from collections import defaultdict, OrderedDict
 import json
 import logging
 import os
@@ -36,17 +37,27 @@ import tempfile
 from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
+from django.db import transaction
 from django.forms import FileField
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as __
 
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import MountPoint, Volume
+from freenasUI.services.models import services
+from freenasUI.sharing.models import (
+    AFP_Share,
+    CIFS_Share,
+    NFS_Share,
+    NFS_Share_Path,
+)
+from freenasUI.storage.models import MountPoint, Volume, Scrub
 from freenasUI.system import models
 
 log = logging.getLogger('system.forms')
@@ -138,11 +149,121 @@ class FileWizard(CommonWizard):
 
 class InitialWizard(FileWizard):
 
+    template_done = 'system/initialwizard_done.html'
+
     def get_template_names(self):
         return [
             'system/wizard_%s.html' % self.get_step_index(),
             'system/wizard.html',
         ]
+
+    def done(self, form_list, **kwargs):
+        cleaned_data = self.get_all_cleaned_data()
+        volume_name = cleaned_data.get('volume_name')
+        share_name = cleaned_data.get('share_name')
+        share_type = cleaned_data.get('share_type')
+
+        with transaction.atomic():
+            volume = Volume(
+                vol_name=volume_name,
+                vol_fstype='ZFS',
+            )
+            volume.save()
+
+            mp = MountPoint(
+                mp_volume=volume,
+                mp_path='/mnt/' + volume_name,
+                mp_options='rw',
+            )
+            mp.save()
+
+            _n = notifier()
+
+            disks = _n.get_disks()
+            bysize = defaultdict(list)
+            for disk, info in disks.items():
+                bysize[info['capacity']].append(info['devname'])
+
+            groups = OrderedDict()
+            grpid = 0
+            for size, devs in bysize.items():
+                #num = len(devs)
+                #TODO: best layout possible
+                groups[grpid] = {
+                    'type': 'stripe',
+                    'disks': devs,
+                }
+                grpid += 1
+
+            _n.init(
+                "volume",
+                volume,
+                groups=groups,
+                init_rand=False,
+            )
+            Scrub.objects.create(scrub_volume=volume)
+
+            errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
+                volume_name,
+                share_name
+            ))
+
+            if errno > 0:
+                raise MiddlewareError(_('Failed to create ZFS: %s') % errmsg)
+
+            path = '/mnt/%s/%s' % (volume_name, share_name)
+
+            if 'cifs' in share_type:
+                CIFS_Share.objects.create(
+                    cifs_name=share_name,
+                    cifs_path=path,
+                )
+                services.objects.filter(srv_service='cifs').update(
+                    srv_enable=True
+                )
+
+            if 'afp' in share_type:
+                AFP_Share.objects.create(
+                    afp_name=share_name,
+                    afp_path=path,
+                )
+                services.objects.filter(srv_service='afp').update(
+                    srv_enable=True
+                )
+
+            if 'nfs' in share_type:
+                nfs_share = NFS_Share.objects.create(
+                    nfs_comment=share_name,
+                )
+                NFS_Share_Path.objects.create(
+                    share=nfs_share,
+                    path=path,
+                )
+                services.objects.filter(srv_service='nfs').update(
+                    srv_enable=True
+                )
+
+        # This must be outside transaction block to make sure the changes
+        # are committed before the call of ix-fstab
+        _n.reload("disk")
+        _n.start("ix-system")
+        _n.start("ix-syslogd")
+        _n.restart("system_datasets")
+        _n.restart("cron")
+
+        if 'cifs' in share_type:
+            _n.restart('cifs')
+
+        if 'afp' in share_type:
+            _n.restart('afp')
+
+        if 'nfs' in share_type:
+            _n.restart('nfs')
+
+        return JsonResp(
+            self.request,
+            message=__('Initial configuration succeeded.')
+        )
 
 
 class FirmwareWizard(FileWizard):
@@ -845,7 +966,24 @@ class SystemDatasetForm(ModelForm):
             notifier().restart("collectd")
 
 
-class VolumeInitialWizardForm(Form):
+class InitialWizardShareForm(Form):
+
+    share_name = forms.CharField(
+        label=_('Share Name'),
+        max_length=80,
+    )
+    share_type = forms.MultipleChoiceField(
+        label=_('Type'),
+        choices=(
+            ('cifs', _('Windows (CIFS)')),
+            ('afp', _('Apple (AFP)')),
+            ('nfs', _('Unix (NFS)')),
+        ),
+        widget=forms.widgets.CheckboxSelectMultiple,
+    )
+
+
+class InitialWizardVolumeForm(Form):
 
     volume_name = forms.CharField(
         label=_('Volume Name'),

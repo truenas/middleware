@@ -1,0 +1,14 @@
+<div data-dojo-type="dijit.layout.ContentPane">
+<script type="dojo/method">
+    {% if retval %}
+    setMessage('{{ retval }}', 'error');
+    {% else %}
+    window.location='{% url "system_reboot" %}';
+    {% endif %}
+</script>
+    {% if retval %}
+    {{ retval }}
+    {% else %}
+    {% trans "Rebooting..." %}
+    {% endif %}
+</div>
