@@ -10,6 +10,7 @@ Requirements:
 
 - You will need the following ports/packages when compiling anything
   FreeNAS-related:
+  - ports-mgmt/poudriere-devel
   - devel/git
   - sysutils/cdrtools
   - archivers/pxz
