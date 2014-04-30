@@ -198,7 +198,9 @@ class FreeAdminSite(object):
     @never_cache
     def adminInterface(self, request):
         from freenasUI.network.models import GlobalConfiguration
+        from freenasUI.middleware.notifier import notifier
         from freenasUI.system.models import Advanced
+        from freenasUI.storage.models import Volume
 
         view = appPool.hook_app_index('freeadmin', request)
         view = filter(None, view)
@@ -214,6 +216,15 @@ class FreeAdminSite(object):
                 '-id')[0].gc_hostname
         except:
             hostname = None
+
+        if (
+            Volume.objects.all().count() == 0 and
+            len(notifier().get_disks()) > 0
+        ):
+            wizard = True
+        else:
+            wizard = False
+
         sw_version = get_sw_version()
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
@@ -224,6 +235,7 @@ class FreeAdminSite(object):
             'css_hook': appPool.get_base_css(request),
             'js_hook': appPool.get_base_js(request),
             'menu_hook': appPool.get_top_menu(request),
+            'wizard': wizard,
         })
 
     @never_cache
