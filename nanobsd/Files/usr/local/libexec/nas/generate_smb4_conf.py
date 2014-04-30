@@ -228,6 +228,15 @@ def add_ldap_conf(smb4_conf):
 
 
 def add_activedirectory_conf(smb4_conf):
+    tdb_range_start = 90000000
+    tdb_range_end = 100000000
+
+    rid_range_start = 20000
+    rid_range_end = 20000000
+
+    ad_range_start = 10000
+    ad_range_end = 90000000
+
     try:
         ad = ActiveDirectory.objects.all()[0]
     except:
@@ -255,8 +264,10 @@ def add_activedirectory_conf(smb4_conf):
     confset1(smb4_conf, "acl map full control = true")
     confset1(smb4_conf, "dos filemode = yes")
 
-    confset1(smb4_conf, "idmap uid = 10000-19999")
-    confset1(smb4_conf, "idmap gid = 10000-19999")
+    confset1(smb4_conf, "idmap config *:backend = tdb")
+    confset1(smb4_conf, "idmap config *:range = %d-%d" % (
+        tdb_range_start, tdb_range_end
+    ))
 
     confset1(smb4_conf, "winbind cache time = 7200")
     confset1(smb4_conf, "winbind offline logon = yes")
@@ -267,16 +278,26 @@ def add_activedirectory_conf(smb4_conf):
         "yes" if ad.ad_use_default_domain else "no")
     confset1(smb4_conf, "winbind refresh tickets = yes")
 
+    if ad.ad_unix_extensions:
+        confset1(smb4_conf, "winbind nss info = rfc2307")
+
+        confset2(smb4_conf, "idmap config %s: backend = ad", ad.ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: schema_mode = rfc2307", ad.ad_workgroup)
+        confset1(smb4_conf, "idmap config %s: range = %d-%d" %(
+            ad.ad_workgroup, ad_range_start, ad_range_end
+        ))
+    else:
+        confset1(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
+        confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+            ad.ad_workgroup, rid_range_start, rid_range_end
+        ))
+
     confset2(smb4_conf, "allow trusted domains = %s",
         "yes" if ad.ad_allow_trusted_doms else "no")
 
     confset1(smb4_conf, "template shell = /bin/sh")
     confset2(smb4_conf, "template homedir = %s",
         "/home/%D/%U" if not ad.ad_use_default_domain else "/home/%U")
-
-    if not ad.ad_unix_extensions:
-        confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
-        confset2(smb4_conf, "idmap config %s: range = 20000-20000000", ad.ad_workgroup)
 
 
 def add_domaincontroller_conf(smb4_conf):
