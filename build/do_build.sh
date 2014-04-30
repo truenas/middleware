@@ -32,25 +32,12 @@ NANO_ARGS=""
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-afJsx] [-j make-jobs] [-t target1] [-t target2] [ -t ...] [-- nanobsd-options]
+usage: ${0##*/} [-Jx] [-j make-jobs] [-- nanobsd-options]
 
--a		- Build all targets
 -j make-jobs	- number of make jobs to run; defaults to ${MAKE_JOBS}.
--s		- show build targets
--t target	- target to build (os-base, <plugin-name>, etc).
-		  This switch can be used more than once to specify multiple targets.
 -x		- enable sh -x debugging
 
 EOF
-	exit 1
-}
-
-show_build_targets()
-{
-	for _target in ${BUILD_TARGETS}
-	do
-		echo "${_target}"
-	done
 	exit 1
 }
 
@@ -59,21 +46,12 @@ parse_cmdline()
 	while getopts 'afj:st:x' _optch
 	do
 		case "${_optch}" in
-		a)
-			TARGETS="${BUILD_TARGETS}"
-			;;
 		j)
 			echo ${OPTARG} | egrep -q '^[[:digit:]]+$' && [ ${OPTARG} -gt 0 ]
 			if [ $? -ne 0 ]; then
 				usage
 			fi
 			MAKE_JOBS=${OPTARG}
-			;;
-		s)	
-			show_build_targets
-			;;
-		t)
-			TARGETS="${TARGETS} ${OPTARG}"
 			;;
 		x)
 			TRACE="-x"
