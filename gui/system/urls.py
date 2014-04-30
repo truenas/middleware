@@ -26,11 +26,19 @@
 #####################################################################
 
 from django.conf.urls import patterns, url
-from freenasUI.system.forms import (FirmwareWizard,
-    FirmwareTemporaryLocationForm, FirmwareUploadForm)
+from freenasUI.system.forms import (
+    FirmwareWizard,
+    FirmwareTemporaryLocationForm,
+    FirmwareUploadForm,
+    InitialWizard,
+    VolumeInitialWizardForm,
+)
 
 urlpatterns = patterns('freenasUI.system.views',
     url(r'^$', 'home', name="system_home"),
+    url(r'^wizard/$', InitialWizard.as_view(
+        [VolumeInitialWizardForm, ]
+    ), name='system_initialwizard'),
     url(r'^reboot/$', 'reboot', name="system_reboot"),
     url(r'^reboot/dialog/$', 'reboot_dialog', name="system_reboot_dialog"),
     url(r'^reboot/run/$', 'reboot_run', name="system_reboot_run"),
@@ -41,7 +49,7 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^info/$', 'system_info', name="system_info"),
     url(r'^firmwizard/$', FirmwareWizard.as_view(
         [FirmwareTemporaryLocationForm, FirmwareUploadForm]
-        ), name='system_firmwizard'),
+    ), name='system_firmwizard'),
     url(r'^firmwizard/progress/$', "firmware_progress", name="system_firmware_progress"),
     url(r'^config/restore/$', 'config_restore', name='system_configrestore'),
     url(r'^config/save/$', 'config_save', name='system_configsave'),
