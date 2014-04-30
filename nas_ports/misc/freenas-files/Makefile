@@ -50,5 +50,7 @@ do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
+	${INSTALL_SCRIPT} ${WRKSRC}/autotune/files/autotune.py ${STAGEDIR}${PREFIX}/usr/local/bin/autotune
+
 
 .include <bsd.port.mk>
