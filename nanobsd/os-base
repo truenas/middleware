@@ -111,7 +111,7 @@ save_build ( )
 }
 customize_cmd save_build
 
-add_pbi_manager()
+[ -z "$USE_POUDRIERE" ] && add_pbi_manager()
 {
 	local pm dst
 	pm=${AVATAR_ROOT}/src/pcbsd/pbi-manager
@@ -146,7 +146,9 @@ add_pbi_manager()
 	mkdir -p ${df} >/dev/null 2>/dev/null
 	cp ${pm}/repo/pcbsd.rpo ${df}/pcbsd.rpo
 }
-customize_cmd add_pbi_manager
+if [ -z "$USE_POUDRIERE" ]; then
+	customize_cmd add_pbi_manager
+fi
 
 add_gui()
 {
