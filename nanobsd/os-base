@@ -180,7 +180,7 @@ add_gui()
 }
 customize_cmd add_gui
 
-add_autotune()
+[ -z "$USE_POUDRIERE" ] && add_autotune()
 {
 	local autotune autotune_src
 
@@ -189,7 +189,9 @@ add_autotune()
 	autotune=$NANO_WORLDDIR/usr/local/bin/autotune
 	install -m 0755 $autotune_src $autotune
 }
-customize_cmd add_autotune
+if [ -z "$USE_POUDRIERE" ]; then
+	customize_cmd add_autotune
+fi
 
 customize_cmd_truenas add_licensor
 
@@ -308,7 +310,7 @@ add_pcbsd_xtrafiles()
 }
 customize_cmd add_pcbsd_xtrafiles
 
-add_pbi_wrapper()
+[ -z "$USE_POUDRIERE" ] && add_pbi_wrapper()
 {
 	local _pm 
 	local _ad
@@ -326,7 +328,9 @@ add_pbi_wrapper()
 		cp "${_pm}" "${_ad}/.pbiwrapper-${NANO_ARCH}"
 	fi
 }
-customize_cmd add_pbi_wrapper
+if [ -z "$USE_POUDRIERE" ]; then
+	customize_cmd add_pbi_wrapper
+fi
 
 # Move the $world/data to the /data partion
 move_data()
