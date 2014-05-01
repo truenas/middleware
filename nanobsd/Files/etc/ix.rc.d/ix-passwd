@@ -56,12 +56,40 @@ group_membership()
 		bsdgrpmember_group_id=$1" | tr \\n ,
 }
 
+samba_groupmap()
+{
+	local group="${1}"
+
+	net groupmap list ntgroup="${group}" >/dev/null 2>&1
+	if [ "$?" = "0" ] ; then
+		return
+	fi
+
+	/usr/local/bin/net groupmap add \
+		unixgroup="${group}" ntgroup="${group}" >/dev/null 2>&1
+}
+
+samba_add_group()
+{
+	local group="${1}"
+	local members="${2}"
+
+	/usr/local/bin/samba-tool group add "${group}" >/dev/null 2>&1
+	if [ -n "${members}" ] ; then
+		/usr/local/bin/samba-tool group \
+			addmembers "${group}" "${members}" >/dev/null 2>&1
+	fi
+}
+
 generate_group()
 {
 	local IFS="|"
-	local f="bsdgrp_group bsdgrp_gid id"
+	local f="bsdgrp_group bsdgrp_gid bsdgrp_builtin id"
 	eval local $f
 	local sf=$(var_to_sf $f)
+
+	LOGNAME="$(whoami)"
+	export LOGNAME
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
 		$sf
@@ -69,7 +97,17 @@ generate_group()
 		account_bsdgroups" | \
 	while eval read $f; do
 		echo -n "${bsdgrp_group}:*:${bsdgrp_gid}:"
-		group_membership ${id} | sed -e 's/,$//g' | tr -d \\n
+
+		local members="$(group_membership ${id} | \
+			sed -e 's/,$//g' | tr -d \\n)"
+		echo -n "${members}"
+		if [ "${bsdgrp_builtin}" = "0" ] ; then
+			if dirsrv_enabled domaincontroller ; then
+				samba_add_group "${bsdgrp_group}" "${members}"
+			else
+				samba_groupmap "${bsdgrp_group}"
+			fi
+		fi
 		echo
 	done > /etc/group
 

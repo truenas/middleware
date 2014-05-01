@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import string
 import tempfile
 import time
 
@@ -19,7 +20,11 @@ cache.get_apps()
 
 from django.db.models import Q
 
-from freenasUI.account.models import bsdUsers
+from freenasUI.account.models import (
+    bsdUsers,
+    bsdGroups,
+    bsdGroupMembership
+)
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
@@ -332,7 +337,7 @@ def generate_smb4_tdb(smb4_tdb):
         return
 
 
-def generate_smb4_conf(smb4_conf):
+def generate_smb4_conf(smb4_conf, role):
     try:
         cifs = CIFS.objects.all()[0]
     except:
@@ -399,7 +404,6 @@ def generate_smb4_conf(smb4_conf):
     confset2(smb4_conf, "acl allow execute always = %s",
         "true" if cifs.cifs_srv_allow_execute_always else "false")
 
-    role = get_server_role()
     if cifs.cifs_srv_localmaster and not nt4_enabled() \
         and not activedirectory_enabled():
         confset2(smb4_conf, "local master = %s",
@@ -709,6 +713,59 @@ def do_migration(old_samba4_datasets):
     return True
 
 
+def import_users(smb_conf_path, importfile, exportfile=None):
+    args = [
+        "/usr/local/bin/pdbedit",
+        "-d 0",
+        "-i smbpasswd:%s" % importfile,
+        "-s %s" % smb_conf_path
+    ]
+
+    if exportfile != None:
+        args.append("-e %s" % exportfile)
+
+    p = pipeopen(string.join(args, ' '))
+    pdbedit_out = p.communicate()
+    if pdbedit_out and pdbedit_out[1]:
+        for line in pdbedit_out[1].split('\n'):
+            print line
+
+
+def get_groups():
+    _groups = {}
+
+    groups = bsdGroups.objects.filter(bsdgrp_builtin=0)
+    for g in groups:
+        key = str(g.bsdgrp_group)
+        _groups[key] = []
+        members = bsdGroupMembership.objects.filter(bsdgrpmember_group=g.id)
+        for m in members:
+             u = bsdUsers.objects.filter(bsdusr_username=m.bsdgrpmember_user)
+             if u:
+                 u = u[0]
+                 _groups[key].append(str(u.bsdusr_username))
+
+    return _groups
+
+
+def smb4_import_groups():
+    s = Samba4()
+
+    groups = get_groups()
+    for g in groups:
+        s.group_add(g)
+        if groups[g]:
+            s.group_addmembers(g, groups[g])
+
+
+def smb4_map_groups():
+    cmd = "/usr/local/bin/net groupmap add unixgroup='%s' ntgroup='%s'"
+
+    groups = get_groups()
+    for g in groups:
+        pipeopen(cmd % (g, g)).communicate()
+
+
 def main():
     smb_conf_path = "/usr/local/etc/smb4.conf"
 
@@ -722,11 +779,12 @@ def main():
     if migration_available(old_samba4_datasets):
         do_migration(old_samba4_datasets)
 
+    role = get_server_role()
+
     generate_smb4_tdb(smb4_tdb)
-    generate_smb4_conf(smb4_conf)
+    generate_smb4_conf(smb4_conf, role)
     generate_smb4_shares(smb4_shares)
 
-    role = get_server_role()
     if role == 'dc' and not Samba4().domain_provisioned():
         provision_smb4()
 
@@ -737,22 +795,24 @@ def main():
             f.write(line + '\n')
         f.close()
 
+    if role == 'member' and ldap_enabled():
+        set_ldap_password()
+
     (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
     for line in smb4_tdb:
         os.write(fd, line + '\n')
     os.close(fd)
 
-    if role == 'member' and ldap_enabled():
-        set_ldap_password()
+    if role == 'dc':
+        import_users(smb_conf_path, tmpfile)
+        smb4_import_groups()  
 
-    if role != 'dc':
-        p = pipeopen("/usr/local/bin/pdbedit -d 0 -i smbpasswd:%s -e %s -s %s" % (
-            tmpfile, "tdbsam:/var/etc/private/passdb.tdb", smb_conf_path))
-        out = p.communicate()
-        if out and out[1]:
-            for line in out[1].split('\n'):
-                print line
-        os.unlink(tmpfile)
+    else:
+        import_users(smb_conf_path, tmpfile,
+            "tdbsam:/var/etc/private/passdb.tdb")
+        smb4_map_groups()
+
+    os.unlink(tmpfile)
 
 
 if __name__ == '__main__':
