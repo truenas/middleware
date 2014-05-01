@@ -31,6 +31,8 @@ import os
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI.common.samba import Samba4
+from freenasUI.common.system import domaincontroller_enabled
 from freenasUI.freeadmin.models import Model, PathField
 from freenasUI.middleware.notifier import notifier
 
@@ -70,6 +72,8 @@ class bsdGroups(Model):
                 "Group %s is built-in and can not be deleted!"
             ) % (self.bsdgrp_group))
         notifier().user_deletegroup(self.bsdgrp_group.encode('utf-8'))
+        if domaincontroller_enabled():
+            Samba4().group_delete(self.bsdgrp_group.encode('utf-8'))
         super(bsdGroups, self).delete(using)
         if reload:
             notifier().reload("user")
@@ -220,6 +224,8 @@ class bsdUsers(Model):
                 "User %s is built-in and can not be deleted!"
             ) % (self.bsdusr_username))
         notifier().user_deleteuser(self.bsdusr_username.encode('utf-8'))
+        if domaincontroller_enabled():
+            Samba4().user_delete(self.bsdusr_username.encode('utf-8'))
         try:
             gobj = self.bsdusr_group
             count = bsdGroupMembership.objects.filter(

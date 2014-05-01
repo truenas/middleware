@@ -73,11 +73,15 @@ samba_add_group()
 {
 	local group="${1}"
 	local members="${2}"
+	local samba_tool="/usr/local/bin/samba-tool"
 
-	/usr/local/bin/samba-tool group add "${group}" >/dev/null 2>&1
+	${samba_tool} group list|grep -iw "${group}" >/dev/null 2>&1
+	if [ "$?" != "0" ] ; then
+		${samba_tool} group add "${group}" >/dev/null 2>&1
+	fi
 	if [ -n "${members}" ] ; then
-		/usr/local/bin/samba-tool group \
-			addmembers "${group}" "${members}" >/dev/null 2>&1
+		${samba_tool} group addmembers \
+			"${group}" "${members}" >/dev/null 2>&1
 	fi
 }
 

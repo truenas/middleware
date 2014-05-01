@@ -117,6 +117,43 @@ class Samba4(object):
     def change_domain_level(self, level):
         return self.samba_tool("domain level raise", { 'domain-level': level})
 
+    def user_add(self):
+        pass
+    def user_create(self):
+        pass
+
+    def user_delete(self, user):
+        return self.samba_tool("user delete", None, [user])
+
+    def user_disable(self, user): 
+        return self.samba_tool("user disable", None, [user])
+
+    def user_enable(self, user):
+        return self.samba_tool("user enable", None, [user])
+
+    def user_list(self):
+        buf = []
+        users = []
+
+        if not self.samba_tool("user list", None, buf=buf):
+            return users
+
+        try:
+            buf = buf[0][0]
+            users = buf.splitlines()
+
+        except: 
+            pass
+
+        return users
+
+    def user_password(self):
+        pass
+    def user_setexpiry(self):
+        pass
+    def user_setpassword(self):
+        pass
+
     def set_user_password(self, user, password):
         return self.samba_tool("user setpassword", {'newpassword': password }, [user], True)
 
