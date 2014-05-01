@@ -28,7 +28,9 @@ all:	build
 
 .BEGIN:
 	${ENV_SETUP} build/check_build_host.sh
+.if !make(checkout) && !make(update) && !make(clean) && !make(distclean)
 	${ENV_SETUP} build/check_sandbox.sh
+.endif
 
 build: git-verify
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
