@@ -28,7 +28,7 @@ all:	build
 
 .BEGIN:
 	${ENV_SETUP} build/check_build_host.sh
-.if !make(checkout) && !make(update) && !make(clean) && !make(distclean)
+.if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
 	${ENV_SETUP} build/check_sandbox.sh
 .endif
 
