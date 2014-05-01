@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import string
 import tempfile
 import time
 
@@ -19,7 +20,11 @@ cache.get_apps()
 
 from django.db.models import Q
 
-from freenasUI.account.models import bsdUsers
+from freenasUI.account.models import (
+    bsdUsers,
+    bsdGroups,
+    bsdGroupMembership
+)
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
@@ -228,6 +233,15 @@ def add_ldap_conf(smb4_conf):
 
 
 def add_activedirectory_conf(smb4_conf):
+    tdb_range_start = 90000000
+    tdb_range_end = 100000000
+
+    rid_range_start = 20000
+    rid_range_end = 20000000
+
+    ad_range_start = 10000
+    ad_range_end = 90000000
+
     try:
         ad = ActiveDirectory.objects.all()[0]
     except:
@@ -255,8 +269,10 @@ def add_activedirectory_conf(smb4_conf):
     confset1(smb4_conf, "acl map full control = true")
     confset1(smb4_conf, "dos filemode = yes")
 
-    confset1(smb4_conf, "idmap uid = 10000-19999")
-    confset1(smb4_conf, "idmap gid = 10000-19999")
+    confset1(smb4_conf, "idmap config *:backend = tdb")
+    confset1(smb4_conf, "idmap config *:range = %d-%d" % (
+        tdb_range_start, tdb_range_end
+    ))
 
     confset1(smb4_conf, "winbind cache time = 7200")
     confset1(smb4_conf, "winbind offline logon = yes")
@@ -267,16 +283,26 @@ def add_activedirectory_conf(smb4_conf):
         "yes" if ad.ad_use_default_domain else "no")
     confset1(smb4_conf, "winbind refresh tickets = yes")
 
+    if ad.ad_unix_extensions:
+        confset1(smb4_conf, "winbind nss info = rfc2307")
+
+        confset2(smb4_conf, "idmap config %s: backend = ad", ad.ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: schema_mode = rfc2307", ad.ad_workgroup)
+        confset1(smb4_conf, "idmap config %s: range = %d-%d" %(
+            ad.ad_workgroup, ad_range_start, ad_range_end
+        ))
+    else:
+        confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
+        confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+            ad.ad_workgroup, rid_range_start, rid_range_end
+        ))
+
     confset2(smb4_conf, "allow trusted domains = %s",
         "yes" if ad.ad_allow_trusted_doms else "no")
 
     confset1(smb4_conf, "template shell = /bin/sh")
     confset2(smb4_conf, "template homedir = %s",
         "/home/%D/%U" if not ad.ad_use_default_domain else "/home/%U")
-
-    if not ad.ad_unix_extensions:
-        confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
-        confset2(smb4_conf, "idmap config %s: range = 20000-20000000", ad.ad_workgroup)
 
 
 def add_domaincontroller_conf(smb4_conf):
@@ -311,7 +337,7 @@ def generate_smb4_tdb(smb4_tdb):
         return
 
 
-def generate_smb4_conf(smb4_conf):
+def generate_smb4_conf(smb4_conf, role):
     try:
         cifs = CIFS.objects.all()[0]
     except:
@@ -378,7 +404,6 @@ def generate_smb4_conf(smb4_conf):
     confset2(smb4_conf, "acl allow execute always = %s",
         "true" if cifs.cifs_srv_allow_execute_always else "false")
 
-    role = get_server_role()
     if cifs.cifs_srv_localmaster and not nt4_enabled() \
         and not activedirectory_enabled():
         confset2(smb4_conf, "local master = %s",
@@ -607,6 +632,9 @@ def smb4_setup():
     smb4_mkdir("/var/etc/private")
     os.chmod("/var/etc/private", 0700)
 
+    smb4_mkdir("/var/db/samba4/private")
+    os.chmod("/var/db/samba4/private", 0700)
+
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
 
@@ -685,6 +713,59 @@ def do_migration(old_samba4_datasets):
     return True
 
 
+def import_users(smb_conf_path, importfile, exportfile=None):
+    args = [
+        "/usr/local/bin/pdbedit",
+        "-d 0",
+        "-i smbpasswd:%s" % importfile,
+        "-s %s" % smb_conf_path
+    ]
+
+    if exportfile != None:
+        args.append("-e %s" % exportfile)
+
+    p = pipeopen(string.join(args, ' '))
+    pdbedit_out = p.communicate()
+    if pdbedit_out and pdbedit_out[1]:
+        for line in pdbedit_out[1].split('\n'):
+            print line
+
+
+def get_groups():
+    _groups = {}
+
+    groups = bsdGroups.objects.filter(bsdgrp_builtin=0)
+    for g in groups:
+        key = str(g.bsdgrp_group)
+        _groups[key] = []
+        members = bsdGroupMembership.objects.filter(bsdgrpmember_group=g.id)
+        for m in members:
+             u = bsdUsers.objects.filter(bsdusr_username=m.bsdgrpmember_user)
+             if u:
+                 u = u[0]
+                 _groups[key].append(str(u.bsdusr_username))
+
+    return _groups
+
+
+def smb4_import_groups():
+    s = Samba4()
+
+    groups = get_groups()
+    for g in groups:
+        s.group_add(g)
+        if groups[g]:
+            s.group_addmembers(g, groups[g])
+
+
+def smb4_map_groups():
+    cmd = "/usr/local/bin/net groupmap add unixgroup='%s' ntgroup='%s'"
+
+    groups = get_groups()
+    for g in groups:
+        pipeopen(cmd % (g, g)).communicate()
+
+
 def main():
     smb_conf_path = "/usr/local/etc/smb4.conf"
 
@@ -698,11 +779,12 @@ def main():
     if migration_available(old_samba4_datasets):
         do_migration(old_samba4_datasets)
 
+    role = get_server_role()
+
     generate_smb4_tdb(smb4_tdb)
-    generate_smb4_conf(smb4_conf)
+    generate_smb4_conf(smb4_conf, role)
     generate_smb4_shares(smb4_shares)
 
-    role = get_server_role()
     if role == 'dc' and not Samba4().domain_provisioned():
         provision_smb4()
 
@@ -713,22 +795,24 @@ def main():
             f.write(line + '\n')
         f.close()
 
+    if role == 'member' and ldap_enabled():
+        set_ldap_password()
+
     (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
     for line in smb4_tdb:
         os.write(fd, line + '\n')
     os.close(fd)
 
-    if role == 'member' and ldap_enabled():
-        set_ldap_password()
+    if role == 'dc':
+        import_users(smb_conf_path, tmpfile)
+        smb4_import_groups()  
 
-    if role != 'dc':
-        p = pipeopen("/usr/local/bin/pdbedit -d 0 -i smbpasswd:%s -e %s -s %s" % (
-            tmpfile, "tdbsam:/var/etc/private/passdb.tdb", smb_conf_path))
-        out = p.communicate()
-        if out and out[1]:
-            for line in out[1].split('\n'):
-                print line
-        os.unlink(tmpfile)
+    else:
+        import_users(smb_conf_path, tmpfile,
+            "tdbsam:/var/etc/private/passdb.tdb")
+        smb4_map_groups()
+
+    os.unlink(tmpfile)
 
 
 if __name__ == '__main__':

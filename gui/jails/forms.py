@@ -489,7 +489,7 @@ class JailsConfigurationForm(ModelForm):
         return jc_collectionurl
 
     def clean_jc_path(self):
-        jc_path = self.cleaned_data.get('jc_path')
+        jc_path = self.cleaned_data.get('jc_path').rstrip('/')
 
         jc_fpath = jc_path
         if not jc_fpath.endswith('/'):

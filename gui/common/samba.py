@@ -26,6 +26,7 @@
 #####################################################################
 import os
 import sys
+import string
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.services.models import DomainController
@@ -33,6 +34,7 @@ from freenasUI.services.models import DomainController
 SAMBA_DB_PATH = "/var/db/samba4"
 SAMBA_PROVISIONED_FILE = os.path.join(SAMBA_DB_PATH, ".provisioned")
 SAMBA_TOOL = "/usr/local/bin/samba-tool"
+
 
 class SambaConf(object):
     # Stub! Implement later!
@@ -43,7 +45,7 @@ class Samba4(object):
         self.samba_tool_path = SAMBA_TOOL
         self.provisioned_file = SAMBA_PROVISIONED_FILE
 
-    def samba_tool(self, cmd, args, nonargs=None, quiet=False):
+    def samba_tool(self, cmd, args, nonargs=None, quiet=False, buf=None):
         samba_tool_args = cmd
 
         if args:
@@ -59,9 +61,8 @@ class Samba4(object):
 
         p = pipeopen("%s %s" % (self.samba_tool_path, samba_tool_args), quiet=quiet)
         out = p.communicate()
-        if out and out[1]:
-            for line in out[1].split('\n'):
-                print line
+        if buf != None:
+            buf.append(out) 
   
         if p.returncode != 0:
             return False
@@ -87,7 +88,17 @@ class Samba4(object):
             'use-rfc2307': None
         }
 
-        return self.samba_tool("domain provision", args)
+        buf = []
+        res = self.samba_tool("domain provision", args, buf=buf)
+        try:
+            buf = buf[0][1]
+            for line in buf.splitlines():
+                print >> sys.stdout, "%s" % line
+
+        except:  
+            pass
+
+        return res
 
     def disable_password_complexity(self):
         return self.samba_tool("domain passwordsettings set", { 'complexity': 'off'})
@@ -106,8 +117,94 @@ class Samba4(object):
     def change_domain_level(self, level):
         return self.samba_tool("domain level raise", { 'domain-level': level})
 
+    def user_add(self):
+        pass
+    def user_create(self):
+        pass
+
+    def user_delete(self, user):
+        return self.samba_tool("user delete", None, [user])
+
+    def user_disable(self, user): 
+        return self.samba_tool("user disable", None, [user])
+
+    def user_enable(self, user):
+        return self.samba_tool("user enable", None, [user])
+
+    def user_list(self):
+        buf = []
+        users = []
+
+        if not self.samba_tool("user list", None, buf=buf):
+            return users
+
+        try:
+            buf = buf[0][0]
+            users = buf.splitlines()
+
+        except: 
+            pass
+
+        return users
+
+    def user_password(self):
+        pass
+    def user_setexpiry(self):
+        pass
+    def user_setpassword(self):
+        pass
+
     def set_user_password(self, user, password):
         return self.samba_tool("user setpassword", {'newpassword': password }, [user], True)
+
+    def group_add(self, group): 
+        return self.samba_tool("group add", None, [group])
+
+    def group_create(self, group): 
+        return self.samba_tool("group create", None, [group])
+
+    def group_addmembers(self, group, members): 
+        return self.samba_tool("group addmembers", None,
+            [group, string.join(members,  ',')])
+
+    def group_delete(self, group):
+        return self.samba_tool("group delete", None, [group])
+
+    def group_list(self):
+        buf = []
+        groups = []
+
+        if not self.samba_tool("group list", None, buf=buf):
+            return groups 
+
+        try:
+            buf = buf[0][0]
+            groups = buf.splitlines()
+
+        except: 
+            pass
+
+        return groups
+
+    def group_listmembers(self, group):
+        buf = []
+        members = [] 
+
+        if not self.samba_tool("group listmembers", None, [group], buf=buf):
+            return members
+
+        try:
+            buf = buf[0][0]
+            members = buf.splitlines()
+
+        except: 
+            pass
+
+        return members
+
+    def group_removemembers(self, group, members):
+        return self.samba_tool("group removemembers", None,
+            [group, string.join(members,  ',')])
 
     def sentinel_file_exists(self):
         return (os.path.exists(self.provisioned_file) and \

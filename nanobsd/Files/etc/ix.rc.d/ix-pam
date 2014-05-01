@@ -218,19 +218,6 @@ pam_start()
 	if dirsrv_enabled activedirectory
 	then
 		ad=1
-               	ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		SELECT
-			ad_unix_extensions
-		FROM
-			services_activedirectory
-		ORDER BY
-			-id
-		LIMIT 1
-		")
-		if [ "${ad_unix}" = "1" ]
-		then
-			ad=2
-		fi
 
 	elif dirsrv_enabled domaincontroller
 	then

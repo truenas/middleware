@@ -195,12 +195,6 @@ activedirectory_start()
 	then
 		AD_init
 
-		if has_unix_extensions
-		then
-			generate_ldap_conf
-			generate_nss_ldap_conf
-		fi
-
 		AD_log "activedirectory_start: trying to join domain"
 		if ! AD_join_domain
 		then
