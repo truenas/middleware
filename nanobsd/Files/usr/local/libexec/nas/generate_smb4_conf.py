@@ -628,6 +628,9 @@ def smb4_setup():
     smb4_mkdir("/var/etc/private")
     os.chmod("/var/etc/private", 0700)
 
+    smb4_mkdir("/var/db/samba4/private")
+    os.chmod("/var/db/samba4/private", 0700)
+
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
 
