@@ -6,6 +6,7 @@ cd "$(dirname "$0")/../.."
 TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
+. build/poudriere-functions.sh
 . build/repos.sh
 . build/ports/ports_funcs.sh
 
