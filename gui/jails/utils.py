@@ -533,30 +533,36 @@ def guess_addresses():
     }
 
     ipv4_addr = guess_ipv4_address()
-    #ipv4_host_network = get_host_ipv4_network()
     ipv4_jail_network = get_jail_ipv4_network()
 
     if ipv4_addr:
         addresses['high_ipv4'] = ipv4_addr
 
     if (ipv4_jail_network and ipv4_addr) and (not ipv4_jail_network.in_network(ipv4_addr)):
-        addresses['bridge_ipv4'] = sipcalc_type("%s/%d" % (
-            ipv4_jail_network.usable_range[0],
-            ipv4_jail_network.network_mask_bits,
-        ))
+        try:
+            addresses['bridge_ipv4'] = sipcalc_type("%s/%d" % (
+                ipv4_jail_network.usable_range[0],
+                ipv4_jail_network.network_mask_bits,
+            ))
+        except Exception as e:
+            log.debug("guess_addresses: %s", e)
+            return addresses  
 
     ipv6_addr = guess_ipv6_address()
-    #ipv6_host_network = get_host_ipv6_network()
     ipv6_jail_network = get_jail_ipv6_network()
 
     if ipv6_addr:
         addresses['high_ipv6'] = ipv6_addr
 
     if (ipv6_jail_network and ipv6_addr) and (not ipv6_jail_network.in_network(ipv6_addr)):
-        addresses['bridge_ipv6'] = sipcalc_type("%s/%d" % (
-            ipv6_jail_network.network_range[0],
-            ipv6_jail_network.prefix_length,
-        ))
+        try:
+            addresses['bridge_ipv6'] = sipcalc_type("%s/%d" % (
+                ipv6_jail_network.network_range[0],
+                ipv6_jail_network.prefix_length,
+            ))
+        except Exception as e:
+            log.debug("guess_addresses: %s", e)
+            return addresses  
 
     return addresses
 
