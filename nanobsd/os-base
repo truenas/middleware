@@ -229,16 +229,22 @@ customize_cmd unmute_console_logging
 
 fi
 
-remove_var_db_pkg()
+remove_packages()
 {
 	# Workaround to remove packages from a fat image
-	CR "pkg_delete -f gcc47\* || true"
-	CR "pkg_delete -f gcc-ecj\* || true"
-	CR "pkg_delete -f kBuild\* || true"
-	CR "pkg_delete -f cmake\* || true"
-	CR "pkg_delete -f docbook\* || true"
-	CR "pkg_delete -f automake\* || true"
-	CR "pkg_delete -f autoconf\* || true"
+	local pkg_to_remove
+
+	for pkg_to_remove in gcc47 gcc-ecj kBuild cmake docbook \
+                             automake autoconf
+	do
+		echo "Removing $pkg_to_remove"
+		CR "pkg_delete -f $pkg_to_remove\* || true"
+	done
+}
+customize_cmd remove_packages
+
+remove_var_db_pkg()
+{
 	# Eats up ~7 MB on the install image.
 	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
 	# bsnmpd complains about no such directory found
