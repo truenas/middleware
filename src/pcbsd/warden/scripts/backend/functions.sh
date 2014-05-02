@@ -1688,6 +1688,35 @@ delete_template()
    exit 0
 }
 
+rename_template()
+{
+   local oldname="${1}"
+   local newname="${2}"
+   local oldtDir="${JDIR}/.warden-template-${oldname}"
+   local newtDir="${JDIR}/.warden-template-${newname}"
+
+   isDirZFS "${JDIR}"
+   if [ $? -eq 0 ] ; then
+     isDirZFS "${oldtDir}" "1"
+     if [ $? -ne 0 ] ; then warden_error "Not a ZFS volume: ${oldtDir}" ; fi
+     tank=`getZFSTank "${oldtDir}"`
+     oldrp=`getZFSRelativePath "${oldtDir}"`
+     newrp=`getZFSRelativePath "${newtDir}"`
+
+     zfs unmount -f "${tank}${oldrp}"
+     zfs rename -f "${tank}${oldrp}" "${tank}${newrp}"
+     zfs set mountpoint="/${tank}${newrp}" "${tank}${newrp}"
+     zfs mount "${tank}${newrp}"
+
+   else
+     if [ ! -e "${oldtDir}.tbz" ] ; then
+       warden_exit "No such template: ${oldname}"
+     fi
+     mv "${oldtDir}.tbz" "${newtDir}.tbz"
+   fi
+   exit 0
+}
+
 get_next_id()
 {
    local jdir="${1}"

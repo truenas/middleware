@@ -356,6 +356,7 @@ Required subcommands:
 
   create - Create a new jail template
   delete - Delete a jail template
+  rename - Rename a jail template
     list - List jail templates on system
 
 Flags:
@@ -372,6 +373,8 @@ Usage:
   warden template create <flags>
    or
   warden template delete <template nickname>
+   or
+  warden template rename <template nickname> <new template nickname>
    or
   warden template list
 
@@ -745,6 +748,7 @@ details) JAILNAME="${2}"
          case $OPT in
            create) shift ; shift; ${PROGDIR}/scripts/backend/createtemplate.sh "$@" ;;
            delete) delete_template "$3" ;;
+           rename) rename_template "$3" "$4" ;;
              list) shift ; shift; list_templates $* ;;
                 *) help_template ; exit 1 ;;
         esac
