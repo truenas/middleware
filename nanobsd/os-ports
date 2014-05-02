@@ -29,7 +29,11 @@
 #
 
 if is_truenas ; then
-	add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
+	if [ -n "$USE_POUDRIERE" ]; then
+		add_port sysutils/zfsd LOCALBASE=/
+	else
+		add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
+	fi
 fi
 
 if [ -n "$USE_POUDRIERE" ]; then
