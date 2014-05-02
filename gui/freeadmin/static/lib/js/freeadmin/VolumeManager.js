@@ -882,7 +882,7 @@ define([
               this.initialDisks[0].addToRow(this, Math.floor(i / div2), i % div2);
             }
 
-            this.rows = mod2;
+            this.rows = 2 + mod2;
 
             // Remaining disks are spare
             if(this.initialDisks.length > 0) {
