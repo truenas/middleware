@@ -229,12 +229,55 @@ customize_cmd unmute_console_logging
 
 fi
 
+remove_gcc47()
+{
+	local files_to_save="
+/usr/local/lib/gcc47/libstdc++.so.6
+/usr/local/lib/gcc47/libstdc++.so
+/usr/local/lib/gcc47/libstdc++.a
+/usr/local/lib/gcc47/libstdc++.so.6-gdb.py
+/usr/local/lib/gcc47/libmudflap.so.0
+/usr/local/lib/gcc47/libmudflap.so
+/usr/local/lib/gcc47/libmudflapth.so.0
+/usr/local/lib/gcc47/libmudflapth.so
+/usr/local/lib/gcc47/libssp.so.0
+/usr/local/lib/gcc47/libssp.so
+/usr/local/lib/gcc47/libgcc_s.so.1
+/usr/local/lib/gcc47/libgcc_s.so
+/usr/local/lib/gcc47/libquadmath.so.0
+/usr/local/lib/gcc47/libquadmath.so
+/usr/local/lib/gcc47/libquadmath.a
+/usr/local/lib/gcc47/libgomp.spec
+/usr/local/lib/gcc47/libgomp.so.1
+/usr/local/lib/gcc47/libgomp.so
+/usr/local/lib/gcc47/libitm.spec
+/usr/local/lib/gcc47/libitm.so.1
+/usr/local/lib/gcc47/libitm.so
+/usr/local/libdata/ldconfig/gcc47
+	"
+
+	echo "Backing up gcc47 libraries"
+	for f in $files_to_save
+	do
+		CR "mv $f $f.bak"
+	done
+	echo "Removing gcc47" 
+	CR "pkg_delete -f gcc47\* || true"
+
+	echo "Restoring gcc47 libraries"
+	for f in $files_to_save
+	do
+		CR "mv $f.bak $f"
+	done
+}
+customize_cmd remove_gcc47
+
 remove_packages()
 {
 	# Workaround to remove packages from a fat image
 	local pkg_to_remove
 
-	for pkg_to_remove in gcc47 gcc-ecj kBuild cmake docbook \
+	for pkg_to_remove in gcc-ecj kBuild cmake docbook \
                              automake autoconf
 	do
 		echo "Removing $pkg_to_remove"
