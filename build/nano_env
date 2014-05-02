@@ -242,6 +242,9 @@ export PXZ_ACCEL
 : ${PORTS_DISTFILES_CACHE:="/freenas/Dev/releng/FreeNAS/ports/distfiles"}
 export PORTS_DISTFILES_CACHE
 
+: ${MASTER_SITE_FREEBSD:=yes}
+export MASTER_SITE_FREEBSD
+
 #
 # FTP mirror where we fetch files for jails
 #
