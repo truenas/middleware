@@ -79,10 +79,6 @@ $var=$val"
 	fi
 done
 
-if [ "$PACKAGE_PREP_BUILD" = 1 ]; then
-	echo "Skipping post-package customize steps"
-	do_image=false
-else
 hack_nsswitch_conf ( )
 {
 	# Remove all references to NIS in the nsswitch.conf file
@@ -375,9 +371,6 @@ freenas_custom()
 }
 late_customize_cmd freenas_custom
 
-fi # [ $PACKAGE_PREP_BUILD = 1 ]
-
-if $do_image; then
 last_orders() {
 	local cd_image_log
 	local full_image full_image_log
@@ -499,7 +492,6 @@ last_orders() {
 	) > "${cd_image_log}" 2>&1
 
 }
-fi # $do_image
 
 
 build_kernel2 ( ) (
