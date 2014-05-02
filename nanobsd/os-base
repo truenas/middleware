@@ -58,15 +58,7 @@ FlashDevice generic 2g
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
-if [ -z "$USE_POUDRIERE" ]; then
-	customize_cmd build_nas_source2
-fi
-
-if [ -z "$USE_POUDRIERE" ]; then
-	. ${AVATAR_ROOT}/nanobsd/os-ports
-else
-	customize_cmd install_ports
-fi
+customize_cmd install_ports
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
  	CONF_INSTALL="${CONF_INSTALL}
@@ -111,45 +103,6 @@ save_build ( )
 }
 customize_cmd save_build
 
-[ -z "$USE_POUDRIERE" ] && add_pbi_manager()
-{
-	local pm dst
-	pm=${AVATAR_ROOT}/src/pcbsd/pbi-manager
-	dst=${NANO_WORLDDIR}/usr/local
-	df="${dst}/share/pcbsd/distfiles/"
-
-	pprint 2 "Adding pbi-manager"
-
-	mkdir -p ${dst}/sbin >/dev/null 2>/dev/null
-	cp ${pm}/pbi-manager ${dst}/sbin/pbi_create
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_add
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_addrepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_browser
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_autobuild
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_delete
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_deleterepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_icon
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_info
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_indextool
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_listrepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makepatch
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makeport
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_makerepo
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_metatool
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_patch
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi_update_hashdir
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbid
-	ln -f ${dst}/sbin/pbi_create ${dst}/sbin/pbi-crashhandler
-	rm -f ${dst}/pbi-manager
-
-	mkdir -p ${df} >/dev/null 2>/dev/null
-	cp ${pm}/repo/pcbsd.rpo ${df}/pcbsd.rpo
-}
-if [ -z "$USE_POUDRIERE" ]; then
-	customize_cmd add_pbi_manager
-fi
-
 add_gui()
 {
 	local gui dst dstCR
@@ -182,19 +135,6 @@ add_gui()
 }
 customize_cmd add_gui
 
-[ -z "$USE_POUDRIERE" ] && add_autotune()
-{
-	local autotune autotune_src
-
-	# See ix-loader for more details.
-	autotune_src=$AVATAR_ROOT/src/autotune/files/autotune.py
-	autotune=$NANO_WORLDDIR/usr/local/bin/autotune
-	install -m 0755 $autotune_src $autotune
-}
-if [ -z "$USE_POUDRIERE" ]; then
-	customize_cmd add_autotune
-fi
-
 customize_cmd_truenas add_licensor
 
 arch_specific_ko()
@@ -203,79 +143,6 @@ arch_specific_ko()
 }
 if ! is_truenas ; then
 	customize_cmd arch_specific_ko
-fi
-
-[ -z "$USE_POUDRIERE" ] && add_pc_extractoverlay()
-{
-	local pce src dst pcbsd bin
-
-	pce="pc-extractoverlay"
-	src="${AVATAR_ROOT}/src/pcbsd/${pce}"
-	dst="${NANO_WORLDDIR}/usr/local"
-	pcbsd="${dst}/share/pcbsd"
-	bin="${dst}/bin"
-
-	pprint 2 "Adding pc-extractoverlay"
-
-	cp ${src}/${pce} ${bin}/${pce}
-	chmod 755 ${bin}/${pce}
-
-	mkdir -p ${dst}/etc
-	mkdir -p ${pcbsd}/conf
-	mkdir -p ${pcbsd}/distfiles
-
-	cp ${src}/server-excludes ${pcbsd}/conf
-	cp ${src}/server-overlay/usr/local/etc/pkg-pubkey.cert ${dst}/etc
-
-	tar -cvJf ${pcbsd}/distfiles/server-overlay.txz -C ${src}/server-overlay .
-}
-if [ -z "$USE_POUDRIERE" ]; then
-	customize_cmd add_pc_extractoverlay
-fi
-
-[ -z "$USE_POUDRIERE" ] && add_warden()
-{
-	local wt src dst share hooks
-
-	wt="${AVATAR_ROOT}/nanobsd/Files/etc/ix/templates/warden"
-	src="${AVATAR_ROOT}/src/pcbsd/warden"
-	dst="${NANO_WORLDDIR}/usr/local"
-	share="${dst}/share/warden"
-	hooks="${share}/scripts/hooks"
-
-	pprint 2 "Adding warden"
-
-	mkdir -p ${dst}/etc >/dev/null 2>/dev/null
-	mkdir -p ${dst}/bin >/dev/null 2>/dev/null
-	mkdir -p ${share} >/dev/null 2>/dev/null
-	mkdir -p ${share}/tmp >/dev/null 2>/dev/null
-	mkdir -p ${share}/export >/dev/null 2>/dev/null
-
-	cp ${src}/bin/warden ${dst}/bin/warden
-	chmod 755 ${dst}/bin/warden
-
-	cp ${src}/pluginjail-packages ${share}/pluginjail-packages
-	chmod 644 ${share}/pluginjail-packages
-
-	cp ${src}/pcbsd-utils-packages ${share}/pcbsd-utils-packages
-	chmod 644 ${share}/pcbsd-utils-packages
-
-	cp ${src}/conf/warden.conf ${dst}/etc/warden.conf
-	chmod 644 ${dst}/etc/warden.conf
-
-	cp -r ${src}/linux-installs ${share}
-	cp -r ${src}/scripts ${share}
-	chmod 755 ${share}/scripts/backend/*
-
-	cp ${src}/scripts/rc.d/wardenrc ${dst}/etc/rc.d/wardenrc
-	chmod 755 ${dst}/etc/rc.d/wardenrc
-
-	cp ${src}/agent.png ${share}/
-	cp ${src}/agent.png ${share}/warden.png
-
-}
-if [ -z "$USE_POUDRIERE" ]; then
-	customize_cmd add_warden
 fi
 
 add_warden_hooks()
@@ -297,65 +164,6 @@ add_warden_hooks()
 	chmod 755 ${hooks}/jail-*
 }
 customize_cmd add_warden_hooks
-
-[ -z "$USE_POUDRIERE" ] && add_pcbsd_libsh()
-{
-	local src dst
-	src="${AVATAR_ROOT}/src/pcbsd/libsh"
-	dst="${NANO_WORLDDIR}/usr/local/share/pcbsd/scripts"
-
-	pprint 2 "Adding pcbsd libsh"
-
-	mkdir -p ${dst} >/dev/null 2>/dev/null
-
-	cp ${src}/functions.sh ${dst}/functions.sh
-	chmod 755 ${dst}/functions.sh
-}
-if [ -z "$USE_POUDRIERE" ]; then
-	customize_cmd add_pcbsd_libsh
-fi
-
-[ -z "$USE_POUDRIERE" ] && add_pcbsd_xtrafiles()
-{
-	local src dst
-	src="${AVATAR_ROOT}/src/pcbsd/xtrafiles/local/share/pcbsd/conf"
-	dst="${NANO_WORLDDIR}/usr/local/share/pcbsd/conf"
-
-	pprint 2 "Adding pcbsd mirrors"
-
-	mkdir -p ${dst} >/dev/null 2>/dev/null
-
-	for xf in $(ls ${src})
-	do
-		cp ${src}/${xf} ${dst}/${xf}
-		chmod 644 ${dst}/${xf}
-	done
-}
-if [ -z "$USE_POUDRIERE" ]; then
-	customize_cmd add_pcbsd_xtrafiles
-fi
-
-[ -z "$USE_POUDRIERE" ] && add_pbi_wrapper()
-{
-	local _pm 
-	local _ad
-	local _bd
-
-	_pm="${NANO_WORLDDIR}/usr/pbi/.pbiwrapper-${NANO_ARCH}"
-	_ad="${AVATAR_ROOT}/pbi"
-	_bd="${_ad}/${NANO_ARCH}"
-
-	pprint 2 "Adding PBI wrapper"
-
-	mkdir -p "${_bd}"
-	if [ ! -s "${_bd}/.pbiwrapper" ]
-	then
-		cp "${_pm}" "${_ad}/.pbiwrapper-${NANO_ARCH}"
-	fi
-}
-if [ -z "$USE_POUDRIERE" ]; then
-	customize_cmd add_pbi_wrapper
-fi
 
 # Move the $world/data to the /data partion
 move_data()
@@ -790,55 +598,6 @@ install_debug_kernel ( )
 	local _kernconf=$(basename ${NANO_KERNEL})
 
 	install_kernel2  ${NANO_OBJ}/${_kernconf}-DEBUG  /boot/kernel-debug
-}
-
-[ -z "$USE_POUDRIERE" ] && build_nas_source2 ( )
-{
-	mkdir -p ${NANO_WORLDDIR}/usr/src
-	mkdir -p ${NANO_WORLDDIR}/usr/nas_source2
-
-	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
-	mount -t nullfs -o noatime ${AVATAR_ROOT}/src ${NANO_WORLDDIR}/usr/nas_source2
-
-        (
-	    # Build PBI wrapper
-            local _target
-            for _target in obj all install; do
-	        CR "unset MAKEOBJDIRPREFIX; \
-	            env \
-	            TARGET=${NANO_ARCH} \
-	            TARGET_ARCH=${NANO_ARCH} \
-	            ${NANO_PMAKE} \
-	            -C /usr/nas_source2/pcbsd/pbi-wrapper \
-	            ${_target}"
-            done
-
-	    # Build extract-tarball
-            for _target in obj all install; do
-	        CR "unset MAKEOBJDIRPREFIX;
-	            env \
-	            TARGET=${NANO_ARCH} \
-	            TARGET_ARCH=${NANO_ARCH} \
-	            ${NANO_PMAKE} \
-	            BINDIR=/usr/local/bin \
-	             -C /usr/nas_source2/extract-tarball \
-	            ${_target}"
-            done
-
-	    # Build winacl
-            for _target in obj all install; do
-	        CR "unset MAKEOBJDIRPREFIX;
-	            env \
-	            TARGET=${NANO_ARCH} \
-	            TARGET_ARCH=${NANO_ARCH} \
-	            ${NANO_PMAKE} \
-	            BINDIR=/usr/local/bin \
-	             -C /usr/nas_source2/winacl \
-	            ${_target}"
-            done
-        )
-	umount -f ${NANO_WORLDDIR}/usr/nas_source2
-	umount -f ${NANO_WORLDDIR}/usr/src
 }
 
 install_ports()

@@ -104,9 +104,7 @@ build_target()
 
 	local _required_logs="_.ik _.iw"
 
-	if [ -n "$USE_POUDRIERE" ]; then
-		_args="${_args} -w -k"
-	fi 
+	_args="${_args} -w -k"
 
 	local _cmd="${_nanobsd} -c ${_target} ${_args} -j ${MAKE_JOBS}"
 	echo ${_cmd}

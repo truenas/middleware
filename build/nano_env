@@ -239,16 +239,8 @@ PXZ_ACCEL="-T 16"
 export NANO_XZ
 export PXZ_ACCEL
 
-if [ -z "$USE_POUDRIERE" ]; then
-	# Delete this block when we move to poudriere
-	: ${DISTCACHE:="/freenas-build/freenas-distfiles"}
-	export DISTCACHE
-fi
-
-if [ -n "$USE_POUDRIERE" ]; then
-	: ${PORTS_DISTFILES_CACHE:="/freenas/Dev/releng/FreeNAS/ports/distfiles"}
-	export PORTS_DISTFILES_CACHE
-fi
+: ${PORTS_DISTFILES_CACHE:="/freenas/Dev/releng/FreeNAS/ports/distfiles"}
+export PORTS_DISTFILES_CACHE
 
 #
 # FTP mirror where we fetch files for jails
@@ -264,16 +256,6 @@ export FREEBSD_PACKAGE_MIRROR
 
 : ${FREEBSD_PACKAGE_MIRROR_32="http://mirror.exonetric.net/pub/pkgng/freebsd:9:x86:32/latest"}
 export FREEBSD_PACKAGE_MIRROR_32
-
-if [ -z "$USE_POUDRIERE" ]; then
-	# Delete this block when we move to poudriere
-	if is_truenas ; then
-		: ${MASTER_SITE_OVERRIDE='http://gitserver/truenas/distfiles/${DIST_SUBDIR}/'}
-	else
-		: ${MASTER_SITE_OVERRIDE='http://gitserver/freenas/distfiles/${DIST_SUBDIR}/'}
-	fi
-	export MASTER_SITE_OVERRIDE
-fi
 
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 

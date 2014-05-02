@@ -29,16 +29,10 @@
 #
 
 if is_truenas ; then
-	if [ -n "$USE_POUDRIERE" ]; then
-		add_port sysutils/zfsd LOCALBASE=/
-	else
-		add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
-	fi
+	add_port sysutils/zfsd LOCALBASE=/
 fi
 
-if [ -n "$USE_POUDRIERE" ]; then
-	add_port misc/freenas-files
-fi
+add_port misc/freenas-files
 
 add_port net/mDNSResponder
 add_port textproc/libxml2

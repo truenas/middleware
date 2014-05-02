@@ -19,11 +19,6 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION} BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
 
-USE_POUDRIERE=yes
-.if defined(USE_POUDRIERE)
-ENV_SETUP+= USE_POUDRIERE=${USE_POUDRIERE}
-.endif
-
 all:	build
 
 .BEGIN:
@@ -34,12 +29,8 @@ all:	build
 
 build: git-verify
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
-.if defined(USE_POUDRIERE)
 	@${ENV_SETUP} ${MAKE} portsjail
 	@${ENV_SETUP} ${MAKE} ports
-.else
-	${ENV_SETUP} PACKAGE_PREP_BUILD=1 build/do_build.sh
-.endif
 	${ENV_SETUP} build/do_build.sh
 
 checkout: git-verify
@@ -75,12 +66,8 @@ freenas: release
 release: git-verify
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
-.if defined(USE_POUDRIERE)
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
-.else
-	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/build_release.sh
-.endif
 
 rebuild:
 	@${ENV_SETUP} ${MAKE} checkout
