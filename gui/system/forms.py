@@ -28,6 +28,7 @@
 from collections import defaultdict, OrderedDict
 import json
 import logging
+import math
 import os
 import re
 import stat
@@ -157,6 +158,19 @@ class InitialWizard(FileWizard):
             'system/wizard.html',
         ]
 
+    def _grp_type(self, num):
+        check = OrderedDict((
+            ('mirror', lambda y: y == 2),
+            ('raidz', lambda y: False if y < 3 else math.log(y - 1, 2) % 1 == 0),
+            ('raidz2', lambda y: False if y < 4 else math.log(y - 2, 2) % 1 == 0),
+            ('raidz3', lambda y: False if y < 5 else math.log(y - 3, 2) % 1 == 0),
+            ('stripe', lambda y: True),
+        ))
+        for name, func in check.items():
+            if func(num):
+                return name
+        return 'stripe'
+
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
         volume_name = cleaned_data.get('volume_name')
@@ -187,13 +201,28 @@ class InitialWizard(FileWizard):
             groups = OrderedDict()
             grpid = 0
             for size, devs in bysize.items():
-                #num = len(devs)
+                num = len(devs)
+                if num in (4, 8):
+                    vdevtype = self._grp_type(num / 2)
+                    for i in range(2):
+                        groups[grpid] = {
+                            'type': vdevtype,
+                            'disks': devs[i * num / 2:(num / 2) * (i + 1)],
+                        }
+                        grpid += 1
+                elif num < 12:
+                    groups[grpid] = {
+                        'type': self._grp_type(num),
+                        'disks': devs,
+                    }
+                    grpid += 1
                 #TODO: best layout possible
-                groups[grpid] = {
-                    'type': 'stripe',
-                    'disks': devs,
-                }
-                grpid += 1
+                else:
+                    groups[grpid] = {
+                        'type': 'stripe',
+                        'disks': devs,
+                    }
+                    grpid += 1
 
             _n.init(
                 "volume",
