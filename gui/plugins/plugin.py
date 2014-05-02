@@ -461,7 +461,7 @@ class Available(object):
 
         rplugin = None
         for rp in self.get_remote(cache=True):
-            if rp.name == iplugin.plugin_name:
+            if rp.name.lower() == iplugin.plugin_name.lower():
                 rplugin = rp
                 break
 
