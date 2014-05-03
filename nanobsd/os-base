@@ -270,7 +270,7 @@ remove_gcc47()
 		CR "mv $f.bak $f"
 	done
 }
-customize_cmd remove_gcc47
+#customize_cmd remove_gcc47
 
 remove_packages()
 {
