@@ -149,6 +149,9 @@ else
 	pprint 2 "Skipping buildkernel (as instructed)"
 fi
 
+if [ -e "${NANO_WORLDDIR}" ]; then
+	 rm -fr "${NANO_WORLDDIR}" || true
+fi
 mkdir -p ${NANO_OBJ} ${NANO_WORLDDIR}
 printenv > ${NANO_OBJ}/_.env
 make_conf_install
