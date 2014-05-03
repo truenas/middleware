@@ -19,6 +19,7 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 from freenasUI.common.system import get_sw_name, send_mail
+from freenasUI.system.models import Email
 
 ALIASES = re.compile(r'^(?P<from>[^#]\S+?):\s*(?P<to>\S+)$')
 
@@ -53,6 +54,14 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
         'X-%s-Host' % get_sw_name(): socket.gethostname(),
     })
     margs['subject'] = em.get('Subject')
+
+    # abusive use of querysets
+    lemail = Email.objects.all()
+    for obj in lemail:
+        if obj.em_fromemail != '':
+            margs['extra_headers'].update({
+               'From': obj.em_fromemail
+            })
 
     if em.is_multipart():
         margs['attachments'] = filter(
