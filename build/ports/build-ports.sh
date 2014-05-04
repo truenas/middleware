@@ -46,6 +46,8 @@ fi
 
 mkdir -p ${NANO_OBJ}/ports/distfiles
 JAIL=$(basename $(realpath ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/j 2> /dev/null))
+: ${PORTSLIST:=${NANO_OBJ}/poudriere/etc/ports.txt}
+: ${PORTS:=p}
 
 if [ -z "$JAIL" ]; then
 	echo "ERROR: jail does not exist"
@@ -53,9 +55,9 @@ if [ -z "$JAIL" ]; then
 fi
 
 if [ -n "$JAIL" ]; then
-	jls -n -q -j "${JAIL}-p" 2> /dev/null
+	jls -n -q -j "${JAIL}-${PORTS}" 2> /dev/null
 	if [ $? -eq 0 ]; then
-		# Jail named ${JAIL}-p is running, we need to choose another jail name
+		# Jail named ${JAIL}-${PORTS} is running, we need to choose another jail name
 		OLD_JAILNAME="$JAIL"
 		JAIL=$(get_unique_jailname)
 		if [ -z "$JAIL" ]; then
@@ -67,11 +69,11 @@ if [ -n "$JAIL" ]; then
 		rm -fr ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/j
 		ln -s ${JAIL} ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/j
 		for d in build cache packages; do
-			rm -fr ${NANO_OBJ}/ports/${d}/${JAIL}-p
-			[ -d ${NANO_OBJ}/ports/${d}/${OLD_JAILNAME}-p ] && mv ${NANO_OBJ}/ports/${d}/${OLD_JAILNAME}-p ${NANO_OBJ}/ports/${d}/${JAIL}-p
+			rm -fr ${NANO_OBJ}/ports/${d}/${JAIL}-${PORTS}
+			[ -d ${NANO_OBJ}/ports/${d}/${OLD_JAILNAME}-${PORTS} ] && mv ${NANO_OBJ}/ports/${d}/${OLD_JAILNAME}-${PORTS} ${NANO_OBJ}/ports/${d}/${JAIL}-${PORTS}
 		done
 	fi
 fi
 
 
-poudriere ${TRACE} -e ${NANO_OBJ}/poudriere/etc bulk -w -J ${MAKE_JOBS} -f ${NANO_OBJ}/poudriere/etc/ports.txt -j "$JAIL" -p p
+poudriere ${TRACE} -e ${NANO_OBJ}/poudriere/etc bulk -w -J ${MAKE_JOBS} -f ${PORTSLIST} -j "$JAIL" -p ${PORTS}
