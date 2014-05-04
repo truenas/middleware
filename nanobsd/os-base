@@ -104,7 +104,7 @@ if [ "${DEBUG}" = 1 ]; then
 	customize_cmd unmute_console_logging
 fi
 
-#customize_cmd remove_gcc47
+customize_cmd remove_gcc47
 
 customize_cmd remove_packages
 
