@@ -55,7 +55,7 @@ zfs_func()
 	section_footer
 
 	section_header "ZFS Snapshots"
-	zfs list -t snapshot
+	zfs list -t snapshot -o name,used,available,referenced,mountpoint,freenas:state
 	section_footer
 
 	section_header "ZFS Datasets Properties"
