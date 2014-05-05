@@ -232,6 +232,13 @@ remove_packages()
 	done
 }
 
+remove_var_cache_pkg()
+{
+	if [ -n "$WITH_PKGNG" ]; then
+		CR "pkg clean -a -y"
+	fi
+}
+
 remove_var_db_pkg()
 {
 	# Eats up ~7 MB on the install image.

@@ -108,6 +108,8 @@ customize_cmd remove_gcc47
 
 customize_cmd remove_packages
 
+customize_cmd remove_var_cache_pkg
+
 customize_cmd remove_var_db_pkg
 
 customize_cmd fix_easy_install_pth
