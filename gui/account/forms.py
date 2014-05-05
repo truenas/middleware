@@ -29,9 +29,7 @@ import os
 import re
 
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User as django_User
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.utils.translation import ugettext as __, ugettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.http import QueryDict
@@ -296,36 +294,6 @@ class FilteredSelectField(forms.fields.MultipleChoiceField):
 
     def __init__(self, *args, **kwargs):
         super(FilteredSelectField, self).__init__(*args, **kwargs)
-
-
-class UserChangeForm(ModelForm):
-    username = forms.RegexField(
-        label=_("Username"),
-        max_length=16,
-        regex=r'^[\w.-_]+$',
-        help_text=_(
-            "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-        ),
-        error_messages={
-            'invalid': _(
-                "This value may contain only letters, numbers and "
-                "./-/_ characters."
-            ),
-        })
-
-    class Meta:
-        fields = ('username', 'first_name', 'last_name',)
-        model = django_User
-
-    def __init__(self, *args, **kwargs):
-        super(UserChangeForm, self).__init__(*args, **kwargs)
-        f = self.fields.get('user_permissions', None)
-        if f is not None:
-            f.queryset = f.queryset.select_related('content_type')
-
-    def save(self):
-        obj = super(UserChangeForm, self).save()
-        return obj
 
 
 class bsdUsersForm(ModelForm, bsdUserGroupMixin):
@@ -1000,61 +968,6 @@ class SetPasswordForm(Form):
         if commit:
             self.user.save()
         return self.user
-
-
-class PasswordChangeForm(SetPasswordForm):
-    """
-    A form that lets a user change his/her password by entering
-    their old password.
-    """
-    change_root = forms.BooleanField(
-        label=_("Change root password as well"),
-        initial=True,
-        required=False,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(PasswordChangeForm, self).__init__(*args, **kwargs)
-        if self.user.has_usable_password():
-            self.fields['old_password'] = forms.CharField(
-                label=_("Old password"),
-                widget=forms.PasswordInput,
-            )
-            self.fields.keyOrder = [
-                'old_password', 'new_password', 'new_password2', 'change_root'
-            ]
-        else:
-            self.fields.keyOrder = [
-                'new_password', 'new_password2', 'change_root'
-            ]
-        if self._api is True:
-            del self.fields['new_password2']
-
-    def clean_old_password(self):
-        """
-        Validates that the old_password field is correct.
-        """
-        if not self.user.has_usable_password():
-            return ''
-        old_password = self.cleaned_data["old_password"]
-        if not self.user.check_password(old_password):
-            raise forms.ValidationError(_(
-                "Your old password was entered incorrectly. Please enter it "
-                "again."
-            ))
-        return old_password
-
-    def save(self, *args, **kwargs):
-        with transaction.atomic():
-            if self.cleaned_data.get('change_root'):
-                root = models.bsdUsers.objects.get(bsdusr_username='root')
-                new_password = self.cleaned_data.get('new_password')
-                bsdpasswdform = bsdUserPasswordForm(instance=root)
-                bsdpasswdform.cleaned_data = {}
-                bsdpasswdform.cleaned_data['bsdusr_password'] = new_password
-                bsdpasswdform.cleaned_data['bsdusr_password2'] = new_password
-                bsdpasswdform.save()
-            return super(PasswordChangeForm, self).save(*args, **kwargs)
 
 
 class DeleteGroupForm(forms.Form):

@@ -32,7 +32,6 @@ import subprocess
 import urllib
 
 from django.conf.urls import url
-from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -43,8 +42,8 @@ from django.utils.translation import ugettext as _
 
 from freenasUI import choices
 from freenasUI.account.forms import (
-    bsdUsersForm, bsdUserPasswordForm, UserChangeForm,
-    PasswordChangeForm
+    bsdUsersForm,
+    bsdUserPasswordForm,
 )
 from freenasUI.account.forms import bsdUserToGroupForm
 from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
@@ -1979,88 +1978,3 @@ class ShutdownResource(DojoResource):
     def post_list(self, request, **kwargs):
         notifier().stop("system")
         return HttpResponse('Shutdown process started.', status=202)
-
-
-class AdminPasswordResource(DojoResource):
-
-    class Meta:
-        allowed_methods = ['put']
-        resource_name = 'system/adminpassword'
-        object_class = object
-
-    def get_object_list(self, *args, **kwargs):
-        return []
-
-    def get_list(self, *args, **kwargs):
-        return []
-
-    def put_list(self, request, **kwargs):
-        deserialized = self.deserialize(
-            request,
-            request.body,
-            format=request.META.get('CONTENT_TYPE', 'application/json'),
-        )
-        user = User.objects.all()[0]
-        form = PasswordChangeForm(
-            user=user, data=deserialized, api_validation=True
-        )
-        if not form.is_valid():
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, form.errors)
-            )
-        else:
-            form.save()
-        return HttpResponse('Admin password changed.', status=202)
-
-
-class AdminUserResource(DojoResource):
-
-    username = fields.CharField(default='admin')
-    first_name = fields.CharField()
-    last_name = fields.CharField()
-
-    class Meta:
-        allowed_methods = ['get', 'put']
-        resource_name = 'system/adminuser'
-        object_class = object
-
-    def get_object_list(self, request):
-        user = User.objects.all()[0]
-        return user
-
-    def get_list(self, request, **kwargs):
-
-        user = User.objects.all()[0]
-        to_be_serialized = {
-            'username': user.username,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-        }
-        response = self.create_response(request, to_be_serialized)
-        return response
-
-    def put_list(self, request, **kwargs):
-        deserialized = self.deserialize(
-            request,
-            request.body,
-            format=request.META.get('CONTENT_TYPE', 'application/json'),
-        )
-        user = User.objects.all()[0]
-        data = user.__dict__
-        data.update(deserialized)
-        form = UserChangeForm(
-            instance=user,
-            data=data,
-            api_validation=True,
-            initial=user.__dict__,
-        )
-        if not form.is_valid():
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, form.errors)
-            )
-        else:
-            form.save()
-
-        response = self.get_list(request, **kwargs)
-        response.status_code = 202
-        return response

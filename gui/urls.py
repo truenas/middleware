@@ -35,7 +35,6 @@ from django.template.loader import add_to_builtins
 from freenasUI import freeadmin
 from freenasUI.api import v1_api
 from freenasUI.api.resources import (
-    AdminPasswordResource, AdminUserResource,
     AlertResource,
     RebootResource, ShutdownResource,
     SnapshotResource
