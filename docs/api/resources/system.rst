@@ -1541,3 +1541,40 @@ Delete resource
       Content-Type: application/json
 
    :statuscode 204: no error
+
+
+Version
+--------
+
+Version of the software installed.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/system/version/
+
+   Returns the version dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/ssytem/version/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "fullversion": "FreeNAS-9.2.2-ALPHA-a346239-x64",
+                "name": "FreeNAS",
+                "version": "9.2.2-ALPHA"
+        }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
