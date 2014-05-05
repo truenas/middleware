@@ -33,6 +33,7 @@ if is_truenas ; then
 fi
 
 add_port misc/freenas-files
+add_port freenas/pcbsd-warden
 
 add_port net/mDNSResponder
 add_port textproc/libxml2
