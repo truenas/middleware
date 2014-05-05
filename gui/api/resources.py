@@ -49,6 +49,11 @@ from freenasUI.account.forms import bsdUserToGroupForm
 from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_number_si
+from freenasUI.common.system import (
+    get_sw_login_version,
+    get_sw_name,
+    get_sw_version,
+)
 from freenasUI.common.warden import Warden
 from freenasUI.jails.forms import JailCreateForm, JailsEditForm
 from freenasUI.middleware import zfs
@@ -1978,3 +1983,21 @@ class ShutdownResource(DojoResource):
     def post_list(self, request, **kwargs):
         notifier().stop("system")
         return HttpResponse('Shutdown process started.', status=202)
+
+
+class VersionResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['get']
+        resource_name = 'system/version'
+
+    def get_list(self, request, **kwargs):
+        version = get_sw_version()
+        login_version = get_sw_login_version()
+        name = get_sw_name()
+        data = {
+            'fullversion': version,
+            'version': login_version,
+            'name': name,
+        }
+        return self.create_response(request, data)
