@@ -49,9 +49,9 @@ clean:
 
 clean-packages:
 .if defined(USE_NEW_LAYOUT)
-	find ../obj/os-base -name "*.tbz" -delete
+	find ../obj/os-base/*/ports -type f -delete
 .else
-	find os-base -name "*.tbz" -delete
+	find os-base/*/ports -type f -delete
 .endif
 
 distclean: clean
