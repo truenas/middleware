@@ -50,3 +50,11 @@ else
 
 fi
 
+echo "PACKAGES AFTER install===================================BEGIN LIST============="
+if [ -n "$WITH_PKGNG" ]; then
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "pkg info"
+else
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "pkg_info"
+fi
+echo "PACKAGES AFTER install===================================END LIST============="
+
