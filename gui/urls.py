@@ -46,8 +46,6 @@ from freenasUI.freeadmin.navtree import navtree
 handler500 = 'freenasUI.freeadmin.views.server_error'
 handler404 = 'freenasUI.freeadmin.views.page_not_found'
 
-v1_api.register(AdminPasswordResource())
-v1_api.register(AdminUserResource())
 v1_api.register(AlertResource())
 v1_api.register(RebootResource())
 v1_api.register(ShutdownResource())
