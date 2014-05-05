@@ -26,8 +26,22 @@ JAIL=$(basename $(realpath ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/j))
 mkdir -p ${NANO_OBJ}/_.w/usr/ports/packages
 mount -t nullfs ${NANO_OBJ}/ports/packages/${JAIL}-${PORTS} ${NANO_OBJ}/_.w/usr/ports/packages  || exit 1
 
-build/ports/install-ports-from-list.py --index ${NANO_OBJ}/ports/packages/${JAIL}-${PORTS}/INDEX-${FREEBSD_RELEASE_MAJOR_VERSION}.bz2 \
+if [ -n "$WITH_PKGNG" ]; then
+	mkdir -p ${NANO_OBJ}/_.w/usr/local/etc/pkg/repos
+	echo "local: { url: \"file:///usr/ports/packages\", enabled: yes }" > ${NANO_OBJ}/_.w/usr/local/etc/pkg/repos/local.conf
+	echo "FreeBSD: { enabled: no }" > ${NANO_OBJ}/_.w/usr/local/etc/pkg/repos/FreeBSD.conf
+	PACKAGES_TO_INSTALL=""
+	for package in $(cat ${PORTSLIST}); do 
+		PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $package"
+	done
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes pkg install -f $PACKAGES_TO_INSTALL"
+
+
+else
+	build/ports/install-ports-from-list.py --index ${NANO_OBJ}/ports/packages/${JAIL}-${PORTS}/INDEX-${FREEBSD_RELEASE_MAJOR_VERSION}.bz2 \
                                        --packages ${NANO_OBJ}/ports/packages/${JAIL}-${PORTS} \
                                        --chroot ${NANO_OBJ}/_.w \
                                        --ports ${PORTSLIST}
+
+fi
 
