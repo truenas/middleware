@@ -171,69 +171,93 @@ class InitialWizard(FileWizard):
                 return name
         return 'stripe'
 
-    def _grp_autoselect(self, disks):
+    def _grp_autoselect(self, disks, layout='SIZE'):
+
+        assert layout in ('SIZE', 'PERFORMANCE')
+
         bysize = defaultdict(list)
         for disk, info in disks.items():
             bysize[info['capacity']].append(info['devname'])
 
         groups = OrderedDict()
         grpid = 0
-        for size, devs in bysize.items():
-            num = len(devs)
-            if num in (4, 8):
-                mod = 0
-                perrow = num / 2
-                rows = 2
-                vdevtype = self._grp_type(num / 2)
-            elif num < 12:
-                mod = 0
-                perrow = num
-                rows = 1
-                vdevtype = self._grp_type(num)
-            elif num < 18:
+
+        if layout == 'PERFORMANCE':
+            for size, devs in bysize.items():
+                num = len(devs)
+                rows = int(num / 2)
                 mod = num % 2
-                rows = 2
-                perrow = (num - mod) / 2
-                vdevtype = self._grp_type(perrow)
-            elif num < 99:
-                div9 = int(num / 9)
-                div10 = int(num / 10)
-                mod9 = num % 9
-                mod10 = num % 10
+                for i in range(rows):
+                    groups[grpid] = {
+                        'type': 'mirror',
+                        'disks': devs[i * 2:2 * (i + 1)],
+                    }
+                    grpid += 1
+                if mod > 0:
+                    groups[grpid] = {
+                        'type': 'spare',
+                        'disks': devs[-mod:],
+                    }
+                    grpid += 1
 
-                if mod9 >= 0.75 * div9 and mod10 >= 0.75 * div10:
-                    perrow = 9
-                    rows = div9
-                    mod = mod9
+        else:
+            for size, devs in bysize.items():
+                num = len(devs)
+                if num in (4, 8):
+                    mod = 0
+                    perrow = num / 2
+                    rows = 2
+                    vdevtype = self._grp_type(num / 2)
+                elif num < 12:
+                    mod = 0
+                    perrow = num
+                    rows = 1
+                    vdevtype = self._grp_type(num)
+                elif num < 18:
+                    mod = num % 2
+                    rows = 2
+                    perrow = (num - mod) / 2
+                    vdevtype = self._grp_type(perrow)
+                elif num < 99:
+                    div9 = int(num / 9)
+                    div10 = int(num / 10)
+                    mod9 = num % 9
+                    mod10 = num % 10
+
+                    if mod9 >= 0.75 * div9 and mod10 >= 0.75 * div10:
+                        perrow = 9
+                        rows = div9
+                        mod = mod9
+                    else:
+                        perrow = 10
+                        rows = div10
+                        mod = mod10
+
+                    vdevtype = self._grp_type(perrow)
                 else:
-                    perrow = 10
-                    rows = div10
-                    mod = mod10
+                    perrow = num
+                    rows = 1
+                    vdevtype = 'stripe'
+                    mod = 0
 
-                vdevtype = self._grp_type(perrow)
-            else:
-                perrow = num
-                rows = 1
-                vdevtype = 'stripe'
-                mod = 0
-
-            for i in range(rows):
-                groups[grpid] = {
-                    'type': vdevtype,
-                    'disks': devs[i * perrow:perrow * (i + 1)],
-                }
-                grpid += 1
-            if mod > 0:
-                groups[grpid] = {
-                    'type': 'spare',
-                    'disks': devs[-mod:],
-                }
-                grpid += 1
+                for i in range(rows):
+                    groups[grpid] = {
+                        'type': vdevtype,
+                        'disks': devs[i * perrow:perrow * (i + 1)],
+                    }
+                    grpid += 1
+                if mod > 0:
+                    groups[grpid] = {
+                        'type': 'spare',
+                        'disks': devs[-mod:],
+                    }
+                    grpid += 1
         return groups
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
         volume_name = cleaned_data.get('volume_name')
+        volume_type = cleaned_data.get('volume_type')
         share_name = cleaned_data.get('share_name')
         share_type = cleaned_data.get('share_type')
 
@@ -254,7 +278,7 @@ class InitialWizard(FileWizard):
             _n = notifier()
 
             disks = _n.get_disks()
-            groups = self._grp_autoselect(disks)
+            groups = self._grp_autoselect(disks, layout=volume_type)
 
             _n.init(
                 "volume",
@@ -1053,8 +1077,8 @@ class InitialWizardVolumeForm(Form):
     volume_type = forms.ChoiceField(
         label=_('Type'),
         choices=(
-            ('performance', _('Performance')),
-            ('size', _('Size')),
+            ('PERFORMANCE', _('Performance')),
+            ('SIZE', _('Size')),
         ),
         widget=forms.RadioSelect,
     )
