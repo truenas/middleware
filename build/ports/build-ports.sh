@@ -27,7 +27,7 @@ cleanup()
 
 trap cleanup EXIT
 
-EXTRA_PORT_DIRS="sysutils/zfsd misc/truenas-files misc/freenas-files freenas/pcbsd-warden freenas/pcbsd-pbi"
+EXTRA_PORT_DIRS="sysutils/zfsd misc/truenas-files freenas/freenas-files freenas/pcbsd-warden freenas/pcbsd-pbi"
 
 for d in $EXTRA_PORT_DIRS; do
 	mkdir -p "${GIT_PORTS_CHECKOUT_PATH}/${d}"
@@ -38,7 +38,7 @@ mount -t nullfs -o ro ${GIT_FREEBSD_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/src  || e
 cp -a ${AVATAR_ROOT}/src/ ${NANO_OBJ}/_.j/usr/nas_source2 
 cp -a ${AVATAR_ROOT}/nas_ports/sysutils/zfsd ${GIT_PORTS_CHECKOUT_PATH}/sysutils 
 cp -a ${AVATAR_ROOT}/nas_ports/misc/truenas-files ${GIT_PORTS_CHECKOUT_PATH}/misc 
-cp -a ${AVATAR_ROOT}/nas_ports/misc/freenas-files ${GIT_PORTS_CHECKOUT_PATH}/misc
+cp -a ${AVATAR_ROOT}/nas_ports/freenas/freenas-files ${GIT_PORTS_CHECKOUT_PATH}/freenas
 cp -a ${AVATAR_ROOT}/nas_ports/freenas/pcbsd-warden ${GIT_PORTS_CHECKOUT_PATH}/freenas
 cp -a ${AVATAR_ROOT}/nas_ports/freenas/pcbsd-pbi ${GIT_PORTS_CHECKOUT_PATH}/freenas
 

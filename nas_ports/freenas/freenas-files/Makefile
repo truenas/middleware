@@ -7,7 +7,7 @@ PORTNAME=       freenas-files
 PORTVERSION=    1.0
 #PORTREVISION=   1
 
-CATEGORIES=     misc
+CATEGORIES=     freenas
 
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        miscellaneous files for FreeNAS

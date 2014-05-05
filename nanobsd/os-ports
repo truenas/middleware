@@ -32,7 +32,7 @@ if is_truenas ; then
 	add_port sysutils/zfsd LOCALBASE=/
 fi
 
-add_port misc/freenas-files
+add_port freenas/freenas-files
 add_port freenas/pcbsd-warden
 add_port freenas/pcbsd-pbi
 
