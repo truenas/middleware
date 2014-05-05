@@ -34,7 +34,12 @@ if [ -n "$WITH_PKGNG" ]; then
 	for package in $(cat ${PORTSLIST}); do 
 		PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $package"
 	done
-	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes pkg install -f $PACKAGES_TO_INSTALL"
+	if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
+		PACKAGESITE="PACKAGESITE=file:///usr/ports/packages"
+	else
+		PACKAGESITE=""
+	fi
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install -f $PACKAGES_TO_INSTALL"
 
 
 else

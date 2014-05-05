@@ -202,7 +202,11 @@ remove_gcc47()
 		CR "mv $f $f.bak"
 	done
 	echo "Removing gcc47" 
-	CR "pkg_delete -f gcc47\* || true"
+	if [ -n "$WITH_PKGNG" ]; then
+		CR "pkg delete -y -f gcc47\* || true"
+	else
+		CR "pkg_delete -f gcc47\* || true"
+	fi
 
 	echo "Restoring gcc47 libraries"
 	for f in $files_to_save
@@ -220,7 +224,11 @@ remove_packages()
                              automake autoconf
 	do
 		echo "Removing $pkg_to_remove"
-		CR "pkg_delete -f $pkg_to_remove\* || true"
+		if [ -n "$WITH_PKGNG" ]; then
+			CR "pkg delete -y -f $pkg_to_remove\* || true"
+		else
+			CR "pkg_delete -f $pkg_to_remove\* || true"
+		fi
 	done
 }
 
