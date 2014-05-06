@@ -8,6 +8,7 @@ PORTVERSION=    1.0
 #PORTREVISION=   1
 
 CATEGORIES=     freenas
+VALID_CATEGORIES+=	freenas
 
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        miscellaneous files for FreeNAS
