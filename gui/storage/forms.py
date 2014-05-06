@@ -116,17 +116,19 @@ def _clean_quota_fields(form, attrs, prefix):
         if field not in cdata:
             cdata[field] = ''
 
-    r = re.compile(r'^(?P<number>[\.0-9]+)(?P<suffix>[KMGT]?)$', re.I)
-    msg = _(u"Enter positive number (optionally suffixed by K, M, G, T), or 0")
+    r = re.compile(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', re.I)
+    msg = _(u"Specify the size with IEC suffixes or 0, e.g. 10 GiB")
 
     for attr in attrs:
         formfield = '%s%s' % (prefix, attr)
-        match = r.match(cdata[formfield])
+        match = r.match(cdata[formfield].replace(' ', ''))
         if not match and cdata[formfield] != "0":
             form._errors[formfield] = form.error_class([msg])
             del cdata[formfield]
         elif match:
             number, suffix = match.groups()
+            if suffix.lower().endswith('ib'):
+                cdata[formfield] = '%s%s' % (number, suffix[0])
             try:
                 Decimal(number)
             except:
@@ -1406,22 +1408,22 @@ class ZFSDataset(Form):
         max_length=128,
         initial=0,
         label=_('Quota for this dataset'),
-        help_text=_('0=Unlimited; example: 1g'))
+        help_text=_('0=Unlimited; example: 1 GiB'))
     dataset_quota = forms.CharField(
         max_length=128,
         initial=0,
         label=_('Quota for this dataset and all children'),
-        help_text=_('0=Unlimited; example: 1g'))
+        help_text=_('0=Unlimited; example: 1 GiB'))
     dataset_refreservation = forms.CharField(
         max_length=128,
         initial=0,
         label=_('Reserved space for this dataset'),
-        help_text=_('0=None; example: 1g'))
+        help_text=_('0=None; example: 1 GiB'))
     dataset_reservation = forms.CharField(
         max_length=128,
         initial=0,
         label=_('Reserved space for this dataset and all children'),
-        help_text=_('0=None; example: 1g'))
+        help_text=_('0=None; example: 1 GiB'))
     dataset_dedup = forms.ChoiceField(
         label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
