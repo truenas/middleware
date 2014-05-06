@@ -405,6 +405,10 @@ class iSCSITargetGlobalConfiguration(Model):
             blank=True,
             null=True,
             )
+    iscsi_multithreaded = models.BooleanField(
+        default=False,
+        verbose_name=_('Enable multithreaded mode'),
+    )
     iscsi_iotimeout = models.IntegerField(
             max_length=120,
             default=30,
