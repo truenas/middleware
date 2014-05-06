@@ -173,7 +173,7 @@ def plugin_update(request, oid):
 
     rplugin = None
     for rp in availablePlugins.get_remote(cache=True):
-        if rp.name == iplugin.plugin_name:
+        if rp.name.lower() == iplugin.plugin_name.lower():
             rplugin = rp
             break
 
