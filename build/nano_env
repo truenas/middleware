@@ -311,7 +311,6 @@ WITHOUT_BIND_LIBS_LWRES=true
 WITHOUT_BIND_NAMED=true
 WITHOUT_BLUETOOTH=true
 WITHOUT_CALENDAR=true
-WITHOUT_CLANG=true
 WITHOUT_CTM=true
 WITHOUT_CVS=true
 WITHOUT_DICT=true
@@ -343,7 +342,6 @@ WITHOUT_SENDMAIL=true
 # Knob needs to be fixed on systems that don't have the docs stuff
 # preinstalled, e.g. 9.x bsdinstall images.
 #WITHOUT_SHAREDOCS=true
-WITHOUT_SSP=true
 WITHOUT_SYSINSTALL=true
 # Telnet's a useful tool to have on the remote box.
 #WITHOUT_TELNET=true
@@ -358,6 +356,14 @@ LOCAL_DIRS=${NANO_LOCAL_DIRS}
 
 ${DEBUG_BUILD}
 "
+
+if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
+	CONF_BUILD="$CONF_BUILD
+WITHOUT_CLANG=true
+WITHOUT_SSP=true
+"
+fi
+
 if is_truenas ; then
 	CONF_BUILD="$CONF_BUILD
 WITH_OFED=true
