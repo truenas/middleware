@@ -29,7 +29,7 @@
 #
 
 if is_truenas ; then
-	add_port sysutils/zfsd LOCALBASE=/
+	add_port truenas/zfsd LOCALBASE=/
 fi
 
 add_port freenas/freenas-files

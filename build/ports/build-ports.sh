@@ -18,7 +18,6 @@ cleanup()
 
 	for d in $EXTRA_PORT_DIRS; do
 		[ -d  "${GIT_PORTS_CHECKOUT_PATH}/${d}" ] && rm -fr "${GIT_PORTS_CHECKOUT_PATH}/${d}"
-		[ -d  "${GIT_PORTS_CHECKOUT_PATH}/freenas" ] && rm -fr "${GIT_PORTS_CHECKOUT_PATH}/freenas"
 	done
 }
 
@@ -27,20 +26,16 @@ cleanup()
 
 trap cleanup EXIT
 
-EXTRA_PORT_DIRS="sysutils/zfsd misc/truenas-files freenas/freenas-files freenas/pcbsd-warden freenas/pcbsd-pbi"
-
-for d in $EXTRA_PORT_DIRS; do
-	mkdir -p "${GIT_PORTS_CHECKOUT_PATH}/${d}"
-done
+EXTRA_PORT_DIRS="freenas truenas"
 
 mount -t nullfs -o ro ${GIT_FREEBSD_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/src  || exit 1
 #mount -t nullfs -o ro ${AVATAR_ROOT}/src ${NANO_OBJ}/_.j/usr/nas_source2 || exit 1
 cp -a ${AVATAR_ROOT}/src/ ${NANO_OBJ}/_.j/usr/nas_source2 
-cp -a ${AVATAR_ROOT}/nas_ports/sysutils/zfsd ${GIT_PORTS_CHECKOUT_PATH}/sysutils 
-cp -a ${AVATAR_ROOT}/nas_ports/misc/truenas-files ${GIT_PORTS_CHECKOUT_PATH}/misc 
-cp -a ${AVATAR_ROOT}/nas_ports/freenas/freenas-files ${GIT_PORTS_CHECKOUT_PATH}/freenas
-cp -a ${AVATAR_ROOT}/nas_ports/freenas/pcbsd-warden ${GIT_PORTS_CHECKOUT_PATH}/freenas
-cp -a ${AVATAR_ROOT}/nas_ports/freenas/pcbsd-pbi ${GIT_PORTS_CHECKOUT_PATH}/freenas
+
+for d in $EXTRA_PORT_DIRS; do
+	mkdir -p "${GIT_PORTS_CHECKOUT_PATH}/${d}"
+	cp -a ${AVATAR_ROOT}/nas_ports/${d}/* ${GIT_PORTS_CHECKOUT_PATH}/${d}
+done
 
 MAKE_JOBS=$(sysctl -n kern.smp.cpus)
 if [ ${MAKE_JOBS} -gt 10 ]; then
