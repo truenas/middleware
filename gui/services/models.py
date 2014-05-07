@@ -1836,6 +1836,37 @@ class LDAP(Model):
         icon_model = "LDAPIcon"
 
 
+class LLDP(Model):
+    lldp_intdesc = models.BooleanField(
+        verbose_name=_('Interface Description'),
+        default=True,
+        help_text=_('Save received info in interface description / alias'),
+    )
+    lldp_country = models.CharField(
+        verbose_name=_('Country Code'),
+        max_length=2,
+        help_text=_(
+            'Specify a two-letterISO 3166 country code (required for LLDP'
+            'location support)'
+        ),
+        blank=True,
+    )
+    lldp_location = models.CharField(
+        verbose_name=_('Location'),
+        max_length=200,
+        help_text=_('Specify the physical location of the host'),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _("LLDP")
+        verbose_name_plural = _("LLDP")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = "LLDPIcon"
+
+
 class Rsyncd(Model):
     rsyncd_port = models.IntegerField(
             default=873,
