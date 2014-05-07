@@ -894,6 +894,17 @@ class LDAPForm(ModelForm):
             raise ServiceFailed("ldap", _("The ldap service failed to reload."))
 
 
+class LLDPForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.LLDP
+
+    def save(self):
+        super(LLDPForm, self).save()
+        started = notifier().restart("lldp")
+
+
 class iSCSITargetAuthCredentialForm(ModelForm):
     iscsi_target_auth_secret2 = forms.CharField(
         label=_("Secret (Confirm)"),
