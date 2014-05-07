@@ -104,7 +104,9 @@ if [ "${DEBUG}" = 1 ]; then
 	customize_cmd unmute_console_logging
 fi
 
-customize_cmd remove_gcc47
+if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
+	customize_cmd remove_gcc47
+fi
 
 customize_cmd remove_packages
 
