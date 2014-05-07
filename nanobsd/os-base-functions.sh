@@ -363,7 +363,9 @@ freenas_custom()
 
 	# This is wrong.  Needs a way to tell kernel how to find the mount utility
 	# instead.
-	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
+	if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
+		mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
+	fi
 	ln -s -f /usr/local/bin/ntfs-3g ${NANO_WORLDDIR}/sbin/mount_ntfs
 
 }
