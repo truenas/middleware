@@ -531,12 +531,10 @@ def generate_smb4_shares(smb4_shares):
         confset2(smb4_shares, "browseable = %s",
             "yes" if share.cifs_browsable else "no")
 
-        if notifier().get_dataset_share_type(
-            share.cifs_path.replace("/mnt/", "", 1)) != "windows":
-            confset2(smb4_shares, "inherit owner = %s",
-                "yes" if share.cifs_inheritowner else "no")
-            confset2(smb4_shares, "inherit permissions = %s",
-                "yes" if share.cifs_inheritperms else "no")
+        confset2(smb4_shares, "inherit owner = %s",
+            "yes" if share.cifs_inheritowner else "no")
+        confset2(smb4_shares, "inherit permissions = %s",
+            "yes" if share.cifs_inheritperms else "no")
 
         vfs_objects = []
         if share.cifs_recyclebin:
