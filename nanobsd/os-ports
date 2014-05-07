@@ -50,6 +50,7 @@ add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
 add_port devel/pkgconf
 add_port devel/m4
+add_port lang/gcc47 OPTIONS_FILE_UNSET+=BOOTSTRAP OPTIONS_FILE_UNSET+=JAVA 
 add_port www/aria2 OPTIONS_FILE_UNSET+=SQLITE
 add_port devel/libpthread-stubs
 add_port devel/cdialog
