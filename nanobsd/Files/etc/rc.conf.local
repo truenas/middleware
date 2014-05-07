@@ -363,6 +363,7 @@ _gen_conf()
 	_bool_svcconfig istgt_enable iscsitarget
 	_bool_svcconfig inadynmt_enable dynamicdns
 	_bool_svcconfig smartd_enable smartd
+	_bool_svcconfig ladvd_enable lldp
 
 	_bool_svcconfig samba_server_enable cifs
 	if ! dirsrv_enabled domaincontroller ; then
@@ -471,6 +472,15 @@ _gen_conf()
 	if [ ${iscsi_multithreaded} -eq 1 ]; then
 		echo "istgt_args=\"-m 2\""
 	fi
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lldp_intdesc, lldp_country, lldp_location FROM services_lldp ORDER BY -id LIMIT 1" | \
+	while read -r lldp_intdesc lldp_country lldp_location; do
+		echo -n "ladvd_flags=\"-a"
+		[ ${lldp_intdesc} -eq 1 ] && echo -n " -z"
+		[ -n "${lldp_country}" ] && echo -n " -c ${lldp_country}"
+		[ -n "${lldp_location}" ] && echo -n " -l \\\"${lldp_location}\\\""
+		echo "\""
+	done
 }
 
 # If we're running really early, then mount /data read-only
