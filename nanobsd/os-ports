@@ -45,7 +45,9 @@ add_port archivers/pigz
 add_port archivers/plzip
 add_port security/easy-rsa
 add_port security/openvpn
-add_port converters/libiconv
+if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
+	add_port converters/libiconv
+fi
 add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
 add_port devel/pkgconf
