@@ -298,8 +298,8 @@ INSTALL_NODEBUG=	t
 "
 fi
 
-#: ${WITH_PKGNG:="yes"}
-#export WITH_PKGNG
+: ${WITH_PKGNG:="yes"}
+export WITH_PKGNG
 
 # NB: leave c++ enabled so devd can be built
 CONF_BUILD="
