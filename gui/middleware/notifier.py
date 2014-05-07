@@ -246,6 +246,7 @@ class notifier:
             'ftp': ('proftpd', '/var/run/proftpd.pid'),
             'tftp': ('inetd', '/var/run/inetd.pid'),
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
+            'lldp': ('ladvd', '/var/run/ladvd.pid'),
             'ups': ('upsd', '/var/db/nut/upsd.pid'),
             'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
@@ -626,6 +627,16 @@ class notifier:
         if self._get_stg_directoryservice() == 'ldap':
             res = self._system_nolog("/etc/directoryservice/LDAP/ctl restart")
         return (True if res == 0 else False)
+
+    def _start_lldp(self):
+        self._system("/usr/sbin/service ladvd start")
+
+    def _stop_lldp(self):
+        self._system("/usr/sbin/service ladvd forcestop")
+
+    def _restart_lldp(self):
+        self._system("/usr/sbin/service ladvd forcestop")
+        self._system("/usr/sbin/service ladvd restart")
 
     def _clear_activedirectory_config(self):
         self._system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")

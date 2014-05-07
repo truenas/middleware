@@ -153,6 +153,7 @@ def servicesToggleView(request, formname):
     form2namemap = {
         'cifs_toggle': 'cifs',
         'afp_toggle': 'afp',
+        'lldp_toggle': 'lldp',
         'nfs_toggle': 'nfs',
         'iscsitarget_toggle': 'iscsitarget',
         'dynamicdns_toggle': 'dynamicdns',
