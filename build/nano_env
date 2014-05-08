@@ -169,7 +169,7 @@ add_nano_modules libiconv libmchain lindev linprocfs linsysfs linux
 add_nano_modules nfs_common nfsclient nfslock
 add_nano_modules ispfw/ispfw
 if [ "${NANO_ARCH}" = "amd64" ]; then
-	add_nano_modules mpslsi3
+#	add_nano_modules mpslsi3
 fi
 add_nano_modules opensolaris
 add_nano_modules pf pflog smbfs tmpfs
