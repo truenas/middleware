@@ -402,6 +402,62 @@ class FTPResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class LLDPResourceTest(APITestCase):
+
+    def setUp(self):
+        super(LLDPResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='lldp',
+        )
+        self._obj = models.LLDP.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': self._obj.id,
+            u'lldp_intdesc': True,
+            u'lldp_country': u'',
+            u'lldp_location': u'',
+        })
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                'lldp_intdesc': False,
+            }
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['lldp_intdesc'], False)
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class LDAPResourceTest(APITestCase):
 
     def setUp(self):
