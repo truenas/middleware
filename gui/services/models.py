@@ -981,6 +981,7 @@ class SNMP(Model):
     snmp_traps = models.BooleanField(
         verbose_name=_("Send SNMP Traps"),
         editable=False,
+        default=False,
     )
     snmp_options = models.TextField(
         verbose_name=_("Auxiliary parameters"),
