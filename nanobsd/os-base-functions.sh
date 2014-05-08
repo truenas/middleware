@@ -92,7 +92,7 @@ add_gui()
 
 arch_specific_ko()
 {
-	cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${FREENAS_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
+	cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${NANO_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
 }
 
 add_warden_hooks()
