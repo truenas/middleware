@@ -837,6 +837,85 @@ Update resource
    :statuscode 200: no error
 
 
+LLDP
+----------
+
+The LLDP resource represents the configuration settings for LLDP service.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/lldp/
+
+   Returns the LLDP settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/lldp/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "id": 1,
+                "lldp_country": "",
+                "lldp_intdesc": true,
+                "lldp_location": ""
+        }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/lldp/
+
+   Update LLDP.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/lldp/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "lldp_intdesc": false,
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "id": 1,
+                "lldp_country": "",
+                "lldp_intdesc": false,
+                "lldp_location": ""
+        }
+
+   :json string lldp_country: two-letterISO 3166 country code
+   :json string lldp_location: physical location of the host
+   :json boolean lldp_intdesc: save received info in interface description / alias
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 200: no error
+
+
 NFS
 ----------
 
