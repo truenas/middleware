@@ -54,14 +54,9 @@ customize_cmd install_debug_kernel
 customize_cmd write_version_file
 customize_cmd install_ports
 
-if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
- 	CONF_INSTALL="${CONF_INSTALL}
+CONF_INSTALL="${CONF_INSTALL}
 ${PKG_ONLY_MAKE_CONF}
 "
-	echo "Automatically building a thin image with packages"
-else
-	echo "Automatically building a * * F A T * * image so we can build ports"
-fi
 
 VARS="MASTER_SITE_BACKUP MASTER_SITE_OVERRIDE PACKAGEROOT PACKAGESITE"
 
