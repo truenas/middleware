@@ -20,7 +20,10 @@ class ZpoolCapAlert(BaseAlert):
             data = proc.communicate()[0]
             if proc.returncode != 0:
                 continue
-            cap = int(data.split('\t')[4].replace('%', ''))
+            try:
+                cap = int(data.split('\t')[4].replace('%', ''))
+            except ValueError:
+                continue
             msg = _(
                 'The capacity for the volume \'%s\' is currently at %d%%, '
                 'while the recommended value is below 80%%.'
