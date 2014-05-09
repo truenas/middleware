@@ -26,6 +26,8 @@ JAIL=$(basename $(realpath ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/j))
 mkdir -p ${NANO_OBJ}/_.w/usr/ports/packages
 mount -t nullfs ${NANO_OBJ}/ports/packages/${JAIL}-${PORTS} ${NANO_OBJ}/_.w/usr/ports/packages  || exit 1
 
+set -e
+
 if [ -n "$WITH_PKGNG" ]; then
 	mkdir -p ${NANO_OBJ}/_.w/usr/local/etc/pkg/repos
 	echo "local: { url: \"file:///usr/ports/packages\", enabled: yes }" > ${NANO_OBJ}/_.w/usr/local/etc/pkg/repos/local.conf

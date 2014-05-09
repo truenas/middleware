@@ -88,5 +88,5 @@ if [ -n "$JAIL" ]; then
 	fi
 fi
 
-
+set -e
 poudriere ${TRACE} -e ${NANO_OBJ}/poudriere/etc bulk -w -J ${MAKE_JOBS} -f ${PORTSLIST} -j "$JAIL" -p ${PORTS}
