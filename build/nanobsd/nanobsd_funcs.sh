@@ -264,9 +264,15 @@ install_world ( ) (
 )
 
 install_etc ( ) (
-
+	local arg
+	local LOG="_.etc"
 	pprint 2 "install /etc"
-	log_file "${NANO_OBJ}/_.etc"
+
+	log_file "${NANO_OBJ}/${LOG}"
+
+	for arg in $*; do
+		eval $arg
+	done
 
 	cd ${NANO_SRC}
 	env \
@@ -284,8 +290,15 @@ install_etc ( ) (
 )
 
 install_kernel ( ) (
+	local arg
+	local LOG="_.ik"
 	pprint 2 "install kernel ($NANO_KERNEL)"
-	log_file "${NANO_OBJ}/_.ik"
+
+	for arg in $*; do
+		eval $arg
+	done
+
+	log_file "${NANO_OBJ}/${LOG}"
 
 	(
 	if [ -f ${NANO_KERNEL} ] ; then

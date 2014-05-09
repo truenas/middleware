@@ -49,9 +49,9 @@ mkdir -p ${NANO_OBJ} ${NANO_WORLDDIR}
 printenv > ${NANO_OBJ}/_.env
 make_conf_install
 install_world LOG=_.ij
-install_etc
+install_etc LOG=_.etcj
 setup_nanobsd_etc
-install_kernel
+install_kernel LOG=_.ikj
 
 mkdir -p ${NANO_WORLDDIR}/wrkdirs
 
