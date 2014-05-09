@@ -58,16 +58,6 @@ CONF_INSTALL="${CONF_INSTALL}
 ${PKG_ONLY_MAKE_CONF}
 "
 
-VARS="MASTER_SITE_BACKUP MASTER_SITE_OVERRIDE PACKAGEROOT PACKAGESITE"
-
-for var in $VARS; do
-	val=$(eval echo "\$$var")
-	if [ -n "$val" ]; then
-		CONF_INSTALL="${CONF_INSTALL}
-$var=$val"
-	fi
-done
-
 customize_cmd hack_nsswitch_conf
 
 
