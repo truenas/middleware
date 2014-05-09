@@ -125,6 +125,8 @@ List resource
 
         {
                 "ad_gcname": "",
+                "ad_keytab": "",
+                "ad_use_keytab": false,
                 "ad_use_default_domain": true,
                 "ad_workgroup": "",
                 "ad_dcname": "",
@@ -178,6 +180,8 @@ Update resource
 
         {
                 "ad_gcname": "",
+                "ad_keytab": "",
+                "ad_use_keytab": false,
                 "ad_use_default_domain": true,
                 "ad_workgroup": "WORKGROUP",
                 "ad_dcname": "",
@@ -203,6 +207,8 @@ Update resource
    :json string ad_adminpw: domain Administrator account password
    :json string ad_dcname: hostname of the domain controller to use
    :json string ad_gcname: hostname of the global catalog server to use
+   :json string ad_keytab: kerberos keytab file
+   :json boolean ad_use_keytab: use keytab
    :json string ad_krbname: hostname of the kerberos server to use
    :json boolean ad_verbose_logging: verbose logging
    :json boolean ad_unix_extensions: unix extensions
@@ -331,13 +337,17 @@ List resource
         {
                 "cifs_srv_dirmask": "",
                 "cifs_srv_description": "FreeNAS Server",
-                "cifs_srv_loglevel": "1",
+                "cifs_srv_loglevel": "0",
                 "cifs_srv_guest": "nobody",
                 "cifs_srv_filemask": "",
                 "cifs_srv_easupport": false,
                 "cifs_srv_smb_options": "",
                 "id": 1,
                 "cifs_srv_aio_ws": 4096,
+                "cifs_srv_allow_execute_always": true,
+                "cifs_srv_max_protocol": "SMB3",
+                "cifs_srv_min_protocol": "",
+                "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
                 "cifs_srv_homedir": null,
                 "cifs_srv_dosattr": true,
@@ -391,13 +401,17 @@ Update resource
         {
                 "cifs_srv_dirmask": "",
                 "cifs_srv_description": "FreeNAS Server",
-                "cifs_srv_loglevel": "1",
+                "cifs_srv_loglevel": "0",
                 "cifs_srv_guest": "nobody",
                 "cifs_srv_filemask": "",
                 "cifs_srv_easupport": false,
                 "cifs_srv_smb_options": "",
                 "id": 1,
                 "cifs_srv_aio_ws": 4096,
+                "cifs_srv_allow_execute_always": true,
+                "cifs_srv_max_protocol": "SMB3",
+                "cifs_srv_min_protocol": "",
+                "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
                 "cifs_srv_homedir": null,
                 "cifs_srv_dosattr": false,
@@ -433,6 +447,10 @@ Update resource
    :json boolean cifs_srv_easupport: ea support
    :json boolean cifs_srv_dosattr: support dos file attributes
    :json boolean cifs_srv_nullpw: allow empty password
+   :json boolean cifs_srv_allow_execute_always:  controls the behaviour of smbd(8) when receiving a protocol request of "open for execution"
+   :json string cifs_srv_max_protocol: highest protocol version that will be supported by the server
+   :json string cifs_srv_min_protocol: lowest protocol version that will be supported by the server
+   :json boolean cifs_srv_syslog: use syslog
    :json string cifs_srv_smb_options: auxiliary parameters added to [global] section
    :json boolean cifs_srv_homedir_enable: enable home directory
    :json boolean cifs_srv_homedir_browseable_enable: enable home directory browsing
@@ -477,6 +495,7 @@ List resource
       Content-Type: application/json
 
         {
+                "ddns_ipserver": "",
                 "ddns_options": "",
                 "ddns_password": "freenas",
                 "id": 1,
@@ -518,6 +537,7 @@ Update resource
       Content-Type: application/json
 
         {
+                "ddns_ipserver": "",
                 "ddns_options": "",
                 "ddns_password": "freenas",
                 "id": 1,
@@ -528,6 +548,7 @@ Update resource
                 "ddns_updateperiod": ""
         }
 
+   :json string ddns_ipserver: client IP is detected by this calling url
    :json string ddns_provider: dyndns@dyndns.org, default@freedns.afraid.org, default@zoneedit.com, default@no-ip.com, default@easydns.com, dyndns@3322.org, default@sitelutions.com, default@dnsomatic.com, ipv6tb@he.net, default@tzo.com, default@dynsip.org, default@dhis.org, default@majimoto.net, default@zerigo.com
    :json string ddns_domain: host name alias
    :json string ddns_username: username
@@ -948,6 +969,7 @@ List resource
                 "nfs_srv_mountd_port": null,
                 "nfs_srv_allow_nonroot": false,
                 "nfs_srv_servers": 4,
+                "nfs_srv_udp": false,
                 "nfs_srv_rpcstatd_port": null,
                 "nfs_srv_rpclockd_port": null,
                 "id": 1
@@ -988,6 +1010,7 @@ Update resource
                 "nfs_srv_mountd_port": null,
                 "nfs_srv_allow_nonroot": false,
                 "nfs_srv_servers": 10,
+                "nfs_srv_udp": false,
                 "nfs_srv_rpcstatd_port": null,
                 "nfs_srv_rpclockd_port": null,
                 "id": 1
@@ -995,6 +1018,7 @@ Update resource
 
    :json string nfs_srv_servers: how many servers to create
    :json boolean nfs_srv_allow_nonroot: allow non-root mount requests to be served.
+   :json boolean nfs_srv_udp: serve UDP requests
    :json string nfs_srv_bindip: IP addresses (separated by commas) to bind to for TCP and UDP requests
    :json integer nfs_srv_mountd_port: force mountd to bind to the specified port
    :json integer nfs_srv_rpcstatd_port: forces the rpc.statd daemon to bind to the specified port
