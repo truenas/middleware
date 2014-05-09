@@ -58,6 +58,13 @@ clean-packages:
 	find os-base/*/ports -type f -delete
 .endif
 
+clean-ui-package:
+.if defined(USE_NEW_LAYOUT)
+	find ../obj/os-base/*/ports -name "freenas-ui*" | xargs rm -fr
+.else
+	find os-base/*/ports -name "freenas-ui*" | xargs rm -fr
+.endif
+
 distclean: clean
 .if defined(USE_NEW_LAYOUT)
 	rm -fr ../extra-src
