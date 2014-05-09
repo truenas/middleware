@@ -33,6 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.jail import Jls
 from freenasUI.common.pbi import pbi_delete
+from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.models import Model
 from freenasUI.jails.models import Jails, JailsConfiguration
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -120,18 +121,16 @@ class Plugins(Model):
             "%s-%s" % (self.plugin_name, platform.machine()),
         )
         jail = None
-        for j in Jls():
-            if j.hostname == self.plugin_jail:
+        for j in Warden().getjails():
+            if j.host == self.plugin_jail:
                 jail = j
                 break
         if jail is None:
-            raise MiddlewareError(_(
-                "The plugins jail is not running, start it before proceeding"
-            ))
+            raise MiddlewareError(_("jail not found"))
 
         notifier().umount_filesystems_within(pbi_path)
         p = pbi_delete(pbi=self.plugin_pbiname)
-        res = p.run(jail=True, jid=jail.jid)
+        res = p.run_in_chroot(os.path.join(jc.jc_path, jail.host))
         if not res or res[0] != 0:
             log.warn("unable to delete %s", self.plugin_pbiname)
 
