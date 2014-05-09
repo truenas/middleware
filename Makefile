@@ -58,12 +58,25 @@ clean-packages:
 	find os-base/*/ports -type f -delete
 .endif
 
-clean-ui-package:
+clean-package:
+.if defined(p)
 .if defined(USE_NEW_LAYOUT)
-	find ../obj/os-base/*/ports -name "freenas-ui*" | xargs rm -fr
+	find ../obj/os-base/*/ports -name "${p}*" | xargs rm -fr
 .else
 	find os-base/*/ports -name "freenas-ui*" | xargs rm -fr
 .endif
+.else
+	@echo "Clean a single package from object tree"
+	@echo "" 
+	@echo "Usage:  ${MAKE} ${.TARGET} p=[package name]"
+	@echo ""
+	@echo "Examples:"
+	@echo "        ${MAKE} ${.TARGET} p=freenas-ui"
+	@echo "        ${MAKE} ${.TARGET} p=netatalk"
+.endif
+
+clean-ui-package:
+	${MAKE} clean-package p=freenas-ui
 
 distclean: clean
 .if defined(USE_NEW_LAYOUT)
