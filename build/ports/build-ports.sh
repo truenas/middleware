@@ -31,12 +31,21 @@ EXTRA_PORT_DIRS="freenas truenas"
 mount -t nullfs -o ro ${GIT_FREEBSD_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/src  || exit 1
 #mount -t nullfs -o ro ${AVATAR_ROOT}/src ${NANO_OBJ}/_.j/usr/nas_source2 || exit 1
 
-for d in /usr/nas_source2 /usr/freenasUI; do
+for d in /usr/nas_source /usr/nas_source2 /usr/freenasUI; do
 	[ -e ${NANO_OBJ}/_.j/$d ] && rm -fr ${NANO_OBJ}/_.j/$d
 	mkdir -p ${NANO_OBJ}/_.j/$d
 done
-cp -a ${AVATAR_ROOT}/src/ ${NANO_OBJ}/_.j/usr/nas_source2
-cp -a ${AVATAR_ROOT}/gui/ ${NANO_OBJ}/_.j/usr/freenasUI
+[ -d ${AVATAR_ROOT}/src ] && cp -a ${AVATAR_ROOT}/src/ ${NANO_OBJ}/_.j/usr/nas_source2
+[ -d ${AVATAR_ROOT}/gui ] && cp -a ${AVATAR_ROOT}/gui/ ${NANO_OBJ}/_.j/usr/freenasUI
+
+if is_truenas; then
+	if [ -d ${GIT_ZFSD_CHECKOUT_PATH} ]; then
+		cp -a ${GIT_ZFSD_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/nas_source
+	fi
+	if [ -d ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH}/build/licensor ]; then
+		cp -a ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH}/build/licensor ${NANO_OBJ}/_.j/usr/nas_source
+	fi
+fi
 
 for d in $EXTRA_PORT_DIRS; do
 	mkdir -p "${GIT_PORTS_CHECKOUT_PATH}/${d}"
