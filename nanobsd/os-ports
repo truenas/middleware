@@ -30,11 +30,20 @@
 
 if is_truenas ; then
 	add_port truenas/zfsd LOCALBASE=/
+	add_port truenas/licensor LOCALBASE=/ \
+                            PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
 fi
 
-add_port freenas/freenas-files
+add_port freenas/freenas-files PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
 add_port freenas/pcbsd-warden
 add_port freenas/pcbsd-pbi
+add_port freenas/freenas-ui PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
 
 add_port net/mDNSResponder
 add_port textproc/libxml2
@@ -215,6 +224,9 @@ add_port net/netatalk3 OPTIONS_FILE_SET+=PAM \
 	OPTIONS_FILE_UNSET+=AVAHI \
 	OPTIONS_FILE_SET+=LDAP
 
+add_port devel/libevent
+add_port net/ladvd
+
 add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
@@ -298,13 +310,6 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_UNSET+=BIND98 \
        OPTIONS_FILE_UNSET+=BIND99
 
-# These are for webcam / security cam recording
-if ! is_truenas ; then
-	add_port multimedia/cuse4bsd-kmod
-	add_port multimedia/libv4l MAKE_JOBS_UNSAFE=yes
-	add_port multimedia/webcamd WITHOUT_HAL=y
-	add_port multimedia/cx88
-fi
 
 if [ "${DEBUG}" = 1 ]; then
 

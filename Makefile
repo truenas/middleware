@@ -19,6 +19,10 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION} BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
 
+.if defined(NANO_ARCH)
+ ENV_SETUP+= NANO_ARCH=${NANO_ARCH}
+.endif
+
 all:	build
 
 .BEGIN:
@@ -54,6 +58,26 @@ clean-packages:
 	find os-base/*/ports -type f -delete
 .endif
 
+clean-package:
+.if defined(p)
+.if defined(USE_NEW_LAYOUT)
+	find ../obj/os-base/*/ports -name "${p}*" | xargs rm -fr
+.else
+	find os-base/*/ports -name "freenas-ui*" | xargs rm -fr
+.endif
+.else
+	@echo "Clean a single package from object tree"
+	@echo "" 
+	@echo "Usage:  ${MAKE} ${.TARGET} p=[package name]"
+	@echo ""
+	@echo "Examples:"
+	@echo "        ${MAKE} ${.TARGET} p=freenas-ui"
+	@echo "        ${MAKE} ${.TARGET} p=netatalk"
+.endif
+
+clean-ui-package:
+	${MAKE} clean-package p=freenas-ui
+
 distclean: clean
 .if defined(USE_NEW_LAYOUT)
 	rm -fr ../extra-src
@@ -86,10 +110,6 @@ truenas: git-verify
 .else
 	mv os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 .endif
-
-# Build truenas using all sources 
-truenas-all-direct:
-	${ENV_SETUP} TESTING_TRUENAS=1 NAS_PORTS_DIRECT=1 $(MAKE) all
 
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com

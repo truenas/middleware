@@ -34,12 +34,11 @@ fi
 # The architecture for the machine (amd64, i386, etc).
 # NOTE: have to do things this way because nanobsd.sh sets this value
 # explicitly in the script.
-: ${FREENAS_ARCH=$(uname -p)}
-if ! [ "${FREENAS_ARCH}" == "amd64" -o "${FREENAS_ARCH}" == "i386" ] ; then
-	echo "Possible values for FREENAS_ARCH are amd64 or i386"
+: ${NANO_ARCH=$(uname -p)}
+if ! [ "${NANO_ARCH}" == "amd64" -o "${NANO_ARCH}" == "i386" ] ; then
+	echo "Possible values for NANO_ARCH are amd64 or i386"
 	exit
 fi
-NANO_ARCH=$FREENAS_ARCH
 
 # Setup a humanized name for the image. Doesn't affect "os-base/*/"'s naming
 # because people would get jangry (sic) having to rebuild their workspaces from
@@ -402,11 +401,24 @@ WITH_LIBCPLUSPLUS=true
 "
 fi
 
-if ! is_truenas ; then
-	PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF}
+if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -ge 10 ]; then
+	if ! is_truenas ; then
+		PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF}
+WITHOUT_CLANG_EXTRAS=true
+WITHOUT_CLANG_FULL=true
+WITHOUT_GCC=true
+WITHOUT_GDB=true
+"
+	fi
+fi
+
+if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
+	if ! is_truenas ; then
+		PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF}
 WITHOUT_TOOLCHAIN=true
 WITHOUT_BINUTILS=true
 "
+	fi
 fi
 
 export CONF_BUILD

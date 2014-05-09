@@ -32,6 +32,7 @@ List resource
       Content-Type: application/json
 
         {
+                "iscsi_multithreaded": false,
                 "iscsi_maxconnect": 8,
                 "iscsi_luc_authnetwork": "",
                 "iscsi_iotimeout": 30,
@@ -86,6 +87,7 @@ Update resource
       Content-Type: application/json
 
         {
+                "iscsi_multithreaded": false,
                 "iscsi_maxconnect": 16,
                 "iscsi_luc_authnetwork": "",
                 "iscsi_iotimeout": 30,
@@ -123,7 +125,8 @@ Update resource
    :json string iscsi_maxrecdata: max receive data segment length
    :json string iscsi_defaultt2w: DefaultTime2Wait
    :json string iscsi_defaultt2r: DefaultTime2Retain
-   :json string iscsi_toggleluc: Enable LUC
+   :json boolean iscsi_toggleluc: Enable LUC
+   :json boolean iscsi_multithreaded: enable multithreaded server
    :json string iscsi_lucip: Controller IP address
    :json string iscsi_lucport: Controller TCP port
    :json string iscsi_luc_authnetwork: Controller Authorized Network
@@ -862,6 +865,7 @@ Create resource
         {
                 "iscsi_target": 1,
                 "iscsi_extent": 1
+                "iscsi_lunid": null,
         }
 
    **Example response**:
@@ -875,11 +879,13 @@ Create resource
         {
                 "iscsi_target": 1,
                 "iscsi_extent": 1,
+                "iscsi_lunid": null,
                 "id": 1
         }
 
    :json integer iscsi_target: id of the target object
    :json integer iscsi_extent: id of the extent object
+   :json integer iscsi_lunid: id of the LUN
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error

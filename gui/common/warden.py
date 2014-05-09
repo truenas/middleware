@@ -1117,6 +1117,13 @@ class Warden(warden_base):
     def zfsrmsnap(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_zfsrmsnap(flags, **kwargs))
 
+    def getjails(self):
+        jail_objects = [] 
+        jails = self.list()
+        for j in jails:
+            jail_objects.append(WardenJail(**j))
+        return jail_objects  
+
 
 def get_warden_template_abi_arch(template_path):
     abi_arch = None

@@ -51,34 +51,19 @@ FlashDevice generic 2g
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
+customize_cmd write_version_file
 customize_cmd install_ports
 
-if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
- 	CONF_INSTALL="${CONF_INSTALL}
+CONF_INSTALL="${CONF_INSTALL}
 ${PKG_ONLY_MAKE_CONF}
 "
-	echo "Automatically building a thin image with packages"
-else
-	echo "Automatically building a * * F A T * * image so we can build ports"
-fi
-
-VARS="MASTER_SITE_BACKUP MASTER_SITE_OVERRIDE PACKAGEROOT PACKAGESITE"
-
-for var in $VARS; do
-	val=$(eval echo "\$$var")
-	if [ -n "$val" ]; then
-		CONF_INSTALL="${CONF_INSTALL}
-$var=$val"
-	fi
-done
 
 customize_cmd hack_nsswitch_conf
 
-customize_cmd save_build
 
-customize_cmd add_gui
-
-customize_cmd_truenas add_licensor
+if is_truenas ; then
+	customize_cmd add_truenas_gui
+fi
 
 if ! is_truenas ; then
 	customize_cmd arch_specific_ko
@@ -90,7 +75,9 @@ customize_cmd move_data
 
 customize_cmd add_data_to_fstab
 
-customize_cmd_truenas afpd_conf_symlink
+if is_truenas ; then
+	customize_cmd afpd_conf_symlink
+fi
 
 customize_cmd select_httpd
 

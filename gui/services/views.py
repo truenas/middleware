@@ -77,6 +77,11 @@ def core(request):
         dynamicdns = models.DynamicDNS.objects.create()
 
     try:
+        lldp = models.LLDP.objects.order_by("-id")[0]
+    except IndexError:
+        lldp = models.LLDP.objects.create()
+
+    try:
         nfs = models.NFS.objects.order_by("-id")[0]
     except IndexError:
         nfs = models.NFS.objects.create()
@@ -121,6 +126,7 @@ def core(request):
         'srv': srv,
         'cifs': cifs,
         'afp': afp,
+        'lldp': lldp,
         'nfs': nfs,
         'rsyncd': rsyncd,
         'dynamicdns': dynamicdns,
@@ -147,6 +153,7 @@ def servicesToggleView(request, formname):
     form2namemap = {
         'cifs_toggle': 'cifs',
         'afp_toggle': 'afp',
+        'lldp_toggle': 'lldp',
         'nfs_toggle': 'nfs',
         'iscsitarget_toggle': 'iscsitarget',
         'dynamicdns_toggle': 'dynamicdns',

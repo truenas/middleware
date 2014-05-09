@@ -260,16 +260,6 @@ class Advanced(Model):
         verbose_name=_("MOTD banner"),
         default='Welcome',
     )
-    adv_system_pool = models.CharField(
-        max_length=1024,
-        blank=True,
-        verbose_name=_("System dataset pool"),
-        choices=()
-    )
-    adv_syslog_usedataset = models.BooleanField(
-        default=True,
-        verbose_name=_("Use system dataset for syslog")
-    )
 
     class Meta:
         verbose_name = _("Advanced")
@@ -1039,6 +1029,29 @@ class Registration(Model):
 
     class Meta:
         verbose_name = _("Registration")
+
+    class FreeAdmin:
+        deletable = False
+
+
+class SystemDataset(Model):
+    sys_pool = models.CharField(
+        max_length=1024,
+        blank=True,
+        verbose_name=_("Pool"),
+        choices=()
+    )
+    sys_syslog_usedataset = models.BooleanField(
+        default=True,
+        verbose_name=_("Syslog")
+    )
+    sys_rrd_usedataset = models.BooleanField(
+        default=True,
+        verbose_name=_("RRD")
+    )
+
+    class Meta:
+        verbose_name = _("System Dataset")
 
     class FreeAdmin:
         deletable = False

@@ -30,7 +30,7 @@ import os
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from freenasUI.system.models import Advanced
+from freenasUI.system.models import SystemDataset
 from freenasUI.reporting import rrd
 
 RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
@@ -41,7 +41,7 @@ log = logging.getLogger('reporting.views')
 def _get_rrd_path():
 
     try:
-        system_pool = Advanced.objects.order_by('-id')[0].adv_system_pool
+        system_pool = SystemDataset.objects.order_by('-id')[0].sys_pool
     except:
         system_pool = None
 

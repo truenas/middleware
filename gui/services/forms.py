@@ -315,6 +315,8 @@ class FTPForm(ModelForm):
         model = models.FTP
         widgets = {
             'ftp_port': forms.widgets.TextInput(),
+            'ftp_passiveportsmin': forms.widgets.TextInput(),
+            'ftp_passiveportsmax': forms.widgets.TextInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -892,6 +894,17 @@ class LDAPForm(ModelForm):
         started = notifier().restart("ldap")
         if started is False and models.services.objects.get(srv_service='directoryservice').srv_enable:
             raise ServiceFailed("ldap", _("The ldap service failed to reload."))
+
+
+class LLDPForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.LLDP
+
+    def save(self):
+        super(LLDPForm, self).save()
+        started = notifier().restart("lldp")
 
 
 class iSCSITargetAuthCredentialForm(ModelForm):

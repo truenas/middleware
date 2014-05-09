@@ -342,6 +342,21 @@ class pbi_base(object):
     def set_appdir(self, dir):  
         os.environ['PBI_APPDIR'] = dir
 
+    def run_in_chroot(self, path):
+        log.debug("pbi_base.run: enter")
+
+        cmd = self.path
+        if self.args is not None:
+            cmd += " %s" % self.args
+            cmd = "/usr/sbin/chroot '%s' %s" % (path, cmd)
+
+        log.debug("pbi_base.cmd = %s", cmd)
+        pobj = pbi_pipe(cmd, self.pipe_func)
+        self.error = pobj.error
+
+        log.debug("pbi_base.run: leave")
+        return (pobj.returncode, str(pobj))
+
     def run(self, jail=False, jid=0):
         log.debug("pbi_base.run: enter")
 
@@ -358,6 +373,9 @@ class pbi_base(object):
 
         log.debug("pbi_base.run: leave")
         return (pobj.returncode, str(pobj))
+
+    def run_in_jail(self, jid=0):
+        return self.run(jail=True, jid=jid)
 
     def __str__(self):
         return self.args

@@ -48,9 +48,9 @@ use_syslog_dataset()
 
 	use="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		adv_syslog_usedataset
+		sys_syslog_usedataset
 	FROM
-		system_advanced
+		system_systemdataset
 	ORDER BY
 		-id
 	LIMIT 1
@@ -73,9 +73,9 @@ get_system_pool()
 {
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		adv_system_pool
+		sys_pool
 	FROM
-		system_advanced
+		system_systemdataset
 	ORDER BY
 		-id
 	LIMIT 1

@@ -6,37 +6,41 @@
 # $Id: Makefile,v 1.2 2002/11/26 10:38:28 pmedwards Exp $
 #
 
-PORTNAME=       zfsd
-PORTVERSION=    1.0
-#PORTREVISION=   1
+PORTNAME=       licensor
+PORTVERSION=    ${PRODUCT_VERSION:C/\-.*//:C/\_.*//}
+PORTREVISION=   ${REVISION}
 
 CATEGORIES=     truenas
 
 VALID_CATEGORIES+= truenas
 
 MAINTAINER=     dev@ixsystems.com
-COMMENT=        zfsd for TrueNAS
-
-NO_STAGE=yes
+COMMENT=        licensor for TrueNAS
 
 USE_XZ=		yes
 
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
 
-WRKSRC=/usr/nas_source/zfsd
+EXTRACT_ONLY=
+WRKSRC=/usr/nas_source/licensor
 
 # no checksum, we just used git!
- #extract:
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
 
-pre-clean:
-	@cd ${WRKSRC} && ${MAKE} clean cleandepend
-
-ALL_TARGET=obj all
-
 MAKE_JOBS_UNSAFE=yes
 
-.include <bsd.port.mk>
+do-build:
+	${MAKE} -C ${WRKSRC}/build/client obj
+	${MAKE} -C ${WRKSRC}/build/client all
 
+do-install:
+	${MKDIR} ${STAGEDIR}${PREFIX}/sbin
+	${MAKE} -C ${WRKSRC}/build/client install BINDIR=${STAGEDIR}${PREFIX}/sbin
+	cd ${STAGEDIR}${PREFIX}/sbin
+	${SH} ${WRKSRC}/src/xzexe ix-licensor
+	${RM} -f ${STAGEDIR}${PREFIX}/sbin/ix-licensor~
+
+
+.include <bsd.port.mk>

@@ -49,12 +49,14 @@ class ActiveDirectoryResourceTest(APITestCase):
             u'ad_dns_timeout': 10,
             u'ad_domainname': u'',
             u'ad_gcname': u'',
+            u'ad_keytab': u'',
             u'ad_kpwdname': u'',
             u'ad_krbname': u'',
             u'ad_netbiosname': u'NAS',
             u'ad_timeout': 10,
             u'ad_unix_extensions': False,
             u'ad_use_default_domain': True,
+            u'ad_use_keytab': False,
             u'ad_verbose_logging': False,
             u'ad_workgroup': u'',
         })
@@ -195,6 +197,7 @@ class CIFSResourceTest(APITestCase):
             u'cifs_srv_aio_enable': False,
             u'cifs_srv_aio_rs': 4096,
             u'cifs_srv_aio_ws': 4096,
+            u'cifs_srv_allow_execute_always': True,
             u'cifs_srv_description': u'',
             u'cifs_srv_dirmask': u'',
             u'cifs_srv_dosattr': False,
@@ -208,7 +211,10 @@ class CIFSResourceTest(APITestCase):
             u'cifs_srv_homedir_enable': False,
             u'cifs_srv_hostlookup': True,
             u'cifs_srv_localmaster': False,
-            u'cifs_srv_loglevel': u'1',
+            u'cifs_srv_loglevel': u'0',
+            u'cifs_srv_max_protocol': u'SMB3',
+            u'cifs_srv_min_protocol': u'',
+            u'cifs_srv_syslog': False,
             u'cifs_srv_netbiosname': u'',
             u'cifs_srv_nullpw': False,
             u'cifs_srv_smb_options': u'',
@@ -275,6 +281,7 @@ class DynamicDNSResourceTest(APITestCase):
             u'id': obj.id,
             u'ddns_domain': u'',
             u'ddns_fupdateperiod': u'',
+            u'ddns_ipserver': u'',
             u'ddns_options': u'',
             u'ddns_password': u'',
             u'ddns_provider': u'dyndns@dyndns.org',
@@ -402,6 +409,62 @@ class FTPResourceTest(APITestCase):
         self.assertHttpMethodNotAllowed(resp)
 
 
+class LLDPResourceTest(APITestCase):
+
+    def setUp(self):
+        super(LLDPResourceTest, self).setUp()
+        models.services.objects.create(
+            srv_service='lldp',
+        )
+        self._obj = models.LLDP.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': self._obj.id,
+            u'lldp_intdesc': True,
+            u'lldp_country': u'',
+            u'lldp_location': u'',
+        })
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                'lldp_intdesc': False,
+            }
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['lldp_intdesc'], False)
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
 class LDAPResourceTest(APITestCase):
 
     def setUp(self):
@@ -508,7 +571,8 @@ class NFSResourceTest(APITestCase):
             u'nfs_srv_mountd_port': None,
             u'nfs_srv_rpclockd_port': None,
             u'nfs_srv_rpcstatd_port': None,
-            u'nfs_srv_servers': 4
+            u'nfs_srv_servers': 4,
+            u'nfs_srv_udp': False,
         })
 
     def test_Update(self):
@@ -1182,6 +1246,7 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
             u'iscsi_maxoutstandingr2t': 16,
             u'iscsi_maxrecdata': 262144,
             u'iscsi_maxsesh': 16,
+            u'iscsi_multithreaded': False,
             u'iscsi_nopinint': 20,
             u'iscsi_r2t': 32,
             u'iscsi_toggleluc': False
@@ -1646,6 +1711,7 @@ class iSCSITargetToExtentResourceTest(APITestCase):
         self.assertEqual(data, {
             u'id': 1,
             u'iscsi_extent': 1,
+            u'iscsi_lunid': None,
             u'iscsi_target': 1,
         })
 
@@ -1663,6 +1729,7 @@ class iSCSITargetToExtentResourceTest(APITestCase):
         self.assertEqual(data, [{
             u'id': obj.id,
             u'iscsi_extent': 1,
+            u'iscsi_lunid': None,
             u'iscsi_target': 1,
         }])
 

@@ -32,15 +32,6 @@
 # FreeNAS specific bits of the common stuff.
 #
 
-customize_cmd_truenas()
-{
-	if is_truenas ; then
-		customize_cmd $*
-	else
-		echo "Skipping TrueNAS specific command $*"
-	fi
-}
-
 hack_nsswitch_conf ( )
 {
 	# Remove all references to NIS in the nsswitch.conf file
@@ -49,7 +40,7 @@ hack_nsswitch_conf ( )
 	rm -f ${NANO_WORLDDIR}/etc/nsswitch.conf.bak
 }
 
-save_build ( )
+write_version_file ( )
 {
 	VERSION_FILE=${NANO_WORLDDIR}/etc/version
 	if [ "${SVNREVISION}" = "${REVISION}" ]; then
@@ -59,40 +50,21 @@ save_build ( )
 	fi
 }
 
-add_gui()
+add_truenas_gui()
 {
 	local gui dst dstCR
 	gui=${AVATAR_ROOT}/gui
 	dstCR=/usr/local/www/freenasUI
 	dst=${NANO_WORLDDIR}${dstCR}
-	if [ -d ${gui} ]; then
-	pprint 2 "Adding freenas web gui"
-	mkdir -p ${dst}
-	( cd ${gui}
-	  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
-	if is_truenas ; then
-		( cd ${TRUENAS_COMPONENTS_ROOT}/gui
-		  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
-	fi
-	pprint 2 "Making freenas initial database"
-	mkdir -p ${NANO_WORLDDIR}/data
-	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate --traceback)"
-	CR "(cd ${dstCR}; python manage.py collectstatic --noinput)"
-	CR "(cd ${dstCR}; python tools/compilemsgs.py)"
-	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
-	CR "ln -sf /etc/local_settings.py ${dstCR}/local_settings.py"
-	CR "chown -R www:www ${dstCR} data"
-	if is_truenas ; then
-		add_gui_encrypted "$gui" "$dst" "$dstCR"
-	fi
-	else
-		pprint 2 "GUI OMITTED from image"
-	fi
+
+	add_gui_encrypted "$gui" "$dst" "$dstCR"
 }
 
 arch_specific_ko()
 {
-	cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${FREENAS_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
+	if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
+		cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${NANO_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
+	fi
 }
 
 add_warden_hooks()
@@ -458,7 +430,7 @@ last_orders() {
 	else
 		echo "VBoxManage not found"
 	fi
-	) > "$vmdk_image_log}" 2>&1
+	) > "${vmdk_image_log}" 2>&1
 
 	pprint 2 "Compressing full disk image"
 	log_file "${full_image_log}"
