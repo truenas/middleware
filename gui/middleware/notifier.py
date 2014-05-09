@@ -1649,6 +1649,10 @@ class notifier:
             except IOError:
                 retval = 'Try again later.'
         if retval is None:
+            mp = self.__get_mountpath(path, 'ZFS')
+            if self.contains_jail_root(mp):
+                self.delete_plugins()
+
             if recursive:
                 zfsproc = self._pipeopen("zfs destroy -r '%s'" % (path))
             else:
@@ -1667,6 +1671,9 @@ class notifier:
         return retval
 
     def destroy_zfs_vol(self, name):
+        mp = self.__get_mountpath(name, 'ZFS')
+        if self.contains_jail_root(mp):
+            self.delete_plugins()
         zfsproc = self._pipeopen("zfs destroy '%s'" % (str(name),))
         retval = zfsproc.communicate()[1]
         return retval
@@ -1674,6 +1681,9 @@ class notifier:
     def __destroy_zfs_volume(self, volume):
         """Internal procedure to destroy a ZFS volume identified by volume id"""
         vol_name = str(volume.vol_name)
+        mp = self.__get_mountpath(vol_name, 'ZFS')
+        if self.contains_jail_root(mp):
+            self.delete_plugins()
         # First, destroy the zpool.
         disks = volume.get_disks()
         self._system("zpool destroy -f %s" % (vol_name, ))
@@ -1721,6 +1731,9 @@ class notifier:
     def __destroy_ufs_volume(self, volume):
         """Internal procedure to destroy a UFS volume identified by volume id"""
         u_name = str(volume.vol_name)
+        mp = self.__get_mountpath(u_name, 'UFS')
+        if self.contains_jail_root(mp):
+            self.delete_plugins()
 
         disks = volume.get_disks()
         provider = self.get_label_consumer('ufs', u_name)
@@ -3089,6 +3102,52 @@ class notifier:
                 ret = False
 
         return ret
+
+    def contains_jail_root(self, path):
+        try:
+            rpath = os.path.realpath(path)
+        except Exception as e:
+            log.debug("realpath %s: %s", path, e)
+            return False
+
+        rpath = os.path.normpath(rpath)
+
+        try:
+            st = os.stat(rpath)
+        except Exception as e:
+            log.debug("stat %s: %s", rpath, e)
+            return False
+
+        (c, conn) = self.__open_db(ret_conn=True)
+        c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
+        row = c.fetchone()
+        if not row:
+            log.debug("contains_jail_root: jails not configured")
+            return False
+
+        try:
+            jail_root = os.path.realpath(row[0])
+        except Exception as e:
+            log.debug("realpath %s: %s", jail_root, e)
+            return False
+
+        jail_root = os.path.normpath(jail_root)
+
+        try:
+            st = os.stat(jail_root)
+        except Exception as e:
+            log.debug("stat %s: %s", jail_root, e)
+            return False
+
+        if jail_root.startswith(rpath):
+            return True
+
+        return False
+
+    def delete_plugins(self):
+        from freenasUI.plugins.models import Plugins
+        for p in Plugins.objects.all():
+            p.delete()
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
