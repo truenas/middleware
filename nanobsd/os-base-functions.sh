@@ -431,7 +431,7 @@ last_orders() {
 	else
 		echo "VBoxManage not found"
 	fi
-	) > "$vmdk_image_log}" 2>&1
+	) > "${vmdk_image_log}" 2>&1
 
 	pprint 2 "Compressing full disk image"
 	log_file "${full_image_log}"
