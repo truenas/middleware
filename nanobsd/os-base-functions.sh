@@ -56,9 +56,8 @@ add_truenas_gui()
 	gui=${AVATAR_ROOT}/gui
 	dstCR=/usr/local/www/freenasUI
 	dst=${NANO_WORLDDIR}${dstCR}
-	if is_truenas ; then
-		add_gui_encrypted "$gui" "$dst" "$dstCR"
-	fi
+
+	add_gui_encrypted "$gui" "$dst" "$dstCR"
 }
 
 arch_specific_ko()
