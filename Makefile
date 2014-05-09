@@ -98,10 +98,6 @@ truenas: git-verify
 	mv os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 .endif
 
-# Build truenas using all sources 
-truenas-all-direct:
-	${ENV_SETUP} TESTING_TRUENAS=1 NAS_PORTS_DIRECT=1 $(MAKE) all
-
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com
 BUILD_BUG_USER?=build-bugs
