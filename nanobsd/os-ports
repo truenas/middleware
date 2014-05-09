@@ -306,7 +306,6 @@ if ! is_truenas ; then
 	add_port multimedia/cuse4bsd-kmod
 	add_port multimedia/libv4l MAKE_JOBS_UNSAFE=yes
 	add_port multimedia/webcamd WITHOUT_HAL=y
-	add_port multimedia/cx88
 fi
 
 if [ "${DEBUG}" = 1 ]; then
