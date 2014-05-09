@@ -834,7 +834,8 @@ class NullMountPointForm(ModelForm):
                 _("The full path cannot exceed 88 characters")
             )
 
-        if not os.path.exists(full):
+        create = self.cleaned_data.get('create')
+        if not os.path.exists(full) and create:
             os.makedirs(full)
 
         return dest
