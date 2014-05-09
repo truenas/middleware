@@ -315,6 +315,8 @@ class FTPForm(ModelForm):
         model = models.FTP
         widgets = {
             'ftp_port': forms.widgets.TextInput(),
+            'ftp_passiveportsmin': forms.widgets.TextInput(),
+            'ftp_passiveportsmax': forms.widgets.TextInput(),
         }
 
     def __init__(self, *args, **kwargs):
