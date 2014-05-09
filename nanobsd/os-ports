@@ -35,6 +35,7 @@ fi
 add_port freenas/freenas-files
 add_port freenas/pcbsd-warden
 add_port freenas/pcbsd-pbi
+add_port freenas/freenas-ui
 
 add_port net/mDNSResponder
 add_port textproc/libxml2

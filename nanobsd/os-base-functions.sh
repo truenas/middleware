@@ -65,28 +65,16 @@ add_gui()
 	gui=${AVATAR_ROOT}/gui
 	dstCR=/usr/local/www/freenasUI
 	dst=${NANO_WORLDDIR}${dstCR}
-	if [ -d ${gui} ]; then
 	pprint 2 "Adding freenas web gui"
-	mkdir -p ${dst}
-	( cd ${gui}
-	  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
-	if is_truenas ; then
-		( cd ${TRUENAS_COMPONENTS_ROOT}/gui
-		  find . | egrep -v "${NANO_IGNORE_FILES_EXPR}" | cpio -R root:wheel -dumpv ${dst} )
-	fi
 	pprint 2 "Making freenas initial database"
 	mkdir -p ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate --traceback)"
 	CR "(cd ${dstCR}; python manage.py collectstatic --noinput)"
 	CR "(cd ${dstCR}; python tools/compilemsgs.py)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
-	CR "ln -sf /etc/local_settings.py ${dstCR}/local_settings.py"
 	CR "chown -R www:www ${dstCR} data"
 	if is_truenas ; then
 		add_gui_encrypted "$gui" "$dst" "$dstCR"
-	fi
-	else
-		pprint 2 "GUI OMITTED from image"
 	fi
 }
 
