@@ -2,7 +2,7 @@ import os
 
 from freenasUI.storage.models import Volume
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
-from freenasUI.system.models import Advanced
+from freenasUI.system.models import SystemDataset
 
 
 class Samba4Alert(BaseAlert):
@@ -10,13 +10,13 @@ class Samba4Alert(BaseAlert):
     def run(self):
         if not Volume.objects.all().exists():
             return None
-        advanced = Advanced.objects.all()[0]
-        if not advanced.adv_system_pool:
+        systemdataset = SystemDataset.objects.all()[0]
+        if not systemdataset.sys_pool:
             return [
                 Alert(
                     Alert.WARN,
                     "No system pool configured, please configure one in "
-                    "Settings->Advanced->System dataset pool"
+                    "Settings->System Dataset->Pool"
                 ),
             ]
 
@@ -28,7 +28,7 @@ class Samba4Alert(BaseAlert):
                     "to /mnt/%s/.system/samba4 cannot be done. Please perform "
                     "this step manually and then delete the now-obsolete "
                     "samba4 datasets and /var/db/samba4/.alert_cant_migrate"
-                    % advanced.adv_system_pool
+                    % systemdataset.sys_pool
                 ),
             ]
 

@@ -328,11 +328,6 @@ class NTPForm(ModelForm):
 
 
 class AdvancedForm(ModelForm):
-    adv_system_pool = forms.ChoiceField(
-        label=_("System dataset pool"),
-        required=False
-    )
-
     class Meta:
         fields = '__all__'
         model = models.Advanced
@@ -354,14 +349,6 @@ class AdvancedForm(ModelForm):
         )
         self.instance._original_adv_autotune = self.instance.adv_autotune
         self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
-
-        pool_choices = [('', '')]
-        for v in Volume.objects.all():
-            pool_choices.append((v.vol_name, v.vol_name))
-
-        self.fields['adv_system_pool'].choices = pool_choices
-        self.instance._original_adv_system_pool = self.instance.adv_system_pool
-        self.instance._original_adv_syslog_usedataset = self.instance.adv_syslog_usedataset
 
     def save(self):
         super(AdvancedForm, self).save()
@@ -392,15 +379,6 @@ class AdvancedForm(ModelForm):
             notifier().reload("loader")
         if self.instance._original_adv_debugkernel != self.instance.adv_debugkernel:
             notifier().reload("loader")
-
-        if self.instance.adv_system_pool:
-            if not notifier().create_system_datasets():
-                raise MiddlewareError(_("Unable to create system dataset!"))
-            if self.instance._original_adv_system_pool != self.instance.adv_system_pool:
-                notifier().restart("system_datasets")
-
-        if self.instance._original_adv_syslog_usedataset != self.instance.adv_syslog_usedataset:
-            notifier().restart("syslogd")
 
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
@@ -1138,3 +1116,39 @@ class RegistrationForm(ModelForm):
         f = open("/usr/local/etc/registration", "w")
         f.write(json.dumps(registration_info))
         f.close()
+
+
+class SystemDatasetForm(ModelForm):
+    sys_pool = forms.ChoiceField(
+        label=_("System dataset pool"),
+        required=False
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.SystemDataset
+
+
+    def __init__(self, *args, **kwargs):
+        super(SystemDatasetForm, self).__init__(*args, **kwargs)
+        pool_choices = [('', '')]
+        for v in Volume.objects.all():
+            pool_choices.append((v.vol_name, v.vol_name))
+
+        self.fields['sys_pool'].choices = pool_choices
+        self.instance._original_sys_pool = self.instance.sys_pool
+        self.instance._original_sys_syslog_usedataset = self.instance.sys_syslog_usedataset
+        self.instance._original_sys_rrd_usedataset = self.instance.sys_rrd_usedataset
+
+    def save(self):
+        super(SystemDatasetForm, self).save()
+        if self.instance.sys_pool:
+            if not notifier().create_system_datasets():
+                raise MiddlewareError(_("Unable to create system dataset!"))
+            if self.instance._original_sys_pool != self.instance.sys_pool:
+                notifier().restart("system_datasets")
+
+        if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
+            notifier().restart("syslogd")
+        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
+            notifier().restart("collectd")

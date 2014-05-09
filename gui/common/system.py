@@ -513,15 +513,15 @@ def get_avatar_conf():
 
 def get_system_dataset():
     from freenasUI.storage.models import Volume
-    from freenasUI.system.models import Advanced
+    from freenasUI.system.models import SystemDataset
 
     try:
-        adv = Advanced.objects.all()[0]
+        systemdataset = SystemDataset.objects.all()[0]
     except:
-        log.error("No advanced settings!")
+        log.error("No system dataset settings!")
         return None, None
 
-    system_pool = adv.adv_system_pool
+    system_pool = systemdataset.sys_pool
     if not system_pool:
         log.error("No system pool configured!")
         return None, None
@@ -541,15 +541,15 @@ def get_samba4_path():
     Returns the volume and path for the samba4 storage path
     """
     from freenasUI.storage.models import Volume
-    from freenasUI.system.models import Advanced
+    from freenasUI.system.models import SystemDataset
 
     try:
-        adv = Advanced.objects.all()[0]
+        systemdataset = SystemDataset.objects.all()[0]
     except Exception:
-        print >> sys.stderr, "No advanced settings!"
+        print >> sys.stderr, "No system dataset settings!"
         sys.exit(1)
 
-    system_pool = adv.adv_system_pool
+    system_pool = systemdataset.sys_pool
     if not system_pool:
         print >> sys.stderr, "No system pool configured!"
         sys.exit(1)

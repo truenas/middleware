@@ -9,13 +9,46 @@
 
 . /etc/rc.freenas
 
+
+use_rrd_dataset()
+{
+	local use
+
+	if ! is_freenas
+	then
+		return 1
+	fi
+
+	use="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		sys_rrd_usedataset
+	FROM
+		system_systemdataset
+	ORDER BY
+		-id
+	LIMIT 1
+	" | \
+	while read -r rrd_usedataset
+	do
+		if [ "${rrd_usedataset}" = "0" ]
+		then
+			echo "1"
+		else
+			echo "0"
+		fi
+	done
+	)"
+
+	return ${use}
+}
+
 get_system_pool()
 {
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		adv_system_pool
+		sys_pool
 	FROM
-		system_advanced
+		system_systemdataset
 	ORDER BY
 		-id
 	LIMIT 1
@@ -64,12 +97,12 @@ generate_collectd()
     rrdds="$(get_rrd_dataset)"
     rrdmnt="/mnt/${rrdds}"
 
-    if [ -n "${rrdds}" -a -d "/mnt/${rrdds}" ]; then
+    if use_rrd_dataset && [ -n "${rrdds}" -a -d "/mnt/${rrdds}" ]; then
         datadir="/mnt/${rrdds}"
     fi
 
     if [ -f "${rrdfile}" ]; then
-        if [ -n "${rrdds}" -a -d "${rrdmnt}" ]; then
+        if use_rrd_dataset && [ -n "${rrdds}" -a -d "${rrdmnt}" ]; then
             if tar -tf "${rrdfile}"|egrep -q '^collectd/rrd/$'; then
                 (cd "${rrdmnt}" && tar jxf "${rrdfile}" && \
                     mv collectd/rrd/* "${rrdmnt}/" && \
