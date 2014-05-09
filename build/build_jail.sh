@@ -54,6 +54,4 @@ setup_nanobsd_etc
 install_kernel
 
 mkdir -p ${NANO_WORLDDIR}/wrkdirs
-mkdir -p ${NANO_WORLDDIR}/usr/nas_source
-mkdir -p ${NANO_WORLDDIR}/usr/nas_source2
 
