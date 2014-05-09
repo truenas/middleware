@@ -14,54 +14,17 @@ CATEGORIES=     truenas
 
 VALID_CATEGORIES+= truenas
 
-MAINTAINER=     alfred@FreeBSD.org
+MAINTAINER=     dev@ixsystems.com
 COMMENT=        zfsd for TrueNAS
 
 NO_STAGE=yes
 
 USE_XZ=		yes
 
-# XXX: do we need this?  WE need it in nanobsd
-#LOCALBASE?=/
-
-# for testing
-#LOCALBASE=/home/alfred/derp
-
-# setting BINDIR doesn't work at this level.
-#BINDIR=${LOCALBASE}/sbin
-# LOCALBASE works better than PREFIX for some reason.
-#PREFIX=/home/alfred/derp
-
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
 
-
-EXPORT_TAG=v${PORTVERSION}
-GIT_ZFS_REPO?=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git
-
-#EXPORT_TAG=master
-
-# Make a tarball from git for ourselves.
-git-export:
-	git archive \
-		--remote=${GIT_ZFS_REPO} \
-		--prefix=${PORTNAME}-${PORTVERSION}/ \
-		${EXPORT_TAG} | \
-			xz > ${PORTNAME}-${PORTVERSION}.tar.xz
-
-#/truenas-build/ports-distfiles/zfsd-${PORTVERSION}.tar.xz
-
-
-
-#NAS_PORTS_DIRECT=YES
-
-# if NAS_PORTS_DIRECT or NAS_PORTS_DIRECT_SYSUTILS_ZFSD is set
-# then what we do is use the checked out copy of ZFSD.
-.if defined(NAS_PORTS_DIRECT) ||defined(NAS_PORTS_DIRECT_SYSUTILS_ZFSD)
-
-EXTRACT_ONLY=
 WRKSRC=/usr/nas_source/zfsd
-#WRKSRC=/home/alfred/tn/zfsd
 
 # no checksum, we just used git!
  #extract:
@@ -74,16 +37,6 @@ pre-clean:
 ALL_TARGET=obj all
 
 MAKE_JOBS_UNSAFE=yes
-
-.endif
-
-#
-# Uncomment to test using git to pull sources instead of tarball
-# EXTRACT_DEPENDS= ${LOCALBASE}/bin/git:${PORTSDIR}/devel/git
-#extract:
-#		mkdir -p ${WRKDIR}
-#		git clone -b /truenas-build/git-repo/zfsd.git ${WRKSRC}
-
 
 .include <bsd.port.mk>
 
