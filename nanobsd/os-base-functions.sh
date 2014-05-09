@@ -49,7 +49,7 @@ hack_nsswitch_conf ( )
 	rm -f ${NANO_WORLDDIR}/etc/nsswitch.conf.bak
 }
 
-save_build ( )
+write_version_file ( )
 {
 	VERSION_FILE=${NANO_WORLDDIR}/etc/version
 	if [ "${SVNREVISION}" = "${REVISION}" ]; then
@@ -59,20 +59,12 @@ save_build ( )
 	fi
 }
 
-add_gui()
+add_truenas_gui()
 {
 	local gui dst dstCR
 	gui=${AVATAR_ROOT}/gui
 	dstCR=/usr/local/www/freenasUI
 	dst=${NANO_WORLDDIR}${dstCR}
-	pprint 2 "Adding freenas web gui"
-	pprint 2 "Making freenas initial database"
-	mkdir -p ${NANO_WORLDDIR}/data
-	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate --traceback)"
-	CR "(cd ${dstCR}; python manage.py collectstatic --noinput)"
-	CR "(cd ${dstCR}; python tools/compilemsgs.py)"
-	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
-	CR "chown -R www:www ${dstCR} data"
 	if is_truenas ; then
 		add_gui_encrypted "$gui" "$dst" "$dstCR"
 	fi

@@ -16,7 +16,12 @@ USE_XZ=		yes
 
 USE_PYTHON=	yes
 
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django:${PORTSDIR}/www/py-django
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django:${PORTSDIR}/www/py-django \
+	${PYTHON_PKGNAMEPREFIX}lxml:${PORTSDIR}/devel/py-lxml \
+	${PYTHON_PKGNAMEPREFIX}xml:${PORTSDIR}/textproc/py-xml \
+	${PYTHON_PKGNAMEPREFIX}bonjour:${PORTSDIR}/dns/py-bonjour \
+	${PYTHON_PKGNAMEPREFIX}dnspython:${PORTSDIR}/dns/py-dnspython \
+	${PYTHON_PKGNAMEPREFIX}requests:${PORTSDIR}/www/py-requests
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI
@@ -34,6 +39,8 @@ checksum fetch:
 
 pre-install:
 	${RM} -f ${PLIST}
+	${ECHO_CMD} "@owner www"  >> ${PLIST}
+	${ECHO_CMD} "@group www"  >> ${PLIST}
 	${ECHO_CMD} "@comment files" >> ${PLIST}
 	${FIND} ${WRKSRC} -type f | \
 		${SED} -e 's|^/usr/|/www/|' -e 's|^/||' \

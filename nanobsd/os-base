@@ -51,6 +51,7 @@ FlashDevice generic 2g
 customize_cmd build_debug_kernel
 customize_cmd install_debug_kernel
 
+customize_cmd write_version_file
 customize_cmd install_ports
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
@@ -74,11 +75,11 @@ done
 
 customize_cmd hack_nsswitch_conf
 
-customize_cmd save_build
 
-customize_cmd add_gui
-
-customize_cmd_truenas add_licensor
+if is_truenas ; then
+	customize_cmd add_truenas_gui
+	customize_cmd add_licensor
+fi
 
 if ! is_truenas ; then
 	customize_cmd arch_specific_ko
@@ -90,7 +91,9 @@ customize_cmd move_data
 
 customize_cmd add_data_to_fstab
 
-customize_cmd_truenas afpd_conf_symlink
+if is_truenas ; then
+	customize_cmd afpd_conf_symlink
+fi
 
 customize_cmd select_httpd
 
