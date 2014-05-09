@@ -32,10 +32,14 @@ if is_truenas ; then
 	add_port truenas/zfsd LOCALBASE=/
 fi
 
-add_port freenas/freenas-files
+add_port freenas/freenas-files PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
 add_port freenas/pcbsd-warden
 add_port freenas/pcbsd-pbi
-add_port freenas/freenas-ui
+add_port freenas/freenas-ui PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
 
 add_port net/mDNSResponder
 add_port textproc/libxml2
