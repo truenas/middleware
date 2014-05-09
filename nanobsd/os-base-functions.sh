@@ -32,15 +32,6 @@
 # FreeNAS specific bits of the common stuff.
 #
 
-customize_cmd_truenas()
-{
-	if is_truenas ; then
-		customize_cmd $*
-	else
-		echo "Skipping TrueNAS specific command $*"
-	fi
-}
-
 hack_nsswitch_conf ( )
 {
 	# Remove all references to NIS in the nsswitch.conf file
