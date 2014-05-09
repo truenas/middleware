@@ -5,7 +5,7 @@
 
 PORTNAME=       freenas-files
 PORTVERSION=	${PRODUCT_VERSION:C/\-.*//:C/\_.*//}
-PORTREVISION=	{REVISION}
+PORTREVISION=	${REVISION}
 
 CATEGORIES=     freenas
 VALID_CATEGORIES+=	freenas
