@@ -63,7 +63,6 @@ customize_cmd hack_nsswitch_conf
 
 if is_truenas ; then
 	customize_cmd add_truenas_gui
-	customize_cmd add_licensor
 fi
 
 if ! is_truenas ; then
