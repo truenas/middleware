@@ -30,11 +30,25 @@ import os
 from django.http import HttpResponse
 from django.shortcuts import render
 
+from freenasUI.system.models import SystemDataset
 from freenasUI.reporting import rrd
 
 RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
 
 log = logging.getLogger('reporting.views')
+
+
+def _get_rrd_path():
+
+    try:
+        system_pool = SystemDataset.objects.order_by('-id')[0].sys_pool
+    except:
+        system_pool = None
+
+    rrdpath = '/mnt/%s/.system/rrd/localhost' % system_pool
+    if not(system_pool and os.path.exists(rrdpath)):
+        rrdpath = RRD_BASE_PATH
+    return rrdpath
 
 
 def plugin2graphs(name):

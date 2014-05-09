@@ -17,7 +17,7 @@ from freenasUI.common.system import get_system_dataset
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
-from freenasUI.system.models import Advanced
+from freenasUI.system.models import SystemDataset
 
 
 def dataset_exists(dataset):
@@ -94,11 +94,11 @@ def pick_default_volume():
 
 
 def save_default_volume(volume):
-    advanced = Advanced.objects.all()
-    if advanced: 
-        advanced = advanced[0]
-        advanced.adv_system_pool = volume.vol_name
-        advanced.save()
+    systemdataset = SystemDataset.objects.all()
+    if systemdataset: 
+        systemdataset = systemdataset[0]
+        systemdataset.sys_pool = volume.vol_name
+        systemdataset.save()
 
 
 def main():

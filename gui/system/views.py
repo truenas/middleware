@@ -210,6 +210,11 @@ def settings(request):
         advanced = None
 
     try:
+        systemdataset = models.SystemDataset.objects.order_by("-id")[0]
+    except:
+        systemdataset = None
+
+    try:
         registration = models.Registration.objects.order_by("-id")[0]
     except:
         registration = None
@@ -219,6 +224,7 @@ def settings(request):
         'email': email,
         'ssl': ssl,
         'advanced': advanced,
+        'systemdataset': systemdataset,
         'registration': registration,
     })
 
