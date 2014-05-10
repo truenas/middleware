@@ -1148,6 +1148,11 @@ class SystemDatasetForm(ModelForm):
             if self.instance._original_sys_pool != self.instance.sys_pool:
                 notifier().restart("system_datasets")
 
+        if self.instance._original_sys_pool != self.instance.sys_pool:
+            if not notifier().migrate_system_dataset(
+                self.instance._original_sys_pool, self.instance.sys_pool):
+                raise MiddlewareError(_("Unable to migrate system dataset!"))
+
         if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
             notifier().restart("syslogd")
         if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:

@@ -392,6 +392,10 @@ class notifier:
         self._system("/usr/sbin/service istgt forcestop")
         self._system("/usr/sbin/service istgt restart")
 
+    def _start_collectd(self):
+        self._system("/usr/sbin/service ix-collectd quietstart")
+        self._system("/usr/sbin/service collectd restart")
+
     def _restart_collectd(self):
         self._system("/usr/sbin/service ix-collectd quietstart")
         self._system("/usr/sbin/service collectd restart")
@@ -4872,6 +4876,12 @@ class notifier:
     def create_system_datasets(self):
         res = False
         if self._system_nolog("/usr/sbin/service ix-system start") == 0:
+            res = True
+        return res
+
+    def migrate_system_dataset(self, src, dst):
+        res = False
+        if self._system_nolog("/usr/sbin/service ix-system migrate '%s' '%s'" % (src, dst)) == 0:
             res = True
         return res
 
