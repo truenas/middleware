@@ -93,21 +93,24 @@ generate_collectd()
     local rrdmnt
 
     rrdfile="/data/rrd_dir.tar.bz2"
+    basedir="/var/db/collectd"
     datadir="/var/db/collectd/rrd"
     rrdds="$(get_rrd_dataset)"
     rrdmnt="/mnt/${rrdds}"
 
     if use_rrd_dataset && [ -n "${rrdds}" -a -d "/mnt/${rrdds}" ]; then
+        basedir="/mnt/$(get_system_dataset)"
         datadir="/mnt/${rrdds}"
     fi
 
     if [ -f "${rrdfile}" ]; then
         if use_rrd_dataset && [ -n "${rrdds}" -a -d "${rrdmnt}" ]; then
             if tar -tf "${rrdfile}"|egrep -q '^collectd/rrd/$'; then
-                (cd "${rrdmnt}" && tar jxf "${rrdfile}" && \
-                    mv collectd/rrd/* "${rrdmnt}/" && \
-		    mv /data/rrd_dir.tar.bz2 "${rrdmnt}/" && \
-                    rm -rf collectd)
+                cd "${rrdmnt}"
+                tar -jxf "${rrdfile}"
+                mv collectd/rrd/* "${rrdmnt}/"
+                mv "${rrdfile}" "${rrdmnt}/"
+                rm -rf collectd
             fi
         elif [ -d "/var/db" -a ! -d "${datadir}" ]; then
             (cd /var/db && tar jxf "${rrdfile}")
@@ -118,7 +121,7 @@ generate_collectd()
     cat << EOF > $cfg
 Hostname "localhost"
 FQDNLookup true
-BaseDir "/var/db/collectd"
+BaseDir "${basedir}"
 PIDFile "/var/run/collectd.pid"
 PluginDir "/usr/local/lib/collectd"
 
