@@ -39,6 +39,8 @@ if is_truenas ; then
     ADDL_REPOS="$ADDL_REPOS ZFSD TRUENAS-COMPONENTS"
 
     : ${GIT_ZFSD_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/git-repo/zfsd.git}
+
+    : ${GIT_TRUENAS_COMPONENTS_BRANCH=9.2.1-BRANCH}
     : ${GIT_TRUENAS_COMPONENTS_REPO=git@gitserver:/git/repos/truenas-build/truenas.git}
 
 	export NAS_PORTS_DIRECT=1
