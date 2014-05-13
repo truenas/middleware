@@ -90,8 +90,10 @@ main()
 			${INSTALLUFSDIR}/etc
 		cp -p ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/sbin/sas2flash \
 			${INSTALLUFSDIR}/usr/local/sbin
-		cp -Rp ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/install/ \
-			${INSTALLUFSDIR}/usr/local/install/
+		if [ -n "$(ls -A ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/install)" ]; then
+			cp -Rp ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/install/ \
+				${INSTALLUFSDIR}/usr/local/install/
+		fi
 		cp -Rp ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/firmware/ \
 			${INSTALLUFSDIR}/usr/local/firmware/
 	fi
