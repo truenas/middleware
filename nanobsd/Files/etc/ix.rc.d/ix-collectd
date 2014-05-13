@@ -10,11 +10,35 @@
 . /etc/rc.freenas
 
 
+get_system_pool()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		sys_pool
+	FROM
+		system_systemdataset
+	ORDER BY
+		-id
+	LIMIT 1
+	" | \
+	while read -r system_pool
+	do
+		echo "${system_pool}"
+	done
+}
+
 use_rrd_dataset()
 {
 	local use
+	local pool
 
 	if ! is_freenas
+	then
+		return 1
+	fi
+
+	pool="$(get_system_pool)"
+	if [ -z "${pool}" ]
 	then
 		return 1
 	fi
@@ -42,22 +66,6 @@ use_rrd_dataset()
 	return ${use}
 }
 
-get_system_pool()
-{
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		sys_pool
-	FROM
-		system_systemdataset
-	ORDER BY
-		-id
-	LIMIT 1
-	" | \
-	while read -r system_pool
-	do
-		echo "${system_pool}"
-	done
-}
 
 get_system_dataset()
 {
