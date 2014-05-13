@@ -72,6 +72,11 @@ system_migrate()
 	/usr/local/bin/rsync -avz "${src_path}" "${dst_path}"
 	res=$?
 
+	if [ "${res}" = "0" ]
+	then
+		zfs destroy -fr "${src_pool}"
+	fi
+
 	if ${start_syslogd}
 	then
 		notifier start syslogd
