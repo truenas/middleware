@@ -53,6 +53,7 @@ do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/rc.d
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/share/warden/bin
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/hooks
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/share/warden/linux-installs
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/bin/warden ${STAGEDIR}${PREFIX}/usr/local/bin/warden
 	${INSTALL_DATA} ${WRKSRC}/pcbsd/warden/pluginjail-packages ${STAGEDIR}${PREFIX}/usr/local/share/warden/pluginjail-packages
 	${INSTALL_DATA} ${WRKSRC}/pcbsd/warden/pcbsd-utils-packages ${STAGEDIR}${PREFIX}/usr/local/share/warden/pcbsd-utils-packages

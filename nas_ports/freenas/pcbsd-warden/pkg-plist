@@ -2,8 +2,8 @@ usr/local/bin/warden
 usr/local/share/warden/pluginjail-packages
 usr/local/share/warden/pcbsd-utils-packages
 usr/local/etc/warden.conf
-usr/local/share/warden/debian-6-squeeze
-usr/local/share/warden/gentoo-stage3-i486
+usr/local/share/warden/linux-installs/debian-6-squeeze
+usr/local/share/warden/linux-installs/gentoo-stage3-i486
 usr/local/share/pcbsd/scripts/functions.sh
 usr/local/share/warden/scripts/backend/checkstatus.sh
 usr/local/share/warden/scripts/backend/checkupdates.sh
@@ -12,7 +12,7 @@ usr/local/share/warden/scripts/backend/createjail.sh
 usr/local/share/warden/scripts/backend/createtemplate.sh
 usr/local/share/warden/scripts/backend/cronsnap.sh
 usr/local/share/warden/scripts/backend/deletejail.sh
-usr/local/share/warden/scripts/backend/detail.sh
+usr/local/share/warden/scripts/backend/details.sh
 usr/local/share/warden/scripts/backend/exportjail.sh
 usr/local/share/warden/scripts/backend/functions.sh
 usr/local/share/warden/scripts/backend/importjail.sh
