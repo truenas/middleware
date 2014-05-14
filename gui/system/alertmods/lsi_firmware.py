@@ -11,7 +11,7 @@ class LSIFirmwareAlert(BaseAlert):
     def run(self):
         alerts = []
         mps = defaultdict(dict)
-        for o in sysctl.filter('dev.em'):
+        for o in sysctl.filter('dev.mps'):
             mibs = o.name.split('.', 3)
             if len(mibs) < 4:
                 continue
