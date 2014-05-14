@@ -60,7 +60,7 @@ class Alert(object):
         return str(self._message)
 
     def __unicode__(self):
-        return self._message.decode('utf8')
+        return self._message
 
     def __eq__(self, other):
         return self.getId() == other.getId()
