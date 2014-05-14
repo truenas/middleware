@@ -25,24 +25,6 @@ class Migration(SchemaMigration):
                 srv_enable=False,
             )
 
-            group = orm['account.bsdGroups'].objects.create(
-                bsdgrp_builtin=True,
-                bsdgrp_gid=78,
-                bsdgrp_group='ladvd',
-            )
-
-            orm['account.bsdUsers'].objects.create(
-                bsdusr_builtin=True,
-                bsdusr_full_name='ladvd user',
-                bsdusr_group=group,
-                bsdusr_home='/var/empty',
-                bsdusr_shell='/usr/sbin/nologin',
-                bsdusr_smbhash='*',
-                bsdusr_unixhash='*',
-                bsdusr_uid=79,
-                bsdusr_username='ladvd',
-            )
-
     def backwards(self, orm):
         # Deleting model 'LLDP'
         db.delete_table(u'services_lldp')
