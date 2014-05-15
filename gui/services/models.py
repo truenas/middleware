@@ -302,6 +302,16 @@ class AFP(Model):
             verbose_name=_("Home directories"),
             blank=True,
             )
+    afp_srv_dbpath = models.CharField(
+        max_length=120,
+        verbose_name=_('Database Path'),
+        blank=True,
+        help_text=_(
+            'Sets the database information to be stored in path. You have to '
+            'specify a writable location, even if the volume is read only.'
+        ),
+    )
+
 
     class Meta:
         verbose_name = _(u"AFP")

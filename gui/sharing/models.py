@@ -147,12 +147,6 @@ class AFP_Share(Model):
             verbose_name=_("Time Machine"),
             help_text=_("Check this to enable Time Machine backups on this share.")
             )
-    afp_dbpath = models.CharField(
-            max_length=120,
-            verbose_name=_("Database Path"),
-            blank=True,
-            help_text=_("Sets the database information to be stored in path. You have to specify a writable location, even if the volume is read only.")
-            )
     afp_nodev = models.BooleanField(
             verbose_name=_("Zero Device Numbers"),
             help_text=_("Always use 0 for device number, helps when the device number is not constant across a reboot, cluster, ...")
