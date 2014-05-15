@@ -107,18 +107,32 @@ def sysctl_int(oid):
     return int(sysctl(oid))
 
 
+def l2arc_enabled():
+    try:
+        return sysctl_int('kstat.zfs.misc.arcstats.l2_size') > 0
+    except:
+        return False
+
+
+L2ARC_ENABLED = l2arc_enabled()
+
+
 HW_PHYSMEM = sysctl_int('hw.physmem')
 
 DEF_KNOBS = {
     'loader': {
-        'vm.kmem_size',
-        'vm.kmem_size_max',
         'vfs.zfs.arc_max',
     },
     'sysctl': {
         'kern.ipc.maxsockbuf',
+        'net.inet.tcp.delayed_ack',
         'net.inet.tcp.recvbuf_max',
         'net.inet.tcp.sendbuf_max',
+        'vfs.zfs.l2arc_headroom',
+        'vfs.zfs.l2arc_noprefetch',
+        'vfs.zfs.l2arc_norw',
+        'vfs.zfs.l2arc_write_max',
+        'vfs.zfs.l2arc_write_boost',
     },
 }
 
@@ -155,6 +169,14 @@ def guess_kern_maxfilesperproc():
     return int(0.8 * guess_kern_maxfiles())
 
 
+def guess_net_inet_tcp_delayed_ack():
+    """Maximum size for TCP receive buffers
+
+    See guess_kern_ipc_maxsockbuf().
+    """
+    return 0
+
+
 def guess_net_inet_tcp_recvbuf_max():
     """Maximum size for TCP receive buffers
 
@@ -171,27 +193,40 @@ def guess_net_inet_tcp_sendbuf_max():
     return 2 * MB
 
 
-def guess_vm_kmem_size():
-    """ Default memory available to the kernel
-    """
-    return int(0.8 * guess_vm_kmem_size_max())
-
-
-def guess_vm_kmem_size_max():
-    """Maximum usable scratch space for kernel memory
-    """
-    return int(max(HW_PHYSMEM - USERLAND_RESERVED_MEM,
-                   MIN_KERNEL_RESERVED_MEM + MIN_ZFS_RESERVED_MEM))
-
-
 def guess_vfs_zfs_arc_max():
     """ Maximum usable scratch space for the ZFS ARC in secondary memory
 
     - See comments for USERLAND_RESERVED_MEM.
     """
-    return int(max(min(guess_vm_kmem_size() * 9 / 10,
+    kmem_size = sysctl_int('vm.kmem_size')
+    return int(max(min(kmem_size * 9 / 10,
                    HW_PHYSMEM - (USERLAND_RESERVED_MEM + KERNEL_RESERVED_MEM)),
                    MIN_ZFS_RESERVED_MEM))
+
+
+def guess_vfs_zfs_l2arc_headroom():
+    if L2ARC_ENABLED:
+        return 16
+
+
+def guess_vfs_zfs_l2arc_noprefetch():
+    if L2ARC_ENABLED:
+        return 0
+
+
+def guess_vfs_zfs_l2arc_norw():
+    if L2ARC_ENABLED:
+        return 0
+
+
+def guess_vfs_zfs_l2arc_write_max():
+    if L2ARC_ENABLED:
+        return 400000000
+
+
+def guess_vfs_zfs_l2arc_write_boost():
+    if L2ARC_ENABLED:
+        return 400000000
 
 
 # vfs.zfs.txg.synctime_ms
@@ -246,10 +281,13 @@ def main(argv):
                      % (DEFAULT_USERLAND_RESERVED_MEM, ))
     USERLAND_RESERVED_MEM = args.userland_reserved
 
-    recommendations = dict([
-        (knob, str(eval('guess_%s()'
-                        % (knob.replace('.', '_'), )), )) for knob in knobs
-        ])
+    recommendations = {}
+    for knob in knobs:
+        func = 'guess_%s()' % (knob.replace('.', '_'), )
+        retval = eval(func)
+        if retval is None:
+            continue
+        recommendations[knob] = str(retval)
 
     if args.conf == 'loader':
         model = Tunable
