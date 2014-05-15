@@ -14,11 +14,12 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         try:
-            afp = orm['services.AFP'].objects.order_by('-id')[0]
-            for o in orm['sharing.AFP_Share'].objects.all():
-                afp.afp_srv_dbpath = o.afp_dbpath
-                afp.save()
-                break
+            if not db.dry_run:
+                afp = orm['services.AFP'].objects.order_by('-id')[0]
+                for o in orm['sharing.AFP_Share'].objects.all():
+                    afp.afp_srv_dbpath = o.afp_dbpath
+                    afp.save()
+                    break
         except:
             pass
 
