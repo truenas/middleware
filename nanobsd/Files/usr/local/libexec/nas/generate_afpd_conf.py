@@ -27,10 +27,6 @@ def main():
     # based on whether a share path has been set.
     from freenasUI.sharing.models import AFP_Share
     afp_share = AFP_Share.objects.all()
-    dbpath = False
-    for share in afp_share:
-        if share.afp_dbpath:
-            dbpath = True
 
     from freenasUI.services.models import AFP
     afp = AFP.objects.order_by('id')[0]
@@ -46,8 +42,9 @@ def main():
 
     cf_contents.append("\tmax connections = %s\n" % afp.afp_srv_connections_limit)
     cf_contents.append("\tmimic model = RackMac\n")
-    if dbpath:
+    if afp.afp_srv_dbpath:
         cf_contents.append("\tvol dbnest = no\n")
+        cf_contents.append("\tvol dbpath = %s\n" % afp.afp_srv_dbpath)
     else:
         cf_contents.append("\tvol dbnest = yes\n")
     cf_contents.append("\n")
@@ -70,8 +67,6 @@ def main():
             cf_contents.append("\trwlist = %s\n" % share.afp_rw)
         if share.afp_timemachine:
             cf_contents.append("\ttime machine = yes\n")
-        if share.afp_dbpath:
-            cf_contents.append("\tvol dbpath = %s\n" % share.afp_dbpath)
         if not share.afp_nodev:
             cf_contents.append("\tcnid dev = no\n")
         if share.afp_nostat:
