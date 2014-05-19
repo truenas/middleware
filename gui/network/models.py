@@ -72,7 +72,12 @@ class GlobalConfiguration(Model):
         default='',
         blank=True,
         verbose_name=_("Nameserver 3")
-        )
+    )
+    gc_httpproxy = models.CharField(
+        verbose_name=_('HTTP Proxy'),
+        blank=True,
+        max_length=255,
+    )
     gc_netwait_enabled = models.BooleanField(
         verbose_name=_("Enable netwait feature"),
         help_text=_("If enabled, delays the start of network-reliant services "
