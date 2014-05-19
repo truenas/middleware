@@ -44,6 +44,7 @@ List resource
                 "gc_nameserver1": "192.168.3.1",
                 "gc_nameserver3": "",
                 "gc_nameserver2": "",
+                "gc_httpproxy": "",
                 "id": 1
         }
 
@@ -88,6 +89,7 @@ Update resource
                 "gc_nameserver1": "192.168.3.1",
                 "gc_nameserver3": "",
                 "gc_nameserver2": "",
+                "gc_httpproxy": "",
                 "id": 1
         }
 
@@ -101,6 +103,7 @@ Update resource
    :json boolean gc_netwait_enabled: enable netwait feature
    :json string gc_netwait_ip: list of IPs to wait before proceed the boot
    :json string gc_hosts: entries to append to /etc/hosts
+   :json string gc_httpproxy: http_proxy ip:port
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
