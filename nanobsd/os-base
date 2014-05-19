@@ -450,7 +450,6 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_SET+=NSUPDATE \
        OPTIONS_FILE_UNSET+=BIND98 \
        OPTIONS_FILE_UNSET+=BIND99
-add_port comms/py-serial
 
 
 if [ "${DEBUG}" = 1 ]; then
