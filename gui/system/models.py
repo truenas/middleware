@@ -1055,3 +1055,7 @@ class SystemDataset(Model):
 
     class FreeAdmin:
         deletable = False
+
+    @property
+    def usedataset(self):
+        return self.sys_syslog_usedataset

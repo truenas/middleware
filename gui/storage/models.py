@@ -258,7 +258,7 @@ class Volume(Model):
             syspool.save()
             # If we are using the syslog dataset kick syslog.
             syslog = SystemDataset.objects.all()[0]
-            if syslog.sys_syslog_usedataset:
+            if syslog.usedataset:
                 n.reload("syslogd")
             # If we are using the rrd dataset kick collectd.
             collectd = SystemDataset.objects.all()[0]
