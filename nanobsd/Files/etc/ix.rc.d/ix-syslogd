@@ -61,7 +61,12 @@ use_syslog_dataset()
 		then
 			echo "1"
 		else
-			echo "0"
+			local failover="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select count(*) from system_failover" 2> /dev/null)"
+			if [ -n "${failover}" ] && [ ${failover} -gt 0 ]; then
+				echo "1"
+			else
+				echo "0"
+			fi
 		fi
 	done
 	)"
