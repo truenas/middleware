@@ -224,6 +224,8 @@ if [ \${EVENT} = "LINK_UP" ]; then
     /usr/sbin/service ix-afpd quietstart
     /usr/sbin/service netatalk forcestop
     /usr/sbin/service netatalk restart
+    /usr/sbin/service ix-collectd quietstart
+    /usr/sbin/service collectd restart
 #
 # There appears to be a small lag if we allow NFS traffic right away.  During
 # this time, we fail NFS requests with ESTALE to the remote system.  This
@@ -279,6 +281,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
 
     /etc/rc.d/watchdogd start
     /usr/sbin/service ix-crontab quietstart
+    /usr/sbin/service collectd forcestop
     echo "\$(date), \$(hostname), assume backup" | mail -s "Failover" root
 
     echo "Syncing enclosure" | logger
