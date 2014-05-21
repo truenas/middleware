@@ -77,6 +77,10 @@ class FreeNAS_ActiveDirectory_Exception(FreeNAS_LDAP_Directory_Exception):
 class FreeNAS_LDAP_Exception(FreeNAS_LDAP_Directory_Exception):
     pass
 
+def _e(val):
+    if val:
+        val = val.encode('utf-8')
+    return val
 
 class FreeNAS_LDAP_Directory(object):
     def __init__(self, **kwargs):
@@ -88,9 +92,9 @@ class FreeNAS_LDAP_Directory(object):
         if kwargs.has_key('port') and kwargs['port'] is not None:
             self.port = long(kwargs['port'])
 
-        self.binddn = kwargs.get('binddn', None)
-        self.bindpw = kwargs.get('bindpw', None)
-        self.basedn = kwargs.get('basedn', None)
+        self.binddn = _e(kwargs.get('binddn', None))
+        self.bindpw = _e(kwargs.get('bindpw', None))
+        self.basedn = _e(kwargs.get('basedn', None))
 
         self.ssl = FREENAS_LDAP_NOSSL
         if kwargs.has_key('ssl') and kwargs['ssl'] is not None:
@@ -105,7 +109,7 @@ class FreeNAS_LDAP_Directory(object):
         if kwargs.has_key('scope') and kwargs['scope'] is not None:
             self.scope = kwargs['scope']
 
-        self.filter = kwargs.get('filter', None)
+        self.filter = _e(kwargs.get('filter', None))
         self.attributes = kwargs.get('attributes', None)
 
         self.pagesize = 0
@@ -404,11 +408,11 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 port = long(parts[1])
 
         binddn = bindpw = None
-        anonbind = ldap['ldap_anonbind']
+        anonbind = _e(ldap['ldap_anonbind'])
         if not anonbind:
-            binddn = ldap['ldap_rootbasedn']
-            bindpw = ldap['ldap_rootbindpw']
-        basedn = ldap['ldap_basedn']
+            binddn = _e(ldap['ldap_rootbasedn'])
+            bindpw = _e(ldap['ldap_rootbindpw'])
+        basedn = _e(ldap['ldap_basedn'])
 
         ssl = FREENAS_LDAP_NOSSL
         if ldap.has_key('ldap_ssl') and ldap['ldap_ssl']:
@@ -430,12 +434,12 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**args)
 
-        self.rootbasedn = ldap['ldap_rootbasedn']
-        self.rootbindpw = ldap['ldap_rootbindpw']
-        self.usersuffix = ldap['ldap_usersuffix']
-        self.groupsuffix = ldap['ldap_groupsuffix']
-        self.machinesuffix = ldap['ldap_machinesuffix']
-        self.passwordsuffix = ldap['ldap_passwordsuffix']
+        self.rootbasedn = _e(ldap['ldap_rootbasedn'])
+        self.rootbindpw = _e(ldap['ldap_rootbindpw'])
+        self.usersuffix = _e(ldap['ldap_usersuffix'])
+        self.groupsuffix = _e(ldap['ldap_groupsuffix'])
+        self.machinesuffix = _e(ldap['ldap_machinesuffix'])
+        self.passwordsuffix = _e(ldap['ldap_passwordsuffix'])
         self.pwencryption = ldap['ldap_pwencryption']
         self.anonbind = ldap['ldap_anonbind']
 
@@ -458,11 +462,11 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             port = long(kwargs['port'])
 
         binddn = bindpw = None
-        anonbind = kwargs.get('anonbind', None)
+        anonbind = _e(kwargs.get('anonbind', None))
         if not anonbind:
-            binddn = kwargs.get('binddn', None)
-            bindpw = kwargs.get('bindpw', None)
-        basedn = kwargs.get('basedn', None)
+            binddn = _e(kwargs.get('binddn', None))
+            bindpw = _e(kwargs.get('bindpw', None))
+        basedn = _e(kwargs.get('basedn', None))
 
         ssl = FREENAS_LDAP_NOSSL
         if kwargs.has_key('ssl') and kwargs['ssl']:
@@ -484,12 +488,12 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**args)
 
-        self.rootbasedn = kwargs.get('rootbasedn', None)
-        self.rootbindpw = kwargs.get('rootbindpw', None)
-        self.usersuffix = kwargs.get('usersuffix', None)
-        self.groupsuffix = kwargs.get('groupsuffix', None)
-        self.machinesuffix = kwargs.get('machinesuffix', None)
-        self.passwordsuffix = kwargs.get('passwordsuffix', None)
+        self.rootbasedn = _e(kwargs.get('rootbasedn', None))
+        self.rootbindpw = _e(kwargs.get('rootbindpw', None))
+        self.usersuffix = _e(kwargs.get('usersuffix', None))
+        self.groupsuffix = _e(kwargs.get('groupsuffix', None))
+        self.machinesuffix = _e(kwargs.get('machinesuffix', None))
+        self.passwordsuffix = _e(kwargs.get('passwordsuffix', None))
         self.pwencryption = kwargs.get('pwencryption', None)
         self.anonbind = kwargs.get('anonbind', None)
 
@@ -534,9 +538,9 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         if self.usersuffix and self.basedn:
             basedn = "%s,%s" % (self.usersuffix, self.basedn)
 
-        args = {'scope': scope, 'filter': filter}
+        args = {'scope': scope, 'filter': _e(filter)}
         if basedn:
-            args['basedn'] = basedn
+            args['basedn'] = _e(basedn)
         if self.attributes:
             args['attributes'] = self.attributes
 
@@ -562,8 +566,12 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(|(objectclass=person)(objectclass=account))(uid=*))'
 
-        basedn = "%s,%s" % (self.usersuffix, self.basedn)
-        results = self._search(basedn, scope, filter, self.attributes)
+        if self.usersuffix:
+            basedn = "%s,%s" % (self.usersuffix, self.basedn)
+        else:
+            basedn = "%s" % self.basedn
+	
+        results = self._search(_e(basedn), scope, _e(filter), self.attributes)
         if results:
             for r in results:
                 if r[0]:
@@ -595,8 +603,12 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         else:
             filter = '(&(objectclass=posixgroup)(cn=%s))' % group
 
-        basedn = "%s,%s" % (self.groupsuffix, self.basedn)
-        results = self._search(basedn, scope, filter, self.attributes)
+        if self.groupsuffix:
+            basedn = "%s,%s" % (self.groupsuffix, self.basedn)
+        else:
+            basedn = "%s" % self.basedn
+
+        results = self._search(_e(basedn), scope, _e(filter), self.attributes)
         if results:
             for r in results:
                 if r[0]:
@@ -618,8 +630,12 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(objectclass=posixgroup)(gidnumber=*))'
 
-        basedn = "%s,%s" % (self.groupsuffix, self.basedn)
-        results = self._search(basedn, scope, filter, self.attributes)
+        if self.groupsuffix:
+            basedn = "%s,%s" % (self.groupsuffix, self.basedn)
+        else:
+            basedn = "%s" % self.basedn
+	
+        results = self._search(_e(basedn), scope, _e(filter), self.attributes)
         if results:
             for r in results:
                 if r[0]:
@@ -793,8 +809,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
             log.debug("FreeNAS_ActiveDirectory_Base.__get_config: leave")
             return res
 
-        self.adminname = self.adset(self.config['adminname'])
-        self.basedn = self.adset(self.config['basedn'])
+        self.adminname = _e(self.adset(self.config['adminname']))
+        self.basedn = _e(self.adset(self.config['basedn']))
         #self.binddn = self.adset(self.config['binddn'])
         #self.bindpw = self.adset(self.config['bindpw'])
         self.domain = self.adset(self.config['domainname'])
@@ -837,8 +853,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         self.domain = self.adset(self.domain, ad['ad_domainname'])
         self.netbiosname = self.adset(self.netbiosname, ad['ad_workgroup'])
 
-        self.binddn = self.adset(self.binddn, ad['ad_bindname'] + '@' + self.domain.upper())
-        self.bindpw = self.adset(self.bindpw, ad['ad_bindpw'])
+        self.binddn = _e(self.adset(self.binddn, ad['ad_bindname'] + '@' + self.domain.upper()))
+        self.bindpw = _e(self.adset(self.bindpw, ad['ad_bindpw']))
 
         self.trusted = True if self.trusted else False
         self.trusted = self.adset(self.trusted, True if long(ad['ad_allow_trusted_doms']) != 0 else False)
@@ -866,7 +882,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_ActiveDirectory_Base, self).__init__(**args)
 
-        self.basedn = self.adset(self.basedn, self.get_baseDN())
+        self.basedn = _e(self.adset(self.basedn, self.get_baseDN()))
         self.netbiosname = self.adset(self.netbiosname, self.get_netbios_name())
 
         log.debug("FreeNAS_ActiveDirectory_Base.__db_init__: leave")
@@ -896,8 +912,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         if kwargs.has_key('port') and kwargs['port'] and not port:
             port = long(kwargs['port'])
 
-        self.binddn = self.adset(self.binddn, kwargs.get('binddn', None))
-        self.bindpw = self.adset(self.bindpw, kwargs.get('bindpw', None))
+        self.binddn = _e(self.adset(self.binddn, kwargs.get('binddn', None)))
+        self.bindpw = _e(self.adset(self.bindpw, kwargs.get('bindpw', None)))
 
         args = {'binddn': self.binddn, 'bindpw': self.bindpw}
         if host:
@@ -1027,7 +1043,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         filter = "(&(objectcategory=crossref)(nCName=%s))" % basedn
 
         netbios_name = None
-        results = self._search(config, ldap.SCOPE_SUBTREE, filter)
+        results = self._search(_e(config), ldap.SCOPE_SUBTREE, _e(filter))
         try:
             netbios_name = results[0][1]['nETBIOSName'][0]
 
@@ -1059,7 +1075,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
             filter = "(cn=*)"
 
         partitions = []
-        results = self._search(basedn, ldap.SCOPE_SUBTREE, filter)
+        results = self._search(_e(basedn), ldap.SCOPE_SUBTREE, _e(filter))
         if results:
             for r in results:
                 if r[0]:
@@ -1185,7 +1201,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
             if filter is None:
                 filter = "(&(objectcategory=crossref)(nCName=%s))" % d
 
-            results = self._search(basedn, ldap.SCOPE_SUBTREE, filter)
+            results = self._search(_e(basedn), ldap.SCOPE_SUBTREE, _e(filter))
             if results and results[0][0]:
                 r = {}
                 for k in results[0][1].keys():
@@ -1217,7 +1233,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(|(objectclass=user)(objectclass=person))(sAMAccountName=%s))' % user
         attributes = ['distinguishedName']
-        results = self._search(self.basedn, scope, filter, attributes)
+        results = self._search(_e(self.basedn), scope, _e(filter), attributes)
         try:
             results = results[0][1][attributes[0]][0]
 
@@ -1243,7 +1259,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         ad_user = None
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(|(objectclass=user)(objectclass=person))(sAMAccountName=%s))' % user
-        results = self._search(self.basedn, scope, filter, self.attributes)
+        results = self._search(_e(self.basedn), scope, _e(filter), self.attributes)
         if results:
             for r in results:
                 if r[0]:
@@ -1267,7 +1283,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         if self.attributes and 'sAMAccountType' not in self.attributes:
             self.attributes.append('sAMAccountType')
 
-        results = self._search(self.basedn, scope, filter, self.attributes)
+        results = self._search(_e(self.basedn), scope, _e(filter), self.attributes)
         if results:
             for r in results:
                 if r[0] and r[1] and r[1].has_key('sAMAccountType'):
@@ -1298,7 +1314,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(objectclass=group)(sAMAccountName=%s))' % group
         attributes = ['distinguishedName']
-        results = self._search(self.basedn, scope, filter, attributes)
+        results = self._search(_e(self.basedn), scope, _e(filter), attributes)
         try:
             results = results[0][1][attributes[0]][0]
 
@@ -1324,7 +1340,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         ad_group = None
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(objectclass=group)(sAMAccountName=%s))' % group
-        results = self._search(self.basedn, scope, filter, self.attributes)
+        results = self._search(_e(self.basedn), scope, _e(filter), self.attributes)
         if results:
             for r in results:
                 if r[0]:
@@ -1348,7 +1364,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         if self.attributes and 'groupType' not in self.attributes:
             self.attributes.append('groupType')
 
-        results = self._search(self.basedn, scope, filter, self.attributes)
+        results = self._search(_e(self.basedn), scope, _e(filter), self.attributes)
         if results:
             for r in results:
                 if r[0]:
