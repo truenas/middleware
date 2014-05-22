@@ -361,6 +361,7 @@ class AdvancedForm(ModelForm):
             notifier().restart("powerd")
         if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
             notifier().start("ttys")
+            notifier().start("ix-sercons")
             if not loader_reloaded:
                 notifier().reload("loader")
                 loader_reloaded = True
