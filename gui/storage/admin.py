@@ -344,6 +344,13 @@ class VolumeFAdmin(BaseFreeAdmin):
             decrypted=False,
         )
 
+        actions['Upgrade'] = self._action_builder(
+            "upgrade",
+            label=_('Upgrade'),
+            func="editScaryObject",
+            icon="upgrade",
+        )
+
         # Dataset actions
         actions['DatasetDelete'] = self._action_builder(
             "dataset_delete",

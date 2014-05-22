@@ -813,6 +813,11 @@ class VolumeResourceMixin(NestedMixin):
                     kwargs={
                         'fs': bundle.obj.vol_name,
                     })
+                bundle.data['_upgrade_url'] = reverse(
+                    'storage_volume_upgrade',
+                    kwargs={
+                        'object_id': bundle.obj.id,
+                    })
                 if bundle.obj.vol_encrypt > 0:
                     bundle.data['_unlock_url'] = reverse(
                         'storage_volume_unlock',

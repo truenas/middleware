@@ -4093,6 +4093,21 @@ class notifier:
         r = re.compile(r'scan: (resilver|scrub) in progress')
         return r.search(res) is not None
 
+    def zpool_version(self, name):
+        p1 = self._pipeopen("zpool get -H -o value version %s" % name)
+        res = p1.communicate()[0].strip('\n')
+        try:
+            return int(res)
+        except:
+            return res
+
+    def zpool_upgrade(self, name):
+        p1 = self._pipeopen("zpool upgrade %s" % name)
+        res = p1.communicate()[0]
+        if p1.returncode == 0:
+            return True
+        return res
+
     def _camcontrol_list(self):
         """
         Parse camcontrol devlist -v output to gather
