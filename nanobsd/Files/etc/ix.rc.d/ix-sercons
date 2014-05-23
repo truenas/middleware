@@ -22,9 +22,14 @@ update_sercons()
 	case ${sercons} in
 	0)
 		if [ -f ${bc} ]; then
-			mount -uw -onoatime /
-			rm -f ${bc}
-			mount -ur /
+			if [ -s ${bc} ]; then
+				mount -uw -onoatime /
+				rm -f ${bc}
+				touch ${bc}
+				mount -ur /
+			fi
+		else
+			touch ${bc}
 		fi
 		;;
 	1)
