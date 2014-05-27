@@ -21,6 +21,12 @@ generate_sshd()
     local cmd cfg
     cfg=/etc/ssh/sshd_config
 
+    if [ ! -d /root/.ssh ]; then
+	mount -uw -onoatime /
+	mkdir -p /root/.ssh
+	mount -ur /
+    fi
+
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ssh ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
