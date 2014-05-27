@@ -1055,6 +1055,10 @@ class SystemDataset(Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = u"SystemDatasetIcon"
+        icon_object = u"SystemDatasetIcon"
+        icon_view = u"SystemDatasetIcon"
+        icon_add = u"SystemDatasetIcon"
 
     @property
     def usedataset(self):
