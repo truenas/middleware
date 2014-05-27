@@ -5,7 +5,7 @@
 
 PORTNAME=       pcbsd-warden
 PORTVERSION=    1.0
-#PORTREVISION=   1
+PORTREVISION=   ${REVISION}
 
 CATEGORIES=     freenas
 VALID_CATEGORIES+=	freenas
@@ -53,12 +53,13 @@ do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/rc.d
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/share/warden/bin
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/hooks
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/share/warden/linux-installs
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/bin/warden ${STAGEDIR}${PREFIX}/usr/local/bin/warden
 	${INSTALL_DATA} ${WRKSRC}/pcbsd/warden/pluginjail-packages ${STAGEDIR}${PREFIX}/usr/local/share/warden/pluginjail-packages
 	${INSTALL_DATA} ${WRKSRC}/pcbsd/warden/pcbsd-utils-packages ${STAGEDIR}${PREFIX}/usr/local/share/warden/pcbsd-utils-packages
 	${INSTALL_DATA} ${WRKSRC}/pcbsd/warden/conf/warden.conf ${STAGEDIR}${PREFIX}/usr/local/etc/warden.conf
-	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/linux-installs/debian-6-squeeze ${STAGEDIR}${PREFIX}/usr/local/share/warden/debian-6-squeeze
-	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/linux-installs/debian-6-squeeze ${STAGEDIR}${PREFIX}/usr/local/share/warden/gentoo-stage3-i486
+	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/linux-installs/debian-6-squeeze ${STAGEDIR}${PREFIX}/usr/local/share/warden/linux-installs/debian-6-squeeze
+	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/linux-installs/debian-6-squeeze ${STAGEDIR}${PREFIX}/usr/local/share/warden/linux-installs/gentoo-stage3-i486
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/checkstatus.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/checkstatus.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/checkupdates.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/checkupdates.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/chrootjail.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/chrootjail.sh
@@ -66,7 +67,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/createtemplate.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/createtemplate.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/cronsnap.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/cronsnap.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/deletejail.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/deletejail.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/details.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/detail.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/details.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/details.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/exportjail.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/exportjail.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/functions.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/functions.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/importjail.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/importjail.sh

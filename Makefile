@@ -63,7 +63,7 @@ clean-package:
 .if defined(USE_NEW_LAYOUT)
 	find ../obj/os-base/*/ports -name "${p}*" | xargs rm -fr
 .else
-	find os-base/*/ports -name "freenas-ui*" | xargs rm -fr
+	find os-base/*/ports -name "${p}*" | xargs rm -fr
 .endif
 .else
 	@echo "Clean a single package from object tree"

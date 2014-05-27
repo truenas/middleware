@@ -165,12 +165,6 @@ class AFP_Share(Model):
         ),
         default=False,
     )
-    afp_dbpath = models.CharField(
-            max_length=120,
-            verbose_name=_("Database Path"),
-            blank=True,
-            help_text=_("Sets the database information to be stored in path. You have to specify a writable location, even if the volume is read only.")
-            )
     afp_nodev = models.BooleanField(
         verbose_name=_('Zero Device Numbers'),
         help_text=_(
@@ -315,7 +309,7 @@ class NFS_Share(Model):
     class Meta:
         verbose_name = _("Unix (NFS) Share")
         verbose_name_plural = _("Unix (NFS) Shares")
-        #ordering = ["nfs_path"]
+        ordering = ["paths__path"]
 
 
 class NFS_Share_Path(Model):
@@ -329,3 +323,4 @@ class NFS_Share_Path(Model):
     class Meta:
         verbose_name = _("Path")
         verbose_name_plural = _("Paths")
+        ordering = ["path"]

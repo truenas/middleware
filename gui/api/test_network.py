@@ -302,6 +302,7 @@ class GlobalConfigurationResourceTest(APITestCase):
             u'gc_nameserver1': u'',
             u'gc_nameserver2': u'',
             u'gc_nameserver3': u'',
+            u'gc_httpproxy': u'',
             u'gc_netwait_enabled': False,
             u'gc_netwait_ip': u'',
         })

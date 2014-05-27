@@ -361,6 +361,7 @@ class AdvancedForm(ModelForm):
             notifier().restart("powerd")
         if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
             notifier().start("ttys")
+            notifier().start("ix-sercons")
             if not loader_reloaded:
                 notifier().reload("loader")
                 loader_reloaded = True
@@ -1147,6 +1148,11 @@ class SystemDatasetForm(ModelForm):
                 raise MiddlewareError(_("Unable to create system dataset!"))
             if self.instance._original_sys_pool != self.instance.sys_pool:
                 notifier().restart("system_datasets")
+
+        if self.instance._original_sys_pool != self.instance.sys_pool:
+            if not notifier().migrate_system_dataset(
+                self.instance._original_sys_pool, self.instance.sys_pool):
+                raise MiddlewareError(_("Unable to migrate system dataset!"))
 
         if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
             notifier().restart("syslogd")

@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
-import argparse, os, sys, time
+import argparse
+import os
+import sys
+
 
 def error_and_exit(cmd, starting_path):
     print "Failed: %s" % cmd
     print os.getcwd()
     os.chdir(starting_path)
     sys.exit(1)
+
 
 def main(starting_path):
     """Clean up a build environment.  Inspired by a shell
@@ -27,7 +31,7 @@ def main(starting_path):
         cmd = "rm -rf os-base"
         ret = os.system(cmd)
         if ret:
-            error_and_exit(starting_path)
+            error_and_exit(cmd, starting_path)
 
     os.chdir(starting_path)
 
@@ -35,7 +39,8 @@ if __name__ == "__main__":
     starting_path = os.getcwd()
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     os.chdir("..")
-    parser = argparse.ArgumentParser(description='Cleanup a build environment.')
+    parser = argparse.ArgumentParser(
+        description='Cleanup a build environment.')
     parser.add_argument('-n', action='store_true',
                         help="Print out the path to be cleaned up and exit")
     args = parser.parse_args()

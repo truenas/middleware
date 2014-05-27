@@ -8,6 +8,7 @@ import time
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.system import send_mail
+from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.system.models import Alert as mAlert
 
 log = logging.getLogger('system.alert')
@@ -60,7 +61,7 @@ class Alert(object):
         return str(self._message)
 
     def __unicode__(self):
-        return self._message.decode('utf8')
+        return self._message
 
     def __eq__(self, other):
         return self.getId() == other.getId()
@@ -90,7 +91,9 @@ class Alert(object):
         return self._message
 
 
-class AlertPlugins(object):
+class AlertPlugins:
+
+    __metaclass__ = HookMetaclass
 
     ALERT_FILE = '/var/tmp/alert'
 

@@ -5,7 +5,7 @@
 
 PORTNAME=       pcbsd-pbi
 PORTVERSION=    1.0
-#PORTREVISION=   1
+PORTREVISION=   ${REVISION}
 
 CATEGORIES=     freenas
 VALID_CATEGORIES+=	freenas

@@ -392,6 +392,10 @@ class notifier:
         self._system("/usr/sbin/service istgt forcestop")
         self._system("/usr/sbin/service istgt restart")
 
+    def _start_collectd(self):
+        self._system("/usr/sbin/service ix-collectd quietstart")
+        self._system("/usr/sbin/service collectd restart")
+
     def _restart_collectd(self):
         self._system("/usr/sbin/service ix-collectd quietstart")
         self._system("/usr/sbin/service collectd restart")
@@ -4089,6 +4093,21 @@ class notifier:
         r = re.compile(r'scan: (resilver|scrub) in progress')
         return r.search(res) is not None
 
+    def zpool_version(self, name):
+        p1 = self._pipeopen("zpool get -H -o value version %s" % name)
+        res = p1.communicate()[0].strip('\n')
+        try:
+            return int(res)
+        except:
+            return res
+
+    def zpool_upgrade(self, name):
+        p1 = self._pipeopen("zpool upgrade %s" % name)
+        res = p1.communicate()[0]
+        if p1.returncode == 0:
+            return True
+        return res
+
     def _camcontrol_list(self):
         """
         Parse camcontrol devlist -v output to gather
@@ -4872,6 +4891,12 @@ class notifier:
     def create_system_datasets(self):
         res = False
         if self._system_nolog("/usr/sbin/service ix-system start") == 0:
+            res = True
+        return res
+
+    def migrate_system_dataset(self, src, dst):
+        res = False
+        if self._system_nolog("/usr/sbin/service ix-system migrate '%s' '%s'" % (src, dst)) == 0:
             res = True
         return res
 

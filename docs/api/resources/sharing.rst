@@ -444,7 +444,6 @@ List resource
                 "afp_dperm": "644",
                 "afp_ro": "",
                 "afp_sharepw": "",
-                "afp_dbpath": "",
                 "afp_path": "/mnt/tank",
                 "afp_timemachine": false,
                 "afp_umask": "000",
@@ -498,7 +497,6 @@ Create resource
                 "afp_dperm": "644",
                 "afp_ro": "",
                 "afp_sharepw": "",
-                "afp_dbpath": "",
                 "afp_path": "/mnt/tank",
                 "afp_timemachine": false,
                 "afp_umask": "000",
@@ -514,7 +512,6 @@ Create resource
    :json string afp_rw: users and groups allowed to read and write
    :json string afp_ro: users and groups allowed to read only
    :json string afp_sharepw: password for the share
-   :json string afp_dbpath: path to set database information
    :json string afp_umask: default umask
    :json boolean afp_upriv: use AFP3 unix privileges
    :json boolean afp_nostat: don't stat volume path when enumerating volumes list
@@ -565,7 +562,6 @@ Update resource
                 "afp_dperm": "644",
                 "afp_ro": "",
                 "afp_sharepw": "",
-                "afp_dbpath": "",
                 "afp_path": "/mnt/tank",
                 "afp_timemachine": true,
                 "afp_umask": "000",
@@ -581,7 +577,6 @@ Update resource
    :json string afp_rw: users and groups allowed to read and write
    :json string afp_ro: users and groups allowed to read only
    :json string afp_sharepw: password for the share
-   :json string afp_dbpath: path to set database information
    :json string afp_umask: default umask
    :json boolean afp_upriv: use AFP3 unix privileges
    :json boolean afp_nostat: don't stat volume path when enumerating volumes list

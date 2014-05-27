@@ -30,6 +30,7 @@ import os
 from django.http import HttpResponse
 from django.shortcuts import render
 
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.system.models import SystemDataset
 from freenasUI.reporting import rrd
 
@@ -74,6 +75,12 @@ def plugin2graphs(name):
 
 
 def index(request):
+
+    view = appPool.hook_app_index('reporting', request)
+    view = filter(None, view)
+    if view:
+        return view[0]
+
     return render(request, "reporting/index.html")
 
 

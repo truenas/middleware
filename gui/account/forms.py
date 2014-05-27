@@ -526,10 +526,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                         self.bsdusr_home_copy = True
                     return home
 
-                if home.endswith('/'):
-                    home = "%s%s" % (home, bsdusr_username)
-                else:
-                    home = "%s/%s" % (home, bsdusr_username)
+                if not self.instance.id:
+                    home = "%s/%s" % (home.rstrip('/'), bsdusr_username)
 
                 if not home.endswith(bsdusr_username):
                     raise forms.ValidationError(

@@ -212,6 +212,16 @@ class AFPForm(ModelForm):
         ):
             raise ServiceFailed("afp", _("The AFP service failed to reload."))
 
+    def clean_afp_srv_dbpath(self):
+        path = self.cleaned_data.get('afp_srv_dbpath')
+        if not path:
+            return path
+        if not os.path.exists(path):
+            raise forms.ValidationError(_('This path does not exist.'))
+        if not os.path.isdir(path):
+            raise forms.ValidationError(_('This path is not a directory.'))
+        return path
+
     def clean(self):
         cleaned_data = self.cleaned_data
         home = cleaned_data['afp_srv_homedir_enable']

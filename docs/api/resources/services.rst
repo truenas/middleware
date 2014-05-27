@@ -254,7 +254,8 @@ List resource
                 "id": 1,
                 "afp_srv_connections_limit": 50,
                 "afp_srv_homedir": null,
-                "afp_srv_homedir_enable": false
+                "afp_srv_homedir_enable": false,
+                "afp_srv_dbpath": ""
         }
 
    :resheader Content-Type: content type of the response
@@ -293,7 +294,8 @@ Update resource
                 "id": 1,
                 "afp_srv_connections_limit": 50,
                 "afp_srv_homedir": null,
-                "afp_srv_homedir_enable": false
+                "afp_srv_homedir_enable": false,
+                "afp_srv_dbpath": ""
         }
 
    :json string afp_srv_guest_user: guest account
@@ -301,6 +303,7 @@ Update resource
    :json integer afp_srv_connections_limit: maximum number of connections permitted
    :json string afp_srv_homedir: path to home directory
    :json boolean afp_srv_homedir_enable: enable to home directory feature
+   :json string afp_srv_dbpath: database information to be stored in path
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error

@@ -179,7 +179,7 @@ if is_truenas ; then
 else
 	add_nano_modules ctl cxgbe/t4_firmware cxgbe/t5_firmware
 	add_nano_modules iscsi syscons
-	add_nano_modules netgraph/ether netgraph/gif
+	add_nano_modules netgraph/ether netgraph/socket
 fi
 
 # Feature sets to enable as part of the build.

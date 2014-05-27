@@ -1042,11 +1042,11 @@ class SystemDataset(Model):
         choices=()
     )
     sys_syslog_usedataset = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_("Syslog")
     )
     sys_rrd_usedataset = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_("RRD")
     )
 
@@ -1055,3 +1055,7 @@ class SystemDataset(Model):
 
     class FreeAdmin:
         deletable = False
+
+    @property
+    def usedataset(self):
+        return self.sys_syslog_usedataset

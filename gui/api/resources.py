@@ -326,6 +326,12 @@ class VolumeResourceMixin(NestedMixin):
                 self.wrap_view('unlock')
             ),
             url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/upgrade%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('upgrade')
+            ),
+            url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/recoverykey%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -422,6 +428,25 @@ class VolumeResourceMixin(NestedMixin):
         else:
             form.done(obj)
         return HttpResponse('Volume has been unlocked.', status=202)
+
+    def upgrade(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        errmsg = _('Pool output could not be parsed. Is the pool imported?')
+        try:
+            notifier().zpool_version(obj.vol_name)
+        except:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, errmsg)
+            )
+        upgrade = notifier().zpool_upgrade(str(obj.vol_name))
+        if upgrade is not True:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, errmsg)
+            )
+        return HttpResponse('Volume has been upgraded.', status=202)
 
     def recoverykey(self, request, **kwargs):
         self.method_check(request, allowed=['post', 'delete'])
@@ -812,6 +837,11 @@ class VolumeResourceMixin(NestedMixin):
                     'storage_manualsnap',
                     kwargs={
                         'fs': bundle.obj.vol_name,
+                    })
+                bundle.data['_upgrade_url'] = reverse(
+                    'storage_volume_upgrade',
+                    kwargs={
+                        'object_id': bundle.obj.id,
                     })
                 if bundle.obj.vol_encrypt > 0:
                     bundle.data['_unlock_url'] = reverse(
