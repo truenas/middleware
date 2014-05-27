@@ -323,3 +323,4 @@ class NFS_Share_Path(Model):
     class Meta:
         verbose_name = _("Path")
         verbose_name_plural = _("Paths")
+        ordering = ["path"]
