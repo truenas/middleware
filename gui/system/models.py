@@ -721,6 +721,66 @@ class Rsync(Model):
             labels.append(unicode(wchoices[str(w)]))
         return ', '.join(labels)
 
+    def commandline(self):
+        line = '/usr/bin/lockf -s -t 0 -k \'%s\' /usr/local/bin/rsync' % (
+            self.rsync_path
+        )
+        if self.rsync_recursive:
+            line += ' -r'
+        if self.rsync_times:
+            line += ' -t'
+        if self.rsync_compress:
+            line += ' -z'
+        if self.rsync_archive:
+            line += ' -a'
+        if self.rsync_preserveperm:
+            line += ' -p'
+        if self.rsync_preserveattr:
+            line += ' -X'
+        if self.rsync_delete:
+            line += ' --delete-delay'
+        line += ' --delay-updates %s' % self.rsync_extra
+
+        if self.rsync_mode == 'module':
+            if self.rsync_direction == 'push':
+                line += ' \'%s\' %s@%s::%s' % (
+                    self.rsync_path,
+                    self.rsync_user,
+                    self.rsync_remotehost,
+                    self.rsync_remotemodule,
+                )
+            else:
+                line += ' %s@%s::%s \'%s\'' % (
+                    self.rsync_user,
+                    self.rsync_remotehost,
+                    self.rsync_remotemodule,
+                    self.rsync_path,
+                )
+        else:
+            line += (
+                ' -e \'ssh -p %d -o BatchMode=yes '
+                '-o StrictHostKeyChecking=yes\''
+            ) % (
+                self.rsync_remoteport
+            )
+            if self.rsync_direction == 'push':
+                line += ' \'%s\' %s@%s:\'%s\'' % (
+                    self.rsync_path,
+                    self.rsync_user,
+                    self.rsync_remotehost,
+                    self.rsync_remotepath,
+                )
+            else:
+                line += ' %s@%s:\'%s\' \'%s\'' % (
+                    self.rsync_user,
+                    self.rsync_remotehost,
+                    self.rsync_remotepath,
+                    self.rsync_path,
+                )
+        if self.rsync_quiet:
+            line += ' > /dev/null 2>&1'
+        return line
+
     def delete(self):
         super(Rsync, self).delete()
         try:

@@ -4987,6 +4987,12 @@ class notifier:
         else:
             return False
 
+    def rsync_command(self, obj_or_id):
+        from freenasUI.system.models import Rsync
+        oid = int(obj_or_id)
+        rsync = Rsync.objects.get(id=oid)
+        return rsync.commandline()
+
 
 def usage():
     usage_str = """usage: %s action command
