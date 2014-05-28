@@ -24,12 +24,19 @@ from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FLAGS_DBINIT
 )
+from freenasUI.common.system import (
+    activedirectory_enabled,
+    domaincontroller_enabled,
+    ldap_enabled
+)
 from freenasUI.system.models import Settings
 from freenasUI.services.models import (
     services,
     ActiveDirectory,
     LDAP
 )
+
+SSSD_CONFIGFILE	="/usr/local/etc/sssd/sssd.conf"
 
 class SSSDBase(object):
     def __init__(self, *args, **kwargs):
@@ -398,26 +405,7 @@ class SSSDConf(SSSDBase):
 
         if path:
             stdout.close()
-
-
-def directoryservice_enabled(ds=None):
-    enabled = False
-    if not ds:
-        return enabled
-
-    try:
-        if services.objects.filter(srv_service='directoryservice')[0].srv_enable:
-            settings = Settings.objects.all()[0]
-            if settings.stg_directoryservice == ds:
-                enabled = True
-    except:
-        pass
-
-    return enabled
-
-
-def activedirectory_enabled():
-    return directoryservice_enabled('activedirectory')
+            os.chmod(path, 0600)
 
 
 def activedirectory_has_unix_extensions():
@@ -430,14 +418,6 @@ def activedirectory_has_unix_extensions():
         pass
 
     return ad_unix_extensions
-
-
-def domaincontroller_enabled():
-    return directoryservice_enabled('domaincontroller')
-
-
-def ldap_enabled():
-    return directoryservice_enabled('ldap')
 
 
 def sssd_mkdir(dir):
@@ -457,6 +437,47 @@ def sssd_setup():
 
 def add_ldap(sc):
     ldap_cookie = 'FreeNAS_LDAP'
+    ldap_domain = 'domain/%s' % ldap_cookie
+
+    ldap_section = None
+    for key in sc.keys():
+        if key == ldap_domain:
+            ldap_section = sc[key]
+            break
+
+    if not ldap_section:
+        ldap_section = SSSDSectionDomain(ldap_domain)
+        ldap_section.description = ldap_cookie
+    if ldap_section.description != ldap_cookie:
+        return
+
+    ldap_defaults = [
+        { 'enumerate': 'true' },
+        { 'cache_credentials': 'true' },
+        { 'id_provider': 'ldap'},
+        { 'auth_provider': 'ldap' },
+        { 'chpass_provider': 'ldap' },
+        { 'ldap_schema': 'rfc2307bis' },
+        { 'ldap_force_upper_case_realm': 'true' },
+        { 'use_fully_qualified_names': 'false' }
+    ]
+
+    for d in ldap_defaults:
+        key = d.keys()[0]  
+        if not key in ldap_section:
+            setattr(ldap_section, key, d[key])
+
+    ldap = LDAP.objects.all()[0]
+
+    ldap_section.ldap_uri = "ldap://%s" % ldap.ldap_hostname
+    ldap_section.ldap_search_base = ldap.ldap_basedn
+    ldap_section.ldap_default_bind_dn = ldap.ldap_rootbasedn
+    ldap_section.ldap_default_authtok_type = 'password'
+    ldap_section.ldap_default_authtok = ldap.ldap_rootbindpw
+
+    sc[ldap_domain] = ldap_section
+    sc['sssd'].add_domain(ldap_cookie)
+    sc['sssd'].add_newline()
 
 
 def add_activedirectory(sc):
@@ -491,7 +512,7 @@ def add_activedirectory(sc):
         { 'ldap_group_name': 'msSFU30Name' },
         { 'ldap_group_gid_number': 'gidNumber' },
         { 'ldap_force_upper_case_realm': 'true' },
-        { 'use_fully_qualified_names': 'true' }
+        { 'use_fully_qualified_names': 'false' }
     ]
 
     for d in ad_defaults:
@@ -522,7 +543,7 @@ def add_activedirectory(sc):
 def main():
     sssd_setup()
 
-    sc = SSSDConf(configfile="/usr/local/etc/sssd/sssd.conf")
+    sc = SSSDConf(configfile=SSSD_CONFIGFILE)
     if not sc['sssd']:
         sc['sssd'] = SSSDSectionSSSD()
 
@@ -539,8 +560,7 @@ def main():
     if ldap_enabled():
         add_ldap(sc)
 
-    print sc
-    #sc.save("/tmp/out.txt")
+    sc.save(SSSD_CONFIGFILE)
 
 if __name__ == '__main__':
     main()
