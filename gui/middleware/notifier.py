@@ -4989,9 +4989,9 @@ class notifier:
 
     def rsync_command(self, obj_or_id):
         """
-        Helper method used in ix-crontab to generate the rsync command to
-        avoid code duplication
-        This should be removed once ix-crontab is rewritten in python
+        Helper method used in ix-crontab to generate the rsync command
+        avoiding code duplication.
+        This should be removed once ix-crontab is rewritten in python.
         """
         from freenasUI.system.models import Rsync
         oid = int(obj_or_id)
