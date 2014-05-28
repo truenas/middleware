@@ -1,3 +1,4 @@
+from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
@@ -84,6 +85,20 @@ class RsyncFAdmin(BaseFreeAdmin):
         'rsync_extra',
     )
     resource_mixin = RsyncResourceMixin
+
+    def get_actions(self):
+        actions = super(RsyncFAdmin, self).get_actions()
+        actions['RunNow'] = {
+            'button_name': _('Run Now'),
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('%s', data._run_url, [mybtn,]);
+                }
+            }""" % (escapejs(_('Run Now')), ),
+        }
+        return actions
 
     def get_datagrid_columns(self):
         columns = super(RsyncFAdmin, self).get_datagrid_columns()

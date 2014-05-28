@@ -523,6 +523,17 @@ def firmware_progress(request):
     return HttpResponse(content, content_type='application/json')
 
 
+def rsync_run(request, oid):
+    rsync = models.Rsync.objects.get(pk=oid)
+    if request.method == "POST":
+        rsync.run()
+        return JsonResp(request, message=_("The rsync process has started"))
+
+    return render(request, 'system/rsync_run.html', {
+        'rsync': rsync,
+    })
+
+
 def restart_httpd(request):
     """ restart httpd """
     notifier().restart("http")

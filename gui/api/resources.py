@@ -1253,6 +1253,9 @@ class RsyncResourceMixin(object):
         bundle = super(RsyncResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
             _common_human_fields(bundle)
+            bundle.data['_run_url'] = reverse('rsync_run', kwargs={
+                'oid': bundle.obj.id
+            })
         return bundle
 
 

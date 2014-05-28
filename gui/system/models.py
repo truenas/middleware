@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import subprocess
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -780,6 +781,12 @@ class Rsync(Model):
         if self.rsync_quiet:
             line += ' > /dev/null 2>&1'
         return line
+
+    def run(self):
+        subprocess.Popen(
+            '%s 2>&1 | logger -t rsync' % self.commandline(),
+            shell=True,
+        )
 
     def delete(self):
         super(Rsync, self).delete()
