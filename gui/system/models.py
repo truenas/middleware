@@ -784,7 +784,10 @@ class Rsync(Model):
 
     def run(self):
         subprocess.Popen(
-            '%s 2>&1 | logger -t rsync' % self.commandline(),
+            'su -m %s -c "%s" 2>&1 | logger -t rsync' % (
+                self.rsync_user,
+                self.commandline(),
+            ),
             shell=True,
         )
 
