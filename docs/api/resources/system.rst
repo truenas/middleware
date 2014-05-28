@@ -974,7 +974,7 @@ Run
       Rsync job started.
 
    :resheader Content-Type: content type of the response
-   :statuscode 200: no error
+   :statuscode 202: no error
 
 
 Settings

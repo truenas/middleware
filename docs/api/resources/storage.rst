@@ -166,7 +166,7 @@ Scrub
       Volume scrub started.
 
    :resheader Content-Type: content type of the response
-   :statuscode 200: no error
+   :statuscode 202: no error
 
 .. http:delete:: /api/v1.0/storage/volume/(int:id|string:name)/scrub/
 
@@ -190,7 +190,7 @@ Scrub
       Volume scrub stopped.
 
    :resheader Content-Type: content type of the response
-   :statuscode 200: no error
+   :statuscode 202: no error
 
 
 Upgrade
@@ -218,7 +218,7 @@ Upgrade
       Volume has been upgraded.
 
    :resheader Content-Type: content type of the response
-   :statuscode 200: no error
+   :statuscode 202: no error
 
 
 Replace disk
