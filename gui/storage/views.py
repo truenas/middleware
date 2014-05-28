@@ -309,10 +309,7 @@ def dataset_create(request, fs):
             dataset_compression = cleaned_data.get('dataset_compression')
             dataset_share_type = cleaned_data.get('dataset_share_type')
             if dataset_share_type == "windows":
-                # XXXX
-                # Add windows case insensitive prop stuff here
-                # XXXX
-                pass
+                props['aclmode'] = 'restricted'
             props['compression'] = dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
             props['atime'] = dataset_atime.__str__()
