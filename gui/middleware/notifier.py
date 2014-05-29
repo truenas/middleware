@@ -2372,7 +2372,7 @@ class notifier:
         if len(apply_paths) > 1:
             apply_paths.insert(0, (path, ''))
         for apath, flags in apply_paths:
-            fargs = args + "%s -p '%s -x'" % (flags, apath)
+            fargs = args + "%s -p '%s' -x" % (flags, apath)
             cmd = "%s %s" % (script, fargs)
             log.debug("XXX: CMD = %s", cmd)
             self._system(cmd)
