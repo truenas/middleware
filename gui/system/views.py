@@ -184,6 +184,17 @@ def config_save(request):
     return response
 
 
+def cron_run(request, oid):
+    cron = models.CronJob.objects.get(pk=oid)
+    if request.method == "POST":
+        cron.run()
+        return JsonResp(request, message=_("The cron process has started"))
+
+    return render(request, 'system/cron_run.html', {
+        'cron': cron,
+    })
+
+
 def reporting(request):
     return render(request, 'system/reporting.html')
 

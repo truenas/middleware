@@ -517,6 +517,28 @@ class CronJob(Model):
             labels.append(unicode(wchoices[str(w)]))
         return ', '.join(labels)
 
+    def commandline(self):
+        line = self.cron_command
+        if self.cron_stdout:
+            line += ' > /dev/null'
+        if self.cron_stderr:
+            line += ' 2> /dev/null'
+        else:
+            line += ' 2>&1'
+        return line
+
+    def run(self):
+        subprocess.Popen(
+            '%s | logger -t cron' % self.commandline(),
+            shell=True,
+            env={
+                'PATH': (
+                    '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
+                    '/usr/local/sbin:/root/bin'
+                ),
+            },
+        )
+
     def delete(self):
         super(CronJob, self).delete()
         try:
