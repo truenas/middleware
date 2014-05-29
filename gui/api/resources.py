@@ -1238,7 +1238,7 @@ class LAGGInterfaceMembersResourceMixin(object):
         return bundle
 
 
-class CronJobResourceMixin(object):
+class CronJobResourceMixin(NestedMixin):
 
     def prepend_urls(self):
         return [
