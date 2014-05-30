@@ -176,9 +176,13 @@ def volumemanager(request):
         hsize = forms.humanize_number_si(d.size)
         if hsize not in bysize:
             bysize[hsize] = []
+        display_name = d.dev
+        if '/' in display_name:
+            display_name = display_name.split('/')[-1]
         bysize[hsize].append({
             'dev': d.dev,
             'name': str(d),
+            'displayName': display_name,
             'size': d.size,
             'serial': d.serial,
         })
