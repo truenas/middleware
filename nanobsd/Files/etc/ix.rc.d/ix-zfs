@@ -48,6 +48,19 @@ import_zpools()
 	done
 	rm -f /data/zfs/killcache
 	cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved 2> /dev/null
+
+	IFS=$'\n'
+	for mp in $(/sbin/zfs list -H|/usr/bin/awk '{ print $5 }'); do
+		if [ -f "${mp}/.windows" ] ; then
+			local dataset aclmode
+
+			dataset="${mp##/mnt/}"
+			aclmode="$(/sbin/zfs get -H aclmode "${dataset}"|awk '{ print $3 }')"
+			if [ "${aclmode}" != "restricted" ] ; then
+				/sbin/zfs set aclmode=restricted "${dataset}"
+			fi
+		fi
+	done
 }
 
 name="ix-zfs"

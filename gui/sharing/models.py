@@ -44,6 +44,11 @@ class CIFS_Share(Model):
             )
     cifs_path = PathField(
             verbose_name=_("Path"))
+    cifs_default_permissions = models.BooleanField(
+        verbose_name=_('Default permissions'),
+        help_text=_('Recursively set sane default windows permissions on share'),
+        default=True
+    )
     cifs_ro = models.BooleanField(
         verbose_name=_('Export Read Only'),
         default=False,

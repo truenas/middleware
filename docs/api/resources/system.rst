@@ -354,6 +354,34 @@ Delete resource
    :statuscode 204: no error
 
 
+Run
++++
+
+.. http:post:: /api/v1.0/system/cronjob/(int:id)/run/
+
+   Start cron job of `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/cronjob/1/run/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Cron job started.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 InitShutdown
 ------------
 
@@ -947,6 +975,34 @@ Delete resource
       Content-Type: application/json
 
    :statuscode 204: no error
+
+
+Run
++++
+
+.. http:post:: /api/v1.0/system/rsync/(int:id)/run/
+
+   Start rsync job of `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/rsync/1/run/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Rsync job started.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
 
 
 Settings

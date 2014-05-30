@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/acl.h>
+#include <sys/extattr.h>
 #include <sys/stat.h>
 #include <err.h>
 #include <fts.h>
@@ -49,6 +50,7 @@ struct windows_acl_info {
 #define	WA_RECURSIVE	0x00000020	/* recursive */
 #define	WA_VERBOSE		0x00000040	/* print more stuff */
 #define	WA_RESET		0x00000080	/* set defaults */
+#define WA_DOSATTRIB	0x00000100	/* DOS extended attribute */
 
 /* default ACL entries if none are specified */
 #define	WA_ENTRY_OWNER		"owner@:rwxpDdaARWcCos:fd:allow"
@@ -196,7 +198,8 @@ usage(char *path)
 		"    -f                           # only set files\n"
 		"    -d                           # only set directories\n"
 		"    -r                           # recursive\n"
-		"    -v                           # verbose\n",
+		"    -v                           # verbose\n"
+		"    -x                           # remove DOSATTRIB EA\n",
 		path
 	);
 
@@ -470,9 +473,21 @@ windows_acl_reset(struct windows_acl_info *w, const char *path)
 
 	/* write out the acl to the file */
 	if (acl_set_file(path, ACL_TYPE_NFS4, acl_new) < 0)
-		warn( "%s: acl_set_file() failed", path);
+		warn("%s: acl_set_file() failed", path);
 
 	return (0);
+}
+
+
+static void
+clear_dosattrib(struct windows_acl_info *w, const char *path)
+{
+	if (extattr_get_file(path, EXTATTR_NAMESPACE_USER,
+		"DOSATTRIB", NULL, 0) > 0) {
+		if (extattr_delete_file(path,
+			EXTATTR_NAMESPACE_USER, "DOSATTRIB") < 0) 
+			warn("%s: extattr_delete_file() failed", path);
+	}
 }
 
 
@@ -497,6 +512,9 @@ set_windows_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 		windows_acl_remove(w, path);
 	else if (w->flags & WA_RESET)
 		windows_acl_reset(w, path);
+
+	if (w->flags & WA_DOSATTRIB)
+		clear_dosattrib(w, path);
 
 	if (w->uid != -1 || w->gid != -1) {
 		if (chown(path, w->uid, w->gid) < 0)
@@ -581,6 +599,9 @@ usage_check(struct windows_acl_info *w)
 		w->dacl == NULL && w->facl == NULL && !(w->flags & WA_RESET)) {
 		errx(EX_USAGE, "no entries specified and not resetting");
 	}
+
+	if (w->flags & WA_DOSATTRIB && !(w->flags & WA_RESET))
+		errx(EX_USAGE, "DOSATTRIB EA can only be cleared with reset");
 }
 
 
@@ -644,7 +665,7 @@ main(int argc, char **argv)
 	w = new_windows_acl_info();
 	w->flags = (WA_FILES|WA_DIRECTORIES);
 
-	while ((ch = getopt(argc, argv, "a:o:g:e:O:G:p:i:fdrv")) != -1) {
+	while ((ch = getopt(argc, argv, "a:o:g:e:O:G:p:i:fdrvx")) != -1) {
 		switch (ch) {
 			case 'a': {
 				int action = get_action(optarg);
@@ -706,6 +727,10 @@ main(int argc, char **argv)
 
 			case 'v':
 				w->flags |= WA_VERBOSE;
+				break;
+
+			case 'x':
+				w->flags |= WA_DOSATTRIB;
 				break;
 
 			case '?':

@@ -15,6 +15,7 @@ Requirements:
   - sysutils/cdrtools
   - archivers/pxz
   - lang/python (2.7 or later, with THREADS support)
+  - emulators/virtualbox-ose
   (and all the dependencies that these ports/pkgs install, of course)
 
 Building the System Quickstart Flow:

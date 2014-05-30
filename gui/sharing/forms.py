@@ -56,6 +56,8 @@ class CIFS_ShareForm(ModelForm):
                     'disabled'
         elif self.instance.cifs_guestok is False:
             self.fields['cifs_guestonly'].widget.attrs['disabled'] = 'disabled'
+        self.instance._original_cifs_default_permissions = \
+            self.instance.cifs_default_permissions
 
     class Meta:
         fields = '__all__'
@@ -86,6 +88,10 @@ class CIFS_ShareForm(ModelForm):
         if not services.objects.get(srv_service='cifs').srv_enable:
             events.append('ask_service("cifs")')
         super(CIFS_ShareForm, self).done(request, events)
+        if self.instance._original_cifs_default_permissions != \
+            self.instance.cifs_default_permissions and \
+            self.instance.cifs_default_permissions == True:
+            notifier().winacl_reset(path=self.instance.cifs_path)
 
 
 class AFP_ShareForm(ModelForm):

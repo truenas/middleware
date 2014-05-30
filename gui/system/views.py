@@ -184,6 +184,17 @@ def config_save(request):
     return response
 
 
+def cron_run(request, oid):
+    cron = models.CronJob.objects.get(pk=oid)
+    if request.method == "POST":
+        cron.run()
+        return JsonResp(request, message=_("The cron process has started"))
+
+    return render(request, 'system/cron_run.html', {
+        'cron': cron,
+    })
+
+
 def reporting(request):
     return render(request, 'system/reporting.html')
 
@@ -521,6 +532,17 @@ def firmware_progress(request):
 
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
+
+
+def rsync_run(request, oid):
+    rsync = models.Rsync.objects.get(pk=oid)
+    if request.method == "POST":
+        rsync.run()
+        return JsonResp(request, message=_("The rsync process has started"))
+
+    return render(request, 'system/rsync_run.html', {
+        'rsync': rsync,
+    })
 
 
 def restart_httpd(request):

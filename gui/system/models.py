@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import subprocess
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -516,6 +517,28 @@ class CronJob(Model):
             labels.append(unicode(wchoices[str(w)]))
         return ', '.join(labels)
 
+    def commandline(self):
+        line = self.cron_command
+        if self.cron_stdout:
+            line += ' > /dev/null'
+        if self.cron_stderr:
+            line += ' 2> /dev/null'
+        else:
+            line += ' 2>&1'
+        return line
+
+    def run(self):
+        subprocess.Popen(
+            '%s | logger -t cron' % self.commandline(),
+            shell=True,
+            env={
+                'PATH': (
+                    '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
+                    '/usr/local/sbin:/root/bin'
+                ),
+            },
+        )
+
     def delete(self):
         super(CronJob, self).delete()
         try:
@@ -720,6 +743,75 @@ class Rsync(Model):
         for w in weeks:
             labels.append(unicode(wchoices[str(w)]))
         return ', '.join(labels)
+
+    def commandline(self):
+        line = '/usr/bin/lockf -s -t 0 -k \'%s\' /usr/local/bin/rsync' % (
+            self.rsync_path
+        )
+        if self.rsync_recursive:
+            line += ' -r'
+        if self.rsync_times:
+            line += ' -t'
+        if self.rsync_compress:
+            line += ' -z'
+        if self.rsync_archive:
+            line += ' -a'
+        if self.rsync_preserveperm:
+            line += ' -p'
+        if self.rsync_preserveattr:
+            line += ' -X'
+        if self.rsync_delete:
+            line += ' --delete-delay'
+        line += ' --delay-updates %s' % self.rsync_extra
+
+        if self.rsync_mode == 'module':
+            if self.rsync_direction == 'push':
+                line += ' \'%s\' %s@%s::%s' % (
+                    self.rsync_path,
+                    self.rsync_user,
+                    self.rsync_remotehost,
+                    self.rsync_remotemodule,
+                )
+            else:
+                line += ' %s@%s::%s \'%s\'' % (
+                    self.rsync_user,
+                    self.rsync_remotehost,
+                    self.rsync_remotemodule,
+                    self.rsync_path,
+                )
+        else:
+            line += (
+                ' -e \'ssh -p %d -o BatchMode=yes '
+                '-o StrictHostKeyChecking=yes\''
+            ) % (
+                self.rsync_remoteport
+            )
+            if self.rsync_direction == 'push':
+                line += ' \'%s\' %s@%s:\'%s\'' % (
+                    self.rsync_path,
+                    self.rsync_user,
+                    self.rsync_remotehost,
+                    self.rsync_remotepath,
+                )
+            else:
+                line += ' %s@%s:\'%s\' \'%s\'' % (
+                    self.rsync_user,
+                    self.rsync_remotehost,
+                    self.rsync_remotepath,
+                    self.rsync_path,
+                )
+        if self.rsync_quiet:
+            line += ' > /dev/null 2>&1'
+        return line
+
+    def run(self):
+        subprocess.Popen(
+            'su -m %s -c "%s" 2>&1 | logger -t rsync' % (
+                self.rsync_user,
+                self.commandline(),
+            ),
+            shell=True,
+        )
 
     def delete(self):
         super(Rsync, self).delete()
@@ -1055,6 +1147,10 @@ class SystemDataset(Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = u"SystemDatasetIcon"
+        icon_object = u"SystemDatasetIcon"
+        icon_view = u"SystemDatasetIcon"
+        icon_add = u"SystemDatasetIcon"
 
     @property
     def usedataset(self):

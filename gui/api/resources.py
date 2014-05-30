@@ -1238,21 +1238,61 @@ class LAGGInterfaceMembersResourceMixin(object):
         return bundle
 
 
-class CronJobResourceMixin(object):
+class CronJobResourceMixin(NestedMixin):
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/run%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('run')
+            ),
+        ]
+
+    def run(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+        obj.run()
+        return HttpResponse('Cron job started.', status=202)
 
     def dehydrate(self, bundle):
         bundle = super(CronJobResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
             _common_human_fields(bundle)
+            bundle.data['_run_url'] = reverse('cron_run', kwargs={
+                'oid': bundle.obj.id
+            })
         return bundle
 
 
-class RsyncResourceMixin(object):
+class RsyncResourceMixin(NestedMixin):
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/run%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('run')
+            ),
+        ]
+
+    def run(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+        obj.run()
+        return HttpResponse('Rsync job started.', status=202)
 
     def dehydrate(self, bundle):
         bundle = super(RsyncResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
             _common_human_fields(bundle)
+            bundle.data['_run_url'] = reverse('rsync_run', kwargs={
+                'oid': bundle.obj.id
+            })
         return bundle
 
 

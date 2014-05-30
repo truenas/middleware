@@ -2343,6 +2343,41 @@ class notifier:
         self._system("/usr/sbin/service ix-sudoers quietstart")
         self.reload("cifs")
 
+    def winacl_reset(self, path, owner=None, group=None, exclude=None):
+        if exclude is None:
+            exclude = []
+
+        if type(owner) is types.UnicodeType:
+            owner = owner.encode('utf-8')
+
+        if type(group) is types.UnicodeType:
+            group = group.encode('utf-8')
+
+        if type(path) is types.UnicodeType:
+            path = path.encode('utf-8')
+
+        winacl = os.path.join(path, ACL_WINDOWS_FILE)
+        winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
+        if not winexists:
+            open(winacl, 'a').close()
+
+        script = "/usr/local/bin/winacl"
+        args = "-a reset"
+        if owner != None:
+            args = "%s -O '%s'" % (args, owner)
+        if group != None:
+            args = "%s -G '%s'" % (args, group)
+        apply_paths = exclude_path(path, exclude)
+        apply_paths = map(lambda y: (y, ' -r '), apply_paths)
+        if len(apply_paths) > 1:
+            apply_paths.insert(0, (path, ''))
+        for apath, flags in apply_paths:
+            fargs = args + "%s -p '%s' -x" % (flags, apath)
+            cmd = "%s %s" % (script, fargs)
+            log.debug("XXX: CMD = %s", cmd)
+            self._system(cmd)
+
+
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False, acl='unix',
                              exclude=None):
@@ -4951,6 +4986,17 @@ class notifier:
             return title[1]
         else:
             return False
+
+    def rsync_command(self, obj_or_id):
+        """
+        Helper method used in ix-crontab to generate the rsync command
+        avoiding code duplication.
+        This should be removed once ix-crontab is rewritten in python.
+        """
+        from freenasUI.system.models import Rsync
+        oid = int(obj_or_id)
+        rsync = Rsync.objects.get(id=oid)
+        return rsync.commandline()
 
 
 def usage():

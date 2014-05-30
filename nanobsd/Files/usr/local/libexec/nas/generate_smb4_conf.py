@@ -383,10 +383,10 @@ def generate_smb4_conf(smb4_conf, role):
     confset1(smb4_conf, "panic action = /usr/local/libexec/samba/samba-backtrace")
 
     confset2(smb4_conf, "server string = %s", cifs.cifs_srv_description)
-    confset2(smb4_conf, "ea support = %s",
-        "yes" if cifs.cifs_srv_easupport else False)
-    confset2(smb4_conf, "store dos attributes = %s",
-        "yes" if cifs.cifs_srv_dosattr else False)
+    confset1(smb4_conf, "ea support = %s" % \
+        ("yes" if cifs.cifs_srv_easupport else "no"))
+    confset1(smb4_conf, "store dos attributes = %s" % \
+        ("yes" if cifs.cifs_srv_dosattr else "no"))
     if cifs.cifs_srv_dosattr:
         confset1(smb4_conf, "map archive = no")
         confset1(smb4_conf, "map readonly = no")
