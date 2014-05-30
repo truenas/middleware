@@ -381,6 +381,29 @@ def activedirectory_enabled():
     return enabled
 
 
+def activedirectory_has_unix_extensions():
+    ad_unix_extensions = False
+
+    h = sqlite3.connect(FREENAS_DATABASE)
+    h.row_factory = sqlite3.Row
+    c = h.cursor()
+
+    c.execute("SELECT ad_unix_extensions " \
+        "FROM services_activedirectory ORDER BY -id LIMIT 1")
+    row = c.fetchone()
+
+    try:
+        if int(row[0]) == 1:
+            ad_unix_extensions = True
+    except:
+        pass
+
+    c.close()
+    h.close()
+
+    return ad_unix_extensions
+
+
 def activedirectory_objects():
     h = sqlite3.connect(FREENAS_DATABASE)
     h.row_factory = sqlite3.Row
