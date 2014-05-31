@@ -62,9 +62,7 @@ add_truenas_gui()
 
 arch_specific_ko()
 {
-	if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
-		cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${NANO_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
-	fi
+	cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${NANO_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
 }
 
 add_warden_hooks()
