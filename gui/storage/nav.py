@@ -149,6 +149,8 @@ class Volumes(TreeNode):
     icon = u'VolumesIcon'
 
     def _gen_dataset(self, node, dataset):
+        if dataset.name.startswith('.'):
+            return
 
         nav = TreeNode(dataset.name)
         nav.name = dataset.mountpoint

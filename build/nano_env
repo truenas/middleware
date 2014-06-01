@@ -277,9 +277,9 @@ NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 # the project, and because this limit is in effect at boot. This is for better
 # built out systems. A lower default will be provided in FreeNAS instead.
 if is_truenas ; then
-	NANO_RAM_TMPVARSIZE=655360
+	NANO_RAM_TMPVARSIZE=
 else
-	NANO_RAM_TMPVARSIZE=327680
+	NANO_RAM_TMPVARSIZE=
 fi
 
 NANO_IMAGES=2

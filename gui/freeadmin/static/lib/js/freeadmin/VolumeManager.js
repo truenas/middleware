@@ -107,7 +107,8 @@ define([
 
     var Disk = declare("freeadmin.Disk", [ _Widget, _Templated ], {
       //templateString: '<div class="disk" style="width: 38px; height: 16px; text-align: center; float: left; background-color: #eee; border: 1px solid #ddd; margin: 2px; padding: 2px;">${name}</div>',
-      templateString: '<div class="disk" style="margin: 2px; padding: 2px; width: 40px;">${name}</div>',
+      templateString: '<div class="disk" style="margin: 2px; padding: 2px; width: 40px;">${displayName}</div>',
+      displayName: "",
       name: "",
       serial: "",
       size: "",
@@ -1166,6 +1167,7 @@ define([
           for(var key in disks) {
             avail_disks.push(new Disk({
               manager: this,
+              displayName: disks[key]['displayName'],
               name: disks[key]['dev'],
               size: size,
               sizeBytes: disks[key]['size'],

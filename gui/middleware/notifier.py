@@ -1041,10 +1041,10 @@ class notifier:
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname, ))
         if swapsize > 0:
-            commands.append("gpart add -b 128 -t freebsd-swap -s %d %s" % (swapsize, devname))
-            commands.append("gpart add -t %s %s" % (type, devname))
+            commands.append("gpart add -a 4k -b 128 -t freebsd-swap -s %d %s" % (swapsize, devname))
+            commands.append("gpart add -a 4k -t %s %s" % (type, devname))
         else:
-            commands.append("gpart add -b 128 -t %s %s" % (type, devname))
+            commands.append("gpart add -a 4k -b 128 -t %s %s" % (type, devname))
 
         # Install a dummy boot block so system gives meaningful message if booting
         # from the wrong disk.

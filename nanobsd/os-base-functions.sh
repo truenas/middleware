@@ -117,7 +117,7 @@ remove_patch_divots ( )
 configure_mnt_md ( )
 {
 	mkdir -m 755 -p ${NANO_WORLDDIR}/conf/base/mnt
-	echo 2048 > ${NANO_WORLDDIR}/conf/base/mnt/md_size
+	echo 8192 > ${NANO_WORLDDIR}/conf/base/mnt/md_size
 }
 
 shrink_md_fbsize()
