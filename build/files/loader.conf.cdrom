@@ -1,8 +1,8 @@
 #
-# Boot loader file for $NANO_LABEL.  This relies on a hacked beastie.4th.
+# Boot loader file for %NANO_LABEL_LOWER%
 #
 autoboot_delay="2"
-loader_logo=" "
+loader_logo="%NANO_LABEL_LOWER%"
 loader_menu_title=" "
 loader_version=" "
 loader_brand="%NANO_LABEL_LOWER%-brand"
