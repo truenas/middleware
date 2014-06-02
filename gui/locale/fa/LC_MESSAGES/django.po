@@ -6314,11 +6314,7 @@ msgstr "نمایش کامل"
 msgid "Debug2"
 msgstr "اشکال‌زدایی2"
 
-#: choices.py:670
-msgid "Debug3"
-msgstr "اشکال‌زدایی3"
-
-#: choices.py:665
+#: choices.py:678
 msgid "Debug3"
 msgstr "اشکال‌زدایی3"
 
