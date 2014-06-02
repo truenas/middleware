@@ -116,10 +116,6 @@ msgstr "Activer le service"
 msgid "The cache is being rebuilt."
 msgstr "Le cache est en reconstruction."
 
-#: freeadmin/static/lib/js/freeadmin.js:994
-msgid "The cache is being rebuilt."
-msgstr "Le cache est en reconstruction"
-
 #: freeadmin/static/lib/js/freeadmin/Menu.js:134
 msgid "Shares"
 msgstr "Partages"
