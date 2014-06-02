@@ -1,4 +1,3 @@
-from django.db.models import Q
 from django.utils.translation import ugettext as _
 
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
@@ -15,7 +14,10 @@ class ReplicationStatusAlert(BaseAlert):
                 continue
             alerts.append(Alert(
                 Alert.CRIT,
-                _('Replication %s failed: %s') % (repl, repl.repl_lastresult),
+                _('Replication %(replication)s failed: %(message)s') % {
+                    'replication': repl,
+                    'message': repl.repl_lastresult,
+                },
             ))
         return alerts
 
