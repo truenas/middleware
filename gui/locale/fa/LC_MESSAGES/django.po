@@ -1221,7 +1221,7 @@ msgid "The full path cannot exceed 88 characters"
 msgstr "مسیر کامل نمی تواند از 88 نویسه تجاوز کند"
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
 msgstr "رایانامه‌ی آزمون شما قابل ارسال نیست: s%"
 
@@ -2285,7 +2285,6 @@ msgid "Path to the plugins jail"
 msgstr ""
 
 #: services/models.py:809
-#, fuzzy
 msgid "Jail name"
 msgstr "نام دامنه"
 
@@ -3518,7 +3517,6 @@ msgid "Specify custom path"
 msgstr ""
 
 #: storage/forms.py:163
-#, fuzzy
 msgid "Volume add"
 msgstr "درایو ZFS"
 
@@ -4137,7 +4135,6 @@ msgid "Volume successfully added."
 msgstr ""
 
 #: storage/views.py:254
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "تنظیمات .S.M.A.R.T"
 
@@ -6039,7 +6036,6 @@ msgid "History"
 msgstr ""
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
 msgstr "کاربر محلی"
 
@@ -6200,7 +6196,6 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#, fuzzy
 msgid "Plugin uname"
 msgstr "نام دامنه"
 
@@ -6243,7 +6238,6 @@ msgstr "نام دامنه"
 #~ msgid "Pass"
 #~ msgstr "قبول شدن"
 
-#, fuzzy
 msgid "Disable password"
 msgstr "غیر فعال شده"
 

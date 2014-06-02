@@ -7208,7 +7208,7 @@ msgstr ""
 
 #: network/models.py:88
 msgid "Netwait IP list"
-msgstr "Liste d'IP netwait"
+msgstr "Liste des IP netwait"
 
 #: network/models.py:97
 msgid "Host name data base"

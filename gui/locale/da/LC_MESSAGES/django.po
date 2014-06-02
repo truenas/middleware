@@ -1308,7 +1308,6 @@ msgid "Plugin successfully updated."
 msgstr "%s blev opdateret."
 
 #: plugins/views.py:80
-#, fuzzy
 msgid "Plugin successfully removed."
 msgstr "%s blev tilføjet."
 
@@ -1361,7 +1360,6 @@ msgid "The NFS service failed to reload."
 msgstr "NFS service kunne ikke genstarte."
 
 #: services/forms.py:157
-#, fuzzy
 msgid "This IP already exists."
 msgstr "En bruger med dette brugernavn findes allerede."
 
@@ -3034,12 +3032,10 @@ msgid "Add Device Extent"
 msgstr ""
 
 #: services/nav.py:79
-#, fuzzy
 msgid "View Device Extents"
 msgstr "Vis alle brugere"
 
 #: services/nav.py:92
-#, fuzzy
 msgid "File Extents"
 msgstr "Vis alle brugere"
 
@@ -4106,7 +4102,6 @@ msgid "View Snapshots"
 msgstr "Vis drev"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
 msgstr "Vis alle grupper"
 
@@ -4171,7 +4166,6 @@ msgid "Volume successfully added."
 msgstr "%s blev tilføjet."
 
 #: storage/views.py:254
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "S.M.A.R.T."
 
@@ -4229,7 +4223,6 @@ msgid "Rollback successful."
 msgstr ""
 
 #: storage/views.py:634
-#, fuzzy
 msgid "Snapshot successfully added."
 msgstr "%s blev slettet."
 
@@ -5505,7 +5498,6 @@ msgid "Add Extent"
 msgstr ""
 
 #: templates/services/iscsi_extents.html:5
-#, fuzzy
 msgid "File Extent"
 msgstr "Vis alle brugere"
 
@@ -5801,7 +5793,6 @@ msgid "No ZFS replication available"
 msgstr ""
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
 msgstr "Der er ikke defineret nogle rsyncs"
 
@@ -5810,7 +5801,6 @@ msgid "Add ZFS Scrub Task"
 msgstr ""
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
 msgstr "Tilføj ZFS Drev"
 
@@ -6084,7 +6074,6 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
 msgstr "Der er ikke defineret nogle rsyncs"
 
@@ -6111,7 +6100,6 @@ msgid "History"
 msgstr "Mappe"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
 msgstr "Lokal master"
 
@@ -6220,7 +6208,6 @@ msgstr ""
 #~ msgstr "Forbundet gennem"
 
 #: templates/system/tunable.html:34
-#, fuzzy
 msgid "No tunable setting defined."
 msgstr "Der er ikke defineret nogle rsyncs"
 
@@ -6299,7 +6286,6 @@ msgstr "S.M.A.R.T."
 msgid "View Sysctls"
 msgstr "Vis drev"
 
-#, fuzzy
 msgid "View Tunables"
 msgstr "Vis alle brugere"
 
@@ -6338,7 +6324,6 @@ msgstr "Vis alle brugere"
 #~ msgid "Export Volume"
 #~ msgstr "Eksporter ZFS Drev"
 
-#, fuzzy
 msgid "successfully deleted"
 msgstr "%s blev slettet."
 
@@ -6363,7 +6348,6 @@ msgstr "%s blev slettet."
 #~ msgid "Admin user"
 #~ msgstr "Admin bruger"
 
-#, fuzzy
 msgid "ZVol Name"
 msgstr "Fuldt navn"
 
