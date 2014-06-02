@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2014-01-30 08:36+0200\n"
+"PO-Revision-Date: 2014-01-30 08:36+0000\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1391071017.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -560,9 +561,8 @@ msgstr "Ev dizini modu"
 msgid "Auxiliary groups"
 msgstr "Yardımcı gruplar"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Bu kimlikle aynı bir kullanıcı zaten var."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Bu kimlikle aynı bir kullanıcı zaten var."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -602,9 +602,8 @@ msgstr "Bu bölümü boş bırakırsanız parola devre dışı kalır"
 msgid "This field is required."
 msgstr "Bu alan gereklidir."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Ev dizini /mnt/ ile veya / başlamalı"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Ev dizini /mnt/ ile veya / başlamalı"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -735,18 +734,15 @@ msgstr "Yönetici Hesabı"
 msgid "Change Password"
 msgstr "Parola Değiştir"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Yönetici Kullanıcısını Değiştir"
+#~ msgid "Change Admin User"
+#~ msgstr "Yönetici Kullanıcısını Değiştir"
 
 #: account/views.py:95
 msgid "Password successfully updated."
 msgstr "Parola başarıyla güncellendi."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Yönetici kullanıcısı başarıyla güncellendi."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Yönetici kullanıcısı başarıyla güncellendi."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -913,9 +909,8 @@ msgstr "Ad sunucusu 2'den önce Ad suncusu 1'i doldurmalısınız"
 msgid "Parent Interface"
 msgstr "Tüm arabirimleri göster"
 
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "Adı vlanXX olmalıdır. Burada XX bir tam sayıdır."
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "Adı vlanXX olmalıdır. Burada XX bir tam sayıdır."
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1152,67 +1147,56 @@ msgstr "Bağlantı Birleştir"
 msgid "View Link Aggregations"
 msgstr "Birleştirilmiş Bağlantıları Göster"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG başarıyla eklendi"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG başarıyla eklendi"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
 msgstr "Bu IP adresi zaten kullanılıyor."
 
-#: plugins/forms.py:92
-msgid "Place to temporarily place PBI file"
-msgstr "Geçici olarak yerleştirilecek PBI dosyasının yükleneceği yer"
+#~ msgid "Place to temporarily place PBI file"
+#~ msgstr "Geçici olarak yerleştirilecek PBI dosyasının yükleneceği yer"
 
-#: plugins/forms.py:93
-msgid ""
-"The system will use this place to temporarily store the PBI file before it's "
-"installed."
-msgstr ""
-"Sisteme uygulamadan önce PBI dosyasını saklamak için geçici olarak burayı "
-"kullanabilirsiniz."
+#~ msgid ""
+#~ "The system will use this place to temporarily store the PBI file before it's "
+#~ "installed."
+#~ msgstr ""
+#~ "Sisteme uygulamadan önce PBI dosyasını saklamak için geçici olarak burayı "
+#~ "kullanabilirsiniz."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
 msgstr "PBI dosyasını yükle:"
 
-#: plugins/forms.py:173
-msgid "You must turn off Plugins service before proceeding"
-msgstr "Devam etmeden önce eklentiler servisini kapatmak gerekir."
+#~ msgid "You must turn off Plugins service before proceeding"
+#~ msgstr "Devam etmeden önce eklentiler servisini kapatmak gerekir."
 
-#: plugins/forms.py:183
 #, python-format
-msgid "The path %s already exists"
-msgstr "%s yolu zaten var"
+#~ msgid "The path %s already exists"
+#~ msgstr "%s yolu zaten var"
 
-#: plugins/forms.py:189
-msgid "The full jail path cannot exceed 76 characters"
-msgstr "Tam jail yolu 76 karakterden uzun olamaz"
+#~ msgid "The full jail path cannot exceed 76 characters"
+#~ msgstr "Tam jail yolu 76 karakterden uzun olamaz"
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr ""
 "Eklentilerin jail yolu eklentilerin arşiv yolunun bir alt kümesi olamaz."
 
-#: plugins/forms.py:205 services/forms.py:148
-msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr "Eklentilerin arşiv eklentilerin jail yolunun bir alt kümesi olamaz."
+#~ msgid "The plugins archive path cannot be a subset of the plugins jail path."
+#~ msgstr "Eklentilerin arşiv eklentilerin jail yolunun bir alt kümesi olamaz."
 
-#: plugins/forms.py:214 services/models.py:803
-msgid "Plugins jail path"
-msgstr "Jail eklentilerinin yolu"
+#~ msgid "Plugins jail path"
+#~ msgstr "Jail eklentilerinin yolu"
 
-#: plugins/forms.py:218
-msgid "Jail IPv4 Address"
-msgstr "Jail IPv4 adresi"
+#~ msgid "Jail IPv4 Address"
+#~ msgstr "Jail IPv4 adresi"
 
-#: plugins/forms.py:222
-msgid "Jail IPv4 Netmask"
-msgstr "Jail IPv4 ağ maskesi"
+#~ msgid "Jail IPv4 Netmask"
+#~ msgstr "Jail IPv4 ağ maskesi"
 
-#: plugins/forms.py:228
-msgid "Plugins archive Path"
-msgstr "Eklentilerinin arşiv yolu"
+#~ msgid "Plugins archive Path"
+#~ msgstr "Eklentilerinin arşiv yolu"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
@@ -1311,17 +1295,15 @@ msgstr "Hedef"
 msgid "Mount Point"
 msgstr "Bağlantı noktası"
 
-#: plugins/models.py:122
-msgid "Mount Points"
-msgstr "Bağlantı Noktası"
+#~ msgid "Mount Points"
+#~ msgstr "Bağlantı Noktası"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
 msgstr "Eklenti başarıyla güncellendi."
 
-#: plugins/views.py:80
-msgid "Plugin successfully removed."
-msgstr "Eklenti başarıyla silindi."
+#~ msgid "Plugin successfully removed."
+#~ msgstr "Eklenti başarıyla silindi."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
@@ -1335,9 +1317,8 @@ msgstr "Eklenti başarıyla güncellendi."
 msgid "Plugin successfully installed"
 msgstr "Eklenti başarıyla kuruldu."
 
-#: plugins/views.py:201
-msgid "There was a problem importing the jail."
-msgstr "Jail almada bir sorun var."
+#~ msgid "There was a problem importing the jail."
+#~ msgstr "Jail almada bir sorun var."
 
 #: plugins/views.py:204
 msgid "Jail successfully imported."
@@ -1367,13 +1348,11 @@ msgstr "AFP hizmeti tekrar yüklenemedi."
 msgid "The NFS service failed to reload."
 msgstr "NFS hizmeti tekrar yüklenemedi."
 
-#: services/forms.py:157
-msgid "This IP already exists."
-msgstr "Bu IP zaten mevcut."
+#~ msgid "This IP already exists."
+#~ msgstr "Bu IP zaten mevcut."
 
-#: services/forms.py:164
-msgid "The Plugins Jail service failed to reload."
-msgstr "Jail eklentilerinin servisinin yeniden başlatılması başarısız oldu."
+#~ msgid "The Plugins Jail service failed to reload."
+#~ msgstr "Jail eklentilerinin servisinin yeniden başlatılması başarısız oldu."
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1506,9 +1485,8 @@ msgstr "Başlatıcı parolası"
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Başlatıcı tarafı gizli. (Karşılıklı CHAP kimlik doğrulamaları için)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Başlatıcı parolası (Onayla)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Başlatıcı parolası (Onayla)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1614,10 +1592,9 @@ msgstr "Disk aygıtı"
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "Portal Grup ID'niz %d den büyük olamaz."
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "Grup ID niz %d den büyük olamaz"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "Grup ID niz %d den büyük olamaz"
 
 #: services/forms.py:1019
 msgid ""
@@ -1758,13 +1735,11 @@ msgstr ""
 "Dizin oluşturma maskesini geçersiz kılmak için bu seçeneği kullanın "
 "(varsayılan 0777)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Büyük RW desteği"
+#~ msgid "Large RW support"
+#~ msgstr "Büyük RW desteği"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Dosyaları sendfile(2) ile gönder"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Dosyaları sendfile(2) ile gönder"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1876,15 +1851,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Sunucu adı"
+#~ msgid "Server Name"
+#~ msgstr "Sunucu adı"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "Sunucu'nun adı. Bu alan boş bırakılırsa varsayılan sunucu belirtilir."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "Sunucu'nun adı. Bu alan boş bırakılırsa varsayılan sunucu belirtilir."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1922,17 +1895,15 @@ msgstr ""
 "Kaç sunucu oluşturulacağını belirler. Uyumlu bir şekilde en fazla düzeyde "
 "işlemek için tipik olarak dört altı istemci yeterli olmaktadır."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Uyumsuz biçim"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Uyumsuz biçim"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Gigabit ağ hızı aşan performansa yardımcı olmak için uyumsuz biçimi "
-"etkinleştirin."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Gigabit ağ hızı aşan performansa yardımcı olmak için uyumsuz biçimi "
+#~ "etkinleştirin."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2354,35 +2325,30 @@ msgstr "Bu parametreler inadyn.conf dosyasındaki genel ayarlara eklenecektir."
 msgid "Dynamic DNS"
 msgstr "Dinamik DNS"
 
-#: services/models.py:804
-msgid "Path to the plugins jail"
-msgstr "Eklentilerin jail yolu"
+#~ msgid "Path to the plugins jail"
+#~ msgstr "Eklentilerin jail yolu"
 
 #: services/models.py:809
 msgid "Jail name"
 msgstr "Jail adı"
 
-#: services/models.py:810
-msgid "Name of the plugins jail"
-msgstr "Eklentilerin jail adı"
+#~ msgid "Name of the plugins jail"
+#~ msgstr "Eklentilerin jail adı"
 
-#: services/models.py:815
-msgid ""
-"Jail name can only contain letters, numbers and hyphens. It must not end "
-"with a hyphen."
-msgstr "Jail adı harf, rakam ve tire içerebilir. Fakat bir tire ile bitemez."
+#~ msgid ""
+#~ "Jail name can only contain letters, numbers and hyphens. It must not end "
+#~ "with a hyphen."
+#~ msgstr "Jail adı harf, rakam ve tire içerebilir. Fakat bir tire ile bitemez."
 
 #: services/models.py:821
 msgid "Jail IP address"
 msgstr "Jail IP adresi"
 
-#: services/models.py:825
-msgid "Jail IP Netmask"
-msgstr "Jail IP ağ maskesi"
+#~ msgid "Jail IP Netmask"
+#~ msgstr "Jail IP ağ maskesi"
 
-#: services/models.py:829
-msgid "Plugins archive path"
-msgstr "Eklentilerin arşiv yolu"
+#~ msgid "Plugins archive path"
+#~ msgstr "Eklentilerin arşiv yolu"
 
 #: services/models.py:852
 msgid "Location"
@@ -2469,9 +2435,8 @@ msgstr ""
 "Kapatma saniyeler içinde başlatılır. UPS de geri dönme durumu oluşursa zaman "
 "bitmeden kapatma iptal edilir."
 
-#: services/models.py:933
-msgid "UPS Master User Password"
-msgstr "UPS master kullanıcı parolası"
+#~ msgid "UPS Master User Password"
+#~ msgstr "UPS master kullanıcı parolası"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
@@ -2569,13 +2534,11 @@ msgstr "Yol"
 msgid "Allow Local User Login"
 msgstr "Yerel kullanıcı girişine izin ver"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "Afiş"
+#~ msgid "Banner"
+#~ msgstr "Afiş"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "İlk bağlantı geldiğinde FTP de görüntülenen tebrik afişi."
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "İlk bağlantı geldiğinde FTP de görüntülenen tebrik afişi."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2817,9 +2780,8 @@ msgstr "SSH"
 msgid "Domain Controller Name"
 msgstr "Alan adı kontrolcüsünün adı"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "AD veya PDC adı."
+#~ msgid "AD or PDC name."
+#~ msgstr "AD veya PDC adı."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3164,26 +3126,20 @@ msgstr "S.M.A.R.T."
 msgid "Control Services"
 msgstr "Kontrol Hizmetleri"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "Aygıt Boyutları"
+#~ msgid "Device Extents"
+#~ msgstr "Aygıt Boyutları"
 
-#: services/nav.py:72
-msgid "Add Device Extent"
-msgstr "Aygıt Boyutu Ekle"
+#~ msgid "Add Device Extent"
+#~ msgstr "Aygıt Boyutu Ekle"
 
-#: services/nav.py:79
-msgid "View Device Extents"
-msgstr "Aygıt Boyutlarını Göster"
+#~ msgid "View Device Extents"
+#~ msgstr "Aygıt Boyutlarını Göster"
 
-#: services/nav.py:92
-msgid "File Extents"
-msgstr "Aygıt Dosyası"
+#~ msgid "File Extents"
+#~ msgstr "Aygıt Dosyası"
 
-#: services/nav.py:111 templates/services/iscsi_extents.html:39
-#: templates/services/iscsi_extents.html:41
-msgid "Add File Extent"
-msgstr "Aygıt Dosyası Ekle"
+#~ msgid "Add File Extent"
+#~ msgstr "Aygıt Dosyası Ekle"
 
 #: services/nav.py:118
 msgid "View File Extents"
@@ -3211,9 +3167,8 @@ msgstr "Rsync Modül Görünümleri"
 msgid "Settings"
 msgstr "Ayarlar"
 
-#: services/nav.py:186
-msgid "Management"
-msgstr "Yönetim"
+#~ msgid "Management"
+#~ msgstr "Yönetim"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3232,9 +3187,8 @@ msgstr "Paylaşılan parola onayı"
 msgid "The path %s does not exist"
 msgstr "%s yolu mevcut değil"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "Bu alan geçerli bir IP adresi veya ağ değil"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "Bu alan geçerli bir IP adresi veya ağ değil"
 
 #: sharing/forms.py:165
 #, python-format
@@ -3392,17 +3346,15 @@ msgstr ""
 "sağlar (bu yazı yazılırken ASCII karakterlerinin kullanılması tavsiye "
 "edilir)."
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "Paylaşım karakter kodlaması"
+#~ msgid "Share Character Set"
+#~ msgstr "Paylaşım karakter kodlaması"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr ""
-"Belirtilen paylaşım karakter ayarları. Örneğin UTF8, UTF8-MAC, ISO-8859-15 "
-"vs."
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr ""
+#~ "Belirtilen paylaşım karakter ayarları. Örneğin UTF8, UTF8-MAC, ISO-8859-15 "
+#~ "vs."
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3454,31 +3406,27 @@ msgstr ""
 "Bazı kullanıcı ve gruplara paylaşım için okuma/yazma erişimi ver. Bu izin "
 "verme seçenek biçimine uyar."
 
-#: sharing/models.py:160
-msgid "Disk Discovery"
-msgstr "Disk bulma"
+#~ msgid "Disk Discovery"
+#~ msgstr "Disk bulma"
 
-#: sharing/models.py:161
-msgid ""
-"Allow other systems to discover this share as a disk for data, as a Time "
-"Machine backup volume or not at all."
-msgstr ""
-"Bir Zaman Makinesi yedekleme birimi olarak veri diskini paylaşmak veya "
-"aramak için bu diske diğer sistemlere erişim izni verin veya iptal edin."
+#~ msgid ""
+#~ "Allow other systems to discover this share as a disk for data, as a Time "
+#~ "Machine backup volume or not at all."
+#~ msgstr ""
+#~ "Bir Zaman Makinesi yedekleme birimi olarak veri diskini paylaşmak veya "
+#~ "aramak için bu diske diğer sistemlere erişim izni verin veya iptal edin."
 
-#: sharing/models.py:167
-msgid "Disk discovery mode"
-msgstr "Disk bulma modu"
+#~ msgid "Disk discovery mode"
+#~ msgstr "Disk bulma modu"
 
-#: sharing/models.py:168
-msgid ""
-"Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
-"behavior in MacOS. Default mode exports the volume as a data volume for "
-"users."
-msgstr ""
-"Not: Birden fazla 'Zaman Makinesi' paylaşımı seçiminde MacOS beklenmedik "
-"davranışlara neden olabilir. Standart mod kullanıcıları için bir veri birimi "
-"olarak birim verir."
+#~ msgid ""
+#~ "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
+#~ "behavior in MacOS. Default mode exports the volume as a data volume for "
+#~ "users."
+#~ msgstr ""
+#~ "Not: Birden fazla 'Zaman Makinesi' paylaşımı seçiminde MacOS beklenmedik "
+#~ "davranışlara neden olabilir. Standart mod kullanıcıları için bir veri birimi "
+#~ "olarak birim verir."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3492,64 +3440,56 @@ msgstr ""
 "Kaydedilecek veri tabanı bilgileri yolunu ayarlar. Birim salt okunabilir "
 "olsa bile bir konum belirtmeniz gerekir."
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "CNID önbelleği"
+#~ msgid "Cache CNID"
+#~ msgstr "CNID önbelleği"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"Veritabanı yükünü azaltmak için Afpd ayarlanırsa AppleDouble V2 başlık "
-"dosyalarında depolanan kimlik bilgilerini kullanır. Eğer birimi olmayan AFP "
-"müşterileri tarafından ayarlanacaksa bu seçeneği ayarlamayın (NFS/SMB/yerel)."
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "Veritabanı yükünü azaltmak için Afpd ayarlanırsa AppleDouble V2 başlık "
+#~ "dosyalarında depolanan kimlik bilgilerini kullanır. Eğer birimi olmayan AFP "
+#~ "müşterileri tarafından ayarlanacaksa bu seçeneği ayarlamayın (NFS/SMB/yerel)."
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "CR/LF çevirisi"
+#~ msgid "Translate CR/LF"
+#~ msgstr "CR/LF çevirisi"
 
-#: sharing/models.py:182
-msgid ""
-"Enables crlf translation for TEXT files, automatically converting macintosh "
-"line breaks into Unix ones. Use of this option might be dangerous since some "
-"older programs store binary data files as type 'TEXT' when saving and switch "
-"the filetype in a second step. Afpd will potentially destroy such files when "
-"'erroneously' changing bytes in order to do line break translation."
-msgstr ""
-"Otomatik olarak Unix boyutlardan alarak macintosh satır sonları dönüştürme, "
-"METİN dosyalar için crlf çevirisi sağlar. Bu seçeneğin kullanılması "
-"durumunda ikinci adımda anahtar ve dosya türü 'METİN' bazı eski programlarda "
-"ikili veri dosyalarında tehlikeli olabilir. 'Yanlışlıkla' satır sonu çeviri "
-"yapmak için bayt değiştirirken Afpd potansiyel olarak bu tür dosyaları yok "
-"edebilir."
+#~ msgid ""
+#~ "Enables crlf translation for TEXT files, automatically converting macintosh "
+#~ "line breaks into Unix ones. Use of this option might be dangerous since some "
+#~ "older programs store binary data files as type 'TEXT' when saving and switch "
+#~ "the filetype in a second step. Afpd will potentially destroy such files when "
+#~ "'erroneously' changing bytes in order to do line break translation."
+#~ msgstr ""
+#~ "Otomatik olarak Unix boyutlardan alarak macintosh satır sonları dönüştürme, "
+#~ "METİN dosyalar için crlf çevirisi sağlar. Bu seçeneğin kullanılması "
+#~ "durumunda ikinci adımda anahtar ve dosya türü 'METİN' bazı eski programlarda "
+#~ "ikili veri dosyalarında tehlikeli olabilir. 'Yanlışlıkla' satır sonu çeviri "
+#~ "yapmak için bayt değiştirirken Afpd potansiyel olarak bu tür dosyaları yok "
+#~ "edebilir."
 
-#: sharing/models.py:185
-msgid "Windows File Names"
-msgstr "Windows dosya adları"
+#~ msgid "Windows File Names"
+#~ msgstr "Windows dosya adları"
 
-#: sharing/models.py:186
-msgid ""
-"This forces filenames to be restricted to the character set used by Windows. "
-"This is not recommended for shares used principally by Mac computers."
-msgstr ""
-"Windows tarafından kullanılan dosya adları karakter kümesindek ayarlarla "
-"sınırlı olmasına zorlanır. Bu Mac bilgisayarlar tarafından esas kullanılan "
-"paylar için tavsiye edilmez."
+#~ msgid ""
+#~ "This forces filenames to be restricted to the character set used by Windows. "
+#~ "This is not recommended for shares used principally by Mac computers."
+#~ msgstr ""
+#~ "Windows tarafından kullanılan dosya adları karakter kümesindek ayarlarla "
+#~ "sınırlı olmasına zorlanır. Bu Mac bilgisayarlar tarafından esas kullanılan "
+#~ "paylar için tavsiye edilmez."
 
-#: sharing/models.py:189
-msgid "Enable .AppleDouble"
-msgstr ".AppleDouble etkinleştir"
+#~ msgid "Enable .AppleDouble"
+#~ msgstr ".AppleDouble etkinleştir"
 
-#: sharing/models.py:190
-msgid ""
-"This will enable automatic creation of the .AppleDouble directories. This "
-"option should be used if files are accessed by Mac computers."
-msgstr ""
-"Bu seçenek etkinleştirilirse .AppleDouble dizinlerinin otomatik olarak "
-"oluşturulmasını sağlayacaktır. Mac bilgisayarlar tarafından erişilen "
-"dosyalar için bu seçenek kullanılmalıdır."
+#~ msgid ""
+#~ "This will enable automatic creation of the .AppleDouble directories. This "
+#~ "option should be used if files are accessed by Mac computers."
+#~ msgstr ""
+#~ "Bu seçenek etkinleştirilirse .AppleDouble dizinlerinin otomatik olarak "
+#~ "oluşturulmasını sağlayacaktır. Mac bilgisayarlar tarafından erişilen "
+#~ "dosyalar için bu seçenek kullanılmalıdır."
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3563,35 +3503,29 @@ msgstr ""
 "Her zaman aygıt numarası için 0 kullanın, aygıt numarasının yeniden "
 "başlatılması kümelenme arasında sabit olmadığı durumlarda yardımcı olur ..."
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "Dosya kimlik numaralarını (ID) devre dışı bırak"
+#~ msgid "Disable File ID"
+#~ msgstr "Dosya kimlik numaralarını (ID) devre dışı bırak"
 
-#: sharing/models.py:201
-msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
-"ID aramalarını silme, çözümleme, dosya kimliği oluşturma aramalarını "
-"yapmayın."
+#~ msgid "Don't advertise createfileid, resolveid, deleteid calls."
+#~ msgstr ""
+#~ "ID aramalarını silme, çözümleme, dosya kimliği oluşturma aramalarını "
+#~ "yapmayın."
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "Kapalı: hex adları"
+#~ msgid "Disable :hex Names"
+#~ msgstr "Kapalı: hex adları"
 
-#: sharing/models.py:205
-msgid ""
-"Disable :hex translations for anything except dot files. This option makes "
-"the '/' character illegal."
-msgstr ""
-"Kapalı: Herhangi bir nokta dosyaları dışındakiler için hex çevirileri. Bu "
-"seçenekdeki '/' karakteri yasadışı yapar."
+#~ msgid ""
+#~ "Disable :hex translations for anything except dot files. This option makes "
+#~ "the '/' character illegal."
+#~ msgstr ""
+#~ "Kapalı: Herhangi bir nokta dosyaları dışındakiler için hex çevirileri. Bu "
+#~ "seçenekdeki '/' karakteri yasadışı yapar."
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "Apple II istemcileri ile uyumluluğu sağlayın."
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "Apple II istemcileri ile uyumluluğu sağlayın."
 
 #: sharing/models.py:212
 msgid "No Stat"
@@ -3677,33 +3611,29 @@ msgstr "Paylaşılan, engellenen günlük uyarılarını dışa aktarmada sorun 
 msgid "Maproot User"
 msgstr "Yönetici haritası kullanıcısı"
 
-#: sharing/models.py:289
-msgid "User to map root to"
-msgstr "Kullanıcıdan harita yetkilisine"
+#~ msgid "User to map root to"
+#~ msgstr "Kullanıcıdan harita yetkilisine"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "Yönetici haritası grubu"
 
-#: sharing/models.py:296
-msgid "Group to map root to"
-msgstr "Gruptan harita yetkilisine"
+#~ msgid "Group to map root to"
+#~ msgstr "Gruptan harita yetkilisine"
 
 #: sharing/models.py:299
 msgid "Mapall User"
 msgstr "Tüm harita kullanıcısı"
 
-#: sharing/models.py:303
-msgid "User to map all users to"
-msgstr "Kullanıcıdan tüm harita kullanıcılarına"
+#~ msgid "User to map all users to"
+#~ msgstr "Kullanıcıdan tüm harita kullanıcılarına"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "Tüm harita grubu"
 
-#: sharing/models.py:310
-msgid "Group to map all users to"
-msgstr "Gruptan tüm harita kullanıcılarına"
+#~ msgid "Group to map all users to"
+#~ msgstr "Gruptan tüm harita kullanıcılarına"
 
 #: sharing/models.py:321
 msgid "Unix (NFS) Share"
@@ -3731,14 +3661,11 @@ msgstr "%s geçerli bir sayı değil"
 msgid "Volume name"
 msgstr "Birim adı"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "Dosya sistem türü"
+#~ msgid "Filesystem type"
+#~ msgstr "Dosya sistem türü"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "4096 bayt sektör boyutuna zorla"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "4096 bayt sektör boyutuna zorla"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
@@ -3774,10 +3701,9 @@ msgstr "Böyle bir yol mevcut değil."
 msgid "Path is not a directory."
 msgstr "Bu yol bir dizin değil."
 
-#: storage/forms.py:264
-msgid "You cannot select an existing ZFS volume and specify a new volume name"
-msgstr ""
-"Varolan ZFS birimini seçemezsiniz ve yeni bir birim adı belirleyemezsiniz"
+#~ msgid "You cannot select an existing ZFS volume and specify a new volume name"
+#~ msgstr ""
+#~ "Varolan ZFS birimini seçemezsiniz ve yeni bir birim adı belirleyemezsiniz"
 
 #: storage/forms.py:269
 msgid ""
@@ -3787,21 +3713,18 @@ msgstr ""
 "Yeni bir birim adını belirtin veya sanal bir aygıt eklemek için mevcut bir "
 "ZFS birimini seçin"
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "Bir dosya sistemi seçmeniz gerekir"
+#~ msgid "You must select a filesystem"
+#~ msgstr "Bir dosya sistemi seçmeniz gerekir"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "Zaten aynı adı taşıyan bir birim var"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" ayrılmış bir sözcük bu nedenle kullanılamaz"
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"log\" ayrılmış bir sözcük bu nedenle kullanılamaz"
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "Birim adları c[-09], mirror, raidz veya boşluk ile başlayamaz"
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr "Birim adları c[-09], mirror, raidz veya boşluk ile başlayamaz"
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -3903,9 +3826,8 @@ msgstr "Bu birim için kota"
 msgid "Reserved space for this volume"
 msgstr "Bu birim için ayrılmış alan"
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "ZFS birim adı"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "ZFS birim adı"
 
 #: storage/forms.py:845
 msgid "Size for this ZFS Volume"
@@ -4197,10 +4119,8 @@ msgstr "Ana Bilgisayarı Uzaktan Kopyala"
 msgid "Remote Replication Hosts"
 msgstr "Ana Bilgisayarları Uzaktan Kopyala"
 
-#: storage/models.py:657 storage/models.py:718
-#: templates/storage/replications.html:20 templates/storage/tasks.html:21
-msgid "Filesystem/Volume"
-msgstr "Dosya Sistemi/Birim"
+#~ msgid "Filesystem/Volume"
+#~ msgstr "Dosya Sistemi/Birim"
 
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4213,9 +4133,8 @@ msgstr ""
 msgid "Remote Host"
 msgstr "Uzak ana bilgisayar"
 
-#: storage/models.py:669
-msgid "Remote ZFS filesystem name"
-msgstr "Uzak ZFS dosya sistemi adı"
+#~ msgid "Remote ZFS filesystem name"
+#~ msgstr "Uzak ZFS dosya sistemi adı"
 
 #: storage/models.py:670
 msgid ""
@@ -4317,9 +4236,8 @@ msgstr "Depolama"
 msgid "View Snapshots"
 msgstr "Anlık Durum Görüntülerini Göster"
 
-#: storage/nav.py:34
-msgid "View ZFS Scrubs"
-msgstr "ZFS Temizliğini Göster"
+#~ msgid "View ZFS Scrubs"
+#~ msgstr "ZFS Temizliğini Göster"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
@@ -4380,9 +4298,8 @@ msgstr "İzinleri Değiştir"
 msgid "Volume successfully added."
 msgstr "Birim başarıyla eklendi."
 
-#: storage/views.py:254
-msgid "S.M.A.R.T. Extra Options"
-msgstr "Ekstra S.M.A.R.T. seçenekleri"
+#~ msgid "S.M.A.R.T. Extra Options"
+#~ msgstr "Ekstra S.M.A.R.T. seçenekleri"
 
 #: storage/views.py:371
 msgid "Dataset successfully added."
@@ -4428,9 +4345,8 @@ msgstr "Anlık durum görüntüleri başarıyla silindi."
 msgid "Rollback successful."
 msgstr "Geri alma başarılı."
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "Anlık durum görüntüsü başarıyla eklendi."
+#~ msgid "Snapshot successfully added."
+#~ msgstr "Anlık durum görüntüsü başarıyla eklendi."
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4476,9 +4392,8 @@ msgstr "Disk başarıyla silindi"
 msgid "Language (Require UI reload)"
 msgstr "Dil (sayfanın yeniden yüklenmesi gerekmektedir)"
 
-#: system/forms.py:214
-msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Bu değer, 1 ile 65535 arasında olmalıdır."
+#~ msgid "You must specify a number between 1 and 65535, inclusive."
+#~ msgstr "Bu değer, 1 ile 65535 arasında olmalıdır."
 
 #: system/forms.py:216
 msgid "Number is required."
@@ -4666,25 +4581,21 @@ msgstr "Seri konsol kullanımı"
 msgid "Enable screen saver"
 msgstr "Ekran koruyucuyu etkinleştir"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "Yeni aygıt yazılımını otomatik kontrol et"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "Yeni aygıt yazılımını otomatik kontrol et"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "Boot ederken biple"
+#~ msgid "Beep on boot"
+#~ msgstr "Boot ederken biple"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "Özel Sistem Ayarlarını Etkinleştir"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "Özel Sistem Ayarlarını Etkinleştir"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "Gücü etkinleştir (Güç Koruma Programcığı)"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "Zeroconf/Bonjour Etkinleştir"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "Zeroconf/Bonjour Etkinleştir"
 
 #: system/models.py:174
 msgid ""
@@ -5069,9 +4980,8 @@ msgstr "Test e-posta gönderilemedi: %s"
 msgid "Your test email has been sent!"
 msgstr "Test e-posta gönderildi!"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Sayfa Bulunamadı"
+#~ msgid "Page Not Found"
+#~ msgstr "Sayfa Bulunamadı"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5093,10 +5003,8 @@ msgstr "Yardım"
 msgid "Log In"
 msgstr "Giriş Yap"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "Kullanıcı Kimliği"
+#~ msgid "ID"
+#~ msgstr "Kullanıcı Kimliği"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -5104,11 +5012,8 @@ msgstr "Kullanıcı Kimliği"
 msgid "Members"
 msgstr "Üyeler"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Değitir"
+#~ msgid "Modify"
+#~ msgstr "Değitir"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5122,17 +5027,14 @@ msgstr "Grubu Değiştir"
 msgid "Delete Group"
 msgstr "Grubu Sil"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "Tanımlanan grupta kullanıcılar yok."
+#~ msgid "There are no user defined groups."
+#~ msgstr "Tanımlanan grupta kullanıcılar yok."
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "Yeni Grup Ekle"
+#~ msgid "Add New Group"
+#~ msgstr "Yeni Grup Ekle"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "Ev dizini"
+#~ msgid "Home"
+#~ msgstr "Ev dizini"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
@@ -5152,22 +5054,18 @@ msgstr "Kullanıcıyı Kaldır"
 msgid "Delete User"
 msgstr "Kullanıcıyı Sil"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "Tanımlı kullanıcı yok"
+#~ msgid "No users defined"
+#~ msgstr "Tanımlı kullanıcı yok"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "Yeni Kullanıcı Ekle"
+#~ msgid "Add New User"
+#~ msgstr "Yeni Kullanıcı Ekle"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "E-Postayı Değiştir"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "Yönetici Parolasını Değiştir"
+#~ msgid "Change Admin Password"
+#~ msgstr "Yönetici Parolasını Değiştir"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5316,9 +5214,8 @@ msgstr "Belgelendirme"
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS Belgeleri"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "Otomatik IPv6"
+#~ msgid "IPv6 Auto"
+#~ msgstr "Otomatik IPv6"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5360,14 +5257,11 @@ msgstr "Kullanılabilir işlemler"
 msgid "Edit"
 msgstr "Düzenle"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "Arabirimi Düzenle"
+#~ msgid "Edit Interface"
+#~ msgstr "Arabirimi Düzenle"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "Arabirimi Düzenle"
+#~ msgid "Delete Interface"
+#~ msgstr "Arabirimi Düzenle"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
@@ -5391,50 +5285,39 @@ msgstr "Üyeleri Düzenle"
 msgid "LAGG Members"
 msgstr "LAGG Üyeleri"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "Henüz bir LAGG arabirimi yok"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "Henüz bir LAGG arabirimi yok"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "LAGG Arabirimi Ekle"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "LAGG Arabirimi Ekle"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "LAGG Ekle"
+#~ msgid "Add LAGG"
+#~ msgstr "LAGG Ekle"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "Sıralama Önceliği"
+#~ msgid "Ordering Priority"
+#~ msgstr "Sıralama Önceliği"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
 msgstr "Başlatma seçeneği"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "Eylem"
+#~ msgid "Action"
+#~ msgstr "Eylem"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "LAGG Üyesi Ekle"
+#~ msgid "Add LAGG Member"
+#~ msgstr "LAGG Üyesi Ekle"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "Sabit Yolu Düzenle"
+#~ msgid "Edit Static Route"
+#~ msgstr "Sabit Yolu Düzenle"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "Sabit Yolu Sil"
+#~ msgid "Delete Static Route"
+#~ msgstr "Sabit Yolu Sil"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "Hiçbir sabit yol yok"
+#~ msgid "No static route defined"
+#~ msgstr "Hiçbir sabit yol yok"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "Sabit Yol Ekle"
+#~ msgid "Add Static Route"
+#~ msgstr "Sabit Yol Ekle"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5452,30 +5335,24 @@ msgstr "Varsayılan Yol"
 msgid "No default route defined"
 msgstr "Henüz varsayılan bir yol yok"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "VLAN Düzenle"
+#~ msgid "Edit VLAN"
+#~ msgstr "VLAN Düzenle"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "VLAN Sil"
+#~ msgid "Delete VLAN"
+#~ msgstr "VLAN Sil"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "Tanımlanmış VLAN Yok"
+#~ msgid "No VLAN defined"
+#~ msgstr "Tanımlanmış VLAN Yok"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "VLAN Arabirimi Ekle"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "VLAN Arabirimi Ekle"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
 msgstr "Yüklendi..."
 
-#: templates/plugins/index.html:5 templates/plugins/index.html.py:7
-#: templates/services/plugins.html:5 templates/services/plugins.html.py:7
-msgid "Install Plugin"
-msgstr "Eklenti Yükle"
+#~ msgid "Install Plugin"
+#~ msgstr "Eklenti Yükle"
 
 #: templates/plugins/index.html:31
 msgid "Info"
@@ -5485,9 +5362,8 @@ msgstr "Bilgi"
 msgid "Plugin info"
 msgstr "Eklenti bilgisi"
 
-#: templates/plugins/index.html:39
-msgid "Edit Plugin"
-msgstr "Eklentiyi Düzenle"
+#~ msgid "Edit Plugin"
+#~ msgstr "Eklentiyi Düzenle"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
@@ -5506,9 +5382,8 @@ msgstr "Birim Al"
 msgid "Step %(step)s of %(step_count)s"
 msgstr "%(step)s - %(step_count)s"
 
-#: templates/plugins/jailpbi.html:18
-msgid "Upload Jail PBI"
-msgstr "Jail PBI Yükle"
+#~ msgid "Upload Jail PBI"
+#~ msgstr "Jail PBI Yükle"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5519,21 +5394,17 @@ msgstr "Jail PBI Yükle"
 msgid "Please wait..."
 msgstr "Lütfen Bekleyin..."
 
-#: templates/plugins/mountpoints.html:19
-msgid "Edit Mount Point"
-msgstr "Bağlantı noktasını düzenle"
+#~ msgid "Edit Mount Point"
+#~ msgstr "Bağlantı noktasını düzenle"
 
-#: templates/plugins/mountpoints.html:25
-msgid "Delete Mount Point"
-msgstr "Bağlantı noktasını sil"
+#~ msgid "Delete Mount Point"
+#~ msgstr "Bağlantı noktasını sil"
 
-#: templates/plugins/mountpoints.html:32
-msgid "No mount points defined"
-msgstr "Henüz bir bağlantı noktası yok"
+#~ msgid "No mount points defined"
+#~ msgstr "Henüz bir bağlantı noktası yok"
 
-#: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-msgid "Add Mount Point"
-msgstr "Bağlantı Noktası Ekle"
+#~ msgid "Add Mount Point"
+#~ msgstr "Bağlantı Noktası Ekle"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
@@ -5594,21 +5465,18 @@ msgstr "FTP Ayarları"
 msgid "ISCSI Settings"
 msgstr "ISCSI Ayarları"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "LDAP Ayarları"
+#~ msgid "LDAP Settings"
+#~ msgstr "LDAP Ayarları"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
 msgstr "NFS Ayarları"
 
-#: templates/services/core.html:103 templates/services/core.html.py:105
-msgid "Plugins Settings"
-msgstr "Eklenti Ayarları"
+#~ msgid "Plugins Settings"
+#~ msgstr "Eklenti Ayarları"
 
-#: templates/services/core.html:105
-msgid "Install Jail PBI"
-msgstr "Jail PBI Kur"
+#~ msgid "Install Jail PBI"
+#~ msgstr "Jail PBI Kur"
 
 #: templates/services/core.html:117
 msgid "Rsync Settings"
@@ -5654,13 +5522,11 @@ msgstr "iSCSI Yönetimi"
 msgid "Portals"
 msgstr "Portallar"
 
-#: templates/services/iscsi.html:14
-msgid "Authorized Initiators"
-msgstr "Yetkili Başlatıcılar"
+#~ msgid "Authorized Initiators"
+#~ msgstr "Yetkili Başlatıcılar"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "Kimlik Doğrulama"
+#~ msgid "Authentication"
+#~ msgstr "Kimlik Doğrulama"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5674,101 +5540,79 @@ msgstr "Boyutlar"
 msgid "Associated Targets"
 msgstr "Bağlı Hedefler"
 
-#: templates/services/iscsi_assoctargets.html:31
-msgid "No associated targets defined"
-msgstr "Henüz tanımlanacak bir hedef yok"
+#~ msgid "No associated targets defined"
+#~ msgstr "Henüz tanımlanacak bir hedef yok"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "Hedef Boyutu Ekle"
+#~ msgid "Add Extent to Target"
+#~ msgstr "Hedef Boyutu Ekle"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "Hedef Boyutu Ekle"
+#~ msgid "Add Extent To Target"
+#~ msgstr "Hedef Boyutu Ekle"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "Eş"
+#~ msgid "Peer"
+#~ msgstr "Eş"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "iSCSI Kullanıcısı Ekle"
+#~ msgid "Add iSCSI User"
+#~ msgstr "iSCSI Kullanıcısı Ekle"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "Yetkilendirilmiş Ağ"
+#~ msgid "Authorized Network"
+#~ msgstr "Yetkilendirilmiş Ağ"
 
-#: templates/services/iscsi_authini.html:35
-msgid "No authorized initiators defined"
-msgstr "Henüz tanımlanan biçbir yetkili başlatıcı yok"
+#~ msgid "No authorized initiators defined"
+#~ msgstr "Henüz tanımlanan biçbir yetkili başlatıcı yok"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "Yetkilendirilmiş Başlatıcı Ekle"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "Yetkilendirilmiş Başlatıcı Ekle"
 
-#: templates/services/iscsi_dextents.html:33
-msgid "No device extents defined"
-msgstr "Henüz tanımlanan hiçbir aygıt boyutu yok"
+#~ msgid "No device extents defined"
+#~ msgstr "Henüz tanımlanan hiçbir aygıt boyutu yok"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "Boyut Ekle"
+#~ msgid "Add Extent"
+#~ msgstr "Boyut Ekle"
 
-#: templates/services/iscsi_extents.html:5
-msgid "File Extent"
-msgstr "Aygıt Dosyası"
+#~ msgid "File Extent"
+#~ msgstr "Aygıt Dosyası"
 
-#: templates/services/iscsi_extents.html:33
-msgid "No extents defined"
-msgstr "Henüz tanımlanan hiçbir boyut yok"
+#~ msgid "No extents defined"
+#~ msgstr "Henüz tanımlanan hiçbir boyut yok"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
 msgstr "Dinle"
 
-#: templates/services/iscsi_portals.html:18
-msgid "No IP defined for this Portal"
-msgstr "Bu Portal için tanımlanmış bir IP yok"
+#~ msgid "No IP defined for this Portal"
+#~ msgstr "Bu Portal için tanımlanmış bir IP yok"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
 msgstr "Portalı Düzenle"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "Portalı Sil"
+#~ msgid "Delete Portal"
+#~ msgstr "Portalı Sil"
 
-#: templates/services/iscsi_portals.html:39
-msgid "No portals defined"
-msgstr "Henüz tanımlanan hiçbir portal yok"
+#~ msgid "No portals defined"
+#~ msgstr "Henüz tanımlanan hiçbir portal yok"
 
 #: templates/services/iscsi_portals.html:46
 #: templates/services/iscsi_portals.html:48
 msgid "Add Portal"
 msgstr "Portal Ekle"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "Henüz bir hedef yok"
+#~ msgid "No targets defined"
+#~ msgstr "Henüz bir hedef yok"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "Hedef Ekle"
+#~ msgid "Add Target"
+#~ msgstr "Hedef Ekle"
 
-#: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-msgid "View Mount Points"
-msgstr "Bağlantı Noktalarını Göster"
+#~ msgid "View Mount Points"
+#~ msgstr "Bağlantı Noktalarını Göster"
 
-#: templates/services/plugins.html:22
-msgid ""
-"ATTENTION: The plugins service is not running, several functionalities have "
-"been disabled."
-msgstr ""
-"DİKKAT: Eklentilerin hizmetleri çalışmıyor, çeşitli fonksiyonlar devre dışı "
-"bırakıldı."
+#~ msgid ""
+#~ "ATTENTION: The plugins service is not running, several functionalities have "
+#~ "been disabled."
+#~ msgstr ""
+#~ "DİKKAT: Eklentilerin hizmetleri çalışmıyor, çeşitli fonksiyonlar devre dışı "
+#~ "bırakıldı."
 
 #: templates/services/plugins.html:31
 msgid "Version"
@@ -5794,43 +5638,32 @@ msgstr "Eklentiyi Güncelle"
 msgid "No available plugins services"
 msgstr "Kullanılabilir eklenti hizmetleri yok"
 
-#: templates/services/pluginsjail_delete.html:4
-msgid "All the files within the plugins jail will be permanently deleted."
-msgstr "Jail içindeki tüm eklenti dosyaları kalıcı olarak silinecek."
+#~ msgid "All the files within the plugins jail will be permanently deleted."
+#~ msgstr "Jail içindeki tüm eklenti dosyaları kalıcı olarak silinecek."
 
-#: templates/services/pluginsjail_edit.html:12
-msgid "Delete Plugins Jail"
-msgstr "Jail Eklentilerini Sil"
+#~ msgid "Delete Plugins Jail"
+#~ msgstr "Jail Eklentilerini Sil"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "Tanımlanan hiçbiri rsync  modülü yok"
+#~ msgid "No rsync modules defined"
+#~ msgstr "Tanımlanan hiçbiri rsync  modülü yok"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "Aktif Paylaşımlar"
+#~ msgid "Active Shares"
+#~ msgstr "Aktif Paylaşımlar"
 
-#: templates/sharing/apple.html:7
-msgid "There are no active Apple (AFP) shares."
-msgstr "Hiçbir Apple (AFP) paylaşımı yok."
+#~ msgid "There are no active Apple (AFP) shares."
+#~ msgstr "Hiçbir Apple (AFP) paylaşımı yok."
 
-#: templates/sharing/apple.html:29
-msgid "Edit Apple (AFP) Share"
-msgstr "Apple (AFP) Paylaşımını Düzenle"
+#~ msgid "Edit Apple (AFP) Share"
+#~ msgstr "Apple (AFP) Paylaşımını Düzenle"
 
-#: templates/sharing/apple.html:35
-msgid "Delete Apple (AFP) Share"
-msgstr "Apple (AFP) Paylaşımını Sil"
+#~ msgid "Delete Apple (AFP) Share"
+#~ msgstr "Apple (AFP) Paylaşımını Sil"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "Henüz bir paylaşım yok"
+#~ msgid "No shares defined"
+#~ msgstr "Henüz bir paylaşım yok"
 
-#: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-msgid "Add Apple (AFP) Share"
-msgstr "Apple (AFP) Paylaşımı Ekle"
+#~ msgid "Add Apple (AFP) Share"
+#~ msgstr "Apple (AFP) Paylaşımı Ekle"
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
@@ -5844,41 +5677,32 @@ msgstr "UNIX (NFS)"
 msgid "Windows (CIFS)"
 msgstr "Windows (CIFS)"
 
-#: templates/sharing/unix.html:7
-msgid "There are no active UNIX (NFS) shares."
-msgstr "Hiç aktif UNIX (NFS) paylaşımı yok."
+#~ msgid "There are no active UNIX (NFS) shares."
+#~ msgstr "Hiç aktif UNIX (NFS) paylaşımı yok."
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "BağlantıNoktası"
+#~ msgid "Mountpoint"
+#~ msgstr "BağlantıNoktası"
 
-#: templates/sharing/unix.html:29
-msgid "Edit UNIX (NFS) Share"
-msgstr "UNIX (NFS) Paylaşımı Düzenle"
+#~ msgid "Edit UNIX (NFS) Share"
+#~ msgstr "UNIX (NFS) Paylaşımı Düzenle"
 
-#: templates/sharing/unix.html:35
-msgid "Delete UNIX (NFS) Share"
-msgstr "UNIX (NFS) Paylaşımı Sil"
+#~ msgid "Delete UNIX (NFS) Share"
+#~ msgstr "UNIX (NFS) Paylaşımı Sil"
 
-#: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-msgid "Add UNIX (NFS) Share"
-msgstr "UNIX (NFS) Paylaşımı Ekle"
+#~ msgid "Add UNIX (NFS) Share"
+#~ msgstr "UNIX (NFS) Paylaşımı Ekle"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (CIFS) shares."
-msgstr "Hiç aktif Windows (CIFS) paylaşımı yok."
+#~ msgid "There are no active Windows (CIFS) shares."
+#~ msgstr "Hiç aktif Windows (CIFS) paylaşımı yok."
 
-#: templates/sharing/windows.html:33
-msgid "Edit Windows (CIFS) Share"
-msgstr "Windows (CIFS) Paylaşımını Düzenle"
+#~ msgid "Edit Windows (CIFS) Share"
+#~ msgstr "Windows (CIFS) Paylaşımını Düzenle"
 
-#: templates/sharing/windows.html:39
-msgid "Delete Windows (CIFS) Share"
-msgstr "Windows (CIFS) Paylaşımını Sil"
+#~ msgid "Delete Windows (CIFS) Share"
+#~ msgstr "Windows (CIFS) Paylaşımını Sil"
 
-#: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (CIFS) Share"
-msgstr "Windows (CIFS) Paylaşımı Ekle"
+#~ msgid "Add Windows (CIFS) Share"
+#~ msgstr "Windows (CIFS) Paylaşımı Ekle"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -5986,39 +5810,29 @@ msgstr ""
 "DİKKAT: Belirli bir ZFS dosya sistemi/biriminin periyodik anlık bir "
 "görüntüsünün kopyalama görevi oluşturulması için gerekli olan alan"
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "Son Anlık Durum Görüntüsü"
+#~ msgid "Last snapshot"
+#~ msgstr "Son Anlık Durum Görüntüsü"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "Uzak ZFS dosya sistemi"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "Uzak ZFS dosya sistemi"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "Kopyayı Sil"
+#~ msgid "Delete Replication"
+#~ msgstr "Kopyayı Sil"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "Kopyayı Düzenle"
+#~ msgid "Edit Replication"
+#~ msgstr "Kopyayı Düzenle"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "Hiç ZFS kopyası yok"
+#~ msgid "No ZFS replication available"
+#~ msgstr "Hiç ZFS kopyası yok"
 
-#: templates/storage/scrub.html:42
-msgid "No scrub tasks defined."
-msgstr "Hiçbir temizlik görevi tanımlı değil."
+#~ msgid "No scrub tasks defined."
+#~ msgstr "Hiçbir temizlik görevi tanımlı değil."
 
-#: templates/storage/scrub.html:48
-msgid "Add ZFS Scrub Task"
-msgstr "ZFS Temizlik Görevi Ekle"
+#~ msgid "Add ZFS Scrub Task"
+#~ msgstr "ZFS Temizlik Görevi Ekle"
 
-#: templates/storage/scrub.html:50
-msgid "Add ZFS Scrub"
-msgstr "ZFS Temizliği Ekle"
+#~ msgid "Add ZFS Scrub"
+#~ msgstr "ZFS Temizliği Ekle"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -6071,45 +5885,37 @@ msgstr "Anlık durum görüntüsünü sil"
 msgid "Periodic Snapshots"
 msgstr "Peryodik Anlık Durum Görüntüsü"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "Periyodik Anlık Durum Görüntüsü Takvimi"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "Periyodik Anlık Durum Görüntüsü Takvimi"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "Hiçbir planlanmış anlık durum görüntüsü takvimi yok."
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "Hiçbir planlanmış anlık durum görüntüsü takvimi yok."
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Yöntem"
+#~ msgid "How"
+#~ msgstr "Yöntem"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "Anlık durum görüntüsünü tutmak için"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "Kimden"
+#~ msgid "From"
+#~ msgstr "Kimden"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "ile"
+#~ msgid "through"
+#~ msgstr "ile"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", her"
+#~ msgid ", every"
+#~ msgstr ", her"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "her gün"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "her üzerinde"
+#~ msgid "on every"
+#~ msgstr "her üzerinde"
 
-#: templates/storage/tasks.html:147
-msgid "There are no periodic snapshots scheduled."
-msgstr "Planlanmış peryodik bir anlık durum görüntüsü yok."
+#~ msgid "There are no periodic snapshots scheduled."
+#~ msgstr "Planlanmış peryodik bir anlık durum görüntüsü yok."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -6168,13 +5974,11 @@ msgstr "Birim Durumları"
 msgid "Destroy Dataset"
 msgstr "Veri Kümesini Sil"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "ZFS Birimini Sil"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "ZFS Birimini Sil"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "Henüz bir birim tanımlı değil"
+#~ msgid "No volumes defined"
+#~ msgstr "Henüz bir birim tanımlı değil"
 
 #: templates/storage/wizard.html:27
 msgid "Volume to extend"
@@ -6188,25 +5992,20 @@ msgstr "Kullanıcı diskleri"
 msgid "Group type"
 msgstr "Grup türü"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "Ekstra ZFS"
+#~ msgid "ZFS Extra"
+#~ msgstr "Ekstra ZFS"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Şiddetle tavsiye edilmeyen sadece 1 günlük disk kullanımı"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "Şiddetle tavsiye edilmeyen sadece 1 günlük disk kullanımı"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Günlük"
+#~ msgid "Log"
+#~ msgstr "Günlük"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "Önbellek"
+#~ msgid "Cache"
+#~ msgstr "Önbellek"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "Yedek"
+#~ msgid "Spare"
+#~ msgstr "Yedek"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6225,21 +6024,18 @@ msgstr "Diski Değiştir"
 msgid "Create ZFS volume on %(name)s"
 msgstr "%(name)s üzerinde ZFS birimi oluştur"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "ZFS Birimi Ekle"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "ZFS Birimi Ekle"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "LDAP/AD Önbelleğini Yeniden Oluştur"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "Önbellek yeniden oluşturuluyor."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "Önbellek yeniden oluşturuluyor."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "Önbellek yeniden oluşturulamadı."
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "Önbellek yeniden oluşturulamadı."
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6251,10 +6047,8 @@ msgstr "Hata Düzeltmeyi Kaydet"
 msgid "Firmware Update"
 msgstr "Aygıt Yazılımını Güncelle"
 
-#: templates/system/advanced_edit.html:39
-#: templates/system/advanced_edit.html:41
-msgid "Import Plugins Jail"
-msgstr "Jail Eklentilerini Al"
+#~ msgid "Import Plugins Jail"
+#~ msgstr "Jail Eklentilerini Al"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6264,17 +6058,14 @@ msgstr "Yeniden Başlatılıyor..."
 msgid "Are you sure you want to restore to factory config?"
 msgstr "Kurulumun standart ayarlarına geri dönmek istediğinizden emin misiniz?"
 
-#: templates/system/cronjob.html:41
-msgid "No cron jobs defined."
-msgstr "Henüz tanımlanmış bir zamanlanmış görev yok"
+#~ msgid "No cron jobs defined."
+#~ msgstr "Henüz tanımlanmış bir zamanlanmış görev yok"
 
-#: templates/system/cronjob.html:47
-msgid "Add a cron job"
-msgstr "Zamanlanmış Görev Ekle"
+#~ msgid "Add a cron job"
+#~ msgstr "Zamanlanmış Görev Ekle"
 
-#: templates/system/cronjob.html:49
-msgid "Add cron job"
-msgstr "Zamanlanmış Görev Ekle"
+#~ msgid "Add cron job"
+#~ msgstr "Zamanlanmış Görev Ekle"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6292,21 +6083,17 @@ msgstr ""
 "İPUCU: Test e-posta root kullanıcısına  gönderilir. Yapılandırmak için Hesap "
 "-> Kullanıcılar -> Kullanıcıları Göster -> root -> E-postayı Değiştir"
 
-#: templates/system/ntpserver.html:7
-msgid "iBurst"
-msgstr "iBurst"
+#~ msgid "iBurst"
+#~ msgstr "iBurst"
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "Henüz bir NTP sunucsu yok"
+#~ msgid "No NTP servers defined."
+#~ msgstr "Henüz bir NTP sunucsu yok"
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "NTP Sunucu ekle"
+#~ msgid "Add NTP server"
+#~ msgstr "NTP Sunucu ekle"
 
-#: templates/system/ntpserver.html:46
-msgid "Add NTP Server"
-msgstr "NTP Sunucu Ekle"
+#~ msgid "Add NTP Server"
+#~ msgstr "NTP Sunucu Ekle"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6324,25 +6111,20 @@ msgstr ""
 msgid "History"
 msgstr "Kayıt"
 
-#: templates/system/rsync.html:5
-msgid "Local Path"
-msgstr "Yerel Yol"
+#~ msgid "Local Path"
+#~ msgstr "Yerel Yol"
 
-#: templates/system/rsync.html:6
-msgid "Remote"
-msgstr "Kaldır"
+#~ msgid "Remote"
+#~ msgstr "Kaldır"
 
-#: templates/system/rsync.html:48
-msgid "No rsync tasks defined."
-msgstr "Hiçbir rsync görevi tanımlı değil."
+#~ msgid "No rsync tasks defined."
+#~ msgstr "Hiçbir rsync görevi tanımlı değil."
 
-#: templates/system/rsync.html:54
-msgid "Add rsync task"
-msgstr "Rsync Görevi Ekle"
+#~ msgid "Add rsync task"
+#~ msgstr "Rsync Görevi Ekle"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Rsync Ekle"
+#~ msgid "Add Rsync"
+#~ msgstr "Rsync Ekle"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6375,29 +6157,23 @@ msgstr "Sistemi <strong>KAPATMAK</strong> ile ilgili tercihiniz nedir?"
 msgid "Unknown"
 msgstr "Bilinmeyen"
 
-#: templates/system/smarttest.html:38
-msgid "No S.M.A.R.T. tests defined"
-msgstr "Tanımlanan S.M.A.R.T. testleri yok"
+#~ msgid "No S.M.A.R.T. tests defined"
+#~ msgstr "Tanımlanan S.M.A.R.T. testleri yok"
 
-#: templates/system/smarttest.html:44
-msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T. Test Ekle"
+#~ msgid "Add S.M.A.R.T. Test"
+#~ msgstr "S.M.A.R.T. Test Ekle"
 
-#: templates/system/smarttest.html:46
-msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T. test ekle"
+#~ msgid "Add S.M.A.R.T. test"
+#~ msgstr "S.M.A.R.T. test ekle"
 
-#: templates/system/sysctl.html:34
-msgid "No sysctl defined."
-msgstr "Hiçbir sysctl tanımlı değil."
+#~ msgid "No sysctl defined."
+#~ msgstr "Hiçbir sysctl tanımlı değil."
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "Sysctl Ekle"
+#~ msgid "Add sysctl"
+#~ msgstr "Sysctl Ekle"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "Sysctl Ekle"
+#~ msgid "Add Sysctl"
+#~ msgstr "Sysctl Ekle"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6423,21 +6199,17 @@ msgstr "Çalışma süresi"
 msgid "Load Average"
 msgstr "Ortalama yük"
 
-#: templates/system/system_info.html:34
-msgid "Connected through"
-msgstr "Bağlantı adresi"
+#~ msgid "Connected through"
+#~ msgstr "Bağlantı adresi"
 
-#: templates/system/tunable.html:34
-msgid "No tunable setting defined."
-msgstr "Yükleyici ayarı yapılandırılmamış."
+#~ msgid "No tunable setting defined."
+#~ msgstr "Yükleyici ayarı yapılandırılmamış."
 
-#: templates/system/tunable.html:40
-msgid "Add Tunable"
-msgstr "Yükleyici Ekle"
+#~ msgid "Add Tunable"
+#~ msgstr "Yükleyici Ekle"
 
-#: templates/system/tunable.html:42
-msgid "Add Loader"
-msgstr "Yükleyici Ekle"
+#~ msgid "Add Loader"
+#~ msgstr "Yükleyici Ekle"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6463,13 +6235,12 @@ msgstr "Birim %(volume)s durumu %(status)s: %(message)s"
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "Birim %(volume)s durumu %(status)s"
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr ""
-"Admin kullanıcısı için parola değiştirlmek zorunda (giriş için şu anda "
-"herhangi bir parola gereklidir)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr ""
+#~ "Admin kullanıcısı için parola değiştirlmek zorunda (giriş için şu anda "
+#~ "herhangi bir parola gereklidir)"
 
 #: tools/alert.py:137
 #, python-format
@@ -6487,47 +6258,47 @@ msgstr "Aşağıdaki IP'ler iSCSI Portalına bağlı ancak sistemde bulunmadı: 
 msgid "Critical Alerts"
 msgstr "Kritik Uyarılar"
 
-msgid "Selected"
-msgstr "Seçilen"
+#~ msgid "Selected"
+#~ msgstr "Seçilen"
 
-msgid "SHA256 sum for the PBI file"
-msgstr "PBI dosyası için SHA256 değeri "
+#~ msgid "SHA256 sum for the PBI file"
+#~ msgstr "PBI dosyası için SHA256 değeri "
 
-msgid "Jail path cannot contain plugins path."
-msgstr "Jail yolu eklentilerin yolunu içeremez."
+#~ msgid "Jail path cannot contain plugins path."
+#~ msgstr "Jail yolu eklentilerin yolunu içeremez."
 
-msgid "Plugins path cannot contain jail path."
-msgstr "Eklentilerin yolu jail yolunu içeremez."
+#~ msgid "Plugins path cannot contain jail path."
+#~ msgstr "Eklentilerin yolu jail yolunu içeremez."
 
-msgid "Plugin uname"
-msgstr "Eklentinin unix adı"
+#~ msgid "Plugin uname"
+#~ msgstr "Eklentinin unix adı"
 
-msgid "UName of the plugin"
-msgstr "Eklentinin Unix Adı"
+#~ msgid "UName of the plugin"
+#~ msgstr "Eklentinin Unix Adı"
 
-msgid "Plugin view"
-msgstr "Eklenti görünümü"
+#~ msgid "Plugin view"
+#~ msgstr "Eklenti görünümü"
 
-msgid "Plugin icon"
-msgstr "Eklenti simgesi"
+#~ msgid "Plugin icon"
+#~ msgstr "Eklenti simgesi"
 
-msgid "Path to plugin"
-msgstr "Eklentinin yolu"
+#~ msgid "Path to plugin"
+#~ msgstr "Eklentinin yolu"
 
-msgid "Control Plugins"
-msgstr "Eklenti Kontrolü"
+#~ msgid "Control Plugins"
+#~ msgstr "Eklenti Kontrolü"
 
-msgid "Configure Plugins"
-msgstr "Eklentileri Yapılandır"
+#~ msgid "Configure Plugins"
+#~ msgstr "Eklentileri Yapılandır"
 
-msgid "Allow guest access"
-msgstr "Misafir girişine izin ver"
+#~ msgid "Allow guest access"
+#~ msgstr "Misafir girişine izin ver"
 
-msgid "Only allow guest access"
-msgstr "Sadece misafir girişine izin ver"
+#~ msgid "Only allow guest access"
+#~ msgstr "Sadece misafir girişine izin ver"
 
-msgid "Plugins Path"
-msgstr "Eklentilerin Yolu"
+#~ msgid "Plugins Path"
+#~ msgstr "Eklentilerin Yolu"
 
 msgid "Path to the plugins directory"
 msgstr "Eklentiler dizinin yolu"
@@ -6536,49 +6307,49 @@ msgid "Invalid prefix"
 msgstr "Geçersiz önek"
 
 # Burası neden çevrile miyor?
-msgid "I'm aware this will destroy snapshots within this dataset"
-msgid_plural ""
-"I'm aware this will destroy all child datasets and snapshots within this "
-"dataset"
-msgstr[0] "Bu veri kümesi içerisinde anlık durum görüntüsü yok"
-msgstr[1] ""
-"Bu veri kümesi içerisinde tüm alt alanlarda veri kümeleri ve anlık durum "
-"görüntüleri yok"
+#~ msgid "I'm aware this will destroy snapshots within this dataset"
+#~ msgid_plural ""
+#~ "I'm aware this will destroy all child datasets and snapshots within this "
+#~ "dataset"
+#~ msgstr[0] "Bu veri kümesi içerisinde anlık durum görüntüsü yok"
+#~ msgstr[1] ""
+#~ "Bu veri kümesi içerisinde tüm alt alanlarda veri kümeleri ve anlık durum "
+#~ "görüntüleri yok"
 
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
-"Son bir yeni anlık durum görüntüsü yapılmadan önce ne kadar zaman geçecek."
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr ""
+#~ "Son bir yeni anlık durum görüntüsü yapılmadan önce ne kadar zaman geçecek."
 
-msgid "An error occurred when setting the options"
-msgstr "Bazı seçenekleri ayarlarken hata oluştu."
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "Bazı seçenekleri ayarlarken hata oluştu."
 
-msgid "Service Pack image to be installed"
-msgstr "Hizmet Paketi imajı kuruldu"
+#~ msgid "Service Pack image to be installed"
+#~ msgstr "Hizmet Paketi imajı kuruldu"
 
-msgid "Invalid service pack"
-msgstr "Geçersiz servis paketi"
+#~ msgid "Invalid service pack"
+#~ msgstr "Geçersiz servis paketi"
 
-msgid "View Cron Jobs"
-msgstr "Zamanlanmış Görevleri Görüntüle"
+#~ msgid "View Cron Jobs"
+#~ msgstr "Zamanlanmış Görevleri Görüntüle"
 
-msgid "View Rsync Tasks"
-msgstr "Rsync Görevleri Görüntüle"
+#~ msgid "View Rsync Tasks"
+#~ msgstr "Rsync Görevleri Görüntüle"
 
-msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. Testleri Görüntüle"
+#~ msgid "View S.M.A.R.T. Tests"
+#~ msgstr "S.M.A.R.T. Testleri Görüntüle"
 
-msgid "View Sysctls"
-msgstr "Sysctl Görüntüle"
+#~ msgid "View Sysctls"
+#~ msgstr "Sysctl Görüntüle"
 
-msgid "View Tunables"
-msgstr "Yükleyicileri Görüntüle"
+#~ msgid "View Tunables"
+#~ msgstr "Yükleyicileri Görüntüle"
 
-msgid "Browse"
-msgstr "Gözat"
+#~ msgid "Browse"
+#~ msgstr "Gözat"
 
-msgid "Close"
-msgstr "Kapat"
+#~ msgid "Close"
+#~ msgstr "Kapat"
 
 msgid "Jail path"
 msgstr "Jail yolu"
@@ -6586,290 +6357,2449 @@ msgstr "Jail yolu"
 msgid "Jail IP"
 msgstr "Jail IP"
 
-msgid "Plugins path"
-msgstr "Eklenti yolu"
+#~ msgid "Plugins path"
+#~ msgstr "Eklenti yolu"
 
-msgid "Add Apple (CIFS) Share"
-msgstr "Apple (CIFS) Paylaşımı Ekle"
+#~ msgid "Add Apple (CIFS) Share"
+#~ msgstr "Apple (CIFS) Paylaşımı Ekle"
 
-msgid "Apply Service Pack"
-msgstr "Hizmet Paketi Yükle"
+#~ msgid "Apply Service Pack"
+#~ msgstr "Hizmet Paketi Yükle"
 
-msgid "Hourly"
-msgstr "Saatlik"
+#~ msgid "Hourly"
+#~ msgstr "Saatlik"
 
-msgid "Hourly Graphs"
-msgstr "Saatlik Grafikler"
+#~ msgid "Hourly Graphs"
+#~ msgstr "Saatlik Grafikler"
 
-msgid "Daily"
-msgstr "Günlük"
+#~ msgid "Daily"
+#~ msgstr "Günlük"
 
-msgid "Daily Graphs"
-msgstr "Günlük Grafikler"
+#~ msgid "Daily Graphs"
+#~ msgstr "Günlük Grafikler"
 
-msgid "Weekly"
-msgstr "Haftalık"
+#~ msgid "Weekly"
+#~ msgstr "Haftalık"
 
-msgid "Weekly Graphs"
-msgstr "Haftalık Grafikler"
+#~ msgid "Weekly Graphs"
+#~ msgstr "Haftalık Grafikler"
 
-msgid "Monthly"
-msgstr "Aylık"
+#~ msgid "Monthly"
+#~ msgstr "Aylık"
 
-msgid "Monthly Graphs"
-msgstr "Aylık Grafikler"
+#~ msgid "Monthly Graphs"
+#~ msgstr "Aylık Grafikler"
 
-msgid "Yearly"
-msgstr "Yıllık"
+#~ msgid "Yearly"
+#~ msgstr "Yıllık"
 
-msgid "Yearly Graphs"
-msgstr "Yıllık Grafikler"
+#~ msgid "Yearly Graphs"
+#~ msgstr "Yıllık Grafikler"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Kaset"
+#~ msgid "Tape"
+#~ msgstr "Kaset"
 
-msgid "Pass"
-msgstr "Pas"
+#~ msgid "Pass"
+#~ msgstr "Pas"
 
 msgid "Disable password"
 msgstr "Parolayı devre dışı bırak"
 
-msgid "My Account"
-msgstr "Hesabım"
+#~ msgid "My Account"
+#~ msgstr "Hesabım"
 
-msgid "View All Users"
-msgstr "Tüm Kullanıcıları Göster"
+#~ msgid "View All Users"
+#~ msgstr "Tüm Kullanıcıları Göster"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Özür dileriz, form doldurma süreniz sona erdi. Formu doldurmak için bu "
-"sayfadan devam edin."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Özür dileriz, form doldurma süreniz sona erdi. Formu doldurmak için bu "
+#~ "sayfadan devam edin."
 
-msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr "IPv4 veya IPv6 ile geçerli bir maskbit belirtmelisiniz"
+#~ msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
+#~ msgstr "IPv4 veya IPv6 ile geçerli bir maskbit belirtmelisiniz"
 
-msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr "Konum yalnızca alfasayısal karakterler, _ veya - olabilir."
+#~ msgid "The location must contain only alphanumeric characters, _ or -"
+#~ msgstr "Konum yalnızca alfasayısal karakterler, _ veya - olabilir."
 
-msgid "Local Access"
-msgstr "Yerel erişim"
+#~ msgid "Local Access"
+#~ msgstr "Yerel erişim"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
-"Bu kutu ile apple paylaşım erişimine yerel hesabı olan kullanıcılara izin "
-"ver."
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr ""
+#~ "Bu kutu ile apple paylaşım erişimine yerel hesabı olan kullanıcılara izin "
+#~ "ver."
 
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"Portal 'adres:port' şeklinde yazılır. Örneğin IPv4 için "
-"'192.168.1.1:3260' veya IPv6 için '[2001:db8:1:1::1]:3260' şeklinde "
-"yazılır. 3260 bağlantı noktası standart iSCSI bağlantı noktası "
-"numarasıdır. Herhangi bir IP adres kullanımı için '0.0.0.0:3260' ve/veya "
-"'[::]:3260' kullanılır. Aynı adres ailesi içindeki joker karakter ve "
-"diğer IP adreslerini karıştırmayınız."
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "Portal 'adres:port' şeklinde yazılır. Örneğin IPv4 için "
+#~ "'192.168.1.1:3260' veya IPv6 için '[2001:db8:1:1::1]:3260' şeklinde "
+#~ "yazılır. 3260 bağlantı noktası standart iSCSI bağlantı noktası "
+#~ "numarasıdır. Herhangi bir IP adres kullanımı için '0.0.0.0:3260' ve/veya "
+#~ "'[::]:3260' kullanılır. Aynı adres ailesi içindeki joker karakter ve "
+#~ "diğer IP adreslerini karıştırmayınız."
 
-msgid "Time in milliseconds"
-msgstr "Milisaniye olarak zaman"
+#~ msgid "Time in milliseconds"
+#~ msgstr "Milisaniye olarak zaman"
 
-msgid "Username of Domain Administrator Account"
-msgstr "Alan Adı Yönetici Hesabının Kullanıcı Adı"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "Alan Adı Yönetici Hesabının Kullanıcı Adı"
 
-msgid "ISCSI"
-msgstr "ISCSI"
+#~ msgid "ISCSI"
+#~ msgstr "ISCSI"
 
-msgid "Guest Account"
-msgstr "Misafir hesabı"
+#~ msgid "Guest Account"
+#~ msgstr "Misafir hesabı"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Misafir olarak belirtilen hizmetlere erişim için kullanılacak kullanıcı "
-"adı (varsayılan 'ftp') geçersiz kılmak için bu seçeneği kullanın. Ne "
-"olursa olsun bu kullanıcı konuk servisine bağlanmadan herhangi bir "
-"istemciye sunulacak olan ayrıcalıklar. Bu kullanıcının giriş yapabilmesi "
-"için parola dosyasında olmalıdır yoksa girişi geçersizdir."
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Misafir olarak belirtilen hizmetlere erişim için kullanılacak kullanıcı "
+#~ "adı (varsayılan 'ftp') geçersiz kılmak için bu seçeneği kullanın. Ne "
+#~ "olursa olsun bu kullanıcı konuk servisine bağlanmadan herhangi bir "
+#~ "istemciye sunulacak olan ayrıcalıklar. Bu kullanıcının giriş yapabilmesi "
+#~ "için parola dosyasında olmalıdır yoksa girişi geçersizdir."
 
-msgid "CIFS Share"
-msgstr "CIFS Paylaşımı"
+#~ msgid "CIFS Share"
+#~ msgstr "CIFS Paylaşımı"
 
-msgid "CIFS Shares"
-msgstr "CIFS Paylaşımları"
+#~ msgid "CIFS Shares"
+#~ msgstr "CIFS Paylaşımları"
 
-msgid "NFS Share"
-msgstr "NFS Paylaşımı"
+#~ msgid "NFS Share"
+#~ msgstr "NFS Paylaşımı"
 
-msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr "Anlık durum görüntülerini yapmaya başlama zamanı, örneğin 8:00"
+#~ msgid "When in a day should we start making snapshots, e.g. 8:00"
+#~ msgstr "Anlık durum görüntülerini yapmaya başlama zamanı, örneğin 8:00"
 
-msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr "Anlık durum görüntülerini durdurmaya başlama zamanı, örneğin 17:00"
+#~ msgid "When in a day should we stop making snapshots, e.g. 17:00"
+#~ msgstr "Anlık durum görüntülerini durdurmaya başlama zamanı, örneğin 17:00"
 
-msgid "NTP server 2"
-msgstr "NTP sunucu 2"
+#~ msgid "NTP server 2"
+#~ msgstr "NTP sunucu 2"
 
-msgid "NTP server 3"
-msgstr "NTP sunucu 3"
+#~ msgid "NTP server 3"
+#~ msgstr "NTP sunucu 3"
 
-msgid "Loader"
-msgstr "Yükleyici"
+#~ msgid "Loader"
+#~ msgstr "Yükleyici"
 
-msgid "Loaders"
-msgstr "Yükleyiciler"
+#~ msgid "Loaders"
+#~ msgstr "Yükleyiciler"
 
-msgid "View Loaders"
-msgstr "Yükleyicileri Görüntüle"
+#~ msgid "View Loaders"
+#~ msgstr "Yükleyicileri Görüntüle"
 
-msgid "Reboot the System"
-msgstr "Sistemi Yeniden Başlat"
+#~ msgid "Reboot the System"
+#~ msgstr "Sistemi Yeniden Başlat"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
 msgid "Edit Disk"
 msgstr "Diski Düzenle"
 
-msgid "Are you sure you want to export?"
-msgstr "Silmek istediğinizden emin misiniz?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "Silmek istediğinizden emin misiniz?"
 
 msgid "Export Volume"
 msgstr "Birimi Dışarı Aktar"
 
-msgid "Add loader"
-msgstr "Yükleyici Ekle"
+#~ msgid "Add loader"
+#~ msgstr "Yükleyici Ekle"
 
-msgid "Volume from which this dataset will be created on"
-msgstr "Bu veri kümesi hangi birim üzerinde oluşturulacak"
+#~ msgid "Volume from which this dataset will be created on"
+#~ msgstr "Bu veri kümesi hangi birim üzerinde oluşturulacak"
 
-msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Oluşturulacak ZFS birimini seçin"
+#~ msgid "Volume from which this ZFS Volume will be created on"
+#~ msgstr "Oluşturulacak ZFS birimini seçin"
 
-msgid "Volume this group belongs to"
-msgstr "Birim bu gruba ait"
+#~ msgid "Volume this group belongs to"
+#~ msgstr "Birim bu gruba ait"
 
 msgid "Group Membership"
 msgstr "Grup üyeliği"
 
-msgid "The disk group containing this disk"
-msgstr "Bu diskin bulunduğu disk grubu"
+#~ msgid "The disk group containing this disk"
+#~ msgstr "Bu diskin bulunduğu disk grubu"
 
-msgid "successfully added"
-msgstr "başarıyla eklendi"
+#~ msgid "successfully added"
+#~ msgstr "başarıyla eklendi"
 
-msgid "successfully deleted"
-msgstr "başarıyla silindi"
+#~ msgid "successfully deleted"
+#~ msgstr "başarıyla silindi"
 
-msgid "successfully edited"
-msgstr "başarıyla düzenlendi"
+#~ msgid "successfully edited"
+#~ msgstr "başarıyla düzenlendi"
 
-msgid "There are no active volumes."
-msgstr "Aktif birim yok."
+#~ msgid "There are no active volumes."
+#~ msgstr "Aktif birim yok."
 
-msgid "%s successfully added."
-msgstr "%s başarıyla eklendi"
+#~ msgid "%s successfully added."
+#~ msgstr "%s başarıyla eklendi"
 
 msgid "IPv6 Netmask"
 msgstr "IPv6 Ağ Maskesi"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Bu değer 0 ile 10000 arasında olmalıdır."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Bu değer 0 ile 10000 arasında olmalıdır."
 
 msgid "This value must be between 0 and 1000, inclusive."
 msgstr "Bu değer 0 ile 1000 arasında olmalıdır."
 
-msgid "Enable DDP"
-msgstr "DDP Aktifleştir"
+#~ msgid "Enable DDP"
+#~ msgstr "DDP Aktifleştir"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "Düşük seviyeli appletalk erişim için DDP desteğini aktifleştir."
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "Düşük seviyeli appletalk erişim için DDP desteğini aktifleştir."
 
-msgid "Turn on/off TLS"
-msgstr "TLS açma/kapama"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "TLS açma/kapama"
 
-msgid "Rsyncd"
-msgstr "Rsyncd"
+#~ msgid "Rsyncd"
+#~ msgstr "Rsyncd"
 
 msgid "The volume failed to export"
 msgstr "Birimi dışarı aktarmak başarısız oldu"
 
-msgid "Cron Scheduler"
-msgstr "Cron Zamanlayıcısı"
+#~ msgid "Cron Scheduler"
+#~ msgstr "Cron Zamanlayıcısı"
 
-msgid "Devel"
-msgstr "İlerlemeleri"
+#~ msgid "Devel"
+#~ msgstr "İlerlemeleri"
 
-msgid "Docs"
-msgstr "Dokümanları"
+#~ msgid "Docs"
+#~ msgstr "Dokümanları"
 
-msgid "Welcome to"
-msgstr "Hoş geldiniz"
+#~ msgid "Welcome to"
+#~ msgstr "Hoş geldiniz"
 
-msgid "LUN"
-msgstr "LUN"
+#~ msgid "LUN"
+#~ msgstr "LUN"
 
-msgid "Mount point"
-msgstr "Bağlantı noktası"
+#~ msgid "Mount point"
+#~ msgstr "Bağlantı noktası"
 
-msgid "Dataset name"
-msgstr "Veri kümesi adı"
+#~ msgid "Dataset name"
+#~ msgstr "Veri kümesi adı"
 
-msgid "Snapshot name"
-msgstr "Anlık durum görüntüleme adı"
+#~ msgid "Snapshot name"
+#~ msgstr "Anlık durum görüntüleme adı"
 
-msgid "Used space"
-msgstr "Kullanılan Alan"
+#~ msgid "Used space"
+#~ msgstr "Kullanılan Alan"
 
-msgid "Referenced space"
-msgstr "Başvurulan alan"
+#~ msgid "Referenced space"
+#~ msgstr "Başvurulan alan"
 
-msgid "No ZFS snapshot available"
-msgstr "Hiçbir ZFS anlık durum görüntüsü yok"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "Hiçbir ZFS anlık durum görüntüsü yok"
 
-msgid "Create Periodic Snapshot"
-msgstr "Periyodik Anlık Durum Görüntüsü Oluştur"
+#~ msgid "Create Periodic Snapshot"
+#~ msgstr "Periyodik Anlık Durum Görüntüsü Oluştur"
 
-msgid "Restore to Factory Defaults"
-msgstr "Kurulumdaki Varsayılan Ayarlara Geri Dön"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "Kurulumdaki Varsayılan Ayarlara Geri Dön"
 
-msgid "Config"
-msgstr "Yapılandırma"
+#~ msgid "Config"
+#~ msgstr "Yapılandırma"
 
-msgid "%s successfully update."
-msgstr "%s başarıyla güncellendi."
+#~ msgid "%s successfully update."
+#~ msgstr "%s başarıyla güncellendi."
 
-msgid "Admin user"
-msgstr "Yönetici kullanıcısı"
+#~ msgid "Admin user"
+#~ msgstr "Yönetici kullanıcısı"
 
 msgid "N/A"
 msgstr "Kullanılamaz"
 
-msgid "ZVol Name"
-msgstr "ZVol Adı"
+#~ msgid "ZVol Name"
+#~ msgstr "ZVol Adı"
 
-msgid "English"
-msgstr "İngilizce"
+#~ msgid "English"
+#~ msgstr "İngilizce"
 
-msgid "Level"
-msgstr "Seviye"
+#~ msgid "Level"
+#~ msgstr "Seviye"
 
-msgid "View All VLANs"
-msgstr "Tüm VLAN'ları Göster"
+#~ msgid "View All VLANs"
+#~ msgstr "Tüm VLAN'ları Göster"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr "Şifrelenmemiş"
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr "Şifrelenmiş hiçbir parola yok"
+
+#: choices.py:308
+msgid "zle (runs of zeros)"
+msgstr "zle (sıfırdan farklı değerde çalışır)"
+
+#: choices.py:309
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (miras, önerilmez)"
+
+#: choices.py:601
+msgid "19200"
+msgstr "19200"
+
+#: choices.py:604
+msgid "115200"
+msgstr "115200"
+
+#: choices.py:662
+msgid "Verbose"
+msgstr "Ayrıntılı"
+
+#: choices.py:670
+msgid "Daemon"
+msgstr "Süreç"
+
+#: choices.py:695
+msgid "data"
+msgstr "veri"
+
+#: choices.py:697
+msgid "auth"
+msgstr "onay"
+
+#: choices.py:700
+msgid "ctrl+!data"
+msgstr "ctrl+!veri"
+
+#: choices.py:702
+msgid "auth+!data"
+msgstr "onay+!veri"
+
+#: account/forms.py:60
+msgid "Confirm New Password"
+msgstr "Yeni Parolayı Onaylayın:"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr "Ev dizini iki nokta üst üste içeremez"
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr "Yerleşik Kullanıcı"
+
+#: api/resources.py:767
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+msgid "Locked"
+msgstr "Kilitle"
+
+#: api/resources.py:860
+msgid "on every %(days)s"
+msgstr "Her %s günde"
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr "Geçersiz adres: %s"
+
+#: jails/admin.py:75
+#: jails/forms.py:725
+#: jails/models.py:403
+#: templates/plugins/plugins.html:21
+msgid "Jail"
+msgstr "Kafes"
+
+#: jails/admin.py:206
+msgid "Start"
+msgstr "Başlat"
+
+#: jails/admin.py:271
+#: jails/models.py:353
+msgid "URL"
+msgstr "URL"
+
+#: jails/forms.py:89
+msgid "type"
+msgstr "Tür"
+
+#: jails/forms.py:171
+msgid "No jail root configured."
+msgstr "Kafes için root yapılandırması yok."
+
+#: jails/forms.py:459
+msgid "autostart"
+msgstr "Otomatik başlat"
+
+#: jails/forms.py:772
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr "%(source)s yolu bağlanamadı: %(error)s"
+
+#: jails/models.py:109
+msgid "IPv4 bridge netmask"
+msgstr "IPv4 köprü ağ maskesi"
+
+#: jails/models.py:95
+msgid "IPv4 bridge address"
+msgstr "IPv4 köprü adresi"
+
+#: jails/models.py:113
+msgid "IPv6 address"
+msgstr "IPv6 adresi"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr "MAC"
+
+#: jails/models.py:224
+msgid "This jail is required by %d plugin(s)"
+msgstr "Bu kafes %d eklentileri tarafından gerekli"
+
+#: jails/models.py:260
+msgid "Jail Root"
+msgstr "Root kafesi"
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr "Kafes verilerini depolamak için kullanılan yol"
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr "Kafes ve eklentiler için IPv4 ağ sıralaması"
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr "Kafes ve eklentiler için IPv4 ağ başlangıç adresi"
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr "Kafes ve eklentiler için IPv4 bitiş adresi"
+
+#: jails/models.py:280
+msgid "IPv6 Network"
+msgstr "IPv6 ağı"
+
+#: jails/models.py:290
+msgid "IPv6 Network End Address"
+msgstr "IPv6 ağ bitiş adresi"
+
+#: jails/models.py:291
+msgid "IPv6 network end address for jails and plugins"
+msgstr "Kafes ve eklentiler için IPv6 ağ bitiş adresi"
+
+#: jails/models.py:294
+msgid "Collection URL"
+msgstr "Arşiv URL"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr "Kafes dizini için URL"
+
+#: jails/models.py:353
+msgid "Architecture"
+msgstr "Yapı"
+
+#: jails/models.py:380
+msgid "Template must have 0 instances!"
+msgstr "Şablon 0 örnekler halinde olmalı!"
+
+#: jails/models.py:395
+#: jails/models.py:396
+msgid "Jail Templates"
+msgstr "Kafes Şablonları"
+
+#: jails/models.py:415
+msgid "Read-Only"
+msgstr "Sadece-Okunur"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr "Kafes Şablonları Ekle"
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr "Eklenti yüklenemedi: %s"
+
+#: jails/utils.py:694
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+
+#: jails/views.py:96
+msgid "Jail successfully edited."
+msgstr "Kafes başarıyla düzenlendi."
+
+#: jails/views.py:136
+msgid "Jail successfully started."
+msgstr "Kafes başarıyla başlatıldı."
+
+#: jails/views.py:399
+msgid "Jail template successfully edited."
+msgstr "Kafes şablonu başarıyla düzenlendi."
+
+#: middleware/notifier.py:2877
+msgid "No RPC Token!"
+msgstr "RPC Simgesi Yok!"
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr "Devam Ediyor"
+
+#: middleware/zfs.py:654
+msgid "None requested"
+msgstr "Talep yok"
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr "Sadece bir arabirim DHCP için kullanılabilir"
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr "%s ağı başka bir NIC tarafından zaten kullanılıyor."
+
+#: network/forms.py:284
+msgid "The IP \"%s\" is not valid"
+msgstr "%s IP adresi geçerli değil"
+
+#: network/forms.py:343
+msgid "You need a domain, e.g. hostname.domain"
+msgstr "Bir alan gerekir. Örneğin hostname.domain"
+
+#: network/forms.py:373
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr ""
+"Buradaki X bir sayıdır. Arabirim adı vlanX şeklinde olmalıdır. Örneğin vlan0"
+
+#: network/models.py:77
+msgid "Enable netwait feature"
+msgstr "Ağ bekleme özelliğini etkinleştir"
+
+#: network/models.py:88
+msgid "Netwait IP list"
+msgstr "Ağ bekleme IP listesi"
+
+#: network/models.py:97
+msgid "Host name data base"
+msgstr "Ana bilgisayar veri tabanı"
+
+#: network/models.py:401
+msgid "LAGG Interface Group"
+msgstr "LAGG Ara Birim Grubu"
+
+#: network/models.py:427
+msgid "Link Aggregation Member"
+msgstr "Bağlantı Birleştirme Üyesi"
+
+#: network/models.py:428
+msgid "Link Aggregation Members"
+msgstr "Bağlantı Birleştirme Üyeleri"
+
+#: plugins/admin.py:58
+#: plugins/admin.py:65
+msgid "Install"
+msgstr "Kur"
+
+#: plugins/forms.py:89
+msgid ""
+"Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
+msgstr "PBI dosyasını yükle:"
+
+#: plugins/forms.py:105
+msgid "Plugin Jail"
+msgstr "Kafes eklentileri"
+
+#: plugins/forms.py:106
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr "PBI içine kurulan kafes eklentileri."
+
+#: plugins/forms.py:215
+msgid "Unable to set repository: %s"
+msgstr "Depo ayarlanmak için açılamıyor: %s"
+
+#: plugins/models.py:103
+msgid "Plugin"
+msgstr "Eklentiler"
+
+#: plugins/models.py:175
+msgid "URL for the plugins repository"
+msgstr "Depo eklentilerinin adresi"
+
+#: plugins/views.py:198
+msgid "Jail does not exist"
+msgstr "Böyle bir kafes yok"
+
+#: plugins/views.py:207
+msgid "Failed to update plugin"
+msgstr "Eklentinin güncellenemedi"
+
+#: plugins/views.py:226
+#: plugins/views.py:357
+msgid "No available IP addresses"
+msgstr "Kullanılabilir IP adresleri yok"
+
+#: services/forms.py:637
+#: services/forms.py:645
+msgid "Spaces or number signs are not allowed."
+msgstr "Boşluk veya sayı işaretlerine izin verilmez."
+
+#: services/forms.py:826
+msgid "Peer Secret (Confirm)"
+msgstr "Gizli Parola (Tekrar)"
+
+#: services/forms.py:1331
+msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
+msgstr "Glabel %(disk)s için seri bulunamadı: %(error)s"
+
+#: services/forms.py:1504
+msgid "A target with that name already exists."
+msgstr "Bu adda zaten bir hedef var."
+
+#: services/models.py:214
+msgid "Hostnames lookups"
+msgstr "Sunucu adı aramaları"
+
+#: services/models.py:287
+msgid "Allow non-root mount"
+msgstr "Root olmayana bağlama izni ver"
+
+#: services/models.py:298
+msgid "Bind IP Addresses"
+msgstr "Bağlantı IP Adresleri"
+
+#: services/models.py:712
+msgid "Initiator side user name."
+msgstr "Yan başlatıcı kullanıcı adı."
+
+#: services/models.py:932
+msgid "These parameters will be added to /etc/snmpd.config."
+msgstr "Bu seçenekler /etc/snmpd.conf dosyasına eklenecektir."
+
+#: services/models.py:971
+msgid "Remote Port"
+msgstr "Uzak Bağlantı Noktası Numarası"
+
+#: services/models.py:1015
+msgid "Monitor User"
+msgstr "İzleyici Kullanıcı"
+
+#: services/models.py:1105
+msgid "Message which will be displayed to the user when they initially login."
+msgstr "Başlangıçta giriş sırasında kullanıcıya gösterilecek mesaj."
+
+#: services/models.py:1132
+msgid ""
+"For local users, only allow access to user home directory unless the user is "
+"a member of group wheel."
+msgstr ""
+"Yerel kullanıcılar kullanıcı grubu çarkının bir üyesi olmadıkça yalnızca "
+"kullanıcı ev dizinine erişim sağlar."
+
+#: services/models.py:1194
+msgid "Enable TLS"
+msgstr "TLS etkinleştir"
+
+#: services/models.py:1199
+msgid "TLS policy"
+msgstr "TLS politikası"
+
+#: services/models.py:1202
+msgid "TLS allow client renegotiations"
+msgstr "TLS sağlayan istemci ertelemesi"
+
+#: services/models.py:1214
+msgid "TLS common name required"
+msgstr "Gerekli TLS ortak adı"
+
+#: services/models.py:1218
+msgid "TLS enable diagnostics"
+msgstr "TLS tanılamayı etkinleştir"
+
+#: services/models.py:1222
+msgid "TLS export certificate data"
+msgstr "İhraç TLS sertifika verileri"
+
+#: services/models.py:1234
+msgid "TLS no session reuse required"
+msgstr "Hiçbir TLS oturumu yok yeniden yükleme gerekli"
+
+#: services/models.py:1238
+msgid "TLS export standard vars"
+msgstr "Standart TLS ihracat değişkenleri"
+
+#: services/models.py:1246
+msgid "TLS DNS name required"
+msgstr "TLS için gerekli DNS adı"
+
+#: services/models.py:1254
+msgid "Certificate and private key"
+msgstr "Sertifika ve özel anahtar"
+
+#: services/models.py:1354
+msgid "SFTP Log Facility"
+msgstr "SFTP Günlük Kuruluşu"
+
+#: services/models.py:1436
+#: services/models.py:1532
+msgid "Domain Controller"
+msgstr "Alan adı denetleyicisi"
+
+#: services/models.py:1437
+#: services/models.py:1533
+msgid "Hostname of the domain controller to use."
+msgstr "Kullanılacak etki alanı denetleyicisi ana bilgisayar adı."
+
+#: services/models.py:1522
+msgid "Set this if you want to allow Trusted Domains."
+msgstr "Eğer Güvenilir Etki Alanları izin vermek istiyorsanız bunu ayarlayın."
+
+#: services/models.py:1544
+msgid "Kerberos Server"
+msgstr "Kerberos sunucusu"
+
+#: services/models.py:1545
+msgid "Hostname of the kerberos server to use."
+msgstr "Kullanmak için kerberos sunucusu ana bilgisayar adı."
+
+#: services/models.py:1550
+msgid "Kerberos Password Server"
+msgstr "Kerberos sunucu parolası"
+
+#: services/models.py:1560
+msgid "DNS timeout"
+msgstr "DNS zaman aşımı"
+
+#: services/models.py:1600
+msgid "NIS domain"
+msgstr "NIS alanı"
+
+#: services/models.py:1607
+msgid "Comma delimited list of NIS servers"
+msgstr "NIS sunucularının listesi virgülle sınırlandırılmıştır"
+
+#: services/models.py:1611
+msgid "Secure mode"
+msgstr "Güvenli biçim"
+
+#: services/models.py:1612
+msgid "Cause ypbind to run in secure mode"
+msgstr "Ypbindin çalıştırılmasına güvenli biçim neden olur"
+
+#: services/models.py:1625
+#: services/models.py:1626
+msgid "NIS Domain"
+msgstr "NIS alanı"
+
+#: services/models.py:1868
+msgid "Informational"
+msgstr "Bilgi"
+
+#: services/models.py:1869
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Sıcaklık çok büyükse veya N dereceye eşitse sistem günlüğüne bildir. Devre "
+"dışı bırakmak için 0 girilmelidir."
+
+#: services/models.py:1876
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Sıcaklık çok büyükse veya N dereceye eşitse bir e-posta gönder. Devre dışı "
+"bırakmak için 0 girilmelidir."
+
+#: services/models.py:1884
+msgid "Destination email address. Separate email addresses by commas"
+msgstr "Hedef e-posta adresi. Ayrı e-posta adreslerini virgülle ayırın."
+
+#: services/nav.py:115
+#: templates/services/core.html:27
+msgid "Directory Services"
+msgstr "Dizin Hizmetleri"
+
+#: sharing/admin.py:78
+#: sharing/models.py:291
+msgid "Paths"
+msgstr "Yollar"
+
+#: sharing/forms.py:148
+#: sharing/forms.py:153
+msgid "The umask must be between 000 and 777."
+msgstr "Umask 000 ile 777 arasında olmalıdır."
+
+#: sharing/forms.py:274
+msgid "Paths for a NFS share must reside within the same filesystem"
+msgstr "Bir NFS paylaşımı için yollar aynı dosya sistemi içinde yer almalıdır"
+
+#: sharing/forms.py:281
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr "Bir kerede bir bağlantı noktası ve alt dizinleri paylaşamazsınız"
+
+#: sharing/forms.py:318
+msgid ""
+"The network %s is already being shared and cannot be used twice for the same "
+"filesystem"
+msgstr ""
+"%s ağı zaten paylaşılıyor ve aynı dosya sistemi için ikinci kez kullanılamaz"
+
+#: sharing/models.py:201
+msgid "Authorized networks"
+msgstr "Yetkilendirilmiş ağlar"
+
+#: sharing/models.py:258
+msgid "The specified group's permission are used by all clients"
+msgstr "Belirtilen grubun izni tüm istemciler tarafından kullanılır"
+
+#: storage/admin.py:283
+msgid "Change Passphrase"
+msgstr "Parola Değiştir"
+
+#: storage/admin.py:290
+msgid "Download Key"
+msgstr "Anahtarı İndir"
+
+#: storage/admin.py:302
+msgid "Add recovery key"
+msgstr "Kurtarma Anahtarı Ekle"
+
+#: storage/admin.py:314
+msgid "Unlock"
+msgstr "Kilidi Aç"
+
+#: storage/admin.py:473
+msgid "Replace"
+msgstr "Değiştir"
+
+#: storage/admin.py:575
+msgid "When"
+msgstr "Zaman"
+
+#: storage/admin.py:612
+msgid "Remote Hostname"
+msgstr "Uzak Ana Bilgisayar Adı"
+
+#: storage/forms.py:120
+msgid "Enter positive number (optionally suffixed by K, M, G, T), or 0"
+msgstr "Pozitif bir sayı (isteğe bağlı K,  M, G, T) veya 0 girin"
+
+#: storage/forms.py:770
+msgid "No: Skip to import"
+msgstr "Hayır: Almaya geç"
+
+#: storage/forms.py:773
+msgid "Encrypted ZFS volume?"
+msgstr "ZFS birimi şifrelenmiş mi?"
+
+#: storage/forms.py:791
+msgid "Encryption Key"
+msgstr "Şifreleme anahtarı"
+
+#: storage/forms.py:839
+msgid "The following disks failed to attach: %s"
+msgstr "Aşağıdaki diskler takılamadı: %s"
+
+#: storage/forms.py:1128
+msgid ""
+"Specifies a suggested block size for files in the file system. This property "
+"is designed solely for use with database workloads that access files in "
+"fixed-size records.  ZFS automatically tunes block sizes according to "
+"internal algorithms optimized for typical access patterns."
+msgstr ""
+"Dosya sistemindeki dosyalar için önerilen bir blok boyutunu belirtir. Bu "
+"özellik sadece sabit boyuttaki kayıtların dosyalarına erişerek veritabanı iş "
+"yükleri ile birlikte kullanılmak üzere tasarlanmıştır. Tipik erişim "
+"modelleri için ZFS otomatik olarak algoritmalara göre blok boyutlarını "
+"ayarlar."
+
+#: storage/forms.py:1272
+msgid "Size for this zvol"
+msgstr "ZFS birimi için boyut"
+
+#: storage/forms.py:1290
+msgid "Block size"
+msgstr "Blok boyutu"
+
+#: storage/forms.py:1292
+msgid ""
+"The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
+"to 128 Kbytes is valid."
+msgstr ""
+"Birimler için varsayılan blok boyutu 8 kbyte'tır. 128 bayttan 512 kilobayta "
+"geçiş için 2 güç yeterlidir."
+
+#: storage/forms.py:1598
+msgid "Confirmation does not match passphrase"
+msgstr "Eşleşmeyen parolaları onayla"
+
+#: storage/forms.py:1606
+msgid "Passphrase is not valid"
+msgstr "Parola geçerli değil"
+
+#: storage/forms.py:1665
+msgid "Dedicated User Enabled"
+msgstr "Atanmış Kullanıcı Etkin"
+
+#: storage/forms.py:1666
+msgid "If disabled then root will be used for replication."
+msgstr ""
+"Devre dışı bırakıldıktan sonra root kullanıcısı çoğaltma için "
+"kullanılacaktır."
+
+#: storage/forms.py:1674
+msgid "Enable High Speed Ciphers"
+msgstr "Yüksek Hızlı Şifreleme Etkin"
+
+#: storage/forms.py:1678
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which makes it less desirable on untrusted networks."
+msgstr ""
+"Bu seçeneğin etkinleştirilmesi yüksek hız veya düşük hız gecikmelerini yerel "
+"ağlarda ki aktarım hızını artırabilir. Güvenilmeyen ağlarda daha az "
+"uygulanan ve varsayılan olarak daha az güvenli şifreleme algoritmaları "
+"kullanılır."
+
+#: storage/forms.py:1885
+msgid "A scrub with this volume already exists."
+msgstr "Bu birim ile ilgili bir iptal zaten var."
+
+# "password"un  karşılığı, şifre yani bir şeyi şifrelemek için kullanılan nesnesin sıfatı değildir. Orada sorulan, "geçiş kodu"  yani paroladır. Ordudaki parola işaret gibi. SÜrekli yanlış kullanılıyor bu yanlışı devam ettirmemek gerek. Hem Türkçe karşılığı ve hemde işlevsel ve mantıksal anlamı poroladır, şifre değil.
+#: storage/forms.py:1944
+msgid "New Passphrase"
+msgstr "Yeni Parola"
+
+#: storage/forms.py:1948
+msgid "Confirm New Passphrase"
+msgstr "Yeni Parolayı Onaylayın"
+
+#: storage/forms.py:1974
+#: storage/forms.py:2119
+msgid "Invalid password"
+msgstr "Geçersiz parola"
+
+#: storage/forms.py:2024
+msgid "Recovery Key"
+msgstr "Kurtarma Anahtarı"
+
+#: storage/forms.py:2028
+msgid "Restart services"
+msgstr "Hizmetleri yeniden başlat"
+
+#: storage/forms.py:2045
+msgid "Jails/Plugins"
+msgstr "Kafesler/Eklentiler"
+
+#: storage/models.py:574
+msgid "Underlying provider"
+msgstr "Destek veren"
+
+#: storage/models.py:791
+msgid "Remote Dedicated User Enabled"
+msgstr "Uzaktaki Atanmış Kullanıcı Etkin"
+
+#: storage/models.py:794
+msgid "Remote Dedicated User"
+msgstr "Uzaktaki Atanmış Kullanıcı"
+
+#: storage/models.py:831
+msgid ""
+"Disabling will stop any new replications being queued. It will not stop any "
+"replications which are queued or in progress."
+msgstr ""
+"Bu seçeneğin devre dışı bırakılması sıraya konmuş herhangi bir tekrarlamayı "
+"durduracaktır. Bu süreçteki herhangi bir sıra veya ilerleme durmayacaktır."
+
+#: storage/models.py:836
+#: storage/models.py:915
+#: templates/storage/snapshots.html:82
+msgid "Volume/Dataset"
+msgstr "Birim/Veri Kümesi"
+
+#: storage/models.py:852
+msgid "Remote ZFS Volume/Dataset"
+msgstr "Uzak ZFS Birim/Veri Kümesi"
+
+#: storage/models.py:885
+msgid "Do not start replication after"
+msgstr "Sonra çoğaltma başlamayın"
+
+#: storage/nav.py:40
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+msgid "ZFS Volume Manager"
+msgstr "ZFS Birim Yöneticisi"
+
+#: storage/nav.py:52
+#: templates/storage/volume_datagrid.html:20
+msgid "UFS Volume Manager (legacy)"
+msgstr "UFS Birim Yöneticisi (eski)"
+
+#: storage/views.py:903
+msgid "Passphrase updated"
+msgstr "Parola başarıyla güncellendi"
+
+#: storage/views.py:997
+msgid "Encryption re-key succeeded"
+msgstr "Yeniden şifreleme anahtarı başarılı"
+
+#: support/models.py:41
+msgid "Support subject."
+msgstr "Destek konuları"
+
+#: support/models.py:49
+msgid "Support"
+msgstr "Destek"
+
+#: system/forms.py:86
+msgid "The volume %s is locked by encryption"
+msgstr "%s birimi şifreleme tarafından kilitlendi"
+
+#: system/forms.py:512
+msgid "The two passphrase fields didn't match."
+msgstr "İki parola alanı uyuşmuyor."
+
+#: system/forms.py:564
+msgid "RSA or DSA private key not found"
+msgstr "RSA veya DSA özel anahtarları bulunamadı"
+
+#: system/forms.py:811
+msgid "Usernames cannot exceed 17 characters for cronjobs"
+msgstr "Kullanıcı adları zamanlanmış görevler için 17 karakteri geçemez"
+
+#: system/models.py:69
+msgid "WebGUI HTTP Port"
+msgstr "WebGUI HTTP bağlantı noktası"
+
+#: system/models.py:108
+msgid "Directory Service"
+msgstr "Dizin Hizmetleri"
+
+#: system/models.py:193
+msgid "Set this to match your serial port speed"
+msgstr "Seri bağlantı noktası hızını eşleştirmek için bu seçeneği ayarlayın"
+
+#: system/models.py:226
+msgid "Enable report anonymous statistics"
+msgstr "Anonim rapor istatistikleri etkinleştir"
+
+#: system/models.py:426
+msgid "Redirect Stderr"
+msgstr "Standart hatayı yönlendir"
+
+#: system/models.py:920
+msgid "Pre Init"
+msgstr "Ön Başlatma"
+
+#: system/models.py:957
+msgid "Last Name"
+msgstr "Soyad"
+
+#: system/models.py:985
+msgid "Zip"
+msgstr "Posta kodu"
+
+#: system/models.py:995
+msgid "Home Phone"
+msgstr "Ev Telefonu"
+
+#: system/models.py:1007
+msgid "Work Phone"
+msgstr "İş Telefonu"
+
+#: templates/freeadmin/generic_model_datagrid.html:8
+msgid "Add %(name)s"
+msgstr "%(name)s Ekle "
+
+#: templates/freeadmin/help.html:39
+msgid "FreeBSD Man Pages"
+msgstr "FreeBSD Man Sayfası"
+
+#: templates/jails/delete.html:3
+msgid "Are you sure you want to delete "
+msgstr "Silmek istediğinizden emin misiniz?"
+
+#: templates/jails/index.html:8
+#: templates/plugins/index.html:32
+msgid "You must configure a default route (Network->IPv4 Default Gateway)"
+msgstr "Varsayılan yolu yapılandırmanız gerekir (Ağ->Varsayılan IPv4 Ağ Geçidi)"
+
+#: templates/jails/stop.html:3
+msgid "Stop "
+msgstr "Dur"
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr "Yenile"
+
+#: templates/plugins/index.html:12
+msgid "Installed"
+msgstr "Kurulu"
+
+#: templates/plugins/plugin_info.html:2
+msgid "Plugin information"
+msgstr "Eklenti bilgisi"
+
+#: templates/registration/login.html:54
+msgid ""
+"The web admin user has been removed in this release in order to unify the "
+"web and Unix authentication mechanisms."
+msgstr ""
+"Web yönetici kullanıcısı web ve Unix kimlik doğrulama mekanizmalarını "
+"birleştirmek için bu sürümden kaldırılmıştır."
+
+#: templates/registration/login.html:55
+msgid ""
+"Administrators should log in to the web UI as root, since the web UI already "
+"confers superuser privileges in many areas."
+msgstr ""
+"Yöneticilerin Web ara yüzünü kullanabilmesi için root olarak oturum açması "
+"gerekir. Bu durumda Web ara yüzü birçok alanda süper ayrıcalıklar sunacaktır."
+
+#: templates/storage/dataset_edit.html:4
+msgid "Dataset"
+msgstr "Veri Seti"
+
+#: templates/storage/key.html:6
+#: templates/storage/recoverykey_add.html:9
+#: templates/storage/recoverykey_remove.html:6
+#: templates/storage/rekey.html:6
+msgid "Continue"
+msgstr "Devam Et"
+
+#: templates/storage/recoverykey_add.html:5
+msgid "This will invalidate any previous recovery key"
+msgstr "Bu herhangi bir önceki kurtarma anahtarını geçersiz kılacaktır"
+
+#: templates/storage/rekey.html:3
+msgid "You are about to re-key the encryption"
+msgstr "Anahtarı yeniden şifrelemek üzeresiniz"
+
+#: templates/storage/snapshots.html:102
+msgid "Available Actions"
+msgstr "Mevcut Eylemler"
+
+#: templates/storage/volumestatus_datagrid.html:8
+msgid "Progress"
+msgstr "Süreç"
+
+#: templates/storage/volumestatus_datagrid.html:15
+msgid "Repaired"
+msgstr "Onarılılan"
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr "UYARI: Birimin kurtarma anahtarı geçersiz olacak!"
+
+#: templates/storage/zvols.html:6
+msgid "Add zvol"
+msgstr "ZFS Birimi Ekle"
+
+#: templates/system/shutdown.html:85
+msgid "System is shutting down"
+msgstr "Sistem kapatılıyor"
+
+#: tools/alert.py:176
+msgid "The WebGUI Address could not bind to %s; using wildcard"
+msgstr "%s WebGUI Adresine bağlanamadı; joker karakter kullanıyorsanız"
+
+#: tools/alert.py:198
+msgid "The following multipaths are not optimal: %s"
+msgstr "Aşağıdaki çoklu yollar için uygun değildir: %s"
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr "HTTP+HTTPS"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr "Parola ile şifrelenmiş"
+
+#: choices.py:304
+msgid "lz4 (recommended)"
+msgstr "lz4 (önerilen)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr "Doğrula"
+
+#: choices.py:602
+msgid "38400"
+msgstr "38400"
+
+#: choices.py:603
+msgid "57600"
+msgstr "57600"
+
+#: choices.py:659
+msgid "Fatal"
+msgstr "Ölümcül"
+
+#: choices.py:664
+msgid "Debug2"
+msgstr "Hata Ayıklama2"
+
+#: choices.py:665
+msgid "Debug3"
+msgstr "Hata Ayıklama3"
+
+#: choices.py:672
+msgid "Auth"
+msgstr "Onay"
+
+#: choices.py:673
+msgid "Local 0"
+msgstr "Yerel 0"
+
+#: choices.py:674
+msgid "Local 1"
+msgstr "Yerel 1"
+
+#: choices.py:675
+msgid "Local 2"
+msgstr "Yerel 2"
+
+#: choices.py:676
+msgid "Local 3"
+msgstr "Yerel 3"
+
+#: choices.py:677
+msgid "Local 4"
+msgstr "Yerel 4"
+
+#: choices.py:678
+msgid "Local 5"
+msgstr "Yerel 5"
+
+#: choices.py:679
+msgid "Local 6"
+msgstr "Yerel 6"
+
+#: choices.py:680
+msgid "Local 7"
+msgstr "Yerel 7"
+
+#: choices.py:686
+msgid "NT4"
+msgstr "NT4"
+
+#: choices.py:687
+msgid "NIS"
+msgstr "NIS"
+
+#: choices.py:694
+msgid "off"
+msgstr "Kapalı"
+
+#: choices.py:696
+msgid "!data"
+msgstr "!veri"
+
+#: choices.py:698
+msgid "ctrl"
+msgstr "ctrl"
+
+#: choices.py:699
+msgid "ctrl+data"
+msgstr "ctr+veri"
+
+# "password"un  karşılığı, şifre yani bir şeyi şifrelemek için kullanılan nesnesin sıfatı değildir. Orada sorulan, "geçiş kodu"  yani paroladır. Ordudaki parola işaret gibi. SÜrekli yanlış kullanılıyor bu yanlışı devam ettirmemek gerek. Hem Türkçe karşılığı ve hemde işlevsel ve mantıksal anlamı poroladır, şifre değil.
+#: account/forms.py:55
+msgid "New Password"
+msgstr "Yeni Parola"
+
+#: account/forms.py:68
+msgid "Passwords do not match"
+msgstr "Parolalar eşeleşmiyor"
+
+#: account/models.py:52
+msgid "Built-in Group"
+msgstr "Yerleşik grup"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr "Sudo izni"
+
+#: common/system.py:278
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr "Dosya bağlanamdı (%(retcode)s) -> %(output)s"
+
+#: freeadmin/forms.py:220
+msgid "A file is required"
+msgstr "Bir dosya gerekli"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+msgid "Invalid network: %s"
+msgstr "Geçersiz ağ: %s"
+
+#: freeadmin/navtree.py:573
+msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
+msgstr "%(url)s gelen serisizleştirmede bir hata oluştu: %(error)s"
+
+#: jails/admin.py:91
+#: jails/models.py:149
+msgid "Autostart"
+msgstr "Otomatik Başlat"
+
+#: jails/admin.py:192
+msgid "Edit Jail"
+msgstr "Kafesi Düzenle"
+
+#: jails/admin.py:195
+#: jails/nav.py:264
+msgid "Add Storage"
+msgstr "Depolama Ekle"
+
+#: jails/admin.py:198
+#: templates/plugins/available_datagrid.html:27
+msgid "Upload Plugin"
+msgstr "Eklentiyi Yükle"
+
+#: jails/admin.py:207
+msgid "Stop"
+msgstr "Dur"
+
+#: jails/admin.py:277
+msgid "Instances"
+msgstr "Örnekler"
+
+#: jails/forms.py:99
+msgid "vanilla"
+msgstr "Vanilya"
+
+#: jails/forms.py:234
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr "Şablon bulunamıyor!"
+
+#: jails/forms.py:460
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr "Birim imajı"
+
+#: jails/forms.py:461
+#: jails/models.py:162
+msgid "NAT"
+msgstr "NAT"
+
+#: jails/forms.py:652
+msgid "Create destination directory if it does not exist"
+msgstr "Hedef dizin yoksa oluştur"
+
+#: jails/forms.py:694
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr "Bu olmamalıydı fakat kafes bulunamadı"
+
+#: jails/hook.py:13
+#: jails/models.py:252
+#: jails/models.py:253
+#: jails/nav.py:47
+#: templates/jails/index.html:17
+msgid "Jails"
+msgstr "Kafes"
+
+#: jails/models.py:73
+msgid "Jail Name"
+msgstr "Kafes adı"
+
+#: jails/models.py:83
+msgid "IPv4 address"
+msgstr "IPv4 adresi"
+
+#: jails/models.py:89
+msgid "IPv4 aliases"
+msgstr "IPV4 takma adı"
+
+#: jails/models.py:101
+msgid "IPv4 bridge aliases"
+msgstr "IPV4 köprü takma adı"
+
+#: jails/models.py:107
+msgid "IPv4 default gateway"
+msgstr "IPv4 varsayılan ağ geçidi"
+
+#: jails/models.py:119
+msgid "IPv6 aliases"
+msgstr "IPV6 takma adı"
+
+#: jails/models.py:153
+msgid "IPv6 bridge prefix length"
+msgstr "IPv6 köprü önek uzunluğu"
+
+#: jails/models.py:265
+msgid "IPv4 Network"
+msgstr "IPv4 ağı"
+
+#: jails/models.py:270
+msgid "IPv4 Network Start Address"
+msgstr "IPv4 ağ başlangıç adresi"
+
+#: jails/models.py:275
+msgid "IPv4 Network End Address"
+msgstr "IPv4 ağ bitiş adresi"
+
+#: jails/models.py:285
+msgid "IPv6 Network Start Address"
+msgstr "IPv6 ağ başlangıç adresi"
+
+#: jails/models.py:305
+#: jails/models.py:306
+msgid "Jails Configuration"
+msgstr "Kafes Yapılandırma"
+
+#: jails/models.py:347
+msgid "OS"
+msgstr "İşletim sistemi"
+
+#: jails/nav.py:100
+msgid "View Jails"
+msgstr "Kafesleri Göster"
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:40
+#: templates/plugins/index.html:20
+msgid "Configuration"
+msgstr "Yapılandırma"
+
+#: jails/utils.py:567
+msgid "Unable to determine IPv4 for plugin"
+msgstr "Eklenti için IPv4 belirlenemiyor"
+
+#: jails/views.py:116
+msgid "Storage successfully added."
+msgstr "Depo başarıyla eklendi."
+
+#: jails/views.py:157
+msgid "Jail successfully stopped."
+msgstr "Kafes başarıyla durduruldu."
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr "Tamamlandı"
+
+#: network/admin.py:39
+msgid "IPv4 Addresses"
+msgstr "IPv4 adresleri"
+
+#: network/admin.py:44
+msgid "IPv6 Addresses"
+msgstr "IPv6 adresleri"
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr "Sadece bir arabirim IPv6 otomatik yapılandırmasında etkin olabilir"
+
+#: network/models.py:78
+msgid ""
+"If enabled, delays the start of network-reliant services until interface is "
+"up and ICMP packets to a destination defined in netwait ip list are "
+"flowing.  Link state is examined first, followed by \"pinging\" an IP "
+"address to verify network usability.  If no destination can be reached or "
+"timeouts are exceeded, network services are started anyway with no guarantee "
+"that the network is usable."
+msgstr ""
+"Eğer bu seçenek etkinse ağ bekleme ip listelerinde tanımlanan ICMP paketleri "
+"işlem yaparken ağ bağımlı hizmetlerin başlangıcını geciktirir. Bağlantı "
+"durumu incelendiğinde ağ kullanılabilirliğini doğrulamak için IP adresinin "
+"\"ping\" çıktısı incelenmelidir. Hiçbir hedefe ulaşılamaz ya da zaman "
+"aşımına uğrarsa ağ hizmetlerinin yeniden başladığının ve kullanılabilir "
+"olduğunun ve başladığının garantisi yoktur."
+
+#: network/models.py:89
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+"Ayrılmış IP listesine ping(8) gider. Birden fazla IP listesi belirtilirse "
+"liste bitene kadar veya başarana kadar denenecektir. Eğer boşsa varsayılan "
+"ağ geçidi kullanılır."
+
+#: network/models.py:98
+msgid ""
+"This field is appended to /etc/hosts which contains information regarding "
+"known hosts on the network. hosts(5)"
+msgstr ""
+"Bu alan /etc/hosts alanına eklenen ağdaki ana bilgisayarlar hakkında bilgi "
+"içerir. hosts(5)"
+
+#: plugins/models.py:93
+msgid "Plugin jail name"
+msgstr "Kafes eklenti adı"
+
+#: plugins/models.py:94
+msgid "Jail where the plugin is installed"
+msgstr "Kafes eklentilerinin yüklendiği yer"
+
+#: plugins/models.py:141
+msgid "Plugin Kernel Module"
+msgstr "Çekirdek Müdül Eklentisi"
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr "Depo adresi"
+
+#: plugins/plugin.py:120
+msgid "Failed to download %(url)s: %(error)s"
+msgstr "%(url)s indirilemedi: %(error)s"
+
+#: plugins/views.py:173
+msgid "Plugin not installed"
+msgstr "Kurulu eklenti yok"
+
+#: plugins/views.py:183
+#: plugins/views.py:244
+msgid "Invalid plugin"
+msgstr "Geçersiz eklenti"
+
+#: plugins/views.py:194
+#: plugins/views.py:252
+msgid "Failed to download plugin"
+msgstr "Eklenti indirilemedi"
+
+#: services/forms.py:1446
+msgid "This IP and port are already in use."
+msgstr "Bu IP ve bağlantı noktası zaten kullanılıyor."
+
+#: services/models.py:259
+msgid "Enable/disable home directories for afp user."
+msgstr "Afp kullanıcıları için ev dizinlerini etkinleştir\\devre dışı bırak."
+
+#: services/models.py:288
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it.  It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+"Root olmayan hizmet isteklerine bağlama izni ver. Sadece bunu gerektiren "
+"istemciler varsa bu belirtilmelidir. Hangi çekirdeğin NFS isteklerini "
+"bağlantı noktalarından denetleyerek kabul edeceği otomatik olarak "
+"vfs.nfsrv.nfs_privport bayrağı ile belirlenir."
+
+#: services/models.py:299
+msgid ""
+"Specify specific IP addresses (separated by commas) to bind to for TCP and "
+"UDP requests. This option may be specified multiple times. If no IP is "
+"specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
+"and if IPv6 is enabled, ::1 to the list."
+msgstr ""
+"TCP ve UDP isteklerine bağlanmak için (virgülle ayrılmış) belirli IP "
+"adreslerini girebilirsiniz. Bu seçenek birden çok kez belirtilebilir. Hiçbir "
+"IP belirtilmemişse INADDR_ANY olarak bağlanacaktır. IPv6 etkinse otomatik "
+"olarak 127.0.0.1 1 listesine eklenecektir."
+
+#: services/models.py:307
+msgid "mountd(8) bind port"
+msgstr "mountd(8) bağlantı noktası"
+
+#: services/models.py:324
+msgid ""
+"This option forces the rpc.statd daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+"Bu seçenek IPv4 ve IPv6 adres ailelerinin belirtilen bağlantı noktasına "
+"bağlamak için rpc.statd artalan sürecini çalışmaya zorlar."
+
+#: services/models.py:861
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names."
+msgstr ""
+"Bir ana bilgisayar takma adı. Bu seçenek aynı IP varsa her etki alanı için "
+"birden çok kez görünebilir. Birden fazla takma adları ayırmak için virgül "
+"kullanın."
+
+#: services/models.py:888
+msgid "These parameters will be added to global settings in inadyn-mt.conf."
+msgstr "Bu seçenekler inadyn-mt.conf dosyasındaki genel ayarlara eklenecektir."
+
+#: services/models.py:950
+msgid "Master"
+msgstr "Birincil"
+
+#: services/models.py:951
+msgid "Slave"
+msgstr "İkincil"
+
+#: services/models.py:1102
+msgid "Display Login"
+msgstr "Girişi Göster"
+
+#: services/models.py:1121
+msgid ""
+"Use this option to override the directory creation mask (077 by default)."
+msgstr ""
+"Dizin oluşturma maskesini geçersiz kılmak için bu seçeneği kullanın ("
+"varsayılan 0777)."
+
+#: services/models.py:1210
+msgid "TLS allow per user"
+msgstr "Kullanıcı başına TLS izin"
+
+#: services/models.py:1226
+msgid "TLS no certificate request"
+msgstr "TLS sertifika isteği yok"
+
+#: services/models.py:1230
+msgid "TLS no empty fragments"
+msgstr "TLS boş parçaları yok"
+
+#: services/models.py:1242
+msgid "TLS use implicit SSL"
+msgstr "TLS için kapalı SSL kullanın"
+
+#: services/models.py:1250
+msgid "TLS IP address required"
+msgstr "TLS için gerekli IP adresi"
+
+#: services/models.py:1343
+msgid "SFTP Log Level"
+msgstr "SFTP Giriş Seviyesi"
+
+#: services/models.py:1347
+msgid ""
+"Specifies which messages will be logged by sftp-server. INFO and VERBOSE log "
+"transactions that sftp-server performs on behalf of the client. DEBUG2 and "
+"DEBUG3 each specify higher levels of debugging output. The default is ERROR."
+msgstr ""
+"Mesajlar sftp sunucusu tarafından kaydedilir. BİLGİ ve AYRINTILI günlük "
+"işlemleri bu sftp sunucu istemcisi adına gerçekleştirilir. Hata ayıklama "
+"çıktısı DEBUG2 ve DEBUG3 düzeyinde belirtilir. Varsayılan HATA."
+
+#: services/models.py:1516
+msgid "UNIX extensions"
+msgstr "UNIX uzantıları"
+
+#: services/models.py:1517
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr "Aktif Dizin UNIX uzantıları varsa bunu ayarlayın."
+
+#: services/models.py:1526
+msgid "Use default domain"
+msgstr "Varsayılan etki alanını kullanın"
+
+#: services/models.py:1538
+msgid "Global Catalog Server"
+msgstr "Genel katalog sunucusu"
+
+#: services/models.py:1551
+msgid "Hostname of the kerberos password server to use."
+msgstr "Kullanmak için kerberos sunucu parolası ana bilgisayar adı."
+
+#: services/models.py:1555
+msgid "AD timeout"
+msgstr "AD zaman aşımı"
+
+#: services/models.py:1556
+msgid "Timeout for AD related commands."
+msgstr "AD ile ilgili komutlar için zaman aşımı."
+
+#: services/models.py:1561
+msgid "Timeout for AD DNS queries."
+msgstr "AD DNS sorguları için zaman aşımı."
+
+#: services/models.py:1601
+msgid "NIS domain name"
+msgstr "NT alan adı"
+
+#: services/models.py:1606
+msgid "NIS servers"
+msgstr "NIS sunucusu"
+
+#: services/models.py:1616
+msgid "Manycast"
+msgstr "Birçok Kalıp"
+
+#: services/models.py:1617
+msgid "Cause ypbind to use 'many-cast' instead of broadcast"
+msgstr "Ypbindin yerine yaygın olarak 'çoklu-çevirim' kullanılır"
+
+#: sharing/forms.py:195
+msgid "This is not a valid network: %s"
+msgstr "Bu geçerli bir ağ değildir: %s"
+
+#: sharing/forms.py:309
+msgid "This option is only available once per mountpoint"
+msgstr "Bu seçenek bağlantı noktası başına sadece bir kez kullanılabilir"
+
+#: sharing/forms.py:341
+msgid "You need at least one path for the share"
+msgstr "Paylaşım için en az bir yol gereklidir"
+
+#: sharing/models.py:178
+msgid "Default umask"
+msgstr "Varsayılan umask"
+
+#: sharing/models.py:202
+msgid ""
+"Networks that are authorized to access the NFS share. Specify network "
+"numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
+msgstr ""
+"Ağınız NFS paylaşımı veya IP adreslerinin listesine erişim yetkisine "
+"sahiptir. Belirlenen ağ numaraları 1.2.3.4/xx şeklindedir. Buradaki xx bit "
+"sayısıdır."
+
+#: sharing/models.py:208
+msgid "Authorized IP addresses or hosts"
+msgstr "Yetkili IP adresleri ya da ana bilgisayarlar"
+
+#: sharing/models.py:231
+msgid ""
+"If a user is selected, the root user is limited to that user's permissions"
+msgstr ""
+"Eğer bir kullanıcı seçilirse root kullanıcısı bu kullanıcının izinleri ile "
+"sınırlandırılır"
+
+#: sharing/models.py:249
+msgid "The specified user's permissions are used by all clients"
+msgstr "Belirtilen kullanıcının izinleri tüm istemciler tarafından kullanılır"
+
+#: storage/admin.py:36
+msgid "Wipe"
+msgstr "Temizle"
+
+#: storage/admin.py:47
+msgid "Edit In Bulk"
+msgstr "Toplu Olarak Düzenle"
+
+#: storage/admin.py:252
+#: storage/admin.py:341
+#: storage/nav.py:124
+msgid "Create zvol"
+msgstr "ZFS Birimi Oluştur"
+
+#: storage/admin.py:296
+msgid "Encryption Re-key"
+msgstr "Şifreleme Anahtarını Yenile"
+
+#: storage/admin.py:348
+msgid "Destroy zvol"
+msgstr "ZFS Birimi Sil"
+
+#: storage/admin.py:400
+msgid "Write"
+msgstr "Yaz"
+
+#: storage/admin.py:406
+msgid "Checksum"
+msgstr "Sağlama"
+
+#: storage/admin.py:470
+msgid "Detach"
+msgstr "Ayır"
+
+#: storage/admin.py:581
+msgid "Frequency"
+msgstr "Sıra"
+
+#: storage/forms.py:71
+msgid ""
+"Enabling dedup may have drastic performance implications,<br /> as well as "
+"impact your ability to access your data.<br /> Consider using compression "
+"instead."
+msgstr ""
+"Veri tekilleştirmesinin etkinleştirilmesi ciddi performans etkileri olabilir<"
+"br />bunun yanı sıra veri erişim yeteneğini etkileyebilir.<br />Bunun yerine "
+"sıkıştırma kullanmayı düşünün."
+
+#: storage/forms.py:764
+msgid "Volume imported"
+msgstr "Birimi al"
+
+#: storage/forms.py:794
+#: storage/forms.py:1585
+#: storage/forms.py:1904
+#: storage/forms.py:2019
+#: storage/forms.py:2131
+#: system/models.py:358
+msgid "Passphrase"
+msgstr "Parola"
+
+#: storage/forms.py:1269
+msgid "zvol name"
+msgstr "Zfs birim adı"
+
+#: storage/forms.py:1281
+msgid ""
+"Creates a sparse volume with no reservation, also kown as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less then the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+"Sanallaştırma diye bilinen hiçbir ayırma ile aralıklı bir birim "
+"oluşturulamaz. Bir \"aralıklı birim\" ayrılmış bir birimin boyutundan daha "
+"az olan bir birimdir. Sonuç olarak havuz alanı az olduğunda ENOSPC ile "
+"aralıklı bir birime yazma başarısız olacaktır. (TAVSİYE EDİLMEZ)"
+
+#: storage/forms.py:1589
+#: storage/forms.py:1908
+#: system/forms.py:479
+msgid "Confirm Passphrase"
+msgstr "Parolayı onayla"
+
+#: storage/forms.py:1670
+msgid "Dedicated User"
+msgstr "Atanmış Kullanıcı"
+
+#: storage/forms.py:1940
+#: storage/forms.py:2100
+msgid "Admin password"
+msgstr "Yönetici Parolası"
+
+#: storage/forms.py:1952
+msgid "Remove passphrase"
+msgstr "Parolayı Kaldır"
+
+#: storage/forms.py:2054
+msgid "You need either a passphrase or a recovery key to unlock"
+msgstr ""
+"Bir parola veya kilidini açmak için bir kurtarma anahtarına ihtiyacınız "
+"vardır"
+
+#: storage/forms.py:2084
+msgid "Volume could not be imported: %d devices failed to decrypt"
+msgstr "Birim alınamadı: %d aygıtının şifresi çözülemedi"
+
+#: storage/forms.py:2088
+msgid "Volume could not be imported"
+msgstr "Birim alınamadı"
+
+#: storage/models.py:126
+msgid "LOCKED"
+msgstr "KİLİTLİ"
+
+#: storage/models.py:445
+msgid "Disk Size"
+msgstr "Disk Boyutu"
+
+#: storage/models.py:805
+msgid "High Speed Encryption Ciphers"
+msgstr "Yüksek Hızlı Şifreleme Şifreleri"
+
+#: storage/models.py:854
+msgid ""
+"This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
+"Datasetname not the mountpoint or filesystem path"
+msgstr ""
+"Bu uzak taraftaki ZFS dosya sisteminin adı olmalıdır. örneğin: BirimAdı/"
+"VeriKümesiAdı olmalıdır. Dosya sistem yolu veya bağlantı yolu olmamalıdır."
+
+#: storage/models.py:880
+msgid "Do not start replication before"
+msgstr "Önce çoğaltmaya başlamayın"
+
+#: storage/views.py:717
+msgid "Pool output could not be parsed. Is the pool imported?"
+msgstr "Havuz üretimi çözüm olamadı. Havuz ithal edilsin mi?"
+
+#: storage/views.py:722
+msgid "The scrub process has stopped"
+msgstr "Temizleme süreci durduruldu."
+
+#: storage/views.py:885
+msgid "Passphrase created"
+msgstr "Parola oluşturuldu"
+
+#: storage/views.py:930
+msgid "Volume failed unlocked"
+msgstr "Birim kilitlenemedi"
+
+#: storage/views.py:1016
+msgid "GELI recovery key download starting..."
+msgstr "GELI kurtarma anahtarı indirlmeye başlanıyor..."
+
+#: storage/views.py:1076
+msgid "Disks successfully edited"
+msgstr "Disk başarıyla düzenlendi"
+
+#: support/models.py:45
+msgid "A description of the issue."
+msgstr "Sorunun açıklaması."
+
+#: support/views.py:86
+msgid "Support request successfully sent"
+msgstr "Destek isteği başarıyla gönderildi"
+
+#: system/forms.py:68
+msgid "The path '%s' requires execute permission bit"
+msgstr "'%s' yolu izni için biraz çalıştırmak gereklidir."
+
+#: system/forms.py:581
+msgid "RSA or DSA private key is not valid"
+msgstr "RSA veya DSA özel anahtarları geçerli değil"
+
+#: system/forms.py:604
+msgid "The modulus of certificate and key must match"
+msgstr "Sertifika ve anahtar modülü eşleşmelidir"
+
+#: system/forms.py:881
+msgid "Usernames cannot exceed 17 characters for rsync tasks"
+msgstr "Kullanıcı adları rsync görevler için 17 karakteri geçemez"
+
+#: system/forms.py:886
+msgid "Usernames cannot have spaces"
+msgstr "Kullanıcı adlarında boşluk olamaz"
+
+#: system/models.py:60
+msgid "WebGUI IPv4 Address"
+msgstr "WebGUI IPv4 adresi"
+
+#: system/models.py:75
+msgid "WebGUI HTTPS Port"
+msgstr "WebGUI HTTPS bağlantı noktası"
+
+#: system/models.py:194
+msgid "Serial Port Speed"
+msgstr "Seri bağlantı noktası hızı"
+
+#: system/models.py:219
+msgid "Enable debug kernel"
+msgstr "Çekirdek hata ayıklamasını etkinleştir"
+
+#: system/models.py:222
+msgid "Enable automatic upload of kernel crash dumps"
+msgstr "Çekirdek kilitlenmesinde dokümanları otomatik yüklemeyi etkinleştir"
+
+#: system/models.py:421
+msgid ""
+"Redirect the standard output to /dev/null. In other words, disable output."
+msgstr ""
+"Standart çıkışı /dev/null dizinine yönlendir. Diğer bir değişle çıkışı devre "
+"dışı bırak."
+
+#: system/models.py:427
+msgid ""
+"Redirect the standard error output to /dev/null. In other words, disable "
+"error output."
+msgstr ""
+"Standart hata çıkıtısını /dev/null dizinine yönlendir. Diğer bir değişle "
+"hata çıktısını devre dışı bırak."
+
+#: system/models.py:519
+msgid "Remote SSH Port"
+msgstr "Uzak SSH bağlantı noktası"
+
+#: system/models.py:520
+msgid "SSH Port"
+msgstr "SSH Bağlantı Noktası"
+
+#: system/models.py:901
+#: system/models.py:913
+msgid "Script"
+msgstr "Komut dizisi"
+
+#: system/models.py:940
+msgid "Init/Shutdown Scripts"
+msgstr "Başlat/Kapat Komutları"
+
+#: system/models.py:953
+msgid "First Name"
+msgstr "İlk Ad"
+
+#: system/models.py:961
+msgid "Company"
+msgstr "Kurum"
+
+#: system/models.py:973
+msgid "City"
+msgstr "Şehir"
+
+#: system/models.py:1001
+msgid "Cell Phone"
+msgstr "Cep Telefonu"
+
+#: system/models.py:1013
+#: templates/system/settings.html:12
+msgid "Registration"
+msgstr "Kayıt"
+
+#: system/views.py:316
+msgid "You must configure the root email (Accounts->Users->root)"
+msgstr ""
+"Root e-posta hesabını yapılandırmak gerekir (Hesaplar->Kullanıcılar->root)"
+
+#: templates/menubar.html:48
+msgid "Alert"
+msgstr "Uyarı"
+
+#: templates/freeadmin/generic_model_datagrid.html:176
+msgid "No entry has been found"
+msgstr "Hiçbir giriş bulunamadı"
+
+#: templates/freeadmin/help.html:44
+msgid "Professional Support"
+msgstr "Profesyonel Destek"
+
+#: templates/freeadmin/help.html:46
+msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
+msgstr "FreeNAS Tabanlı Depolama Cihazı İçin Profesyonel Destek"
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr "?"
+
+#: templates/jails/start.html:3
+msgid "Start "
+msgstr "Başlangıç"
+
+#: templates/plugins/available_install.html:3
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr "Eklentiyi kurmak istediğinize emin misiniz? - \"%(plugin)s\""
+
+#: templates/plugins/plugin_update.html:3
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr "Eklentiyi güncellemek istediğinize emin misiniz? - \"%(plugin)s\""
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+msgid "Available Plugins"
+msgstr "Kullanılabilir Eklentiler"
+
+#: templates/registration/login.html:57
+msgid "For security reasons, you must now set a new root password:"
+msgstr ""
+"Güvenlik nedenlerinden dolayı şimdi yeni bir root parolası ayarlamanız "
+"gerekir:"
+
+#: templates/services/core.html:33
+msgid "Directory Service Settings"
+msgstr "Aktif Dizin Ayarları"
+
+#: templates/storage/disk_editbulk.html:3
+msgid "Editing the following disks"
+msgstr "Aşağıdaki diskleri düzenle"
+
+#: templates/storage/key.html:3
+msgid "You are about to download the global GELI key"
+msgstr "Genel GELI anahtarını indirmek üzeresiniz"
+
+#: templates/storage/recoverykey_add.html:4
+msgid "You are about to add a recovery key for this volume"
+msgstr "Bu birim için bir kurtarma anahtarı eklemek üzeresiniz"
+
+#: templates/storage/replication_add.html:5
+msgid "SSH Key Scan"
+msgstr "SSH Anahtarını Tara"
+
+#: templates/storage/snapshots.html:97
+msgid "Refer"
+msgstr "Başvuru"
+
+#: templates/storage/volume_datagrid.html:22
+msgid "UFS Volume Manager"
+msgstr "UFS Birim Yöneticisi"
+
+#: templates/storage/volume_detach.html:27
+msgid ""
+"This is an encrypted volume, make sure to <a href=\"%(url)s\" "
+"target=\"_blank\">download</a> the key so you can be able to import it in "
+"the future"
+msgstr ""
+"Bu şifrelenmiş bir birimdir. Gelecekte bunu almak mümkün olmayabilir. Bu "
+"yüzden anahtarı <a href=\"%(url)s\" target=\"_blank\">indirdiğinize</a> emin "
+"olun."
+
+#: templates/storage/volumestatus_datagrid.html:4
+msgid "Scrub"
+msgstr "Temizlik"
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "%(scanned)s out of %(total)s"
+msgstr "%(total)s - %(scanned)s"
+
+#: templates/storage/volumestatus_datagrid.html:14
+msgid "Errors"
+msgstr "Hatalar"
+
+#: templates/storage/wizard.html:92
+msgid "Extend Volume"
+msgstr "Birimi Genişletin"
+
+#: templates/storage/zvols.html:3
+msgid "Create zvol on %(name)s"
+msgstr "%(name)s üzerinde ZFS birimi oluştur"
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr "Gönder"
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr "Yeniden Başlat"
+
+#: templates/system/firmware_wizard_0.html:6
+#: templates/system/firmware_wizard_1.html:21
+msgid ""
+"Consider downloading your configuration before proceeding, <a "
+"href=\"%(url)s\" target=\"_blank\">click here</a>."
+msgstr ""
+"Yapılandırma indirilirken devam etmeden önce <a href=\"%(url)s\" "
+"target=\"_blank\">buraya tıklayın</a>."
+
+#: templates/system/reboot.html:79
+msgid "System is rebooting"
+msgstr "Sistem yeniden başlatılıyor"
+
+#: choices.py:600
+msgid "9600"
+msgstr "9600"
+
+#: choices.py:701
+msgid "auth+data"
+msgstr "onay+veri"
+
+#: account/forms.py:561
+msgid "Home directory must end with username"
+msgstr "Ev dizini kullanıcı adı ile bitmelidir"
+
+#: account/models.py:142
+msgid "Disable password login"
+msgstr "Parolayla oturum açmayı devre dışı bırak"
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr "Grup Üyeleri"
+
+#: freeadmin/navtree.py:608
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr "Ağ atlamasında url adresi ters olamaz. %(node)s - %(error)s"
+
+#: jails/forms.py:451
+msgid "Path does not exist!"
+msgstr "Böyle bir yol mevcut değil."
+
+#: jails/models.py:90
+msgid "IPv4 netmask"
+msgstr "IPv4 ağ maskesi"
+
+#: jails/models.py:134
+msgid "IPv6 prefix length"
+msgstr "IPv6 önek uzunluğu"
+
+#: jails/models.py:125
+msgid "IPv6 bridge address"
+msgstr "IPv6 köprü adresi"
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr "IPV6 köprü takma adı"
+
+#: jails/models.py:138
+msgid "IPv6 default gateway"
+msgstr "IPv6 varsayılan ağ geçidi"
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr "Kafes ve eklentiler için IPv6 ağ sıralaması"
+
+#: jails/models.py:286
+msgid "IPv6 network start address for jails and plugins"
+msgstr "Kafes ve eklentiler için IPv6 ağ başlangıç adresi"
+
+#: jails/nav.py:70
+msgid "Add Jails"
+msgstr "Kafes Ekle "
+
+#: jails/nav.py:114
+msgid "View Jail Templates"
+msgstr "Kafes Şablonlarını Göster"
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr "Devam etmek için bir ZFS birimi oluşturmak gerekiyor!"
+
+#: jails/views.py:178
+msgid "Jail successfully deleted."
+msgstr "Kafes başarıyla silindi."
+
+#: middleware/zfs.py:644
+msgid "Canceled"
+msgstr "İptal Edildi"
+
+#: services/models.py:216
+msgid ""
+"Specifies whether samba should use (expensive) hostname lookups or use the "
+"ip addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+"Pahalı ana bilgisayar adı veya IP adresi aramaları yerine Samba "
+"kullanılmalıdır. Örneğin ana bilgisayar adı aramaları şu anda kullanılan "
+"yerlerde ana kontrol ve ana bilgisayar durumunu reddeder."
+
+#: services/models.py:312
+msgid ""
+"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
+"families. This is typically done to ensure that the port which mountd binds "
+"to is a known value which can be used in firewall rulesets."
+msgstr ""
+"IPv4 ve IPv6 adres aileleri için belirtilen bağlantı noktasına mountd "
+"gereklidir. Bu genellikle mountd bağlantı noktası için güvenlik duvarı "
+"kurallarını kullanabilecek diğer bağlantıları sağlamak için yapılır."
+
+#: services/models.py:319
+msgid "rpc.statd(8) bind port"
+msgstr "rpc.statd(8) bağlama noktası"
+
+#: services/models.py:329
+msgid "rpc.lockd(8) bind port"
+msgstr "rpc.lockd(8) bağlantı noktası"
+
+#: services/models.py:334
+msgid ""
+"This option forces rpc.lockd the daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+"Bu seçenek IPv4 ve IPv6 adres ailelerinin belirtilen bağlantı noktasına "
+"bağlamak için rpc.lockd artalan sürecini çalışmaya zorlar."
+
+#: services/models.py:953
+msgid "UPS Mode"
+msgstr "UPS Biçimi"
+
+#: services/models.py:1020
+msgid "Monitor Password"
+msgstr "İzleyici Parolası"
+
+#: services/models.py:1139
+msgid "Perform Reverse DNS Lookups"
+msgstr "Ters DNS Aramaları Gerçekleştirmek"
+
+#: services/models.py:1206
+msgid "TLS allow dot login"
+msgstr "TLS nokta giriş izni"
+
+#: services/models.py:1256
+msgid "Place the contents of your certificate and private key here."
+msgstr "Buraya sertifika ve özel anahtar içeriğini yerleştirin."
+
+#: services/models.py:1358
+msgid ""
+"Specifies the facility code that is used when logging messages from sftp-"
+"server."
+msgstr "Sftp sunucusu günlük iletiler için kullanılan tesisin kodunu belirtir."
+
+#: services/models.py:1472
+#: services/models.py:1473
+msgid "NT4 Domain"
+msgstr "NT4 Alan Adı"
+
+#: services/models.py:1512
+msgid "Verbose logging"
+msgstr "Ayrıntılı günlük kaydı"
+
+#: services/models.py:1527
+msgid "Set this if you want to use the default domain for users and groups."
+msgstr ""
+"Eğer kullanıcılar ve gruplar için varsayılan etki alanını kullanmak "
+"istiyorsanız bunu ayarlayın."
+
+#: services/models.py:1539
+msgid "Hostname of the global catalog server to use."
+msgstr "Kullanmak için genel katalog sunucusunun ana bilgisayar adı."
+
+#: sharing/forms.py:118
+msgid "Delete password"
+msgstr "Parolayı sil"
+
+#: sharing/models.py:144
+msgid "Check this to enable Time Machine backups on this share."
+msgstr ""
+"Bu paylaşımda Zaman Makinesi yedeklemelerini etkinleştirmek için bu seçeneği "
+"işaretleyin."
+
+#: sharing/models.py:209
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr ""
+"NFS paylaşımına erişmek için yetkili IP adresleri veya ana bilgisayar adları."
+
+#: sharing/models.py:240
+msgid ""
+"If a group is selected, the root user will also be limited to that group's "
+"permissions"
+msgstr ""
+"Eğer bir grup seçilirse root kullanıcısı da bu grubun izinleri ile sınırlı "
+"olacaktır"
+
+#: storage/admin.py:276
+msgid "Create Passphrase"
+msgstr "Parola Oluştur"
+
+#: storage/admin.py:308
+msgid "Remove recovery key"
+msgstr "Kurtarma Anahtarını Kaldır"
+
+#: storage/admin.py:394
+msgid "Read"
+msgstr "Oku"
+
+#: storage/admin.py:467
+msgid "Offline"
+msgstr "Çevrimdışı"
+
+#: storage/forms.py:483
+msgid "You need at least %d disks"
+msgstr "En azından %d diskleri gerekir"
+
+#: storage/forms.py:527
+msgid "You need a data disk group"
+msgstr "Bir veri disk grubu gerekir"
+
+#: storage/forms.py:771
+msgid "Yes: Decrypt disks"
+msgstr "Evet: Disklerin şifresini çöz"
+
+#: storage/forms.py:1117
+#: storage/forms.py:1229
+msgid "ZFS Deduplication"
+msgstr "ZFS Tekilleştirme"
+
+#: storage/forms.py:1124
+msgid "Record Size"
+msgstr "Kayıt Boyutu"
+
+# ZFS Volume, aslında bölüm değil. YAni diğer dosya sistemlerindeki partition(bölümleme değil). HAtta unix ve linux onu bir aygıt olarak kabul ediyor. O yüzden bence bölüm yanlış. 
+# Open solaris sayfasından alıntı: ZFS Volumes
+# A ZFS volume is a dataset that represents a block device and can be used like any block device. ZFS volumes are identified as devices in the /dev/zvol/{dsk,rdsk}/path directory.
+# In the following example, 5-Gbyte ZFS volume, tank/vol, is created:
+# .. Bu yüzden bence birim veya ne bileyim sanal aygıt denebilir veya daha uygun birşey.
+#: storage/forms.py:1279
+msgid "Sparse volume"
+msgstr "Aralıklı birim"
+
+#: storage/forms.py:1917
+#: storage/forms.py:1983
+msgid "The passphrases do not match"
+msgstr "Parolalar birbirinin aynısı değil"
+
+#: storage/models.py:64
+msgid "Encryption Type"
+msgstr "Şifreleme Türü"
+
+#: storage/models.py:807
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which make it less desirable on untrusted networks."
+msgstr ""
+"Bu seçeneğin etkinleştirilmesi ağlar üzerindeki yüksek ve düşük hızlı veri "
+"aktarımını artırabilir. Varsayılan olarak güvenilmeyen ağlar üzerinde daha "
+"cazip olsada daha az güvenli şifreleme algoritmaları kullanılır."
+
+#: storage/views.py:115
+msgid "Please enter a hostname"
+msgstr "Lütfen bir ana bilgisayar adı girin"
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr "Anahtar bilinmeyen bir nedenle alınamadı"
+
+#: storage/views.py:926
+#: storage/views.py:939
+msgid "Volume unlocked"
+msgstr "Birim kilitlendi"
+
+#: storage/views.py:958
+msgid "GELI key download starting..."
+msgstr "GELI anahtarı indirlmeye başlanıyor..."
+
+#: storage/views.py:1057
+msgid "Recovery has been removed"
+msgstr "Kurtarma kaldırıldı"
+
+#: support/models.py:40
+msgid "Subject"
+msgstr "Konu"
+
+#: system/forms.py:749
+msgid "Memory device"
+msgstr "Aygıt belleği"
+
+#: system/models.py:66
+msgid "WebGUI IPv6 Address"
+msgstr "WebGUI IPv6 adresi"
+
+#: system/models.py:359
+msgid "Private key passphrase"
+msgstr "Özel anahtar parolası"
+
+#: system/models.py:420
+msgid "Redirect Stdout"
+msgstr "Standart çıkışı yeniden yönlendir"
+
+#: system/models.py:921
+msgid "Post Init"
+msgstr "Mesaj Başlatma"
+
+#: system/models.py:939
+msgid "Init/Shutdown Script"
+msgstr "Başlat/Kapat Komutları"
+
+#: templates/freeadmin/generic_model_add.html:38
+#: templates/freeadmin/generic_model_edit.html:42
+#: templates/support/index.html:41
+msgid "Add extra"
+msgstr "Ek Ekle"
+
+#: templates/freeadmin/generic_model_datagrid.html:10
+msgid "Add"
+msgstr "Ekle"
+
+#: templates/jails/index.html:32
+msgid "Templates"
+msgstr "Şablonlar"
+
+#: templates/registration/login.html:51
+msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
+msgstr "Hoşgeldiniz %(sw_name)s&trade; %(sw_login_version)s"
+
+#: templates/storage/create_passphrase.html:5
+msgid ""
+"Remember to add a new recovery key as this action invalidates the previous "
+"recovery key"
+msgstr ""
+"Bu eylem bir önceki kurtarma anahtarını geçersiz kılacak. Yeni bir kurtarma "
+"anahtarı eklemeyi unutmayın."
+
+#: templates/storage/recoverykey_remove.html:3
+msgid "You are about to remove a recovery key for this volume"
+msgstr "Bu birim için kurtarma anahtarını kaldırmak üzeresiniz"
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr "Bu birimin kilidini açmak istiyor musunuz?"
+
+#: templates/storage/volume_detach.html:19
+msgid "ATTENTION - Currently the following services depend on this volume: "
+msgstr "DİKKAT - Şu anda aşağıdaki hizmetler bu birime bağlıdır:"
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "Scan"
+msgstr "Tara"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2011-11-22 14:47+0200\n"
+"PO-Revision-Date: 2011-11-22 14:47+0000\n"
 "Last-Translator: Marc <marc.codina@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ca\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1321973224.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Presentar informe"
+#~ msgid "Reporting"
+#~ msgstr "Presentar informe"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -52,13 +52,11 @@ msgstr "Magatzem"
 msgid "Some error occurred"
 msgstr "Hi ha hagut algun error!"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Editar"
+#~ msgid "Edit"
+#~ msgstr "Editar"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Editar disc"
+#~ msgid "Edit Disk"
+#~ msgstr "Editar disc"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
@@ -85,17 +83,17 @@ msgstr "Cada un seleccionat"
 msgid "Every N"
 msgstr "Cada N"
 
-msgid "CronJobs"
-msgstr "Cronjobs"
+#~ msgid "CronJobs"
+#~ msgstr "Cronjobs"
 
-msgid "Replace"
-msgstr "Reemplaçament"
+#~ msgid "Replace"
+#~ msgstr "Reemplaçament"
 
-msgid "Disk Replacement"
-msgstr "Reemplaçament del disc"
+#~ msgid "Disk Replacement"
+#~ msgstr "Reemplaçament del disc"
 
-msgid "Detach"
-msgstr "Extreure"
+#~ msgid "Detach"
+#~ msgstr "Extreure"
 
-msgid "Disk Detach"
-msgstr "Extreure disc"
+#~ msgid "Disk Detach"
+#~ msgstr "Extreure disc"

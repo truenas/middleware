@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-12-06 11:04+0200\n"
+"PO-Revision-Date: 2013-12-06 11:04+0000\n"
 "Last-Translator: Tato90 <alessandro_rocchi@msn.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1386327899.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Rapporti"
+#~ msgid "Reporting"
+#~ msgstr "Rapporti"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -51,17 +51,14 @@ msgstr "Spazio disco"
 msgid "Some error occurred"
 msgstr "                  Si è verificato qualche errore!                "
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Modifica"
+#~ msgid "Edit"
+#~ msgstr "Modifica"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Modifica disco"
+#~ msgid "Edit Disk"
+#~ msgstr "Modifica disco"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Pulisci"
+#~ msgid "Wipe"
+#~ msgstr "Pulisci"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
 #, fuzzy
@@ -87,20 +84,63 @@ msgstr "Ogni N"
 msgid "Plugins"
 msgstr "Estensioni"
 
-msgid "CronJobs"
-msgstr "CronJobs"
+#~ msgid "CronJobs"
+#~ msgstr "CronJobs"
 
-msgid "Replace"
-msgstr "Sostituisci"
+#~ msgid "Replace"
+#~ msgstr "Sostituisci"
 
-msgid "Disk Replacement"
-msgstr "Sostituzione Disco"
+#~ msgid "Disk Replacement"
+#~ msgstr "Sostituzione Disco"
 
-msgid "Detach"
-msgstr "Scollega"
+#~ msgid "Detach"
+#~ msgstr "Scollega"
 
-msgid "Disk Detach"
-msgstr "Scollega disco"
+#~ msgid "Disk Detach"
+#~ msgstr "Scollega disco"
 
-msgid "Every"
-msgstr "Ogni"
+#~ msgid "Every"
+#~ msgstr "Ogni"
+
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr "Errore Sistema                "
+
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr "Servizio Abilitato                "
+
+#: freeadmin/static/lib/js/freeadmin.js:994
+msgid "The cache is being rebuilt."
+msgstr "                  La Cache Sta Per Essere Ripristinata                "
+
+#: freeadmin/static/lib/js/freeadmin.js:996
+msgid "The cache could not be rebuilt: "
+msgstr "                  La Cache Non Può Essere Ripristinata                "
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr "                  Condivisi                "
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:398
+msgid "Support"
+msgstr "Supporto"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr "Shell"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr "                  Incolla                "
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr "Esplora"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr "Chiudi"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2013-07-03 07:26+0200\n"
+"PO-Revision-Date: 2013-07-03 07:26+0000\n"
 "Last-Translator: zadd3l <vzadd3l@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1372836410.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -559,9 +560,8 @@ msgstr "Chế độ Thư mục gốc"
 msgid "Auxiliary groups"
 msgstr "Nhóm phụ"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Tên đăng nhập với uid này đã tồn tại."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Tên đăng nhập với uid này đã tồn tại."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -601,9 +601,8 @@ msgstr "Mật khẩu đã bị vô hiệu hóa, vui lòng để trống"
 msgid "This field is required."
 msgstr "Mục này là bắt buộc"
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Thư mục Home phải bắt đầu bằng /mnt/ hoặc là /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Thư mục Home phải bắt đầu bằng /mnt/ hoặc là /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -733,18 +732,15 @@ msgstr "Tài khoản Quản trị"
 msgid "Change Password"
 msgstr "Thay đổi mật khẩu"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Thay đổi người quản trị hệ thống(Admin)"
+#~ msgid "Change Admin User"
+#~ msgstr "Thay đổi người quản trị hệ thống(Admin)"
 
 #: account/views.py:95
 msgid "Password successfully updated."
 msgstr "Mật khẩu đã cập nhật thành công."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Tài khoản Admin (tài khoản quản trị hệ thống) đã cập nhật thành công."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Tài khoản Admin (tài khoản quản trị hệ thống) đã cập nhật thành công."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -5223,21 +5219,17 @@ msgstr "Định tuyến mặc định"
 msgid "No default route defined"
 msgstr "Định tuyến mặc định chưa được định nghĩa"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "Chỉnh sửa VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "Chỉnh sửa VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "Xóa VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "Xóa VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "Không có VLAN"
+#~ msgid "No VLAN defined"
+#~ msgstr "Không có VLAN"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "Thêm giao tiếp VLAN"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "Thêm giao tiếp VLAN"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
@@ -5367,9 +5359,8 @@ msgstr "Thiết lập FTP"
 msgid "ISCSI Settings"
 msgstr "Thiết lập iSCSI"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "Thiết lập LDAP"
+#~ msgid "LDAP Settings"
+#~ msgstr "Thiết lập LDAP"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
@@ -5434,9 +5425,8 @@ msgstr ""
 msgid "Authorized Initiators"
 msgstr "Xác thực"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "Xác thực"
+#~ msgid "Authentication"
+#~ msgstr "Xác thực"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -6266,8 +6256,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-msgid "Selected"
-msgstr "Đã chọn"
+#~ msgid "Selected"
+#~ msgstr "Đã chọn"
 
 #, fuzzy
 msgid "View Sysctls"
@@ -6281,43 +6271,43 @@ msgstr "Xem tất cả tài khoản"
 msgid "Add Apple (CIFS) Share"
 msgstr "Thiết lập CIFS"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Băng từ"
+#~ msgid "Tape"
+#~ msgstr "Băng từ"
 
-msgid "Pass"
-msgstr "Đi qua"
+#~ msgid "Pass"
+#~ msgstr "Đi qua"
 
 msgid "Disable password"
 msgstr "Vô hiệu hóa mật khẩu"
 
-msgid "View All Users"
-msgstr "Xem tất cả tài khoản"
+#~ msgid "View All Users"
+#~ msgstr "Xem tất cả tài khoản"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr "Rất tiếc, thời hạn nhập mẫu đã hết. Vui lòng nhập lại từ trang này."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr "Rất tiếc, thời hạn nhập mẫu đã hết. Vui lòng nhập lại từ trang này."
 
 msgid "%s successfully added."
 msgstr "%s đã thêm vào hệ thống thành công."
 
-msgid "Cron Scheduler"
-msgstr "Lịch trình Cron"
+#~ msgid "Cron Scheduler"
+#~ msgstr "Lịch trình Cron"
 
-msgid "Welcome to"
-msgstr "Chào mừng đến với8"
+#~ msgid "Welcome to"
+#~ msgstr "Chào mừng đến với8"
 
-msgid "Success!"
-msgstr "Thành công!"
+#~ msgid "Success!"
+#~ msgstr "Thành công!"
 
-msgid "Your password was changed."
-msgstr "Mật khẩu của bạn đã được thay đổi."
+#~ msgid "Your password was changed."
+#~ msgstr "Mật khẩu của bạn đã được thay đổi."
 
-msgid "Password change"
-msgstr "Đổi mật khẩu"
+#~ msgid "Password change"
+#~ msgstr "Đổi mật khẩu"
 
-msgid "English"
-msgstr "Tiếng Anh"
+#~ msgid "English"
+#~ msgstr "Tiếng Anh"

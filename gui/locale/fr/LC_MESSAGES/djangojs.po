@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-05-31 10:50+0200\n"
+"PO-Revision-Date: 2014-05-31 10:50+0000\n"
 "Last-Translator: SmallGuy <zoreille.gfo@hotmail.fr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -16,12 +16,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1401533403.0\n"
 
 # Pour la fonction actuelle, "Graphiques" correspond plus.
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Graphiques"
+#~ msgid "Reporting"
+#~ msgstr "Graphiques"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -52,21 +52,17 @@ msgstr "Stockage"
 msgid "Some error occurred"
 msgstr "Des erreurs sont survenues"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Modifier"
+#~ msgid "Edit"
+#~ msgstr "Modifier"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Modifier le disque"
+#~ msgid "Edit Disk"
+#~ msgstr "Modifier le disque"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Effacer"
+#~ msgid "Wipe"
+#~ msgstr "Effacer"
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Effacer le disque"
+#~ msgid "Wipe Disk"
+#~ msgstr "Effacer le disque"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -89,21 +85,165 @@ msgstr "Chaque N"
 msgid "Plugins"
 msgstr "Modules"
 
-msgid "CronJobs"
-msgstr "Tâches planifiées"
+#~ msgid "CronJobs"
+#~ msgstr "Tâches planifiées"
 
-msgid "Replace"
-msgstr "Remplacer"
+#~ msgid "Replace"
+#~ msgstr "Remplacer"
 
-msgid "Disk Replacement"
-msgstr "Remplacement du disque"
+#~ msgid "Disk Replacement"
+#~ msgstr "Remplacement du disque"
 
-msgid "Detach"
-msgstr "Détacher"
+#~ msgid "Detach"
+#~ msgstr "Détacher"
 
-msgid "Disk Detach"
-msgstr "Détacher le disque"
+#~ msgid "Disk Detach"
+#~ msgstr "Détacher le disque"
 
 # Utilisé dans "Every minute", "Every hour", "Every day of month"
-msgid "Every"
-msgstr "Chaque"
+#~ msgid "Every"
+#~ msgstr "Chaque"
+
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr "Alerte Système"
+
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr "Activer le service"
+
+#: freeadmin/static/lib/js/freeadmin.js:996
+msgid "The cache is being rebuilt."
+msgstr "Le cache est en reconstruction."
+
+#: freeadmin/static/lib/js/freeadmin.js:994
+msgid "The cache is being rebuilt."
+msgstr "Le cache est en reconstruction"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr "Partages"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:212
+msgid "Jails"
+msgstr "Prisons"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:398
+msgid "Support"
+msgstr "Support"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
+msgid "Size"
+msgstr "Taille"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:262
+msgid "drives"
+msgstr "lecteurs"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:264
+msgid "drive"
+msgstr "lecteur"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:266
+msgid "show"
+msgstr "afficher"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
+msgid "no more drives"
+msgstr "aucun autre lecteur"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
+msgid ""
+"Your configuration is not optimal!<br /><br />It means this number of disks "
+"will not provide the best performance for that type of disk group.<br /><br "
+"/>For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"Votre configuration n'est pas optimale !<br /><br />Cela signifie que ce "
+"nombre de disques ne procurera pas les meilleurs performances pour ce type "
+"d'agrégation.<br /><br />Pour plus de détails consultez la <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
+msgid "Capacity"
+msgstr "Capacité"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
+msgid "Drag and drop this to resize"
+msgstr "Glissez-déposez pour redimensionner"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Add Volume"
+msgstr "Ajouter un volume"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Existing data will be cleared"
+msgstr "Les données existantes seront supprimées"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
+msgid "Extend Volume"
+msgstr "Étendre un volume"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
+msgid "Volume Name"
+msgstr "Nom du volume"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
+msgid "Volume to extend"
+msgstr "Volume à étendre"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
+msgid ""
+"Extending an encrypted volume will reset the passphrase and recovery key!"
+msgstr ""
+"Étendre un volume chiffré va réinitialiser la phrase de passe et la clef de "
+"récupération !"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
+msgid "Encryption"
+msgstr "Chiffrement"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
+msgid "Initialize Safely"
+msgstr "Initialiser en toute sécurité"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
+msgid "Available disks"
+msgstr "Disques disponibles"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
+msgid "Volume layout"
+msgstr "Agencement du volume"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
+msgid "Estimated capacity"
+msgstr "Capacité estimée"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
+msgid "Add Extra Device"
+msgstr "Ajouter un périphérique supplémentaire"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
+msgid "Cancel"
+msgstr "Annuler"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr "Terminal"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr "Coller"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr "Parcourir"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr "Fermer"

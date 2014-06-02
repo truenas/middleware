@@ -8,19 +8,19 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-03-30 18:18+0200\n"
-"Last-Translator: kent1983 <kent_starup@hotmail.com>\n"
+"PO-Revision-Date: 2013-12-06 11:04+0000\n"
+"Last-Translator: dennis.stjernholmco <dennis@stjernholmco.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1386327889.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Rapportering"
+#~ msgid "Reporting"
+#~ msgstr "Rapportering"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -51,21 +51,17 @@ msgstr "Lager"
 msgid "Some error occurred"
 msgstr "Der opstod en fejl!"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Rediger"
+#~ msgid "Edit"
+#~ msgstr "Rediger"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Rediger disk"
+#~ msgid "Edit Disk"
+#~ msgstr "Rediger disk"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Tørre"
+#~ msgid "Wipe"
+#~ msgstr "Tørre"
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Slet disk"
+#~ msgid "Wipe Disk"
+#~ msgstr "Slet disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -83,20 +79,20 @@ msgstr "Alle valgte"
 msgid "Every N"
 msgstr "Hver N"
 
-msgid "CronJobs"
-msgstr "Tidsstyrede opgaver"
+#~ msgid "CronJobs"
+#~ msgstr "Tidsstyrede opgaver"
 
-msgid "Replace"
-msgstr "Erstat"
+#~ msgid "Replace"
+#~ msgstr "Erstat"
 
-msgid "Disk Replacement"
-msgstr "Disk udskiftning"
+#~ msgid "Disk Replacement"
+#~ msgstr "Disk udskiftning"
 
-msgid "Detach"
-msgstr "Frakobel"
+#~ msgid "Detach"
+#~ msgstr "Frakobel"
 
-msgid "Disk Detach"
-msgstr "Frakobl disk"
+#~ msgid "Disk Detach"
+#~ msgstr "Frakobl disk"
 
-msgid "Every"
-msgstr "Hver"
+#~ msgid "Every"
+#~ msgstr "Hver"

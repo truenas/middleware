@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2011-08-06 13:00+0200\n"
+"PO-Revision-Date: 2011-08-06 13:00+0000\n"
 "Last-Translator: nonless <tero.harju@netti.fi>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fi\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1312635659.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "Täysi"
 msgid "Debug"
 msgstr ""
 
-#: choices.py:195
-msgid "Default"
-msgstr "Oletus"
+#~ msgid "Default"
+#~ msgstr "Oletus"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -6196,8 +6196,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Nauha"
+#~ msgid "Tape"
+#~ msgstr "Nauha"

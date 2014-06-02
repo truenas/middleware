@@ -8,19 +8,19 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2011-12-21 11:44+0200\n"
-"Last-Translator: Zlatko <z.emanuilov@ecopharm.bg>\n"
+"PO-Revision-Date: 2012-10-18 12:01+0000\n"
+"Last-Translator: ikroumov <ikroumov@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1350561714.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Статистика"
+#~ msgid "Reporting"
+#~ msgstr "Статистика"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -52,13 +52,11 @@ msgstr "Съхранение"
 msgid "Some error occurred"
 msgstr "Възникна грешка!"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Редактиране"
+#~ msgid "Edit"
+#~ msgstr "Редактиране"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Редактиране на диска"
+#~ msgid "Edit Disk"
+#~ msgstr "Редактиране на диска"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
@@ -85,17 +83,17 @@ msgstr "Всяко от избраните"
 msgid "Every N"
 msgstr "Всяко N"
 
-msgid "CronJobs"
-msgstr "Разписание на задачите"
+#~ msgid "CronJobs"
+#~ msgstr "Разписание на задачите"
 
-msgid "Replace"
-msgstr "Замяна"
+#~ msgid "Replace"
+#~ msgstr "Замяна"
 
-msgid "Disk Replacement"
-msgstr "Смяна на диск"
+#~ msgid "Disk Replacement"
+#~ msgstr "Смяна на диск"
 
-msgid "Detach"
-msgstr "Откачи"
+#~ msgid "Detach"
+#~ msgstr "Откачи"
 
-msgid "Disk Detach"
-msgstr "Откачи диска"
+#~ msgid "Disk Detach"
+#~ msgstr "Откачи диска"

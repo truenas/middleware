@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2014-05-31 15:26+0200\n"
+"PO-Revision-Date: 2014-05-31 15:26+0000\n"
 "Last-Translator: demon <aska.x5@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: mn\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1401549975.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6183,3 +6184,458 @@ msgstr ""
 #: tools/alert.py:177
 msgid "Critical Alerts"
 msgstr ""
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr "HTTP+HTTPS"
+
+#: choices.py:304
+msgid "lz4 (recommended)"
+msgstr "lz4 (зөвлөхүйц)"
+
+#: choices.py:308
+msgid "zle (runs of zeros)"
+msgstr "zle (0-ээс эхлэх)"
+
+#: choices.py:309
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (legacy, not recommended)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr "Шалгах"
+
+#: choices.py:600
+msgid "9600"
+msgstr "9600"
+
+#: choices.py:601
+msgid "19200"
+msgstr "19200"
+
+#: choices.py:602
+msgid "38400"
+msgstr "38400"
+
+#: choices.py:603
+msgid "57600"
+msgstr "57600"
+
+#: choices.py:604
+msgid "115200"
+msgstr "115200"
+
+#: choices.py:659
+msgid "Fatal"
+msgstr "Аюултай "
+
+#: choices.py:662
+msgid "Verbose"
+msgstr "Олон үгтэй"
+
+#: choices.py:664
+msgid "Debug2"
+msgstr "Debug2"
+
+#: choices.py:665
+msgid "Debug3"
+msgstr "Debug3"
+
+#: choices.py:670
+msgid "Daemon"
+msgstr "Daemon"
+
+#: choices.py:672
+msgid "Auth"
+msgstr "Auth"
+
+#: choices.py:673
+msgid "Local 0"
+msgstr "Дотоод 0"
+
+#: choices.py:674
+msgid "Local 1"
+msgstr "Дотоод 1"
+
+#: choices.py:675
+msgid "Local 2"
+msgstr "Дотоод 2"
+
+#: choices.py:676
+msgid "Local 3"
+msgstr "Дотоод 3"
+
+#: choices.py:677
+msgid "Local 4"
+msgstr "Дотоод 4"
+
+#: choices.py:678
+msgid "Local 5"
+msgstr "Дотоод 5"
+
+#: choices.py:679
+msgid "Local 6"
+msgstr "Дотоод 6"
+
+#: choices.py:680
+msgid "Local 7"
+msgstr "Дотоод 7"
+
+#: choices.py:686
+msgid "NT4"
+msgstr "NT4"
+
+#: choices.py:687
+msgid "NIS"
+msgstr "NIS"
+
+#: choices.py:693
+msgid "on"
+msgstr "асаах"
+
+#: choices.py:694
+msgid "off"
+msgstr "унтраах"
+
+#: choices.py:695
+msgid "data"
+msgstr "өгөгдөл"
+
+#: choices.py:696
+msgid "!data"
+msgstr "!өгөгдөл"
+
+#: choices.py:697
+msgid "auth"
+msgstr "auth"
+
+#: choices.py:698
+msgid "ctrl"
+msgstr "Ctrl"
+
+#: choices.py:699
+msgid "ctrl+data"
+msgstr "ctrl+өгөгдөл"
+
+#: choices.py:700
+msgid "ctrl+!data"
+msgstr "ctrl+!өгөгдөл"
+
+#: choices.py:701
+msgid "auth+data"
+msgstr "auth+өгөгдөл"
+
+#: choices.py:702
+msgid "auth+!data"
+msgstr "auth+!өгөгдөл"
+
+#: account/forms.py:55
+msgid "New Password"
+msgstr "Шинэ нууц үг"
+
+#: account/forms.py:60
+msgid "Confirm New Password"
+msgstr "Нууц үгээ бататгах:"
+
+#: account/forms.py:68
+msgid "Passwords do not match"
+msgstr "Нууц үг тохирохгүй байна"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr "Гэр лавлах нь давхар цэгийг агуулах боломжгүй"
+
+#: account/forms.py:561
+msgid "Home directory must end with username"
+msgstr "Гэр лавлах нь хэрэглэгчийн нэрээр төгсөх ёстой"
+
+#: account/models.py:52
+msgid "Built-in Group"
+msgstr "Бүтээгдсэн бүлэг"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr "Sudo-г зөвшөөрөх"
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr "Бүтээгдсэн хэрэглэгч"
+
+#: account/models.py:142
+msgid "Disable password login"
+msgstr "Нууц үгээр нэвтрэхийг хаах"
+
+#: account/models.py:241
+msgid "Group Membership"
+msgstr "Групп-ын гишүүнчлэл"
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr "Групп-ын гишүүнчлэл"
+
+#: api/resources.py:767
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+msgid "Locked"
+msgstr "Түгжигдсэн"
+
+#: api/resources.py:860
+msgid "on every %(days)s"
+msgstr "өдөр бүр %(өдөр)үүд"
+
+#: api/resources.py:866
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr "%(эхлэл)ээс %(сүүл) хүртэл, %(давтагдах)"
+
+#: freeadmin/forms.py:220
+msgid "A file is required"
+msgstr "Файл шаардлагатай"
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr "Хаяг буруу байна: %s"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+msgid "Invalid network: %s"
+msgstr "Сүлжээ буруу байна: %s"
+
+#: jails/admin.py:91
+#: jails/models.py:149
+msgid "Autostart"
+msgstr "Автоматаар эхлэх"
+
+#: jails/admin.py:195
+#: jails/nav.py:264
+msgid "Add Storage"
+msgstr "Санах ой нэмэх"
+
+#: jails/admin.py:198
+#: templates/plugins/available_datagrid.html:27
+msgid "Upload Plugin"
+msgstr "Залгаас байршуулах"
+
+#: jails/admin.py:206
+msgid "Start"
+msgstr "Эхлэх"
+
+#: jails/admin.py:207
+msgid "Stop"
+msgstr "Зогсоох"
+
+#: jails/admin.py:271
+#: jails/models.py:353
+msgid "URL"
+msgstr "URL"
+
+#: jails/admin.py:277
+msgid "Instances"
+msgstr "Загварууд"
+
+#: jails/forms.py:89
+msgid "type"
+msgstr "төрөл"
+
+#: jails/forms.py:99
+msgid "vanilla"
+msgstr "Өнгөгүй"
+
+#: jails/forms.py:234
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr "Загвар олдсонгүй"
+
+#: jails/forms.py:451
+msgid "Path does not exist!"
+msgstr "Зам үл оршино"
+
+#: jails/forms.py:459
+msgid "autostart"
+msgstr "автоматаар эхлэх"
+
+#: jails/forms.py:460
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr "VIMAGE"
+
+#: jails/forms.py:461
+#: jails/models.py:162
+msgid "NAT"
+msgstr "NAT"
+
+#: jails/forms.py:652
+msgid "Create destination directory if it does not exist"
+msgstr "Лавлахийн зориулалт байхгүй бол шинээр үүсгэх"
+
+#: jails/forms.py:772
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr "Зам суулгагдаагүй байна %(эх үүсвэр)үүд: %(алдаа)нууд"
+
+#: jails/models.py:90
+msgid "IPv4 netmask"
+msgstr "IPv4 netmask"
+
+#: jails/models.py:83
+msgid "IPv4 address"
+msgstr "IPv4 хаяг"
+
+#: jails/models.py:109
+msgid "IPv4 bridge netmask"
+msgstr "IPv4 bridge netmask"
+
+#: jails/models.py:125
+msgid "IPv6 bridge address"
+msgstr "IPv6 bridge address"
+
+#: jails/models.py:153
+msgid "IPv6 bridge prefix length"
+msgstr "IPv6 bridge prefix length"
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr "IPv6 bridge aliases"
+
+#: jails/models.py:138
+msgid "IPv6 default gateway"
+msgstr "IPv6 өгөгдмөл зам"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr "MAC"
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr "jail өгөгдөлийг хадгалах зам"
+
+#: jails/models.py:265
+msgid "IPv4 Network"
+msgstr "IPv4 Сүлжээ"
+
+#: jails/models.py:280
+msgid "IPv6 Network"
+msgstr "IPv6 Сүлжээ"
+
+#: jails/models.py:285
+msgid "IPv6 Network Start Address"
+msgstr "IPv6 сүлжээ эхлэх хаяг"
+
+#: jails/models.py:290
+msgid "IPv6 Network End Address"
+msgstr "IPv6 сүлжээ төгсөх хаяг"
+
+#: jails/models.py:294
+msgid "Collection URL"
+msgstr "URL цуглуулга"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr "jails-ийн үзүүлэлтэнд зориулагдсан URL "
+
+#: jails/models.py:415
+msgid "Read-Only"
+msgstr "Зөвхөн уншигдах"
+
+#: jails/nav.py:70
+msgid "Add Jails"
+msgstr "Jails-үүдийг нэмэх"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr "Jail-йин загваруудыг нэмэх"
+
+#: jails/nav.py:100
+msgid "View Jails"
+msgstr "Jails-үүдийг харах"
+
+#: jails/nav.py:114
+msgid "View Jail Templates"
+msgstr "Jail-ийн загварыг харах"
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:40
+#: templates/plugins/index.html:20
+msgid "Configuration"
+msgstr "Тохиргоо"
+
+#: jails/views.py:157
+msgid "Jail successfully stopped."
+msgstr "Jail амжилттай зогслоо"
+
+#: jails/views.py:178
+msgid "Jail successfully deleted."
+msgstr "Jail амжилттай устгагдлаа"
+
+#: jails/views.py:399
+msgid "Jail template successfully edited."
+msgstr "Jail-ийн загвар амжилттай устгагдлаа"
+
+#: middleware/notifier.py:2877
+msgid "No RPC Token!"
+msgstr "No RPC Token!"
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr "Явж байгаа"
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr "Дууссан"
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr "DHCP-д ганцхан интерфейс ашиглагдах боломжтой"
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr "Зөвхөн нэг л интерфейсийн IPv6 авто тохируулга нь зөвшөөрөгдсөн"
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr "Энэ сүлжээ өөр NIC-ээр ашиглагдаж байгаа"
+
+#: network/forms.py:343
+msgid "You need a domain, e.g. hostname.domain"
+msgstr "Танд домэйн нэр хэрэгтэй байна, жишээ hostname.domain"
+
+#: network/models.py:401
+msgid "LAGG Interface Group"
+msgstr "LAGG Интерфейс Групп"
+
+#: plugins/forms.py:215
+msgid "Unable to set repository: %s"
+msgstr "Хадгалах газрыг суулгах боломжгүй: %s"
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr "URL хадгалах газар"
+
+#: plugins/models.py:175
+msgid "URL for the plugins repository"
+msgstr "залгаас хадгалах газрын URL"
+
+#: plugins/plugin.py:120
+msgid "Failed to download %(url)s: %(error)s"
+msgstr "Татаж авахад алдаа гарлаа %(url)s: %(алдаа)s"
+
+#: plugins/views.py:173
+msgid "Plugin not installed"
+msgstr "Залгаас суулгагдаагүй байна"
+
+#: plugins/views.py:194
+#: plugins/views.py:252
+msgid "Failed to download plugin"
+msgstr "Залгаас татаж авахад алдаа гарлаа"
+
+#: plugins/views.py:198
+msgid "Jail does not exist"
+msgstr "Jail алга байна"
+
+#: services/forms.py:637
+#: services/forms.py:645
+msgid "Spaces or number signs are not allowed."
+msgstr "Хоосон зай болон тоон тэмдэгтүүд ашиглах боломжгүй"

@@ -8,16 +8,17 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2013-06-06 22:19+0200\n"
+"PO-Revision-Date: 2013-06-06 22:19+0000\n"
 "Last-Translator: dj_amil <djulic@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Pootle 2.1.6\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<="
+"4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1370557151.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -5992,13 +5993,11 @@ msgstr ""
 msgid "iBurst"
 msgstr ""
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "NTP server nije definisan"
+#~ msgid "No NTP servers defined."
+#~ msgstr "NTP server nije definisan"
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "Dodaj NTP server"
+#~ msgid "Add NTP server"
+#~ msgstr "Dodaj NTP server"
 
 #: templates/system/ntpserver.html:46
 msgid "Add NTP Server"
@@ -6019,13 +6018,11 @@ msgstr ""
 msgid "History"
 msgstr "Historija"
 
-#: templates/system/rsync.html:5
-msgid "Local Path"
-msgstr "Lokalna putanja"
+#~ msgid "Local Path"
+#~ msgstr "Lokalna putanja"
 
-#: templates/system/rsync.html:6
-msgid "Remote"
-msgstr "Udaljen"
+#~ msgid "Remote"
+#~ msgstr "Udaljen"
 
 #: templates/system/rsync.html:48
 msgid "No rsync tasks defined."
@@ -6118,9 +6115,8 @@ msgstr ""
 msgid "Load Average"
 msgstr ""
 
-#: templates/system/system_info.html:34
-msgid "Connected through"
-msgstr "Konektovan putem"
+#~ msgid "Connected through"
+#~ msgstr "Konektovan putem"
 
 #: templates/system/tunable.html:34
 msgid "No tunable setting defined."

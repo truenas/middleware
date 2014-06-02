@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2013-02-20 07:17+0200\n"
+"PO-Revision-Date: 2013-02-20 07:17+0000\n"
 "Last-Translator: apis17 <mhbinet@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1361344628.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "Penuh"
 msgid "Debug"
 msgstr "Ralat"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Setting Asal"
+#~ msgid "Default"
+#~ msgstr "Setting Asal"
 
 # refer to Apple Time Machine
 #: choices.py:196
@@ -341,9 +341,8 @@ msgstr "On"
 msgid "Off"
 msgstr "Off"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (disyorkan)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (disyorkan)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -526,9 +525,8 @@ msgstr "Sila taip kata laluan yang sama sekali lagi untuk pengesahan"
 msgid "Shell"
 msgstr "Shell"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Tutup login password"
+#~ msgid "Disable password logins"
+#~ msgstr "Tutup login password"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -554,9 +552,8 @@ msgstr "Mod Home Directory"
 msgid "Auxiliary groups"
 msgstr "Kumpulan Sokongan"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Nama pengguna dengan uid tersebut sudah wujud"
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Nama pengguna dengan uid tersebut sudah wujud"
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -596,9 +593,8 @@ msgstr "Password ditutup, tinggalkan kosong"
 msgid "This field is required."
 msgstr "Medan perlu di penuhi"
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Folder home harus bermula dengan /mnt/ atau /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Folder home harus bermula dengan /mnt/ atau /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -722,24 +718,17 @@ msgstr ""
 msgid "Admin Account"
 msgstr "Akaun Admin"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Tukar katalaluan"
+#~ msgid "Change Password"
+#~ msgstr "Tukar katalaluan"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Tukar Admin"
+#~ msgid "Change Admin User"
+#~ msgstr "Tukar Admin"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Password berjaya dikemaskini."
+#~ msgid "Password successfully updated."
+#~ msgstr "Password berjaya dikemaskini."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Pengguna admin berjaya dikemaskini."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Pengguna admin berjaya dikemaskini."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -906,9 +895,8 @@ msgstr "Mesti mengisi nameserver 1 sebelum mengisi nameserver 2"
 msgid "Parent Interface"
 msgstr "Peranti Atasan"
 
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "Nama mestilah vlanXX dimana XX ialah integer"
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "Nama mestilah vlanXX dimana XX ialah integer"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1104,9 +1092,8 @@ msgstr "Gabungan Sambungan"
 msgid "Link Aggregations"
 msgstr "Penggabungan Sambungan"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "Kumpulan Peranti LAGG"
+#~ msgid "LAGG Interface group"
+#~ msgstr "Kumpulan Peranti LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1148,9 +1135,8 @@ msgstr "Buat Penggabungan Sambungan"
 msgid "View Link Aggregations"
 msgstr ""
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG berjaya ditambah."
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG berjaya ditambah."
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1493,17 +1479,15 @@ msgstr "Rahsia (Ulang)"
 msgid "Enter the same secret above for verification."
 msgstr "Masukkan rahsia yang sama spt di atas utk pengesahan."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Rahsia Pemula"
+#~ msgid "Initiator Secret"
+#~ msgstr "Rahsia Pemula"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Rahsia lain pemula. (intuk pengesahan CHAP bersama)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Rahsia Pemula (Ulang)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Rahsia Pemula (Ulang)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1593,19 +1577,17 @@ msgstr ""
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Peranti Cakera"
+#~ msgid "Disk device"
+#~ msgstr "Peranti Cakera"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "ID Kumpulan Portal tidak boleh lebih daripada %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "ID Kumpulan tidak boleh lebih daripada %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "ID Kumpulan tidak boleh lebih daripada %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -6250,8 +6232,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-msgid "Selected"
-msgstr "Dipilih"
+#~ msgid "Selected"
+#~ msgstr "Dipilih"
 
 #, fuzzy
 msgid "View Sysctls"
@@ -6261,25 +6243,25 @@ msgstr "Papar Semua %"
 msgid "View Tunables"
 msgstr "Papar semua pengguna"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Tape"
+#~ msgid "Tape"
+#~ msgstr "Tape"
 
-msgid "Pass"
-msgstr "Pass"
+#~ msgid "Pass"
+#~ msgstr "Pass"
 
-msgid "Disable password"
-msgstr "Tiada password"
+#~ msgid "Disable password"
+#~ msgstr "Tiada password"
 
-msgid "View All Users"
-msgstr "Papar semua pengguna"
+#~ msgid "View All Users"
+#~ msgstr "Papar semua pengguna"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr "Maaf, masa telah tamat, sila isi semula medan berkenaan semula."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr "Maaf, masa telah tamat, sila isi semula medan berkenaan semula."
 
 #, fuzzy
 msgid "Export Volume"
@@ -6289,14 +6271,14 @@ msgstr "Saiz ZFS"
 msgid "successfully deleted"
 msgstr "%s data berjaya dinaiktaraf."
 
-msgid "%s successfully added."
-msgstr "% berjaya ditambah."
+#~ msgid "%s successfully added."
+#~ msgstr "% berjaya ditambah."
 
-msgid "%s successfully update."
-msgstr "%s data berjaya dinaiktaraf."
+#~ msgid "%s successfully update."
+#~ msgstr "%s data berjaya dinaiktaraf."
 
-msgid "Admin user"
-msgstr "Pengguna Admin"
+#~ msgid "Admin user"
+#~ msgstr "Pengguna Admin"
 
 #, fuzzy
 msgid "ZVol Name"

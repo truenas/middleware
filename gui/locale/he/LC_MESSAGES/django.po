@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2012-11-29 08:46+0200\n"
+"PO-Revision-Date: 2012-11-29 08:48+0000\n"
 "Last-Translator: shaharhd <shaharhd@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1354178884.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "מלא"
 msgid "Debug"
 msgstr "הסרת שגיאות"
 
-#: choices.py:195
-msgid "Default"
-msgstr "ברירת מחדל"
+#~ msgid "Default"
+#~ msgstr "ברירת מחדל"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -338,9 +338,8 @@ msgstr "מופעל"
 msgid "Off"
 msgstr "כבוי"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "Izjb (מומלץ)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "Izjb (מומלץ)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -525,9 +524,8 @@ msgstr "הקש את אותה סיסמה כמו למעלה, לצורך אימות
 msgid "Shell"
 msgstr "מעטפת"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "נטרל כניסות עם סיסמא"
+#~ msgid "Disable password logins"
+#~ msgstr "נטרל כניסות עם סיסמא"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -554,9 +552,8 @@ msgstr "תיקיית הבית"
 msgid "Auxiliary groups"
 msgstr "קבוצות מסייעות"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "שם משתמש עם הuid הזה כבר קיים."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "שם משתמש עם הuid הזה כבר קיים."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -596,9 +593,8 @@ msgstr "סיסמא מנוטרלת, השאר ריק"
 msgid "This field is required."
 msgstr "השדה הזה נחוץ."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "תיקיית הבית חייב להתחיל ב- /mnt/ או /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "תיקיית הבית חייב להתחיל ב- /mnt/ או /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -722,24 +718,17 @@ msgstr "חשבון"
 msgid "Admin Account"
 msgstr "חשבון מנהל מערכת"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "שנה סיסמה"
+#~ msgid "Change Password"
+#~ msgstr "שנה סיסמה"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "שנה סיסמת מנהל"
+#~ msgid "Change Admin User"
+#~ msgstr "שנה סיסמת מנהל"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "סיסמה עודכנה בהצלחה."
+#~ msgid "Password successfully updated."
+#~ msgstr "סיסמה עודכנה בהצלחה."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "משתמש מנהל עודכן בהצלחה."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "משתמש מנהל עודכן בהצלחה."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -1106,9 +1095,8 @@ msgstr "צרוף הקישור"
 msgid "Link Aggregations"
 msgstr "קישור מצורף"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "LAGG קבוצת הממשק"
+#~ msgid "LAGG Interface group"
+#~ msgstr "LAGG קבוצת הממשק"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1151,9 +1139,8 @@ msgstr "יצור קיבוץ כרטיסים"
 msgid "View Link Aggregations"
 msgstr "ראה את כל הקישורים המצורפים"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG הוסף בהצלחה"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG הוסף בהצלחה"
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1517,17 +1504,15 @@ msgstr "סוד (אמות)"
 msgid "Enter the same secret above for verification."
 msgstr "הקש את אותו סוד כמו למעלה לצורך אימות"
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "יזם סודי"
+#~ msgid "Initiator Secret"
+#~ msgstr "יזם סודי"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "צד היזם סודי. (לצורך אימות CHAP הדדי) "
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "יזם סודי (אמות)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "יזם סודי (אמות)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1616,19 +1601,17 @@ msgstr "הערך יכול להיות בבייטים, או יכול להיות ק
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "התקן דיסק"
+#~ msgid "Disk device"
+#~ msgstr "התקן דיסק"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "השער מזהה קבוצתי לא יכול להיות גבוה מ-%d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "המזהה הקבותי שלך לא יכול להיות גבוה מ%d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "המזהה הקבותי שלך לא יכול להיות גבוה מ%d"
 
 #: services/forms.py:1019
 #, fuzzy
@@ -1761,13 +1744,11 @@ msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr "השתמש באופציה זאתי על מנת לעקוף את מסכת יצירת תיקיה (0777 בברירת מחדל)"
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "תמיכה בRW גדול"
+#~ msgid "Large RW support"
+#~ msgstr "תמיכה בRW גדול"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "של קבצים עם Sendfile (2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "של קבצים עם Sendfile (2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1879,15 +1860,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "שם השרת"
+#~ msgid "Server Name"
+#~ msgstr "שם השרת"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "שם השרת. אם השדה הזה יושאר ריק שם השרת יהיה ברירת המחדל."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "שם השרת. אם השדה הזה יושאר ריק שם השרת יהיה ברירת המחדל."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1925,15 +1904,13 @@ msgstr ""
 "ציין כמה שרתים לייצר. צרכים להיות מספיק כדי לטפל ברמת המקסימום של בוזמניות "
 "מהלקוחות של השרת, בדרך כלל ארבע עד שש."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "מצב לא סינכרוני"
+#~ msgid "Asynchronous mode"
+#~ msgstr "מצב לא סינכרוני"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr "אפשר מצב לא סינכרוני, שיעזור לביצועים ברשתות שגבוהות ממהירות מגיגהביט."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr "אפשר מצב לא סינכרוני, שיעזור לביצועים ברשתות שגבוהות ממהירות מגיגהביט."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2321,13 +2298,12 @@ msgstr "ספק"
 msgid "Domain name"
 msgstr "שם הדומיין"
 
-#: services/models.py:765
-msgid ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
-msgstr ""
-"שם פונדקאי נרדף. האוציה הזאת יכולה להופיע מספר פעמים, לכל דומיין שיש את אותו "
-"IP. השתמש ברווח כדי להפריד בשמות נרדפים מרובים."
+#~ msgid ""
+#~ "A host name alias. This option can appear multiple times, for each domain "
+#~ "that has the same IP. Use a space to separate multiple alias names."
+#~ msgstr ""
+#~ "שם פונדקאי נרדף. האוציה הזאת יכולה להופיע מספר פעמים, לכל דומיין שיש את אותו "
+#~ "IP. השתמש ברווח כדי להפריד בשמות נרדפים מרובים."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2341,9 +2317,8 @@ msgstr ""
 msgid "Forced update period"
 msgstr "כפה זמן עידכון"
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr "המאיינים האלו יוספו למאפיינים הגלובליים ב- inadyn.conf."
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr "המאיינים האלו יוספו למאפיינים הגלובליים ב- inadyn.conf."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
@@ -2566,13 +2541,11 @@ msgstr "נתיב"
 msgid "Allow Local User Login"
 msgstr "אפשר כניסה של משתמש מקומי"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "כרזה "
+#~ msgid "Banner"
+#~ msgstr "כרזה "
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "כרזת ברכה שתופיע מתי שחיבור נכס בפעם הראשונה בחיבור FTP."
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "כרזת ברכה שתופיע מתי שחיבור נכס בפעם הראשונה בחיבור FTP."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2594,9 +2567,8 @@ msgstr "אפשר Chroot"
 msgid "Require IDENT Authentication"
 msgstr "חייב אימות זהות"
 
-#: services/models.py:1031
-msgid "Require Reverse DNS for IP"
-msgstr "חייב DNS הפוך לIP"
+#~ msgid "Require Reverse DNS for IP"
+#~ msgstr "חייב DNS הפוך לIP"
 
 #: services/models.py:1033
 msgid "Masquerade address"
@@ -2676,9 +2648,8 @@ msgstr "רוחב פס להעלאה למשתמש אנונימי"
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr "רוחב פס להורדה למתמש אנונימי בקילובייט/שנייה. אפס משמעותו אין סוף."
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "אפשר SSL\\TLS"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "אפשר SSL\\TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -2793,13 +2764,11 @@ msgstr ""
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1239
-msgid "Domain Controller Name"
-msgstr "שם בקר הדומיין"
+#~ msgid "Domain Controller Name"
+#~ msgstr "שם בקר הדומיין"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "שם AD או PDC."
+#~ msgid "AD or PDC name."
+#~ msgstr "שם AD או PDC."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3102,15 +3071,13 @@ msgid ""
 msgstr ""
 "דווח אם הטמפרטורה השתנתה בלפחות N מעלות צלזיוס מדיווח אחרון. 0 בשביל לנטרל"
 
-#: services/models.py:1475
-msgid "Informal"
-msgstr "בלתי פורמלי"
+#~ msgid "Informal"
+#~ msgstr "בלתי פורמלי"
 
-#: services/models.py:1476 services/models.py:1481
-msgid ""
-"Report if the temperature is greater or equal than N degrees Celsius. 0 to "
-"disable"
-msgstr "דווח את הטמפרטורה גבוהה או שווה לN מעלות צלזיוס. 0 בשביל לנטרל"
+#~ msgid ""
+#~ "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
+#~ "disable"
+#~ msgstr "דווח את הטמפרטורה גבוהה או שווה לN מעלות צלזיוס. 0 בשביל לנטרל"
 
 #: services/models.py:1480
 msgid "Critical"
@@ -3120,9 +3087,8 @@ msgstr "קריטי"
 msgid "Email to report"
 msgstr "כתובת אימייל בשביל דיווח"
 
-#: services/models.py:1487
-msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr "כתובת אימייל של היעד,הפרד כתובות אמייל ע\"י נקודת פסיק."
+#~ msgid "Destination email address. Separate email addresses by semi-colon"
+#~ msgstr "כתובת אימייל של היעד,הפרד כתובות אמייל ע\"י נקודת פסיק."
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3133,13 +3099,11 @@ msgstr "S.M.A.R.T."
 msgid "Control Services"
 msgstr "נהל שירותים"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "הקפי התקנים"
+#~ msgid "Device Extents"
+#~ msgstr "הקפי התקנים"
 
-#: services/nav.py:72
-msgid "Add Device Extent"
-msgstr "הוסף הקף התקן"
+#~ msgid "Add Device Extent"
+#~ msgstr "הוסף הקף התקן"
 
 #: services/nav.py:79
 #, fuzzy
@@ -3208,14 +3172,12 @@ msgstr "סיסמת שיתוף"
 msgid "The path %s does not exist"
 msgstr "הדרך להקף"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "השדה הזה אינו כתובת IP או רשת חוקית"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "השדה הזה אינו כתובת IP או רשת חוקית"
 
-#: sharing/forms.py:165
 #, python-format
-msgid "The IP '%s' is not valid."
-msgstr "ה-IP '%s' אינו חוקי."
+#~ msgid "The IP '%s' is not valid."
+#~ msgstr "ה-IP '%s' אינו חוקי."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3362,15 +3324,13 @@ msgstr ""
 "האפשרות הזאת מאפשרת לתת סיסמה לנפח, שיכול להיות עד 8 תווים (שימוש בתווי "
 "ASCII מומלץ ביותר בזמן הכתיבה)."
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "שתף סט תווים"
+#~ msgid "Share Character Set"
+#~ msgstr "שתף סט תווים"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr "מציין את סט תווי השיתוף, לדוגמא UTF8, UTF8-MAC, ISO-8859-15 וכו'"
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr "מציין את סט תווי השיתוף, לדוגמא UTF8, UTF8-MAC, ISO-8859-15 וכו'"
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3420,30 +3380,26 @@ msgstr ""
 "אפשר למשתמשים מסוימים גישת קריאה/כתיבה לשיתוף. זה נוהג על פי פורמט אפשור "
 "האפשרות ."
 
-#: sharing/models.py:160
-msgid "Disk Discovery"
-msgstr "גילוי הכונן"
+#~ msgid "Disk Discovery"
+#~ msgstr "גילוי הכונן"
 
-#: sharing/models.py:161
-msgid ""
-"Allow other systems to discover this share as a disk for data, as a Time "
-"Machine backup volume or not at all."
-msgstr ""
-"אפשר למערכות אחרות לגלות את השיתוף הזה כמו כונן בשביל מידע, בשביל נפח Time "
-"Machine backup או לא בכלל."
+#~ msgid ""
+#~ "Allow other systems to discover this share as a disk for data, as a Time "
+#~ "Machine backup volume or not at all."
+#~ msgstr ""
+#~ "אפשר למערכות אחרות לגלות את השיתוף הזה כמו כונן בשביל מידע, בשביל נפח Time "
+#~ "Machine backup או לא בכלל."
 
-#: sharing/models.py:167
-msgid "Disk discovery mode"
-msgstr "מצב גילוי הכונן"
+#~ msgid "Disk discovery mode"
+#~ msgstr "מצב גילוי הכונן"
 
-#: sharing/models.py:168
-msgid ""
-"Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
-"behavior in MacOS. Default mode exports the volume as a data volume for "
-"users."
-msgstr ""
-"אזהרה! בחירת 'Time Machine' על כמה שיתופים יכול לגרום לתוצאות בלתי צפויות "
-"בMacOS. אפשרות ברירת המחדל היא ליצא את הנפח בתור נפח מידע בשביל משתמשים."
+#~ msgid ""
+#~ "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
+#~ "behavior in MacOS. Default mode exports the volume as a data volume for "
+#~ "users."
+#~ msgstr ""
+#~ "אזהרה! בחירת 'Time Machine' על כמה שיתופים יכול לגרום לתוצאות בלתי צפויות "
+#~ "בMacOS. אפשרות ברירת המחדל היא ליצא את הנפח בתור נפח מידע בשביל משתמשים."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3457,49 +3413,43 @@ msgstr ""
 "מגדיר את בסיס המידע  להיות שמור בנתיב. אתה צריך להגדיר מיקום בר כתיבה, אפילו "
 "אם הנפח הוא כתיבה בלבד."
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "מטמון CNID"
+#~ msgid "Cache CNID"
+#~ msgstr "מטמון CNID"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"אם מוגדר afpd הוא ישתמש במידע שמאוחסן בקובץ הכותרת עליונה בשביל להוריד את "
-"לחץ מידע הבסיס. אל תשנה את האפשרות הזאת אם אם הנפח משונה על ידי לקוחות שאינם "
-"לקוחות AFTP (NFS/SMB/local)."
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "אם מוגדר afpd הוא ישתמש במידע שמאוחסן בקובץ הכותרת עליונה בשביל להוריד את "
+#~ "לחץ מידע הבסיס. אל תשנה את האפשרות הזאת אם אם הנפח משונה על ידי לקוחות שאינם "
+#~ "לקוחות AFTP (NFS/SMB/local)."
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "תרגם CR/LF"
+#~ msgid "Translate CR/LF"
+#~ msgstr "תרגם CR/LF"
 
-#: sharing/models.py:182
-msgid ""
-"Enables crlf translation for TEXT files, automatically converting macintosh "
-"line breaks into Unix ones. Use of this option might be dangerous since some "
-"older programs store binary data files as type 'TEXT' when saving and switch "
-"the filetype in a second step. Afpd will potentially destroy such files when "
-"'erroneously' changing bytes in order to do line break translation."
-msgstr ""
-"אפשר תרגום crlf בשביל קבצי TEXT. המר אוטומטי שבירת קווים של מקינטוס לכאלה של "
-"UNIX.אפשרות זאת יכולה להיות מסוכנת מכיוון שחלק מתוכניות ישנות משתמשות קבצי "
-"מידע בינארי בתור 'TEXT' מתי שמלחיפים את סוג הקובץ בשלב השני. Afpd יכול "
-"בפוטנציאל להשמיד קבצים כאלה 'בטעות' כאשר מחליף בייטים בשביל לעשות תרגום "
-"שבירת קווין."
+#~ msgid ""
+#~ "Enables crlf translation for TEXT files, automatically converting macintosh "
+#~ "line breaks into Unix ones. Use of this option might be dangerous since some "
+#~ "older programs store binary data files as type 'TEXT' when saving and switch "
+#~ "the filetype in a second step. Afpd will potentially destroy such files when "
+#~ "'erroneously' changing bytes in order to do line break translation."
+#~ msgstr ""
+#~ "אפשר תרגום crlf בשביל קבצי TEXT. המר אוטומטי שבירת קווים של מקינטוס לכאלה של "
+#~ "UNIX.אפשרות זאת יכולה להיות מסוכנת מכיוון שחלק מתוכניות ישנות משתמשות קבצי "
+#~ "מידע בינארי בתור 'TEXT' מתי שמלחיפים את סוג הקובץ בשלב השני. Afpd יכול "
+#~ "בפוטנציאל להשמיד קבצים כאלה 'בטעות' כאשר מחליף בייטים בשביל לעשות תרגום "
+#~ "שבירת קווין."
 
-#: sharing/models.py:185
-msgid "Windows File Names"
-msgstr "שמות קבצים של חלונות"
+#~ msgid "Windows File Names"
+#~ msgstr "שמות קבצים של חלונות"
 
-#: sharing/models.py:186
-msgid ""
-"This forces filenames to be restricted to the character set used by Windows. "
-"This is not recommended for shares used principally by Mac computers."
-msgstr ""
-"זה  מכריח שמות קבצים להיות מוגבלים לסט תווים של חלונות. זה לא מומלץ לשיתופים "
-"שבשביל מחשבי מקינטוש."
+#~ msgid ""
+#~ "This forces filenames to be restricted to the character set used by Windows. "
+#~ "This is not recommended for shares used principally by Mac computers."
+#~ msgstr ""
+#~ "זה  מכריח שמות קבצים להיות מוגבלים לסט תווים של חלונות. זה לא מומלץ לשיתופים "
+#~ "שבשביל מחשבי מקינטוש."
 
 #: sharing/models.py:189
 #, fuzzy
@@ -3527,33 +3477,27 @@ msgstr ""
 "תמיד השתמש ב0 בשביל מספר התקן. עוזר מתי שמספר ההתקן קבוע בהפעלה מחדש, "
 "קבץ, ...."
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "נטרל מזהה קובץ"
+#~ msgid "Disable File ID"
+#~ msgstr "נטרל מזהה קובץ"
 
-#: sharing/models.py:201
-msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "אל תפרסם יוצר שדה. (createfileid, resolveid, deleteid calls."
+#~ msgid "Don't advertise createfileid, resolveid, deleteid calls."
+#~ msgstr "אל תפרסם יוצר שדה. (createfileid, resolveid, deleteid calls."
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "נטרל: שמות hex"
+#~ msgid "Disable :hex Names"
+#~ msgstr "נטרל: שמות hex"
 
-#: sharing/models.py:205
-msgid ""
-"Disable :hex translations for anything except dot files. This option makes "
-"the '/' character illegal."
-msgstr ""
-"נטרל: תרגומי hex בשביל הכל חוץ מקבצי dot. האפשרות הזאת גורמת לתו '/' להיות "
-"בלתי חוקי."
+#~ msgid ""
+#~ "Disable :hex translations for anything except dot files. This option makes "
+#~ "the '/' character illegal."
+#~ msgstr ""
+#~ "נטרל: תרגומי hex בשביל הכל חוץ מקבצי dot. האפשרות הזאת גורמת לתו '/' להיות "
+#~ "בלתי חוקי."
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "ספק תאיומות עם לקוחות אפל II (Apple II )."
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "ספק תאיומות עם לקוחות אפל II (Apple II )."
 
 #: sharing/models.py:212
 msgid "No Stat"
@@ -3595,19 +3539,17 @@ msgstr "שיתוף אפל (apple)"
 msgid "Apple (AFP) Shares"
 msgstr "שיתופי אפל (apple)"
 
-#: sharing/models.py:268
-msgid "Authorized network or IP addresses"
-msgstr "כתובת IP או רשת מאושרת"
+#~ msgid "Authorized network or IP addresses"
+#~ msgstr "כתובת IP או רשת מאושרת"
 
-#: sharing/models.py:269
-msgid ""
-"Network that is authorized to access the NFS share or a list of IP "
-"addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
-"number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
-msgstr ""
-"רשת שמאושרת לגשת לשיתופי NFS או רשימה של כתובות IP. ציין מספרים בצורת "
-"1.2.3.4/xx איפה שXX מציינים מציינים את מספר הביטים של מסכת הרשת או רשימה של "
-"כתובות IP 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgid ""
+#~ "Network that is authorized to access the NFS share or a list of IP "
+#~ "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
+#~ "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgstr ""
+#~ "רשת שמאושרת לגשת לשיתופי NFS או רשימה של כתובות IP. ציין מספרים בצורת "
+#~ "1.2.3.4/xx איפה שXX מציינים מציינים את מספר הביטים של מסכת הרשת או רשימה של "
+#~ "כתובות IP 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -3642,33 +3584,29 @@ msgstr "מנע אהזרות של יומן המערכת עם יצוא השיתו�
 msgid "Maproot User"
 msgstr "Maproot משתמש"
 
-#: sharing/models.py:289
-msgid "User to map root to"
-msgstr "משתמש ממפה את root ל-"
+#~ msgid "User to map root to"
+#~ msgstr "משתמש ממפה את root ל-"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "Maproot קבוצה"
 
-#: sharing/models.py:296
-msgid "Group to map root to"
-msgstr "קבוצה ממפה את root ל-"
+#~ msgid "Group to map root to"
+#~ msgstr "קבוצה ממפה את root ל-"
 
 #: sharing/models.py:299
 msgid "Mapall User"
 msgstr "Mapall משתמש"
 
-#: sharing/models.py:303
-msgid "User to map all users to"
-msgstr "מתשמש ממפה את כל המשתמשים ל-"
+#~ msgid "User to map all users to"
+#~ msgstr "מתשמש ממפה את כל המשתמשים ל-"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "Mapall קבוצה"
 
-#: sharing/models.py:310
-msgid "Group to map all users to"
-msgstr "קבוצה ממפה את כל המשתמשים ל-"
+#~ msgid "Group to map all users to"
+#~ msgstr "קבוצה ממפה את כל המשתמשים ל-"
 
 #: sharing/models.py:321
 #, fuzzy
@@ -3699,14 +3637,11 @@ msgstr "המשתמש % לא חוקי."
 msgid "Volume name"
 msgstr "שם הנפח"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "סוג מערכת הקבצים"
+#~ msgid "Filesystem type"
+#~ msgstr "סוג מערכת הקבצים"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "כפה סקטורים בגודל 4096 בייטים"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "כפה סקטורים בגודל 4096 בייטים"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
@@ -3753,21 +3688,18 @@ msgid ""
 "append a virtual device"
 msgstr ""
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "אתה חייב לבחור מערכת קבצים"
+#~ msgid "You must select a filesystem"
+#~ msgstr "אתה חייב לבחור מערכת קבצים"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "כבר יש נפח עם אותו שם"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"יומן\" הוא מילה שמור ומכיוון זה לא יכול להיות משומש."
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"יומן\" הוא מילה שמור ומכיוון זה לא יכול להיות משומש."
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "הנפח לא יכול להתחיל עם עם c[0-9], mirror, raidz or spare"
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr "הנפח לא יכול להתחיל עם עם c[0-9], mirror, raidz or spare"
 
 #: storage/forms.py:311
 #, fuzzy
@@ -3872,13 +3804,11 @@ msgstr "מכסה בשביל סט המידע"
 msgid "Reserved space for this volume"
 msgstr "נפח שמור בשביל סט המידע הזה"
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "שם נפח ZFS"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "שם נפח ZFS"
 
-#: storage/forms.py:845
-msgid "Size for this ZFS Volume"
-msgstr "גודל בשביל נפח הZFS הזה"
+#~ msgid "Size for this ZFS Volume"
+#~ msgstr "גודל בשביל נפח הZFS הזה"
 
 #: storage/forms.py:846
 #, fuzzy
@@ -4327,10 +4257,8 @@ msgstr "יבא נפח באופן אוטומטי"
 msgid "View Volumes"
 msgstr "ראה את כל הנפחים"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "צור נפח ZFS"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "צור נפח ZFS"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4406,9 +4334,8 @@ msgstr "התצלום נמחק בהצלחה."
 msgid "Rollback successful."
 msgstr "חזרה לאחורה מוצלחת."
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "התצלום הוסף בהצלחה."
+#~ msgid "Snapshot successfully added."
+#~ msgstr "התצלום הוסף בהצלחה."
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4637,25 +4564,21 @@ msgstr "השתמש במסוף בקרה סריאלי"
 msgid "Enable screen saver"
 msgstr "אפשר שומר מסך"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "בדוק אוטומטית קושחה חדשה"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "בדוק אוטומטית קושחה חדשה"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "צפצוף בהדלקה"
+#~ msgid "Beep on boot"
+#~ msgstr "צפצוף בהדלקה"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "אפשר כיוונן מערכת מיוחד"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "אפשר כיוונן מערכת מיוחד"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "אפשר דלוק(Daemon חסיכה בחשמל)"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "אפשר Zeroconf/Bonjour"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "אפשר Zeroconf/Bonjour"
 
 #: system/models.py:174
 #, fuzzy
@@ -5050,9 +4973,8 @@ msgstr "לא היה ניתן לשלוח את הודעת הבדיקה:"
 msgid "Your test email has been sent!"
 msgstr "הודעת הבדיקה נשלחה בהצלחה!"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "דף לא נמצא"
+#~ msgid "Page Not Found"
+#~ msgstr "דף לא נמצא"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5074,10 +4996,8 @@ msgstr "עזרה"
 msgid "Log In"
 msgstr "כניסה"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "מזהה"
+#~ msgid "ID"
+#~ msgstr "מזהה"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -5085,11 +5005,8 @@ msgstr "מזהה"
 msgid "Members"
 msgstr "חברים"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "ערוך/שנה"
+#~ msgid "Modify"
+#~ msgstr "ערוך/שנה"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5103,52 +5020,42 @@ msgstr "שנה קבוצה"
 msgid "Delete Group"
 msgstr "מחק קבוצה"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "אין שום קבוצות שהוגרו ע\"י משתמש."
+#~ msgid "There are no user defined groups."
+#~ msgstr "אין שום קבוצות שהוגרו ע\"י משתמש."
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "הוסף קבוצה חדשה"
+#~ msgid "Add New Group"
+#~ msgstr "הוסף קבוצה חדשה"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "בית"
+#~ msgid "Home"
+#~ msgstr "בית"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
 msgstr "ערוך משתמש"
 
-#: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
-#: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
-msgid "Auxiliary Groups"
-msgstr "קבוצות עזר"
+#~ msgid "Auxiliary Groups"
+#~ msgstr "קבוצות עזר"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
 msgstr "מחק משתמש"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "מחק משתמש"
+#~ msgid "Delete User"
+#~ msgstr "מחק משתמש"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "אין משתמשים מוגדרים"
+#~ msgid "No users defined"
+#~ msgstr "אין משתמשים מוגדרים"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "הוסף משתמש חדש"
+#~ msgid "Add New User"
+#~ msgstr "הוסף משתמש חדש"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "שנה כתובת אימייל"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "שנה סיסמת מנהל"
+#~ msgid "Change Admin Password"
+#~ msgstr "שנה סיסמת מנהל"
 
 #: templates/freeadmin/advanced_btn.html:25
 #, fuzzy
@@ -5297,9 +5204,8 @@ msgstr "תעוד"
 msgid "FreeNAS Documentation"
 msgstr "תעוד FreeNAS"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "IPv6 אוטומטי"
+#~ msgid "IPv6 Auto"
+#~ msgstr "IPv6 אוטומטי"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5341,22 +5247,18 @@ msgstr "פעולות זמינות"
 msgid "Edit"
 msgstr "ערוך"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "ערוך מנשק"
+#~ msgid "Edit Interface"
+#~ msgstr "ערוך מנשק"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "מחק מנשק"
+#~ msgid "Delete Interface"
+#~ msgstr "מחק מנשק"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
 msgstr "שום מנשק לא הוגדר"
 
-#: templates/network/interface.html:47 templates/network/interface.html:49
-msgid "Add Interface"
-msgstr "הוסף מנשק"
+#~ msgid "Add Interface"
+#~ msgstr "הוסף מנשק"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5372,50 +5274,38 @@ msgstr "ערוך חברים"
 msgid "LAGG Members"
 msgstr "חברי LAGG"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "שום מנשק LAGG לא הוגדר"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "שום מנשק LAGG לא הוגדר"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "הוסף מנשק LAGG"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "הוסף מנשק LAGG"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "הוסף LAGG"
+#~ msgid "Add LAGG"
+#~ msgstr "הוסף LAGG"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "עדיפות הזמנות"
+#~ msgid "Ordering Priority"
+#~ msgstr "עדיפות הזמנות"
 
-#: templates/network/lagg_members.html:7
-msgid "Startup option"
-msgstr "אפשרות התחלה"
+#~ msgid "Startup option"
+#~ msgstr "אפשרות התחלה"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "פעולה"
+#~ msgid "Action"
+#~ msgstr "פעולה"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "הוסף חברLAGG"
+#~ msgid "Add LAGG Member"
+#~ msgstr "הוסף חברLAGG"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "ערוך ניתוב סטטי"
+#~ msgid "Edit Static Route"
+#~ msgstr "ערוך ניתוב סטטי"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "מחק ניתוב סטטי"
+#~ msgid "Delete Static Route"
+#~ msgstr "מחק ניתוב סטטי"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "ניתוב סטטי לא מוגדר"
+#~ msgid "No static route defined"
+#~ msgstr "ניתוב סטטי לא מוגדר"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "הוסף ניתוב סטטי"
+#~ msgid "Add Static Route"
+#~ msgstr "הוסף ניתוב סטטי"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5433,21 +5323,17 @@ msgstr "ניתוב בררת מחדל"
 msgid "No default route defined"
 msgstr "נתיב ברירת מחדל לא הוגדר"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "ערוך VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "ערוך VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "מחק VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "מחק VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "שום VLAN לא הוגדר"
+#~ msgid "No VLAN defined"
+#~ msgstr "שום VLAN לא הוגדר"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "הוסף מנשק VLAN"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "הוסף מנשק VLAN"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
@@ -5544,9 +5430,8 @@ msgstr "ברוך הבא %(username)s. תודה שהתחברת."
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
 msgstr ""
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "הכנס בבקשה."
+#~ msgid "Please log in."
+#~ msgstr "הכנס בבקשה."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5564,9 +5449,8 @@ msgstr "כנס בחזרה"
 msgid "AFP Settings"
 msgstr "הגדרות AFP"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "הגדרות תיקייה פעילה"
+#~ msgid "Active Directory Settings"
+#~ msgstr "הגדרות תיקייה פעילה"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5584,9 +5468,8 @@ msgstr "הגדרות FTP"
 msgid "ISCSI Settings"
 msgstr "הגדרות iSCSI"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "הגדרות LDAP"
+#~ msgid "LDAP Settings"
+#~ msgstr "הגדרות LDAP"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
@@ -5651,9 +5534,8 @@ msgstr "שערים"
 msgid "Authorized Initiators"
 msgstr "יזם מאושר"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "אימות"
+#~ msgid "Authentication"
+#~ msgstr "אימות"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5672,45 +5554,36 @@ msgstr "מטרות משויכות"
 msgid "No associated targets defined"
 msgstr "אין שום מטרות מוגדרות"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "הוסף הקף למטרה"
+#~ msgid "Add Extent to Target"
+#~ msgstr "הוסף הקף למטרה"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "הוסף הקף למטרה"
+#~ msgid "Add Extent To Target"
+#~ msgstr "הוסף הקף למטרה"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "עמית"
+#~ msgid "Peer"
+#~ msgstr "עמית"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "הוסף משתמש iSCSI"
+#~ msgid "Add iSCSI User"
+#~ msgstr "הוסף משתמש iSCSI"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "רשת מאושרת"
+#~ msgid "Authorized Network"
+#~ msgstr "רשת מאושרת"
 
 #: templates/services/iscsi_authini.html:35
 #, fuzzy
 msgid "No authorized initiators defined"
 msgstr "יזם מאושר"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "הוסף יזם מאושר"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "הוסף יזם מאושר"
 
 #: templates/services/iscsi_dextents.html:33
 #, fuzzy
 msgid "No device extents defined"
 msgstr "אין שום מטרות מוגדרות"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "הוסף הקף"
+#~ msgid "Add Extent"
+#~ msgstr "הוסף הקף"
 
 #: templates/services/iscsi_extents.html:5
 #, fuzzy
@@ -5730,32 +5603,25 @@ msgstr "הקשב"
 msgid "No IP defined for this Portal"
 msgstr ""
 
-#: templates/services/iscsi_portals.html:26
-msgid "Edit Portal"
-msgstr "ערוך שער"
+#~ msgid "Edit Portal"
+#~ msgstr "ערוך שער"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "מחק שער"
+#~ msgid "Delete Portal"
+#~ msgstr "מחק שער"
 
 #: templates/services/iscsi_portals.html:39
 #, fuzzy
 msgid "No portals defined"
 msgstr "אין שום מטרות מוגדרות"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "הוסף שער"
+#~ msgid "Add Portal"
+#~ msgstr "הוסף שער"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "אין שום מטרות מוגדרות"
+#~ msgid "No targets defined"
+#~ msgstr "אין שום מטרות מוגדרות"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "הוסף מטרה"
+#~ msgid "Add Target"
+#~ msgstr "הוסף מטרה"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -5804,14 +5670,11 @@ msgstr ""
 msgid "Delete Plugins Jail"
 msgstr "מחק קובץ מוסתר."
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "שום יחידות תפקוד Rsync מוגדרות"
+#~ msgid "No rsync modules defined"
+#~ msgstr "שום יחידות תפקוד Rsync מוגדרות"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "שיתופים פעילים"
+#~ msgid "Active Shares"
+#~ msgstr "שיתופים פעילים"
 
 #: templates/sharing/apple.html:7
 #, fuzzy
@@ -5828,10 +5691,8 @@ msgstr "ערוך שיתוף אפל"
 msgid "Delete Apple (AFP) Share"
 msgstr "מחק שיתוף אפל"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "שום שיתוף לא מוגדר"
+#~ msgid "No shares defined"
+#~ msgstr "שום שיתוף לא מוגדר"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 #, fuzzy
@@ -5858,9 +5719,8 @@ msgstr "הוסף שיתוף חלונות (CIFS)"
 msgid "There are no active UNIX (NFS) shares."
 msgstr "אין שום שיתופי UNIX פעילים"
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "נקודת כינון"
+#~ msgid "Mountpoint"
+#~ msgstr "נקודת כינון"
 
 #: templates/sharing/unix.html:29
 #, fuzzy
@@ -6004,27 +5864,20 @@ msgid ""
 "to create a replication task"
 msgstr ""
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "צילום אחרון"
+#~ msgid "Last snapshot"
+#~ msgstr "צילום אחרון"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "מערכת ZFS מרוחקת"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "מערכת ZFS מרוחקת"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "מחק העתק"
+#~ msgid "Delete Replication"
+#~ msgstr "מחק העתק"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "ערוך העתק"
+#~ msgid "Edit Replication"
+#~ msgstr "ערוך העתק"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "שום העתק ZFS זמין"
+#~ msgid "No ZFS replication available"
+#~ msgstr "שום העתק ZFS זמין"
 
 #: templates/storage/scrub.html:42
 #, fuzzy
@@ -6096,41 +5949,34 @@ msgstr "שכפל תצלום"
 msgid "Periodic Snapshots"
 msgstr "תצלומים תקופתיים"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "לוח זמנים לתצלומים התקופתיים"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "לוח זמנים לתצלומים התקופתיים"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "אין תצלומים מתוכננים"
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "אין תצלומים מתוכננים"
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "איך"
+#~ msgid "How"
+#~ msgstr "איך"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "שמור תצלום למשך"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "מ-"
+#~ msgid "From"
+#~ msgstr "מ-"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "עד"
+#~ msgid "through"
+#~ msgstr "עד"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", כל "
+#~ msgid ", every"
+#~ msgstr ", כל "
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "כל יום"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "על כל אחד"
+#~ msgid "on every"
+#~ msgstr "על כל אחד"
 
 #: templates/storage/tasks.html:147
 #, fuzzy
@@ -6192,13 +6038,11 @@ msgstr "נתיב לנפח"
 msgid "Destroy Dataset"
 msgstr "השמד סט מידע"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "השמד נפח ZFS"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "השמד נפח ZFS"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "שום נפח לא הוגדר"
+#~ msgid "No volumes defined"
+#~ msgstr "שום נפח לא הוגדר"
 
 #: templates/storage/wizard.html:27
 #, fuzzy
@@ -6213,25 +6057,20 @@ msgstr "כוננים חברים"
 msgid "Group type"
 msgstr "סוג קבוצה"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS נוסף(extra)"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS נוסף(extra)"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "שימוש בכונן אחד ליומן לא מומלץ ביותר"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "שימוש בכונן אחד ליומן לא מומלץ ביותר"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "יומן"
+#~ msgid "Log"
+#~ msgstr "יומן"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "מטמון"
+#~ msgid "Cache"
+#~ msgstr "מטמון"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "עודף"
+#~ msgid "Spare"
+#~ msgstr "עודף"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6251,21 +6090,18 @@ msgstr "החלף כונן"
 msgid "Create ZFS volume on %(name)s"
 msgstr "צור נפח ZFS"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "הוסף נפח ZFS"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "הוסף נפח ZFS"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "בנה מחדש מטמון LDAP\\AD"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "המטמון נבנה מחדש כרגע."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "המטמון נבנה מחדש כרגע."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "המטמון לא יכול להיבנות מחדש"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "המטמון לא יכול להיבנות מחדש"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6376,9 +6212,8 @@ msgstr "שום rsyncs מוגדרים"
 msgid "Add rsync task"
 msgstr "הוסף Rsync"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "הוסף Rsync"
+#~ msgid "Add Rsync"
+#~ msgstr "הוסף Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6532,8 +6367,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "קריטי"
 
-msgid "Selected"
-msgstr "בחור"
+#~ msgid "Selected"
+#~ msgstr "בחור"
 
 #, fuzzy
 msgid "SHA256 sum for the PBI file"
@@ -6551,24 +6386,24 @@ msgstr "נתיב לנקודת כינון"
 msgid "Control Plugins"
 msgstr "נהל שירותים"
 
-msgid "Allow guest access"
-msgstr "אפשר גישת אורחים"
+#~ msgid "Allow guest access"
+#~ msgstr "אפשר גישת אורחים"
 
-msgid "Only allow guest access"
-msgstr "אפשר גישת אורחים בלבד"
+#~ msgid "Only allow guest access"
+#~ msgstr "אפשר גישת אורחים בלבד"
 
-msgid "Invalid prefix"
-msgstr "תחילית בלתי חוקית"
+#~ msgid "Invalid prefix"
+#~ msgstr "תחילית בלתי חוקית"
 
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr "כמה דקות עברו לפני הכנת התצלום החדש ואחרי התלום האחרון."
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr "כמה דקות עברו לפני הכנת התצלום החדש ואחרי התלום האחרון."
 
-msgid "An error occurred when setting the options"
-msgstr "תקלה כלשהי קרתה בזמן קביעת האפשרות"
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "תקלה כלשהי קרתה בזמן קביעת האפשרות"
 
-msgid "Service Pack image to be installed"
-msgstr "תמונת חבילת שרות להתקנה"
+#~ msgid "Service Pack image to be installed"
+#~ msgstr "תמונת חבילת שרות להתקנה"
 
 #, fuzzy
 msgid "Invalid service pack"
@@ -6594,117 +6429,117 @@ msgstr "ראה כוננים"
 msgid "View Tunables"
 msgstr "ראה את כל המשתמשים"
 
-msgid "Browse"
-msgstr "דפדף"
+#~ msgid "Browse"
+#~ msgstr "דפדף"
 
-msgid "Close"
-msgstr "סגור"
+#~ msgid "Close"
+#~ msgstr "סגור"
 
 #, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "הוסף שיתוף אפל"
 
-msgid "Apply Service Pack"
-msgstr "החל חבילת שרות"
+#~ msgid "Apply Service Pack"
+#~ msgstr "החל חבילת שרות"
 
-msgid "Hourly"
-msgstr "שעתי"
+#~ msgid "Hourly"
+#~ msgstr "שעתי"
 
-msgid "Hourly Graphs"
-msgstr "גרפיים שעתיים"
+#~ msgid "Hourly Graphs"
+#~ msgstr "גרפיים שעתיים"
 
-msgid "Daily"
-msgstr "יומי"
+#~ msgid "Daily"
+#~ msgstr "יומי"
 
-msgid "Daily Graphs"
-msgstr "גרפיים ימיים"
+#~ msgid "Daily Graphs"
+#~ msgstr "גרפיים ימיים"
 
-msgid "Weekly"
-msgstr "שבועי"
+#~ msgid "Weekly"
+#~ msgstr "שבועי"
 
-msgid "Weekly Graphs"
-msgstr "גרפים שבועיים"
+#~ msgid "Weekly Graphs"
+#~ msgstr "גרפים שבועיים"
 
-msgid "Monthly"
-msgstr "יומי"
+#~ msgid "Monthly"
+#~ msgstr "יומי"
 
-msgid "Monthly Graphs"
-msgstr "גרפים חודשיים"
+#~ msgid "Monthly Graphs"
+#~ msgstr "גרפים חודשיים"
 
-msgid "Yearly"
-msgstr "שנתי"
+#~ msgid "Yearly"
+#~ msgstr "שנתי"
 
-msgid "Yearly Graphs"
-msgstr "גרפיים שנתיים"
+#~ msgid "Yearly Graphs"
+#~ msgstr "גרפיים שנתיים"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "קלטת"
+#~ msgid "Tape"
+#~ msgstr "קלטת"
 
-msgid "Pass"
-msgstr "מעבר"
+#~ msgid "Pass"
+#~ msgstr "מעבר"
 
-msgid "Disable password"
-msgstr "נטרל סיסמא"
+#~ msgid "Disable password"
+#~ msgstr "נטרל סיסמא"
 
-msgid "My Account"
-msgstr "החשבון שלי"
+#~ msgid "My Account"
+#~ msgstr "החשבון שלי"
 
-msgid "View All Users"
-msgstr "ראה את כל המשתמשים"
+#~ msgid "View All Users"
+#~ msgstr "ראה את כל המשתמשים"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"אנחנו מצטערים, אבל הטופס שלך פג. בבקשה תמשיך למלא את הטופס מהדף הזה."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "אנחנו מצטערים, אבל הטופס שלך פג. בבקשה תמשיך למלא את הטופס מהדף הזה."
 
-msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr "עליך להכתיב IPv4 או IPv6 חוקי עם maskbit"
+#~ msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
+#~ msgstr "עליך להכתיב IPv4 או IPv6 חוקי עם maskbit"
 
-msgid "Local Access"
-msgstr "גישה מקומית"
+#~ msgid "Local Access"
+#~ msgstr "גישה מקומית"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr "אפשר למשתמשים עם חשבונות מקומיים לגשת לשיתופי אפל על המכונה הזאת."
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr "אפשר למשתמשים עם חשבונות מקומיים לגשת לשיתופי אפל על המכונה הזאת."
 
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"השער לוקח צורה מ 'address:port'. לדוגמה 192.168.1.1:3260'  לIPv4,  '[2001:"
-"db8:1:1::1]:3260' לIPv6. הפורט 3260 הוא הסטנדרט למספר שהפור של iSCSI. "
-"לאיזה IP (כתובת בתווים חופשייה), השתמש ב  '0.0.0.0:3260' and/or "
-"'[::]:3260'. אל תערבב תויים חופשיים ו IP אחרים עם אותה משפחת כתובות."
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "השער לוקח צורה מ 'address:port'. לדוגמה 192.168.1.1:3260'  לIPv4,  '[2001:"
+#~ "db8:1:1::1]:3260' לIPv6. הפורט 3260 הוא הסטנדרט למספר שהפור של iSCSI. "
+#~ "לאיזה IP (כתובת בתווים חופשייה), השתמש ב  '0.0.0.0:3260' and/or "
+#~ "'[::]:3260'. אל תערבב תויים חופשיים ו IP אחרים עם אותה משפחת כתובות."
 
-msgid "Time in milliseconds"
-msgstr "זמן במילי שניות"
+#~ msgid "Time in milliseconds"
+#~ msgstr "זמן במילי שניות"
 
-msgid "Username of Domain Administrator Account"
-msgstr "שם המשתמש של חשבון מנהל הדומיין"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "שם המשתמש של חשבון מנהל הדומיין"
 
-msgid "ISCSI"
-msgstr "ISCSI"
+#~ msgid "ISCSI"
+#~ msgstr "ISCSI"
 
-msgid "Guest Account"
-msgstr "חשבון אורח"
+#~ msgid "Guest Account"
+#~ msgstr "חשבון אורח"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"השתמש באפשרות הזאת על מנת לעקוף את המשתמש('ftp' בברירת מחדל) שישמש לצורך "
-"גישה לשרותים שמצוינים בתור אורח.איזה זכויות יתר שיש למשתמש הזה יהיו לכל "
-"לקוח שמתחבר לשרות אורח .המשתמש חייב להתקיים בתוך קובץ סיסמה, אבל  לא "
-"מצליח כניסה חוקית."
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "השתמש באפשרות הזאת על מנת לעקוף את המשתמש('ftp' בברירת מחדל) שישמש לצורך "
+#~ "גישה לשרותים שמצוינים בתור אורח.איזה זכויות יתר שיש למשתמש הזה יהיו לכל "
+#~ "לקוח שמתחבר לשרות אורח .המשתמש חייב להתקיים בתוך קובץ סיסמה, אבל  לא "
+#~ "מצליח כניסה חוקית."
 
 #, fuzzy
 msgid "CIFS Share"
@@ -6718,17 +6553,17 @@ msgstr "שיתופי UNIX"
 msgid "NFS Share"
 msgstr "ערוך שיתוף NFS"
 
-msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr "מתי ביום נתחיל להכין תצלומים, דוג' 8:00"
+#~ msgid "When in a day should we start making snapshots, e.g. 8:00"
+#~ msgstr "מתי ביום נתחיל להכין תצלומים, דוג' 8:00"
 
-msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr "מתי ביום נפסיק להכין תצלומים, דוג' 17:00"
+#~ msgid "When in a day should we stop making snapshots, e.g. 17:00"
+#~ msgstr "מתי ביום נפסיק להכין תצלומים, דוג' 17:00"
 
-msgid "NTP server 2"
-msgstr "שרת NTP 2"
+#~ msgid "NTP server 2"
+#~ msgstr "שרת NTP 2"
 
-msgid "NTP server 3"
-msgstr "שרת NTP 3"
+#~ msgid "NTP server 3"
+#~ msgstr "שרת NTP 3"
 
 #, fuzzy
 msgid "Loader"
@@ -6738,251 +6573,251 @@ msgstr "מטען ממוצע"
 msgid "Loaders"
 msgstr "מטען ממוצע"
 
-msgid "Reboot the System"
-msgstr "מפעיל מחדש את המערכת"
+#~ msgid "Reboot the System"
+#~ msgstr "מפעיל מחדש את המערכת"
 
-msgid "Apple"
-msgstr "אפל"
+#~ msgid "Apple"
+#~ msgstr "אפל"
 
-msgid "UNIX"
-msgstr "UNIX "
+#~ msgid "UNIX"
+#~ msgstr "UNIX "
 
-msgid "Windows"
-msgstr "חלונות(ווינדוס)"
+#~ msgid "Windows"
+#~ msgstr "חלונות(ווינדוס)"
 
 msgid "Edit Disk"
 msgstr "ערוך כונן"
 
-msgid "Are you sure you want to export?"
-msgstr "האם אתה בטוח שאתה רוצה ליצא?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "האם אתה בטוח שאתה רוצה ליצא?"
 
-msgid "Export Volume"
-msgstr "יצא נפח"
+#~ msgid "Export Volume"
+#~ msgstr "יצא נפח"
 
 #, fuzzy
 msgid "Add loader"
 msgstr "הוסף שער"
 
-msgid "Volume from which this dataset will be created on"
-msgstr "נפח מסט המידע ייצר ב-"
+#~ msgid "Volume from which this dataset will be created on"
+#~ msgstr "נפח מסט המידע ייצר ב-"
 
-msgid "Volume from which this ZFS Volume will be created on"
-msgstr "נפח שממנו נפח הZFS יווצר בו."
+#~ msgid "Volume from which this ZFS Volume will be created on"
+#~ msgstr "נפח שממנו נפח הZFS יווצר בו."
 
-msgid "Volume this group belongs to"
-msgstr "הנפח שייך לקבוצה"
+#~ msgid "Volume this group belongs to"
+#~ msgstr "הנפח שייך לקבוצה"
 
 msgid "Group Membership"
 msgstr "חברות הקבוצה"
 
-msgid "The disk group containing this disk"
-msgstr "קבוצת הכונן מכילה את הכונן הזה"
+#~ msgid "The disk group containing this disk"
+#~ msgstr "קבוצת הכונן מכילה את הכונן הזה"
 
-msgid "successfully added"
-msgstr "הוסף בהצלחה"
+#~ msgid "successfully added"
+#~ msgstr "הוסף בהצלחה"
 
-msgid "successfully deleted"
-msgstr "נמחק בהצלחה"
+#~ msgid "successfully deleted"
+#~ msgstr "נמחק בהצלחה"
 
-msgid "successfully edited"
-msgstr "נערך בהצלחה"
+#~ msgid "successfully edited"
+#~ msgstr "נערך בהצלחה"
 
-msgid "There are no active volumes."
-msgstr "אין נפחים פעילים"
+#~ msgid "There are no active volumes."
+#~ msgstr "אין נפחים פעילים"
 
-msgid "%s successfully added."
-msgstr "%S הוסף בהצלחה"
+#~ msgid "%s successfully added."
+#~ msgstr "%S הוסף בהצלחה"
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 Netmask"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 Netmask"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "הערך חייב להיות בין 0 ל10000, כולל."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "הערך חייב להיות בין 0 ל10000, כולל."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "הערך חייב להיות בין 0 ל1000, כולל."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "הערך חייב להיות בין 0 ל1000, כולל."
 
-msgid "Enable DDP"
-msgstr "אפשר DDP"
+#~ msgid "Enable DDP"
+#~ msgstr "אפשר DDP"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "אפשר תמיכה בDDP לרמה נמוכה בגישת appletalk"
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "אפשר תמיכה בDDP לרמה נמוכה בגישת appletalk"
 
-msgid "Turn on/off TLS"
-msgstr "הדלק/כבה TLS"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "הדלק/כבה TLS"
 
-msgid "Rsyncd"
-msgstr "Rsyncd"
+#~ msgid "Rsyncd"
+#~ msgstr "Rsyncd"
 
-msgid "The volume failed to export"
-msgstr "הנפח הזה נכשל ביצוא"
+#~ msgid "The volume failed to export"
+#~ msgstr "הנפח הזה נכשל ביצוא"
 
-msgid "Cron Scheduler"
-msgstr "לוח זמניםשל Cron"
+#~ msgid "Cron Scheduler"
+#~ msgstr "לוח זמניםשל Cron"
 
-msgid "Devel"
-msgstr "Devel"
+#~ msgid "Devel"
+#~ msgstr "Devel"
 
-msgid "Docs"
-msgstr "מסמכי"
+#~ msgid "Docs"
+#~ msgstr "מסמכי"
 
-msgid "Welcome to"
-msgstr "ברוך הבא ל8"
+#~ msgid "Welcome to"
+#~ msgstr "ברוך הבא ל8"
 
-msgid "LUN"
-msgstr "LUN"
+#~ msgid "LUN"
+#~ msgstr "LUN"
 
-msgid "Mount point"
-msgstr "נקודת כינון"
+#~ msgid "Mount point"
+#~ msgstr "נקודת כינון"
 
-msgid "Dataset name"
-msgstr "שם הסט מידע"
+#~ msgid "Dataset name"
+#~ msgstr "שם הסט מידע"
 
-msgid "Snapshot name"
-msgstr "צלם שם"
+#~ msgid "Snapshot name"
+#~ msgstr "צלם שם"
 
-msgid "Used space"
-msgstr "נפח משומש"
+#~ msgid "Used space"
+#~ msgstr "נפח משומש"
 
-msgid "Referenced space"
-msgstr "שטח מיוחס"
+#~ msgid "Referenced space"
+#~ msgstr "שטח מיוחס"
 
-msgid "No ZFS snapshot available"
-msgstr "שום תצלום ZFS זמין"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "שום תצלום ZFS זמין"
 
-msgid "Create Periodic Snapshot"
-msgstr "יצור תצלום תקופתי"
+#~ msgid "Create Periodic Snapshot"
+#~ msgstr "יצור תצלום תקופתי"
 
-msgid "Restore to Factory Defaults"
-msgstr "חזור להגדרות מפעל"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "חזור להגדרות מפעל"
 
-msgid "Config"
-msgstr "הגדרה"
+#~ msgid "Config"
+#~ msgstr "הגדרה"
 
-msgid "%s successfully update."
-msgstr "% התעדכן בהצלחה"
+#~ msgid "%s successfully update."
+#~ msgstr "% התעדכן בהצלחה"
 
-msgid "Admin user"
-msgstr "משתמש מנהל"
+#~ msgid "Admin user"
+#~ msgstr "משתמש מנהל"
 
-msgid "N/A"
-msgstr "לא זמין"
+#~ msgid "N/A"
+#~ msgstr "לא זמין"
 
-msgid ""
-"Use this option to override the username ('www' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"השתמש באופציה זאתי על מנת לעקוף את שם המשתמש ('www' בברירת המחדל) שישומשו "
-"לגישה לשרותים שמצוינים בתור אורח.איזה זכיות יתר שיש למשתמש הזה יהיו "
-"זמינים לכל לקוח שמתחבר לשרות אורח.המתמש הזה חייב להתקיים בתור קובץ סיסמה, "
-"אבל לא מצריך כניסה חוקית."
+#~ msgid ""
+#~ "Use this option to override the username ('www' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "השתמש באופציה זאתי על מנת לעקוף את שם המשתמש ('www' בברירת המחדל) שישומשו "
+#~ "לגישה לשרותים שמצוינים בתור אורח.איזה זכיות יתר שיש למשתמש הזה יהיו "
+#~ "זמינים לכל לקוח שמתחבר לשרות אורח.המתמש הזה חייב להתקיים בתור קובץ סיסמה, "
+#~ "אבל לא מצריך כניסה חוקית."
 
-msgid "ZVol Name"
-msgstr "שם ZVol"
+#~ msgid "ZVol Name"
+#~ msgstr "שם ZVol"
 
 msgid "Dataset"
 msgstr "סט מידע"
 
-msgid "ZVol"
-msgstr "ZVol"
+#~ msgid "ZVol"
+#~ msgstr "ZVol"
 
-msgid "Native dataset"
-msgstr "סט מידע טבעי"
+#~ msgid "Native dataset"
+#~ msgstr "סט מידע טבעי"
 
-msgid "/var/log/messages"
-msgstr "/var/log/messages"
+#~ msgid "/var/log/messages"
+#~ msgstr "/var/log/messages"
 
-msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; עזרה ותמיכה"
+#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; עזרה ותמיכה"
 
-msgid "Success!"
-msgstr "הצלחה!"
+#~ msgid "Success!"
+#~ msgstr "הצלחה!"
 
-msgid "Your password was changed."
-msgstr "סיסמתך שונתה."
+#~ msgid "Your password was changed."
+#~ msgstr "סיסמתך שונתה."
 
-msgid "Password change"
-msgstr "שינוי סיסמה"
+#~ msgid "Password change"
+#~ msgstr "שינוי סיסמה"
 
-msgid "Please correct the error below."
-msgid_plural "Please correct the errors below."
-msgstr[0] "יחיד במינו"
-msgstr[1] "ריבוי"
+#~ msgid "Please correct the error below."
+#~ msgid_plural "Please correct the errors below."
+#~ msgstr[0] "יחיד במינו"
+#~ msgstr[1] "ריבוי"
 
-msgid ""
-"Please enter your old password, and then enter your new password twice to "
-"verify it is typed in correctly."
-msgstr ""
-"בבקשה הקש את סיסמתך הישנה, ואחר כך את סיסמתך החזרה פעמיים לצורך אימות "
-"שהקשת נכון."
+#~ msgid ""
+#~ "Please enter your old password, and then enter your new password twice to "
+#~ "verify it is typed in correctly."
+#~ msgstr ""
+#~ "בבקשה הקש את סיסמתך הישנה, ואחר כך את סיסמתך החזרה פעמיים לצורך אימות "
+#~ "שהקשת נכון."
 
-msgid "Password (again)"
-msgstr "סיסמה (שוב)"
+#~ msgid "Password (again)"
+#~ msgstr "סיסמה (שוב)"
 
-msgid "minutes,"
-msgstr ",דקות"
+#~ msgid "minutes,"
+#~ msgstr ",דקות"
 
-msgid "Create ZFS zvol"
-msgstr "יצור zvol ZFS"
+#~ msgid "Create ZFS zvol"
+#~ msgstr "יצור zvol ZFS"
 
-msgid "Add ZVol"
-msgstr "הוסף ZVol"
+#~ msgid "Add ZVol"
+#~ msgstr "הוסף ZVol"
 
-msgid "English"
-msgstr "אנגלית"
+#~ msgid "English"
+#~ msgstr "אנגלית"
 
-msgid "Level"
-msgstr "רמה"
+#~ msgid "Level"
+#~ msgstr "רמה"
 
-msgid "Add Link Aggregation"
-msgstr "הוסף קיבוץ כרטיסים"
+#~ msgid "Add Link Aggregation"
+#~ msgstr "הוסף קיבוץ כרטיסים"
 
-msgid "View All Interfaces"
-msgstr "ראה את כל הממשקים"
+#~ msgid "View All Interfaces"
+#~ msgstr "ראה את כל הממשקים"
 
-msgid "View All VLANs"
-msgstr "ראה את כך הVLANs"
+#~ msgid "View All VLANs"
+#~ msgstr "ראה את כך הVLANs"
 
-msgid "View All Static Routes"
-msgstr "ראה את כל הנתובים הסטטים"
+#~ msgid "View All Static Routes"
+#~ msgstr "ראה את כל הנתובים הסטטים"
 
-msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr "הגירסה של חלונות מיקרוסופט שהתיקייה הפעילה רצה."
+#~ msgid "The version of Microsoft Windows that Active Directory is running."
+#~ msgstr "הגירסה של חלונות מיקרוסופט שהתיקייה הפעילה רצה."
 
-msgid "Service Principal Name"
-msgstr "שם ראשי של השרות"
+#~ msgid "Service Principal Name"
+#~ msgstr "שם ראשי של השרות"
 
-msgid "Service Principal Name, eg service/account."
-msgstr "שם ראשי של השרות, דוג' שרות\\חשבון."
+#~ msgid "Service Principal Name, eg service/account."
+#~ msgstr "שם ראשי של השרות, דוג' שרות\\חשבון."
 
-msgid "Service Principal Name Password"
-msgstr "סיסמת שם ראשי של השרות"
+#~ msgid "Service Principal Name Password"
+#~ msgstr "סיסמת שם ראשי של השרות"
 
-msgid "Password of the Service Principal Name account."
-msgstr "סיסמת חשבון של השם הראשי של השרות."
+#~ msgid "Password of the Service Principal Name account."
+#~ msgstr "סיסמת חשבון של השם הראשי של השרות."
 
-msgid "Kerberos Keytab File"
-msgstr "קובץ Kerberos Keytab"
+#~ msgid "Kerberos Keytab File"
+#~ msgstr "קובץ Kerberos Keytab"
 
-msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
-msgstr "קובץ הKerberos Keytab יוצר על השרת עם התיקייה הפעילה."
+#~ msgid ""
+#~ "The kerberos keytab file that was generated on the Active Directory "
+#~ "server."
+#~ msgstr "קובץ הKerberos Keytab יוצר על השרת עם התיקייה הפעילה."
 
-msgid "Auxillary Parameters"
-msgstr "מאפייני עזר"
+#~ msgid "Auxillary Parameters"
+#~ msgstr "מאפייני עזר"
 
-msgid "View All UNIX Shares"
-msgstr "ראה את כל שיתופי UNIX "
+#~ msgid "View All UNIX Shares"
+#~ msgstr "ראה את כל שיתופי UNIX "
 
-msgid "View All Apple Shares"
-msgstr "ראה את כל שיתופי אפל (apple)"
+#~ msgid "View All Apple Shares"
+#~ msgstr "ראה את כל שיתופי אפל (apple)"
 
-msgid "View All Windows Shares"
-msgstr "ראה את כל שיתופי חלונות (ווינדוס)"
+#~ msgid "View All Windows Shares"
+#~ msgstr "ראה את כל שיתופי חלונות (ווינדוס)"
 
 msgid "Read"
 msgstr "קריאה"
@@ -6990,23 +6825,23 @@ msgstr "קריאה"
 msgid "Write"
 msgstr "כתיבה"
 
-msgid "Execute"
-msgstr "בצע"
+#~ msgid "Execute"
+#~ msgstr "בצע"
 
-msgid "Owner"
-msgstr "בעל"
+#~ msgid "Owner"
+#~ msgstr "בעל"
 
-msgid "Other"
-msgstr "אחר"
+#~ msgid "Other"
+#~ msgstr "אחר"
 
-msgid "View All Periodic Snapshot Tasks"
-msgstr "ראה את מטלות התצלום התקופתיות"
+#~ msgid "View All Periodic Snapshot Tasks"
+#~ msgstr "ראה את מטלות התצלום התקופתיות"
 
-msgid "sucessfully edited"
-msgstr "נערך בהצלחה"
+#~ msgid "sucessfully edited"
+#~ msgstr "נערך בהצלחה"
 
-msgid "Lagg Interface was successfully added"
-msgstr "מנשק LAGG הוסף בהצלחה"
+#~ msgid "Lagg Interface was successfully added"
+#~ msgstr "מנשק LAGG הוסף בהצלחה"
 
-msgid "ActiveDirectory Settings"
-msgstr "הגדרות תיקייה פעילה"
+#~ msgid "ActiveDirectory Settings"
+#~ msgstr "הגדרות תיקייה פעילה"

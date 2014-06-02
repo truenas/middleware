@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2014-03-12 08:53+0200\n"
+"PO-Revision-Date: 2014-03-12 08:53+0000\n"
 "Last-Translator: dennis.stjernholmco <dennis@stjernholmco.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1394614413.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -244,9 +245,8 @@ msgstr "Fuld"
 msgid "Debug"
 msgstr "Debug"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Default"
+#~ msgid "Default"
+#~ msgstr "Default"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -339,9 +339,8 @@ msgstr "Til"
 msgid "Off"
 msgstr "Fra"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (anbefalet)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (anbefalet)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -525,9 +524,8 @@ msgstr "Indtast, for at verificere, den samme adgangskode som ovenfor."
 msgid "Shell"
 msgstr "Kommandofortolker (shell)"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Deaktiver kodeord-logins"
+#~ msgid "Disable password logins"
+#~ msgstr "Deaktiver kodeord-logins"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -553,9 +551,8 @@ msgstr "Hjemmemappe"
 msgid "Auxiliary groups"
 msgstr "Hjælpegrupper"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "En bruger med dette brugernavn findes allerede."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "En bruger med dette brugernavn findes allerede."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -595,9 +592,8 @@ msgstr "Kodeord er deaktiveret, feltet efterlades tomt"
 msgid "This field is required."
 msgstr "Dette felt er påkrævet."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Startmappen skal start med /mnt eller ikke være oprettet"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Startmappen skal start med /mnt eller ikke være oprettet"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -722,24 +718,17 @@ msgstr "Konto"
 msgid "Admin Account"
 msgstr "Administrator kontoen"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Skift adgangskode"
+#~ msgid "Change Password"
+#~ msgstr "Skift adgangskode"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Skift admin bruger"
+#~ msgid "Change Admin User"
+#~ msgstr "Skift admin bruger"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Adgangskode opdateret"
+#~ msgid "Password successfully updated."
+#~ msgstr "Adgangskode opdateret"
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Admin bruger opdateret"
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Admin bruger opdateret"
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -906,9 +895,8 @@ msgstr "Navneserver 1 skal udfyldes før navneserver 2"
 msgid "Parent Interface"
 msgstr "Overordnet enhed"
 
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "Navnet skal være vlanXX hvor XX er et heltal."
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "Navnet skal være vlanXX hvor XX er et heltal."
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1105,9 +1093,8 @@ msgstr "Link samling"
 msgid "Link Aggregations"
 msgstr "Link samlinger"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "LAGG netværks gruppe"
+#~ msgid "LAGG Interface group"
+#~ msgstr "LAGG netværks gruppe"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1150,9 +1137,8 @@ msgstr "Opret link samling"
 msgid "View Link Aggregations"
 msgstr "Vis alle link samlinger"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG tilføjet."
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG tilføjet."
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1504,17 +1490,15 @@ msgstr "Hemmelighed (Bekræft)"
 msgid "Enter the same secret above for verification."
 msgstr "Indtast den samme hemmelighed ovenfor for verifikation."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Afsender hemmelighed"
+#~ msgid "Initiator Secret"
+#~ msgstr "Afsender hemmelighed"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Afsenders hemmelighed. (For gensidig CHAP godkendelse)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Afsender hemmelighed (bekræft)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Afsender hemmelighed (bekræft)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1604,19 +1588,17 @@ msgstr "Værdien kan være i bytes, eller være efterfulgt af KB, MB, GB, TB"
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Disk enhed."
+#~ msgid "Disk device"
+#~ msgstr "Disk enhed."
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "Dit Portal gruppe-id må ikke være større end %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "Dit gruppe-id må ikke være større end %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "Dit gruppe-id må ikke være større end %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1857,9 +1839,8 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Servernavn"
+#~ msgid "Server Name"
+#~ msgstr "Servernavn"
 
 #: services/models.py:204
 msgid ""
@@ -2521,9 +2502,8 @@ msgstr "Tillad lokal bruger adgang"
 msgid "Banner"
 msgstr "Medelelse"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "Velkomstsmeddelelse der vises af FTP når der oprettes forbindelse."
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "Velkomstsmeddelelse der vises af FTP når der oprettes forbindelse."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2618,9 +2598,8 @@ msgstr "Anonym brugers båndbredde ved download"
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "Aktiver SSL/TLS"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "Aktiver SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -4163,10 +4142,8 @@ msgstr ""
 msgid "View Volumes"
 msgstr "Vis alle brugere"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "Opret ZFS Drev"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "Opret ZFS Drev"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4879,9 +4856,8 @@ msgstr "Din testemail kunne ikke sendes:"
 msgid "Your test email has been sent!"
 msgstr "Din testemail er sendt!"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Side Ikke Fundet"
+#~ msgid "Page Not Found"
+#~ msgstr "Side Ikke Fundet"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5365,9 +5341,8 @@ msgstr ""
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
 msgstr ""
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "Log venligst ind."
+#~ msgid "Please log in."
+#~ msgstr "Log venligst ind."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5624,10 +5599,8 @@ msgstr "Slet underliggende fil"
 msgid "No rsync modules defined"
 msgstr ""
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "Aktive Delinger"
+#~ msgid "Active Shares"
+#~ msgstr "Aktive Delinger"
 
 #: templates/sharing/apple.html:7
 msgid "There are no active Apple (AFP) shares."
@@ -5900,17 +5873,15 @@ msgstr ""
 msgid "There are no scheduled snapshots."
 msgstr ""
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Hvordan"
+#~ msgid "How"
+#~ msgstr "Hvordan"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr ""
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "Fra"
+#~ msgid "From"
+#~ msgstr "Fra"
 
 #: templates/storage/tasks.html:43
 msgid "through"
@@ -5986,9 +5957,8 @@ msgstr ""
 msgid "Destroy Dataset"
 msgstr ""
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "Slet ZFS Drev"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "Slet ZFS Drev"
 
 #: templates/storage/volumes.html:268
 msgid "No volumes defined"
@@ -6010,13 +5980,11 @@ msgstr ""
 msgid "ZFS Extra"
 msgstr ""
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Brugen af ​​kun en log-disk er frarådes på det kraftigste"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "Brugen af ​​kun en log-disk er frarådes på det kraftigste"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Log"
+#~ msgid "Log"
+#~ msgstr "Log"
 
 #: templates/storage/wizard.html:117
 msgid "Cache"
@@ -6044,21 +6012,18 @@ msgstr "Erstatter disk"
 msgid "Create ZFS volume on %(name)s"
 msgstr "Opret ZFS Drev"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "Tilføj ZFS Drev"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "Tilføj ZFS Drev"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr ""
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "Cachen genopbygges."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "Cachen genopbygges."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "Cachen kunne ikke genopbygges"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "Cachen kunne ikke genopbygges"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6123,13 +6088,11 @@ msgstr ""
 msgid "No NTP servers defined."
 msgstr "Der er ikke defineret nogle rsyncs"
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "Tilføj NTP server"
+#~ msgid "Add NTP server"
+#~ msgstr "Tilføj NTP server"
 
-#: templates/system/ntpserver.html:46
-msgid "Add NTP Server"
-msgstr "Tilføj NTP Server"
+#~ msgid "Add NTP Server"
+#~ msgstr "Tilføj NTP Server"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6166,9 +6129,8 @@ msgstr "Der er ikke defineret nogle rsyncs"
 msgid "Add rsync task"
 msgstr "Tilføj Rsync"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Tilføj Rsync"
+#~ msgid "Add Rsync"
+#~ msgstr "Tilføj Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6254,9 +6216,8 @@ msgstr "Oppetid"
 msgid "Load Average"
 msgstr ""
 
-#: templates/system/system_info.html:34
-msgid "Connected through"
-msgstr "Forbundet gennem"
+#~ msgid "Connected through"
+#~ msgstr "Forbundet gennem"
 
 #: templates/system/tunable.html:34
 #, fuzzy
@@ -6317,14 +6278,14 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritiske alarmer"
 
-msgid "Selected"
-msgstr "Udvalgte"
+#~ msgid "Selected"
+#~ msgstr "Udvalgte"
 
-msgid "Allow guest access"
-msgstr "Tillad gæsteadgang"
+#~ msgid "Allow guest access"
+#~ msgstr "Tillad gæsteadgang"
 
-msgid "Only allow guest access"
-msgstr "Tillad alene gæsteadgang"
+#~ msgid "Only allow guest access"
+#~ msgstr "Tillad alene gæsteadgang"
 
 #, fuzzy
 msgid "View Rsync Tasks"
@@ -6342,72 +6303,294 @@ msgstr "Vis drev"
 msgid "View Tunables"
 msgstr "Vis alle brugere"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Bånd"
+#~ msgid "Tape"
+#~ msgstr "Bånd"
 
 # Kan også betyde gennemgang.
-msgid "Pass"
-msgstr "Passere"
+#~ msgid "Pass"
+#~ msgstr "Passere"
 
-msgid "Disable password"
-msgstr "Deaktiver adgangskode"
+#~ msgid "Disable password"
+#~ msgstr "Deaktiver adgangskode"
 
-msgid "View All Users"
-msgstr "Vis alle brugere"
+#~ msgid "View All Users"
+#~ msgstr "Vis alle brugere"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Vi undskylder, men din formular er udløbet. Fortsæt venligst med at "
-"udfylde formularen på denne side."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Vi undskylder, men din formular er udløbet. Fortsæt venligst med at "
+#~ "udfylde formularen på denne side."
 
-msgid "Local Access"
-msgstr "Lokal adgang"
+#~ msgid "Local Access"
+#~ msgstr "Lokal adgang"
 
-msgid "Guest Account"
-msgstr "Gæste konto"
+#~ msgid "Guest Account"
+#~ msgstr "Gæste konto"
 
-msgid "Are you sure you want to export?"
-msgstr "Er du sikker på at du vil eksportere?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "Er du sikker på at du vil eksportere?"
 
-msgid "Export Volume"
-msgstr "Eksporter ZFS Drev"
+#~ msgid "Export Volume"
+#~ msgstr "Eksporter ZFS Drev"
 
 #, fuzzy
 msgid "successfully deleted"
 msgstr "%s blev slettet."
 
-msgid "%s successfully added."
-msgstr "%s blev tilføjet."
+#~ msgid "%s successfully added."
+#~ msgstr "%s blev tilføjet."
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 Netmaske"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 Netmaske"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Denne værdi skal være mellem 0 og 10000, inklusive."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Denne værdi skal være mellem 0 og 10000, inklusive."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Denne værdi skal være mellem 0 og 1000, inklusive."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Denne værdi skal være mellem 0 og 1000, inklusive."
 
-msgid "Welcome to"
-msgstr "Velkommen til8"
+#~ msgid "Welcome to"
+#~ msgstr "Velkommen til8"
 
-msgid "%s successfully update."
-msgstr "%s succesfuldt opdateret."
+#~ msgid "%s successfully update."
+#~ msgstr "%s succesfuldt opdateret."
 
-msgid "Admin user"
-msgstr "Admin bruger"
+#~ msgid "Admin user"
+#~ msgstr "Admin bruger"
 
 #, fuzzy
 msgid "ZVol Name"
 msgstr "Fuldt navn"
 
-msgid "English"
-msgstr "Engelsk"
+#~ msgid "English"
+#~ msgstr "Engelsk"
 
-msgid "Level"
-msgstr "Niveau"
+#~ msgid "Level"
+#~ msgstr "Niveau"
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr "HTTP+HTTPS"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr "Ukrypteret"
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr "Krypteret, ingen kodeord"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr "Krypteret, med kodeord"
+
+#: choices.py:304
+msgid "lz4 (recommended)"
+msgstr "lz4 (anbefalet)"
+
+#: choices.py:309
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (forældet, ikke anbefalet)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr "Verificer"
+
+#: choices.py:600
+msgid "9600"
+msgstr "9600"
+
+#: choices.py:601
+msgid "19200"
+msgstr "19200"
+
+#: choices.py:602
+msgid "38400"
+msgstr "38400"
+
+#: choices.py:603
+msgid "57600"
+msgstr "57600"
+
+#: choices.py:604
+msgid "115200"
+msgstr "115200"
+
+#: choices.py:659
+msgid "Fatal"
+msgstr "Kritisk"
+
+#: choices.py:662
+msgid "Verbose"
+msgstr "Uddybende"
+
+#: choices.py:664
+msgid "Debug2"
+msgstr "Fejlsøge"
+
+#: choices.py:665
+msgid "Debug3"
+msgstr "Fejlsøge"
+
+#: choices.py:670
+msgid "Daemon"
+msgstr "Dæmon"
+
+#: choices.py:672
+msgid "Auth"
+msgstr "Bekræft"
+
+#: choices.py:673
+msgid "Local 0"
+msgstr "Lokal bruger 0"
+
+#: choices.py:687
+msgid "NIS"
+msgstr "NIS"
+
+#: choices.py:695
+msgid "data"
+msgstr "data"
+
+#: choices.py:696
+msgid "!data"
+msgstr "!data"
+
+#: choices.py:698
+msgid "ctrl"
+msgstr "ctrl"
+
+#: choices.py:699
+msgid "ctrl+data"
+msgstr "ctrl+data"
+
+#: choices.py:700
+msgid "ctrl+!data"
+msgstr "ctrl+!data"
+
+#: account/forms.py:55
+msgid "New Password"
+msgstr "Ny adgangskode"
+
+#: account/forms.py:60
+msgid "Confirm New Password"
+msgstr "Bekræft ny adgangskode"
+
+#: account/forms.py:68
+msgid "Passwords do not match"
+msgstr "Adgangskoder er ikke ens"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr "Hjemmemappen kan ikke indeholde kolloner"
+
+#: account/models.py:52
+msgid "Built-in Group"
+msgstr "Indbyggede Grupper"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr "Tillad Sudo"
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr "Indbyggede Brugere"
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr "Gruppe medlemskab"
+
+#: api/resources.py:866
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr "Fra %(start) til %(slut), %(gentag)"
+
+#: common/system.py:278
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr "Mount fejlede (%(returkode)r) -> %(output)s"
+
+#: freeadmin/forms.py:220
+msgid "A file is required"
+msgstr "En fil er påkrævet"
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr "Ugyldig adresse: %s"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+msgid "Invalid network: %s"
+msgstr "Ugyldigt netværk: %s"
+
+#: jails/admin.py:75
+#: jails/forms.py:725
+#: jails/models.py:403
+#: templates/plugins/plugins.html:21
+msgid "Jail"
+msgstr "Fængsel"
+
+#: jails/admin.py:195
+#: jails/nav.py:264
+msgid "Add Storage"
+msgstr "Tilføj disk"
+
+#: jails/admin.py:206
+msgid "Start"
+msgstr "Start"
+
+#: jails/admin.py:207
+msgid "Stop"
+msgstr "Stop"
+
+#: jails/admin.py:271
+#: jails/models.py:353
+msgid "URL"
+msgstr "URL"
+
+#: jails/admin.py:277
+msgid "Instances"
+msgstr "Udgaver"
+
+#: jails/forms.py:234
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr "Kan ikke finde skabelon!"
+
+#: jails/forms.py:451
+msgid "Path does not exist!"
+msgstr "Stien eksistere ikke!"
+
+#: jails/forms.py:461
+#: jails/models.py:162
+msgid "NAT"
+msgstr "NAT"
+
+#: jails/forms.py:652
+msgid "Create destination directory if it does not exist"
+msgstr "Opret destination bibliotek hvis det ikke findes"
+
+#: jails/forms.py:694
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr "Dette bør ikke kunne ske, men fængslet kunne ikke findes"
+
+#: jails/hook.py:13
+#: jails/models.py:252
+#: jails/models.py:253
+#: jails/nav.py:47
+#: templates/jails/index.html:17
+msgid "Jails"
+msgstr "Fængsler"
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr "IPv6 bro aliaser"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr "MAC"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2013-02-15 09:59+0200\n"
+"PO-Revision-Date: 2013-02-15 09:59+0000\n"
 "Last-Translator: asis <asis.ind@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bn\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1360922370.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "সম্পূর্ণ"
 msgid "Debug"
 msgstr "ডিবাগ"
 
-#: choices.py:195
-msgid "Default"
-msgstr "ডিফল্ট"
+#~ msgid "Default"
+#~ msgstr "ডিফল্ট"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -338,9 +338,8 @@ msgstr "চালু"
 msgid "Off"
 msgstr "বন্ধ"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (প্রস্তাবিত)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (প্রস্তাবিত)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"

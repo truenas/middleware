@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2012-10-18 12:01+0200\n"
+"PO-Revision-Date: 2012-10-18 12:01+0000\n"
 "Last-Translator: ikroumov <ikroumov@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1350561714.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "Пълен"
 msgid "Debug"
 msgstr "Отстраняване на дефекти"
 
-#: choices.py:195
-msgid "Default"
-msgstr "По подразбиране"
+#~ msgid "Default"
+#~ msgstr "По подразбиране"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -338,9 +338,8 @@ msgstr "Включен"
 msgid "Off"
 msgstr "Изключен"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "Izjb (задължително)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "Izjb (задължително)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -530,9 +529,8 @@ msgstr "Въведете паролата отново за потвържден
 msgid "Shell"
 msgstr "Обвивка (среда)"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Забрани логването с парола"
+#~ msgid "Disable password logins"
+#~ msgstr "Забрани логването с парола"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -559,9 +557,8 @@ msgstr "Стартова директория"
 msgid "Auxiliary groups"
 msgstr "Външни групи"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Вече съществува потребител с този потребителски номер (UID)."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Вече съществува потребител с този потребителски номер (UID)."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -730,24 +727,17 @@ msgstr "Акаунт"
 msgid "Admin Account"
 msgstr "Акаунт"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Смяна на паролата"
+#~ msgid "Change Password"
+#~ msgstr "Смяна на паролата"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Смяна на администраторския акаунт"
+#~ msgid "Change Admin User"
+#~ msgstr "Смяна на администраторския акаунт"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Паролата е обновена успешно."
+#~ msgid "Password successfully updated."
+#~ msgstr "Паролата е обновена успешно."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Администраторският акаунт е обновен успешно."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Администраторският акаунт е обновен успешно."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -1114,9 +1104,8 @@ msgstr "Агрегация на трафика"
 msgid "Link Aggregations"
 msgstr "Агрегации на трафика"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "LAGG интерфейсна група"
+#~ msgid "LAGG Interface group"
+#~ msgstr "LAGG интерфейсна група"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1159,9 +1148,8 @@ msgstr "Създаване на агрегация на трафика"
 msgid "View Link Aggregations"
 msgstr "Преглед на всички агрегации на трафика"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG е успешно добавен"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG е успешно добавен"
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1528,17 +1516,15 @@ msgstr "Тайна (Потвърждение)"
 msgid "Enter the same secret above for verification."
 msgstr "Въведете същата тайна за проверка."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Тайна на инициатора"
+#~ msgid "Initiator Secret"
+#~ msgstr "Тайна на инициатора"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Тайна на страната инициатор. (за автентикация при споделен CHAP)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Тайна на инициатора (Потвърждение)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Тайна на инициатора (Потвърждение)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1631,19 +1617,17 @@ msgstr ""
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Дисково устройство"
+#~ msgid "Disk device"
+#~ msgstr "Дисково устройство"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "Вашият Portal Group ID не може да бъде по-голям от %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "Вашият групов ID не може да бъде по-голям от %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "Вашият групов ID не може да бъде по-голям от %d"
 
 #: services/forms.py:1019
 #, fuzzy
@@ -1781,13 +1765,11 @@ msgstr ""
 "Използвайте тази опция, за да промените маската за създаване на директория "
 "(0777 по подразбиране)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Поддръжка на големи RW"
+#~ msgid "Large RW support"
+#~ msgstr "Поддръжка на големи RW"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Изпращай файловете със sendfile(2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Изпращай файловете със sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1896,17 +1878,15 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Име на сървъра"
+#~ msgid "Server Name"
+#~ msgstr "Име на сървъра"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr ""
-"Наименование на сървъра. Ако това поле бъде оставено празно се задава "
-"наименование на сървъра по подразбиране."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr ""
+#~ "Наименование на сървъра. Ако това поле бъде оставено празно се задава "
+#~ "наименование на сървъра по подразбиране."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1944,17 +1924,15 @@ msgstr ""
 "Определя броя на създадените сървъри. Трябва да бъде достатъчен, за да "
 "обслужи всички клинети едновременно, обикновено 4-6."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Асинхронен режим"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Асинхронен режим"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Разреши асинхронен режим, който ще повиши производителността при мрежова "
-"свързаност над 1 гбит/с."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Разреши асинхронен режим, който ще повиши производителността при мрежова "
+#~ "свързаност над 1 гбит/с."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -3066,9 +3044,8 @@ msgid ""
 "last report. 0 to disable"
 msgstr ""
 
-#: services/models.py:1475
-msgid "Informal"
-msgstr "Неофициален"
+#~ msgid "Informal"
+#~ msgstr "Неофициален"
 
 #: services/models.py:1476 services/models.py:1481
 msgid ""
@@ -3170,14 +3147,12 @@ msgstr "Сподели паролата"
 msgid "The path %s does not exist"
 msgstr "Групата %s е невалидна."
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "В полето не е въведен валиден IP адрес или мрежа"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "В полето не е въведен валиден IP адрес или мрежа"
 
-#: sharing/forms.py:165
 #, python-format
-msgid "The IP '%s' is not valid."
-msgstr "IP адресът '%s' е невалиден."
+#~ msgid "The IP '%s' is not valid."
+#~ msgstr "IP адресът '%s' е невалиден."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3309,9 +3284,8 @@ msgid ""
 "writing)."
 msgstr ""
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "Споделяне на символите"
+#~ msgid "Share Character Set"
+#~ msgstr "Споделяне на символите"
 
 #: sharing/models.py:133
 msgid ""
@@ -3463,9 +3437,8 @@ msgid ""
 "the '/' character illegal."
 msgstr ""
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
 #: sharing/models.py:209
 msgid "Provide compatibility with Apple II clients."
@@ -3607,10 +3580,8 @@ msgstr "Потребителят %s е невалиден."
 msgid "Volume name"
 msgstr ""
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "Тип файлова система"
+#~ msgid "Filesystem type"
+#~ msgstr "Тип файлова система"
 
 #: storage/forms.py:147 templates/storage/wizard.html:65
 msgid "Force 4096 bytes sector size"
@@ -3778,13 +3749,11 @@ msgstr "Размер на този ZFS том"
 msgid "Reserved space for this volume"
 msgstr "Няма активни дялове."
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "Наименование на ZFS том"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "Наименование на ZFS том"
 
-#: storage/forms.py:845
-msgid "Size for this ZFS Volume"
-msgstr "Размер на този ZFS том"
+#~ msgid "Size for this ZFS Volume"
+#~ msgstr "Размер на този ZFS том"
 
 #: storage/forms.py:846
 msgid "Example: 1g"
@@ -4230,10 +4199,8 @@ msgstr "Автомачтино добавяне на дял"
 msgid "View Volumes"
 msgstr "Преглед на всички дялове"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "Създаване на ZFS дял"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "Създаване на ZFS дял"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4309,9 +4276,8 @@ msgstr "Моментните снимки са изтрите успешно."
 msgid "Rollback successful."
 msgstr "Връщането е извършено успешно."
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "Моментната снимка е добавена успешно."
+#~ msgid "Snapshot successfully added."
+#~ msgstr "Моментната снимка е добавена успешно."
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4541,25 +4507,21 @@ msgstr "Използвай Серийната конзола"
 msgid "Enable screen saver"
 msgstr "Разреши скрийн сейвър"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "Автоматично проверявай за нов Firmware"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "Автоматично проверявай за нов Firmware"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "Звукова сигнализация при стартиране"
+#~ msgid "Beep on boot"
+#~ msgstr "Звукова сигнализация при стартиране"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "Разрешаване на специални Системни настройки"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "Разрешаване на специални Системни настройки"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "Разрешаване на powerd (Deamon за пестене на енергия)"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "Разрешаване на Zeroconf/Bonjour"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "Разрешаване на Zeroconf/Bonjour"
 
 #: system/models.py:174
 #, fuzzy
@@ -4947,9 +4909,8 @@ msgstr "Вашият тестов имейл не може да бъде изп�
 msgid "Your test email has been sent!"
 msgstr "Вашият тестов имейл беше изпратен успешно!"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Страницата не е намерена"
+#~ msgid "Page Not Found"
+#~ msgstr "Страницата не е намерена"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -4971,10 +4932,8 @@ msgstr "Помощ"
 msgid "Log In"
 msgstr "Вход"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -4982,11 +4941,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "Членове"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Модифицирай"
+#~ msgid "Modify"
+#~ msgstr "Модифицирай"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5000,52 +4956,42 @@ msgstr "Модифицирай групата"
 msgid "Delete Group"
 msgstr "Изтрий групата"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "Няма потребителски дефинирани групи."
+#~ msgid "There are no user defined groups."
+#~ msgstr "Няма потребителски дефинирани групи."
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "Добавяне на нова група"
+#~ msgid "Add New Group"
+#~ msgstr "Добавяне на нова група"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "Начало"
+#~ msgid "Home"
+#~ msgstr "Начало"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
 msgstr "Модификация на потребител"
 
-#: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
-#: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
-msgid "Auxiliary Groups"
-msgstr "Допълнителни групи"
+#~ msgid "Auxiliary Groups"
+#~ msgstr "Допълнителни групи"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
 msgstr "Премахване на потребител"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "Изтриване на потребител"
+#~ msgid "Delete User"
+#~ msgstr "Изтриване на потребител"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "Няма дефинирани потребители"
+#~ msgid "No users defined"
+#~ msgstr "Няма дефинирани потребители"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "Добавяне на нов потребител"
+#~ msgid "Add New User"
+#~ msgstr "Добавяне на нов потребител"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "Промяна на електронна поща"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "Промяна на администраторската парола"
+#~ msgid "Change Admin Password"
+#~ msgstr "Промяна на администраторската парола"
 
 #: templates/freeadmin/advanced_btn.html:25
 #, fuzzy
@@ -5194,9 +5140,8 @@ msgstr "Документация"
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS Документация"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "Автоматично IPv6"
+#~ msgid "IPv6 Auto"
+#~ msgstr "Автоматично IPv6"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5238,22 +5183,18 @@ msgstr "Достъпни действия"
 msgid "Edit"
 msgstr "Редактиране"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "Редактиране на интерфейс"
+#~ msgid "Edit Interface"
+#~ msgstr "Редактиране на интерфейс"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "Изтриване на интерфейс"
+#~ msgid "Delete Interface"
+#~ msgstr "Изтриване на интерфейс"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
 msgstr "Няма дефинирани интерфейси"
 
-#: templates/network/interface.html:47 templates/network/interface.html:49
-msgid "Add Interface"
-msgstr "Добавяне на интерфейс"
+#~ msgid "Add Interface"
+#~ msgstr "Добавяне на интерфейс"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5269,50 +5210,39 @@ msgstr "Редактиране на членове"
 msgid "LAGG Members"
 msgstr "LAGG членове"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "Няма дефиниран LAGG интерфейс"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "Няма дефиниран LAGG интерфейс"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "Добавяне на LAGG интерфейс"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "Добавяне на LAGG интерфейс"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "Добавяне на LAGG"
+#~ msgid "Add LAGG"
+#~ msgstr "Добавяне на LAGG"
 
 #: templates/network/lagg_members.html:6
 msgid "Ordering Priority"
 msgstr ""
 
-#: templates/network/lagg_members.html:7
-msgid "Startup option"
-msgstr "Опция при стартиране"
+#~ msgid "Startup option"
+#~ msgstr "Опция при стартиране"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "Действие"
+#~ msgid "Action"
+#~ msgstr "Действие"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "Добави LAGG член"
+#~ msgid "Add LAGG Member"
+#~ msgstr "Добави LAGG член"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "Редактиране на Статичен маршрут"
+#~ msgid "Edit Static Route"
+#~ msgstr "Редактиране на Статичен маршрут"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "Изтриване на Статичен маршрут"
+#~ msgid "Delete Static Route"
+#~ msgstr "Изтриване на Статичен маршрут"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "Няма дефиниран статичен маршрут"
+#~ msgid "No static route defined"
+#~ msgstr "Няма дефиниран статичен маршрут"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "Добавяне на Статичен маршрут"
+#~ msgid "Add Static Route"
+#~ msgstr "Добавяне на Статичен маршрут"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5330,21 +5260,17 @@ msgstr "Маршрут по подразбиране"
 msgid "No default route defined"
 msgstr "Няма дефиниран маршрут по подразбиране"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "Редактиране на VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "Редактиране на VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "Изтриване на VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "Изтриване на VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "Няма дефиниран VLAN"
+#~ msgid "No VLAN defined"
+#~ msgstr "Няма дефиниран VLAN"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "Добавяне на VLAN интерфейс"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "Добавяне на VLAN интерфейс"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
@@ -5436,14 +5362,12 @@ msgstr ""
 msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr ""
 
-#: templates/registration/login.html:46
 #, python-format
-msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr "Добре дошли в %(sw_name)s&trade; %(sw_login_version)s"
+#~ msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
+#~ msgstr "Добре дошли в %(sw_name)s&trade; %(sw_login_version)s"
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "Моля идентифицирайте се."
+#~ msgid "Please log in."
+#~ msgstr "Моля идентифицирайте се."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5461,9 +5385,8 @@ msgstr "Влез обратно"
 msgid "AFP Settings"
 msgstr "AFP настройки"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "Настройки на Активната директория"
+#~ msgid "Active Directory Settings"
+#~ msgstr "Настройки на Активната директория"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5481,9 +5404,8 @@ msgstr "FTP настройки"
 msgid "ISCSI Settings"
 msgstr "ISCSI настройки"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "LDAP настройки"
+#~ msgid "LDAP Settings"
+#~ msgstr "LDAP настройки"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
@@ -5547,9 +5469,8 @@ msgstr "Портали"
 msgid "Authorized Initiators"
 msgstr "Оторизиран инициатор"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "Автентикация"
+#~ msgid "Authentication"
+#~ msgstr "Автентикация"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5576,37 +5497,30 @@ msgstr ""
 msgid "Add Extent To Target"
 msgstr ""
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "Пиър"
+#~ msgid "Peer"
+#~ msgstr "Пиър"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "Добавяне на ISCSI потребител"
+#~ msgid "Add iSCSI User"
+#~ msgstr "Добавяне на ISCSI потребител"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "Оторизирана мрежа"
+#~ msgid "Authorized Network"
+#~ msgstr "Оторизирана мрежа"
 
 #: templates/services/iscsi_authini.html:35
 #, fuzzy
 msgid "No authorized initiators defined"
 msgstr "Оторизиран инициатор"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "Добавяне на оторизиран инициатор"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "Добавяне на оторизиран инициатор"
 
 #: templates/services/iscsi_dextents.html:33
 #, fuzzy
 msgid "No device extents defined"
 msgstr "Няма дефиниран статичен маршрут"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "Добави разширение"
+#~ msgid "Add Extent"
+#~ msgstr "Добави разширение"
 
 #: templates/services/iscsi_extents.html:5
 #, fuzzy
@@ -5626,32 +5540,26 @@ msgstr "Слушане"
 msgid "No IP defined for this Portal"
 msgstr ""
 
-#: templates/services/iscsi_portals.html:26
-msgid "Edit Portal"
-msgstr "Редактиране на портал"
+#~ msgid "Edit Portal"
+#~ msgstr "Редактиране на портал"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "Изтриване на портал"
+#~ msgid "Delete Portal"
+#~ msgstr "Изтриване на портал"
 
 #: templates/services/iscsi_portals.html:39
 #, fuzzy
 msgid "No portals defined"
 msgstr "Няма дефинирани дялове"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "Добавяне на портал"
+#~ msgid "Add Portal"
+#~ msgstr "Добавяне на портал"
 
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
 msgstr ""
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "Добави цел"
+#~ msgid "Add Target"
+#~ msgstr "Добави цел"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -5700,14 +5608,11 @@ msgstr ""
 msgid "Delete Plugins Jail"
 msgstr "Изтриване на портал"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "Няма дефинирани модули за синхронизация"
+#~ msgid "No rsync modules defined"
+#~ msgstr "Няма дефинирани модули за синхронизация"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "Активни споделени ресурси"
+#~ msgid "Active Shares"
+#~ msgstr "Активни споделени ресурси"
 
 #: templates/sharing/apple.html:7
 #, fuzzy
@@ -5724,10 +5629,8 @@ msgstr "Редактиране на споделени ресурси за Apple
 msgid "Delete Apple (AFP) Share"
 msgstr "Изтриване на споделени ресурси за Apple"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "Няма споделени ресурси"
+#~ msgid "No shares defined"
+#~ msgstr "Няма споделени ресурси"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 #, fuzzy
@@ -5754,9 +5657,8 @@ msgstr "Добавяне на споделени ресурси за Windows (CI
 msgid "There are no active UNIX (NFS) shares."
 msgstr "Няма споделени ресурси за UNIX."
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "Точка на монтаж"
+#~ msgid "Mountpoint"
+#~ msgstr "Точка на монтаж"
 
 #: templates/sharing/unix.html:29
 #, fuzzy
@@ -5900,27 +5802,21 @@ msgid ""
 "to create a replication task"
 msgstr ""
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "Последна моментна снимка"
+#~ msgid "Last snapshot"
+#~ msgstr "Последна моментна снимка"
 
 #: templates/storage/replications.html:23
 msgid "Remote ZFS filesystem"
 msgstr ""
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "Изтрий репликация"
+#~ msgid "Delete Replication"
+#~ msgstr "Изтрий репликация"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "Редактирай репликация"
+#~ msgid "Edit Replication"
+#~ msgstr "Редактирай репликация"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "Репликацията на ZFS не е достъпна"
+#~ msgid "No ZFS replication available"
+#~ msgstr "Репликацията на ZFS не е достъпна"
 
 #: templates/storage/scrub.html:42
 #, fuzzy
@@ -5991,45 +5887,37 @@ msgstr "Клонирай моментната снимка"
 msgid "Periodic Snapshots"
 msgstr "Периодични моментни снимки"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "График на периодичните моментни снимки"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "График на периодичните моментни снимки"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "Няма планирани моментни снимки"
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "Няма планирани моментни снимки"
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Как"
+#~ msgid "How"
+#~ msgstr "Как"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "Запази моментна снимка за"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "От"
+#~ msgid "From"
+#~ msgstr "От"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "през"
+#~ msgid "through"
+#~ msgstr "през"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", всеки"
+#~ msgid ", every"
+#~ msgstr ", всеки"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "всеки ден"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "на всеки"
+#~ msgid "on every"
+#~ msgstr "на всеки"
 
-#: templates/storage/tasks.html:147
-msgid "There are no periodic snapshots scheduled."
-msgstr "Няма планирани периодични моментни снимки."
+#~ msgid "There are no periodic snapshots scheduled."
+#~ msgstr "Няма планирани периодични моментни снимки."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -6084,13 +5972,11 @@ msgstr "Статус на масива"
 msgid "Destroy Dataset"
 msgstr "Унищожи набора от данни"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "Изтриване на ZFS дял"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "Изтриване на ZFS дял"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "Няма дефинирани дялове"
+#~ msgid "No volumes defined"
+#~ msgstr "Няма дефинирани дялове"
 
 #: templates/storage/wizard.html:27
 #, fuzzy
@@ -6105,25 +5991,20 @@ msgstr "Описани дискове"
 msgid "Group type"
 msgstr "Тип на групата"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "Допълнителни ZFS настройки"
+#~ msgid "ZFS Extra"
+#~ msgstr "Допълнителни ZFS настройки"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Използването смао на един лог диск не е препоръчително"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "Използването смао на един лог диск не е препоръчително"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Лог"
+#~ msgid "Log"
+#~ msgstr "Лог"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "Кеш"
+#~ msgid "Cache"
+#~ msgstr "Кеш"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "Резервен"
+#~ msgid "Spare"
+#~ msgstr "Резервен"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6138,26 +6019,22 @@ msgstr "Съществуващата информация ще бъде прем
 msgid "Replace Disk"
 msgstr "Замяна на диск"
 
-#: templates/storage/zvols.html:3
 #, python-format
-msgid "Create ZFS volume on %(name)s"
-msgstr "Създаване на ZFS дял върху %(name)s"
+#~ msgid "Create ZFS volume on %(name)s"
+#~ msgstr "Създаване на ZFS дял върху %(name)s"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "Добави ZFS дял"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "Добави ZFS дял"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "Възстанови LDAP/AD кеша"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "Кешът се възстановавя."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "Кешът се възстановавя."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "Кешът не може да бъде възстановен"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "Кешът не може да бъде възстановен"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6183,17 +6060,14 @@ msgstr "Рестартиране..."
 msgid "Are you sure you want to restore to factory config?"
 msgstr "Сигурни ли сте че искате да възстановите заводските настройки?"
 
-#: templates/system/cronjob.html:41
-msgid "No cron jobs defined."
-msgstr "Няма дефинирани периодични задачи"
+#~ msgid "No cron jobs defined."
+#~ msgstr "Няма дефинирани периодични задачи"
 
-#: templates/system/cronjob.html:47
-msgid "Add a cron job"
-msgstr "Добави периодична задача"
+#~ msgid "Add a cron job"
+#~ msgstr "Добави периодична задача"
 
-#: templates/system/cronjob.html:49
-msgid "Add cron job"
-msgstr "Добави периодична задача"
+#~ msgid "Add cron job"
+#~ msgstr "Добави периодична задача"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6258,17 +6132,14 @@ msgstr "Местност"
 msgid "Remote"
 msgstr "Премахни"
 
-#: templates/system/rsync.html:48
-msgid "No rsync tasks defined."
-msgstr "Няма дефинирана задача за RSYNC"
+#~ msgid "No rsync tasks defined."
+#~ msgstr "Няма дефинирана задача за RSYNC"
 
-#: templates/system/rsync.html:54
-msgid "Add rsync task"
-msgstr "Добави RSYNC задача"
+#~ msgid "Add rsync task"
+#~ msgstr "Добави RSYNC задача"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Добави синхронизация на файлове"
+#~ msgid "Add Rsync"
+#~ msgstr "Добави синхронизация на файлове"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6303,29 +6174,23 @@ msgstr ""
 msgid "Unknown"
 msgstr "Неизвестно"
 
-#: templates/system/smarttest.html:38
-msgid "No S.M.A.R.T. tests defined"
-msgstr "Няма дефинирани S.M.A.R.T. тестове"
+#~ msgid "No S.M.A.R.T. tests defined"
+#~ msgstr "Няма дефинирани S.M.A.R.T. тестове"
 
-#: templates/system/smarttest.html:44
-msgid "Add S.M.A.R.T. Test"
-msgstr "Добави S.M.A.R.T. Тест"
+#~ msgid "Add S.M.A.R.T. Test"
+#~ msgstr "Добави S.M.A.R.T. Тест"
 
-#: templates/system/smarttest.html:46
-msgid "Add S.M.A.R.T. test"
-msgstr "Добави S.M.A.R.T. тест"
+#~ msgid "Add S.M.A.R.T. test"
+#~ msgstr "Добави S.M.A.R.T. тест"
 
-#: templates/system/sysctl.html:34
-msgid "No sysctl defined."
-msgstr "Няма дефиниран SYSCTL."
+#~ msgid "No sysctl defined."
+#~ msgstr "Няма дефиниран SYSCTL."
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "Добави SYSCTL"
+#~ msgid "Add sysctl"
+#~ msgstr "Добави SYSCTL"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "Добави SYSCTL"
+#~ msgid "Add Sysctl"
+#~ msgstr "Добави SYSCTL"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6365,9 +6230,8 @@ msgstr "Няма дефинирани настройки за лоудера."
 msgid "Add Tunable"
 msgstr "Добави цел"
 
-#: templates/system/tunable.html:42
-msgid "Add Loader"
-msgstr "Добави лоудер"
+#~ msgid "Add Loader"
+#~ msgstr "Добави лоудер"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6393,13 +6257,12 @@ msgstr "Статуса на масив %(volume)s е %(status)s"
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "Статуса на масив %(volume)s е %(status)s"
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr ""
-"Вие трябва да промените паролата на администратора (в момента не е "
-"необходима парола за вход)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr ""
+#~ "Вие трябва да промените паролата на администратора (в момента не е "
+#~ "необходима парола за вход)"
 
 #: tools/alert.py:137
 #, python-format
@@ -6417,8 +6280,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Критични сигнали"
 
-msgid "Selected"
-msgstr "Избран"
+#~ msgid "Selected"
+#~ msgstr "Избран"
 
 #, fuzzy
 msgid "SHA256 sum for the PBI file"
@@ -6428,120 +6291,120 @@ msgstr "SHA256 сума за изображението"
 msgid "Control Plugins"
 msgstr "Контрол на Услугите"
 
-msgid "Allow guest access"
-msgstr "Разреши достъп за гост"
+#~ msgid "Allow guest access"
+#~ msgstr "Разреши достъп за гост"
 
-msgid "Only allow guest access"
-msgstr "Разреши достъп само за гост"
+#~ msgid "Only allow guest access"
+#~ msgstr "Разреши достъп само за гост"
 
-msgid "An error occurred when setting the options"
-msgstr "Възникна грешка при задаване на опциите"
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "Възникна грешка при задаване на опциите"
 
-msgid "Service Pack image to be installed"
-msgstr "Изображение за инсталация на Сервизен пакет"
+#~ msgid "Service Pack image to be installed"
+#~ msgstr "Изображение за инсталация на Сервизен пакет"
 
 #, fuzzy
 msgid "Invalid service pack"
 msgstr "Невалиден сервизен пакет или контролна сума"
 
-msgid "View Cron Jobs"
-msgstr "Преглед на разписанието на задачите"
+#~ msgid "View Cron Jobs"
+#~ msgstr "Преглед на разписанието на задачите"
 
-msgid "View Rsync Tasks"
-msgstr "Преглед на Rsync задачите"
+#~ msgid "View Rsync Tasks"
+#~ msgstr "Преглед на Rsync задачите"
 
-msgid "View S.M.A.R.T. Tests"
-msgstr "Показва S.M.A.R.T. Тестове"
+#~ msgid "View S.M.A.R.T. Tests"
+#~ msgstr "Показва S.M.A.R.T. Тестове"
 
-msgid "View Sysctls"
-msgstr "Показва Sysctls"
+#~ msgid "View Sysctls"
+#~ msgstr "Показва Sysctls"
 
 #, fuzzy
 msgid "View Tunables"
 msgstr "Показва лоудерите"
 
-msgid "Browse"
-msgstr "Преглед"
+#~ msgid "Browse"
+#~ msgstr "Преглед"
 
-msgid "Close"
-msgstr "Затваряне"
+#~ msgid "Close"
+#~ msgstr "Затваряне"
 
 #, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "Добавяне на споделени ресурси за Apple"
 
-msgid "Apply Service Pack"
-msgstr "Приложи сервизния пакет"
+#~ msgid "Apply Service Pack"
+#~ msgstr "Приложи сервизния пакет"
 
-msgid "Hourly"
-msgstr "Ежечасово"
+#~ msgid "Hourly"
+#~ msgstr "Ежечасово"
 
-msgid "Hourly Graphs"
-msgstr "Часови графики"
+#~ msgid "Hourly Graphs"
+#~ msgstr "Часови графики"
 
-msgid "Daily"
-msgstr "Дневно"
+#~ msgid "Daily"
+#~ msgstr "Дневно"
 
-msgid "Daily Graphs"
-msgstr "Дневни графики"
+#~ msgid "Daily Graphs"
+#~ msgstr "Дневни графики"
 
-msgid "Weekly"
-msgstr "Седмично"
+#~ msgid "Weekly"
+#~ msgstr "Седмично"
 
-msgid "Weekly Graphs"
-msgstr "Седмични графики"
+#~ msgid "Weekly Graphs"
+#~ msgstr "Седмични графики"
 
-msgid "Monthly"
-msgstr "Месечно"
+#~ msgid "Monthly"
+#~ msgstr "Месечно"
 
-msgid "Monthly Graphs"
-msgstr "Месечни графики"
+#~ msgid "Monthly Graphs"
+#~ msgstr "Месечни графики"
 
-msgid "Yearly"
-msgstr "Годишно"
+#~ msgid "Yearly"
+#~ msgstr "Годишно"
 
-msgid "Yearly Graphs"
-msgstr "Годишни графики"
+#~ msgid "Yearly Graphs"
+#~ msgstr "Годишни графики"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Лента"
+#~ msgid "Tape"
+#~ msgstr "Лента"
 
-msgid "Pass"
-msgstr "Преминаване"
+#~ msgid "Pass"
+#~ msgstr "Преминаване"
 
-msgid "Disable password"
-msgstr "Изключване на паролата"
+#~ msgid "Disable password"
+#~ msgstr "Изключване на паролата"
 
-msgid "My Account"
-msgstr "Моят профил"
+#~ msgid "My Account"
+#~ msgstr "Моят профил"
 
-msgid "View All Users"
-msgstr "Преглед на всички потребители"
+#~ msgid "View All Users"
+#~ msgstr "Преглед на всички потребители"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Извиняваме се, но Вашият формуляр е изтекъл. Моля продължете попълването "
-"на формуляра от тази страница."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Извиняваме се, но Вашият формуляр е изтекъл. Моля продължете попълването "
+#~ "на формуляра от тази страница."
 
-msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr "Трябва да зададете валиден IPv4 или IPv6 с маска"
+#~ msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
+#~ msgstr "Трябва да зададете валиден IPv4 или IPv6 с маска"
 
-msgid "Local Access"
-msgstr "Локален достъп"
+#~ msgid "Local Access"
+#~ msgstr "Локален достъп"
 
-msgid "Time in milliseconds"
-msgstr "Време в милисекунди"
+#~ msgid "Time in milliseconds"
+#~ msgstr "Време в милисекунди"
 
-msgid "ISCSI"
-msgstr "ISCSI"
+#~ msgid "ISCSI"
+#~ msgstr "ISCSI"
 
-msgid "Guest Account"
-msgstr "Гост"
+#~ msgid "Guest Account"
+#~ msgstr "Гост"
 
 #, fuzzy
 msgid "CIFS Share"
@@ -6551,112 +6414,112 @@ msgstr "Редактиране на NFS споделени ресурси"
 msgid "NFS Share"
 msgstr "Редактиране на NFS споделени ресурси"
 
-msgid "NTP server 2"
-msgstr "NTP сървър 2"
+#~ msgid "NTP server 2"
+#~ msgstr "NTP сървър 2"
 
-msgid "NTP server 3"
-msgstr "NTP сървър 3"
+#~ msgid "NTP server 3"
+#~ msgstr "NTP сървър 3"
 
-msgid "Loader"
-msgstr "Лоудер"
+#~ msgid "Loader"
+#~ msgstr "Лоудер"
 
-msgid "Loaders"
-msgstr "Лоудери"
+#~ msgid "Loaders"
+#~ msgstr "Лоудери"
 
-msgid "Reboot the System"
-msgstr "Рестартиране на системата"
+#~ msgid "Reboot the System"
+#~ msgstr "Рестартиране на системата"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
 msgid "Edit Disk"
 msgstr "Редактиране на диск"
 
-msgid "Are you sure you want to export?"
-msgstr "Сигурни ли сте че искате да експортирате?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "Сигурни ли сте че искате да експортирате?"
 
-msgid "Export Volume"
-msgstr "Експортиране на дял"
+#~ msgid "Export Volume"
+#~ msgstr "Експортиране на дял"
 
-msgid "Add loader"
-msgstr "Добави лоудер."
+#~ msgid "Add loader"
+#~ msgstr "Добави лоудер."
 
-msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Том от който този ZFS том ще бъде създаден"
+#~ msgid "Volume from which this ZFS Volume will be created on"
+#~ msgstr "Том от който този ZFS том ще бъде създаден"
 
-msgid "successfully added"
-msgstr "успешно добавен"
+#~ msgid "successfully added"
+#~ msgstr "успешно добавен"
 
-msgid "successfully deleted"
-msgstr "успешно изтрит"
+#~ msgid "successfully deleted"
+#~ msgstr "успешно изтрит"
 
-msgid "successfully edited"
-msgstr "успешно редактиран"
+#~ msgid "successfully edited"
+#~ msgstr "успешно редактиран"
 
-msgid "%s successfully added."
-msgstr "%s успешно добавени."
+#~ msgid "%s successfully added."
+#~ msgstr "%s успешно добавени."
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 мрежова маска"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 мрежова маска"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
-"Тази стойност трябва да бъде в диапазона между 0 и 10000 включително."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr ""
+#~ "Тази стойност трябва да бъде в диапазона между 0 и 10000 включително."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
-"Тази стойност трябва да бъде в диапазона между 0 и 1000 включително."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr ""
+#~ "Тази стойност трябва да бъде в диапазона между 0 и 1000 включително."
 
-msgid "Enable DDP"
-msgstr "Разреши DDP"
+#~ msgid "Enable DDP"
+#~ msgstr "Разреши DDP"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "Разреши поддръжката на DDP за ниско ниво на достъп"
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "Разреши поддръжката на DDP за ниско ниво на достъп"
 
-msgid "Rsyncd"
-msgstr "Rsyncd"
+#~ msgid "Rsyncd"
+#~ msgstr "Rsyncd"
 
-msgid "The volume failed to export"
-msgstr "Томът не може да бъде експортиран"
+#~ msgid "The volume failed to export"
+#~ msgstr "Томът не може да бъде експортиран"
 
-msgid "Cron Scheduler"
-msgstr "Разписание на задачите"
+#~ msgid "Cron Scheduler"
+#~ msgstr "Разписание на задачите"
 
-msgid "Docs"
-msgstr "Документи на"
+#~ msgid "Docs"
+#~ msgstr "Документи на"
 
-msgid "Welcome to"
-msgstr "Добре дошли във8"
+#~ msgid "Welcome to"
+#~ msgstr "Добре дошли във8"
 
-msgid "LUN"
-msgstr "LUN"
+#~ msgid "LUN"
+#~ msgstr "LUN"
 
-msgid "Dataset name"
-msgstr "Наименование на набора от данни"
+#~ msgid "Dataset name"
+#~ msgstr "Наименование на набора от данни"
 
-msgid "Snapshot name"
-msgstr "Наименование на моментната снимка"
+#~ msgid "Snapshot name"
+#~ msgstr "Наименование на моментната снимка"
 
-msgid "Used space"
-msgstr "Използвано пространство"
+#~ msgid "Used space"
+#~ msgstr "Използвано пространство"
 
-msgid "Referenced space"
-msgstr "Референтно пространство"
+#~ msgid "Referenced space"
+#~ msgstr "Референтно пространство"
 
-msgid "No ZFS snapshot available"
-msgstr "Няма ZFS моментна снимка на разположение"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "Няма ZFS моментна снимка на разположение"
 
-msgid "Create Periodic Snapshot"
-msgstr "Създаване на периодична моментна снимка"
+#~ msgid "Create Periodic Snapshot"
+#~ msgstr "Създаване на периодична моментна снимка"
 
-msgid "Restore to Factory Defaults"
-msgstr "Възстановяване на фабричните настройки"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "Възстановяване на фабричните настройки"
 
-msgid "Config"
-msgstr "Конфигурация"
+#~ msgid "Config"
+#~ msgstr "Конфигурация"

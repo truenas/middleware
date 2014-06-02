@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2012-03-10 16:45+0200\n"
+"PO-Revision-Date: 2012-03-10 16:45+0000\n"
 "Last-Translator: ngosngosan <ngosngosan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1331397940.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -244,9 +245,8 @@ msgstr "Penuh"
 msgid "Debug"
 msgstr "Debug"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Kondisi Awal"
+#~ msgid "Default"
+#~ msgstr "Kondisi Awal"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -339,9 +339,8 @@ msgstr "Menyala"
 msgid "Off"
 msgstr "Padam"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (disarankan)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (disarankan)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -525,9 +524,8 @@ msgstr "Ulangi kata sandi diatas untuk verifikasi."
 msgid "Shell"
 msgstr "Shell"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Matikan sandi login"
+#~ msgid "Disable password logins"
+#~ msgstr "Matikan sandi login"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -553,9 +551,8 @@ msgstr "Mode Direktori Home"
 msgid "Auxiliary groups"
 msgstr "Grup tambahan"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Nama pengguna telah terdaftar. Cari yg lain."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Nama pengguna telah terdaftar. Cari yg lain."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -595,9 +592,8 @@ msgstr "Biarkan kosong, katasandi sedang dimatikan"
 msgid "This field is required."
 msgstr "Kotak ini harus diisi."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Direktori Home harus dimulai dengan /mnt atau menjadi /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Direktori Home harus dimulai dengan /mnt atau menjadi /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -721,24 +717,17 @@ msgstr "Akun"
 msgid "Admin Account"
 msgstr "Akun Admin"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Ganti kata sandi"
+#~ msgid "Change Password"
+#~ msgstr "Ganti kata sandi"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Ganti Admin"
+#~ msgid "Change Admin User"
+#~ msgstr "Ganti Admin"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Kata sandi berhasil diperbaharui."
+#~ msgid "Password successfully updated."
+#~ msgstr "Kata sandi berhasil diperbaharui."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Admin berhasil diperbaharui."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Admin berhasil diperbaharui."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -1107,9 +1096,8 @@ msgstr "Agregat Tautan"
 msgid "Link Aggregations"
 msgstr "Agregat Tautan"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "Grup Interface LAGG"
+#~ msgid "LAGG Interface group"
+#~ msgstr "Grup Interface LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1152,9 +1140,8 @@ msgstr "Buat Agregat Tautan"
 msgid "View Link Aggregations"
 msgstr "Lihat Semua Agregat Tautan"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG berhasil ditambahkan"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG berhasil ditambahkan"
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1517,17 +1504,15 @@ msgstr "Rahasia (Konfirmasi)"
 msgid "Enter the same secret above for verification."
 msgstr "Masukkan rahasia yang sama dengan diatas untuk verifikasi."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Inisiator Rahasia"
+#~ msgid "Initiator Secret"
+#~ msgstr "Inisiator Rahasia"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Inisiator sisi rahasia. (untuk saling otentikasi CHAP)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Inisiator Rahasia (Konfirmasi)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Inisiator Rahasia (Konfirmasi)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1620,19 +1605,17 @@ msgstr ""
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Perangkat cakram"
+#~ msgid "Disk device"
+#~ msgstr "Perangkat cakram"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "ID Grup Portal anda tak dapat lebih besar daripada %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "ID Grup anda tak dapat lebih besar daripada %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "ID Grup anda tak dapat lebih besar daripada %d"
 
 #: services/forms.py:1019
 #, fuzzy
@@ -1772,13 +1755,11 @@ msgstr ""
 "Gunakan opsi ini untuk mengesampinkan pembuatan masker direktori (0777 "
 "secara default)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Dukungan baca/tulis yang besar"
+#~ msgid "Large RW support"
+#~ msgstr "Dukungan baca/tulis yang besar"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Kirim berkas dengan sendfile(2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Kirim berkas dengan sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1890,15 +1871,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Nama Server"
+#~ msgid "Server Name"
+#~ msgstr "Nama Server"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "Nama Server. Jika kolom ini kosong, server asal yang digunakan."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "Nama Server. Jika kolom ini kosong, server asal yang digunakan."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1936,17 +1915,15 @@ msgstr ""
 "Tentukan berapa banyak server yang dibuat. Harus ada cukup untuk menangani "
 "konkurensi tingkat maksimum dari klien, biasanya 4-6."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Mode Asynchronous"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Mode Asynchronous"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Nyalakan mode asynchronous, yang akan membantu performa diluar kecepatan "
-"jaringan gigabit."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Nyalakan mode asynchronous, yang akan membantu performa diluar kecepatan "
+#~ "jaringan gigabit."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2347,14 +2324,13 @@ msgstr "Penyedia"
 msgid "Domain name"
 msgstr "Nama domain"
 
-#: services/models.py:765
-msgid ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
-msgstr ""
-"Alias dari nama host. Opsi ini dapat muncul berkali-kali, untuk setiap "
-"domain yang memiliki IP sama. Gunakan spasi untuk menyekat beberapa nama "
-"alias."
+#~ msgid ""
+#~ "A host name alias. This option can appear multiple times, for each domain "
+#~ "that has the same IP. Use a space to separate multiple alias names."
+#~ msgstr ""
+#~ "Alias dari nama host. Opsi ini dapat muncul berkali-kali, untuk setiap "
+#~ "domain yang memiliki IP sama. Gunakan spasi untuk menyekat beberapa nama "
+#~ "alias."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2368,10 +2344,9 @@ msgstr ""
 msgid "Forced update period"
 msgstr "Periode pembaharuan paksa"
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
-"Parameten tersebut akan ditambahkan ke pengaturan global di inadyn.conf."
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr ""
+#~ "Parameten tersebut akan ditambahkan ke pengaturan global di inadyn.conf."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
@@ -2599,13 +2574,11 @@ msgstr "Path"
 msgid "Allow Local User Login"
 msgstr "Izinkan Login Pengguna Lokal"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "Spanduk"
+#~ msgid "Banner"
+#~ msgstr "Spanduk"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "Spanduk penyambut ditampilkan oleh FTP ketika koneksi pertama kali."
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "Spanduk penyambut ditampilkan oleh FTP ketika koneksi pertama kali."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2630,9 +2603,8 @@ msgstr "Terbatas ke direktori"
 msgid "Require IDENT Authentication"
 msgstr "Diperlukan Otentikasi IDENT"
 
-#: services/models.py:1031
-msgid "Require Reverse DNS for IP"
-msgstr "Diperlukan Pembalikan DNS untuk IP"
+#~ msgid "Require Reverse DNS for IP"
+#~ msgstr "Diperlukan Pembalikan DNS untuk IP"
 
 #: services/models.py:1033
 msgid "Masquerade address"
@@ -2717,9 +2689,8 @@ msgstr "Bandwidth unduh pengguna anonim"
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr "Bandwitdth unduh pengguna anonim dalam KB/s. Nol berarti tak terbatas."
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "Nyalakan SSL/TLS"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "Nyalakan SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -2837,13 +2808,11 @@ msgstr ""
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1239
-msgid "Domain Controller Name"
-msgstr "Nama Pengontrol Domain"
+#~ msgid "Domain Controller Name"
+#~ msgstr "Nama Pengontrol Domain"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "Nama AD atau PDC."
+#~ msgid "AD or PDC name."
+#~ msgstr "Nama AD atau PDC."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3157,17 +3126,15 @@ msgstr ""
 "Laporkan jika temperatur berubah setidaknya N derajat Celcius sejak "
 "pelaporan terakhir. 0 untuk mematikan"
 
-#: services/models.py:1475
-msgid "Informal"
-msgstr "Informal"
+#~ msgid "Informal"
+#~ msgstr "Informal"
 
-#: services/models.py:1476 services/models.py:1481
-msgid ""
-"Report if the temperature is greater or equal than N degrees Celsius. 0 to "
-"disable"
-msgstr ""
-"Laporkan jika temperatur lebih besar atau sama dengan N derajat Celcius. 0 "
-"untuk mematikan"
+#~ msgid ""
+#~ "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
+#~ "disable"
+#~ msgstr ""
+#~ "Laporkan jika temperatur lebih besar atau sama dengan N derajat Celcius. 0 "
+#~ "untuk mematikan"
 
 #: services/models.py:1480
 msgid "Critical"
@@ -3177,9 +3144,8 @@ msgstr "Kritikal"
 msgid "Email to report"
 msgstr "Email untuk melapor"
 
-#: services/models.py:1487
-msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr "Alamat email tujuan. Pisahkan alamat email dengan titik koma"
+#~ msgid "Destination email address. Separate email addresses by semi-colon"
+#~ msgstr "Alamat email tujuan. Pisahkan alamat email dengan titik koma"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3190,13 +3156,11 @@ msgstr "S.M.A.R.T"
 msgid "Control Services"
 msgstr "Servis Kontrol"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "Ekstensi Perangkat"
+#~ msgid "Device Extents"
+#~ msgstr "Ekstensi Perangkat"
 
-#: services/nav.py:72
-msgid "Add Device Extent"
-msgstr "Tambahkan ekstensi perangkat"
+#~ msgid "Add Device Extent"
+#~ msgstr "Tambahkan ekstensi perangkat"
 
 #: services/nav.py:79
 #, fuzzy
@@ -3265,14 +3229,12 @@ msgstr "Kata sandi berbagi"
 msgid "The path %s does not exist"
 msgstr "Path ekstensi"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "Isian pada kolom adalah alamat IP atau jaringan yang tidak valid"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "Isian pada kolom adalah alamat IP atau jaringan yang tidak valid"
 
-#: sharing/forms.py:165
 #, python-format
-msgid "The IP '%s' is not valid."
-msgstr "Alamat IP '%s' tidak valid."
+#~ msgid "The IP '%s' is not valid."
+#~ msgstr "Alamat IP '%s' tidak valid."
 
 #: sharing/forms.py:179
 #, fuzzy
@@ -3426,16 +3388,14 @@ msgstr ""
 "Opsi ini mengizinkan anda untuk mengatur kata sandi volume, yang maksimalnya "
 "8 karakter (sangat disarankan untuk menggunakan ASCII ketika menulis ini)."
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "Set Karakter Berbagi"
+#~ msgid "Share Character Set"
+#~ msgstr "Set Karakter Berbagi"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr ""
-"Tentukan set karakter berbagi. Contohnya UTF8, UTF8-MAC, ISO-8859-15, dll."
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr ""
+#~ "Tentukan set karakter berbagi. Contohnya UTF8, UTF8-MAC, ISO-8859-15, dll."
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3491,27 +3451,24 @@ msgstr ""
 msgid "Disk Discovery"
 msgstr ""
 
-#: sharing/models.py:161
-msgid ""
-"Allow other systems to discover this share as a disk for data, as a Time "
-"Machine backup volume or not at all."
-msgstr ""
-"Izinkan sistem lain untuk menemukan berbagi ini sebagai disk atau data, "
-"seperti sebuah Mesin Waktu volume backup atau tidak sama sekali."
+#~ msgid ""
+#~ "Allow other systems to discover this share as a disk for data, as a Time "
+#~ "Machine backup volume or not at all."
+#~ msgstr ""
+#~ "Izinkan sistem lain untuk menemukan berbagi ini sebagai disk atau data, "
+#~ "seperti sebuah Mesin Waktu volume backup atau tidak sama sekali."
 
-#: sharing/models.py:167
-msgid "Disk discovery mode"
-msgstr "Modus penemuan cakram"
+#~ msgid "Disk discovery mode"
+#~ msgstr "Modus penemuan cakram"
 
-#: sharing/models.py:168
-msgid ""
-"Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
-"behavior in MacOS. Default mode exports the volume as a data volume for "
-"users."
-msgstr ""
-"Catatan! Memilih 'Mesin Waktu' pada beberapa berbagi mungkin menyebabkan "
-"perilaku yang tidak terprediksi pada MacOS. Modus asal mengeksport volume "
-"sebagai volume data untuk pengguna."
+#~ msgid ""
+#~ "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
+#~ "behavior in MacOS. Default mode exports the volume as a data volume for "
+#~ "users."
+#~ msgstr ""
+#~ "Catatan! Memilih 'Mesin Waktu' pada beberapa berbagi mungkin menyebabkan "
+#~ "perilaku yang tidak terprediksi pada MacOS. Modus asal mengeksport volume "
+#~ "sebagai volume data untuk pengguna."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3525,49 +3482,43 @@ msgstr ""
 "Atur informasi database untuk disimpan di path. Anda bisa memilih lokasi "
 "yang dapat ditulisi, walaupun jika volume hanya baca saja."
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "Cache CNID"
+#~ msgid "Cache CNID"
+#~ msgstr "Cache CNID"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"Jika anda mengatur afpd menggunakan informasi ID yang tersimpan di awalan "
-"berkas AppleDouble V2 untuk mengurangi muatan database. Jangan mengatur opsi "
-"ini jika volume dimodifikasi oleh klien non AFP (NFS/SMB/lokal)."
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "Jika anda mengatur afpd menggunakan informasi ID yang tersimpan di awalan "
+#~ "berkas AppleDouble V2 untuk mengurangi muatan database. Jangan mengatur opsi "
+#~ "ini jika volume dimodifikasi oleh klien non AFP (NFS/SMB/lokal)."
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "Translate CR/LF"
+#~ msgid "Translate CR/LF"
+#~ msgstr "Translate CR/LF"
 
-#: sharing/models.py:182
-msgid ""
-"Enables crlf translation for TEXT files, automatically converting macintosh "
-"line breaks into Unix ones. Use of this option might be dangerous since some "
-"older programs store binary data files as type 'TEXT' when saving and switch "
-"the filetype in a second step. Afpd will potentially destroy such files when "
-"'erroneously' changing bytes in order to do line break translation."
-msgstr ""
-"Nyalakan translasi CR/LF untuk berkas TEXT, secara otomatis mengkonversi "
-"batas baris Macintosh ke UNIX. Menggunakan opsi ini mungkin berbahaya karena "
-"sebagian program lama menyimpan data biner sebagai 'TEXT' ketika menyimpan "
-"dan mengganti tipe berkas setelahnya. Afpd akan berpotensi merusak file "
-"seperti itu ketika mengganti byte dalam hal mentranslasi batas baris."
+#~ msgid ""
+#~ "Enables crlf translation for TEXT files, automatically converting macintosh "
+#~ "line breaks into Unix ones. Use of this option might be dangerous since some "
+#~ "older programs store binary data files as type 'TEXT' when saving and switch "
+#~ "the filetype in a second step. Afpd will potentially destroy such files when "
+#~ "'erroneously' changing bytes in order to do line break translation."
+#~ msgstr ""
+#~ "Nyalakan translasi CR/LF untuk berkas TEXT, secara otomatis mengkonversi "
+#~ "batas baris Macintosh ke UNIX. Menggunakan opsi ini mungkin berbahaya karena "
+#~ "sebagian program lama menyimpan data biner sebagai 'TEXT' ketika menyimpan "
+#~ "dan mengganti tipe berkas setelahnya. Afpd akan berpotensi merusak file "
+#~ "seperti itu ketika mengganti byte dalam hal mentranslasi batas baris."
 
-#: sharing/models.py:185
-msgid "Windows File Names"
-msgstr "Nama Berkas Windows"
+#~ msgid "Windows File Names"
+#~ msgstr "Nama Berkas Windows"
 
-#: sharing/models.py:186
-msgid ""
-"This forces filenames to be restricted to the character set used by Windows. "
-"This is not recommended for shares used principally by Mac computers."
-msgstr ""
-"Ini akan memaksa nama berkas untuk membatasi set karakter yang digunakan "
-"oleh Windows. Tidak direkomendasikan untuk berbagi dengan komputer Mac."
+#~ msgid ""
+#~ "This forces filenames to be restricted to the character set used by Windows. "
+#~ "This is not recommended for shares used principally by Mac computers."
+#~ msgstr ""
+#~ "Ini akan memaksa nama berkas untuk membatasi set karakter yang digunakan "
+#~ "oleh Windows. Tidak direkomendasikan untuk berbagi dengan komputer Mac."
 
 #: sharing/models.py:189
 #, fuzzy
@@ -3595,33 +3546,27 @@ msgstr ""
 "Selalu gunakan 0 untuk nomor perangkat, membantu ketika nomor perangkat "
 "tidak tetap ketika menyalakan ulang, kluster, ..."
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "Matikan ID Berkas"
+#~ msgid "Disable File ID"
+#~ msgstr "Matikan ID Berkas"
 
-#: sharing/models.py:201
-msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "Jangan umumkan panggilan createfileid, resolveid, deleteid."
+#~ msgid "Don't advertise createfileid, resolveid, deleteid calls."
+#~ msgstr "Jangan umumkan panggilan createfileid, resolveid, deleteid."
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "Matikan nama hex"
+#~ msgid "Disable :hex Names"
+#~ msgstr "Matikan nama hex"
 
-#: sharing/models.py:205
-msgid ""
-"Disable :hex translations for anything except dot files. This option makes "
-"the '/' character illegal."
-msgstr ""
-"Matikan translasi hex untuk semuanya kecuali berkas dot. Opsi ini membuat "
-"karakter '/' ilegal."
+#~ msgid ""
+#~ "Disable :hex translations for anything except dot files. This option makes "
+#~ "the '/' character illegal."
+#~ msgstr ""
+#~ "Matikan translasi hex untuk semuanya kecuali berkas dot. Opsi ini membuat "
+#~ "karakter '/' ilegal."
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "Menyediakan kompatibilitas dengan klien Apple II."
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "Menyediakan kompatibilitas dengan klien Apple II."
 
 #: sharing/models.py:212
 msgid "No Stat"
@@ -3663,19 +3608,17 @@ msgstr "Berbagi Apple"
 msgid "Apple (AFP) Shares"
 msgstr "Berbagi Apple"
 
-#: sharing/models.py:268
-msgid "Authorized network or IP addresses"
-msgstr "Jaringan atau alamat IP yang berhak"
+#~ msgid "Authorized network or IP addresses"
+#~ msgstr "Jaringan atau alamat IP yang berhak"
 
-#: sharing/models.py:269
-msgid ""
-"Network that is authorized to access the NFS share or a list of IP "
-"addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
-"number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
-msgstr ""
-"Jaringan yang berhak untuk mengakses berbagi NFS atau sebuah daftar alamat "
-"IP. Tentukan nomor jaringan yang berbentuk 1.2.3.4/xx dimana xx adalah nomor "
-"dari bit sebuah netmask atau daftar alamat IP 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgid ""
+#~ "Network that is authorized to access the NFS share or a list of IP "
+#~ "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
+#~ "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgstr ""
+#~ "Jaringan yang berhak untuk mengakses berbagi NFS atau sebuah daftar alamat "
+#~ "IP. Tentukan nomor jaringan yang berbentuk 1.2.3.4/xx dimana xx adalah nomor "
+#~ "dari bit sebuah netmask atau daftar alamat IP 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -3771,14 +3714,11 @@ msgstr "Pengguna %s tidak valid."
 msgid "Volume name"
 msgstr "Nama volume"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "Tipe sistem berkas"
+#~ msgid "Filesystem type"
+#~ msgstr "Tipe sistem berkas"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "Paksa ukuran sektor 4096 byte"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "Paksa ukuran sektor 4096 byte"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
@@ -3827,22 +3767,19 @@ msgid ""
 "append a virtual device"
 msgstr ""
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "Anda harus memilih sebuah sistem berkas (filesystem)"
+#~ msgid "You must select a filesystem"
+#~ msgstr "Anda harus memilih sebuah sistem berkas (filesystem)"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "Anda telah memiliki nama volume yang sama"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" adalah kata yang sudah dipesan jadi tidak dapat digunakan"
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"log\" adalah kata yang sudah dipesan jadi tidak dapat digunakan"
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
-"Nama volume TIDAK boleh diawali dengan c[0-9], mirror, raidz atau spare"
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr ""
+#~ "Nama volume TIDAK boleh diawali dengan c[0-9], mirror, raidz atau spare"
 
 #: storage/forms.py:311
 #, fuzzy
@@ -3947,13 +3884,11 @@ msgstr "Kuota untuk dataset ini"
 msgid "Reserved space for this volume"
 msgstr "Tempat yang telah dipesan untuk dataset ini"
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "Nama Volume ZFS"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "Nama Volume ZFS"
 
-#: storage/forms.py:845
-msgid "Size for this ZFS Volume"
-msgstr "Ukuran untuk Volume ZFS ini"
+#~ msgid "Size for this ZFS Volume"
+#~ msgstr "Ukuran untuk Volume ZFS ini"
 
 #: storage/forms.py:846
 #, fuzzy
@@ -4413,10 +4348,8 @@ msgstr "Impor Volume Otomatis"
 msgid "View Volumes"
 msgstr "Lihat Semua Volume-volume"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "Buat ZFS Volume"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "Buat ZFS Volume"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4495,9 +4428,8 @@ msgstr "Snapshot berhasil dihapus."
 msgid "Rollback successful."
 msgstr "Pengembalian berhasil."
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "Snapshot berhasil ditambahkan."
+#~ msgid "Snapshot successfully added."
+#~ msgstr "Snapshot berhasil ditambahkan."
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4727,25 +4659,21 @@ msgstr "Gunakan Konsol Serial"
 msgid "Enable screen saver"
 msgstr "Nyalakan screen saver"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "Secara otomatis mengecek firmware baru"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "Secara otomatis mengecek firmware baru"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "Bunyi ketika boot"
+#~ msgid "Beep on boot"
+#~ msgstr "Bunyi ketika boot"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "Nyalakan pengaturan spesial pada sistem"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "Nyalakan pengaturan spesial pada sistem"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "Nyalakan powerd (Power Saving Daemon)"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "Nyalakan Zeroconf/Bonjour"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "Nyalakan Zeroconf/Bonjour"
 
 #: system/models.py:174
 #, fuzzy
@@ -5147,9 +5075,8 @@ msgstr "Email tes anda tidak dapat dikirim:"
 msgid "Your test email has been sent!"
 msgstr "Email tes anda telah dikirim!"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Halaman Tidak Ditemukan"
+#~ msgid "Page Not Found"
+#~ msgstr "Halaman Tidak Ditemukan"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5171,10 +5098,8 @@ msgstr "Bantuan"
 msgid "Log In"
 msgstr "Log Masuk"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -5182,11 +5107,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "Anggota-anggota"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Modifikasi"
+#~ msgid "Modify"
+#~ msgstr "Modifikasi"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5205,13 +5127,11 @@ msgstr "Hapus Grup"
 msgid "There are no user defined groups."
 msgstr "Ada kelompok pengguna tidak didefinisikan."
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "Tambahkan Grup Baru"
+#~ msgid "Add New Group"
+#~ msgstr "Tambahkan Grup Baru"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "Beranda"
+#~ msgid "Home"
+#~ msgstr "Beranda"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
@@ -5228,26 +5148,21 @@ msgstr "Grup Cadangan"
 msgid "Remove User"
 msgstr "Hilangkan Pengguna"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "Hapus Pengguna"
+#~ msgid "Delete User"
+#~ msgstr "Hapus Pengguna"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "Tidak ada pengguna yang didefinisikan"
+#~ msgid "No users defined"
+#~ msgstr "Tidak ada pengguna yang didefinisikan"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "Tambahkan Pengguna Baru"
+#~ msgid "Add New User"
+#~ msgstr "Tambahkan Pengguna Baru"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "Ubah Email"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "Ganti Kata Sandi Admin"
+#~ msgid "Change Admin Password"
+#~ msgstr "Ganti Kata Sandi Admin"
 
 #: templates/freeadmin/advanced_btn.html:25
 #, fuzzy
@@ -5396,9 +5311,8 @@ msgstr "Dokumentasi"
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS Documentation"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "IPv6 Otomatis"
+#~ msgid "IPv6 Auto"
+#~ msgstr "IPv6 Otomatis"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5440,22 +5354,18 @@ msgstr "Aksi yang tersedia"
 msgid "Edit"
 msgstr "Sunting"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "Sunting Interface"
+#~ msgid "Edit Interface"
+#~ msgstr "Sunting Interface"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "Hapus Interface"
+#~ msgid "Delete Interface"
+#~ msgstr "Hapus Interface"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
 msgstr "Tidak ada interface yang didefinisikan"
 
-#: templates/network/interface.html:47 templates/network/interface.html:49
-msgid "Add Interface"
-msgstr "Tambahkan Interface"
+#~ msgid "Add Interface"
+#~ msgstr "Tambahkan Interface"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5471,50 +5381,38 @@ msgstr "Sunting Anggota-anggota"
 msgid "LAGG Members"
 msgstr "Anggota-anggota LAGG"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "Tidak ada interface LAGG yang didefinisikan"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "Tidak ada interface LAGG yang didefinisikan"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "Tambahoan Interface LAGG"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "Tambahoan Interface LAGG"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "Tambahkan LAGG"
+#~ msgid "Add LAGG"
+#~ msgstr "Tambahkan LAGG"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "Mengurutkan Prioritas"
+#~ msgid "Ordering Priority"
+#~ msgstr "Mengurutkan Prioritas"
 
-#: templates/network/lagg_members.html:7
-msgid "Startup option"
-msgstr "Opsi startup"
+#~ msgid "Startup option"
+#~ msgstr "Opsi startup"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "Aksi"
+#~ msgid "Action"
+#~ msgstr "Aksi"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "Tambahkan Anggota LAGG"
+#~ msgid "Add LAGG Member"
+#~ msgstr "Tambahkan Anggota LAGG"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "Sunting Rute Statis"
+#~ msgid "Edit Static Route"
+#~ msgstr "Sunting Rute Statis"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "Hapus Rute Statis"
+#~ msgid "Delete Static Route"
+#~ msgstr "Hapus Rute Statis"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "Tidak ada rute statis yang didefinisikan"
+#~ msgid "No static route defined"
+#~ msgstr "Tidak ada rute statis yang didefinisikan"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "Tambahkan Rute Statis"
+#~ msgid "Add Static Route"
+#~ msgstr "Tambahkan Rute Statis"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5532,21 +5430,17 @@ msgstr "Rute asal"
 msgid "No default route defined"
 msgstr "Tidak ada rute asal yang didefinisikan"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "Sunting VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "Sunting VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "Hapus VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "Hapus VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "Tidak ada VLAN yang didefinisikan"
+#~ msgid "No VLAN defined"
+#~ msgstr "Tidak ada VLAN yang didefinisikan"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "Tambahkan Interface VLAN"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "Tambahkan Interface VLAN"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
@@ -5638,14 +5532,12 @@ msgstr "Nama pengguna dan kata sandi anda tidak cocok. Silahkan coba lagi."
 msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Selamat datang, %(username)s. Terimakasih telah log masuk."
 
-#: templates/registration/login.html:46
 #, python-format
-msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr "Selamat datang di %(sw_name)s&trade; %(sw_login_version)s"
+#~ msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
+#~ msgstr "Selamat datang di %(sw_name)s&trade; %(sw_login_version)s"
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "Silahkan log masuk."
+#~ msgid "Please log in."
+#~ msgstr "Silahkan log masuk."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5663,9 +5555,8 @@ msgstr "Log masuk kembali"
 msgid "AFP Settings"
 msgstr "Pengaturan AFP"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "Pengaturan Direktori Aktif"
+#~ msgid "Active Directory Settings"
+#~ msgstr "Pengaturan Direktori Aktif"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5683,9 +5574,8 @@ msgstr "Pengaturan FTP"
 msgid "ISCSI Settings"
 msgstr "Pengaturan iSCSI"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "Pengaturan LDAP"
+#~ msgid "LDAP Settings"
+#~ msgstr "Pengaturan LDAP"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
@@ -5750,9 +5640,8 @@ msgstr "Portal"
 msgid "Authorized Initiators"
 msgstr "Inisiator yang Berhak"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "Otentikasi"
+#~ msgid "Authentication"
+#~ msgstr "Otentikasi"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5771,45 +5660,36 @@ msgstr "Target Terasosiasi"
 msgid "No associated targets defined"
 msgstr "Tidak ada target yang didefinisikan"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "Tambahkan ekstensi ke target"
+#~ msgid "Add Extent to Target"
+#~ msgstr "Tambahkan ekstensi ke target"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "Tambahkan ekstensi ke target"
+#~ msgid "Add Extent To Target"
+#~ msgstr "Tambahkan ekstensi ke target"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "Sesama"
+#~ msgid "Peer"
+#~ msgstr "Sesama"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "Tambahkan Pengguna iSCSI"
+#~ msgid "Add iSCSI User"
+#~ msgstr "Tambahkan Pengguna iSCSI"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "Jaringan yang Berhak"
+#~ msgid "Authorized Network"
+#~ msgstr "Jaringan yang Berhak"
 
 #: templates/services/iscsi_authini.html:35
 #, fuzzy
 msgid "No authorized initiators defined"
 msgstr "Inisiator yang Berhak"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "Tambahkan Inisiator yang Berhak"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "Tambahkan Inisiator yang Berhak"
 
 #: templates/services/iscsi_dextents.html:33
 #, fuzzy
 msgid "No device extents defined"
 msgstr "Tidak ada target yang didefinisikan"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "Tambahkan Ekstensi"
+#~ msgid "Add Extent"
+#~ msgstr "Tambahkan Ekstensi"
 
 #: templates/services/iscsi_extents.html:5
 #, fuzzy
@@ -5829,32 +5709,25 @@ msgstr "Dengarkan"
 msgid "No IP defined for this Portal"
 msgstr ""
 
-#: templates/services/iscsi_portals.html:26
-msgid "Edit Portal"
-msgstr "Sunting Portal"
+#~ msgid "Edit Portal"
+#~ msgstr "Sunting Portal"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "Hapus Portal"
+#~ msgid "Delete Portal"
+#~ msgstr "Hapus Portal"
 
 #: templates/services/iscsi_portals.html:39
 #, fuzzy
 msgid "No portals defined"
 msgstr "Tidak ada target yang didefinisikan"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "Tambahkan Portal"
+#~ msgid "Add Portal"
+#~ msgstr "Tambahkan Portal"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "Tidak ada target yang didefinisikan"
+#~ msgid "No targets defined"
+#~ msgstr "Tidak ada target yang didefinisikan"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "Tambahkan Target"
+#~ msgid "Add Target"
+#~ msgstr "Tambahkan Target"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -5903,14 +5776,11 @@ msgstr ""
 msgid "Delete Plugins Jail"
 msgstr "Hapus berkas pokok"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "Tidak ada modul rsync yang didefinisikan"
+#~ msgid "No rsync modules defined"
+#~ msgstr "Tidak ada modul rsync yang didefinisikan"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "Berbagi Aktif"
+#~ msgid "Active Shares"
+#~ msgstr "Berbagi Aktif"
 
 #: templates/sharing/apple.html:7
 #, fuzzy
@@ -5927,10 +5797,8 @@ msgstr "Sunting Berbagi Apple"
 msgid "Delete Apple (AFP) Share"
 msgstr "Hapus Berbagi Apple"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "Tidak ada berbagi yang didefinisikan"
+#~ msgid "No shares defined"
+#~ msgstr "Tidak ada berbagi yang didefinisikan"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 #, fuzzy
@@ -5957,9 +5825,8 @@ msgstr "Tambahkan Berbagi Windows (CIFS)"
 msgid "There are no active UNIX (NFS) shares."
 msgstr "Tidak ada Berbagi UNIX yang aktif disini."
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "Titik Mount"
+#~ msgid "Mountpoint"
+#~ msgstr "Titik Mount"
 
 #: templates/sharing/unix.html:29
 #, fuzzy
@@ -6106,27 +5973,20 @@ msgid ""
 "to create a replication task"
 msgstr ""
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "Snapshot terakhir"
+#~ msgid "Last snapshot"
+#~ msgstr "Snapshot terakhir"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "Sistem berkas ZFS jarak jauh"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "Sistem berkas ZFS jarak jauh"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "Hapus Replikasi"
+#~ msgid "Delete Replication"
+#~ msgstr "Hapus Replikasi"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "Sunting Replikasi"
+#~ msgid "Edit Replication"
+#~ msgstr "Sunting Replikasi"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "Tidak ada replikasi ZFS yang tersedia"
+#~ msgid "No ZFS replication available"
+#~ msgstr "Tidak ada replikasi ZFS yang tersedia"
 
 #: templates/storage/scrub.html:42
 #, fuzzy
@@ -6198,41 +6058,34 @@ msgstr "Klon snapshot"
 msgid "Periodic Snapshots"
 msgstr "Snapshot Periodik"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "Jadwal Snapshot Periodik"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "Jadwal Snapshot Periodik"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "Tidak ada jadwal snapshot disini."
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "Tidak ada jadwal snapshot disini."
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Bagaimana"
+#~ msgid "How"
+#~ msgstr "Bagaimana"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "Jaga snapshot untuk"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "Dari"
+#~ msgid "From"
+#~ msgstr "Dari"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "melalui"
+#~ msgid "through"
+#~ msgstr "melalui"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", setiap"
+#~ msgid ", every"
+#~ msgstr ", setiap"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "setiap hari"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "pada setiap"
+#~ msgid "on every"
+#~ msgstr "pada setiap"
 
 #: templates/storage/tasks.html:147
 #, fuzzy
@@ -6294,13 +6147,11 @@ msgstr "Volume-Volume"
 msgid "Destroy Dataset"
 msgstr "Hancurkan Dataset"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "Hancurkan ZFS Volume"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "Hancurkan ZFS Volume"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "Tidak ada volume yang didefinisikan"
+#~ msgid "No volumes defined"
+#~ msgstr "Tidak ada volume yang didefinisikan"
 
 #: templates/storage/wizard.html:27
 #, fuzzy
@@ -6315,25 +6166,20 @@ msgstr "Anggota cakram"
 msgid "Group type"
 msgstr "Tipe grup"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS Tambahan"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS Tambahan"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Penggunaan hanya 1 cakram log sangat tidak disarankan"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "Penggunaan hanya 1 cakram log sangat tidak disarankan"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Log"
+#~ msgid "Log"
+#~ msgstr "Log"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "Cache"
+#~ msgid "Cache"
+#~ msgstr "Cache"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "Luang"
+#~ msgid "Spare"
+#~ msgstr "Luang"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6353,21 +6199,18 @@ msgstr "Ganti cakram"
 msgid "Create ZFS volume on %(name)s"
 msgstr "Buat ZFS Volume"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "Tambah ZFS Volume"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "Tambah ZFS Volume"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "Bangun ulang Cache LDAP/AD"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "Cache sedang dibangun ulang."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "Cache sedang dibangun ulang."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "Cache tidak dapat dibangun ulang"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "Cache tidak dapat dibangun ulang"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6480,9 +6323,8 @@ msgstr "Tidak ada rsync yang didefinisikan"
 msgid "Add rsync task"
 msgstr "Tambahkan Rsync"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Tambahkan Rsync"
+#~ msgid "Add Rsync"
+#~ msgstr "Tambahkan Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6615,13 +6457,12 @@ msgstr ""
 msgid "The volume %(volume)s status is %(status)s"
 msgstr ""
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr ""
-"Anda harus mengganti kata sandi sebagai admin (saat ini tidak menggunakan "
-"kata sandi untuk masuk)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr ""
+#~ "Anda harus mengganti kata sandi sebagai admin (saat ini tidak menggunakan "
+#~ "kata sandi untuk masuk)"
 
 #: tools/alert.py:137
 #, python-format
@@ -6640,8 +6481,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritikal"
 
-msgid "Selected"
-msgstr "Terpilih"
+#~ msgid "Selected"
+#~ msgstr "Terpilih"
 
 #, fuzzy
 msgid "SHA256 sum for the PBI file"
@@ -6659,26 +6500,26 @@ msgstr "Path ke poin mount"
 msgid "Control Plugins"
 msgstr "Servis Kontrol"
 
-msgid "Allow guest access"
-msgstr "Izinkan akses Tamu"
+#~ msgid "Allow guest access"
+#~ msgstr "Izinkan akses Tamu"
 
-msgid "Only allow guest access"
-msgstr "Hanya izinkan akses Tamu"
+#~ msgid "Only allow guest access"
+#~ msgstr "Hanya izinkan akses Tamu"
 
-msgid "Invalid prefix"
-msgstr "Awalan invalid"
+#~ msgid "Invalid prefix"
+#~ msgstr "Awalan invalid"
 
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
-"Berapa menit terlewati sebelum sebuah snapshot yang baru diuat setelah "
-"yang terakhir. "
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr ""
+#~ "Berapa menit terlewati sebelum sebuah snapshot yang baru diuat setelah "
+#~ "yang terakhir. "
 
-msgid "An error occurred when setting the options"
-msgstr "Beberapa kesalahan muncul ketika mengatur opsi"
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "Beberapa kesalahan muncul ketika mengatur opsi"
 
-msgid "Service Pack image to be installed"
-msgstr "Image Service Pack yang akan dipasang"
+#~ msgid "Service Pack image to be installed"
+#~ msgstr "Image Service Pack yang akan dipasang"
 
 #, fuzzy
 msgid "Invalid service pack"
@@ -6704,123 +6545,123 @@ msgstr "Lihat Cakram"
 msgid "View Tunables"
 msgstr "Lihat Semua Pengguna"
 
-msgid "Browse"
-msgstr "Jelajahi"
+#~ msgid "Browse"
+#~ msgstr "Jelajahi"
 
-msgid "Close"
-msgstr "Tutup"
+#~ msgid "Close"
+#~ msgstr "Tutup"
 
 #, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "Tambahkan Berbagi Apple"
 
-msgid "Apply Service Pack"
-msgstr "Aplikasikan Service Pack"
+#~ msgid "Apply Service Pack"
+#~ msgstr "Aplikasikan Service Pack"
 
-msgid "Hourly"
-msgstr "Per jam"
+#~ msgid "Hourly"
+#~ msgstr "Per jam"
 
-msgid "Hourly Graphs"
-msgstr "Grafik per Jam"
+#~ msgid "Hourly Graphs"
+#~ msgstr "Grafik per Jam"
 
-msgid "Daily"
-msgstr "Per hari"
+#~ msgid "Daily"
+#~ msgstr "Per hari"
 
-msgid "Daily Graphs"
-msgstr "Grafik Harian"
+#~ msgid "Daily Graphs"
+#~ msgstr "Grafik Harian"
 
-msgid "Weekly"
-msgstr "Per minggu"
+#~ msgid "Weekly"
+#~ msgstr "Per minggu"
 
-msgid "Weekly Graphs"
-msgstr "Grafik Mingguan"
+#~ msgid "Weekly Graphs"
+#~ msgstr "Grafik Mingguan"
 
-msgid "Monthly"
-msgstr "Per Bulan"
+#~ msgid "Monthly"
+#~ msgstr "Per Bulan"
 
-msgid "Monthly Graphs"
-msgstr "Grafik Bulanan"
+#~ msgid "Monthly Graphs"
+#~ msgstr "Grafik Bulanan"
 
-msgid "Yearly"
-msgstr "Per tahun"
+#~ msgid "Yearly"
+#~ msgstr "Per tahun"
 
-msgid "Yearly Graphs"
-msgstr "Grafik Tahunan"
+#~ msgid "Yearly Graphs"
+#~ msgstr "Grafik Tahunan"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Tape"
+#~ msgid "Tape"
+#~ msgstr "Tape"
 
-msgid "Pass"
-msgstr "Lewati"
+#~ msgid "Pass"
+#~ msgstr "Lewati"
 
-msgid "Disable password"
-msgstr "Matikan kata sandi"
+#~ msgid "Disable password"
+#~ msgstr "Matikan kata sandi"
 
-msgid "My Account"
-msgstr "Akun Saya"
+#~ msgid "My Account"
+#~ msgstr "Akun Saya"
 
-msgid "View All Users"
-msgstr "Lihat Semua Pengguna"
+#~ msgid "View All Users"
+#~ msgstr "Lihat Semua Pengguna"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Maaf, kolom isian anda kadaluarsa. Silahkan lanjutkan mengisi isian di "
-"halaman ini."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Maaf, kolom isian anda kadaluarsa. Silahkan lanjutkan mengisi isian di "
+#~ "halaman ini."
 
-msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr ""
-"Anda wajib menjelaskan baik untuk IPv4 atau IPv6 yang valid dengan maskbit"
+#~ msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
+#~ msgstr ""
+#~ "Anda wajib menjelaskan baik untuk IPv4 atau IPv6 yang valid dengan maskbit"
 
-msgid "Local Access"
-msgstr "Akses Lokal"
+#~ msgid "Local Access"
+#~ msgstr "Akses Lokal"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
-"Izinkan pengguna dengan akun lokal untuk mengakses berbagi Apple di kotak "
-"ini."
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr ""
+#~ "Izinkan pengguna dengan akun lokal untuk mengakses berbagi Apple di kotak "
+#~ "ini."
 
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"Portal mengambil bentuk dari 'alamat:port'. Contohnya '192.168.1.1:3260' "
-"untuk IPv4, '[2001:db8:1:1::1]:3260' untuk IPv6. Port 3260 adalah nomor "
-"port iSCSI standart. Untuk sembarang IP (alamat wildcard), gunakan "
-"'0.0.0.0:3260' dan/atau '[::]:3260'. Jangan campur wildcard dan IP yang "
-"lain pada keluarga alamat yang sama."
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "Portal mengambil bentuk dari 'alamat:port'. Contohnya '192.168.1.1:3260' "
+#~ "untuk IPv4, '[2001:db8:1:1::1]:3260' untuk IPv6. Port 3260 adalah nomor "
+#~ "port iSCSI standart. Untuk sembarang IP (alamat wildcard), gunakan "
+#~ "'0.0.0.0:3260' dan/atau '[::]:3260'. Jangan campur wildcard dan IP yang "
+#~ "lain pada keluarga alamat yang sama."
 
-msgid "Time in milliseconds"
-msgstr "Waktu dalam milidetik"
+#~ msgid "Time in milliseconds"
+#~ msgstr "Waktu dalam milidetik"
 
-msgid "Username of Domain Administrator Account"
-msgstr "Nama pengguna dari Akun Admin Domain"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "Nama pengguna dari Akun Admin Domain"
 
-msgid "ISCSI"
-msgstr "iSCSI"
+#~ msgid "ISCSI"
+#~ msgstr "iSCSI"
 
-msgid "Guest Account"
-msgstr "Akun Tamu"
+#~ msgid "Guest Account"
+#~ msgstr "Akun Tamu"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Gunakan opsi ini untuk mengesampingkan nama pengguna ('ftp') dimana yang "
-"akan digunakan untuk mengakses servis sebagai Tamu. Hak apapun pengguna "
-"ini akan tersedia untuk setiap klien yang terhubung pada Servis Tamu. "
-"Pengguna ini harus asa pada berkas kata sandi, tetapi tidak memerlukan "
-"login yang valid."
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Gunakan opsi ini untuk mengesampingkan nama pengguna ('ftp') dimana yang "
+#~ "akan digunakan untuk mengakses servis sebagai Tamu. Hak apapun pengguna "
+#~ "ini akan tersedia untuk setiap klien yang terhubung pada Servis Tamu. "
+#~ "Pengguna ini harus asa pada berkas kata sandi, tetapi tidak memerlukan "
+#~ "login yang valid."
 
 #, fuzzy
 msgid "CIFS Share"
@@ -6834,18 +6675,18 @@ msgstr "Berbagi UNIX"
 msgid "NFS Share"
 msgstr "Sunting Berbagi NFS"
 
-msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr "Ketika dalam suatu hari harus memulai membuat snapshot, e.g. 8:00"
+#~ msgid "When in a day should we start making snapshots, e.g. 8:00"
+#~ msgstr "Ketika dalam suatu hari harus memulai membuat snapshot, e.g. 8:00"
 
-msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
-"Ketika dalam suatu hari harus mengakhiri membuat snapsho, e.g. 17:00"
+#~ msgid "When in a day should we stop making snapshots, e.g. 17:00"
+#~ msgstr ""
+#~ "Ketika dalam suatu hari harus mengakhiri membuat snapsho, e.g. 17:00"
 
-msgid "NTP server 2"
-msgstr "Server NTP 2"
+#~ msgid "NTP server 2"
+#~ msgstr "Server NTP 2"
 
-msgid "NTP server 3"
-msgstr "Server NTP 3"
+#~ msgid "NTP server 3"
+#~ msgstr "Server NTP 3"
 
 #, fuzzy
 msgid "Loader"
@@ -6855,129 +6696,129 @@ msgstr "Beban Rata-rata"
 msgid "Loaders"
 msgstr "Beban Rata-rata"
 
-msgid "Reboot the System"
-msgstr "Nyalakan ulang Sistem"
+#~ msgid "Reboot the System"
+#~ msgstr "Nyalakan ulang Sistem"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
 msgid "Edit Disk"
 msgstr "Sunting Cakram"
 
-msgid "Are you sure you want to export?"
-msgstr "Apakah anda yakin ingin meng-ekspor?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "Apakah anda yakin ingin meng-ekspor?"
 
-msgid "Export Volume"
-msgstr "Ekspor Volume"
+#~ msgid "Export Volume"
+#~ msgstr "Ekspor Volume"
 
 #, fuzzy
 msgid "Add loader"
 msgstr "Tambahkan Portal"
 
-msgid "Volume from which this dataset will be created on"
-msgstr "Volume dari dataset yang mana akan dibuat"
+#~ msgid "Volume from which this dataset will be created on"
+#~ msgstr "Volume dari dataset yang mana akan dibuat"
 
-msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Volume dari volume ZFS yang akan dibuat"
+#~ msgid "Volume from which this ZFS Volume will be created on"
+#~ msgstr "Volume dari volume ZFS yang akan dibuat"
 
-msgid "Volume this group belongs to"
-msgstr "Volume dimana grup ini berada"
+#~ msgid "Volume this group belongs to"
+#~ msgstr "Volume dimana grup ini berada"
 
 msgid "Group Membership"
 msgstr "Keanggotaan Grup"
 
-msgid "The disk group containing this disk"
-msgstr "Grup cakram berisi cakram ini"
+#~ msgid "The disk group containing this disk"
+#~ msgstr "Grup cakram berisi cakram ini"
 
-msgid "successfully added"
-msgstr "berhasil ditambahkan"
+#~ msgid "successfully added"
+#~ msgstr "berhasil ditambahkan"
 
-msgid "successfully deleted"
-msgstr "berhasil dihapus"
+#~ msgid "successfully deleted"
+#~ msgstr "berhasil dihapus"
 
-msgid "successfully edited"
-msgstr "berhasil disunting"
+#~ msgid "successfully edited"
+#~ msgstr "berhasil disunting"
 
-msgid "There are no active volumes."
-msgstr "Tidak ada volume aktif disini."
+#~ msgid "There are no active volumes."
+#~ msgstr "Tidak ada volume aktif disini."
 
-msgid "%s successfully added."
-msgstr "%s berhasil ditambahkan."
+#~ msgid "%s successfully added."
+#~ msgstr "%s berhasil ditambahkan."
 
-msgid "IPv6 Netmask"
-msgstr "Netmask IPv6"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "Netmask IPv6"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Nilai ini harus diantara 0 dan 10000, inklusif."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Nilai ini harus diantara 0 dan 10000, inklusif."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Nilai ini harus diantara 0 dan 1000, inklusif."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Nilai ini harus diantara 0 dan 1000, inklusif."
 
-msgid "Enable DDP"
-msgstr "Nyalakan DDP"
+#~ msgid "Enable DDP"
+#~ msgstr "Nyalakan DDP"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "Nyalakan dukungan DDP untuk akses AppleTalk tingkat rendah."
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "Nyalakan dukungan DDP untuk akses AppleTalk tingkat rendah."
 
-msgid "Turn on/off TLS"
-msgstr "Nyalakan/Matikan TLS"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "Nyalakan/Matikan TLS"
 
-msgid "Rsyncd"
-msgstr "Rsyncd"
+#~ msgid "Rsyncd"
+#~ msgstr "Rsyncd"
 
-msgid "The volume failed to export"
-msgstr "Volume gagal untuk di-ekspor"
+#~ msgid "The volume failed to export"
+#~ msgstr "Volume gagal untuk di-ekspor"
 
-msgid "Cron Scheduler"
-msgstr "Pengatur waktu Cron"
+#~ msgid "Cron Scheduler"
+#~ msgstr "Pengatur waktu Cron"
 
-msgid "Devel"
-msgstr "Devel"
+#~ msgid "Devel"
+#~ msgstr "Devel"
 
-msgid "Docs"
-msgstr "Docs"
+#~ msgid "Docs"
+#~ msgstr "Docs"
 
-msgid "Welcome to"
-msgstr "Selamat Datang di8"
+#~ msgid "Welcome to"
+#~ msgstr "Selamat Datang di8"
 
-msgid "LUN"
-msgstr "LUN"
+#~ msgid "LUN"
+#~ msgstr "LUN"
 
-msgid "Mount point"
-msgstr "Titip mount"
+#~ msgid "Mount point"
+#~ msgstr "Titip mount"
 
-msgid "Dataset name"
-msgstr "Nama dataset"
+#~ msgid "Dataset name"
+#~ msgstr "Nama dataset"
 
-msgid "Snapshot name"
-msgstr "Nama snapshot"
+#~ msgid "Snapshot name"
+#~ msgstr "Nama snapshot"
 
-msgid "Used space"
-msgstr "Ruang terpakai"
+#~ msgid "Used space"
+#~ msgstr "Ruang terpakai"
 
-msgid "Referenced space"
-msgstr "Ruang yang direferensikan"
+#~ msgid "Referenced space"
+#~ msgstr "Ruang yang direferensikan"
 
-msgid "No ZFS snapshot available"
-msgstr "Tidak ada snapshot ZFS yang tersedia"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "Tidak ada snapshot ZFS yang tersedia"
 
-msgid "Create Periodic Snapshot"
-msgstr "Buat Snapshot Periodik"
+#~ msgid "Create Periodic Snapshot"
+#~ msgstr "Buat Snapshot Periodik"
 
-msgid "Restore to Factory Defaults"
-msgstr "Kembalikan ke pengaturan asal"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "Kembalikan ke pengaturan asal"
 
-msgid "Config"
-msgstr "Pengaturan"
+#~ msgid "Config"
+#~ msgstr "Pengaturan"
 
-msgid "English"
-msgstr "Inggris"
+#~ msgid "English"
+#~ msgstr "Inggris"
 
-msgid "Level"
-msgstr "Tingkatan"
+#~ msgid "Level"
+#~ msgstr "Tingkatan"

@@ -8,20 +8,20 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-03-13 00:47+0200\n"
-"Last-Translator: zubr139 <zubr139@ukr.net>\n"
+"PO-Revision-Date: 2013-12-31 00:33+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
-"X-Generator: Pootle 2.1.6\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1388449988.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Звіти"
+#~ msgid "Reporting"
+#~ msgstr "Звіти"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -52,21 +52,17 @@ msgstr "Сховище"
 msgid "Some error occurred"
 msgstr "Деякі помилки"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Редагувати"
+#~ msgid "Edit"
+#~ msgstr "Редагувати"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Редагувати диск"
+#~ msgid "Edit Disk"
+#~ msgstr "Редагувати диск"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Очищення"
+#~ msgid "Wipe"
+#~ msgstr "Очищення"
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Очистити диск"
+#~ msgid "Wipe Disk"
+#~ msgstr "Очистити диск"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -87,20 +83,180 @@ msgstr "Кожен номер"
 msgid "Plugins"
 msgstr "Плагіни"
 
-msgid "CronJobs"
-msgstr "Планувальник Cron"
+#~ msgid "CronJobs"
+#~ msgstr "Планувальник Cron"
 
-msgid "Replace"
-msgstr "Замінити"
+#~ msgid "Replace"
+#~ msgstr "Замінити"
 
-msgid "Disk Replacement"
-msgstr "Заміна диску"
+#~ msgid "Disk Replacement"
+#~ msgstr "Заміна диску"
 
-msgid "Detach"
-msgstr "Від'єднати"
+#~ msgid "Detach"
+#~ msgstr "Від'єднати"
 
-msgid "Disk Detach"
-msgstr "Від'єднати диск"
+#~ msgid "Disk Detach"
+#~ msgstr "Від'єднати диск"
 
-msgid "Every"
-msgstr "Кожен"
+#~ msgid "Every"
+#~ msgstr "Кожен"
+
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr "Система попереджень"
+
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr "Увімкнути службу"
+
+#: freeadmin/static/lib/js/freeadmin.js:994
+msgid "The cache is being rebuilt."
+msgstr "Кеш было перебудовано."
+
+#: freeadmin/static/lib/js/freeadmin.js:996
+msgid "The cache could not be rebuilt: "
+msgstr "Не вдалося перебудувати кеш: "
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr "Спільні ресурси"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:212
+msgid "Jails"
+msgstr "Jail"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:398
+msgid "Support"
+msgstr "Підтримка"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
+msgid "Size"
+msgstr "Розмір"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:262
+msgid "drives"
+msgstr "диски"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:264
+msgid "drive"
+msgstr "диск"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:266
+msgid "show"
+msgstr "показати"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
+msgid "no more drives"
+msgstr "більше дисків немає"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
+msgid "Disk size mismatch"
+msgstr "Розмір диска не збігається"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:519
+msgid ""
+"Your configuration is optimal!<br /><br />It means you'll have the best "
+"performance possible for this number of disks and type of disk group.<br /><"
+"br />For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"Ваша конфігурація оптимальна!<br /><br />Ви отримаєте найкращу можливу "
+"продуктивність для цієї кількості дисків і типу групи.<br /><br />За "
+"додатковою інформацією звертайтеся до <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target ="
+"'_blank '>документації</a>."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
+msgid ""
+"Your configuration is not optimal!<br /><br />It means this number of disks "
+"will not provide the best performance for that type of disk group.<br /><br "
+"/>For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"Ваша конфігурація не оптимальна!<br /><br />Ця кількість дисків не надасть "
+"найкращу можливу продуктивність для цього типу групи.<br /><br />За "
+"додатковою інформацією звертайтеся до <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target ="
+"'_blank '>документації</a>."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
+msgid "Capacity"
+msgstr "Місткість"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
+msgid "Drag and drop this to resize"
+msgstr "Перетягнiть мишею для зміни розміру"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Add Volume"
+msgstr "Додати том"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Existing data will be cleared"
+msgstr "Існуючі дані будуть очищені"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
+msgid "Extend Volume"
+msgstr "Розширити том"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
+msgid "Volume Name"
+msgstr "Назва тому"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
+msgid "Volume to extend"
+msgstr "Том для розширення"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
+msgid ""
+"Extending an encrypted volume will reset the passphrase and recovery key!"
+msgstr "Розширення зашифрованого томи скине пароль і ключ відновлення!"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
+msgid "Encryption"
+msgstr "Шифрування"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
+msgid "Initialize Safely"
+msgstr "Ініціалізувати безпечно"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
+msgid "Available disks"
+msgstr "Наявні диски"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
+msgid "Volume layout"
+msgstr "Планування тому"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
+msgid "Estimated capacity"
+msgstr "Розрахункова ємність"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
+msgid "Add Extra Device"
+msgstr "Додати ще диск"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
+msgid "Cancel"
+msgstr "Скасувати"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr "Командний iнтерпретатор"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr "Вставити"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr "Огляд"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr "Закрити"

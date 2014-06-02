@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2013-06-14 08:41+0200\n"
+"PO-Revision-Date: 2013-06-14 08:41+0000\n"
 "Last-Translator: kentwelcome <kentwelcome@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1371199287.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -566,9 +567,8 @@ msgstr "家目錄模式"
 msgid "Auxiliary groups"
 msgstr "附屬群組"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "使用者的 uid 已經存在！"
+#~ msgid "A user with that uid already exists."
+#~ msgstr "使用者的 uid 已經存在！"
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -608,9 +608,8 @@ msgstr "密碼停用，此欄位請保留空白"
 msgid "This field is required."
 msgstr "此欄位必填。"
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "家目錄必須以 /mnt/ 開頭或是  /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "家目錄必須以 /mnt/ 開頭或是  /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -740,18 +739,15 @@ msgstr "管理者帳戶"
 msgid "Change Password"
 msgstr "變更密碼"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "變更管理者"
+#~ msgid "Change Admin User"
+#~ msgstr "變更管理者"
 
 #: account/views.py:95
 msgid "Password successfully updated."
 msgstr "密碼更新成功"
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "管理者更新成功"
+#~ msgid "Admin user successfully updated."
+#~ msgstr "管理者更新成功"
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -1160,9 +1156,8 @@ msgstr "創建網路聚集"
 msgid "View Link Aggregations"
 msgstr "檢視所有網路聚集"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG 介面新增成功"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG 介面新增成功"
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1527,9 +1522,8 @@ msgstr "起始端密鑰"
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "起始端密鑰。(供雙向 CHAP 驗證)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "確認起始端密鑰"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "確認起始端密鑰"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1625,10 +1619,9 @@ msgstr "磁碟設備"
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "您的入口(Portal)群組編號不可大於 %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "您的群組編號不可大於 %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "您的群組編號不可大於 %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1757,13 +1750,11 @@ msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr "請使用此選項重新定義新建目錄的權限遮罩 (預設為 0777)。"
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "支援大量讀寫"
+#~ msgid "Large RW support"
+#~ msgstr "支援大量讀寫"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "利用 sendfile(2) 傳送檔案"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "利用 sendfile(2) 傳送檔案"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1871,15 +1862,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "主機名稱"
+#~ msgid "Server Name"
+#~ msgstr "主機名稱"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "主機名稱。如果不填，會指定預設伺服器。"
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "主機名稱。如果不填，會指定預設伺服器。"
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1914,15 +1903,13 @@ msgid ""
 msgstr ""
 "輸入預建立伺服器的數量。從客戶端必需有足夠的最高處理層級，通常是 4～6 個"
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "非同步模式"
+#~ msgid "Asynchronous mode"
+#~ msgstr "非同步模式"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr "啟用非同步模式，速度超過 gigabit 的網路有助於提昇效能。"
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr "啟用非同步模式，速度超過 gigabit 的網路有助於提昇效能。"
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2447,9 +2434,8 @@ msgid ""
 "back before the time is up the shutdown is canceled."
 msgstr "啟動關機時間。以秒為單位。如果UPS在恢復前，關機時間到期，就取消關機。"
 
-#: services/models.py:933
-msgid "UPS Master User Password"
-msgstr "UPS 主要使用者的密碼"
+#~ msgid "UPS Master User Password"
+#~ msgstr "UPS 主要使用者的密碼"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
@@ -2545,13 +2531,11 @@ msgstr "路徑"
 msgid "Allow Local User Login"
 msgstr "允許本機使用者登入"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "看板"
+#~ msgid "Banner"
+#~ msgstr "看板"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "FTP 第一次連線顯示歡迎看板"
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "FTP 第一次連線顯示歡迎看板"
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2770,9 +2754,8 @@ msgstr "SSH"
 msgid "Domain Controller Name"
 msgstr "網域控制站名稱"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "AD 或 PDC 名稱"
+#~ msgid "AD or PDC name."
+#~ msgstr "AD 或 PDC 名稱"
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3089,13 +3072,11 @@ msgstr "S.M.A.R.T."
 msgid "Control Services"
 msgstr "服務控制"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "設置延伸磁區(Extents)"
+#~ msgid "Device Extents"
+#~ msgstr "設置延伸磁區(Extents)"
 
-#: services/nav.py:72
-msgid "Add Device Extent"
-msgstr "新增設備的延伸磁區(Extents)"
+#~ msgid "Add Device Extent"
+#~ msgstr "新增設備的延伸磁區(Extents)"
 
 #: services/nav.py:79
 #, fuzzy
@@ -3162,9 +3143,8 @@ msgstr "共享區的密碼確認"
 msgid "The path %s does not exist"
 msgstr "路徑不存在"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "這不是有效的 IP 位址"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "這不是有效的 IP 位址"
 
 #: sharing/forms.py:165
 #, python-format
@@ -3309,15 +3289,13 @@ msgid ""
 "writing)."
 msgstr "此選項允許設定磁區的密碼。最多8 個字元。(強烈建議使用ASCII字元 )"
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "共享區的編碼字元集"
+#~ msgid "Share Character Set"
+#~ msgstr "共享區的編碼字元集"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr "指定這個共享區的檔名編碼方式，例如：UTF8、UTF8-MAC、ISO-8859-15等等"
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr "指定這個共享區的檔名編碼方式，例如：UTF8、UTF8-MAC、ISO-8859-15等等"
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3364,29 +3342,25 @@ msgid ""
 msgstr ""
 "允許特定使用者和群組可讀寫存取。使用者與群組用逗號分隔。群組請開頭請加上@。"
 
-#: sharing/models.py:160
-msgid "Disk Discovery"
-msgstr "探索硬碟"
+#~ msgid "Disk Discovery"
+#~ msgstr "探索硬碟"
 
-#: sharing/models.py:161
-msgid ""
-"Allow other systems to discover this share as a disk for data, as a Time "
-"Machine backup volume or not at all."
-msgstr ""
-"允許其他系統將此共享視為磁碟、Time Machine備份磁碟或其他設備進行數據探索。"
+#~ msgid ""
+#~ "Allow other systems to discover this share as a disk for data, as a Time "
+#~ "Machine backup volume or not at all."
+#~ msgstr ""
+#~ "允許其他系統將此共享視為磁碟、Time Machine備份磁碟或其他設備進行數據探索。"
 
-#: sharing/models.py:167
-msgid "Disk discovery mode"
-msgstr "探索硬碟模式"
+#~ msgid "Disk discovery mode"
+#~ msgstr "探索硬碟模式"
 
-#: sharing/models.py:168
-msgid ""
-"Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
-"behavior in MacOS. Default mode exports the volume as a data volume for "
-"users."
-msgstr ""
-"注意！在MacOS上，多個共享選擇「Time Machine」將可能導致不可預知的錯誤。預設模"
-"式將磁區作為資料磁區使用。"
+#~ msgid ""
+#~ "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
+#~ "behavior in MacOS. Default mode exports the volume as a data volume for "
+#~ "users."
+#~ msgstr ""
+#~ "注意！在MacOS上，多個共享選擇「Time Machine」將可能導致不可預知的錯誤。預設模"
+#~ "式將磁區作為資料磁區使用。"
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3399,44 +3373,38 @@ msgid ""
 msgstr ""
 "設置資料庫資料存儲在路徑。即使是唯獨磁區，也都必須指定一個可寫入的位置。 "
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "快取 CNID"
+#~ msgid "Cache CNID"
+#~ msgstr "快取 CNID"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"設置 afpd 將 ID資料存儲在AppleDouble V2格式檔案的開頭，可減少資料庫負載。如果"
-"磁區不是由AFP用戶端(NFS/SMB/local)管理 ，則請勿設置此選項。"
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "設置 afpd 將 ID資料存儲在AppleDouble V2格式檔案的開頭，可減少資料庫負載。如果"
+#~ "磁區不是由AFP用戶端(NFS/SMB/local)管理 ，則請勿設置此選項。"
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "轉換 CR/LF"
+#~ msgid "Translate CR/LF"
+#~ msgstr "轉換 CR/LF"
 
-#: sharing/models.py:182
-msgid ""
-"Enables crlf translation for TEXT files, automatically converting macintosh "
-"line breaks into Unix ones. Use of this option might be dangerous since some "
-"older programs store binary data files as type 'TEXT' when saving and switch "
-"the filetype in a second step. Afpd will potentially destroy such files when "
-"'erroneously' changing bytes in order to do line break translation."
-msgstr ""
-"啟用 CRLF的文件斷行轉換，將自動轉換Macintosh到Unix的斷行格式。使用此選項可能"
-"會有風險，因為一些舊版文件當儲存或切換時會將二進制資料轉存成文字型態。 Afpd "
-"為了做文件斷行轉換，有可能破壞這些文件時。"
+#~ msgid ""
+#~ "Enables crlf translation for TEXT files, automatically converting macintosh "
+#~ "line breaks into Unix ones. Use of this option might be dangerous since some "
+#~ "older programs store binary data files as type 'TEXT' when saving and switch "
+#~ "the filetype in a second step. Afpd will potentially destroy such files when "
+#~ "'erroneously' changing bytes in order to do line break translation."
+#~ msgstr ""
+#~ "啟用 CRLF的文件斷行轉換，將自動轉換Macintosh到Unix的斷行格式。使用此選項可能"
+#~ "會有風險，因為一些舊版文件當儲存或切換時會將二進制資料轉存成文字型態。 Afpd "
+#~ "為了做文件斷行轉換，有可能破壞這些文件時。"
 
-#: sharing/models.py:185
-msgid "Windows File Names"
-msgstr "Windows 的檔案名稱"
+#~ msgid "Windows File Names"
+#~ msgstr "Windows 的檔案名稱"
 
-#: sharing/models.py:186
-msgid ""
-"This forces filenames to be restricted to the character set used by Windows. "
-"This is not recommended for shares used principally by Mac computers."
-msgstr "這被限制在Windows字元編碼的檔案名稱。不建議主要使用Mac電腦的共享使用。"
+#~ msgid ""
+#~ "This forces filenames to be restricted to the character set used by Windows. "
+#~ "This is not recommended for shares used principally by Mac computers."
+#~ msgstr "這被限制在Windows字元編碼的檔案名稱。不建議主要使用Mac電腦的共享使用。"
 
 #: sharing/models.py:189
 #, fuzzy
@@ -3464,31 +3432,25 @@ msgstr ""
 "如果設備沒有固定編號時，在重新啟動、使用叢集...的狀況下，總是使用 0 作為設備"
 "編號，會比較方便。"
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "停用檔案 ID"
+#~ msgid "Disable File ID"
+#~ msgstr "停用檔案 ID"
 
-#: sharing/models.py:201
-msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "不宣告createfileid, resolveid, deleteid 的呼叫"
+#~ msgid "Don't advertise createfileid, resolveid, deleteid calls."
+#~ msgstr "不宣告createfileid, resolveid, deleteid 的呼叫"
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "停用：十六進制名稱"
+#~ msgid "Disable :hex Names"
+#~ msgstr "停用：十六進制名稱"
 
-#: sharing/models.py:205
-msgid ""
-"Disable :hex translations for anything except dot files. This option makes "
-"the '/' character illegal."
-msgstr "停用：十六進制轉換以句點(.)開頭的檔案，這選項會造成 '/' 字元錯誤。"
+#~ msgid ""
+#~ "Disable :hex translations for anything except dot files. This option makes "
+#~ "the '/' character illegal."
+#~ msgstr "停用：十六進制轉換以句點(.)開頭的檔案，這選項會造成 '/' 字元錯誤。"
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "提供相容Apple II用戶端"
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "提供相容Apple II用戶端"
 
 #: sharing/models.py:212
 msgid "No Stat"
@@ -3574,33 +3536,29 @@ msgstr "如果共享有問題，則不要在系統日誌出現警告。"
 msgid "Maproot User"
 msgstr "root對映權限帳號"
 
-#: sharing/models.py:289
-msgid "User to map root to"
-msgstr "使用者對應 root 帳號"
+#~ msgid "User to map root to"
+#~ msgstr "使用者對應 root 帳號"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "root對映權限群組"
 
-#: sharing/models.py:296
-msgid "Group to map root to"
-msgstr "群組對應 root 帳號"
+#~ msgid "Group to map root to"
+#~ msgstr "群組對應 root 帳號"
 
 #: sharing/models.py:299
 msgid "Mapall User"
 msgstr "all對映權限帳號"
 
-#: sharing/models.py:303
-msgid "User to map all users to"
-msgstr "使用者對應 all users 帳號"
+#~ msgid "User to map all users to"
+#~ msgstr "使用者對應 all users 帳號"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "all對映權限群組"
 
-#: sharing/models.py:310
-msgid "Group to map all users to"
-msgstr "群組對應 all users 帳號"
+#~ msgid "Group to map all users to"
+#~ msgstr "群組對應 all users 帳號"
 
 #: sharing/models.py:321
 #, fuzzy
@@ -3630,14 +3588,11 @@ msgstr "%s 是無效數字。"
 msgid "Volume name"
 msgstr "磁區名稱"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "檔案系統格式"
+#~ msgid "Filesystem type"
+#~ msgstr "檔案系統格式"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "強制4096位元組磁區大小"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "強制4096位元組磁區大小"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
@@ -3682,21 +3637,18 @@ msgid ""
 "append a virtual device"
 msgstr ""
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "必須選擇一種檔案系統"
+#~ msgid "You must select a filesystem"
+#~ msgstr "必須選擇一種檔案系統"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "已經有相同名稱的磁區"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" 是保留字，無法使用"
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"log\" 是保留字，無法使用"
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "磁區名稱的開頭可能無法使用 C[0-9]、mirror、raidz 或是spare 等文字"
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr "磁區名稱的開頭可能無法使用 C[0-9]、mirror、raidz 或是spare 等文字"
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -3795,9 +3747,8 @@ msgstr "磁區配額"
 msgid "Reserved space for this volume"
 msgstr "磁區的預留空間"
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "ZFS 磁區名稱"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "ZFS 磁區名稱"
 
 #: storage/forms.py:845
 msgid "Size for this ZFS Volume"
@@ -4090,10 +4041,8 @@ msgstr "遠端複寫主機"
 msgid "Remote Replication Hosts"
 msgstr "遠端複寫主機"
 
-#: storage/models.py:657 storage/models.py:718
-#: templates/storage/replications.html:20 templates/storage/tasks.html:21
-msgid "Filesystem/Volume"
-msgstr "檔案系統/磁區"
+#~ msgid "Filesystem/Volume"
+#~ msgstr "檔案系統/磁區"
 
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4321,9 +4270,8 @@ msgstr "快照刪除成功"
 msgid "Rollback successful."
 msgstr "已成功還原"
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "快照新增成功"
+#~ msgid "Snapshot successfully added."
+#~ msgstr "快照新增成功"
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4371,9 +4319,8 @@ msgstr "%s 新增成功"
 msgid "Language (Require UI reload)"
 msgstr "語言(需重新載入介面)"
 
-#: system/forms.py:214
-msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "值必須介於 1 ～ 655355 之間。"
+#~ msgid "You must specify a number between 1 and 65535, inclusive."
+#~ msgstr "值必須介於 1 ～ 655355 之間。"
 
 #: system/forms.py:216
 msgid "Number is required."
@@ -4545,25 +4492,21 @@ msgstr "使用序列控制"
 msgid "Enable screen saver"
 msgstr "啟用螢幕保護"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "自動檢查是否有新韌體"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "自動檢查是否有新韌體"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "開機警示聲"
+#~ msgid "Beep on boot"
+#~ msgstr "開機警示聲"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "啟用特定系統優化"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "啟用特定系統優化"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "啟用 powerd (省電服務)"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "啟用 Bonjour (Zeroconf) 服務"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "啟用 Bonjour (Zeroconf) 服務"
 
 #: system/models.py:174
 #, fuzzy
@@ -4947,9 +4890,8 @@ msgstr "您的測試郵件無法傳送至%s"
 msgid "Your test email has been sent!"
 msgstr "測試郵件已傳送！"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "找不到網頁"
+#~ msgid "Page Not Found"
+#~ msgstr "找不到網頁"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -4971,10 +4913,8 @@ msgstr "幫助"
 msgid "Log In"
 msgstr "登入"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -4982,11 +4922,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "成員"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "修改"
+#~ msgid "Modify"
+#~ msgstr "修改"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5000,17 +4937,14 @@ msgstr "修改群組"
 msgid "Delete Group"
 msgstr "刪除群組"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "沒有預設的群組"
+#~ msgid "There are no user defined groups."
+#~ msgstr "沒有預設的群組"
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "新增群組"
+#~ msgid "Add New Group"
+#~ msgstr "新增群組"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "家目錄"
+#~ msgid "Home"
+#~ msgstr "家目錄"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
@@ -5030,22 +4964,18 @@ msgstr "刪除使用者"
 msgid "Delete User"
 msgstr "刪除使用者"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "沒有預設使用者"
+#~ msgid "No users defined"
+#~ msgstr "沒有預設使用者"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "新增使用者"
+#~ msgid "Add New User"
+#~ msgstr "新增使用者"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "變更電子郵件"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "變更管理者密碼"
+#~ msgid "Change Admin Password"
+#~ msgstr "變更管理者密碼"
 
 #: templates/freeadmin/advanced_btn.html:25
 #, fuzzy
@@ -5194,9 +5124,8 @@ msgstr "文件"
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS的文件"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "IPv6 自動偵測"
+#~ msgid "IPv6 Auto"
+#~ msgstr "IPv6 自動偵測"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5238,14 +5167,11 @@ msgstr "可執行的功能"
 msgid "Edit"
 msgstr "管理"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "管理網路介面"
+#~ msgid "Edit Interface"
+#~ msgstr "管理網路介面"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "刪除網路介面"
+#~ msgid "Delete Interface"
+#~ msgstr "刪除網路介面"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
@@ -5269,50 +5195,39 @@ msgstr "成員管理"
 msgid "LAGG Members"
 msgstr "LAGG 成員"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "沒有預設的LAGG介面"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "沒有預設的LAGG介面"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "新增LAGG介面"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "新增LAGG介面"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "新增LAGG介面"
+#~ msgid "Add LAGG"
+#~ msgstr "新增LAGG介面"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "優先順序"
+#~ msgid "Ordering Priority"
+#~ msgstr "優先順序"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
 msgstr "啟動選項"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "啟用"
+#~ msgid "Action"
+#~ msgstr "啟用"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "新增LAGG 成員"
+#~ msgid "Add LAGG Member"
+#~ msgstr "新增LAGG 成員"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "管理靜態路由"
+#~ msgid "Edit Static Route"
+#~ msgstr "管理靜態路由"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "刪除靜態路由"
+#~ msgid "Delete Static Route"
+#~ msgstr "刪除靜態路由"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "沒有設置靜態路由"
+#~ msgid "No static route defined"
+#~ msgstr "沒有設置靜態路由"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "新增靜態路由"
+#~ msgid "Add Static Route"
+#~ msgstr "新增靜態路由"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5330,21 +5245,17 @@ msgstr "預設路由"
 msgid "No default route defined"
 msgstr "沒有設置預設路由"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "管理VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "管理VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "刪除VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "刪除VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "沒有設置VLAN"
+#~ msgid "No VLAN defined"
+#~ msgstr "沒有設置VLAN"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "新增VLAN介面"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "新增VLAN介面"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
@@ -5461,9 +5372,8 @@ msgstr "重新登入"
 msgid "AFP Settings"
 msgstr "AFP 設定"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "Active Directory 設定"
+#~ msgid "Active Directory Settings"
+#~ msgstr "Active Directory 設定"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5481,9 +5391,8 @@ msgstr "FTP 設定"
 msgid "ISCSI Settings"
 msgstr "iSCSI 設定"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "LDAP 設定"
+#~ msgid "LDAP Settings"
+#~ msgstr "LDAP 設定"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
@@ -5547,9 +5456,8 @@ msgstr "入口"
 msgid "Authorized Initiators"
 msgstr "授權啟動"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "驗證"
+#~ msgid "Authentication"
+#~ msgstr "驗證"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5568,45 +5476,36 @@ msgstr "相關目標"
 msgid "No associated targets defined"
 msgstr "沒有定義的目標"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "在目標新增延伸磁區(Extent)"
+#~ msgid "Add Extent to Target"
+#~ msgstr "在目標新增延伸磁區(Extent)"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "在目標新增延伸磁區(Extent)"
+#~ msgid "Add Extent To Target"
+#~ msgstr "在目標新增延伸磁區(Extent)"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "同儕(Peer)"
+#~ msgid "Peer"
+#~ msgstr "同儕(Peer)"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "新增 iSCSI 使用者"
+#~ msgid "Add iSCSI User"
+#~ msgstr "新增 iSCSI 使用者"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "授權的網路"
+#~ msgid "Authorized Network"
+#~ msgstr "授權的網路"
 
 #: templates/services/iscsi_authini.html:35
 #, fuzzy
 msgid "No authorized initiators defined"
 msgstr "授權啟動"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "新增授權啟動"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "新增授權啟動"
 
 #: templates/services/iscsi_dextents.html:33
 #, fuzzy
 msgid "No device extents defined"
 msgstr "沒有定義的目標"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "新增區段(Extent)"
+#~ msgid "Add Extent"
+#~ msgstr "新增區段(Extent)"
 
 #: templates/services/iscsi_extents.html:5
 #, fuzzy
@@ -5630,28 +5529,22 @@ msgstr ""
 msgid "Edit Portal"
 msgstr "編輯入口首頁"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "刪除入口首頁"
+#~ msgid "Delete Portal"
+#~ msgstr "刪除入口首頁"
 
 #: templates/services/iscsi_portals.html:39
 #, fuzzy
 msgid "No portals defined"
 msgstr "沒有定義的目標"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "新增入口首頁"
+#~ msgid "Add Portal"
+#~ msgstr "新增入口首頁"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "沒有定義的目標"
+#~ msgid "No targets defined"
+#~ msgstr "沒有定義的目標"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "新增目標"
+#~ msgid "Add Target"
+#~ msgstr "新增目標"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -5700,14 +5593,11 @@ msgstr ""
 msgid "Delete Plugins Jail"
 msgstr "刪除相關檔案"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "沒有定義 rsync的模組"
+#~ msgid "No rsync modules defined"
+#~ msgstr "沒有定義 rsync的模組"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "使用中的共享"
+#~ msgid "Active Shares"
+#~ msgstr "使用中的共享"
 
 #: templates/sharing/apple.html:7
 #, fuzzy
@@ -5724,10 +5614,8 @@ msgstr "設定 Apple Share"
 msgid "Delete Apple (AFP) Share"
 msgstr "刪除 Apple Share"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "沒有設定共享"
+#~ msgid "No shares defined"
+#~ msgstr "沒有設定共享"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 #, fuzzy
@@ -5754,9 +5642,8 @@ msgstr "新增Windows共享(CIFS)"
 msgid "There are no active UNIX (NFS) shares."
 msgstr "沒有設定 UNIX 共享"
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "掛載點"
+#~ msgid "Mountpoint"
+#~ msgstr "掛載點"
 
 #: templates/sharing/unix.html:29
 #, fuzzy
@@ -5898,27 +5785,20 @@ msgid ""
 "to create a replication task"
 msgstr "注意：在特定ZFS檔案系統/磁區上的定期快照，需要建立複寫排程。"
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "最新的快照"
+#~ msgid "Last snapshot"
+#~ msgstr "最新的快照"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "遠端 ZFS 系統格式"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "遠端 ZFS 系統格式"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "刪除複寫"
+#~ msgid "Delete Replication"
+#~ msgstr "刪除複寫"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "管理複寫"
+#~ msgid "Edit Replication"
+#~ msgstr "管理複寫"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "ZFS 複寫無法使用"
+#~ msgid "No ZFS replication available"
+#~ msgstr "ZFS 複寫無法使用"
 
 #: templates/storage/scrub.html:42
 #, fuzzy
@@ -5984,45 +5864,37 @@ msgstr "複製快照"
 msgid "Periodic Snapshots"
 msgstr "快照工作週期"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "排定快照工作週期"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "排定快照工作週期"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "沒有排定快照的工作"
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "沒有排定快照的工作"
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "如何"
+#~ msgid "How"
+#~ msgstr "如何"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "保存快照"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "來自"
+#~ msgid "From"
+#~ msgstr "來自"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "經過"
+#~ msgid "through"
+#~ msgstr "經過"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", 每"
+#~ msgid ", every"
+#~ msgstr ", 每"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "每天"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "在每"
+#~ msgid "on every"
+#~ msgstr "在每"
 
-#: templates/storage/tasks.html:147
-msgid "There are no periodic snapshots scheduled."
-msgstr "沒有定期快照的排程"
+#~ msgid "There are no periodic snapshots scheduled."
+#~ msgstr "沒有定期快照的排程"
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -6077,13 +5949,11 @@ msgstr "磁區狀態"
 msgid "Destroy Dataset"
 msgstr "銷毀資料集"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "銷毀 ZFS 磁區"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "銷毀 ZFS 磁區"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "沒有預設磁區"
+#~ msgid "No volumes defined"
+#~ msgstr "沒有預設磁區"
 
 #: templates/storage/wizard.html:27
 #, fuzzy
@@ -6098,25 +5968,20 @@ msgstr "成員磁碟"
 msgid "Group type"
 msgstr "群組類型"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS 延伸磁區(Extra)"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS 延伸磁區(Extra)"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "強烈建議不要只使用1個 log 磁碟"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "強烈建議不要只使用1個 log 磁碟"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Log"
+#~ msgid "Log"
+#~ msgstr "Log"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "暫存區"
+#~ msgid "Cache"
+#~ msgstr "暫存區"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "備用"
+#~ msgid "Spare"
+#~ msgstr "備用"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6136,21 +6001,18 @@ msgstr "取代磁碟"
 msgid "Create ZFS volume on %(name)s"
 msgstr "在%(name)s 建立ZFS 磁區"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "新增ZFS 磁區"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "新增ZFS 磁區"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "重建 LDAP/AD 暫存區"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "將重建暫存區"
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "將重建暫存區"
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "暫存區重建失敗"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "暫存區重建失敗"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6176,17 +6038,14 @@ msgstr "正在重新啟動..."
 msgid "Are you sure you want to restore to factory config?"
 msgstr "確定要還原至出廠預設值嗎？"
 
-#: templates/system/cronjob.html:41
-msgid "No cron jobs defined."
-msgstr "沒有設定例行工作"
+#~ msgid "No cron jobs defined."
+#~ msgstr "沒有設定例行工作"
 
-#: templates/system/cronjob.html:47
-msgid "Add a cron job"
-msgstr "新增例行工作"
+#~ msgid "Add a cron job"
+#~ msgstr "新增例行工作"
 
-#: templates/system/cronjob.html:49
-msgid "Add cron job"
-msgstr "新增例行工作"
+#~ msgid "Add cron job"
+#~ msgstr "新增例行工作"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6249,17 +6108,14 @@ msgstr "本地管理者"
 msgid "Remote"
 msgstr "刪除"
 
-#: templates/system/rsync.html:48
-msgid "No rsync tasks defined."
-msgstr "沒有設定 rsyncs 排程"
+#~ msgid "No rsync tasks defined."
+#~ msgstr "沒有設定 rsyncs 排程"
 
-#: templates/system/rsync.html:54
-msgid "Add rsync task"
-msgstr "新增 rsyncs 排程"
+#~ msgid "Add rsync task"
+#~ msgstr "新增 rsyncs 排程"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "新增 Rsync 工作"
+#~ msgid "Add Rsync"
+#~ msgstr "新增 Rsync 工作"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6292,29 +6148,23 @@ msgstr "系統將 <strong>關機</strong>，是否繼續？"
 msgid "Unknown"
 msgstr "未知"
 
-#: templates/system/smarttest.html:38
-msgid "No S.M.A.R.T. tests defined"
-msgstr "沒有設定 S.M.A.R.T. 檢測"
+#~ msgid "No S.M.A.R.T. tests defined"
+#~ msgstr "沒有設定 S.M.A.R.T. 檢測"
 
-#: templates/system/smarttest.html:44
-msgid "Add S.M.A.R.T. Test"
-msgstr "設定 S.M.A.R.T. 檢測"
+#~ msgid "Add S.M.A.R.T. Test"
+#~ msgstr "設定 S.M.A.R.T. 檢測"
 
-#: templates/system/smarttest.html:46
-msgid "Add S.M.A.R.T. test"
-msgstr "設定 S.M.A.R.T. 檢測"
+#~ msgid "Add S.M.A.R.T. test"
+#~ msgstr "設定 S.M.A.R.T. 檢測"
 
-#: templates/system/sysctl.html:34
-msgid "No sysctl defined."
-msgstr "沒有設定系統調整( sysctl )"
+#~ msgid "No sysctl defined."
+#~ msgstr "沒有設定系統調整( sysctl )"
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "新增系統調整( sysctl )"
+#~ msgid "Add sysctl"
+#~ msgstr "新增系統調整( sysctl )"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "新增系統調整( Sysctl ) "
+#~ msgid "Add Sysctl"
+#~ msgstr "新增系統調整( Sysctl ) "
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6354,9 +6204,8 @@ msgstr "沒有設定載入設置"
 msgid "Add Tunable"
 msgstr "新增目標"
 
-#: templates/system/tunable.html:42
-msgid "Add Loader"
-msgstr "新增載掛"
+#~ msgid "Add Loader"
+#~ msgstr "新增載掛"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6382,11 +6231,10 @@ msgstr "磁區 %(volume) 狀態 %(status)"
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "磁區 %(volume) 狀態 %(status)"
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr "必須變更使用者 admin 的密碼。(目前登入不需要密碼)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr "必須變更使用者 admin 的密碼。(目前登入不需要密碼)"
 
 #: tools/alert.py:137
 #, python-format
@@ -6404,8 +6252,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "重要提醒"
 
-msgid "Selected"
-msgstr "勾選"
+#~ msgid "Selected"
+#~ msgstr "勾選"
 
 #, fuzzy
 msgid "SHA256 sum for the PBI file"
@@ -6427,11 +6275,11 @@ msgstr "服務控制"
 msgid "Configure Plugins"
 msgstr "設定 Rsyncd 組態檔"
 
-msgid "Allow guest access"
-msgstr "允許訪客存取"
+#~ msgid "Allow guest access"
+#~ msgstr "允許訪客存取"
 
-msgid "Only allow guest access"
-msgstr "只允許訪客存取"
+#~ msgid "Only allow guest access"
+#~ msgstr "只允許訪客存取"
 
 #, fuzzy
 msgid "Path to the plugins directory"
@@ -6440,359 +6288,359 @@ msgstr "路徑不是目錄"
 msgid "Invalid prefix"
 msgstr "無效的前置字元"
 
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr "設定建立兩個快照之間的閒置時間(分鐘)"
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr "設定建立兩個快照之間的閒置時間(分鐘)"
 
-msgid "An error occurred when setting the options"
-msgstr "設置選項時發生錯誤"
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "設置選項時發生錯誤"
 
-msgid "Service Pack image to be installed"
-msgstr "安裝系統更新檔"
+#~ msgid "Service Pack image to be installed"
+#~ msgstr "安裝系統更新檔"
 
-msgid "Invalid service pack"
-msgstr "無效的系統更新包"
+#~ msgid "Invalid service pack"
+#~ msgstr "無效的系統更新包"
 
-msgid "View Cron Jobs"
-msgstr "檢視例行工作"
+#~ msgid "View Cron Jobs"
+#~ msgstr "檢視例行工作"
 
-msgid "View Rsync Tasks"
-msgstr "檢視Rsync排程"
+#~ msgid "View Rsync Tasks"
+#~ msgstr "檢視Rsync排程"
 
-msgid "View S.M.A.R.T. Tests"
-msgstr "檢視 S.M.A.R.T. 的測試"
+#~ msgid "View S.M.A.R.T. Tests"
+#~ msgstr "檢視 S.M.A.R.T. 的測試"
 
-msgid "View Sysctls"
-msgstr "檢視Sysctls"
+#~ msgid "View Sysctls"
+#~ msgstr "檢視Sysctls"
 
 #, fuzzy
 msgid "View Tunables"
 msgstr "檢視公開金鑰"
 
-msgid "Browse"
-msgstr "瀏覽"
+#~ msgid "Browse"
+#~ msgstr "瀏覽"
 
-msgid "Close"
-msgstr "關閉"
+#~ msgid "Close"
+#~ msgstr "關閉"
 
 #, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "新增 Apple Share"
 
-msgid "Apply Service Pack"
-msgstr "使用系統補丁包"
+#~ msgid "Apply Service Pack"
+#~ msgstr "使用系統補丁包"
 
-msgid "Hourly"
-msgstr "每小時"
+#~ msgid "Hourly"
+#~ msgstr "每小時"
 
-msgid "Hourly Graphs"
-msgstr "每小時圖表"
+#~ msgid "Hourly Graphs"
+#~ msgstr "每小時圖表"
 
-msgid "Daily"
-msgstr "每日"
+#~ msgid "Daily"
+#~ msgstr "每日"
 
-msgid "Daily Graphs"
-msgstr "每日圖表"
+#~ msgid "Daily Graphs"
+#~ msgstr "每日圖表"
 
-msgid "Weekly"
-msgstr "每週"
+#~ msgid "Weekly"
+#~ msgstr "每週"
 
-msgid "Weekly Graphs"
-msgstr "每週圖表"
+#~ msgid "Weekly Graphs"
+#~ msgstr "每週圖表"
 
-msgid "Monthly"
-msgstr "每月"
+#~ msgid "Monthly"
+#~ msgstr "每月"
 
-msgid "Monthly Graphs"
-msgstr "每月圖表"
+#~ msgid "Monthly Graphs"
+#~ msgstr "每月圖表"
 
-msgid "Yearly"
-msgstr "每年"
+#~ msgid "Yearly"
+#~ msgstr "每年"
 
-msgid "Yearly Graphs"
-msgstr "每年圖表"
+#~ msgid "Yearly Graphs"
+#~ msgstr "每年圖表"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "磁帶"
+#~ msgid "Tape"
+#~ msgstr "磁帶"
 
-msgid "Pass"
-msgstr "通過"
+#~ msgid "Pass"
+#~ msgstr "通過"
 
 msgid "Disable password"
 msgstr "停用密碼"
 
-msgid "My Account"
-msgstr "我的帳號"
+#~ msgid "My Account"
+#~ msgstr "我的帳號"
 
-msgid "View All Users"
-msgstr "檢視全部使用者"
+#~ msgid "View All Users"
+#~ msgstr "檢視全部使用者"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr "很抱歉，您送出的表單資訊已過期。請從本頁重新填寫表單。"
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr "很抱歉，您送出的表單資訊已過期。請從本頁重新填寫表單。"
 
-msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr "請指定一個有效的 IPv4 或 IPv6 的遮罩位元"
+#~ msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
+#~ msgstr "請指定一個有效的 IPv4 或 IPv6 的遮罩位元"
 
-msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr "請填入英文字母、數字、_或 -"
+#~ msgid "The location must contain only alphanumeric characters, _ or -"
+#~ msgstr "請填入英文字母、數字、_或 -"
 
-msgid "Local Access"
-msgstr "本機使用者連接"
+#~ msgid "Local Access"
+#~ msgstr "本機使用者連接"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr "允許本機使用者連接 apple 共享"
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr "允許本機使用者連接 apple 共享"
 
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"入口採用的格式為「IP位址：連接埠」。例如：IPv4格式為"
-"「192.168.1.1:3260」 ，IPv6格式「[2001：db8：1:1：：1]：3260」。標準的"
-"iSCSI埠為3260。對於任何IP位址(萬用字元位址wildcard address)，請使用"
-"「0.0.0.0:3260」和「/」或「[::]:3260」。請不要在相同的位址混合萬用字元和其"
-"他IP位址。"
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "入口採用的格式為「IP位址：連接埠」。例如：IPv4格式為"
+#~ "「192.168.1.1:3260」 ，IPv6格式「[2001：db8：1:1：：1]：3260」。標準的"
+#~ "iSCSI埠為3260。對於任何IP位址(萬用字元位址wildcard address)，請使用"
+#~ "「0.0.0.0:3260」和「/」或「[::]:3260」。請不要在相同的位址混合萬用字元和其"
+#~ "他IP位址。"
 
-msgid "Time in milliseconds"
-msgstr "時間，以毫秒為單位"
+#~ msgid "Time in milliseconds"
+#~ msgstr "時間，以毫秒為單位"
 
-msgid "Username of Domain Administrator Account"
-msgstr "網域管理者帳號"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "網域管理者帳號"
 
-msgid "ISCSI"
-msgstr "iSCSI"
+#~ msgid "ISCSI"
+#~ msgstr "iSCSI"
 
-msgid "Guest Account"
-msgstr "訪客帳號"
+#~ msgid "Guest Account"
+#~ msgstr "訪客帳號"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"請使用此選項重新定義 (override) 存取訪客服務的帳號 (預設為 'ftp') 此帳號的"
-"所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
-"裡，但不必是個有效的登入帳號。"
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "請使用此選項重新定義 (override) 存取訪客服務的帳號 (預設為 'ftp') 此帳號的"
+#~ "所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
+#~ "裡，但不必是個有效的登入帳號。"
 
-msgid "CIFS Share"
-msgstr "CIFS 共享"
+#~ msgid "CIFS Share"
+#~ msgstr "CIFS 共享"
 
-msgid "CIFS Shares"
-msgstr "CIFS 共享"
+#~ msgid "CIFS Shares"
+#~ msgstr "CIFS 共享"
 
-msgid "NFS Share"
-msgstr "NFS 共享"
+#~ msgid "NFS Share"
+#~ msgstr "NFS 共享"
 
-msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr "建立快照的開始時間 (例如： 8:00)"
+#~ msgid "When in a day should we start making snapshots, e.g. 8:00"
+#~ msgstr "建立快照的開始時間 (例如： 8:00)"
 
-msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr "建立快照的開始時間 (例如：17:00)"
+#~ msgid "When in a day should we stop making snapshots, e.g. 17:00"
+#~ msgstr "建立快照的開始時間 (例如：17:00)"
 
-msgid "NTP server 2"
-msgstr "NTP網路校時伺服器 2"
+#~ msgid "NTP server 2"
+#~ msgstr "NTP網路校時伺服器 2"
 
-msgid "NTP server 3"
-msgstr "NTP網路校時伺服器 3"
+#~ msgid "NTP server 3"
+#~ msgstr "NTP網路校時伺服器 3"
 
-msgid "Loader"
-msgstr "負載程序"
+#~ msgid "Loader"
+#~ msgstr "負載程序"
 
-msgid "Loaders"
-msgstr "負載程序"
+#~ msgid "Loaders"
+#~ msgstr "負載程序"
 
-msgid "View Loaders"
-msgstr "檢視全部負載"
+#~ msgid "View Loaders"
+#~ msgstr "檢視全部負載"
 
-msgid "Reboot the System"
-msgstr "重新啟動系統"
+#~ msgid "Reboot the System"
+#~ msgstr "重新啟動系統"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
 msgid "Edit Disk"
 msgstr "管理磁碟"
 
-msgid "Are you sure you want to export?"
-msgstr "確定要匯出？"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "確定要匯出？"
 
 msgid "Export Volume"
 msgstr "匯出磁區"
 
-msgid "Add loader"
-msgstr "新增載掛"
+#~ msgid "Add loader"
+#~ msgstr "新增載掛"
 
-msgid "Volume from which this dataset will be created on"
-msgstr "將建立本資料集的磁區"
+#~ msgid "Volume from which this dataset will be created on"
+#~ msgstr "將建立本資料集的磁區"
 
-msgid "Volume from which this ZFS Volume will be created on"
-msgstr "將建立位於此ZFS磁碟的磁碟"
+#~ msgid "Volume from which this ZFS Volume will be created on"
+#~ msgstr "將建立位於此ZFS磁碟的磁碟"
 
-msgid "Volume this group belongs to"
-msgstr "磁區群組屬於"
+#~ msgid "Volume this group belongs to"
+#~ msgstr "磁區群組屬於"
 
 msgid "Group Membership"
 msgstr "群組成員"
 
-msgid "The disk group containing this disk"
-msgstr "此硬碟所屬的磁碟群組"
+#~ msgid "The disk group containing this disk"
+#~ msgstr "此硬碟所屬的磁碟群組"
 
-msgid "successfully added"
-msgstr "新增成功"
+#~ msgid "successfully added"
+#~ msgstr "新增成功"
 
-msgid "successfully deleted"
-msgstr "刪除成功"
+#~ msgid "successfully deleted"
+#~ msgstr "刪除成功"
 
-msgid "successfully edited"
-msgstr "修改成功"
+#~ msgid "successfully edited"
+#~ msgstr "修改成功"
 
-msgid "There are no active volumes."
-msgstr "沒有磁區正在使用"
+#~ msgid "There are no active volumes."
+#~ msgstr "沒有磁區正在使用"
 
-msgid "zpool status"
-msgstr "顯示儲存池的容量(zpool status)"
+#~ msgid "zpool status"
+#~ msgstr "顯示儲存池的容量(zpool status)"
 
-msgid "%s successfully added."
-msgstr "%s 新增成功"
+#~ msgid "%s successfully added."
+#~ msgstr "%s 新增成功"
 
 msgid "IPv6 Netmask"
 msgstr "IPv6 網路遮罩"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "值必須介於 0 ～ 10000 之間。"
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "值必須介於 0 ～ 10000 之間。"
 
 msgid "This value must be between 0 and 1000, inclusive."
 msgstr "值必須介於 0 ～ 1000 之間。"
 
-msgid "Enable DDP"
-msgstr "啟用DDP(資料封包傳輸協定)"
+#~ msgid "Enable DDP"
+#~ msgstr "啟用DDP(資料封包傳輸協定)"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "啟用支援低階 appletalk 連線"
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "啟用支援低階 appletalk 連線"
 
-msgid "Turn on/off TLS"
-msgstr "啟用或停用 TLS"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "啟用或停用 TLS"
 
-msgid "Rsyncd"
-msgstr "使用Rsyncd"
+#~ msgid "Rsyncd"
+#~ msgstr "使用Rsyncd"
 
 msgid "The volume failed to export"
 msgstr "磁區無法提供服務"
 
-msgid "Cron Scheduler"
-msgstr "例行工作排程"
+#~ msgid "Cron Scheduler"
+#~ msgstr "例行工作排程"
 
-msgid "Devel"
-msgstr "的開發"
+#~ msgid "Devel"
+#~ msgstr "的開發"
 
-msgid "Docs"
-msgstr "的文件"
+#~ msgid "Docs"
+#~ msgstr "的文件"
 
-msgid "Welcome to"
-msgstr "歡迎使用8"
+#~ msgid "Welcome to"
+#~ msgstr "歡迎使用8"
 
-msgid "LUN"
-msgstr "管理邏輯單元編號 (LUN)"
+#~ msgid "LUN"
+#~ msgstr "管理邏輯單元編號 (LUN)"
 
-msgid "Mount point"
-msgstr "掛載點"
+#~ msgid "Mount point"
+#~ msgstr "掛載點"
 
-msgid "Dataset name"
-msgstr "資料集名稱"
+#~ msgid "Dataset name"
+#~ msgstr "資料集名稱"
 
-msgid "Snapshot name"
-msgstr "快照名稱"
+#~ msgid "Snapshot name"
+#~ msgstr "快照名稱"
 
-msgid "Used space"
-msgstr "使用的空間"
+#~ msgid "Used space"
+#~ msgstr "使用的空間"
 
-msgid "Referenced space"
-msgstr "參照的空間"
+#~ msgid "Referenced space"
+#~ msgstr "參照的空間"
 
-msgid "No ZFS snapshot available"
-msgstr "無可用的ZFS快照"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "無可用的ZFS快照"
 
-msgid "Create Periodic Snapshot"
-msgstr "建立定期快照"
+#~ msgid "Create Periodic Snapshot"
+#~ msgstr "建立定期快照"
 
-msgid "Restore to Factory Defaults"
-msgstr "還原至出廠預設值"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "還原至出廠預設值"
 
-msgid "Config"
-msgstr "組態"
+#~ msgid "Config"
+#~ msgstr "組態"
 
-msgid "%s successfully update."
-msgstr "%s 更新成功"
+#~ msgid "%s successfully update."
+#~ msgstr "%s 更新成功"
 
-msgid "Admin user"
-msgstr "管理者"
+#~ msgid "Admin user"
+#~ msgstr "管理者"
 
 msgid "N/A"
 msgstr "不適用"
 
-msgid ""
-"Use this option to override the username ('www' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"請使用此選項重新定義 (override) 存取訪客服務的帳號 (預設為 'www') 此帳號的"
-"所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
-"裡，但不必是個有效的登入帳號"
+#~ msgid ""
+#~ "Use this option to override the username ('www' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "請使用此選項重新定義 (override) 存取訪客服務的帳號 (預設為 'www') 此帳號的"
+#~ "所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
+#~ "裡，但不必是個有效的登入帳號"
 
-msgid "ZVol Name"
-msgstr "ZVol 名稱"
+#~ msgid "ZVol Name"
+#~ msgstr "ZVol 名稱"
 
 msgid "Dataset"
 msgstr "資料集"
 
-msgid "ZVol"
-msgstr "ZVol (ZFS 磁區)"
+#~ msgid "ZVol"
+#~ msgstr "ZVol (ZFS 磁區)"
 
-msgid "Native dataset"
-msgstr "原生資料集"
+#~ msgid "Native dataset"
+#~ msgstr "原生資料集"
 
-msgid "/var/log/messages"
-msgstr "/var/log/messages"
+#~ msgid "/var/log/messages"
+#~ msgstr "/var/log/messages"
 
-msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;幫助和支持"
+#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;幫助和支持"
 
-msgid "Success!"
-msgstr "成功！"
+#~ msgid "Success!"
+#~ msgstr "成功！"
 
-msgid "Your password was changed."
-msgstr "密碼已變更"
+#~ msgid "Your password was changed."
+#~ msgstr "密碼已變更"
 
-msgid "Password change"
-msgstr "變更密碼"
+#~ msgid "Password change"
+#~ msgstr "變更密碼"
 
-msgid ""
-"Please enter your old password, and then enter your new password twice to "
-"verify it is typed in correctly."
-msgstr "請先輸入舊密碼，再輸入新密碼兩次，以利驗證。"
+#~ msgid ""
+#~ "Please enter your old password, and then enter your new password twice to "
+#~ "verify it is typed in correctly."
+#~ msgstr "請先輸入舊密碼，再輸入新密碼兩次，以利驗證。"
 
-msgid "Password (again)"
-msgstr "密碼確認"
+#~ msgid "Password (again)"
+#~ msgstr "密碼確認"
 
-msgid "minutes,"
-msgstr "分鐘，"
+#~ msgid "minutes,"
+#~ msgstr "分鐘，"
 
 msgid "Create ZFS zvol"
 msgstr "建立 ZFS 磁區"
@@ -6800,58 +6648,58 @@ msgstr "建立 ZFS 磁區"
 msgid "Add ZVol"
 msgstr "新增 ZVol 磁區"
 
-msgid "English"
-msgstr "英語"
+#~ msgid "English"
+#~ msgstr "英語"
 
-msgid "Level"
-msgstr "等級"
+#~ msgid "Level"
+#~ msgstr "等級"
 
-msgid "Add Link Aggregation"
-msgstr "新增網路聚集"
+#~ msgid "Add Link Aggregation"
+#~ msgstr "新增網路聚集"
 
-msgid "View All Interfaces"
-msgstr "檢視全部介面"
+#~ msgid "View All Interfaces"
+#~ msgstr "檢視全部介面"
 
-msgid "View All VLANs"
-msgstr "檢視全部 VLAN"
+#~ msgid "View All VLANs"
+#~ msgstr "檢視全部 VLAN"
 
-msgid "View All Static Routes"
-msgstr "檢視全部靜態路由"
+#~ msgid "View All Static Routes"
+#~ msgstr "檢視全部靜態路由"
 
-msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr "該版本的Microsoft Windows Active Directory 正在執行中"
+#~ msgid "The version of Microsoft Windows that Active Directory is running."
+#~ msgstr "該版本的Microsoft Windows Active Directory 正在執行中"
 
-msgid "Service Principal Name"
-msgstr "服務主體名稱"
+#~ msgid "Service Principal Name"
+#~ msgstr "服務主體名稱"
 
-msgid "Service Principal Name, eg service/account."
-msgstr "服務主體名稱，例如：service/account"
+#~ msgid "Service Principal Name, eg service/account."
+#~ msgstr "服務主體名稱，例如：service/account"
 
-msgid "Service Principal Name Password"
-msgstr "服務主體名稱的密碼"
+#~ msgid "Service Principal Name Password"
+#~ msgstr "服務主體名稱的密碼"
 
-msgid "Password of the Service Principal Name account."
-msgstr "服務主體名稱的密碼"
+#~ msgid "Password of the Service Principal Name account."
+#~ msgstr "服務主體名稱的密碼"
 
 msgid "Kerberos Keytab File"
 msgstr "Kerberos Keytab 檔"
 
-msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
-msgstr "Kerberos Keytab 檔產生在 Active Directory 伺服器上"
+#~ msgid ""
+#~ "The kerberos keytab file that was generated on the Active Directory "
+#~ "server."
+#~ msgstr "Kerberos Keytab 檔產生在 Active Directory 伺服器上"
 
-msgid "Auxillary Parameters"
-msgstr "附屬參數"
+#~ msgid "Auxillary Parameters"
+#~ msgstr "附屬參數"
 
-msgid "View All UNIX Shares"
-msgstr "檢視全部的 UNIX 共享"
+#~ msgid "View All UNIX Shares"
+#~ msgstr "檢視全部的 UNIX 共享"
 
-msgid "View All Apple Shares"
-msgstr "檢視全部的 Apple 共享"
+#~ msgid "View All Apple Shares"
+#~ msgstr "檢視全部的 Apple 共享"
 
-msgid "View All Windows Shares"
-msgstr "檢視全部的 Windows 共享"
+#~ msgid "View All Windows Shares"
+#~ msgstr "檢視全部的 Windows 共享"
 
 msgid "Read"
 msgstr "讀"
@@ -6859,23 +6707,23 @@ msgstr "讀"
 msgid "Write"
 msgstr "寫"
 
-msgid "Execute"
-msgstr "執行"
+#~ msgid "Execute"
+#~ msgstr "執行"
 
-msgid "Owner"
-msgstr "所有人"
+#~ msgid "Owner"
+#~ msgstr "所有人"
 
-msgid "Other"
-msgstr "其他"
+#~ msgid "Other"
+#~ msgstr "其他"
 
-msgid "View All Periodic Snapshot Tasks"
-msgstr "檢視全部定期快照工作"
+#~ msgid "View All Periodic Snapshot Tasks"
+#~ msgstr "檢視全部定期快照工作"
 
-msgid "sucessfully edited"
-msgstr "更新成功"
+#~ msgid "sucessfully edited"
+#~ msgstr "更新成功"
 
-msgid "Lagg Interface was successfully added"
-msgstr "LAGG介面新增成功"
+#~ msgid "Lagg Interface was successfully added"
+#~ msgstr "LAGG介面新增成功"
 
 msgid "ActiveDirectory Settings"
 msgstr "ActiveDirectory 設定"

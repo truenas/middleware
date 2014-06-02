@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-02-07 07:02+0200\n"
+"PO-Revision-Date: 2014-02-07 07:02+0000\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2);;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1391756527.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Rapoarte"
+#~ msgid "Reporting"
+#~ msgstr "Rapoarte"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -52,21 +52,17 @@ msgstr "Stocare"
 msgid "Some error occurred"
 msgstr "Au apărut unele erori!"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Editare"
+#~ msgid "Edit"
+#~ msgstr "Editare"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Editare disc"
+#~ msgid "Edit Disk"
+#~ msgstr "Editare disc"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Ştergere"
+#~ msgid "Wipe"
+#~ msgstr "Ştergere"
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Ștergere disc"
+#~ msgid "Wipe Disk"
+#~ msgstr "Ștergere disc"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -87,20 +83,182 @@ msgstr "Fiecare N"
 msgid "Plugins"
 msgstr "Plugin-uri"
 
-msgid "CronJobs"
-msgstr "Acțiuni programate"
+#~ msgid "CronJobs"
+#~ msgstr "Acțiuni programate"
 
-msgid "Replace"
-msgstr "Înlocuire"
+#~ msgid "Replace"
+#~ msgstr "Înlocuire"
 
-msgid "Disk Replacement"
-msgstr "Înlocuire disc"
+#~ msgid "Disk Replacement"
+#~ msgstr "Înlocuire disc"
 
-msgid "Detach"
-msgstr "Detaşare"
+#~ msgid "Detach"
+#~ msgstr "Detaşare"
 
-msgid "Disk Detach"
-msgstr "Detaşare disc"
+#~ msgid "Disk Detach"
+#~ msgstr "Detaşare disc"
 
-msgid "Every"
-msgstr "Fiecare"
+#~ msgid "Every"
+#~ msgstr "Fiecare"
+
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr "Sistem de alertă"
+
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr "Activare serviciu"
+
+#: freeadmin/static/lib/js/freeadmin.js:994
+msgid "The cache is being rebuilt."
+msgstr "Se reface conținutul memoriei cache."
+
+#: freeadmin/static/lib/js/freeadmin.js:996
+msgid "The cache could not be rebuilt: "
+msgstr "Memoria cache nu a putut fi reactualizată: "
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr "Partajări"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:212
+msgid "Jails"
+msgstr "Zone captive (Jail)"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:398
+msgid "Support"
+msgstr "Suport"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
+msgid "Size"
+msgstr "Dimensiune"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:262
+msgid "drives"
+msgstr "discuri"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:264
+msgid "drive"
+msgstr "disc"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:266
+msgid "show"
+msgstr "afișare"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
+msgid "no more drives"
+msgstr "niciun disc"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
+msgid "Disk size mismatch"
+msgstr "Nepotrivire dimensiune disc"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:519
+msgid ""
+"Your configuration is optimal!<br /><br />It means you'll have the best "
+"performance possible for this number of disks and type of disk group.<br /><"
+"br />For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"Configurația dumneavoastă este optimă<br /><br />Acest lucru înseamnă că ați "
+"atins performanța maximă posibilă pentru acest număr de discuri și acest tip "
+"de grup de discuri.<br /><br />Pentru mai multe informații puteți consulta <"
+"a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentația ZFS</a>."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
+msgid ""
+"Your configuration is not optimal!<br /><br />It means this number of disks "
+"will not provide the best performance for that type of disk group.<br /><br "
+"/>For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"Configurația dumneavoastă nu este optimă<br /><br />Acest lucru înseamnă că "
+"acest număr de discuri nu oferă performanța maximă posibilă pentru acest "
+"grup de discuri.<br /><br />Pentru mai multe informații puteți consulta <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentația ZFS</a>."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
+msgid "Capacity"
+msgstr "Capacitate"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
+msgid "Drag and drop this to resize"
+msgstr "Drag and drop pentru redimensionare"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Add Volume"
+msgstr "Adăugare volum"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Existing data will be cleared"
+msgstr "Datele existente vor fi șterse"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
+msgid "Extend Volume"
+msgstr "Extindere volum"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
+msgid "Volume Name"
+msgstr "Nume volum"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
+msgid "Volume to extend"
+msgstr "Volum de extins"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
+msgid ""
+"Extending an encrypted volume will reset the passphrase and recovery key!"
+msgstr ""
+"Extinderea unui volum criptat determină resetarea frazei de criptare și a "
+"cheii de recuperare!"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
+msgid "Encryption"
+msgstr "Criptare"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
+msgid "Initialize Safely"
+msgstr "Inițializare în siguranță"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
+msgid "Available disks"
+msgstr "Discuri disponibile"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
+msgid "Volume layout"
+msgstr "Structură volum"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
+msgid "Estimated capacity"
+msgstr "Capacitate estimată"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
+msgid "Add Extra Device"
+msgstr "Adăugare disc suplimentar"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
+msgid "Cancel"
+msgstr "Renunț"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr "Consolă"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr "Lipire"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr "Navigare"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr "Închide"

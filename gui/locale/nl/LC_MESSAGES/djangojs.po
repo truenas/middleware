@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-01-02 10:38+0200\n"
+"PO-Revision-Date: 2014-01-02 10:38+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1388659084.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Rapporteren"
+#~ msgid "Reporting"
+#~ msgstr "Rapporteren"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -51,21 +51,17 @@ msgstr "Opslag"
 msgid "Some error occurred"
 msgstr "Er is een fout opgetreden"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Wijzigen"
+#~ msgid "Edit"
+#~ msgstr "Wijzigen"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Wijzig schijf"
+#~ msgid "Edit Disk"
+#~ msgstr "Wijzig schijf"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Wissen"
+#~ msgid "Wipe"
+#~ msgstr "Wissen"
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Wis schijf"
+#~ msgid "Wipe Disk"
+#~ msgstr "Wis schijf"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -86,20 +82,182 @@ msgstr "Elke N"
 msgid "Plugins"
 msgstr "Plug-ins"
 
-msgid "CronJobs"
-msgstr "CronJobs"
+#~ msgid "CronJobs"
+#~ msgstr "CronJobs"
 
-msgid "Replace"
-msgstr "Vervang"
+#~ msgid "Replace"
+#~ msgstr "Vervang"
 
-msgid "Disk Replacement"
-msgstr "Schijf vervangen"
+#~ msgid "Disk Replacement"
+#~ msgstr "Schijf vervangen"
 
-msgid "Detach"
-msgstr "Afkoppelen"
+#~ msgid "Detach"
+#~ msgstr "Afkoppelen"
 
-msgid "Disk Detach"
-msgstr "Schijf Afkoppelen"
+#~ msgid "Disk Detach"
+#~ msgstr "Schijf Afkoppelen"
 
-msgid "Every"
-msgstr "Elke"
+#~ msgid "Every"
+#~ msgstr "Elke"
+
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr "Waarschuwingssysteem"
+
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr "Service inschakelen"
+
+#: freeadmin/static/lib/js/freeadmin.js:994
+msgid "The cache is being rebuilt."
+msgstr "De cache wordt opnieuw opgebouwd."
+
+#: freeadmin/static/lib/js/freeadmin.js:996
+msgid "The cache could not be rebuilt: "
+msgstr "De cache kon niet opnieuw worden opgebouwd: "
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr "Shares"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:212
+msgid "Jails"
+msgstr "Jails"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:398
+msgid "Support"
+msgstr "Ondersteuning"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
+msgid "Size"
+msgstr "Grootte"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:262
+msgid "drives"
+msgstr "stations"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:264
+msgid "drive"
+msgstr "station"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:266
+msgid "show"
+msgstr "tonen"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
+msgid "no more drives"
+msgstr "geen stations meer"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
+msgid "Disk size mismatch"
+msgstr "Schijfgroottes niet gelijk"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:519
+msgid ""
+"Your configuration is optimal!<br /><br />It means you'll have the best "
+"performance possible for this number of disks and type of disk group.<br /><"
+"br />For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"Uw configuratie is optimaal!<br /><br />Dit betekent dat u de best mogelijke "
+"prestaties voor dit aantal schijven en type schijfgroep zult hebben.<br /><"
+"br />Wend u voor meer uitleg tot de <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentatie</a>."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
+msgid ""
+"Your configuration is not optimal!<br /><br />It means this number of disks "
+"will not provide the best performance for that type of disk group.<br /><br "
+"/>For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"Uw configuratie is niet optimaal!<br /><br />Dit betekent dat dit aantal "
+"schijven niet de beste prestaties voor dat type schijfgroep zal bieden.<br "
+"/><br />Wend u voor meer uitleg tot de <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentatie</a>."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
+msgid "Capacity"
+msgstr "Capaciteit"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
+msgid "Drag and drop this to resize"
+msgstr "Sleep dit om de grootte aan te passen"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Add Volume"
+msgstr "Volume toevoegen"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Existing data will be cleared"
+msgstr "Bestaande gegevens zullen worden gewist"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
+msgid "Extend Volume"
+msgstr "Volume uitbreiden"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
+msgid "Volume Name"
+msgstr "Volumenaam"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
+msgid "Volume to extend"
+msgstr "Uit te breiden volume"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
+msgid ""
+"Extending an encrypted volume will reset the passphrase and recovery key!"
+msgstr ""
+"Uitbreiden van een versleuteld volume zal de wachtwoordzin en herstelsleutel "
+"herinitialiseren!"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
+msgid "Encryption"
+msgstr "Versleuteling"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
+msgid "Initialize Safely"
+msgstr "Veilig initialiseren"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
+msgid "Available disks"
+msgstr "Beschikbare schijven"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
+msgid "Volume layout"
+msgstr "Volume-indeling"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
+msgid "Estimated capacity"
+msgstr "Geschatte capaciteit"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
+msgid "Add Extra Device"
+msgstr "Extra apparaat toevoegen"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr "Shell"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr "Plakken"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr "Bladeren"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr "Sluiten"

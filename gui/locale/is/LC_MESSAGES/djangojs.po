@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2011-11-03 00:12+0200\n"
+"PO-Revision-Date: 2011-11-03 00:12+0000\n"
 "Last-Translator: gaujix <gudjon@247.is>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: is\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1320279174.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Skýrslur"
+#~ msgid "Reporting"
+#~ msgstr "Skýrslur"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -52,13 +52,11 @@ msgstr "Gagnageymslur"
 msgid "Some error occurred"
 msgstr "Einhver villa kom upp!"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Stilla disk"
+#~ msgid "Edit"
+#~ msgstr "Stilla disk"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Stilla disk"
+#~ msgid "Edit Disk"
+#~ msgstr "Stilla disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
@@ -85,17 +83,17 @@ msgstr "Hvert valið atriðið"
 msgid "Every N"
 msgstr "Hvert N"
 
-msgid "CronJobs"
-msgstr "Reglubundnar keyrslur"
+#~ msgid "CronJobs"
+#~ msgstr "Reglubundnar keyrslur"
 
-msgid "Replace"
-msgstr "Skipta út"
+#~ msgid "Replace"
+#~ msgstr "Skipta út"
 
-msgid "Disk Replacement"
-msgstr "Diskur sem kemur í staðinn"
+#~ msgid "Disk Replacement"
+#~ msgstr "Diskur sem kemur í staðinn"
 
-msgid "Detach"
-msgstr "Aftengja"
+#~ msgid "Detach"
+#~ msgstr "Aftengja"
 
-msgid "Disk Detach"
-msgstr "Aftengja Disk"
+#~ msgid "Disk Detach"
+#~ msgstr "Aftengja Disk"

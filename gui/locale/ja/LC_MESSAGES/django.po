@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2014-03-02 07:46+0200\n"
+"PO-Revision-Date: 2014-03-02 07:46+0000\n"
 "Last-Translator: ReiKirishima <rei@kirishima.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1393746397.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -250,9 +251,8 @@ msgstr "フル（Full）"
 msgid "Debug"
 msgstr "デバッグ（Debug）"
 
-#: choices.py:195
-msgid "Default"
-msgstr "既定値"
+#~ msgid "Default"
+#~ msgstr "既定値"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -346,9 +346,8 @@ msgstr "ON"
 msgid "Off"
 msgstr "OFF"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb（推奨）"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb（推奨）"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -535,9 +534,8 @@ msgstr "確認のため、上の項目と同じパスワードを入力してく
 msgid "Shell"
 msgstr "シェル"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "パスワードでのログインを無効にする"
+#~ msgid "Disable password logins"
+#~ msgstr "パスワードでのログインを無効にする"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -563,9 +561,8 @@ msgstr "ホームディレクトリモード"
 msgid "Auxiliary groups"
 msgstr "補助グループ"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "同じユーザIDを持つ他のユーザが既に存在します。"
+#~ msgid "A user with that uid already exists."
+#~ msgstr "同じユーザIDを持つ他のユーザが既に存在します。"
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -606,10 +603,9 @@ msgstr "パスワードは無効である為、空にして下さい"
 msgid "This field is required."
 msgstr "この項目は必須です。"
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr ""
-"ホームディレクトリは /mnt/ から始まるか /nonexistent にする必要があります"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr ""
+#~ "ホームディレクトリは /mnt/ から始まるか /nonexistent にする必要があります"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -734,24 +730,17 @@ msgstr "アカウント"
 msgid "Admin Account"
 msgstr "管理者アカウント"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "パスワードの変更"
+#~ msgid "Change Password"
+#~ msgstr "パスワードの変更"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "管理ユーザの変更"
+#~ msgid "Change Admin User"
+#~ msgstr "管理ユーザの変更"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "パスワードを更新しました。"
+#~ msgid "Password successfully updated."
+#~ msgstr "パスワードを更新しました。"
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "管理者ユーザーを更新しました。"
+#~ msgid "Admin user successfully updated."
+#~ msgstr "管理者ユーザーを更新しました。"
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -1125,9 +1114,8 @@ msgstr "リンクアグリゲーション"
 msgid "Link Aggregations"
 msgstr "リンクアグリゲーション"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "LAGGインタフェースグループ"
+#~ msgid "LAGG Interface group"
+#~ msgstr "LAGGインタフェースグループ"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1170,23 +1158,20 @@ msgid "View Link Aggregations"
 msgstr "全てのリンクアグリゲーションを表示"
 
 # 意訳
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGGを追加しました"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGGを追加しました"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
 msgstr "このIPアドレスはすでに使われています。"
 
-#: plugins/forms.py:92
-msgid "Place to temporarily place PBI file"
-msgstr "ＰＢＩファイルを一時保存する場所"
+#~ msgid "Place to temporarily place PBI file"
+#~ msgstr "ＰＢＩファイルを一時保存する場所"
 
-#: plugins/forms.py:93
-msgid ""
-"The system will use this place to temporarily store the PBI file before it's "
-"installed."
-msgstr "ＰＢＩファイルを適用前に一時保存する場所"
+#~ msgid ""
+#~ "The system will use this place to temporarily store the PBI file before it's "
+#~ "installed."
+#~ msgstr "ＰＢＩファイルを適用前に一時保存する場所"
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
@@ -1214,9 +1199,8 @@ msgstr ""
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr "プラグインパスにはjailパスが含まれてはいけません。"
 
-#: plugins/forms.py:214 services/models.py:803
-msgid "Plugins jail path"
-msgstr "プラグインjailのパス"
+#~ msgid "Plugins jail path"
+#~ msgstr "プラグインjailのパス"
 
 #: plugins/forms.py:218
 #, fuzzy
@@ -1233,9 +1217,8 @@ msgstr "IPv4 ネットマスク"
 msgid "Plugins archive Path"
 msgstr "プラグインjailのパス"
 
-#: plugins/forms.py:244
-msgid "Plugins Jail PBI"
-msgstr "プラグインのJailのＰＢＩ"
+#~ msgid "Plugins Jail PBI"
+#~ msgstr "プラグインのJailのＰＢＩ"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
@@ -1351,9 +1334,8 @@ msgstr "%s を正しく更新しました。"
 msgid "Plugin successfully removed."
 msgstr "ボリュームを正しく追加しました。"
 
-#: plugins/views.py:86
-msgid "Unable to remove plugin."
-msgstr "プラグインの削除が失敗しました。"
+#~ msgid "Unable to remove plugin."
+#~ msgstr "プラグインの削除が失敗しました。"
 
 #: plugins/views.py:101
 #, fuzzy
@@ -1531,18 +1513,16 @@ msgstr "シークレット（確認）"
 msgid "Enter the same secret above for verification."
 msgstr "確認のため、上の項目と同じシークレットを入力して下さい。"
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "イニシエータシークレット"
+#~ msgid "Initiator Secret"
+#~ msgstr "イニシエータシークレット"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 #, fuzzy
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "イニシエータ側のシークレット（相互 CHAP 認証に使われます。）"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "イニシエータシークレット（確認）"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "イニシエータシークレット（確認）"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1644,19 +1624,17 @@ msgstr ""
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr "このファイルはエクステントのサイズがauto (0)に設定されていても存在する必要があります。"
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "ディスクデバイス"
+#~ msgid "Disk device"
+#~ msgstr "ディスクデバイス"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "Portal Group IDは %d を超えてはいけません"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "Group ID は %d を超えてはいけません"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "Group ID は %d を超えてはいけません"
 
 #: services/forms.py:1019
 #, fuzzy
@@ -1794,13 +1772,11 @@ msgid ""
 msgstr ""
 "このオプションはディレクトリ作成時のマスクを上書きします(既定値は0777)。"
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Large RW サポート"
+#~ msgid "Large RW support"
+#~ msgstr "Large RW サポート"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "sendfile(2) を用いて送信"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "sendfile(2) を用いて送信"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1916,15 +1892,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "サーバ名"
+#~ msgid "Server Name"
+#~ msgstr "サーバ名"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "サーバ名。項目が空の場合は既定のサーバ名が使用されます。"
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "サーバ名。項目が空の場合は既定のサーバ名が使用されます。"
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1960,16 +1934,14 @@ msgstr ""
 "サーバの作成数を設定します。クライアントから問題なく同時実行できる範囲で指定"
 "してください。一般に 4-6 程度です。"
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "非同期モード"
+#~ msgid "Asynchronous mode"
+#~ msgstr "非同期モード"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"非同期モードを有効化すると、ギガビット以上のパフォーマンスが期待できます"
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "非同期モードを有効化すると、ギガビット以上のパフォーマンスが期待できます"
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2387,13 +2359,12 @@ msgstr "プロバイダ"
 msgid "Domain name"
 msgstr "ドメイン名"
 
-#: services/models.py:765
-msgid ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
-msgstr ""
-"ホストの別名を指定します。このオプションで同じIPアドレスに複数の名前を持たせ"
-"ることができます。複数の名前を指定する場合はスペースで区切ってください。"
+#~ msgid ""
+#~ "A host name alias. This option can appear multiple times, for each domain "
+#~ "that has the same IP. Use a space to separate multiple alias names."
+#~ msgstr ""
+#~ "ホストの別名を指定します。このオプションで同じIPアドレスに複数の名前を持たせ"
+#~ "ることができます。複数の名前を指定する場合はスペースで区切ってください。"
 
 #: services/models.py:777
 msgid "Update period"
@@ -2407,10 +2378,9 @@ msgstr "秒単位の設定。初期値は約1分。"
 msgid "Forced update period"
 msgstr "強制的に時刻を更新"
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
-"ここで指定したパラメータは、inadyn.conf の global settings に追加されます。"
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr ""
+#~ "ここで指定したパラメータは、inadyn.conf の global settings に追加されます。"
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
@@ -2422,13 +2392,11 @@ msgstr "Dynamic DNS"
 msgid "Path to the plugins jail"
 msgstr "エクステントへのパス"
 
-#: services/models.py:809
-msgid "Jail name"
-msgstr "Jail名"
+#~ msgid "Jail name"
+#~ msgstr "Jail名"
 
-#: services/models.py:810
-msgid "Name of the plugins jail"
-msgstr "プラグインjailの名前"
+#~ msgid "Name of the plugins jail"
+#~ msgstr "プラグインjailの名前"
 
 #: services/models.py:815
 msgid ""
@@ -2537,9 +2505,8 @@ msgstr ""
 "シャットダウンが開始されるまでの秒数を指定します。指定した時間内にUPS へ電源"
 "が再度供給された場合、シャットダウンはキャンセルされます。"
 
-#: services/models.py:933
-msgid "UPS Master User Password"
-msgstr "UPSマスターユーザのパスワード"
+#~ msgid "UPS Master User Password"
+#~ msgstr "UPSマスターユーザのパスワード"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
@@ -2637,9 +2604,8 @@ msgstr "パス"
 msgid "Allow Local User Login"
 msgstr "ローカルユーザのログインを許可"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "バナー"
+#~ msgid "Banner"
+#~ msgstr "バナー"
 
 #: services/models.py:1008
 #, fuzzy
@@ -2669,9 +2635,8 @@ msgstr "常にchroot"
 msgid "Require IDENT Authentication"
 msgstr "IDENT 認証を要求"
 
-#: services/models.py:1031
-msgid "Require Reverse DNS for IP"
-msgstr "DNS 逆引きをする"
+#~ msgid "Require Reverse DNS for IP"
+#~ msgstr "DNS 逆引きをする"
 
 #: services/models.py:1033
 msgid "Masquerade address"
@@ -2756,9 +2721,8 @@ msgstr "匿名ユーザのダウンロード帯域"
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr "匿名ユーザのダウンロード帯域（KB/s)。0は無制限を意味します。"
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "SSL/TLSを有効化"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "SSL/TLSを有効化"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -2876,13 +2840,11 @@ msgstr ""
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1239
-msgid "Domain Controller Name"
-msgstr "ドメインコントローラ名"
+#~ msgid "Domain Controller Name"
+#~ msgstr "ドメインコントローラ名"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "AD または PDC の名前"
+#~ msgid "AD or PDC name."
+#~ msgstr "AD または PDC の名前"
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3245,9 +3207,8 @@ msgstr "S.M.A.R.T."
 msgid "Control Services"
 msgstr "サービスの制御"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "デバイスエクステント"
+#~ msgid "Device Extents"
+#~ msgstr "デバイスエクステント"
 
 #: services/nav.py:72
 #, fuzzy
@@ -3320,14 +3281,12 @@ msgstr "共有パスワードを確認"
 msgid "The path %s does not exist"
 msgstr "エクステントへのパス"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "有効な IP アドレス または ネットワークではありません。"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "有効な IP アドレス または ネットワークではありません。"
 
-#: sharing/forms.py:165
 #, python-format
-msgid "The IP '%s' is not valid."
-msgstr "'%s' は無効な IP アドレスです。"
+#~ msgid "The IP '%s' is not valid."
+#~ msgstr "'%s' は無効な IP アドレスです。"
 
 #: sharing/forms.py:179
 #, fuzzy
@@ -3484,16 +3443,14 @@ msgstr ""
 "このオプションではボリュームパスワードを設定できます。(最大8文字。ASCIIコード"
 "を使うことを強く推奨します。)"
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "共有文字コード"
+#~ msgid "Share Character Set"
+#~ msgstr "共有文字コード"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr ""
-"共有で使用する文字コードを指定します。（例: UTF8、UTF8-MAC、ISO-8859-15など）"
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr ""
+#~ "共有で使用する文字コードを指定します。（例: UTF8、UTF8-MAC、ISO-8859-15など）"
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3548,9 +3505,8 @@ msgstr ""
 "特定のユーザ、グループが共有への読み込み/書き込みアクセス権を持つ事を許可しま"
 "す。これは許可リストの形式に従います。"
 
-#: sharing/models.py:160
-msgid "Disk Discovery"
-msgstr "ディスクの自動検出"
+#~ msgid "Disk Discovery"
+#~ msgstr "ディスクの自動検出"
 
 #: sharing/models.py:161
 #, fuzzy
@@ -3591,24 +3547,21 @@ msgstr ""
 "データベース情報を指定したパスに保存するように設定します。ボリュームが読み取"
 "り専用の場合、書き込み可能な場所を選択してください。"
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "キャッシュ CNID"
+#~ msgid "Cache CNID"
+#~ msgstr "キャッシュ CNID"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"有効にした場合、afpd はデータベース負荷を減らすために AppleDouble V2 ヘッダ"
-"ファイル内で記憶された ID 情報を使用します。ボリュームが AFP クライアント以外"
-"（NFS/SMB/ローカル）によって修正される事がある場合は、このオプションを有効に"
-"しないでください。"
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "有効にした場合、afpd はデータベース負荷を減らすために AppleDouble V2 ヘッダ"
+#~ "ファイル内で記憶された ID 情報を使用します。ボリュームが AFP クライアント以外"
+#~ "（NFS/SMB/ローカル）によって修正される事がある場合は、このオプションを有効に"
+#~ "しないでください。"
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "CR/LF を変換"
+#~ msgid "Translate CR/LF"
+#~ msgstr "CR/LF を変換"
 
 #: sharing/models.py:182
 #, fuzzy
@@ -3640,9 +3593,8 @@ msgstr ""
 "ファイル名に Windows の文字セットのみ使えるようにします。主に Mac で使用され"
 "る共有には、適用しないでください。"
 
-#: sharing/models.py:189
-msgid "Enable .AppleDouble"
-msgstr ".AppleDouble を有効にする"
+#~ msgid "Enable .AppleDouble"
+#~ msgstr ".AppleDouble を有効にする"
 
 #: sharing/models.py:190
 #, fuzzy
@@ -3667,9 +3619,8 @@ msgstr ""
 "デバイス番号として常に 0 を使います。リブートやクラスタを経て、デバイスが特定"
 "の値をもたない場合に役に立ちます"
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "ファイル ID の無効化"
+#~ msgid "Disable File ID"
+#~ msgstr "ファイル ID の無効化"
 
 # 動詞の訳は間違ってると思う。Macユーザに期待。
 #: sharing/models.py:201
@@ -3677,9 +3628,8 @@ msgstr "ファイル ID の無効化"
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
 msgstr "createfileid, resoleveid 及び deleteid の呼び出しを宣伝しません。"
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "hex 変換の無効化"
+#~ msgid "Disable :hex Names"
+#~ msgstr "hex 変換の無効化"
 
 #: sharing/models.py:205
 #, fuzzy
@@ -3690,13 +3640,11 @@ msgstr ""
 "ドットファイル以外の hex 変換を禁止します。このオプションによって '/' を無効"
 "な文字と認識するようになります。"
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "Apple II クライアントの互換性を提供します。"
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "Apple II クライアントの互換性を提供します。"
 
 #: sharing/models.py:212
 #, fuzzy
@@ -3742,19 +3690,17 @@ msgstr "Apple ファイル共有"
 msgid "Apple (AFP) Shares"
 msgstr "Apple ファイル共有"
 
-#: sharing/models.py:268
-msgid "Authorized network or IP addresses"
-msgstr "許可するネットワークまたは IP アドレス"
+#~ msgid "Authorized network or IP addresses"
+#~ msgstr "許可するネットワークまたは IP アドレス"
 
-#: sharing/models.py:269
-msgid ""
-"Network that is authorized to access the NFS share or a list of IP "
-"addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
-"number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
-msgstr ""
-"NFS共有へのアクセスを許可されたネットワーク、もしくはIPアドレスのリスト。指定"
-"方法は、ネットワーク：「1.2.3.4/xx」（'xx' はネットマスクのビット数）、IPアド"
-"レスのリスト：「1.2.3.4 1.2.3.5 1.2.3.6」。"
+#~ msgid ""
+#~ "Network that is authorized to access the NFS share or a list of IP "
+#~ "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
+#~ "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgstr ""
+#~ "NFS共有へのアクセスを許可されたネットワーク、もしくはIPアドレスのリスト。指定"
+#~ "方法は、ネットワーク：「1.2.3.4/xx」（'xx' はネットマスクのビット数）、IPアド"
+#~ "レスのリスト：「1.2.3.4 1.2.3.5 1.2.3.6」。"
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -3789,25 +3735,22 @@ msgstr "この共有のエクスポート時に問題がある場合の、syslog
 msgid "Maproot User"
 msgstr "Maproot ユーザ"
 
-#: sharing/models.py:289
-msgid "User to map root to"
-msgstr "root にマッピングするユーザ"
+#~ msgid "User to map root to"
+#~ msgstr "root にマッピングするユーザ"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "Maproot グループ"
 
-#: sharing/models.py:296
-msgid "Group to map root to"
-msgstr " root にマッピングするグループ"
+#~ msgid "Group to map root to"
+#~ msgstr " root にマッピングするグループ"
 
 #: sharing/models.py:299
 msgid "Mapall User"
 msgstr "Mapall ユーザ"
 
-#: sharing/models.py:303
-msgid "User to map all users to"
-msgstr "すべてのユーザをマッピングするユーザ"
+#~ msgid "User to map all users to"
+#~ msgstr "すべてのユーザをマッピングするユーザ"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
@@ -3847,22 +3790,18 @@ msgstr "%s は無効なユーザ名です。"
 msgid "Volume name"
 msgstr "ボリューム名"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "ファイルシステムタイプ"
+#~ msgid "Filesystem type"
+#~ msgstr "ファイルシステムタイプ"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "セクタサイズを 4096 バイトに強制"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "セクタサイズを 4096 バイトに強制"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
 msgstr "カスタムパスを指定"
 
-#: storage/forms.py:163
-msgid "Volume add"
-msgstr "ボリュームを追加"
+#~ msgid "Volume add"
+#~ msgstr "ボリュームを追加"
 
 #: storage/forms.py:175
 msgid ""
@@ -3903,21 +3842,18 @@ msgid ""
 "append a virtual device"
 msgstr ""
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "ファイルシステムを選択してください。"
+#~ msgid "You must select a filesystem"
+#~ msgstr "ファイルシステムを選択してください。"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "すでに同じ名前のボリュームがあります。"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" は予約語のため、使用できません。"
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"log\" は予約語のため、使用できません。"
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "数字、mirror、raidz、spare で始まるボリューム名は指定できません。"
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr "数字、mirror、raidz、spare で始まるボリューム名は指定できません。"
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -4496,10 +4432,8 @@ msgstr "ボリュームの自動インポート"
 msgid "View Volumes"
 msgstr "ボリュームを表示"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "ZFS ボリュームの作成"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "ZFS ボリュームの作成"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4635,9 +4569,8 @@ msgstr "%s を追加しました。"
 msgid "Language (Require UI reload)"
 msgstr "言語（設定後、画面を開き直してください）"
 
-#: system/forms.py:214
-msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "この値は 1 以上 65535 以下で設定してください。"
+#~ msgid "You must specify a number between 1 and 65535, inclusive."
+#~ msgstr "この値は 1 以上 65535 以下で設定してください。"
 
 #: system/forms.py:216
 #, fuzzy
@@ -4714,13 +4647,11 @@ msgstr "クオートは使用できません"
 msgid "Protocol"
 msgstr "プロトコル"
 
-#: system/models.py:50
-msgid "WebGUI Address"
-msgstr "WebGUIのアドレス"
+#~ msgid "WebGUI Address"
+#~ msgstr "WebGUIのアドレス"
 
-#: system/models.py:56
-msgid "WebGUI Port"
-msgstr "WebGUIのポート"
+#~ msgid "WebGUI Port"
+#~ msgstr "WebGUIのポート"
 
 #: system/models.py:62
 msgid "Language"
@@ -4821,26 +4752,22 @@ msgstr "シリアルコンソールの使用"
 msgid "Enable screen saver"
 msgstr "スクリーンセーバの有効化"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "ファームウェアの自動更新チェック"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "ファームウェアの自動更新チェック"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "起動時のビープ音"
+#~ msgid "Beep on boot"
+#~ msgstr "起動時のビープ音"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "特殊なシステムチューニングの有効化"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "特殊なシステムチューニングの有効化"
 
 #: system/models.py:169
 #, fuzzy
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "powerdの有効化（省電力化デーモン）"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "Zeroconf/Bonjourの有効化"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "Zeroconf/Bonjourの有効化"
 
 #: system/models.py:174
 msgid ""
@@ -5278,10 +5205,8 @@ msgstr "ヘルプ"
 msgid "Log In"
 msgstr "ログイン"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 # メンバ（複数）の方がよい？
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
@@ -5290,11 +5215,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "メンバー"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "修正"
+#~ msgid "Modify"
+#~ msgstr "修正"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5308,53 +5230,43 @@ msgstr "グループを修正"
 msgid "Delete Group"
 msgstr "グループを削除"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "ユーザが定義したグループはありません。"
+#~ msgid "There are no user defined groups."
+#~ msgstr "ユーザが定義したグループはありません。"
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "新しいグループを追加"
+#~ msgid "Add New Group"
+#~ msgstr "新しいグループを追加"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "ホーム"
+#~ msgid "Home"
+#~ msgstr "ホーム"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
 msgstr "ユーザを修正"
 
-#: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
-#: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
-msgid "Auxiliary Groups"
-msgstr "補助グループ"
+#~ msgid "Auxiliary Groups"
+#~ msgstr "補助グループ"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
 msgstr "ユーザを削除"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "ユーザを削除"
+#~ msgid "Delete User"
+#~ msgstr "ユーザを削除"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "ユーザが定義したものはありません"
+#~ msgid "No users defined"
+#~ msgstr "ユーザが定義したものはありません"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "新しいユーザを追加"
+#~ msgid "Add New User"
+#~ msgstr "新しいユーザを追加"
 
 # 表記の揺れ。
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "メールアドレスの変更"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "管理パスワードの変更"
+#~ msgid "Change Admin Password"
+#~ msgstr "管理パスワードの変更"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5512,9 +5424,8 @@ msgstr "場所"
 msgid "FreeNAS Documentation"
 msgstr "FreeNASドキュメンテーション"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "IPv6 Auto"
+#~ msgid "IPv6 Auto"
+#~ msgstr "IPv6 Auto"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5556,22 +5467,18 @@ msgstr "利用可能な操作"
 msgid "Edit"
 msgstr "編集"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "インタフェースを編集"
+#~ msgid "Edit Interface"
+#~ msgstr "インタフェースを編集"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "インタフェースを削除"
+#~ msgid "Delete Interface"
+#~ msgstr "インタフェースを削除"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
 msgstr "定義されたインタフェースはありません。"
 
-#: templates/network/interface.html:47 templates/network/interface.html:49
-msgid "Add Interface"
-msgstr "インタフェースを追加"
+#~ msgid "Add Interface"
+#~ msgstr "インタフェースを追加"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5587,29 +5494,23 @@ msgstr "メンバーを編集"
 msgid "LAGG Members"
 msgstr "LAGG メンバ"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "定義された LAGG インタフェースはありません。"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "定義された LAGG インタフェースはありません。"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "LAGGインタフェースを追加 "
+#~ msgid "Add LAGG Interface "
+#~ msgstr "LAGGインタフェースを追加 "
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "LAGGを追加"
+#~ msgid "Add LAGG"
+#~ msgstr "LAGGを追加"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "優先順位"
+#~ msgid "Ordering Priority"
+#~ msgstr "優先順位"
 
-#: templates/network/lagg_members.html:7
-msgid "Startup option"
-msgstr "起動オプション"
+#~ msgid "Startup option"
+#~ msgstr "起動オプション"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "アクション"
+#~ msgid "Action"
+#~ msgstr "アクション"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
@@ -5617,21 +5518,17 @@ msgstr "アクション"
 msgid "Add LAGG Member"
 msgstr "LAGG メンバ"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "静的ルートを編集"
+#~ msgid "Edit Static Route"
+#~ msgstr "静的ルートを編集"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "静的ルートを削除"
+#~ msgid "Delete Static Route"
+#~ msgstr "静的ルートを削除"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "定義された静的ルートはありません。"
+#~ msgid "No static route defined"
+#~ msgstr "定義された静的ルートはありません。"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "静的ルートを追加"
+#~ msgid "Add Static Route"
+#~ msgstr "静的ルートを追加"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5649,30 +5546,24 @@ msgstr "デフォルトルート"
 msgid "No default route defined"
 msgstr "定義されたデフォルトルートはありません"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "VLANを編集"
+#~ msgid "Edit VLAN"
+#~ msgstr "VLANを編集"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "VLANを削除"
+#~ msgid "Delete VLAN"
+#~ msgstr "VLANを削除"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "定義された VLAN はありません。"
+#~ msgid "No VLAN defined"
+#~ msgstr "定義された VLAN はありません。"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "VLANインタフェースを追加"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "VLANインタフェースを追加"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
 msgstr "インストール済み・・・"
 
-#: templates/plugins/index.html:5 templates/plugins/index.html.py:7
-#: templates/services/plugins.html:5 templates/services/plugins.html.py:7
-msgid "Install Plugin"
-msgstr "プラグインをインストールする"
+#~ msgid "Install Plugin"
+#~ msgstr "プラグインをインストールする"
 
 # log levelの設定だと思われます。
 # カタカナだけだと、致命的な設定ミスを誘発しかねないので、元の単語を併記します。
@@ -5684,17 +5575,15 @@ msgstr "インフォ"
 msgid "Plugin info"
 msgstr "プラグイン情報"
 
-#: templates/plugins/index.html:39
-msgid "Edit Plugin"
-msgstr "プラグインの編集"
+#~ msgid "Edit Plugin"
+#~ msgstr "プラグインの編集"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
 msgstr "プラグインを削除"
 
-#: templates/plugins/index.html:55
-msgid "No plugins installed"
-msgstr "プラグインがインストールされていません"
+#~ msgid "No plugins installed"
+#~ msgstr "プラグインがインストールされていません"
 
 #: templates/plugins/jail_import.html:2
 #, fuzzy
@@ -5706,9 +5595,8 @@ msgstr "ボリュームのインポート"
 msgid "Step %(step)s of %(step_count)s"
 msgstr "%(step)s ステップ目 / %(step_count)s ステップ"
 
-#: templates/plugins/jailpbi.html:18
-msgid "Upload Jail PBI"
-msgstr "JailのＰＢＩをアップロード"
+#~ msgid "Upload Jail PBI"
+#~ msgstr "JailのＰＢＩをアップロード"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5754,14 +5642,12 @@ msgstr "ユーザ名かパスワードが正しくありません。もう一度
 msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "ようこそ、%(username)sさん。ログインしてくれてありがとう。"
 
-#: templates/registration/login.html:46
 #, python-format
-msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr "%(sw_name) %(sw_login_version) へようこそ！"
+#~ msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
+#~ msgstr "%(sw_name) %(sw_login_version) へようこそ！"
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "ログインして下さい。"
+#~ msgid "Please log in."
+#~ msgstr "ログインして下さい。"
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5779,9 +5665,8 @@ msgstr "もう一度ログイン"
 msgid "AFP Settings"
 msgstr "AFP の設定"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "Active Directory の設定"
+#~ msgid "Active Directory Settings"
+#~ msgstr "Active Directory の設定"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5799,21 +5684,18 @@ msgstr "FTP の設定"
 msgid "ISCSI Settings"
 msgstr "iSCSIの設定"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "LDAP の設定"
+#~ msgid "LDAP Settings"
+#~ msgstr "LDAP の設定"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
 msgstr "NFS の設定"
 
-#: templates/services/core.html:103 templates/services/core.html.py:105
-msgid "Plugins Settings"
-msgstr "プラグイン設定"
+#~ msgid "Plugins Settings"
+#~ msgstr "プラグイン設定"
 
-#: templates/services/core.html:105
-msgid "Install Jail PBI"
-msgstr "JailのＰＢＩをインストール"
+#~ msgid "Install Jail PBI"
+#~ msgstr "JailのＰＢＩをインストール"
 
 #: templates/services/core.html:117
 msgid "Rsync Settings"
@@ -5859,13 +5741,11 @@ msgstr "iSCSIの管理"
 msgid "Portals"
 msgstr "ポータル"
 
-#: templates/services/iscsi.html:14
-msgid "Authorized Initiators"
-msgstr "認証されたイニシエータ"
+#~ msgid "Authorized Initiators"
+#~ msgstr "認証されたイニシエータ"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "認証"
+#~ msgid "Authentication"
+#~ msgstr "認証"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5886,45 +5766,36 @@ msgstr "関連するターゲット"
 msgid "No associated targets defined"
 msgstr "定義されたターゲットはありません。"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "ターゲットにエクステントを追加"
+#~ msgid "Add Extent to Target"
+#~ msgstr "ターゲットにエクステントを追加"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "ターゲットにエクステントを追加"
+#~ msgid "Add Extent To Target"
+#~ msgstr "ターゲットにエクステントを追加"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "ピア"
+#~ msgid "Peer"
+#~ msgstr "ピア"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "iSCSIユーザを追加"
+#~ msgid "Add iSCSI User"
+#~ msgstr "iSCSIユーザを追加"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "認証されたネットワーク"
+#~ msgid "Authorized Network"
+#~ msgstr "認証されたネットワーク"
 
 #: templates/services/iscsi_authini.html:35
 #, fuzzy
 msgid "No authorized initiators defined"
 msgstr "認証されたイニシエータ"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "認証されたイニシエータを追加"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "認証されたイニシエータを追加"
 
 #: templates/services/iscsi_dextents.html:33
 #, fuzzy
 msgid "No device extents defined"
 msgstr "定義されたターゲットはありません。"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "エクステントを追加"
+#~ msgid "Add Extent"
+#~ msgstr "エクステントを追加"
 
 #: templates/services/iscsi_extents.html:5
 #, fuzzy
@@ -5940,36 +5811,28 @@ msgstr "定義されたターゲットはありません。"
 msgid "Listen"
 msgstr "待ち受け"
 
-#: templates/services/iscsi_portals.html:18
-msgid "No IP defined for this Portal"
-msgstr "このポータルにはＩＰが定義されていません"
+#~ msgid "No IP defined for this Portal"
+#~ msgstr "このポータルにはＩＰが定義されていません"
 
-#: templates/services/iscsi_portals.html:26
-msgid "Edit Portal"
-msgstr "ポータルを編集"
+#~ msgid "Edit Portal"
+#~ msgstr "ポータルを編集"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "ポータルを削除"
+#~ msgid "Delete Portal"
+#~ msgstr "ポータルを削除"
 
 #: templates/services/iscsi_portals.html:39
 #, fuzzy
 msgid "No portals defined"
 msgstr "定義されたターゲットはありません。"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "ポータルを追加"
+#~ msgid "Add Portal"
+#~ msgstr "ポータルを追加"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "定義されたターゲットはありません。"
+#~ msgid "No targets defined"
+#~ msgstr "定義されたターゲットはありません。"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "ターゲットを追加"
+#~ msgid "Add Target"
+#~ msgstr "ターゲットを追加"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -6009,43 +5872,32 @@ msgstr "プラグインを削除"
 msgid "No available plugins services"
 msgstr "利用可能なプラグインサービスはありません。"
 
-#: templates/services/pluginsjail_delete.html:4
-msgid "All the files within the plugins jail will be permanently deleted."
-msgstr "プラグインのjail内の全てのファイルが削除されます"
+#~ msgid "All the files within the plugins jail will be permanently deleted."
+#~ msgstr "プラグインのjail内の全てのファイルが削除されます"
 
-#: templates/services/pluginsjail_edit.html:12
-msgid "Delete Plugins Jail"
-msgstr "プラグインのjailを削除"
+#~ msgid "Delete Plugins Jail"
+#~ msgstr "プラグインのjailを削除"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "Rsync モジュールは定義されていません。"
+#~ msgid "No rsync modules defined"
+#~ msgstr "Rsync モジュールは定義されていません。"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "アクティブな共有"
+#~ msgid "Active Shares"
+#~ msgstr "アクティブな共有"
 
-#: templates/sharing/apple.html:7
-msgid "There are no active Apple (AFP) shares."
-msgstr "有効な Appleファイルプロトコル（ＡＦＰ）のシェアはありません。"
+#~ msgid "There are no active Apple (AFP) shares."
+#~ msgstr "有効な Appleファイルプロトコル（ＡＦＰ）のシェアはありません。"
 
-#: templates/sharing/apple.html:29
-msgid "Edit Apple (AFP) Share"
-msgstr "Apple共有を編集"
+#~ msgid "Edit Apple (AFP) Share"
+#~ msgstr "Apple共有を編集"
 
-#: templates/sharing/apple.html:35
-msgid "Delete Apple (AFP) Share"
-msgstr "Apple共有を削除"
+#~ msgid "Delete Apple (AFP) Share"
+#~ msgstr "Apple共有を削除"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "ファイル共有は定義されていません。"
+#~ msgid "No shares defined"
+#~ msgstr "ファイル共有は定義されていません。"
 
-#: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-msgid "Add Apple (AFP) Share"
-msgstr "Apple（ＡＦＰ）共有を追加"
+#~ msgid "Add Apple (AFP) Share"
+#~ msgstr "Apple（ＡＦＰ）共有を追加"
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
@@ -6059,41 +5911,32 @@ msgstr "UNIX(NFS)"
 msgid "Windows (CIFS)"
 msgstr "Windows共有(CIFS)"
 
-#: templates/sharing/unix.html:7
-msgid "There are no active UNIX (NFS) shares."
-msgstr "有効な Unix ファイル共有（ＮＦＳ）はありません。"
+#~ msgid "There are no active UNIX (NFS) shares."
+#~ msgstr "有効な Unix ファイル共有（ＮＦＳ）はありません。"
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "マウントポイント"
+#~ msgid "Mountpoint"
+#~ msgstr "マウントポイント"
 
-#: templates/sharing/unix.html:29
-msgid "Edit UNIX (NFS) Share"
-msgstr "NFS共有を編集"
+#~ msgid "Edit UNIX (NFS) Share"
+#~ msgstr "NFS共有を編集"
 
-#: templates/sharing/unix.html:35
-msgid "Delete UNIX (NFS) Share"
-msgstr "NFS共有を削除"
+#~ msgid "Delete UNIX (NFS) Share"
+#~ msgstr "NFS共有を削除"
 
-#: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-msgid "Add UNIX (NFS) Share"
-msgstr "UNIX共有を追加"
+#~ msgid "Add UNIX (NFS) Share"
+#~ msgstr "UNIX共有を追加"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (CIFS) shares."
-msgstr "有効なWindows ファイル共有はありません。"
+#~ msgid "There are no active Windows (CIFS) shares."
+#~ msgstr "有効なWindows ファイル共有はありません。"
 
-#: templates/sharing/windows.html:33
-msgid "Edit Windows (CIFS) Share"
-msgstr "Windows共有を編集"
+#~ msgid "Edit Windows (CIFS) Share"
+#~ msgstr "Windows共有を編集"
 
-#: templates/sharing/windows.html:39
-msgid "Delete Windows (CIFS) Share"
-msgstr "Windows共有(CIFS)を削除"
+#~ msgid "Delete Windows (CIFS) Share"
+#~ msgstr "Windows共有(CIFS)を削除"
 
-#: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (CIFS) Share"
-msgstr "Windows共有(CIFS)を追加"
+#~ msgid "Add Windows (CIFS) Share"
+#~ msgstr "Windows共有(CIFS)を追加"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6209,39 +6052,29 @@ msgstr ""
 "注意： レプリケーションタスクを作成するには、ＺＦＳファイルシステム・ボリュー"
 "ムの定期的なスナップショットが必要です。"
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "最終スナップショット"
+#~ msgid "Last snapshot"
+#~ msgstr "最終スナップショット"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "リモートZFSファイルシステム"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "リモートZFSファイルシステム"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "リプリケーションを削除"
+#~ msgid "Delete Replication"
+#~ msgstr "リプリケーションを削除"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "リプリケーションを編集"
+#~ msgid "Edit Replication"
+#~ msgstr "リプリケーションを編集"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "ZFS レプリケーションはありません。"
+#~ msgid "No ZFS replication available"
+#~ msgstr "ZFS レプリケーションはありません。"
 
-#: templates/storage/scrub.html:42
-msgid "No scrub tasks defined."
-msgstr "スクラブのタスクが定義されていません"
+#~ msgid "No scrub tasks defined."
+#~ msgstr "スクラブのタスクが定義されていません"
 
-#: templates/storage/scrub.html:48
-msgid "Add ZFS Scrub Task"
-msgstr "ＺＦＳのスクラブタスクを追加"
+#~ msgid "Add ZFS Scrub Task"
+#~ msgstr "ＺＦＳのスクラブタスクを追加"
 
-#: templates/storage/scrub.html:50
-msgid "Add ZFS Scrub"
-msgstr "ZFS ボリュームを追加"
+#~ msgid "Add ZFS Scrub"
+#~ msgstr "ZFS ボリュームを追加"
 
 # んー、不自然ですね・・・
 #: templates/storage/scrub_confirm.html:6
@@ -6296,17 +6129,14 @@ msgstr "スナップショットを削除"
 msgid "Periodic Snapshots"
 msgstr "定期的なスナップショット"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "定期的なスナップショットのスケジュール"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "定期的なスナップショットのスケジュール"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "予定されているスナップショットはありません。"
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "予定されているスナップショットはありません。"
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "作成条件"
+#~ msgid "How"
+#~ msgstr "作成条件"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
@@ -6314,29 +6144,24 @@ msgstr "スナップショットの保持期間"
 
 # このあたり思いっきり言語依存っぽい
 # 無理矢理回避する書き方をしてみます
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "開始時刻"
+#~ msgid "From"
+#~ msgstr "開始時刻"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "終了時刻"
+#~ msgid "through"
+#~ msgstr "終了時刻"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr "、の間、更新間隔"
+#~ msgid ", every"
+#~ msgstr "、の間、更新間隔"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "毎日"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "曜日"
+#~ msgid "on every"
+#~ msgstr "曜日"
 
-#: templates/storage/tasks.html:147
-msgid "There are no periodic snapshots scheduled."
-msgstr "予定されている定期的なスナップショットはありません。"
+#~ msgid "There are no periodic snapshots scheduled."
+#~ msgstr "予定されている定期的なスナップショットはありません。"
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -6390,18 +6215,15 @@ msgstr "ボリュームのステータス"
 msgid "Destroy Dataset"
 msgstr "データセットの破棄"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "ZFS ボリュームの破棄"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "ZFS ボリュームの破棄"
 
 # 単に「ボリュームがありません」でもいいかも
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "ボリュームが定義されていません。"
+#~ msgid "No volumes defined"
+#~ msgstr "ボリュームが定義されていません。"
 
-#: templates/storage/wizard.html:27
-msgid "Volume to extend"
-msgstr "拡張するボリューム"
+#~ msgid "Volume to extend"
+#~ msgstr "拡張するボリューム"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6411,25 +6233,20 @@ msgstr "メンバディスク"
 msgid "Group type"
 msgstr "グループタイプ"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS Extra"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS Extra"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "要注意： 一台だけのlogディスクは非推奨です。"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "要注意： 一台だけのlogディスクは非推奨です。"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Log"
+#~ msgid "Log"
+#~ msgstr "Log"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "キャッシュ"
+#~ msgid "Cache"
+#~ msgstr "キャッシュ"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "スペア"
+#~ msgid "Spare"
+#~ msgstr "スペア"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6443,26 +6260,22 @@ msgstr "既存のデータは消去されます。"
 msgid "Replace Disk"
 msgstr "ディスク交換"
 
-#: templates/storage/zvols.html:3
 #, python-format
-msgid "Create ZFS volume on %(name)s"
-msgstr "%(name)上にZFS ボリュームを作成"
+#~ msgid "Create ZFS volume on %(name)s"
+#~ msgstr "%(name)上にZFS ボリュームを作成"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "ZFS ボリュームを追加"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "ZFS ボリュームを追加"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "LDAP/AD キャッシュの再構築"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "キャッシュを再構築しています。"
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "キャッシュを再構築しています。"
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "キャッシュを再構築できませんでした。"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "キャッシュを再構築できませんでした。"
 
 # log levelの設定だと思われます。
 # カタカナだけだと、致命的な設定ミスを誘発しかねないので、元の単語を併記します。
@@ -6492,13 +6305,11 @@ msgstr "再開中です..."
 msgid "Are you sure you want to restore to factory config?"
 msgstr "本当にすべての設定を工場出荷時に戻してもよろしいですか？"
 
-#: templates/system/cronjob.html:41
-msgid "No cron jobs defined."
-msgstr "cronのジョブが定義されていません。"
+#~ msgid "No cron jobs defined."
+#~ msgstr "cronのジョブが定義されていません。"
 
-#: templates/system/cronjob.html:47
-msgid "Add a cron job"
-msgstr "Cron ジョブを追加する。"
+#~ msgid "Add a cron job"
+#~ msgstr "Cron ジョブを追加する。"
 
 #: templates/system/cronjob.html:49
 #, fuzzy
@@ -6521,21 +6332,17 @@ msgstr ""
 "ヒント: テストメールをrootユーザに送りました。設定するには ユーザ→root→メール"
 "の変更 を開いてください"
 
-#: templates/system/ntpserver.html:7
-msgid "iBurst"
-msgstr "iBurst"
+#~ msgid "iBurst"
+#~ msgstr "iBurst"
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "ネームサーバは定義されていません。"
+#~ msgid "No NTP servers defined."
+#~ msgstr "ネームサーバは定義されていません。"
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "NTPサーバを追加"
+#~ msgid "Add NTP server"
+#~ msgstr "NTPサーバを追加"
 
-#: templates/system/ntpserver.html:46
-msgid "Add NTP Server"
-msgstr "NTPサーバを追加"
+#~ msgid "Add NTP Server"
+#~ msgstr "NTPサーバを追加"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6553,21 +6360,17 @@ msgstr "本当に<strong>再起動</strong>してよろしいですか？"
 msgid "History"
 msgstr "ディレクトリ"
 
-#: templates/system/rsync.html:5
-msgid "Local Path"
-msgstr "ローカルパス"
+#~ msgid "Local Path"
+#~ msgstr "ローカルパス"
 
-#: templates/system/rsync.html:6
-msgid "Remote"
-msgstr "リモート"
+#~ msgid "Remote"
+#~ msgstr "リモート"
 
-#: templates/system/rsync.html:48
-msgid "No rsync tasks defined."
-msgstr "rsyncのタスクは定義されていません。"
+#~ msgid "No rsync tasks defined."
+#~ msgstr "rsyncのタスクは定義されていません。"
 
-#: templates/system/rsync.html:54
-msgid "Add rsync task"
-msgstr "Rsyncのタスクを追加する。"
+#~ msgid "Add rsync task"
+#~ msgstr "Rsyncのタスクを追加する。"
 
 #: templates/system/rsync.html:56
 #, fuzzy
@@ -6607,29 +6410,23 @@ msgstr "本当に<strong>シャットダウン</strong>してよろしいです�
 msgid "Unknown"
 msgstr "不明"
 
-#: templates/system/smarttest.html:38
-msgid "No S.M.A.R.T. tests defined"
-msgstr "S.M.A.R.T.テストが定義されていません。"
+#~ msgid "No S.M.A.R.T. tests defined"
+#~ msgstr "S.M.A.R.T.テストが定義されていません。"
 
-#: templates/system/smarttest.html:44
-msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T.テストを追加"
+#~ msgid "Add S.M.A.R.T. Test"
+#~ msgstr "S.M.A.R.T.テストを追加"
 
-#: templates/system/smarttest.html:46
-msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T.テストを追加"
+#~ msgid "Add S.M.A.R.T. test"
+#~ msgstr "S.M.A.R.T.テストを追加"
 
-#: templates/system/sysctl.html:34
-msgid "No sysctl defined."
-msgstr "sysctlが定義されていません。"
+#~ msgid "No sysctl defined."
+#~ msgstr "sysctlが定義されていません。"
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "sysctlを追加"
+#~ msgid "Add sysctl"
+#~ msgstr "sysctlを追加"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "sysctlを追加"
+#~ msgid "Add Sysctl"
+#~ msgstr "sysctlを追加"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6670,9 +6467,8 @@ msgstr "定義されたターゲットはありません。"
 msgid "Add Tunable"
 msgstr "ターゲットを追加"
 
-#: templates/system/tunable.html:42
-msgid "Add Loader"
-msgstr "ローダーを追加"
+#~ msgid "Add Loader"
+#~ msgstr "ローダーを追加"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6698,17 +6494,15 @@ msgstr ""
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "ボリューム %(volume) のステータスは %(status)"
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr "設定されていない為、管理者パスワードを設定して下さい"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr "設定されていない為、管理者パスワードを設定して下さい"
 
-#: tools/alert.py:137
 #, python-format
-msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
-"WebGUIのアドレスは %s とバインドできなかった為、ワイルドカードが使われます"
+#~ msgid "The WebGUI Address could not be bind to %s; using wildcard"
+#~ msgstr ""
+#~ "WebGUIのアドレスは %s とバインドできなかった為、ワイルドカードが使われます"
 
 #: tools/alert.py:147
 #, python-format
@@ -6721,52 +6515,52 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "致命的なアラート"
 
-msgid "Selected"
-msgstr "選択済み"
+#~ msgid "Selected"
+#~ msgstr "選択済み"
 
 # 意訳
-msgid "SHA256 sum for the PBI file"
-msgstr "ＰＢＩファイルのSHA256 ハッシュ"
+#~ msgid "SHA256 sum for the PBI file"
+#~ msgstr "ＰＢＩファイルのSHA256 ハッシュ"
 
-msgid "Jail path cannot contain plugins path."
-msgstr "Jailパスにはプラグインパスが含まれてはいけません。"
+#~ msgid "Jail path cannot contain plugins path."
+#~ msgstr "Jailパスにはプラグインパスが含まれてはいけません。"
 
-msgid "Plugin uname"
-msgstr "プラグインuname"
+#~ msgid "Plugin uname"
+#~ msgstr "プラグインuname"
 
-msgid "UName of the plugin"
-msgstr "プラグインのUName"
+#~ msgid "UName of the plugin"
+#~ msgstr "プラグインのUName"
 
-msgid "Path to plugin"
-msgstr "プラグインへのパス"
+#~ msgid "Path to plugin"
+#~ msgstr "プラグインへのパス"
 
 #, fuzzy
 msgid "Control Plugins"
 msgstr "サービスの制御"
 
-msgid "Allow guest access"
-msgstr "ゲストアクセスの許可"
+#~ msgid "Allow guest access"
+#~ msgstr "ゲストアクセスの許可"
 
-msgid "Only allow guest access"
-msgstr "ゲストアクセスのみを許可"
+#~ msgid "Only allow guest access"
+#~ msgstr "ゲストアクセスのみを許可"
 
-msgid "Plugins Path"
-msgstr "プラグインへのパス"
+#~ msgid "Plugins Path"
+#~ msgstr "プラグインへのパス"
 
-msgid "Path to the plugins directory"
-msgstr "プラグインのディレクトリへのパス"
+#~ msgid "Path to the plugins directory"
+#~ msgstr "プラグインのディレクトリへのパス"
 
-msgid "Invalid prefix"
-msgstr "無効なプリフィクス"
+#~ msgid "Invalid prefix"
+#~ msgstr "無効なプリフィクス"
 
 # 日本語が硬いです。
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
-"スナップショットの作成終了から次の作成開始までの間隔を分単位で指定します。"
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr ""
+#~ "スナップショットの作成終了から次の作成開始までの間隔を分単位で指定します。"
 
-msgid "An error occurred when setting the options"
-msgstr "オプションの設定中にエラーが発生しました"
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "オプションの設定中にエラーが発生しました"
 
 #, fuzzy
 msgid "Service Pack image to be installed"
@@ -6776,17 +6570,17 @@ msgstr "Service Pack イメージ"
 msgid "Invalid service pack"
 msgstr "無効なサービスパックかチェックサム"
 
-msgid "View Cron Jobs"
-msgstr "Cron ジョブを表示"
+#~ msgid "View Cron Jobs"
+#~ msgstr "Cron ジョブを表示"
 
-msgid "View Rsync Tasks"
-msgstr "Rsyncのタスクを表示"
+#~ msgid "View Rsync Tasks"
+#~ msgstr "Rsyncのタスクを表示"
 
-msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T.テストの表示"
+#~ msgid "View S.M.A.R.T. Tests"
+#~ msgstr "S.M.A.R.T.テストの表示"
 
-msgid "View Sysctls"
-msgstr "Sysctlの表示"
+#~ msgid "View Sysctls"
+#~ msgstr "Sysctlの表示"
 
 #, fuzzy
 msgid "View Tunables"
@@ -6801,146 +6595,146 @@ msgstr "ブラウズ (閲覧)"
 msgid "Close"
 msgstr "閉じる"
 
-msgid "Jail path"
-msgstr "Jailのパス"
+#~ msgid "Jail path"
+#~ msgstr "Jailのパス"
 
-msgid "Jail IP"
-msgstr "JailのＩＰアドレス"
+#~ msgid "Jail IP"
+#~ msgstr "JailのＩＰアドレス"
 
-msgid "Plugins path"
-msgstr "プラグインのパス"
+#~ msgid "Plugins path"
+#~ msgstr "プラグインのパス"
 
-msgid "Add Apple (CIFS) Share"
-msgstr "Apple（ＣＩＦＳ）共有を追加"
+#~ msgid "Add Apple (CIFS) Share"
+#~ msgstr "Apple（ＣＩＦＳ）共有を追加"
 
-msgid "Apply Service Pack"
-msgstr "サービスパックの適用"
+#~ msgid "Apply Service Pack"
+#~ msgstr "サービスパックの適用"
 
-msgid "Hourly"
-msgstr "1時間毎"
-
-# 意訳
-msgid "Hourly Graphs"
-msgstr "1時間単位のグラフ"
-
-msgid "Daily"
-msgstr "日次"
+#~ msgid "Hourly"
+#~ msgstr "1時間毎"
 
 # 意訳
-msgid "Daily Graphs"
-msgstr "１日単位のグラフ"
+#~ msgid "Hourly Graphs"
+#~ msgstr "1時間単位のグラフ"
 
-msgid "Weekly"
-msgstr "週次"
-
-# 意訳
-msgid "Weekly Graphs"
-msgstr "1週間単位のグラフ"
-
-msgid "Monthly"
-msgstr "月次"
+#~ msgid "Daily"
+#~ msgstr "日次"
 
 # 意訳
-msgid "Monthly Graphs"
-msgstr "1ヶ月間単位のグラフ"
+#~ msgid "Daily Graphs"
+#~ msgstr "１日単位のグラフ"
 
-msgid "Yearly"
-msgstr "年次"
+#~ msgid "Weekly"
+#~ msgstr "週次"
 
-msgid "Yearly Graphs"
-msgstr "1年間単位のグラフ"
+# 意訳
+#~ msgid "Weekly Graphs"
+#~ msgstr "1週間単位のグラフ"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "Monthly"
+#~ msgstr "月次"
 
-msgid "Tape"
-msgstr "テープドライブ"
+# 意訳
+#~ msgid "Monthly Graphs"
+#~ msgstr "1ヶ月間単位のグラフ"
 
-msgid "Pass"
-msgstr "パススルー"
+#~ msgid "Yearly"
+#~ msgstr "年次"
 
-msgid "Disable password"
-msgstr "パスワードを無効にする"
+#~ msgid "Yearly Graphs"
+#~ msgstr "1年間単位のグラフ"
 
-msgid "My Account"
-msgstr "マイアカウント"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "View All Users"
-msgstr "すべてのユーザを表示"
+#~ msgid "Tape"
+#~ msgstr "テープドライブ"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"入力画面がタイムアウトしました。もう一度この画面から入力してください。"
+#~ msgid "Pass"
+#~ msgstr "パススルー"
 
-msgid "Local Access"
-msgstr "ローカルアクセス"
+#~ msgid "Disable password"
+#~ msgstr "パスワードを無効にする"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr "全ての Apple 共有でローカルアカウントによるアクセスを有効にします。"
+#~ msgid "My Account"
+#~ msgstr "マイアカウント"
 
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"ポータルの形式は 'address:port' です。例: IPv4は'192.168.1.1:3260'、IPv6"
-"は'[2001:db8:1:1::1]:3260'。ポート3260はiSCSIの標準的なポート番号です。IP"
-"を特に限定しない場合(ワイルドカードアドレス)は、IPv4は '0.0.0.0:3260' 、"
-"IPv6は '[::]:3260'。ワイルドカードを使う場合は、同じアドレスファミリのIPと"
-"混在させないようにしてください。）"
+#~ msgid "View All Users"
+#~ msgstr "すべてのユーザを表示"
 
-msgid "Time in milliseconds"
-msgstr "間隔はミリ秒単位で指定してください。"
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "入力画面がタイムアウトしました。もう一度この画面から入力してください。"
 
-msgid "Username of Domain Administrator Account"
-msgstr "ドメイン管理者アカウントのユーザ名"
+#~ msgid "Local Access"
+#~ msgstr "ローカルアクセス"
 
-msgid "ISCSI"
-msgstr "iSCSI"
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr "全ての Apple 共有でローカルアカウントによるアクセスを有効にします。"
 
-msgid "Guest Account"
-msgstr "ゲストアカウント"
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "ポータルの形式は 'address:port' です。例: IPv4は'192.168.1.1:3260'、IPv6"
+#~ "は'[2001:db8:1:1::1]:3260'。ポート3260はiSCSIの標準的なポート番号です。IP"
+#~ "を特に限定しない場合(ワイルドカードアドレス)は、IPv4は '0.0.0.0:3260' 、"
+#~ "IPv6は '[::]:3260'。ワイルドカードを使う場合は、同じアドレスファミリのIPと"
+#~ "混在させないようにしてください。）"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"このオプションは、サービスにアクセスする際のゲストユーザ名を変更する場合に"
-"使用します（初期値は 'ftp'）。このユーザにどのような権限を設定しても構いま"
-"せんが、ゲストサービスに接続するすべてのクライアントに適用されます。この"
-"ユーザはパスワードファイル内に必ず記述して下さい。なお、ログイン可能である"
-"必要はありません。"
+#~ msgid "Time in milliseconds"
+#~ msgstr "間隔はミリ秒単位で指定してください。"
 
-msgid "CIFS Share"
-msgstr "ＣＩＦＳ共有"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "ドメイン管理者アカウントのユーザ名"
 
-msgid "CIFS Shares"
-msgstr "CIFS共有"
+#~ msgid "ISCSI"
+#~ msgstr "iSCSI"
+
+#~ msgid "Guest Account"
+#~ msgstr "ゲストアカウント"
+
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "このオプションは、サービスにアクセスする際のゲストユーザ名を変更する場合に"
+#~ "使用します（初期値は 'ftp'）。このユーザにどのような権限を設定しても構いま"
+#~ "せんが、ゲストサービスに接続するすべてのクライアントに適用されます。この"
+#~ "ユーザはパスワードファイル内に必ず記述して下さい。なお、ログイン可能である"
+#~ "必要はありません。"
+
+#~ msgid "CIFS Share"
+#~ msgstr "ＣＩＦＳ共有"
+
+#~ msgid "CIFS Shares"
+#~ msgstr "CIFS共有"
 
 #, fuzzy
 msgid "NFS Share"
 msgstr "NFS 共有の設定"
 
 # 日本語が硬い
-msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr "何時からスナップショットを作成するのか指定します。（例: 8:00）"
+#~ msgid "When in a day should we start making snapshots, e.g. 8:00"
+#~ msgstr "何時からスナップショットを作成するのか指定します。（例: 8:00）"
 
 # 日本語が硬い
-msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr "何時までスナップショットを作成するのか指定します。（例: 17:00）"
+#~ msgid "When in a day should we stop making snapshots, e.g. 17:00"
+#~ msgstr "何時までスナップショットを作成するのか指定します。（例: 17:00）"
 
-msgid "NTP server 2"
-msgstr "NTPサーバ2"
+#~ msgid "NTP server 2"
+#~ msgstr "NTPサーバ2"
 
-msgid "NTP server 3"
-msgstr "NTPサーバ3"
+#~ msgid "NTP server 3"
+#~ msgstr "NTPサーバ3"
 
 #, fuzzy
 msgid "Loader"
@@ -6950,241 +6744,241 @@ msgstr "ロードアベレージ"
 msgid "Loaders"
 msgstr "ロードアベレージ"
 
-msgid "Reboot the System"
-msgstr "システムの再起動"
+#~ msgid "Reboot the System"
+#~ msgstr "システムの再起動"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "Unix"
+#~ msgid "UNIX"
+#~ msgstr "Unix"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
 msgid "Edit Disk"
 msgstr "ディスクを編集"
 
 # あえて敬語にしてみた
-msgid "Are you sure you want to export?"
-msgstr "本当にエクスポートしてもよろしいですか？"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "本当にエクスポートしてもよろしいですか？"
 
-msgid "Export Volume"
-msgstr "ボリュームのエクスポート"
+#~ msgid "Export Volume"
+#~ msgstr "ボリュームのエクスポート"
 
-msgid "Add loader"
-msgstr "ローダーを追加"
+#~ msgid "Add loader"
+#~ msgstr "ローダーを追加"
 
-msgid "Volume from which this dataset will be created on"
-msgstr "データセットを作成したボリューム"
+#~ msgid "Volume from which this dataset will be created on"
+#~ msgstr "データセットを作成したボリューム"
 
 #, fuzzy
 msgid "Volume from which this ZFS Volume will be created on"
 msgstr "データセットを作成したボリューム"
 
-msgid "Volume this group belongs to"
-msgstr "このグループに属するボリューム"
+#~ msgid "Volume this group belongs to"
+#~ msgstr "このグループに属するボリューム"
 
 msgid "Group Membership"
 msgstr "グループメンバシップ"
 
-msgid "The disk group containing this disk"
-msgstr "このディスクを含むディスクグループ"
+#~ msgid "The disk group containing this disk"
+#~ msgstr "このディスクを含むディスクグループ"
 
 # 意訳
-msgid "successfully added"
-msgstr "追加が成功しました。"
+#~ msgid "successfully added"
+#~ msgstr "追加が成功しました。"
 
-msgid "successfully deleted"
-msgstr "削除しました"
+#~ msgid "successfully deleted"
+#~ msgstr "削除しました"
 
-msgid "successfully edited"
-msgstr "編集が成功しました。"
+#~ msgid "successfully edited"
+#~ msgstr "編集が成功しました。"
 
-msgid "There are no active volumes."
-msgstr "アクティブなボリュームがありません"
+#~ msgid "There are no active volumes."
+#~ msgstr "アクティブなボリュームがありません"
 
-msgid "%s successfully added."
-msgstr "%s を追加しました。"
+#~ msgid "%s successfully added."
+#~ msgstr "%s を追加しました。"
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 ネットマスク"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 ネットマスク"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "この値は 0 以上 10000 以下で設定してください。"
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "この値は 0 以上 10000 以下で設定してください。"
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "この値は 0 以上 1000 以下で設定してください。"
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "この値は 0 以上 1000 以下で設定してください。"
 
-msgid "Enable DDP"
-msgstr "DDP の有効化"
+#~ msgid "Enable DDP"
+#~ msgstr "DDP の有効化"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "低レベルのappletalkアクセスのためにDDPサポートを有効にします。"
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "低レベルのappletalkアクセスのためにDDPサポートを有効にします。"
 
-msgid "Turn on/off TLS"
-msgstr "TLS の on/off"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "TLS の on/off"
 
-msgid "Rsyncd"
-msgstr "Rsyncd"
+#~ msgid "Rsyncd"
+#~ msgstr "Rsyncd"
 
-msgid "The volume failed to export"
-msgstr "ボリュームのエクスポートに失敗しました。"
+#~ msgid "The volume failed to export"
+#~ msgstr "ボリュームのエクスポートに失敗しました。"
 
-msgid "Cron Scheduler"
-msgstr "Cron のスケジュール"
-
-# メーリングリストへのリンクなので、原文のままがよいと思います。
-msgid "Devel"
-msgstr "Devel (開発)"
+#~ msgid "Cron Scheduler"
+#~ msgstr "Cron のスケジュール"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
-msgid "Docs"
-msgstr "ドキュメンテーション"
+#~ msgid "Devel"
+#~ msgstr "Devel (開発)"
 
-msgid "LUN"
-msgstr "LUN"
+# メーリングリストへのリンクなので、原文のままがよいと思います。
+#~ msgid "Docs"
+#~ msgstr "ドキュメンテーション"
 
-msgid "Mount point"
-msgstr "マウントポイント"
+#~ msgid "LUN"
+#~ msgstr "LUN"
 
-msgid "Dataset name"
-msgstr "データセット名"
+#~ msgid "Mount point"
+#~ msgstr "マウントポイント"
 
-msgid "Snapshot name"
-msgstr "スナップショット名"
+#~ msgid "Dataset name"
+#~ msgstr "データセット名"
 
-msgid "Used space"
-msgstr "使用容量"
+#~ msgid "Snapshot name"
+#~ msgstr "スナップショット名"
 
-msgid "Referenced space"
-msgstr "参照容量"
+#~ msgid "Used space"
+#~ msgstr "使用容量"
 
-msgid "No ZFS snapshot available"
-msgstr "ZFS スナップショットはありません。"
+#~ msgid "Referenced space"
+#~ msgstr "参照容量"
 
-msgid "Create Periodic Snapshot"
-msgstr "定期的なスナップショットの作成"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "ZFS スナップショットはありません。"
+
+#~ msgid "Create Periodic Snapshot"
+#~ msgstr "定期的なスナップショットの作成"
 
 # 意訳
-msgid "Restore to Factory Defaults"
-msgstr "すべての設定を工場出荷時に初期化"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "すべての設定を工場出荷時に初期化"
 
-msgid "Config"
-msgstr "設定"
+#~ msgid "Config"
+#~ msgstr "設定"
 
-msgid "%s successfully update."
-msgstr "%s を正しく更新しました。"
+#~ msgid "%s successfully update."
+#~ msgstr "%s を正しく更新しました。"
 
-msgid "Admin user"
-msgstr "管理ユーザ"
+#~ msgid "Admin user"
+#~ msgstr "管理ユーザ"
 
-msgid "N/A"
-msgstr "該当なし"
+#~ msgid "N/A"
+#~ msgstr "該当なし"
 
 # password fileがファイル名と想定してそのままにしています。
-msgid ""
-"Use this option to override the username ('www' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"このオプションでユーザ名(既定値は'ftp')を上書きできます。ゲストユーザとし"
-"て指定されたサービスにアクセスするのに使います。このユーザにどんな権限を設"
-"定しても構いませんが、ゲストサービスに接続するあらゆるクライアントに適用さ"
-"れます。このユーザはpasswordファイルに記述しておく必要がありますが、ログイ"
-"ン可能である必要はありません。"
+#~ msgid ""
+#~ "Use this option to override the username ('www' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "このオプションでユーザ名(既定値は'ftp')を上書きできます。ゲストユーザとし"
+#~ "て指定されたサービスにアクセスするのに使います。このユーザにどんな権限を設"
+#~ "定しても構いませんが、ゲストサービスに接続するあらゆるクライアントに適用さ"
+#~ "れます。このユーザはpasswordファイルに記述しておく必要がありますが、ログイ"
+#~ "ン可能である必要はありません。"
 
-msgid "ZVol Name"
-msgstr "ZVol 名"
+#~ msgid "ZVol Name"
+#~ msgstr "ZVol 名"
 
 msgid "Dataset"
 msgstr "データセット"
 
-msgid "ZVol"
-msgstr "ZVol"
+#~ msgid "ZVol"
+#~ msgstr "ZVol"
 
-msgid "Native dataset"
-msgstr "ネイティブデータセット"
+#~ msgid "Native dataset"
+#~ msgstr "ネイティブデータセット"
 
-msgid "/var/log/messages"
-msgstr "/var/log/messages"
+#~ msgid "/var/log/messages"
+#~ msgstr "/var/log/messages"
 
-msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ヘルプ/サポート"
+#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ヘルプ/サポート"
 
-msgid "Success!"
-msgstr "成功！"
+#~ msgid "Success!"
+#~ msgstr "成功！"
 
-msgid "Your password was changed."
-msgstr "パスワードは変更されました。"
+#~ msgid "Your password was changed."
+#~ msgstr "パスワードは変更されました。"
 
-msgid "Password change"
-msgstr "パスワードの変更"
+#~ msgid "Password change"
+#~ msgstr "パスワードの変更"
 
-msgid "Please correct the error below."
-msgid_plural "Please correct the errors below."
-msgstr[0] "以下のエラーを修正してください。"
+#~ msgid "Please correct the error below."
+#~ msgid_plural "Please correct the errors below."
+#~ msgstr[0] "以下のエラーを修正してください。"
 
-msgid ""
-"Please enter your old password, and then enter your new password twice to "
-"verify it is typed in correctly."
-msgstr ""
-"現在のパスワードと新しいパスワードを入力してください。新しいパスワードは確"
-"認のため2回入力します。"
+#~ msgid ""
+#~ "Please enter your old password, and then enter your new password twice to "
+#~ "verify it is typed in correctly."
+#~ msgstr ""
+#~ "現在のパスワードと新しいパスワードを入力してください。新しいパスワードは確"
+#~ "認のため2回入力します。"
 
-msgid "Password (again)"
-msgstr "パスワード（確認）"
+#~ msgid "Password (again)"
+#~ msgstr "パスワード（確認）"
 
 #, fuzzy
 msgid "minutes,"
 msgstr "分、"
 
-msgid "Create ZFS zvol"
-msgstr "ZVol を ZFS で作成"
+#~ msgid "Create ZFS zvol"
+#~ msgstr "ZVol を ZFS で作成"
 
-msgid "Add ZVol"
-msgstr "ZVolを追加"
+#~ msgid "Add ZVol"
+#~ msgstr "ZVolを追加"
 
-msgid "English"
-msgstr "英語"
+#~ msgid "English"
+#~ msgstr "英語"
 
-msgid "Level"
-msgstr "レベル"
+#~ msgid "Level"
+#~ msgstr "レベル"
 
-msgid "Add Link Aggregation"
-msgstr "リンクアグリゲーションを追加"
+#~ msgid "Add Link Aggregation"
+#~ msgstr "リンクアグリゲーションを追加"
 
-msgid "View All Interfaces"
-msgstr "全てのインタフェースを表示"
+#~ msgid "View All Interfaces"
+#~ msgstr "全てのインタフェースを表示"
 
-msgid "View All VLANs"
-msgstr "全てのVLANを表示"
+#~ msgid "View All VLANs"
+#~ msgstr "全てのVLANを表示"
 
-msgid "View All Static Routes"
-msgstr "全ての静的ルートを表示"
+#~ msgid "View All Static Routes"
+#~ msgstr "全ての静的ルートを表示"
 
-msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr ""
-"Active Directoryを実行する Microsoft Windows のバージョンを指定します。"
+#~ msgid "The version of Microsoft Windows that Active Directory is running."
+#~ msgstr ""
+#~ "Active Directoryを実行する Microsoft Windows のバージョンを指定します。"
 
-msgid "Service Principal Name"
-msgstr "サービスプリンシパル名"
+#~ msgid "Service Principal Name"
+#~ msgstr "サービスプリンシパル名"
 
-msgid "Service Principal Name, eg service/account."
-msgstr "サービスプリンシパル名を指定します。（例: service/account）"
+#~ msgid "Service Principal Name, eg service/account."
+#~ msgstr "サービスプリンシパル名を指定します。（例: service/account）"
 
-msgid "Service Principal Name Password"
-msgstr "サービスプリンシパル名のパスワード"
+#~ msgid "Service Principal Name Password"
+#~ msgstr "サービスプリンシパル名のパスワード"
 
 # このあたりの翻訳、ActiveDirectoryに詳しい方、フォローお願いします。
 #, fuzzy
 msgid "Password of the Service Principal Name account."
 msgstr "サービスプリンシパル名アカウントのパスワード"
 
-msgid "Kerberos Keytab File"
-msgstr "ケルベロス認証のキータブファイル"
+#~ msgid "Kerberos Keytab File"
+#~ msgstr "ケルベロス認証のキータブファイル"
 
 #, fuzzy
 msgid ""
@@ -7193,17 +6987,17 @@ msgid ""
 msgstr ""
 "ケルベロス認証のキータブファイルは、Active Directory サーバが生成します。"
 
-msgid "Auxillary Parameters"
-msgstr "補助パラメータ"
+#~ msgid "Auxillary Parameters"
+#~ msgstr "補助パラメータ"
 
-msgid "View All UNIX Shares"
-msgstr "すべての Unix 共有を表示"
+#~ msgid "View All UNIX Shares"
+#~ msgstr "すべての Unix 共有を表示"
 
-msgid "View All Apple Shares"
-msgstr "すべての Apple 共有を表示"
+#~ msgid "View All Apple Shares"
+#~ msgstr "すべての Apple 共有を表示"
 
-msgid "View All Windows Shares"
-msgstr "すべての Windows 共有を表示"
+#~ msgid "View All Windows Shares"
+#~ msgstr "すべての Windows 共有を表示"
 
 msgid "Read"
 msgstr "読み込み"
@@ -7211,23 +7005,452 @@ msgstr "読み込み"
 msgid "Write"
 msgstr "書き込み"
 
-msgid "Execute"
-msgstr "実行"
+#~ msgid "Execute"
+#~ msgstr "実行"
 
-msgid "Owner"
-msgstr "所有者"
+#~ msgid "Owner"
+#~ msgstr "所有者"
 
-msgid "Other"
-msgstr "その他のユーザ"
+#~ msgid "Other"
+#~ msgstr "その他のユーザ"
 
-msgid "View All Periodic Snapshot Tasks"
-msgstr "すべての定期的なスナップショットタスクを表示"
+#~ msgid "View All Periodic Snapshot Tasks"
+#~ msgstr "すべての定期的なスナップショットタスクを表示"
 
-msgid "sucessfully edited"
-msgstr "編集が成功しました。"
+#~ msgid "sucessfully edited"
+#~ msgstr "編集が成功しました。"
 
-msgid "Lagg Interface was successfully added"
-msgstr "LAGG インタフェースを追加しました。"
+#~ msgid "Lagg Interface was successfully added"
+#~ msgstr "LAGG インタフェースを追加しました。"
 
-msgid "ActiveDirectory Settings"
-msgstr "ActiveDirectoryの設定"
+#~ msgid "ActiveDirectory Settings"
+#~ msgstr "ActiveDirectoryの設定"
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr "HTTPS"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr "暗号化なし"
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr "暗号化あり（パスフレーズなし）"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr "暗号化あり（パスフレーズあり）"
+
+#: choices.py:304
+msgid "lz4 (recommended)"
+msgstr "lz4 （推奨）"
+
+#: choices.py:309
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb （レガシー、非推奨）"
+
+#: choices.py:560
+msgid "Verify"
+msgstr "確認"
+
+#: choices.py:600
+msgid "9600"
+msgstr "9600"
+
+#: choices.py:601
+msgid "19200"
+msgstr "19200"
+
+#: choices.py:602
+msgid "38400"
+msgstr "38400"
+
+#: choices.py:603
+msgid "57600"
+msgstr "57600"
+
+#: choices.py:604
+msgid "115200"
+msgstr "115200"
+
+#: choices.py:659
+msgid "Fatal"
+msgstr "致命的"
+
+#: choices.py:670
+msgid "Daemon"
+msgstr "デーモン"
+
+#: choices.py:672
+msgid "Auth"
+msgstr "認証"
+
+#: choices.py:686
+msgid "NT4"
+msgstr "NT4"
+
+#: choices.py:687
+msgid "NIS"
+msgstr "NIS"
+
+#: choices.py:693
+msgid "on"
+msgstr "on"
+
+#: choices.py:698
+msgid "ctrl"
+msgstr "ctrl"
+
+#: choices.py:700
+msgid "ctrl+!data"
+msgstr "ctrl+!data"
+
+#: account/forms.py:68
+msgid "Passwords do not match"
+msgstr "パスワードが一致しません"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr "ホームディレクトリにコロン（：）は使用できません"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr "sudo を許可"
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr "ビルトインユーザー"
+
+#: account/models.py:142
+msgid "Disable password login"
+msgstr "パスワードでのログインを無効にする"
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr "グループメンバシップ"
+
+#: jails/admin.py:207
+msgid "Stop"
+msgstr "停止"
+
+#: jails/admin.py:271
+#: jails/models.py:353
+msgid "URL"
+msgstr "URL"
+
+#: jails/admin.py:277
+msgid "Instances"
+msgstr "インスタンス"
+
+#: jails/forms.py:89
+msgid "type"
+msgstr "タイプ"
+
+#: jails/forms.py:171
+msgid "No jail root configured."
+msgstr "Jail root が構成されていません"
+
+#: jails/forms.py:459
+msgid "autostart"
+msgstr "自動起動"
+
+#: jails/forms.py:461
+#: jails/models.py:162
+msgid "NAT"
+msgstr "NAT"
+
+#: jails/forms.py:652
+msgid "Create destination directory if it does not exist"
+msgstr "ディレクトリがないときに作成する。"
+
+#: jails/models.py:89
+msgid "IPv4 aliases"
+msgstr "IPv4 エイリアス"
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr "IPv6 ブリッジエイリアス"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr "MAC"
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr "jail データの格納先パス"
+
+#: jails/models.py:265
+msgid "IPv4 Network"
+msgstr "IPv4 ネットワーク"
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr "jail とプラグインに対する IPv4 ネットワークの範囲"
+
+#: jails/models.py:270
+msgid "IPv4 Network Start Address"
+msgstr "IPv4 ネットワーク開始アドレス"
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr "jail とプラグインに対する IPv4 ネットワークの開始アドレス"
+
+#: jails/models.py:275
+msgid "IPv4 Network End Address"
+msgstr "IPv4 ネットワーク終端アドレス"
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr "jail とプラグインに対する IPv4 ネットワーク終端アドレス"
+
+#: jails/models.py:280
+msgid "IPv6 Network"
+msgstr "IPv6 ネットワーク"
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr "jail とプラグインに対する IPv6 ネットワーク範囲"
+
+#: jails/models.py:285
+msgid "IPv6 Network Start Address"
+msgstr "IPv6 ネットワーク開始アドレス"
+
+#: jails/models.py:286
+msgid "IPv6 network start address for jails and plugins"
+msgstr "jail とプラグインに対する IPv6 ネットワーク開始アドレス"
+
+#: jails/models.py:290
+msgid "IPv6 Network End Address"
+msgstr "IPv6 ネットワーク終端アドレス"
+
+#: jails/models.py:291
+msgid "IPv6 network end address for jails and plugins"
+msgstr "jail とプラグインに対する IPv6 ネットワーク終端アドレス"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr "jails index のためのURL"
+
+#: jails/models.py:347
+msgid "OS"
+msgstr "OS"
+
+#: jails/models.py:380
+msgid "Template must have 0 instances!"
+msgstr "テンプレートは 0 インスタンスが必要です"
+
+#: jails/models.py:395
+#: jails/models.py:396
+msgid "Jail Templates"
+msgstr "Jail テンプレート"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr "Jail テンプレートを追加"
+
+#: jails/nav.py:100
+msgid "View Jails"
+msgstr "Jail を表示"
+
+#: jails/nav.py:114
+msgid "View Jail Templates"
+msgstr "Jail テンプレートを表示"
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr "プラグインのインストールに失敗しました: %s"
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr "進めるために ZFS ボリュームを作成する必要があります"
+
+#: middleware/notifier.py:2877
+msgid "No RPC Token!"
+msgstr "RPC トークンがありません。"
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr "処理中"
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr "完了"
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr "DHCPのためには、ひとつのインターフェースだけが用いられます"
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr "ひとつのインターフェースだけがIPv6 自動構成を有効に設定できます"
+
+#: network/forms.py:284
+msgid "The IP \"%s\" is not valid"
+msgstr "'%s' は無効な IP アドレスです。"
+
+#: network/forms.py:343
+msgid "You need a domain, e.g. hostname.domain"
+msgstr "ドメインが必要です。（例：hostname.domain）"
+
+#: network/forms.py:373
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr "インタフェース名は vlanXX (XXは数字)である必要があります。例: vlan0 。"
+
+#: network/models.py:77
+msgid "Enable netwait feature"
+msgstr "netwait 機能の有効化"
+
+#: network/models.py:88
+msgid "Netwait IP list"
+msgstr "Netwait IP リスト"
+
+#: network/models.py:89
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+"スペースで区切られたping(8)のためのIPアドレスのリスト。もし、複数のIPアドレスが指定されている場合、リストがなくなるまで、それぞれに対し試行しま"
+"す。空欄の場合はデフォルトゲートウェイが用いられます。"
+
+#: plugins/forms.py:105
+msgid "Plugin Jail"
+msgstr "プラグイン Jail"
+
+#: plugins/models.py:94
+msgid "Jail where the plugin is installed"
+msgstr "プラグインがインストールされている jail"
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr "リポジトリ URL"
+
+#: services/models.py:951
+msgid "Slave"
+msgstr "スレーブ"
+
+#: services/models.py:1214
+msgid "TLS common name required"
+msgstr "TLSコモンネームが必要です"
+
+#: services/models.py:1437
+#: services/models.py:1533
+msgid "Hostname of the domain controller to use."
+msgstr "ドメインコートローラーが使用するホスト名"
+
+#: services/models.py:1517
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr "Active Directory で UNIX 拡張が有効な場合は設定する"
+
+#: services/models.py:1526
+msgid "Use default domain"
+msgstr "デフォルトドメインを使用する"
+
+#: services/models.py:1538
+msgid "Global Catalog Server"
+msgstr "グローバルカタログサーバー"
+
+#: services/models.py:1539
+msgid "Hostname of the global catalog server to use."
+msgstr "グローバルカタログサーバーが使用するホスト名"
+
+#: services/models.py:1550
+msgid "Kerberos Password Server"
+msgstr "Kerberos パスワードサーバー"
+
+#: services/models.py:1551
+msgid "Hostname of the kerberos password server to use."
+msgstr "Kerberos パスワードサーバーが使用するホスト名"
+
+#: services/models.py:1556
+msgid "Timeout for AD related commands."
+msgstr "ADに関連するコマンドのタイムアウト"
+
+#: services/models.py:1561
+msgid "Timeout for AD DNS queries."
+msgstr "AD DNS クエリのタイムアウト"
+
+#: services/models.py:1607
+msgid "Comma delimited list of NIS servers"
+msgstr "NISサーバーのカンマで区切られたリスト"
+
+#: sharing/forms.py:281
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr "マウントポイントとサブディレクトリを一度に共有できません"
+
+#: sharing/forms.py:309
+msgid "This option is only available once per mountpoint"
+msgstr "このオプションは１つのマウントポイントごとに１度のみ有効です"
+
+#: storage/views.py:885
+msgid "Passphrase created"
+msgstr "パスフレーズが作成されました"
+
+#: system/forms.py:564
+msgid "RSA or DSA private key not found"
+msgstr "RSA または DSA 秘密鍵が見つかりません"
+
+#: system/forms.py:581
+msgid "RSA or DSA private key is not valid"
+msgstr "RSA または DSA 秘密鍵は無効です"
+
+#: system/models.py:193
+msgid "Set this to match your serial port speed"
+msgstr "シリアルポートの速度に合わせて設定してください"
+
+#: system/models.py:194
+msgid "Serial Port Speed"
+msgstr "シリアルポートの速度"
+
+#: system/models.py:901
+#: system/models.py:913
+msgid "Script"
+msgstr "スクリプト"
+
+#: system/models.py:973
+msgid "City"
+msgstr "市町村名"
+
+#: system/models.py:985
+msgid "Zip"
+msgstr "Zip"
+
+#: system/models.py:995
+msgid "Home Phone"
+msgstr "自宅の電話番号"
+
+#: system/models.py:1001
+msgid "Cell Phone"
+msgstr "携帯電話"
+
+#: system/models.py:1007
+msgid "Work Phone"
+msgstr "勤務先の電話番号"
+
+#: templates/freeadmin/generic_model_datagrid.html:176
+msgid "No entry has been found"
+msgstr "該当は見つかりませんでした。"
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr "?"
+
+#: templates/jails/index.html:32
+msgid "Templates"
+msgstr "テンプレート"
+
+#: templates/jails/stop.html:3
+msgid "Stop "
+msgstr "停止"
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr "更新"
+
+#: templates/system/shutdown.html:85
+msgid "System is shutting down"
+msgstr "システムをシャットダウンしています"

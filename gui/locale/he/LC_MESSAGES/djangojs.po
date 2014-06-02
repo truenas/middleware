@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-11-29 08:48+0200\n"
+"PO-Revision-Date: 2012-11-29 08:48+0000\n"
 "Last-Translator: shaharhd <shaharhd@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1354178884.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "דיווח"
+#~ msgid "Reporting"
+#~ msgstr "דיווח"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -51,13 +51,11 @@ msgstr "אחסון"
 msgid "Some error occurred"
 msgstr "קרתה תקלה כלשהיא"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "ערוך"
+#~ msgid "Edit"
+#~ msgstr "ערוך"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "ערוך כונן"
+#~ msgid "Edit Disk"
+#~ msgstr "ערוך כונן"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
@@ -87,20 +85,20 @@ msgstr "כל N"
 msgid "Plugins"
 msgstr "פלאגין"
 
-msgid "CronJobs"
-msgstr "עבודות Cron"
+#~ msgid "CronJobs"
+#~ msgstr "עבודות Cron"
 
-msgid "Replace"
-msgstr "החלף"
+#~ msgid "Replace"
+#~ msgstr "החלף"
 
-msgid "Disk Replacement"
-msgstr "החלפת כונן"
+#~ msgid "Disk Replacement"
+#~ msgstr "החלפת כונן"
 
-msgid "Detach"
-msgstr "נתק"
+#~ msgid "Detach"
+#~ msgstr "נתק"
 
-msgid "Disk Detach"
-msgstr "נתק כונן"
+#~ msgid "Disk Detach"
+#~ msgstr "נתק כונן"
 
-msgid "Every"
-msgstr "כל"
+#~ msgid "Every"
+#~ msgstr "כל"

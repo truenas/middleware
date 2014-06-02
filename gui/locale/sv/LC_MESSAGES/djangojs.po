@@ -8,19 +8,19 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-07-27 03:58+0200\n"
-"Last-Translator: Robin <robin@gehrke.se>\n"
+"PO-Revision-Date: 2013-12-06 11:05+0000\n"
+"Last-Translator: edvind <joel.bergroth@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1386327909.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Rapportering"
+#~ msgid "Reporting"
+#~ msgstr "Rapportering"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -51,21 +51,17 @@ msgstr "Lagring"
 msgid "Some error occurred"
 msgstr "Något fel uppstod!"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Redigera"
+#~ msgid "Edit"
+#~ msgstr "Redigera"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Redigera hårddisk"
+#~ msgid "Edit Disk"
+#~ msgstr "Redigera hårddisk"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Töm"
+#~ msgid "Wipe"
+#~ msgstr "Töm"
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Formatera hårddisk"
+#~ msgid "Wipe Disk"
+#~ msgstr "Formatera hårddisk"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -83,20 +79,20 @@ msgstr "Varje vald"
 msgid "Every N"
 msgstr "Varje N"
 
-msgid "CronJobs"
-msgstr "Cron jobb"
+#~ msgid "CronJobs"
+#~ msgstr "Cron jobb"
 
-msgid "Replace"
-msgstr "Ersätt"
+#~ msgid "Replace"
+#~ msgstr "Ersätt"
 
-msgid "Disk Replacement"
-msgstr "Diskersättning"
+#~ msgid "Disk Replacement"
+#~ msgstr "Diskersättning"
 
-msgid "Detach"
-msgstr "Koppla ifrån"
+#~ msgid "Detach"
+#~ msgstr "Koppla ifrån"
 
-msgid "Disk Detach"
-msgstr "Koppla ifrån hårddisk"
+#~ msgid "Disk Detach"
+#~ msgstr "Koppla ifrån hårddisk"
 
-msgid "Every"
-msgstr "Varje"
+#~ msgid "Every"
+#~ msgstr "Varje"

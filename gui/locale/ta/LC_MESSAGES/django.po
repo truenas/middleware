@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2013-04-06 23:55+0200\n"
-"Last-Translator: venkavis <venkavis@gmail.com>\n"
+"PO-Revision-Date: 2013-08-19 12:13+0000\n"
+"Last-Translator: rameshkarthik <rameshkarthik.b@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ta\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1376914382.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -262,9 +263,8 @@ msgstr "முழு"
 msgid "Debug"
 msgstr "பிழைத்திருத்தம்"
 
-#: choices.py:195
-msgid "Default"
-msgstr "இயல்புநிலை"
+#~ msgid "Default"
+#~ msgstr "இயல்புநிலை"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -357,9 +357,8 @@ msgstr "மேல்"
 msgid "Off"
 msgstr "கீழ்"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (பரிந்துரைக்கப்பட்டது)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (பரிந்துரைக்கப்பட்டது)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-01-28 12:37+0200\n"
+"PO-Revision-Date: 2014-01-28 12:37+0000\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1390912646.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Raporlama"
+#~ msgid "Reporting"
+#~ msgstr "Raporlama"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -51,21 +51,17 @@ msgstr "Depolama"
 msgid "Some error occurred"
 msgstr "Bazı hatalar oluştu"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Düzenle"
+#~ msgid "Edit"
+#~ msgstr "Düzenle"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Disk Düzenleme"
+#~ msgid "Edit Disk"
+#~ msgstr "Disk Düzenleme"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Sil"
+#~ msgid "Wipe"
+#~ msgstr "Sil"
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Disk Silme"
+#~ msgid "Wipe Disk"
+#~ msgstr "Disk Silme"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -86,20 +82,178 @@ msgstr "Her N"
 msgid "Plugins"
 msgstr "Eklentiler"
 
-msgid "CronJobs"
-msgstr "Zamanlanmış Görevler"
+#~ msgid "CronJobs"
+#~ msgstr "Zamanlanmış Görevler"
 
-msgid "Replace"
-msgstr "Yer Değiştir"
+#~ msgid "Replace"
+#~ msgstr "Yer Değiştir"
 
-msgid "Disk Replacement"
-msgstr "Disk Değiştirme"
+#~ msgid "Disk Replacement"
+#~ msgstr "Disk Değiştirme"
 
-msgid "Detach"
-msgstr "Ayır"
+#~ msgid "Detach"
+#~ msgstr "Ayır"
 
-msgid "Disk Detach"
-msgstr "Disk Ayırma"
+#~ msgid "Disk Detach"
+#~ msgstr "Disk Ayırma"
 
-msgid "Every"
-msgstr "Her"
+#~ msgid "Every"
+#~ msgstr "Her"
+
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr "Uyarı Sistemi"
+
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr "Hizmeti aktifleştir"
+
+#: freeadmin/static/lib/js/freeadmin.js:994
+msgid "The cache is being rebuilt."
+msgstr "Önbellek yeniden oluşturuluyor."
+
+#: freeadmin/static/lib/js/freeadmin.js:996
+msgid "The cache could not be rebuilt: "
+msgstr "Önbellek yeniden oluşturulamadı:"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr "Paylaşımlar"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:212
+msgid "Jails"
+msgstr "Kafes"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:398
+msgid "Support"
+msgstr "Destek"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
+msgid "Size"
+msgstr "Boyut"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:262
+msgid "drives"
+msgstr "sürücü"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:264
+msgid "drive"
+msgstr "sürücü"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:266
+msgid "show"
+msgstr "göster"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
+msgid "no more drives"
+msgstr "daha fazla sürücü yok"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
+msgid "Disk size mismatch"
+msgstr "Disk boyutu uyumsuzluğu"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:519
+msgid ""
+"Your configuration is optimal!<br /><br />It means you'll have the best "
+"performance possible for this number of disks and type of disk group.<br /><"
+"br />For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"En iyi yapılandırma!<br /><br />Bu numara diskler ve disk grupları için "
+"mümkün olan en iyi performansa sahip olacağı anlamına gelir.<br /><br />Daha "
+"fazla açıklama için <a href='http://doc.freenas.org/index.php/Volumes#"
+"ZFS_Volume_Manager' target='_blank'>belegelerine</a> bakabilirsiniz."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
+msgid ""
+"Your configuration is not optimal!<br /><br />It means this number of disks "
+"will not provide the best performance for that type of disk group.<br /><br "
+"/>For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"En iyi yapılandırm!<br /><br />Bu disklerin sayısı disk grubunun en iyi "
+"performansı vermeyeceği anlamına gelir.<br /><br />Daha fazla açıklama için <"
+"a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>belgelerine</a> bakabilirsiniz."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
+msgid "Capacity"
+msgstr "Kapasite"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
+msgid "Drag and drop this to resize"
+msgstr "Yeniden boyutlandırmak için sürükleyin ve bırakın"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Add Volume"
+msgstr "Birim Ekle"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
+msgid "Existing data will be cleared"
+msgstr "Mevcut veriler silinecektir"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
+msgid "Extend Volume"
+msgstr "Birimi Yapılandır"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
+msgid "Volume Name"
+msgstr "Birim Adı"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
+msgid "Volume to extend"
+msgstr "Yapılandırılacak birim"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
+msgid ""
+"Extending an encrypted volume will reset the passphrase and recovery key!"
+msgstr "Şifreli bir birimi yapılandırma parola ve kurtarma anahtarını sıfırlar!"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
+msgid "Encryption"
+msgstr "Şifreleme"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
+msgid "Initialize Safely"
+msgstr "Güvenli Bir Şekilde Başlat"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
+msgid "Available disks"
+msgstr "Mevcut diskler"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
+msgid "Volume layout"
+msgstr "Birim düzeni"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
+msgid "Estimated capacity"
+msgstr "Tahmini kapasite"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
+msgid "Add Extra Device"
+msgstr "Ek Aygıt Ekle"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
+msgid "Cancel"
+msgstr "İptal"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr "Kabuk"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr "Yapıştır"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr "Göz at"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr "Kapat"

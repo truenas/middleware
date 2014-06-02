@@ -8,14 +8,15 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2013-03-31 08:56+0200\n"
+"PO-Revision-Date: 2013-03-31 08:56+0000\n"
 "Last-Translator: Piloteer <EricLeung@piloteer.com.hk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_HK\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1364720168.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -555,9 +556,8 @@ msgstr "主目錄模式"
 msgid "Auxiliary groups"
 msgstr "副群組"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "用戶名稱已經存在."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "用戶名稱已經存在."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -597,9 +597,8 @@ msgstr "密碼停用，此欄位請保留空白"
 msgid "This field is required."
 msgstr "必填項目"
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "主目錄必須以 /mnt 或 /nonexistent 開頭"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "主目錄必須以 /mnt 或 /nonexistent 開頭"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -729,18 +728,15 @@ msgstr "管理者帳戶"
 msgid "Change Password"
 msgstr "改變密碼"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "改變管理員用戶"
+#~ msgid "Change Admin User"
+#~ msgstr "改變管理員用戶"
 
 #: account/views.py:95
 msgid "Password successfully updated."
 msgstr "密碼更新成功"
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "管理者更新成功"
+#~ msgid "Admin user successfully updated."
+#~ msgstr "管理者更新成功"
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -907,9 +903,8 @@ msgstr "必須先輸入 nameserver 1 之後才可輸入 nameserver 2"
 msgid "Parent Interface"
 msgstr "上層網路介面"
 
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "名稱必須為 vlanXX, 其中 XX 為整數"
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "名稱必須為 vlanXX, 其中 XX 為整數"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1146,9 +1141,8 @@ msgstr "新增 Link Aggregation"
 msgid "View Link Aggregations"
 msgstr "監視所有 Link Aggregations"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG 介面新增成功"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG 介面新增成功"
 
 #: plugins/forms.py:55
 #, fuzzy
@@ -1848,15 +1842,13 @@ msgstr ""
 msgid "CIFS"
 msgstr ""
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "伺服器名稱"
+#~ msgid "Server Name"
+#~ msgstr "伺服器名稱"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "伺服器名稱。如果不填則會指定預設伺服器。"
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "伺服器名稱。如果不填則會指定預設伺服器。"
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -6065,21 +6057,18 @@ msgstr "更換磁盤"
 msgid "Create ZFS volume on %(name)s"
 msgstr "ZFS Volume"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "添加ZFS量"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "添加ZFS量"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr ""
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "正在重建緩存"
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "正在重建緩存"
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "緩存無法重建"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "緩存無法重建"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6331,14 +6320,14 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-msgid "Selected"
-msgstr "已選的"
+#~ msgid "Selected"
+#~ msgstr "已選的"
 
-msgid "Allow guest access"
-msgstr "容許訪客存取"
+#~ msgid "Allow guest access"
+#~ msgstr "容許訪客存取"
 
-msgid "Only allow guest access"
-msgstr "只容許訪客存取"
+#~ msgid "Only allow guest access"
+#~ msgstr "只容許訪客存取"
 
 #, fuzzy
 msgid "Invalid service pack"
@@ -6360,61 +6349,61 @@ msgstr "查看所有用戶"
 msgid "Add Apple (CIFS) Share"
 msgstr "UNIX 字符集"
 
-msgid "Apply Service Pack"
-msgstr "使用 Service Pack"
+#~ msgid "Apply Service Pack"
+#~ msgstr "使用 Service Pack"
 
-msgid "Hourly"
-msgstr "每小時"
+#~ msgid "Hourly"
+#~ msgstr "每小時"
 
-msgid "Hourly Graphs"
-msgstr "每小時圖"
+#~ msgid "Hourly Graphs"
+#~ msgstr "每小時圖"
 
-msgid "Daily"
-msgstr "每日"
+#~ msgid "Daily"
+#~ msgstr "每日"
 
-msgid "Daily Graphs"
-msgstr "每日圖"
+#~ msgid "Daily Graphs"
+#~ msgstr "每日圖"
 
-msgid "Weekly"
-msgstr "每週"
+#~ msgid "Weekly"
+#~ msgstr "每週"
 
-msgid "Weekly Graphs"
-msgstr "每週圖"
+#~ msgid "Weekly Graphs"
+#~ msgstr "每週圖"
 
-msgid "Monthly"
-msgstr "每月"
+#~ msgid "Monthly"
+#~ msgstr "每月"
 
-msgid "Monthly Graphs"
-msgstr "每月圖"
+#~ msgid "Monthly Graphs"
+#~ msgstr "每月圖"
 
-msgid "Yearly"
-msgstr "每年"
+#~ msgid "Yearly"
+#~ msgstr "每年"
 
-msgid "Yearly Graphs"
-msgstr "每年圖"
+#~ msgid "Yearly Graphs"
+#~ msgstr "每年圖"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "磁帶"
+#~ msgid "Tape"
+#~ msgstr "磁帶"
 
-msgid "Pass"
-msgstr "通過"
+#~ msgid "Pass"
+#~ msgstr "通過"
 
 msgid "Disable password"
 msgstr "停用密碼"
 
-msgid "View All Users"
-msgstr "查看所有用戶"
+#~ msgid "View All Users"
+#~ msgstr "查看所有用戶"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr "唔好意思, 由於網頁已經超時, 請在此頁繼續輸入資料."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr "唔好意思, 由於網頁已經超時, 請在此頁繼續輸入資料."
 
-msgid "Guest Account"
-msgstr "訪客帳戶"
+#~ msgid "Guest Account"
+#~ msgstr "訪客帳戶"
 
 #, fuzzy
 msgid "CIFS Shares"
@@ -6435,8 +6424,8 @@ msgstr "出口量"
 msgid "successfully deleted"
 msgstr "%s 已成功刪除."
 
-msgid "%s successfully added."
-msgstr "%s 成功加入."
+#~ msgid "%s successfully added."
+#~ msgstr "%s 成功加入."
 
 msgid "IPv6 Netmask"
 msgstr "IPv6 Netmask"
@@ -6445,30 +6434,30 @@ msgstr "IPv6 Netmask"
 msgid "Docs"
 msgstr "版本"
 
-msgid "Config"
-msgstr "設置"
+#~ msgid "Config"
+#~ msgstr "設置"
 
-msgid "%s successfully update."
-msgstr "%s 更新成功."
+#~ msgid "%s successfully update."
+#~ msgstr "%s 更新成功."
 
-msgid "Admin user"
-msgstr "管理員用戶"
+#~ msgid "Admin user"
+#~ msgstr "管理員用戶"
 
 #, fuzzy
 msgid "ZVol Name"
 msgstr "全名"
 
-msgid "English"
-msgstr "英文"
+#~ msgid "English"
+#~ msgstr "英文"
 
-msgid "Add Link Aggregation"
-msgstr "加入 Link Aggregation"
+#~ msgid "Add Link Aggregation"
+#~ msgstr "加入 Link Aggregation"
 
-msgid "View All Interfaces"
-msgstr "檢視所有介面"
+#~ msgid "View All Interfaces"
+#~ msgstr "檢視所有介面"
 
-msgid "View All VLANs"
-msgstr "檢視所有 VLAN"
+#~ msgid "View All VLANs"
+#~ msgstr "檢視所有 VLAN"
 
 msgid "Read"
 msgstr "讀取"

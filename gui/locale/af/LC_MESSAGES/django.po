@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2012-03-13 13:51+0200\n"
-"Last-Translator: Nick <jjstccean@gmail.com>\n"
+"PO-Revision-Date: 2013-11-30 00:28+0000\n"
+"Last-Translator: Josh <josh@ixsystems.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: af\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1385771308.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "Vol"
 msgid "Debug"
 msgstr "Ontfout"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Default"
+#~ msgid "Default"
+#~ msgstr "Default"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -338,9 +338,8 @@ msgstr "Op"
 msgid "Off"
 msgstr "Af"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (aanbevole)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (aanbevole)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -523,9 +522,8 @@ msgstr "Tik dieselfde wagwoord as hierbo, vir verifiëring."
 msgid "Shell"
 msgstr "Shell"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Skakel wagwoord logins"
+#~ msgid "Disable password logins"
+#~ msgstr "Skakel wagwoord logins"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -551,9 +549,8 @@ msgstr "Huis Gids Mode"
 msgid "Auxiliary groups"
 msgstr "Hulp groepe"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "'N gebruiker met dié UID bestaan ​​reeds."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "'N gebruiker met dié UID bestaan ​​reeds."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -593,9 +590,8 @@ msgstr "Wagwoord is gestremd, los dit leeg"
 msgid "This field is required."
 msgstr "Hierdie geliasseer word vereis"
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Home gids moet begin met /mnt/ of /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Home gids moet begin met /mnt/ of /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -719,16 +715,11 @@ msgstr ""
 msgid "Admin Account"
 msgstr ""
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Verander wagwoord"
+#~ msgid "Change Password"
+#~ msgstr "Verander wagwoord"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Verander Admin gebruiker"
+#~ msgid "Change Admin User"
+#~ msgstr "Verander Admin gebruiker"
 
 #: account/views.py:95
 msgid "Password successfully updated."
@@ -6182,5 +6173,9 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-msgid "Selected"
-msgstr "Gekies"
+#~ msgid "Selected"
+#~ msgstr "Gekies"
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr "HTTP+HTTPS"

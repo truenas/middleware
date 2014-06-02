@@ -8,19 +8,19 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-06-07 18:06+0200\n"
-"Last-Translator: raulfg <raulfg3@gmail.com>\n"
+"PO-Revision-Date: 2013-12-06 11:04+0000\n"
+"Last-Translator: sukarra <jon.altia@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1386327893.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Informes"
+#~ msgid "Reporting"
+#~ msgstr "Informes"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -51,21 +51,17 @@ msgstr "Almacenamiento"
 msgid "Some error occurred"
 msgstr "Ocurrió algún error"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Editar"
+#~ msgid "Edit"
+#~ msgstr "Editar"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Editar Disco"
+#~ msgid "Edit Disk"
+#~ msgstr "Editar Disco"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Borrar"
+#~ msgid "Wipe"
+#~ msgstr "Borrar"
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Borrar disco"
+#~ msgid "Wipe Disk"
+#~ msgstr "Borrar disco"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
@@ -86,20 +82,20 @@ msgstr "Cada 'N'"
 msgid "Plugins"
 msgstr "Plugins"
 
-msgid "CronJobs"
-msgstr "Tareas Programadas"
+#~ msgid "CronJobs"
+#~ msgstr "Tareas Programadas"
 
-msgid "Replace"
-msgstr "Sustituir"
+#~ msgid "Replace"
+#~ msgstr "Sustituir"
 
-msgid "Disk Replacement"
-msgstr "Sustitución de Disco"
+#~ msgid "Disk Replacement"
+#~ msgstr "Sustitución de Disco"
 
-msgid "Detach"
-msgstr "Desconectar"
+#~ msgid "Detach"
+#~ msgstr "Desconectar"
 
-msgid "Disk Detach"
-msgstr "Desconexión de Disco"
+#~ msgid "Disk Detach"
+#~ msgstr "Desconexión de Disco"
 
-msgid "Every"
-msgstr "Cada"
+#~ msgid "Every"
+#~ msgstr "Cada"

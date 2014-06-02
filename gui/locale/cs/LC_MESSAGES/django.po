@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-01-29 14:48+0200\n"
+"PO-Revision-Date: 2014-01-29 14:48+0000\n"
 "Last-Translator: Zdeněk <linuz@centrum.cz>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1391006925.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -244,9 +245,8 @@ msgstr "Plný"
 msgid "Debug"
 msgstr "Ladění"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Výchozí"
+#~ msgid "Default"
+#~ msgstr "Výchozí"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -339,9 +339,8 @@ msgstr "Zap"
 msgid "Off"
 msgstr "Vyp"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "llzjb (doporučeno)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "llzjb (doporučeno)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -530,9 +529,8 @@ msgstr "Pro potvrzení vložte stejné heslo."
 msgid "Shell"
 msgstr "Shell"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Vypnout přihlášení hesly"
+#~ msgid "Disable password logins"
+#~ msgstr "Vypnout přihlášení hesly"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -558,9 +556,8 @@ msgstr "Mód domovského adresáře"
 msgid "Auxiliary groups"
 msgstr "Vedlejší skupiny"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Uživatelské jméno tohoto UID již existuje."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Uživatelské jméno tohoto UID již existuje."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -600,9 +597,8 @@ msgstr "Heslo je zakázáno, ponechte prázdné"
 msgid "This field is required."
 msgstr "Toto pole je vyžadováno."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Domovský adresář musí začínat /mnt/ nebo /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Domovský adresář musí začínat /mnt/ nebo /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -726,24 +722,17 @@ msgstr "Správa účtů"
 msgid "Admin Account"
 msgstr "Administrátorský účet"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Změnit heslo"
+#~ msgid "Change Password"
+#~ msgstr "Změnit heslo"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Změna administratora"
+#~ msgid "Change Admin User"
+#~ msgstr "Změna administratora"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Heslo úspěšně aktualizováno."
+#~ msgid "Password successfully updated."
+#~ msgstr "Heslo úspěšně aktualizováno."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Administrátor byl úspěšně aktualizován."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Administrátor byl úspěšně aktualizován."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -910,9 +899,8 @@ msgstr "je nutné zadat název prvního DNS server před zadáním druhého serv
 msgid "Parent Interface"
 msgstr "Hlavní rozhraní"
 
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "Jméno musí být ve tvaru vlanXX kde XX je číslo"
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "Jméno musí být ve tvaru vlanXX kde XX je číslo"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1106,9 +1094,8 @@ msgstr "Agregace spojení"
 msgid "Link Aggregations"
 msgstr "Agregace linek"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "rozhraní skupiny LAGG"
+#~ msgid "LAGG Interface group"
+#~ msgstr "rozhraní skupiny LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1150,68 +1137,56 @@ msgstr "vytvořit linku agregace"
 msgid "View Link Aggregations"
 msgstr "Zobrazit všechny agregace linek"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "Rozhraní typu LAGG bylo úspěšně přidáno"
+#~ msgid "LAGG successfully added"
+#~ msgstr "Rozhraní typu LAGG bylo úspěšně přidáno"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
 msgstr "Tato IP je již používaná."
 
-#: plugins/forms.py:92
-msgid "Place to temporarily place PBI file"
-msgstr "Místo pro dočasné uložení PBI souboru"
+#~ msgid "Place to temporarily place PBI file"
+#~ msgstr "Místo pro dočasné uložení PBI souboru"
 
-#: plugins/forms.py:93
-msgid ""
-"The system will use this place to temporarily store the PBI file before it's "
-"installed."
-msgstr "Toto umístění bude použito pro uložení PBI souboru před jeho instalací."
+#~ msgid ""
+#~ "The system will use this place to temporarily store the PBI file before it's "
+#~ "installed."
+#~ msgstr "Toto umístění bude použito pro uložení PBI souboru před jeho instalací."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
 msgstr "PBI soubor k instalaci"
 
-#: plugins/forms.py:173
-msgid "You must turn off Plugins service before proceeding"
-msgstr "Pro pokračování musíte vypnout službu Pluginy"
+#~ msgid "You must turn off Plugins service before proceeding"
+#~ msgstr "Pro pokračování musíte vypnout službu Pluginy"
 
-#: plugins/forms.py:183
 #, python-format
-msgid "The path %s already exists"
-msgstr "Cesta %s už existuje."
+#~ msgid "The path %s already exists"
+#~ msgstr "Cesta %s už existuje."
 
-#: plugins/forms.py:189
-msgid "The full jail path cannot exceed 76 characters"
-msgstr "Plná cesta k jail nemůže překročit 76 znaků"
+#~ msgid "The full jail path cannot exceed 76 characters"
+#~ msgstr "Plná cesta k jail nemůže překročit 76 znaků"
 
-#: plugins/forms.py:200
-msgid "The plugins jail path cannot be a subset of the plugins archive path."
-msgstr "Cesta jailu pluginů nemůže být podmnožinou cesty archívu pluginů."
+#~ msgid "The plugins jail path cannot be a subset of the plugins archive path."
+#~ msgstr "Cesta jailu pluginů nemůže být podmnožinou cesty archívu pluginů."
 
-#: plugins/forms.py:205 services/forms.py:148
-msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr "Cesta archívu pluginů nemůže být podmožinou cesty jailu pluginů."
+#~ msgid "The plugins archive path cannot be a subset of the plugins jail path."
+#~ msgstr "Cesta archívu pluginů nemůže být podmožinou cesty jailu pluginů."
 
 #: plugins/forms.py:214 services/models.py:803
 msgid "Plugins jail path"
 msgstr ""
 
-#: plugins/forms.py:218
-msgid "Jail IPv4 Address"
-msgstr "IPv4 adresa jailu"
+#~ msgid "Jail IPv4 Address"
+#~ msgstr "IPv4 adresa jailu"
 
-#: plugins/forms.py:222
-msgid "Jail IPv4 Netmask"
-msgstr "IPv4 síťová maska jailu"
+#~ msgid "Jail IPv4 Netmask"
+#~ msgstr "IPv4 síťová maska jailu"
 
-#: plugins/forms.py:228
-msgid "Plugins archive Path"
-msgstr "Cesta k archívu pluginů"
+#~ msgid "Plugins archive Path"
+#~ msgstr "Cesta k archívu pluginů"
 
-#: plugins/forms.py:244
-msgid "Plugins Jail PBI"
-msgstr "PBI jailu pluginů"
+#~ msgid "Plugins Jail PBI"
+#~ msgstr "PBI jailu pluginů"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
@@ -1221,10 +1196,9 @@ msgstr "Připojený?"
 msgid "The full path cannot exceed 88 characters"
 msgstr "Celá cesta nemůže překročit 88 znaků"
 
-#: plugins/forms.py:336
 #, python-format
-msgid "The path could not be mounted %s"
-msgstr "Cesta %s nemohla být připojena"
+#~ msgid "The path could not be mounted %s"
+#~ msgstr "Cesta %s nemohla být připojena"
 
 #: plugins/forms.py:341
 #, python-format
@@ -1306,21 +1280,18 @@ msgstr "Cíl"
 msgid "Mount Point"
 msgstr ""
 
-#: plugins/models.py:122
-msgid "Mount Points"
-msgstr "Body připojení"
+#~ msgid "Mount Points"
+#~ msgstr "Body připojení"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
 msgstr "Zásuvný modul úspěšně updatován."
 
-#: plugins/views.py:80
-msgid "Plugin successfully removed."
-msgstr "Plugin úspěšně odinstalován."
+#~ msgid "Plugin successfully removed."
+#~ msgstr "Plugin úspěšně odinstalován."
 
-#: plugins/views.py:86
-msgid "Unable to remove plugin."
-msgstr "Plugin nebylo možné odebrat."
+#~ msgid "Unable to remove plugin."
+#~ msgstr "Plugin nebylo možné odebrat."
 
 #: plugins/views.py:101
 msgid "Plugin successfully updated"
@@ -1330,13 +1301,11 @@ msgstr "Zásuvný modul úspěšně aktualizován"
 msgid "Plugin successfully installed"
 msgstr "Zásuvný modul úspěšně nainstalován"
 
-#: plugins/views.py:201
-msgid "There was a problem importing the jail."
-msgstr "Při imprtování jailu se vyskytl problém."
+#~ msgid "There was a problem importing the jail."
+#~ msgstr "Při imprtování jailu se vyskytl problém."
 
-#: plugins/views.py:204
-msgid "Jail successfully imported."
-msgstr "Jail byl úspěšně importován."
+#~ msgid "Jail successfully imported."
+#~ msgstr "Jail byl úspěšně importován."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1363,9 +1332,8 @@ msgstr "Službě AFP se nepodařilo znovu načíst konfiguraci."
 msgid "The NFS service failed to reload."
 msgstr "Službě NFS se nepodařilo znovu načíst konfiguraci"
 
-#: services/forms.py:157
-msgid "This IP already exists."
-msgstr "Tato IP adresa již existuje."
+#~ msgid "This IP already exists."
+#~ msgstr "Tato IP adresa již existuje."
 
 #: services/forms.py:164
 #, fuzzy
@@ -1494,17 +1462,15 @@ msgstr "Heslo (potvrzení)"
 msgid "Enter the same secret above for verification."
 msgstr "Zadejte stejné heslo pro ověření výše."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Heslo iniciátora"
+#~ msgid "Initiator Secret"
+#~ msgstr "Heslo iniciátora"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Heslo z iniciátora (pro vzájemné ověřování CHAP)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Heslo iniciátora (potvrzení)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Heslo iniciátora (potvrzení)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1596,19 +1562,17 @@ msgstr ""
 "V případě, že pro extent nastavíte auto(0), musí již příslušný soubor "
 "existovat."
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Disk"
+#~ msgid "Disk device"
+#~ msgstr "Disk"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "ID skupiny portálu nemůže být vyšší než %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "Vaše skupinové ID nemůže být vyšší než %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "Vaše skupinové ID nemůže být vyšší než %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1743,13 +1707,11 @@ msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr "Použijte tuto možnost k přepsání masky (výchozí hodnota 0777)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Podporovat dlouhé čtení/zápis"
+#~ msgid "Large RW support"
+#~ msgstr "Podporovat dlouhé čtení/zápis"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Posílat soubory pomocí sendfile(2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Posílat soubory pomocí sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1852,17 +1814,15 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Jméno serveru"
+#~ msgid "Server Name"
+#~ msgstr "Jméno serveru"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr ""
-"Jméno serveru. Jestliže je tato položka prázdná tak je použit výchozí "
-"server."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr ""
+#~ "Jméno serveru. Jestliže je tato položka prázdná tak je použit výchozí "
+#~ "server."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1899,17 +1859,15 @@ msgstr ""
 "Specifikuje kolik serverů se vytvoří. Serverů by měl být dostatek k tomu aby "
 "se obsloužily všechny současné požadaky, obvykle 4 - 6."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Asynchronní režim"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Asynchronní režim"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Povol asynchronní režim, který pomůže s výkonem až za gigabitovou rychlost "
-"sítě."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Povol asynchronní režim, který pomůže s výkonem až za gigabitovou rychlost "
+#~ "sítě."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2734,13 +2692,11 @@ msgstr ""
 msgid "SSH"
 msgstr ""
 
-#: services/models.py:1239
-msgid "Domain Controller Name"
-msgstr "Název doménového řadiče"
+#~ msgid "Domain Controller Name"
+#~ msgstr "Název doménového řadiče"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "Název AD nebo PDC"
+#~ msgid "AD or PDC name."
+#~ msgstr "Název AD nebo PDC"
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3103,9 +3059,8 @@ msgstr ""
 msgid "Settings"
 msgstr "Nastavení"
 
-#: services/nav.py:186
-msgid "Management"
-msgstr "Správa"
+#~ msgid "Management"
+#~ msgstr "Správa"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3583,9 +3538,8 @@ msgstr ""
 msgid "Specify custom path"
 msgstr ""
 
-#: storage/forms.py:163
-msgid "Volume add"
-msgstr "Přidat svazek"
+#~ msgid "Volume add"
+#~ msgstr "Přidat svazek"
 
 #: storage/forms.py:175
 msgid ""
@@ -3624,9 +3578,8 @@ msgid ""
 "append a virtual device"
 msgstr ""
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "Musíte zvolit souborový systém"
+#~ msgid "You must select a filesystem"
+#~ msgstr "Musíte zvolit souborový systém"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
@@ -3742,9 +3695,8 @@ msgstr "Rezervované místo pro tento svazek"
 msgid "ZFS Volume Name"
 msgstr "svazek ZFS"
 
-#: storage/forms.py:845
-msgid "Size for this ZFS Volume"
-msgstr "Velikost tohoto ZFS svazku"
+#~ msgid "Size for this ZFS Volume"
+#~ msgstr "Velikost tohoto ZFS svazku"
 
 #: storage/forms.py:846
 msgid "Example: 1g"
@@ -4143,14 +4095,11 @@ msgstr "Uložiště"
 msgid "View Snapshots"
 msgstr "Zobrazit snapshoty"
 
-#: storage/nav.py:34
-msgid "View ZFS Scrubs"
-msgstr "Zobrazit všechny kontroly"
+#~ msgid "View ZFS Scrubs"
+#~ msgstr "Zobrazit všechny kontroly"
 
-#: storage/nav.py:41 templates/storage/volumes.html:4
-#: templates/storage/volumes.html.py:6
-msgid "Volume Manager"
-msgstr "Správce svazků"
+#~ msgid "Volume Manager"
+#~ msgstr "Správce svazků"
 
 #: storage/nav.py:52 templates/storage/autoimport.html:18
 #: templates/storage/import.html:43 templates/storage/volumes.html:12
@@ -4177,10 +4126,8 @@ msgstr "Automaticky importovat svazek"
 msgid "View Volumes"
 msgstr "Zobrazit svazky"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "Vytvořit svazek ZFS"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "Vytvořit svazek ZFS"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4317,9 +4264,8 @@ msgstr "Jazyk (Vyžadováno obnovení stránky)"
 msgid "You must specify a number between 1 and 65535, inclusive."
 msgstr "Tato hodnota musí být mezi 0 a 65535 včetně"
 
-#: system/forms.py:216
-msgid "Number is required."
-msgstr "Je vyžadováno číslo."
+#~ msgid "Number is required."
+#~ msgstr "Je vyžadováno číslo."
 
 #: system/forms.py:245
 msgid "Force"
@@ -4356,9 +4302,8 @@ msgstr ""
 msgid "SHA256 sum for the image"
 msgstr ""
 
-#: system/forms.py:538
-msgid "Invalid firmware"
-msgstr "Neplatný firmware"
+#~ msgid "Invalid firmware"
+#~ msgstr "Neplatný firmware"
 
 #: system/forms.py:544
 msgid "Invalid checksum"
@@ -4382,13 +4327,11 @@ msgstr "Nejsou povoleny kvóty"
 msgid "Protocol"
 msgstr ""
 
-#: system/models.py:50
-msgid "WebGUI Address"
-msgstr "Adresa webového rozhraní"
+#~ msgid "WebGUI Address"
+#~ msgstr "Adresa webového rozhraní"
 
-#: system/models.py:56
-msgid "WebGUI Port"
-msgstr "Port webového rozhraní"
+#~ msgid "WebGUI Port"
+#~ msgstr "Port webového rozhraní"
 
 #: system/models.py:62
 msgid "Language"
@@ -4484,13 +4427,11 @@ msgstr "Připojit konzoli přes sériový port"
 msgid "Enable screen saver"
 msgstr "Povolit spořič obrazovky"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "Automaticky kontrolovat nové aktualizace firmwaru"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "Automaticky kontrolovat nové aktualizace firmwaru"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "Pípnutí při startu"
+#~ msgid "Beep on boot"
+#~ msgstr "Pípnutí při startu"
 
 #: system/models.py:167
 msgid "Enable Special System Tuning"
@@ -4885,9 +4826,8 @@ msgstr "Zkušební email nemohl být odeslán:"
 msgid "Your test email has been sent!"
 msgstr "Zkušební email byl odeslán."
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Stránka nenalezena"
+#~ msgid "Page Not Found"
+#~ msgstr "Stránka nenalezena"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -4920,11 +4860,8 @@ msgstr ""
 msgid "Members"
 msgstr "Členové"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Upravit"
+#~ msgid "Modify"
+#~ msgstr "Upravit"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -4938,13 +4875,11 @@ msgstr "Upravit skupinu"
 msgid "Delete Group"
 msgstr "Smazat skupinu"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "Nejsou žádné uživatelem definované skupiny."
+#~ msgid "There are no user defined groups."
+#~ msgstr "Nejsou žádné uživatelem definované skupiny."
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "Přidat novou skupinu"
+#~ msgid "Add New Group"
+#~ msgstr "Přidat novou skupinu"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
 msgid "Home"
@@ -4964,26 +4899,21 @@ msgstr ""
 msgid "Remove User"
 msgstr "Odebrat uživatele"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "Smazat uživatele"
+#~ msgid "Delete User"
+#~ msgstr "Smazat uživatele"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "Žádní uživatelé nejsou definováni"
+#~ msgid "No users defined"
+#~ msgstr "Žádní uživatelé nejsou definováni"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "Přidat nového uživatele"
+#~ msgid "Add New User"
+#~ msgstr "Přidat nového uživatele"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "Změnit e-mail"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "Změnit administrátorské heslo"
+#~ msgid "Change Admin Password"
+#~ msgstr "Změnit administrátorské heslo"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5213,21 +5143,17 @@ msgstr ""
 msgid "Add LAGG Interface "
 msgstr ""
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "Přidat LAGG"
+#~ msgid "Add LAGG"
+#~ msgstr "Přidat LAGG"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "Priorita řazení"
+#~ msgid "Ordering Priority"
+#~ msgstr "Priorita řazení"
 
-#: templates/network/lagg_members.html:7
-msgid "Startup option"
-msgstr "Možnost spuštění"
+#~ msgid "Startup option"
+#~ msgstr "Možnost spuštění"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "Akce"
+#~ msgid "Action"
+#~ msgstr "Akce"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
@@ -5266,17 +5192,14 @@ msgstr ""
 msgid "No default route defined"
 msgstr ""
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "Upravit VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "Upravit VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "Smazat VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "Smazat VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "Žádná VLAN není definována"
+#~ msgid "No VLAN defined"
+#~ msgstr "Žádná VLAN není definována"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
@@ -5286,10 +5209,8 @@ msgstr ""
 msgid "Installed..."
 msgstr "Instalovaný ..."
 
-#: templates/plugins/index.html:5 templates/plugins/index.html.py:7
-#: templates/services/plugins.html:5 templates/services/plugins.html.py:7
-msgid "Install Plugin"
-msgstr "Nainstalovat plugin"
+#~ msgid "Install Plugin"
+#~ msgstr "Nainstalovat plugin"
 
 #: templates/plugins/index.html:31
 msgid "Info"
@@ -5299,17 +5220,15 @@ msgstr "Informace"
 msgid "Plugin info"
 msgstr ""
 
-#: templates/plugins/index.html:39
-msgid "Edit Plugin"
-msgstr "Upravit Plugin"
+#~ msgid "Edit Plugin"
+#~ msgstr "Upravit Plugin"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
 msgstr "Odstranit zásuvný modul"
 
-#: templates/plugins/index.html:55
-msgid "No plugins installed"
-msgstr "Nejsou instlované žádné pluginy"
+#~ msgid "No plugins installed"
+#~ msgstr "Nejsou instlované žádné pluginy"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
@@ -5370,9 +5289,8 @@ msgstr ""
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
 msgstr ""
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "Přihlašte se."
+#~ msgid "Please log in."
+#~ msgstr "Přihlašte se."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5390,9 +5308,8 @@ msgstr ""
 msgid "AFP Settings"
 msgstr "Nastavení AFP"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "Nastavení Active Directory"
+#~ msgid "Active Directory Settings"
+#~ msgstr "Nastavení Active Directory"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5410,9 +5327,8 @@ msgstr "Nastavení FTP"
 msgid "ISCSI Settings"
 msgstr "Nastavení ISCSI"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "Nastavení LDAP"
+#~ msgid "LDAP Settings"
+#~ msgstr "Nastavení LDAP"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
@@ -5510,9 +5426,8 @@ msgstr ""
 msgid "Peer"
 msgstr ""
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "Přidat uživatele iSCSI"
+#~ msgid "Add iSCSI User"
+#~ msgstr "Přidat uživatele iSCSI"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
@@ -5543,17 +5458,15 @@ msgstr ""
 msgid "File Extent"
 msgstr "zobrazit všechny uživatele"
 
-#: templates/services/iscsi_extents.html:33
-msgid "No extents defined"
-msgstr "Žádné extenty nebyly definovány"
+#~ msgid "No extents defined"
+#~ msgstr "Žádné extenty nebyly definovány"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
 msgstr ""
 
-#: templates/services/iscsi_portals.html:18
-msgid "No IP defined for this Portal"
-msgstr "Není definována IP adresa pro tento portál"
+#~ msgid "No IP defined for this Portal"
+#~ msgstr "Není definována IP adresa pro tento portál"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
@@ -5626,18 +5539,14 @@ msgstr ""
 msgid "Delete Plugins Jail"
 msgstr ""
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "Nebyly definovány žádné rsync moduly"
+#~ msgid "No rsync modules defined"
+#~ msgstr "Nebyly definovány žádné rsync moduly"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "Aktivní sdílení"
+#~ msgid "Active Shares"
+#~ msgstr "Aktivní sdílení"
 
-#: templates/sharing/apple.html:7
-msgid "There are no active Apple (AFP) shares."
-msgstr "Žádné sdílení Apple (AFP) není aktivní."
+#~ msgid "There are no active Apple (AFP) shares."
+#~ msgstr "Žádné sdílení Apple (AFP) není aktivní."
 
 #: templates/sharing/apple.html:29
 msgid "Edit Apple (AFP) Share"
@@ -5647,10 +5556,8 @@ msgstr ""
 msgid "Delete Apple (AFP) Share"
 msgstr ""
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "Není nastaveno žádné sdílení"
+#~ msgid "No shares defined"
+#~ msgstr "Není nastaveno žádné sdílení"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 msgid "Add Apple (AFP) Share"
@@ -5668,9 +5575,8 @@ msgstr ""
 msgid "Windows (CIFS)"
 msgstr ""
 
-#: templates/sharing/unix.html:7
-msgid "There are no active UNIX (NFS) shares."
-msgstr "Žádné sdílení UNIX (NFS) není aktivní."
+#~ msgid "There are no active UNIX (NFS) shares."
+#~ msgstr "Žádné sdílení UNIX (NFS) není aktivní."
 
 #: templates/sharing/unix.html:12
 msgid "Mountpoint"
@@ -5689,9 +5595,8 @@ msgstr ""
 msgid "Add UNIX (NFS) Share"
 msgstr "Nastavení CIFS"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (CIFS) shares."
-msgstr "Žádná sdílení Windows (CIFS) nejsou aktivní."
+#~ msgid "There are no active Windows (CIFS) shares."
+#~ msgstr "Žádná sdílení Windows (CIFS) nejsou aktivní."
 
 #: templates/sharing/windows.html:33
 msgid "Edit Windows (CIFS) Share"
@@ -5821,31 +5726,24 @@ msgstr ""
 msgid "Remote ZFS filesystem"
 msgstr ""
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "Smazat replikaci"
+#~ msgid "Delete Replication"
+#~ msgstr "Smazat replikaci"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "Upravit replikaci"
+#~ msgid "Edit Replication"
+#~ msgstr "Upravit replikaci"
 
 #: templates/storage/replications.html:56
 msgid "No ZFS replication available"
 msgstr ""
 
-#: templates/storage/scrub.html:42
-msgid "No scrub tasks defined."
-msgstr "Nebyly definovány žádné kontroly"
+#~ msgid "No scrub tasks defined."
+#~ msgstr "Nebyly definovány žádné kontroly"
 
-#: templates/storage/scrub.html:48
-msgid "Add ZFS Scrub Task"
-msgstr "Přidej kontrolu ZFS svazku"
+#~ msgid "Add ZFS Scrub Task"
+#~ msgstr "Přidej kontrolu ZFS svazku"
 
-#: templates/storage/scrub.html:50
-msgid "Add ZFS Scrub"
-msgstr "Přidat kontrolu ZFS"
+#~ msgid "Add ZFS Scrub"
+#~ msgstr "Přidat kontrolu ZFS"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -5904,17 +5802,15 @@ msgstr ""
 msgid "There are no scheduled snapshots."
 msgstr ""
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Jak"
+#~ msgid "How"
+#~ msgstr "Jak"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr ""
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "Od"
+#~ msgid "From"
+#~ msgstr "Od"
 
 #: templates/storage/tasks.html:43
 msgid "through"
@@ -5932,9 +5828,8 @@ msgstr "každodenní"
 msgid "on every"
 msgstr ""
 
-#: templates/storage/tasks.html:147
-msgid "There are no periodic snapshots scheduled."
-msgstr "Nejsou naplánovány žádné pravidelné snapshoty."
+#~ msgid "There are no periodic snapshots scheduled."
+#~ msgstr "Nejsou naplánovány žádné pravidelné snapshoty."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -5988,13 +5883,11 @@ msgstr "Stav svazku"
 msgid "Destroy Dataset"
 msgstr "Odstranit dataset"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "Zrušit svazek ZFS"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "Zrušit svazek ZFS"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "Nejsou definovány žádné svazky"
+#~ msgid "No volumes defined"
+#~ msgstr "Nejsou definovány žádné svazky"
 
 #: templates/storage/wizard.html:27
 #, fuzzy
@@ -6041,26 +5934,22 @@ msgstr "Stávající data budou vymazány"
 msgid "Replace Disk"
 msgstr "Vyměňte disk"
 
-#: templates/storage/zvols.html:3
 #, python-format
-msgid "Create ZFS volume on %(name)s"
-msgstr "Vytvořit ZFS svazek na %(name)s"
+#~ msgid "Create ZFS volume on %(name)s"
+#~ msgstr "Vytvořit ZFS svazek na %(name)s"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "Přidat svazek ZFS"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "Přidat svazek ZFS"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "Obnovit vyrovnávací paměť LDAP/AD"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "Mezipaměť se vytváří znova."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "Mezipaměť se vytváří znova."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "Mezipaměť nemohla být znovu vytvořena."
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "Mezipaměť nemohla být znovu vytvořena."
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6085,17 +5974,14 @@ msgstr "Restartování..."
 msgid "Are you sure you want to restore to factory config?"
 msgstr "Opravdu chcete obnovit do továrního nastavení?"
 
-#: templates/system/cronjob.html:41
-msgid "No cron jobs defined."
-msgstr "Žádné úlohy nejsou naplánovány."
+#~ msgid "No cron jobs defined."
+#~ msgstr "Žádné úlohy nejsou naplánovány."
 
-#: templates/system/cronjob.html:47
-msgid "Add a cron job"
-msgstr "Naplánovat úlohu"
+#~ msgid "Add a cron job"
+#~ msgstr "Naplánovat úlohu"
 
-#: templates/system/cronjob.html:49
-msgid "Add cron job"
-msgstr "Naplánovat úlohu"
+#~ msgid "Add cron job"
+#~ msgstr "Naplánovat úlohu"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6117,17 +6003,14 @@ msgstr ""
 msgid "iBurst"
 msgstr ""
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "Žádné NTP servery nebyly definovány"
+#~ msgid "No NTP servers defined."
+#~ msgstr "Žádné NTP servery nebyly definovány"
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "Přidat NTP server"
+#~ msgid "Add NTP server"
+#~ msgstr "Přidat NTP server"
 
-#: templates/system/ntpserver.html:46
-msgid "Add NTP Server"
-msgstr "Přidat NTP server"
+#~ msgid "Add NTP Server"
+#~ msgstr "Přidat NTP server"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6144,21 +6027,18 @@ msgstr ""
 msgid "History"
 msgstr "Historie"
 
-#: templates/system/rsync.html:5
-msgid "Local Path"
-msgstr "Lokální cesta"
+#~ msgid "Local Path"
+#~ msgstr "Lokální cesta"
 
 #: templates/system/rsync.html:6
 msgid "Remote"
 msgstr ""
 
-#: templates/system/rsync.html:48
-msgid "No rsync tasks defined."
-msgstr "Nebyly definovány žádné rsync úlohy"
+#~ msgid "No rsync tasks defined."
+#~ msgstr "Nebyly definovány žádné rsync úlohy"
 
-#: templates/system/rsync.html:54
-msgid "Add rsync task"
-msgstr "Přidat úlohu rsync"
+#~ msgid "Add rsync task"
+#~ msgstr "Přidat úlohu rsync"
 
 #: templates/system/rsync.html:56
 msgid "Add Rsync"
@@ -6195,29 +6075,23 @@ msgstr ""
 msgid "Unknown"
 msgstr "Neznámý"
 
-#: templates/system/smarttest.html:38
-msgid "No S.M.A.R.T. tests defined"
-msgstr "Žádné S.M.A.R.T. testy nebyly definovány."
+#~ msgid "No S.M.A.R.T. tests defined"
+#~ msgstr "Žádné S.M.A.R.T. testy nebyly definovány."
 
-#: templates/system/smarttest.html:44
-msgid "Add S.M.A.R.T. Test"
-msgstr "Přidat test S.M.A.R.T."
+#~ msgid "Add S.M.A.R.T. Test"
+#~ msgstr "Přidat test S.M.A.R.T."
 
-#: templates/system/smarttest.html:46
-msgid "Add S.M.A.R.T. test"
-msgstr "Přidat test S.M.A.R.T."
+#~ msgid "Add S.M.A.R.T. test"
+#~ msgstr "Přidat test S.M.A.R.T."
 
-#: templates/system/sysctl.html:34
-msgid "No sysctl defined."
-msgstr "Žádné sysctl nebyly definovány"
+#~ msgid "No sysctl defined."
+#~ msgstr "Žádné sysctl nebyly definovány"
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "Přidat sysctl"
+#~ msgid "Add sysctl"
+#~ msgstr "Přidat sysctl"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "Přidat sysctl"
+#~ msgid "Add Sysctl"
+#~ msgstr "Přidat sysctl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6243,9 +6117,8 @@ msgstr "Doba od spuštění"
 msgid "Load Average"
 msgstr "Průměrná zátěž"
 
-#: templates/system/system_info.html:34
-msgid "Connected through"
-msgstr "Připojeno přes"
+#~ msgid "Connected through"
+#~ msgstr "Připojeno přes"
 
 #: templates/system/tunable.html:34
 #, fuzzy
@@ -6256,9 +6129,8 @@ msgstr "Nebyly definovány žádné zavaděče."
 msgid "Add Tunable"
 msgstr ""
 
-#: templates/system/tunable.html:42
-msgid "Add Loader"
-msgstr "Přidat zavaděč"
+#~ msgid "Add Loader"
+#~ msgstr "Přidat zavaděč"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6284,13 +6156,12 @@ msgstr "Stav svazku %(volume) je %(status): %(message)s"
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "Stav svazku %(volume) je %(status)."
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr ""
-"Musíte změnit heslo administrátora (nyní není heslo pro přihlášení "
-"požadováno)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr ""
+#~ "Musíte změnit heslo administrátora (nyní není heslo pro přihlášení "
+#~ "požadováno)"
 
 #: tools/alert.py:137
 #, python-format
@@ -6310,90 +6181,90 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritická upozornění"
 
-msgid "Selected"
-msgstr "vybraný"
+#~ msgid "Selected"
+#~ msgstr "vybraný"
 
-msgid "Allow guest access"
-msgstr "Povolit účet hosta"
+#~ msgid "Allow guest access"
+#~ msgstr "Povolit účet hosta"
 
-msgid "Only allow guest access"
-msgstr "Povolit pouze účet hosta"
+#~ msgid "Only allow guest access"
+#~ msgstr "Povolit pouze účet hosta"
 
 #, fuzzy
 msgid "View S.M.A.R.T. Tests"
 msgstr "Nastavení S.M.A.R.T."
 
-msgid "View Sysctls"
-msgstr "Zobrazit proměnné sysctl"
+#~ msgid "View Sysctls"
+#~ msgstr "Zobrazit proměnné sysctl"
 
-msgid "View Tunables"
-msgstr "Zobrazit vyladění"
+#~ msgid "View Tunables"
+#~ msgstr "Zobrazit vyladění"
 
 #, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "Nastavení CIFS"
 
-msgid "Hourly"
-msgstr "Hodinové"
+#~ msgid "Hourly"
+#~ msgstr "Hodinové"
 
-msgid "Hourly Graphs"
-msgstr "Hodinové grafy"
+#~ msgid "Hourly Graphs"
+#~ msgstr "Hodinové grafy"
 
-msgid "Daily"
-msgstr "Denní"
+#~ msgid "Daily"
+#~ msgstr "Denní"
 
-msgid "Daily Graphs"
-msgstr "Denní grafy"
+#~ msgid "Daily Graphs"
+#~ msgstr "Denní grafy"
 
-msgid "Weekly"
-msgstr "Týdenní"
+#~ msgid "Weekly"
+#~ msgstr "Týdenní"
 
-msgid "Weekly Graphs"
-msgstr "Týdenní grafy"
+#~ msgid "Weekly Graphs"
+#~ msgstr "Týdenní grafy"
 
-msgid "Monthly"
-msgstr "Měsíční"
+#~ msgid "Monthly"
+#~ msgstr "Měsíční"
 
-msgid "Monthly Graphs"
-msgstr "Měsíční grafy"
+#~ msgid "Monthly Graphs"
+#~ msgstr "Měsíční grafy"
 
-msgid "Yearly"
-msgstr "Roční"
+#~ msgid "Yearly"
+#~ msgstr "Roční"
 
-msgid "Yearly Graphs"
-msgstr "Roční Grafy"
+#~ msgid "Yearly Graphs"
+#~ msgstr "Roční Grafy"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "páska"
+#~ msgid "Tape"
+#~ msgstr "páska"
 
-msgid "Pass"
-msgstr "Úspěšně dokončeno"
+#~ msgid "Pass"
+#~ msgstr "Úspěšně dokončeno"
 
-msgid "Disable password"
-msgstr "Zakázat heslo"
+#~ msgid "Disable password"
+#~ msgstr "Zakázat heslo"
 
-msgid "My Account"
-msgstr "Můj účet"
+#~ msgid "My Account"
+#~ msgstr "Můj účet"
 
-msgid "View All Users"
-msgstr "zobrazit všechny uživatele"
+#~ msgid "View All Users"
+#~ msgstr "zobrazit všechny uživatele"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Omlouváme se, ale platnost formuláře vypršela. Prosím, pokračujte "
-"vyplňování formuláře na této stránce."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Omlouváme se, ale platnost formuláře vypršela. Prosím, pokračujte "
+#~ "vyplňování formuláře na této stránce."
 
-msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr ""
-"Umístění musí obsahovat pouze písmena, číslice, podtržítko nebo pomlčku"
+#~ msgid "The location must contain only alphanumeric characters, _ or -"
+#~ msgstr ""
+#~ "Umístění musí obsahovat pouze písmena, číslice, podtržítko nebo pomlčku"
 
-msgid "Guest Account"
-msgstr "Účet hosta"
+#~ msgid "Guest Account"
+#~ msgstr "Účet hosta"
 
 #, fuzzy
 msgid "Loader"
@@ -6403,52 +6274,746 @@ msgstr "Průměrné vytížení"
 msgid "Loaders"
 msgstr "Průměrné vytížení"
 
-msgid "Export Volume"
-msgstr "Exportovat svazek"
+#~ msgid "Export Volume"
+#~ msgstr "Exportovat svazek"
 
-msgid "Add loader"
-msgstr "Přidat zavaděč"
+#~ msgid "Add loader"
+#~ msgstr "Přidat zavaděč"
 
 #, fuzzy
 msgid "successfully deleted"
 msgstr "%s úspěšně smazáno."
 
-msgid "%s successfully added."
-msgstr "%s úspěšně přidáno."
+#~ msgid "%s successfully added."
+#~ msgstr "%s úspěšně přidáno."
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 síťová maska"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 síťová maska"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Tato hodnota musí být mezi 0 a 10000 včetně."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Tato hodnota musí být mezi 0 a 10000 včetně."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Tato hodnota musí být mezi 0 a 1000, včetně."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Tato hodnota musí být mezi 0 a 1000, včetně."
 
-msgid "Welcome to"
-msgstr "Vítejte ve8"
+#~ msgid "Welcome to"
+#~ msgstr "Vítejte ve8"
 
-msgid "%s successfully update."
-msgstr "%s aktualizace proběhla úspěšně."
+#~ msgid "%s successfully update."
+#~ msgstr "%s aktualizace proběhla úspěšně."
 
-msgid "Admin user"
-msgstr "Administrátor"
+#~ msgid "Admin user"
+#~ msgstr "Administrátor"
 
 #, fuzzy
 msgid "ZVol Name"
 msgstr "celé jméno"
 
-msgid "English"
-msgstr "angličtina"
+#~ msgid "English"
+#~ msgstr "angličtina"
 
-msgid "Level"
-msgstr "Úroveň"
+#~ msgid "Level"
+#~ msgstr "Úroveň"
 
-msgid "Add Link Aggregation"
-msgstr "Přidat linku agregace"
+#~ msgid "Add Link Aggregation"
+#~ msgstr "Přidat linku agregace"
 
-msgid "View All Interfaces"
-msgstr "zobrazit všechna rozhraní"
+#~ msgid "View All Interfaces"
+#~ msgstr "zobrazit všechna rozhraní"
 
-msgid "View All VLANs"
-msgstr "Zobrazit všechny VLANy"
+#~ msgid "View All VLANs"
+#~ msgstr "Zobrazit všechny VLANy"
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr "HTTP+HTTPS"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr "Nešifrováno"
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr "Zašifrované, bez hesla"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr "Zašifrované, s heslem"
+
+#: choices.py:304
+msgid "lz4 (recommended)"
+msgstr "lz4 (doporučeno)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr "Zkontrolovat"
+
+#: choices.py:600
+msgid "9600"
+msgstr "9600             "
+
+#: choices.py:601
+msgid "19200"
+msgstr "19200"
+
+#: choices.py:602
+msgid "38400"
+msgstr "38400"
+
+#: choices.py:603
+msgid "57600"
+msgstr "57600"
+
+#: choices.py:604
+msgid "115200"
+msgstr "115200"
+
+#: choices.py:659
+msgid "Fatal"
+msgstr "Kritický"
+
+#: choices.py:662
+msgid "Verbose"
+msgstr "Podrobný"
+
+#: choices.py:664
+msgid "Debug2"
+msgstr "Debug2"
+
+#: choices.py:670
+msgid "Daemon"
+msgstr "Démon"
+
+#: choices.py:686
+msgid "NT4"
+msgstr "NT4"
+
+#: choices.py:687
+msgid "NIS"
+msgstr "NIS"
+
+#: choices.py:693
+msgid "on"
+msgstr "zapnuto             "
+
+#: choices.py:694
+msgid "off"
+msgstr "vypnuto            "
+
+#: choices.py:695
+msgid "data"
+msgstr "data"
+
+#: choices.py:696
+msgid "!data"
+msgstr "!data"
+
+#: choices.py:698
+msgid "ctrl"
+msgstr "ctrl"
+
+#: choices.py:699
+msgid "ctrl+data"
+msgstr "ctrl+data"
+
+#: choices.py:700
+msgid "ctrl+!data"
+msgstr "ctrl+!data"
+
+#: account/forms.py:55
+msgid "New Password"
+msgstr "Nové heslo"
+
+#: account/forms.py:60
+msgid "Confirm New Password"
+msgstr "Potvrdit nové heslo"
+
+#: account/forms.py:68
+msgid "Passwords do not match"
+msgstr "Hesla se neshodují            "
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr "Domácí adresář nesmí obsahovat dvojtečku"
+
+#: account/forms.py:561
+msgid "Home directory must end with username"
+msgstr "Domovský adresář musí končit uživatelským jménem"
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr "Povolit Sudo            "
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr "Systémový uživatel          "
+
+#: account/models.py:142
+msgid "Disable password login"
+msgstr "Vypnout přihlašování heslem"
+
+#: account/models.py:241
+msgid "Group Membership"
+msgstr "Členství ve skupině"
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr "Členství ve skupině"
+
+#: api/resources.py:767
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+msgid "Locked"
+msgstr "Zamknuto"
+
+#: api/resources.py:860
+msgid "on every %(days)s"
+msgstr "každý %s den"
+
+#: api/resources.py:866
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr "Od %(begin)s do %(end)s, %(repeat)s"
+
+#: common/system.py:278
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr "Připojení selhalo (%(retcode)s) -> %(output)s"
+
+#: freeadmin/forms.py:220
+msgid "A file is required"
+msgstr "Je požadovaný soubor"
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr "Neplatná adresa: %s"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+msgid "Invalid network: %s"
+msgstr "Neplatná síť: %s"
+
+#: freeadmin/navtree.py:608
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr "Nelze přeložit url, vynechávám %(node)s: %(error)s"
+
+#: jails/admin.py:75
+#: jails/forms.py:725
+#: jails/models.py:403
+#: templates/plugins/plugins.html:21
+msgid "Jail"
+msgstr "Žalář"
+
+#: jails/admin.py:192
+msgid "Edit Jail"
+msgstr "Upravit žalář"
+
+#: jails/admin.py:195
+#: jails/nav.py:264
+msgid "Add Storage"
+msgstr "Přidat uložiště"
+
+#: jails/admin.py:198
+#: templates/plugins/available_datagrid.html:27
+msgid "Upload Plugin"
+msgstr "Nahrát zásuvný modul"
+
+#: jails/admin.py:207
+msgid "Stop"
+msgstr "Stop"
+
+#: jails/admin.py:271
+#: jails/models.py:353
+msgid "URL"
+msgstr "URL"
+
+#: jails/forms.py:89
+msgid "type"
+msgstr "typ"
+
+#: jails/forms.py:234
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr "Šablonu nelze nalézt!"
+
+#: jails/forms.py:451
+msgid "Path does not exist!"
+msgstr "Cesta neexistuje!"
+
+#: jails/forms.py:459
+msgid "autostart"
+msgstr "autostart"
+
+#: jails/forms.py:460
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr "VIMAGE"
+
+#: jails/forms.py:461
+#: jails/models.py:162
+msgid "NAT"
+msgstr "NAT"
+
+#: jails/forms.py:694
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr "Toto by se nemělo stát, ale žalář nebyl nalezen"
+
+#: jails/hook.py:13
+#: jails/models.py:252
+#: jails/models.py:253
+#: jails/nav.py:47
+#: templates/jails/index.html:17
+msgid "Jails"
+msgstr "Žaláře"
+
+#: jails/models.py:73
+msgid "Jail Name"
+msgstr "Název žaláře"
+
+#: jails/models.py:107
+msgid "IPv4 default gateway"
+msgstr "IPv4 výchozí brána"
+
+#: jails/models.py:113
+msgid "IPv6 address"
+msgstr "IPv6 Adresa"
+
+#: jails/models.py:119
+msgid "IPv6 aliases"
+msgstr "IPv6 Aliasy"
+
+#: jails/models.py:138
+msgid "IPv6 default gateway"
+msgstr "Výchozí brána IPv6"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr "MAC"
+
+#: jails/models.py:224
+msgid "This jail is required by %d plugin(s)"
+msgstr "Tento žalář je vyžadován %d pluginem(ny)"
+
+#: jails/models.py:260
+msgid "Jail Root"
+msgstr "Root žaláře"
+
+#: jails/models.py:261
+msgid "Path where to store jail data"
+msgstr "Cesta, kam jsou ukládána data žaláře"
+
+#: jails/models.py:265
+msgid "IPv4 Network"
+msgstr "IPv4 síť"
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr "IPv4 rozsah pro žaláře a zásuvné moduly"
+
+#: jails/models.py:270
+msgid "IPv4 Network Start Address"
+msgstr "IPv4 počáteční síťová adresa"
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr "Počáteční IPv4 adresa pro žaláře a zásuvné moduly"
+
+#: jails/models.py:275
+msgid "IPv4 Network End Address"
+msgstr "IPv4 koncová síťová adresa"
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr "Konečná IPv4 adresa pro žaláře a zásuvné moduly"
+
+#: jails/models.py:280
+msgid "IPv6 Network"
+msgstr "IPv6 síť"
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr "IPv6 rozsah pro žaláře a zásuvné moduly"
+
+#: jails/models.py:286
+msgid "IPv6 network start address for jails and plugins"
+msgstr "Počáteční IPv6 adresa pro žaláře a zásuvné moduly"
+
+#: jails/models.py:291
+msgid "IPv6 network end address for jails and plugins"
+msgstr "Konečná IPv6 adresa pro žaláře a zásuvné moduly"
+
+#: jails/models.py:294
+msgid "Collection URL"
+msgstr "URL kolekce"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr "URL s indexem žalářů"
+
+#: jails/models.py:305
+#: jails/models.py:306
+msgid "Jails Configuration"
+msgstr "Konfigurace žalářů"
+
+#: jails/models.py:353
+msgid "Architecture"
+msgstr "Architektura"
+
+#: jails/models.py:347
+msgid "OS"
+msgstr "OS"
+
+#: jails/models.py:395
+#: jails/models.py:396
+msgid "Jail Templates"
+msgstr "Žalářové šablony"
+
+#: jails/models.py:415
+msgid "Read-Only"
+msgstr "Jen pro čtení"
+
+#: jails/nav.py:70
+msgid "Add Jails"
+msgstr "Přidat žaláře"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr "Přidat žalářové šablony"
+
+#: jails/nav.py:100
+msgid "View Jails"
+msgstr "Zobrazit žaláře"
+
+#: jails/nav.py:114
+msgid "View Jail Templates"
+msgstr "Zobrazit žalářové šablony"
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:40
+#: templates/plugins/index.html:20
+msgid "Configuration"
+msgstr "Nastavení"
+
+#: jails/utils.py:567
+msgid "Unable to determine IPv4 for plugin"
+msgstr "Nebyla zjištěna IPv4 zásuvného modulu"
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr "Chyba při instalaci zásuvného modulu: %s"
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr "Pro pokračování musíte vytvořit ZFS svazek!"
+
+#: jails/utils.py:694
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr "Selhalo vytvoření datasetu %(name)s: %(error)s"
+
+#: jails/views.py:96
+msgid "Jail successfully edited."
+msgstr "Žalář úspěšně editován."
+
+#: jails/views.py:136
+msgid "Jail successfully started."
+msgstr "Žalář úspěšně spuštěn."
+
+#: jails/views.py:157
+msgid "Jail successfully stopped."
+msgstr "Žalář úspěšně zastaven."
+
+#: jails/views.py:178
+msgid "Jail successfully deleted."
+msgstr "Žalář úspěšně smazán."
+
+#: jails/views.py:399
+msgid "Jail template successfully edited."
+msgstr "Šablona žaláře úspěšně editována."
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr "Probíhá"
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr "Dokončeno"
+
+#: middleware/zfs.py:644
+msgid "Canceled"
+msgstr "Zrušeno"
+
+#: network/admin.py:39
+msgid "IPv4 Addresses"
+msgstr "IPv4 adresa"
+
+#: network/admin.py:44
+msgid "IPv6 Addresses"
+msgstr "IPv6 adresa"
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr "Pouze jendo rozhraní může být použito pro DHCP"
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr "Pouze jendo rozhraní může mít povolenou IPv6 autokonfiguraci"
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr "Síť %s je už použita jinou NIC."
+
+#: network/forms.py:284
+msgid "The IP \"%s\" is not valid"
+msgstr "IP %s není platná"
+
+#: network/forms.py:373
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr "Rozhraní se musí jmenovat vlanX kde X je jméno. Například: vlan0"
+
+#: network/models.py:401
+msgid "LAGG Interface Group"
+msgstr "Rozhraní skupiny LAGG"
+
+#: plugins/admin.py:58
+#: plugins/admin.py:65
+msgid "Install"
+msgstr "Instalovat"
+
+#: plugins/forms.py:105
+msgid "Plugin Jail"
+msgstr "Žalář zásuvného modulu"
+
+#: plugins/forms.py:106
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr "Žalář zásuvného modulu, do kterého bude nainstalováno PBI."
+
+#: plugins/models.py:93
+msgid "Plugin jail name"
+msgstr "Název žaláře zásuvného modulu"
+
+#: plugins/models.py:94
+msgid "Jail where the plugin is installed"
+msgstr "Žalář, do kterého bude nainstalován zásuvný modul"
+
+#: plugins/models.py:103
+msgid "Plugin"
+msgstr "Zásuvný modul"
+
+#: plugins/models.py:175
+msgid "URL for the plugins repository"
+msgstr "URL repositáře zásuvných modulů"
+
+#: plugins/views.py:173
+msgid "Plugin not installed"
+msgstr "Zásuvný modul není nainstalován"
+
+#: plugins/views.py:183
+#: plugins/views.py:244
+msgid "Invalid plugin"
+msgstr "Neplatný zásuvný modul"
+
+#: plugins/views.py:194
+#: plugins/views.py:252
+msgid "Failed to download plugin"
+msgstr "Selhalo stahování zásuvného modulu"
+
+#: plugins/views.py:198
+msgid "Jail does not exist"
+msgstr "Žalář neexistuje"
+
+#: plugins/views.py:207
+msgid "Failed to update plugin"
+msgstr "Selhal update zásuvného modulu"
+
+#: services/models.py:1544
+msgid "Kerberos Server"
+msgstr "Kerberos server"
+
+#: sharing/models.py:201
+msgid "Authorized networks"
+msgstr "Oprávněná síť"
+
+#: sharing/models.py:208
+msgid "Authorized IP addresses or hosts"
+msgstr "Oprávněná IP adresa nebo název hostitele"
+
+#: sharing/models.py:209
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr "IP adresy nebo hostitelská jména oprávněná k přístupu k NFS sdílení."
+
+#: sharing/models.py:258
+msgid "The specified group's permission are used by all clients"
+msgstr "Určená skupinová oprávnění použitá všemi klienty"
+
+#: storage/admin.py:36
+msgid "Wipe"
+msgstr "Vymazat"
+
+#: storage/admin.py:394
+msgid "Read"
+msgstr "Čtení"
+
+#: storage/admin.py:400
+msgid "Write"
+msgstr "Zápis"
+
+#: storage/admin.py:406
+msgid "Checksum"
+msgstr "Kontrolní součet"
+
+#: storage/admin.py:464
+msgid "Edit Disk"
+msgstr "Upravit disk"
+
+#: storage/admin.py:467
+msgid "Offline"
+msgstr "Offline"
+
+#: storage/admin.py:470
+msgid "Detach"
+msgstr "Odpojit"
+
+#: storage/admin.py:473
+msgid "Replace"
+msgstr "Nahradit"
+
+#: storage/forms.py:773
+msgid "Encrypted ZFS volume?"
+msgstr "Šifrovaný ZFS svazek?"
+
+#: storage/forms.py:791
+msgid "Encryption Key"
+msgstr "Šifrovací klíč"
+
+#: storage/forms.py:794
+#: storage/forms.py:1585
+#: storage/forms.py:1904
+#: storage/forms.py:2019
+#: storage/forms.py:2131
+#: system/models.py:358
+msgid "Passphrase"
+msgstr "Heslo"
+
+#: storage/forms.py:839
+msgid "The following disks failed to attach: %s"
+msgstr "Selhalo připojení následujících disků: %s"
+
+#: storage/forms.py:1117
+#: storage/forms.py:1229
+msgid "ZFS Deduplication"
+msgstr "ZFS deduplikace"
+
+#: storage/forms.py:1272
+msgid "Size for this zvol"
+msgstr "Velikost tohoto ZFS svazku"
+
+#: storage/forms.py:2045
+msgid "Jails/Plugins"
+msgstr "Žaláře/Zásuvné moduly"
+
+#: storage/nav.py:40
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+msgid "ZFS Volume Manager"
+msgstr "Správce ZFS svazků"
+
+#: storage/nav.py:52
+#: templates/storage/volume_datagrid.html:20
+msgid "UFS Volume Manager (legacy)"
+msgstr "Správce UFS svazků (pomníček)"
+
+#: storage/views.py:115
+msgid "Please enter a hostname"
+msgstr "Zadejte prosím název hostitele"
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr "Z neznámých důvodů nebyl klíč získán"
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr "?"
+
+#: templates/plugins/available_install.html:3
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr "Opravdu chcete nainstalovat zásuvný modul \"%(plugin)s\"?"
+
+#: templates/plugins/plugin_info.html:2
+msgid "Plugin information"
+msgstr "Informace o zásuvném modulu"
+
+#: templates/plugins/plugin_update.html:3
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr "Opravdu chcete aktualizovat zásuvný modul \"%(plugin)s\"?"
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+msgid "Available Plugins"
+msgstr "Dostupné zásuvné moduly"
+
+#: templates/storage/snapshots.html:102
+msgid "Available Actions"
+msgstr "Dostupné akce"
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr "Přejete si odemknout tento svazek?"
+
+#: templates/storage/volume_datagrid.html:22
+msgid "UFS Volume Manager"
+msgstr "Správce UFS svazků"
+
+#: templates/storage/volumestatus_datagrid.html:4
+msgid "Scrub"
+msgstr "Kontrola ZFS (scrub)"
+
+#: templates/storage/volumestatus_datagrid.html:8
+msgid "Progress"
+msgstr "Postup"
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "Scan"
+msgstr "Skenování"
+
+#: templates/storage/volumestatus_datagrid.html:9
+msgid "%(scanned)s out of %(total)s"
+msgstr "%(scanned)s z %(total)s"
+
+#: templates/storage/volumestatus_datagrid.html:14
+msgid "Errors"
+msgstr "Chyby"
+
+#: templates/storage/volumestatus_datagrid.html:15
+msgid "Repaired"
+msgstr "Opraveno"
+
+#: templates/storage/wizard.html:92
+msgid "Extend Volume"
+msgstr "Rozšířit svazek"
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr "UPOZORNĚNÍ: Obnovovací klíč pro váš svazek bude zneplatněn!"
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr "Odeslat"
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr "Resetovat"
+
+#: templates/system/reboot.html:79
+msgid "System is rebooting"
+msgstr "Systém se rebootuje"
+
+#: templates/system/shutdown.html:85
+msgid "System is shutting down"
+msgstr "Systém se vypíná"

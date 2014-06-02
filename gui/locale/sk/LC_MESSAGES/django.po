@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2013-04-01 22:02+0200\n"
-"Last-Translator: ataman <mk@ataman.sk>\n"
+"PO-Revision-Date: 2013-11-30 12:37+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1385815021.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -246,9 +247,8 @@ msgstr "Plný"
 msgid "Debug"
 msgstr "Ladenie"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Predvolené"
+#~ msgid "Default"
+#~ msgstr "Predvolené"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -341,9 +341,8 @@ msgstr "Zapnúť"
 msgid "Off"
 msgstr "Vypnúť"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (odporúčané)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (odporúčané)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -530,9 +529,8 @@ msgstr "Pre overenie, zadajte rovnaké heslo ako predtým."
 msgid "Shell"
 msgstr "Shell"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Zakázať prihlásenie sa heslom"
+#~ msgid "Disable password logins"
+#~ msgstr "Zakázať prihlásenie sa heslom"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -558,9 +556,8 @@ msgstr "Mód domovský adresár"
 msgid "Auxiliary groups"
 msgstr "Pomocné skupiny"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Používateľ s takýmto uid už existuje."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Používateľ s takýmto uid už existuje."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -600,9 +597,8 @@ msgstr "Heslo je vypnuté, nechajte to prázdne"
 msgid "This field is required."
 msgstr "Toto pole je požadované."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Domovský adresár musí začínať s /mnt/ alebo byť /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "Domovský adresár musí začínať s /mnt/ alebo byť /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -727,24 +723,17 @@ msgstr "Konto"
 msgid "Admin Account"
 msgstr "Administrátorský účet"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Zmeniť heslo"
+#~ msgid "Change Password"
+#~ msgstr "Zmeniť heslo"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Zmeniť správcu"
+#~ msgid "Change Admin User"
+#~ msgstr "Zmeniť správcu"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Heslo bolo úspešne aktualizované."
+#~ msgid "Password successfully updated."
+#~ msgstr "Heslo bolo úspešne aktualizované."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Správca užívateľov bol úspešne aktualizovaný."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Správca užívateľov bol úspešne aktualizovaný."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -911,9 +900,8 @@ msgstr "Je nutné zadať názov DNS servera 1 pred vyplnením DNS servera 2"
 msgid "Parent Interface"
 msgstr "Rodičovské rozhranie"
 
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "Názov musí byť vlanXX kde XX je celočíselné"
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "Názov musí byť vlanXX kde XX je celočíselné"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1107,9 +1095,8 @@ msgstr "Agregácie spojenia"
 msgid "Link Aggregations"
 msgstr "Linka agregácie"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "Rozhranie skupiny LAGG"
+#~ msgid "LAGG Interface group"
+#~ msgstr "Rozhranie skupiny LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1151,25 +1138,22 @@ msgstr "Vytvoriť linku agregácie"
 msgid "View Link Aggregations"
 msgstr "Zobraziť spojenie zoskupenia"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG úspešne pridaný"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG úspešne pridaný"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
 msgstr "Táto IP už existuje."
 
-#: plugins/forms.py:92
-msgid "Place to temporarily place PBI file"
-msgstr "Miesto na dočasné uloženie PBI súboru"
+#~ msgid "Place to temporarily place PBI file"
+#~ msgstr "Miesto na dočasné uloženie PBI súboru"
 
-#: plugins/forms.py:93
-msgid ""
-"The system will use this place to temporarily store the PBI file before it's "
-"installed."
-msgstr ""
-"Systém použije toto miesto ako dočasné úložisko pre PBI (firmware) súbor než "
-"bude nainštalovaný."
+#~ msgid ""
+#~ "The system will use this place to temporarily store the PBI file before it's "
+#~ "installed."
+#~ msgstr ""
+#~ "Systém použije toto miesto ako dočasné úložisko pre PBI (firmware) súbor než "
+#~ "bude nainštalovaný."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
@@ -1179,10 +1163,9 @@ msgstr "PBI súbor čo bude nainštalovaný"
 msgid "You must turn off Plugins service before proceeding"
 msgstr ""
 
-#: plugins/forms.py:183
 #, python-format
-msgid "The path %s already exists"
-msgstr "Cesta %s už existuje"
+#~ msgid "The path %s already exists"
+#~ msgstr "Cesta %s už existuje"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
@@ -1513,18 +1496,16 @@ msgstr "Heslo (Potvrdenie)"
 msgid "Enter the same secret above for verification."
 msgstr "Zadajte rovnaké heslo pre overenie vyššie."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Heslo iniciátora"
+#~ msgid "Initiator Secret"
+#~ msgstr "Heslo iniciátora"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr ""
 "Heslo na strane iniciátora. (pre overovanie vzájomného CHAP (mutual CHAP))"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Heslo iniciátora (Potvrdenie)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Heslo iniciátora (Potvrdenie)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1623,19 +1604,17 @@ msgstr ""
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Disk zariadenie"
+#~ msgid "Disk device"
+#~ msgstr "Disk zariadenie"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "Váše ID Portal skupiny (Portal Group ID) nesmie byť vyššie ako %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "Vaše ID skupiny nemôže byť vyššie ako %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "Vaše ID skupiny nemôže byť vyššie ako %d"
 
 #: services/forms.py:1019
 #, fuzzy
@@ -1777,13 +1756,11 @@ msgstr ""
 "Použite túto voľbu na nahradenie masky pri tvorbe adresárov (0777 v "
 "predvolenom nastavení)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Large RW podpora"
+#~ msgid "Large RW support"
+#~ msgstr "Large RW podpora"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Posielať súbory pomocou sendfile(2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Posielať súbory pomocou sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1896,15 +1873,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Názov servera"
+#~ msgid "Server Name"
+#~ msgstr "Názov servera"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "Názov servera. Pre predvolený názov nechajte toto pole prázdne."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "Názov servera. Pre predvolený názov nechajte toto pole prázdne."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1945,17 +1920,15 @@ msgstr ""
 "Určuje koľko serverov vytvoriť. Malo by ich dostatok na zvládnutie "
 "maximalnej hladiny súbežných klientov, typicky štyri až šesť."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Asynchrónny režim"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Asynchrónny režim"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Aktivovať asynchrónny režim, ktorý pomože zvýšit výkon sieti rýchlostí "
-"väčších ako gigabit."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Aktivovať asynchrónny režim, ktorý pomože zvýšit výkon sieti rýchlostí "
+#~ "väčších ako gigabit."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2354,13 +2327,12 @@ msgstr "Poskytovateľ"
 msgid "Domain name"
 msgstr "Doména"
 
-#: services/models.py:765
-msgid ""
-"A host name alias. This option can appear multiple times, for each domain "
-"that has the same IP. Use a space to separate multiple alias names."
-msgstr ""
-"Alias pre názov hostiteľa. Táto voľba sa môže zobraziť viackrát, pre každú "
-"doménu s rovnakou IP adresou. Použite medzeru na oddelenie viacerých aliasov."
+#~ msgid ""
+#~ "A host name alias. This option can appear multiple times, for each domain "
+#~ "that has the same IP. Use a space to separate multiple alias names."
+#~ msgstr ""
+#~ "Alias pre názov hostiteľa. Táto voľba sa môže zobraziť viackrát, pre každú "
+#~ "doménu s rovnakou IP adresou. Použite medzeru na oddelenie viacerých aliasov."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2374,9 +2346,8 @@ msgstr ""
 msgid "Forced update period"
 msgstr "Čas nútenej aktualizácie"
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr "Tieto parametre budú pridané do globálnych nastavení v inadyn.conf."
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr "Tieto parametre budú pridané do globálnych nastavení v inadyn.conf."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
@@ -2602,13 +2573,11 @@ msgstr "Cesta"
 msgid "Allow Local User Login"
 msgstr "Povoliť lokálne prihlásenie používateľa"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "Banner"
+#~ msgid "Banner"
+#~ msgstr "Banner"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "Uvítací banner zobrazený FTP serverom pri prvom pripojení."
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "Uvítací banner zobrazený FTP serverom pri prvom pripojení."
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2632,9 +2601,8 @@ msgstr "Vždy použiť chroot"
 msgid "Require IDENT Authentication"
 msgstr "Požadovať IDENT autentifikáciu"
 
-#: services/models.py:1031
-msgid "Require Reverse DNS for IP"
-msgstr "Požadovať reverzné DNS pre IP"
+#~ msgid "Require Reverse DNS for IP"
+#~ msgstr "Požadovať reverzné DNS pre IP"
 
 #: services/models.py:1033
 msgid "Masquerade address"
@@ -2726,9 +2694,8 @@ msgstr ""
 "Šírka download pásma pre anonymných používateľov v KB/s. Nula znamená "
 "neobmedzená."
 
-#: services/models.py:1081
-msgid "Enable SSL/TLS"
-msgstr "Aktivovať SSL/TLS"
+#~ msgid "Enable SSL/TLS"
+#~ msgstr "Aktivovať SSL/TLS"
 
 #: services/models.py:1086
 msgid "These parameters are added to proftpd.conf."
@@ -2845,13 +2812,11 @@ msgstr ""
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1239
-msgid "Domain Controller Name"
-msgstr "Meno doménového kontrolera"
+#~ msgid "Domain Controller Name"
+#~ msgstr "Meno doménového kontrolera"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "AD alebo PDC názov."
+#~ msgid "AD or PDC name."
+#~ msgstr "AD alebo PDC názov."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3167,16 +3132,14 @@ msgstr ""
 "Oznám ak sa teplota zmenila o minimálne N stupňov Celziových od posledného "
 "oznámenia. 0 pre vypnutie"
 
-#: services/models.py:1475
-msgid "Informal"
-msgstr "Neformálne"
+#~ msgid "Informal"
+#~ msgstr "Neformálne"
 
-#: services/models.py:1476 services/models.py:1481
-msgid ""
-"Report if the temperature is greater or equal than N degrees Celsius. 0 to "
-"disable"
-msgstr ""
-"Oznám ak je teplota väčšia alebo rovná N stupňov Celzia. 0 pre vypnutie"
+#~ msgid ""
+#~ "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
+#~ "disable"
+#~ msgstr ""
+#~ "Oznám ak je teplota väčšia alebo rovná N stupňov Celzia. 0 pre vypnutie"
 
 #: services/models.py:1480
 msgid "Critical"
@@ -3186,9 +3149,8 @@ msgstr "Kritické"
 msgid "Email to report"
 msgstr "Email pre oznamy"
 
-#: services/models.py:1487
-msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr "Cieľova emailová adresa. Oddelte emailové adresy bodkočiarkou"
+#~ msgid "Destination email address. Separate email addresses by semi-colon"
+#~ msgstr "Cieľova emailová adresa. Oddelte emailové adresy bodkočiarkou"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3199,13 +3161,11 @@ msgstr "S.M.A.R.T."
 msgid "Control Services"
 msgstr "Riadiace služby"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "Rozšírenia zariadenia"
+#~ msgid "Device Extents"
+#~ msgstr "Rozšírenia zariadenia"
 
-#: services/nav.py:72
-msgid "Add Device Extent"
-msgstr "Pridať Extent zariadenia"
+#~ msgid "Add Device Extent"
+#~ msgstr "Pridať Extent zariadenia"
 
 #: services/nav.py:79
 #, fuzzy
@@ -3274,14 +3234,12 @@ msgstr "Heslo zdieľania"
 msgid "The path %s does not exist"
 msgstr "Cesta k extent-u"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "Pole neobsahuje platnú IP adresu alebo sieť"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "Pole neobsahuje platnú IP adresu alebo sieť"
 
-#: sharing/forms.py:165
 #, python-format
-msgid "The IP '%s' is not valid."
-msgstr "IP %s' nie je platná."
+#~ msgid "The IP '%s' is not valid."
+#~ msgstr "IP %s' nie je platná."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3432,16 +3390,14 @@ msgstr ""
 "Táto možnosť vám umožňuje nastaviť heslo zväzku, ktoré môže byť najviac 8 "
 "znakov dlhé (použitie ASCII je tohto času silne doporučené)."
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "Znaková sada zdieľania"
+#~ msgid "Share Character Set"
+#~ msgstr "Znaková sada zdieľania"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr ""
-"Určuje znakovú sadu zdieľania. Napríklad UTF8, UTF8-MAC, ISO-8859-15, atď."
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr ""
+#~ "Určuje znakovú sadu zdieľania. Napríklad UTF8, UTF8-MAC, ISO-8859-15, atď."
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3493,31 +3449,27 @@ msgstr ""
 "Dovoľ niektorým užívateľom a skupinám čítanie/zápis (read/write) prístup na "
 "share. Toto sleduje \"povoľ\" formát nastavenia."
 
-#: sharing/models.py:160
-msgid "Disk Discovery"
-msgstr "Disk Discovery"
+#~ msgid "Disk Discovery"
+#~ msgstr "Disk Discovery"
 
-#: sharing/models.py:161
-msgid ""
-"Allow other systems to discover this share as a disk for data, as a Time "
-"Machine backup volume or not at all."
-msgstr ""
-"Dovoliť ostatným systémom nájsť tento share ako disk pre dáta, ako Time "
-"Machine záložný volume alebo nič z toho."
+#~ msgid ""
+#~ "Allow other systems to discover this share as a disk for data, as a Time "
+#~ "Machine backup volume or not at all."
+#~ msgstr ""
+#~ "Dovoliť ostatným systémom nájsť tento share ako disk pre dáta, ako Time "
+#~ "Machine záložný volume alebo nič z toho."
 
-#: sharing/models.py:167
-msgid "Disk discovery mode"
-msgstr "Disk discovery mód"
+#~ msgid "Disk discovery mode"
+#~ msgstr "Disk discovery mód"
 
-#: sharing/models.py:168
-msgid ""
-"Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
-"behavior in MacOS. Default mode exports the volume as a data volume for "
-"users."
-msgstr ""
-"Pozor! Výber \"Time Machine\" na viacerých sharoch môže spôsobyť "
-"nepredvýdateľné správanie na MacOS. Štandardný mód exportuje volume ako "
-"dátový volume pre užívateľov."
+#~ msgid ""
+#~ "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
+#~ "behavior in MacOS. Default mode exports the volume as a data volume for "
+#~ "users."
+#~ msgstr ""
+#~ "Pozor! Výber \"Time Machine\" na viacerých sharoch môže spôsobyť "
+#~ "nepredvýdateľné správanie na MacOS. Štandardný mód exportuje volume ako "
+#~ "dátový volume pre užívateľov."
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3531,50 +3483,44 @@ msgstr ""
 "Nastav databázové informácie, ktoré budú uložené v ceste. Máš špecifikovať "
 "miesto, kde sa dá zapisovať, napriek tomu že zväzok je iba na čítanie."
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "Cache CNID"
+#~ msgid "Cache CNID"
+#~ msgstr "Cache CNID"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"Dovoluje afpd používať ID informácie uložené v AppleDouble V2 hlavičkovom "
-"súbore pre redukcie záťaže databáze. Neaktivujte túto možnosť aj je zväzok "
-"(volume) modifikovaný aj inými ako AFP klientami (NFS/SMB/local)."
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "Dovoluje afpd používať ID informácie uložené v AppleDouble V2 hlavičkovom "
+#~ "súbore pre redukcie záťaže databáze. Neaktivujte túto možnosť aj je zväzok "
+#~ "(volume) modifikovaný aj inými ako AFP klientami (NFS/SMB/local)."
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "Prekladať CR/LF"
+#~ msgid "Translate CR/LF"
+#~ msgstr "Prekladať CR/LF"
 
-#: sharing/models.py:182
-msgid ""
-"Enables crlf translation for TEXT files, automatically converting macintosh "
-"line breaks into Unix ones. Use of this option might be dangerous since some "
-"older programs store binary data files as type 'TEXT' when saving and switch "
-"the filetype in a second step. Afpd will potentially destroy such files when "
-"'erroneously' changing bytes in order to do line break translation."
-msgstr ""
-"Aktivuje preklad crlf pre TEXTOVÉ súbory, automaticky konvertuje macintosh "
-"zalomovanie riadkov na Unix. Použitie tejto možnosti môže byť nebezpečné, "
-"pretože niektoré staré programy ukladajú binárne dátové súbory ako typ "
-"'TEXT' pri ukladaní a zmenia príponu súboru v druhom kroku. Afpd "
-"potencionálne zničí takéto súbory, keďže bude nesprávne meniť bajty aby "
-"vykonal preklad zalomení riadkov."
+#~ msgid ""
+#~ "Enables crlf translation for TEXT files, automatically converting macintosh "
+#~ "line breaks into Unix ones. Use of this option might be dangerous since some "
+#~ "older programs store binary data files as type 'TEXT' when saving and switch "
+#~ "the filetype in a second step. Afpd will potentially destroy such files when "
+#~ "'erroneously' changing bytes in order to do line break translation."
+#~ msgstr ""
+#~ "Aktivuje preklad crlf pre TEXTOVÉ súbory, automaticky konvertuje macintosh "
+#~ "zalomovanie riadkov na Unix. Použitie tejto možnosti môže byť nebezpečné, "
+#~ "pretože niektoré staré programy ukladajú binárne dátové súbory ako typ "
+#~ "'TEXT' pri ukladaní a zmenia príponu súboru v druhom kroku. Afpd "
+#~ "potencionálne zničí takéto súbory, keďže bude nesprávne meniť bajty aby "
+#~ "vykonal preklad zalomení riadkov."
 
-#: sharing/models.py:185
-msgid "Windows File Names"
-msgstr "Windows názvy súborov"
+#~ msgid "Windows File Names"
+#~ msgstr "Windows názvy súborov"
 
-#: sharing/models.py:186
-msgid ""
-"This forces filenames to be restricted to the character set used by Windows. "
-"This is not recommended for shares used principally by Mac computers."
-msgstr ""
-"Toto nastavenie obmedzuje názvy súborov na znakovú sadu použitú vo Windows. "
-"Nie je odporúčané pre zdieľané adresáre používané Mac počítačmi."
+#~ msgid ""
+#~ "This forces filenames to be restricted to the character set used by Windows. "
+#~ "This is not recommended for shares used principally by Mac computers."
+#~ msgstr ""
+#~ "Toto nastavenie obmedzuje názvy súborov na znakovú sadu použitú vo Windows. "
+#~ "Nie je odporúčané pre zdieľané adresáre používané Mac počítačmi."
 
 #: sharing/models.py:189
 #, fuzzy
@@ -3602,33 +3548,27 @@ msgstr ""
 "Vždy použi 0 ako číslo zariadenia, pomôže to, keď číslo zariadenia nie je "
 "konštantné po reboote, cluster, ..."
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "Deaktivuj ID súboru"
+#~ msgid "Disable File ID"
+#~ msgstr "Deaktivuj ID súboru"
 
-#: sharing/models.py:201
-msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "Neoznamovať createfileid, resolveid, deleteid volania."
+#~ msgid "Don't advertise createfileid, resolveid, deleteid calls."
+#~ msgstr "Neoznamovať createfileid, resolveid, deleteid volania."
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "Deaktivovať :hex názvy"
+#~ msgid "Disable :hex Names"
+#~ msgstr "Deaktivovať :hex názvy"
 
-#: sharing/models.py:205
-msgid ""
-"Disable :hex translations for anything except dot files. This option makes "
-"the '/' character illegal."
-msgstr ""
-"Deaktivuje :hex preklady pre všetko okrem súborov začínajúcich bodkou. Táto "
-"možnosť zneplatňuje znak '/'."
+#~ msgid ""
+#~ "Disable :hex translations for anything except dot files. This option makes "
+#~ "the '/' character illegal."
+#~ msgstr ""
+#~ "Deaktivuje :hex preklady pre všetko okrem súborov začínajúcich bodkou. Táto "
+#~ "možnosť zneplatňuje znak '/'."
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "Poskytnúť kompatibilitu s Apple II klientami."
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "Poskytnúť kompatibilitu s Apple II klientami."
 
 #: sharing/models.py:212
 msgid "No Stat"
@@ -3670,19 +3610,17 @@ msgstr "Apple Share"
 msgid "Apple (AFP) Shares"
 msgstr "Apple share"
 
-#: sharing/models.py:268
-msgid "Authorized network or IP addresses"
-msgstr "Autorizovaná sieť alebo IP adresa"
+#~ msgid "Authorized network or IP addresses"
+#~ msgstr "Autorizovaná sieť alebo IP adresa"
 
-#: sharing/models.py:269
-msgid ""
-"Network that is authorized to access the NFS share or a list of IP "
-"addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
-"number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
-msgstr ""
-"Sieť, ktorá je autorizovaná pristúpiť k zdieľanému NFS alebo zoznam IP "
-"adries. Určte čísla sietí vo formáte 1.2.3.4/xx, kde xx je počet bitov "
-"sieťovej masky alebo zoznam IP adries v tvare 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgid ""
+#~ "Network that is authorized to access the NFS share or a list of IP "
+#~ "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
+#~ "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
+#~ msgstr ""
+#~ "Sieť, ktorá je autorizovaná pristúpiť k zdieľanému NFS alebo zoznam IP "
+#~ "adries. Určte čísla sietí vo formáte 1.2.3.4/xx, kde xx je počet bitov "
+#~ "sieťovej masky alebo zoznam IP adries v tvare 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:273
 msgid "All Directories"
@@ -3720,33 +3658,29 @@ msgstr ""
 msgid "Maproot User"
 msgstr "Maproot užívateľ"
 
-#: sharing/models.py:289
-msgid "User to map root to"
-msgstr "Užívateľ mapuje roota do"
+#~ msgid "User to map root to"
+#~ msgstr "Užívateľ mapuje roota do"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "Maproot skupina"
 
-#: sharing/models.py:296
-msgid "Group to map root to"
-msgstr "Mapovať skupinu root do"
+#~ msgid "Group to map root to"
+#~ msgstr "Mapovať skupinu root do"
 
 #: sharing/models.py:299
 msgid "Mapall User"
 msgstr "Mapall užívateľ"
 
-#: sharing/models.py:303
-msgid "User to map all users to"
-msgstr "Užívateľ mapujúci všetkých užívateľov do"
+#~ msgid "User to map all users to"
+#~ msgstr "Užívateľ mapujúci všetkých užívateľov do"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "Mapall skupina"
 
-#: sharing/models.py:310
-msgid "Group to map all users to"
-msgstr "Skupina mapujúca všetkých užívateľov do"
+#~ msgid "Group to map all users to"
+#~ msgstr "Skupina mapujúca všetkých užívateľov do"
 
 #: sharing/models.py:321
 #, fuzzy
@@ -3777,14 +3711,11 @@ msgstr "Používateľ %s neexistuje."
 msgid "Volume name"
 msgstr "Meno volumu/zväzku"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "Typ súborového systému"
+#~ msgid "Filesystem type"
+#~ msgstr "Typ súborového systému"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "Vynútiť 4096-bytovú veľkosť sektora"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "Vynútiť 4096-bytovú veľkosť sektora"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
@@ -3833,21 +3764,18 @@ msgid ""
 "append a virtual device"
 msgstr ""
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "Musíte vybrať súborový systém"
+#~ msgid "You must select a filesystem"
+#~ msgstr "Musíte vybrať súborový systém"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "Zväzok s rovnakým názvom už existuje"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" je vyhradené slovo a preto nemôže byť použité"
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"log\" je vyhradené slovo a preto nemôže byť použité"
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "Názov zväzku NEmôže začínať s c[0-9], mirror, raidz alebo spare."
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr "Názov zväzku NEmôže začínať s c[0-9], mirror, raidz alebo spare."
 
 #: storage/forms.py:311
 #, fuzzy
@@ -3952,13 +3880,11 @@ msgstr "Kvota pre tento dataset"
 msgid "Reserved space for this volume"
 msgstr "Rezervované miesto pre tento dataset"
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "Meno ZFS zväzku"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "Meno ZFS zväzku"
 
-#: storage/forms.py:845
-msgid "Size for this ZFS Volume"
-msgstr "Veľkosť tohto ZFS zväzku"
+#~ msgid "Size for this ZFS Volume"
+#~ msgstr "Veľkosť tohto ZFS zväzku"
 
 #: storage/forms.py:846
 #, fuzzy
@@ -4409,10 +4335,8 @@ msgstr "Automaticky importovať zväzok"
 msgid "View Volumes"
 msgstr "Ukázať všetky zväzky"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "Vytvoriť ZFS zväzok (ZFS volume)"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "Vytvoriť ZFS zväzok (ZFS volume)"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4488,9 +4412,8 @@ msgstr "Snímok úspešne vymazaný."
 msgid "Rollback successful."
 msgstr "Návrat úspešný."
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "Snímka úspešne pridaná."
+#~ msgid "Snapshot successfully added."
+#~ msgstr "Snímka úspešne pridaná."
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4720,25 +4643,21 @@ msgstr "Použiť sériovú konzolu"
 msgid "Enable screen saver"
 msgstr "Aktivovať šetrič obrazovky"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "Automaticky kontrolovať nový firmware"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "Automaticky kontrolovať nový firmware"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "Pípnuť pri boote"
+#~ msgid "Beep on boot"
+#~ msgstr "Pípnuť pri boote"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "Zapnúť Špecíalny Túnovací Systém"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "Zapnúť Špecíalny Túnovací Systém"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "Aktivovať powerd (pre šetrenie energie)"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "Aktivovať Zeroconf/Bonjour"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "Aktivovať Zeroconf/Bonjour"
 
 #: system/models.py:174
 #, fuzzy
@@ -5138,9 +5057,8 @@ msgstr "Váš testovací email nemohol byť odoslaný:"
 msgid "Your test email has been sent!"
 msgstr "Váš testovací email bol odoslaný!"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Stránka nebola nájdená"
+#~ msgid "Page Not Found"
+#~ msgstr "Stránka nebola nájdená"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -5162,10 +5080,8 @@ msgstr "Nápoveda"
 msgid "Log In"
 msgstr "Prihlásiť sa"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -5173,11 +5089,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "Členovia"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Upraviť"
+#~ msgid "Modify"
+#~ msgstr "Upraviť"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5191,52 +5104,42 @@ msgstr "Upraviť skupinu"
 msgid "Delete Group"
 msgstr "Zmazať skupinu"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "Neexistujú žiadne používateľom definované skupiny."
+#~ msgid "There are no user defined groups."
+#~ msgstr "Neexistujú žiadne používateľom definované skupiny."
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "Pridať novú skupinu"
+#~ msgid "Add New Group"
+#~ msgstr "Pridať novú skupinu"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "Domov"
+#~ msgid "Home"
+#~ msgstr "Domov"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
 msgstr "Upraviť používateľa"
 
-#: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
-#: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
-msgid "Auxiliary Groups"
-msgstr "Prídavné skupiny"
+#~ msgid "Auxiliary Groups"
+#~ msgstr "Prídavné skupiny"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
 msgstr "Odstrániť používateľa"
 
-#: templates/account/bsdusers.html:58
-msgid "Delete User"
-msgstr "Zmazať používateľa"
+#~ msgid "Delete User"
+#~ msgstr "Zmazať používateľa"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "Žiadny používatelia nie sú definovaní"
+#~ msgid "No users defined"
+#~ msgstr "Žiadny používatelia nie sú definovaní"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "Pridať nového používateľa"
+#~ msgid "Add New User"
+#~ msgstr "Pridať nového používateľa"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "Zmeniť E-mail"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "Zmeniť heslo administrátora"
+#~ msgid "Change Admin Password"
+#~ msgstr "Zmeniť heslo administrátora"
 
 #: templates/freeadmin/advanced_btn.html:25
 #, fuzzy
@@ -5385,9 +5288,8 @@ msgstr "Dokumentácia"
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS Dokumentácia"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "IPv6 Auto"
+#~ msgid "IPv6 Auto"
+#~ msgstr "IPv6 Auto"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5429,22 +5331,18 @@ msgstr "Dostupné akcie"
 msgid "Edit"
 msgstr "Upraviť"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "Upraviť rozhranie"
+#~ msgid "Edit Interface"
+#~ msgstr "Upraviť rozhranie"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "Zmazať rozhranie"
+#~ msgid "Delete Interface"
+#~ msgstr "Zmazať rozhranie"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
 msgstr "Žiadne rozhrania nie sú definované"
 
-#: templates/network/interface.html:47 templates/network/interface.html:49
-msgid "Add Interface"
-msgstr "Pridať rozhranie"
+#~ msgid "Add Interface"
+#~ msgstr "Pridať rozhranie"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5460,50 +5358,38 @@ msgstr "Upraviť členov"
 msgid "LAGG Members"
 msgstr "LAGG člen"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "Žiadne LAGG rozhranie nie je definované"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "Žiadne LAGG rozhranie nie je definované"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "Pridať LAGG rozhranie"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "Pridať LAGG rozhranie"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "Pridať LAGG"
+#~ msgid "Add LAGG"
+#~ msgstr "Pridať LAGG"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "Priorita zoraďovania"
+#~ msgid "Ordering Priority"
+#~ msgstr "Priorita zoraďovania"
 
-#: templates/network/lagg_members.html:7
-msgid "Startup option"
-msgstr "Štartovacie možnosti"
+#~ msgid "Startup option"
+#~ msgstr "Štartovacie možnosti"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "Akcia"
+#~ msgid "Action"
+#~ msgstr "Akcia"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "Pridať LAGG člena"
+#~ msgid "Add LAGG Member"
+#~ msgstr "Pridať LAGG člena"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "Upraviť statickú cestu/smerovanie"
+#~ msgid "Edit Static Route"
+#~ msgstr "Upraviť statickú cestu/smerovanie"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "Zmazať statickú cestu"
+#~ msgid "Delete Static Route"
+#~ msgstr "Zmazať statickú cestu"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "Žiadna statická cesta nieje definovaná"
+#~ msgid "No static route defined"
+#~ msgstr "Žiadna statická cesta nieje definovaná"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "Pridať statickú cestu"
+#~ msgid "Add Static Route"
+#~ msgstr "Pridať statickú cestu"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5521,21 +5407,17 @@ msgstr "Východisková cesta/smer"
 msgid "No default route defined"
 msgstr "Východisková cesta/smer nie je definovaná"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "Upraviť VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "Upraviť VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "Zmazať VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "Zmazať VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "Žiaden VLAN nie je definovaný"
+#~ msgid "No VLAN defined"
+#~ msgstr "Žiaden VLAN nie je definovaný"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "Pridať VLAN rozhranie"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "Pridať VLAN rozhranie"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
@@ -5632,9 +5514,8 @@ msgstr "Vitajte, %(username)s. Ďakujeme za prihlásenie."
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
 msgstr ""
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "Prosím prihláste sa."
+#~ msgid "Please log in."
+#~ msgstr "Prosím prihláste sa."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5652,9 +5533,8 @@ msgstr "Znova sa prihlásiť"
 msgid "AFP Settings"
 msgstr "AFP Nastavenia"
 
-#: templates/services/core.html:21
-msgid "Active Directory Settings"
-msgstr "Active Directory Nastavenia"
+#~ msgid "Active Directory Settings"
+#~ msgstr "Active Directory Nastavenia"
 
 #: templates/services/core.html:32
 msgid "CIFS Settings"
@@ -5672,9 +5552,8 @@ msgstr "FTP Nastavenia"
 msgid "ISCSI Settings"
 msgstr "ISCSI Nastavenia"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "LDAP Nastavenia"
+#~ msgid "LDAP Settings"
+#~ msgstr "LDAP Nastavenia"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
@@ -5739,9 +5618,8 @@ msgstr "Portály"
 msgid "Authorized Initiators"
 msgstr "Autorizovaný Iniciátor"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "Autentifikácia"
+#~ msgid "Authentication"
+#~ msgstr "Autentifikácia"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5760,45 +5638,36 @@ msgstr "Asociované ciele"
 msgid "No associated targets defined"
 msgstr "Žiadne ciele nie sú definované"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "Pridať Extent ku cieľu"
+#~ msgid "Add Extent to Target"
+#~ msgstr "Pridať Extent ku cieľu"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "Pridať Extent ku cieľu"
+#~ msgid "Add Extent To Target"
+#~ msgstr "Pridať Extent ku cieľu"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "Peer"
+#~ msgid "Peer"
+#~ msgstr "Peer"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "Pridať iSCSI Používateľa"
+#~ msgid "Add iSCSI User"
+#~ msgstr "Pridať iSCSI Používateľa"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "Autorizovaná Sieť"
+#~ msgid "Authorized Network"
+#~ msgstr "Autorizovaná Sieť"
 
 #: templates/services/iscsi_authini.html:35
 #, fuzzy
 msgid "No authorized initiators defined"
 msgstr "Autorizovaný Iniciátor"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "Pridať autorizovaného iniciátora"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "Pridať autorizovaného iniciátora"
 
 #: templates/services/iscsi_dextents.html:33
 #, fuzzy
 msgid "No device extents defined"
 msgstr "Žiadne ciele nie sú definované"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "Pridať Extent"
+#~ msgid "Add Extent"
+#~ msgstr "Pridať Extent"
 
 #: templates/services/iscsi_extents.html:5
 #, fuzzy
@@ -5818,32 +5687,25 @@ msgstr "Počúvať"
 msgid "No IP defined for this Portal"
 msgstr ""
 
-#: templates/services/iscsi_portals.html:26
-msgid "Edit Portal"
-msgstr "Upraviť Portál"
+#~ msgid "Edit Portal"
+#~ msgstr "Upraviť Portál"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "Zmazať Portál"
+#~ msgid "Delete Portal"
+#~ msgstr "Zmazať Portál"
 
 #: templates/services/iscsi_portals.html:39
 #, fuzzy
 msgid "No portals defined"
 msgstr "Žiadne ciele nie sú definované"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "Pridať Portál"
+#~ msgid "Add Portal"
+#~ msgstr "Pridať Portál"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "Žiadne ciele nie sú definované"
+#~ msgid "No targets defined"
+#~ msgstr "Žiadne ciele nie sú definované"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "Pridať Cieľ"
+#~ msgid "Add Target"
+#~ msgstr "Pridať Cieľ"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -5892,14 +5754,11 @@ msgstr ""
 msgid "Delete Plugins Jail"
 msgstr "Vymazať obsiahnutý súbor"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "Žiadne definované rsync moduly"
+#~ msgid "No rsync modules defined"
+#~ msgstr "Žiadne definované rsync moduly"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "Aktívne Zdieľané Adresáre"
+#~ msgid "Active Shares"
+#~ msgstr "Aktívne Zdieľané Adresáre"
 
 #: templates/sharing/apple.html:7
 #, fuzzy
@@ -5916,10 +5775,8 @@ msgstr "Upraviť Apple Zdieľaný Adresár"
 msgid "Delete Apple (AFP) Share"
 msgstr "Zmazať Apple Zdieľaný Adresár"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "Žiadne zdieľané adresáre nie sú definované"
+#~ msgid "No shares defined"
+#~ msgstr "Žiadne zdieľané adresáre nie sú definované"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 #, fuzzy
@@ -5946,9 +5803,8 @@ msgstr "Pridať Windows Zdieľaný Adresár (CIFS)"
 msgid "There are no active UNIX (NFS) shares."
 msgstr "Nie sú žiadne aktívne UNIX Zdieľané Adresáre."
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "Prípojný bod"
+#~ msgid "Mountpoint"
+#~ msgstr "Prípojný bod"
 
 #: templates/sharing/unix.html:29
 #, fuzzy
@@ -6093,27 +5949,20 @@ msgid ""
 "to create a replication task"
 msgstr ""
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "Posledná snímka"
+#~ msgid "Last snapshot"
+#~ msgstr "Posledná snímka"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "Vzdialený ZFS súborový systém"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "Vzdialený ZFS súborový systém"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "Odstrániť replikáciu"
+#~ msgid "Delete Replication"
+#~ msgstr "Odstrániť replikáciu"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "Upraviť replikáciu"
+#~ msgid "Edit Replication"
+#~ msgstr "Upraviť replikáciu"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "Žiadna dostupná ZFS replikácia"
+#~ msgid "No ZFS replication available"
+#~ msgstr "Žiadna dostupná ZFS replikácia"
 
 #: templates/storage/scrub.html:42
 #, fuzzy
@@ -6185,41 +6034,34 @@ msgstr "Klonovať snímok"
 msgid "Periodic Snapshots"
 msgstr "Periodické snímky"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "Rozvrh periodických snímkov"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "Rozvrh periodických snímkov"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "Nie sú naplánované žiadne snímky."
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "Nie sú naplánované žiadne snímky."
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "Ako"
+#~ msgid "How"
+#~ msgstr "Ako"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "Zachovať snímok pre"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "Od"
+#~ msgid "From"
+#~ msgstr "Od"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "cez"
+#~ msgid "through"
+#~ msgstr "cez"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ", každý"
+#~ msgid ", every"
+#~ msgstr ", každý"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "každý deň"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "každý"
+#~ msgid "on every"
+#~ msgstr "každý"
 
 #: templates/storage/tasks.html:147
 #, fuzzy
@@ -6281,13 +6123,11 @@ msgstr "Zväzky"
 msgid "Destroy Dataset"
 msgstr "Odstrániť sadu dát"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "Odstrániť ZFS zväzok (ZFS volume)"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "Odstrániť ZFS zväzok (ZFS volume)"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "Žiadne zväzky definované"
+#~ msgid "No volumes defined"
+#~ msgstr "Žiadne zväzky definované"
 
 #: templates/storage/wizard.html:27
 #, fuzzy
@@ -6302,25 +6142,20 @@ msgstr "Členský disk"
 msgid "Group type"
 msgstr "Typ skupiny"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS Extra"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS Extra"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Použitie iba 1 logovacieho disku je silno nedoporučované"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "Použitie iba 1 logovacieho disku je silno nedoporučované"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Záznam"
+#~ msgid "Log"
+#~ msgstr "Záznam"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "Cache"
+#~ msgid "Cache"
+#~ msgstr "Cache"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "Náhrada"
+#~ msgid "Spare"
+#~ msgstr "Náhrada"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6340,21 +6175,18 @@ msgstr "Vymeniť disk"
 msgid "Create ZFS volume on %(name)s"
 msgstr "Vytvoriť ZFS zväzok (ZFS volume)"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "Pridať ZFS zväzok"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "Pridať ZFS zväzok"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "Obnoviť LDAP/AD cache"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "Cache sa obnovuje."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "Cache sa obnovuje."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "Cache nemôže byť obnovená"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "Cache nemôže byť obnovená"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6414,9 +6246,8 @@ msgstr ""
 msgid "iBurst"
 msgstr ""
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "Doménový (DNS) server nie je definovaný"
+#~ msgid "No NTP servers defined."
+#~ msgstr "Doménový (DNS) server nie je definovaný"
 
 #: templates/system/ntpserver.html:44
 #, fuzzy
@@ -6464,9 +6295,8 @@ msgstr "Žiadny definovaný rsync"
 msgid "Add rsync task"
 msgstr "Pridať rsync"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Pridať rsync"
+#~ msgid "Add Rsync"
+#~ msgstr "Pridať rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6620,11 +6450,11 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritické"
 
-msgid "Selected"
-msgstr "Vybraný"
+#~ msgid "Selected"
+#~ msgstr "Vybraný"
 
-msgid "SHA256 sum for the PBI file"
-msgstr "SHA256 kontrolný súčet pre PBI súbor"
+#~ msgid "SHA256 sum for the PBI file"
+#~ msgstr "SHA256 kontrolný súčet pre PBI súbor"
 
 #, fuzzy
 msgid "Plugin uname"
@@ -6638,26 +6468,26 @@ msgstr "Cesta k prípojnému bodu"
 msgid "Control Plugins"
 msgstr "Riadiace služby"
 
-msgid "Allow guest access"
-msgstr "Povoliť prístup hosťa"
+#~ msgid "Allow guest access"
+#~ msgstr "Povoliť prístup hosťa"
 
-msgid "Only allow guest access"
-msgstr "Povoliť iba hosťovský (guest) pristup"
+#~ msgid "Only allow guest access"
+#~ msgstr "Povoliť iba hosťovský (guest) pristup"
 
-msgid "Invalid prefix"
-msgstr "Neplatná predpona (prefix)"
+#~ msgid "Invalid prefix"
+#~ msgstr "Neplatná predpona (prefix)"
 
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
-"Koľko minút musí ubehnúť od poslednej snímky, aby bola urobená nová "
-"snímka."
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr ""
+#~ "Koľko minút musí ubehnúť od poslednej snímky, aby bola urobená nová "
+#~ "snímka."
 
-msgid "An error occurred when setting the options"
-msgstr "Pri nastavovaní volieb sa vyskytla chyba"
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "Pri nastavovaní volieb sa vyskytla chyba"
 
-msgid "Service Pack image to be installed"
-msgstr "Service Pack obraz ktorý bude inštalovaný"
+#~ msgid "Service Pack image to be installed"
+#~ msgstr "Service Pack obraz ktorý bude inštalovaný"
 
 #, fuzzy
 msgid "Invalid service pack"
@@ -6683,120 +6513,120 @@ msgstr "Zobraziť disky"
 msgid "View Tunables"
 msgstr "Zobraziť všetkých používateľov"
 
-msgid "Browse"
-msgstr "Prehliadať"
+#~ msgid "Browse"
+#~ msgstr "Prehliadať"
 
-msgid "Close"
-msgstr "Zatvoriť"
+#~ msgid "Close"
+#~ msgstr "Zatvoriť"
 
 #, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "Pridať Apple Zideľaný Adresár"
 
-msgid "Apply Service Pack"
-msgstr "Aplikovať Service Pack"
+#~ msgid "Apply Service Pack"
+#~ msgstr "Aplikovať Service Pack"
 
-msgid "Hourly"
-msgstr "Hodina"
+#~ msgid "Hourly"
+#~ msgstr "Hodina"
 
-msgid "Hourly Graphs"
-msgstr "Hodinové grafy"
+#~ msgid "Hourly Graphs"
+#~ msgstr "Hodinové grafy"
 
-msgid "Daily"
-msgstr "Deň"
+#~ msgid "Daily"
+#~ msgstr "Deň"
 
-msgid "Daily Graphs"
-msgstr "Denné grafy"
+#~ msgid "Daily Graphs"
+#~ msgstr "Denné grafy"
 
-msgid "Weekly"
-msgstr "Týždeň"
+#~ msgid "Weekly"
+#~ msgstr "Týždeň"
 
-msgid "Weekly Graphs"
-msgstr "Týždenné grafy"
+#~ msgid "Weekly Graphs"
+#~ msgstr "Týždenné grafy"
 
-msgid "Monthly"
-msgstr "Mesiac"
+#~ msgid "Monthly"
+#~ msgstr "Mesiac"
 
-msgid "Monthly Graphs"
-msgstr "Mesačné grafy"
+#~ msgid "Monthly Graphs"
+#~ msgstr "Mesačné grafy"
 
-msgid "Yearly"
-msgstr "Rok"
+#~ msgid "Yearly"
+#~ msgstr "Rok"
 
-msgid "Yearly Graphs"
-msgstr "Ročné grafy"
+#~ msgid "Yearly Graphs"
+#~ msgstr "Ročné grafy"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Páska"
+#~ msgid "Tape"
+#~ msgstr "Páska"
 
 # Pass/ without context i dont know
-msgid "Pass"
-msgstr "Pass"
+#~ msgid "Pass"
+#~ msgstr "Pass"
 
-msgid "Disable password"
-msgstr "Vypnúť heslo"
+#~ msgid "Disable password"
+#~ msgstr "Vypnúť heslo"
 
-msgid "My Account"
-msgstr "Môj účet"
+#~ msgid "My Account"
+#~ msgstr "Môj účet"
 
-msgid "View All Users"
-msgstr "Zobraziť všetkých používateľov"
+#~ msgid "View All Users"
+#~ msgstr "Zobraziť všetkých používateľov"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Ospravedlňujeme sa, ale platnosť dát vo formulári vypršala. Prosím, "
-"opakujte vyplnenie formulára."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Ospravedlňujeme sa, ale platnosť dát vo formulári vypršala. Prosím, "
+#~ "opakujte vyplnenie formulára."
 
-msgid "Local Access"
-msgstr "Lokálny prístup"
+#~ msgid "Local Access"
+#~ msgstr "Lokálny prístup"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
-"Povoliť lokálnym používateľom prístup k apple zdieľaným adresárom na "
-"tomto serveri."
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr ""
+#~ "Povoliť lokálnym používateľom prístup k apple zdieľaným adresárom na "
+#~ "tomto serveri."
 
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"Syntax portálu je vo forme 'adresa:port'. napríklad '192.168.1.1:3260' "
-"pre IPv4, '[2001:db8:1:1::1]:3260' pre IPv6. Číslo portu 3260 je "
-"štandardizováne ako iSCSI port. Pre každú IP adresu (wildcard adresa), "
-"použi '0.0.0.0:3260' a/alebo '[::]:3260'. Nekombinujte wildcard a IP "
-"adresy z rovnakej skupiny adries[IPv4/IPv6]."
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "Syntax portálu je vo forme 'adresa:port'. napríklad '192.168.1.1:3260' "
+#~ "pre IPv4, '[2001:db8:1:1::1]:3260' pre IPv6. Číslo portu 3260 je "
+#~ "štandardizováne ako iSCSI port. Pre každú IP adresu (wildcard adresa), "
+#~ "použi '0.0.0.0:3260' a/alebo '[::]:3260'. Nekombinujte wildcard a IP "
+#~ "adresy z rovnakej skupiny adries[IPv4/IPv6]."
 
-msgid "Time in milliseconds"
-msgstr "Čas v milisekundách"
+#~ msgid "Time in milliseconds"
+#~ msgstr "Čas v milisekundách"
 
-msgid "Username of Domain Administrator Account"
-msgstr "Používateľské meno konta administrátora domény"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "Používateľské meno konta administrátora domény"
 
-msgid "ISCSI"
-msgstr "ISCSI"
+#~ msgid "ISCSI"
+#~ msgstr "ISCSI"
 
-msgid "Guest Account"
-msgstr "Účet hosťa (Guest)"
+#~ msgid "Guest Account"
+#~ msgstr "Účet hosťa (Guest)"
 
 # Dlha veta bez hlavy a paty :D its opravis to!
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Použite túto možnosť na zmenu užívateľského mena ('ftp' v predvolenom "
-"nastavení), ktoré bude použité pre prístup k službám, ktoré sú "
-"špecifikované ako hosťovské. Tento používatel musí existovať v súbore s "
-"heslami, ale nevyžaduje platný login."
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Použite túto možnosť na zmenu užívateľského mena ('ftp' v predvolenom "
+#~ "nastavení), ktoré bude použité pre prístup k službám, ktoré sú "
+#~ "špecifikované ako hosťovské. Tento používatel musí existovať v súbore s "
+#~ "heslami, ale nevyžaduje platný login."
 
 #, fuzzy
 msgid "CIFS Share"
@@ -6810,17 +6640,17 @@ msgstr "UNIX Zdieľané Adresáre"
 msgid "NFS Share"
 msgstr "Upraviť NFS Zdieľaný Adresár"
 
-msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr "Kedy cez deň máme začať robiť snímky, napr. 8:00"
+#~ msgid "When in a day should we start making snapshots, e.g. 8:00"
+#~ msgstr "Kedy cez deň máme začať robiť snímky, napr. 8:00"
 
-msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr "Kedy cez deň máme prestať robiť snímky, napr. 17:00"
+#~ msgid "When in a day should we stop making snapshots, e.g. 17:00"
+#~ msgstr "Kedy cez deň máme prestať robiť snímky, napr. 17:00"
 
-msgid "NTP server 2"
-msgstr "NTP server 2"
+#~ msgid "NTP server 2"
+#~ msgstr "NTP server 2"
 
-msgid "NTP server 3"
-msgstr "NTP server 3"
+#~ msgid "NTP server 3"
+#~ msgstr "NTP server 3"
 
 #, fuzzy
 msgid "Loader"
@@ -6830,123 +6660,128 @@ msgstr "Priemerné zaťaženie"
 msgid "Loaders"
 msgstr "Priemerné zaťaženie"
 
-msgid "Reboot the System"
-msgstr "Reštartovať systém"
+#~ msgid "Reboot the System"
+#~ msgstr "Reštartovať systém"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
 msgid "Edit Disk"
 msgstr "Upraviť disk"
 
-msgid "Are you sure you want to export?"
-msgstr "Ste si istý, že chcete exportovať?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "Ste si istý, že chcete exportovať?"
 
-msgid "Export Volume"
-msgstr "Exportovať zväzok"
+#~ msgid "Export Volume"
+#~ msgstr "Exportovať zväzok"
 
 #, fuzzy
 msgid "Add loader"
 msgstr "Pridať Portál"
 
-msgid "Volume from which this dataset will be created on"
-msgstr "Zväzok z ktorého tento dataset bude vytvorený"
+#~ msgid "Volume from which this dataset will be created on"
+#~ msgstr "Zväzok z ktorého tento dataset bude vytvorený"
 
-msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Zväzok, z ktorého bude tento ZFS zväzok vytvorený"
+#~ msgid "Volume from which this ZFS Volume will be created on"
+#~ msgstr "Zväzok, z ktorého bude tento ZFS zväzok vytvorený"
 
-msgid "Volume this group belongs to"
-msgstr "Zväzok (Volume) tejto skupiny patrí do"
+#~ msgid "Volume this group belongs to"
+#~ msgstr "Zväzok (Volume) tejto skupiny patrí do"
 
 msgid "Group Membership"
 msgstr "Členstvo v skupine"
 
-msgid "The disk group containing this disk"
-msgstr "Skupina diskov obsahuje tento disk"
+#~ msgid "The disk group containing this disk"
+#~ msgstr "Skupina diskov obsahuje tento disk"
 
-msgid "successfully added"
-msgstr "úspešne pridané"
+#~ msgid "successfully added"
+#~ msgstr "úspešne pridané"
 
-msgid "successfully deleted"
-msgstr "úspešne zmazané"
+#~ msgid "successfully deleted"
+#~ msgstr "úspešne zmazané"
 
-msgid "successfully edited"
-msgstr "úspešne upravené"
+#~ msgid "successfully edited"
+#~ msgstr "úspešne upravené"
 
-msgid "There are no active volumes."
-msgstr "Žiadne aktívne zväzky."
+#~ msgid "There are no active volumes."
+#~ msgstr "Žiadne aktívne zväzky."
 
-msgid "%s successfully added."
-msgstr "%s úspešne pridané."
+#~ msgid "%s successfully added."
+#~ msgstr "%s úspešne pridané."
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 sieťová maska"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 sieťová maska"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Táto hodnota musí byť medzi 0 a 10000, vrátane."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Táto hodnota musí byť medzi 0 a 10000, vrátane."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Táto hodnota musí byť medzi 0 a 1000, vrátane."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Táto hodnota musí byť medzi 0 a 1000, vrátane."
 
-msgid "Enable DDP"
-msgstr "Aktivovať DDP"
+#~ msgid "Enable DDP"
+#~ msgstr "Aktivovať DDP"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "Aktivovať DDP podporu pre nízkoúrovňový appletalk prístup."
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "Aktivovať DDP podporu pre nízkoúrovňový appletalk prístup."
 
-msgid "Turn on/off TLS"
-msgstr "Zapnúť/vypnúť TLS"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "Zapnúť/vypnúť TLS"
 
-msgid "Rsyncd"
-msgstr "Rsyncd"
+#~ msgid "Rsyncd"
+#~ msgstr "Rsyncd"
 
-msgid "The volume failed to export"
-msgstr "Zväzok sa nepodarilo exportovať"
+#~ msgid "The volume failed to export"
+#~ msgstr "Zväzok sa nepodarilo exportovať"
 
-msgid "Cron Scheduler"
-msgstr "Plánovač Cron"
+#~ msgid "Cron Scheduler"
+#~ msgstr "Plánovač Cron"
 
-msgid "Devel"
-msgstr "vývoj"
+#~ msgid "Devel"
+#~ msgstr "vývoj"
 
-msgid "Docs"
-msgstr "Dokumentácia"
+#~ msgid "Docs"
+#~ msgstr "Dokumentácia"
 
-msgid "Welcome to"
-msgstr "Vitajte vo8"
+#~ msgid "Welcome to"
+#~ msgstr "Vitajte vo8"
 
-msgid "LUN"
-msgstr "LUN"
+#~ msgid "LUN"
+#~ msgstr "LUN"
 
-msgid "Mount point"
-msgstr "Prípojný bod"
+#~ msgid "Mount point"
+#~ msgstr "Prípojný bod"
 
-msgid "Dataset name"
-msgstr "Názov sady dát"
+#~ msgid "Dataset name"
+#~ msgstr "Názov sady dát"
 
-msgid "Snapshot name"
-msgstr "Názov snímku"
+#~ msgid "Snapshot name"
+#~ msgstr "Názov snímku"
 
-msgid "Used space"
-msgstr "Použité miesto"
+#~ msgid "Used space"
+#~ msgstr "Použité miesto"
 
-msgid "Referenced space"
-msgstr "Odkazované miesto"
+#~ msgid "Referenced space"
+#~ msgstr "Odkazované miesto"
 
-msgid "No ZFS snapshot available"
-msgstr "Žiadne dostupné ZFS snímky"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "Žiadne dostupné ZFS snímky"
 
-msgid "Create Periodic Snapshot"
-msgstr "Vytvoriť periodickú snímku (Snapshot)"
+#~ msgid "Create Periodic Snapshot"
+#~ msgstr "Vytvoriť periodickú snímku (Snapshot)"
 
-msgid "Restore to Factory Defaults"
-msgstr "Obnoviť na továrenské nastavenia"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "Obnoviť na továrenské nastavenia"
 
-msgid "Config"
-msgstr "Konfigurácia"
+#~ msgid "Config"
+#~ msgstr "Konfigurácia"
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr "Neplatná adresa: %s"

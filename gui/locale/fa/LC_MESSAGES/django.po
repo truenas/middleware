@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2014-03-03 12:15+0200\n"
+"PO-Revision-Date: 2014-03-03 12:15+0000\n"
 "Last-Translator: mehrdad <m3hrdad.p@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fa\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1393848913.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "کامل"
 msgid "Debug"
 msgstr "اشکال‌زدایی"
 
-#: choices.py:195
-msgid "Default"
-msgstr "پیش‌فرض"
+#~ msgid "Default"
+#~ msgstr "پیش‌فرض"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -338,9 +338,8 @@ msgstr "روشن"
 msgid "Off"
 msgstr "خاموش"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (توصیه می‌شود)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (توصیه می‌شود)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -2273,9 +2272,8 @@ msgstr ""
 msgid "Forced update period"
 msgstr ""
 
-#: services/models.py:789 services/models.py:876
-msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr "این پارامترها به تنظیمات کلی در inadyn.conf اضافه خواهند شد."
+#~ msgid "These parameters will be added to global settings in inadyn.conf."
+#~ msgstr "این پارامترها به تنظیمات کلی در inadyn.conf اضافه خواهند شد."
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
@@ -6206,48 +6204,619 @@ msgstr ""
 msgid "Plugin uname"
 msgstr "نام دامنه"
 
-msgid "Hourly"
-msgstr "هر ساعت"
+#~ msgid "Hourly"
+#~ msgstr "هر ساعت"
 
-msgid "Hourly Graphs"
-msgstr "نمودارها به ساعت"
+#~ msgid "Hourly Graphs"
+#~ msgstr "نمودارها به ساعت"
 
-msgid "Daily"
-msgstr "روزانه"
+#~ msgid "Daily"
+#~ msgstr "روزانه"
 
-msgid "Daily Graphs"
-msgstr "نمودارهای روزانه"
+#~ msgid "Daily Graphs"
+#~ msgstr "نمودارهای روزانه"
 
-msgid "Weekly"
-msgstr "هفتگی"
+#~ msgid "Weekly"
+#~ msgstr "هفتگی"
 
-msgid "Weekly Graphs"
-msgstr "نمودارهای هفتگی"
+#~ msgid "Weekly Graphs"
+#~ msgstr "نمودارهای هفتگی"
 
-msgid "Monthly"
-msgstr "ماهانه"
+#~ msgid "Monthly"
+#~ msgstr "ماهانه"
 
-msgid "Monthly Graphs"
-msgstr "نمودارهای ماهانه"
+#~ msgid "Monthly Graphs"
+#~ msgstr "نمودارهای ماهانه"
 
-msgid "Yearly"
-msgstr "سالانه"
+#~ msgid "Yearly"
+#~ msgstr "سالانه"
 
-msgid "Yearly Graphs"
-msgstr "نمودارهای سالانه"
+#~ msgid "Yearly Graphs"
+#~ msgstr "نمودارهای سالانه"
 
-msgid "DVD"
-msgstr "دی‌وی‌دی"
+#~ msgid "DVD"
+#~ msgstr "دی‌وی‌دی"
 
-msgid "Tape"
-msgstr "نوار"
+#~ msgid "Tape"
+#~ msgstr "نوار"
 
-msgid "Pass"
-msgstr "قبول شدن"
+#~ msgid "Pass"
+#~ msgstr "قبول شدن"
 
 #, fuzzy
 msgid "Disable password"
 msgstr "غیر فعال شده"
 
-msgid "Time in milliseconds"
-msgstr "زمان به میلی‌ثانیه"
+#~ msgid "Time in milliseconds"
+#~ msgstr "زمان به میلی‌ثانیه"
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr "HTTP + HTTPS"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr "رمزنگاری نشده"
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr "رمزنگاری شده بدون کلمه عبور"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr "رمزنگاری شده با کلمه عبور"
+
+#: choices.py:304
+msgid "lz4 (recommended)"
+msgstr "lz4 (توصیه می‌شود)"
+
+#: choices.py:308
+msgid "zle (runs of zeros)"
+msgstr "zle (اجرا از صفر)"
+
+#: choices.py:309
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (توصیه نمی‌شود)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr "تایید"
+
+#: choices.py:600
+msgid "9600"
+msgstr "9600"
+
+#: choices.py:601
+msgid "19200"
+msgstr "19200"
+
+#: choices.py:602
+msgid "38400"
+msgstr "38400"
+
+#: choices.py:603
+msgid "57600"
+msgstr "57600"
+
+#: choices.py:604
+msgid "115200"
+msgstr "115200"
+
+#: choices.py:659
+msgid "Fatal"
+msgstr "اضطراری (کشنده)"
+
+#: choices.py:662
+msgid "Verbose"
+msgstr "نمایش کامل"
+
+#: choices.py:664
+msgid "Debug2"
+msgstr "اشکال‌زدایی2"
+
+#: choices.py:670
+msgid "Debug3"
+msgstr "اشکال‌زدایی3"
+
+#: choices.py:665
+msgid "Debug3"
+msgstr "اشکال‌زدایی3"
+
+#: choices.py:672
+msgid "Auth"
+msgstr "تایید"
+
+#: choices.py:673
+msgid "Local 0"
+msgstr "محلی 0"
+
+#: choices.py:674
+msgid "Local 1"
+msgstr "محلی 1"
+
+#: choices.py:675
+msgid "Local 2"
+msgstr "محلی 2"
+
+#: choices.py:676
+msgid "Local 3"
+msgstr "کاربر محلی 3"
+
+#: choices.py:677
+msgid "Local 4"
+msgstr "محلی 4"
+
+#: choices.py:678
+msgid "Local 5"
+msgstr "محلی 5"
+
+#: choices.py:679
+msgid "Local 6"
+msgstr "محلی 6"
+
+#: choices.py:680
+msgid "Local 7"
+msgstr "محلی 7"
+
+#: choices.py:686
+msgid "NT4"
+msgstr "NT4"
+
+#: choices.py:687
+msgid "NIS"
+msgstr "NIS"
+
+#: choices.py:693
+msgid "on"
+msgstr "روشن"
+
+#: choices.py:694
+msgid "off"
+msgstr "خاموش"
+
+#: choices.py:695
+msgid "data"
+msgstr "اطلاعات"
+
+#: choices.py:696
+msgid "!data"
+msgstr "اطلاعات"
+
+#: choices.py:697
+msgid "auth"
+msgstr "تایید"
+
+#: choices.py:698
+msgid "ctrl"
+msgstr "ctrl"
+
+#: choices.py:699
+msgid "ctrl+data"
+msgstr "ctrl+data"
+
+#: choices.py:700
+msgid "ctrl+!data"
+msgstr "ctrl+!data"
+
+#: choices.py:701
+msgid "auth+data"
+msgstr "اطلاعات + تایید"
+
+#: choices.py:702
+msgid "auth+!data"
+msgstr "!اطلاعات + تایید"
+
+#: account/forms.py:55
+msgid "New Password"
+msgstr "گذرواژه جدید"
+
+#: account/forms.py:60
+msgid "Confirm New Password"
+msgstr "تائید گذرواژه جدید"
+
+#: account/forms.py:68
+msgid "Passwords do not match"
+msgstr "گذرواژه ها یکسان نیستند"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr "شاخه Home نمی تواند شامل .. باشد"
+
+#: account/forms.py:561
+msgid "Home directory must end with username"
+msgstr "دایرکتوری Home باید با نام کاربری به پایان برسد"
+
+#: account/models.py:52
+msgid "Built-in Group"
+msgstr "گروه داخلی"
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr "کاربر داخلی"
+
+#: account/models.py:142
+msgid "Disable password login"
+msgstr "گذرواژه ورود غیرفعال"
+
+#: account/models.py:241
+msgid "Group Membership"
+msgstr "اعضای گروه"
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr "اعضای گروه"
+
+#: api/resources.py:767
+#: storage/models.py:725
+#: storage/models.py:735
+#: storage/models.py:752
+msgid "Locked"
+msgstr "قفل شده"
+
+#: api/resources.py:860
+msgid "on every %(days)s"
+msgstr "در هر %(روز)s"
+
+#: api/resources.py:866
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr "از شروع تا پایان (تکرار)"
+
+#: freeadmin/forms.py:220
+msgid "A file is required"
+msgstr "یک فایل نیاز است"
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr "ادرس غیرمعتبر"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+msgid "Invalid network: %s"
+msgstr "شبکه غیر معتبر"
+
+#: jails/admin.py:192
+msgid "Edit Jail"
+msgstr "ویرایش Jail"
+
+#: jails/admin.py:195
+#: jails/nav.py:264
+msgid "Add Storage"
+msgstr "اضافه کردن دستگاه ذخیره سازی (Storage)"
+
+#: jails/admin.py:206
+msgid "Start"
+msgstr "شروع"
+
+#: jails/admin.py:207
+msgid "Stop"
+msgstr "توقف"
+
+#: jails/admin.py:271
+#: jails/models.py:353
+msgid "URL"
+msgstr "نشانی اینترنتی"
+
+#: jails/admin.py:277
+msgid "Instances"
+msgstr "نمونه‌ها"
+
+#: jails/forms.py:89
+msgid "type"
+msgstr "نوع"
+
+#: jails/forms.py:99
+msgid "vanilla"
+msgstr "وانیلي"
+
+#: jails/forms.py:171
+msgid "No jail root configured."
+msgstr "پیکربندی root Jail مود نمی باشد"
+
+#: jails/forms.py:234
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr "قالب پیدا نمی شود"
+
+#: jails/forms.py:451
+msgid "Path does not exist!"
+msgstr "مسیر موجود نمی باشد"
+
+#: jails/forms.py:459
+msgid "autostart"
+msgstr "شروع خودکار"
+
+#: jails/forms.py:460
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr "VIMAGE"
+
+#: jails/forms.py:461
+#: jails/models.py:162
+msgid "NAT"
+msgstr "NAT"
+
+#: jails/forms.py:652
+msgid "Create destination directory if it does not exist"
+msgstr "ایجاد شاخه مقصد در صورت عدم وجود"
+
+#: jails/models.py:90
+msgid "IPv4 netmask"
+msgstr "IPv4 netmask"
+
+#: jails/models.py:83
+msgid "IPv4 address"
+msgstr "آدرس IPv4"
+
+#: jails/models.py:109
+msgid "IPv4 bridge netmask"
+msgstr "IPv4 bridge netmask"
+
+#: jails/models.py:89
+msgid "IPv4 aliases"
+msgstr "IPv4 aliases"
+
+#: jails/models.py:95
+msgid "IPv4 bridge address"
+msgstr "IPv4 bridge address"
+
+#: jails/models.py:101
+msgid "IPv4 bridge aliases"
+msgstr "IPv4 bridge aliases"
+
+#: jails/models.py:107
+msgid "IPv4 default gateway"
+msgstr "IPv4 default gateway"
+
+#: jails/models.py:134
+msgid "IPv6 prefix length"
+msgstr "IPv6 prefix length"
+
+#: jails/models.py:113
+msgid "IPv6 address"
+msgstr "IPv6 address"
+
+#: jails/models.py:119
+msgid "IPv6 aliases"
+msgstr "IPv6 aliases"
+
+#: jails/models.py:125
+msgid "IPv6 bridge address"
+msgstr "IPv6 bridge address"
+
+#: jails/models.py:153
+msgid "IPv6 bridge prefix length"
+msgstr "IPv6 bridge prefix length"
+
+#: jails/models.py:131
+msgid "IPv6 bridge aliases"
+msgstr "IPv6 bridge aliases"
+
+#: jails/models.py:138
+msgid "IPv6 default gateway"
+msgstr "IPv6 default gateway"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr "MAC"
+
+#: jails/models.py:224
+msgid "This jail is required by %d plugin(s)"
+msgstr "این Jail نیازمند %d پلاگین است"
+
+#: jails/models.py:260
+msgid "Jail Root"
+msgstr "Jail Root"
+
+#: jails/models.py:265
+msgid "IPv4 Network"
+msgstr "IPv4 Network"
+
+#: jails/models.py:266
+msgid "IPv4 network range for jails and plugins"
+msgstr "IPv4 network range for jails and plugins"
+
+#: jails/models.py:270
+msgid "IPv4 Network Start Address"
+msgstr "آدرس آغازین IPv4"
+
+#: jails/models.py:271
+msgid "IPv4 network start address for jails and plugins"
+msgstr "IPv4 network start address for jails and plugins"
+
+#: jails/models.py:275
+msgid "IPv4 Network End Address"
+msgstr "آدرس پایانی IPv4"
+
+#: jails/models.py:276
+msgid "IPv4 network end address for jails and plugins"
+msgstr "IPv4 network end address for jails and plugins"
+
+#: jails/models.py:280
+msgid "IPv6 Network"
+msgstr "IPv6 Network"
+
+#: jails/models.py:281
+msgid "IPv6 network range for jails and plugins"
+msgstr "IPv6 network range for jails and plugins"
+
+#: jails/models.py:285
+msgid "IPv6 Network Start Address"
+msgstr "IPv6 Network Start Address"
+
+#: jails/models.py:294
+msgid "Collection URL"
+msgstr "مجموعه آدرس های اینترنتی"
+
+#: jails/models.py:296
+msgid "URL for the jails index"
+msgstr "آدرس اینترنتی برای عنوان Jail"
+
+#: jails/models.py:353
+msgid "Architecture"
+msgstr "معماری"
+
+#: jails/models.py:347
+msgid "OS"
+msgstr "سیستم عامل"
+
+#: jails/nav.py:70
+msgid "Add Jails"
+msgstr "اضافه کردن jails"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr "اضافه کردن قالب Jail"
+
+#: jails/nav.py:114
+msgid "View Jail Templates"
+msgstr "نمایش قالب Jail"
+
+#: jails/nav.py:129
+#: plugins/models.py:183
+#: templates/jails/index.html:40
+#: templates/plugins/index.html:20
+msgid "Configuration"
+msgstr "پیکربندی"
+
+#: jails/utils.py:567
+msgid "Unable to determine IPv4 for plugin"
+msgstr "برای پلاگین نمی توان آدرس IPv4 مشخص نمود"
+
+#: jails/utils.py:640
+msgid "Failed to install plugin: %s"
+msgstr "عدم موفقییت در نصب پلاگین :%s"
+
+#: jails/utils.py:679
+msgid "You need to create a ZFS volume to proceed!"
+msgstr "شما جهت انجام عملیات نیاز به ساخت یک حجم ZFS دارید"
+
+#: jails/utils.py:694
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr "عدم موفقییت در ساخت dataset %(name)s: %(error)s"
+
+#: jails/views.py:96
+msgid "Jail successfully edited."
+msgstr "Jail با موفقییت ویرایش شد"
+
+#: jails/views.py:116
+msgid "Storage successfully added."
+msgstr "دستگاه ذخیره سازی (Storage) با موفقییت اضافه شد "
+
+#: jails/views.py:136
+msgid "Jail successfully started."
+msgstr "Jail با موفقییت شروع به کار کرد"
+
+#: jails/views.py:157
+msgid "Jail successfully stopped."
+msgstr "Jail با موفقییت متوقف شد"
+
+#: jails/views.py:178
+msgid "Jail successfully deleted."
+msgstr "Jail با موفقییت حذف شد"
+
+#: jails/views.py:399
+msgid "Jail template successfully edited."
+msgstr "قالب Jail با موفقییت ویرایش شد"
+
+#: middleware/notifier.py:2877
+msgid "No RPC Token!"
+msgstr "رمز RPC وجود ندارد"
+
+#: middleware/zfs.py:609
+msgid "In Progress"
+msgstr "در حال اجرا"
+
+#: middleware/zfs.py:633
+msgid "Completed"
+msgstr "کامل شده"
+
+#: middleware/zfs.py:644
+msgid "Canceled"
+msgstr "لغو شد"
+
+#: network/admin.py:39
+msgid "IPv4 Addresses"
+msgstr "آدرس IPv4"
+
+#: network/admin.py:44
+msgid "IPv6 Addresses"
+msgstr "آدرس IPV6"
+
+#: network/forms.py:128
+msgid "Only one interface can be used for DHCP"
+msgstr "فقط یک رابط (کارت شبکه) می تواند برای DHCP مورد استفاده قرار بگیرد"
+
+#: network/forms.py:141
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr ""
+"فقط یک رابط شبکه (کارت شبکه) می تواند در حالت پیکربندی خودکار IPv6 فعال شود"
+
+#: network/forms.py:175
+#: network/forms.py:584
+msgid "The network %s is already in use by another NIC."
+msgstr "شبکه %s درحال استفاده بر روی کارت شبکه دیگیری است"
+
+#: network/forms.py:284
+msgid "The IP \"%s\" is not valid"
+msgstr "آدرس %s معتبر نیست"
+
+#: network/models.py:77
+msgid "Enable netwait feature"
+msgstr "خاصیت netwait فعال"
+
+#: network/models.py:88
+msgid "Netwait IP list"
+msgstr "لیست آدرس های netwait"
+
+#: network/models.py:97
+msgid "Host name data base"
+msgstr "نام میزبان بانک اطلاعاتی (Database)"
+
+#: network/models.py:401
+msgid "LAGG Interface Group"
+msgstr "گروه رابط LAGG"
+
+#: network/models.py:427
+msgid "Link Aggregation Member"
+msgstr "اعضای Link Aggregation"
+
+#: network/models.py:428
+msgid "Link Aggregation Members"
+msgstr "اعضای Link Aggregation"
+
+#: plugins/admin.py:58
+#: plugins/admin.py:65
+msgid "Install"
+msgstr "نصب"
+
+#: plugins/models.py:141
+msgid "Plugin Kernel Module"
+msgstr "ماژول هسته ی افزونه"
+
+#: plugins/models.py:173
+msgid "Repository URL"
+msgstr "آدرس مخزن"
+
+#: plugins/models.py:175
+msgid "URL for the plugins repository"
+msgstr "آدرس مخزن افزونه ها"
+
+#: plugins/views.py:183
+#: plugins/views.py:244
+msgid "Invalid plugin"
+msgstr "افزونه نا معتبر است"
+
+#: plugins/views.py:194
+#: plugins/views.py:252
+msgid "Failed to download plugin"
+msgstr "عدم موفقییت در دانلود افزونه"
+
+#: plugins/views.py:198
+msgid "Jail does not exist"
+msgstr "Jail وجود ندارد"
+
+#: plugins/views.py:226
+#: plugins/views.py:357
+msgid "No available IP addresses"
+msgstr "آدرس IP موجود نمی باشد"

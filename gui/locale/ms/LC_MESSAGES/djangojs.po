@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-02-20 05:09+0200\n"
+"PO-Revision-Date: 2013-02-20 07:17+0000\n"
 "Last-Translator: apis17 <mhbinet@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
@@ -16,11 +16,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1361344628.0\n"
 
-#: freeadmin/static/lib/js/freeadmin.js:56
-msgid "Reporting"
-msgstr "Laporan"
+#~ msgid "Reporting"
+#~ msgstr "Laporan"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
@@ -51,21 +51,17 @@ msgstr "Ruang Storan"
 msgid "Some error occurred"
 msgstr "Terdapat masalah berlaku"
 
-#: freeadmin/static/lib/js/freeadmin.js:538
-msgid "Edit"
-msgstr "Ubah"
+#~ msgid "Edit"
+#~ msgstr "Ubah"
 
-#: freeadmin/static/lib/js/freeadmin.js:542
-msgid "Edit Disk"
-msgstr "Ubah Disk"
+#~ msgid "Edit Disk"
+#~ msgstr "Ubah Disk"
 
-#: freeadmin/static/lib/js/freeadmin.js:547
-msgid "Wipe"
-msgstr "Padam"
+#~ msgid "Wipe"
+#~ msgstr "Padam"
 
-#: freeadmin/static/lib/js/freeadmin.js:551
-msgid "Wipe Disk"
-msgstr "Padam Disk"
+#~ msgid "Wipe Disk"
+#~ msgstr "Padam Disk"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-03-16 10:33+0200\n"
+"PO-Revision-Date: 2014-03-16 10:33+0000\n"
 "Last-Translator: yuhr123 <yuhr123@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1394965980.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -550,9 +551,8 @@ msgstr "主目录模式"
 msgid "Auxiliary groups"
 msgstr "次要群组"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "该UID的用户已经存在。"
+#~ msgid "A user with that uid already exists."
+#~ msgstr "该UID的用户已经存在。"
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -592,9 +592,8 @@ msgstr "密码被禁用，此处不填"
 msgid "This field is required."
 msgstr "此栏必填"
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "主目录必须以/mnt/开头或者为/nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr "主目录必须以/mnt/开头或者为/nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -724,18 +723,15 @@ msgstr "管理员帐户"
 msgid "Change Password"
 msgstr "更改密码"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "更改管理员"
+#~ msgid "Change Admin User"
+#~ msgstr "更改管理员"
 
 #: account/views.py:95
 msgid "Password successfully updated."
 msgstr "密码已成功更新。"
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Admin用户更新成功"
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Admin用户更新成功"
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -902,9 +898,8 @@ msgstr "请首先填写1号域名服务器然后填写2号域名服务器"
 msgid "Parent Interface"
 msgstr "上级接口"
 
-#: network/forms.py:245
-msgid "The name must be vlanXX where XX is an integer"
-msgstr "名称格式为 vlanXX，其中 XX 为整数"
+#~ msgid "The name must be vlanXX where XX is an integer"
+#~ msgstr "名称格式为 vlanXX，其中 XX 为整数"
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -1141,64 +1136,53 @@ msgstr "创建链路聚合"
 msgid "View Link Aggregations"
 msgstr "查看链路聚合"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "链路聚合设置成功"
+#~ msgid "LAGG successfully added"
+#~ msgstr "链路聚合设置成功"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
 msgstr "该 IP 已被使用。"
 
-#: plugins/forms.py:92
-msgid "Place to temporarily place PBI file"
-msgstr "将转移至临时PBI文件"
+#~ msgid "Place to temporarily place PBI file"
+#~ msgstr "将转移至临时PBI文件"
 
-#: plugins/forms.py:93
-msgid ""
-"The system will use this place to temporarily store the PBI file before it's "
-"installed."
-msgstr "系统将会使用这个地方临时储存PBI安装前的文件。"
+#~ msgid ""
+#~ "The system will use this place to temporarily store the PBI file before it's "
+#~ "installed."
+#~ msgstr "系统将会使用这个地方临时储存PBI安装前的文件。"
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
 msgstr "PBI文件已安装"
 
-#: plugins/forms.py:173
-msgid "You must turn off Plugins service before proceeding"
-msgstr "在处理前你必须关闭插件服务"
+#~ msgid "You must turn off Plugins service before proceeding"
+#~ msgstr "在处理前你必须关闭插件服务"
 
-#: plugins/forms.py:183
 #, python-format
-msgid "The path %s already exists"
-msgstr "路径 %s 已存在"
+#~ msgid "The path %s already exists"
+#~ msgstr "路径 %s 已存在"
 
-#: plugins/forms.py:189
-msgid "The full jail path cannot exceed 76 characters"
-msgstr "完整 jail 路径不能超过 76 个字符"
+#~ msgid "The full jail path cannot exceed 76 characters"
+#~ msgstr "完整 jail 路径不能超过 76 个字符"
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr "插件jail路径不能为插件存档路径的子集(路径)"
 
-#: plugins/forms.py:205 services/forms.py:148
-msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr "Jail路径不能包含插件路径。"
+#~ msgid "The plugins archive path cannot be a subset of the plugins jail path."
+#~ msgstr "Jail路径不能包含插件路径。"
 
-#: plugins/forms.py:214 services/models.py:803
-msgid "Plugins jail path"
-msgstr "插件的 jail 路径"
+#~ msgid "Plugins jail path"
+#~ msgstr "插件的 jail 路径"
 
-#: plugins/forms.py:218
-msgid "Jail IPv4 Address"
-msgstr "Jail IPv4 地址"
+#~ msgid "Jail IPv4 Address"
+#~ msgstr "Jail IPv4 地址"
 
-#: plugins/forms.py:222
-msgid "Jail IPv4 Netmask"
-msgstr "Jail IPv4 子网掩码"
+#~ msgid "Jail IPv4 Netmask"
+#~ msgstr "Jail IPv4 子网掩码"
 
-#: plugins/forms.py:228
-msgid "Plugins archive Path"
-msgstr "插件归档路径"
+#~ msgid "Plugins archive Path"
+#~ msgstr "插件归档路径"
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
@@ -1299,17 +1283,15 @@ msgid "Mount Point"
 msgstr "挂载点"
 
 # plural and singular can be the same format in chinese. And we can use "list of mount points" in chinese to distingush "Mount Points" from "Mount Point".
-#: plugins/models.py:122
-msgid "Mount Points"
-msgstr "挂载点列表"
+#~ msgid "Mount Points"
+#~ msgstr "挂载点列表"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
 msgstr "插件更新成功。"
 
-#: plugins/views.py:80
-msgid "Plugin successfully removed."
-msgstr "插件移除成功."
+#~ msgid "Plugin successfully removed."
+#~ msgstr "插件移除成功."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
@@ -1323,9 +1305,8 @@ msgstr "插件更新成功。"
 msgid "Plugin successfully installed"
 msgstr "插件安装成功。"
 
-#: plugins/views.py:201
-msgid "There was a problem importing the jail."
-msgstr "Jail导入出错。"
+#~ msgid "There was a problem importing the jail."
+#~ msgstr "Jail导入出错。"
 
 #: plugins/views.py:204
 msgid "Jail successfully imported."
@@ -1355,13 +1336,11 @@ msgstr "AFP 服务未重新加载失败"
 msgid "The NFS service failed to reload."
 msgstr "NFS服务重新加载失败"
 
-#: services/forms.py:157
-msgid "This IP already exists."
-msgstr "该IP早已存在。"
+#~ msgid "This IP already exists."
+#~ msgstr "该IP早已存在。"
 
-#: services/forms.py:164
-msgid "The Plugins Jail service failed to reload."
-msgstr "插件 Jail 服务重新加载失败。"
+#~ msgid "The Plugins Jail service failed to reload."
+#~ msgstr "插件 Jail 服务重新加载失败。"
 
 #: services/forms.py:169
 msgid "File Permission"
@@ -1489,9 +1468,8 @@ msgstr "发起端密钥"
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "发起端密钥。（用于双向CHAP验证）"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "发起端密钥（确认）"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "发起端密钥（确认）"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1585,10 +1563,9 @@ msgstr "磁盘设备"
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "您的门户群组ID不能大于%d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "您的群组ID不能大于 %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "您的群组ID不能大于 %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1717,13 +1694,11 @@ msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr "使用这个选项来改变目录创建时默认的权限掩码（默认值为0666）。"
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "支持大文件读写"
+#~ msgid "Large RW support"
+#~ msgstr "支持大文件读写"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "使用 sendfile(2) 来传出文件"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "使用 sendfile(2) 来传出文件"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1830,15 +1805,13 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "服务器名"
+#~ msgid "Server Name"
+#~ msgstr "服务器名"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr "服务器的名字。如果留空表示使用本机的主机名。"
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr "服务器的名字。如果留空表示使用本机的主机名。"
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1873,15 +1846,13 @@ msgid ""
 msgstr ""
 "指定运行的服务进程数量。这个数值需要满足客户端最高并发数，通常设为4至6之间。"
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "异步模式"
+#~ msgid "Asynchronous mode"
+#~ msgstr "异步模式"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr "使用异步模式，这将有助于性能超越千兆网络速度。"
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr "使用异步模式，这将有助于性能超越千兆网络速度。"
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -2286,23 +2257,20 @@ msgstr "这些参数将会被增加到全局设置文件inadyn.conf中"
 msgid "Dynamic DNS"
 msgstr "动态DNS"
 
-#: services/models.py:804
-msgid "Path to the plugins jail"
-msgstr "插件的 jail 路径"
+#~ msgid "Path to the plugins jail"
+#~ msgstr "插件的 jail 路径"
 
 #: services/models.py:809
 msgid "Jail name"
 msgstr "Jail 名称"
 
-#: services/models.py:810
-msgid "Name of the plugins jail"
-msgstr "插件 Jail 名称"
+#~ msgid "Name of the plugins jail"
+#~ msgstr "插件 Jail 名称"
 
-#: services/models.py:815
-msgid ""
-"Jail name can only contain letters, numbers and hyphens. It must not end "
-"with a hyphen."
-msgstr "Jail 名只能包含字母、数字和连接符，且不能以连接符结束。"
+#~ msgid ""
+#~ "Jail name can only contain letters, numbers and hyphens. It must not end "
+#~ "with a hyphen."
+#~ msgstr "Jail 名只能包含字母、数字和连接符，且不能以连接符结束。"
 
 #: services/models.py:821
 msgid "Jail IP address"
@@ -2312,9 +2280,8 @@ msgstr "Jail IP地址"
 msgid "Jail IP Netmask"
 msgstr "Jail IP 网络掩码"
 
-#: services/models.py:829
-msgid "Plugins archive path"
-msgstr "插件归档路径"
+#~ msgid "Plugins archive path"
+#~ msgstr "插件归档路径"
 
 #: services/models.py:852
 msgid "Location"
@@ -2397,9 +2364,8 @@ msgid ""
 "back before the time is up the shutdown is canceled."
 msgstr "开始关机前的等待秒数。如果UPS在时间到期前恢复，则取消关机操作。"
 
-#: services/models.py:933
-msgid "UPS Master User Password"
-msgstr "UPS密码"
+#~ msgid "UPS Master User Password"
+#~ msgstr "UPS密码"
 
 #: services/models.py:937
 msgid "Extra users (upsd.users)"
@@ -2496,13 +2462,11 @@ msgstr "路径"
 msgid "Allow Local User Login"
 msgstr "允许本地用户登录"
 
-#: services/models.py:1006
-msgid "Banner"
-msgstr "看板"
+#~ msgid "Banner"
+#~ msgstr "看板"
 
-#: services/models.py:1008
-msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "一个连接首次登录FTP时显示的欢迎信息。"
+#~ msgid "Greeting banner displayed by FTP when a connection first comes in."
+#~ msgstr "一个连接首次登录FTP时显示的欢迎信息。"
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2716,9 +2680,8 @@ msgstr "SSH"
 msgid "Domain Controller Name"
 msgstr "域控制器名称"
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "域控制器或主域控制器名称。"
+#~ msgid "AD or PDC name."
+#~ msgstr "域控制器或主域控制器名称。"
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3027,26 +2990,20 @@ msgstr "S.M.A.R.T."
 msgid "Control Services"
 msgstr "控制服务"
 
-#: services/nav.py:53 templates/services/iscsi.html:32
-msgid "Device Extents"
-msgstr "设备扩展"
+#~ msgid "Device Extents"
+#~ msgstr "设备扩展"
 
-#: services/nav.py:72
-msgid "Add Device Extent"
-msgstr "新增设备的扩展区"
+#~ msgid "Add Device Extent"
+#~ msgstr "新增设备的扩展区"
 
-#: services/nav.py:79
-msgid "View Device Extents"
-msgstr "查看设备范围"
+#~ msgid "View Device Extents"
+#~ msgstr "查看设备范围"
 
-#: services/nav.py:92
-msgid "File Extents"
-msgstr "文件范围列表"
+#~ msgid "File Extents"
+#~ msgstr "文件范围列表"
 
-#: services/nav.py:111 templates/services/iscsi_extents.html:39
-#: templates/services/iscsi_extents.html:41
-msgid "Add File Extent"
-msgstr "添加文件范围"
+#~ msgid "Add File Extent"
+#~ msgstr "添加文件范围"
 
 #: services/nav.py:118
 msgid "View File Extents"
@@ -3074,9 +3031,8 @@ msgstr "查看 Rsync 模块列表"
 msgid "Settings"
 msgstr "设置"
 
-#: services/nav.py:186
-msgid "Management"
-msgstr "管理"
+#~ msgid "Management"
+#~ msgstr "管理"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
@@ -3095,9 +3051,8 @@ msgstr "确认共享密码"
 msgid "The path %s does not exist"
 msgstr "路径 %s 不存在"
 
-#: sharing/forms.py:157
-msgid "The field is a not a valid IP address or network"
-msgstr "该域不是一个合法的IP地址或网络"
+#~ msgid "The field is a not a valid IP address or network"
+#~ msgstr "该域不是一个合法的IP地址或网络"
 
 #: sharing/forms.py:165
 #, python-format
@@ -3237,15 +3192,13 @@ msgid ""
 msgstr ""
 "这个选项允许你设置一个卷密码，密码最多为8个字符（强烈建议使用ASICII码）"
 
-#: sharing/models.py:131
-msgid "Share Character Set"
-msgstr "共享编码设置"
+#~ msgid "Share Character Set"
+#~ msgstr "共享编码设置"
 
-#: sharing/models.py:133
-msgid ""
-"Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
-"etc."
-msgstr "指定共享编码设置。例如UTF8，UTF8-MAC, ISO-8859-15, 等等。"
+#~ msgid ""
+#~ "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
+#~ "etc."
+#~ msgstr "指定共享编码设置。例如UTF8，UTF8-MAC, ISO-8859-15, 等等。"
 
 #: sharing/models.py:137
 msgid "Allow List"
@@ -3291,28 +3244,24 @@ msgid ""
 "follows the allow option format."
 msgstr "允许确定的用户和群组拥有对共享的读写权限。格式和允许选项相同。"
 
-#: sharing/models.py:160
-msgid "Disk Discovery"
-msgstr "寻找硬盘"
+#~ msgid "Disk Discovery"
+#~ msgstr "寻找硬盘"
 
-#: sharing/models.py:161
-msgid ""
-"Allow other systems to discover this share as a disk for data, as a Time "
-"Machine backup volume or not at all."
-msgstr "允许其他系统将此共享发现为磁盘、Time Machine备份盘或其它设备。"
+#~ msgid ""
+#~ "Allow other systems to discover this share as a disk for data, as a Time "
+#~ "Machine backup volume or not at all."
+#~ msgstr "允许其他系统将此共享发现为磁盘、Time Machine备份盘或其它设备。"
 
-#: sharing/models.py:167
-msgid "Disk discovery mode"
-msgstr "寻找磁盘模式"
+#~ msgid "Disk discovery mode"
+#~ msgstr "寻找磁盘模式"
 
-#: sharing/models.py:168
-msgid ""
-"Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
-"behavior in MacOS. Default mode exports the volume as a data volume for "
-"users."
-msgstr ""
-"警告! “时间机器”在多个共享空间可能会导致Mac OS的未知行为。默认模式导出卷为用"
-"户的数据卷。"
+#~ msgid ""
+#~ "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
+#~ "behavior in MacOS. Default mode exports the volume as a data volume for "
+#~ "users."
+#~ msgstr ""
+#~ "警告! “时间机器”在多个共享空间可能会导致Mac OS的未知行为。默认模式导出卷为用"
+#~ "户的数据卷。"
 
 #: sharing/models.py:172
 msgid "Database Path"
@@ -3324,55 +3273,47 @@ msgid ""
 "writable location, even if the volume is read only."
 msgstr "设置存储在路径中的数据库信息。即使卷是只读的，也必须给出一个可写的目录。"
 
-#: sharing/models.py:177
-msgid "Cache CNID"
-msgstr "缓存CNID"
+#~ msgid "Cache CNID"
+#~ msgstr "缓存CNID"
 
-#: sharing/models.py:178
-msgid ""
-"If set afpd uses the ID information stored in AppleDouble V2 header files to "
-"reduce database load. Don't set this option if the volume is modified by non "
-"AFP clients (NFS/SMB/local)."
-msgstr ""
-"如已设定在afpd中使用了储存在 AppleDouble V2(Mac OS "
-"X中的影子文件)头文件中的id信息以减少数据库载入,在此卷已被非AFP客户端((NFS/SMB/local)存取的情况下请不要选中此选项。"
+#~ msgid ""
+#~ "If set afpd uses the ID information stored in AppleDouble V2 header files to "
+#~ "reduce database load. Don't set this option if the volume is modified by non "
+#~ "AFP clients (NFS/SMB/local)."
+#~ msgstr ""
+#~ "如已设定在afpd中使用了储存在 AppleDouble V2(Mac OS "
+#~ "X中的影子文件)头文件中的id信息以减少数据库载入,在此卷已被非AFP客户端((NFS/SMB/local)存取的情况下请不要选中此选项。"
 
-#: sharing/models.py:181
-msgid "Translate CR/LF"
-msgstr "转换 CR/LF"
+#~ msgid "Translate CR/LF"
+#~ msgstr "转换 CR/LF"
 
-#: sharing/models.py:182
-msgid ""
-"Enables crlf translation for TEXT files, automatically converting macintosh "
-"line breaks into Unix ones. Use of this option might be dangerous since some "
-"older programs store binary data files as type 'TEXT' when saving and switch "
-"the filetype in a second step. Afpd will potentially destroy such files when "
-"'erroneously' changing bytes in order to do line break translation."
-msgstr ""
-"启用CRLF的文件换行转换，将自动转换Macintosh为Unix的换行格式。因为一些旧版文件在储存或切换文件格式时会将二进制数据类型保存为字符型，Af"
-"pd在做文件换行转换时，有可能破坏这些文件。"
+#~ msgid ""
+#~ "Enables crlf translation for TEXT files, automatically converting macintosh "
+#~ "line breaks into Unix ones. Use of this option might be dangerous since some "
+#~ "older programs store binary data files as type 'TEXT' when saving and switch "
+#~ "the filetype in a second step. Afpd will potentially destroy such files when "
+#~ "'erroneously' changing bytes in order to do line break translation."
+#~ msgstr ""
+#~ "启用CRLF的文件换行转换，将自动转换Macintosh为Unix的换行格式。因为一些旧版文件在储存或切换文件格式时会将二进制数据类型保存为字符型，Af"
+#~ "pd在做文件换行转换时，有可能破坏这些文件。"
 
-#: sharing/models.py:185
-msgid "Windows File Names"
-msgstr "Windows文件名"
+#~ msgid "Windows File Names"
+#~ msgstr "Windows文件名"
 
-#: sharing/models.py:186
-msgid ""
-"This forces filenames to be restricted to the character set used by Windows. "
-"This is not recommended for shares used principally by Mac computers."
-msgstr ""
-"这个强制要求文件名是Windows下可设定的字符。这个名称不建议给主要用Mac电脑共享"
-"的使用。"
+#~ msgid ""
+#~ "This forces filenames to be restricted to the character set used by Windows. "
+#~ "This is not recommended for shares used principally by Mac computers."
+#~ msgstr ""
+#~ "这个强制要求文件名是Windows下可设定的字符。这个名称不建议给主要用Mac电脑共享"
+#~ "的使用。"
 
-#: sharing/models.py:189
-msgid "Enable .AppleDouble"
-msgstr "启用 .AppleDouble"
+#~ msgid "Enable .AppleDouble"
+#~ msgstr "启用 .AppleDouble"
 
-#: sharing/models.py:190
-msgid ""
-"This will enable automatic creation of the .AppleDouble directories. This "
-"option should be used if files are accessed by Mac computers."
-msgstr "这会自动创建 .AppleDouble目录。该选项在Mac电脑访问时生效。"
+#~ msgid ""
+#~ "This will enable automatic creation of the .AppleDouble directories. This "
+#~ "option should be used if files are accessed by Mac computers."
+#~ msgstr "这会自动创建 .AppleDouble目录。该选项在Mac电脑访问时生效。"
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
@@ -3384,31 +3325,25 @@ msgid ""
 "across a reboot, cluster, ..."
 msgstr "一直使用0作为设备编号，有助于避免设备编号在重启后或应用集群后改变"
 
-#: sharing/models.py:200
-msgid "Disable File ID"
-msgstr "禁用文件 ID"
+#~ msgid "Disable File ID"
+#~ msgstr "禁用文件 ID"
 
-#: sharing/models.py:201
-msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "不通告 createfileid, resolveid, deleteid 的呼叫"
+#~ msgid "Don't advertise createfileid, resolveid, deleteid calls."
+#~ msgstr "不通告 createfileid, resolveid, deleteid 的呼叫"
 
-#: sharing/models.py:204
-msgid "Disable :hex Names"
-msgstr "禁用: 十六进制名称"
+#~ msgid "Disable :hex Names"
+#~ msgstr "禁用: 十六进制名称"
 
-#: sharing/models.py:205
-msgid ""
-"Disable :hex translations for anything except dot files. This option makes "
-"the '/' character illegal."
-msgstr "禁用：十六进制转换以句点(.)开头的文件，这选项会造成'/'字符错误"
+#~ msgid ""
+#~ "Disable :hex translations for anything except dot files. This option makes "
+#~ "the '/' character illegal."
+#~ msgstr "禁用：十六进制转换以句点(.)开头的文件，这选项会造成'/'字符错误"
 
-#: sharing/models.py:208
-msgid "ProDOS"
-msgstr "ProDOS"
+#~ msgid "ProDOS"
+#~ msgstr "ProDOS"
 
-#: sharing/models.py:209
-msgid "Provide compatibility with Apple II clients."
-msgstr "提供与Apple II客户端的兼容性。"
+#~ msgid "Provide compatibility with Apple II clients."
+#~ msgstr "提供与Apple II客户端的兼容性。"
 
 #: sharing/models.py:212
 msgid "No Stat"
@@ -3490,33 +3425,29 @@ msgstr "如果共享有问题，则不要在系统日志出现警告。"
 msgid "Maproot User"
 msgstr "Maproot用户"
 
-#: sharing/models.py:289
-msgid "User to map root to"
-msgstr "用户映射到管理员"
+#~ msgid "User to map root to"
+#~ msgstr "用户映射到管理员"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
 msgstr "Maproot组"
 
-#: sharing/models.py:296
-msgid "Group to map root to"
-msgstr "群组映射到管理员"
+#~ msgid "Group to map root to"
+#~ msgstr "群组映射到管理员"
 
 #: sharing/models.py:299
 msgid "Mapall User"
 msgstr "Mapall用户"
 
-#: sharing/models.py:303
-msgid "User to map all users to"
-msgstr "用户映射到所有用户"
+#~ msgid "User to map all users to"
+#~ msgstr "用户映射到所有用户"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
 msgstr "Mapall组"
 
-#: sharing/models.py:310
-msgid "Group to map all users to"
-msgstr "群组映射到所有用户"
+#~ msgid "Group to map all users to"
+#~ msgstr "群组映射到所有用户"
 
 #: sharing/models.py:321
 msgid "Unix (NFS) Share"
@@ -3544,14 +3475,11 @@ msgstr "%s 为无效数字。"
 msgid "Volume name"
 msgstr "卷名称"
 
-#: storage/forms.py:134 templates/storage/import.html:32
-#: templates/storage/wizard.html:54
-msgid "Filesystem type"
-msgstr "文件系统类型"
+#~ msgid "Filesystem type"
+#~ msgstr "文件系统类型"
 
-#: storage/forms.py:147 templates/storage/wizard.html:65
-msgid "Force 4096 bytes sector size"
-msgstr "强制 4096 字节扇区尺寸"
+#~ msgid "Force 4096 bytes sector size"
+#~ msgstr "强制 4096 字节扇区尺寸"
 
 #: storage/forms.py:150 templates/storage/wizard.html:138
 msgid "Specify custom path"
@@ -3584,9 +3512,8 @@ msgstr "路径不存在"
 msgid "Path is not a directory."
 msgstr "路径不是目录"
 
-#: storage/forms.py:264
-msgid "You cannot select an existing ZFS volume and specify a new volume name"
-msgstr "不能选择已存在的 ZFS 卷并指定新卷名"
+#~ msgid "You cannot select an existing ZFS volume and specify a new volume name"
+#~ msgstr "不能选择已存在的 ZFS 卷并指定新卷名"
 
 #: storage/forms.py:269
 msgid ""
@@ -3594,21 +3521,18 @@ msgid ""
 "append a virtual device"
 msgstr "必须指定一个新卷名或选择已经存在的 ZFS 卷来添加虚拟设备"
 
-#: storage/forms.py:276
-msgid "You must select a filesystem"
-msgstr "你必须选择一个文件系统"
+#~ msgid "You must select a filesystem"
+#~ msgstr "你必须选择一个文件系统"
 
 #: storage/forms.py:292 storage/forms.py:471 storage/forms.py:576
 msgid "You already have a volume with same name"
 msgstr "卷名重复"
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "不能使用保留字 \"log\""
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "不能使用保留字 \"log\""
 
-#: storage/forms.py:305
-msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "卷名的开头不能是数字、mirror、raidz或spare"
+#~ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
+#~ msgstr "卷名的开头不能是数字、mirror、raidz或spare"
 
 #: storage/forms.py:311
 msgid "UFS volume names cannot be higher than 9 characters"
@@ -3706,9 +3630,8 @@ msgstr "设定的卷空间"
 msgid "Reserved space for this volume"
 msgstr "该卷上的保留空间"
 
-#: storage/forms.py:842
-msgid "ZFS Volume Name"
-msgstr "ZFS卷名"
+#~ msgid "ZFS Volume Name"
+#~ msgstr "ZFS卷名"
 
 #: storage/forms.py:845
 msgid "Size for this ZFS Volume"
@@ -3997,10 +3920,8 @@ msgstr "远程复制主机"
 msgid "Remote Replication Hosts"
 msgstr "远程复制主机列表"
 
-#: storage/models.py:657 storage/models.py:718
-#: templates/storage/replications.html:20 templates/storage/tasks.html:21
-msgid "Filesystem/Volume"
-msgstr "文件系统/卷"
+#~ msgid "Filesystem/Volume"
+#~ msgstr "文件系统/卷"
 
 #: storage/models.py:662
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -4011,9 +3932,8 @@ msgstr "发送到远程端的最后快照。（留空为完整复制）"
 msgid "Remote Host"
 msgstr "远程主机"
 
-#: storage/models.py:669
-msgid "Remote ZFS filesystem name"
-msgstr "远程ZFS文件系统名"
+#~ msgid "Remote ZFS filesystem name"
+#~ msgstr "远程ZFS文件系统名"
 
 #: storage/models.py:670
 msgid ""
@@ -4110,9 +4030,8 @@ msgstr "存储器"
 msgid "View Snapshots"
 msgstr "查看快照"
 
-#: storage/nav.py:34
-msgid "View ZFS Scrubs"
-msgstr "查看ZFS Scrubs"
+#~ msgid "View ZFS Scrubs"
+#~ msgstr "查看ZFS Scrubs"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
@@ -4173,9 +4092,8 @@ msgstr "改变权限"
 msgid "Volume successfully added."
 msgstr "卷添加成功"
 
-#: storage/views.py:254
-msgid "S.M.A.R.T. Extra Options"
-msgstr "S.M.A.R.T. 扩展选项"
+#~ msgid "S.M.A.R.T. Extra Options"
+#~ msgstr "S.M.A.R.T. 扩展选项"
 
 #: storage/views.py:371
 msgid "Dataset successfully added."
@@ -4221,9 +4139,8 @@ msgstr "快照成功删除"
 msgid "Rollback successful."
 msgstr "回滚成功"
 
-#: storage/views.py:634
-msgid "Snapshot successfully added."
-msgstr "快照添加成功"
+#~ msgid "Snapshot successfully added."
+#~ msgstr "快照添加成功"
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
@@ -4269,9 +4186,8 @@ msgstr "成功擦除磁盘"
 msgid "Language (Require UI reload)"
 msgstr "语言(需要重新加载界面)"
 
-#: system/forms.py:214
-msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "指定 1 ~ 65535 的数字。"
+#~ msgid "You must specify a number between 1 and 65535, inclusive."
+#~ msgstr "指定 1 ~ 65535 的数字。"
 
 #: system/forms.py:216
 msgid "Number is required."
@@ -4439,25 +4355,21 @@ msgstr "启用串口控制台"
 msgid "Enable screen saver"
 msgstr "启用屏幕保护程序"
 
-#: system/models.py:163
-msgid "Automatically Check for New Firmware"
-msgstr "自动检查新固件"
+#~ msgid "Automatically Check for New Firmware"
+#~ msgstr "自动检查新固件"
 
-#: system/models.py:165
-msgid "Beep on boot"
-msgstr "开机提示音"
+#~ msgid "Beep on boot"
+#~ msgstr "开机提示音"
 
-#: system/models.py:167
-msgid "Enable Special System Tuning"
-msgstr "开启特别系统优化"
+#~ msgid "Enable Special System Tuning"
+#~ msgstr "开启特别系统优化"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "启用powerd（省电守护）"
 
-#: system/models.py:171
-msgid "Enable Zeroconf/Bonjour"
-msgstr "开启 Zeroconf/Bonjour"
+#~ msgid "Enable Zeroconf/Bonjour"
+#~ msgstr "开启 Zeroconf/Bonjour"
 
 #: system/models.py:174
 msgid ""
@@ -4830,9 +4742,8 @@ msgstr "未发送您的测试邮件：%s"
 msgid "Your test email has been sent!"
 msgstr "您的测试邮件已发送！"
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "页面未找到"
+#~ msgid "Page Not Found"
+#~ msgstr "页面未找到"
 
 #: templates/base.html:51
 msgid "expand all"
@@ -4854,10 +4765,8 @@ msgstr "帮助"
 msgid "Log In"
 msgstr "登录"
 
-#: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
-#: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:83
-msgid "ID"
-msgstr "ID"
+#~ msgid "ID"
+#~ msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
@@ -4865,11 +4774,8 @@ msgstr "ID"
 msgid "Members"
 msgstr "成员"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "修改"
+#~ msgid "Modify"
+#~ msgstr "修改"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -4883,17 +4789,14 @@ msgstr "编辑组"
 msgid "Delete Group"
 msgstr "删除组"
 
-#: templates/account/bsdgroups.html:51
-msgid "There are no user defined groups."
-msgstr "无用户定义组"
+#~ msgid "There are no user defined groups."
+#~ msgstr "无用户定义组"
 
-#: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
-msgid "Add New Group"
-msgstr "新建用户组"
+#~ msgid "Add New Group"
+#~ msgstr "新建用户组"
 
-#: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:86
-msgid "Home"
-msgstr "主页"
+#~ msgid "Home"
+#~ msgstr "主页"
 
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
@@ -4913,22 +4816,18 @@ msgstr "删除用户"
 msgid "Delete User"
 msgstr "删除用户"
 
-#: templates/account/bsdusers.html:66 templates/account/bsdusers.html:143
-#: templates/services/iscsi_auth.html:33
-msgid "No users defined"
-msgstr "未定义用户"
+#~ msgid "No users defined"
+#~ msgstr "未定义用户"
 
-#: templates/account/bsdusers.html:73 templates/account/bsdusers.html.py:75
-msgid "Add New User"
-msgstr "添加新用户"
+#~ msgid "Add New User"
+#~ msgstr "添加新用户"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
 msgstr "更换电子邮箱"
 
-#: templates/account/passform.html:2
-msgid "Change Admin Password"
-msgstr "改变管理员密码"
+#~ msgid "Change Admin Password"
+#~ msgstr "改变管理员密码"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
@@ -5075,9 +4974,8 @@ msgstr "文档"
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS文档"
 
-#: templates/network/interface.html:9
-msgid "IPv6 Auto"
-msgstr "自动配置IPv6"
+#~ msgid "IPv6 Auto"
+#~ msgstr "自动配置IPv6"
 
 #: templates/network/interface.html:12 templates/plugins/index.html:17
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:14
@@ -5119,14 +5017,11 @@ msgstr "可用操作"
 msgid "Edit"
 msgstr "编辑"
 
-#: templates/network/interface.html:28 templates/network/lagg.html:14
-#: templates/network/lagg.html.py:16
-msgid "Edit Interface"
-msgstr "编辑接口"
+#~ msgid "Edit Interface"
+#~ msgstr "编辑接口"
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "删除接口"
+#~ msgid "Delete Interface"
+#~ msgstr "删除接口"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
@@ -5150,50 +5045,39 @@ msgstr "编辑成员"
 msgid "LAGG Members"
 msgstr "链路聚合的成员口"
 
-#: templates/network/lagg.html:53 templates/network/lagg_members.html:33
-msgid "No LAGG interface defined"
-msgstr "未定义 LAGG 接口"
+#~ msgid "No LAGG interface defined"
+#~ msgstr "未定义 LAGG 接口"
 
-#: templates/network/lagg.html:60
-msgid "Add LAGG Interface "
-msgstr "添加链路聚合接口"
+#~ msgid "Add LAGG Interface "
+#~ msgstr "添加链路聚合接口"
 
-#: templates/network/lagg.html:62
-msgid "Add LAGG"
-msgstr "添加链路聚合"
+#~ msgid "Add LAGG"
+#~ msgstr "添加链路聚合"
 
-#: templates/network/lagg_members.html:6
-msgid "Ordering Priority"
-msgstr "优先级排序"
+#~ msgid "Ordering Priority"
+#~ msgstr "优先级排序"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
 msgstr "启动选项"
 
-#: templates/network/lagg_members.html:8 templates/sharing/unix.html:14
-msgid "Action"
-msgstr "启用"
+#~ msgid "Action"
+#~ msgstr "启用"
 
-#: templates/network/lagg_members.html:39
-#: templates/network/lagg_members.html:41
-msgid "Add LAGG Member"
-msgstr "添加链路聚合的成员口"
+#~ msgid "Add LAGG Member"
+#~ msgstr "添加链路聚合的成员口"
 
-#: templates/network/staticroute.html:20
-msgid "Edit Static Route"
-msgstr "编辑静态路由"
+#~ msgid "Edit Static Route"
+#~ msgstr "编辑静态路由"
 
-#: templates/network/staticroute.html:26
-msgid "Delete Static Route"
-msgstr "删除静态路由"
+#~ msgid "Delete Static Route"
+#~ msgstr "删除静态路由"
 
-#: templates/network/staticroute.html:33
-msgid "No static route defined"
-msgstr "没有设置静态路由"
+#~ msgid "No static route defined"
+#~ msgstr "没有设置静态路由"
 
-#: templates/network/staticroute.html:39 templates/network/staticroute.html:41
-msgid "Add Static Route"
-msgstr "添加静态路由"
+#~ msgid "Add Static Route"
+#~ msgstr "添加静态路由"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -5211,30 +5095,24 @@ msgstr "默认路由"
 msgid "No default route defined"
 msgstr "没有设置默认路由"
 
-#: templates/network/vlan.html:21
-msgid "Edit VLAN"
-msgstr "编辑VLAN"
+#~ msgid "Edit VLAN"
+#~ msgstr "编辑VLAN"
 
-#: templates/network/vlan.html:27
-msgid "Delete VLAN"
-msgstr "删除VLAN"
+#~ msgid "Delete VLAN"
+#~ msgstr "删除VLAN"
 
-#: templates/network/vlan.html:34
-msgid "No VLAN defined"
-msgstr "没有设置VLAN"
+#~ msgid "No VLAN defined"
+#~ msgstr "没有设置VLAN"
 
-#: templates/network/vlan.html:40 templates/network/vlan.html.py:42
-msgid "Add VLAN Interface"
-msgstr "添加VLAN接口"
+#~ msgid "Add VLAN Interface"
+#~ msgstr "添加VLAN接口"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
 msgstr "安装..."
 
-#: templates/plugins/index.html:5 templates/plugins/index.html.py:7
-#: templates/services/plugins.html:5 templates/services/plugins.html.py:7
-msgid "Install Plugin"
-msgstr "安装插件"
+#~ msgid "Install Plugin"
+#~ msgstr "安装插件"
 
 #: templates/plugins/index.html:31
 msgid "Info"
@@ -5244,9 +5122,8 @@ msgstr "信息"
 msgid "Plugin info"
 msgstr "插件信息"
 
-#: templates/plugins/index.html:39
-msgid "Edit Plugin"
-msgstr "编辑插件"
+#~ msgid "Edit Plugin"
+#~ msgstr "编辑插件"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
@@ -5265,9 +5142,8 @@ msgstr "导入"
 msgid "Step %(step)s of %(step_count)s"
 msgstr "第 %(step)s 步，共 %(step_count)s 步"
 
-#: templates/plugins/jailpbi.html:18
-msgid "Upload Jail PBI"
-msgstr "上传Jail PBI"
+#~ msgid "Upload Jail PBI"
+#~ msgstr "上传Jail PBI"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5278,21 +5154,17 @@ msgstr "上传Jail PBI"
 msgid "Please wait..."
 msgstr "请稍候..."
 
-#: templates/plugins/mountpoints.html:19
-msgid "Edit Mount Point"
-msgstr "编辑挂载点"
+#~ msgid "Edit Mount Point"
+#~ msgstr "编辑挂载点"
 
-#: templates/plugins/mountpoints.html:25
-msgid "Delete Mount Point"
-msgstr "删除挂载点"
+#~ msgid "Delete Mount Point"
+#~ msgstr "删除挂载点"
 
-#: templates/plugins/mountpoints.html:32
-msgid "No mount points defined"
-msgstr "未定义挂载点"
+#~ msgid "No mount points defined"
+#~ msgstr "未定义挂载点"
 
-#: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-msgid "Add Mount Point"
-msgstr "添加挂载点"
+#~ msgid "Add Mount Point"
+#~ msgstr "添加挂载点"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
@@ -5353,21 +5225,18 @@ msgstr "FTP设置"
 msgid "ISCSI Settings"
 msgstr "iSCSI 设置"
 
-#: templates/services/core.html:80
-msgid "LDAP Settings"
-msgstr "LDAP设置"
+#~ msgid "LDAP Settings"
+#~ msgstr "LDAP设置"
 
 #: templates/services/core.html:91
 msgid "NFS Settings"
 msgstr "NFS设置"
 
-#: templates/services/core.html:103 templates/services/core.html.py:105
-msgid "Plugins Settings"
-msgstr "插件设置"
+#~ msgid "Plugins Settings"
+#~ msgstr "插件设置"
 
-#: templates/services/core.html:105
-msgid "Install Jail PBI"
-msgstr "安装Jail PBI"
+#~ msgid "Install Jail PBI"
+#~ msgstr "安装Jail PBI"
 
 #: templates/services/core.html:117
 msgid "Rsync Settings"
@@ -5414,13 +5283,11 @@ msgstr "iSCSI 管理"
 msgid "Portals"
 msgstr "Portals"
 
-#: templates/services/iscsi.html:14
-msgid "Authorized Initiators"
-msgstr "授权的 Initiators"
+#~ msgid "Authorized Initiators"
+#~ msgstr "授权的 Initiators"
 
-#: templates/services/iscsi.html:20
-msgid "Authentication"
-msgstr "认证"
+#~ msgid "Authentication"
+#~ msgstr "认证"
 
 #: templates/services/iscsi.html:26
 msgid "Targets"
@@ -5434,101 +5301,77 @@ msgstr "扩展"
 msgid "Associated Targets"
 msgstr "关联Targets"
 
-#: templates/services/iscsi_assoctargets.html:31
-msgid "No associated targets defined"
-msgstr "未定义关联目标"
+#~ msgid "No associated targets defined"
+#~ msgstr "未定义关联目标"
 
-#: templates/services/iscsi_assoctargets.html:37
-msgid "Add Extent to Target"
-msgstr "向目标添加Extent"
+#~ msgid "Add Extent to Target"
+#~ msgstr "向目标添加Extent"
 
-#: templates/services/iscsi_assoctargets.html:39
-msgid "Add Extent To Target"
-msgstr "向目标添加Extent"
+#~ msgid "Add Extent To Target"
+#~ msgstr "向目标添加Extent"
 
-#: templates/services/iscsi_auth.html:7
-msgid "Peer"
-msgstr "对端"
+#~ msgid "Peer"
+#~ msgstr "对端"
 
-#: templates/services/iscsi_auth.html:40 templates/services/iscsi_auth.html:42
-msgid "Add iSCSI User"
-msgstr "添加 iSCIS 用户"
+#~ msgid "Add iSCSI User"
+#~ msgstr "添加 iSCIS 用户"
 
-#: templates/services/iscsi_authini.html:7
-msgid "Authorized Network"
-msgstr "授权的网络"
+#~ msgid "Authorized Network"
+#~ msgstr "授权的网络"
 
 # 根据上下文翻译
-#: templates/services/iscsi_authini.html:35
-msgid "No authorized initiators defined"
-msgstr "未定义任何Initiators"
+#~ msgid "No authorized initiators defined"
+#~ msgstr "未定义任何Initiators"
 
-#: templates/services/iscsi_authini.html:42
-#: templates/services/iscsi_authini.html:44
-msgid "Add Authorized Initiator"
-msgstr "添加并授权Initiator"
+#~ msgid "Add Authorized Initiator"
+#~ msgstr "添加并授权Initiator"
 
-#: templates/services/iscsi_dextents.html:33
-msgid "No device extents defined"
-msgstr "设备extent未设置"
+#~ msgid "No device extents defined"
+#~ msgstr "设备extent未设置"
 
-#: templates/services/iscsi_dextents.html:39
-#: templates/services/iscsi_dextents.html:41
-msgid "Add Extent"
-msgstr "添加Extent"
+#~ msgid "Add Extent"
+#~ msgstr "添加Extent"
 
-#: templates/services/iscsi_extents.html:5
-msgid "File Extent"
-msgstr "文件Extent"
+#~ msgid "File Extent"
+#~ msgstr "文件Extent"
 
-#: templates/services/iscsi_extents.html:33
-msgid "No extents defined"
-msgstr "未定义任何extent"
+#~ msgid "No extents defined"
+#~ msgstr "未定义任何extent"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
 msgstr "监听"
 
-#: templates/services/iscsi_portals.html:18
-msgid "No IP defined for this Portal"
-msgstr "未设置IP"
+#~ msgid "No IP defined for this Portal"
+#~ msgstr "未设置IP"
 
 # Portal 为 SCSI专有名词
 #: templates/services/iscsi_portals.html:26
 msgid "Edit Portal"
 msgstr "编辑Portal"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "删除Portal"
+#~ msgid "Delete Portal"
+#~ msgstr "删除Portal"
 
-#: templates/services/iscsi_portals.html:39
-msgid "No portals defined"
-msgstr "未定义接口"
+#~ msgid "No portals defined"
+#~ msgstr "未定义接口"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "添加Portal"
+#~ msgid "Add Portal"
+#~ msgstr "添加Portal"
 
-#: templates/services/iscsi_targets.html:34
-msgid "No targets defined"
-msgstr "未定义任何Target"
+#~ msgid "No targets defined"
+#~ msgstr "未定义任何Target"
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "添加Target"
+#~ msgid "Add Target"
+#~ msgstr "添加Target"
 
-#: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-msgid "View Mount Points"
-msgstr "查看挂载点"
+#~ msgid "View Mount Points"
+#~ msgstr "查看挂载点"
 
-#: templates/services/plugins.html:22
-msgid ""
-"ATTENTION: The plugins service is not running, several functionalities have "
-"been disabled."
-msgstr "注意: 插件服务未运行，部分功能被禁用。"
+#~ msgid ""
+#~ "ATTENTION: The plugins service is not running, several functionalities have "
+#~ "been disabled."
+#~ msgstr "注意: 插件服务未运行，部分功能被禁用。"
 
 #: templates/services/plugins.html:31
 msgid "Version"
@@ -5554,43 +5397,32 @@ msgstr "更新插件"
 msgid "No available plugins services"
 msgstr "无可用插件服务"
 
-#: templates/services/pluginsjail_delete.html:4
-msgid "All the files within the plugins jail will be permanently deleted."
-msgstr "插件jail中的所有文件将被永久删除。"
+#~ msgid "All the files within the plugins jail will be permanently deleted."
+#~ msgstr "插件jail中的所有文件将被永久删除。"
 
-#: templates/services/pluginsjail_edit.html:12
-msgid "Delete Plugins Jail"
-msgstr "删除插件 Jail"
+#~ msgid "Delete Plugins Jail"
+#~ msgstr "删除插件 Jail"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "未定义rsync模块"
+#~ msgid "No rsync modules defined"
+#~ msgstr "未定义rsync模块"
 
-#: templates/sharing/apple.html:5 templates/sharing/unix.html:5
-#: templates/sharing/windows.html:5
-msgid "Active Shares"
-msgstr "活动的共享"
+#~ msgid "Active Shares"
+#~ msgstr "活动的共享"
 
-#: templates/sharing/apple.html:7
-msgid "There are no active Apple (AFP) shares."
-msgstr "无活动的 Apple (AFP) 共享"
+#~ msgid "There are no active Apple (AFP) shares."
+#~ msgstr "无活动的 Apple (AFP) 共享"
 
-#: templates/sharing/apple.html:29
-msgid "Edit Apple (AFP) Share"
-msgstr "编辑 Apple (AFP) 共享"
+#~ msgid "Edit Apple (AFP) Share"
+#~ msgstr "编辑 Apple (AFP) 共享"
 
-#: templates/sharing/apple.html:35
-msgid "Delete Apple (AFP) Share"
-msgstr "删除 Apple (AFP) 共享"
+#~ msgid "Delete Apple (AFP) Share"
+#~ msgstr "删除 Apple (AFP) 共享"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "没有定义共享"
+#~ msgid "No shares defined"
+#~ msgstr "没有定义共享"
 
-#: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-msgid "Add Apple (AFP) Share"
-msgstr "增加 Apple (AFP) 共享"
+#~ msgid "Add Apple (AFP) Share"
+#~ msgstr "增加 Apple (AFP) 共享"
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
@@ -5604,41 +5436,32 @@ msgstr "UNIX（NFS）"
 msgid "Windows (CIFS)"
 msgstr "Windows(CIFS)"
 
-#: templates/sharing/unix.html:7
-msgid "There are no active UNIX (NFS) shares."
-msgstr "无活动 UNIX(NFS) 共享"
+#~ msgid "There are no active UNIX (NFS) shares."
+#~ msgstr "无活动 UNIX(NFS) 共享"
 
-#: templates/sharing/unix.html:12
-msgid "Mountpoint"
-msgstr "挂载点"
+#~ msgid "Mountpoint"
+#~ msgstr "挂载点"
 
-#: templates/sharing/unix.html:29
-msgid "Edit UNIX (NFS) Share"
-msgstr "编辑 UNIX(NFS) 共享"
+#~ msgid "Edit UNIX (NFS) Share"
+#~ msgstr "编辑 UNIX(NFS) 共享"
 
-#: templates/sharing/unix.html:35
-msgid "Delete UNIX (NFS) Share"
-msgstr "删除 UNIX(NFS) 共享"
+#~ msgid "Delete UNIX (NFS) Share"
+#~ msgstr "删除 UNIX(NFS) 共享"
 
-#: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-msgid "Add UNIX (NFS) Share"
-msgstr "添加 UNIX(NFS) 共享"
+#~ msgid "Add UNIX (NFS) Share"
+#~ msgstr "添加 UNIX(NFS) 共享"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (CIFS) shares."
-msgstr "无活动的 Windows(CIFS) 共享"
+#~ msgid "There are no active Windows (CIFS) shares."
+#~ msgstr "无活动的 Windows(CIFS) 共享"
 
-#: templates/sharing/windows.html:33
-msgid "Edit Windows (CIFS) Share"
-msgstr "编辑 Windows(CIFS) 共享"
+#~ msgid "Edit Windows (CIFS) Share"
+#~ msgstr "编辑 Windows(CIFS) 共享"
 
-#: templates/sharing/windows.html:39
-msgid "Delete Windows (CIFS) Share"
-msgstr "删除 Windows(CIFS) 共享"
+#~ msgid "Delete Windows (CIFS) Share"
+#~ msgstr "删除 Windows(CIFS) 共享"
 
-#: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (CIFS) Share"
-msgstr "添加 Windows(CIFS) 共享"
+#~ msgid "Add Windows (CIFS) Share"
+#~ msgstr "添加 Windows(CIFS) 共享"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -5743,39 +5566,29 @@ msgid ""
 "to create a replication task"
 msgstr "注意：要创建复制任务，必需要对指定的ZFS文件系统/文件卷做定期快照"
 
-#: templates/storage/replications.html:21
-msgid "Last snapshot"
-msgstr "最近的快照"
+#~ msgid "Last snapshot"
+#~ msgstr "最近的快照"
 
-#: templates/storage/replications.html:23
-msgid "Remote ZFS filesystem"
-msgstr "远程ZFS文件系统"
+#~ msgid "Remote ZFS filesystem"
+#~ msgstr "远程ZFS文件系统"
 
-#: templates/storage/replications.html:37
-#: templates/storage/replications.html:41
-msgid "Delete Replication"
-msgstr "删除复制"
+#~ msgid "Delete Replication"
+#~ msgstr "删除复制"
 
-#: templates/storage/replications.html:46
-#: templates/storage/replications.html:50
-msgid "Edit Replication"
-msgstr "修改复制"
+#~ msgid "Edit Replication"
+#~ msgstr "修改复制"
 
-#: templates/storage/replications.html:56
-msgid "No ZFS replication available"
-msgstr "ZFS 复制不存在"
+#~ msgid "No ZFS replication available"
+#~ msgstr "ZFS 复制不存在"
 
-#: templates/storage/scrub.html:42
-msgid "No scrub tasks defined."
-msgstr "未定义scrub任务。"
+#~ msgid "No scrub tasks defined."
+#~ msgstr "未定义scrub任务。"
 
-#: templates/storage/scrub.html:48
-msgid "Add ZFS Scrub Task"
-msgstr "添加ZFS scrub任务"
+#~ msgid "Add ZFS Scrub Task"
+#~ msgstr "添加ZFS scrub任务"
 
-#: templates/storage/scrub.html:50
-msgid "Add ZFS Scrub"
-msgstr "添加 ZFS Scrub"
+#~ msgid "Add ZFS Scrub"
+#~ msgstr "添加 ZFS Scrub"
 
 #: templates/storage/scrub_confirm.html:6
 msgid ""
@@ -5826,45 +5639,37 @@ msgstr "删除快照"
 msgid "Periodic Snapshots"
 msgstr "快照工作周期"
 
-#: templates/storage/tasks.html:13
-msgid "Periodic Snapshot Schedule"
-msgstr "定期快照计划"
+#~ msgid "Periodic Snapshot Schedule"
+#~ msgstr "定期快照计划"
 
-#: templates/storage/tasks.html:16
-msgid "There are no scheduled snapshots."
-msgstr "目前尚无快照计划。"
+#~ msgid "There are no scheduled snapshots."
+#~ msgstr "目前尚无快照计划。"
 
-#: templates/storage/tasks.html:23
-msgid "How"
-msgstr "怎样"
+#~ msgid "How"
+#~ msgstr "怎样"
 
 #: templates/storage/tasks.html:24
 msgid "Keep snapshot for"
 msgstr "保存快照"
 
-#: templates/storage/tasks.html:41
-msgid "From"
-msgstr "从"
+#~ msgid "From"
+#~ msgstr "从"
 
-#: templates/storage/tasks.html:43
-msgid "through"
-msgstr "到"
+#~ msgid "through"
+#~ msgstr "到"
 
-#: templates/storage/tasks.html:45
-msgid ", every"
-msgstr ",每"
+#~ msgid ", every"
+#~ msgstr ",每"
 
 #: templates/storage/tasks.html:48
 msgid "everyday"
 msgstr "每天"
 
-#: templates/storage/tasks.html:51
-msgid "on every"
-msgstr "每逢"
+#~ msgid "on every"
+#~ msgstr "每逢"
 
-#: templates/storage/tasks.html:147
-msgid "There are no periodic snapshots scheduled."
-msgstr "无周期快照计划"
+#~ msgid "There are no periodic snapshots scheduled."
+#~ msgstr "无周期快照计划"
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -5918,13 +5723,11 @@ msgstr "卷状态"
 msgid "Destroy Dataset"
 msgstr "撤销数据集"
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "销毁 ZFS 卷"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "销毁 ZFS 卷"
 
-#: templates/storage/volumes.html:268
-msgid "No volumes defined"
-msgstr "未定义任何卷"
+#~ msgid "No volumes defined"
+#~ msgstr "未定义任何卷"
 
 #: templates/storage/wizard.html:27
 msgid "Volume to extend"
@@ -5938,25 +5741,20 @@ msgstr "成员盘"
 msgid "Group type"
 msgstr "磁盘组类型"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS 扩展"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS 扩展"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "强烈建议不要只使用一个设备来保存ZIL"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "强烈建议不要只使用一个设备来保存ZIL"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "ZIL设备"
+#~ msgid "Log"
+#~ msgstr "ZIL设备"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "缓存"
+#~ msgid "Cache"
+#~ msgstr "缓存"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "备用盘"
+#~ msgid "Spare"
+#~ msgstr "备用盘"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -5975,21 +5773,18 @@ msgstr "替换磁盘"
 msgid "Create ZFS volume on %(name)s"
 msgstr "在%(name)s上创建 ZFS 卷"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "添加 ZFS 卷"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "添加 ZFS 卷"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "重建 LDAP/AD 快取缓存"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "正在重建缓存。"
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "正在重建缓存。"
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "无法重建缓存"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "无法重建缓存"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6001,10 +5796,8 @@ msgstr "保存调试"
 msgid "Firmware Update"
 msgstr "固件升级"
 
-#: templates/system/advanced_edit.html:39
-#: templates/system/advanced_edit.html:41
-msgid "Import Plugins Jail"
-msgstr "导入插件Jail"
+#~ msgid "Import Plugins Jail"
+#~ msgstr "导入插件Jail"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -6014,17 +5807,14 @@ msgstr "正在重启系统..."
 msgid "Are you sure you want to restore to factory config?"
 msgstr "确认恢复出厂配置？"
 
-#: templates/system/cronjob.html:41
-msgid "No cron jobs defined."
-msgstr "未定义计划任务。"
+#~ msgid "No cron jobs defined."
+#~ msgstr "未定义计划任务。"
 
-#: templates/system/cronjob.html:47
-msgid "Add a cron job"
-msgstr "添加计划任务"
+#~ msgid "Add a cron job"
+#~ msgstr "添加计划任务"
 
-#: templates/system/cronjob.html:49
-msgid "Add cron job"
-msgstr "添加计划任务"
+#~ msgid "Add cron job"
+#~ msgstr "添加计划任务"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -6040,21 +5830,17 @@ msgid ""
 "> Change E-mail"
 msgstr "提示： 测试用电子邮件已发送至root用户。通过Users -> root -> Change E-mail修改配置。"
 
-#: templates/system/ntpserver.html:7
-msgid "iBurst"
-msgstr "iBurst"
+#~ msgid "iBurst"
+#~ msgstr "iBurst"
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "没有设置NTP服务器"
+#~ msgid "No NTP servers defined."
+#~ msgstr "没有设置NTP服务器"
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "添加NTP服务器"
+#~ msgid "Add NTP server"
+#~ msgstr "添加NTP服务器"
 
-#: templates/system/ntpserver.html:46
-msgid "Add NTP Server"
-msgstr "添加NTP服务器"
+#~ msgid "Add NTP Server"
+#~ msgstr "添加NTP服务器"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6071,25 +5857,20 @@ msgstr "你确认要<strong>重启FreeNAS服务器</strong>吗?"
 msgid "History"
 msgstr "历史信息"
 
-#: templates/system/rsync.html:5
-msgid "Local Path"
-msgstr "本地路径"
+#~ msgid "Local Path"
+#~ msgstr "本地路径"
 
-#: templates/system/rsync.html:6
-msgid "Remote"
-msgstr "远程"
+#~ msgid "Remote"
+#~ msgstr "远程"
 
-#: templates/system/rsync.html:48
-msgid "No rsync tasks defined."
-msgstr "未定义rsync任务"
+#~ msgid "No rsync tasks defined."
+#~ msgstr "未定义rsync任务"
 
-#: templates/system/rsync.html:54
-msgid "Add rsync task"
-msgstr "添加 Rsync任务"
+#~ msgid "Add rsync task"
+#~ msgstr "添加 Rsync任务"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "添加 Rsync"
+#~ msgid "Add Rsync"
+#~ msgstr "添加 Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6122,29 +5903,23 @@ msgstr "你确认要<strong>关闭FreeNAS服务器</strong>吗?"
 msgid "Unknown"
 msgstr "未知"
 
-#: templates/system/smarttest.html:38
-msgid "No S.M.A.R.T. tests defined"
-msgstr "S.M.A.R.T. 测试未定义"
+#~ msgid "No S.M.A.R.T. tests defined"
+#~ msgstr "S.M.A.R.T. 测试未定义"
 
-#: templates/system/smarttest.html:44
-msgid "Add S.M.A.R.T. Test"
-msgstr "添加S.M.A.R.T.检测"
+#~ msgid "Add S.M.A.R.T. Test"
+#~ msgstr "添加S.M.A.R.T.检测"
 
-#: templates/system/smarttest.html:46
-msgid "Add S.M.A.R.T. test"
-msgstr "添加S.M.A.R.T.检测"
+#~ msgid "Add S.M.A.R.T. test"
+#~ msgstr "添加S.M.A.R.T.检测"
 
-#: templates/system/sysctl.html:34
-msgid "No sysctl defined."
-msgstr "未定义sysctl。"
+#~ msgid "No sysctl defined."
+#~ msgstr "未定义sysctl。"
 
-#: templates/system/sysctl.html:40
-msgid "Add sysctl"
-msgstr "添加 sysctl"
+#~ msgid "Add sysctl"
+#~ msgstr "添加 sysctl"
 
-#: templates/system/sysctl.html:42
-msgid "Add Sysctl"
-msgstr "添加 systl"
+#~ msgid "Add Sysctl"
+#~ msgstr "添加 systl"
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -6170,21 +5945,17 @@ msgstr "正常运行时间"
 msgid "Load Average"
 msgstr "平均负载"
 
-#: templates/system/system_info.html:34
-msgid "Connected through"
-msgstr "通过连接"
+#~ msgid "Connected through"
+#~ msgstr "通过连接"
 
-#: templates/system/tunable.html:34
-msgid "No tunable setting defined."
-msgstr "没有定义tunable设置。"
+#~ msgid "No tunable setting defined."
+#~ msgstr "没有定义tunable设置。"
 
-#: templates/system/tunable.html:40
-msgid "Add Tunable"
-msgstr "添加tunable"
+#~ msgid "Add Tunable"
+#~ msgstr "添加tunable"
 
-#: templates/system/tunable.html:42
-msgid "Add Loader"
-msgstr "添加Loader"
+#~ msgid "Add Loader"
+#~ msgstr "添加Loader"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6210,11 +5981,10 @@ msgstr "卷%(valume)s状态为%(status)s:%(message)s"
 msgid "The volume %(volume)s status is %(status)s"
 msgstr "卷%(volume)的状态为%(status)"
 
-#: tools/alert.py:125
-msgid ""
-"You have to change the password for the admin user (currently no password is "
-"required to login)"
-msgstr "您需要修改用户admin的密码(当前未设置密码)"
+#~ msgid ""
+#~ "You have to change the password for the admin user (currently no password is "
+#~ "required to login)"
+#~ msgstr "您需要修改用户admin的密码(当前未设置密码)"
 
 #: tools/alert.py:137
 #, python-format
@@ -6232,47 +6002,47 @@ msgstr "系统未找到绑定了以下IP地址的iSCSI接口"
 msgid "Critical Alerts"
 msgstr "关键警告"
 
-msgid "Selected"
-msgstr "选中"
+#~ msgid "Selected"
+#~ msgstr "选中"
 
-msgid "SHA256 sum for the PBI file"
-msgstr "PBI文件的SHA256码"
+#~ msgid "SHA256 sum for the PBI file"
+#~ msgstr "PBI文件的SHA256码"
 
-msgid "Jail path cannot contain plugins path."
-msgstr "Jail路径不包括插件路径."
+#~ msgid "Jail path cannot contain plugins path."
+#~ msgstr "Jail路径不包括插件路径."
 
-msgid "Plugins path cannot contain jail path."
-msgstr "插件路径不包含Jail路径."
+#~ msgid "Plugins path cannot contain jail path."
+#~ msgstr "插件路径不包含Jail路径."
 
-msgid "Plugin uname"
-msgstr "插件名"
+#~ msgid "Plugin uname"
+#~ msgstr "插件名"
 
-msgid "UName of the plugin"
-msgstr "插件名"
+#~ msgid "UName of the plugin"
+#~ msgstr "插件名"
 
-msgid "Plugin view"
-msgstr "插件一览"
+#~ msgid "Plugin view"
+#~ msgstr "插件一览"
 
-msgid "Plugin icon"
-msgstr "插件图标"
+#~ msgid "Plugin icon"
+#~ msgstr "插件图标"
 
-msgid "Path to plugin"
-msgstr "插件路径"
+#~ msgid "Path to plugin"
+#~ msgstr "插件路径"
 
-msgid "Control Plugins"
-msgstr "插件控制"
+#~ msgid "Control Plugins"
+#~ msgstr "插件控制"
 
-msgid "Configure Plugins"
-msgstr "插件配置"
+#~ msgid "Configure Plugins"
+#~ msgstr "插件配置"
 
-msgid "Allow guest access"
-msgstr "允许来宾帐户访问"
+#~ msgid "Allow guest access"
+#~ msgstr "允许来宾帐户访问"
 
-msgid "Only allow guest access"
-msgstr "仅允许来宾帐户访问"
+#~ msgid "Only allow guest access"
+#~ msgstr "仅允许来宾帐户访问"
 
-msgid "Plugins Path"
-msgstr "插件路径"
+#~ msgid "Plugins Path"
+#~ msgstr "插件路径"
 
 msgid "Path to the plugins directory"
 msgstr "插件目录"
@@ -6280,259 +6050,259 @@ msgstr "插件目录"
 msgid "Invalid prefix"
 msgstr "无效的前缀"
 
-msgid ""
-"How many minutes passed before a new snapshot is made after the last one."
-msgstr "设定两个快照建立的间隔时间（分钟）"
+#~ msgid ""
+#~ "How many minutes passed before a new snapshot is made after the last one."
+#~ msgstr "设定两个快照建立的间隔时间（分钟）"
 
-msgid "An error occurred when setting the options"
-msgstr "设置选项时发生错误"
+#~ msgid "An error occurred when setting the options"
+#~ msgstr "设置选项时发生错误"
 
-msgid "Invalid service pack"
-msgstr "无效服务包"
+#~ msgid "Invalid service pack"
+#~ msgstr "无效服务包"
 
-msgid "View Cron Jobs"
-msgstr "查看计划任务列表"
+#~ msgid "View Cron Jobs"
+#~ msgstr "查看计划任务列表"
 
-msgid "View Rsync Tasks"
-msgstr "查看同步任务列表"
+#~ msgid "View Rsync Tasks"
+#~ msgstr "查看同步任务列表"
 
-msgid "View S.M.A.R.T. Tests"
-msgstr "查看 S.M.A.R.T.测试列表"
+#~ msgid "View S.M.A.R.T. Tests"
+#~ msgstr "查看 S.M.A.R.T.测试列表"
 
-msgid "View Sysctls"
-msgstr "查看系统控制"
+#~ msgid "View Sysctls"
+#~ msgstr "查看系统控制"
 
-msgid "View Tunables"
-msgstr "查看所有Tunable"
+#~ msgid "View Tunables"
+#~ msgstr "查看所有Tunable"
 
-msgid "Browse"
-msgstr "浏览"
+#~ msgid "Browse"
+#~ msgstr "浏览"
 
-msgid "Close"
-msgstr "关闭"
+#~ msgid "Close"
+#~ msgstr "关闭"
 
-msgid "Add Apple (CIFS) Share"
-msgstr "增加 Apple (AFP) 共享"
+#~ msgid "Add Apple (CIFS) Share"
+#~ msgstr "增加 Apple (AFP) 共享"
 
-msgid "Apply Service Pack"
-msgstr "应用快速升级包"
+#~ msgid "Apply Service Pack"
+#~ msgstr "应用快速升级包"
 
-msgid "Hourly"
-msgstr "每小时"
+#~ msgid "Hourly"
+#~ msgstr "每小时"
 
-msgid "Hourly Graphs"
-msgstr "小时图"
+#~ msgid "Hourly Graphs"
+#~ msgstr "小时图"
 
-msgid "Daily"
-msgstr "每日"
+#~ msgid "Daily"
+#~ msgstr "每日"
 
-msgid "Daily Graphs"
-msgstr "日图"
+#~ msgid "Daily Graphs"
+#~ msgstr "日图"
 
-msgid "Weekly"
-msgstr "每周"
+#~ msgid "Weekly"
+#~ msgstr "每周"
 
-msgid "Weekly Graphs"
-msgstr "周图"
+#~ msgid "Weekly Graphs"
+#~ msgstr "周图"
 
-msgid "Monthly"
-msgstr "每月"
+#~ msgid "Monthly"
+#~ msgstr "每月"
 
-msgid "Monthly Graphs"
-msgstr "月图"
+#~ msgid "Monthly Graphs"
+#~ msgstr "月图"
 
-msgid "Yearly"
-msgstr "每年"
+#~ msgid "Yearly"
+#~ msgstr "每年"
 
-msgid "Yearly Graphs"
-msgstr "年图"
+#~ msgid "Yearly Graphs"
+#~ msgstr "年图"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "磁带"
+#~ msgid "Tape"
+#~ msgstr "磁带"
 
-msgid "Pass"
-msgstr "通过"
+#~ msgid "Pass"
+#~ msgstr "通过"
 
 msgid "Disable password"
 msgstr "禁用密码"
 
-msgid "My Account"
-msgstr "我的帐户"
+#~ msgid "My Account"
+#~ msgstr "我的帐户"
 
-msgid "View All Users"
-msgstr "查看所有用户"
+#~ msgid "View All Users"
+#~ msgstr "查看所有用户"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr "抱歉，您的表单已到期。请继续填写这个页面上的表单。"
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr "抱歉，您的表单已到期。请继续填写这个页面上的表单。"
 
-msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr "您必须指定一个有效的IPv4或IPv6与maskbit"
+#~ msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
+#~ msgstr "您必须指定一个有效的IPv4或IPv6与maskbit"
 
-msgid "Local Access"
-msgstr "本地访问"
+#~ msgid "Local Access"
+#~ msgstr "本地访问"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr "允许用户在这块区域使用当前账户类型来访问苹果共享"
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr "允许用户在这块区域使用当前账户类型来访问苹果共享"
 
-msgid ""
-"The portal takes the form of 'address:port'. for example "
-"'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
-"3260 is standard iSCSI port number. For any IPs (wildcard address), use "
-"'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
-"same address family."
-msgstr ""
-"入口的格式为“地址:端口“。例如：对IPV4为\"192.168.1.1:3260\"；对IPV6"
-"为“[2001:db8:1:1::1]:3260”。3260是iSCSI标准端口。对任何IP （通配符地"
-"址）， 使用“'0.0.0.0:3260”和/或“[::]:3260”。 不要在同一地址段将通配符和其"
-"他IP地址相混淆。"
+#~ msgid ""
+#~ "The portal takes the form of 'address:port'. for example "
+#~ "'192.168.1.1:3260' for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port "
+#~ "3260 is standard iSCSI port number. For any IPs (wildcard address), use "
+#~ "'0.0.0.0:3260' and/or '[::]:3260'. Do not mix wildcard and other IPs at "
+#~ "same address family."
+#~ msgstr ""
+#~ "入口的格式为“地址:端口“。例如：对IPV4为\"192.168.1.1:3260\"；对IPV6"
+#~ "为“[2001:db8:1:1::1]:3260”。3260是iSCSI标准端口。对任何IP （通配符地"
+#~ "址）， 使用“'0.0.0.0:3260”和/或“[::]:3260”。 不要在同一地址段将通配符和其"
+#~ "他IP地址相混淆。"
 
-msgid "Time in milliseconds"
-msgstr "时间在毫秒级"
+#~ msgid "Time in milliseconds"
+#~ msgstr "时间在毫秒级"
 
-msgid "Username of Domain Administrator Account"
-msgstr "域管理员帐户"
+#~ msgid "Username of Domain Administrator Account"
+#~ msgstr "域管理员帐户"
 
-msgid "ISCSI"
-msgstr "ISCSI"
+#~ msgid "ISCSI"
+#~ msgstr "ISCSI"
 
-msgid "Guest Account"
-msgstr "访客帐号"
+#~ msgid "Guest Account"
+#~ msgstr "访客帐号"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"使用这个选项来改变以访客身份访问时采用的系统用户身份（默认为'ftp'用户）。"
-"这个用户的权限将决定所有以访客身份连接服务的客户的权限。这个用户在密码文件"
-"中必须存在，但不必拥有登录权限。"
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "使用这个选项来改变以访客身份访问时采用的系统用户身份（默认为'ftp'用户）。"
+#~ "这个用户的权限将决定所有以访客身份连接服务的客户的权限。这个用户在密码文件"
+#~ "中必须存在，但不必拥有登录权限。"
 
-msgid "CIFS Share"
-msgstr "CIFS 共享"
+#~ msgid "CIFS Share"
+#~ msgstr "CIFS 共享"
 
-msgid "CIFS Shares"
-msgstr "CIFS 共享列表"
+#~ msgid "CIFS Shares"
+#~ msgstr "CIFS 共享列表"
 
-msgid "NFS Share"
-msgstr "NFS共享"
+#~ msgid "NFS Share"
+#~ msgstr "NFS共享"
 
-msgid "NTP server 2"
-msgstr "网络授时服务器 2"
+#~ msgid "NTP server 2"
+#~ msgstr "网络授时服务器 2"
 
-msgid "NTP server 3"
-msgstr "网络授时服务器 3"
+#~ msgid "NTP server 3"
+#~ msgstr "网络授时服务器 3"
 
-msgid "Loader"
-msgstr "平均负载"
+#~ msgid "Loader"
+#~ msgstr "平均负载"
 
-msgid "Loaders"
-msgstr "平均负载"
+#~ msgid "Loaders"
+#~ msgstr "平均负载"
 
-msgid "Reboot the System"
-msgstr "重启系统"
+#~ msgid "Reboot the System"
+#~ msgstr "重启系统"
 
-msgid "Apple"
-msgstr "苹果"
+#~ msgid "Apple"
+#~ msgstr "苹果"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
-msgid "Windows"
-msgstr "Windows"
+#~ msgid "Windows"
+#~ msgstr "Windows"
 
-msgid "Are you sure you want to export?"
-msgstr "你确定需要导出吗?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "你确定需要导出吗?"
 
 msgid "Export Volume"
 msgstr "导出卷"
 
-msgid "Add loader"
-msgstr "添加负载均衡"
+#~ msgid "Add loader"
+#~ msgstr "添加负载均衡"
 
-msgid "successfully added"
-msgstr "成功添加"
+#~ msgid "successfully added"
+#~ msgstr "成功添加"
 
-msgid "successfully deleted"
-msgstr "成功删除"
+#~ msgid "successfully deleted"
+#~ msgstr "成功删除"
 
-msgid "successfully edited"
-msgstr "编辑成功"
+#~ msgid "successfully edited"
+#~ msgstr "编辑成功"
 
-msgid "%s successfully added."
-msgstr "%s 已成功添加。"
+#~ msgid "%s successfully added."
+#~ msgstr "%s 已成功添加。"
 
 msgid "IPv6 Netmask"
 msgstr "IPv6 网络掩码"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "这个值必须在 0 到(包括) 10000 之间。"
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "这个值必须在 0 到(包括) 10000 之间。"
 
 msgid "This value must be between 0 and 1000, inclusive."
 msgstr "这个值必须在 0 到(包括) 1000 之间。"
 
-msgid "Enable DDP"
-msgstr "启用DDP"
+#~ msgid "Enable DDP"
+#~ msgstr "启用DDP"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "为低层appletalk访问启用DDP支持"
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "为低层appletalk访问启用DDP支持"
 
-msgid "Turn on/off TLS"
-msgstr "开/关 TLS"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "开/关 TLS"
 
 msgid "The volume failed to export"
 msgstr "卷无法提供服务"
 
-msgid "Cron Scheduler"
-msgstr "定期快照计划"
+#~ msgid "Cron Scheduler"
+#~ msgstr "定期快照计划"
 
-msgid "Docs"
-msgstr "文档"
+#~ msgid "Docs"
+#~ msgstr "文档"
 
-msgid "Welcome to"
-msgstr "欢迎使用8"
+#~ msgid "Welcome to"
+#~ msgstr "欢迎使用8"
 
-msgid "Mount point"
-msgstr "挂载点"
+#~ msgid "Mount point"
+#~ msgstr "挂载点"
 
-msgid "Dataset name"
-msgstr "数据集名"
+#~ msgid "Dataset name"
+#~ msgstr "数据集名"
 
-msgid "Snapshot name"
-msgstr "快照名称"
+#~ msgid "Snapshot name"
+#~ msgstr "快照名称"
 
-msgid "Used space"
-msgstr "已用空间"
+#~ msgid "Used space"
+#~ msgstr "已用空间"
 
-msgid "No ZFS snapshot available"
-msgstr "目前尚无ZFS快照"
+#~ msgid "No ZFS snapshot available"
+#~ msgstr "目前尚无ZFS快照"
 
-msgid "Restore to Factory Defaults"
-msgstr "恢复为出厂设置"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "恢复为出厂设置"
 
-msgid "Config"
-msgstr "配置"
+#~ msgid "Config"
+#~ msgstr "配置"
 
-msgid "%s successfully update."
-msgstr "%s 已成功更新。"
+#~ msgid "%s successfully update."
+#~ msgstr "%s 已成功更新。"
 
-msgid "Admin user"
-msgstr "管理员"
+#~ msgid "Admin user"
+#~ msgstr "管理员"
 
 msgid "N/A"
 msgstr "不可用"
 
-msgid "ZVol Name"
-msgstr "ZVol 名称"
+#~ msgid "ZVol Name"
+#~ msgstr "ZVol 名称"
 
-msgid "minutes,"
-msgstr "分钟，"
+#~ msgid "minutes,"
+#~ msgstr "分钟，"
 
 msgid "Create ZFS zvol"
 msgstr "创建 ZFS zvol"
@@ -6540,17 +6310,90 @@ msgstr "创建 ZFS zvol"
 msgid "Add ZVol"
 msgstr "添加 Zvol"
 
-msgid "English"
-msgstr "英语"
+#~ msgid "English"
+#~ msgstr "英语"
 
-msgid "Level"
-msgstr "级别"
+#~ msgid "Level"
+#~ msgstr "级别"
 
-msgid "Add Link Aggregation"
-msgstr "添加链路聚合"
+#~ msgid "Add Link Aggregation"
+#~ msgstr "添加链路聚合"
 
-msgid "View All Interfaces"
-msgstr "查看所有接口"
+#~ msgid "View All Interfaces"
+#~ msgstr "查看所有接口"
 
-msgid "View All VLANs"
-msgstr "查看所有 VLAN"
+#~ msgid "View All VLANs"
+#~ msgstr "查看所有 VLAN"
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr "HTTPS(加密的超文本传输协议）"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr "未加密"
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr "加密方式，无密码的"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr "加密方式，有密码的"
+
+#: choices.py:304
+msgid "lz4 (recommended)"
+msgstr "lz4无损压缩算法(推荐)"
+
+#: choices.py:560
+msgid "Verify"
+msgstr "验证"
+
+#: choices.py:600
+msgid "9600"
+msgstr "9600"
+
+#: choices.py:601
+msgid "19200"
+msgstr "19200"
+
+#: choices.py:602
+msgid "38400"
+msgstr "38400"
+
+#: choices.py:603
+msgid "57600"
+msgstr "57600"
+
+#: choices.py:604
+msgid "115200"
+msgstr "115200"
+
+#: choices.py:670
+msgid "Daemon"
+msgstr "                  守护进程                "
+
+#: choices.py:672
+msgid "Auth"
+msgstr "认证"
+
+#: choices.py:693
+msgid "on"
+msgstr "开启"
+
+#: choices.py:695
+msgid "data"
+msgstr "数据"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr "                  主目录不能包含冒号                "
+
+#: account/models.py:56
+#: account/models.py:150
+msgid "Permit Sudo"
+msgstr "允许使用 Sudo"
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr "内建用户"

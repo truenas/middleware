@@ -8,16 +8,17 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2014-02-09 12:32+0200\n"
+"PO-Revision-Date: 2014-02-09 12:32+0000\n"
 "Last-Translator: shumi <shumi252@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Pootle 2.1.6\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1391949163.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -245,9 +246,8 @@ msgstr "Sve"
 msgid "Debug"
 msgstr "Debug"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Predefinirano"
+#~ msgid "Default"
+#~ msgstr "Predefinirano"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -340,9 +340,8 @@ msgstr "Uključeno"
 msgid "Off"
 msgstr "Isključeno"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "Izjb (preporučeno)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "Izjb (preporučeno)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -530,9 +529,8 @@ msgstr "Unesite zaporku još jednom za provjeru."
 msgid "Shell"
 msgstr "Komandna ljuska"
 
-#: account/forms.py:269 account/forms.py:553
-msgid "Disable password logins"
-msgstr "Onemogući prijave lozinkom"
+#~ msgid "Disable password logins"
+#~ msgstr "Onemogući prijave lozinkom"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -559,9 +557,8 @@ msgstr "Modus početnog direktorija"
 msgid "Auxiliary groups"
 msgstr "Dodatne grupe"
 
-#: account/forms.py:347
-msgid "A user with that uid already exists."
-msgstr "Korisničko sa tim UID-om već postoji."
+#~ msgid "A user with that uid already exists."
+#~ msgstr "Korisničko sa tim UID-om već postoji."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
@@ -601,10 +598,9 @@ msgstr "Lozinka je onemogućena, ovo polje ostavite prazno"
 msgid "This field is required."
 msgstr "Ovo polje mora biti ispunjeno."
 
-#: account/forms.py:632
-msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr ""
-"Naziv početnog direktorija mora početi sa /mnt/ ili mora biti /nonexistent"
+#~ msgid "Home directory has to start with /mnt or be /nonexistent"
+#~ msgstr ""
+#~ "Naziv početnog direktorija mora početi sa /mnt/ ili mora biti /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
@@ -728,24 +724,17 @@ msgstr "Korisnički račun"
 msgid "Admin Account"
 msgstr "Račun administratora"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Promijeni zaporku"
+#~ msgid "Change Password"
+#~ msgstr "Promijeni zaporku"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Promijeni administrativnog korisnika"
+#~ msgid "Change Admin User"
+#~ msgstr "Promijeni administrativnog korisnika"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Zaporka je uspješno promijenjena."
+#~ msgid "Password successfully updated."
+#~ msgstr "Zaporka je uspješno promijenjena."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Administratorski korisnik je uspješno promijenjen."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Administratorski korisnik je uspješno promijenjen."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -1111,9 +1100,8 @@ msgstr "Agregacija mrežnih veza"
 msgid "Link Aggregations"
 msgstr "Agregacije mrežnih veza"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "Grupa LAGG sučelja"
+#~ msgid "LAGG Interface group"
+#~ msgstr "Grupa LAGG sučelja"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -1155,25 +1143,22 @@ msgstr "Kreiraj agregaciju mrežnih veza"
 msgid "View Link Aggregations"
 msgstr "Pregled svih mrežnih agregacija"
 
-#: network/views.py:197
-msgid "LAGG successfully added"
-msgstr "LAGG uspješno dodan"
+#~ msgid "LAGG successfully added"
+#~ msgstr "LAGG uspješno dodan"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
 msgstr "Ovaj IP je već u uporabi."
 
-#: plugins/forms.py:92
-msgid "Place to temporarily place PBI file"
-msgstr "Mjesto na koje privremeno postaviti PBI datoteku"
+#~ msgid "Place to temporarily place PBI file"
+#~ msgstr "Mjesto na koje privremeno postaviti PBI datoteku"
 
-#: plugins/forms.py:93
-msgid ""
-"The system will use this place to temporarily store the PBI file before it's "
-"installed."
-msgstr ""
-"Sustav će koristiti ovo mjesto da privremeno pohrani PBI datoteku prije "
-"instalacije."
+#~ msgid ""
+#~ "The system will use this place to temporarily store the PBI file before it's "
+#~ "installed."
+#~ msgstr ""
+#~ "Sustav će koristiti ovo mjesto da privremeno pohrani PBI datoteku prije "
+#~ "instalacije."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
@@ -1183,10 +1168,9 @@ msgstr "PBI datoteka koje će se instalirati"
 msgid "You must turn off Plugins service before proceeding"
 msgstr ""
 
-#: plugins/forms.py:183
 #, python-format
-msgid "The path %s already exists"
-msgstr "Putanja %s već postoji"
+#~ msgid "The path %s already exists"
+#~ msgstr "Putanja %s već postoji"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
@@ -1230,10 +1214,9 @@ msgstr "Montiran?"
 msgid "The full path cannot exceed 88 characters"
 msgstr "Puna putanja ne smije prelaziti 88 znakova"
 
-#: plugins/forms.py:336
 #, python-format
-msgid "The path could not be mounted %s"
-msgstr "Putanja nije mogla biti montirana %s"
+#~ msgid "The path could not be mounted %s"
+#~ msgstr "Putanja nije mogla biti montirana %s"
 
 #: plugins/forms.py:341
 #, python-format
@@ -1325,9 +1308,8 @@ msgstr ""
 msgid "Plugin successfully updated."
 msgstr "Dodatak je uspješno promijenjen."
 
-#: plugins/views.py:80
-msgid "Plugin successfully removed."
-msgstr "Dodatak je uspješno uklonjen."
+#~ msgid "Plugin successfully removed."
+#~ msgstr "Dodatak je uspješno uklonjen."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
@@ -1375,9 +1357,8 @@ msgstr "Neuspješno pokretanje APF servisa."
 msgid "The NFS service failed to reload."
 msgstr "Neuspješno pokretanje NFS servisa."
 
-#: services/forms.py:157
-msgid "This IP already exists."
-msgstr "Ova IP adresa već postoji."
+#~ msgid "This IP already exists."
+#~ msgstr "Ova IP adresa već postoji."
 
 #: services/forms.py:164
 #, fuzzy
@@ -1507,17 +1488,15 @@ msgstr "Tajna (potvrda)"
 msgid "Enter the same secret above for verification."
 msgstr "Upišite tajnu ponovno za provjeru."
 
-#: services/forms.py:504
-msgid "Initiator Secret"
-msgstr "Tajna inicijatora"
+#~ msgid "Initiator Secret"
+#~ msgstr "Tajna inicijatora"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Tajna na strani inicijatora. (za obostranu CHAP autentikaciju)"
 
-#: services/forms.py:509
-msgid "Initiator Secret (Confirm)"
-msgstr "Tajna inicijatora (potvrda)"
+#~ msgid "Initiator Secret (Confirm)"
+#~ msgstr "Tajna inicijatora (potvrda)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
@@ -1611,19 +1590,17 @@ msgstr ""
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:830
-msgid "Disk device"
-msgstr "Disk uređaj"
+#~ msgid "Disk device"
+#~ msgstr "Disk uređaj"
 
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "ID Portal grupe ne može biti veći od %d"
 
-#: services/forms.py:1001
 #, python-format
-msgid "Your Group ID cannot be higher than %d"
-msgstr "ID grupe ne može biti veći od %d"
+#~ msgid "Your Group ID cannot be higher than %d"
+#~ msgstr "ID grupe ne može biti veći od %d"
 
 #: services/forms.py:1019
 msgid ""
@@ -1761,13 +1738,11 @@ msgid ""
 msgstr ""
 "Koristite ovu opciju za nadglašavanje maske mape (0777 pretpostavljeno)."
 
-#: services/models.py:132
-msgid "Large RW support"
-msgstr "Podrška za velik RW"
+#~ msgid "Large RW support"
+#~ msgstr "Podrška za velik RW"
 
-#: services/models.py:134
-msgid "Send files with sendfile(2)"
-msgstr "Pošalji datoteku s sendfile(2)"
+#~ msgid "Send files with sendfile(2)"
+#~ msgstr "Pošalji datoteku s sendfile(2)"
 
 #: services/models.py:136
 msgid "EA Support"
@@ -1879,17 +1854,15 @@ msgstr ""
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:203
-msgid "Server Name"
-msgstr "Naziv poslužitelja"
+#~ msgid "Server Name"
+#~ msgstr "Naziv poslužitelja"
 
-#: services/models.py:204
-msgid ""
-"Name of the server. If this field is left empty the default server is "
-"specified."
-msgstr ""
-"Naziv poslužitelja. U slučaju kada je polje prazno koristi se "
-"pretpostavljeno ime."
+#~ msgid ""
+#~ "Name of the server. If this field is left empty the default server is "
+#~ "specified."
+#~ msgstr ""
+#~ "Naziv poslužitelja. U slučaju kada je polje prazno koristi se "
+#~ "pretpostavljeno ime."
 
 #: services/models.py:207
 msgid "Guest Access"
@@ -1926,17 +1899,15 @@ msgstr ""
 "Specificira koliko poslužitelja treba kreirati. Treba ih biti dovoljno za "
 "posluživanje maksimalnog broja istovremenih korisnika, obično 4 - 6."
 
-#: services/models.py:241
-msgid "Asynchronous mode"
-msgstr "Asinkroni režim rada"
+#~ msgid "Asynchronous mode"
+#~ msgstr "Asinkroni režim rada"
 
-#: services/models.py:242
-msgid ""
-"Enable asynchronous mode, which will help performance beyond gigabit network "
-"speed."
-msgstr ""
-"Omogući asinkroni režim rada, povećavajući radna svojstva na gigabitnim "
-"mrežama."
+#~ msgid ""
+#~ "Enable asynchronous mode, which will help performance beyond gigabit network "
+#~ "speed."
+#~ msgstr ""
+#~ "Omogući asinkroni režim rada, povećavajući radna svojstva na gigabitnim "
+#~ "mrežama."
 
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
@@ -4182,10 +4153,8 @@ msgstr ""
 msgid "View Volumes"
 msgstr "Pregled svih korisnika"
 
-#: storage/nav.py:108 templates/storage/volumes.html:129
-#: templates/storage/volumes.html.py:133
-msgid "Create ZFS Volume"
-msgstr "Kreiraj ZFS particiju"
+#~ msgid "Create ZFS Volume"
+#~ msgstr "Kreiraj ZFS particiju"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
@@ -4921,11 +4890,8 @@ msgstr ""
 msgid "Members"
 msgstr "Članovi"
 
-#: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
-#: templates/storage/tasks.html.py:134
-msgid "Modify"
-msgstr "Izmijeni"
+#~ msgid "Modify"
+#~ msgstr "Izmijeni"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -5180,17 +5146,15 @@ msgstr "Uređivanje"
 msgid "Edit Interface"
 msgstr ""
 
-#: templates/network/interface.html:34 templates/network/lagg.html:46
-msgid "Delete Interface"
-msgstr "Brisanje sučelja"
+#~ msgid "Delete Interface"
+#~ msgstr "Brisanje sučelja"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
 msgstr ""
 
-#: templates/network/interface.html:47 templates/network/interface.html:49
-msgid "Add Interface"
-msgstr "Dodaj sučelje"
+#~ msgid "Add Interface"
+#~ msgstr "Dodaj sučelje"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 #: templates/network/vlan.html:8 templates/plugins/mountpoints.html:7
@@ -5372,9 +5336,8 @@ msgstr ""
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
 msgstr ""
 
-#: templates/registration/login.html:47
-msgid "Please log in."
-msgstr "Prijavite se na sustav."
+#~ msgid "Please log in."
+#~ msgstr "Prijavite se na sustav."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -5629,9 +5592,8 @@ msgstr ""
 msgid "Delete Plugins Jail"
 msgstr "Obriši osnovnu datoteku"
 
-#: templates/services/rsyncmod.html:34
-msgid "No rsync modules defined"
-msgstr "rsync moduli nisu definirani"
+#~ msgid "No rsync modules defined"
+#~ msgstr "rsync moduli nisu definirani"
 
 #: templates/sharing/apple.html:5 templates/sharing/unix.html:5
 #: templates/sharing/windows.html:5
@@ -5996,9 +5958,8 @@ msgstr ""
 msgid "Destroy Dataset"
 msgstr ""
 
-#: templates/storage/volumes.html:248 templates/storage/volumes.html.py:252
-msgid "Destroy ZFS Volume"
-msgstr "Uništi ZFS particiju"
+#~ msgid "Destroy ZFS Volume"
+#~ msgstr "Uništi ZFS particiju"
 
 #: templates/storage/volumes.html:268
 msgid "No volumes defined"
@@ -6016,25 +5977,20 @@ msgstr ""
 msgid "Group type"
 msgstr "Vrsta grupe"
 
-#: templates/storage/wizard.html:105
-msgid "ZFS Extra"
-msgstr "ZFS dodatno"
+#~ msgid "ZFS Extra"
+#~ msgstr "ZFS dodatno"
 
-#: templates/storage/wizard.html:109
-msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Korištenje samo jednog diska za bilješke nije preporučljivo"
+#~ msgid "The use of only 1 log disk is highly discouraged"
+#~ msgstr "Korištenje samo jednog diska za bilješke nije preporučljivo"
 
-#: templates/storage/wizard.html:116
-msgid "Log"
-msgstr "Bilješke"
+#~ msgid "Log"
+#~ msgstr "Bilješke"
 
-#: templates/storage/wizard.html:117
-msgid "Cache"
-msgstr "Predmemorija"
+#~ msgid "Cache"
+#~ msgstr "Predmemorija"
 
-#: templates/storage/wizard.html:118
-msgid "Spare"
-msgstr "Rezerva"
+#~ msgid "Spare"
+#~ msgstr "Rezerva"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
@@ -6049,26 +6005,22 @@ msgstr "Postojeći podaci će biti obrisani"
 msgid "Replace Disk"
 msgstr "Zamijenjujem disk"
 
-#: templates/storage/zvols.html:3
 #, python-format
-msgid "Create ZFS volume on %(name)s"
-msgstr "Kreiraj ZFS particiju na %(name)s"
+#~ msgid "Create ZFS volume on %(name)s"
+#~ msgstr "Kreiraj ZFS particiju na %(name)s"
 
-#: templates/storage/zvols.html:6
-msgid "Add ZFS Volume"
-msgstr "Dodaj ZFS particiju"
+#~ msgid "Add ZFS Volume"
+#~ msgstr "Dodaj ZFS particiju"
 
 #: templates/system/advanced_edit.html:5
 msgid "Rebuild LDAP/AD Cache"
 msgstr "Regeneriraj LDAP/AD predmemoriju"
 
-#: templates/system/advanced_edit.html:18
-msgid "The cache is being rebuilt."
-msgstr "U tijeku je regenereriranje predmemorije."
+#~ msgid "The cache is being rebuilt."
+#~ msgstr "U tijeku je regenereriranje predmemorije."
 
-#: templates/system/advanced_edit.html:20
-msgid "The cache could not be rebuilt"
-msgstr "Neuspješno regeneriranje predmemorije"
+#~ msgid "The cache could not be rebuilt"
+#~ msgstr "Neuspješno regeneriranje predmemorije"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
@@ -6128,17 +6080,14 @@ msgstr ""
 msgid "iBurst"
 msgstr ""
 
-#: templates/system/ntpserver.html:38
-msgid "No NTP servers defined."
-msgstr "Nema definiranih NTP poslužitelja"
+#~ msgid "No NTP servers defined."
+#~ msgstr "Nema definiranih NTP poslužitelja"
 
-#: templates/system/ntpserver.html:44
-msgid "Add NTP server"
-msgstr "Dodaj NTP server"
+#~ msgid "Add NTP server"
+#~ msgstr "Dodaj NTP server"
 
-#: templates/system/ntpserver.html:46
-msgid "Add NTP Server"
-msgstr "Dodaj NTP server"
+#~ msgid "Add NTP Server"
+#~ msgstr "Dodaj NTP server"
 
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
@@ -6155,13 +6104,11 @@ msgstr ""
 msgid "History"
 msgstr "Povijest"
 
-#: templates/system/rsync.html:5
-msgid "Local Path"
-msgstr "Lokalna Putanja"
+#~ msgid "Local Path"
+#~ msgstr "Lokalna Putanja"
 
-#: templates/system/rsync.html:6
-msgid "Remote"
-msgstr "Udaljeno"
+#~ msgid "Remote"
+#~ msgstr "Udaljeno"
 
 #: templates/system/rsync.html:48
 #, fuzzy
@@ -6173,9 +6120,8 @@ msgstr "Nisu definirani rsync"
 msgid "Add rsync task"
 msgstr "Dodaj Rsync"
 
-#: templates/system/rsync.html:56
-msgid "Add Rsync"
-msgstr "Dodaj Rsync"
+#~ msgid "Add Rsync"
+#~ msgstr "Dodaj Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -6262,9 +6208,8 @@ msgstr "Vrijeme rada"
 msgid "Load Average"
 msgstr "Prosječno opterećenje"
 
-#: templates/system/system_info.html:34
-msgid "Connected through"
-msgstr "Povezano preko"
+#~ msgid "Connected through"
+#~ msgstr "Povezano preko"
 
 #: templates/system/tunable.html:34
 #, fuzzy
@@ -6327,14 +6272,14 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-msgid "Selected"
-msgstr "Odabrano"
+#~ msgid "Selected"
+#~ msgstr "Odabrano"
 
-msgid "Allow guest access"
-msgstr "Dozvoli pristup gostima"
+#~ msgid "Allow guest access"
+#~ msgstr "Dozvoli pristup gostima"
 
-msgid "Only allow guest access"
-msgstr "Dozvoli pristup samo gostima"
+#~ msgid "Only allow guest access"
+#~ msgstr "Dozvoli pristup samo gostima"
 
 #, fuzzy
 msgid "Invalid service pack"
@@ -6352,84 +6297,84 @@ msgstr "Pregledaj sve %s"
 msgid "View Tunables"
 msgstr "Pregled svih korisnika"
 
-msgid "Apply Service Pack"
-msgstr "Apliciraj servisni paket"
+#~ msgid "Apply Service Pack"
+#~ msgstr "Apliciraj servisni paket"
 
-msgid "Hourly"
-msgstr "Po satu"
+#~ msgid "Hourly"
+#~ msgstr "Po satu"
 
-msgid "Hourly Graphs"
-msgstr "Grafovi po satu"
+#~ msgid "Hourly Graphs"
+#~ msgstr "Grafovi po satu"
 
-msgid "Daily"
-msgstr "Dnevno"
+#~ msgid "Daily"
+#~ msgstr "Dnevno"
 
-msgid "Daily Graphs"
-msgstr "Grafovi po danima"
+#~ msgid "Daily Graphs"
+#~ msgstr "Grafovi po danima"
 
-msgid "Weekly"
-msgstr "Tjedno"
+#~ msgid "Weekly"
+#~ msgstr "Tjedno"
 
-msgid "Weekly Graphs"
-msgstr "Grafovi po tjednima"
+#~ msgid "Weekly Graphs"
+#~ msgstr "Grafovi po tjednima"
 
-msgid "Monthly"
-msgstr "Mjesečno"
+#~ msgid "Monthly"
+#~ msgstr "Mjesečno"
 
-msgid "Monthly Graphs"
-msgstr "Grafovi po mjesecima"
+#~ msgid "Monthly Graphs"
+#~ msgstr "Grafovi po mjesecima"
 
-msgid "Yearly"
-msgstr "Godišnje"
+#~ msgid "Yearly"
+#~ msgstr "Godišnje"
 
-msgid "Yearly Graphs"
-msgstr "Grafovi po godinama"
+#~ msgid "Yearly Graphs"
+#~ msgstr "Grafovi po godinama"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Traka"
+#~ msgid "Tape"
+#~ msgstr "Traka"
 
-msgid "Pass"
-msgstr "Prolaz"
+#~ msgid "Pass"
+#~ msgstr "Prolaz"
 
-msgid "Disable password"
-msgstr "Onemogući lozinku"
+#~ msgid "Disable password"
+#~ msgstr "Onemogući lozinku"
 
-msgid "View All Users"
-msgstr "Pregled svih korisnika"
+#~ msgid "View All Users"
+#~ msgstr "Pregled svih korisnika"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Ispričavamo se ali vrijeme za unos forme je isteklo. Nastavite s unosom s "
-"ove stranice."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Ispričavamo se ali vrijeme za unos forme je isteklo. Nastavite s unosom s "
+#~ "ove stranice."
 
-msgid "Local Access"
-msgstr "Lokalni pristup"
+#~ msgid "Local Access"
+#~ msgstr "Lokalni pristup"
 
-msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
-"Omogući lokalnim korisnicima pristup apple dijeljenim mapama na ovom "
-"poslužitelju."
+#~ msgid "Allow users with local accounts to access apple shares on this box."
+#~ msgstr ""
+#~ "Omogući lokalnim korisnicima pristup apple dijeljenim mapama na ovom "
+#~ "poslužitelju."
 
-msgid "Guest Account"
-msgstr "Gost korisnički račun"
+#~ msgid "Guest Account"
+#~ msgstr "Gost korisnički račun"
 
-msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
-msgstr ""
-"Koristite ovu opciju za promjenu korisničkog imena ('ftp' za "
-"pretpostavljeno) koje će biti korišteno za servise koji su specificirani "
-"kao gost. Sva prava koja ima ovaj korisnik biti će dostupna svakom "
-"klijentu koji se spaja na gost servis. Korisnik mora postojati u datoteci "
-"zaporki ali ne mora koristiti ispravane podatke za prijavu."
+#~ msgid ""
+#~ "Use this option to override the username ('ftp' by default) which will be "
+#~ "used for access to services which are specified as guest. Whatever "
+#~ "privileges this user has will be available to any client connecting to "
+#~ "the guest service. This user must exist in the password file, but does "
+#~ "not require a valid login."
+#~ msgstr ""
+#~ "Koristite ovu opciju za promjenu korisničkog imena ('ftp' za "
+#~ "pretpostavljeno) koje će biti korišteno za servise koji su specificirani "
+#~ "kao gost. Sva prava koja ima ovaj korisnik biti će dostupna svakom "
+#~ "klijentu koji se spaja na gost servis. Korisnik mora postojati u datoteci "
+#~ "zaporki ali ne mora koristiti ispravane podatke za prijavu."
 
 #, fuzzy
 msgid "Loader"
@@ -6439,42 +6384,205 @@ msgstr "Prosječno opterećenje"
 msgid "Loaders"
 msgstr "Prosječno opterećenje"
 
-msgid "Are you sure you want to export?"
-msgstr "Da li ste sigurni da želite izvoz?"
+#~ msgid "Are you sure you want to export?"
+#~ msgstr "Da li ste sigurni da želite izvoz?"
 
-msgid "Export Volume"
-msgstr "Izvezi particiju"
+#~ msgid "Export Volume"
+#~ msgstr "Izvezi particiju"
 
 #, fuzzy
 msgid "Add loader"
 msgstr "Dodaj particiju"
 
-msgid "%s successfully added."
-msgstr "%s je uspješno dodan."
+#~ msgid "%s successfully added."
+#~ msgstr "%s je uspješno dodan."
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 maska"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 maska"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Vrijednost mora biti između 0 i 10000."
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Vrijednost mora biti između 0 i 10000."
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Vrijednost mora biti između 0 i 1000."
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Vrijednost mora biti između 0 i 1000."
 
-msgid "Enable DDP"
-msgstr "Omogući DDP"
+#~ msgid "Enable DDP"
+#~ msgstr "Omogući DDP"
 
-msgid "Enables DDP support for low-level appletalk access."
-msgstr "Omogućuje DDP podršku za appletalk protokol niske razine."
+#~ msgid "Enables DDP support for low-level appletalk access."
+#~ msgstr "Omogućuje DDP podršku za appletalk protokol niske razine."
 
-msgid "Welcome to"
-msgstr "Dobrodošli u8"
+#~ msgid "Welcome to"
+#~ msgstr "Dobrodošli u8"
 
-msgid "Restore to Factory Defaults"
-msgstr "Povrat tvorničkih postavki"
+#~ msgid "Restore to Factory Defaults"
+#~ msgstr "Povrat tvorničkih postavki"
 
-msgid "Config"
-msgstr "Konfiguracija"
+#~ msgid "Config"
+#~ msgstr "Konfiguracija"
 
-msgid "Admin user"
-msgstr "Administrator"
+#~ msgid "Admin user"
+#~ msgstr "Administrator"
+
+#: choices.py:52
+msgid "HTTP+HTTPS"
+msgstr "HTTP+HTTPS"
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr "Nekriptirano"
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr "Kriptirano, bez lozinke"
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr "Kriptirano, sa lozinkom"
+
+#: choices.py:560
+msgid "Verify"
+msgstr "Provjera"
+
+#: choices.py:600
+msgid "9600"
+msgstr "9600"
+
+#: choices.py:601
+msgid "19200"
+msgstr "19200"
+
+#: choices.py:602
+msgid "38400"
+msgstr "38400"
+
+#: choices.py:603
+msgid "57600"
+msgstr "57600"
+
+#: choices.py:604
+msgid "115200"
+msgstr "115200"
+
+#: choices.py:659
+msgid "Fatal"
+msgstr "fatalno"
+
+#: choices.py:662
+msgid "Verbose"
+msgstr "Opširno"
+
+#: choices.py:670
+msgid "Daemon"
+msgstr "Daemon"
+
+#: choices.py:672
+msgid "Auth"
+msgstr "Autorizacija"
+
+#: choices.py:673
+msgid "Local 0"
+msgstr "Lokalni korisnik 0"
+
+#: choices.py:686
+msgid "NT4"
+msgstr "NT4"
+
+#: choices.py:695
+msgid "data"
+msgstr "podaci"
+
+#: choices.py:696
+msgid "!data"
+msgstr "!podaci"
+
+#: choices.py:697
+msgid "auth"
+msgstr "ovjera"
+
+#: choices.py:698
+msgid "ctrl"
+msgstr "ctrl"
+
+#: choices.py:699
+msgid "ctrl+data"
+msgstr "ctrl+podatak"
+
+#: choices.py:700
+msgid "ctrl+!data"
+msgstr "ctrl+!podatak"
+
+#: choices.py:701
+msgid "auth+data"
+msgstr "ovjera+podatak"
+
+#: choices.py:702
+msgid "auth+!data"
+msgstr "ovjera+!podatak"
+
+#: account/forms.py:539
+msgid "Home directory cannot contain colons"
+msgstr "Početni direktorij ne smije imati dvotočku"
+
+#: account/models.py:135
+msgid "Built-in User"
+msgstr "Ugrađen korisnik"
+
+#: account/models.py:242
+msgid "Group Memberships"
+msgstr "Članstvo grupa"
+
+#: api/resources.py:860
+msgid "on every %(days)s"
+msgstr "svakih %(dan)a"
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr "Neispravna adresa: %s"
+
+#: jails/admin.py:75
+#: jails/forms.py:725
+#: jails/models.py:403
+#: templates/plugins/plugins.html:21
+msgid "Jail"
+msgstr "Zatvor"
+
+#: jails/admin.py:271
+#: jails/models.py:353
+msgid "URL"
+msgstr "URL"
+
+#: jails/admin.py:277
+msgid "Instances"
+msgstr "Instanca"
+
+#: jails/forms.py:89
+msgid "type"
+msgstr "tip"
+
+#: jails/forms.py:99
+msgid "vanilla"
+msgstr "vanila"
+
+#: jails/forms.py:234
+#: jails/utils.py:623
+msgid "Unable to find template!"
+msgstr "Ne mogu pronači predložak!"
+
+#: jails/forms.py:451
+msgid "Path does not exist!"
+msgstr "Adresa ne postoji!"
+
+#: jails/forms.py:459
+msgid "autostart"
+msgstr "Automatsko pokretanje"
+
+#: jails/forms.py:460
+#: jails/models.py:158
+msgid "VIMAGE"
+msgstr "VIMAGE"
+
+#: jails/models.py:144
+msgid "MAC"
+msgstr "MAC"

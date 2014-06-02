@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2011-11-03 00:12+0200\n"
+"PO-Revision-Date: 2011-11-03 00:12+0000\n"
 "Last-Translator: gaujix <gudjon@247.is>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: is\n"
@@ -16,7 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.1.6\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1320279174.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -243,9 +244,8 @@ msgstr "Fullt"
 msgid "Debug"
 msgstr "Aflúsa"
 
-#: choices.py:195
-msgid "Default"
-msgstr "Sjálfgefið"
+#~ msgid "Default"
+#~ msgstr "Sjálfgefið"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -338,9 +338,8 @@ msgstr "Á"
 msgid "Off"
 msgstr "Af"
 
-#: choices.py:292
-msgid "lzjb (recommended)"
-msgstr "lzjb (mælt með)"
+#~ msgid "lzjb (recommended)"
+#~ msgstr "lzjb (mælt með)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -734,24 +733,17 @@ msgstr ""
 msgid "Admin Account"
 msgstr "Minn aðgangur"
 
-#: account/nav.py:19 templates/account/bsdusers.html:33
-#: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
-msgid "Change Password"
-msgstr "Breyta lykilorði"
+#~ msgid "Change Password"
+#~ msgstr "Breyta lykilorði"
 
-#: account/nav.py:24 templates/account/changeform.html:2
-#: templates/account/index.html:3
-msgid "Change Admin User"
-msgstr "Breyta kerfisnotanda"
+#~ msgid "Change Admin User"
+#~ msgstr "Breyta kerfisnotanda"
 
-#: account/views.py:95
-msgid "Password successfully updated."
-msgstr "Lykilorðið hefur verið uppfært."
+#~ msgid "Password successfully updated."
+#~ msgstr "Lykilorðið hefur verið uppfært."
 
-#: account/views.py:112
-msgid "Admin user successfully updated."
-msgstr "Admin notandinn hefur verið uppfærður."
+#~ msgid "Admin user successfully updated."
+#~ msgstr "Admin notandinn hefur verið uppfærður."
 
 #: account/views.py:125
 msgid "Users successfully updated."
@@ -1123,9 +1115,8 @@ msgstr "Samnýting netkorta"
 msgid "Link Aggregations"
 msgstr "Link Aggregations"
 
-#: network/models.py:346
-msgid "LAGG Interface group"
-msgstr "LAGG Viðmótshópur"
+#~ msgid "LAGG Interface group"
+#~ msgstr "LAGG Viðmótshópur"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -2758,9 +2749,8 @@ msgstr ""
 msgid "Domain Controller Name"
 msgstr ""
 
-#: services/models.py:1240
-msgid "AD or PDC name."
-msgstr "Nafn á AD eða PDC."
+#~ msgid "AD or PDC name."
+#~ msgstr "Nafn á AD eða PDC."
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
@@ -3634,9 +3624,8 @@ msgstr ""
 msgid "You already have a volume with same name"
 msgstr ""
 
-#: storage/forms.py:298
-msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" er frátekið orð og því má ekki nota það"
+#~ msgid "\"log\" is a reserved word and thus cannot be used"
+#~ msgstr "\"log\" er frátekið orð og því má ekki nota það"
 
 #: storage/forms.py:305
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
@@ -4893,9 +4882,8 @@ msgstr ""
 msgid "Your test email has been sent!"
 msgstr ""
 
-#: templates/404.html:7
-msgid "Page Not Found"
-msgstr "Síðan Fannst Ekki"
+#~ msgid "Page Not Found"
+#~ msgstr "Síðan Fannst Ekki"
 
 #: templates/base.html:51
 #, fuzzy
@@ -5567,32 +5555,26 @@ msgstr "Hlusta"
 msgid "No IP defined for this Portal"
 msgstr ""
 
-#: templates/services/iscsi_portals.html:26
-msgid "Edit Portal"
-msgstr "Breyta Gátt"
+#~ msgid "Edit Portal"
+#~ msgstr "Breyta Gátt"
 
-#: templates/services/iscsi_portals.html:32
-msgid "Delete Portal"
-msgstr "Eyða Gátt"
+#~ msgid "Delete Portal"
+#~ msgstr "Eyða Gátt"
 
 #: templates/services/iscsi_portals.html:39
 #, fuzzy
 msgid "No portals defined"
 msgstr "Engin deiling skylgreind"
 
-#: templates/services/iscsi_portals.html:46
-#: templates/services/iscsi_portals.html:48
-msgid "Add Portal"
-msgstr "Bæta við Gátt"
+#~ msgid "Add Portal"
+#~ msgstr "Bæta við Gátt"
 
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
 msgstr ""
 
-#: templates/services/iscsi_targets.html:40
-#: templates/services/iscsi_targets.html:42
-msgid "Add Target"
-msgstr "Bæta við Takmarki"
+#~ msgid "Add Target"
+#~ msgstr "Bæta við Takmarki"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 #, fuzzy
@@ -5665,10 +5647,8 @@ msgstr "Breyta Apple Deilingu"
 msgid "Delete Apple (AFP) Share"
 msgstr "Eyða Apple Deilingu"
 
-#: templates/sharing/apple.html:42 templates/sharing/unix.html:42
-#: templates/sharing/windows.html:46
-msgid "No shares defined"
-msgstr "Engin deiling skylgreind"
+#~ msgid "No shares defined"
+#~ msgstr "Engin deiling skylgreind"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 #, fuzzy
@@ -6344,15 +6324,15 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-msgid "Selected"
-msgstr "Valið"
+#~ msgid "Selected"
+#~ msgstr "Valið"
 
 #, fuzzy
 msgid "Control Plugins"
 msgstr "Stjórna þjónustum"
 
-msgid "Allow guest access"
-msgstr "Leyfa gestaaðgang"
+#~ msgid "Allow guest access"
+#~ msgstr "Leyfa gestaaðgang"
 
 #, fuzzy
 msgid "View S.M.A.R.T. Tests"
@@ -6370,65 +6350,65 @@ msgstr "Skoða alla notendur"
 msgid "Add Apple (CIFS) Share"
 msgstr "Bæta við Apple Deilingu"
 
-msgid "DVD"
-msgstr "DVD"
+#~ msgid "DVD"
+#~ msgstr "DVD"
 
-msgid "Tape"
-msgstr "Snælda"
+#~ msgid "Tape"
+#~ msgstr "Snælda"
 
-msgid "Pass"
-msgstr "Sleppa"
+#~ msgid "Pass"
+#~ msgstr "Sleppa"
 
 #, fuzzy
 msgid "Disable password"
 msgstr "Nýtt lykilorð"
 
-msgid "View All Users"
-msgstr "Skoða alla notendur"
+#~ msgid "View All Users"
+#~ msgstr "Skoða alla notendur"
 
-msgid ""
-"We apologize, but your form has expired. Please continue filling out the "
-"form from this page."
-msgstr ""
-"Við biðjum afsökunar, en eyðublaðið rann út. Vinsamlega haldið áfram að "
-"filla út eyðublaðið á þessari síðu."
+#~ msgid ""
+#~ "We apologize, but your form has expired. Please continue filling out the "
+#~ "form from this page."
+#~ msgstr ""
+#~ "Við biðjum afsökunar, en eyðublaðið rann út. Vinsamlega haldið áfram að "
+#~ "filla út eyðublaðið á þessari síðu."
 
-msgid "ISCSI"
-msgstr "ISCSI"
+#~ msgid "ISCSI"
+#~ msgstr "ISCSI"
 
-msgid "Guest Account"
-msgstr "Gestaaðgangur"
+#~ msgid "Guest Account"
+#~ msgstr "Gestaaðgangur"
 
-msgid "NTP server 2"
-msgstr "NTP þjónn 2"
+#~ msgid "NTP server 2"
+#~ msgstr "NTP þjónn 2"
 
-msgid "NTP server 3"
-msgstr "NTP þjónn 3"
+#~ msgid "NTP server 3"
+#~ msgstr "NTP þjónn 3"
 
-msgid "Apple"
-msgstr "Apple"
+#~ msgid "Apple"
+#~ msgstr "Apple"
 
-msgid "UNIX"
-msgstr "UNIX"
+#~ msgid "UNIX"
+#~ msgstr "UNIX"
 
 #, fuzzy
 msgid "Add loader"
 msgstr "Bæta við Gátt"
 
-msgid "%s successfully added."
-msgstr "%s hefur verið bætt við."
+#~ msgid "%s successfully added."
+#~ msgstr "%s hefur verið bætt við."
 
-msgid "IPv6 Netmask"
-msgstr "IPv6 netmöskvi"
+#~ msgid "IPv6 Netmask"
+#~ msgstr "IPv6 netmöskvi"
 
-msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Þetta gildi þarf að vera á bilinu 0 til 10000"
+#~ msgid "This value must be between 0 and 10000, inclusive."
+#~ msgstr "Þetta gildi þarf að vera á bilinu 0 til 10000"
 
-msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Þetta gildi þarf að vera á bilinu 0 til 1000"
+#~ msgid "This value must be between 0 and 1000, inclusive."
+#~ msgstr "Þetta gildi þarf að vera á bilinu 0 til 1000"
 
-msgid "Turn on/off TLS"
-msgstr "Virkja/afvirkja TLS"
+#~ msgid "Turn on/off TLS"
+#~ msgstr "Virkja/afvirkja TLS"
 
-msgid "Docs"
-msgstr "Skjöl"
+#~ msgid "Docs"
+#~ msgstr "Skjöl"
