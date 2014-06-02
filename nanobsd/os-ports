@@ -49,6 +49,12 @@ add_port freenas/freenas-ui PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
 
+if ! is_truenas ; then
+	add_port freenas/arcsas PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
+fi
+
 add_port net/mDNSResponder
 add_port textproc/libxml2
 add_port devel/libffi
