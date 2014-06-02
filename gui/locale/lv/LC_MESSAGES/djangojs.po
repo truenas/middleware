@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-02 02:11+0000\n"
-"PO-Revision-Date: 2012-09-13 12:40+0000\n"
-"Last-Translator: ok1 <ok1@trups.org>\n"
+"POT-Creation-Date: 2012-06-04 02:10-0700\n"
+"PO-Revision-Date: 2014-01-15 02:34+0000\n"
+"Last-Translator: ilmarmors <ilmars@delibero.lv>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
 "MIME-Version: 1.0\n"
@@ -18,106 +18,39 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 : "
 "2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1347540053.0\n"
-
-#: freeadmin/static/lib/js/alert.js:77
-msgid "Alert System"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:239
-msgid "Enable service"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:390
-#: freeadmin/static/lib/js/freeadmin.js:409
-msgid "Some error occurred"
-msgstr "Notika kāda kļūda"
-
-#: freeadmin/static/lib/js/freeadmin.js:733
-msgid "The cache is being rebuilt."
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:735
-msgid "The cache could not be rebuilt: "
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:943
-msgid "Please wait..."
-msgstr "Lūdzu uzgaidiet..."
-
-#: freeadmin/static/lib/js/freeadmin.js:1023
-msgid "An error occurred!"
-msgstr "Notika kļūda!"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:46
-msgid "Settings"
-msgstr "Uzstādījumi"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:57
-msgid "System Information"
-msgstr "Sistēmas informācija"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:96
-msgid "Network Settings"
-msgstr "Tīkla iestatījumi"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:134
-msgid "Shares"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:167
-msgid "Services"
-msgstr "Pakalpojumi"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:208
-msgid "Jails"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:246
-msgid "Plugins"
-msgstr "Spraudņi"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:286
-msgid "Account"
-msgstr "Konts"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:325
-msgid "Storage"
-msgstr "Glabātuve"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:394
-msgid "Support"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
-msgid "Shell"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
-msgid "Paste"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
-msgid "Each selected"
-msgstr "Katra atlasītā"
-
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
-msgid "Every N"
-msgstr "Katru N"
-
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
-msgid "Browse"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
-msgid "Close"
-msgstr ""
+"X-POOTLE-MTIME: 1389753253.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Ziņojumi"
+
+#: freeadmin/static/lib/js/freeadmin.js:68
+msgid "Settings"
+msgstr "Uzstādījumi"
+
+#: freeadmin/static/lib/js/freeadmin.js:79
+msgid "System Information"
+msgstr "Sistēmas informācija"
+
+#: freeadmin/static/lib/js/freeadmin.js:119
+msgid "Network Settings"
+msgstr "Tīkla iestatījumi"
+
+#: freeadmin/static/lib/js/freeadmin.js:190
+msgid "Services"
+msgstr "Pakalpojumi"
+
+#: freeadmin/static/lib/js/freeadmin.js:231
+msgid "Account"
+msgstr "Konts"
+
+#: freeadmin/static/lib/js/freeadmin.js:270
+msgid "Storage"
+msgstr "Glabātuve"
+
+#: freeadmin/static/lib/js/freeadmin.js:500
+#: freeadmin/static/lib/js/freeadmin.js:523
+msgid "Some error occurred"
+msgstr "Notika kāda kļūda"
 
 #~ msgid "Edit"
 #~ msgstr "Labot"
@@ -130,6 +63,25 @@ msgstr ""
 
 #~ msgid "Wipe Disk"
 #~ msgstr "Tīrīt Disku"
+
+#: freeadmin/static/lib/js/freeadmin.js:862
+msgid "Please wait..."
+msgstr "Lūdzu uzgaidiet..."
+
+#: freeadmin/static/lib/js/freeadmin.js:927
+msgid "An error occurred!"
+msgstr "Notika kļūda!"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
+msgid "Each selected"
+msgstr "Katra atlasītā"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
+msgid "Every N"
+msgstr "Katru N"
+
+msgid "Plugins"
+msgstr "Spraudņi"
 
 #~ msgid "CronJobs"
 #~ msgstr "Cron darbi"
@@ -146,106 +98,15 @@ msgstr ""
 #~ msgid "Disk Detach"
 #~ msgstr "Diska atdalīšana"
 
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
-msgid "Size"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:262
-msgid "drives"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:264
-msgid "drive"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:266
-msgid "show"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
-msgid "no more drives"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
-#, fuzzy
-msgid "Disk size mismatch"
-msgstr "Diska atdalīšana"
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:519
-msgid ""
-"Your configuration is optimal!<br /><br />It means you'll have the best "
-"performance possible for this number of disks and type of disk group.<br /><"
-"br />For further explanation please refer to the <a "
-"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
-"target='_blank'>documentation</a>."
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
-msgid ""
-"Your configuration is not optimal!<br /><br />It means this number of disks "
-"will not provide the best performance for that type of disk group.<br /><br "
-"/>For further explanation please refer to the <a "
-"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
-"target='_blank'>documentation</a>."
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
-msgid "Capacity"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
-msgid "Drag and drop this to resize"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
-msgid "Add Volume"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
-msgid "Existing data will be cleared"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
-msgid "Extend Volume"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
-msgid "Volume Name"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
-msgid "Volume to extend"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
-msgid ""
-"Extending an encrypted volume will reset the passphrase and recovery key!"
-msgstr ""
-
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Encryption"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
-msgid "Initialize Safely"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
-msgid "Available disks"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
-msgid "Volume layout"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
-msgid "Estimated capacity"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
-msgid "Add Extra Device"
-msgstr ""
+msgstr "Šifrēšana"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
 msgid "Cancel"
-msgstr ""
+msgstr "Atcelt"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr "Aizvērt"

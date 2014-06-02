@@ -31,9 +31,13 @@ class LSIFirmwareAlert(BaseAlert):
                 alerts.append(Alert(
                     Alert.WARN,
                     _(
-                        'Firmware version %s does not match driver version %s '
-                        'for /dev/mps%s'
-                    ) % (firmware, driver, number)
+                        'Firmware version %(fwversion)s does not match driver '
+                        'version %(drversion)s for /dev/mps%(mps)s'
+                    ) % {
+                        'fwversion': firmware,
+                        'drversion': driver,
+                        'mps': number,
+                    }
                 ))
 
         return alerts

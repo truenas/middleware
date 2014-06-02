@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-02 02:10+0000\n"
-"PO-Revision-Date: 2012-09-24 04:19+0000\n"
-"Last-Translator: SirAL <hglpd@hotmail.de>\n"
+"POT-Creation-Date: 2012-06-04 02:10-0700\n"
+"PO-Revision-Date: 2014-04-29 08:19+0000\n"
+"Last-Translator: matsimon <mathieu.sim@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -17,106 +17,39 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1348460349.0\n"
-
-#: freeadmin/static/lib/js/alert.js:77
-msgid "Alert System"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:239
-msgid "Enable service"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:390
-#: freeadmin/static/lib/js/freeadmin.js:409
-msgid "Some error occurred"
-msgstr "Einige Fehler aufgetreten"
-
-#: freeadmin/static/lib/js/freeadmin.js:733
-msgid "The cache is being rebuilt."
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:735
-msgid "The cache could not be rebuilt: "
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:943
-msgid "Please wait..."
-msgstr "Bitte warten..."
-
-#: freeadmin/static/lib/js/freeadmin.js:1023
-msgid "An error occurred!"
-msgstr "Ein Fehler ist aufgetreten!"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:46
-msgid "Settings"
-msgstr "Einstellungen"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:57
-msgid "System Information"
-msgstr "Systeminformationen"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:96
-msgid "Network Settings"
-msgstr "Netzwerkeinstellungen"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:134
-msgid "Shares"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:167
-msgid "Services"
-msgstr "Dienste"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:208
-msgid "Jails"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:246
-msgid "Plugins"
-msgstr "Erweiterungen"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:286
-msgid "Account"
-msgstr "Benutzerkonto"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:325
-msgid "Storage"
-msgstr "Speicher"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:394
-msgid "Support"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
-msgid "Shell"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
-msgid "Paste"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
-msgid "Each selected"
-msgstr "Alle ausgewählten"
-
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
-msgid "Every N"
-msgstr "Alle N"
-
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
-msgid "Browse"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
-msgid "Close"
-msgstr ""
+"X-POOTLE-MTIME: 1398759587.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Berichte"
+
+#: freeadmin/static/lib/js/freeadmin.js:68
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: freeadmin/static/lib/js/freeadmin.js:79
+msgid "System Information"
+msgstr "Systeminformationen"
+
+#: freeadmin/static/lib/js/freeadmin.js:119
+msgid "Network Settings"
+msgstr "Netzwerkeinstellungen"
+
+#: freeadmin/static/lib/js/freeadmin.js:190
+msgid "Services"
+msgstr "Dienste"
+
+#: freeadmin/static/lib/js/freeadmin.js:231
+msgid "Account"
+msgstr "Benutzerkonto"
+
+#: freeadmin/static/lib/js/freeadmin.js:270
+msgid "Storage"
+msgstr "Speicher"
+
+#: freeadmin/static/lib/js/freeadmin.js:500
+#: freeadmin/static/lib/js/freeadmin.js:523
+msgid "Some error occurred"
+msgstr "Einige Fehler aufgetreten"
 
 #~ msgid "Edit"
 #~ msgstr "Bearbeiten"
@@ -129,6 +62,25 @@ msgstr ""
 
 #~ msgid "Wipe Disk"
 #~ msgstr "Festplatte Löschen"
+
+#: freeadmin/static/lib/js/freeadmin.js:862
+msgid "Please wait..."
+msgstr "Bitte warten..."
+
+#: freeadmin/static/lib/js/freeadmin.js:927
+msgid "An error occurred!"
+msgstr "Ein Fehler ist aufgetreten!"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
+msgid "Each selected"
+msgstr "Alle ausgewählten"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
+msgid "Every N"
+msgstr "Alle N"
+
+msgid "Plugins"
+msgstr "Erweiterungen"
 
 #~ msgid "CronJobs"
 #~ msgstr "Zeitgesteuerte Aufgaben"
@@ -148,28 +100,55 @@ msgstr ""
 #~ msgid "Every"
 #~ msgstr "Alle"
 
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr "Warnsystem"
+
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr "Dienst aktivieren"
+
+#: freeadmin/static/lib/js/freeadmin.js:994
+msgid "The cache is being rebuilt."
+msgstr "Der Cache wird neu aufgebaut."
+
+#: freeadmin/static/lib/js/freeadmin.js:996
+msgid "The cache could not be rebuilt: "
+msgstr "Der Cache konnte nicht wieder aufgebaut werden: "
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr "Freigaben"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:212
+msgid "Jails"
+msgstr "Jails"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:398
+msgid "Support"
+msgstr "Hilfe"
+
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
 msgid "Size"
-msgstr ""
+msgstr "Größe"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:262
 msgid "drives"
-msgstr ""
+msgstr "Laufwerke"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:264
 msgid "drive"
-msgstr ""
+msgstr "Laufwerk"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:266
 msgid "show"
-msgstr ""
+msgstr "anzeigen"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
 msgid "no more drives"
-msgstr ""
+msgstr "keine weiteren Laufwerke"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
-#, fuzzy
 msgid "Disk size mismatch"
 msgstr "Festplatte trennen"
 
@@ -181,6 +160,11 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
+"Ihre Konfiguration it optimal!<br /><br />Sie erhalten die bestmögliche "
+"Leistung für diese Anzahl Festplatten und Art von Festplattengruppe.<br /><"
+"br />Weiterführende Informationen in der <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>Dokumentation</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
 msgid ""
@@ -190,64 +174,67 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
+"Ihre Konfiguration ist nicht optimal!<br /><br />D.h. dass Sie diese mit der "
+"gewählten Anzahl Festplatten Art mit dieser Art der Festplattengruppierung "
+"nicht die optimale Leistung erreichen.<br /><br />Weiterführende "
+"Informationen in der <a href='http://doc.freenas.org/index.php/Volumes#"
+"ZFS_Volume_Manager' target='_blank'>Dokumentation</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
 msgid "Capacity"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
-msgid "Drag and drop this to resize"
-msgstr ""
+msgstr "Kapazität"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
 msgid "Add Volume"
-msgstr ""
+msgstr "Volume hinzufügen"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Vorhandene Daten werden gelöscht"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
 msgid "Extend Volume"
-msgstr ""
+msgstr "Volume erweitern"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
 msgid "Volume Name"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
-msgid "Volume to extend"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
-msgid ""
-"Extending an encrypted volume will reset the passphrase and recovery key!"
-msgstr ""
+msgstr "Datenträger-Name"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Encryption"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
-msgid "Initialize Safely"
-msgstr ""
+msgstr "Verschlüsselung"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
 msgid "Available disks"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
-msgid "Volume layout"
-msgstr ""
+msgstr "Verfügbare Festplatten"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
 msgid "Estimated capacity"
-msgstr ""
+msgstr "Geschätzt Kapazität"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Add Extra Device"
-msgstr ""
+msgstr "Zusätzliches Gerät hinzufügen"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
 msgid "Cancel"
-msgstr ""
+msgstr "Abbrechen"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr "Terminal"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr "Einfügen"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr "Durchsuchen"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr "Schließen"

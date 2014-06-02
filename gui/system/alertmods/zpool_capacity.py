@@ -25,8 +25,8 @@ class ZpoolCapAlert(BaseAlert):
             except ValueError:
                 continue
             msg = _(
-                'The capacity for the volume \'%s\' is currently at %d%%, '
-                'while the recommended value is below 80%%.'
+                'The capacity for the volume \'%(volume)s\' is currently at '
+                '%(capacity)d%%, while the recommended value is below 80%%.'
             )
             level = None
             if cap >= 90:
@@ -37,7 +37,10 @@ class ZpoolCapAlert(BaseAlert):
                 alerts.append(
                     Alert(
                         level,
-                        msg % (vol.vol_name, cap),
+                        msg % {
+                            'volume': vol.vol_name,
+                            'capacity': cap,
+                        },
                     )
                 )
         return alerts

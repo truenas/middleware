@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-02 02:11+0000\n"
-"PO-Revision-Date: 2013-10-28 00:55+0000\n"
-"Last-Translator: zeke <sage.0118@gmail.com>\n"
+"POT-Creation-Date: 2012-06-04 02:10-0700\n"
+"PO-Revision-Date: 2014-03-02 07:46+0000\n"
+"Last-Translator: ReiKirishima <rei@kirishima.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -17,107 +17,40 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1382921725.0\n"
-
-#: freeadmin/static/lib/js/alert.js:77
-msgid "Alert System"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:239
-msgid "Enable service"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:390
-#: freeadmin/static/lib/js/freeadmin.js:409
-#, fuzzy
-msgid "Some error occurred"
-msgstr "エラーが発生しました!"
-
-#: freeadmin/static/lib/js/freeadmin.js:733
-msgid "The cache is being rebuilt."
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:735
-msgid "The cache could not be rebuilt: "
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin.js:943
-msgid "Please wait..."
-msgstr "お待ちください・・・"
-
-#: freeadmin/static/lib/js/freeadmin.js:1023
-msgid "An error occurred!"
-msgstr "エラーが発生しました!"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:46
-msgid "Settings"
-msgstr "設定"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:57
-msgid "System Information"
-msgstr "システム情報"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:96
-msgid "Network Settings"
-msgstr "ネットワーク設定"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:134
-msgid "Shares"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:167
-msgid "Services"
-msgstr "サービス"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:208
-msgid "Jails"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:246
-msgid "Plugins"
-msgstr "プラグイン"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:286
-msgid "Account"
-msgstr "アカウント"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:325
-msgid "Storage"
-msgstr "ストレージ"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:394
-msgid "Support"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
-msgid "Shell"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
-msgid "Paste"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
-msgid "Each selected"
-msgstr "選択したものそれぞれ"
-
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
-msgid "Every N"
-msgstr "各 N"
-
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
-msgid "Browse"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
-msgid "Close"
-msgstr ""
+"X-POOTLE-MTIME: 1393746397.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "レポート"
+
+#: freeadmin/static/lib/js/freeadmin.js:68
+msgid "Settings"
+msgstr "設定"
+
+#: freeadmin/static/lib/js/freeadmin.js:79
+msgid "System Information"
+msgstr "システム情報"
+
+#: freeadmin/static/lib/js/freeadmin.js:119
+msgid "Network Settings"
+msgstr "ネットワーク設定"
+
+#: freeadmin/static/lib/js/freeadmin.js:190
+msgid "Services"
+msgstr "サービス"
+
+#: freeadmin/static/lib/js/freeadmin.js:231
+msgid "Account"
+msgstr "アカウント"
+
+#: freeadmin/static/lib/js/freeadmin.js:270
+msgid "Storage"
+msgstr "ストレージ"
+
+#: freeadmin/static/lib/js/freeadmin.js:500
+#: freeadmin/static/lib/js/freeadmin.js:523
+#, fuzzy
+msgid "Some error occurred"
+msgstr "エラーが発生しました!"
 
 #~ msgid "Edit"
 #~ msgstr "編集"
@@ -125,9 +58,33 @@ msgstr ""
 #~ msgid "Edit Disk"
 #~ msgstr "ディスクを編集"
 
+#: freeadmin/static/lib/js/freeadmin.js:547
+msgid "Wipe"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:551
 #, fuzzy
-#~ msgid "Wipe Disk"
-#~ msgstr "ディスクを編集"
+msgid "Wipe Disk"
+msgstr "ディスクを編集"
+
+#: freeadmin/static/lib/js/freeadmin.js:862
+msgid "Please wait..."
+msgstr "お待ちください・・・"
+
+#: freeadmin/static/lib/js/freeadmin.js:927
+msgid "An error occurred!"
+msgstr "エラーが発生しました!"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
+msgid "Each selected"
+msgstr "選択したものそれぞれ"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
+msgid "Every N"
+msgstr "各 N"
+
+msgid "Plugins"
+msgstr "プラグイン"
 
 #~ msgid "CronJobs"
 #~ msgstr "cron ジョブ (定期的なコマンドの実行)"
@@ -147,106 +104,72 @@ msgstr ""
 #~ msgid "Every"
 #~ msgstr "すべて"
 
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr "警報システム"
+
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr "サービスを有効にする"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr "共有"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:212
+msgid "Jails"
+msgstr "Jails"
+
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
 msgid "Size"
-msgstr ""
+msgstr "容量"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:262
 msgid "drives"
-msgstr ""
+msgstr "ドライブ"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:264
 msgid "drive"
-msgstr ""
+msgstr "ドライブ"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:266
 msgid "show"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
-msgid "no more drives"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
-#, fuzzy
-msgid "Disk size mismatch"
-msgstr "ディスクのデタッチ"
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:519
-msgid ""
-"Your configuration is optimal!<br /><br />It means you'll have the best "
-"performance possible for this number of disks and type of disk group.<br /><"
-"br />For further explanation please refer to the <a "
-"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
-"target='_blank'>documentation</a>."
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
-msgid ""
-"Your configuration is not optimal!<br /><br />It means this number of disks "
-"will not provide the best performance for that type of disk group.<br /><br "
-"/>For further explanation please refer to the <a "
-"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
-"target='_blank'>documentation</a>."
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
-msgid "Capacity"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
-msgid "Drag and drop this to resize"
-msgstr ""
+msgstr "表示"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
 msgid "Add Volume"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
-msgid "Existing data will be cleared"
-msgstr ""
+msgstr "ボリュームを追加"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
 msgid "Extend Volume"
-msgstr ""
+msgstr "拡張ボリューム"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
 msgid "Volume Name"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
-msgid "Volume to extend"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
-msgid ""
-"Extending an encrypted volume will reset the passphrase and recovery key!"
-msgstr ""
+msgstr "ボリューム名"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Encryption"
-msgstr ""
-
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
-msgid "Initialize Safely"
-msgstr ""
+msgstr "暗号化"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
 msgid "Available disks"
-msgstr ""
+msgstr "利用可能なディスク"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
 msgid "Volume layout"
-msgstr ""
+msgstr "ボリュームレイアウト"
 
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
-msgid "Estimated capacity"
-msgstr ""
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr "Shell"
 
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
-msgid "Add Extra Device"
-msgstr ""
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr "貼り付け"
 
-#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
-msgid "Cancel"
-msgstr ""
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr "参照..."

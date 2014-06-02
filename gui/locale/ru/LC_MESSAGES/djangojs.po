@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-12-02 02:12+0000\n"
+"POT-Creation-Date: 2012-06-04 02:10-0700\n"
 "PO-Revision-Date: 2013-12-06 11:05+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,104 +20,37 @@ msgstr ""
 "X-Generator: Pootle 2.5.0\n"
 "X-POOTLE-MTIME: 1386327907.0\n"
 
-#: freeadmin/static/lib/js/alert.js:77
-msgid "Alert System"
-msgstr "Система предупреждений"
+#~ msgid "Reporting"
+#~ msgstr "Отчёты"
 
-#: freeadmin/static/lib/js/freeadmin.js:239
-msgid "Enable service"
-msgstr "Включить службу"
-
-#: freeadmin/static/lib/js/freeadmin.js:390
-#: freeadmin/static/lib/js/freeadmin.js:409
-msgid "Some error occurred"
-msgstr "Произошла какая-то ошибка"
-
-#: freeadmin/static/lib/js/freeadmin.js:733
-msgid "The cache is being rebuilt."
-msgstr "Кеш был перестроен."
-
-#: freeadmin/static/lib/js/freeadmin.js:735
-msgid "The cache could not be rebuilt: "
-msgstr "Невозможно перестроить кэш: "
-
-#: freeadmin/static/lib/js/freeadmin.js:943
-msgid "Please wait..."
-msgstr "Подождите..."
-
-#: freeadmin/static/lib/js/freeadmin.js:1023
-msgid "An error occurred!"
-msgstr "Произошла ошибка!"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:46
+#: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
 msgstr "Настройки"
 
-#: freeadmin/static/lib/js/freeadmin/Menu.js:57
+#: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
 msgstr "Информация о системе"
 
-#: freeadmin/static/lib/js/freeadmin/Menu.js:96
+#: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
 msgstr "Настройки Сети"
 
-#: freeadmin/static/lib/js/freeadmin/Menu.js:134
-msgid "Shares"
-msgstr "Общие ресурсы"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:167
+#: freeadmin/static/lib/js/freeadmin.js:190
 msgid "Services"
 msgstr "Службы"
 
-#: freeadmin/static/lib/js/freeadmin/Menu.js:208
-msgid "Jails"
-msgstr "Jail"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:246
-msgid "Plugins"
-msgstr "Плагины"
-
-#: freeadmin/static/lib/js/freeadmin/Menu.js:286
+#: freeadmin/static/lib/js/freeadmin.js:231
 msgid "Account"
 msgstr "Учётная запись"
 
-#: freeadmin/static/lib/js/freeadmin/Menu.js:325
+#: freeadmin/static/lib/js/freeadmin.js:270
 msgid "Storage"
 msgstr "Хранилище"
 
-#: freeadmin/static/lib/js/freeadmin/Menu.js:394
-msgid "Support"
-msgstr "Поддержка"
-
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
-msgid "Shell"
-msgstr "Командный интерпретатор"
-
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
-#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
-msgid "Paste"
-msgstr "Вставить"
-
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:62
-msgid "Each selected"
-msgstr "Каждый выбранный"
-
-#: freeadmin/static/lib/js/freeadmin/form/Cron.js:117
-msgid "Every N"
-msgstr "Каждый N"
-
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
-msgid "Browse"
-msgstr "Просмотреть"
-
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
-#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
-msgid "Close"
-msgstr "Закрыть"
-
-#~ msgid "Reporting"
-#~ msgstr "Отчёты"
+#: freeadmin/static/lib/js/freeadmin.js:500
+#: freeadmin/static/lib/js/freeadmin.js:523
+msgid "Some error occurred"
+msgstr "Произошла какая-то ошибка"
 
 #~ msgid "Edit"
 #~ msgstr "Редактирование"
@@ -130,6 +63,25 @@ msgstr "Закрыть"
 
 #~ msgid "Wipe Disk"
 #~ msgstr "Очистка диска"
+
+#: freeadmin/static/lib/js/freeadmin.js:862
+msgid "Please wait..."
+msgstr "Подождите..."
+
+#: freeadmin/static/lib/js/freeadmin.js:927
+msgid "An error occurred!"
+msgstr "Произошла ошибка!"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
+msgid "Each selected"
+msgstr "Каждый выбранный"
+
+#: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
+msgid "Every N"
+msgstr "Каждый N"
+
+msgid "Plugins"
+msgstr "Плагины"
 
 #~ msgid "CronJobs"
 #~ msgstr "Планировщик Cron"
@@ -148,6 +100,34 @@ msgstr "Закрыть"
 
 #~ msgid "Every"
 #~ msgstr "Каждый"
+
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr "Система предупреждений"
+
+#: freeadmin/static/lib/js/freeadmin.js:239
+msgid "Enable service"
+msgstr "Включить службу"
+
+#: freeadmin/static/lib/js/freeadmin.js:994
+msgid "The cache is being rebuilt."
+msgstr "Кеш был перестроен."
+
+#: freeadmin/static/lib/js/freeadmin.js:996
+msgid "The cache could not be rebuilt: "
+msgstr "Невозможно перестроить кэш: "
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr "Общие ресурсы"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:212
+msgid "Jails"
+msgstr "Jail"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:398
+msgid "Support"
+msgstr "Поддержка"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:123
 msgid "Size"
@@ -261,3 +241,22 @@ msgstr "Добавить еще диск"
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
 msgid "Cancel"
 msgstr "Отмена"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr "Командный интерпретатор"
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr "Вставить"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr "Просмотреть"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr "Закрыть"
