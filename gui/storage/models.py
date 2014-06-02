@@ -943,7 +943,10 @@ class Replication(Model):
             if title:
                 reg = re.search(r'sending (\S+) \((\d+)%', title)
                 if reg:
-                    return _('Sending %s (%s%%)') % reg.groups()
+                    return _('Sending %(snapshot)s (%(percent)s%%)') % {
+                        'snapshot': reg.groups()[0],
+                        'percent': reg.groups()[1],
+                    }
                 else:
                     return _('Sending')
         if self.repl_lastresult:
