@@ -5019,11 +5019,6 @@ msgstr "Gebruiker wijzigen"
 #~ msgid "Auxiliary Groups"
 #~ msgstr "Aanvullende Groepen"
 
-# Verschil tussen Delete User en Remove User?
-#: templates/account/bsdusers.html:56
-msgid "Remove User"
-msgstr "Gebruiker verwijderen"
-
 #~ msgid "Delete User"
 #~ msgstr "Verwijder Gebruiker"
 
@@ -7268,10 +7263,6 @@ msgstr "Ypbind in beveiligde modus laten uitvoeren"
 msgid "NIS Domain"
 msgstr "NIS-domein"
 
-#: services/models.py:1869
-msgid "Informational"
-msgstr "Informatief"
-
 #: services/models.py:1868
 msgid "Informational"
 msgstr "Informatief"
@@ -8329,11 +8320,6 @@ msgstr "Toegewezen gebruiker"
 msgid "Admin password"
 msgstr "Beheerderswachtwoord"
 
-# Verschil tussen Delete User en Remove User?
-#: storage/forms.py:1952
-msgid "Remove passphrase"
-msgstr "Wachtwoordzin verwijderen"
-
 #: storage/forms.py:2054
 msgid "You need either a passphrase or a recovery key to unlock"
 msgstr "U hebt een wachtwoordzin of herstelsleutel nodig om te ontgrendelen"
@@ -8390,10 +8376,6 @@ msgstr "Volume ontgrendelen mislukt"
 #: storage/views.py:1016
 msgid "GELI recovery key download starting..."
 msgstr "Downloaden van GELI-herstelsleutel starten..."
-
-#: storage/views.py:1076
-msgid "Recovery has been removed"
-msgstr "Herstelsleutel is verwijderd"
 
 #: support/models.py:45
 msgid "A description of the issue."
