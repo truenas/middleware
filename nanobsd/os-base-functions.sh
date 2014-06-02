@@ -60,13 +60,6 @@ add_truenas_gui()
 	add_gui_encrypted "$gui" "$dst" "$dstCR"
 }
 
-arch_specific_ko()
-{
-	if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
-		cp ${AVATAR_ROOT}/src/kernel_modules/arcsas_${NANO_ARCH}.ko ${NANO_WORLDDIR}/boot/modules/arcsas.ko
-	fi
-}
-
 add_warden_hooks()
 {
 	local wt src dst share hooks
