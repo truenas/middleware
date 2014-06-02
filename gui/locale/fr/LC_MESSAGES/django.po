@@ -7206,10 +7206,6 @@ msgstr ""
 "joignable ou le délai expire, les services réseau sont néanmoins démarrés, "
 "mais sans garantie que le réseau soit fonctionnel."
 
-#: network/models.py:77
-msgid "Netwait IP list"
-msgstr "Liste des IP netwait"
-
 #: network/models.py:88
 msgid "Netwait IP list"
 msgstr "Liste d'IP netwait"
@@ -8072,16 +8068,6 @@ msgstr ""
 "réinitialiser le drapeau vfs.nfsrv.nfs_privport de sysctl, qui contrôle si "
 "le noyau ne doit accepter des requêtes NFS provenant de ports réservés "
 "uniquement."
-
-#: services/models.py:299
-msgid ""
-"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
-"families. This is typically done to ensure that the port which mountd binds "
-"to is a known value which can be used in firewall rulesets."
-msgstr ""
-"Contraint mountd à lier au port spécifié, pour les deux familles d'adresses "
-"IPv4 et IPv6. Typiquement, cela est fait pour s'assurer que le port auquel "
-"se lie mountd est connu et peut être déclaré dans les règles d'un firewall."
 
 #: services/models.py:312
 msgid ""
