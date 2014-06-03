@@ -559,7 +559,16 @@ def reload_httpd(request):
 
 def debug(request):
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+    p1 = pipeopen("zfs list -H -o name")
+    zfs = p1.communicate()[0]
+    zfs = zfs.split()
     dir = "/var/tmp/ixdiagnose"
+    for dataset in zfs:
+        if dataset.endswith(".system"):
+            p1 = pipeopen("zfs list -H -o mountpoint %s" % dataset)
+            mntpoint = p1.communicate()[0].strip()
+            dir = mntpoint + "/" + "ixdiagnose"
+            break
     dump = "%s/ixdiagnose.tgz" % dir
 
     opts = ["/usr/local/bin/ixdiagnose", "-d", dir, "-s", "-F"]
