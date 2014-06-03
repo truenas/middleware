@@ -261,3 +261,12 @@ msgstr "Bladeren"
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
 msgid "Close"
 msgstr "Sluiten"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
+msgid "Manual setup"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "Volumenaam"

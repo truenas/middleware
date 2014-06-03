@@ -173,3 +173,91 @@ msgstr "貼り付け"
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
 msgid "Browse"
 msgstr "参照..."
+
+#: freeadmin/static/lib/js/freeadmin.js:784
+msgid "The cache is being rebuilt."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:786
+msgid "The cache could not be rebuilt: "
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:400
+msgid "Support"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:277
+#, fuzzy
+msgid "no more drives"
+msgstr "ドライブ"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:335
+#, fuzzy
+msgid "Disk size mismatch"
+msgstr "ディスクのデタッチ"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:520
+msgid ""
+"Your configuration is optimal!<br /><br />It means you'll have the best "
+"performance possible for this number of disks and type of disk group.<br /><"
+"br />For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:525
+msgid ""
+"Your configuration is not optimal!<br /><br />It means this number of disks "
+"will not provide the best performance for that type of disk group.<br /><br "
+"/>For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:666
+msgid "Capacity"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:974
+msgid "Drag and drop this to resize"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
+msgid "Existing data will be cleared"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
+#, fuzzy
+msgid "Volume to extend"
+msgstr "ボリュームレイアウト"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
+msgid ""
+"Extending an encrypted volume will reset the passphrase and recovery key!"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1073
+msgid "Estimated capacity"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1194
+msgid "Add Extra Device"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1212
+msgid "Cancel"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
+msgid "Manual setup"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "ボリューム名"
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr ""

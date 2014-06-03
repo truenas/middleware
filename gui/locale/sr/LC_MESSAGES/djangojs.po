@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2013-12-06 11:05+0000\n"
+"PO-Revision-Date: 2014-06-02 20:30+0000\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1386327909.0\n"
+"X-POOTLE-MTIME: 1401741041.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Izveštavanje"
@@ -97,3 +97,158 @@ msgstr "Dodatci"
 
 #~ msgid "Disk Detach"
 #~ msgstr "Odvoji Disk"
+
+#: freeadmin/static/lib/js/alert.js:77
+msgid "Alert System"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:258
+msgid "Enable service"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:784
+msgid "The cache is being rebuilt."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:786
+msgid "The cache could not be rebuilt: "
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:134
+msgid "Shares"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:213
+msgid "Jails"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:400
+msgid "Support"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:124
+msgid "Size"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:263
+msgid "drives"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:265
+msgid "drive"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:267
+msgid "show"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:277
+msgid "no more drives"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:335
+#, fuzzy
+msgid "Disk size mismatch"
+msgstr "Odvoji Disk"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:520
+msgid ""
+"Your configuration is optimal!<br /><br />It means you'll have the best "
+"performance possible for this number of disks and type of disk group.<br /><"
+"br />For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:525
+msgid ""
+"Your configuration is not optimal!<br /><br />It means this number of disks "
+"will not provide the best performance for that type of disk group.<br /><br "
+"/>For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:666
+msgid "Capacity"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:974
+msgid "Drag and drop this to resize"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
+msgid "Add Volume"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
+msgid "Existing data will be cleared"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1019
+msgid "Extend Volume"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
+msgid "Volume Name"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
+msgid "Volume to extend"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
+msgid ""
+"Extending an encrypted volume will reset the passphrase and recovery key!"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
+msgid "Encryption"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1071
+msgid "Available disks"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1072
+msgid "Volume layout"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1073
+msgid "Estimated capacity"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1194
+msgid "Add Extra Device"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1212
+msgid "Cancel"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
+msgid "Manual setup"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
+msgid "ZFS Volume Manager"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+msgid "Shell"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:90
+#: freeadmin/static/lib/js/freeadmin/WebShell.js:114
+msgid "Paste"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
+msgid "Browse"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
+#: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
+msgid "Close"
+msgstr ""
