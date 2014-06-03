@@ -24,10 +24,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
+import glob
 import logging
 import os
 import re
+import shutil
 import smtplib
 import sqlite3
 import subprocess
@@ -623,3 +624,43 @@ def exclude_path(path, exclude):
         return apply_paths
     else:
         return [path]
+
+
+def backup_database():
+    volume, basename = get_system_dataset()
+    if volume:
+        files = glob.glob('/mnt/%s/*.db' % basename)
+        reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
+        files = filter(lambda y: reg.match(y), files)
+        today = datetime.now().strftime("%Y-%m-%d")
+        number = 1
+        if files:
+            # Sort found files by date and revision
+            files = sorted(
+                files,
+                cmp=lambda x, y: cmp(
+                    (x.groups()[0], int(x.groups()[1])),
+                    (y.groups()[0], int(y.groups()[1])),
+                ),
+                key=lambda x: reg.search(x),
+                reverse=True,
+            )
+            last = files[0]
+            search = reg.search(last)
+            date = search.groups()[0]
+            if date == today:
+                number = int(search.groups()[1]) + 1
+
+            # Remove too old database files
+            for f in files[29:]:
+                try:
+                    os.unlink(f)
+                except:
+                    pass
+        newfile = '/mnt/%s/%s-%s-%d.db' % (
+            basename,
+            'hostname',
+            today,
+            number,
+        )
+        shutil.copy('/data/freenas-v1.db', newfile)
