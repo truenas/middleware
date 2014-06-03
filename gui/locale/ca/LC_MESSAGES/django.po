@@ -904,7 +904,6 @@ msgid "Parent Interface"
 msgstr "Interfície Pare"
 
 #: network/forms.py:245
-#, fuzzy
 msgid "The name must be vlanXX where XX is an integer"
 msgstr "El nomsde ha d'esser vlanXX on XX és un número integre"
 
@@ -1159,12 +1158,10 @@ msgid "This IP is already in use."
 msgstr "Un grup amb aquest gid ja existeix"
 
 #: plugins/forms.py:92
-#, fuzzy
 msgid "Place to temporarily place PBI file"
 msgstr "Col.loca a un lloc temporal el fitxer de firmware"
 
 #: plugins/forms.py:93
-#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
@@ -1182,7 +1179,7 @@ msgid "You must turn off Plugins service before proceeding"
 msgstr ""
 
 #: plugins/forms.py:183
-#, fuzzy, python-format
+#, python-format
 msgid "The path %s already exists"
 msgstr "Un grup amb aquest gid ja existeix"
 
@@ -1203,12 +1200,10 @@ msgid "Plugins jail path"
 msgstr ""
 
 #: plugins/forms.py:218
-#, fuzzy
 msgid "Jail IPv4 Address"
 msgstr "Direcció de correu electrònic"
 
 #: plugins/forms.py:222
-#, fuzzy
 msgid "Jail IPv4 Netmask"
 msgstr "Màscara IPv4 "
 
@@ -1229,7 +1224,7 @@ msgid "The full path cannot exceed 88 characters"
 msgstr ""
 
 #: plugins/forms.py:336
-#, fuzzy, python-format
+#, python-format
 msgid "The path could not be mounted %s"
 msgstr "La cache no es pot reconstruir"
 
@@ -1321,7 +1316,6 @@ msgid "Mount Point"
 msgstr "Punt de muntatge"
 
 #: plugins/models.py:122
-#, fuzzy
 msgid "Mount Points"
 msgstr "Punt de muntatge"
 
@@ -1331,7 +1325,6 @@ msgid "Plugin successfully updated."
 msgstr "%s actualitzat amb èxit."
 
 #: plugins/views.py:80
-#, fuzzy
 msgid "Plugin successfully removed."
 msgstr "Volum afegit amb èxit."
 
@@ -1354,7 +1347,6 @@ msgid "There was a problem importing the jail."
 msgstr ""
 
 #: plugins/views.py:204
-#, fuzzy
 msgid "Jail successfully imported."
 msgstr "%s actualitzat amb èxit."
 
@@ -1383,12 +1375,10 @@ msgid "The NFS service failed to reload."
 msgstr "El servei NFS ha fallat de recàrrega-se"
 
 #: services/forms.py:157
-#, fuzzy
 msgid "This IP already exists."
 msgstr "Un grup amb aquest gid ja existeix"
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
 msgstr "El servei AFP ha fallat de recàrrega-se"
 
@@ -2377,12 +2367,10 @@ msgid "Dynamic DNS"
 msgstr "DNS dinàmic"
 
 #: services/models.py:804
-#, fuzzy
 msgid "Path to the plugins jail"
 msgstr "Ruta a l'Extent"
 
 #: services/models.py:809
-#, fuzzy
 msgid "Jail name"
 msgstr "Nom de domini"
 
@@ -2397,12 +2385,10 @@ msgid ""
 msgstr ""
 
 #: services/models.py:821
-#, fuzzy
 msgid "Jail IP address"
 msgstr "Direcció de correu electrònic"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
 msgstr "Màscara IPv4 "
 
@@ -2497,7 +2483,6 @@ msgstr ""
 "s'aixeca abans que s'acabi el temps, l'aturada es cancel.la."
 
 #: services/models.py:933
-#, fuzzy
 msgid "UPS Master User Password"
 msgstr "Contrasenya de la compartició"
 
@@ -3193,23 +3178,19 @@ msgstr "Serveis de Control"
 #~ msgstr "Afegeix un perifèric Extent"
 
 #: services/nav.py:79
-#, fuzzy
 msgid "View Device Extents"
 msgstr "Veure tots els perifèrics Extent"
 
 #: services/nav.py:92
-#, fuzzy
 msgid "File Extents"
 msgstr "Extents del perifèric"
 
 #: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
-#, fuzzy
 msgid "Add File Extent"
 msgstr "Afegeix un perifèric Extent"
 
 #: services/nav.py:118
-#, fuzzy
 msgid "View File Extents"
 msgstr "Veure tots els Extents"
 
@@ -3237,7 +3218,6 @@ msgid "Settings"
 msgstr "Ajustos"
 
 #: services/nav.py:186
-#, fuzzy
 msgid "Management"
 msgstr "Administració iSCSI"
 
@@ -3553,12 +3533,10 @@ msgstr ""
 #~ "bàsicament per ordinadors Mac."
 
 #: sharing/models.py:189
-#, fuzzy
 msgid "Enable .AppleDouble"
 msgstr "Sense .AppleDouble"
 
 #: sharing/models.py:190
-#, fuzzy
 msgid ""
 "This will enable automatic creation of the .AppleDouble directories. This "
 "option should be used if files are accessed by Mac computers."
@@ -3753,7 +3731,6 @@ msgid "Specify custom path"
 msgstr "Especifíca una ruta (path) a mida"
 
 #: storage/forms.py:163
-#, fuzzy
 msgid "Volume add"
 msgstr "Nom del volum"
 
@@ -4210,7 +4187,6 @@ msgstr "Hosts de replicació remota"
 
 #: storage/models.py:657 storage/models.py:718
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
-#, fuzzy
 msgid "Filesystem/Volume"
 msgstr "Tipo de sistema de fitxers"
 
@@ -4226,7 +4202,6 @@ msgid "Remote Host"
 msgstr "Host remot"
 
 #: storage/models.py:669
-#, fuzzy
 msgid "Remote ZFS filesystem name"
 msgstr "sistema de fitxers ZFS remot"
 
@@ -4328,13 +4303,11 @@ msgid "View Snapshots"
 msgstr "Veure tots els Snapshots"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
 msgstr "Veure tots els grups"
 
 #: storage/nav.py:41 templates/storage/volumes.html:4
 #: templates/storage/volumes.html.py:6
-#, fuzzy
 msgid "Volume Manager"
 msgstr "Nom del volum"
 
@@ -4392,7 +4365,6 @@ msgid "Volume successfully added."
 msgstr "Volum afegit amb èxit."
 
 #: storage/views.py:254
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "Opcions extra de S.M.A.R.T."
 
@@ -4493,12 +4465,10 @@ msgid "Language (Require UI reload)"
 msgstr "Idioma (requereix recarregar la UI)"
 
 #: system/forms.py:214
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
 msgstr "Aquest valor ha d'estar entre 0 i 65535, inclusivament."
 
 #: system/forms.py:216
-#, fuzzy
 msgid "Number is required."
 msgstr "Aquest camp és requereix."
 
@@ -4540,12 +4510,10 @@ msgid "SHA256 sum for the image"
 msgstr "Suma SHA256  per la imatge"
 
 #: system/forms.py:538
-#, fuzzy
 msgid "Invalid firmware"
 msgstr "Firmware o checksum incorrecte"
 
 #: system/forms.py:544
-#, fuzzy
 msgid "Invalid checksum"
 msgstr "Firmware o checksum incorrecte"
 
@@ -4568,7 +4536,6 @@ msgid "Protocol"
 msgstr "Protocol"
 
 #: system/models.py:50
-#, fuzzy
 msgid "WebGUI Address"
 msgstr "Adreça IPv4"
 
@@ -5473,7 +5440,6 @@ msgid "Plugin info"
 msgstr ""
 
 #: templates/plugins/index.html:39
-#, fuzzy
 msgid "Edit Plugin"
 msgstr "Editar portal"
 
@@ -5510,22 +5476,18 @@ msgid "Please wait..."
 msgstr "Si us plau, espera...."
 
 #: templates/plugins/mountpoints.html:19
-#, fuzzy
 msgid "Edit Mount Point"
 msgstr "Punt de muntatge"
 
 #: templates/plugins/mountpoints.html:25
-#, fuzzy
 msgid "Delete Mount Point"
 msgstr "Punt de muntatge"
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
 msgstr "No hi ha tasques programades definides"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-#, fuzzy
 msgid "Add Mount Point"
 msgstr "Punt de muntatge"
 
@@ -5596,7 +5558,6 @@ msgid "NFS Settings"
 msgstr "Paràmetres NFS"
 
 #: templates/services/core.html:103 templates/services/core.html.py:105
-#, fuzzy
 msgid "Plugins Settings"
 msgstr "paràmetres AFP"
 
@@ -5650,7 +5611,6 @@ msgid "Portals"
 msgstr "Portals"
 
 #: templates/services/iscsi.html:14
-#, fuzzy
 msgid "Authorized Initiators"
 msgstr "Iniciador autoritzat"
 
@@ -5670,7 +5630,6 @@ msgid "Associated Targets"
 msgstr "Targets associats"
 
 #: templates/services/iscsi_assoctargets.html:31
-#, fuzzy
 msgid "No associated targets defined"
 msgstr "Cap target definit"
 
@@ -5690,7 +5649,6 @@ msgstr "Cap target definit"
 #~ msgstr "Xarxa autoritzada"
 
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
 msgstr "Iniciador autoritzat"
 
@@ -5698,7 +5656,6 @@ msgstr "Iniciador autoritzat"
 #~ msgstr "Afegir inicador autoritzat"
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
 msgstr "Cap target definit"
 
@@ -5706,12 +5663,10 @@ msgstr "Cap target definit"
 #~ msgstr "Afegir extent"
 
 #: templates/services/iscsi_extents.html:5
-#, fuzzy
 msgid "File Extent"
 msgstr "Extents del perifèric"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
 msgstr "Cap target definit"
 
@@ -5730,7 +5685,6 @@ msgstr ""
 #~ msgstr "Esborrar portal"
 
 #: templates/services/iscsi_portals.html:39
-#, fuzzy
 msgid "No portals defined"
 msgstr "Cap target definit"
 
@@ -5744,7 +5698,6 @@ msgstr "Cap target definit"
 #~ msgstr "Afegir target"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-#, fuzzy
 msgid "View Mount Points"
 msgstr "Punt de muntatge"
 
@@ -5786,7 +5739,6 @@ msgid "All the files within the plugins jail will be permanently deleted."
 msgstr ""
 
 #: templates/services/pluginsjail_edit.html:12
-#, fuzzy
 msgid "Delete Plugins Jail"
 msgstr "Esborrar el fitxer subjacent"
 
@@ -5797,17 +5749,14 @@ msgstr "Esborrar el fitxer subjacent"
 #~ msgstr "Shares actiu"
 
 #: templates/sharing/apple.html:7
-#, fuzzy
 msgid "There are no active Apple (AFP) shares."
 msgstr "No hi ha cap Apple Sahre"
 
 #: templates/sharing/apple.html:29
-#, fuzzy
 msgid "Edit Apple (AFP) Share"
 msgstr "Editar Apple Share"
 
 #: templates/sharing/apple.html:35
-#, fuzzy
 msgid "Delete Apple (AFP) Share"
 msgstr "Esborrar Apple Share"
 
@@ -5815,7 +5764,6 @@ msgstr "Esborrar Apple Share"
 #~ msgstr "No hi ha share definits"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-#, fuzzy
 msgid "Add Apple (AFP) Share"
 msgstr "Afegir Apple share"
 
@@ -5835,7 +5783,6 @@ msgid "Windows (CIFS)"
 msgstr "Afegir finestra de compartició (CIFS)"
 
 #: templates/sharing/unix.html:7
-#, fuzzy
 msgid "There are no active UNIX (NFS) shares."
 msgstr "No hi ha comparticions (shares) actives d'UNIX"
 
@@ -5843,37 +5790,30 @@ msgstr "No hi ha comparticions (shares) actives d'UNIX"
 #~ msgstr "Punt de montatge"
 
 #: templates/sharing/unix.html:29
-#, fuzzy
 msgid "Edit UNIX (NFS) Share"
 msgstr "Edita la compartició (share) de NFS (sistema de fitxers)"
 
 #: templates/sharing/unix.html:35
-#, fuzzy
 msgid "Delete UNIX (NFS) Share"
 msgstr "Elimina la compartició (share) de NFS (sistema de fitxers)"
 
 #: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-#, fuzzy
 msgid "Add UNIX (NFS) Share"
 msgstr "Afegir la compartició UNIX"
 
 #: templates/sharing/windows.html:7
-#, fuzzy
 msgid "There are no active Windows (CIFS) shares."
 msgstr "No hi ha cap finestra activa de compartició"
 
 #: templates/sharing/windows.html:33
-#, fuzzy
 msgid "Edit Windows (CIFS) Share"
 msgstr "Editar finestra de compartició"
 
 #: templates/sharing/windows.html:39
-#, fuzzy
 msgid "Delete Windows (CIFS) Share"
 msgstr "Eliminar finestra de compartició"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-#, fuzzy
 msgid "Add Windows (CIFS) Share"
 msgstr "Afegir finestra de compartició"
 
@@ -6000,7 +5940,6 @@ msgstr ""
 #~ msgstr "Replicació ZFS no disponible"
 
 #: templates/storage/scrub.html:42
-#, fuzzy
 msgid "No scrub tasks defined."
 msgstr "No hi ha rsyncs definits"
 
@@ -6009,7 +5948,6 @@ msgid "Add ZFS Scrub Task"
 msgstr ""
 
 #: templates/storage/scrub.html:50
-#, fuzzy
 msgid "Add ZFS Scrub"
 msgstr "Afegir volum ZFS"
 
@@ -6099,7 +6037,6 @@ msgstr "cada dia"
 #~ msgstr "a cada"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
 msgstr "No hi ha planificació periòdica de l'snapshot"
 
@@ -6165,7 +6102,6 @@ msgstr "Eliminar el Dataset"
 #~ msgstr "No hi ha volums definits"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
 msgstr "Ruta del volum"
 
@@ -6206,7 +6142,7 @@ msgid "Replace Disk"
 msgstr "Substituir disc"
 
 #: templates/storage/zvols.html:3
-#, fuzzy, python-format
+#, python-format
 msgid "Create ZFS volume on %(name)s"
 msgstr "Crear un volum ZFS"
 
@@ -6236,7 +6172,6 @@ msgstr "Actualització del firmware"
 
 #: templates/system/advanced_edit.html:39
 #: templates/system/advanced_edit.html:41
-#, fuzzy
 msgid "Import Plugins Jail"
 msgstr "Esborrar el fitxer subjacent"
 
@@ -6249,17 +6184,14 @@ msgid "Are you sure you want to restore to factory config?"
 msgstr "Estas segur que vols retornar a la configuració de fàbrica"
 
 #: templates/system/cronjob.html:41
-#, fuzzy
 msgid "No cron jobs defined."
 msgstr "No hi ha tasques programades definides"
 
 #: templates/system/cronjob.html:47
-#, fuzzy
 msgid "Add a cron job"
 msgstr "Afegir una tasca programada"
 
 #: templates/system/cronjob.html:49
-#, fuzzy
 msgid "Add cron job"
 msgstr "Afegir una tasca programada"
 
@@ -6282,17 +6214,14 @@ msgid "iBurst"
 msgstr ""
 
 #: templates/system/ntpserver.html:38
-#, fuzzy
 msgid "No NTP servers defined."
 msgstr "No està definit el nom del servidor"
 
 #: templates/system/ntpserver.html:44
-#, fuzzy
 msgid "Add NTP server"
 msgstr "Servidor NTP 1"
 
 #: templates/system/ntpserver.html:46
-#, fuzzy
 msgid "Add NTP Server"
 msgstr "Servidor NTP 1"
 
@@ -6313,22 +6242,18 @@ msgid "History"
 msgstr "Directori"
 
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Local Path"
 msgstr "Master local"
 
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Remote"
 msgstr "Treure"
 
 #: templates/system/rsync.html:48
-#, fuzzy
 msgid "No rsync tasks defined."
 msgstr "No hi ha rsyncs definits"
 
 #: templates/system/rsync.html:54
-#, fuzzy
 msgid "Add rsync task"
 msgstr "Afegir un rsync"
 
@@ -6367,22 +6292,18 @@ msgid "Unknown"
 msgstr "Deconegut"
 
 #: templates/system/smarttest.html:38
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
 msgstr "Cap target definit"
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
 msgstr "S.M.A.R.T."
 
 #: templates/system/smarttest.html:46
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
 msgstr "S.M.A.R.T."
 
 #: templates/system/sysctl.html:34
-#, fuzzy
 msgid "No sysctl defined."
 msgstr "No hi ha rsyncs definits"
 
@@ -6421,17 +6342,14 @@ msgid "Connected through"
 msgstr ""
 
 #: templates/system/tunable.html:34
-#, fuzzy
 msgid "No tunable setting defined."
 msgstr "Cap target definit"
 
 #: templates/system/tunable.html:40
-#, fuzzy
 msgid "Add Tunable"
 msgstr "Afegir target"
 
 #: templates/system/tunable.html:42
-#, fuzzy
 msgid "Add Loader"
 msgstr "Afegir portal"
 
@@ -6484,19 +6402,15 @@ msgstr "Alertes Crítiques"
 #~ msgid "Selected"
 #~ msgstr "Seleccionat"
 
-#, fuzzy
 msgid "SHA256 sum for the PBI file"
 msgstr "Suma SHA256  per la imatge"
 
-#, fuzzy
 msgid "Plugin uname"
 msgstr "Nom de domini"
 
-#, fuzzy
 msgid "Path to plugin"
 msgstr "Ruta al punt de muntatge"
 
-#, fuzzy
 msgid "Control Plugins"
 msgstr "Serveis de Control"
 
@@ -6506,7 +6420,6 @@ msgstr "Serveis de Control"
 #~ msgid "Only allow guest access"
 #~ msgstr "Només permetre l'accés guest"
 
-#, fuzzy
 msgid "Path to the plugins directory"
 msgstr "La ruta no és un directori."
 
@@ -6523,27 +6436,21 @@ msgstr "La ruta no és un directori."
 #~ msgid "Service Pack image to be installed"
 #~ msgstr "Imatge del Service Pack a instalar"
 
-#, fuzzy
 msgid "Invalid service pack"
 msgstr "Service Pack o checksum incorrecte"
 
-#, fuzzy
 msgid "View Cron Jobs"
 msgstr "Tasques programades"
 
-#, fuzzy
 msgid "View Rsync Tasks"
 msgstr "Veure totes les tasques de replicació"
 
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
 msgstr "Opcions d'S.M.A.R.T."
 
-#, fuzzy
 msgid "View Sysctls"
 msgstr "Visualitzar discos"
 
-#, fuzzy
 msgid "View Tunables"
 msgstr "Veure tots els usuaris"
 
@@ -6553,7 +6460,6 @@ msgstr "Veure tots els usuaris"
 #~ msgid "Close"
 #~ msgstr "Tancar"
 
-#, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "Afegir Apple share"
 
@@ -6662,7 +6568,6 @@ msgstr "Afegir Apple share"
 #~ "usuari ha d'existir al fitxer password, però no requereix tenir un login "
 #~ "vàlid."
 
-#, fuzzy
 msgid "CIFS Share"
 msgstr "UNIX Share"
 
@@ -6684,11 +6589,9 @@ msgstr "UNIX Share"
 #~ msgid "NTP server 3"
 #~ msgstr "Servidor NTP 3"
 
-#, fuzzy
 msgid "Loader"
 msgstr "Carrega mitja"
 
-#, fuzzy
 msgid "Loaders"
 msgstr "Carrega mitja"
 
@@ -6713,7 +6616,6 @@ msgstr "Editar disc"
 #~ msgid "Export Volume"
 #~ msgstr "Exportar un volum"
 
-#, fuzzy
 msgid "Add loader"
 msgstr "Afegir portal"
 

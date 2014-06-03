@@ -1336,7 +1336,6 @@ msgstr "Službě NFS se nepodařilo znovu načíst konfiguraci"
 #~ msgstr "Tato IP adresa již existuje."
 
 #: services/forms.py:164
-#, fuzzy
 msgid "The Plugins Jail service failed to reload."
 msgstr "Službě AFP se nepodařilo znovu načíst konfiguraci"
 
@@ -2294,12 +2293,10 @@ msgid ""
 msgstr ""
 
 #: services/models.py:821
-#, fuzzy
 msgid "Jail IP address"
 msgstr "IPv4 addresa"
 
 #: services/models.py:825
-#, fuzzy
 msgid "Jail IP Netmask"
 msgstr "IPv4 síťová maska"
 
@@ -2978,7 +2975,6 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1475
-#, fuzzy
 msgid "Informal"
 msgstr "normální"
 
@@ -3018,12 +3014,10 @@ msgid "Add Device Extent"
 msgstr ""
 
 #: services/nav.py:79
-#, fuzzy
 msgid "View Device Extents"
 msgstr "zobrazit všechna statická routování"
 
 #: services/nav.py:92
-#, fuzzy
 msgid "File Extents"
 msgstr "zobrazit všechny uživatele"
 
@@ -3033,7 +3027,6 @@ msgid "Add File Extent"
 msgstr ""
 
 #: services/nav.py:118
-#, fuzzy
 msgid "View File Extents"
 msgstr "zobrazit všechny uživatele"
 
@@ -3691,7 +3684,6 @@ msgid "Reserved space for this volume"
 msgstr "Rezervované místo pro tento svazek"
 
 #: storage/forms.py:842
-#, fuzzy
 msgid "ZFS Volume Name"
 msgstr "svazek ZFS"
 
@@ -4154,7 +4146,6 @@ msgid "Volume successfully added."
 msgstr "Svazek úspěšně přidán."
 
 #: storage/views.py:254
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "Nastavení S.M.A.R.T."
 
@@ -4209,7 +4200,6 @@ msgid "Rollback successful."
 msgstr ""
 
 #: storage/views.py:634
-#, fuzzy
 msgid "Snapshot successfully added."
 msgstr "%s úspěšně smazáno."
 
@@ -4260,7 +4250,6 @@ msgid "Language (Require UI reload)"
 msgstr "Jazyk (Vyžadováno obnovení stránky)"
 
 #: system/forms.py:214
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
 msgstr "Tato hodnota musí být mezi 0 a 65535 včetně"
 
@@ -5261,7 +5250,6 @@ msgid "Delete Mount Point"
 msgstr ""
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
 msgstr "Žádné cron úlohy nejsou definovány."
 
@@ -5335,7 +5323,6 @@ msgid "NFS Settings"
 msgstr "Nastavení NFS"
 
 #: templates/services/core.html:103 templates/services/core.html.py:105
-#, fuzzy
 msgid "Plugins Settings"
 msgstr "Nastavení AFP"
 
@@ -5389,7 +5376,6 @@ msgid "Portals"
 msgstr ""
 
 #: templates/services/iscsi.html:14
-#, fuzzy
 msgid "Authorized Initiators"
 msgstr "Autorizovaná síť"
 
@@ -5410,7 +5396,6 @@ msgid "Associated Targets"
 msgstr ""
 
 #: templates/services/iscsi_assoctargets.html:31
-#, fuzzy
 msgid "No associated targets defined"
 msgstr "Nebyly definovány žádné rsync úlohy"
 
@@ -5434,7 +5419,6 @@ msgid "Authorized Network"
 msgstr ""
 
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
 msgstr "Autorizovaná síť"
 
@@ -5444,7 +5428,6 @@ msgid "Add Authorized Initiator"
 msgstr ""
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
 msgstr "Nebyly definovány žádné rsync úlohy"
 
@@ -5454,7 +5437,6 @@ msgid "Add Extent"
 msgstr ""
 
 #: templates/services/iscsi_extents.html:5
-#, fuzzy
 msgid "File Extent"
 msgstr "zobrazit všechny uživatele"
 
@@ -5477,7 +5459,6 @@ msgid "Delete Portal"
 msgstr ""
 
 #: templates/services/iscsi_portals.html:39
-#, fuzzy
 msgid "No portals defined"
 msgstr "Nebyly definovány žádné rsync úlohy"
 
@@ -5591,7 +5572,6 @@ msgid "Delete UNIX (NFS) Share"
 msgstr ""
 
 #: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-#, fuzzy
 msgid "Add UNIX (NFS) Share"
 msgstr "Nastavení CIFS"
 
@@ -5890,7 +5870,6 @@ msgstr "Odstranit dataset"
 #~ msgstr "Nejsou definovány žádné svazky"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
 msgstr "Stav svazku"
 
@@ -6121,7 +6100,6 @@ msgstr "Průměrná zátěž"
 #~ msgstr "Připojeno přes"
 
 #: templates/system/tunable.html:34
-#, fuzzy
 msgid "No tunable setting defined."
 msgstr "Nebyly definovány žádné zavaděče."
 
@@ -6190,7 +6168,6 @@ msgstr "Kritická upozornění"
 #~ msgid "Only allow guest access"
 #~ msgstr "Povolit pouze účet hosta"
 
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
 msgstr "Nastavení S.M.A.R.T."
 
@@ -6200,7 +6177,6 @@ msgstr "Nastavení S.M.A.R.T."
 #~ msgid "View Tunables"
 #~ msgstr "Zobrazit vyladění"
 
-#, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "Nastavení CIFS"
 
@@ -6266,11 +6242,9 @@ msgstr "Nastavení CIFS"
 #~ msgid "Guest Account"
 #~ msgstr "Účet hosta"
 
-#, fuzzy
 msgid "Loader"
 msgstr "Průměrné vytížení"
 
-#, fuzzy
 msgid "Loaders"
 msgstr "Průměrné vytížení"
 
@@ -6280,7 +6254,6 @@ msgstr "Průměrné vytížení"
 #~ msgid "Add loader"
 #~ msgstr "Přidat zavaděč"
 
-#, fuzzy
 msgid "successfully deleted"
 msgstr "%s úspěšně smazáno."
 
@@ -6305,7 +6278,6 @@ msgstr "%s úspěšně smazáno."
 #~ msgid "Admin user"
 #~ msgstr "Administrátor"
 
-#, fuzzy
 msgid "ZVol Name"
 msgstr "celé jméno"
 

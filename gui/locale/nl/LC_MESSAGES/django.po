@@ -4211,7 +4211,6 @@ msgid "View Snapshots"
 msgstr "Momentopnamen weergeven"
 
 #: storage/nav.py:34
-#, fuzzy
 msgid "View ZFS Scrubs"
 msgstr "Alle Groepen Bekijken"
 
@@ -4271,7 +4270,6 @@ msgid "Volume successfully added."
 msgstr "Volume met succes toegevoegd."
 
 #: storage/views.py:254
-#, fuzzy
 msgid "S.M.A.R.T. Extra Options"
 msgstr "S.M.A.R.T. extra opties"
 
@@ -4367,7 +4365,6 @@ msgid "Language (Require UI reload)"
 msgstr "Taal (vereist herladen van UI)"
 
 #: system/forms.py:214
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
 msgstr "Deze waarde moet tussen 0 en 65535 liggen."
 
@@ -5360,22 +5357,18 @@ msgid "Please wait..."
 msgstr "Even geduld..."
 
 #: templates/plugins/mountpoints.html:19
-#, fuzzy
 msgid "Edit Mount Point"
 msgstr "Mount Point"
 
 #: templates/plugins/mountpoints.html:25
-#, fuzzy
 msgid "Delete Mount Point"
 msgstr "Mount Point"
 
 #: templates/plugins/mountpoints.html:32
-#, fuzzy
 msgid "No mount points defined"
 msgstr "Geen CronJobs gedefinieerd"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
-#, fuzzy
 msgid "Add Mount Point"
 msgstr "Mount Point"
 
@@ -5446,7 +5439,6 @@ msgid "NFS Settings"
 msgstr "NFS-instellingen"
 
 #: templates/services/core.html:103 templates/services/core.html.py:105
-#, fuzzy
 msgid "Plugins Settings"
 msgstr "AFP Instellingen"
 
@@ -5499,7 +5491,6 @@ msgid "Portals"
 msgstr "Portals"
 
 #: templates/services/iscsi.html:14
-#, fuzzy
 msgid "Authorized Initiators"
 msgstr "Geautoriseerde Initiator"
 
@@ -5519,7 +5510,6 @@ msgid "Associated Targets"
 msgstr "Gekoppelde doelen"
 
 #: templates/services/iscsi_assoctargets.html:31
-#, fuzzy
 msgid "No associated targets defined"
 msgstr "Geen doelen gedefinieerd"
 
@@ -5539,7 +5529,6 @@ msgstr "Geen doelen gedefinieerd"
 #~ msgstr "Geautoriseerd Netwerk"
 
 #: templates/services/iscsi_authini.html:35
-#, fuzzy
 msgid "No authorized initiators defined"
 msgstr "Geautoriseerde Initiator"
 
@@ -5547,7 +5536,6 @@ msgstr "Geautoriseerde Initiator"
 #~ msgstr "Geautoriseerde Initiator Toevoegen"
 
 #: templates/services/iscsi_dextents.html:33
-#, fuzzy
 msgid "No device extents defined"
 msgstr "Geen doelen gedefinieerd"
 
@@ -5558,7 +5546,6 @@ msgstr "Geen doelen gedefinieerd"
 #~ msgstr "Bestand Extentie"
 
 #: templates/services/iscsi_extents.html:33
-#, fuzzy
 msgid "No extents defined"
 msgstr "Geen doelen gedefinieerd"
 
@@ -5577,7 +5564,6 @@ msgstr ""
 #~ msgstr "Verwijder Portaal"
 
 #: templates/services/iscsi_portals.html:39
-#, fuzzy
 msgid "No portals defined"
 msgstr "Geen doelen gedefinieerd"
 
@@ -5591,7 +5577,6 @@ msgstr "Geen doelen gedefinieerd"
 #~ msgstr "Doel Toevoegen"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
-#, fuzzy
 msgid "View Mount Points"
 msgstr "Mount Point"
 
@@ -5631,7 +5616,6 @@ msgid "All the files within the plugins jail will be permanently deleted."
 msgstr ""
 
 #: templates/services/pluginsjail_edit.html:12
-#, fuzzy
 msgid "Delete Plugins Jail"
 msgstr "Verwijder onderliggend bestand"
 
@@ -5642,17 +5626,14 @@ msgstr "Verwijder onderliggend bestand"
 #~ msgstr "Actieve Shares"
 
 #: templates/sharing/apple.html:7
-#, fuzzy
 msgid "There are no active Apple (AFP) shares."
 msgstr "Er zijn geen actieve Apple Shares."
 
 #: templates/sharing/apple.html:29
-#, fuzzy
 msgid "Edit Apple (AFP) Share"
 msgstr "Wijzig Apple Share"
 
 #: templates/sharing/apple.html:35
-#, fuzzy
 msgid "Delete Apple (AFP) Share"
 msgstr "Verwijder Apple Share"
 
@@ -5660,7 +5641,6 @@ msgstr "Verwijder Apple Share"
 #~ msgstr "Geen Shares gedefinieerd"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
-#, fuzzy
 msgid "Add Apple (AFP) Share"
 msgstr "Apple Share Toevoegen"
 
@@ -5677,7 +5657,6 @@ msgid "Windows (CIFS)"
 msgstr "Windows (CIFS)"
 
 #: templates/sharing/unix.html:7
-#, fuzzy
 msgid "There are no active UNIX (NFS) shares."
 msgstr "Er zijn geen actieve UNIX Shares."
 
@@ -5685,37 +5664,30 @@ msgstr "Er zijn geen actieve UNIX Shares."
 #~ msgstr "Mountpoint"
 
 #: templates/sharing/unix.html:29
-#, fuzzy
 msgid "Edit UNIX (NFS) Share"
 msgstr "NFS Share Wijzigen"
 
 #: templates/sharing/unix.html:35
-#, fuzzy
 msgid "Delete UNIX (NFS) Share"
 msgstr "NFS Share Verwijderen"
 
 #: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
-#, fuzzy
 msgid "Add UNIX (NFS) Share"
 msgstr "UNIX Share Toevoegen"
 
 #: templates/sharing/windows.html:7
-#, fuzzy
 msgid "There are no active Windows (CIFS) shares."
 msgstr "Er zijn geen actieve Windows Shares"
 
 #: templates/sharing/windows.html:33
-#, fuzzy
 msgid "Edit Windows (CIFS) Share"
 msgstr "Windows Share Wijzigen"
 
 #: templates/sharing/windows.html:39
-#, fuzzy
 msgid "Delete Windows (CIFS) Share"
 msgstr "Windows Share Verwijderen"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-#, fuzzy
 msgid "Add Windows (CIFS) Share"
 msgstr "Windows Share Toevoegen"
 
@@ -5939,7 +5911,6 @@ msgstr "elke dag"
 #~ msgstr "bij elke"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
 msgstr "Geen periodieke snapshots gepland"
 
@@ -6078,17 +6049,14 @@ msgid "Are you sure you want to restore to factory config?"
 msgstr "Weet u zeker dat u de fabrieksconfiguratie wilt terugzetten?"
 
 #: templates/system/cronjob.html:41
-#, fuzzy
 msgid "No cron jobs defined."
 msgstr "Geen CronJobs gedefinieerd"
 
 #: templates/system/cronjob.html:47
-#, fuzzy
 msgid "Add a cron job"
 msgstr "CronJob toevoegen"
 
 #: templates/system/cronjob.html:49
-#, fuzzy
 msgid "Add cron job"
 msgstr "CronJob toevoegen"
 
@@ -6142,12 +6110,10 @@ msgstr "Geschiedenis"
 #~ msgstr "Op afstand"
 
 #: templates/system/rsync.html:48
-#, fuzzy
 msgid "No rsync tasks defined."
 msgstr "Geen RSyncs gedefinieerd"
 
 #: templates/system/rsync.html:54
-#, fuzzy
 msgid "Add rsync task"
 msgstr "Rsync toevoegen"
 
@@ -6186,17 +6152,14 @@ msgid "Unknown"
 msgstr "Onbekend"
 
 #: templates/system/smarttest.html:38
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
 msgstr "Geen doelen gedefinieerd"
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
 msgstr "S.M.A.R.T."
 
 #: templates/system/smarttest.html:46
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
 msgstr "S.M.A.R.T."
 
@@ -6243,7 +6206,6 @@ msgstr "Gemiddelde belasting"
 #~ msgstr "Instelling toevoegen"
 
 #: templates/system/tunable.html:42
-#, fuzzy
 msgid "Add Loader"
 msgstr "Portaal Toevoegen"
 
@@ -6354,22 +6316,18 @@ msgstr "Kritieke waarschuwingen"
 #~ msgid "Invalid service pack"
 #~ msgstr "Ongeldige service pack"
 
-#, fuzzy
 msgid "View Cron Jobs"
 msgstr "CronJobs"
 
-#, fuzzy
 msgid "View Rsync Tasks"
 msgstr "Toon Alle Replicatie Taken"
 
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
 msgstr "S.M.A.R.T. instellingen"
 
 #~ msgid "View Sysctls"
 #~ msgstr "Bekijk Sysctls"
 
-#, fuzzy
 msgid "View Tunables"
 msgstr "Alle Gebruikers Bekijken"
 
@@ -6379,7 +6337,6 @@ msgstr "Alle Gebruikers Bekijken"
 #~ msgid "Close"
 #~ msgstr "Sluiten"
 
-#, fuzzy
 msgid "Add Apple (CIFS) Share"
 msgstr "Apple Share Toevoegen"
 
@@ -6511,11 +6468,9 @@ msgstr "Apple Share Toevoegen"
 #~ msgid "NTP server 3"
 #~ msgstr "NTP server 3"
 
-#, fuzzy
 msgid "Loader"
 msgstr "Gemiddelde belasting"
 
-#, fuzzy
 msgid "Loaders"
 msgstr "Gemiddelde belasting"
 
@@ -6540,7 +6495,6 @@ msgstr "Schijf bewerken"
 #~ msgid "Export Volume"
 #~ msgstr "Volume exporteren"
 
-#, fuzzy
 msgid "Add loader"
 msgstr "Portaal Toevoegen"
 

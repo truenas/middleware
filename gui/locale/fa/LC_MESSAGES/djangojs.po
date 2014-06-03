@@ -20,7 +20,6 @@ msgstr ""
 "X-POOTLE-MTIME: 1393848913.0\n"
 
 #: freeadmin/static/lib/js/freeadmin.js:56
-#, fuzzy
 msgid "Reporting"
 msgstr "گزارش"
 
@@ -63,7 +62,6 @@ msgid "Edit"
 msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:542
-#, fuzzy
 msgid "Edit Disk"
 msgstr "ویرایش دیسک"
 
@@ -72,7 +70,6 @@ msgid "Wipe"
 msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
 msgstr "ویرایش دیسک"
 
@@ -92,18 +89,14 @@ msgstr ""
 msgid "Every N"
 msgstr ""
 
-#, fuzzy
 msgid "Replace"
 msgstr "جایگزین کردن"
 
-#, fuzzy
 msgid "Disk Replacement"
 msgstr "جایگزین دیسک"
 
-#, fuzzy
 msgid "Detach"
 msgstr "جدا کردن"
 
-#, fuzzy
 msgid "Disk Detach"
 msgstr "جدا کردن دیسک"
