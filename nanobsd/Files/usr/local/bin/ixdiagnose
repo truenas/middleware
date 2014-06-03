@@ -8,6 +8,15 @@
 # that are in 'dumpdir' set by /etc/rc.conf.
 #
 
+# If there is a system dataset use it
+
+zfs list | grep -qE '\.system '
+if [ $? -eq 0 ] ; then
+    tmpdir=$(zfs list | grep -E '\.system ' | awk '{print $5}')
+else
+    tmpdir=/var/tmp
+fi
+
 mydir=`dirname $0`
 
 # get the textdump file. On some systems this is a gzipped 
@@ -67,7 +76,7 @@ truncate_files ()
 		! -name '*.bzip2' -a \
 		! -name '*.bz2' -a \
 		! -name '*.compressed' -print) ; do
-		tmpfile="$(mktemp /tmp/XXXXXX)"
+		tmpfile="$(env TMPDIR="${tmpdir}" mktemp /tmp/XXXXXX)"
 		tail -n $limit "$file" > "$tmpfile" 2>/dev/null
 		if [ $? = 0 ] ; then
 			mv "$tmpfile" "$file"
@@ -154,7 +163,7 @@ fi
 # so that the tarball extracts nicely.
 set -x
 if [ -z "${topdir}" ] ; then
-	topdir=`mktemp -d -t ixdiagnose`
+	topdir=`env TMPDIR="${tmpdir}" mktemp -d -t ixdiagnose`
 else
 	mkdir -p "${topdir}"
 fi
