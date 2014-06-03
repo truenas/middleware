@@ -1753,6 +1753,59 @@ class JailTemplateResourceMixin(object):
         return bundle
 
 
+class PluginsResourceMixin(NestedMixin):
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('plugin_start'),
+                name="api_plugins_plugins_start"
+            ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/stop%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('plugin_stop'),
+                name="api_plugin_plugins_stop"
+            ),
+        ]
+
+    def plugin_start(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        try:
+            obj.service_start(request)
+        except Exception, e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error': e,
+                })
+            )
+
+        return HttpResponse('Plugin started.', status=202)
+
+    def plugin_stop(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        try:
+            obj.service_stop(request)
+        except Exception, e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error': e,
+                })
+            )
+
+        return HttpResponse('Plugin stopped.', status=202)
+
+
 class SnapshotResource(DojoResource):
 
     id = fields.CharField(attribute='filesystem')

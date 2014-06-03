@@ -27,6 +27,7 @@
 import os
 import logging
 import platform
+import requests
 
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
@@ -111,6 +112,41 @@ class Plugins(Model):
     class Meta:
         verbose_name = _(u"Plugin")
         verbose_name_plural = _(u"Plugins")
+
+    def _service_control(self, request, action):
+        addr = request.META.get("SERVER_ADDR")
+        # IPv6
+        if ':' in addr:
+            addr = '[%s]' % addr
+        r = requests.get(
+            'http%s://%s/plugins/%s/%s/_s/%s' % (
+                's' if request.is_secure() else '',
+                addr,
+                self.plugin_name,
+                self.id,
+                action,
+            ),
+            headers={'Content-Type': "application/json"},
+            cookies={
+                # This is a hack for backward compatibility.
+                # The API needs to be able to poke plugins services
+                # however it was built to use the current browser session
+                # to check for authentication so we need to use this field.
+                'sessionid': request.META['HTTP_AUTHORIZATION'].encode('base64'),
+            },
+            verify=False,
+        )
+        try:
+            retval = r.json()
+            return (not retval['error'], retval['message'])
+        except:
+            return (False, None)
+
+    def service_start(self, request):
+        return self._service_control(request, 'start')
+
+    def service_stop(self, request):
+        return self._service_control(request, 'stop')
 
     def _do_delete(self):
         jc = JailsConfiguration.objects.order_by('-id')[0]
