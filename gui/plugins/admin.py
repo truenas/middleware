@@ -31,7 +31,10 @@ from collections import OrderedDict
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
-from freenasUI.api.resources import AvailablePluginsResource
+from freenasUI.api.resources import (
+    AvailablePluginsResource,
+    PluginsResourceMixin,
+)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.plugins import models
@@ -42,6 +45,8 @@ log = logging.getLogger('plugins.admin')
 class PluginsFAdmin(BaseFreeAdmin):
 
     icon_model = u"PluginsIcon"
+
+    resource_mixin = PluginsResourceMixin
 
     fields = (
         'plugin_name',

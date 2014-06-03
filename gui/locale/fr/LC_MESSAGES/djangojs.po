@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-05-31 10:50+0000\n"
+"PO-Revision-Date: 2014-05-31 15:05+0000\n"
 "Last-Translator: SmallGuy <zoreille.gfo@hotmail.fr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1401533403.0\n"
+"X-POOTLE-MTIME: 1401548711.0\n"
 
 # Pour la fonction actuelle, "Graphiques" correspond plus.
 #~ msgid "Reporting"
@@ -243,3 +243,37 @@ msgstr "Parcourir"
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
 msgid "Close"
 msgstr "Fermer"
+
+#: freeadmin/static/lib/js/freeadmin.js:786
+#, fuzzy
+msgid "The cache could not be rebuilt: "
+msgstr "Le cache est en reconstruction."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:335
+#, fuzzy
+msgid "Disk size mismatch"
+msgstr "Détacher le disque"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:520
+#, fuzzy
+msgid ""
+"Your configuration is optimal!<br /><br />It means you'll have the best "
+"performance possible for this number of disks and type of disk group.<br /><"
+"br />For further explanation please refer to the <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+msgstr ""
+"Votre configuration n'est pas optimale !<br /><br />Cela signifie que ce "
+"nombre de disques ne procurera pas les meilleurs performances pour ce type "
+"d'agrégation.<br /><br />Pour plus de détails consultez la <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
+msgid "Manual setup"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "Nom du volume"

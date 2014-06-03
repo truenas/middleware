@@ -264,23 +264,8 @@ export FREEBSD_PACKAGE_MIRROR_32
 
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 
-# /var -> ~300MB (look through rc.initdiskless for the formula of how this
-# number is calculated out).
-# This is needed for samba as it drops a lot of files in /var/db/samba for
-# locking purposes when transferring large collections of data (~100MB for
-# ~4 TB in-flight data). I added overhead just in case, because when space
-# can't be obtained for /var/db/samba, smbd and nmbd have a nasty habit of
-# SIGABRTing and crashing, and this causes other applications to get unhappy
-# (vi and friends ;(..).
-#
-# Do NOT move this over to FreeNAS because of the lower memory constraints in
-# the project, and because this limit is in effect at boot. This is for better
-# built out systems. A lower default will be provided in FreeNAS instead.
-if is_truenas ; then
-	NANO_RAM_TMPVARSIZE=
-else
-	NANO_RAM_TMPVARSIZE=
-fi
+NANO_RAM_TMPVARSIZE=
+NANO_RAM_ETCSIZE=65536
 
 NANO_IMAGES=2
 # Remove .orig and .rej too

@@ -34,6 +34,7 @@ from django.core import serializers
 from django.contrib import auth
 from django.utils.importlib import import_module
 
+from freenasUI.api.utils import FreeBasicAuthentication
 from freenasUI.storage.models import MountPoint
 from freenasUI.plugins.models import Plugins, Kmod
 from freenasUI.jails.models import Jails, JailsConfiguration
@@ -163,7 +164,20 @@ def plugins_is_authenticated(request, sessionid):
         backend = auth.load_backend(backend_path)
         user = backend.get_user(user_id)
     except KeyError:
-        return False
+
+        # Fall back and check for API authentication
+        http_auth = sessionid.decode('base64')
+        # Simulate a request object required for FreeBasicAuthentication
+        request = type(
+            'request',
+            (object, ),
+            {'META': {'HTTP_AUTHORIZATION': http_auth}}
+        )
+
+        if FreeBasicAuthentication().is_authenticated(request):
+            user = request.user
+        else:
+            return False
     if user and user.is_authenticated():
         return True
     return False

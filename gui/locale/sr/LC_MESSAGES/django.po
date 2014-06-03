@@ -6433,3 +6433,2986 @@ msgstr "tip"
 #: jails/forms.py:99
 msgid "vanilla"
 msgstr "vanila"
+
+#: choices.py:173
+msgid "LANMAN1"
+msgstr ""
+
+#: choices.py:174
+msgid "LANMAN2"
+msgstr ""
+
+#: choices.py:175
+#, fuzzy
+msgid "NT1"
+msgstr "NT4"
+
+#: choices.py:177
+msgid "SMB2_02"
+msgstr ""
+
+#: choices.py:312
+#, fuzzy
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (preporučeno)"
+
+#: choices.py:319
+msgid "plzip (best compression)"
+msgstr ""
+
+#: choices.py:698
+#: services/models.py:1531
+#: services/models.py:1639
+#: services/models.py:2103
+#: services/models.py:2104
+#, fuzzy
+msgid "Domain Controller"
+msgstr "Ime Domen Kontrolera"
+
+#: choices.py:714
+#, fuzzy
+msgid "ctrl+!data"
+msgstr "!podaci"
+
+#: choices.py:716
+#, fuzzy
+msgid "auth+!data"
+msgstr "!podaci"
+
+#: account/forms.py:58
+#, fuzzy
+msgid "Confirm New Password"
+msgstr "Potvrdi lozinku"
+
+#: account/forms.py:514
+msgid "Home directory cannot contain colons"
+msgstr ""
+
+#: account/models.py:139
+msgid "Built-in User"
+msgstr ""
+
+#: api/resources.py:888
+#: storage/models.py:745
+#: storage/models.py:755
+#: storage/models.py:772
+#, fuzzy
+msgid "Locked"
+msgstr "Zaključaj korisnika"
+
+#: api/resources.py:986
+#, fuzzy
+msgid "on every %(days)s"
+msgstr "Svakih %s dana"
+
+#: api/resources.py:992
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr ""
+
+#: jails/forms.py:182
+#: jails/forms.py:629
+msgid "No jail root configured."
+msgstr ""
+
+#: jails/forms.py:516
+msgid "autostart"
+msgstr ""
+
+#: jails/forms.py:906
+#, fuzzy
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr "Putanja se nemože postaviti %s"
+
+#: jails/models.py:103
+#, fuzzy
+msgid "IPv4 bridge address"
+msgstr "IPv4 Addresa"
+
+#: jails/models.py:110
+#, fuzzy
+msgid "IPv4 bridge netmask"
+msgstr "IPv4 maska mreže"
+
+#: jails/models.py:128
+#, fuzzy
+msgid "IPv6 address"
+msgstr "IPv6 Adresa"
+
+#: jails/models.py:173
+msgid "MAC"
+msgstr ""
+
+#: jails/models.py:332
+msgid "Jail Root"
+msgstr ""
+
+#: jails/models.py:333
+msgid "Path where to store jail data"
+msgstr ""
+
+#: jails/models.py:338
+msgid "IPv4 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:343
+msgid "IPv4 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:348
+msgid "IPv4 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:352
+#, fuzzy
+msgid "IPv6 Network"
+msgstr "IPv6 maska mreže"
+
+#: jails/models.py:362
+#, fuzzy
+msgid "IPv6 Network End Address"
+msgstr "IPv6 Adresa"
+
+#: jails/models.py:363
+msgid "IPv6 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:366
+#, fuzzy
+msgid "Collection URL"
+msgstr "Konekcije"
+
+#: jails/models.py:368
+msgid "URL for the jails index"
+msgstr ""
+
+#: jails/models.py:486
+msgid "Template must have 0 instances!"
+msgstr ""
+
+#: jails/models.py:493
+msgid "Jail root is not configured!"
+msgstr ""
+
+#: jails/models.py:513
+#: jails/models.py:514
+#, fuzzy
+msgid "Jail Templates"
+msgstr "JAIL IP mrežna maska"
+
+#: jails/models.py:533
+#, fuzzy
+msgid "Read-Only"
+msgstr "Samo za čitanje"
+
+#: jails/models.py:537
+#, fuzzy
+msgid "Filesystem"
+msgstr "Tip sistema datoteka"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr ""
+
+#: jails/utils.py:695
+msgid "You need to create a volume to proceed!"
+msgstr ""
+
+#: jails/utils.py:714
+#, fuzzy
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr "Nije moguće preuzeti %(url)s: %(greška)s"
+
+#: jails/utils.py:739
+#, fuzzy
+msgid "Failed to create directory %(name)s: %(error)s"
+msgstr "Nije moguće preuzeti %(url)s: %(greška)s"
+
+# ako % predstavlja user  kao users 
+#: jails/views.py:95
+#, fuzzy
+msgid "Jail successfully edited."
+msgstr "JAIL je uspešno uvezen."
+
+# ako % predstavlja user  kao users 
+#: jails/views.py:135
+#, fuzzy
+msgid "Jail successfully started."
+msgstr "JAIL je uspešno uvezen."
+
+# ako % predstavlja user  kao users 
+#: jails/views.py:399
+#, fuzzy
+msgid "Jail template successfully edited."
+msgstr "Skup podataka uspešno ažuriran."
+
+#: middleware/notifier.py:3068
+msgid "No RPC Token!"
+msgstr ""
+
+#: middleware/notifier.py:3824
+msgid "No carrier"
+msgstr ""
+
+#: middleware/notifier.py:3849
+msgid "Down"
+msgstr ""
+
+#: middleware/zfs.py:623
+#: middleware/zfs.py:691
+msgid "In Progress"
+msgstr ""
+
+#: network/forms.py:380
+#, fuzzy
+msgid "The IP \"%s\" is not valid"
+msgstr "IP adresa '%s' nije ispravna."
+
+#: network/forms.py:477
+#, fuzzy
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr "Imena interfejsa moraju biti vlanXX gde je XX broj. Primer: vlan0."
+
+#: network/models.py:82
+#, fuzzy
+msgid "Enable netwait feature"
+msgstr "Omogućiti automatsko podešavanje"
+
+#: network/models.py:93
+msgid "Netwait IP list"
+msgstr ""
+
+#: network/models.py:102
+msgid "Host name data base"
+msgstr ""
+
+#: network/models.py:415
+#, fuzzy
+msgid "LAGG Interface Group"
+msgstr "Grupa Interfejsa za LAGG"
+
+#: network/models.py:441
+#, fuzzy
+msgid "Link Aggregation Member"
+msgstr "Agregacija Linka"
+
+#: network/models.py:442
+#, fuzzy
+msgid "Link Aggregation Members"
+msgstr "Agregacije linka"
+
+#: network/nav.py:17
+#: templates/network/index.html:14
+msgid "IPMI"
+msgstr ""
+
+#: plugins/forms.py:84
+msgid ""
+"Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
+msgstr ""
+
+#: plugins/forms.py:100
+#, fuzzy
+msgid "Plugin Jail"
+msgstr "JAIL PBI dodatne komponente"
+
+#: plugins/forms.py:101
+#, fuzzy
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr ""
+"Dodaci za JAIL putanju ne mogu biti podskup dodataka za arhivsku putanju."
+
+#: plugins/forms.py:210
+msgid "Unable to set repository: %s"
+msgstr ""
+
+#: plugins/models.py:112
+#, fuzzy
+msgid "Plugin"
+msgstr "Dodatne komponente"
+
+#: plugins/models.py:217
+msgid "URL for the plugins repository"
+msgstr ""
+
+#: plugins/views.py:196
+#, fuzzy
+msgid "Jail does not exist"
+msgstr "Putanja ne postoji."
+
+#: services/forms.py:220
+#, fuzzy
+msgid "This path does not exist."
+msgstr "Putanja %s ne postoji"
+
+#: services/forms.py:222
+#, fuzzy
+msgid "This path is not a directory."
+msgstr "Putanja nije direktorijum."
+
+#: services/forms.py:671
+#: services/forms.py:679
+#, fuzzy
+msgid "Spaces or number signs are not allowed."
+msgstr "Navodnici nisu dozvoljeni"
+
+#: services/forms.py:754
+#, fuzzy
+msgid "Confirm Domain Account Password"
+msgstr "Potvrditi Administratorsku lozinku"
+
+#: services/forms.py:927
+#, fuzzy
+msgid "Peer Secret (Confirm)"
+msgstr "Tajna (Potvrdi)"
+
+#: services/forms.py:1456
+msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
+msgstr ""
+
+#: services/forms.py:1659
+#, fuzzy
+msgid "A target with that name already exists."
+msgstr "Grupa sa tim imenom već postoji."
+
+#: services/models.py:233
+msgid "Server minimum protocol"
+msgstr ""
+
+#: services/models.py:235
+msgid "The minimum protocol version that will be supported by the server"
+msgstr ""
+
+#: services/models.py:243
+msgid "The highest protocol version that will be supported by the server"
+msgstr ""
+
+#: services/models.py:248
+msgid ""
+"This boolean parameter controls the behaviour of smbd(8) when receiving a "
+"protocol request of \"open for execution\" from a Windows client. With Samba "
+"3.6 and older, the execution right in the ACL was not checked, so a client "
+"could execute a file even if it did not have execute rights on the file. In "
+"Samba 4.0, this has been fixed, so that by default, i.e. when this parameter "
+"is set to \"False\", \"open for execution\" is now denied when execution "
+"permissions are not present. If this parameter is set to \"True\", Samba "
+"does not check execute permissions on \"open for execution\", thus re-"
+"establishing the behaviour of Samba 3.6 "
+msgstr ""
+
+#: services/models.py:339
+#, fuzzy
+msgid "Allow non-root mount"
+msgstr "Dozvoli prijavljivanje Root korisnika"
+
+#: services/models.py:350
+#, fuzzy
+msgid "Bind IP Addresses"
+msgstr "IP Addresa"
+
+#: services/models.py:418
+msgid "Enable multithreaded mode"
+msgstr ""
+
+#: services/models.py:914
+#, fuzzy
+msgid "IP Server"
+msgstr "NTP server"
+
+#: services/models.py:997
+#, fuzzy
+msgid "These parameters will be added to /etc/snmpd.config."
+msgstr "Ovi parametri su dodati u proftpd.conf."
+
+#: services/models.py:1036
+#, fuzzy
+msgid "Remote Port"
+msgstr "Udaljeni port"
+
+#: services/models.py:1180
+msgid "Message which will be displayed to the user when they initially login."
+msgstr ""
+
+#: services/models.py:1211
+msgid ""
+"For local users, only allow access to user home directory unless the user is "
+"a member of group wheel."
+msgstr ""
+
+#: services/models.py:1278
+#, fuzzy
+msgid "Enable TLS"
+msgstr "Omogućiti SSL/TLS"
+
+#: services/models.py:1285
+msgid "TLS policy"
+msgstr ""
+
+#: services/models.py:1288
+msgid "TLS allow client renegotiations"
+msgstr ""
+
+#: services/models.py:1300
+msgid "TLS common name required"
+msgstr ""
+
+#: services/models.py:1304
+msgid "TLS enable diagnostics"
+msgstr ""
+
+#: services/models.py:1320
+msgid "TLS no session reuse required"
+msgstr ""
+
+#: services/models.py:1332
+#, fuzzy
+msgid "TLS DNS name required"
+msgstr "Broj je obavezan."
+
+#: services/models.py:1449
+msgid "SFTP Log Facility"
+msgstr ""
+
+#: services/models.py:1569
+#: services/models.py:1570
+#, fuzzy
+msgid "NT4 Domain"
+msgstr "Domen"
+
+#: services/models.py:1596
+#, fuzzy
+msgid "Domain account name to bind as"
+msgstr "Ime naloga Domenskog Administratora"
+
+#: services/models.py:1601
+#, fuzzy
+msgid "Domain Account password."
+msgstr "Lozinka naloga Domenskog Administratora"
+
+#: services/models.py:1609
+msgid "Use keytab"
+msgstr ""
+
+#: services/models.py:1613
+msgid "Kerberos keytab file"
+msgstr ""
+
+#: services/models.py:1629
+msgid "Set this if you want to allow Trusted Domains."
+msgstr ""
+
+#: services/models.py:1651
+#, fuzzy
+msgid "Kerberos Server"
+msgstr "Broj servera"
+
+#: services/models.py:1652
+msgid "Hostname of the kerberos server to use."
+msgstr ""
+
+#: services/models.py:1657
+msgid "Kerberos Password Server"
+msgstr ""
+
+#: services/models.py:1710
+#, fuzzy
+msgid "NIS domain"
+msgstr "Domen"
+
+#: services/models.py:1722
+msgid "Cause ypbind to run in secure mode"
+msgstr ""
+
+#: services/models.py:1735
+#: services/models.py:1736
+#, fuzzy
+msgid "NIS Domain"
+msgstr "Domen"
+
+#: services/models.py:1850
+#, fuzzy
+msgid "Interface Description"
+msgstr "Opis"
+
+#: services/models.py:1855
+#, fuzzy
+msgid "Country Code"
+msgstr "Zemlja"
+
+#: services/models.py:1858
+msgid ""
+"Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
+msgstr ""
+
+#: services/models.py:1866
+msgid "Specify the physical location of the host"
+msgstr ""
+
+#: services/models.py:2009
+#, fuzzy
+msgid "Informational"
+msgstr "Neformalno"
+
+#: services/models.py:2010
+#, fuzzy
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Prijavi ukoliko je temperatura veća ili jednaka od N stepeni Celzijusa. 0 da "
+"bi se onemogućilo"
+
+#: services/models.py:2017
+#, fuzzy
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable"
+msgstr ""
+"Prijavi ukoliko je temperatura veća ili jednaka od N stepeni Celzijusa. 0 da "
+"bi se onemogućilo"
+
+#: services/models.py:2064
+#, fuzzy
+msgid "Domain Name in old format, eg EXAMPLE"
+msgstr "Ime radne grupe ili domena u starom formatu, npr. RADNAGRUPA"
+
+#: services/models.py:2075
+msgid "DNS Backend"
+msgstr ""
+
+#: services/models.py:2076
+msgid "DNS Backend, eg SAMBA_INTERNAL"
+msgstr ""
+
+#: services/models.py:2082
+msgid "DNS Forwarder"
+msgstr ""
+
+#: services/models.py:2087
+msgid "Domain Forest Level"
+msgstr ""
+
+#: services/nav.py:118
+#: templates/services/core.html:27
+#, fuzzy
+msgid "Directory Services"
+msgstr "Dozvole direktorijuma"
+
+#: sharing/admin.py:81
+#: sharing/models.py:330
+#, fuzzy
+msgid "Paths"
+msgstr "Putanja"
+
+#: sharing/forms.py:136
+#: sharing/forms.py:141
+#, fuzzy
+msgid "The umask must be between 000 and 777."
+msgstr "Ova vrednost mora biti između 0 i 1000, uključujući i njih."
+
+#: sharing/forms.py:253
+msgid "Paths for a NFS share must reside within the same filesystem"
+msgstr ""
+
+#: sharing/forms.py:260
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr ""
+
+#: sharing/forms.py:297
+msgid ""
+"The network %s is already being shared and cannot be used twice for the same "
+"filesystem"
+msgstr ""
+
+#: sharing/models.py:48
+#, fuzzy
+msgid "Apply Default Permissions"
+msgstr "Podrazumevana dozvola za datoteku"
+
+#: sharing/models.py:87
+msgid ""
+"The ownership of new files and directories is normally governed by effective "
+"uid of the connected user. This option allows the Samba administrator to "
+"specify that the ownership for new files and directories should be "
+"controlled by the ownership of the parent directory. For windows shares it "
+"is NOT recommended to set this. The desired behavior can be achieved using "
+"ACL's. This probably won't do what you want it to do."
+msgstr ""
+
+#: sharing/models.py:91
+msgid ""
+"New directories inherit the mode of the parent directory, including bits "
+"such as setgid. New files inherit their read/write bits from the parent "
+"directory. For windows shares it is NOT recommended to set this. The desired "
+"behavior can be achieved using ACL's. This probably won't do what you want "
+"it to do."
+msgstr ""
+
+#: sharing/models.py:297
+msgid "The specified group's permission are used by all clients"
+msgstr ""
+
+#: storage/admin.py:130
+#, fuzzy
+msgid "Compression"
+msgstr "Komprimovati"
+
+#: storage/admin.py:297
+#, fuzzy
+msgid "Lock Volume"
+msgstr "Volumen"
+
+#: storage/admin.py:311
+#, fuzzy
+msgid "Change Passphrase"
+msgstr "Promeni Šifru"
+
+#: storage/admin.py:318
+msgid "Download Key"
+msgstr ""
+
+#: storage/admin.py:330
+msgid "Add recovery key"
+msgstr ""
+
+#: storage/admin.py:342
+msgid "Unlock"
+msgstr ""
+
+#: storage/admin.py:511
+#, fuzzy
+msgid "Replace"
+msgstr "Zameni disk"
+
+#: storage/admin.py:613
+msgid "When"
+msgstr ""
+
+#: storage/admin.py:650
+#, fuzzy
+msgid "Remote Hostname"
+msgstr "Ime udaljenog host-a"
+
+#: storage/forms.py:1090
+msgid "No: Skip to import"
+msgstr ""
+
+#: storage/forms.py:1093
+#, fuzzy
+msgid "Encrypted ZFS volume?"
+msgstr "Napraviti ZFS volumen"
+
+#: storage/forms.py:1111
+#, fuzzy
+msgid "Encryption Key"
+msgstr "Režim šifrovanja"
+
+#: storage/forms.py:1431
+#: storage/forms.py:1436
+#, fuzzy
+msgid "0=Unlimited; example: 1 GiB"
+msgstr "0=Neograničeno; primer: 1g"
+
+#: storage/forms.py:1605
+#, fuzzy
+msgid "Size for this zvol"
+msgstr "Veličina ovog ZFS Volumena"
+
+#: storage/forms.py:1626
+msgid ""
+"The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
+"to 128 Kbytes is valid."
+msgstr ""
+
+#: storage/forms.py:1655
+msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
+msgstr ""
+
+#: storage/forms.py:1684
+#, fuzzy
+msgid "Permission Type"
+msgstr "Dozvole fajla"
+
+#: storage/forms.py:1860
+#, fuzzy
+msgid "Only [-a-zA-Z0-9_./ ] permitted as clone name"
+msgstr "Samo [-a-zA-Z0-9_./] su dozvoljeni kao ime klona"
+
+#: storage/forms.py:1953
+msgid "Confirmation does not match passphrase"
+msgstr ""
+
+#: storage/forms.py:2021
+msgid "Dedicated User Enabled"
+msgstr ""
+
+#: storage/forms.py:2022
+msgid "If disabled then root will be used for replication."
+msgstr ""
+
+#: storage/forms.py:2030
+msgid "Enable High Speed Ciphers"
+msgstr ""
+
+#: storage/forms.py:2237
+#, fuzzy
+msgid "A scrub with this volume already exists."
+msgstr "Grupa sa tim imenom već postoji."
+
+#: storage/forms.py:2320
+#, fuzzy
+msgid "Confirm New Passphrase"
+msgstr "Potvrdi lozinku"
+
+#: storage/forms.py:2346
+#: storage/forms.py:2492
+#, fuzzy
+msgid "Invalid password"
+msgstr "Stara šifra"
+
+#: storage/forms.py:2396
+#, fuzzy
+msgid "Recovery Key"
+msgstr "svakodnevni"
+
+#: storage/forms.py:2400
+#, fuzzy
+msgid "Restart services"
+msgstr "Kontrolni servisi"
+
+#: storage/forms.py:2417
+#, fuzzy
+msgid "Jails/Plugins"
+msgstr "Dodatne komponente"
+
+#: storage/models.py:594
+msgid "Underlying provider"
+msgstr ""
+
+#: storage/models.py:811
+msgid "Remote Dedicated User Enabled"
+msgstr ""
+
+#: storage/models.py:849
+#: storage/models.py:968
+#: templates/storage/snapshots.html:82
+#, fuzzy
+msgid "Volume/Dataset"
+msgstr "Volumeni"
+
+#: storage/models.py:856
+#, fuzzy
+msgid "Last snapshot sent to remote side"
+msgstr ""
+"Poslednji snimak poslat na udaljenu stranu (ostaviti prazno za punu "
+"replikaciju)"
+
+#: storage/models.py:903
+#, fuzzy
+msgid "Do not start replication after"
+msgstr "Ne uzimati snimak posle"
+
+#: storage/models.py:946
+msgid "Sending %(snapshot)s (%(percent)s%%)"
+msgstr ""
+
+#: storage/nav.py:52
+#: templates/storage/volume_datagrid.html:20
+#, fuzzy
+msgid "UFS Volume Manager (legacy)"
+msgstr "Upravljač volumenom"
+
+# ako % predstavlja user  kao users 
+#: storage/views.py:964
+#, fuzzy
+msgid "Passphrase updated"
+msgstr "Šifra uspešno ažurirana."
+
+#: storage/views.py:1068
+#, fuzzy
+msgid "Encryption re-key succeeded"
+msgstr "Režim šifrovanja"
+
+#: storage/views.py:1151
+#, fuzzy
+msgid "The pool failed to upgraded: %s"
+msgstr "Volumen nije uspešno izvezen"
+
+#: support/models.py:49
+#, fuzzy
+msgid "Support"
+msgstr "EA Podrška"
+
+#: system/forms.py:86
+#, fuzzy
+msgid "The volume %s is locked by encryption"
+msgstr "Volumen nije uspešno izvezen"
+
+#: system/forms.py:518
+#, fuzzy
+msgid "The two passphrase fields didn't match."
+msgstr "Šifre se ne poklapaju."
+
+#: system/forms.py:570
+msgid "RSA or DSA private key not found"
+msgstr ""
+
+#: system/forms.py:817
+#, fuzzy
+msgid "Usernames cannot exceed 17 characters for cronjobs"
+msgstr "Ime pune putanje ne može biti duže od 88 znakova"
+
+#: system/forms.py:1018
+#, fuzzy
+msgid "This variable already exists"
+msgstr "Ova IP već postoji."
+
+#: system/forms.py:1124
+msgid "System dataset pool"
+msgstr ""
+
+#: system/models.py:70
+#, fuzzy
+msgid "WebGUI HTTP Port"
+msgstr "WebGUI Port"
+
+#: system/models.py:80
+msgid "WebGUI HTTP -> HTTPS Redirect"
+msgstr ""
+
+#: system/models.py:115
+#, fuzzy
+msgid "Directory Service"
+msgstr "Dozvole direktorijuma"
+
+#: system/models.py:205
+#, fuzzy
+msgid "Serial Port Address"
+msgstr "JAIL IPv4 adresa"
+
+#: system/models.py:212
+msgid "Set this to match your serial port speed"
+msgstr ""
+
+#: system/models.py:249
+msgid "Enable report anonymous statistics"
+msgstr ""
+
+#: system/models.py:1030
+msgid "Pre Init"
+msgstr ""
+
+#: system/models.py:1067
+#, fuzzy
+msgid "Last Name"
+msgstr "Osnovno ime"
+
+#: system/models.py:1105
+msgid "Home Phone"
+msgstr ""
+
+#: system/alertmods/multipaths_status.py:19
+#, fuzzy
+msgid "The following multipaths are not optimal: %s"
+msgstr "Sledeći diskovi već imaju testove za ovaj tip: %s"
+
+#: system/alertmods/replication_status.py:17
+msgid "Replication %(replication)s failed: %(message)s"
+msgstr ""
+
+#: system/alertmods/volume_version.py:24
+#: system/alertmods/volume_version.py:44
+msgid "You need to upgrade the volume %s"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:8
+#, fuzzy
+msgid "Add %(name)s"
+msgstr "Dodaj %s"
+
+#: templates/freeadmin/help.html:39
+msgid "FreeBSD Man Pages"
+msgstr ""
+
+#: templates/jails/index.html:8
+#: templates/plugins/index.html:32
+msgid "You must configure a default route (Network->IPv4 Default Gateway)"
+msgstr ""
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr ""
+
+#: templates/plugins/plugin_info.html:2
+#, fuzzy
+msgid "Plugin information"
+msgstr "Informacija o dodatnoj komponenti"
+
+#: templates/registration/login.html:54
+msgid ""
+"The web admin user has been removed in this release in order to unify the "
+"web and Unix authentication mechanisms."
+msgstr ""
+
+#: templates/registration/login.html:55
+msgid ""
+"Administrators should log in to the web UI as root, since the web UI already "
+"confers superuser privileges in many areas."
+msgstr ""
+
+#: templates/reporting/index.html:3
+msgid "CPU"
+msgstr ""
+
+#: templates/storage/dataset_edit.html:4
+#, fuzzy
+msgid "Dataset"
+msgstr "Dodaj skup podataka"
+
+#: templates/storage/key.html:6
+#: templates/storage/recoverykey_add.html:9
+#: templates/storage/recoverykey_remove.html:6
+#: templates/storage/rekey.html:11
+msgid "Continue"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:5
+msgid "This will invalidate any previous recovery key"
+msgstr ""
+
+#: templates/storage/rekey.html:6
+msgid ""
+"Remember to create a new passphrase as this action removes the current "
+"passphrase"
+msgstr ""
+
+#: templates/storage/snapshots.html:107
+#, fuzzy
+msgid "Available Actions"
+msgstr "Dostupne radnje"
+
+#: templates/storage/upgrade_confirm.html:5
+#, fuzzy
+msgid "Are you sure you want to upgrade your pool?"
+msgstr "Želite li zaista da izbrišete?"
+
+#: templates/storage/volumestatus_datagrid.html:10
+#: templates/storage/volumestatus_datagrid.html:25
+#, fuzzy
+msgid "Progress"
+msgstr "Komprimovati"
+
+#: templates/storage/volumestatus_datagrid.html:32
+#, fuzzy
+msgid "Repaired"
+msgstr "Potreban"
+
+#: templates/system/cron_run.html:5
+#, fuzzy
+msgid "Would you like to run this cron job now?"
+msgstr "Želite li da omogućite ovu uslugu?"
+
+#: templates/system/shutdown.html:85
+msgid "System is shutting down"
+msgstr ""
+
+#: choices.py:172
+msgid "COREPLUS"
+msgstr ""
+
+#: choices.py:179
+msgid "SMB2_22"
+msgstr ""
+
+#: choices.py:180
+msgid "SMB2_24"
+msgstr ""
+
+#: choices.py:307
+#, fuzzy
+msgid "lz4 (recommended)"
+msgstr "lzjb (preporučeno)"
+
+#: choices.py:318
+msgid "pigz (all rounder)"
+msgstr ""
+
+#: choices.py:677
+#, fuzzy
+msgid "Debug2"
+msgstr "Ispravljanje grešaka"
+
+#: choices.py:678
+#, fuzzy
+msgid "Debug3"
+msgstr "Ispravljanje grešaka"
+
+#: choices.py:688
+#, fuzzy
+msgid "Local 2"
+msgstr "Lokalni Korisnik"
+
+#: choices.py:691
+#, fuzzy
+msgid "Local 5"
+msgstr "Lokalni Korisnik"
+
+#: choices.py:701
+#, fuzzy
+msgid "NIS"
+msgstr "NIC"
+
+#: choices.py:713
+#, fuzzy
+msgid "ctrl+data"
+msgstr "podaci"
+
+#: account/forms.py:53
+#, fuzzy
+msgid "New Password"
+msgstr "Nova šifra"
+
+#: account/forms.py:66
+#, fuzzy
+msgid "Passwords do not match"
+msgstr "Tajna se ne podudara"
+
+#: account/forms.py:398
+#, fuzzy
+msgid "Create Home Directory In"
+msgstr "Korisnički Direktorijum"
+
+#: account/models.py:54
+#, fuzzy
+msgid "Built-in Group"
+msgstr "Pomoćne grupe"
+
+#: api/resources.py:437
+#: storage/views.py:778
+#: storage/views.py:1144
+msgid "Pool output could not be parsed. Is the pool imported?"
+msgstr ""
+
+#: api/resources.py:1864
+#: api/resources.py:1875
+#, fuzzy
+msgid "Invalid snapshot"
+msgstr "Poslednji snimak"
+
+#: common/system.py:279
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: freeadmin/forms.py:220
+#, fuzzy
+msgid "A file is required"
+msgstr "Ovo polje je neophodno"
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+#, fuzzy
+msgid "Invalid address: %s"
+msgstr "Nevažeći firmver"
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+#, fuzzy
+msgid "Invalid network: %s"
+msgstr "Nevažeći kontrolni zbir"
+
+#: freeadmin/navtree.py:576
+#, fuzzy
+msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
+msgstr ""
+"Došlo je do greške dok se vršila ne-serijalizacija od %(url)s: %(error)s"
+
+#: jails/admin.py:75
+#: jails/forms.py:859
+#: jails/models.py:521
+#: templates/plugins/plugins.html:21
+#, fuzzy
+msgid "Jail"
+msgstr "JAIL ime"
+
+#: jails/admin.py:186
+#, fuzzy
+msgid "Edit Jail"
+msgstr "Uredi portal"
+
+#: jails/admin.py:192
+#: templates/plugins/available_datagrid.html:27
+#, fuzzy
+msgid "Upload Plugin"
+msgstr "Ažuriranje komponente"
+
+#: jails/forms.py:260
+#: jails/utils.py:628
+msgid "Unable to find template!"
+msgstr ""
+
+#: jails/forms.py:518
+#: jails/models.py:196
+#, fuzzy
+msgid "NAT"
+msgstr "N/A"
+
+#: jails/forms.py:785
+msgid "Create destination directory if it does not exist"
+msgstr ""
+
+#: jails/models.py:74
+#, fuzzy
+msgid "Jail Name"
+msgstr "JAIL ime"
+
+#: jails/models.py:84
+#, fuzzy
+msgid "IPv4 address"
+msgstr "IPv4 Addresa"
+
+#: jails/models.py:141
+#, fuzzy
+msgid "IPv6 aliases"
+msgstr "Aliasi"
+
+#: jails/models.py:296
+#, fuzzy
+msgid "This jail is required by %d plugin(s)"
+msgstr "Ovo polje je obavezno za anonimno prijavljivanje"
+
+#: jails/models.py:337
+#, fuzzy
+msgid "IPv4 Network"
+msgstr "IPv4 maska mreže"
+
+#: jails/models.py:347
+#, fuzzy
+msgid "IPv4 Network End Address"
+msgstr "IPv4 Addresa"
+
+#: jails/models.py:357
+#, fuzzy
+msgid "IPv6 Network Start Address"
+msgstr "IPv6 Adresa"
+
+#: jails/models.py:377
+#: jails/models.py:378
+#, fuzzy
+msgid "Jails Configuration"
+msgstr "Globalna Konfiguracija"
+
+#: jails/models.py:428
+#, fuzzy
+msgid "Architecture"
+msgstr "Arhitektura dodatne komponente"
+
+#: jails/utils.py:645
+msgid "Failed to install plugin: %s"
+msgstr ""
+
+# ako % predstavlja user  kao users 
+#: jails/views.py:156
+#, fuzzy
+msgid "Jail successfully stopped."
+msgstr "JAIL je uspešno uvezen."
+
+#: middleware/notifier.py:3821
+msgid "Backup"
+msgstr ""
+
+#: middleware/notifier.py:3847
+msgid "Degraded"
+msgstr ""
+
+#: middleware/zfs.py:673
+#: middleware/zfs.py:732
+msgid "None requested"
+msgstr ""
+
+#: network/admin.py:44
+#, fuzzy
+msgid "IPv4 Addresses"
+msgstr "IPv4 Addresa"
+
+#: network/forms.py:138
+msgid "Only one interface can be used for DHCP"
+msgstr ""
+
+#: network/forms.py:151
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr ""
+
+#: network/forms.py:189
+#: network/forms.py:698
+msgid "The network %s is already in use by another NIC."
+msgstr ""
+
+#: network/forms.py:446
+msgid "You need a domain, e.g. hostname.domain"
+msgstr ""
+
+#: network/models.py:83
+msgid ""
+"If enabled, delays the start of network-reliant services until interface is "
+"up and ICMP packets to a destination defined in netwait ip list are "
+"flowing.  Link state is examined first, followed by \"pinging\" an IP "
+"address to verify network usability.  If no destination can be reached or "
+"timeouts are exceeded, network services are started anyway with no guarantee "
+"that the network is usable."
+msgstr ""
+
+#: network/models.py:94
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+
+#: network/models.py:103
+msgid ""
+"This field is appended to /etc/hosts which contains information regarding "
+"known hosts on the network. hosts(5)"
+msgstr ""
+
+#: plugins/admin.py:59
+#: plugins/admin.py:66
+#, fuzzy
+msgid "Install"
+msgstr "Instalirano..."
+
+#: plugins/models.py:102
+#, fuzzy
+msgid "Plugin jail name"
+msgstr "Ime dodatne komponente"
+
+#: plugins/models.py:180
+#, fuzzy
+msgid "Plugin Kernel Module"
+msgstr "Dodatna komponenta omogućena"
+
+#: plugins/models.py:215
+msgid "Repository URL"
+msgstr ""
+
+#: plugins/plugin.py:119
+#, fuzzy
+msgid "Failed to download %(url)s: %(error)s"
+msgstr "Nije moguće preuzeti %(url)s: %(greška)s"
+
+#: plugins/views.py:171
+#, fuzzy
+msgid "Plugin not installed"
+msgstr "Nema instaliranih dodatnih komponenti"
+
+#: plugins/views.py:181
+#: plugins/views.py:242
+#, fuzzy
+msgid "Invalid plugin"
+msgstr "Instalirati dodatnu komponentu"
+
+#: plugins/views.py:192
+#: plugins/views.py:250
+#, fuzzy
+msgid "Failed to download plugin"
+msgstr "Nemoguće je ukloniti dodatnu komponentu."
+
+#: plugins/views.py:224
+#: plugins/views.py:355
+#, fuzzy
+msgid "No available IP addresses"
+msgstr "Jail IP addresa"
+
+#: services/forms.py:758
+#: services/models.py:1612
+msgid "Kerberos keytab"
+msgstr ""
+
+#: services/forms.py:1081
+#, fuzzy
+msgid "LUN ID already exists."
+msgstr "Ova IP već postoji."
+
+#: services/forms.py:1561
+#, fuzzy
+msgid "This IP and port are already in use."
+msgstr "Ova IP adresa je već u upotrebi."
+
+#: services/models.py:224
+#, fuzzy
+msgid "Hostnames lookups"
+msgstr "Ime računara"
+
+#: services/models.py:246
+#, fuzzy
+msgid "Allow execute always"
+msgstr "Dozvoli ponavljanje GID-a"
+
+#: services/models.py:334
+msgid "Serve UDP NFS clients"
+msgstr ""
+
+#: services/models.py:340
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it.  It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+
+#: services/models.py:359
+msgid "mountd(8) bind port"
+msgstr ""
+
+#: services/models.py:376
+msgid ""
+"This option forces the rpc.statd daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:763
+#, fuzzy
+msgid "Initiator side user name."
+msgstr "Tajni inicijator"
+
+#: services/models.py:952
+#, fuzzy
+msgid "These parameters will be added to global settings in inadyn-mt.conf."
+msgstr "Ovi parametri će biti dodati globalnim podešavanjima u inadin.conf."
+
+#: services/models.py:1016
+msgid "Slave"
+msgstr ""
+
+#: services/models.py:1080
+#, fuzzy
+msgid "Monitor User"
+msgstr "Izmeni korisnika"
+
+#: services/models.py:1177
+msgid "Display Login"
+msgstr ""
+
+#: services/models.py:1196
+#, fuzzy
+msgid ""
+"Use this option to override the directory creation mask (077 by default)."
+msgstr ""
+"Koristiti ovu opciju da bi se zamenila maska kreiranja direktorijuma ("
+"podrazumevana vrednost je 0777)."
+
+#: services/models.py:1308
+#, fuzzy
+msgid "TLS export certificate data"
+msgstr "Samo potpisan sertifikat"
+
+#: services/models.py:1312
+#, fuzzy
+msgid "TLS no certificate request"
+msgstr "Samo potpisan sertifikat"
+
+#: services/models.py:1316
+msgid "TLS no empty fragments"
+msgstr ""
+
+#: services/models.py:1324
+msgid "TLS export standard vars"
+msgstr ""
+
+#: services/models.py:1336
+msgid "TLS IP address required"
+msgstr ""
+
+#: services/models.py:1340
+msgid "Certificate and private key"
+msgstr ""
+
+#: services/models.py:1442
+msgid ""
+"Specifies which messages will be logged by sftp-server. INFO and VERBOSE log "
+"transactions that sftp-server performs on behalf of the client. DEBUG2 and "
+"DEBUG3 each specify higher levels of debugging output. The default is ERROR."
+msgstr ""
+
+#: services/models.py:1532
+#: services/models.py:1640
+msgid "Hostname of the domain controller to use."
+msgstr ""
+
+#: services/models.py:1595
+#, fuzzy
+msgid "Domain Account Name"
+msgstr "Ime domena"
+
+#: services/models.py:1600
+#, fuzzy
+msgid "Domain Account Password"
+msgstr "Lozinka naloga Domenskog Administratora"
+
+#: services/models.py:1623
+#, fuzzy
+msgid "UNIX extensions"
+msgstr "Unix ekstenzije"
+
+#: services/models.py:1658
+msgid "Hostname of the kerberos password server to use."
+msgstr ""
+
+# ili Prekid???
+#: services/models.py:1662
+#, fuzzy
+msgid "AD timeout"
+msgstr "Pauza"
+
+#: services/models.py:1663
+msgid "Timeout for AD related commands."
+msgstr ""
+
+# ili Prekid???
+#: services/models.py:1667
+#, fuzzy
+msgid "DNS timeout"
+msgstr "Pauza"
+
+#: services/models.py:1668
+msgid "Timeout for AD DNS queries."
+msgstr ""
+
+#: services/models.py:1711
+#, fuzzy
+msgid "NIS domain name"
+msgstr "Ime domena"
+
+#: services/models.py:1716
+#, fuzzy
+msgid "NIS servers"
+msgstr "NTP serveri"
+
+#: services/models.py:1717
+msgid "Comma delimited list of NIS servers"
+msgstr ""
+
+#: services/models.py:1721
+#, fuzzy
+msgid "Secure mode"
+msgstr "Režim napajanja"
+
+#: services/models.py:1726
+msgid "Manycast"
+msgstr ""
+
+#: services/models.py:1727
+msgid "Cause ypbind to use 'many-cast' instead of broadcast"
+msgstr ""
+
+#: services/models.py:1871
+#: services/models.py:1872
+#: templates/services/core.html:76
+msgid "LLDP"
+msgstr ""
+
+#: services/models.py:2025
+#, fuzzy
+msgid "Destination email address. Separate email addresses by commas"
+msgstr "Odredišna email adresa. Razdvojiti email adrese sa tačka-zarezom"
+
+#: services/models.py:2058
+msgid "Realm"
+msgstr ""
+
+#: services/models.py:2059
+msgid "Realm Name, eg EXAMPLE.ORG"
+msgstr ""
+
+#: services/models.py:2088
+msgid "Domain and Forest Level, eg 2003"
+msgstr ""
+
+#: sharing/forms.py:320
+msgid "You need at least one path for the share"
+msgstr ""
+
+#: sharing/models.py:49
+msgid "Recursively set sane default windows permissions on share"
+msgstr ""
+
+#: sharing/models.py:208
+#, fuzzy
+msgid "Default umask"
+msgstr "Podrazumevano"
+
+#: sharing/models.py:231
+#, fuzzy
+msgid "Authorized networks"
+msgstr "Ovlašćena mreža"
+
+#: sharing/models.py:238
+#, fuzzy
+msgid "Authorized IP addresses or hosts"
+msgstr "Autorizovana mreža ili IP sdrese"
+
+#: storage/admin.py:36
+msgid "Wipe"
+msgstr ""
+
+#: storage/admin.py:136
+#, fuzzy
+msgid "Compression Ratio"
+msgstr "Nivo kompresije"
+
+#: storage/admin.py:274
+#: storage/admin.py:376
+#: storage/nav.py:124
+#, fuzzy
+msgid "Create zvol"
+msgstr "Napraviti ZFS volumen"
+
+#: storage/admin.py:324
+#, fuzzy
+msgid "Encryption Re-key"
+msgstr "Režim šifrovanja"
+
+#: storage/admin.py:502
+#, fuzzy
+msgid "Edit Disk"
+msgstr "Urediti skup podataka"
+
+#: storage/admin.py:619
+msgid "Frequency"
+msgstr ""
+
+#: storage/forms.py:120
+msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
+msgstr ""
+
+#: storage/forms.py:558
+msgid ""
+"You are trying to add a virtual device of type '%(addtype)s' in a pool that "
+"has a virtual device of type '%(vdevtype)s'"
+msgstr ""
+
+#: storage/forms.py:568
+msgid ""
+"You are trying to add a virtual device consisting of %(addnum)s device(s) in "
+"a pool that has a virtual device consisted of %(vdevnum)s device(s)"
+msgstr ""
+
+#: storage/forms.py:601
+#: templates/storage/zfswizard.html:51
+msgid "Initialize Safely"
+msgstr ""
+
+#: storage/forms.py:906
+#, fuzzy
+msgid ""
+"The selected disks were not verified for these import rules. Filesystem "
+"check failed."
+msgstr "Izabrane diskovi nisu verifikovani za ovaj uvoz pravila."
+
+#: storage/forms.py:1114
+#: storage/forms.py:1940
+#: storage/forms.py:2276
+#: storage/forms.py:2391
+#: system/models.py:381
+msgid "Passphrase"
+msgstr ""
+
+#: storage/forms.py:1165
+#, fuzzy
+msgid "The following disks failed to attach: %s"
+msgstr "Sledeći diskovi već imaju testove za ovaj tip: %s"
+
+#: storage/forms.py:1422
+#, fuzzy
+msgid "Share type"
+msgstr "Deljeni Komentar"
+
+#: storage/forms.py:1441
+#: storage/forms.py:1446
+#, fuzzy
+msgid "0=None; example: 1 GiB"
+msgstr "0=Nijedan; primer: 1g"
+
+#: storage/forms.py:1459
+msgid ""
+"Specifies a suggested block size for files in the file system. This property "
+"is designed solely for use with database workloads that access files in "
+"fixed-size records.  ZFS automatically tunes block sizes according to "
+"internal algorithms optimized for typical access patterns."
+msgstr ""
+
+#: storage/forms.py:1613
+#, fuzzy
+msgid "Sparse volume"
+msgstr "Premotavanje volumena"
+
+#: storage/forms.py:1615
+msgid ""
+"Creates a sparse volume with no reservation, also known as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less than the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+
+#: storage/forms.py:1624
+#, fuzzy
+msgid "Block size"
+msgstr "Veličina logičkog bloka"
+
+#: storage/forms.py:1817
+#, fuzzy
+msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
+msgstr "Samo [-a-zA-Z0-9_.] su dozvoljeni kao ime snimka"
+
+#: storage/forms.py:2026
+#, fuzzy
+msgid "Dedicated User"
+msgstr "Obriši korisnika"
+
+#: storage/forms.py:2034
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which makes it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/forms.py:2312
+#, fuzzy
+msgid "Admin password"
+msgstr "Stara šifra"
+
+#: storage/forms.py:2316
+#, fuzzy
+msgid "New Passphrase"
+msgstr "Nova šifra"
+
+#: storage/forms.py:2456
+msgid "Volume could not be imported: %d devices failed to decrypt"
+msgstr ""
+
+#: storage/forms.py:2473
+#, fuzzy
+msgid "Root password"
+msgstr "Root lozinka za vezivanje"
+
+#: storage/models.py:131
+msgid "LOCKED"
+msgstr ""
+
+#: storage/models.py:814
+#, fuzzy
+msgid "Remote Dedicated User"
+msgstr "Udaljeni host za replikaciju"
+
+#: storage/models.py:825
+msgid "High Speed Encryption Ciphers"
+msgstr ""
+
+#: storage/models.py:864
+#, fuzzy
+msgid "Remote ZFS Volume/Dataset"
+msgstr "Kreiraj ZFS skup podataka"
+
+#: storage/models.py:866
+#, fuzzy
+msgid ""
+"This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
+"Datasetname not the mountpoint or filesystem path"
+msgstr ""
+"To bi trebalo da bude ime ZFS sistema datoteka na udaljenoj strani. npr: "
+"poolname/datasetname nije tačka montiranja ili putanja sistema datoteka"
+
+#: storage/models.py:886
+#, fuzzy
+msgid "Replication Stream Compression"
+msgstr "Replikacioni zadaci"
+
+#: storage/models.py:951
+msgid "Sending"
+msgstr ""
+
+#: storage/nav.py:40
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "Upravljač volumenom"
+
+#: storage/views.py:783
+#, fuzzy
+msgid "The scrub process has stopped"
+msgstr "Proces premotavanja je počeo"
+
+#: storage/views.py:946
+msgid "Passphrase created"
+msgstr ""
+
+#: storage/views.py:980
+#, fuzzy
+msgid "Volume locked"
+msgstr "Dodavanje volumena"
+
+#: storage/views.py:1029
+msgid "GELI key download starting..."
+msgstr ""
+
+#: storage/views.py:1088
+msgid "GELI recovery key download starting..."
+msgstr ""
+
+# wipe - isto kao i delete ali se prostor popunjava nulama i jedinicama u nekoliko iteracija
+#: storage/views.py:1171
+#, fuzzy
+msgid "Disks successfully edited"
+msgstr "Disk je uspešno trajno obrisan"
+
+#: support/models.py:41
+#, fuzzy
+msgid "Support subject."
+msgstr "Podrška za probleme"
+
+#: support/models.py:45
+#, fuzzy
+msgid "A description of the issue."
+msgstr "enkripcija veze"
+
+#: support/views.py:86
+#, fuzzy
+msgid "Support request successfully sent"
+msgstr "Snimak uspešno obrisan."
+
+#: system/forms.py:68
+msgid "The path '%s' requires execute permission bit"
+msgstr ""
+
+#: system/forms.py:587
+msgid "RSA or DSA private key is not valid"
+msgstr ""
+
+#: system/forms.py:610
+msgid "The modulus of certificate and key must match"
+msgstr ""
+
+#: system/forms.py:1155
+msgid "Unable to migrate system dataset!"
+msgstr ""
+
+#: system/models.py:61
+#, fuzzy
+msgid "WebGUI IPv4 Address"
+msgstr "WebGUI Addresa"
+
+#: system/models.py:75
+#, fuzzy
+msgid "WebGUI HTTPS Port"
+msgstr "WebGUI Port"
+
+#: system/models.py:83
+msgid ""
+"Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled"
+msgstr ""
+
+#: system/models.py:213
+msgid "Serial Port Speed"
+msgstr ""
+
+#: system/models.py:245
+msgid "Enable automatic upload of kernel crash dumps"
+msgstr ""
+
+#: system/models.py:444
+msgid ""
+"Redirect the standard output to /dev/null. In other words, disable output."
+msgstr ""
+
+#: system/models.py:450
+msgid ""
+"Redirect the standard error output to /dev/null. In other words, disable "
+"error output."
+msgstr ""
+
+#: system/models.py:1011
+#: system/models.py:1023
+msgid "Script"
+msgstr ""
+
+#: system/models.py:1063
+#, fuzzy
+msgid "First Name"
+msgstr "Ime cilja"
+
+#: system/models.py:1071
+msgid "Company"
+msgstr ""
+
+#: system/models.py:1095
+msgid "Zip"
+msgstr ""
+
+#: system/models.py:1111
+msgid "Cell Phone"
+msgstr ""
+
+#: system/models.py:1117
+msgid "Work Phone"
+msgstr ""
+
+#: system/models.py:1123
+#: templates/system/settings.html:14
+#, fuzzy
+msgid "Registration"
+msgstr "Odredište"
+
+#: system/models.py:1138
+#, fuzzy
+msgid "Syslog"
+msgstr "Syslog server"
+
+#: system/models.py:1146
+#: templates/system/settings.html:11
+#, fuzzy
+msgid "System Dataset"
+msgstr "Urediti skup podataka"
+
+#: system/views.py:191
+#, fuzzy
+msgid "The cron process has started"
+msgstr "Proces premotavanja je počeo"
+
+#: system/views.py:541
+#, fuzzy
+msgid "The rsync process has started"
+msgstr "Proces premotavanja je počeo"
+
+#: system/alertmods/httpd_bindaddr.py:20
+#, fuzzy
+msgid "The WebGUI Address could not bind to %s; using wildcard"
+msgstr "WebGUI adresa ne može biti povezana na %s; upotrebom džokera"
+
+#: system/alertmods/zpool_capacity.py:28
+msgid ""
+"The capacity for the volume '%(volume)s' is currently at %(capacity)d%%, "
+"while the recommended value is below 80%%."
+msgstr ""
+
+#: templates/freeadmin/generic_model_add.html:38
+#: templates/freeadmin/generic_model_edit.html:42
+#: templates/support/index.html:41
+#, fuzzy
+msgid "Add extra"
+msgstr "Dodaj interfejs"
+
+#: templates/jails/delete.html:3
+#, fuzzy
+msgid "Are you sure you want to delete "
+msgstr "Želite li zaista da izbrišete?"
+
+#: templates/jails/start.html:3
+#, fuzzy
+msgid "Start "
+msgstr "Početak"
+
+#: templates/jails/stop.html:3
+#, fuzzy
+msgid "Stop "
+msgstr "Zaustavi"
+
+#: templates/plugins/available_install.html:3
+#, fuzzy
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr "Da li ste sigurni da želite da uništite \"%(name)s\"?"
+
+#: templates/plugins/index.html:12
+#, fuzzy
+msgid "Installed"
+msgstr "Instalirano..."
+
+#: templates/registration/login.html:57
+msgid "For security reasons, you must now set a new root password:"
+msgstr ""
+
+#: templates/services/core.html:82
+#, fuzzy
+msgid "LLDP Settings"
+msgstr "LDAP podešavanja"
+
+#: templates/storage/key.html:3
+msgid "You are about to download the global GELI key"
+msgstr ""
+
+#: templates/storage/lock.html:3
+#, fuzzy
+msgid "Do you want to lock this volume?"
+msgstr "Kvota za ovaj volumen"
+
+#: templates/storage/recoverykey_add.html:4
+msgid "You are about to add a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/rekey.html:4
+msgid "You are about to re-key the encryption"
+msgstr ""
+
+#: templates/storage/replication_datagrid.html:16
+#, fuzzy
+msgid ""
+"ATTENTION: A periodic snapshot of a given ZFS Volume/Dataset is required to "
+"create a replication task"
+msgstr ""
+"PAŽNJA: Periodični snimak datog ZFS sistema fajlova/volumena je potreban da "
+"bi se kreirao zadatak replikacije"
+
+#: templates/storage/upgrade_confirm.html:5
+msgid "This operation is irreversible!"
+msgstr ""
+
+#: templates/storage/volume_datagrid.html:22
+#, fuzzy
+msgid "UFS Volume Manager"
+msgstr "Upravljač volumenom"
+
+#: templates/storage/volume_detach.html:27
+msgid ""
+"This is an encrypted volume, make sure to <a href=\"%(url)s\" "
+"target=\"_blank\">download</a> the key so you can be able to import it in "
+"the future"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:17
+#: templates/storage/volumestatus_datagrid.html:33
+msgid "Date"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:21
+#, fuzzy
+msgid "Scrub"
+msgstr "ZFS premotavanje"
+
+#: templates/storage/wizard.html:92
+#, fuzzy
+msgid "Extend Volume"
+msgstr "Dodati volumen"
+
+#: templates/storage/zfswizard.html:77
+#, fuzzy
+msgid "Deduplication"
+msgstr "ZFS replikacija"
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr ""
+
+#: templates/storage/zvols.html:6
+#, fuzzy
+msgid "Add zvol"
+msgstr "Dodaj portal"
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr ""
+
+#: templates/system/firmware_wizard_0.html:6
+#: templates/system/firmware_wizard_1.html:21
+msgid ""
+"Consider downloading your configuration before proceeding, <a "
+"href=\"%(url)s\" target=\"_blank\">click here</a>."
+msgstr ""
+
+#: templates/system/reboot.html:79
+#, fuzzy
+msgid "System is rebooting"
+msgstr "Sistemsko Vreme"
+
+#: templates/system/reboot_dialog2.html:4
+msgid ""
+"Some storage pools are doing resilver/scrub, are you really sure you want to "
+"proceed with <strong>REBOOT</strong>?"
+msgstr ""
+
+#: templates/system/shutdown_dialog2.html:4
+msgid ""
+"Some storage pools are doing resilver/scrub, are you really sure you want to "
+"proceed with <strong>SHUTDOWN</strong>?"
+msgstr ""
+
+#: choices.py:171
+msgid "CORE"
+msgstr ""
+
+#: choices.py:176
+msgid "SMB2"
+msgstr ""
+
+#: choices.py:178
+msgid "SMB2_10"
+msgstr ""
+
+#: choices.py:181
+msgid "SMB3"
+msgstr ""
+
+#: choices.py:182
+msgid "SMB3_00"
+msgstr ""
+
+#: choices.py:317
+#, fuzzy
+msgid "lz4 (fastest)"
+msgstr "gzip (najbrže)"
+
+#: choices.py:686
+#, fuzzy
+msgid "Local 0"
+msgstr "Lokalni Korisnik"
+
+#: choices.py:687
+#, fuzzy
+msgid "Local 1"
+msgstr "Lokalni Korisnik"
+
+#: choices.py:689
+#, fuzzy
+msgid "Local 3"
+msgstr "Lokalni Korisnik"
+
+#: choices.py:690
+#, fuzzy
+msgid "Local 4"
+msgstr "Lokalni Korisnik"
+
+#: choices.py:692
+#, fuzzy
+msgid "Local 6"
+msgstr "Lokalni Korisnik"
+
+#: choices.py:693
+#, fuzzy
+msgid "Local 7"
+msgstr "Lokalni Korisnik"
+
+#: choices.py:707
+#, fuzzy
+msgid "on"
+msgstr "Nijedan"
+
+#: choices.py:708
+#, fuzzy
+msgid "off"
+msgstr "Isključen"
+
+#: choices.py:712
+msgid "ctrl"
+msgstr ""
+
+#: choices.py:715
+#, fuzzy
+msgid "auth+data"
+msgstr "podaci"
+
+#: account/forms.py:534
+#, fuzzy
+msgid "Home directory must end with username"
+msgstr "Korisnički direktorijum nije promenjiv, ostavite prazno"
+
+#: account/models.py:58
+#: account/models.py:154
+msgid "Permit Sudo"
+msgstr ""
+
+#: account/models.py:146
+#, fuzzy
+msgid "Disable password login"
+msgstr "Onemogući prijavu lozinkom"
+
+#: account/models.py:264
+#, fuzzy
+msgid "Group Membership"
+msgstr "LAGG članovi"
+
+#: account/models.py:265
+#, fuzzy
+msgid "Group Memberships"
+msgstr "LAGG članovi"
+
+#: freeadmin/navtree.py:611
+#, fuzzy
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr "Nije moguće preuzeti %(url)s: %(greška)s"
+
+#: jails/admin.py:89
+#: jails/models.py:183
+#, fuzzy
+msgid "Autostart"
+msgstr "Automatski"
+
+#: jails/admin.py:189
+#: jails/nav.py:264
+#, fuzzy
+msgid "Add Storage"
+msgstr "Uređaj za skladištenje"
+
+#: jails/forms.py:486
+#, fuzzy
+msgid "Path does not exist!"
+msgstr "Putanja ne postoji."
+
+#: jails/forms.py:508
+msgid "Jail root must be on a volume or dataset!"
+msgstr ""
+
+#: jails/forms.py:517
+#: jails/models.py:192
+msgid "VIMAGE"
+msgstr ""
+
+#: jails/forms.py:827
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr ""
+
+#: jails/hook.py:13
+#: jails/models.py:324
+#: jails/models.py:325
+#: jails/nav.py:47
+#: templates/jails/index.html:17
+msgid "Jails"
+msgstr ""
+
+#: jails/models.py:91
+#, fuzzy
+msgid "IPv4 netmask"
+msgstr "IPv4 maska mreže"
+
+#: jails/models.py:97
+#, fuzzy
+msgid "IPv4 aliases"
+msgstr "Aliasi"
+
+#: jails/models.py:116
+msgid "IPv4 bridge aliases"
+msgstr ""
+
+#: jails/models.py:122
+#, fuzzy
+msgid "IPv4 default gateway"
+msgstr "IPv4 podrazumevani mrežni prolaz"
+
+#: jails/models.py:135
+#, fuzzy
+msgid "IPv6 prefix length"
+msgstr "IPv6 dužina prefiksa"
+
+#: jails/models.py:147
+#, fuzzy
+msgid "IPv6 bridge address"
+msgstr "IPv6 Adresa"
+
+#: jails/models.py:154
+#, fuzzy
+msgid "IPv6 bridge prefix length"
+msgstr "IPv6 dužina prefiksa"
+
+#: jails/models.py:160
+msgid "IPv6 bridge aliases"
+msgstr ""
+
+#: jails/models.py:167
+#, fuzzy
+msgid "IPv6 default gateway"
+msgstr "IPv6 podrazumevani mrežni prolaz"
+
+#: jails/models.py:178
+msgid "Comma delimited list of sysctl's"
+msgstr ""
+
+#: jails/models.py:342
+#, fuzzy
+msgid "IPv4 Network Start Address"
+msgstr "IPv4 Addresa"
+
+#: jails/models.py:353
+msgid "IPv6 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:358
+msgid "IPv6 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:422
+msgid "OS"
+msgstr ""
+
+#: jails/nav.py:70
+#, fuzzy
+msgid "Add Jails"
+msgstr "Dodaj %s"
+
+#: jails/nav.py:100
+#, fuzzy
+msgid "View Jails"
+msgstr "Prikaži %s"
+
+#: jails/nav.py:114
+#, fuzzy
+msgid "View Jail Templates"
+msgstr "Pogledaj oblast datoteke"
+
+#: jails/nav.py:129
+#: plugins/models.py:225
+#: templates/jails/index.html:40
+#: templates/plugins/index.html:20
+#, fuzzy
+msgid "Configuration"
+msgstr "Globalna Konfiguracija"
+
+#: jails/utils.py:573
+#, fuzzy
+msgid "Unable to determine IPv4 for plugin"
+msgstr "Nemoguće je ukloniti dodatnu komponentu."
+
+#: jails/views.py:115
+#, fuzzy
+msgid "Storage successfully added."
+msgstr "Skup podataka uspešno dodat."
+
+#: jails/views.py:177
+#, fuzzy
+msgid "Jail successfully deleted."
+msgstr "%s uspešno obrisani."
+
+#: middleware/notifier.py:3820
+#: middleware/notifier.py:3845
+#, fuzzy
+msgid "Active"
+msgstr "Radnja"
+
+#: middleware/notifier.py:3822
+#, fuzzy
+msgid "Init"
+msgstr "Inicijator"
+
+#: middleware/notifier.py:3823
+#: services/models.py:1015
+#, fuzzy
+msgid "Master"
+msgstr "Lokalni Master"
+
+#: middleware/zfs.py:648
+#: middleware/zfs.py:711
+msgid "Completed"
+msgstr ""
+
+#: middleware/zfs.py:663
+#: middleware/zfs.py:722
+#, fuzzy
+msgid "Canceled"
+msgstr "Otkaži"
+
+#: network/admin.py:39
+#, fuzzy
+msgid "Media Status"
+msgstr "Status"
+
+#: network/admin.py:49
+#, fuzzy
+msgid "IPv6 Addresses"
+msgstr "IPv6 Adresa"
+
+#: network/forms.py:311
+#, fuzzy
+msgid "Channel"
+msgstr "Promeni"
+
+#: network/models.py:77
+msgid "HTTP Proxy"
+msgstr ""
+
+# ako % predstavlja user  kao users 
+#: network/views.py:66
+#, fuzzy
+msgid "IPMI successfully edited"
+msgstr "Skup podataka uspešno ažuriran."
+
+#: network/views.py:68
+msgid "IPMI failed"
+msgstr ""
+
+#: plugins/admin.py:73
+#, fuzzy
+msgid "Install plugin"
+msgstr "Instalirati dodatnu komponentu"
+
+#: plugins/models.py:103
+#, fuzzy
+msgid "Jail where the plugin is installed"
+msgstr "Nema instaliranih dodatnih komponenti"
+
+#: plugins/models.py:129
+#, fuzzy
+msgid "jail not found"
+msgstr "Stranica nije pronađena"
+
+#: plugins/views.py:205
+#, fuzzy
+msgid "Failed to update plugin"
+msgstr "Naziv dodatne komponente"
+
+#: services/models.py:109
+msgid "Use syslog"
+msgstr ""
+
+#: services/models.py:226
+msgid ""
+"Specifies whether samba should use (expensive) hostname lookups or use the "
+"ip addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+
+#: services/models.py:240
+msgid "Server maximum protocol"
+msgstr ""
+
+#: services/models.py:298
+#, fuzzy
+msgid "Enable/disable home directories for afp user."
+msgstr "Omogućiti/onemogućiti matične direktorijume za SAMBA korisnika."
+
+#: services/models.py:351
+msgid ""
+"Specify specific IP addresses (separated by commas) to bind to for TCP and "
+"UDP requests. This option may be specified multiple times. If no IP is "
+"specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
+"and if IPv6 is enabled, ::1 to the list."
+msgstr ""
+
+#: services/models.py:364
+msgid ""
+"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
+"families. This is typically done to ensure that the port which mountd binds "
+"to is a known value which can be used in firewall rulesets."
+msgstr ""
+
+#: services/models.py:371
+msgid "rpc.statd(8) bind port"
+msgstr ""
+
+#: services/models.py:381
+msgid "rpc.lockd(8) bind port"
+msgstr ""
+
+#: services/models.py:386
+msgid ""
+"This option forces rpc.lockd the daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:874
+msgid "LUN ID"
+msgstr ""
+
+#: services/models.py:916
+msgid ""
+"The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
+"Defaults to checkip.dyndns.org:80 /."
+msgstr ""
+
+#: services/models.py:925
+#, fuzzy
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names."
+msgstr ""
+"Alias za ime hosta. Ova opcija se može pojaviti više puta, za svaki domen "
+"koji ima isti IP. Koristite razmak za razdvajanje višestrukih aliasa."
+
+#: services/models.py:1018
+#, fuzzy
+msgid "UPS Mode"
+msgstr "Režim"
+
+#: services/models.py:1085
+#, fuzzy
+msgid "Monitor Password"
+msgstr "Potvrdi lozinku"
+
+#: services/models.py:1221
+#, fuzzy
+msgid "Perform Reverse DNS Lookups"
+msgstr "Zahtevati Reverzni DNS za IP"
+
+#: services/models.py:1292
+#, fuzzy
+msgid "TLS allow dot login"
+msgstr "Dozvoli prijavljivanje Root korisnika"
+
+#: services/models.py:1296
+msgid "TLS allow per user"
+msgstr ""
+
+#: services/models.py:1328
+msgid "TLS use implicit SSL"
+msgstr ""
+
+#: services/models.py:1342
+#, fuzzy
+msgid "Place the contents of your certificate and private key here."
+msgstr "Postavite sadržaj vašeg samo potpisanog sertifikata ovde."
+
+#: services/models.py:1438
+#, fuzzy
+msgid "SFTP Log Level"
+msgstr "Nivo zapisa"
+
+#: services/models.py:1453
+msgid ""
+"Specifies the facility code that is used when logging messages from sftp-"
+"server."
+msgstr ""
+
+#: services/models.py:1619
+#, fuzzy
+msgid "Verbose logging"
+msgstr "Detaljno"
+
+#: services/models.py:1624
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr ""
+
+#: services/models.py:1633
+msgid "Use default domain"
+msgstr ""
+
+#: services/models.py:1634
+msgid "Set this if you want to use the default domain for users and groups."
+msgstr ""
+
+#: services/models.py:1645
+msgid "Global Catalog Server"
+msgstr ""
+
+#: services/models.py:1646
+msgid "Hostname of the global catalog server to use."
+msgstr ""
+
+#: services/models.py:1852
+msgid "Save received info in interface description / alias"
+msgstr ""
+
+#: services/models.py:2068
+#: services/models.py:2069
+#, fuzzy
+msgid "Server Role"
+msgstr "Ime Servera"
+
+#: services/models.py:2083
+#, fuzzy
+msgid "DNS Forwarder IP Address"
+msgstr "IP adresa kontrolera"
+
+#: sharing/forms.py:174
+#, fuzzy
+msgid "This is not a valid network: %s"
+msgstr "Ovo nije ispravna mreža"
+
+#: sharing/forms.py:288
+msgid "This option is only available once per mountpoint"
+msgstr ""
+
+#: sharing/models.py:94
+#, fuzzy
+msgid "Inherit ACL's"
+msgstr "Naslediti"
+
+#: sharing/models.py:96
+msgid ""
+"This parameter can be used to ensure that if default acls exist on parent "
+"directories, they are always honored when creating a new file or "
+"subdirectory in these parent directories. The default behavior is to use the "
+"unix mode specified when creating the directory. For windows shares it is "
+"NOT recommended to set this. The desired behavior can be achieved using "
+"ACL's. This probably won't do what you want it to do."
+msgstr ""
+
+#: sharing/models.py:169
+msgid "Check this to enable Time Machine backups on this share."
+msgstr ""
+
+#: sharing/models.py:232
+#, fuzzy
+msgid ""
+"Networks that are authorized to access the NFS share. Specify network "
+"numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
+msgstr ""
+"Mreža koja je ovlašćena za pristup NFS deljenom resursu ili listi IP adresa. "
+"Navedite broj mreža u formi 1.2.3.4/XX gde je XX broj bitova mrežne maske "
+"ili spisak IP adresa 1.2.3.4 1.2.3.5 1.2.3.6."
+
+#: sharing/models.py:239
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr ""
+
+#: sharing/models.py:246
+#, fuzzy
+msgid ""
+"Allow mounting of any subdirectory under this mount point ifselected. "
+"Otherwise, only the top level directory can be mounted."
+msgstr ""
+"Dozvoli montiranje bilo kog pod-direktorijuma pod ovom tačkom montiranja "
+"ukoliko bude naznačeno. U suprotnom, samo gornji nivo direktorijum-a može da "
+"se montira."
+
+#: sharing/models.py:270
+msgid ""
+"If a user is selected, the root user is limited to that user's permissions"
+msgstr ""
+
+#: sharing/models.py:279
+msgid ""
+"If a group is selected, the root user will also be limited to that group's "
+"permissions"
+msgstr ""
+
+#: sharing/models.py:288
+msgid "The specified user's permissions are used by all clients"
+msgstr ""
+
+#: storage/admin.py:47
+msgid "Edit In Bulk"
+msgstr ""
+
+#: storage/admin.py:304
+#, fuzzy
+msgid "Create Passphrase"
+msgstr "Nešifrovano, nema fraze za prolaz"
+
+#: storage/admin.py:336
+#, fuzzy
+msgid "Remove recovery key"
+msgstr "Ukloni korisnika"
+
+#: storage/admin.py:349
+msgid "Upgrade"
+msgstr ""
+
+#: storage/admin.py:383
+#, fuzzy
+msgid "Destroy zvol"
+msgstr "Uništiti"
+
+#: storage/admin.py:432
+#, fuzzy
+msgid "Read"
+msgstr "Samo za čitanje"
+
+#: storage/admin.py:438
+#, fuzzy
+msgid "Write"
+msgstr "Samo za pisanje"
+
+#: storage/admin.py:444
+msgid "Checksum"
+msgstr ""
+
+#: storage/admin.py:505
+msgid "Offline"
+msgstr ""
+
+#: storage/admin.py:508
+#, fuzzy
+msgid "Detach"
+msgstr "Odvojiti Volumen"
+
+#: storage/forms.py:71
+msgid ""
+"Enabling dedup may have drastic performance implications,<br /> as well as "
+"impact your ability to access your data.<br /> Consider using compression "
+"instead."
+msgstr ""
+
+#: storage/forms.py:490
+msgid "You need at least %d disks"
+msgstr ""
+
+#: storage/forms.py:534
+msgid "You need a data disk group"
+msgstr ""
+
+#: storage/forms.py:597
+#: templates/storage/zfswizard.html:41
+#, fuzzy
+msgid "Encryption"
+msgstr "Režim šifrovanja"
+
+#: storage/forms.py:605
+#: storage/forms.py:1448
+#: storage/forms.py:1562
+#, fuzzy
+msgid "ZFS Deduplication"
+msgstr "ZFS replikacija"
+
+#: storage/forms.py:1084
+#, fuzzy
+msgid "Volume imported"
+msgstr "Volumen za proširivanje"
+
+#: storage/forms.py:1091
+#, fuzzy
+msgid "Yes: Decrypt disks"
+msgstr "Diskovi članovi"
+
+#: storage/forms.py:1455
+msgid "Record Size"
+msgstr ""
+
+#: storage/forms.py:1506
+#, fuzzy
+msgid ""
+"Dataset names must begin with an alphanumeric character and may only contain "
+"\"-\", \"_\", \":\", \" \" and \".\"."
+msgstr ""
+"Imena skupova podataka moraju početi alfanumeričkim karakterom i mogu da "
+"sadrži samo \"-\", \"_\", \":\" i \".\" ."
+
+#: storage/forms.py:1602
+#, fuzzy
+msgid "zvol name"
+msgstr "Ime modula"
+
+#: storage/forms.py:1606
+#, fuzzy
+msgid "Example: 1 GiB"
+msgstr "Primer: 1g"
+
+#: storage/forms.py:1944
+#: storage/forms.py:2280
+#: system/forms.py:484
+#, fuzzy
+msgid "Confirm Passphrase"
+msgstr "Potvrdi lozinku"
+
+#: storage/forms.py:1961
+#, fuzzy
+msgid "Passphrase is not valid"
+msgstr "Korisnik %s nije ispravan."
+
+#: storage/forms.py:2289
+#: storage/forms.py:2355
+#, fuzzy
+msgid "The passphrases do not match"
+msgstr "Tajna se ne podudara"
+
+#: storage/forms.py:2324
+#, fuzzy
+msgid "Remove passphrase"
+msgstr "Ukloni korisnika"
+
+#: storage/forms.py:2426
+msgid "You need either a passphrase or a recovery key to unlock"
+msgstr ""
+
+#: storage/forms.py:2460
+#, fuzzy
+msgid "Volume could not be imported"
+msgstr "Putanja se nemože postaviti %s"
+
+#: storage/models.py:67
+#, fuzzy
+msgid "Encryption Type"
+msgstr "Režim šifrovanja"
+
+#: storage/models.py:465
+#, fuzzy
+msgid "Disk Size"
+msgstr "Disk uređaj"
+
+#: storage/models.py:827
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which make it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/models.py:898
+#, fuzzy
+msgid "Do not start replication before"
+msgstr "Ne uzimati snimak pre"
+
+#: storage/models.py:909
+msgid "Disabling will not stop any replications which are in progress."
+msgstr ""
+
+#: storage/views.py:115
+#, fuzzy
+msgid "Please enter a hostname"
+msgstr "Sistemsko ime hosta"
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr ""
+
+#: storage/views.py:997
+#: storage/views.py:1010
+#, fuzzy
+msgid "Volume unlocked"
+msgstr "Ime volumena"
+
+#: storage/views.py:1001
+#, fuzzy
+msgid "Volume failed unlocked"
+msgstr "Dodavanje volumena"
+
+#: storage/views.py:1129
+#, fuzzy
+msgid "Recovery has been removed"
+msgstr "Disk je uklonjen."
+
+#: storage/views.py:1154
+msgid "The pool has been upgraded"
+msgstr ""
+
+#: support/models.py:40
+#, fuzzy
+msgid "Subject"
+msgstr "Tema e-poruke"
+
+#: system/admin.py:59
+#: system/admin.py:66
+#: system/admin.py:106
+#: system/admin.py:113
+msgid "Run Now"
+msgstr ""
+
+#: system/forms.py:754
+#, fuzzy
+msgid "Memory device"
+msgstr "Memorija"
+
+#: system/forms.py:888
+msgid "Usernames cannot exceed 17 characters for rsync tasks"
+msgstr ""
+
+#: system/forms.py:893
+msgid "Usernames cannot have spaces"
+msgstr ""
+
+#: system/forms.py:1148
+msgid "Unable to create system dataset!"
+msgstr ""
+
+#: system/models.py:67
+#, fuzzy
+msgid "WebGUI IPv6 Address"
+msgstr "WebGUI Addresa"
+
+#: system/models.py:203
+msgid "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
+msgstr ""
+
+#: system/models.py:242
+#, fuzzy
+msgid "Enable debug kernel"
+msgstr "Omogući servis"
+
+#: system/models.py:382
+#, fuzzy
+msgid "Private key passphrase"
+msgstr "Nešifrovano, nema fraze za prolaz"
+
+#: system/models.py:443
+msgid "Redirect Stdout"
+msgstr ""
+
+#: system/models.py:449
+msgid "Redirect Stderr"
+msgstr ""
+
+#: system/models.py:562
+#, fuzzy
+msgid "Remote SSH Port"
+msgstr "Udaljeni port"
+
+#: system/models.py:563
+#, fuzzy
+msgid "SSH Port"
+msgstr "Port"
+
+#: system/models.py:1031
+msgid "Post Init"
+msgstr ""
+
+#: system/models.py:1049
+#, fuzzy
+msgid "Init/Shutdown Script"
+msgstr "Tajni inicijator"
+
+#: system/models.py:1050
+msgid "Init/Shutdown Scripts"
+msgstr ""
+
+#: system/models.py:1083
+msgid "City"
+msgstr ""
+
+#: system/models.py:1133
+msgid "Pool"
+msgstr ""
+
+#: system/models.py:1142
+msgid "RRD"
+msgstr ""
+
+#: system/views.py:341
+msgid "You must configure the root email (Accounts->Users->root)"
+msgstr ""
+
+#: system/alertmods/lsi_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mps%(mps)s"
+msgstr ""
+
+#: templates/menubar.html:48
+msgid "Alert"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:10
+#, fuzzy
+msgid "Add"
+msgstr "Dodaj %s"
+
+#: templates/freeadmin/generic_model_datagrid.html:177
+msgid "No entry has been found"
+msgstr ""
+
+#: templates/freeadmin/generic_model_delete.html:19
+#, fuzzy
+msgid ""
+"There is %(related_num)s related entry that will also be deleted as it "
+"depend upon this item"
+msgid_plural ""
+"There are %(related_num)s related entries that will also be deleted as they "
+"depend upon this item"
+msgstr[0] ""
+"Postoje %(related_num)s povezanih stavki koje će biti izbrisane, kao i zbog "
+"toga što zavisi od ove"
+msgstr[1] ""
+"Postoje %(related_num)s povezanih stavki koje će biti izbrisane, kao i zbog "
+"toga što zavisi od ove"
+msgstr[2] ""
+"Postoje %(related_num)s povezanih stavki koje će biti izbrisane, kao i zbog "
+"toga što zavisi od ove"
+
+#: templates/freeadmin/help.html:44
+msgid "Professional Support"
+msgstr ""
+
+#: templates/freeadmin/help.html:46
+msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr ""
+
+#: templates/jails/index.html:32
+msgid "Templates"
+msgstr ""
+
+#: templates/plugins/plugin_update.html:3
+#, fuzzy
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr "Da li ste sigurni da želite da uništite \"%(name)s\"?"
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+#, fuzzy
+msgid "Available Plugins"
+msgstr "Dostupne radnje"
+
+# nisam siguran????pomoc!!!
+#: templates/registration/login.html:51
+#, fuzzy
+msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
+msgstr "Dobro došli na %(sw_name)s&trade; %(sw_login_version)s"
+
+#: templates/reporting/index.html:11
+#, fuzzy
+msgid "Partition"
+msgstr "Opcija pokretanja"
+
+#: templates/services/core.html:33
+#, fuzzy
+msgid "Directory Service Settings"
+msgstr "Podešavanja za Aktivni Direktorijum"
+
+#: templates/storage/create_passphrase.html:5
+msgid ""
+"Remember to add a new recovery key as this action invalidates the previous "
+"recovery key"
+msgstr ""
+
+#: templates/storage/disk_editbulk.html:3
+msgid "Editing the following disks"
+msgstr ""
+
+#: templates/storage/recoverykey_remove.html:3
+msgid "You are about to remove a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/replication_add.html:5
+msgid "SSH Key Scan"
+msgstr ""
+
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Poželjan"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Replication"
+msgstr "ZFS replikacija"
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr ""
+
+#: templates/storage/volume_detach.html:19
+msgid "ATTENTION - Currently the following services depend on this volume: "
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:6
+msgid "Resilver"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:11
+#: templates/storage/volumestatus_datagrid.html:26
+msgid "Scan"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:11
+#: templates/storage/volumestatus_datagrid.html:26
+msgid "%(scanned)s out of %(total)s"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:16
+#: templates/storage/volumestatus_datagrid.html:31
+#, fuzzy
+msgid "Errors"
+msgstr "Greška"
+
+#: templates/storage/zvols.html:3
+#, fuzzy
+msgid "Create zvol on %(name)s"
+msgstr "Kreirati ZFS volumen na %(name)s"
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr ""
+
+#: templates/system/rsync_run.html:5
+#, fuzzy
+msgid "Would you like to run this rsync job now?"
+msgstr "Želite li da omogućite ovu uslugu?"

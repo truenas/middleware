@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
 from django.db import models
 from django.db.models.base import ModelBase
 
@@ -33,6 +35,8 @@ from freenasUI.freeadmin.apppool import appPool
 from .fields import (
     UserField, GroupField, PathField, MACField, Network4Field, Network6Field
 )
+
+log = logging.getLogger('freeadmin.models')
 
 
 class FreeModelBase(ModelBase):
@@ -87,3 +91,25 @@ class Model(models.Model):
             self._meta.app_label,
             self._meta.model_name,
             ), )
+
+    def save(self, *args, **kwargs):
+        rv = super(Model, self).save(*args, **kwargs)
+        from freenasUI.common.system import backup_database
+        try:
+            # TODO: maybe we should do this in a thread
+            # to do not wait operation to finish
+            backup_database()
+        except:
+            pass
+        return rv
+
+    def delete(self, *args, **kwargs):
+        rv = super(Model, self).delete(*args, **kwargs)
+        from freenasUI.common.system import backup_database
+        try:
+            # TODO: maybe we should do this in a thread
+            # to do not wait operation to finish
+            backup_database()
+        except:
+            pass
+        return rv

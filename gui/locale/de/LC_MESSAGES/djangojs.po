@@ -238,3 +238,30 @@ msgstr "Durchsuchen"
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
 msgid "Close"
 msgstr "Schließen"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:974
+msgid "Drag and drop this to resize"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
+msgid "Volume to extend"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
+msgid ""
+"Extending an encrypted volume will reset the passphrase and recovery key!"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1072
+#, fuzzy
+msgid "Volume layout"
+msgstr "Datenträger-Name"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
+msgid "Manual setup"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "Datenträger-Name"

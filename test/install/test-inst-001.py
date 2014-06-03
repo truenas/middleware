@@ -78,7 +78,7 @@ def runTest():
     cmd = "bhyvectl --destroy --vm=%s" % test_config['vm_name']
     print
     ret = os.system(cmd)
-    cmd = "bhyveload -m 2G -d %s %s" % (test_config['iso'], test_config['vm_name'])
+    cmd = "bhyveload -m %s -d %s %s" % (test_config['ram'], test_config['iso'], test_config['vm_name'])
     print cmd
     child1 = pexpect.spawn(cmd)
     child1.logfile = sys.stdout
@@ -88,7 +88,7 @@ def runTest():
     if test_config.has_key('mac'):
         macaddress = ",mac=%s" % test_config['mac']
 
-    cmd = "bhyve -c 2 -m 2G -AI -H -P -g 0 -s 0:0,hostbridge -s 1:0,lpc -s 2:0,virtio-net,%s%s -s 3:0,virtio-blk,%s -l com1,stdio -s 31:0,virtio-blk,%s %s"  % (test_config['tap'], macaddress, test_config['disk_img'], test_config['iso'], test_config['vm_name'])
+    cmd = "bhyve -c 2 -m %s -AI -H -P -g 0 -s 0:0,hostbridge -s 1:0,lpc -s 2:0,virtio-net,%s%s -s 3:0,virtio-blk,%s -l com1,stdio -s 31:0,virtio-blk,%s %s"  % (test_config['ram'], test_config['tap'], macaddress, test_config['disk_img'], test_config['iso'], test_config['vm_name'])
     print cmd
     child2 = pexpect.spawn(cmd)
     child2.logfile = sys.stdout

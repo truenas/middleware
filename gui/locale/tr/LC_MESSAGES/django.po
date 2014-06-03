@@ -8803,3 +8803,778 @@ msgstr "DİKKAT - Şu anda aşağıdaki hizmetler bu birime bağlıdır:"
 #: templates/storage/volumestatus_datagrid.html:9
 msgid "Scan"
 msgstr "Tara"
+
+#: choices.py:171
+msgid "CORE"
+msgstr ""
+
+#: choices.py:172
+msgid "COREPLUS"
+msgstr ""
+
+#: choices.py:173
+msgid "LANMAN1"
+msgstr ""
+
+#: choices.py:174
+msgid "LANMAN2"
+msgstr ""
+
+#: choices.py:175
+#, fuzzy
+msgid "NT1"
+msgstr "NT4"
+
+#: choices.py:176
+msgid "SMB2"
+msgstr ""
+
+#: choices.py:177
+msgid "SMB2_02"
+msgstr ""
+
+#: choices.py:178
+msgid "SMB2_10"
+msgstr ""
+
+#: choices.py:179
+msgid "SMB2_22"
+msgstr ""
+
+#: choices.py:180
+msgid "SMB2_24"
+msgstr ""
+
+#: choices.py:181
+msgid "SMB3"
+msgstr ""
+
+#: choices.py:182
+msgid "SMB3_00"
+msgstr ""
+
+#: choices.py:317
+#, fuzzy
+msgid "lz4 (fastest)"
+msgstr "gzip (en hızlı)"
+
+#: choices.py:318
+msgid "pigz (all rounder)"
+msgstr ""
+
+#: choices.py:319
+msgid "plzip (best compression)"
+msgstr ""
+
+#: choices.py:707
+#, fuzzy
+msgid "on"
+msgstr "Hiçbiri"
+
+#: account/forms.py:398
+#, fuzzy
+msgid "Create Home Directory In"
+msgstr "Ev dizini"
+
+#: api/resources.py:992
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr ""
+
+#: api/resources.py:1864
+#: api/resources.py:1875
+#, fuzzy
+msgid "Invalid snapshot"
+msgstr "Son Anlık Durum Görüntüsü"
+
+#: jails/forms.py:508
+msgid "Jail root must be on a volume or dataset!"
+msgstr ""
+
+#: jails/models.py:178
+#, fuzzy
+msgid "Comma delimited list of sysctl's"
+msgstr "NIS sunucularının listesi virgülle sınırlandırılmıştır"
+
+#: jails/models.py:493
+#, fuzzy
+msgid "Jail root is not configured!"
+msgstr "Kafes için root yapılandırması yok."
+
+#: jails/models.py:537
+#, fuzzy
+msgid "Filesystem"
+msgstr "Dosya sistem türü"
+
+#: jails/utils.py:695
+#, fuzzy
+msgid "You need to create a volume to proceed!"
+msgstr "Devam etmek için bir ZFS birimi oluşturmak gerekiyor!"
+
+#: jails/utils.py:739
+#, fuzzy
+msgid "Failed to create directory %(name)s: %(error)s"
+msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+
+#: middleware/notifier.py:3820
+#: middleware/notifier.py:3845
+#, fuzzy
+msgid "Active"
+msgstr "Eylem"
+
+#: middleware/notifier.py:3821
+msgid "Backup"
+msgstr ""
+
+#: middleware/notifier.py:3822
+#, fuzzy
+msgid "Init"
+msgstr "Ön Başlatma"
+
+#: middleware/notifier.py:3824
+msgid "No carrier"
+msgstr ""
+
+#: middleware/notifier.py:3847
+msgid "Degraded"
+msgstr ""
+
+#: middleware/notifier.py:3849
+msgid "Down"
+msgstr ""
+
+#: network/admin.py:39
+#, fuzzy
+msgid "Media Status"
+msgstr "Durum"
+
+#: network/forms.py:311
+#, fuzzy
+msgid "Channel"
+msgstr "Değiştir"
+
+#: network/models.py:77
+msgid "HTTP Proxy"
+msgstr ""
+
+#: network/nav.py:17
+#: templates/network/index.html:14
+msgid "IPMI"
+msgstr ""
+
+#: network/views.py:66
+#, fuzzy
+msgid "IPMI successfully edited"
+msgstr "başarıyla düzenlendi"
+
+#: network/views.py:68
+msgid "IPMI failed"
+msgstr ""
+
+#: plugins/admin.py:73
+#, fuzzy
+msgid "Install plugin"
+msgstr "Eklenti Yükle"
+
+#: plugins/models.py:129
+#, fuzzy
+msgid "jail not found"
+msgstr "Sayfa Bulunamadı"
+
+#: services/forms.py:220
+#, fuzzy
+msgid "This path does not exist."
+msgstr "%s yolu mevcut değil"
+
+#: services/forms.py:222
+#, fuzzy
+msgid "This path is not a directory."
+msgstr "Bu yol bir dizin değil."
+
+#: services/forms.py:754
+#, fuzzy
+msgid "Confirm Domain Account Password"
+msgstr "Yönetci parolasını onayla"
+
+#: services/forms.py:758
+#: services/models.py:1612
+#, fuzzy
+msgid "Kerberos keytab"
+msgstr "Kerberos sunucusu"
+
+#: services/forms.py:1081
+#, fuzzy
+msgid "LUN ID already exists."
+msgstr "Bu IP zaten mevcut."
+
+#: services/models.py:109
+msgid "Use syslog"
+msgstr ""
+
+#: services/models.py:233
+msgid "Server minimum protocol"
+msgstr ""
+
+#: services/models.py:235
+msgid "The minimum protocol version that will be supported by the server"
+msgstr ""
+
+#: services/models.py:240
+msgid "Server maximum protocol"
+msgstr ""
+
+#: services/models.py:243
+msgid "The highest protocol version that will be supported by the server"
+msgstr ""
+
+#: services/models.py:246
+#, fuzzy
+msgid "Allow execute always"
+msgstr "Tekrarlanan GID dosyalarına izin ver"
+
+#: services/models.py:248
+msgid ""
+"This boolean parameter controls the behaviour of smbd(8) when receiving a "
+"protocol request of \"open for execution\" from a Windows client. With Samba "
+"3.6 and older, the execution right in the ACL was not checked, so a client "
+"could execute a file even if it did not have execute rights on the file. In "
+"Samba 4.0, this has been fixed, so that by default, i.e. when this parameter "
+"is set to \"False\", \"open for execution\" is now denied when execution "
+"permissions are not present. If this parameter is set to \"True\", Samba "
+"does not check execute permissions on \"open for execution\", thus re-"
+"establishing the behaviour of Samba 3.6 "
+msgstr ""
+
+#: services/models.py:334
+msgid "Serve UDP NFS clients"
+msgstr ""
+
+#: services/models.py:418
+msgid "Enable multithreaded mode"
+msgstr ""
+
+#: services/models.py:874
+msgid "LUN ID"
+msgstr ""
+
+#: services/models.py:914
+#, fuzzy
+msgid "IP Server"
+msgstr "NTP Sunucu"
+
+#: services/models.py:916
+msgid ""
+"The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
+"Defaults to checkip.dyndns.org:80 /."
+msgstr ""
+
+#: services/models.py:1595
+#, fuzzy
+msgid "Domain Account Name"
+msgstr "Alan adı"
+
+#: services/models.py:1596
+#, fuzzy
+msgid "Domain account name to bind as"
+msgstr "Alan adı yöneticinin hesap adı"
+
+#: services/models.py:1600
+#, fuzzy
+msgid "Domain Account Password"
+msgstr "Alan adı yöneticisinin parolası."
+
+#: services/models.py:1601
+#, fuzzy
+msgid "Domain Account password."
+msgstr "Alan adı yöneticisinin parolası."
+
+#: services/models.py:1609
+msgid "Use keytab"
+msgstr ""
+
+#: services/models.py:1613
+#, fuzzy
+msgid "Kerberos keytab file"
+msgstr "Kerberos sunucusu"
+
+#: services/models.py:1850
+#, fuzzy
+msgid "Interface Description"
+msgstr "Açıklama"
+
+#: services/models.py:1852
+msgid "Save received info in interface description / alias"
+msgstr ""
+
+#: services/models.py:1855
+#, fuzzy
+msgid "Country Code"
+msgstr "Ülke"
+
+#: services/models.py:1858
+msgid ""
+"Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
+msgstr ""
+
+#: services/models.py:1866
+msgid "Specify the physical location of the host"
+msgstr ""
+
+#: services/models.py:1871
+#: services/models.py:1872
+#: templates/services/core.html:76
+msgid "LLDP"
+msgstr ""
+
+#: services/models.py:2058
+msgid "Realm"
+msgstr ""
+
+#: services/models.py:2059
+msgid "Realm Name, eg EXAMPLE.ORG"
+msgstr ""
+
+#: services/models.py:2064
+#, fuzzy
+msgid "Domain Name in old format, eg EXAMPLE"
+msgstr "Eski biçimde çalışma grubu veya etki alanı adı, örneğin WORKGROUP"
+
+#: services/models.py:2068
+#: services/models.py:2069
+#, fuzzy
+msgid "Server Role"
+msgstr "Sunucu adı"
+
+#: services/models.py:2075
+msgid "DNS Backend"
+msgstr ""
+
+#: services/models.py:2076
+msgid "DNS Backend, eg SAMBA_INTERNAL"
+msgstr ""
+
+#: services/models.py:2082
+msgid "DNS Forwarder"
+msgstr ""
+
+#: services/models.py:2083
+#, fuzzy
+msgid "DNS Forwarder IP Address"
+msgstr "Kontrolör IP adresi"
+
+#: services/models.py:2087
+msgid "Domain Forest Level"
+msgstr ""
+
+#: services/models.py:2088
+msgid "Domain and Forest Level, eg 2003"
+msgstr ""
+
+#: sharing/models.py:48
+#, fuzzy
+msgid "Apply Default Permissions"
+msgstr "Varsayılan dosya izni"
+
+#: sharing/models.py:49
+msgid "Recursively set sane default windows permissions on share"
+msgstr ""
+
+#: sharing/models.py:87
+msgid ""
+"The ownership of new files and directories is normally governed by effective "
+"uid of the connected user. This option allows the Samba administrator to "
+"specify that the ownership for new files and directories should be "
+"controlled by the ownership of the parent directory. For windows shares it "
+"is NOT recommended to set this. The desired behavior can be achieved using "
+"ACL's. This probably won't do what you want it to do."
+msgstr ""
+
+#: sharing/models.py:91
+msgid ""
+"New directories inherit the mode of the parent directory, including bits "
+"such as setgid. New files inherit their read/write bits from the parent "
+"directory. For windows shares it is NOT recommended to set this. The desired "
+"behavior can be achieved using ACL's. This probably won't do what you want "
+"it to do."
+msgstr ""
+
+#: sharing/models.py:94
+#, fuzzy
+msgid "Inherit ACL's"
+msgstr "Miras"
+
+#: sharing/models.py:96
+msgid ""
+"This parameter can be used to ensure that if default acls exist on parent "
+"directories, they are always honored when creating a new file or "
+"subdirectory in these parent directories. The default behavior is to use the "
+"unix mode specified when creating the directory. For windows shares it is "
+"NOT recommended to set this. The desired behavior can be achieved using "
+"ACL's. This probably won't do what you want it to do."
+msgstr ""
+
+#: sharing/models.py:246
+#, fuzzy
+msgid ""
+"Allow mounting of any subdirectory under this mount point ifselected. "
+"Otherwise, only the top level directory can be mounted."
+msgstr ""
+"Seçilen bu bağlama noktası altında herhangi bir alt bağlantıya izin verin. "
+"Aksi taktirde sadece üst düzey dizin bağlanabilir."
+
+#: storage/admin.py:130
+#, fuzzy
+msgid "Compression"
+msgstr "Sıkıştırma"
+
+#: storage/admin.py:136
+#, fuzzy
+msgid "Compression Ratio"
+msgstr "Sıkıştırma seviyesi"
+
+#: storage/admin.py:297
+#, fuzzy
+msgid "Lock Volume"
+msgstr "Birim"
+
+#: storage/admin.py:349
+msgid "Upgrade"
+msgstr ""
+
+#: storage/forms.py:120
+msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
+msgstr ""
+
+#: storage/forms.py:558
+msgid ""
+"You are trying to add a virtual device of type '%(addtype)s' in a pool that "
+"has a virtual device of type '%(vdevtype)s'"
+msgstr ""
+
+#: storage/forms.py:568
+msgid ""
+"You are trying to add a virtual device consisting of %(addnum)s device(s) in "
+"a pool that has a virtual device consisted of %(vdevnum)s device(s)"
+msgstr ""
+
+#: storage/forms.py:597
+#: templates/storage/zfswizard.html:41
+#, fuzzy
+msgid "Encryption"
+msgstr "Şifreleme anahtarı"
+
+#: storage/forms.py:601
+#: templates/storage/zfswizard.html:51
+msgid "Initialize Safely"
+msgstr ""
+
+#: storage/forms.py:906
+#, fuzzy
+msgid ""
+"The selected disks were not verified for these import rules. Filesystem "
+"check failed."
+msgstr "Seçilen diskler belirlenen alma kuralları için doğrulanamadı."
+
+#: storage/forms.py:1422
+#, fuzzy
+msgid "Share type"
+msgstr "Paylaşım yorumu"
+
+#: storage/forms.py:1431
+#: storage/forms.py:1436
+#, fuzzy
+msgid "0=Unlimited; example: 1 GiB"
+msgstr "0=Sınırsız; örnek: 1g"
+
+#: storage/forms.py:1441
+#: storage/forms.py:1446
+#, fuzzy
+msgid "0=None; example: 1 GiB"
+msgstr "0=Yok, örneğin: 1g"
+
+#: storage/forms.py:1506
+#, fuzzy
+msgid ""
+"Dataset names must begin with an alphanumeric character and may only contain "
+"\"-\", \"_\", \":\", \" \" and \".\"."
+msgstr ""
+"Veri kümesi adları alfasayısal karakterlerle başlamalıdır ve sadece (-), (_)"
+", (:) ve (.) içerebilir."
+
+#: storage/forms.py:1606
+#, fuzzy
+msgid "Example: 1 GiB"
+msgstr "Örneğin: 1g"
+
+#: storage/forms.py:1615
+#, fuzzy
+msgid ""
+"Creates a sparse volume with no reservation, also known as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less than the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+"Sanallaştırma diye bilinen hiçbir ayırma ile aralıklı bir birim "
+"oluşturulamaz. Bir \"aralıklı birim\" ayrılmış bir birimin boyutundan daha "
+"az olan bir birimdir. Sonuç olarak havuz alanı az olduğunda ENOSPC ile "
+"aralıklı bir birime yazma başarısız olacaktır. (TAVSİYE EDİLMEZ)"
+
+#: storage/forms.py:1655
+msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
+msgstr ""
+
+#: storage/forms.py:1684
+#, fuzzy
+msgid "Permission Type"
+msgstr "Dosya iznleri"
+
+#: storage/forms.py:1817
+#, fuzzy
+msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
+msgstr "İzin verilen anlık durum görüntüsü adı karakterleri [-a-zA-Z0-9_.]"
+
+#: storage/forms.py:1860
+#, fuzzy
+msgid "Only [-a-zA-Z0-9_./ ] permitted as clone name"
+msgstr "İzin verilen kloa adı karakterleri [-a-zA-Z0-9_.]"
+
+#: storage/forms.py:2473
+#, fuzzy
+msgid "Root password"
+msgstr "Root bağlanma parolası"
+
+#: storage/models.py:856
+#, fuzzy
+msgid "Last snapshot sent to remote side"
+msgstr ""
+"Son anlık durum görüntüsü uzak tarafına gönder (tam kopyalama için boş "
+"bırakın)"
+
+#: storage/models.py:886
+#, fuzzy
+msgid "Replication Stream Compression"
+msgstr "Kopyalama Görevleri"
+
+#: storage/models.py:909
+#, fuzzy
+msgid "Disabling will not stop any replications which are in progress."
+msgstr ""
+"Bu seçeneğin devre dışı bırakılması sıraya konmuş herhangi bir tekrarlamayı "
+"durduracaktır. Bu süreçteki herhangi bir sıra veya ilerleme durmayacaktır."
+
+#: storage/models.py:946
+msgid "Sending %(snapshot)s (%(percent)s%%)"
+msgstr ""
+
+#: storage/models.py:951
+msgid "Sending"
+msgstr ""
+
+#: storage/views.py:980
+#, fuzzy
+msgid "Volume locked"
+msgstr "Birim kilitlendi"
+
+#: storage/views.py:1151
+#, fuzzy
+msgid "The pool failed to upgraded: %s"
+msgstr "Birimi dışarı aktarmak başarısız oldu"
+
+#: storage/views.py:1154
+msgid "The pool has been upgraded"
+msgstr ""
+
+#: system/admin.py:59
+#: system/admin.py:66
+#: system/admin.py:106
+#: system/admin.py:113
+msgid "Run Now"
+msgstr ""
+
+#: system/forms.py:1018
+#, fuzzy
+msgid "This variable already exists"
+msgstr "Bu IP zaten mevcut."
+
+#: system/forms.py:1124
+msgid "System dataset pool"
+msgstr ""
+
+#: system/forms.py:1148
+#, fuzzy
+msgid "Unable to create system dataset!"
+msgstr "Şablon bulunamıyor!"
+
+#: system/forms.py:1155
+#, fuzzy
+msgid "Unable to migrate system dataset!"
+msgstr "Şablon bulunamıyor!"
+
+#: system/models.py:80
+#, fuzzy
+msgid "WebGUI HTTP -> HTTPS Redirect"
+msgstr "WebGUI HTTP bağlantı noktası"
+
+#: system/models.py:83
+msgid ""
+"Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled"
+msgstr ""
+
+#: system/models.py:203
+#, fuzzy
+msgid "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
+msgstr "Seri bağlantı noktası hızını eşleştirmek için bu seçeneği ayarlayın"
+
+#: system/models.py:205
+#, fuzzy
+msgid "Serial Port Address"
+msgstr "Seri bağlantı noktası hızı"
+
+#: system/models.py:1133
+msgid "Pool"
+msgstr ""
+
+#: system/models.py:1138
+#, fuzzy
+msgid "Syslog"
+msgstr "Syslog sunucusu"
+
+#: system/models.py:1142
+msgid "RRD"
+msgstr ""
+
+#: system/models.py:1146
+#: templates/system/settings.html:11
+#, fuzzy
+msgid "System Dataset"
+msgstr "Veri Kümesini Düzenle"
+
+#: system/views.py:191
+#, fuzzy
+msgid "The cron process has started"
+msgstr "Temizleme süreci durduruldu."
+
+#: system/views.py:541
+#, fuzzy
+msgid "The rsync process has started"
+msgstr "Temizleme süreci durduruldu."
+
+#: system/alertmods/lsi_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mps%(mps)s"
+msgstr ""
+
+#: system/alertmods/replication_status.py:17
+msgid "Replication %(replication)s failed: %(message)s"
+msgstr ""
+
+#: system/alertmods/volume_version.py:24
+#: system/alertmods/volume_version.py:44
+#, fuzzy
+msgid "You need to upgrade the volume %s"
+msgstr "Devam etmek için bir ZFS birimi oluşturmak gerekiyor!"
+
+#: system/alertmods/zpool_capacity.py:28
+msgid ""
+"The capacity for the volume '%(volume)s' is currently at %(capacity)d%%, "
+"while the recommended value is below 80%%."
+msgstr ""
+
+#: templates/freeadmin/generic_model_delete.html:19
+#, fuzzy
+msgid ""
+"There is %(related_num)s related entry that will also be deleted as it "
+"depend upon this item"
+msgid_plural ""
+"There are %(related_num)s related entries that will also be deleted as they "
+"depend upon this item"
+msgstr[0] ""
+"%(related_num)s ilgili kayıtlar bulunmaktadır. Bunu silerseniz ilgili "
+"bağımlı kayıtlarda silinecektir."
+
+#: templates/reporting/index.html:3
+msgid "CPU"
+msgstr ""
+
+#: templates/reporting/index.html:11
+#, fuzzy
+msgid "Partition"
+msgstr "Başlatma seçeneği"
+
+#: templates/services/core.html:82
+#, fuzzy
+msgid "LLDP Settings"
+msgstr "LDAP Ayarları"
+
+#: templates/storage/lock.html:3
+#, fuzzy
+msgid "Do you want to lock this volume?"
+msgstr "Bu birimin kilidini açmak istiyor musunuz?"
+
+#: templates/storage/rekey.html:6
+#, fuzzy
+msgid ""
+"Remember to create a new passphrase as this action removes the current "
+"passphrase"
+msgstr ""
+"Bu eylem bir önceki kurtarma anahtarını geçersiz kılacak. Yeni bir kurtarma "
+"anahtarı eklemeyi unutmayın."
+
+#: templates/storage/replication_datagrid.html:16
+#, fuzzy
+msgid ""
+"ATTENTION: A periodic snapshot of a given ZFS Volume/Dataset is required to "
+"create a replication task"
+msgstr ""
+"DİKKAT: Belirli bir ZFS dosya sistemi/biriminin periyodik anlık bir "
+"görüntüsünün kopyalama görevi oluşturulması için gerekli olan alan"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Replication"
+msgstr "ZFS Kopyalama"
+
+#: templates/storage/upgrade_confirm.html:5
+#, fuzzy
+msgid "Are you sure you want to upgrade your pool?"
+msgstr "Silmek istediğinizden emin misiniz?"
+
+#: templates/storage/upgrade_confirm.html:5
+msgid "This operation is irreversible!"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:6
+msgid "Resilver"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:17
+#: templates/storage/volumestatus_datagrid.html:33
+msgid "Date"
+msgstr ""
+
+#: templates/storage/zfswizard.html:77
+#, fuzzy
+msgid "Deduplication"
+msgstr "ZFS Tekilleştirme"
+
+#: templates/system/cron_run.html:5
+#, fuzzy
+msgid "Would you like to run this cron job now?"
+msgstr "Bu hizmeti etkinleştirmek ister misiniz?"
+
+#: templates/system/reboot_dialog2.html:4
+msgid ""
+"Some storage pools are doing resilver/scrub, are you really sure you want to "
+"proceed with <strong>REBOOT</strong>?"
+msgstr ""
+
+#: templates/system/rsync_run.html:5
+#, fuzzy
+msgid "Would you like to run this rsync job now?"
+msgstr "Bu hizmeti etkinleştirmek ister misiniz?"
+
+#: templates/system/shutdown_dialog2.html:4
+msgid ""
+"Some storage pools are doing resilver/scrub, are you really sure you want to "
+"proceed with <strong>SHUTDOWN</strong>?"
+msgstr ""

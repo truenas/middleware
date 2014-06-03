@@ -6311,3 +6311,2888 @@ msgstr "%s đã thêm vào hệ thống thành công."
 
 #~ msgid "English"
 #~ msgstr "Tiếng Anh"
+
+#: choices.py:166
+msgid "Encrypted, no passphrase"
+msgstr ""
+
+#: choices.py:173
+msgid "LANMAN1"
+msgstr ""
+
+#: choices.py:174
+msgid "LANMAN2"
+msgstr ""
+
+#: choices.py:175
+msgid "NT1"
+msgstr ""
+
+#: choices.py:177
+msgid "SMB2_02"
+msgstr ""
+
+#: choices.py:312
+#, fuzzy
+msgid "lzjb (legacy, not recommended)"
+msgstr "lzjb (khuyến cáo)"
+
+#: choices.py:319
+msgid "plzip (best compression)"
+msgstr ""
+
+#: choices.py:613
+msgid "115200"
+msgstr ""
+
+#: choices.py:675
+msgid "Verbose"
+msgstr ""
+
+#: choices.py:683
+msgid "Daemon"
+msgstr ""
+
+#: choices.py:698
+#: services/models.py:1531
+#: services/models.py:1639
+#: services/models.py:2103
+#: services/models.py:2104
+msgid "Domain Controller"
+msgstr ""
+
+#: choices.py:709
+msgid "data"
+msgstr ""
+
+#: choices.py:711
+msgid "auth"
+msgstr ""
+
+#: choices.py:714
+msgid "ctrl+!data"
+msgstr ""
+
+#: choices.py:716
+msgid "auth+!data"
+msgstr ""
+
+#: account/forms.py:58
+#, fuzzy
+msgid "Confirm New Password"
+msgstr "Thay đổi mật khẩu"
+
+#: account/forms.py:514
+msgid "Home directory cannot contain colons"
+msgstr ""
+
+#: account/models.py:139
+msgid "Built-in User"
+msgstr ""
+
+#: api/resources.py:888
+#: storage/models.py:745
+#: storage/models.py:755
+#: storage/models.py:772
+#, fuzzy
+msgid "Locked"
+msgstr "Khóa người dùng"
+
+#: api/resources.py:986
+#, fuzzy
+msgid "on every %(days)s"
+msgstr "mỗi ngày"
+
+#: api/resources.py:992
+msgid "From %(begin)s through %(end)s, %(repeat)s"
+msgstr ""
+
+#: jails/admin.py:265
+#: jails/models.py:434
+msgid "URL"
+msgstr ""
+
+#: jails/forms.py:90
+msgid "type"
+msgstr ""
+
+#: jails/forms.py:182
+#: jails/forms.py:629
+msgid "No jail root configured."
+msgstr ""
+
+#: jails/forms.py:516
+msgid "autostart"
+msgstr ""
+
+#: jails/forms.py:906
+#, fuzzy
+msgid "The path could not be mounted %(source)s: %(error)s"
+msgstr "Gửi test mail thất bại:"
+
+#: jails/models.py:103
+#, fuzzy
+msgid "IPv4 bridge address"
+msgstr "địa chỉ IPv4"
+
+#: jails/models.py:110
+#, fuzzy
+msgid "IPv4 bridge netmask"
+msgstr "Mặt nạ mạng của IPv4"
+
+#: jails/models.py:128
+#, fuzzy
+msgid "IPv6 address"
+msgstr "Địa chỉ IPv6"
+
+#: jails/models.py:173
+msgid "MAC"
+msgstr ""
+
+#: jails/models.py:332
+msgid "Jail Root"
+msgstr ""
+
+#: jails/models.py:333
+msgid "Path where to store jail data"
+msgstr ""
+
+#: jails/models.py:338
+msgid "IPv4 network range for jails and plugins"
+msgstr ""
+
+#: jails/models.py:343
+msgid "IPv4 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:348
+msgid "IPv4 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:352
+#, fuzzy
+msgid "IPv6 Network"
+msgstr "Mặt nạ mạng của IPv4"
+
+#: jails/models.py:362
+#, fuzzy
+msgid "IPv6 Network End Address"
+msgstr "Địa chỉ IPv6"
+
+#: jails/models.py:363
+msgid "IPv6 network end address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:366
+msgid "Collection URL"
+msgstr ""
+
+#: jails/models.py:368
+msgid "URL for the jails index"
+msgstr ""
+
+#: jails/models.py:486
+msgid "Template must have 0 instances!"
+msgstr ""
+
+#: jails/models.py:493
+msgid "Jail root is not configured!"
+msgstr ""
+
+#: jails/models.py:513
+#: jails/models.py:514
+#, fuzzy
+msgid "Jail Templates"
+msgstr "địa chỉ IPv4"
+
+#: jails/models.py:533
+#, fuzzy
+msgid "Read-Only"
+msgstr "Chỉ đọc"
+
+#: jails/models.py:537
+msgid "Filesystem"
+msgstr ""
+
+#: jails/utils.py:695
+msgid "You need to create a volume to proceed!"
+msgstr ""
+
+#: jails/utils.py:714
+#, fuzzy
+msgid "Failed to create dataset %(name)s: %(error)s"
+msgstr "Không thể đọc %(url)s: %(error)s"
+
+#: jails/utils.py:739
+#, fuzzy
+msgid "Failed to create directory %(name)s: %(error)s"
+msgstr "Không thể đọc %(url)s: %(error)s"
+
+#: jails/views.py:135
+#, fuzzy
+msgid "Jail successfully started."
+msgstr "%s đã cập nhật thành công."
+
+#: jails/views.py:399
+#, fuzzy
+msgid "Jail template successfully edited."
+msgstr "%s đã cập nhật thành công."
+
+#: middleware/notifier.py:3068
+msgid "No RPC Token!"
+msgstr ""
+
+#: middleware/notifier.py:3824
+msgid "No carrier"
+msgstr ""
+
+#: middleware/notifier.py:3849
+msgid "Down"
+msgstr ""
+
+#: middleware/zfs.py:623
+#: middleware/zfs.py:691
+msgid "In Progress"
+msgstr ""
+
+#: network/forms.py:380
+#, fuzzy
+msgid "The IP \"%s\" is not valid"
+msgstr "Người dùng %s đúng"
+
+#: network/models.py:82
+msgid "Enable netwait feature"
+msgstr ""
+
+#: network/models.py:93
+msgid "Netwait IP list"
+msgstr ""
+
+#: network/models.py:102
+msgid "Host name data base"
+msgstr ""
+
+#: network/models.py:415
+#, fuzzy
+msgid "LAGG Interface Group"
+msgstr "Nhóm giao diện LAGG"
+
+#: network/models.py:441
+#, fuzzy
+msgid "Link Aggregation Member"
+msgstr "Kết hợp đường truyền"
+
+#: network/models.py:442
+#, fuzzy
+msgid "Link Aggregation Members"
+msgstr "Các đường truyền kết hợp"
+
+#: network/nav.py:17
+#: templates/network/index.html:14
+msgid "IPMI"
+msgstr ""
+
+#: plugins/forms.py:84
+msgid ""
+"Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
+msgstr ""
+
+#: plugins/forms.py:100
+msgid "Plugin Jail"
+msgstr ""
+
+#: plugins/forms.py:101
+msgid "The plugin jail that the PBI is to be installed in."
+msgstr ""
+
+#: plugins/forms.py:210
+msgid "Unable to set repository: %s"
+msgstr ""
+
+#: plugins/models.py:112
+msgid "Plugin"
+msgstr ""
+
+#: plugins/models.py:217
+msgid "URL for the plugins repository"
+msgstr ""
+
+#: plugins/views.py:196
+msgid "Jail does not exist"
+msgstr ""
+
+#: services/forms.py:220
+#, fuzzy
+msgid "This path does not exist."
+msgstr "Tên đăng nhập này đã tồn tại."
+
+#: services/forms.py:222
+msgid "This path is not a directory."
+msgstr ""
+
+#: services/forms.py:671
+#: services/forms.py:679
+msgid "Spaces or number signs are not allowed."
+msgstr ""
+
+#: services/forms.py:754
+#, fuzzy
+msgid "Confirm Domain Account Password"
+msgstr "Thay đổi mật khẩu"
+
+#: services/forms.py:927
+msgid "Peer Secret (Confirm)"
+msgstr ""
+
+#: services/forms.py:1456
+msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
+msgstr ""
+
+#: services/forms.py:1659
+#, fuzzy
+msgid "A target with that name already exists."
+msgstr "Tên nhóm này đã tồn tại."
+
+#: services/models.py:233
+msgid "Server minimum protocol"
+msgstr ""
+
+#: services/models.py:235
+msgid "The minimum protocol version that will be supported by the server"
+msgstr ""
+
+#: services/models.py:243
+msgid "The highest protocol version that will be supported by the server"
+msgstr ""
+
+#: services/models.py:248
+msgid ""
+"This boolean parameter controls the behaviour of smbd(8) when receiving a "
+"protocol request of \"open for execution\" from a Windows client. With Samba "
+"3.6 and older, the execution right in the ACL was not checked, so a client "
+"could execute a file even if it did not have execute rights on the file. In "
+"Samba 4.0, this has been fixed, so that by default, i.e. when this parameter "
+"is set to \"False\", \"open for execution\" is now denied when execution "
+"permissions are not present. If this parameter is set to \"True\", Samba "
+"does not check execute permissions on \"open for execution\", thus re-"
+"establishing the behaviour of Samba 3.6 "
+msgstr ""
+
+#: services/models.py:339
+msgid "Allow non-root mount"
+msgstr ""
+
+#: services/models.py:418
+msgid "Enable multithreaded mode"
+msgstr ""
+
+#: services/models.py:914
+msgid "IP Server"
+msgstr ""
+
+#: services/models.py:997
+msgid "These parameters will be added to /etc/snmpd.config."
+msgstr ""
+
+#: services/models.py:1036
+msgid "Remote Port"
+msgstr ""
+
+#: services/models.py:1180
+msgid "Message which will be displayed to the user when they initially login."
+msgstr ""
+
+#: services/models.py:1211
+msgid ""
+"For local users, only allow access to user home directory unless the user is "
+"a member of group wheel."
+msgstr ""
+
+#: services/models.py:1278
+#, fuzzy
+msgid "Enable TLS"
+msgstr "Vô hiệu hóa"
+
+#: services/models.py:1285
+msgid "TLS policy"
+msgstr ""
+
+#: services/models.py:1288
+msgid "TLS allow client renegotiations"
+msgstr ""
+
+#: services/models.py:1300
+msgid "TLS common name required"
+msgstr ""
+
+#: services/models.py:1304
+msgid "TLS enable diagnostics"
+msgstr ""
+
+#: services/models.py:1320
+msgid "TLS no session reuse required"
+msgstr ""
+
+#: services/models.py:1332
+#, fuzzy
+msgid "TLS DNS name required"
+msgstr "Mục này là bắt buộc"
+
+#: services/models.py:1449
+msgid "SFTP Log Facility"
+msgstr ""
+
+#: services/models.py:1596
+msgid "Domain account name to bind as"
+msgstr ""
+
+#: services/models.py:1601
+msgid "Domain Account password."
+msgstr ""
+
+#: services/models.py:1609
+msgid "Use keytab"
+msgstr ""
+
+#: services/models.py:1613
+msgid "Kerberos keytab file"
+msgstr ""
+
+#: services/models.py:1629
+msgid "Set this if you want to allow Trusted Domains."
+msgstr ""
+
+#: services/models.py:1651
+msgid "Kerberos Server"
+msgstr ""
+
+#: services/models.py:1652
+msgid "Hostname of the kerberos server to use."
+msgstr ""
+
+#: services/models.py:1657
+msgid "Kerberos Password Server"
+msgstr ""
+
+#: services/models.py:1710
+#, fuzzy
+msgid "NIS domain"
+msgstr "Tên miền"
+
+#: services/models.py:1722
+msgid "Cause ypbind to run in secure mode"
+msgstr ""
+
+#: services/models.py:1735
+#: services/models.py:1736
+#, fuzzy
+msgid "NIS Domain"
+msgstr "Tên miền"
+
+#: services/models.py:1855
+msgid "Country Code"
+msgstr ""
+
+#: services/models.py:1858
+msgid ""
+"Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
+msgstr ""
+
+#: services/models.py:1866
+msgid "Specify the physical location of the host"
+msgstr ""
+
+#: services/models.py:2009
+#, fuzzy
+msgid "Informational"
+msgstr "Thường"
+
+#: services/models.py:2010
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable"
+msgstr ""
+
+#: services/models.py:2017
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable"
+msgstr ""
+
+#: services/models.py:2064
+msgid "Domain Name in old format, eg EXAMPLE"
+msgstr ""
+
+#: services/models.py:2075
+msgid "DNS Backend"
+msgstr ""
+
+#: services/models.py:2076
+msgid "DNS Backend, eg SAMBA_INTERNAL"
+msgstr ""
+
+#: services/models.py:2082
+msgid "DNS Forwarder"
+msgstr ""
+
+#: services/models.py:2087
+msgid "Domain Forest Level"
+msgstr ""
+
+#: services/nav.py:118
+#: templates/services/core.html:27
+#, fuzzy
+msgid "Directory Services"
+msgstr "Bộ quyền của thư mục"
+
+#: sharing/admin.py:81
+#: sharing/models.py:330
+msgid "Paths"
+msgstr ""
+
+#: sharing/forms.py:136
+#: sharing/forms.py:141
+msgid "The umask must be between 000 and 777."
+msgstr ""
+
+#: sharing/forms.py:253
+msgid "Paths for a NFS share must reside within the same filesystem"
+msgstr ""
+
+#: sharing/forms.py:297
+msgid ""
+"The network %s is already being shared and cannot be used twice for the same "
+"filesystem"
+msgstr ""
+
+#: sharing/models.py:48
+#, fuzzy
+msgid "Apply Default Permissions"
+msgstr "Bộ quyền của file"
+
+#: sharing/models.py:87
+msgid ""
+"The ownership of new files and directories is normally governed by effective "
+"uid of the connected user. This option allows the Samba administrator to "
+"specify that the ownership for new files and directories should be "
+"controlled by the ownership of the parent directory. For windows shares it "
+"is NOT recommended to set this. The desired behavior can be achieved using "
+"ACL's. This probably won't do what you want it to do."
+msgstr ""
+
+#: sharing/models.py:91
+msgid ""
+"New directories inherit the mode of the parent directory, including bits "
+"such as setgid. New files inherit their read/write bits from the parent "
+"directory. For windows shares it is NOT recommended to set this. The desired "
+"behavior can be achieved using ACL's. This probably won't do what you want "
+"it to do."
+msgstr ""
+
+#: sharing/models.py:297
+msgid "The specified group's permission are used by all clients"
+msgstr ""
+
+#: storage/admin.py:130
+msgid "Compression"
+msgstr ""
+
+#: storage/admin.py:297
+#, fuzzy
+msgid "Lock Volume"
+msgstr "Khóa người dùng"
+
+#: storage/admin.py:311
+#, fuzzy
+msgid "Change Passphrase"
+msgstr "Thay đổi mật khẩu"
+
+#: storage/admin.py:318
+msgid "Download Key"
+msgstr ""
+
+#: storage/admin.py:330
+msgid "Add recovery key"
+msgstr ""
+
+#: storage/admin.py:342
+msgid "Unlock"
+msgstr ""
+
+#: storage/admin.py:511
+msgid "Replace"
+msgstr ""
+
+#: storage/admin.py:613
+msgid "When"
+msgstr ""
+
+#: storage/admin.py:650
+#, fuzzy
+msgid "Remote Hostname"
+msgstr "Hostname"
+
+#: storage/forms.py:1090
+msgid "No: Skip to import"
+msgstr ""
+
+#: storage/forms.py:1093
+msgid "Encrypted ZFS volume?"
+msgstr ""
+
+#: storage/forms.py:1111
+msgid "Encryption Key"
+msgstr ""
+
+#: storage/forms.py:1431
+#: storage/forms.py:1436
+msgid "0=Unlimited; example: 1 GiB"
+msgstr ""
+
+#: storage/forms.py:1605
+msgid "Size for this zvol"
+msgstr ""
+
+#: storage/forms.py:1626
+msgid ""
+"The default blocksize for volumes is 8 Kbytes. Any power of 2 from 512 bytes "
+"to 128 Kbytes is valid."
+msgstr ""
+
+#: storage/forms.py:1655
+msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
+msgstr ""
+
+#: storage/forms.py:1684
+#, fuzzy
+msgid "Permission Type"
+msgstr "Bộ quyền của file"
+
+#: storage/forms.py:1860
+msgid "Only [-a-zA-Z0-9_./ ] permitted as clone name"
+msgstr ""
+
+#: storage/forms.py:1953
+msgid "Confirmation does not match passphrase"
+msgstr ""
+
+#: storage/forms.py:2021
+msgid "Dedicated User Enabled"
+msgstr ""
+
+#: storage/forms.py:2022
+msgid "If disabled then root will be used for replication."
+msgstr ""
+
+#: storage/forms.py:2030
+msgid "Enable High Speed Ciphers"
+msgstr ""
+
+#: storage/forms.py:2237
+#, fuzzy
+msgid "A scrub with this volume already exists."
+msgstr "Tên nhóm này đã tồn tại."
+
+#: storage/forms.py:2320
+#, fuzzy
+msgid "Confirm New Passphrase"
+msgstr "Thay đổi mật khẩu"
+
+#: storage/forms.py:2346
+#: storage/forms.py:2492
+#, fuzzy
+msgid "Invalid password"
+msgstr "Mật khẩu cũ"
+
+#: storage/forms.py:2396
+#, fuzzy
+msgid "Recovery Key"
+msgstr "mỗi ngày"
+
+#: storage/forms.py:2400
+msgid "Restart services"
+msgstr ""
+
+#: storage/forms.py:2417
+msgid "Jails/Plugins"
+msgstr ""
+
+#: storage/models.py:594
+msgid "Underlying provider"
+msgstr ""
+
+#: storage/models.py:811
+msgid "Remote Dedicated User Enabled"
+msgstr ""
+
+#: storage/models.py:849
+#: storage/models.py:968
+#: templates/storage/snapshots.html:82
+#, fuzzy
+msgid "Volume/Dataset"
+msgstr "Trạng thái"
+
+#: storage/models.py:856
+msgid "Last snapshot sent to remote side"
+msgstr ""
+
+#: storage/models.py:903
+msgid "Do not start replication after"
+msgstr ""
+
+#: storage/models.py:946
+msgid "Sending %(snapshot)s (%(percent)s%%)"
+msgstr ""
+
+#: storage/nav.py:52
+#: templates/storage/volume_datagrid.html:20
+msgid "UFS Volume Manager (legacy)"
+msgstr ""
+
+#: storage/views.py:964
+#, fuzzy
+msgid "Passphrase updated"
+msgstr "Mật khẩu đã cập nhật thành công."
+
+#: storage/views.py:1068
+msgid "Encryption re-key succeeded"
+msgstr ""
+
+#: storage/views.py:1151
+msgid "The pool failed to upgraded: %s"
+msgstr ""
+
+#: support/models.py:49
+msgid "Support"
+msgstr ""
+
+#: system/forms.py:86
+msgid "The volume %s is locked by encryption"
+msgstr ""
+
+#: system/forms.py:518
+#, fuzzy
+msgid "The two passphrase fields didn't match."
+msgstr "Hai trường mật khẩu không giống nhau."
+
+#: system/forms.py:570
+msgid "RSA or DSA private key not found"
+msgstr ""
+
+#: system/forms.py:817
+msgid "Usernames cannot exceed 17 characters for cronjobs"
+msgstr ""
+
+#: system/forms.py:1018
+#, fuzzy
+msgid "This variable already exists"
+msgstr "Tên đăng nhập này đã tồn tại."
+
+#: system/forms.py:1124
+msgid "System dataset pool"
+msgstr ""
+
+#: system/models.py:70
+msgid "WebGUI HTTP Port"
+msgstr ""
+
+#: system/models.py:80
+msgid "WebGUI HTTP -> HTTPS Redirect"
+msgstr ""
+
+#: system/models.py:115
+#, fuzzy
+msgid "Directory Service"
+msgstr "Bộ quyền của thư mục"
+
+#: system/models.py:205
+#, fuzzy
+msgid "Serial Port Address"
+msgstr "địa chỉ IPv4"
+
+#: system/models.py:212
+msgid "Set this to match your serial port speed"
+msgstr ""
+
+#: system/models.py:249
+msgid "Enable report anonymous statistics"
+msgstr ""
+
+#: system/models.py:1030
+msgid "Pre Init"
+msgstr ""
+
+#: system/models.py:1067
+msgid "Last Name"
+msgstr ""
+
+#: system/models.py:1105
+msgid "Home Phone"
+msgstr ""
+
+#: system/alertmods/multipaths_status.py:19
+msgid "The following multipaths are not optimal: %s"
+msgstr ""
+
+#: system/alertmods/replication_status.py:17
+msgid "Replication %(replication)s failed: %(message)s"
+msgstr ""
+
+#: system/alertmods/volume_version.py:24
+#: system/alertmods/volume_version.py:44
+msgid "You need to upgrade the volume %s"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:8
+#, fuzzy
+msgid "Add %(name)s"
+msgstr "Thêm  %s"
+
+#: templates/freeadmin/help.html:39
+msgid "FreeBSD Man Pages"
+msgstr ""
+
+#: templates/jails/index.html:8
+#: templates/plugins/index.html:32
+msgid "You must configure a default route (Network->IPv4 Default Gateway)"
+msgstr ""
+
+#: templates/plugins/available_datagrid.html:13
+msgid "Refresh"
+msgstr ""
+
+#: templates/plugins/plugin_info.html:2
+#, fuzzy
+msgid "Plugin information"
+msgstr "địa chỉ IPv4"
+
+#: templates/registration/login.html:54
+msgid ""
+"The web admin user has been removed in this release in order to unify the "
+"web and Unix authentication mechanisms."
+msgstr ""
+
+#: templates/registration/login.html:55
+msgid ""
+"Administrators should log in to the web UI as root, since the web UI already "
+"confers superuser privileges in many areas."
+msgstr ""
+
+#: templates/reporting/index.html:3
+msgid "CPU"
+msgstr ""
+
+#: templates/storage/dataset_edit.html:4
+msgid "Dataset"
+msgstr ""
+
+#: templates/storage/key.html:6
+#: templates/storage/recoverykey_add.html:9
+#: templates/storage/recoverykey_remove.html:6
+#: templates/storage/rekey.html:11
+msgid "Continue"
+msgstr ""
+
+#: templates/storage/rekey.html:6
+msgid ""
+"Remember to create a new passphrase as this action removes the current "
+"passphrase"
+msgstr ""
+
+#: templates/storage/snapshots.html:107
+#, fuzzy
+msgid "Available Actions"
+msgstr "Sẵn sàng"
+
+#: templates/storage/upgrade_confirm.html:5
+msgid "Are you sure you want to upgrade your pool?"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:10
+#: templates/storage/volumestatus_datagrid.html:25
+msgid "Progress"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:32
+#, fuzzy
+msgid "Repaired"
+msgstr "Đòi hỏi"
+
+#: templates/system/cron_run.html:5
+msgid "Would you like to run this cron job now?"
+msgstr ""
+
+#: templates/system/shutdown.html:85
+msgid "System is shutting down"
+msgstr ""
+
+#: choices.py:165
+msgid "Unencrypted"
+msgstr ""
+
+#: choices.py:167
+msgid "Encrypted, with passphrase"
+msgstr ""
+
+#: choices.py:179
+msgid "SMB2_22"
+msgstr ""
+
+#: choices.py:180
+msgid "SMB2_24"
+msgstr ""
+
+#: choices.py:307
+#, fuzzy
+msgid "lz4 (recommended)"
+msgstr "lzjb (khuyến cáo)"
+
+#: choices.py:311
+msgid "zle (runs of zeros)"
+msgstr ""
+
+#: choices.py:318
+msgid "pigz (all rounder)"
+msgstr ""
+
+#: choices.py:610
+msgid "19200"
+msgstr ""
+
+#: choices.py:672
+msgid "Fatal"
+msgstr ""
+
+#: choices.py:677
+#, fuzzy
+msgid "Debug2"
+msgstr "Gỡ lỗi"
+
+#: choices.py:678
+#, fuzzy
+msgid "Debug3"
+msgstr "Gỡ lỗi"
+
+#: choices.py:685
+msgid "Auth"
+msgstr ""
+
+#: choices.py:688
+#, fuzzy
+msgid "Local 2"
+msgstr "Người dùng tại chỗ"
+
+#: choices.py:691
+#, fuzzy
+msgid "Local 5"
+msgstr "Người dùng tại chỗ"
+
+#: choices.py:701
+#, fuzzy
+msgid "NIS"
+msgstr "NIC"
+
+#: choices.py:713
+msgid "ctrl+data"
+msgstr ""
+
+#: account/forms.py:66
+#, fuzzy
+msgid "Passwords do not match"
+msgstr "Xác nhận mật khẩu"
+
+#: account/forms.py:398
+#, fuzzy
+msgid "Create Home Directory In"
+msgstr "Thư mục gốc"
+
+#: account/models.py:54
+#, fuzzy
+msgid "Built-in Group"
+msgstr "Nhóm phụ"
+
+#: api/resources.py:437
+#: storage/views.py:778
+#: storage/views.py:1144
+msgid "Pool output could not be parsed. Is the pool imported?"
+msgstr ""
+
+#: api/resources.py:1864
+#: api/resources.py:1875
+#, fuzzy
+msgid "Invalid snapshot"
+msgstr "Xem tất cả %s"
+
+#: common/system.py:279
+msgid "Mount failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: freeadmin/forms.py:220
+#, fuzzy
+msgid "A file is required"
+msgstr "Mục này là bắt buộc"
+
+#: freeadmin/forms.py:255
+#: freeadmin/forms.py:279
+msgid "Invalid address: %s"
+msgstr ""
+
+#: freeadmin/forms.py:259
+#: freeadmin/forms.py:283
+msgid "Invalid network: %s"
+msgstr ""
+
+#: freeadmin/navtree.py:576
+#, fuzzy
+msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
+msgstr "Lỗi xảy ra khi unserializing từ %(url)s: %(error)s"
+
+#: jails/admin.py:75
+#: jails/forms.py:859
+#: jails/models.py:521
+#: templates/plugins/plugins.html:21
+msgid "Jail"
+msgstr ""
+
+#: jails/admin.py:192
+#: templates/plugins/available_datagrid.html:27
+msgid "Upload Plugin"
+msgstr ""
+
+#: jails/admin.py:200
+msgid "Start"
+msgstr ""
+
+#: jails/admin.py:271
+msgid "Instances"
+msgstr ""
+
+#: jails/forms.py:260
+#: jails/utils.py:628
+msgid "Unable to find template!"
+msgstr ""
+
+#: jails/forms.py:518
+#: jails/models.py:196
+msgid "NAT"
+msgstr ""
+
+#: jails/forms.py:785
+msgid "Create destination directory if it does not exist"
+msgstr ""
+
+#: jails/models.py:74
+#, fuzzy
+msgid "Jail Name"
+msgstr "Tên đầy đủ"
+
+#: jails/models.py:84
+#, fuzzy
+msgid "IPv4 address"
+msgstr "địa chỉ IPv4"
+
+#: jails/models.py:141
+msgid "IPv6 aliases"
+msgstr ""
+
+#: jails/models.py:296
+#, fuzzy
+msgid "This jail is required by %d plugin(s)"
+msgstr "Mục này bắt buộc khi dùng đăng nhập nặc danh"
+
+#: jails/models.py:337
+#, fuzzy
+msgid "IPv4 Network"
+msgstr "Mặt nạ mạng của IPv4"
+
+#: jails/models.py:357
+#, fuzzy
+msgid "IPv6 Network Start Address"
+msgstr "Địa chỉ IPv6"
+
+#: jails/models.py:377
+#: jails/models.py:378
+#, fuzzy
+msgid "Jails Configuration"
+msgstr "Thiết đặt chung"
+
+#: jails/models.py:428
+#, fuzzy
+msgid "Architecture"
+msgstr "Lưu trữ"
+
+#: jails/nav.py:85
+msgid "Add Jail Templates"
+msgstr ""
+
+#: jails/nav.py:100
+#, fuzzy
+msgid "View Jails"
+msgstr "Xem %s"
+
+#: jails/utils.py:645
+msgid "Failed to install plugin: %s"
+msgstr ""
+
+#: jails/views.py:95
+#, fuzzy
+msgid "Jail successfully edited."
+msgstr "%s đã cập nhật thành công."
+
+#: jails/views.py:156
+#, fuzzy
+msgid "Jail successfully stopped."
+msgstr "%s đã cập nhật thành công."
+
+#: middleware/notifier.py:3821
+msgid "Backup"
+msgstr ""
+
+#: middleware/notifier.py:3847
+msgid "Degraded"
+msgstr ""
+
+#: middleware/zfs.py:673
+#: middleware/zfs.py:732
+msgid "None requested"
+msgstr ""
+
+#: network/admin.py:44
+#, fuzzy
+msgid "IPv4 Addresses"
+msgstr "địa chỉ IPv4"
+
+#: network/forms.py:138
+msgid "Only one interface can be used for DHCP"
+msgstr ""
+
+#: network/forms.py:151
+msgid "Only one interface can have IPv6 autoconfiguration enabled"
+msgstr ""
+
+#: network/forms.py:189
+#: network/forms.py:698
+msgid "The network %s is already in use by another NIC."
+msgstr ""
+
+#: network/forms.py:446
+msgid "You need a domain, e.g. hostname.domain"
+msgstr ""
+
+#: network/forms.py:477
+#, fuzzy
+msgid "The name must be vlanX where X is a number. Example: vlan0"
+msgstr "Định dạng tên phải là vlanXX với XX là các chữ số tự nhiên"
+
+#: network/models.py:83
+msgid ""
+"If enabled, delays the start of network-reliant services until interface is "
+"up and ICMP packets to a destination defined in netwait ip list are "
+"flowing.  Link state is examined first, followed by \"pinging\" an IP "
+"address to verify network usability.  If no destination can be reached or "
+"timeouts are exceeded, network services are started anyway with no guarantee "
+"that the network is usable."
+msgstr ""
+
+#: network/models.py:94
+msgid ""
+"Space-delimited list of IP addresses to ping(8). If multiple IP addresses "
+"are specified, each will be tried until one is successful or the list is "
+"exhausted. If it is empty the default gateway will be used."
+msgstr ""
+
+#: network/models.py:103
+msgid ""
+"This field is appended to /etc/hosts which contains information regarding "
+"known hosts on the network. hosts(5)"
+msgstr ""
+
+#: plugins/admin.py:59
+#: plugins/admin.py:66
+msgid "Install"
+msgstr ""
+
+#: plugins/models.py:102
+#, fuzzy
+msgid "Plugin jail name"
+msgstr "địa chỉ IPv4"
+
+#: plugins/models.py:180
+msgid "Plugin Kernel Module"
+msgstr ""
+
+#: plugins/models.py:215
+msgid "Repository URL"
+msgstr ""
+
+#: plugins/plugin.py:119
+#, fuzzy
+msgid "Failed to download %(url)s: %(error)s"
+msgstr "Không thể đọc %(url)s: %(error)s"
+
+#: plugins/views.py:181
+#: plugins/views.py:242
+msgid "Invalid plugin"
+msgstr ""
+
+#: plugins/views.py:192
+#: plugins/views.py:250
+msgid "Failed to download plugin"
+msgstr ""
+
+#: plugins/views.py:224
+#: plugins/views.py:355
+#, fuzzy
+msgid "No available IP addresses"
+msgstr "địa chỉ IPv4"
+
+#: services/forms.py:1081
+#, fuzzy
+msgid "LUN ID already exists."
+msgstr "Tên đăng nhập này đã tồn tại."
+
+#: services/forms.py:1561
+#, fuzzy
+msgid "This IP and port are already in use."
+msgstr "Tên đăng nhập này đã tồn tại."
+
+#: services/models.py:224
+#, fuzzy
+msgid "Hostnames lookups"
+msgstr "Hostname"
+
+#: services/models.py:246
+#, fuzzy
+msgid "Allow execute always"
+msgstr "Cho phép lặp lại GIDs"
+
+#: services/models.py:334
+msgid "Serve UDP NFS clients"
+msgstr ""
+
+#: services/models.py:340
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it.  It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+
+#: services/models.py:350
+#, fuzzy
+msgid "Bind IP Addresses"
+msgstr "địa chỉ IPv4"
+
+#: services/models.py:359
+msgid "mountd(8) bind port"
+msgstr ""
+
+#: services/models.py:376
+msgid ""
+"This option forces the rpc.statd daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:763
+msgid "Initiator side user name."
+msgstr ""
+
+#: services/models.py:952
+msgid "These parameters will be added to global settings in inadyn-mt.conf."
+msgstr ""
+
+#: services/models.py:1016
+msgid "Slave"
+msgstr ""
+
+#: services/models.py:1080
+msgid "Monitor User"
+msgstr ""
+
+#: services/models.py:1177
+msgid "Display Login"
+msgstr ""
+
+#: services/models.py:1308
+msgid "TLS export certificate data"
+msgstr ""
+
+#: services/models.py:1316
+msgid "TLS no empty fragments"
+msgstr ""
+
+#: services/models.py:1324
+msgid "TLS export standard vars"
+msgstr ""
+
+#: services/models.py:1340
+msgid "Certificate and private key"
+msgstr ""
+
+#: services/models.py:1442
+msgid ""
+"Specifies which messages will be logged by sftp-server. INFO and VERBOSE log "
+"transactions that sftp-server performs on behalf of the client. DEBUG2 and "
+"DEBUG3 each specify higher levels of debugging output. The default is ERROR."
+msgstr ""
+
+#: services/models.py:1595
+#, fuzzy
+msgid "Domain Account Name"
+msgstr "Tài khoản Quản trị"
+
+#: services/models.py:1600
+#, fuzzy
+msgid "Domain Account Password"
+msgstr "Tài khoản Quản trị"
+
+#: services/models.py:1623
+#, fuzzy
+msgid "UNIX extensions"
+msgstr "Không có VLAN"
+
+#: services/models.py:1658
+msgid "Hostname of the kerberos password server to use."
+msgstr ""
+
+#: services/models.py:1662
+msgid "AD timeout"
+msgstr ""
+
+#: services/models.py:1663
+msgid "Timeout for AD related commands."
+msgstr ""
+
+#: services/models.py:1667
+msgid "DNS timeout"
+msgstr ""
+
+#: services/models.py:1668
+msgid "Timeout for AD DNS queries."
+msgstr ""
+
+#: services/models.py:1711
+msgid "NIS domain name"
+msgstr ""
+
+#: services/models.py:1716
+#, fuzzy
+msgid "NIS servers"
+msgstr "Máy chủ tên miền 1"
+
+#: services/models.py:1717
+msgid "Comma delimited list of NIS servers"
+msgstr ""
+
+#: services/models.py:1721
+#, fuzzy
+msgid "Secure mode"
+msgstr "Chế độ lưu trữ"
+
+#: services/models.py:1726
+msgid "Manycast"
+msgstr ""
+
+#: services/models.py:1727
+msgid "Cause ypbind to use 'many-cast' instead of broadcast"
+msgstr ""
+
+#: services/models.py:1850
+#, fuzzy
+msgid "Interface Description"
+msgstr "Miêu tả"
+
+#: services/models.py:1871
+#: services/models.py:1872
+#: templates/services/core.html:76
+msgid "LLDP"
+msgstr ""
+
+#: services/models.py:2025
+msgid "Destination email address. Separate email addresses by commas"
+msgstr ""
+
+#: services/models.py:2058
+msgid "Realm"
+msgstr ""
+
+#: services/models.py:2059
+msgid "Realm Name, eg EXAMPLE.ORG"
+msgstr ""
+
+#: sharing/forms.py:260
+msgid "You cannot share a mount point and subdirectories all at once"
+msgstr ""
+
+#: sharing/forms.py:320
+msgid "You need at least one path for the share"
+msgstr ""
+
+#: sharing/models.py:49
+msgid "Recursively set sane default windows permissions on share"
+msgstr ""
+
+#: sharing/models.py:208
+#, fuzzy
+msgid "Default umask"
+msgstr "Mặc định"
+
+#: sharing/models.py:231
+#, fuzzy
+msgid "Authorized networks"
+msgstr "Xác thực"
+
+#: sharing/models.py:238
+#, fuzzy
+msgid "Authorized IP addresses or hosts"
+msgstr "Xác thực"
+
+#: storage/admin.py:36
+msgid "Wipe"
+msgstr ""
+
+#: storage/admin.py:136
+msgid "Compression Ratio"
+msgstr ""
+
+#: storage/admin.py:274
+#: storage/admin.py:376
+#: storage/nav.py:124
+msgid "Create zvol"
+msgstr ""
+
+#: storage/admin.py:324
+msgid "Encryption Re-key"
+msgstr ""
+
+#: storage/admin.py:502
+#, fuzzy
+msgid "Edit Disk"
+msgstr "Ổ đĩa"
+
+#: storage/admin.py:619
+msgid "Frequency"
+msgstr ""
+
+#: storage/forms.py:120
+msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
+msgstr ""
+
+#: storage/forms.py:558
+msgid ""
+"You are trying to add a virtual device of type '%(addtype)s' in a pool that "
+"has a virtual device of type '%(vdevtype)s'"
+msgstr ""
+
+#: storage/forms.py:601
+#: templates/storage/zfswizard.html:51
+msgid "Initialize Safely"
+msgstr ""
+
+#: storage/forms.py:906
+msgid ""
+"The selected disks were not verified for these import rules. Filesystem "
+"check failed."
+msgstr ""
+
+#: storage/forms.py:1114
+#: storage/forms.py:1940
+#: storage/forms.py:2276
+#: storage/forms.py:2391
+#: system/models.py:381
+msgid "Passphrase"
+msgstr ""
+
+#: storage/forms.py:1165
+msgid "The following disks failed to attach: %s"
+msgstr ""
+
+#: storage/forms.py:1422
+msgid "Share type"
+msgstr ""
+
+#: storage/forms.py:1441
+#: storage/forms.py:1446
+msgid "0=None; example: 1 GiB"
+msgstr ""
+
+#: storage/forms.py:1459
+msgid ""
+"Specifies a suggested block size for files in the file system. This property "
+"is designed solely for use with database workloads that access files in "
+"fixed-size records.  ZFS automatically tunes block sizes according to "
+"internal algorithms optimized for typical access patterns."
+msgstr ""
+
+#: storage/forms.py:1613
+#, fuzzy
+msgid "Sparse volume"
+msgstr "Phân vùng định dạng ZFS"
+
+#: storage/forms.py:1615
+msgid ""
+"Creates a sparse volume with no reservation, also known as \"thin "
+"provisioning\". A \"sparse volume\" is a volume where the reservation is "
+"less than the volume size. Consequently, writes to a sparse volume can fail "
+"with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
+msgstr ""
+
+#: storage/forms.py:1624
+#, fuzzy
+msgid "Block size"
+msgstr "Khóa người dùng"
+
+#: storage/forms.py:1817
+msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
+msgstr ""
+
+#: storage/forms.py:2026
+msgid "Dedicated User"
+msgstr ""
+
+#: storage/forms.py:2034
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which makes it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/forms.py:2312
+#, fuzzy
+msgid "Admin password"
+msgstr "Mật khẩu cũ"
+
+#: storage/forms.py:2316
+#, fuzzy
+msgid "New Passphrase"
+msgstr "Mật khẩu mới"
+
+#: storage/forms.py:2456
+msgid "Volume could not be imported: %d devices failed to decrypt"
+msgstr ""
+
+#: storage/forms.py:2473
+#, fuzzy
+msgid "Root password"
+msgstr "Mật khẩu mới"
+
+#: storage/models.py:131
+msgid "LOCKED"
+msgstr ""
+
+#: storage/models.py:814
+msgid "Remote Dedicated User"
+msgstr ""
+
+#: storage/models.py:864
+msgid "Remote ZFS Volume/Dataset"
+msgstr ""
+
+#: storage/models.py:886
+msgid "Replication Stream Compression"
+msgstr ""
+
+#: storage/models.py:951
+msgid "Sending"
+msgstr ""
+
+#: storage/nav.py:40
+#: templates/storage/volume_datagrid.html:6
+#: templates/storage/volume_datagrid.html:10
+#, fuzzy
+msgid "ZFS Volume Manager"
+msgstr "Phân vùng định dạng ZFS"
+
+#: storage/views.py:783
+msgid "The scrub process has stopped"
+msgstr ""
+
+#: storage/views.py:946
+msgid "Passphrase created"
+msgstr ""
+
+#: storage/views.py:980
+#, fuzzy
+msgid "Volume locked"
+msgstr "Trạng thái"
+
+#: storage/views.py:1029
+msgid "GELI key download starting..."
+msgstr ""
+
+#: storage/views.py:1088
+msgid "GELI recovery key download starting..."
+msgstr ""
+
+#: storage/views.py:1171
+#, fuzzy
+msgid "Disks successfully edited"
+msgstr "%s đã cập nhật thành công."
+
+#: support/models.py:41
+msgid "Support subject."
+msgstr ""
+
+#: support/models.py:45
+msgid "A description of the issue."
+msgstr ""
+
+#: support/views.py:86
+#, fuzzy
+msgid "Support request successfully sent"
+msgstr "%s đã xóa thành công."
+
+#: system/forms.py:68
+msgid "The path '%s' requires execute permission bit"
+msgstr ""
+
+#: system/forms.py:587
+msgid "RSA or DSA private key is not valid"
+msgstr ""
+
+#: system/forms.py:610
+msgid "The modulus of certificate and key must match"
+msgstr ""
+
+#: system/forms.py:1155
+msgid "Unable to migrate system dataset!"
+msgstr ""
+
+#: system/models.py:61
+#, fuzzy
+msgid "WebGUI IPv4 Address"
+msgstr "địa chỉ IPv4"
+
+#: system/models.py:75
+msgid "WebGUI HTTPS Port"
+msgstr ""
+
+#: system/models.py:83
+msgid ""
+"Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled"
+msgstr ""
+
+#: system/models.py:213
+msgid "Serial Port Speed"
+msgstr ""
+
+#: system/models.py:245
+msgid "Enable automatic upload of kernel crash dumps"
+msgstr ""
+
+#: system/models.py:450
+msgid ""
+"Redirect the standard error output to /dev/null. In other words, disable "
+"error output."
+msgstr ""
+
+#: system/models.py:1011
+#: system/models.py:1023
+msgid "Script"
+msgstr ""
+
+#: system/models.py:1063
+#, fuzzy
+msgid "First Name"
+msgstr "Tên đầy đủ"
+
+#: system/models.py:1071
+msgid "Company"
+msgstr ""
+
+#: system/models.py:1095
+msgid "Zip"
+msgstr ""
+
+#: system/models.py:1111
+msgid "Cell Phone"
+msgstr ""
+
+#: system/models.py:1117
+msgid "Work Phone"
+msgstr ""
+
+#: system/models.py:1123
+#: templates/system/settings.html:14
+#, fuzzy
+msgid "Registration"
+msgstr "Miêu tả"
+
+#: system/models.py:1138
+msgid "Syslog"
+msgstr ""
+
+#: system/models.py:1146
+#: templates/system/settings.html:11
+msgid "System Dataset"
+msgstr ""
+
+#: system/views.py:191
+msgid "The cron process has started"
+msgstr ""
+
+#: system/views.py:541
+msgid "The rsync process has started"
+msgstr ""
+
+#: system/alertmods/httpd_bindaddr.py:20
+msgid "The WebGUI Address could not bind to %s; using wildcard"
+msgstr ""
+
+#: system/alertmods/zpool_capacity.py:28
+msgid ""
+"The capacity for the volume '%(volume)s' is currently at %(capacity)d%%, "
+"while the recommended value is below 80%%."
+msgstr ""
+
+#: templates/freeadmin/generic_model_add.html:38
+#: templates/freeadmin/generic_model_edit.html:42
+#: templates/support/index.html:41
+msgid "Add extra"
+msgstr ""
+
+#: templates/jails/delete.html:3
+msgid "Are you sure you want to delete "
+msgstr ""
+
+#: templates/jails/start.html:3
+msgid "Start "
+msgstr ""
+
+#: templates/jails/stop.html:3
+msgid "Stop "
+msgstr ""
+
+#: templates/plugins/available_install.html:3
+msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
+msgstr ""
+
+#: templates/plugins/index.html:12
+msgid "Installed"
+msgstr ""
+
+#: templates/registration/login.html:57
+msgid "For security reasons, you must now set a new root password:"
+msgstr ""
+
+#: templates/services/core.html:82
+#, fuzzy
+msgid "LLDP Settings"
+msgstr "Thiết lập LDAP"
+
+#: templates/storage/key.html:3
+msgid "You are about to download the global GELI key"
+msgstr ""
+
+#: templates/storage/lock.html:3
+msgid "Do you want to lock this volume?"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:5
+msgid "This will invalidate any previous recovery key"
+msgstr ""
+
+#: templates/storage/rekey.html:4
+msgid "You are about to re-key the encryption"
+msgstr ""
+
+#: templates/storage/replication_datagrid.html:16
+msgid ""
+"ATTENTION: A periodic snapshot of a given ZFS Volume/Dataset is required to "
+"create a replication task"
+msgstr ""
+
+#: templates/storage/upgrade_confirm.html:5
+msgid "This operation is irreversible!"
+msgstr ""
+
+#: templates/storage/volume_datagrid.html:22
+#, fuzzy
+msgid "UFS Volume Manager"
+msgstr "Phân vùng định dạng ZFS"
+
+#: templates/storage/volume_detach.html:27
+msgid ""
+"This is an encrypted volume, make sure to <a href=\"%(url)s\" "
+"target=\"_blank\">download</a> the key so you can be able to import it in "
+"the future"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:17
+#: templates/storage/volumestatus_datagrid.html:33
+msgid "Date"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:21
+#, fuzzy
+msgid "Scrub"
+msgstr "Thiết lập NFS"
+
+#: templates/storage/wizard.html:92
+#, fuzzy
+msgid "Extend Volume"
+msgstr "Xem tất cả tài khoản"
+
+#: templates/storage/zfswizard.html:77
+#, fuzzy
+msgid "Deduplication"
+msgstr "Thư mục gốc"
+
+#: templates/storage/zpool_disk_replace.html:8
+msgid "WARNING: The recovery key of your volume will be invalidated!"
+msgstr ""
+
+#: templates/storage/zvols.html:6
+msgid "Add zvol"
+msgstr ""
+
+#: templates/support/index.html:57
+msgid "Submit"
+msgstr ""
+
+#: templates/system/firmware_wizard_0.html:6
+#: templates/system/firmware_wizard_1.html:21
+msgid ""
+"Consider downloading your configuration before proceeding, <a "
+"href=\"%(url)s\" target=\"_blank\">click here</a>."
+msgstr ""
+
+#: templates/system/reboot.html:79
+msgid "System is rebooting"
+msgstr ""
+
+#: templates/system/reboot_dialog2.html:4
+msgid ""
+"Some storage pools are doing resilver/scrub, are you really sure you want to "
+"proceed with <strong>REBOOT</strong>?"
+msgstr ""
+
+#: templates/system/shutdown_dialog2.html:4
+msgid ""
+"Some storage pools are doing resilver/scrub, are you really sure you want to "
+"proceed with <strong>SHUTDOWN</strong>?"
+msgstr ""
+
+#: choices.py:52
+#, fuzzy
+msgid "HTTP+HTTPS"
+msgstr "HTTPS"
+
+#: choices.py:171
+msgid "CORE"
+msgstr ""
+
+#: choices.py:172
+msgid "COREPLUS"
+msgstr ""
+
+#: choices.py:176
+msgid "SMB2"
+msgstr ""
+
+#: choices.py:178
+msgid "SMB2_10"
+msgstr ""
+
+#: choices.py:181
+msgid "SMB3"
+msgstr ""
+
+#: choices.py:182
+msgid "SMB3_00"
+msgstr ""
+
+#: choices.py:317
+#, fuzzy
+msgid "lz4 (fastest)"
+msgstr "gzip (mức nhanh nhất)"
+
+#: choices.py:569
+msgid "Verify"
+msgstr ""
+
+#: choices.py:611
+msgid "38400"
+msgstr ""
+
+#: choices.py:612
+msgid "57600"
+msgstr ""
+
+#: choices.py:686
+#, fuzzy
+msgid "Local 0"
+msgstr "Người dùng tại chỗ"
+
+#: choices.py:687
+#, fuzzy
+msgid "Local 1"
+msgstr "Người dùng tại chỗ"
+
+#: choices.py:689
+#, fuzzy
+msgid "Local 3"
+msgstr "Người dùng tại chỗ"
+
+#: choices.py:690
+#, fuzzy
+msgid "Local 4"
+msgstr "Người dùng tại chỗ"
+
+#: choices.py:692
+#, fuzzy
+msgid "Local 6"
+msgstr "Người dùng tại chỗ"
+
+#: choices.py:693
+#, fuzzy
+msgid "Local 7"
+msgstr "Người dùng tại chỗ"
+
+#: choices.py:700
+msgid "NT4"
+msgstr ""
+
+#: choices.py:707
+#, fuzzy
+msgid "on"
+msgstr "Không"
+
+#: choices.py:708
+#, fuzzy
+msgid "off"
+msgstr "Tắt"
+
+#: choices.py:710
+msgid "!data"
+msgstr ""
+
+#: choices.py:712
+msgid "ctrl"
+msgstr ""
+
+#: choices.py:715
+msgid "auth+data"
+msgstr ""
+
+#: account/forms.py:53
+#, fuzzy
+msgid "New Password"
+msgstr "Mật khẩu mới"
+
+#: account/forms.py:534
+#, fuzzy
+msgid "Home directory must end with username"
+msgstr "Không thể ghi vào thư mục Home, vui lòng để trống."
+
+#: account/models.py:58
+#: account/models.py:154
+msgid "Permit Sudo"
+msgstr ""
+
+#: account/models.py:146
+#, fuzzy
+msgid "Disable password login"
+msgstr "Vô hiệu hóa đăng nhập"
+
+#: account/models.py:264
+#, fuzzy
+msgid "Group Membership"
+msgstr "Tên nhóm"
+
+#: account/models.py:265
+msgid "Group Memberships"
+msgstr ""
+
+#: freeadmin/navtree.py:611
+#, fuzzy
+msgid "Could not reverse url, skipping node %(node)s: %(error)s"
+msgstr "Không thể đọc %(url)s: %(error)s"
+
+#: jails/admin.py:89
+#: jails/models.py:183
+#, fuzzy
+msgid "Autostart"
+msgstr "Tự động"
+
+#: jails/admin.py:186
+msgid "Edit Jail"
+msgstr ""
+
+#: jails/admin.py:189
+#: jails/nav.py:264
+msgid "Add Storage"
+msgstr ""
+
+#: jails/admin.py:201
+msgid "Stop"
+msgstr ""
+
+#: jails/forms.py:94
+msgid "vanilla"
+msgstr ""
+
+#: jails/forms.py:486
+msgid "Path does not exist!"
+msgstr ""
+
+#: jails/forms.py:508
+msgid "Jail root must be on a volume or dataset!"
+msgstr ""
+
+#: jails/forms.py:517
+#: jails/models.py:192
+msgid "VIMAGE"
+msgstr ""
+
+#: jails/forms.py:827
+msgid "This shouldn't happen, but the jail could not be found"
+msgstr ""
+
+#: jails/hook.py:13
+#: jails/models.py:324
+#: jails/models.py:325
+#: jails/nav.py:47
+#: templates/jails/index.html:17
+msgid "Jails"
+msgstr ""
+
+#: jails/models.py:91
+#, fuzzy
+msgid "IPv4 netmask"
+msgstr "Mặt nạ mạng của IPv4"
+
+#: jails/models.py:97
+msgid "IPv4 aliases"
+msgstr ""
+
+#: jails/models.py:116
+msgid "IPv4 bridge aliases"
+msgstr ""
+
+#: jails/models.py:122
+#, fuzzy
+msgid "IPv4 default gateway"
+msgstr "Gateway mặc định cho IPv4"
+
+#: jails/models.py:154
+msgid "IPv6 bridge prefix length"
+msgstr ""
+
+#: jails/models.py:160
+msgid "IPv6 bridge aliases"
+msgstr ""
+
+#: jails/models.py:178
+msgid "Comma delimited list of sysctl's"
+msgstr ""
+
+#: jails/models.py:342
+#, fuzzy
+msgid "IPv4 Network Start Address"
+msgstr "địa chỉ IPv4"
+
+#: jails/models.py:347
+#, fuzzy
+msgid "IPv4 Network End Address"
+msgstr "địa chỉ IPv4"
+
+#: jails/models.py:358
+msgid "IPv6 network start address for jails and plugins"
+msgstr ""
+
+#: jails/models.py:422
+msgid "OS"
+msgstr ""
+
+#: jails/nav.py:114
+msgid "View Jail Templates"
+msgstr ""
+
+#: jails/nav.py:129
+#: plugins/models.py:225
+#: templates/jails/index.html:40
+#: templates/plugins/index.html:20
+#, fuzzy
+msgid "Configuration"
+msgstr "Thiết đặt chung"
+
+#: jails/utils.py:573
+msgid "Unable to determine IPv4 for plugin"
+msgstr ""
+
+#: jails/views.py:115
+#, fuzzy
+msgid "Storage successfully added."
+msgstr "%s đã thêm vào hệ thống thành công."
+
+#: jails/views.py:177
+#, fuzzy
+msgid "Jail successfully deleted."
+msgstr "%s Đã xóa thành công"
+
+#: middleware/notifier.py:3820
+#: middleware/notifier.py:3845
+msgid "Active"
+msgstr ""
+
+#: middleware/notifier.py:3822
+msgid "Init"
+msgstr ""
+
+#: middleware/notifier.py:3823
+#: services/models.py:1015
+msgid "Master"
+msgstr ""
+
+#: middleware/zfs.py:648
+#: middleware/zfs.py:711
+msgid "Completed"
+msgstr ""
+
+#: middleware/zfs.py:663
+#: middleware/zfs.py:722
+msgid "Canceled"
+msgstr ""
+
+#: network/admin.py:39
+#, fuzzy
+msgid "Media Status"
+msgstr "Trạng thái"
+
+#: network/admin.py:49
+#, fuzzy
+msgid "IPv6 Addresses"
+msgstr "Địa chỉ IPv6"
+
+#: network/forms.py:311
+#, fuzzy
+msgid "Channel"
+msgstr "Email"
+
+#: network/models.py:77
+msgid "HTTP Proxy"
+msgstr ""
+
+#: network/views.py:66
+#, fuzzy
+msgid "IPMI successfully edited"
+msgstr "%s đã cập nhật thành công."
+
+#: network/views.py:68
+msgid "IPMI failed"
+msgstr ""
+
+#: plugins/admin.py:73
+msgid "Install plugin"
+msgstr ""
+
+#: plugins/models.py:103
+msgid "Jail where the plugin is installed"
+msgstr ""
+
+#: plugins/models.py:129
+msgid "jail not found"
+msgstr ""
+
+#: plugins/views.py:171
+#, fuzzy
+msgid "Plugin not installed"
+msgstr "%s đã cập nhật thành công."
+
+#: plugins/views.py:205
+msgid "Failed to update plugin"
+msgstr ""
+
+#: services/forms.py:758
+#: services/models.py:1612
+msgid "Kerberos keytab"
+msgstr ""
+
+#: services/models.py:109
+msgid "Use syslog"
+msgstr ""
+
+#: services/models.py:226
+msgid ""
+"Specifies whether samba should use (expensive) hostname lookups or use the "
+"ip addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+
+#: services/models.py:240
+msgid "Server maximum protocol"
+msgstr ""
+
+#: services/models.py:298
+msgid "Enable/disable home directories for afp user."
+msgstr ""
+
+#: services/models.py:351
+msgid ""
+"Specify specific IP addresses (separated by commas) to bind to for TCP and "
+"UDP requests. This option may be specified multiple times. If no IP is "
+"specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
+"and if IPv6 is enabled, ::1 to the list."
+msgstr ""
+
+#: services/models.py:364
+msgid ""
+"Force mountd to bind to the specified port, for both IPv4 and IPv6 address "
+"families. This is typically done to ensure that the port which mountd binds "
+"to is a known value which can be used in firewall rulesets."
+msgstr ""
+
+#: services/models.py:371
+msgid "rpc.statd(8) bind port"
+msgstr ""
+
+#: services/models.py:874
+msgid "LUN ID"
+msgstr ""
+
+#: services/models.py:916
+msgid ""
+"The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
+"Defaults to checkip.dyndns.org:80 /."
+msgstr ""
+
+#: services/models.py:925
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names."
+msgstr ""
+
+#: services/models.py:1018
+msgid "UPS Mode"
+msgstr ""
+
+#: services/models.py:1085
+#, fuzzy
+msgid "Monitor Password"
+msgstr "Thay đổi mật khẩu"
+
+#: services/models.py:1196
+msgid ""
+"Use this option to override the directory creation mask (077 by default)."
+msgstr ""
+
+#: services/models.py:1221
+msgid "Perform Reverse DNS Lookups"
+msgstr ""
+
+#: services/models.py:1292
+msgid "TLS allow dot login"
+msgstr ""
+
+#: services/models.py:1296
+msgid "TLS allow per user"
+msgstr ""
+
+#: services/models.py:1312
+msgid "TLS no certificate request"
+msgstr ""
+
+#: services/models.py:1328
+msgid "TLS use implicit SSL"
+msgstr ""
+
+#: services/models.py:1336
+msgid "TLS IP address required"
+msgstr ""
+
+#: services/models.py:1342
+msgid "Place the contents of your certificate and private key here."
+msgstr ""
+
+#: services/models.py:1438
+msgid "SFTP Log Level"
+msgstr ""
+
+#: services/models.py:1453
+msgid ""
+"Specifies the facility code that is used when logging messages from sftp-"
+"server."
+msgstr ""
+
+#: services/models.py:1532
+#: services/models.py:1640
+msgid "Hostname of the domain controller to use."
+msgstr ""
+
+#: services/models.py:1569
+#: services/models.py:1570
+#, fuzzy
+msgid "NT4 Domain"
+msgstr "Tên miền"
+
+#: services/models.py:1624
+msgid "Set this if your Active Directory has UNIX extensions."
+msgstr ""
+
+#: services/models.py:1633
+msgid "Use default domain"
+msgstr ""
+
+#: services/models.py:1634
+msgid "Set this if you want to use the default domain for users and groups."
+msgstr ""
+
+#: services/models.py:1645
+msgid "Global Catalog Server"
+msgstr ""
+
+#: services/models.py:1646
+msgid "Hostname of the global catalog server to use."
+msgstr ""
+
+#: services/models.py:1852
+msgid "Save received info in interface description / alias"
+msgstr ""
+
+#: services/models.py:2068
+#: services/models.py:2069
+msgid "Server Role"
+msgstr ""
+
+#: services/models.py:2083
+msgid "DNS Forwarder IP Address"
+msgstr ""
+
+#: services/models.py:2088
+msgid "Domain and Forest Level, eg 2003"
+msgstr ""
+
+#: sharing/forms.py:174
+#, fuzzy
+msgid "This is not a valid network: %s"
+msgstr "Đây không phải là địa chỉ máy chủ tên miền hợp pháp"
+
+#: sharing/forms.py:288
+msgid "This option is only available once per mountpoint"
+msgstr ""
+
+#: sharing/models.py:169
+msgid "Check this to enable Time Machine backups on this share."
+msgstr ""
+
+#: sharing/models.py:232
+msgid ""
+"Networks that are authorized to access the NFS share. Specify network "
+"numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
+msgstr ""
+
+#: sharing/models.py:239
+msgid "IP addresses or hostnames that are authorized to access the NFS share."
+msgstr ""
+
+#: sharing/models.py:246
+msgid ""
+"Allow mounting of any subdirectory under this mount point ifselected. "
+"Otherwise, only the top level directory can be mounted."
+msgstr ""
+
+#: sharing/models.py:270
+msgid ""
+"If a user is selected, the root user is limited to that user's permissions"
+msgstr ""
+
+#: sharing/models.py:279
+msgid ""
+"If a group is selected, the root user will also be limited to that group's "
+"permissions"
+msgstr ""
+
+#: sharing/models.py:288
+msgid "The specified user's permissions are used by all clients"
+msgstr ""
+
+#: storage/admin.py:47
+msgid "Edit In Bulk"
+msgstr ""
+
+#: storage/admin.py:304
+msgid "Create Passphrase"
+msgstr ""
+
+#: storage/admin.py:336
+msgid "Remove recovery key"
+msgstr ""
+
+#: storage/admin.py:349
+msgid "Upgrade"
+msgstr ""
+
+#: storage/admin.py:383
+msgid "Destroy zvol"
+msgstr ""
+
+#: storage/admin.py:432
+#, fuzzy
+msgid "Read"
+msgstr "Chỉ đọc"
+
+#: storage/admin.py:438
+#, fuzzy
+msgid "Write"
+msgstr "Chỉ ghi"
+
+#: storage/admin.py:444
+msgid "Checksum"
+msgstr ""
+
+#: storage/admin.py:505
+msgid "Offline"
+msgstr ""
+
+#: storage/admin.py:508
+#, fuzzy
+msgid "Detach"
+msgstr "Phân vùng định dạng ZFS"
+
+#: storage/forms.py:71
+msgid ""
+"Enabling dedup may have drastic performance implications,<br /> as well as "
+"impact your ability to access your data.<br /> Consider using compression "
+"instead."
+msgstr ""
+
+#: storage/forms.py:490
+msgid "You need at least %d disks"
+msgstr ""
+
+#: storage/forms.py:568
+msgid ""
+"You are trying to add a virtual device consisting of %(addnum)s device(s) in "
+"a pool that has a virtual device consisted of %(vdevnum)s device(s)"
+msgstr ""
+
+#: storage/forms.py:597
+#: templates/storage/zfswizard.html:41
+#, fuzzy
+msgid "Encryption"
+msgstr "Miêu tả"
+
+#: storage/forms.py:605
+#: storage/forms.py:1448
+#: storage/forms.py:1562
+msgid "ZFS Deduplication"
+msgstr ""
+
+#: storage/forms.py:1084
+#, fuzzy
+msgid "Volume imported"
+msgstr "Trạng thái"
+
+#: storage/forms.py:1455
+msgid "Record Size"
+msgstr ""
+
+#: storage/forms.py:1602
+msgid "zvol name"
+msgstr ""
+
+#: storage/forms.py:1606
+msgid "Example: 1 GiB"
+msgstr ""
+
+#: storage/forms.py:1944
+#: storage/forms.py:2280
+#: system/forms.py:484
+#, fuzzy
+msgid "Confirm Passphrase"
+msgstr "Thay đổi mật khẩu"
+
+#: storage/forms.py:2289
+#: storage/forms.py:2355
+#, fuzzy
+msgid "The passphrases do not match"
+msgstr "Hai trường mật khẩu không giống nhau."
+
+#: storage/forms.py:2324
+msgid "Remove passphrase"
+msgstr ""
+
+#: storage/forms.py:2426
+msgid "You need either a passphrase or a recovery key to unlock"
+msgstr ""
+
+#: storage/forms.py:2460
+#, fuzzy
+msgid "Volume could not be imported"
+msgstr "Gửi test mail thất bại:"
+
+#: storage/models.py:465
+#, fuzzy
+msgid "Disk Size"
+msgstr "Ổ đĩa"
+
+#: storage/models.py:825
+msgid "High Speed Encryption Ciphers"
+msgstr ""
+
+#: storage/models.py:827
+msgid ""
+"Enabling this may increase transfer speed on high speed/low latency local "
+"networks.  It uses less secure encryption algorithms than the defaults, "
+"which make it less desirable on untrusted networks."
+msgstr ""
+
+#: storage/models.py:866
+msgid ""
+"This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
+"Datasetname not the mountpoint or filesystem path"
+msgstr ""
+
+#: storage/models.py:898
+msgid "Do not start replication before"
+msgstr ""
+
+#: storage/models.py:909
+msgid "Disabling will not stop any replications which are in progress."
+msgstr ""
+
+#: storage/views.py:128
+msgid "Key could not be retrieved for unknown reason"
+msgstr ""
+
+#: storage/views.py:997
+#: storage/views.py:1010
+#, fuzzy
+msgid "Volume unlocked"
+msgstr "Trạng thái"
+
+#: storage/views.py:1001
+#, fuzzy
+msgid "Volume failed unlocked"
+msgstr "Trạng thái"
+
+#: storage/views.py:1129
+msgid "Recovery has been removed"
+msgstr ""
+
+#: storage/views.py:1154
+msgid "The pool has been upgraded"
+msgstr ""
+
+#: support/models.py:40
+msgid "Subject"
+msgstr ""
+
+#: system/admin.py:59
+#: system/admin.py:66
+#: system/admin.py:106
+#: system/admin.py:113
+msgid "Run Now"
+msgstr ""
+
+#: system/forms.py:754
+msgid "Memory device"
+msgstr ""
+
+#: system/forms.py:888
+msgid "Usernames cannot exceed 17 characters for rsync tasks"
+msgstr ""
+
+#: system/forms.py:893
+msgid "Usernames cannot have spaces"
+msgstr ""
+
+#: system/forms.py:1148
+msgid "Unable to create system dataset!"
+msgstr ""
+
+#: system/models.py:67
+#, fuzzy
+msgid "WebGUI IPv6 Address"
+msgstr "Địa chỉ IPv6"
+
+#: system/models.py:203
+msgid "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
+msgstr ""
+
+#: system/models.py:242
+msgid "Enable debug kernel"
+msgstr ""
+
+#: system/models.py:382
+msgid "Private key passphrase"
+msgstr ""
+
+#: system/models.py:443
+msgid "Redirect Stdout"
+msgstr ""
+
+#: system/models.py:444
+msgid ""
+"Redirect the standard output to /dev/null. In other words, disable output."
+msgstr ""
+
+#: system/models.py:449
+msgid "Redirect Stderr"
+msgstr ""
+
+#: system/models.py:562
+msgid "Remote SSH Port"
+msgstr ""
+
+#: system/models.py:563
+msgid "SSH Port"
+msgstr ""
+
+#: system/models.py:1031
+msgid "Post Init"
+msgstr ""
+
+#: system/models.py:1049
+msgid "Init/Shutdown Script"
+msgstr ""
+
+#: system/models.py:1050
+msgid "Init/Shutdown Scripts"
+msgstr ""
+
+#: system/models.py:1083
+msgid "City"
+msgstr ""
+
+#: system/models.py:1133
+msgid "Pool"
+msgstr ""
+
+#: system/models.py:1142
+msgid "RRD"
+msgstr ""
+
+#: system/views.py:341
+msgid "You must configure the root email (Accounts->Users->root)"
+msgstr ""
+
+#: system/alertmods/lsi_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mps%(mps)s"
+msgstr ""
+
+#: templates/menubar.html:48
+msgid "Alert"
+msgstr ""
+
+#: templates/freeadmin/generic_model_datagrid.html:10
+#, fuzzy
+msgid "Add"
+msgstr "Thêm  %s"
+
+#: templates/freeadmin/generic_model_datagrid.html:177
+msgid "No entry has been found"
+msgstr ""
+
+#: templates/freeadmin/generic_model_delete.html:19
+msgid ""
+"There is %(related_num)s related entry that will also be deleted as it "
+"depend upon this item"
+msgid_plural ""
+"There are %(related_num)s related entries that will also be deleted as they "
+"depend upon this item"
+msgstr[0] ""
+
+#: templates/freeadmin/help.html:44
+msgid "Professional Support"
+msgstr ""
+
+#: templates/freeadmin/help.html:46
+msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
+msgstr ""
+
+#: templates/jails/delete.html:3
+#: templates/jails/start.html:3
+#: templates/jails/stop.html:3
+msgid "?"
+msgstr ""
+
+#: templates/jails/index.html:32
+msgid "Templates"
+msgstr ""
+
+#: templates/plugins/plugin_update.html:3
+msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
+msgstr ""
+
+#: templates/plugins/plugins_datagrid.html:4
+#: templates/plugins/plugins_datagrid.html:6
+#, fuzzy
+msgid "Available Plugins"
+msgstr "Sẵn sàng"
+
+#: templates/registration/login.html:51
+msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
+msgstr ""
+
+#: templates/reporting/index.html:11
+#, fuzzy
+msgid "Partition"
+msgstr "Miêu tả"
+
+#: templates/services/core.html:33
+#, fuzzy
+msgid "Directory Service Settings"
+msgstr "Thiết lập Active Directory"
+
+#: templates/storage/disk_editbulk.html:3
+msgid "Editing the following disks"
+msgstr ""
+
+#: templates/storage/recoverykey_add.html:4
+msgid "You are about to add a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/recoverykey_remove.html:3
+msgid "You are about to remove a recovery key for this volume"
+msgstr ""
+
+#: templates/storage/replication_add.html:5
+msgid "SSH Key Scan"
+msgstr ""
+
+#: templates/storage/snapshots.html:97
+#, fuzzy
+msgid "Refer"
+msgstr "Ưu tiên"
+
+#: templates/storage/snapshots.html:102
+#, fuzzy
+msgid "Replication"
+msgstr "Xác thực"
+
+#: templates/storage/unlock.html:3
+msgid "Do you want to unlock this volume?"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:6
+msgid "Resilver"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:11
+#: templates/storage/volumestatus_datagrid.html:26
+msgid "Scan"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:11
+#: templates/storage/volumestatus_datagrid.html:26
+msgid "%(scanned)s out of %(total)s"
+msgstr ""
+
+#: templates/storage/volumestatus_datagrid.html:16
+#: templates/storage/volumestatus_datagrid.html:31
+#, fuzzy
+msgid "Errors"
+msgstr "Lỗi: %s"
+
+#: templates/storage/zvols.html:3
+msgid "Create zvol on %(name)s"
+msgstr ""
+
+#: templates/support/index.html:60
+#: templates/system/registration_add.html:11
+#: templates/system/registration_edit.html:11
+msgid "Reset"
+msgstr ""
+
+#: templates/system/rsync_run.html:5
+msgid "Would you like to run this rsync job now?"
+msgstr ""
+
+#: choices.py:609
+msgid "9600"
+msgstr ""
+
+#: jails/models.py:135
+msgid "IPv6 prefix length"
+msgstr ""
+
+#: jails/models.py:147
+#, fuzzy
+msgid "IPv6 bridge address"
+msgstr "Địa chỉ IPv6"
+
+#: jails/models.py:167
+#, fuzzy
+msgid "IPv6 default gateway"
+msgstr "Gateway mặc định cho IPv6"
+
+#: jails/models.py:353
+msgid "IPv6 network range for jails and plugins"
+msgstr ""
+
+#: jails/nav.py:70
+#, fuzzy
+msgid "Add Jails"
+msgstr "Thêm  %s"
+
+#: services/models.py:381
+msgid "rpc.lockd(8) bind port"
+msgstr ""
+
+#: services/models.py:386
+msgid ""
+"This option forces rpc.lockd the daemon to bind to the specified port, for "
+"both IPv4 and IPv6 address families."
+msgstr ""
+
+#: services/models.py:1619
+#, fuzzy
+msgid "Verbose logging"
+msgstr "Lăm ơn đăng nhập."
+
+#: sharing/models.py:94
+#, fuzzy
+msgid "Inherit ACL's"
+msgstr "Thừa hưởng"
+
+#: sharing/models.py:96
+msgid ""
+"This parameter can be used to ensure that if default acls exist on parent "
+"directories, they are always honored when creating a new file or "
+"subdirectory in these parent directories. The default behavior is to use the "
+"unix mode specified when creating the directory. For windows shares it is "
+"NOT recommended to set this. The desired behavior can be achieved using "
+"ACL's. This probably won't do what you want it to do."
+msgstr ""
+
+#: storage/forms.py:534
+msgid "You need a data disk group"
+msgstr ""
+
+#: storage/forms.py:1091
+msgid "Yes: Decrypt disks"
+msgstr ""
+
+#: storage/forms.py:1506
+msgid ""
+"Dataset names must begin with an alphanumeric character and may only contain "
+"\"-\", \"_\", \":\", \" \" and \".\"."
+msgstr ""
+
+#: storage/forms.py:1961
+#, fuzzy
+msgid "Passphrase is not valid"
+msgstr "Người dùng %s đúng"
+
+#: storage/models.py:67
+msgid "Encryption Type"
+msgstr ""
+
+#: storage/views.py:115
+msgid "Please enter a hostname"
+msgstr ""
+
+#: templates/storage/create_passphrase.html:5
+msgid ""
+"Remember to add a new recovery key as this action invalidates the previous "
+"recovery key"
+msgstr ""
+
+#: templates/storage/volume_detach.html:19
+msgid "ATTENTION - Currently the following services depend on this volume: "
+msgstr ""
