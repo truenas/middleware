@@ -10,12 +10,8 @@
 
 # If there is a system dataset use it
 
-zfs list | grep -qE '\.system '
-if [ $? -eq 0 ] ; then
-    tmpdir=$(zfs list | grep -E '\.system ' | awk '{print $5}')
-else
-    tmpdir=/var/tmp
-fi
+tmpdir=$(zfs list -H | grep -E '\.system ' | awk '{print $5}')
+if [ -z "${tmpdir}" ]; then tmpdir="/var/tmp"; fi
 
 mydir=`dirname $0`
 
