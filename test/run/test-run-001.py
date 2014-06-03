@@ -93,7 +93,7 @@ def runTest():
         json.dump(test_config, outfile, indent=4)
         outfile.close()
 
-    child6.expect("Starting nginx")
+    child6.expect("Starting nginx", 25000000)
     child6.expect("Starting cron")
     child6.expect(" PST ", 25000000)
     (handle, sentinel_file) = tempfile.mkstemp("test")
