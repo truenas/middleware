@@ -518,7 +518,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 return home
 
             if home.startswith(u'/mnt/'):
-                bsdusr_username = self.cleaned_data['bsdusr_username']
+                bsdusr_username = self.cleaned_data.get('bsdusr_username', '')
                 saved_home = self.bsdusr_home_saved
 
                 if home.endswith(bsdusr_username):
