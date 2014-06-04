@@ -764,18 +764,26 @@ class Rsync(Model):
             line += ' --delete-delay'
         line += ' --delay-updates %s' % self.rsync_extra
 
+        # Do not use username if one is specified in host field
+        # See #5096 for more details
+        if '@' in self.rsync_remotehost:
+            remote = self.rsync_remotehost
+        else:
+            remote = '%s@%s' % (
+                self.rsync_user,
+                self.rsync_remotehost,
+            )
+
         if self.rsync_mode == 'module':
             if self.rsync_direction == 'push':
-                line += ' \'%s\' %s@%s::%s' % (
+                line += ' \'%s\' %s::%s' % (
                     self.rsync_path,
-                    self.rsync_user,
-                    self.rsync_remotehost,
+                    remote,
                     self.rsync_remotemodule,
                 )
             else:
-                line += ' %s@%s::%s \'%s\'' % (
-                    self.rsync_user,
-                    self.rsync_remotehost,
+                line += ' %s::%s \'%s\'' % (
+                    remote,
                     self.rsync_remotemodule,
                     self.rsync_path,
                 )
@@ -787,16 +795,14 @@ class Rsync(Model):
                 self.rsync_remoteport
             )
             if self.rsync_direction == 'push':
-                line += ' \'%s\' %s@%s:\'%s\'' % (
+                line += ' \'%s\' %s:\'%s\'' % (
                     self.rsync_path,
-                    self.rsync_user,
-                    self.rsync_remotehost,
+                    remote,
                     self.rsync_remotepath,
                 )
             else:
-                line += ' %s@%s:\'%s\' \'%s\'' % (
-                    self.rsync_user,
-                    self.rsync_remotehost,
+                line += ' %s:\'%s\' \'%s\'' % (
+                    remote,
                     self.rsync_remotepath,
                     self.rsync_path,
                 )
