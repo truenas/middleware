@@ -144,14 +144,6 @@ class CIFS(Model):
             help_text=_("Use this option to override the directory creation "
                 "mask (0777 by default).")
             )
-    cifs_srv_easupport = models.BooleanField(
-        verbose_name=_("EA Support"),
-        default=False,
-    )
-    cifs_srv_dosattr = models.BooleanField(
-        verbose_name=_("Support DOS File Attributes"),
-        default=False,
-    )
     cifs_srv_nullpw = models.BooleanField(
         verbose_name=_("Allow Empty Password"),
         default=False,
