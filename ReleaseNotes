@@ -1,5 +1,6 @@
 Release Notes for FreeNAS 9.2.1.6-BETA
 
+o  Samba updated to 4.1.8, ldb to version 1.1.17, and tdb to version 1.3.0
 o  Added extra safety belts and sane ACL behavior for CIFS sharing.
 
 Now when a ZFS dataset is created with the type set to Windows, or a Windows share is created
