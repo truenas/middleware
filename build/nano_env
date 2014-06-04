@@ -225,10 +225,6 @@ export SVNREVISION
 # mirrors. They're intentionally unset here to avoid accidental pollution from
 # one's environment. Please replace these lines with valid values.
 
-# See bsd.port.mk
-# We need this to hit our local package cache.
-#unset MASTER_SITE_BACKUP
-#unset MASTER_SITE_OVERRIDE
 
 # See pkg_add(1).
 unset PACKAGEROOT
@@ -243,6 +239,10 @@ export PXZ_ACCEL
 
 : ${PORTS_DISTFILES_CACHE:="/freenas/Dev/releng/FreeNAS/ports/distfiles"}
 export PORTS_DISTFILES_CACHE
+
+# See bsd.port.mk
+# This is our local package cache.
+MASTER_SITE_BACKUP="${PORTS_DISTFILES_CACHE}/\${DIST_SUBDIR}/ http://download.freenas.org/distfiles/\${DIST_SUBDIR}/ http://ftp.FreeBSD.org/pub/FreeBSD/ports/distfiles/\${DIST_SUBDIR}/"
 
 : ${MASTER_SITE_FREEBSD:=yes}
 export MASTER_SITE_FREEBSD
