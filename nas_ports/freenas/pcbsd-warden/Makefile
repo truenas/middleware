@@ -59,7 +59,7 @@ do-install:
 	${INSTALL_DATA} ${WRKSRC}/pcbsd/warden/pcbsd-utils-packages ${STAGEDIR}${PREFIX}/usr/local/share/warden/pcbsd-utils-packages
 	${INSTALL_DATA} ${WRKSRC}/pcbsd/warden/conf/warden.conf ${STAGEDIR}${PREFIX}/usr/local/etc/warden.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/linux-installs/debian-6-squeeze ${STAGEDIR}${PREFIX}/usr/local/share/warden/linux-installs/debian-6-squeeze
-	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/linux-installs/debian-6-squeeze ${STAGEDIR}${PREFIX}/usr/local/share/warden/linux-installs/gentoo-stage3-i486
+	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/linux-installs/gentoo-stage3-i486 ${STAGEDIR}${PREFIX}/usr/local/share/warden/linux-installs/gentoo-stage3-i486
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/checkstatus.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/checkstatus.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/checkupdates.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/checkupdates.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/chrootjail.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/chrootjail.sh
