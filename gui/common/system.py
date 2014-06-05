@@ -30,6 +30,7 @@ import os
 import re
 import shutil
 import smtplib
+import socket
 import sqlite3
 import subprocess
 import sys
@@ -607,7 +608,7 @@ def backup_database():
                     pass
         newfile = '%s/%s-%s-%d.db' % (
             systempath,
-            'hostname',
+            socket.gethostname(),
             today,
             number,
         )
