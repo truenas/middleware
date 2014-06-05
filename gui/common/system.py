@@ -577,7 +577,7 @@ def backup_database():
     from freenasUI.middleware.notifier import notifier
     systempath = notifier().system_dataset_path()
     if systempath:
-        files = glob.glob('%s/%s/*.db' % systempath)
+        files = glob.glob('%s/*.db' % systempath)
         reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
         files = filter(lambda y: reg.match(y), files)
         today = datetime.now().strftime("%Y-%m-%d")
