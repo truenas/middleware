@@ -10,35 +10,16 @@
 . /etc/rc.freenas
 
 
-get_system_pool()
-{
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		sys_pool
-	FROM
-		system_systemdataset
-	ORDER BY
-		-id
-	LIMIT 1
-	" | \
-	while read -r system_pool
-	do
-		echo "${system_pool}"
-	done
-}
-
 use_rrd_dataset()
 {
 	local use
-	local pool
 
 	if ! is_freenas
 	then
 		return 1
 	fi
 
-	pool="$(get_system_pool)"
-	if [ -z "${pool}" ]
+	if [ -z "$(get_rrd_dataset)" ]
 	then
 		return 1
 	fi
@@ -67,37 +48,17 @@ use_rrd_dataset()
 }
 
 
-get_system_dataset()
-{
-	local system_pool="$(get_system_pool)"
-
-	if [ ! -d "/mnt/${system_pool}" ]
-	then
-		return 1
-	fi
-
-	if [ -n "${system_pool}" ]
-	then
-		echo "${system_pool}/.system"
-	fi
-
-	return 0
-}
-
 get_rrd_dataset()
 {
-	local system_dataset="$(get_system_dataset)"
-
-	if [ -n "${system_dataset}" ]
+	if [ -L "${FREENAS_SYSTEMDATASET}" -a -e "${FREENAS_SYSTEMDATASET}" ]
 	then
-		echo "${system_dataset}/rrd"
+		echo "$(realpath ${FREENAS_SYSTEMDATASET}/rrd)"
 	fi
 }
 
 generate_collectd()
 {
     local datadir
-    local rrdds
     local rrdmnt
 
     # If there is a failover table remove the rc.conf cache
@@ -111,16 +72,24 @@ generate_collectd()
     rrdfile="/data/rrd_dir.tar.bz2"
     basedir="/var/db/collectd"
     datadir="/var/db/collectd/rrd"
-    rrdds="$(get_rrd_dataset)"
-    rrdmnt="/mnt/${rrdds}"
+    rrdmnt="$(get_rrd_dataset)"
 
-    if use_rrd_dataset && [ -n "${rrdds}" -a -d "/mnt/${rrdds}" ]; then
-        basedir="/mnt/$(get_system_dataset)"
-        datadir="/mnt/${rrdds}"
+    if use_rrd_dataset && [ -d "${rrdmnt}" ]; then
+	if [ -d "${datadir}" -a ! -L "${datadir}" ]; then
+		mv "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
+	fi
+	ln -s "${rrdmnt}" "${datadir}"
+        basedir="$(realpath ${FREENAS_SYSTEMDATASET})"
+        datadir="${rrdmnt}"
+    else
+        if [ -L "${datadir}" ]; then
+	    rm -f "${datadir}"
+	    mkdir -p "${datadir}"
+	fi
     fi
 
     if [ -f "${rrdfile}" ]; then
-        if use_rrd_dataset && [ -n "${rrdds}" -a -d "${rrdmnt}" ]; then
+        if use_rrd_dataset && [ -d "${rrdmnt}" ]; then
             if tar -tf "${rrdfile}"|egrep -q '^collectd/rrd/$'; then
                 cd "${rrdmnt}"
                 tar -jxf "${rrdfile}"

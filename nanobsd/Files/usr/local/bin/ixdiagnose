@@ -9,9 +9,8 @@
 #
 
 # If there is a system dataset use it
-
-tmpdir=$(zfs list -H | grep -E '\.system ' | awk '{print $5}')
-if [ -z "${tmpdir}" ]; then tmpdir="/var/tmp"; fi
+tmpdir="/var/db/system"
+if [ -e "${tmpdir}" ]; then tmpdir="/var/tmp"; fi
 
 mydir=`dirname $0`
 
