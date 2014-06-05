@@ -1595,6 +1595,17 @@ class BsdUserResourceMixin(NestedMixin):
                 kwargs={'object_id': bundle.obj.id})
         return bundle
 
+    def hydrate(self, bundle):
+        if (
+            bundle.request.method == 'PUT' and
+            bundle.obj.id and 'bsdusr_to_group' not in bundle.data
+        ):
+            bundle.data['bsdusr_to_group'] = [
+                o.id for o in bundle.obj.bsdgroupmembership_set.all()
+            ]
+        bundle = super(BsdUserResourceMixin, self).hydrate(bundle)
+        return bundle
+
 
 class BsdGroupResourceMixin(object):
 
