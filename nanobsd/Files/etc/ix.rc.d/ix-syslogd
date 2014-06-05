@@ -74,35 +74,14 @@ use_syslog_dataset()
 	return ${use}
 }
 
-get_system_pool()
-{
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		sys_pool
-	FROM
-		system_systemdataset
-	ORDER BY
-		-id
-	LIMIT 1
-	" | \
-	while read -r system_pool
-	do
-		echo "${system_pool}"
-	done
-}
-
 get_system_dataset()
 {
-	local system_pool="$(get_system_pool)"
 
-	if [ ! -d "/mnt/${system_pool}" ]
+	if [ -L "${FREENAS_SYSTEMDATASET}" -a -e "${FREENAS_SYSTEMDATASET}" ]
 	then
+		echo "$(realpath ${FREENAS_SYSTEMDATASET})"
+	else
 		return 1
-	fi
-
-	if [ -n "${system_pool}" ]
-	then
-		echo "${system_pool}/.system"
 	fi
 
 	return 0
@@ -141,10 +120,9 @@ ix_syslogd_start()
 		return 0
 	fi
 
-	local system_dataset="$(get_system_dataset)"
-	local syslog_dataset="$(get_syslog_dataset)"
+	local mp="$(get_syslog_dataset)"
 
-	if [ -z "${syslog_dataset}" ]
+	if [ -z "${mp}" ]
 	then
 		if [ -L "/var/log" ]
 		then
@@ -163,8 +141,6 @@ ix_syslogd_start()
 
 		return 0
 	fi
-
-	local mp="/mnt/${syslog_dataset}"
 
 	#
 	#	log directory exists, pick up any new files or
@@ -220,7 +196,7 @@ ix_syslogd_start()
 		/usr/local/bin/rsync -avz /var/log/* ${mp}/log/ >/dev/null 2>&1
 	fi
 
-	if [ ! -L "/var/log" ]
+	if [ ! -L "/var/log" -o ! -e "/var/log" ]
 	then
 		local datestr="$(date +'%Y%m%d%H%M%S')"
 		mv "/var/log" "/var/log.${datestr}"

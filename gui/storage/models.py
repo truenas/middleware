@@ -178,17 +178,23 @@ class Volume(Model):
                     services[service] = services.get(service, 0) + len(ids)
         return services
 
-    def _delete(self, destroy=True, cascade=True):
+    def _delete(self, destroy=True, cascade=True, systemdataset=None):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
         """
         from freenasUI.services.models import iSCSITargetExtent
-        from freenasUI.system.models import SystemDataset
+
+        # If we are using this volume to store collectd data
+        # the service needs to be restarted
+        if systemdataset and systemdataset.sys_rrd_usedataset:
+            reload_collectd = True
+        else:
+            reload_collectd = False
 
         # TODO: This is ugly.
-        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'jails')
-        reloads = (False, False, False,  False, False)
+        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'jails', 'collectd')
+        reloads = (False, False, False,  False, False, reload_collectd)
 
         n = notifier()
         if cascade:
@@ -205,7 +211,9 @@ class Volume(Model):
                     if destroy:
                         notifier().destroy_zfs_vol(zvol)
                     qs.delete()
-                reloads = map(sum, zip(reloads, (False, False, False, True, False)))
+                reloads = map(sum, zip(
+                    reloads, (False, False, False, True, False, reload_collectd)
+                ))
 
         else:
 
@@ -247,33 +255,26 @@ class Volume(Model):
         else:
             n.volume_detach(self)
 
-        # If there's a system dataset on this pool, stop using it.
-        try:
-            syspool = SystemDataset .objects.filter(sys_pool=self.vol_name)[0]
-        except IndexError:
-            # No system dataset on the pool being destroyed
-            pass
-        else:
-            syspool.sys_pool = ""
-            syspool.save()
-            # If we are using the syslog dataset kick syslog.
-            syslog = SystemDataset.objects.all()[0]
-            if syslog.usedataset:
-                n.reload("syslogd")
-            # If we are using the rrd dataset kick collectd.
-            collectd = SystemDataset.objects.all()[0]
-            if collectd.sys_rrd_usedataset:
-                n.reload("collectd")
-
         return (svcs, reloads)
 
     def delete(self, destroy=True, cascade=True):
+        from freenasUI.system.models import SystemDataset
+
+        try:
+            systemdataset = SystemDataset.objects.filter(
+                sys_pool=self.vol_name
+            )[0]
+        except IndexError:
+            systemdataset = None
 
         with transaction.atomic():
             try:
-                svcs, reloads = Volume._delete(self,
-                                               destroy=destroy,
-                                               cascade=cascade)
+                svcs, reloads = Volume._delete(
+                    self,
+                    destroy=destroy,
+                    cascade=cascade,
+                    systemdataset=systemdataset,
+                )
             finally:
                 for mp in self.mountpoint_set.all():
                     if not os.path.isdir(mp.mp_path):
@@ -284,6 +285,13 @@ class Volume(Model):
             # The framework would cascade delete all database items
             # referencing this volume.
             super(Volume, self).delete()
+
+        # If there's a system dataset on this pool, stop using it.
+        if systemdataset:
+            systemdataset.sys_pool = ''
+            systemdataset.save()
+            n.restart('system_datasets')
+
         # Refresh the fstab
         n.reload("disk")
         # For scrub tasks
@@ -684,6 +692,7 @@ class MountPoint(Model):
         reload_afp = False
         reload_nfs = False
         reload_iscsi = False
+        reload_collectd = False
 
         # Delete attached paths if they are under our tree.
         # and report if some action needs to be done.
@@ -704,7 +713,7 @@ class MountPoint(Model):
             reload_iscsi = True
         reload_jails = len(attachments['jails']) > 0
 
-        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi, reload_jails)
+        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi, reload_jails, reload_collectd)
 
     def delete(self, do_reload=True):
         if do_reload:

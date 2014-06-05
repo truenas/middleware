@@ -35,6 +35,7 @@
 : ${FREENAS_SQLITE_CMD:="/usr/local/bin/sqlite3"}
 : ${FREENAS_RC:="/var/tmp/rc.conf.freenas"}
 : ${FREENAS_VERSIONFILE:="/etc/version"}
+: ${FREENAS_SYSTEMDATASET:="/var/db/system"}
 
 #
 #	Updater specific variables.

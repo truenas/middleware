@@ -28,16 +28,13 @@ from freenasUI.account.models import (
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
-    get_samba4_path,
     activedirectory_enabled,
     domaincontroller_enabled,
     ldap_enabled,
-    nis_enabled,
     nt4_enabled
 )
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
-    services,
     ActiveDirectory,
     CIFS,
     DomainController,
@@ -47,7 +44,6 @@ from freenasUI.services.models import (
 
 from freenasUI.sharing.models import CIFS_Share
 from freenasUI.storage.models import Task
-from freenasUI.system.models import Settings
 
 
 def is_within_zfs(mountpoint):
@@ -87,7 +83,7 @@ def get_sysctl(name):
         return None
     try:
         out = out[0].strip()
-    except: 
+    except:
         pass
     return out
 
@@ -623,28 +619,27 @@ def smb4_setup():
     smb4_mkdir("/var/etc/private")
     os.chmod("/var/etc/private", 0700)
 
-    smb4_mkdir("/var/db/samba4/private")
-    os.chmod("/var/db/samba4/private", 0700)
-
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
 
     if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'BACKUP':
         return
 
-    volume, basename = get_samba4_path()
-    basename_realpath = "/mnt/%s" % basename
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+    basename_realpath = "/mnt/%s/samba4" % basename
     statedir_realpath = os.path.realpath(statedir)
 
-    if not volume.is_decrypted():
-        if (basename_realpath == statedir_realpath and os.path.islink(statedir)) or \
-            os.path.islink(statedir):
-            smb4_unlink(statedir)  
+    if not volume or not volume.is_decrypted():
+        if os.path.islink(statedir):
+            smb4_unlink(statedir)
             smb4_mkdir(statedir)
         return
 
+    if os.path.islink(statedir) and not os.path.exists(statedir):
+        smb4_unlink(statedir)
+
     if basename_realpath != statedir_realpath and os.path.exists(basename_realpath):
-        smb4_unlink(statedir)  
+        smb4_unlink(statedir)
         if os.path.exists(statedir):
             olddir = "%s.%s" % (statedir, time.strftime("%Y%m%d%H%M%S"))
             try:
@@ -652,18 +647,21 @@ def smb4_setup():
             except Exception as e:
                 print >> sys.stderr, "Unable to rename '%s' to '%s' (%s)" % (
                     statedir, olddir, e)
-                sys.exit(1)  
+                sys.exit(1)
 
         try:
             os.symlink(basename_realpath, statedir)
         except Exception as e:
             print >> sys.stderr, "Unable to create symlink '%s' -> '%s' (%s)" % (
                 basename_realpath, statedir, e)
-            sys.exit(1)  
+            sys.exit(1)
 
     if os.path.islink(statedir) and not os.path.exists(statedir_realpath):
-        smb4_unlink(statedir)  
+        smb4_unlink(statedir)
         smb4_mkdir(statedir)
+
+    smb4_mkdir("/var/db/samba4/private")
+    os.chmod("/var/db/samba4/private", 0700)
 
 
 def get_old_samba4_datasets():

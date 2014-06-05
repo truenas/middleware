@@ -535,59 +535,6 @@ def get_avatar_conf():
     return avatar_conf
 
 
-def get_system_dataset():
-    from freenasUI.storage.models import Volume
-    from freenasUI.system.models import SystemDataset
-
-    try:
-        systemdataset = SystemDataset.objects.all()[0]
-    except:
-        log.error("No system dataset settings!")
-        return None, None
-
-    system_pool = systemdataset.sys_pool
-    if not system_pool:
-        log.error("No system pool configured!")
-        return None, None
-
-    volume = Volume.objects.filter(vol_name=system_pool)
-    if not volume:
-        log.error("You need to create a volume to proceed!")
-        return None, None
-
-    volume = volume[0]
-    basename = "%s/.system" % volume.vol_name
-    return volume, basename
-
-
-def get_samba4_path():
-    """
-    Returns the volume and path for the samba4 storage path
-    """
-    from freenasUI.storage.models import Volume
-    from freenasUI.system.models import SystemDataset
-
-    try:
-        systemdataset = SystemDataset.objects.all()[0]
-    except Exception:
-        print >> sys.stderr, "No system dataset settings!"
-        sys.exit(1)
-
-    system_pool = systemdataset.sys_pool
-    if not system_pool:
-        print >> sys.stderr, "No system pool configured!"
-        sys.exit(1)
-
-    volume = Volume.objects.filter(vol_name=system_pool)
-    if not volume:
-        print >> sys.stderr, "You need to create a volume to proceed!"
-        sys.exit(1)
-
-    volume = volume[0]
-    basename = "%s/.system/samba4" % volume.vol_name
-    return volume, basename
-
-
 def exclude_path(path, exclude):
 
     if isinstance(path, unicode):
@@ -627,9 +574,10 @@ def exclude_path(path, exclude):
 
 
 def backup_database():
-    volume, basename = get_system_dataset()
-    if volume:
-        files = glob.glob('/mnt/%s/*.db' % basename)
+    from freenasUI.middleware.notifier import notifier
+    systempath = notifier().system_dataset_path()
+    if systempath:
+        files = glob.glob('%s/%s/*.db' % systempath)
         reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
         files = filter(lambda y: reg.match(y), files)
         today = datetime.now().strftime("%Y-%m-%d")
@@ -657,8 +605,8 @@ def backup_database():
                     os.unlink(f)
                 except:
                     pass
-        newfile = '/mnt/%s/%s-%s-%d.db' % (
-            basename,
+        newfile = '%s/%s-%s-%d.db' % (
+            systempath,
             'hostname',
             today,
             number,

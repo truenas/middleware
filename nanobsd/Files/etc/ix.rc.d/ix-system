@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-system
-# BEFORE: samba_server ix-syslogd
+# BEFORE: samba_server ix-syslogd ix-collectd
 
 . /etc/rc.freenas
 
@@ -16,89 +16,13 @@ notifier()
 
 system_start()
 {
-	/usr/local/libexec/nas/create_system_datasets.py
-}
-
-system_migrate()
-{
-	local src_pool="${1}"
-	local dst_pool="${2}"
-
-	if [ -z "${src_pool}" ]
-	then
-		echo "no source pool specified"
-		return 1
-	fi
-	if [ -z "${dst_pool}" ]
-	then
-		echo "no destination pool specified"
-		return 1
-	fi
-
-	local src_path="/mnt/${src_pool}/.system/"
-	local dst_path="/mnt/${dst_pool}/.system/"
-
-	if [ ! -d "${src_path}" ]
-	then
-		echo "source system dataset does not exist"
-		return 1
-	fi
-	if [ ! -d "${dst_path}" ]
-	then
-		echo "destination system dataset does not exist"
-		return 1
-	fi
-
-	start_syslogd=false
-	start_samba=false
-	start_collectd=false
-
-	if [ -f "/var/run/syslog.pid" ]
-	then
-		notifier stop syslogd
-		start_syslogd=true
-	fi
-	if [ -f "/var/run/samba/smbd.pid" ]
-	then
-		notifier stop cifs
-		start_samba=true
-	fi
-	if [ -f "/var/run/collectd.pid" ]
-	then
-		notifier stop collectd
-		start_collectd=true
-	fi
-
-	/usr/local/bin/rsync -avz "${src_path}" "${dst_path}"
-	res=$?
-
-	if [ "${res}" = "0" ]
-	then
-		zfs destroy -fr "${src_pool}"
-	fi
-
-	if ${start_syslogd}
-	then
-		notifier start syslogd
-	fi
-	if ${start_samba}
-	then
-		notifier start cifs
-	fi
-	if ${start_collectd}
-	then
-		notifier start collectd
-	fi
-
-	return ${res}
+	notifier system_dataset_create > /dev/null
 }
 
 name="ix-system"
 start_cmd='system_start'
 stop_cmd=':'
 status_cmd=':'
-migrate_cmd='system_migrate'
-extra_commands='migrate'
-            
+
 load_rc_config $name
 run_rc_command $*
