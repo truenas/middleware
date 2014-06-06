@@ -14,15 +14,14 @@ require([
   console.log(dialog.parentForm);
   dialog.submitForm();
   dialog.hide();
-
 });
 </script>
 <table class="form">
     <tr>
         <td>
         {% block confirm %}
-        {% trans "Are you sure you want to edit this?" %}
-	{% endblock %}
+        {{ message }}
+        {% endblock %}
         </td>
     </tr>
 
@@ -30,13 +29,11 @@ require([
     <tr>
         <td>
             <button class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type:'submit'">
-                {% block oklabel %}
-                {% trans "OK" %}
-                {% endblock %}
+                {% trans "Yes" %}
             </button>
             {% if not inline %}
             <button data-dojo-type="dijit.form.Button" class="cancelform">
-                {% trans "Cancel" %}
+                {% trans "No" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                     cancelDialog(this);
                 </script>

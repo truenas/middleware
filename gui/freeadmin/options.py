@@ -629,10 +629,15 @@ class BaseFreeAdmin(object):
                 context,
                 content_type='text/html')
 
+    def get_editconfirm_message(self):
+        return _('Are you sure you want to edit this?')
+
     def editconfirm(self, request, oid, mf=None):
 
         m = self._model
-        context = {}
+        context = {
+            'message': self.get_editconfirm_message(),
+        }
 
         template = "%s/%s_edit_confirm.html" % (
             m._meta.app_label,
