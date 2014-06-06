@@ -78,9 +78,10 @@ generate_collectd()
 	if [ -d "${datadir}" -a ! -L "${datadir}" ]; then
 		mv "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
 	fi
-	ln -s "${rrdmnt}" "${datadir}"
-        basedir="$(realpath ${FREENAS_SYSTEMDATASET})"
-        datadir="${rrdmnt}"
+	if [ "$(realpath -q ${datadir})" != "${rrdmnt}" ]; then
+		rm -f "${datadir}"
+		ln -s "${rrdmnt}" "${datadir}"
+	fi
     else
         if [ -L "${datadir}" ]; then
 	    rm -f "${datadir}"
