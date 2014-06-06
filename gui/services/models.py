@@ -113,6 +113,10 @@ class CIFS(Model):
         verbose_name=_("Local Master"),
         default=False,
     )
+    cifs_srv_domain_logons = models.BooleanField(
+        verbose_name=_("Domain logons"),
+        default=False,
+    )
     cifs_srv_timeserver = models.BooleanField(
         verbose_name=_("Time Server for Domain"),
         default=False,

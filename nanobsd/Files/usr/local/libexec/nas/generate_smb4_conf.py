@@ -389,6 +389,8 @@ def generate_smb4_conf(smb4_conf, role):
         "yes" if cifs.cifs_srv_timeserver else False)
     confset2(smb4_conf, "null passwords = %s",
         "yes" if cifs.cifs_srv_nullpw else False)
+    confset2(smb4_conf, "domain logons = %s",
+        "yes" if cifs.cifs_srv_domain_logons else "no")
 
     confset2(smb4_conf, "acl allow execute always = %s",
         "true" if cifs.cifs_srv_allow_execute_always else "false")
