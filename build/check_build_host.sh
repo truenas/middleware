@@ -61,7 +61,6 @@ check_for_command_from_port()
 
 check_build_tools()
 {
-	check_for_command_from_port mkisofs sysutils/cdrtools
 	check_for_command_from_port git devel/git
 	check_for_command_from_port pxz archivers/pxz
 	check_for_command_from_port xz archivers/xz
@@ -69,7 +68,7 @@ check_build_tools()
 	check_for_command_from_port python2 lang/python2
 	check_for_command_from_port VBoxManage emulators/virtualbox-ose
 	check_for_command_from_port poudriere ports-mgmt/poudriere-devel
-	check_for_command_from_port grub-mkrescue sysutils/grub2
+	check_for_command_from_port grub-mkrescue sysutils/grub2-pcbsd
 	check_for_command_from_port xorriso sysutils/xorriso
 }
 
