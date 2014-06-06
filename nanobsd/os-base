@@ -748,7 +748,8 @@ customize_cmd select_httpd
 
 remove_patch_divots ( )
 {
-	find ${NANO_WORLDDIR} -name \*.orig -or -name \*.rej -delete
+	find ${NANO_WORLDDIR} -name \*.orig -delete
+	find ${NANO_WORLDDIR} -name \*.rej -delete
 }
 customize_cmd remove_patch_divots
 
@@ -877,7 +878,8 @@ freenas_custom()
 	rm -rf ${NANO_WORLDDIR}/usr/share/me
 
 	# Kill all .a's and .la's that are installed (20MB+)
-	find ${NANO_WORLDDIR} -name \*.a -or -name \*.la -delete
+	find ${NANO_WORLDDIR} -name \*.a -delete
+	find ${NANO_WORLDDIR} -name \*.la -delete
 
 	# magic.mgc is just a speed optimization.  Kill it for 1.7MB
 	rm -f ${NANO_WORLDDIR}/usr/share/misc/magic.mgc
