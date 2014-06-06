@@ -74,10 +74,25 @@ ldapctl_start()
 
 	echo ${cifs_started} > "${cifs_file}"
 
+
+	if ! ldapctl_cmd ${service} ix-ldap quietstart
+	then
+		srv_set directoryservice 0
+		return 1
+	fi
+
 	ldapctl_cmd ${service} ix-nsswitch quietstart
 	ldapctl_cmd ${service} ix-pam quietstart
 	ldapctl_cmd ${service} ix-samba quietstart
 	cifs_start
+
+	if ! ldapctl_cmd ${service} ix-ldap status
+	then
+		srv_set directoryservice 0
+		return 1
+	fi
+
+	cifs_restart
 
 	ldapctl_cmd "${service} ix-cache quietstart &"
 
@@ -104,6 +119,7 @@ ldapctl_stop()
 		cifs_stop
 	fi
 
+	ldapctl_cmd ${service} ix-ldap forcestop
 	ldapctl_cmd ${service} ix-nsswitch quietstop
 	ldapctl_cmd ${service} ix-pam quietstop
 	ldapctl_cmd "${service} ix-cache quietstop &"
