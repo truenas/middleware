@@ -6,6 +6,7 @@ from freenasUI.api.resources import (
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
+from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 
 
@@ -51,6 +52,15 @@ class InterfacesFAdmin(BaseFreeAdmin):
             'sortable': False,
         })
         return columns
+
+    def get_editconfirm_message(self):
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status == 'MASTER'
+        ):
+            return _('This change will cause a failover event. Do you want to proceed?')
+        else:
+            return super(InterfacesFAdmin, self).get_editconfirm_message()
 
 
 class LAGGInterfaceFAdmin(BaseFreeAdmin):
