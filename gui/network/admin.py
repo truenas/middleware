@@ -60,7 +60,7 @@ class InterfacesFAdmin(BaseFreeAdmin):
         ):
             return _('This change will cause a failover event. Do you want to proceed?')
         else:
-            return super(InterfacesFAdmin, self).get_editconfirm_message()
+            return _('Network connectivity will be interrupted')
 
 
 class LAGGInterfaceFAdmin(BaseFreeAdmin):
