@@ -128,9 +128,15 @@ class RRDBase(object):
         # rrdtool python is suffering from some sort of threading locking issue
         # See #3478
         # rrdtool.graph(*args)
-        subprocess.Popen(
-            args, stdout=subprocess.PIPE, stdin=subprocess.PIPE
-        ).communicate()
+        proc = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            log.error("Failed to generate graph: %s", err)
         return fh, path
 
 
