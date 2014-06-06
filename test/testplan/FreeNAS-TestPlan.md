@@ -1,4 +1,4 @@
-= FreeNAS Test Plan =
+# FreeNAS Test Plan
 - [ ]  Do a clean wipe install of FreeNAS via ISO
 - [ ]  Do an upgrade of an existing FreeNAS system via ISO
 - [ ]  Do an upgrade of an existing FreeNAS system via GUI
