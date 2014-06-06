@@ -1,19 +1,24 @@
 Release Notes for FreeNAS 9.2.1.6-BETA
 
 o  Samba updated to 4.1.8, ldb to version 1.1.17, and tdb to version 1.3.0
+
+o  Netatalk updated to 3.1.2
+
 o  Added extra safety belts and sane ACL behavior for CIFS sharing.
 
-Now when a ZFS dataset is created with the type set to Windows, or a Windows share is created
-on an existing dataset with "Default Permissions" checked (a new GUI option in the CIFS sharing
-dialog), FreeNAS will make sure that the ACLs / ownerships are set properly for Windows and it
-will also make sure that the behavior of chmod(2) is set in ZFS such that it does not also
-destroy the Inherit, Delete or Delete Child ACLs whenever it's used.
+	Now when a ZFS dataset is created with the type set to Windows, or a
+	Windows share is created on an existing dataset with "Apply Default
+	Permissions" checked (a new GUI option in the CIFS sharing dialog),
+	FreeNAS will make sure that the ACLs / ownerships are set properly
+	for Windows and it will also make sure that the behavior of chmod(2)
+	is set in ZFS such that it does not also destroy the Inherit, Delete
+	or Delete Child ACLs whenever it's used.
 
-o The System Dataset now has its own Settings UI that allows you to control the placement of
-various sub-datasets under it.
+o The System Dataset now has its own Settings UI that allows you to control
+the placement of various sub-datasets under it.
 
-o The System Dataset will now migrate if you change the pool assignment, preserving your data
-and also moving it off the previous pool.
+o The System Dataset will now migrate if you change the pool assignment,
+preserving your data and also moving it off the previous pool.
 
-o A new Virtualbox jail template has been added.  Supporting Virtualbox in a jail is as easy
-as creating an instance of this template.
+o A new Virtualbox jail template has been added.  Supporting Virtualbox in a
+jail is as easy as creating an instance of this template.
