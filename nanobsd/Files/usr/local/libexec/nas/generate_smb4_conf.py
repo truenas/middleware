@@ -30,7 +30,6 @@ from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     activedirectory_enabled,
     domaincontroller_enabled,
-    ldap_enabled,
     nt4_enabled
 )
 from freenasUI.middleware.notifier import notifier
@@ -107,7 +106,7 @@ def get_dcerpc_endpoint_servers():
 
 def get_server_role():
     role = "standalone"
-    if nt4_enabled() or activedirectory_enabled() or ldap_enabled():
+    if nt4_enabled() or activedirectory_enabled():
         role = "member"
 
     if domaincontroller_enabled():
@@ -174,58 +173,6 @@ def add_nt4_conf(smb4_conf):
     confset1(smb4_conf, "local master = no")
     confset1(smb4_conf, "domain master = no")
     confset1(smb4_conf, "preferred master = no")
-
-
-def set_ldap_password():
-    try:
-        ldap = LDAP.objects.all()[0]
-    except:
-        return
-
-    if ldap.ldap_rootbindpw:
-        p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_rootbindpw)
-        out = p.communicate()
-        if out and out[1]:
-            for line in out[1].split('\n'):
-                print line
-
-
-def add_ldap_conf(smb4_conf):
-    try:
-        ldap = LDAP.objects.all()[0]
-        cifs = CIFS.objects.all()[0]
-    except:
-        return
-
-    confset1(smb4_conf, "security = user")
-
-    confset2(
-        smb4_conf,
-        "passdb backend = %s",
-        "ldapsam:ldaps://%s" % ldap.ldap_hostname if \
-        (ldap.ldap_ssl == 'on' or ldap.ldap_ssl == 'start_tls') else
-        "ldapsam:ldap://%s" % ldap.ldap_hostname
-    )
-
-    confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_rootbasedn)
-    confset2(smb4_conf, "ldap suffix = %s", ldap.ldap_basedn)
-    confset2(smb4_conf, "ldap user suffix = %s", ldap.ldap_usersuffix)
-    confset2(smb4_conf, "ldap group suffix = %s", ldap.ldap_groupsuffix)
-    confset2(smb4_conf, "ldap machine suffix = %s", ldap.ldap_machinesuffix)
-    confset2(
-        smb4_conf,
-        "ldap ssl = %s",
-        "start tls" if (ldap.ldap_ssl == 'start_tls') else 'off'
-    )
-
-    confset1(smb4_conf, "ldap replication sleep = 1000")
-    confset1(smb4_conf, "ldap passwd sync = yes")
-    confset1(smb4_conf, "ldapsam:trusted = yes")
-    confset1(smb4_conf, "idmap uid = 10000-39999")
-    confset1(smb4_conf, "idmap gid = 10000-39999")
-
-    confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
-    confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
 
 
 def add_activedirectory_conf(smb4_conf):
@@ -416,9 +363,6 @@ def generate_smb4_conf(smb4_conf, role):
 
         if nt4_enabled():
             add_nt4_conf(smb4_conf)
-
-        elif ldap_enabled():
-            add_ldap_conf(smb4_conf)
 
         elif activedirectory_enabled():
             add_activedirectory_conf(smb4_conf)
@@ -783,9 +727,6 @@ def main():
         for line in smb4_shares:
             f.write(line + '\n')
         f.close()
-
-    if role == 'member' and ldap_enabled():
-        set_ldap_password()
 
     (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
     for line in smb4_tdb:
