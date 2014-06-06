@@ -223,14 +223,13 @@ pam_start()
 	then
 		ad=1
 
+	elif dirsrv_enabled ldap
+	then
+		ldap=1
 
 	elif dirsrv_enabled nt4
 	then
 		nt4=1
-
-	elif dirsrv_enabled ldap
-	then
-		ldap=1
 
 	elif dirsrv_enabled nis
 	then
