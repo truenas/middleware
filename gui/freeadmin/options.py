@@ -72,6 +72,7 @@ class BaseFreeAdmin(object):
 
     create_modelform = None
     edit_modelform = None
+    edit_confirm = False
     delete_form = None
     delete_form_filter = {}  # Ugly workaround for Extent/DeviceExtent
     deletable = True
@@ -220,6 +221,9 @@ class BaseFreeAdmin(object):
                 url(r'^edit/(?P<oid>\d+)/(?P<mf>.+?)?$',
                     wrap(self.edit),
                     name='freeadmin_%s_%s_edit' % info),
+                url(r'^edit-confirm/(?P<oid>\d+)/(?P<mf>.+?)?$',
+                    wrap(self.editconfirm),
+                    name='freeadmin_%s_%s_edit_confirm' % info),
                 url(r'^delete/(?P<oid>\d+)/$',
                     wrap(self.delete),
                     name='freeadmin_%s_%s_delete' % info),
@@ -435,6 +439,11 @@ class BaseFreeAdmin(object):
             'extra_js': m._admin.extra_js,
             'verbose_name': m._meta.verbose_name,
             'deletable': m._admin.deletable,
+            'confirm_url': reverse('freeadmin_%s_%s_edit_confirm' % (
+                self.app_label,
+                self.module_name,
+            ), kwargs={'oid': oid}),
+            'edit_confirm': self.edit_confirm,
         }
 
         if 'deletable' in request.GET:
@@ -619,6 +628,27 @@ class BaseFreeAdmin(object):
                 template,
                 context,
                 content_type='text/html')
+
+    def editconfirm(self, request, oid, mf=None):
+
+        m = self._model
+        context = {}
+
+        template = "%s/%s_edit_confirm.html" % (
+            m._meta.app_label,
+            m._meta.object_name.lower(),
+        )
+        try:
+            get_template(template)
+        except TemplateDoesNotExist:
+            template = 'freeadmin/generic_model_edit_confirm.html'
+
+        return render(
+            request,
+            template,
+            context,
+            content_type='text/html',
+        )
 
     def delete(self, request, oid, mf=None):
         from freenasUI.freeadmin.navtree import navtree
