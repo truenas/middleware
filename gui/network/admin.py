@@ -13,6 +13,7 @@ class InterfacesFAdmin(BaseFreeAdmin):
 
     create_modelform = "InterfacesForm"
     edit_modelform = "InterfacesEditForm"
+    edit_confirm = True
     icon_object = u"InterfacesIcon"
     icon_model = u"InterfacesIcon"
     icon_add = u"AddInterfaceIcon"
