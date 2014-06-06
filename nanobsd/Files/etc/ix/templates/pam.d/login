@@ -7,7 +7,7 @@
 # auth
 auth		sufficient	pam_self.so		no_warn
 #@@WINBIND@@	auth		sufficient	/usr/local/lib/pam_winbind.so silent try_first_pass krb5_auth krb5_ccache_type=FILE
-#@@LDAP@@	auth		sufficient	/usr/local/lib/pam_sss.so use_first_pass
+#@@LDAP@@	auth		sufficient	/usr/local/lib/pam_sss.so
 auth		include		system
 
 # account

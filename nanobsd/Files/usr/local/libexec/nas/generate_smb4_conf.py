@@ -199,12 +199,12 @@ def add_ldap_conf(smb4_conf):
 
     confset1(smb4_conf, "security = user")
 
-    confset2(
+    confset1(
         smb4_conf,
-        "passdb backend = %s",
-        "ldapsam:ldaps://%s" % ldap.ldap_hostname if \
-        (ldap.ldap_ssl == 'on' or ldap.ldap_ssl == 'start_tls') else
-        "ldapsam:ldap://%s" % ldap.ldap_hostname
+        "passdb backend = ldapsam:%s://%s" % (
+            "ldaps" if ldap.ldap_ssl == 'on' else "ldap",
+            ldap.ldap_hostname
+        )
     )
 
     confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_rootbasedn)
