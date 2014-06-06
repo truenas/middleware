@@ -396,20 +396,6 @@ add_port www/py-requests
 add_port sysutils/smp_utils
 add_port net/trafshow
 
-#
-# These are all for SSSD
-# 
-add_port textproc/xmlcatmgr
-add_port textproc/libxslt
-add_port dns/c-ares
-add_port databases/ldb
-add_port devel/libunistring
-add_port devel/ding-libs
-add_port devel/nspr
-add_port security/nss
-add_port security/krb5
-add_port security/sssd
-
 add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
 add_port ftp/curl
 add_port devel/git OPTIONS_FILE_UNSET+=SVN \
