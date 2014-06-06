@@ -22,3 +22,7 @@ preserving your data and also moving it off the previous pool.
 
 o A new Virtualbox jail template has been added.  Supporting Virtualbox in a
 jail is as easy as creating an instance of this template.
+
+o The ISO installation image can, in addition to being used as CD install
+media, can also be written to a USB device and booted directly now.  To
+facilitate this, the installer now uses the GRUB boot manager.
