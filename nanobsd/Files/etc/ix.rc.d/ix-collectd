@@ -122,6 +122,11 @@ LoadPlugin processes
 LoadPlugin rrdtool
 LoadPlugin swap
 LoadPlugin uptime
+LoadPlugin syslog
+
+<Plugin "syslog">
+    LogLevel warning
+</Plugin>
 
 <Plugin "aggregation">
     <Aggregation>
