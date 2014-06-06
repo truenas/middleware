@@ -796,6 +796,7 @@ remove_var_db_pkg()
 	CR "pkg_delete -f autoconf\* || true"
 	# Eats up ~7 MB on the install image.
 	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
+	rm -Rf ${NANO_WORLDDIR}/conf/base/var/db/pkg
 	# bsnmpd complains about no such directory found
 	mkdir ${NANO_WORLDDIR}/var/db/pkg
 }
