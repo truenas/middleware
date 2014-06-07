@@ -21,15 +21,40 @@ ldapctl_cmd()
 	return 0
 }
 
-cifs_enabled()
-{
-	srv_enabled cifs && return 0
-	return 1
-}
-
 ldap_enabled()
 {
 	dirsrv_enabled ldap && return 0
+	return 1
+}
+
+sssd_running()
+{
+	${service} sssd onestatus >/dev/null 2>&1
+	return $?
+}
+
+sssd_start()
+{
+	ldapctl_cmd ${service} sssd onestart
+	return $?
+}
+
+sssd_stop()
+{
+	ldapctl_cmd ${service} sssd onestop
+	return $?
+}
+
+sssd_restart()
+{
+	ldapctl_cmd ${service} sssd onestart
+	ldapctl_cmd ${service} sssd onestop
+	return $?
+}
+
+cifs_enabled()
+{
+	srv_enabled cifs && return 0
 	return 1
 }
 
@@ -83,6 +108,15 @@ ldapctl_start()
 
 	ldapctl_cmd ${service} ix-nsswitch quietstart
 	ldapctl_cmd ${service} ix-pam quietstart
+
+	ldapctl_cmd $[service} ix-sssd start	
+	if sssd_running
+	then
+		sssd_restart
+	else
+		sssd_start
+	fi
+
 	ldapctl_cmd ${service} ix-samba quietstart
 	cifs_start
 
@@ -117,6 +151,12 @@ ldapctl_stop()
 	then
 		cifs_started=1
 		cifs_stop
+	fi
+
+	if sssd_running
+	then
+		sssd_stop
+		ldapctl_cmd ${service} ix-sssd start
 	fi
 
 	ldapctl_cmd ${service} ix-ldap forcestop
