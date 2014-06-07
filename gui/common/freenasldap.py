@@ -1734,9 +1734,9 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
 
                 u = u[1]
                 if self.default or self.unix:
-                    sAMAccountName = u['sAMAccountName'][0]
+                    sAMAccountName = _e(u['sAMAccountName'][0])
                 else:
-                    sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, u['sAMAccountName'][0]))
+                    sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, _e(u['sAMAccountName'][0])))
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
 
@@ -1992,8 +1992,9 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                 ad_groups = self.get_groups()
 
             for g in ad_groups:
-                sAMAccountName = g[1]['sAMAccountName'][0]
                 if self.default or self.unix:
+                    sAMAccountName = _e(g[1]['sAMAccountName'][0])
+                else:  
                     sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, sAMAccountName))
 
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
@@ -2173,10 +2174,10 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
             ad_group = self.get_group(group)
 
         if self.default or self.unix:
-            g = ad_group[1]['sAMAccountName'][0] if ad_group else group
+            g = _e(ad_group[1]['sAMAccountName'][0]) if ad_group else group
         else:
             g = "%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR,
-                ad_group[1]['sAMAccountName'][0] if ad_group else group)
+                _e(ad_group[1]['sAMAccountName'][0]) if ad_group else group)
 
         try:
             gr = grp.getgrnam(g)
@@ -2351,10 +2352,10 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
             ad_user = self.get_user(user)
 
         if self.default or self.unix:
-            u = ad_user[1]['sAMAccountName'][0] if ad_user else user
+            u = _e(ad_user[1]['sAMAccountName'][0]) if ad_user else user
         else:
             u = "%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR,
-                ad_user[1]['sAMAccountName'][0] if ad_user else user)
+                _e(ad_user[1]['sAMAccountName'][0]) if ad_user else user)
 
         try:
             pw = pwd.getpwnam(u)
