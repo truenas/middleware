@@ -18,6 +18,7 @@ NSSWITCH_CONF_PATH = "/etc/nsswitch.conf"
 
 from freenasUI.common.system import (
     activedirectory_enabled,
+    activedirectory_has_unix_extensions,
     domaincontroller_enabled,
     ldap_enabled,
     nis_enabled,
