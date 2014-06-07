@@ -8,7 +8,7 @@
 # BEFORE: NETWORK
 
 . /etc/rc.freenas
-    
+
 save_certificate()
 {
 	local ldap_id="${1}"
@@ -35,13 +35,11 @@ save_certificate()
 
 	done
 }
-
+    
 generate_ldapconf()
 {
 	local IFS=\|
-	local nssconf="${NSS_LDAP_CONF}"
 	local ldapconf="${LDAP_CONF}"
-	local secret="${NSS_LDAP_SECRET}"
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -81,61 +79,9 @@ generate_ldapconf()
 	do
 		[ -z "${ldap_hostname}" -o -z "${ldap_basedn}" ] && return 1
 
-		cat >"${nssconf}" <<-EOF
-		host ${ldap_hostname}
-		base ${ldap_basedn}
-		rootbinddn ${ldap_rootbasedn}
-		pam_password ${ldap_pwencryption}
-		nss_override_attribute_value loginShell /bin/sh
-EOF
-		if [ -z "${ldap_usersuffix}" ]; then
-			cat >>"${nssconf}" <<-EOF
-			nss_base_passwd ${ldap_basedn}
-EOF
-		else
-			cat >>"${nssconf}" <<-EOF
-			nss_base_passwd ${ldap_usersuffix},${ldap_basedn}
-EOF
-		fi
-		if [ -z "${ldap_groupsuffix}" ]; then
-			cat >>"${nssconf}" <<-EOF
-			nss_base_group ${ldap_basedn}
-EOF
-		else
-			cat >>"${nssconf}" <<-EOF
-			nss_base_group ${ldap_groupsuffix},${ldap_basedn}
-EOF
-		fi
-	
-		if [ "${ldap_ssl}" = "start_tls" ]; then
+		if [ "${ldap_ssl}" = "start_tls" -o "${ldap_ssl}" = "on" ]; then
 			save_certificate "${ldap_id}"
 
-			cat >>"${nssconf}" <<-EOF
-			ssl ${ldap_ssl}
-			tls_cacertfile ${LDAPCACERT}
-EOF
-		elif [ "${ldap_ssl}" = "on" ]; then
-			save_certificate "${ldap_id}"
-
-			cat >>"${nssconf}" <<-EOF
-			uri ldaps://${ldap_hostname}
-			ssl ${ldap_ssl}
-			tls_cacertfile ${LDAPCACERT}
-EOF
-		fi
-
-		for opt in ${ldap_options}; do
-			echo ${opt} >> "${nssconf}"
-		done
-
-		if [ "$ldap_anonbind" != 1 ]; then
-			echo "${ldap_rootbindpw}" > "${secret}"
-			chmod 600 "${secret}"
-		fi
-
-		ln -sf ${nssconf} "$(dirname ${nssconf})/ldap.conf"
-		if [ "$ldap_anonbind" != 1 ]; then
-			ln -sf ${secret} "$(dirname ${secret})/ldap.secret"
 		fi
 
 		echo "HOST ${ldap_hostname}" > "${ldapconf}"
@@ -287,14 +233,6 @@ ldap_start()
 
 ldap_stop()
 {
-	rm -f "${NSS_LDAP_SECRET}"
-	rm -f /usr/local/etc/ldap.secret
-
-	rm -f "${NSS_LDAP_CONF}"
-	rm -f /usr/local/etc/ldap.conf
-
-	cp /usr/local/etc/nss_ldap.conf.sample /usr/local/etc/nss_ldap.conf 2>/dev/null
-
         /usr/local/www/freenasUI/tools/cachetool.py expire
 }
 

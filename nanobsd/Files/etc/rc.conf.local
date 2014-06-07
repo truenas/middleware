@@ -341,6 +341,18 @@ _ssl_config()
 	echo "ixssl_list=\"${ssl_list}\""
 }
 
+_sssd_config()
+{
+	sssd_enable="NO"
+	if dirsrv_enabled ldap ; then
+		sssd_enable="YES"
+	fi
+	if dirsrv_enabled activedirectory; then
+		sssd_enable="YES"
+	fi
+	echo "sssd_enable=\"${sssd_enable}\""
+}
+
 _gen_conf()
 {
 	## First, import network interface configuration.
@@ -376,6 +388,7 @@ _gen_conf()
 		_nis_config
 	fi
 
+	_sssd_config
 	_nut_config
 
 	# Workaround: we don't enable ZFS by default but still want /etc/zfs/exports

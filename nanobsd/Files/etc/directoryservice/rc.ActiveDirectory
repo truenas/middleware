@@ -905,6 +905,16 @@ AD_leave_domain()
 	return ${res}
 }
 
+AD_has_unix_extensions()
+{
+	local ad_unix="$(AD_get ad_unix_extensions)"
+	if [ "${ad_unix}" = "1" ]
+	then
+		return 0
+	fi
+	return 1
+}
+
 AD_log()
 {
 	local args="$*"

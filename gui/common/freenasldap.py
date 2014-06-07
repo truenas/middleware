@@ -65,7 +65,7 @@ FREENAS_LDAP_CACHE_ENABLE = get_freenas_var("FREENAS_LDAP_CACHE_ENABLE", 1)
 
 FREENAS_LDAP_VERSION = ldap.VERSION3
 FREENAS_LDAP_REFERRALS = get_freenas_var("FREENAS_LDAP_REFERRALS", 0)
-FREENAS_LDAP_CACERTFILE = get_freenas_var("CERT_FILE")
+FREENAS_LDAP_CACERTFILE = get_freenas_var("LDAPCACERT")
 
 FREENAS_LDAP_PAGESIZE = get_freenas_var("FREENAS_LDAP_PAGESIZE", 1024)
 
@@ -217,6 +217,7 @@ class FreeNAS_LDAP_Directory(object):
             if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
                 self._handle.set_option(ldap.OPT_X_TLS_ALLOW, 1)
                 self._handle.set_option(ldap.OPT_X_TLS_CACERTFILE, FREENAS_LDAP_CACERTFILE)
+                self._handle.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
                 self._handle.set_option(ldap.OPT_X_TLS_NEWCTX, ldap.OPT_X_TLS_DEMAND)
 
             if self.ssl == FREENAS_LDAP_USETLS:

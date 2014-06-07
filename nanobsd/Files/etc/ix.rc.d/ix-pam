@@ -8,7 +8,7 @@
 # REQUIRE: ix-nsswitch
 # BEFORE: NETWORK
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 : ${PAM_TEMPLATE_DIR:="/etc/ix/templates/pam.d"}
 : ${PAM_DIR:="/etc/pam.d"}
@@ -217,20 +217,25 @@ pam_start()
 
 	if dirsrv_enabled activedirectory
 	then
-		ad=1
+		AD_init
+		if AD_has_unix_extensions
+		then
+			ldap=1
+		else
+			ad=1
+		fi
 
 	elif dirsrv_enabled domaincontroller
 	then
 		ad=1
 
+	elif dirsrv_enabled ldap
+	then
+		ldap=1
 
 	elif dirsrv_enabled nt4
 	then
 		nt4=1
-
-	elif dirsrv_enabled ldap
-	then
-		ldap=1
 
 	elif dirsrv_enabled nis
 	then

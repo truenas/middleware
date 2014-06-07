@@ -199,12 +199,12 @@ def add_ldap_conf(smb4_conf):
 
     confset1(smb4_conf, "security = user")
 
-    confset2(
+    confset1(
         smb4_conf,
-        "passdb backend = %s",
-        "ldapsam:ldaps://%s" % ldap.ldap_hostname if \
-        (ldap.ldap_ssl == 'on' or ldap.ldap_ssl == 'start_tls') else
-        "ldapsam:ldap://%s" % ldap.ldap_hostname
+        "passdb backend = ldapsam:%s://%s" % (
+            "ldaps" if ldap.ldap_ssl == 'on' else "ldap",
+            ldap.ldap_hostname
+        )
     )
 
     confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_rootbasedn)
@@ -389,6 +389,8 @@ def generate_smb4_conf(smb4_conf, role):
         "yes" if cifs.cifs_srv_timeserver else False)
     confset2(smb4_conf, "null passwords = %s",
         "yes" if cifs.cifs_srv_nullpw else False)
+    confset2(smb4_conf, "domain logons = %s",
+        "yes" if cifs.cifs_srv_domain_logons else "no")
 
     confset2(smb4_conf, "acl allow execute always = %s",
         "true" if cifs.cifs_srv_allow_execute_always else "false")

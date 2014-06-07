@@ -491,6 +491,7 @@ def add_ldap(sc):
     elif ldap.ldap_ssl == 'start_tls':
         ldap_section.tls_reqcert = 'demand'
         ldap_section.ldap_tls_cacert = ldap.ldap_tls_cacertfile
+        ldap_section.ldap_id_use_start_tls = 'true'
 
     sc[ldap_domain] = ldap_section
     sc['sssd'].add_domain(ldap_cookie)
