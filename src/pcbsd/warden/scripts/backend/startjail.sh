@@ -55,10 +55,10 @@ start_jail_vimage()
 
   if [ -n "${BRIDGEIP4}" ] ; then
      if ! ipv4_configured "${BRIDGE}" ; then
-        ifconfig ${BRIDGE} inet "${BRIDGEIP4}"
+        ifconfig ${BRIDGE} inet "${BRIDGEIP4}"/32
 
      elif ! ipv4_address_configured "${BRIDGE}" "${BRIDGEIP4}" ; then
-        ifconfig ${BRIDGE} inet alias "${BRIDGEIP4}"
+        ifconfig ${BRIDGE} inet alias "${BRIDGEIP4}"/32
      fi
   fi
   if [ -n "${BRIDGEIPS4}" ] ; then
