@@ -22,7 +22,7 @@ from freenasUI.storage.models import Volume
 
 log = logging.getLogger('jails.utils')
 
-JAILS_INDEX = "http://cdn.freenas.org"
+JAILS_INDEX = "http://download.freenas.org"
 EXTRACT_TARBALL_STATUS_FILE = "/var/tmp/status"
 
 
