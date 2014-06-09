@@ -231,6 +231,12 @@ if len(mp_to_task_map) > 0:
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 log.error("Failed to create snapshot '%s': %s", snapname, err)
+            # Take a hold on snapshots.
+            holdcmd = '/sbin/zfs hold%s freenas:repl %s' % (rflag, snapname)
+            proc = pipeopen(holdcmd, logger=log)
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                log.error("Failed to create snapshot '%s': %s", snapname, err)
             MNTLOCK.unlock()
         else:
             snapcmd = '/sbin/zfs snapshot%s %s' % (rflag, snapname)
@@ -241,6 +247,7 @@ if len(mp_to_task_map) > 0:
 
     MNTLOCK.lock()
     for snapshot in snapshots_pending_delete:
+        # TODO: Future versions will have freenas:state removed in favor of holds.
         zfsproc = pipeopen('/sbin/zfs get -H freenas:state %s' % (snapshot, ), logger=log)
         output = zfsproc.communicate()[0]
         if output != '':

@@ -209,6 +209,8 @@ for replication in replication_tasks:
                     if state != '-':
                         system('/sbin/zfs set freenas:state=NEW %s' % (known_latest_snapshot))
                         system('/sbin/zfs set freenas:state=LATEST %s' % (snapshot))
+                        system('/sbin/zfs hold -r freenas:repl %s' % (known_latest_snapshot))
+                        system('/sbin/zfs hold -r freenas:repl %s' % (snapshot))
                         wanted_list.insert(0, known_latest_snapshot)
                         log.debug("Snapshot %s added to wanted list (was LATEST)" % (snapshot))
                         known_latest_snapshot = snapshot
@@ -226,6 +228,7 @@ for replication in replication_tasks:
                         # For compatibility with older versions
                         wanted_list.insert(0, snapshot)
                         system('/sbin/zfs set freenas:state=NEW %s' % (snapshot))
+                        system('/sbin/zfs hold -r freenas:repl %s' % (snapshot))
                         log.debug("Snapshot %s added to wanted list (stale)" % (snapshot))
                     elif state == '-':
                         # The snapshot is already replicated, or is not
@@ -266,6 +269,7 @@ for replication in replication_tasks:
                     log.info("Marking %s as latest snapshot" % (last_snapshot))
                     if state == '-':
                         system('/sbin/zfs inherit freenas:state %s' % (known_latest_snapshot))
+                        system('/sbin/zfs release -r freenas:repl %s' % (snapshot))
                         system('/sbin/zfs set freenas:state=LATEST %s' % (last_snapshot))
                         known_latest_snapshot = last_snapshot
                 else:
@@ -285,6 +289,7 @@ Hello,
             log.log(logging.NOTICE, "Can not locate %s on remote system, starting from there" % (known_latest_snapshot))
             # Reset the "latest" snapshot to a new one.
             system('/sbin/zfs set freenas:state=NEW %s' % (known_latest_snapshot))
+            system('/sbin/zfs hold -r freenas:repl %s' % (known_latest_snapshot))
             wanted_list.insert(0, known_latest_snapshot)
             last_snapshot = ''
             known_latest_snapshot = ''
@@ -364,12 +369,20 @@ Hello,
             remote_snap = output.split('\n')[0]
             if local_snap == remote_snap:
                 system('%s -p %d %s "/sbin/zfs inherit freenas:state %s@%s"' % (sshcmd, remote_port, remote, remotefs_final, remote_snap))
+                # system('%s -p %d %s "/sbin/zfs hold -r freenas:repl %s@%s"' % (sshcmd, remote_port, remote, remotefs_final, remote_snap))
+                # TODO: release all older snapshots
                 # Replication was successful, mark as such
                 MNTLOCK.lock()
                 if last_snapshot != '':
                     system('/sbin/zfs inherit freenas:state %s' % (last_snapshot))
+                    system('/sbin/zfs release -r freenas:repl %s' % (last_snapshot))
                 last_snapshot = snapname
                 system('/sbin/zfs set freenas:state=LATEST %s' % (last_snapshot))
+                #
+                # Place a hold.  This is harmless when it's already held but important if
+                # there is no hold.
+                #
+                system('/sbin/zfs hold -r freenas:repl %s' % (last_snapshot))
                 MNTLOCK.unlock()
                 replication.repl_lastsnapshot = last_snapshot
                 if resetonce:
@@ -389,6 +402,7 @@ Hello,
                         # Replication was successful, mark as such
                         MNTLOCK.lock()
                         system('/sbin/zfs inherit freenas:state %s' % (snapname))
+                        system('/sbin/zfs release -r freenas:repl %s' % (snapname))
                         MNTLOCK.unlock()
                         continue
 
