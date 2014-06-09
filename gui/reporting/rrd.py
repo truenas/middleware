@@ -32,7 +32,6 @@ import tempfile
 import subprocess
 
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('reporting.rrd')
 
@@ -733,18 +732,11 @@ class DiskPlugin(RRDBase):
 
     def get_identifiers(self):
         ids = []
-        mdevs = []
-        for multipath in notifier().multipath_all():
-            for consumer in multipath.consumers:
-                if consumer.status == 'READ':
-                    mdevs.append(consumer.devname)
         for entry in glob.glob('%s/disk-*' % self._base_path):
             ident = entry.split('-', 1)[-1]
             if not os.path.exists('/dev/%s' % ident):
                 continue
             if ident.startswith('pass'):
-                continue
-            if ident in mdevs:
                 continue
             if os.path.exists(os.path.join(entry, 'disk_octets.rrd')):
                 ids.append(ident)
