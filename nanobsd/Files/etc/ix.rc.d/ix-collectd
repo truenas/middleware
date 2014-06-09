@@ -126,7 +126,7 @@ LoadPlugin uptime
 LoadPlugin syslog
 
 <Plugin "syslog">
-    LogLevel warning
+    LogLevel err
 </Plugin>
 
 <Plugin "aggregation">
