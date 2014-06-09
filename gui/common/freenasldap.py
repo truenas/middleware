@@ -1737,6 +1737,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                     sAMAccountName = _e(u['sAMAccountName'][0])
                 else:
                     sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, _e(u['sAMAccountName'][0])))
+
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
 
@@ -1995,8 +1996,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                 if self.default or self.unix:
                     sAMAccountName = _e(g[1]['sAMAccountName'][0])
                 else:  
-                    sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, sAMAccountName))
-
+                    sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, _e(g[1]['sAMAccountName'][0])))
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
                     self.__dgcache[n][sAMAccountName.upper()] = g
 
