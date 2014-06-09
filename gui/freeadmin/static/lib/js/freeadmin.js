@@ -661,6 +661,31 @@ require([
       }
     }
 
+    cifs_default_permissions_toggle = function() {
+        var id_default_permissions = registry.byId("id_cifs_default_permissions");
+        var default_permissions = id_default_permissions.get("value");
+
+        var id_inheritowner = registry.byId("id_cifs_inheritowner");
+        var id_inheritperms = registry.byId("id_cifs_inheritperms");
+        var id_inheritacls = registry.byId("id_cifs_inheritacls");
+
+        if (default_permissions == 'on') {
+            id_inheritowner.set("checked", false);
+            id_inheritowner.set("disabled", true);
+
+            id_inheritperms.set("checked", false);
+            id_inheritperms.set("disabled", true);
+
+            id_inheritacls.set("checked", false);
+            id_inheritacls.set("disabled", true);
+
+        } else {
+            id_inheritowner.set("disabled", false);
+            id_inheritperms.set("disabled", false);
+            id_inheritacls.set("disabled", false);
+        }
+    }
+
     mpAclChange = function(acl) {
       var mode = registry.byId("id_mp_mode");
       if(acl.get('value') === false) {

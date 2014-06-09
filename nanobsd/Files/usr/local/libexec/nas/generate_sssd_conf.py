@@ -469,11 +469,29 @@ def add_ldap(sc):
 
     ldap = LDAP.objects.all()[0]
 
-    ldap_section.ldap_uri = "ldap://%s" % ldap.ldap_hostname
+    ldap_section.ldap_uri = "%s://%s" % (
+        "ldaps" if ldap.ldap_ssl == 'on' else "ldap",
+        ldap.ldap_hostname
+    )
     ldap_section.ldap_search_base = ldap.ldap_basedn
+    if ldap.ldap_usersuffix:
+        ldap_section.ldap_user_search_base = "%s,%s" % (
+            ldap.ldap_usersuffix, ldap.ldap_basedn
+        )
+    if ldap.ldap_groupsuffix:
+        ldap_section.ldap_group_search_base = "%s,%s" % (
+            ldap.ldap_groupsuffix, ldap.ldap_basedn
+        )
     ldap_section.ldap_default_bind_dn = ldap.ldap_rootbasedn
     ldap_section.ldap_default_authtok_type = 'password'
     ldap_section.ldap_default_authtok = ldap.ldap_rootbindpw
+    
+    if ldap.ldap_ssl == 'on':
+        ldap_section.ldap_tls_cacert = ldap.ldap_tls_cacertfile
+    elif ldap.ldap_ssl == 'start_tls':
+        ldap_section.tls_reqcert = 'demand'
+        ldap_section.ldap_tls_cacert = ldap.ldap_tls_cacertfile
+        ldap_section.ldap_id_use_start_tls = 'true'
 
     sc[ldap_domain] = ldap_section
     sc['sssd'].add_domain(ldap_cookie)

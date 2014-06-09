@@ -29,6 +29,7 @@ import logging
 from django.db import models
 from django.db.models.base import ModelBase
 
+from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.apppool import appPool
 
 #FIXME: Backward compatible
@@ -99,8 +100,9 @@ class Model(models.Model):
             # TODO: maybe we should do this in a thread
             # to do not wait operation to finish
             backup_database()
-        except:
-            pass
+        except Exception, e:
+            log.debug("Failed to backup database on model delete")
+            log_traceback(log=log)
         return rv
 
     def delete(self, *args, **kwargs):
@@ -110,6 +112,7 @@ class Model(models.Model):
             # TODO: maybe we should do this in a thread
             # to do not wait operation to finish
             backup_database()
-        except:
-            pass
+        except Exception, e:
+            log.debug("Failed to backup database on model delete")
+            log_traceback(log=log)
         return rv

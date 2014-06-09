@@ -40,7 +40,9 @@ build: git-verify
 checkout: git-verify
 	${ENV_SETUP} build/do_checkout.sh
 
-update: checkout
+update: git-verify
+	git pull
+	${ENV_SETUP} build/do_checkout.sh
 
 clean:
 	${ENV_SETUP} build/build_cleanup.py

@@ -21,15 +21,40 @@ adctl_cmd()
 	return 0
 }
 
-cifs_enabled()
-{
-	srv_enabled cifs && return 0
-	return 1
-}
-
 ad_enabled()
 {
 	dirsrv_enabled activedirectory && return 0
+	return 1
+}
+
+sssd_running()
+{
+	${service} sssd onestatus >/dev/null 2>&1
+	return $?
+}
+
+sssd_start()
+{
+	adctl_cmd ${service} sssd onestart
+	return $?
+}
+
+sssd_stop()
+{
+	adctl_cmd ${service} sssd onestop
+	return $?
+}
+
+sssd_restart()
+{
+	adctl_cmd ${service} sssd onestart
+	adctl_cmd ${service} sssd onestop
+	return $?
+}
+
+cifs_enabled()
+{
+	srv_enabled cifs && return 0
 	return 1
 }
 
@@ -57,6 +82,8 @@ adctl_start()
 	local cifs_started=0	
 	local ad_started=0
 
+	AD_init
+
 	if cifs_enabled
 	then
 		cifs_started=1
@@ -75,7 +102,6 @@ adctl_start()
 	echo ${cifs_started} > "${cifs_file}"
 
 	adctl_cmd ${service} ix-kerberos quietstart
-
 	adctl_cmd ${service} ix-nsswitch quietstart
 
 	adctl_cmd ${service} ix-kinit quietstart
@@ -83,6 +109,17 @@ adctl_start()
 	then
 		srv_set directoryservice 0
 		return 1
+	fi
+
+	if AD_has_unix_extensions
+	then
+		adctl_cmd ${service} ix-sssd start
+		if sssd_running
+		then
+			sssd_restart
+		else
+			sssd_start
+		fi
 	fi
 
 	adctl_cmd ${service} ix-samba quietstart
@@ -111,6 +148,7 @@ adctl_stop()
 {
 	local cifs_started=1
 	local prev_cifs_started=0
+
 	if [ -s "${cifs_file}" ]
 	then
 		prev_cifs_started="$(cat "${cifs_file}")"
@@ -125,6 +163,12 @@ adctl_stop()
 	then
 		cifs_started=1
 		cifs_stop
+	fi
+
+	if sssd_running
+	then
+		sssd_stop
+		adctl_cmd ${service} ix-sssd start
 	fi
 
 	adctl_cmd ${service} ix-kerberos quietstop

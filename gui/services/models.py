@@ -113,6 +113,10 @@ class CIFS(Model):
         verbose_name=_("Local Master"),
         default=False,
     )
+    cifs_srv_domain_logons = models.BooleanField(
+        verbose_name=_("Domain logons"),
+        default=False,
+    )
     cifs_srv_timeserver = models.BooleanField(
         verbose_name=_("Time Server for Domain"),
         default=False,
@@ -144,14 +148,6 @@ class CIFS(Model):
             help_text=_("Use this option to override the directory creation "
                 "mask (0777 by default).")
             )
-    cifs_srv_easupport = models.BooleanField(
-        verbose_name=_("EA Support"),
-        default=False,
-    )
-    cifs_srv_dosattr = models.BooleanField(
-        verbose_name=_("Support DOS File Attributes"),
-        default=False,
-    )
     cifs_srv_nullpw = models.BooleanField(
         verbose_name=_("Allow Empty Password"),
         default=False,
@@ -238,7 +234,7 @@ class CIFS(Model):
     cifs_srv_max_protocol = models.CharField(
             max_length=120,
             verbose_name=_("Server maximum protocol"),
-            default='SMB3',
+            default='SMB2',
             choices=choices.CIFS_SMB_PROTO_CHOICES,
             help_text=_("The highest protocol version that will be supported by the server")
             )

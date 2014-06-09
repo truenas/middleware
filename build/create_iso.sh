@@ -35,9 +35,10 @@ main()
 	OUTPUT="${NANO_OBJ}/$NANO_NAME.iso" # Output file of mkisofs
 
 	CDROM_LABEL=${NANO_LABEL}_INSTALL
-	MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
-			 -allow-multidot -hide boot.catalog -V ${CDROM_LABEL} -o ${OUTPUT} -no-emul-boot \
-			 -b boot/cdboot ${ISODIR}"
+	#MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
+	#		 -allow-multidot -hide boot.catalog -V ${CDROM_LABEL} -o ${OUTPUT} -no-emul-boot \
+	#		 -b boot/cdboot ${ISODIR}"
+	MKISOFS_CMD="/usr/local/bin/grub-mkrescue -o ${OUTPUT} ${ISODIR} -- -volid FREENAS_INSTALL"
 
 	if ! command -v mkisofs >/dev/null 2>&1; then
 		error "mkisofs not available.  Please install the sysutils/cdrtools port."

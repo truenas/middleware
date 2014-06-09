@@ -56,7 +56,7 @@ a:hover {
 #rebootDialog_underlay {
     background-color:#000;
 }
-#shutdownDialog_underlay,#editscary_dialog_underlay {
+#shutdownDialog_underlay,#editscary_dialog_underlay,#editconfirmscary_dialog_underlay {
     background-color:#FD0000;
 }
 #top_dialog_underlay {

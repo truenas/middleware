@@ -6,6 +6,7 @@ from freenasUI.api.resources import (
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
+from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 
 
@@ -13,6 +14,7 @@ class InterfacesFAdmin(BaseFreeAdmin):
 
     create_modelform = "InterfacesForm"
     edit_modelform = "InterfacesEditForm"
+    edit_confirm = True
     icon_object = u"InterfacesIcon"
     icon_model = u"InterfacesIcon"
     icon_add = u"AddInterfaceIcon"
@@ -50,6 +52,15 @@ class InterfacesFAdmin(BaseFreeAdmin):
             'sortable': False,
         })
         return columns
+
+    def get_editconfirm_message(self):
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status == 'MASTER'
+        ):
+            return _('This change will cause a failover event. Do you want to proceed?')
+        else:
+            return _('Network connectivity will be interrupted')
 
 
 class LAGGInterfaceFAdmin(BaseFreeAdmin):

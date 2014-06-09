@@ -65,6 +65,7 @@ FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NEED_UPDATE_SENTINEL = '/data/need-update'
 VERSION_FILE = '/etc/version'
 GELI_KEYPATH = '/data/geli'
+SYSTEMPATH = '/var/db/system'
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -1556,7 +1557,7 @@ class notifier:
         zfs_error = zfsproc.wait()
         return zfs_error, zfs_err
 
-    def create_zfs_dataset(self, path, props=None):
+    def create_zfs_dataset(self, path, props=None, _restart_collectd=True):
         """Internal procedure to create ZFS volume"""
         options = " "
         if props:
@@ -1567,7 +1568,7 @@ class notifier:
         zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
-        if zfs_error == 0:
+        if zfs_error == 0 and _restart_collectd:
             self.restart("collectd")
         return zfs_error, zfs_err
 
@@ -4787,7 +4788,6 @@ class notifier:
             pipe.communicate()
             stderr.seek(0)
             err = stderr.read()
-            print err
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
             if pipe.returncode != 0 and err.find("end of device") == -1:
                 raise MiddlewareError(
@@ -4923,23 +4923,13 @@ class notifier:
         #)
         return rv
 
-    def create_system_datasets(self):
-        res = False
-        if self._system_nolog("/usr/sbin/service ix-system start") == 0:
-            res = True
-        return res
-
-    def migrate_system_dataset(self, src, dst):
-        res = False
-        if self._system_nolog("/usr/sbin/service ix-system migrate '%s' '%s'" % (src, dst)) == 0:
-            res = True
-        return res
-
     def _restart_system_datasets(self):
-        self.start("ix-syslogd")
-        self.restart("syslogd")
-        self.start("ix-samba")
+        systemdataset = self.system_dataset_create()
+        if systemdataset.sys_syslog_usedataset:
+            self.restart("syslogd")
         self.restart("cifs")
+        if systemdataset.sys_rrd_usedataset:
+            self.restart("collectd")
 
     def dataset_init_unix(self, dataset):
         """path = "/mnt/%s" % dataset"""
@@ -4997,6 +4987,137 @@ class notifier:
         oid = int(obj_or_id)
         rsync = Rsync.objects.get(id=oid)
         return rsync.commandline()
+
+    def system_dataset_settings(self):
+        from freenasUI.storage.models import Volume
+        from freenasUI.system.models import SystemDataset
+
+        try:
+            systemdataset = SystemDataset.objects.all()[0]
+        except:
+            systemdataset = SystemDataset.objects.create()
+
+        # If there is a pool configured make sure the volume exists
+        # Otherwise reset it to blank
+        # TODO: Maybe it would be better to use a ForeignKey
+        if systemdataset.sys_pool:
+            volume = Volume.objects.filter(vol_name=systemdataset.sys_pool)
+            if not volume.exists():
+                systemdataset.sys_pool = ''
+                systemdataset.save()
+            else:
+                volume = volume[0]
+
+        if not systemdataset.sys_pool:
+            volume = None
+            for o in Volume.objects.order_by('-vol_fstype', 'vol_encrypt'):
+                if o.is_decrypted():
+                    volume = o
+                    break
+            if not volume:
+                return systemdataset, None, None
+            else:
+                systemdataset.sys_pool = volume.vol_name
+                systemdataset.save()
+
+        basename = '%s/.system' % volume.vol_name
+        return systemdataset, volume, basename
+
+    def system_dataset_create(self):
+
+        if (
+            hasattr(self, 'failover_status') and
+            self.failover_status() == 'BACKUP'
+        ):
+            if os.path.lexists(SYSTEMPATH):
+                os.unlink(SYSTEMPATH)
+            return None
+
+        systemdataset, volume, basename = self.system_dataset_settings()
+        if not volume:
+            if os.path.lexists(SYSTEMPATH):
+                os.unlink(SYSTEMPATH)
+            return systemdataset
+
+        datasets = [basename]
+        for sub in ('samba4', 'syslog', 'cores', 'rrd'):
+            datasets.append('%s/%s' % (basename, sub))
+
+        assert volume.vol_fstype in ('ZFS', 'UFS')
+
+        createdds = False
+        for dataset in datasets:
+            if volume.vol_fstype == 'ZFS':
+                proc = self._pipeopen('/sbin/zfs list \'%s\'' % dataset)
+                proc.communicate()
+                if proc.returncode == 0:
+                    continue
+                self.create_zfs_dataset(dataset, _restart_collectd=False)
+                createdds = True
+                os.chmod('/mnt/%s' % dataset, 0755)
+            else:
+                if not os.path.exists(dataset):
+                    try:
+                        os.makedirs(dataset, mode=0755)
+                    except:
+                        pass
+
+        if createdds:
+            self.restart('collectd')
+
+        corepath = '/mnt/%s/cores' % basename
+        if os.path.exists(corepath):
+            self._system('/sbin/sysctl kern.corefile=\'%s/%%N.core\'' % (
+                corepath,
+            ))
+            os.chmod(corepath, 0775)
+
+        if os.path.lexists(SYSTEMPATH):
+            os.unlink(SYSTEMPATH)
+        os.symlink('/mnt/%s' % basename, SYSTEMPATH)
+
+        return systemdataset
+
+    def system_dataset_path(self):
+        if not os.path.exists(SYSTEMPATH):
+            return None
+        return os.path.realpath(SYSTEMPATH)
+
+    def system_dataset_migrate(self, _from, _to):
+
+        rsyncs = (
+            ('/mnt/%s/.system/' % _from, '/mnt/%s/.system/' % _to),
+        )
+
+        restart = []
+        if os.path.exists('/var/run/syslog.pid'):
+            restart.append('syslogd')
+            self.stop('syslogd')
+
+        if os.path.exists('/var/run/samba/smbd.pid'):
+            restart.append('cifs')
+            self.stop('cifs')
+
+        if os.path.exists('/var/run/collectd.pid'):
+            restart.append('collectd')
+            self.stop('collectd')
+
+        for src, dest in rsyncs:
+            rv = self._system_nolog('/usr/local/bin/rsync -az "%s" "%s"' % (
+                src,
+                dest,
+            ))
+
+        if _from and rv == 0:
+            proc = self._pipeopen(
+                '/sbin/zfs list -H -o name %s/.system|xargs zfs destroy -r' % (
+                    _from,
+                )
+            )
+            proc.communicate()
+
+        for service in restart:
+            self.start(service)
 
 
 def usage():

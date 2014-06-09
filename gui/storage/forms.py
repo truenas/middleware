@@ -49,7 +49,7 @@ from freenasUI import choices
 from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
-from freenasUI.common.system import get_system_dataset, mount, umount
+from freenasUI.common.system import mount, umount
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect
@@ -461,7 +461,6 @@ class VolumeManagerForm(VolumeMixin, Form):
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
         notifier().reload("disk")
-        notifier().start("ix-system")
         notifier().start("ix-syslogd")
         notifier().restart("system_datasets")
         # For scrub cronjob
@@ -1725,11 +1724,11 @@ class MountPointAccessForm(Form):
         return self.cleaned_data
 
     def commit(self, path='/mnt/'):
-        volume, basename = get_system_dataset()
+        systemdataset, volume, basename = notifier().system_dataset_settings()
 
         exclude = []
         if basename:
-             exclude = [ '/mnt/%s' % basename ]
+             exclude = ['/mnt/%s' % basename]
 
         notifier().mp_change_permission(
              path=path,
