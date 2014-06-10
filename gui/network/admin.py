@@ -56,7 +56,7 @@ class InterfacesFAdmin(BaseFreeAdmin):
     def get_editconfirm_message(self):
         if (
             hasattr(notifier, 'failover_status') and
-            notifier().failover_status == 'MASTER'
+            notifier().failover_status() == 'MASTER'
         ):
             return _('This change will cause a failover event. Do you want to proceed?')
         else:
