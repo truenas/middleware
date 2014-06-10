@@ -141,6 +141,72 @@ Delete resource
    :statuscode 204: no error
 
 
+Datasets
+++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/datasets/
+
+   Create dataset for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/datasets/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      {
+        "avail": "2.44G",
+        "mountpoint": "/mnt/tank/foo",
+        "name": "foo",
+        "pool": "tank",
+        "refer": "144K",
+        "used": "144K"
+      }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+.. http:get:: /api/v1.0/storage/volume/(int:id|string:name)/datasets/
+
+   Get datasets for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/storage/volume/tank/datasets/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      [{
+        "avail": "2.44G",
+        "mountpoint": "/mnt/tank/foo",
+        "name": "foo",
+        "pool": "tank",
+        "refer": "144K",
+        "used": "144K"}
+      }]
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 Scrub
 +++++
 

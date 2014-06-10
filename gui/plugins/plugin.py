@@ -17,7 +17,7 @@ if p.machine() == 'amd64':
 else:
     __arch = 'x32'
 
-PLUGINS_INDEX = 'http://www.freenas.org/downloads/plugins/9/%s' % __arch
+PLUGINS_INDEX = 'http://download.freenas.org/plugins/9/%s' % __arch
 PLUGINS_META = '%s/pbi-meta' % PLUGINS_INDEX
 PLUGINS_REPO = '%s/pbi-repo.rpo' % PLUGINS_META
 
