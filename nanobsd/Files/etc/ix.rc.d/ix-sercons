@@ -29,7 +29,9 @@ update_sercons()
 				mount -ur /
 			fi
 		else
+			mount -uw -onoatime /
 			touch ${bc}
+			mount -ur /
 		fi
 		;;
 	1)
