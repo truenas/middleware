@@ -861,7 +861,7 @@ require([
         }
     }
 
-    handleJson = function(rnode, data) {
+    handleJson = function(form, rnode, data) {
 
         if(data.type == 'page') {
             rnode.set('content', data.content);
@@ -911,6 +911,24 @@ require([
                 if(rnode.isInstanceOf(Dialog))
                     rnode.hide();
             }
+        } else if(data.type == 'confirm') {
+
+            var confirmdialog = new Dialog({
+              id: "editconfirmscary_dialog",
+              title: gettext('Confirm'),
+              content: data.confirm,
+              parseOnLoad: true,
+              submitForm: function() {
+                form.submitForm(form, null, true);
+              },
+              onHide: function() {
+                  setTimeout(lang.hitch(this, function() {
+                      this.destroyRecursive();
+                  }), manager.defaultDuration);
+              }
+
+            });
+            confirmdialog.show();
 
         } else {
 
@@ -1002,7 +1020,7 @@ require([
             attrs = {};
         }
 
-        if(attrs.event !== undefined) {
+        if(attrs.event !== undefined && attrs.event !== null) {
             // prevent the default submit
             dEvent.stop(attrs.event);
         }
@@ -1034,6 +1052,9 @@ require([
 
         newData = attrs.form.get("value");
         newData['__form_id'] = attrs.form.id;
+        if(attrs.confirm == true) {
+          newData['__confirm'] = "1";
+        }
 
         multipart = query("input[type=file]", attrs.form.domNode).length > 0;
 
@@ -1056,7 +1077,7 @@ require([
                 }
                 if(sbtn.isInstanceOf(dojox.form.BusyButton)) sbtn.resetTimeout();
             }
-            handleJson(rnode, data);
+            handleJson(attrs.form, rnode, data);
 
             if('onComplete' in attrs) {
                 attrs.onComplete(data);

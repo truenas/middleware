@@ -1,12 +1,16 @@
 {% load freeadmin %}
 <form data-dojo-type="dijit.form.Form" id="dialogForm_{{ verbose_name }}">
+<script type="dojo/method" data-dojo-event="submitForm" data-dojo-args="form,e,conf">
+     doSubmit({
+        form: form,
+        event: e,
+        url: '{{ request.path }}',
+        confirm: conf
+     });
+</script>
 {% block post_form %}
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    doSubmit({
-       form: this,
-       event: e,
-       url: '{{ request.path }}'
-    });
+this.submitForm(this, e);
 </script>
 {% endblock %}
 <table class="form">
