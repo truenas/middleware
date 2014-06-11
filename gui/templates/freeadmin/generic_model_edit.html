@@ -1,53 +1,16 @@
 {% load i18n freeadmin %}
 <form data-dojo-type="dijit.form.Form" encType="multipart/form-data" id="dialogForm_{{ verbose_name }}">
-{% block post_form %}
-<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-
-var form = this;
-var submitForm = function() {
+<script type="dojo/method" data-dojo-event="submitForm" data-dojo-args="form,e,conf">
      doSubmit({
         form: form,
         event: e,
-        url: '{{ request.path }}{% if inline %}?inline=true{% endif %}'
+        url: '{{ request.path }}{% if inline %}?inline=true{% endif %}',
+        confirm: conf
      });
-};
-
-{% if edit_confirm %}
-
-require([
-  "dojo/_base/event",
-  "dojo/_base/lang",
-  "dijit/_base/manager",
-  "dijit/Dialog",
-], function(
-  dEvent,
-  lang,
-  manager,
-  Dialog
-) {
-
-  dEvent.stop(e);
-  var confirmdialog = new Dialog({
-    id: "editconfirmscary_dialog",
-    title: gettext('Confirm'),
-    href: '{{ confirm_url }}',
-    parseOnLoad: true,
-    submitForm: submitForm,
-    onHide: function() {
-        setTimeout(lang.hitch(this, function() {
-            this.destroyRecursive();
-        }), manager.defaultDuration);
-    }
-
-  });
-  confirmdialog.show();
-
-});
-
-{% else %}
-submitForm();
-{% endif %}
-
+</script>
+{% block post_form %}
+<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+this.submitForm(this, e);
 </script>
 {% endblock %}
 {% if inline and saved %}<span class="saved">{% trans "Your changes have been successfully updated!" %}</span>{% endif %}

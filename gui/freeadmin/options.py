@@ -36,7 +36,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import TemplateDoesNotExist
-from django.template.loader import get_template
+from django.template.loader import get_template, render_to_string
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
@@ -72,7 +72,6 @@ class BaseFreeAdmin(object):
 
     create_modelform = None
     edit_modelform = None
-    edit_confirm = False
     delete_form = None
     delete_form_filter = {}  # Ugly workaround for Extent/DeviceExtent
     deletable = True
@@ -221,9 +220,6 @@ class BaseFreeAdmin(object):
                 url(r'^edit/(?P<oid>\d+)/(?P<mf>.+?)?$',
                     wrap(self.edit),
                     name='freeadmin_%s_%s_edit' % info),
-                url(r'^edit-confirm/(?P<oid>\d+)/(?P<mf>.+?)?$',
-                    wrap(self.editconfirm),
-                    name='freeadmin_%s_%s_edit_confirm' % info),
                 url(r'^delete/(?P<oid>\d+)/$',
                     wrap(self.delete),
                     name='freeadmin_%s_%s_delete' % info),
@@ -338,6 +334,17 @@ class BaseFreeAdmin(object):
             valid &= mf.is_valid(formsets=formsets)
 
             if valid:
+                if '__confirm' not in request.POST:
+                    message = self.get_confirm_message(
+                        'add',
+                        obj=instance,
+                        form=mf,
+                    )
+                    if message:
+                        return JsonResp(
+                            request,
+                            confirm=self.confirm(message),
+                        )
                 try:
                     mf.save()
                     for name, fs in formsets.items():
@@ -439,11 +446,6 @@ class BaseFreeAdmin(object):
             'extra_js': m._admin.extra_js,
             'verbose_name': m._meta.verbose_name,
             'deletable': m._admin.deletable,
-            'confirm_url': reverse('freeadmin_%s_%s_edit_confirm' % (
-                self.app_label,
-                self.module_name,
-            ), kwargs={'oid': oid}),
-            'edit_confirm': self.edit_confirm,
         }
 
         if 'deletable' in request.GET:
@@ -509,6 +511,17 @@ class BaseFreeAdmin(object):
             valid &= mf.is_valid(formsets=formsets)
 
             if valid:
+                if '__confirm' not in request.POST:
+                    message = self.get_confirm_message(
+                        'edit',
+                        obj=instance,
+                        form=mf,
+                    )
+                    if message:
+                        return JsonResp(
+                            request,
+                            confirm=self.confirm(message),
+                        )
                 try:
                     mf.save()
                     for name, fs in formsets.items():
@@ -629,30 +642,29 @@ class BaseFreeAdmin(object):
                 context,
                 content_type='text/html')
 
-    def get_editconfirm_message(self):
+    def get_confirm_message(self, action, **kwargs):
+        return None
         return _('Are you sure you want to edit this?')
 
-    def editconfirm(self, request, oid, mf=None):
+    def confirm(self, message):
 
         m = self._model
         context = {
-            'message': self.get_editconfirm_message(),
+            'message': message,
         }
 
-        template = "%s/%s_edit_confirm.html" % (
+        template = "%s/%s_confirm.html" % (
             m._meta.app_label,
             m._meta.object_name.lower(),
         )
         try:
             get_template(template)
         except TemplateDoesNotExist:
-            template = 'freeadmin/generic_model_edit_confirm.html'
+            template = 'freeadmin/generic_model_confirm.html'
 
-        return render(
-            request,
+        return render_to_string(
             template,
             context,
-            content_type='text/html',
         )
 
     def delete(self, request, oid, mf=None):
@@ -708,6 +720,17 @@ class BaseFreeAdmin(object):
             if form:
                 form_i = form(request.POST, instance=instance)
                 if form_i.is_valid():
+                    if '__confirm' not in request.POST:
+                        message = self.get_confirm_message(
+                            'delete',
+                            obj=instance,
+                            form=form_i,
+                        )
+                        if message:
+                            return JsonResp(
+                                request,
+                                confirm=self.confirm(message),
+                            )
                     events = []
                     if hasattr(form_i, "done"):
                         form_i.done(events=events)
@@ -720,6 +743,17 @@ class BaseFreeAdmin(object):
                         events=events)
 
             else:
+                if '__confirm' not in request.POST:
+                    message = self.get_confirm_message(
+                        'delete',
+                        obj=instance,
+                        form=form_i,
+                    )
+                    if message:
+                        return JsonResp(
+                            request,
+                            confirm=self.confirm(message),
+                        )
                 events = []
                 mf.delete(events=events)
                 return JsonResp(

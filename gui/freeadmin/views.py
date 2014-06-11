@@ -47,6 +47,7 @@ class JsonResp(HttpResponse):
     force_json = False
     message = ''
     events = []
+    confirm = None
 
     def __init__(self, request, *args, **kwargs):
 
@@ -57,6 +58,7 @@ class JsonResp(HttpResponse):
         self.type = kwargs.pop('type', None)
         self.template = kwargs.pop('template', None)
         self.form = kwargs.pop('form', None)
+        self.confirm = kwargs.pop('confirm', None)
         self.formsets = kwargs.pop('formsets', {})
         self.request = request
 
@@ -66,6 +68,8 @@ class JsonResp(HttpResponse):
             self.type = 'message'
         if not self.type:
             self.type = 'page'
+        if self.confirm:
+            self.type = 'confirm'
 
         data = dict()
 
@@ -116,6 +120,12 @@ class JsonResp(HttpResponse):
             data.update({
                 'error': self.error,
                 'message': self.message,
+            })
+        elif self.type == 'confirm':
+            data.update({
+                'confirm': self.confirm,
+                'error': self.error,
+                'type': 'confirm',
             })
         else:
             raise NotImplementedError
