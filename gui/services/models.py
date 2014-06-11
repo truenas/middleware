@@ -409,6 +409,10 @@ class iSCSITargetGlobalConfiguration(Model):
             blank=True,
             null=True,
             )
+    iscsi_experimental_target = models.BooleanField(
+        default=False,
+        verbose_name=_('Enable experimental target'),
+    )
     iscsi_multithreaded = models.BooleanField(
         default=False,
         verbose_name=_('Enable multithreaded mode'),
@@ -530,13 +534,6 @@ class iSCSITargetGlobalConfiguration(Model):
     class Meta:
         verbose_name = _(u"Target Global Configuration")
         verbose_name_plural = _(u"Target Global Configuration")
-
-    class FreeAdmin:
-        deletable = False
-        menu_child_of = "services.ISCSI"
-        icon_model = u"SettingsIcon"
-        nav_extra = {'type': 'iscsi'}
-        resource_name = 'services/iscsi/globalconfiguration'
 
 
 class iSCSITargetExtent(Model):

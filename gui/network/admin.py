@@ -14,7 +14,6 @@ class InterfacesFAdmin(BaseFreeAdmin):
 
     create_modelform = "InterfacesForm"
     edit_modelform = "InterfacesEditForm"
-    edit_confirm = True
     icon_object = u"InterfacesIcon"
     icon_model = u"InterfacesIcon"
     icon_add = u"AddInterfaceIcon"
@@ -53,14 +52,20 @@ class InterfacesFAdmin(BaseFreeAdmin):
         })
         return columns
 
-    def get_editconfirm_message(self):
+    def get_confirm_message(self, action, **kwargs):
         if (
             hasattr(notifier, 'failover_status') and
-            notifier().failover_status == 'MASTER'
+            notifier().failover_status() == 'MASTER'
         ):
-            return _('This change will cause a failover event. Do you want to proceed?')
+            return _(
+                'This change will cause a failover event. '
+                'Do you want to proceed?'
+            )
         else:
-            return _('Network connectivity will be interrupted')
+            return _(
+                'Network connectivity will be interrupted. '
+                'Do you want to proceed?'
+            )
 
 
 class LAGGInterfaceFAdmin(BaseFreeAdmin):

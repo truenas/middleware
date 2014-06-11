@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-02-28 08:51+0000\n"
-"Last-Translator: mehrdad <m3hrdad.p@gmail.com>\n"
+"PO-Revision-Date: 2014-06-09 17:35+0000\n"
+"Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1393577497.0\n"
+"X-POOTLE-MTIME: 1402335301.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -110,7 +110,7 @@ msgstr "Altijd aan"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "غیر فعال"
+msgstr "Uitgeschakeld"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -1054,7 +1054,7 @@ msgstr "Virtuele interface"
 #: network/models.py:266
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
-"Interface namen moeten vlanX zijn waar X een nummer is. Bijvoorbeeld: vlan0."
+"Interfacenamen moeten vlanX zijn, waar X een getal is. Voorbeeld: vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -3679,6 +3679,7 @@ msgstr "Pad is geen map."
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
 msgstr ""
+"U kunt geen bestaand ZFS-volume selecteren en een nieuwe volumenaam opgeven"
 
 #: storage/forms.py:269
 msgid ""
@@ -4212,7 +4213,7 @@ msgstr "Momentopnamen weergeven"
 
 #: storage/nav.py:34
 msgid "View ZFS Scrubs"
-msgstr "Alle Groepen Bekijken"
+msgstr "ZFS-reinigingen weergeven"
 
 #~ msgid "Volume Manager"
 #~ msgstr "Volume manager"
@@ -4291,7 +4292,7 @@ msgstr "Dit is in gebruik door het iscsi-doel, verwijder het daar eerst."
 
 #: storage/views.py:475
 msgid "ZFS Volume successfully destroyed."
-msgstr "Het ZFS-volume is met succes verwijderd."
+msgstr "ZFS-volume met succes verwijderd."
 
 #: storage/views.py:524
 msgid "Native dataset successfully edited."
@@ -5189,7 +5190,7 @@ msgstr "FreeNAS Documentatie"
 #: templates/system/smarttest.html:11 templates/system/sysctl.html:9
 #: templates/system/tunable.html:9
 msgid "Available actions"
-msgstr "Beschikbare Acties"
+msgstr "Beschikbare acties"
 
 #: templates/network/interface.html:26 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -5358,11 +5359,11 @@ msgstr "Even geduld..."
 
 #: templates/plugins/mountpoints.html:19
 msgid "Edit Mount Point"
-msgstr "Mount Point"
+msgstr "Koppelpunt bewerken"
 
 #: templates/plugins/mountpoints.html:25
 msgid "Delete Mount Point"
-msgstr "Mount Point"
+msgstr "Koppelpunt verwijderen"
 
 #: templates/plugins/mountpoints.html:32
 msgid "No mount points defined"
@@ -5370,7 +5371,7 @@ msgstr "Geen CronJobs gedefinieerd"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
 msgid "Add Mount Point"
-msgstr "Mount Point"
+msgstr "Koppelpunt toevoegen"
 
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
@@ -5578,7 +5579,7 @@ msgstr "Geen doelen gedefinieerd"
 
 #: templates/services/plugins.html:13 templates/services/plugins.html.py:15
 msgid "View Mount Points"
-msgstr "Mount Point"
+msgstr "Koppelpunten weergeven"
 
 #~ msgid ""
 #~ "ATTENTION: The plugins service is not running, several functionalities have "
@@ -5631,7 +5632,7 @@ msgstr "Er zijn geen actieve Apple Shares."
 
 #: templates/sharing/apple.html:29
 msgid "Edit Apple (AFP) Share"
-msgstr "Wijzig Apple Share"
+msgstr "Apple (AFP)-share bewerken"
 
 #: templates/sharing/apple.html:35
 msgid "Delete Apple (AFP) Share"
@@ -5665,7 +5666,7 @@ msgstr "Er zijn geen actieve UNIX Shares."
 
 #: templates/sharing/unix.html:29
 msgid "Edit UNIX (NFS) Share"
-msgstr "NFS Share Wijzigen"
+msgstr "UNIX (NFS)-share bewerken"
 
 #: templates/sharing/unix.html:35
 msgid "Delete UNIX (NFS) Share"
@@ -5681,7 +5682,7 @@ msgstr "Er zijn geen actieve Windows Shares"
 
 #: templates/sharing/windows.html:33
 msgid "Edit Windows (CIFS) Share"
-msgstr "Windows Share Wijzigen"
+msgstr "Windows (CIFS)-share bewerken"
 
 #: templates/sharing/windows.html:39
 msgid "Delete Windows (CIFS) Share"
@@ -5689,7 +5690,7 @@ msgstr "Windows Share Verwijderen"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
 msgid "Add Windows (CIFS) Share"
-msgstr "Windows Share Toevoegen"
+msgstr "Replicatiestroomcompressie"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6207,7 +6208,7 @@ msgstr "Gemiddelde belasting"
 
 #: templates/system/tunable.html:42
 msgid "Add Loader"
-msgstr "Portaal Toevoegen"
+msgstr "Laadprogramma toevoegen"
 
 #: templates/system/wizard.html:14
 msgid "Apply Update"
@@ -6317,19 +6318,19 @@ msgstr "Kritieke waarschuwingen"
 #~ msgstr "Ongeldige service pack"
 
 msgid "View Cron Jobs"
-msgstr "CronJobs"
+msgstr "Cronjobs weergeven"
 
 msgid "View Rsync Tasks"
-msgstr "Toon Alle Replicatie Taken"
+msgstr "Rsync-taken weergeven"
 
 msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. instellingen"
+msgstr "S.M.A.R.T.-tests weergeven"
 
 #~ msgid "View Sysctls"
 #~ msgstr "Bekijk Sysctls"
 
 msgid "View Tunables"
-msgstr "Alle Gebruikers Bekijken"
+msgstr "Afstembare parameters weergeven"
 
 #~ msgid "Browse"
 #~ msgstr "Zoeken"
@@ -6338,7 +6339,7 @@ msgstr "Alle Gebruikers Bekijken"
 #~ msgstr "Sluiten"
 
 msgid "Add Apple (CIFS) Share"
-msgstr "Apple Share Toevoegen"
+msgstr "Apple (CIFS)-share toevoegen"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "Service Pack toepassen"
@@ -6469,7 +6470,7 @@ msgstr "Apple Share Toevoegen"
 #~ msgstr "NTP server 3"
 
 msgid "Loader"
-msgstr "Gemiddelde belasting"
+msgstr "Laadprogramma"
 
 msgid "Loaders"
 msgstr "Gemiddelde belasting"
@@ -6496,7 +6497,7 @@ msgstr "Schijf bewerken"
 #~ msgstr "Volume exporteren"
 
 msgid "Add loader"
-msgstr "Portaal Toevoegen"
+msgstr "Laadprogramma toevoegen"
 
 #~ msgid "Volume from which this dataset will be created on"
 #~ msgstr "Volume vanaf waar deze dataset op wordt gecreërd"
@@ -6796,7 +6797,7 @@ msgstr "Gebruiker verwijderen"
 
 #: account/forms.py:60
 msgid "Confirm New Password"
-msgstr "Bevestig nieuw wachtwoord"
+msgstr "Nieuw wachtwoord bevestigen"
 
 #: account/forms.py:539
 msgid "Home directory cannot contain colons"
@@ -8911,221 +8912,200 @@ msgstr "Scannen"
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "CORE"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
-#, fuzzy
 msgid "NT1"
-msgstr "NT4"
+msgstr "NT1"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (snelst)"
+msgstr "lz4 (snelst)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (alleskunner)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (beste compressie)"
 
 #: account/forms.py:398
-#, fuzzy
 msgid "Create Home Directory In"
-msgstr "Basismap"
+msgstr "Basismap aanmaken in"
 
 #: api/resources.py:1864
 #: api/resources.py:1875
-#, fuzzy
 msgid "Invalid snapshot"
-msgstr "Laatste snapshot"
+msgstr "Ongeldige momentopname"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
-msgstr ""
+msgstr "Jail-hoofdmap moet op een volume of gegevensset staan!"
 
 #: jails/models.py:178
-#, fuzzy
 msgid "Comma delimited list of sysctl's"
-msgstr "Door komma's gescheiden lijst van NIS-servers"
+msgstr "Door komma's gescheiden lijst van sysctl’s"
 
 #: jails/models.py:493
-#, fuzzy
 msgid "Jail root is not configured!"
-msgstr "Geen jail-hoofdmap geconfigureerd."
+msgstr "Jail-hoofdmap is niet geconfigureerd!"
 
 #: jails/models.py:537
-#, fuzzy
 msgid "Filesystem"
-msgstr "Type bestandssysteem"
+msgstr "Bestandssysteem"
 
 #: jails/utils.py:695
-#, fuzzy
 msgid "You need to create a volume to proceed!"
 msgstr "U dient een ZFS-volume aan te maken om verder te gaan!"
 
 #: jails/utils.py:739
-#, fuzzy
 msgid "Failed to create directory %(name)s: %(error)s"
-msgstr "Aanmaken van gegevensset %(name)s mislukt: %(error)s"
+msgstr "Aanmaken van map %(name)s mislukt: %(error)s"
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
-#, fuzzy
 msgid "Active"
-msgstr "Actie"
+msgstr "Actief"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
 msgstr ""
 
 #: middleware/notifier.py:3822
-#, fuzzy
 msgid "Init"
-msgstr "Voor initialisatie"
+msgstr "Init"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
-msgstr ""
+msgstr "Geen carrier"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
-msgstr ""
+msgstr "Gedegradeerd"
 
 #: middleware/notifier.py:3849
+#, fuzzy
 msgid "Down"
-msgstr ""
+msgstr "Buiten werking"
 
 #: network/admin.py:39
-#, fuzzy
 msgid "Media Status"
-msgstr "Status"
+msgstr "Mediastatus"
 
 #: network/forms.py:311
-#, fuzzy
 msgid "Channel"
-msgstr "Wijzigen"
+msgstr "Kanaal"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
-msgstr ""
+msgstr "HTTP-proxy"
 
 #: network/nav.py:17
 #: templates/network/index.html:14
 msgid "IPMI"
-msgstr ""
+msgstr "IPMI"
 
 #: network/views.py:66
-#, fuzzy
 msgid "IPMI successfully edited"
-msgstr "Succesvol gewijzigd"
+msgstr "IPMI met succes bewerkt"
 
 #: network/views.py:68
 msgid "IPMI failed"
-msgstr ""
+msgstr "IPMI mislukt"
 
 #: plugins/admin.py:73
-#, fuzzy
 msgid "Install plugin"
-msgstr "Installeer Plugin"
+msgstr "Plug-in installeren"
 
 #: plugins/models.py:129
-#, fuzzy
 msgid "jail not found"
-msgstr "Pagina niet gevonden"
+msgstr "jail niet gevonden"
 
 #: services/forms.py:220
-#, fuzzy
 msgid "This path does not exist."
-msgstr "Het pad %s bestaat niet"
+msgstr "Dit pad bestaat niet."
 
 #: services/forms.py:222
-#, fuzzy
 msgid "This path is not a directory."
-msgstr "Pad is geen map."
+msgstr "Dit pad is geen map."
 
 #: services/forms.py:754
-#, fuzzy
 msgid "Confirm Domain Account Password"
-msgstr "Beheerderswachtwoord bevestigen"
+msgstr "Domeinaccountwachtwoord bevestigen"
 
 #: services/forms.py:758
 #: services/models.py:1612
-#, fuzzy
 msgid "Kerberos keytab"
-msgstr "Kerberos Keytab Bestand"
+msgstr "Kerberos-keytab-bestand"
 
 #: services/forms.py:1081
-#, fuzzy
 msgid "LUN ID already exists."
-msgstr "Dit IP adres bestaat al."
+msgstr "LUN ID bestaat al."
 
 #: services/models.py:109
 msgid "Use syslog"
-msgstr ""
+msgstr "Syslog gebruiken"
 
 #: services/models.py:233
 msgid "Server minimum protocol"
-msgstr ""
+msgstr "Minimale serverprotocol"
 
 #: services/models.py:235
 msgid "The minimum protocol version that will be supported by the server"
-msgstr ""
+msgstr "De minimale protocolversie die door de server wordt ondersteund"
 
 #: services/models.py:240
 msgid "Server maximum protocol"
-msgstr ""
+msgstr "Maximale serverprotocol"
 
 #: services/models.py:243
 msgid "The highest protocol version that will be supported by the server"
-msgstr ""
+msgstr "De hoogste protocolversie die door de server wordt ondersteund"
 
 #: services/models.py:246
-#, fuzzy
 msgid "Allow execute always"
-msgstr "Herhaalde GID's toestaan"
+msgstr "Altijd uitvoeren toestaan"
 
 #: services/models.py:248
 msgid ""
@@ -9139,141 +9119,143 @@ msgid ""
 "does not check execute permissions on \"open for execution\", thus re-"
 "establishing the behaviour of Samba 3.6 "
 msgstr ""
+"Deze boolean parameter bepaalt het gedrag van smbd(8) tijdens de ontvangst "
+"van een protocolaanvraag van \"open for execution\" vanaf een Windows-"
+"client. Bij Samba 3.6 en lager werd de uitvoermachtiging in de ACL niet "
+"gecontroleerd, zodat een client een bestand ook kon uitvoeren als het geen "
+"uitvoerrechten op het bestand had. In Samba 4.0 is dit verholpen, zodat "
+"wanneer bv. deze parameter is ingesteld \"False\", \"open for execution\" nu "
+"standaard wordt geweigerd wanneer de uitvoermachtiging ontbreekt. Als deze "
+"parameter is ingesteld op \"True\", controleert Samba geen uitvoermachtiging "
+"bij \"open for execution\", en wordt dus het gedrag van Samba 3.6 "
+"aangehouden "
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
-msgstr ""
+msgstr "UDP NFS-clients behandelen"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
-msgstr ""
+msgstr "Multithreaded-modus inschakelen"
 
 #: services/models.py:874
 msgid "LUN ID"
-msgstr ""
+msgstr "LUN-ID"
 
 #: services/models.py:914
-#, fuzzy
 msgid "IP Server"
-msgstr "NTP-server"
+msgstr "IP-server"
 
 #: services/models.py:916
 msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
 "Defaults to checkip.dyndns.org:80 /."
 msgstr ""
+"Het client-IP-adres wordt herkend door 'url' vanaf deze 'ip_server_name:"
+"port' aan te roepen. Standaard is dit checkip.dyndns.org:80 /."
 
 #: services/models.py:1595
-#, fuzzy
 msgid "Domain Account Name"
-msgstr "Domeinnaam"
+msgstr "Domeinaccountnaam"
 
 #: services/models.py:1596
-#, fuzzy
 msgid "Domain account name to bind as"
-msgstr "Naam van domeinbeheerdersaccount"
+msgstr "Domeinaccountnaam om mee te binden"
 
 #: services/models.py:1600
-#, fuzzy
 msgid "Domain Account Password"
-msgstr "Wachtwoord van domeinbeheerdersaccount."
+msgstr "Domeinaccountwachtwoord"
 
 #: services/models.py:1601
-#, fuzzy
 msgid "Domain Account password."
-msgstr "Wachtwoord van domeinbeheerdersaccount."
+msgstr "Domeinaccountwachtwoord."
 
 #: services/models.py:1609
 msgid "Use keytab"
-msgstr ""
+msgstr "Keytab gebruiken"
 
 #: services/models.py:1613
-#, fuzzy
 msgid "Kerberos keytab file"
-msgstr "Kerberos Keytab Bestand"
+msgstr "Kerberos-keytab-bestand"
 
 #: services/models.py:1850
-#, fuzzy
 msgid "Interface Description"
-msgstr "Beschrijving"
+msgstr "Interfacebeschrijving"
 
 #: services/models.py:1852
 msgid "Save received info in interface description / alias"
-msgstr ""
+msgstr "Ontvangen info opslaan in interfacebeschrijving / alias"
 
 #: services/models.py:1855
-#, fuzzy
 msgid "Country Code"
-msgstr "Land"
+msgstr "Landcode"
 
 #: services/models.py:1858
 msgid ""
 "Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
 msgstr ""
+"Specificeer een twee-letterige ISO 3166-landcode (vereist voor LLDPlocation-"
+"ondersteuning)"
 
 #: services/models.py:1866
 msgid "Specify the physical location of the host"
-msgstr ""
+msgstr "Specificeer de fysieke locatie van de host"
 
 #: services/models.py:1871
 #: services/models.py:1872
 #: templates/services/core.html:76
 msgid "LLDP"
-msgstr ""
+msgstr "LLDP"
 
 #: services/models.py:2058
 msgid "Realm"
-msgstr ""
+msgstr "Realm"
 
 #: services/models.py:2059
 msgid "Realm Name, eg EXAMPLE.ORG"
-msgstr ""
+msgstr "Realm-naam, bv. VOORBEELD.ORG"
 
 #: services/models.py:2064
-#, fuzzy
 msgid "Domain Name in old format, eg EXAMPLE"
-msgstr "Werkgroep- of domeinnaam in oud formaat, bv. WORKGROUP"
+msgstr "Domeinnaam in oud formaat, bv. VOORBEELD"
 
 #: services/models.py:2068
 #: services/models.py:2069
-#, fuzzy
 msgid "Server Role"
-msgstr "Server Naam"
+msgstr "Serverfunctie"
 
 #: services/models.py:2075
 msgid "DNS Backend"
-msgstr ""
+msgstr "DNS-back-end"
 
 #: services/models.py:2076
 msgid "DNS Backend, eg SAMBA_INTERNAL"
-msgstr ""
+msgstr "DNS-back-end, bv. SAMBA_INTERNAL"
 
 #: services/models.py:2082
 msgid "DNS Forwarder"
-msgstr ""
+msgstr "DNS-doorstuurserver"
 
 #: services/models.py:2083
-#, fuzzy
 msgid "DNS Forwarder IP Address"
-msgstr ""
-"Geautoriseerd netmask van Logical Unit Controller (127.0.0.0/8 is standaard)"
+msgstr "IP-adres van DNS-doorstuurserver"
 
 #: services/models.py:2087
 msgid "Domain Forest Level"
-msgstr ""
+msgstr "Domeinforestniveau"
 
 #: services/models.py:2088
 msgid "Domain and Forest Level, eg 2003"
-msgstr ""
+msgstr "Domein- en forestniveau, bv. 2003"
 
 #: sharing/models.py:48
-#, fuzzy
 msgid "Apply Default Permissions"
-msgstr "Standaard bestandsmachtiging"
+msgstr "Standaardmachtigingen toepassen"
 
 #: sharing/models.py:49
+#, fuzzy
 msgid "Recursively set sane default windows permissions on share"
-msgstr ""
+msgstr "Standaard Windows-machtigingen recursief instellen bij delen"
 
 #: sharing/models.py:87
 msgid ""
@@ -9284,6 +9266,13 @@ msgid ""
 "is NOT recommended to set this. The desired behavior can be achieved using "
 "ACL's. This probably won't do what you want it to do."
 msgstr ""
+"Het eigendom van nieuwe bestanden en mappen wordt normaal gesproken bepaald "
+"door de effectieve uid van de verbonden gebruiker. Via deze optie kan de "
+"Samba-beheerder opgeven dat het eigendom voor nieuwe bestanden en mappen "
+"moet worden bepaald door het eigendom van de bovenliggende map. Voor Windows-"
+"shares wordt het NIET aanbevolen om dit in te stellen. Het gewenste gedrag "
+"kan worden bereikt door het gebruik van ACL's. Dit doet waarschijnlijk niet "
+"wat u het wilt laten doen."
 
 #: sharing/models.py:91
 msgid ""
@@ -9293,11 +9282,15 @@ msgid ""
 "behavior can be achieved using ACL's. This probably won't do what you want "
 "it to do."
 msgstr ""
+"Nieuwe mappen nemen de modus van de bovenliggende map over, inclusief bits "
+"zoals setgid. Nieuwe bestanden nemen hun lees-/schrijfbits over van de "
+"bovenliggende map. Voor Windows-shares wordt het NIET aanbevolen om dit in "
+"te stellen. Het gewenste gedrag kan worden bereikt door het gebruik van "
+"ACL's. Dit doet waarschijnlijk niet wat u het wilt laten doen."
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Inherit ACL's"
-msgstr "Overnemen"
+msgstr "ACL's overnemen"
 
 #: sharing/models.py:96
 msgid ""
@@ -9308,9 +9301,15 @@ msgid ""
 "NOT recommended to set this. The desired behavior can be achieved using "
 "ACL's. This probably won't do what you want it to do."
 msgstr ""
+"Deze parameter kan worden gebruikt om te verzekeren dat bij het bestaan van "
+"standaard-ACL's op bovenliggende mappen, deze altijd worden gehonoreerd bij "
+"het aanmaken van een nieuw bestand of submap in deze bovenliggende mappen. "
+"Het standaardgedrag is het gebruik van de opgegeven Unix-modus bij het "
+"aanmaken van de map. Voor Windows-shares wordt het NIET aanbevolen om dit in "
+"te stellen. Het gewenste gedrag kan worden bereikt door het gebruik van "
+"ACL's. Dit doet waarschijnlijk niet wat u het wilt laten doen."
 
 #: sharing/models.py:246
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point ifselected. "
 "Otherwise, only the top level directory can be mounted."
@@ -9319,92 +9318,88 @@ msgstr ""
 "toegestaan. Anders kan alleen de map op het hoogste niveau worden gekoppeld."
 
 #: storage/admin.py:130
-#, fuzzy
 msgid "Compression"
-msgstr "Comprimeren"
+msgstr "Compressie"
 
 #: storage/admin.py:136
-#, fuzzy
 msgid "Compression Ratio"
-msgstr "Compressieniveau"
+msgstr "Compressieratio"
 
 #: storage/admin.py:297
-#, fuzzy
 msgid "Lock Volume"
-msgstr "Volume"
+msgstr "Volume vergrendelen"
 
 #: storage/admin.py:349
+#, fuzzy
 msgid "Upgrade"
-msgstr ""
+msgstr "Upgrade"
 
 #: storage/forms.py:120
 msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
-msgstr ""
+msgstr "Specificeer de grootte met IEC-achtervoegsels of 0, bv. 10 GiB"
 
 #: storage/forms.py:558
 msgid ""
 "You are trying to add a virtual device of type '%(addtype)s' in a pool that "
 "has a virtual device of type '%(vdevtype)s'"
 msgstr ""
+"U probeert een virtueel apparaat van het type '%(addtype)s' toe te voegen in "
+"een pool die een virtueel apparaat van het type '%(vdevtype)s' heeft"
 
 #: storage/forms.py:568
 msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisted of %(vdevnum)s device(s)"
 msgstr ""
+"U probeert een virtueel apparaat dat uit %(addnum)s apparaten bestaat toe te "
+"voegen in een pool die een virtueel apparaat bevat dat uit %(vdevnum)s "
+"apparaten bestond"
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
-#, fuzzy
 msgid "Encryption"
-msgstr "Versleutelingssleutel"
+msgstr "Versleuteling"
 
 #: storage/forms.py:601
 #: templates/storage/zfswizard.html:51
 msgid "Initialize Safely"
-msgstr ""
+msgstr "Veilig initialiseren"
 
 #: storage/forms.py:906
-#, fuzzy
 msgid ""
 "The selected disks were not verified for these import rules. Filesystem "
 "check failed."
 msgstr ""
-"De geselecteerde schijven zijn niet geverifieerd voor deze importregels."
+"De geselecteerde schijven zijn niet geverifieerd voor deze importregels. "
+"Bestandssysteemcontrole mislukt."
 
 #: storage/forms.py:1422
-#, fuzzy
 msgid "Share type"
-msgstr "Opmerking delen"
+msgstr "Sharetype"
 
 #: storage/forms.py:1431
 #: storage/forms.py:1436
-#, fuzzy
 msgid "0=Unlimited; example: 1 GiB"
-msgstr "0=Ongelimiteerd; voorbeeld: 1g"
+msgstr "0=Onbeperkt; voorbeeld: 1GiB"
 
 #: storage/forms.py:1441
 #: storage/forms.py:1446
-#, fuzzy
 msgid "0=None; example: 1 GiB"
-msgstr "0=Geen; voorbeeld: 1g"
+msgstr "0=Geen; voorbeeld: 1GiB"
 
 #: storage/forms.py:1506
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\", \" \" and \".\"."
 msgstr ""
 "Namen van gegevenssets moeten met een alfanumeriek teken beginnen en mogen "
-"alleen \"-\", \"_\", \":\" en \".\" bevatten."
+"alleen \"-\", \"_\", \":\", \" \" en \".\" bevatten."
 
 #: storage/forms.py:1606
-#, fuzzy
 msgid "Example: 1 GiB"
-msgstr "Voorbeeld: 1g"
+msgstr "Voorbeeld: 1GiB"
 
 #: storage/forms.py:1615
-#, fuzzy
 msgid ""
 "Creates a sparse volume with no reservation, also known as \"thin "
 "provisioning\". A \"sparse volume\" is a volume where the reservation is "
@@ -9419,218 +9414,192 @@ msgstr ""
 
 #: storage/forms.py:1655
 msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
-msgstr ""
+msgstr "Specificeer de grootte met IEC-achtervoegsels, bv. 10 GiB"
 
 #: storage/forms.py:1684
-#, fuzzy
 msgid "Permission Type"
-msgstr "Bestandsmachtiging"
+msgstr "Machtigingstype"
 
 #: storage/forms.py:1817
-#, fuzzy
 msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
-msgstr "Alleen [-a-zA-Z0-9_.] zijn toegestaan als momentopnamenaam"
+msgstr "Alleen [-a-zA-Z0-9_. ] toegestaan als momentopnamenaam"
 
 #: storage/forms.py:1860
-#, fuzzy
 msgid "Only [-a-zA-Z0-9_./ ] permitted as clone name"
-msgstr "Alleen [-a-zA-Z0-9_./] toegestaan als kloonnaam"
+msgstr "Alleen [-a-zA-Z0-9_./ ] toegestaan als kloonnaam"
 
 #: storage/forms.py:2473
-#, fuzzy
 msgid "Root password"
-msgstr "Bindwachtwoord van root"
+msgstr "Root-wachtwoord"
 
 #: storage/models.py:856
-#, fuzzy
 msgid "Last snapshot sent to remote side"
-msgstr ""
-"Laatste momentopname verzonden naar extern systeem (laat leeg voor volledige "
-"replicatie)"
+msgstr "Laatste momentopname verzonden naar extern systeem"
 
 #: storage/models.py:886
-#, fuzzy
 msgid "Replication Stream Compression"
-msgstr "Replicatietaken"
+msgstr "Replicatiestroomcompressie"
 
 #: storage/models.py:909
-#, fuzzy
 msgid "Disabling will not stop any replications which are in progress."
-msgstr ""
-"Uitschakelen stopt het in de wachtrij plaatsen van alle nieuwe replicaties. "
-"Alle replicaties die in de wachtrij staan of worden uitgevoerd worden niet "
-"gestopt."
+msgstr "Uitschakelen zal replicaties die worden uitgevoerd niet stoppen."
 
 #: storage/models.py:946
 msgid "Sending %(snapshot)s (%(percent)s%%)"
-msgstr ""
+msgstr "%(snapshot)s verzenden (%(percent)s%%)"
 
 #: storage/models.py:951
 msgid "Sending"
-msgstr ""
+msgstr "Verzenden"
 
 #: storage/views.py:980
-#, fuzzy
 msgid "Volume locked"
-msgstr "Volume ontgrendeld"
+msgstr "Volume vergrendeld"
 
 #: storage/views.py:1151
-#, fuzzy
 msgid "The pool failed to upgraded: %s"
-msgstr "Exporteren van het volume is mislukt."
+msgstr "Upgraden van pool mislukt: %s"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
-msgstr ""
+msgstr "De pool is geüpgraded"
 
 #: system/admin.py:59
 #: system/admin.py:66
 #: system/admin.py:106
 #: system/admin.py:113
 msgid "Run Now"
-msgstr ""
+msgstr "Nu uitvoeren"
 
 #: system/forms.py:1018
-#, fuzzy
 msgid "This variable already exists"
-msgstr "Dit IP adres bestaat al."
+msgstr "Deze variabele bestaat al"
 
 #: system/forms.py:1124
-#, fuzzy
 msgid "System dataset pool"
-msgstr "Native dataset"
+msgstr "Pool van systeemgegevensset"
 
 #: system/forms.py:1148
-#, fuzzy
 msgid "Unable to create system dataset!"
-msgstr "Kan sjabloon niet vinden!"
+msgstr "Kan geen systeemgegevensset aanmaken!"
 
 #: system/forms.py:1155
-#, fuzzy
 msgid "Unable to migrate system dataset!"
-msgstr "Kan sjabloon niet vinden!"
+msgstr "Kan systeemgegevensset niet migreren!"
 
 #: system/models.py:80
 #, fuzzy
 msgid "WebGUI HTTP -> HTTPS Redirect"
-msgstr "HTTP-poort van WebGUI"
+msgstr "WebGUI HTTP -> HTTPS-omleiding"
 
 #: system/models.py:83
 msgid ""
 "Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled"
 msgstr ""
+"HTTP (poort 80) naar HTTPS omleiden als alleen het HTTPS-protocol is "
+"ingeschakeld"
 
 #: system/models.py:203
-#, fuzzy
 msgid "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
-msgstr "Stel dit in op de snelheid van uw seriële poort"
+msgstr "Stel dit in op het adres van uw seriële poort (0x3f8, 0x2f8, etc.)"
 
 #: system/models.py:205
-#, fuzzy
 msgid "Serial Port Address"
-msgstr "Snelheid van seriële poort"
+msgstr "Adres van seriële poort"
 
 #: system/models.py:1133
 msgid "Pool"
-msgstr ""
+msgstr "Pool"
 
 #: system/models.py:1138
-#, fuzzy
 msgid "Syslog"
-msgstr "Syslog-server"
+msgstr "Syslog"
 
 #: system/models.py:1142
 msgid "RRD"
-msgstr ""
+msgstr "RRD"
 
 #: system/models.py:1146
 #: templates/system/settings.html:11
-#, fuzzy
 msgid "System Dataset"
-msgstr "Gegevensset bewerken"
+msgstr "Systeemgegevensset"
 
 #: system/views.py:191
-#, fuzzy
 msgid "The cron process has started"
-msgstr "Het reinigingsproces is gestopt"
+msgstr "Het cron-proces is gestart"
 
 #: system/views.py:541
-#, fuzzy
 msgid "The rsync process has started"
-msgstr "Het reinigingsproces is gestopt"
+msgstr "Het rsync-proces is gestart"
 
 #: system/alertmods/lsi_firmware.py:34
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s"
 msgstr ""
+"Firmwareversie %(fwversion)s komt niet overeen met stuurprogrammaversie "
+"%(drversion)s voor /dev/mps%(mps)s"
 
 #: system/alertmods/replication_status.py:17
 msgid "Replication %(replication)s failed: %(message)s"
-msgstr ""
+msgstr "Replicatie %(replication)s mislukt: %(message)s"
 
 #: system/alertmods/volume_version.py:24
 #: system/alertmods/volume_version.py:44
-#, fuzzy
 msgid "You need to upgrade the volume %s"
-msgstr "U dient een ZFS-volume aan te maken om verder te gaan!"
+msgstr "U dient het volume %s te upgraden"
 
 #: system/alertmods/zpool_capacity.py:28
 msgid ""
 "The capacity for the volume '%(volume)s' is currently at %(capacity)d%%, "
 "while the recommended value is below 80%%."
 msgstr ""
+"De capaciteit voor het volume '%(volume)s' ligt momenteel op %(capacity)d%%, "
+"terwijl de aanbevolen waarde onder de 80%% ligt."
 
 #: templates/reporting/index.html:3
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #: templates/reporting/index.html:11
-#, fuzzy
 msgid "Partition"
-msgstr "Opstart optie"
+msgstr "Partitie"
 
 #: templates/services/core.html:82
-#, fuzzy
 msgid "LLDP Settings"
-msgstr "LDAP Instellingen"
+msgstr "LLDP-instellingen"
 
 #: templates/storage/lock.html:3
-#, fuzzy
 msgid "Do you want to lock this volume?"
-msgstr "Wilt u dit volume ontgrendelen?"
+msgstr "Wilt u dit volume vergrendelen?"
 
 #: templates/storage/rekey.html:6
-#, fuzzy
 msgid ""
 "Remember to create a new passphrase as this action removes the current "
 "passphrase"
 msgstr ""
-"Denk eraan dat u een nieuwe herstelsleutel toevoegt, omdat deze actie de "
-"vorige herstelsleutel ongeldig maakt"
+"Denk eraan dat u een nieuwe wachtwoordzin aanmaakt, omdat deze actie de "
+"huidige wachtwoordzin verwijdert"
 
 #: templates/storage/replication_datagrid.html:16
-#, fuzzy
 msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS Volume/Dataset is required to "
 "create a replication task"
 msgstr ""
-"ATTENTIE: er is een periodieke momentopname van een bepaald ZFS-"
-"bestandssysteem/-volume vereist om een replicatietaak aan te maken"
+"ATTENTIE: er is een periodieke momentopname van een bepaald ZFS-volume/-"
+"gegevensset vereist om een replicatietaak aan te maken"
 
 #: templates/storage/snapshots.html:102
-#, fuzzy
 msgid "Replication"
-msgstr "ZFS-replicatie"
+msgstr "Replicatie"
 
 #: templates/storage/upgrade_confirm.html:5
-#, fuzzy
 msgid "Are you sure you want to upgrade your pool?"
-msgstr "Weet u zeker dat u wilt verwijderen?"
+msgstr "Weet u zeker dat u uw pool wilt upgraden?"
 
 #: templates/storage/upgrade_confirm.html:5
 msgid "This operation is irreversible!"
-msgstr ""
+msgstr "Deze bewerking is onomkeerbaar!"
 
 #: templates/storage/volumestatus_datagrid.html:6
 msgid "Resilver"
@@ -9639,17 +9608,15 @@ msgstr ""
 #: templates/storage/volumestatus_datagrid.html:17
 #: templates/storage/volumestatus_datagrid.html:33
 msgid "Date"
-msgstr ""
+msgstr "Datum"
 
 #: templates/storage/zfswizard.html:77
-#, fuzzy
 msgid "Deduplication"
-msgstr "ZFS-ontdubbeling"
+msgstr "Ontdubbeling"
 
 #: templates/system/cron_run.html:5
-#, fuzzy
 msgid "Would you like to run this cron job now?"
-msgstr "Wilt u deze service inschakelen?"
+msgstr "Wilt u deze cronjob nu uitvoeren?"
 
 #: templates/system/reboot_dialog2.html:4
 msgid ""
@@ -9658,12 +9625,27 @@ msgid ""
 msgstr ""
 
 #: templates/system/rsync_run.html:5
-#, fuzzy
 msgid "Would you like to run this rsync job now?"
-msgstr "Wilt u deze service inschakelen?"
+msgstr "Wilt u deze rsync-taak nu uitvoeren?"
 
 #: templates/system/shutdown_dialog2.html:4
 msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>SHUTDOWN</strong>?"
 msgstr ""
+
+#: freeadmin/options.py:633
+msgid "Are you sure you want to edit this?"
+msgstr "Weet u zeker dat u dit wilt bewerken?"
+
+#: network/admin.py:61
+msgid "This change will cause a failover event. Do you want to proceed?"
+msgstr "Deze wijziging veroorzaakt een failovergebeurtenis. Wilt u doorgaan?"
+
+#: network/admin.py:63
+msgid "Network connectivity will be interrupted"
+msgstr "Netwerkverbindingen zullen worden onderbroken"
+
+#: services/models.py:117
+msgid "Domain logons"
+msgstr "Domeinaanmeldingsnamen"

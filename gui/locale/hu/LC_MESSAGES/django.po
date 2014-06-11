@@ -9452,3 +9452,21 @@ msgstr ""
 #: templates/system/rsync_run.html:5
 msgid "Would you like to run this rsync job now?"
 msgstr ""
+
+#: freeadmin/options.py:633
+#, fuzzy
+msgid "Are you sure you want to edit this?"
+msgstr "Biztos, hogy eltávolítod?"
+
+#: network/admin.py:61
+msgid "This change will cause a failover event. Do you want to proceed?"
+msgstr ""
+
+#: network/admin.py:63
+msgid "Network connectivity will be interrupted"
+msgstr ""
+
+#: services/models.py:117
+#, fuzzy
+msgid "Domain logons"
+msgstr "Domén név"

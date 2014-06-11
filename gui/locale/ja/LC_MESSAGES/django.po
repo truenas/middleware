@@ -10049,3 +10049,24 @@ msgstr ""
 #, fuzzy
 msgid "Would you like to run this rsync job now?"
 msgstr "サービスを有効にします？"
+
+# あえて敬語にしてみた。
+# デタッチはzfsにおけるdetach（zpool detach とか）と思われます。
+# そのため固有名詞的な扱いとして、カタカナで表しています。
+#: freeadmin/options.py:633
+#, fuzzy
+msgid "Are you sure you want to edit this?"
+msgstr "本当にデタッチしてよろしいですか？"
+
+#: network/admin.py:61
+msgid "This change will cause a failover event. Do you want to proceed?"
+msgstr ""
+
+#: network/admin.py:63
+msgid "Network connectivity will be interrupted"
+msgstr ""
+
+#: services/models.py:117
+#, fuzzy
+msgid "Domain logons"
+msgstr "ドメイン名"

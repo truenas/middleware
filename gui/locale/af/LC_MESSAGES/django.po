@@ -8970,3 +8970,19 @@ msgstr ""
 #: templates/storage/volume_detach.html:19
 msgid "ATTENTION - Currently the following services depend on this volume: "
 msgstr ""
+
+#: freeadmin/options.py:633
+msgid "Are you sure you want to edit this?"
+msgstr ""
+
+#: network/admin.py:61
+msgid "This change will cause a failover event. Do you want to proceed?"
+msgstr ""
+
+#: network/admin.py:63
+msgid "Network connectivity will be interrupted"
+msgstr ""
+
+#: services/models.py:117
+msgid "Domain logons"
+msgstr ""

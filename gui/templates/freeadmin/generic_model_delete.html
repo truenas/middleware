@@ -1,12 +1,14 @@
 <form data-dojo-type="dijit.form.Form">
+<script type="dojo/method" data-dojo-event="submitForm" data-dojo-args="form,e,conf">
+     doSubmit({
+        form: form,
+        event: e,
+        url: '{{ request.path }}',
+        confirm: conf
+     });
+</script>
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    {% block onsubmit %}
-    doSubmit({
-        form: this,
-	event: e,
-	url: '{{ request.path }}'
-	});
-    {% endblock %}
+this.submitForm(this, e);
 </script>
 <table class="form">
 {% if form %}

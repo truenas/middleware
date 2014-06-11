@@ -9940,3 +9940,21 @@ msgstr ""
 #, fuzzy
 msgid "Would you like to run this rsync job now?"
 msgstr "Si desidera abilitare questo servizio?"
+
+#: freeadmin/options.py:633
+#, fuzzy
+msgid "Are you sure you want to edit this?"
+msgstr "Sei sicuro di voler scollegare?"
+
+#: network/admin.py:61
+msgid "This change will cause a failover event. Do you want to proceed?"
+msgstr ""
+
+#: network/admin.py:63
+msgid "Network connectivity will be interrupted"
+msgstr ""
+
+#: services/models.py:117
+#, fuzzy
+msgid "Domain logons"
+msgstr "Nome Dominio"

@@ -9366,3 +9366,21 @@ msgid ""
 "This option forces rpc.lockd the daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
 msgstr ""
+
+#: freeadmin/options.py:633
+#, fuzzy
+msgid "Are you sure you want to edit this?"
+msgstr "确认分离?"
+
+#: network/admin.py:61
+msgid "This change will cause a failover event. Do you want to proceed?"
+msgstr ""
+
+#: network/admin.py:63
+msgid "Network connectivity will be interrupted"
+msgstr ""
+
+#: services/models.py:117
+#, fuzzy
+msgid "Domain logons"
+msgstr "域名"
