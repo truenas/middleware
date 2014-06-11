@@ -33,6 +33,7 @@ def main():
 
     # Generate the auth section
     # Work around SQLite not supporting DISTINCT ON
+    masteropen = False
     val = None
     isopen = False
     AUTH = None
@@ -50,6 +51,7 @@ def main():
                 cf_contents.append("}\n\n")
         if isopen:
             cf_contents.append("auth-group ag%d {\n" % id.iscsi_target_auth_tag)
+            masteropen = True
             isopen = False
         # It is an error to mix CHAP and Mutual CHAP in the same auth group
         # But not in istgt, so we need to catch this and do something.
@@ -64,7 +66,8 @@ def main():
             AUTH = "CHAP"
             cf_contents.append("\tchap %s %s\n" % (id.iscsi_target_auth_user,
                                                    id.iscsi_target_auth_secret))
-    cf_contents.append("}\n\n")
+    if masteropen:
+        cf_contents.append("}\n\n")
 
     # Generate the portal-group section
     for portal in iSCSITargetPortal.objects.all():
