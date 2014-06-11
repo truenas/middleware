@@ -51,6 +51,28 @@ class FTPFAdmin(BaseFreeAdmin):
     )
 
 
+class ISCSITargetGlobalConfigurationFAdmin(BaseFreeAdmin):
+
+    deletable = False
+    menu_child_of = "services.ISCSI"
+    icon_model = u"SettingsIcon"
+    nav_extra = {'type': 'iscsi'}
+    resource_name = 'services/iscsi/globalconfiguration'
+
+    def get_confirm_message(self, action, **kwargs):
+        if action == 'edit':
+            form = kwargs.get('form')
+            if form._target_changed():
+                return _(
+                    'Enabling experimental target requires a reboot. Do you '
+                    'want to proceed?'
+                )
+        return super(
+            ISCSITargetGlobalConfigurationFAdmin,
+            self
+        ).get_confirm_message(action, **kwargs)
+
+
 class ISCSITargetFAdmin(BaseFreeAdmin):
 
     menu_child_of = "services.ISCSI"
@@ -148,6 +170,11 @@ class NFSFAdmin(BaseFreeAdmin):
 
 
 site.register(models.FTP, FTPFAdmin)
+
+site.register(
+    models.iSCSITargetGlobalConfiguration,
+    ISCSITargetGlobalConfigurationFAdmin,
+)
 site.register(models.iSCSITarget, ISCSITargetFAdmin)
 site.register(models.iSCSITargetPortal, ISCSIPortalFAdmin)
 site.register(models.iSCSITargetAuthCredential, ISCSIAuthCredentialFAdmin)
