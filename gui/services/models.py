@@ -409,6 +409,10 @@ class iSCSITargetGlobalConfiguration(Model):
             blank=True,
             null=True,
             )
+    iscsi_experimental_target = models.BooleanField(
+        default=False,
+        verbose_name=_('Enable experimental target'),
+    )
     iscsi_multithreaded = models.BooleanField(
         default=False,
         verbose_name=_('Enable multithreaded mode'),
