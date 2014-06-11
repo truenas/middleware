@@ -92,30 +92,39 @@ def main():
         else:
             cf_contents.append("\tauth-group ag%s\n" % target.iscsi_target_authgroup)
         cf_contents.append("\tportal-group pg%s\n" % target.iscsi_target_portalgroup)
-        LUN = 0
-        for lun in iSCSITargetToExtent.objects.filter(id=target.id).order_by('iscsi_lunid'):
+        used_lunids = [
+            o.iscsi_lunid
+            for o in target.iscsitargettoextent_set.all().exclude(
+                iscsi_lunid=None,
+            )
+        ]
+        cur_lunid = 0
+        for t2e in target.iscsitargettoextent_set.all().extra({
+            'null_first': 'iscsi_lunid IS NULL',
+        }).order_by('null_first', 'iscsi_lunid'):
+
             cf_contents.append("\t\t\n")
-            if not lun.iscsi_lunid:
-                cf_contents.append("\t\tlun %s {\n" % LUN)
-                path = iSCSITargetExtent.objects.get(id=LUN+1).iscsi_target_extent_path
-                size = iSCSITargetExtent.objects.get(id=LUN+1).iscsi_target_extent_filesize
-                LUN += 1
+            if t2e.iscsi_lunid is None:
+                while cur_lunid in used_lunids:
+                    cur_lunid += 1
+                cf_contents.append("\t\tlun %s {\n" % cur_lunid)
+                cur_lunid += 1
             else:
-                cf_contents.append("\t\tlun %s {\n" % lun.iscsi_lunid)
-                path = iSCSITargetExtent.objects.get(id=lun.scsi_lunid).iscsi_target_extent_path
-                size = iSCSITargetExtent.objects.get(id=lun.scsi_lunid).iscsi_target_extent_filesize
+                cf_contents.append("\t\tlun %s {\n" % t2e.iscsi_lunid)
+            path = t2e.iscsi_extent.iscsi_target_extent_path
+            size = t2e.iscsi_extent.iscsi_target_extent_filesize
             if not path.startswith("/mnt"):
                 path = "/dev/" + path
             cf_contents.append("\t\t\tpath %s\n" % path)
-        cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
-        cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
-        cf_contents.append('\t\t\tdevice-id "FreeBSD iSCSI Disk"\n')
-        if size != "0":
-            if size.endswith('B'):
-                size = size.strip('B')
-            cf_contents.append("\t\t\tsize %s\n" % size)
-        cf_contents.append("\t\t}\n")
-    cf_contents.append("}\n\n")
+            cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
+            cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
+            cf_contents.append('\t\t\tdevice-id "FreeBSD iSCSI Disk"\n')
+            if size != "0":
+                if size.endswith('B'):
+                    size = size.strip('B')
+                cf_contents.append("\t\t\tsize %s\n" % size)
+            cf_contents.append("\t\t}\n")
+        cf_contents.append("}\n\n")
 
     fh = open(ctl_config, "w")
     for line in cf_contents:
