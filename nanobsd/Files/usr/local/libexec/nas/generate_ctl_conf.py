@@ -27,7 +27,6 @@ def main():
     from freenasUI.services.models import iSCSITargetExtent
     from freenasUI.services.models import iSCSITargetPortal
     from freenasUI.services.models import iSCSITargetPortalIP
-    from freenasUI.services.models import iSCSITargetAuthorizedInitiator
     from freenasUI.services.models import iSCSITargetAuthCredential
     from freenasUI.services.models import iSCSITarget
     from freenasUI.services.models import iSCSITargetToExtent
@@ -57,24 +56,29 @@ def main():
         # For now just skip over doing something that would cause ctld to bomb
         if id.iscsi_target_auth_peeruser and AUTH != "CHAP":
             AUTH = "Mutual"
-            cf.contents.append("\tchap-mutual %s %s %s %s\n" % (id.iscsi_target_auth_user, id.iscsi_target_auth_secret,
-                                                                    id.iscsi_target_auth_peeruser, id.iscsi_target_auth_peersecret))
+            cf_contents.append("\tchap-mutual %s %s %s %s\n" % (id.iscsi_target_auth_user,
+                                                                id.iscsi_target_auth_secret,
+                                                                id.iscsi_target_auth_peeruser,
+                                                                id.iscsi_target_auth_peersecret))
         elif AUTH != "Mutual":
             AUTH = "CHAP"
-            cf_contents.append("\tchap %s %s\n" % (id.iscsi_target_auth_user, id.iscsi_target_auth_secret))
+            cf_contents.append("\tchap %s %s\n" % (id.iscsi_target_auth_user,
+                                                   id.iscsi_target_auth_secret))
     cf_contents.append("}\n\n")
 
     # Generate the portal-group section
     for portal in iSCSITargetPortal.objects.all():
         cf_contents.append("portal-group pg%s {\n" % portal.id)
-        disc_authmethod =  iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_discoveryauthmethod
+        disc_authmethod = iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_discoveryauthmethod
         if disc_authmethod == "None":
             cf_contents.append("\tdiscovery-auth-group no-authentication\n")
         else:
-            cf_contents.append("\tdiscovery-auth-group %s\n" % iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_discoveryauthgroup)
+            cf_contents.append("\tdiscovery-auth-group %s\n" %
+                               iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_discoveryauthgroup)
         listen = iSCSITargetPortalIP.objects.filter(id=portal.id)
         for obj in listen:
-            cf_contents.append("\tlisten %s:%s\n" % (obj.iscsi_target_portalip_ip, obj.iscsi_target_portalip_port))
+            cf_contents.append("\tlisten %s:%s\n" % (obj.iscsi_target_portalip_ip,
+                                                     obj.iscsi_target_portalip_port))
         cf_contents.append("}\n\n")
 
     # Generate the target section
@@ -98,14 +102,14 @@ def main():
                 LUN += 1
             else:
                 cf_contents.append("\t\tlun %s {\n" % lun.iscsi_lunid)
-                path = iSCSITargetExtent.objects.get(id=scsi_lunid).iscsi_target_extent_path
-                size = iSCSITargetExtent.objects.get(id=scsi_lunid).iscsi_target_extent_filesize
+                path = iSCSITargetExtent.objects.get(id=lun.scsi_lunid).iscsi_target_extent_path
+                size = iSCSITargetExtent.objects.get(id=lun.scsi_lunid).iscsi_target_extent_filesize
             if not path.startswith("/mnt"):
                 path = "/dev/" + path
             cf_contents.append("\t\t\tpath %s\n" % path)
         cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
         cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
-        cf_contents.append("\t\t\tdevice-id FreeBSD iSCSI Disk\n")
+        cf_contents.append('\t\t\tdevice-id "FreeBSD iSCSI Disk"\n')
         if size != "0":
             if size.endswith('B'):
                 size = size.strip('B')
