@@ -33,12 +33,13 @@ main()
 	INSTALLUFSDIR="${NANO_OBJ}/_.instufs" # Scratch mountpoint where the image will be dissected
 
 	OUTPUT="${NANO_OBJ}/$NANO_NAME.iso" # Output file of mkisofs
+	OUTPUT_GRUB="${NANO_OBJ}/$NANO_NAME.usb" # Output file of mkisofs
 
 	CDROM_LABEL=${NANO_LABEL}_INSTALL
-	#MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
-	#		 -allow-multidot -hide boot.catalog -V ${CDROM_LABEL} -o ${OUTPUT} -no-emul-boot \
-	#		 -b boot/cdboot ${ISODIR}"
-	MKISOFS_CMD="/usr/local/bin/grub-mkrescue -o ${OUTPUT} ${ISODIR} -- -volid FREENAS_INSTALL"
+	MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
+			 -allow-multidot -hide boot.catalog -V ${CDROM_LABEL} -o ${OUTPUT} -no-emul-boot \
+			 -b boot/cdboot ${ISODIR}"
+	MKISOFS_GRUB_CMD="/usr/local/bin/grub-mkrescue -o ${OUTPUT_GRUB} ${ISODIR} -- -volid ${CDROM_LABEL}"
 
 	if ! command -v mkisofs >/dev/null 2>&1; then
 		error "mkisofs not available.  Please install the sysutils/cdrtools port."
@@ -325,6 +326,12 @@ main()
         ( cd $NANO_OBJ
           sha256_signature=`sha256 ${NANO_NAME}.iso`
           echo "${sha256_signature}" > ${NANO_NAME}.iso.sha256.txt
+        )
+
+	eval ${MKISOFS_GRUB_CMD}
+        ( cd $NANO_OBJ
+          sha256_signature=`sha256 ${NANO_NAME}.usb`
+          echo "${sha256_signature}" > ${NANO_NAME}.usb.sha256.txt
         )
 
 	echo "Created ${OUTPUT}"
