@@ -40,7 +40,7 @@ SSSD_CONFIGFILE	="/usr/local/etc/sssd/sssd.conf"
 
 class SSSDBase(object):
     def __init__(self, *args, **kwargs):
-        self.path = "/usr/local/etc/sssd/sssd.conf"
+        self.path = SSSD_CONFIGFILE
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -342,6 +342,10 @@ class SSSDConf(SSSDBase):
     def __init__(self, *args, **kwargs):
         super(SSSDConf, self).__init__(*args, **kwargs)
         self.sections = SSSDSectionContainer()
+
+        if 'parse' in kwargs:
+            self.parse = kwargs.pop('parse')
+
         self.parse()
 
     def parse(self):
@@ -431,8 +435,10 @@ def sssd_setup():
     sssd_mkdir("/var/log/sssd")
     sssd_mkdir("/var/db/sss")
     sssd_mkdir("/var/run/sss/private")
-    os.chown("/usr/local/etc/sssd/sssd.conf", 0, 0)
-    os.chmod("/usr/local/etc/sssd/sssd.conf", 0600)
+
+    if os.path.exists(SSSD_CONFIGFILE):
+        os.chown(SSSD_CONFIGFILE, 0, 0)
+        os.chmod(SSSD_CONFIGFILE, 0600)
 
 
 def add_ldap(sc):
@@ -559,9 +565,14 @@ def add_activedirectory(sc):
 
 
 def main():
-    sssd_setup()
+    sssd_conf = None
 
-    sc = SSSDConf(configfile=SSSD_CONFIGFILE)
+    sssd_setup()
+    if os.path.exists(SSSD_CONFIGFILE):
+        sssd_conf = SSSD_CONFIGFILE
+
+    def nullfunc(): pass
+    sc = SSSDConf(path=sssd_conf, parse=nullfunc)
     if not sc['sssd']:
         sc['sssd'] = SSSDSectionSSSD()
 

@@ -9778,3 +9778,21 @@ msgid ""
 "NOT recommended to set this. The desired behavior can be achieved using "
 "ACL's. This probably won't do what you want it to do."
 msgstr ""
+
+#: freeadmin/options.py:633
+#, fuzzy
+msgid "Are you sure you want to edit this?"
+msgstr "Jesteś pewien że chcesz odłączyć?"
+
+#: network/admin.py:61
+msgid "This change will cause a failover event. Do you want to proceed?"
+msgstr ""
+
+#: network/admin.py:63
+msgid "Network connectivity will be interrupted"
+msgstr ""
+
+#: services/models.py:117
+#, fuzzy
+msgid "Domain logons"
+msgstr "Nazwa domeny"

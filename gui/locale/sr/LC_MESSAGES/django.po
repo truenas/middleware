@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2014-06-02 20:30+0000\n"
+"PO-Revision-Date: 2014-06-10 20:17+0000\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1401741041.0\n"
+"X-POOTLE-MTIME: 1402431422.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6436,29 +6436,28 @@ msgstr "vanila"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
-#, fuzzy
 msgid "NT1"
-msgstr "NT4"
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:312
 #, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb (preporučeno)"
+msgstr "lzjb (zastarelo, nije preporučeno)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (najbolja kompresija)"
 
 #: choices.py:698
 #: services/models.py:1531
@@ -6467,43 +6466,42 @@ msgstr ""
 #: services/models.py:2104
 #, fuzzy
 msgid "Domain Controller"
-msgstr "Ime Domen Kontrolera"
+msgstr "Domen Kontroler"
 
 #: choices.py:714
 #, fuzzy
 msgid "ctrl+!data"
-msgstr "!podaci"
+msgstr "ctrl+!podaci"
 
 #: choices.py:716
 #, fuzzy
 msgid "auth+!data"
-msgstr "!podaci"
+msgstr "auth+!podaci"
 
 #: account/forms.py:58
 #, fuzzy
 msgid "Confirm New Password"
-msgstr "Potvrdi lozinku"
+msgstr "Potvrdi Novu Lozinku"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
-msgstr ""
+msgstr "Matični direktorijum nemože da sadrži dvotačke"
 
 #: account/models.py:139
 msgid "Built-in User"
-msgstr ""
+msgstr "Ugrađeni korisnik"
 
 #: api/resources.py:888
 #: storage/models.py:745
 #: storage/models.py:755
 #: storage/models.py:772
-#, fuzzy
 msgid "Locked"
-msgstr "Zaključaj korisnika"
+msgstr "Zaključan"
 
 #: api/resources.py:986
 #, fuzzy
 msgid "on every %(days)s"
-msgstr "Svakih %s dana"
+msgstr "na svakih %(dana)s"
 
 #: api/resources.py:992
 msgid "From %(begin)s through %(end)s, %(repeat)s"
@@ -7418,54 +7416,53 @@ msgstr ""
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:307
 #, fuzzy
 msgid "lz4 (recommended)"
-msgstr "lzjb (preporučeno)"
+msgstr "lz4 (preporučeno)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (sve zaokruženo)"
 
 #: choices.py:677
 #, fuzzy
 msgid "Debug2"
-msgstr "Ispravljanje grešaka"
+msgstr "Otklanjanje grešaka2"
 
 #: choices.py:678
-#, fuzzy
 msgid "Debug3"
-msgstr "Ispravljanje grešaka"
+msgstr "Otklanjanje grešaka3"
 
 #: choices.py:688
 #, fuzzy
 msgid "Local 2"
-msgstr "Lokalni Korisnik"
+msgstr "Lokal 2"
 
 #: choices.py:691
 #, fuzzy
 msgid "Local 5"
-msgstr "Lokalni Korisnik"
+msgstr "Lokal 5"
 
 #: choices.py:701
 #, fuzzy
 msgid "NIS"
-msgstr "NIC"
+msgstr "NIS"
 
 #: choices.py:713
 #, fuzzy
 msgid "ctrl+data"
-msgstr "podaci"
+msgstr "ctrl+podaci"
 
 #: account/forms.py:53
 #, fuzzy
@@ -7475,17 +7472,17 @@ msgstr "Nova šifra"
 #: account/forms.py:66
 #, fuzzy
 msgid "Passwords do not match"
-msgstr "Tajna se ne podudara"
+msgstr "Lozinka se ne podudara"
 
 #: account/forms.py:398
 #, fuzzy
 msgid "Create Home Directory In"
-msgstr "Korisnički Direktorijum"
+msgstr "Kreiraj Matični Direktorijum u"
 
 #: account/models.py:54
 #, fuzzy
 msgid "Built-in Group"
-msgstr "Pomoćne grupe"
+msgstr "Ugrađena grupa"
 
 #: api/resources.py:437
 #: storage/views.py:778
@@ -8436,63 +8433,63 @@ msgstr ""
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "CORE"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
 #, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (najbrže)"
+msgstr "lz4 (najbrže)"
 
 #: choices.py:686
 #, fuzzy
 msgid "Local 0"
-msgstr "Lokalni Korisnik"
+msgstr "Lokal 0"
 
 #: choices.py:687
 #, fuzzy
 msgid "Local 1"
-msgstr "Lokalni Korisnik"
+msgstr "Lokal 1"
 
 #: choices.py:689
 #, fuzzy
 msgid "Local 3"
-msgstr "Lokalni Korisnik"
+msgstr "Lokal 3"
 
 #: choices.py:690
 #, fuzzy
 msgid "Local 4"
-msgstr "Lokalni Korisnik"
+msgstr "Lokal 4"
 
 #: choices.py:692
 #, fuzzy
 msgid "Local 6"
-msgstr "Lokalni Korisnik"
+msgstr "Lokal 6"
 
 #: choices.py:693
 #, fuzzy
 msgid "Local 7"
-msgstr "Lokalni Korisnik"
+msgstr "Lokal 7"
 
 #: choices.py:707
 #, fuzzy
 msgid "on"
-msgstr "Nijedan"
+msgstr "Uključen"
 
 #: choices.py:708
 #, fuzzy
@@ -8501,22 +8498,22 @@ msgstr "Isključen"
 
 #: choices.py:712
 msgid "ctrl"
-msgstr ""
+msgstr "ctrl"
 
 #: choices.py:715
 #, fuzzy
 msgid "auth+data"
-msgstr "podaci"
+msgstr "auth+podaci"
 
 #: account/forms.py:534
 #, fuzzy
 msgid "Home directory must end with username"
-msgstr "Korisnički direktorijum nije promenjiv, ostavite prazno"
+msgstr "Matični direktorijum treba da se završi sa korisničkim imenom"
 
 #: account/models.py:58
 #: account/models.py:154
 msgid "Permit Sudo"
-msgstr ""
+msgstr "Dozvoli Sudo"
 
 #: account/models.py:146
 #, fuzzy
@@ -8526,12 +8523,12 @@ msgstr "Onemogući prijavu lozinkom"
 #: account/models.py:264
 #, fuzzy
 msgid "Group Membership"
-msgstr "LAGG članovi"
+msgstr "Grupno članstvo"
 
 #: account/models.py:265
 #, fuzzy
 msgid "Group Memberships"
-msgstr "LAGG članovi"
+msgstr "Grupna članstva"
 
 #: freeadmin/navtree.py:611
 #, fuzzy
@@ -9416,3 +9413,21 @@ msgstr ""
 #, fuzzy
 msgid "Would you like to run this rsync job now?"
 msgstr "Želite li da omogućite ovu uslugu?"
+
+#: freeadmin/options.py:633
+#, fuzzy
+msgid "Are you sure you want to edit this?"
+msgstr "Da li ste sigurni da želite da odvojite?"
+
+#: network/admin.py:61
+msgid "This change will cause a failover event. Do you want to proceed?"
+msgstr ""
+
+#: network/admin.py:63
+msgid "Network connectivity will be interrupted"
+msgstr ""
+
+#: services/models.py:117
+#, fuzzy
+msgid "Domain logons"
+msgstr "Ime domena"
