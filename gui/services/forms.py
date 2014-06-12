@@ -1368,6 +1368,19 @@ class iSCSITargetExtentForm(ModelForm):
 
         return diskchoices.items()
 
+    def clean_iscsi_target_extent_name(self):
+        name = self.cleaned_data.get('iscsi_target_extent_name')
+        if not name:
+            return name
+        qs = models.iSCSITargetExtent.objects.filter(
+            iscsi_target_extent_name=name
+        )
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_('Extent name must be unique.'))
+        return name
+
     def clean_iscsi_target_extent_disk(self):
         _type = self.cleaned_data.get('iscsi_target_extent_type')
         disk = self.cleaned_data.get('iscsi_target_extent_disk')
