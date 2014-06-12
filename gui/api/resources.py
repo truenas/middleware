@@ -2066,23 +2066,25 @@ class FTPResourceMixin(object):
             permission and not umask.
             Convert from umask to unix perm before proceesing.
             """
-            fmask = bundle.data['ftp_filemask']
-            try:
-                assert len(fmask) == 3
-                fmask = int(fmask, 8)
-                fmask = (~fmask & 0o666)
-                bundle.data['ftp_filemask'] = oct(fmask)
-            except:
-                pass
+            if 'ftp_filemask' in bundle.data:
+                fmask = bundle.data['ftp_filemask']
+                try:
+                    assert len(fmask) == 3
+                    fmask = int(fmask, 8)
+                    fmask = (~fmask & 0o666)
+                    bundle.data['ftp_filemask'] = oct(fmask)
+                except:
+                    pass
 
-            dmask = bundle.data['ftp_dirmask']
-            try:
-                assert len(dmask) == 3
-                dmask = int(dmask, 8)
-                dmask = (~dmask & 0o777)
-                bundle.data['ftp_dirmask'] = oct(dmask)
-            except:
-                pass
+            if 'ftp_dirmask' in bundle.data:
+                dmask = bundle.data['ftp_dirmask']
+                try:
+                    assert len(dmask) == 3
+                    dmask = int(dmask, 8)
+                    dmask = (~dmask & 0o777)
+                    bundle.data['ftp_dirmask'] = oct(dmask)
+                except:
+                    pass
         return bundle
 
 
