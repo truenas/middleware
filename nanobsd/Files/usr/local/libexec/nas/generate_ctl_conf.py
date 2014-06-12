@@ -118,7 +118,7 @@ def main():
             size = t2e.iscsi_extent.iscsi_target_extent_filesize
             if not path.startswith("/mnt"):
                 path = "/dev/" + path
-                cf_contents.append("\t\t\toption unmap on")
+                cf_contents.append("\t\t\toption unmap on\n")
             cf_contents.append("\t\t\tpath %s\n" % path)
             cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
             cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
