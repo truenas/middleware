@@ -250,6 +250,7 @@ class notifier:
             'ftp': ('proftpd', '/var/run/proftpd.pid'),
             'tftp': ('inetd', '/var/run/inetd.pid'),
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
+            'ctld': ('ctld', '/var/run/ctld.pid'),
             'ups': ('upsd', '/var/db/nut/upsd.pid'),
             'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
@@ -265,6 +266,10 @@ class notifier:
         Returns:
             StartNotify object if the service is known or None otherwise
         """
+
+        # FIXME: Ugly workaround for one service and multiple backend
+        if what == 'iscsitarget' and self._iscsi_experimental_target():
+            what = 'ctld'
 
         if what in self.__service2daemon:
             procname, pidfile = self.__service2daemon[what]
@@ -283,6 +288,10 @@ class notifier:
         Returns:
             True whether the service is alive, False otherwise
         """
+
+        # FIXME: Ugly workaround for one service and multiple backend
+        if what == 'iscsitarget' and self._iscsi_experimental_target():
+            what = 'ctld'
 
         if what in self.__service2daemon:
             procname, pidfile = self.__service2daemon[what]
