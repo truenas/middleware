@@ -285,7 +285,7 @@ Hello,
                     results[replication.id] = 'Remote system have diverged snapshot with us'
                     continue
                 MNTLOCK.unlock()
-        else:
+        elif sshproc.returncode == 0:
             log.log(logging.NOTICE, "Can not locate %s on remote system, starting from there" % (known_latest_snapshot))
             # Reset the "latest" snapshot to a new one.
             system('/sbin/zfs set freenas:state=NEW %s' % (known_latest_snapshot))
@@ -293,6 +293,19 @@ Hello,
             wanted_list.insert(0, known_latest_snapshot)
             last_snapshot = ''
             known_latest_snapshot = ''
+        else:
+            log.warn("Got %d when running %s" % (sshproc.returncode, sshcmd))
+            # Can NOT proceed any further.  Report this situation.
+            error, errmsg = send_mail(subject="Replication failed!", text=\
+                        """
+Hello,
+    The replication failed for the local ZFS %s because the command:
+%s
+    have returned an error code of %d
+                        """ % (localfs, sshcmd, sshproc.returncode,), interval=datetime.timedelta(hours=2), channel='autorepl')
+            results[replication.id] = 'SSH Failed'
+            continue
+
     if resetonce:
         log.log(logging.NOTICE, "Destroying remote %s" % (remotefs_final))
         destroycmd = '%s -p %d %s /sbin/zfs destroy -rRf %s' % (sshcmd, remote_port, remote, remotefs_final)
