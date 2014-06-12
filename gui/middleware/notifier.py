@@ -3778,6 +3778,7 @@ class notifier:
                     snapshot, state = snapshot_item.split('\t')
                     if state != '-':
                         self.zfs_inherit_option(snapshot, 'freenas:state')
+                        self._system("/sbin/zfs release -r freenas:repl %s" % (snapshot))
         except IOError:
             retval = 'Try again later.'
         return retval
@@ -3800,6 +3801,7 @@ class notifier:
                     snapshot, state = snapshot_item.split('\t')
                     if state != 'NEW':
                         self.zfs_set_option(snapshot, 'freenas:state', 'NEW')
+                        self._system("/sbin/zfs hold -r freenas:repl %s" % (snapshot))
         except IOError:
             retval = 'Try again later.'
         return retval

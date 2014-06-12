@@ -965,7 +965,7 @@ class Replication(Model):
         try:
             if self.repl_lastsnapshot != "":
                 zfsname = self.repl_lastsnapshot.split('@')[0]
-                notifier().zfs_inherit_option(zfsname, 'freenas:state', True)
+                notifier().zfs_dataset_release_snapshots(zfsname, True)
         except:
             pass
         super(Replication, self).delete()
