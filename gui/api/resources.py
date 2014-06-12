@@ -1833,6 +1833,7 @@ class SnapshotResource(DojoResource):
         allowed_methods = ['delete', 'get', 'post']
         object_class = zfs.Snapshot
         resource_name = 'storage/snapshot'
+        max_limit = 0
 
     def get_list(self, request, **kwargs):
 
@@ -1864,11 +1865,18 @@ class SnapshotResource(DojoResource):
             results.sort(
                 key=lambda item: getattr(item, field),
                 reverse=reverse)
+
+        limit = self._meta.limit
+        if 'HTTP_X_RANGE' in request.META:
+            _range = request.META['HTTP_X_RANGE'].split('-')
+            if len(_range) > 1 and _range[1] == '':
+                limit = 0
+
         paginator = self._meta.paginator_class(
             request,
             results,
             resource_uri=self.get_resource_uri(),
-            limit=self._meta.limit,
+            limit=limit,
             max_limit=self._meta.max_limit,
             collection_name=self._meta.collection_name,
         )
@@ -2058,23 +2066,25 @@ class FTPResourceMixin(object):
             permission and not umask.
             Convert from umask to unix perm before proceesing.
             """
-            fmask = bundle.data['ftp_filemask']
-            try:
-                assert len(fmask) == 3
-                fmask = int(fmask, 8)
-                fmask = (~fmask & 0o666)
-                bundle.data['ftp_filemask'] = oct(fmask)
-            except:
-                pass
+            if 'ftp_filemask' in bundle.data:
+                fmask = bundle.data['ftp_filemask']
+                try:
+                    assert len(fmask) == 3
+                    fmask = int(fmask, 8)
+                    fmask = (~fmask & 0o666)
+                    bundle.data['ftp_filemask'] = oct(fmask)
+                except:
+                    pass
 
-            dmask = bundle.data['ftp_dirmask']
-            try:
-                assert len(dmask) == 3
-                dmask = int(dmask, 8)
-                dmask = (~dmask & 0o777)
-                bundle.data['ftp_dirmask'] = oct(dmask)
-            except:
-                pass
+            if 'ftp_dirmask' in bundle.data:
+                dmask = bundle.data['ftp_dirmask']
+                try:
+                    assert len(dmask) == 3
+                    dmask = int(dmask, 8)
+                    dmask = (~dmask & 0o777)
+                    bundle.data['ftp_dirmask'] = oct(dmask)
+                except:
+                    pass
         return bundle
 
 
