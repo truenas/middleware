@@ -1833,6 +1833,7 @@ class SnapshotResource(DojoResource):
         allowed_methods = ['delete', 'get', 'post']
         object_class = zfs.Snapshot
         resource_name = 'storage/snapshot'
+        max_limit = 0
 
     def get_list(self, request, **kwargs):
 
@@ -1864,11 +1865,18 @@ class SnapshotResource(DojoResource):
             results.sort(
                 key=lambda item: getattr(item, field),
                 reverse=reverse)
+
+        limit = self._meta.limit
+        if 'HTTP_X_RANGE' in request.META:
+            _range = request.META['HTTP_X_RANGE'].split('-')
+            if len(_range) > 1 and _range[1] == '':
+                limit = 0
+
         paginator = self._meta.paginator_class(
             request,
             results,
             resource_uri=self.get_resource_uri(),
-            limit=self._meta.limit,
+            limit=limit,
             max_limit=self._meta.max_limit,
             collection_name=self._meta.collection_name,
         )
