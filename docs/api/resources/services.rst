@@ -1814,7 +1814,7 @@ Update resource
         {
                 "tftp_umask": "022",
                 "tftp_username": "nobody",
-                "tftp_directory": "/tftproot",
+                "tftp_directory": "/mnt/tank/tftproot",
                 "tftp_port": 69,
                 "tftp_options": "",
                 "id": 1,
