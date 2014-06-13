@@ -437,8 +437,8 @@ class notifier:
             self._system("/usr/sbin/service ix-ctld quietstart")
             self._system("/usr/sbin/service ctld reload")
         else:
-            self._system("/usr/sbin/service ix-ctld quietstart")
-            self._system("/usr/sbin/service ctld reload")
+            self._system("/usr/sbin/service ix-istgt quietstart")
+            self._system("/usr/sbin/service istgt reload")
 
     def _start_collectd(self):
         self._system("/usr/sbin/service ix-collectd quietstart")
