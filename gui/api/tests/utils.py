@@ -39,6 +39,7 @@ class APITestCase(ResourceTestCase):
 
     __metaclass__ = TestCaseMeta
 
+    maxDiff = None
     resource_name = None
 
     def setUp(self):
