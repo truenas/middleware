@@ -26,7 +26,7 @@ mkdir -p "${TOP}/${STAGEDIR}"
 arch=x64
 mapped_arch=amd64
 mkdir -p ${TOP}/${STAGEDIR}/${arch}
-for ext in img.xz GUI_Upgrade.txz iso vmdk.xz ; do
+for ext in img.xz GUI_Upgrade.txz iso vmdk.xz usb; do
 	if [ -f ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ]; then
 		ln ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ${TOP}/${STAGEDIR}/${arch}
 		ln ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}.sha256.txt ${TOP}/${STAGEDIR}/${arch}
