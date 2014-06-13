@@ -27,6 +27,23 @@ the replication peers failed, have been fixed.
 o A new Virtualbox jail template has been added.  Supporting Virtualbox in a
 jail is as easy as creating an instance of this template.
 
-o The ISO installation image can, in addition to being used as CD install
-media, also now be written to a USB device and booted directly.  To facilitate
-this, the installer uses the GRUB boot manager.
+o A .usb image is now being distributed that can be imaged to a USB key.  This
+will boot into the installer which can ease installation on systems without
+an optical drive.  This image will also work if burned to a CD.
+
+o Pool import time for healthy pools has been improved by a factor of 3x in
+many cases.
+
+o FreeNAS now includes the mpr driver, which is the officially sanctioned
+LSI 12 Gbps SAS HBA driver.  Users who were using a tunable to load mps3
+(the beta LSI driver) can safely delete that tunable as that driver has
+been removed from the build and replaced by the official driver.
+
+o FreeNAS includes an experimental in kernel iSCSI target, which can be
+enabled via the services -> iSCSI settings screen.  Changing between the
+userland iSCSI target and the new kernel iSCSI target requires a reboot.
+Additionally while one should be able to migrate between targets at will this
+has not been well tested and VMWare at least notices the change.  The new
+target is designed to be backed by zvols.  While it works with files not
+all features are enabled and performance may suffer.  The new target also
+enables FC target mode with a few additional tweaks.
