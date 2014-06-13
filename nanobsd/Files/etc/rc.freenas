@@ -840,3 +840,22 @@ jail_post_delete()
 {
 	:
 }
+
+mount_root_rw()
+{
+    local opts="$@"
+
+    mount -uw $opts /
+}
+
+# set root mount back to read only if !Developer
+mount_root_restore()
+{
+
+    if sh -c '. /etc/avatar.conf && echo $AVATAR_VERSION' | grep -q 'DEVELOPER$' ; then
+	mount -uw /
+    else
+	mount -ur /
+    fi
+
+}
