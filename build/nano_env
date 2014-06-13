@@ -227,10 +227,16 @@ export SVNREVISION
 unset PACKAGEROOT
 unset PACKAGESITE
 
+HW_NCPU=$(sysctl -n hw.ncpu)
+
 # Can be overriden with env when calling, but use pxz by default
 # if it's installed.
 NANO_XZ=pxz
-PXZ_ACCEL="-T 16"
+if [ "$HW_NCPU" -lt 16 ]; then
+    PXZ_ACCEL="-T ${HW_NCPU}"
+else
+    PXZ_ACCEL="-T 16"
+fi
 export NANO_XZ
 export PXZ_ACCEL
 
