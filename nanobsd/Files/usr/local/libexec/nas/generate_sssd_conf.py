@@ -213,7 +213,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
         if not service in ('nss', 'pam', 'sudo', 'ssh'):
             return
         if not self.services:
-            self.service = service
+            self.services = service
         else:
             services = []
             self_services = self.services.split(',')
@@ -575,6 +575,7 @@ def main():
     sc = SSSDConf(path=sssd_conf, parse=nullfunc)
     if not sc['sssd']:
         sc['sssd'] = SSSDSectionSSSD()
+        sc['sssd'].config_file_version = 2
 
     if not sc['nss']:
         sc['nss'] = SSSDSectionNSS()
