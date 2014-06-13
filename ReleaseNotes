@@ -20,6 +20,10 @@ the placement of various sub-datasets under it.
 o The System Dataset will now migrate if you change the pool assignment,
 preserving your data and also moving it off the previous pool.
 
+o Several bugs which broke ZFS snapshot replication when snapshots expired
+before replication could complete successfully, or if the connection between
+the replication peers failed, have been fixed.
+
 o A new Virtualbox jail template has been added.  Supporting Virtualbox in a
 jail is as easy as creating an instance of this template.
 
