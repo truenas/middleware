@@ -279,10 +279,10 @@ for replication in replication_tasks:
                         """
 Hello,
     The replication failed for the local ZFS %s because the remote system
-    have diverged snapshot with us.
+    has diverged snapshots with us.
                         """ % (localfs), interval=datetime.timedelta(hours=2), channel='autorepl')
                     MNTLOCK.unlock()
-                    results[replication.id] = 'Remote system have diverged snapshot with us'
+                    results[replication.id] = 'Remote system has diverged snapshots with us'
                     continue
                 MNTLOCK.unlock()
         elif sshproc.returncode == 0:
