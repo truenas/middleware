@@ -430,7 +430,7 @@ class notifier:
         if self._iscsi_experimental_target():
             self._system("/usr/sbin/service ctld forcestop")
         else:
-            self._system("/usr/sbin/service ctld forcestop")
+            self._system("/usr/sbin/service istgt forcestop")
 
     def _reload_iscsitarget(self):
         if self._iscsi_experimental_target():
