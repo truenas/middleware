@@ -47,3 +47,7 @@ has not been well tested and VMWare at least notices the change.  The new
 target is designed to be backed by zvols.  While it works with files not
 all features are enabled and performance may suffer.  The new target also
 enables FC target mode with a few additional tweaks.
+
+This is, again, an experimental feature largely aimed at Windows 2012
+installations as an alternative to the stable, but feature-frozen, istgt
+(user-mode iSCSI) implementation.
