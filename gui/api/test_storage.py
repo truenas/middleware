@@ -413,6 +413,8 @@ class ReplicationResourceTest(APITestCase):
             u'repl_remote_hostkey': u'AAAA',
             u'repl_remote_hostname': u'testhost',
             u'repl_remote_port': 22,
+            u'repl_compression': u'lz4',
+            u'repl_status': u'Waiting',
         })
 
     def test_Retrieve(self):
@@ -449,6 +451,8 @@ class ReplicationResourceTest(APITestCase):
             u'repl_remote_hostkey': u'AAAA',
             u'repl_remote_hostname': u'testhost',
             u'repl_remote_port': 22,
+            u'repl_compression': u'lz4',
+            u'repl_status': u'Waiting',
         }])
 
     def test_Update(self):
