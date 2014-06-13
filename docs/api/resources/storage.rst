@@ -865,6 +865,7 @@ List resource
                 "repl_compression": "lz4",
                 "repl_remote_hostname": "testhost",
                 "repl_lastsnapshot": "",
+                "repl_status": "Waiting",
                 "id": 1,
                 "repl_zfs": "tank"
         }
@@ -921,6 +922,7 @@ Create resource
                 "repl_compression": "lz4",
                 "repl_remote_hostname": "testhost",
                 "repl_lastsnapshot": "",
+                "repl_status": "Waiting",
                 "id": 1,
                 "repl_zfs": "tank"
         }
@@ -937,6 +939,7 @@ Create resource
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
    :json boolean repl_resetonce: initialize remote side for once
    :json string repl_compression: replication stream compression
+   :json string repl_status: current status of the replication
    :json integer repl_limit: limit the replication speed in KB/s
    :json string repl_begin: do not start replication before
    :json string repl_end: do not start replication after
@@ -987,6 +990,7 @@ Update resource
                 "repl_compression": "lz4",
                 "repl_remote_hostname": "testhost",
                 "repl_lastsnapshot": "",
+                "repl_status": "Waiting",
                 "id": 1,
                 "repl_zfs": "tank"
         }
@@ -1003,6 +1007,7 @@ Update resource
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
    :json boolean repl_resetonce: initialize remote side for once
    :json string repl_compression: replication stream compression
+   :json string repl_status: current status of the replication
    :json integer repl_limit: limit the replication speed in KB/s
    :json string repl_begin: do not start replication before
    :json string repl_end: do not start replication after
