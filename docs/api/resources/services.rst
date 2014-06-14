@@ -343,17 +343,16 @@ List resource
                 "cifs_srv_loglevel": "0",
                 "cifs_srv_guest": "nobody",
                 "cifs_srv_filemask": "",
-                "cifs_srv_easupport": false,
                 "cifs_srv_smb_options": "",
                 "id": 1,
                 "cifs_srv_aio_ws": 4096,
                 "cifs_srv_allow_execute_always": true,
-                "cifs_srv_max_protocol": "SMB3",
+                "cifs_srv_max_protocol": "SMB2",
                 "cifs_srv_min_protocol": "",
                 "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
+                "cifs_srv_domain_logons": false,
                 "cifs_srv_homedir": null,
-                "cifs_srv_dosattr": true,
                 "cifs_srv_homedir_browseable_enable": false,
                 "cifs_srv_homedir_enable": false,
                 "cifs_srv_aio_enable": false,
@@ -390,7 +389,7 @@ Update resource
       Content-Type: application/json
 
         {
-                "cifs_srv_dosattr": false
+                "cifs_srv_hostlookup": false
         }
 
    **Example response**:
@@ -407,7 +406,6 @@ Update resource
                 "cifs_srv_loglevel": "0",
                 "cifs_srv_guest": "nobody",
                 "cifs_srv_filemask": "",
-                "cifs_srv_easupport": false,
                 "cifs_srv_smb_options": "",
                 "id": 1,
                 "cifs_srv_aio_ws": 4096,
@@ -416,8 +414,8 @@ Update resource
                 "cifs_srv_min_protocol": "",
                 "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
+                "cifs_srv_domain_logons": false,
                 "cifs_srv_homedir": null,
-                "cifs_srv_dosattr": false,
                 "cifs_srv_homedir_browseable_enable": false,
                 "cifs_srv_homedir_enable": false,
                 "cifs_srv_aio_enable": false,
@@ -427,7 +425,7 @@ Update resource
                 "cifs_srv_timeserver": true,
                 "cifs_srv_workgroup": "WORKGROUP",
                 "cifs_srv_doscharset": "CP437",
-                "cifs_srv_hostlookup": true,
+                "cifs_srv_hostlookup": false,
                 "cifs_srv_netbiosname": "freenas",
                 "cifs_srv_nullpw": false,
                 "cifs_srv_zeroconf": true,
@@ -447,8 +445,6 @@ Update resource
    :json string cifs_srv_guest: guest account
    :json string cifs_srv_filemask: file mask
    :json string cifs_srv_dirmask: directory mask
-   :json boolean cifs_srv_easupport: ea support
-   :json boolean cifs_srv_dosattr: support dos file attributes
    :json boolean cifs_srv_nullpw: allow empty password
    :json boolean cifs_srv_allow_execute_always:  controls the behaviour of smbd(8) when receiving a protocol request of "open for execution"
    :json string cifs_srv_max_protocol: highest protocol version that will be supported by the server
@@ -460,6 +456,7 @@ Update resource
    :json string cifs_srv_homedir: home directories path
    :json string cifs_srv_homedir_aux: homes auxiliary parameters
    :json boolean cifs_srv_unixext: unix extensions
+   :json boolean cifs_srv_domain_logons: domains logons
    :json boolean cifs_srv_aio_enable: enable aio
    :json integer cifs_srv_aio_rs: minimum aio read size
    :json integer cifs_srv_aio_ws: minimum aio write size

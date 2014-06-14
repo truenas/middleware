@@ -201,9 +201,8 @@ class CIFSResourceTest(APITestCase):
             u'cifs_srv_allow_execute_always': True,
             u'cifs_srv_description': u'',
             u'cifs_srv_dirmask': u'',
-            u'cifs_srv_dosattr': False,
+            u'cifs_srv_domain_logons': False,
             u'cifs_srv_doscharset': u'CP437',
-            u'cifs_srv_easupport': False,
             u'cifs_srv_filemask': u'',
             u'cifs_srv_guest': u'nobody',
             u'cifs_srv_homedir': None,
@@ -213,7 +212,7 @@ class CIFSResourceTest(APITestCase):
             u'cifs_srv_hostlookup': True,
             u'cifs_srv_localmaster': False,
             u'cifs_srv_loglevel': u'0',
-            u'cifs_srv_max_protocol': u'SMB3',
+            u'cifs_srv_max_protocol': u'SMB2',
             u'cifs_srv_min_protocol': u'',
             u'cifs_srv_syslog': False,
             u'cifs_srv_netbiosname': u'',
@@ -1230,6 +1229,7 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, {
             u'id': self._obj.id,
+            u'iscsi_experimental_target': False,
             u'iscsi_basename': u'iqn.2011-03.org.example.istgt',
             u'iscsi_defaultt2r': 60,
             u'iscsi_defaultt2w': 2,

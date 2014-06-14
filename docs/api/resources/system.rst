@@ -1034,8 +1034,9 @@ List resource
 
         {
                 "stg_timezone": "America/Los_Angeles",
-                "stg_guiport": null,
-                "stg_guihttpsport": null,
+                "stg_guiport": 80,
+                "stg_guihttpsport": 443,
+                "stg_guihttpsredirect": true,
                 "stg_guiprotocol": "http",
                 "stg_guiv6address": "::",
                 "stg_syslogserver": "",
@@ -1078,8 +1079,9 @@ Update resource
 
         {
                 "stg_timezone": "America/Sao_Paulo",
-                "stg_guiport": null,
-                "stg_guihttpsport": null,
+                "stg_guiport": 80,
+                "stg_guihttpsport": 443,
+                "stg_guihttpsredirect": true,
                 "stg_guiprotocol": "http",
                 "stg_guiv6address": "::",
                 "stg_syslogserver": "",
@@ -1095,6 +1097,7 @@ Update resource
    :json string stg_guiv6address: WebGUI IPv6 Address
    :json integer stg_guiport: WebGUI Port for HTTP
    :json integer stg_guihttpsport: WebGUI Port for HTTPS
+   :json boolean tg_guihttpsredirect: Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled
    :json string stg_language: webguil language
    :json string stg_kbdmap: see /usr/share/syscons/keymaps/INDEX.keymaps
    :json string stg_timezone: see /usr/share/zoneinfo
