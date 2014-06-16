@@ -96,7 +96,9 @@ def main():
             cf_contents.append("\tauth-group no-authentication\n")
         else:
             cf_contents.append("\tauth-group ag%s\n" % target.iscsi_target_authgroup)
-        cf_contents.append("\tportal-group pg%s\n" % target.iscsi_target_portalgroup)
+        cf_contents.append("\tportal-group pg%d\n" % (
+            target.iscsi_target_portalgroup.iscsi_target_portal_tag,
+        ))
         used_lunids = [
             o.iscsi_lunid
             for o in target.iscsitargettoextent_set.all().exclude(
