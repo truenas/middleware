@@ -24,12 +24,10 @@ def main():
     cf_contents = []
 
     from freenasUI.services.models import iSCSITargetGlobalConfiguration
-    from freenasUI.services.models import iSCSITargetExtent
     from freenasUI.services.models import iSCSITargetPortal
     from freenasUI.services.models import iSCSITargetPortalIP
     from freenasUI.services.models import iSCSITargetAuthCredential
     from freenasUI.services.models import iSCSITarget
-    from freenasUI.services.models import iSCSITargetToExtent
 
     gconf = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
 
