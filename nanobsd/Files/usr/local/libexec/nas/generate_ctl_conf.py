@@ -31,6 +31,8 @@ def main():
     from freenasUI.services.models import iSCSITarget
     from freenasUI.services.models import iSCSITargetToExtent
 
+    gconf = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
+
     # Generate the auth section
     # Work around SQLite not supporting DISTINCT ON
     masteropen = False
@@ -72,12 +74,12 @@ def main():
     # Generate the portal-group section
     for portal in iSCSITargetPortal.objects.all():
         cf_contents.append("portal-group pg%s {\n" % portal.id)
-        disc_authmethod = iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_discoveryauthmethod
+        disc_authmethod = gconf.iscsi_discoveryauthmethod
         if disc_authmethod == "None":
             cf_contents.append("\tdiscovery-auth-group no-authentication\n")
         else:
             cf_contents.append("\tdiscovery-auth-group %s\n" %
-                               iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_discoveryauthgroup)
+                               gconf.iscsi_discoveryauthgroup)
         listen = iSCSITargetPortalIP.objects.filter(id=portal.id)
         for obj in listen:
             cf_contents.append("\tlisten %s:%s\n" % (obj.iscsi_target_portalip_ip,
@@ -85,7 +87,7 @@ def main():
         cf_contents.append("}\n\n")
 
     # Generate the target section
-    target_basename = iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_basename
+    target_basename = gconf.iscsi_basename
     for target in iSCSITarget.objects.all():
         cf_contents.append("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
         if target.iscsi_target_name:
