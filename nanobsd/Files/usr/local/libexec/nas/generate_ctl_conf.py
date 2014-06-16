@@ -124,11 +124,17 @@ def main():
             cf_contents.append("\t\t\tpath %s\n" % path)
             cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
             cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
-            cf_contents.append('\t\t\tdevice-id "FreeBSD iSCSI Disk"\n')
+            padded_serial = target.iscsi_target_serial
+            for i in xrange(32 - len(target.iscsi_target_serial)):
+                padded_serial += " "
+            cf_contents.append('\t\t\tdevice-id "iSCSI Disk     %s"\n' % padded_serial)
             if size != "0":
                 if size.endswith('B'):
                     size = size.strip('B')
                 cf_contents.append("\t\t\tsize %s\n" % size)
+            cf_contents.append('\t\t\toption vendor "FreeBSD"\n')
+            cf_contents.append('\t\t\toption product "iSCSI Disk"\n')
+            cf_contents.append('\t\t\toption revision "0123"\n')
             cf_contents.append("\t\t}\n")
         cf_contents.append("}\n\n")
 
