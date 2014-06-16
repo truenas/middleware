@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-06-02 23:26+0000\n"
+"PO-Revision-Date: 2014-06-14 02:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zu\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1401751608.0\n"
+"X-POOTLE-MTIME: 1402712182.0\n"
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
@@ -239,4 +239,8 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
 msgid "Close"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:918
+msgid "Confirm"
 msgstr ""

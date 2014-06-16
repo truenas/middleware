@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-06-09 17:35+0000\n"
+"PO-Revision-Date: 2014-06-15 15:52+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1402335301.0\n"
+"X-POOTLE-MTIME: 1402847536.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -265,7 +265,7 @@ msgstr "Client ziet kleine letters, server ziet hoofdletters"
 
 #: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Client ziet hoofdletters, server ziet kleine lettters"
+msgstr "Client ziet hoofdletters, server ziet kleine letters"
 
 #: choices.py:207
 msgid "File"
@@ -803,7 +803,7 @@ msgstr "Het was niet mogelijk om de huidige status op te halen"
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
 msgid "%s successfully updated."
-msgstr "Kon url niet terughalen, node %(node)s wordt overgeslagen: %(error)s"
+msgstr "%s met succes bijgewerkt."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
@@ -3088,10 +3088,7 @@ msgstr "Kritiek"
 
 #: services/models.py:1484
 msgid "Email to report"
-msgstr ""
-"Rapporteren als kritiek in het systeemlogboek en een e-mail verzenden als de "
-"temperatuur hoger dan of gelijk is aan N graden Celsius. 0 om uit te "
-"schakelen"
+msgstr "E-mailadres voor rapportage"
 
 #~ msgid "Destination email address. Separate email addresses by semi-colon"
 #~ msgstr "Ontvangend email adres. Scheid meerdere email adressen met een comma"
@@ -5367,7 +5364,7 @@ msgstr "Koppelpunt verwijderen"
 
 #: templates/plugins/mountpoints.html:32
 msgid "No mount points defined"
-msgstr "Geen CronJobs gedefinieerd"
+msgstr "Geen koppelpunten gedefinieerd"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
 msgid "Add Mount Point"
@@ -5441,7 +5438,7 @@ msgstr "NFS-instellingen"
 
 #: templates/services/core.html:103 templates/services/core.html.py:105
 msgid "Plugins Settings"
-msgstr "AFP Instellingen"
+msgstr "Plug-in-instellingen"
 
 #: templates/services/core.html:105
 msgid "Install Jail PBI"
@@ -5493,7 +5490,7 @@ msgstr "Portals"
 
 #: templates/services/iscsi.html:14
 msgid "Authorized Initiators"
-msgstr "Geautoriseerde Initiator"
+msgstr "Geautoriseerde initiators"
 
 #~ msgid "Authentication"
 #~ msgstr "Authentificatie"
@@ -5512,7 +5509,7 @@ msgstr "Gekoppelde doelen"
 
 #: templates/services/iscsi_assoctargets.html:31
 msgid "No associated targets defined"
-msgstr "Geen doelen gedefinieerd"
+msgstr "Geen verbonden doelen gedefinieerd"
 
 #~ msgid "Add Extent to Target"
 #~ msgstr "Extent Toevoegen Aan Doel"
@@ -5531,14 +5528,14 @@ msgstr "Geen doelen gedefinieerd"
 
 #: templates/services/iscsi_authini.html:35
 msgid "No authorized initiators defined"
-msgstr "Geautoriseerde Initiator"
+msgstr "Geen geautoriseerde initiators gedefinieerd"
 
 #~ msgid "Add Authorized Initiator"
 #~ msgstr "Geautoriseerde Initiator Toevoegen"
 
 #: templates/services/iscsi_dextents.html:33
 msgid "No device extents defined"
-msgstr "Geen doelen gedefinieerd"
+msgstr "Geen apparaatextents gedefinieerd"
 
 #~ msgid "Add Extent"
 #~ msgstr "Extent Toevoegen"
@@ -5548,7 +5545,7 @@ msgstr "Geen doelen gedefinieerd"
 
 #: templates/services/iscsi_extents.html:33
 msgid "No extents defined"
-msgstr "Geen doelen gedefinieerd"
+msgstr "Geen extents gedefinieerd"
 
 #: templates/services/iscsi_portals.html:5
 msgid "Listen"
@@ -5566,7 +5563,7 @@ msgstr ""
 
 #: templates/services/iscsi_portals.html:39
 msgid "No portals defined"
-msgstr "Geen doelen gedefinieerd"
+msgstr "Geen portals gedefinieerd"
 
 #~ msgid "Add Portal"
 #~ msgstr "Portaal Toevoegen"
@@ -5618,7 +5615,7 @@ msgstr ""
 
 #: templates/services/pluginsjail_edit.html:12
 msgid "Delete Plugins Jail"
-msgstr "Verwijder onderliggend bestand"
+msgstr "Plug-in-jail verwijderen"
 
 #~ msgid "No rsync modules defined"
 #~ msgstr "Geen Rsync modules gedefinieerd"
@@ -5628,7 +5625,7 @@ msgstr "Verwijder onderliggend bestand"
 
 #: templates/sharing/apple.html:7
 msgid "There are no active Apple (AFP) shares."
-msgstr "Er zijn geen actieve Apple Shares."
+msgstr "Er zijn geen actieve Apple (AFP)-shares."
 
 #: templates/sharing/apple.html:29
 msgid "Edit Apple (AFP) Share"
@@ -5636,14 +5633,14 @@ msgstr "Apple (AFP)-share bewerken"
 
 #: templates/sharing/apple.html:35
 msgid "Delete Apple (AFP) Share"
-msgstr "Verwijder Apple Share"
+msgstr "Apple (AFP)-share verwijderen"
 
 #~ msgid "No shares defined"
 #~ msgstr "Geen Shares gedefinieerd"
 
 #: templates/sharing/apple.html:49 templates/sharing/apple.html.py:51
 msgid "Add Apple (AFP) Share"
-msgstr "Apple Share Toevoegen"
+msgstr "Apple (AFP)-share toevoegen"
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
@@ -5659,7 +5656,7 @@ msgstr "Windows (CIFS)"
 
 #: templates/sharing/unix.html:7
 msgid "There are no active UNIX (NFS) shares."
-msgstr "Er zijn geen actieve UNIX Shares."
+msgstr "Er zijn geen actieve UNIX (NFS)-shares."
 
 #~ msgid "Mountpoint"
 #~ msgstr "Mountpoint"
@@ -5670,15 +5667,15 @@ msgstr "UNIX (NFS)-share bewerken"
 
 #: templates/sharing/unix.html:35
 msgid "Delete UNIX (NFS) Share"
-msgstr "NFS Share Verwijderen"
+msgstr "UNIX (NFS)-share verwijderen"
 
 #: templates/sharing/unix.html:49 templates/sharing/unix.html.py:51
 msgid "Add UNIX (NFS) Share"
-msgstr "UNIX Share Toevoegen"
+msgstr "UNIX (NFS)-share toevoegen"
 
 #: templates/sharing/windows.html:7
 msgid "There are no active Windows (CIFS) shares."
-msgstr "Er zijn geen actieve Windows Shares"
+msgstr "Er zijn geen actieve Windows (CIFS)-shares."
 
 #: templates/sharing/windows.html:33
 msgid "Edit Windows (CIFS) Share"
@@ -5686,7 +5683,7 @@ msgstr "Windows (CIFS)-share bewerken"
 
 #: templates/sharing/windows.html:39
 msgid "Delete Windows (CIFS) Share"
-msgstr "Windows Share Verwijderen"
+msgstr "Windows (CIFS)-share verwijderen"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
 msgid "Add Windows (CIFS) Share"
@@ -5913,7 +5910,7 @@ msgstr "elke dag"
 
 #: templates/storage/tasks.html:147
 msgid "There are no periodic snapshots scheduled."
-msgstr "Geen periodieke snapshots gepland"
+msgstr "Er zijn geen periodieke momentopnamen gepland."
 
 #: templates/storage/volume_detach.html:8
 #, python-format
@@ -6051,15 +6048,15 @@ msgstr "Weet u zeker dat u de fabrieksconfiguratie wilt terugzetten?"
 
 #: templates/system/cronjob.html:41
 msgid "No cron jobs defined."
-msgstr "Geen CronJobs gedefinieerd"
+msgstr "Geen cronjobs gedefinieerd"
 
 #: templates/system/cronjob.html:47
 msgid "Add a cron job"
-msgstr "CronJob toevoegen"
+msgstr "Cronjob toevoegen"
 
 #: templates/system/cronjob.html:49
 msgid "Add cron job"
-msgstr "CronJob toevoegen"
+msgstr "Cronjob toevoegen"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -8306,7 +8303,7 @@ msgid ""
 "Datasetname not the mountpoint or filesystem path"
 msgstr ""
 "Dit zou de naam van het ZFS-bestandssysteem aan de andere zijde moeten zijn. "
-"vb: volumenaam/gegevenssetnaam, niet het koppelpunt of bestandssysteempad"
+"Vb: volumenaam/gegevenssetnaam, niet het koppelpunt of bestandssysteempad"
 
 #: storage/models.py:880
 msgid "Do not start replication before"
@@ -9009,8 +9006,9 @@ msgid "Active"
 msgstr "Actief"
 
 #: middleware/notifier.py:3821
+#, fuzzy
 msgid "Backup"
-msgstr ""
+msgstr "Back-up"
 
 #: middleware/notifier.py:3822
 msgid "Init"
@@ -9253,9 +9251,8 @@ msgid "Apply Default Permissions"
 msgstr "Standaardmachtigingen toepassen"
 
 #: sharing/models.py:49
-#, fuzzy
 msgid "Recursively set sane default windows permissions on share"
-msgstr "Standaard Windows-machtigingen recursief instellen bij delen"
+msgstr "Standaard-Windows-machtigingen recursief instellen bij delen"
 
 #: sharing/models.py:87
 msgid ""
@@ -9380,12 +9377,12 @@ msgstr "Sharetype"
 #: storage/forms.py:1431
 #: storage/forms.py:1436
 msgid "0=Unlimited; example: 1 GiB"
-msgstr "0=Onbeperkt; voorbeeld: 1GiB"
+msgstr "0=Onbeperkt; voorbeeld: 1 GiB"
 
 #: storage/forms.py:1441
 #: storage/forms.py:1446
 msgid "0=None; example: 1 GiB"
-msgstr "0=Geen; voorbeeld: 1GiB"
+msgstr "0=Geen; voorbeeld: 1 GiB"
 
 #: storage/forms.py:1506
 msgid ""
@@ -9397,7 +9394,7 @@ msgstr ""
 
 #: storage/forms.py:1606
 msgid "Example: 1 GiB"
-msgstr "Voorbeeld: 1GiB"
+msgstr "Voorbeeld: 1 GiB"
 
 #: storage/forms.py:1615
 msgid ""
@@ -9488,7 +9485,6 @@ msgid "Unable to migrate system dataset!"
 msgstr "Kan systeemgegevensset niet migreren!"
 
 #: system/models.py:80
-#, fuzzy
 msgid "WebGUI HTTP -> HTTPS Redirect"
 msgstr "WebGUI HTTP -> HTTPS-omleiding"
 
@@ -9602,8 +9598,9 @@ msgid "This operation is irreversible!"
 msgstr "Deze bewerking is onomkeerbaar!"
 
 #: templates/storage/volumestatus_datagrid.html:6
+#, fuzzy
 msgid "Resilver"
-msgstr ""
+msgstr "Resilvering"
 
 #: templates/storage/volumestatus_datagrid.html:17
 #: templates/storage/volumestatus_datagrid.html:33
@@ -9623,6 +9620,8 @@ msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>REBOOT</strong>?"
 msgstr ""
+"Sommige opslagpools zijn bezig met resilvering/reiniging, weet u echt zeker "
+"dat u wilt doorgaan met <strong>HERSTARTEN</strong>?"
 
 #: templates/system/rsync_run.html:5
 msgid "Would you like to run this rsync job now?"
@@ -9633,6 +9632,8 @@ msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>SHUTDOWN</strong>?"
 msgstr ""
+"Sommige opslagpools zijn bezig met resilvering/reiniging, weet u echt zeker "
+"dat u wilt doorgaan met <strong>AFSLUITEN</strong>?"
 
 #: freeadmin/options.py:633
 msgid "Are you sure you want to edit this?"
@@ -9649,3 +9650,21 @@ msgstr "Netwerkverbindingen zullen worden onderbroken"
 #: services/models.py:117
 msgid "Domain logons"
 msgstr "Domeinaanmeldingsnamen"
+
+#: network/admin.py:66
+msgid "Network connectivity will be interrupted. Do you want to proceed?"
+msgstr "Netwerkverbindingen zullen worden onderbroken. Wilt u doorgaan?"
+
+#: services/admin.py:67
+#, fuzzy
+msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
+msgstr ""
+"Inschakelen van experimental target vereist een herstart. Wilt u doorgaan?"
+
+#: services/forms.py:1381
+msgid "Extent name must be unique."
+msgstr "Extentnaam moet uniek zijn."
+
+#: services/models.py:414
+msgid "Enable experimental target"
+msgstr "Experimental target inschakelen"
