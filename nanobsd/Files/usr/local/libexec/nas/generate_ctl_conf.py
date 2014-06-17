@@ -76,7 +76,7 @@ def main():
         if disc_authmethod == "None":
             cf_contents.append("\tdiscovery-auth-group no-authentication\n")
         else:
-            cf_contents.append("\tdiscovery-auth-group %s\n" %
+            cf_contents.append("\tdiscovery-auth-group ag%s\n" %
                                gconf.iscsi_discoveryauthgroup)
         listen = iSCSITargetPortalIP.objects.filter(id=portal.id)
         for obj in listen:
@@ -125,7 +125,7 @@ def main():
             cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
             cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
             padded_devid = "iSCSI Disk     %s" % target.iscsi_target_serial
-            for i in xrange(32 - len(padded_devid)):
+            for i in xrange(32-len(padded_devid)):
                 padded_devid += " "
             cf_contents.append('\t\t\tdevice-id "%s"\n' % padded_devid)
             if size != "0":
