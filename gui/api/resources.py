@@ -257,6 +257,7 @@ class DatasetResource(DojoResource):
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, retval)
             )
+        return HttpResponse(status=204)
 
     def detail_uri_kwargs(self, bundle_or_obj):
         return {}
