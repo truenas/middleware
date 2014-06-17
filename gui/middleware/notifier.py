@@ -4998,7 +4998,7 @@ class notifier:
         path = "/mnt/%s" % dataset
         if os.path.exists("%s/.windows" % path):
             share_type = "windows"
-        elif os.path.exists("%s/.windows" % path):
+        elif os.path.exists("%s/.apple" % path):
             share_type = "apple"
 
         return share_type
