@@ -3858,7 +3858,7 @@ class notifier:
         if name.startswith('carp'):
             reg = re.search(r'carp: (\S+)', data)
         else:
-            reg = re.search(r'status: (.+)$', data)
+            reg = re.search(r'status: (.+)$', data, re.MULTILINE)
 
         if proc.returncode != 0 or not reg:
             return _('Unknown')
