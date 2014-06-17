@@ -29,6 +29,7 @@ import logging
 import re
 import socket
 
+from django.core.validators import RegexValidator
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 
@@ -433,6 +434,9 @@ class HostnameForm(Form):
 
     hostname = forms.CharField(
         max_length=200,
+        validators=[RegexValidator(
+            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+        )],
     )
 
     def __init__(self, *args, **kwargs):
