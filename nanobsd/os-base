@@ -250,7 +250,7 @@ add_port shells/bash OPTIONS_FILE_UNSET+=NLS
 add_port shells/ksh93
 add_port shells/mksh
 add_port shells/zsh
-add_port shells/scponly
+add_port shells/scponly OPTIONS_FILE_SET+=GFTP OPTIONS_FILE_SET+=RSYNC OPTIONS_FILE_SET+=SCP OPTIONS_FILE_SET+=WINSCP
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-libs
 add_port sysutils/fusefs-kmod OPTIONS_FILE_UNSET+=DOCS
