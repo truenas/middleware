@@ -29,8 +29,8 @@ test_config_file = None
 sentinel_file = None
 
 def usage(argv):
-    print "Usage:"
-    print "    %s -f [JSON config file]" % argv[0]
+    print("Usage:")
+    print("    %s -f [JSON config file]" % argv[0])
 
 
 def main(argv):
@@ -79,7 +79,7 @@ def runTest():
     print
     ret = os.system(cmd)
     cmd = "bhyveload -m %s -d %s %s" % (test_config['ram'], test_config['iso'], test_config['vm_name'])
-    print cmd
+    print(cmd)
     child1 = pexpect.spawn(cmd)
     child1.logfile = sys.stdout
     child1.expect(pexpect.EOF)
@@ -89,7 +89,7 @@ def runTest():
         macaddress = ",mac=%s" % test_config['mac']
 
     cmd = "bhyve -c 2 -m %s -AI -H -P -g 0 -s 0:0,hostbridge -s 1:0,lpc -s 2:0,virtio-net,%s%s -s 3:0,virtio-blk,%s -l com1,stdio -s 31:0,virtio-blk,%s %s"  % (test_config['ram'], test_config['tap'], macaddress, test_config['disk_img'], test_config['iso'], test_config['vm_name'])
-    print cmd
+    print(cmd)
     child2 = pexpect.spawn(cmd)
     child2.logfile = sys.stdout
     child2.expect(['Install'])
@@ -107,13 +107,13 @@ def runTest():
     child2.expect(pexpect.EOF)
 
     cmd = "bhyveload -m 2G -d %s %s" % (test_config['disk_img'], test_config['vm_name'])
-    print cmd
+    print(cmd)
     child5 = pexpect.spawn(cmd)
     child5.logfile = sys.stdout
     child5.expect (['Booting...'])
     child5.expect(pexpect.EOF)
     cmd = "bhyve -c 2 -m 2G -AI -H -P -g 0 -s 0:0,hostbridge -s 1:0,lpc -s 2:0,virtio-net,%s -s 31:0,virtio-blk,%s %s -l com1,stdio %s" % (test_config['tap'], test_config['disk_img'], extra_disks, test_config['vm_name'])
-    print cmd
+    print(cmd)
     child6 = pexpect.spawn(cmd)
     child6.logfile = sys.stdout
     c = child6.expect("bound to", 25000000)

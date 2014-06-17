@@ -20,8 +20,8 @@ test_config_file = None
 sentinel_file = None
 
 def usage(argv):
-    print "Usage:"
-    print "    %s -f [JSON config file]" % argv[0]
+    print("Usage:")
+    print("    %s -f [JSON config file]" % argv[0])
 
 def main(argv):
 
