@@ -1725,7 +1725,7 @@ get_next_id()
 
    IFS=$'\n'
    if [ -d "${jdir}" ] ; then
-      for i in `ls -d ${jdir}/.*.meta 2>/dev/null`
+      for i in `ls -d ${jdir}/.*.meta 2>/dev/null|grep -vw "${JAILNAME}"`
       do
         if [ ! -f "${i}/id" ] ; then continue ; fi
 

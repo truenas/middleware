@@ -92,6 +92,8 @@ touch /etc/mtab
 JAILNAME="${1}"
 HOST="${1}"
 
+export JAILNAME
+
 # Everything else is passed via environmental variables
 
 case "${JAILTYPE}" in
