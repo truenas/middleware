@@ -124,10 +124,10 @@ def main():
             cf_contents.append("\t\t\tpath %s\n" % path)
             cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
             cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
-            padded_devid = "iSCSI Disk     %s" % target.iscsi_target_serial
-            for i in xrange(32-len(padded_devid)):
-                padded_devid += " "
-            cf_contents.append('\t\t\tdevice-id "%s"\n' % padded_devid)
+            padded_serial = target.iscsi_target_serial
+            for i in xrange(32-len(target.iscsi_target_serial)):
+                padded_serial += " "
+            cf_contents.append('\t\t\tdevice-id "iSCSI Disk     %s"\n' % padded_serial)
             if size != "0":
                 if size.endswith('B'):
                     size = size.strip('B')
