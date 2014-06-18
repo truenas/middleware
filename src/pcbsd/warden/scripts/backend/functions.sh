@@ -1734,7 +1734,7 @@ get_next_id()
    local meta_id=0
 
    if [ -d "${jdir}" ] ; then
-      for i in `ls -d ${jdir}/.*.meta 2>/dev/null`
+      for i in `ls -d ${jdir}/.*.meta 2>/dev/null|grep -vw "${JAILNAME}"`
       do
         id="$(cat ${i}/id 2>/dev/null)"
         if [ "${id}" -gt "${meta_id}" ] ; then
