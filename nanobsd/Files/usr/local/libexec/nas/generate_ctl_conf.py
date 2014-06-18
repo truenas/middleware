@@ -78,7 +78,7 @@ def main():
         else:
             cf_contents.append("\tdiscovery-auth-group ag%s\n" %
                                gconf.iscsi_discoveryauthgroup)
-        listen = iSCSITargetPortalIP.objects.filter(id=portal.id)
+        listen = iSCSITargetPortalIP.objects.filter(iscsi_target_portalip_portal=portal)
         for obj in listen:
             cf_contents.append("\tlisten %s:%s\n" % (obj.iscsi_target_portalip_ip,
                                                      obj.iscsi_target_portalip_port))
