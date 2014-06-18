@@ -571,7 +571,7 @@ List resource
         {
         "filesystem": "tank/jails/.warden-template-pluginjail-9.2-RELEASE-x64",
         "fullname": "tank/jails/.warden-template-pluginjail-9.2-RELEASE-x64@clean",
-        "id": "tank/jails/.warden-template-pluginjail-9.2-RELEASE-x64",
+        "id": "tank/jails/.warden-template-pluginjail-9.2-RELEASE-x64@clean",
         "mostrecent": true,
         "name": "clean",
         "parent_type": "filesystem",
@@ -616,7 +616,7 @@ Create resource
         {
                 "filesystem": "tank",
                 "fullname": "tank@test",
-                "id": "tank",
+                "id": "tank@test",
                 "mostrecent": true,
                 "name": "test",
                 "parent_type": "filesystem",
