@@ -182,15 +182,15 @@ def checkpreReqBhyve():
     # XXX: Maybe this should not be so silent?
     euid = os.geteuid()
     if euid != 0:
-        raise EnvironmentError, "this script need to be run as root"
+        raise(EnvironmentError, "this script need to be run as root")
         sys.exit()
     ret = os.system("kldload -n vmm")
     if ret != 0:
-        raise EnvironmentError, "missing vmm.ko"
+        raise(EnvironmentError, "missing vmm.ko")
         sys.exit()
     ret = os.system("kldload -n if_tap")
     if ret != 0:
-        raise EnvironmentError, "missing if_tap.ko"
+        raise(EnvironmentError, "missing if_tap.ko")
         sys.exit()
 
 def cleanup():
