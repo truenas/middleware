@@ -1820,7 +1820,7 @@ class PluginsResourceMixin(NestedMixin):
 
 class SnapshotResource(DojoResource):
 
-    id = fields.CharField(attribute='filesystem')
+    id = fields.CharField(attribute='fullname')
     name = fields.CharField(attribute='name')
     filesystem = fields.CharField(attribute='filesystem')
     fullname = fields.CharField(attribute='fullname')
