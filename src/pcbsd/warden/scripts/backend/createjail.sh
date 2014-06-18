@@ -328,8 +328,9 @@ sendmail_msp_queue_enable=\"NO\"
 hostname=\"${HOST}\"
 devfs_enable=\"YES\"
 devfs_system_ruleset=\"devfsrules_common\"" > "${JAILDIR}/etc/rc.conf"
+fi
 
-  # Create the host for this device
+# Create the host for this device
 cat<<__EOF__>"${JAILDIR}/etc/hosts"
 # : src/etc/hosts,v 1.16 2003/01/28 21:29:23 dbaker Exp $
 #
@@ -347,19 +348,17 @@ cat<<__EOF__>"${JAILDIR}/etc/hosts"
 127.0.0.1               localhost localhost.localdomain ${HOST}
 __EOF__
 
-  if [ "${IP4}" != "OFF" ] ; then
-    echo "${IP4}			${HOST}" >> "${JAILDIR}/etc/hosts"
-  fi
-  if [ "${IP6}" != "OFF" ] ; then
-    echo "${IP6}			${HOST}" >> "${JAILDIR}/etc/hosts"
-    sed -i '' "s|#ListenAddress ::|ListenAddress ${IP6}|g" ${JAILDIR}/etc/ssh/sshd_config
-  fi
+if [ "${IP4}" != "OFF" ] ; then
+  echo "${IP4}			${HOST}" >> "${JAILDIR}/etc/hosts"
+fi
+if [ "${IP6}" != "OFF" ] ; then
+  echo "${IP6}			${HOST}" >> "${JAILDIR}/etc/hosts"
+  sed -i '' "s|#ListenAddress ::|ListenAddress ${IP6}|g" ${JAILDIR}/etc/ssh/sshd_config
+fi
 
-  # Copy resolv.conf
-  rm -f "${JAILDIR}/etc/resolv.conf"  
-  cp /etc/resolv.conf "${JAILDIR}/etc/resolv.conf"
-
-fi # End of ARCHIVEFILE check
+# Copy resolv.conf
+rm -f "${JAILDIR}/etc/resolv.conf"  
+cp /etc/resolv.conf "${JAILDIR}/etc/resolv.conf"
 
 # Fixup sendmail permissions
 chroot "${JAILDIR}" chown smmsp /var/spool/clientmqueue
