@@ -8,6 +8,7 @@
 
 from optparse import OptionParser
 import atexit
+import ctypes
 import getopt
 import json
 import os
@@ -59,6 +60,41 @@ def main(argv):
     checkpreReqBhyve()
     runTest()
 
+def freebsd_bootloader_iso():
+    cmd = "bhyveload -m %s -d %s %s" % (test_config['ram'], test_config['iso'], test_config['vm_name'])
+    print(cmd)
+    child = pexpect.spawn(cmd)
+    child.logfile = sys.stdout
+    child.expect(pexpect.EOF)
+
+def grub_bootloader_iso():
+    tmpfile = '/tmp/map'
+    f = open(tmpfile, "w")
+    f.write("(cd0) %s\n" % (test_config['iso']))
+    f.write("(hd1) %s\n" % (test_config['disk_img']))
+    f.close()
+
+    optarg = ctypes.c_char_p(test_config['ram'])
+    memsize = ctypes.c_ulong(0)
+    libvmmapi = ctypes.CDLL("libvmmapi.so")
+    libvmmapi.vm_parse_memsize(optarg, ctypes.byref(memsize))
+
+    cmd = "grub-bhyve -r cd0 --device-map=%s --memory=%s %s" % (tmpfile, memsize.value / (1024 * 1024), test_config['vm_name'])
+    print(cmd)
+    child = pexpect.spawn(cmd)
+    child.expect("Press enter")
+    child.sendline("c")
+    child.expect("grub>")
+    child.sendline("kfreebsd -h /boot/kernel/kernel")
+    child.expect("grub>")
+    child.sendline("kfreebsd_loadenv /boot/device.hints")
+    child.expect("grub>")
+    child.sendline("set kFreeBSD.vfs.root.mountfrom=cd9660:/dev/iso9660/FREENAS_INSTALL")
+    child.expect("grub>")
+    child.sendline("boot")
+    child.logfile = sys.stdout
+    child.expect(pexpect.EOF)
+
 def runTest():
     global test_config
     global test_config_file
@@ -78,11 +114,14 @@ def runTest():
     cmd = "bhyvectl --destroy --vm=%s" % test_config['vm_name']
     print
     ret = os.system(cmd)
-    cmd = "bhyveload -m %s -d %s %s" % (test_config['ram'], test_config['iso'], test_config['vm_name'])
-    print(cmd)
-    child1 = pexpect.spawn(cmd)
-    child1.logfile = sys.stdout
-    child1.expect(pexpect.EOF)
+
+    if test_config['iso_bootloader'] == "grub":
+        grub_bootloader_iso()
+    elif test_config['iso_bootloader'] == "freebsd":
+        freebsd_bootloader_iso()
+    else:
+        print("'iso_bootloader' not set to a valid bootloader: grub, freebsd")
+        sys.exit()
 
     macaddress = ""
     if test_config.has_key('mac'):
@@ -100,7 +139,7 @@ def runTest():
     child2.sendline("Y")
     child2.expect(['Please remove'], 250000)
     child2.sendline("")
-    child2.expect("Shutdown")
+    child2.expect("Shutdown", 250000)
     child2.sendline("4")
     child2.expect("The operating system has halted.")
     ret = os.system("bhyvectl --destroy --vm=%s" % (test_config['vm_name']))
