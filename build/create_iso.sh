@@ -25,7 +25,7 @@ main()
 	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.img.xz"
 	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
 
-	INSTALLER_FILES="$AVATAR_ROOT/nanobsd/Installer"
+	INSTALLER_FILES="$AVATAR_ROOT/build/nanobsd-cfg/Installer"
 	AVATAR_CONF="$NANO_OBJ/_.w/etc/avatar.conf"
 
 	# Various mount points needed to build the CD, adjust to taste

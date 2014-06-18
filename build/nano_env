@@ -74,7 +74,7 @@ else
 fi
 
 # Where the build configuration files used by nanobsd.sh live.
-NANO_CFG_BASE=$AVATAR_ROOT/nanobsd
+NANO_CFG_BASE=$AVATAR_ROOT/build/nanobsd-cfg
 
 # Where the FreeBSD ports tree lives.
 NANO_PORTS="$AVATAR_ROOT/${EXTRA_SRC}/FreeBSD/ports"
