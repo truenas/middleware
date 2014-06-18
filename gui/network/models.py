@@ -34,6 +34,7 @@ from freenasUI import choices
 from freenasUI.contrib.IPAddressField import (IPAddressField, IP4AddressField,
     IP6AddressField)
 from freenasUI.freeadmin.models import Model
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
 
@@ -484,4 +485,8 @@ class StaticRoute(Model):
 
     def delete(self, *args, **kwargs):
         super(StaticRoute, self).delete(*args, **kwargs)
-        notifier().staticroute_delete(self)
+        try:
+            # TODO: async user notification
+            notifier().staticroute_delete(self)
+        except MiddlewareError:
+            pass
