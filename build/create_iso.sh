@@ -316,7 +316,7 @@ main()
 	mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
 
 	cp -p ${AVATAR_ROOT}/build/files/loader.conf.cdrom ${ISODIR}/boot/loader.conf
-	cp -p ${AVATAR_ROOT}/build/files/grub.cfg ${ISODIR}/boot/grub/grub.cfg
+	cp -p ${AVATAR_ROOT}/build/files/grub.cfg.cdrom ${ISODIR}/boot/grub/grub.cfg
 	sed -i "" 's/%CDROM_LABEL%/'${CDROM_LABEL}'/'  ${ISODIR}/boot/loader.conf
 	sed -i "" 's/%CDROM_LABEL%/'${CDROM_LABEL}'/'  ${ISODIR}/boot/grub/grub.cfg
 	sed -i "" 's/%NANO_LABEL_LOWER%/'${NANO_LABEL_LOWER}'/'  ${ISODIR}/boot/loader.conf
