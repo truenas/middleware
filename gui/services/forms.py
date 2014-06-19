@@ -750,6 +750,8 @@ class NT4(ModelForm):
 
 
 class ActiveDirectoryForm(ModelForm):
+    ad_certfile = FileField(label=_("Certificate"), required=False)
+
     ad_bindpw2 = forms.CharField(
         max_length=50,
         label=_("Confirm Domain Account Password"),
@@ -843,6 +845,24 @@ class ActiveDirectoryForm(ModelForm):
 
         return filename
 
+    def clean_ad_certfile(self):
+        filename = "/data/activedirectory_certfile"
+
+        ad_certfile = self.cleaned_data.get("ad_certfile", None)
+        if ad_certfile and ad_certfile != filename:  
+            if hasattr(ad_certfile, 'temporary_file_path'):
+                shutil.move(ad_certfile.temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as f:
+                    for c in ad_certfile.chunks():
+                        f.write(c)
+                    f.close()
+
+            os.chmod(filename, 0400)
+            self.instance.ad_certfile = filename
+
+        return filename
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ad_bindpw"):
@@ -873,7 +893,7 @@ class NIS(ModelForm):
 
 
 class LDAPForm(ModelForm):
-    ldap_tls_cacertfile = FileField(label=_("Self signed certificate"), required=False)
+    ldap_tls_cacertfile = FileField(label=_("Certificate"), required=False)
 
     class Meta:
         fields = '__all__'

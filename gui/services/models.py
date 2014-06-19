@@ -1617,6 +1617,11 @@ class ActiveDirectory(Model):
                 " on/off/start_tls"
                 )
             )
+    ad_certfile = models.TextField(
+            verbose_name=_("SSL Certificate"),
+            blank=True,
+            help_text=_("Upload your certificate file here.")
+            )
     ad_verbose_logging = models.BooleanField(
             default=False,
             verbose_name=_("Verbose logging"),
@@ -1695,6 +1700,7 @@ class ActiveDirectory(Model):
             'ad_use_keytab',
             'ad_keytab',
             'ad_ssl',
+            'ad_certfile',
             'ad_verbose_logging',
             'ad_unix_extensions',
             'ad_allow_trusted_doms',
@@ -1824,10 +1830,9 @@ class LDAP(Model):
         )
     )
     ldap_tls_cacertfile = models.TextField(
-            verbose_name=_("Self signed certificate"),
+            verbose_name=_("SSL Certificate"),
             blank=True,
-            help_text=_("Place the contents of your self signed certificate "
-                "file here.")
+            help_text=_("Upload your certificate file here.")
             )
     ldap_options = models.TextField(
             max_length=120,
