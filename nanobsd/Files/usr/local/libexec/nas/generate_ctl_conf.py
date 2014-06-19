@@ -129,7 +129,7 @@ def main():
                 padded_serial += str(cur_lunid-1)
             else:
                 padded_serial += str(t2e.iscsi_lunid)
-            for i in xrange(32-len(target.iscsi_target_serial)):
+            for i in xrange(31-len(target.iscsi_target_serial)):
                 padded_serial += " "
             cf_contents.append('\t\t\tdevice-id "iSCSI Disk      %s"\n' % padded_serial)
             if size != "0":
