@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2014-01-13 19:47+0000\n"
-"Last-Translator: dimitri <dimitri-ferreira@sapo.pt>\n"
+"PO-Revision-Date: 2014-06-13 22:40+0000\n"
+"Last-Translator: Quito <josemaria.galamba@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1389642471.0\n"
+"X-POOTLE-MTIME: 1402699226.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -110,7 +110,7 @@ msgstr "Sempre Ligado"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "Desactivado"
+msgstr "Desativado"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -253,7 +253,7 @@ msgstr "Maquina do tempo (Time Machine)"
 
 #: choices.py:199
 msgid "No case folding"
-msgstr "Nenhuma duplicação"
+msgstr "Nenhuma redundância"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
@@ -290,7 +290,7 @@ msgstr "leitura-escrita"
 
 #: choices.py:222
 msgid "read-only"
-msgstr "somente leitura"
+msgstr "só de leitura"
 
 #: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
 #: services/forms.py:1058 templates/storage/scrub.html:24
@@ -367,7 +367,7 @@ msgstr "Semana(s)"
 
 #: choices.py:492
 msgid "Month(s)"
-msgstr "Mes(es)"
+msgstr "Mês(es)"
 
 #: choices.py:493
 msgid "Year(s)"
@@ -6685,23 +6685,23 @@ msgstr "Membro do Grupo"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr ""
+msgstr "Encriptado, sem palavra-passe"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:312
 #, fuzzy
@@ -7654,28 +7654,28 @@ msgstr ""
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr ""
+msgstr "Não encriptado            "
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr ""
+msgstr "Encriptado, com palavra-passe"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "NUCLEO ADICIONAL"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:307
 #, fuzzy
 msgid "lz4 (recommended)"
-msgstr "lzjb (recomendado)"
+msgstr "lz4 (recomendado)"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
@@ -8649,29 +8649,28 @@ msgid ""
 msgstr ""
 
 #: choices.py:52
-#, fuzzy
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTP+HTTPS                "
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "NÚCLEO"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
 #, fuzzy
@@ -9744,3 +9743,19 @@ msgstr ""
 #, fuzzy
 msgid "Domain logons"
 msgstr "Nome de domínio"
+
+#: network/admin.py:66
+msgid "Network connectivity will be interrupted. Do you want to proceed?"
+msgstr ""
+
+#: services/admin.py:67
+msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
+msgstr ""
+
+#: services/forms.py:1381
+msgid "Extent name must be unique."
+msgstr ""
+
+#: services/models.py:414
+msgid "Enable experimental target"
+msgstr ""

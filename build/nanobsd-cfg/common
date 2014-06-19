@@ -316,7 +316,7 @@ make_conf_install ( ) (
 )
 
 
-FREENAS_STRIP_EXCLUDE_FILE="${AVATAR_ROOT}/nanobsd/strip.exclude"
+FREENAS_STRIP_EXCLUDE_FILE="${AVATAR_ROOT}/build/nanobsd-cfg/strip.exclude"
 FREENAS_STRIP_EXCLUDES="$(cat "${FREENAS_STRIP_EXCLUDE_FILE}")"
 
 dontstrip()

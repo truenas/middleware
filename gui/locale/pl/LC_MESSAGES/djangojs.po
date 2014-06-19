@@ -259,3 +259,7 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
 msgid "Browse"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:918
+msgid "Confirm"
+msgstr ""

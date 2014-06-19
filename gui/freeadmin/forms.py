@@ -91,7 +91,8 @@ class UserField(forms.ChoiceField):
 
     def prepare_value(self, value):
         rv = super(UserField, self).prepare_value(value)
-        user = FreeNAS_User(rv)
+        user = FreeNAS_User(rv,
+            flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER)
         if rv and not user:
             return 'nobody'
         return rv
@@ -99,7 +100,7 @@ class UserField(forms.ChoiceField):
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
         users = FreeNAS_Users(
-            flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER | FLAGS_CACHE_WRITE_USER
+            flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER
         )
         if len(users) > 500:
             if self.initial:
@@ -146,7 +147,8 @@ class GroupField(forms.ChoiceField):
 
     def prepare_value(self, value):
         rv = super(GroupField, self).prepare_value(value)
-        group = FreeNAS_Group(rv)
+        group = FreeNAS_Group(rv,
+            flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP)
         if rv and not group:
             return 'nobody'
         return rv
@@ -154,8 +156,7 @@ class GroupField(forms.ChoiceField):
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
         groups = FreeNAS_Groups(
-            flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP |
-            FLAGS_CACHE_WRITE_GROUP
+            flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP
         )
         if len(groups) > 500:
             if self.initial:

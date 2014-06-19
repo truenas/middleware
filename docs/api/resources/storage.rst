@@ -206,6 +206,28 @@ Datasets
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
 
+.. http:delete:: /api/v1.0/storage/volume/(int:id|string:name)/datasets/(string:dsname)/
+
+   Delete dataset `dsname` of the volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/storage/volume/tank/datasets/test/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :resheader Content-Type: content type of the response
+   :statuscode 204: no error
+
 
 Scrub
 +++++
@@ -549,7 +571,7 @@ List resource
         {
         "filesystem": "tank/jails/.warden-template-pluginjail-9.2-RELEASE-x64",
         "fullname": "tank/jails/.warden-template-pluginjail-9.2-RELEASE-x64@clean",
-        "id": "tank/jails/.warden-template-pluginjail-9.2-RELEASE-x64",
+        "id": "tank/jails/.warden-template-pluginjail-9.2-RELEASE-x64@clean",
         "mostrecent": true,
         "name": "clean",
         "parent_type": "filesystem",
@@ -594,7 +616,7 @@ Create resource
         {
                 "filesystem": "tank",
                 "fullname": "tank@test",
-                "id": "tank",
+                "id": "tank@test",
                 "mostrecent": true,
                 "name": "test",
                 "parent_type": "filesystem",

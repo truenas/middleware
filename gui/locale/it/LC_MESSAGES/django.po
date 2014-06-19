@@ -9958,3 +9958,19 @@ msgstr ""
 #, fuzzy
 msgid "Domain logons"
 msgstr "Nome Dominio"
+
+#: network/admin.py:66
+msgid "Network connectivity will be interrupted. Do you want to proceed?"
+msgstr ""
+
+#: services/admin.py:67
+msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
+msgstr ""
+
+#: services/forms.py:1381
+msgid "Extent name must be unique."
+msgstr ""
+
+#: services/models.py:414
+msgid "Enable experimental target"
+msgstr ""

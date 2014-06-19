@@ -1607,6 +1607,16 @@ class ActiveDirectory(Model):
             blank=True,
             null=True,
             )
+    ad_ssl = models.CharField(
+            choices=choices.LDAP_SSL_CHOICES,
+            default='off',
+            max_length=120,
+            verbose_name=_("Encryption Mode"),
+            help_text=_(
+                "This parameter specifies whether to use SSL/TLS, e.g."
+                " on/off/start_tls"
+                )
+            )
     ad_verbose_logging = models.BooleanField(
             default=False,
             verbose_name=_("Verbose logging"),
@@ -1684,6 +1694,7 @@ class ActiveDirectory(Model):
         advanced_fields = (
             'ad_use_keytab',
             'ad_keytab',
+            'ad_ssl',
             'ad_verbose_logging',
             'ad_unix_extensions',
             'ad_allow_trusted_doms',

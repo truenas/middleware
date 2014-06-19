@@ -25,7 +25,7 @@ main()
 	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.img.xz"
 	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
 
-	INSTALLER_FILES="$AVATAR_ROOT/nanobsd/Installer"
+	INSTALLER_FILES="$AVATAR_ROOT/build/nanobsd-cfg/Installer"
 	AVATAR_CONF="$NANO_OBJ/_.w/etc/avatar.conf"
 
 	# Various mount points needed to build the CD, adjust to taste
@@ -38,7 +38,7 @@ main()
 	#MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
 	#		 -allow-multidot -hide boot.catalog -V ${CDROM_LABEL} -o ${OUTPUT} -no-emul-boot \
 	#		 -b boot/cdboot ${ISODIR}"
-	MKISOFS_CMD="/usr/local/bin/grub-mkrescue -o ${OUTPUT} ${ISODIR} -- -volid FREENAS_INSTALL"
+	MKISOFS_CMD="/usr/local/bin/grub-mkrescue -o ${OUTPUT} ${ISODIR} -- -volid ${CDROM_LABEL}"
 
 	if ! command -v mkisofs >/dev/null 2>&1; then
 		error "mkisofs not available.  Please install the sysutils/cdrtools port."
@@ -64,6 +64,7 @@ main()
 	mkdir -p ${ISODIR}/.mount
 	mkdir -p ${ISODIR}/mnt
 	mkdir -p ${ISODIR}/tmp
+	mkdir -p ${ISODIR}/boot/grub
 
 	# Create the install ISO based on contents from the installworld tree
 	mkdir -p ${INSTALLUFSDIR}
@@ -315,7 +316,9 @@ main()
 	mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
 
 	cp -p ${AVATAR_ROOT}/build/files/loader.conf.cdrom ${ISODIR}/boot/loader.conf
+	cp -p ${AVATAR_ROOT}/build/files/grub.cfg.cdrom ${ISODIR}/boot/grub/grub.cfg
 	sed -i "" 's/%CDROM_LABEL%/'${CDROM_LABEL}'/'  ${ISODIR}/boot/loader.conf
+	sed -i "" 's/%CDROM_LABEL%/'${CDROM_LABEL}'/'  ${ISODIR}/boot/grub/grub.cfg
 	sed -i "" 's/%NANO_LABEL_LOWER%/'${NANO_LABEL_LOWER}'/'  ${ISODIR}/boot/loader.conf
 	cp -p ${AVATAR_ROOT}/build/files/mount.conf.cdrom ${ISODIR}/.mount.conf
 
