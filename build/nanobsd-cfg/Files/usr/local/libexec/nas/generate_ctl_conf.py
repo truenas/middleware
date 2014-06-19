@@ -125,9 +125,13 @@ def main():
             cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
             cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
             padded_serial = target.iscsi_target_serial
+            if t2e.iscsi_lunid is None:
+                padded_serial += str(cur_lunid-1)
+            else:
+                padded_serial += str(t2e.iscsi_lunid)
             for i in xrange(32-len(target.iscsi_target_serial)):
                 padded_serial += " "
-            cf_contents.append('\t\t\tdevice-id "iSCSI Disk     %s"\n' % padded_serial)
+            cf_contents.append('\t\t\tdevice-id "iSCSI Disk      %s"\n' % padded_serial)
             if size != "0":
                 if size.endswith('B'):
                     size = size.strip('B')
