@@ -67,6 +67,13 @@ def freebsd_bootloader_iso():
     child.logfile = sys.stdout
     child.expect(pexpect.EOF)
 
+def get_volume_descriptor():
+    cmd = "isoinfo -d -i %s | grep 'Volume id: ' | sed -e 's/Volume id: //'" % (test_config['iso'])
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    (volume_descriptor, err) = proc.communicate()
+    volume_descriptor = volume_descriptor.rstrip()
+    return volume_descriptor
+
 def grub_bootloader_iso():
     tmpfile = '/tmp/map'
     f = open(tmpfile, "w")
@@ -89,7 +96,8 @@ def grub_bootloader_iso():
     child.expect("grub>")
     child.sendline("kfreebsd_loadenv /boot/device.hints")
     child.expect("grub>")
-    child.sendline("set kFreeBSD.vfs.root.mountfrom=cd9660:/dev/iso9660/FREENAS_INSTALL")
+    volume_descriptor = get_volume_descriptor()
+    child.sendline("set kFreeBSD.vfs.root.mountfrom=cd9660:/dev/iso9660/%s" % (volume_descriptor))
     child.expect("grub>")
     child.sendline("boot")
     child.logfile = sys.stdout
