@@ -212,17 +212,6 @@ remove_var_db_pkg()
 	mkdir ${NANO_WORLDDIR}/var/db/pkg
 }
 
-fix_easy_install_pth()
-{
-	local site_packages
-
-	site_packages="$NANO_WORLDDIR/usr/local/lib/$PYTHON_DEFAULT_VERSION/site-packages"
-
-	env PYTHONPATH=$site_packages \
-		python ${AVATAR_ROOT}/tools/sanitize_pth.py -f \
-		$site_packages
-}
-
 create_var_home_symlink()
 {
 	# Create a link to a non-persistent location that ix-activedirectory
