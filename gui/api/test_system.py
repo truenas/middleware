@@ -831,7 +831,7 @@ class EmailResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data['id'], self._advanced.id)
+        self.assertEqual(data['id'], self._obj.id)
         self.assertEqual(data['em_fromemail'], 'dev@ixsystems.com')
         self.assertEqual(data['em_outgoingserver'], 'mail.ixsystems.com')
 
