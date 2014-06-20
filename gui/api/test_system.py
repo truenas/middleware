@@ -841,3 +841,72 @@ class EmailResourceTest(APITestCase):
             format='json',
         )
         self.assertHttpMethodNotAllowed(resp)
+
+
+class SSLResourceTest(APITestCase):
+
+    def setUp(self):
+        super(SSLResourceTest, self).setUp()
+        self._obj = models.SSL.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': self._obj.id,
+            u'ssl_certfile': u'',
+            u'ssl_city': None,
+            u'ssl_common': None,
+            u'ssl_country': None,
+            u'ssl_email': None,
+            u'ssl_org': None,
+            u'ssl_passphrase': None,
+            u'ssl_state': None,
+            u'ssl_unit': None
+        })
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                "ssl_city": 'Curitiba',
+                "ssl_common": 'iXsystems',
+                "ssl_country": 'BR',
+                "ssl_email": 'william@ixsystems.com',
+                "ssl_org": 'iXsystems',
+                "ssl_state": 'Parana',
+            }
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['ssl_city'], 'Curitiba')
+        self.assertEqual(data['ssl_common'], 'iXsystems')
+        self.assertEqual(data['ssl_country'], 'BR')
+        self.assertEqual(data['ssl_email'], 'william@ixsystems.com')
+        self.assertEqual(data['ssl_org'], 'iXsystems')
+        self.assertEqual(data['ssl_state'], 'Parana')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
