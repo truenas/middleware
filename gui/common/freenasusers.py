@@ -212,14 +212,8 @@ class FreeNAS_Local_Group(object):
         log.debug("FreeNAS_local_Group.__get_group: group = %s", group)
 
         grfunc = None
-        if type(group) in (types.IntType, types.LongType) or group.isdigit():
-            objects = bsdGroups_objects(bsdgrp_gid=group)
-            grfunc = grp.getgrgid
-            group = int(group)
-
-        else:
-            objects = bsdGroups_objects(bsdgrp_group=group)
-            grfunc = grp.getgrnam
+        objects = bsdGroups_objects(bsdgrp_group=group)
+        grfunc = grp.getgrnam
 
         if objects:
             group = objects[0]['bsdgrp_group']
@@ -351,14 +345,8 @@ class FreeNAS_Local_User(object):
         log.debug("FreeNAS_local_User.__get_user: user = %s", user)
 
         pwfunc = None
-        if type(user) in (types.IntType, types.LongType) or user.isdigit():
-            objects = bsdUsers_objects(bsdusr_uid=user)
-            pwfunc = pwd.getpwuid
-            user = int(user)
-
-        else:
-            objects = bsdUsers_objects(bsdusr_username=user)
-            pwfunc = pwd.getpwnam
+        objects = bsdUsers_objects(bsdusr_username=user)
+        pwfunc = pwd.getpwnam
 
         if objects:
             user = objects[0]['bsdusr_username']
