@@ -382,6 +382,103 @@ Run
    :statuscode 202: no error
 
 
+Email
+--------
+
+The Email resource represents the email settings.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/system/email/
+
+   Returns the email settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/ssytem/email/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "em_fromemail": "root@freenas.local",
+                "em_outgoingserver": "",
+                "em_pass": null,
+                "em_port": 25,
+                "em_security": "plain",
+                "em_smtp": false,
+                "em_user": null,
+                "id": 1
+        }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/system/email/
+
+   Update email settins.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/system/email/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "em_fromemail": "william.spam@ixsystems.com",
+                "em_outgoingserver": "mail.ixsystems.com",
+                "em_pass": "changeme",
+                "em_port": 25,
+                "em_security": "plain",
+                "em_smtp": true,
+                "em_user": "william.spam@ixsystems.com"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "em_fromemail": "william.spam@ixsystems.com",
+                "em_outgoingserver": "mail.ixsystems.com",
+                "em_pass": "changeme",
+                "em_port": 25,
+                "em_security": "plain",
+                "em_smtp": true,
+                "em_user": "william.spam@ixsystems.com",
+                "id": 1
+        }
+
+   :json string em_fromemail: from email address
+   :json string em_outgoingserver: address of outgoing mail server
+   :json interger em_port: port to connect to
+   :json boolean em_smtp: use SMTP authentication
+   :json string em_security: type of authentication (plain, ssl, tls)
+   :json string em_user: username for auth
+   :json string em_pass: username password
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 200: no error
+
+
 InitShutdown
 ------------
 
