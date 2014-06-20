@@ -968,6 +968,7 @@ def get_urls(addrs, ipv6=False):
                 ips = out
         else:
             ips = [ip]
+        ips = filter(lambda y: y != '::1' and not y.endswith('lo0'), ips)
         for o in ips:
             try:
                 if ipv6:
