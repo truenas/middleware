@@ -1013,7 +1013,7 @@ The Settings resource represents the system settings.
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/services/settings/
+.. http:get:: /api/v1.0/system/settings/
 
    Returns the settings dictionary.
 
@@ -1021,7 +1021,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/services/settings/ HTTP/1.1
+      GET /api/v1.0/system/settings/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -1054,7 +1054,7 @@ List resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/services/settings/
+.. http:put:: /api/v1.0/system/settings/
 
    Update settings.
 
@@ -1062,7 +1062,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/services/settings/ HTTP/1.1
+      PUT /api/v1.0/system/settings/ HTTP/1.1
       Content-Type: application/json
 
         {
