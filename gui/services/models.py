@@ -410,9 +410,11 @@ class iSCSITargetGlobalConfiguration(Model):
             null=True,
             )
     iscsi_experimental_target = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name=_('Enable experimental target'),
     )
+## The multithreaded mode should be retired as it is only really relevant
+## to iSCSI, which is deprecated.
     iscsi_multithreaded = models.BooleanField(
         default=False,
         verbose_name=_('Enable multithreaded mode'),
