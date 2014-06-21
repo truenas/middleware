@@ -924,7 +924,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 port = long(parts[1])
         return (host, port)
 
-    def __db_init__(self, **kwargs):
+    def __init__(self, **kwargs):
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: enter")
         super(FreeNAS_ActiveDirectory_Base, self).__init__()
 
@@ -1005,7 +1005,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def get_rootDSE(self):
         log.debug("FreeNAS_ActiveDirectory_Base.get_rootDSE: enter")
-                                                                        
+
         results = self._search(self.dchandle, '', ldap.SCOPE_BASE,
             "(objectclass=*)")
 
