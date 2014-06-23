@@ -11,24 +11,24 @@ TOP="$(pwd)"
 . build/functions.sh
 
 if [ "$USE_NEW_LAYOUT" ]; then
-	OBJ=../obj
+	OBJ=objs
 else
 	OBJ=
 fi
 
 TARBALL="${TOP}/${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}.tar"
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-rm -rf "${TOP}/${STAGEDIR}"
+rm -rf "${TOP}/${OBJ}/${STAGEDIR}"
 set -x
 set -e
-mkdir -p "${TOP}/${STAGEDIR}"
+mkdir -p "${TOP}/${OBJ}/${STAGEDIR}"
 
 arch=x64
 mapped_arch=amd64
-mkdir -p ${TOP}/${STAGEDIR}/${arch}
+mkdir -p ${TOP}/${OBJ}/${STAGEDIR}/${arch}
 for ext in img.xz GUI_Upgrade.txz iso vmdk.xz usb; do
 	if [ -f ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ]; then
-		ln ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ${TOP}/${STAGEDIR}/${arch}
-		ln ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}.sha256.txt ${TOP}/${STAGEDIR}/${arch}
+		ln ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ${TOP}/${OBJ}/${STAGEDIR}/${arch}
+		ln ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}.sha256.txt ${TOP}/${OBJ}/${STAGEDIR}/${arch}
 	fi
 done
