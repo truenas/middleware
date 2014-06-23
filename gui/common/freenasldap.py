@@ -1966,6 +1966,10 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
 
         self._gr = None
         if group:
+            try:
+                group = str(group.decode('utf-8'))
+            except:
+                pass
             self.__get_group(group)
 
         log.debug("FreeNAS_LDAP_Group.__init__: leave")
@@ -2033,7 +2037,7 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
 
     def __init__(self, group, **kwargs):
         try:
-            group = group.decode('utf-8')
+            group = str(group.decode('utf-8'))
         except:
             pass
 
@@ -2151,6 +2155,10 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
 
         self._pw = None
         if user:
+            try:
+                user = str(user.decode('utf-8'))
+            except:
+                pass
             self.__get_user(user)
 
         log.debug("FreeNAS_LDAP_User.__init__: leave")
@@ -2220,7 +2228,7 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
 
     def __init__(self, user, **kwargs):
         try:
-            user = user.decode('utf-8')
+            user = str(user.decode('utf-8'))
         except:
             pass
 
