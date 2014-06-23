@@ -215,7 +215,7 @@ class bsdUsers(Model):
             if self.bsdusr_unixhash == 'x' or self.bsdusr_unixhash == '*':
                 return False
             return crypt.crypt(
-                raw_password, str(self.bsdusr_unixhash)
+                raw_password.encode('utf8'), str(self.bsdusr_unixhash)
             ) == str(self.bsdusr_unixhash)
 
     def delete(self, using=None, reload=True):
