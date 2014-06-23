@@ -1610,7 +1610,7 @@ class notifier:
 
     def list_zfs_vols(self, volname):
         """Return a dictionary that contains all ZFS volumes list"""
-        zfsproc = self._pipeopen("/sbin/zfs list -H -o name,volsize,used,avail,refer -t volume -r '%s'" % (str(volname),))
+        zfsproc = self._pipeopen("/sbin/zfs list -H -o name,volsize,used,avail,refer,compression,compressratio -t volume -r '%s'" % (str(volname),))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_output = zfs_output.split('\n')
         retval = {}
@@ -1623,6 +1623,8 @@ class notifier:
                 'used': data[2],
                 'avail': data[3],
                 'refer': data[4],
+                'compression': data[5],
+                'compressratio': data[6],
             }
         return retval
 

@@ -906,12 +906,20 @@ class VolumeResourceMixin(NestedMixin):
                     zvol['volsize'][:-1],
                     zvol['volsize'][-1],
                 )
+                refer = '%s %siB' % (
+                    zvol['refer'][:-1],
+                    zvol['refer'][-1],
+                )
                 data = {
                     'id': uid.next(),
                     'name': name,
                     'status': mp.status,
                     'type': 'zvol',
                     'total_si': total_si,
+                    'avail_si': '-',
+                    'used': refer,
+                    'compression': zvol['compression'],
+                    'compressratio': zvol['compressratio'],
                 }
 
                 if self.is_webclient(bundle.request):
