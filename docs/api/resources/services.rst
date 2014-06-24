@@ -1892,6 +1892,7 @@ Update resource
       Content-Type: application/json
 
         {
+                "ups_port": "/dev/ugen0.1",
                 "ups_rmonitor": true
         }
 
