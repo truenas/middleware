@@ -360,15 +360,15 @@ last_orders() {
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
 				-s '@^updatep2$@bin/updatep2@' \
-				-C "$AVATAR_ROOT/nanobsd/Files/root" \
+				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
 					update updatep1 updatep2 \
 				-C "$NANO_WORLDDIR" \
 					etc/avatar.conf \
-				-C "$AVATAR_ROOT/nanobsd/Installer" \
+				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Installer" \
 					. \
 				-C "${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer" \
 					. \
-				-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
+				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
 					. \
 				-C "$NANO_DISKIMGDIR" \
 					${firmware_img##*/}
@@ -379,13 +379,13 @@ last_orders() {
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
 				-s '@^updatep2$@bin/updatep2@' \
-				-C "$AVATAR_ROOT/nanobsd/Files/root" \
+				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
 					update updatep1 updatep2 \
 				-C "$NANO_WORLDDIR" \
 					etc/avatar.conf \
-				-C "$AVATAR_ROOT/nanobsd/Installer" \
+				-C "$AVATAR_ROOT/build/nanobsd-cfg/Installer" \
 					. \
-				-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
+				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
 					. \
 				-C "$NANO_DISKIMGDIR" \
 					${firmware_img##*/}
