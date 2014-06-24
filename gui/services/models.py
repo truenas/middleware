@@ -1574,17 +1574,6 @@ class ActiveDirectory(Model):
             verbose_name=_("Domain Name (DNS/Realm-Name)"),
             help_text=_("Domain Name, eg example.com")
             )
-    ad_netbiosname = models.CharField(
-            max_length=120,
-            verbose_name=_("NetBIOS Name"),
-            help_text=_("System hostname"),
-            blank=True
-            )
-    ad_workgroup = models.CharField(
-            max_length=120,
-            verbose_name=_("Workgroup Name"),
-            help_text=_("Workgroup or domain name in old format, eg WORKGROUP")
-            )
     ad_bindname = models.CharField(
             max_length=120,
             verbose_name=_("Domain Account Name"),
@@ -1599,6 +1588,12 @@ class ActiveDirectory(Model):
     #
     # AD Advanced settings
     #
+    ad_netbiosname = models.CharField(
+            max_length=120,
+            verbose_name=_("NetBIOS Name"),
+            help_text=_("System hostname"),
+            blank=True
+            )
     ad_use_keytab = models.BooleanField(
             default=False,
             verbose_name=_("Use keytab"),
@@ -1699,6 +1694,7 @@ class ActiveDirectory(Model):
         deletable = False
         icon_model = "ActiveDirectoryIcon"
         advanced_fields = (
+            'ad_netbiosname',
             'ad_use_keytab',
             'ad_keytab',
             'ad_ssl',

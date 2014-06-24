@@ -771,7 +771,6 @@ class ActiveDirectoryForm(ModelForm):
         for name in (
             'ad_domainname',
             'ad_netbiosname',
-            'ad_workgroup',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
             'ad_use_keytab',
@@ -791,8 +790,6 @@ class ActiveDirectoryForm(ModelForm):
         if self.instance._original_ad_domainname != self.instance.ad_domainname:
             return True
         if self.instance._original_ad_netbiosname != self.instance.ad_netbiosname:
-            return True
-        if self.instance._original_ad_workgroup != self.instance.ad_workgroup:
             return True
         if self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms:
             return True
