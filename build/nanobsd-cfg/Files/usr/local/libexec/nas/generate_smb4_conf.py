@@ -229,9 +229,6 @@ def add_ldap_conf(smb4_conf):
 
 
 def add_activedirectory_conf(smb4_conf):
-    tdb_range_start = 90000000
-    tdb_range_end = 100000000
-
     rid_range_start = 20000
     rid_range_end = 20000000
 
@@ -264,11 +261,6 @@ def add_activedirectory_conf(smb4_conf):
     confset1(smb4_conf, "acl check permissions = true")
     confset1(smb4_conf, "acl map full control = true")
     confset1(smb4_conf, "dos filemode = yes")
-
-    confset1(smb4_conf, "idmap config *:backend = tdb")
-    confset1(smb4_conf, "idmap config *:range = %d-%d" % (
-        tdb_range_start, tdb_range_end
-    ))
 
     confset1(smb4_conf, "winbind cache time = 7200")
     confset1(smb4_conf, "winbind offline logon = yes")
@@ -321,6 +313,16 @@ def add_domaincontroller_conf(smb4_conf):
     #    string.join(server_services, ',').rstrip(','))
     #confset2(smb4_conf, "dcerpc endpoint servers = %s",
     #    string.join(dcerpc_endpoint_servers, ',').rstrip(','))
+
+
+def add_default_idmap(smb4_conf):
+    tdb_range_start = 90000000
+    tdb_range_end = 100000000
+
+    confset1(smb4_conf, "idmap config *:backend = tdb")
+    confset1(smb4_conf, "idmap config *:range = %d-%d" % (
+        tdb_range_start, tdb_range_end
+    ))
 
 
 def generate_smb4_tdb(smb4_tdb):
@@ -399,6 +401,8 @@ def generate_smb4_conf(smb4_conf, role):
         and not activedirectory_enabled():
         confset2(smb4_conf, "local master = %s",
             "yes" if cifs.cifs_srv_localmaster else False)
+
+    add_default_idmap(smb4_conf)
 
     if role == 'auto':
         confset1(smb4_conf, "server role = auto")
