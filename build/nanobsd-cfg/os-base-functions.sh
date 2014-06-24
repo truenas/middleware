@@ -388,7 +388,7 @@ last_orders() {
 				-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
 					. \
 				-C "$NANO_DISKIMGDIR" \
-					${firmware_img##*/} \
+					${firmware_img##*/}
 				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
 				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
 		fi
