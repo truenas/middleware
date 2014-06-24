@@ -1223,8 +1223,8 @@ define([
             commonDialog({
               style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
               name: gettext('ZFS Volume Manager'),
-              url: me.manualUrl
-              //nodes: [this,]
+              url: me.manualUrl,
+              nodes: [registry.byId("tab_Volume")]
             });
 
           }
