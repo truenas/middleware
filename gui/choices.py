@@ -771,7 +771,7 @@ NULLMOUNTPOINT_CHOICES = (
 SHARE_TYPE_CHOICES = (
     ('unix', 'UNIX'),
     ('windows', 'Windows'),
-    ('apple', 'Apple')
+    ('mac', 'Mac')
 )
 
 

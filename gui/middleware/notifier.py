@@ -4995,7 +4995,7 @@ class notifier:
         if os.path.exists("%s/.windows" % path):
             share_type = "windows"
         elif os.path.exists("%s/.apple" % path):
-            share_type = "apple"
+            share_type = "mac"
 
         return share_type
 
