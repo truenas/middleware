@@ -384,6 +384,7 @@ menu_install()
         # checks won't make sense, but others might (e.g. hardware sanity
         # checks).
         install_worker.sh -D / -m / pre-install
+	gpart destroy -F ${_disk}
     fi
 
     # Run pc-sysinstall against the config generated
