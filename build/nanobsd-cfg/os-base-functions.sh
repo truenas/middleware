@@ -356,7 +356,7 @@ last_orders() {
 		# gui image's bin directory.
 
 		if is_truenas ; then
-			tar -cpvf - \
+			tar -c -p -v -f ${gui_upgrade_bname}.tar \
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
 				-s '@^updatep2$@bin/updatep2@' \
@@ -371,10 +371,11 @@ last_orders() {
 				-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
 					. \
 				-C "$NANO_DISKIMGDIR" \
-					${firmware_img##*/} \
-				| ${NANO_XZ} ${PXZ_ACCEL} -9 -cz > "$gui_upgrade_bname.txz"
+					${firmware_img##*/}
+				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
+				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
 		else
-			tar -cpvf - \
+			tar -c -p -v -f ${gui_upgrade_bname}.tar \
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
 				-s '@^updatep2$@bin/updatep2@' \
@@ -388,7 +389,8 @@ last_orders() {
 					. \
 				-C "$NANO_DISKIMGDIR" \
 					${firmware_img##*/} \
-				| ${NANO_XZ} ${PXZ_ACCEL} -9 -cz > "$gui_upgrade_bname.txz"
+				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
+				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
 		fi
 		) > "${gui_image_log}" 2>&1
 		(
