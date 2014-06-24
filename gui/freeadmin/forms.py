@@ -91,8 +91,7 @@ class UserField(forms.ChoiceField):
 
     def prepare_value(self, value):
         rv = super(UserField, self).prepare_value(value)
-        user = FreeNAS_User(rv,
-            flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER)
+        user = FreeNAS_User(rv, flags=FLAGS_DBINIT)
         if rv and not user:
             return 'nobody'
         return rv
@@ -147,8 +146,7 @@ class GroupField(forms.ChoiceField):
 
     def prepare_value(self, value):
         rv = super(GroupField, self).prepare_value(value)
-        group = FreeNAS_Group(rv,
-            flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP)
+        group = FreeNAS_Group(rv, flags=FLAGS_DBINIT)
         if rv and not group:
             return 'nobody'
         return rv
