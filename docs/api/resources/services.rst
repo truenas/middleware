@@ -128,7 +128,6 @@ List resource
                 "ad_keytab": "",
                 "ad_use_keytab": false,
                 "ad_use_default_domain": true,
-                "ad_workgroup": "",
                 "ad_dcname": "",
                 "ad_adminname": "",
                 "ad_unix_extensions": false,
@@ -165,7 +164,6 @@ Update resource
         {
                 "ad_netbiosname": "mynas",
                 "ad_domainname": "mydomain",
-                "ad_workgroup": "WORKGROUP",
                 "ad_adminname": "admin",
                 "ad_adminpw": "mypw"
         }
@@ -183,7 +181,6 @@ Update resource
                 "ad_keytab": "",
                 "ad_use_keytab": false,
                 "ad_use_default_domain": true,
-                "ad_workgroup": "WORKGROUP",
                 "ad_dcname": "",
                 "ad_adminname": "admin",
                 "ad_unix_extensions": false,
@@ -202,7 +199,6 @@ Update resource
 
    :json string ad_domainname: domain name
    :json string ad_netbiosname: system hostname
-   :json string ad_workgroup: workgroup or domain name in old format
    :json string ad_adminname: domain Administrator account nam
    :json string ad_adminpw: domain Administrator account password
    :json string ad_dcname: hostname of the domain controller to use
