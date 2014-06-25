@@ -314,7 +314,6 @@ class NFS_Share(Model):
     class Meta:
         verbose_name = _("Unix (NFS) Share")
         verbose_name_plural = _("Unix (NFS) Shares")
-        ordering = ["paths__path"]
 
 
 class NFS_Share_Path(Model):
