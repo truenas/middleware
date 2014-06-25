@@ -1,0 +1,276 @@
+{
+    "account/groups": {
+        "list_endpoint": "/api/v1.0/account/groups/",
+        "schema": "/api/v1.0/account/groups/schema/"
+    },
+    "account/users": {
+        "list_endpoint": "/api/v1.0/account/users/",
+        "schema": "/api/v1.0/account/users/schema/"
+    },
+    "jails/jails": {
+        "list_endpoint": "/api/v1.0/jails/jails/",
+        "schema": "/api/v1.0/jails/jails/schema/"
+    },
+    "jails/jailsconfiguration": {
+        "list_endpoint": "/api/v1.0/jails/jailsconfiguration/",
+        "schema": "/api/v1.0/jails/jailsconfiguration/schema/"
+    },
+    "jails/jailtemplate": {
+        "list_endpoint": "/api/v1.0/jails/jailtemplate/",
+        "schema": "/api/v1.0/jails/jailtemplate/schema/"
+    },
+    "jails/nullmountpoint": {
+        "list_endpoint": "/api/v1.0/jails/nullmountpoint/",
+        "schema": "/api/v1.0/jails/nullmountpoint/schema/"
+    },
+    "network/alias": {
+        "list_endpoint": "/api/v1.0/network/alias/",
+        "schema": "/api/v1.0/network/alias/schema/"
+    },
+    "network/globalconfiguration": {
+        "list_endpoint": "/api/v1.0/network/globalconfiguration/",
+        "schema": "/api/v1.0/network/globalconfiguration/schema/"
+    },
+    "network/interface": {
+        "list_endpoint": "/api/v1.0/network/interface/",
+        "schema": "/api/v1.0/network/interface/schema/"
+    },
+    "network/lagg": {
+        "list_endpoint": "/api/v1.0/network/lagg/",
+        "schema": "/api/v1.0/network/lagg/schema/"
+    },
+    "network/lagginterfacemembers": {
+        "list_endpoint": "/api/v1.0/network/lagginterfacemembers/",
+        "schema": "/api/v1.0/network/lagginterfacemembers/schema/"
+    },
+    "network/staticroute": {
+        "list_endpoint": "/api/v1.0/network/staticroute/",
+        "schema": "/api/v1.0/network/staticroute/schema/"
+    },
+    "network/vlan": {
+        "list_endpoint": "/api/v1.0/network/vlan/",
+        "schema": "/api/v1.0/network/vlan/schema/"
+    },
+    "plugins/available": {
+        "list_endpoint": "/api/v1.0/plugins/available/",
+        "schema": "/api/v1.0/plugins/available/schema/"
+    },
+    "plugins/configuration": {
+        "list_endpoint": "/api/v1.0/plugins/configuration/",
+        "schema": "/api/v1.0/plugins/configuration/schema/"
+    },
+    "plugins/plugins": {
+        "list_endpoint": "/api/v1.0/plugins/plugins/",
+        "schema": "/api/v1.0/plugins/plugins/schema/"
+    },
+    "services/activedirectory": {
+        "list_endpoint": "/api/v1.0/services/activedirectory/",
+        "schema": "/api/v1.0/services/activedirectory/schema/"
+    },
+    "services/afp": {
+        "list_endpoint": "/api/v1.0/services/afp/",
+        "schema": "/api/v1.0/services/afp/schema/"
+    },
+    "services/cifs": {
+        "list_endpoint": "/api/v1.0/services/cifs/",
+        "schema": "/api/v1.0/services/cifs/schema/"
+    },
+    "services/domaincontroller": {
+        "list_endpoint": "/api/v1.0/services/domaincontroller/",
+        "schema": "/api/v1.0/services/domaincontroller/schema/"
+    },
+    "services/dynamicdns": {
+        "list_endpoint": "/api/v1.0/services/dynamicdns/",
+        "schema": "/api/v1.0/services/dynamicdns/schema/"
+    },
+    "services/ftp": {
+        "list_endpoint": "/api/v1.0/services/ftp/",
+        "schema": "/api/v1.0/services/ftp/schema/"
+    },
+    "services/iscsi/authcredential": {
+        "list_endpoint": "/api/v1.0/services/iscsi/authcredential/",
+        "schema": "/api/v1.0/services/iscsi/authcredential/schema/"
+    },
+    "services/iscsi/authorizedinitiator": {
+        "list_endpoint": "/api/v1.0/services/iscsi/authorizedinitiator/",
+        "schema": "/api/v1.0/services/iscsi/authorizedinitiator/schema/"
+    },
+    "services/iscsi/extent": {
+        "list_endpoint": "/api/v1.0/services/iscsi/extent/",
+        "schema": "/api/v1.0/services/iscsi/extent/schema/"
+    },
+    "services/iscsi/globalconfiguration": {
+        "list_endpoint": "/api/v1.0/services/iscsi/globalconfiguration/",
+        "schema": "/api/v1.0/services/iscsi/globalconfiguration/schema/"
+    },
+    "services/iscsi/portal": {
+        "list_endpoint": "/api/v1.0/services/iscsi/portal/",
+        "schema": "/api/v1.0/services/iscsi/portal/schema/"
+    },
+    "services/iscsi/target": {
+        "list_endpoint": "/api/v1.0/services/iscsi/target/",
+        "schema": "/api/v1.0/services/iscsi/target/schema/"
+    },
+    "services/iscsi/targettoextent": {
+        "list_endpoint": "/api/v1.0/services/iscsi/targettoextent/",
+        "schema": "/api/v1.0/services/iscsi/targettoextent/schema/"
+    },
+    "services/ldap": {
+        "list_endpoint": "/api/v1.0/services/ldap/",
+        "schema": "/api/v1.0/services/ldap/schema/"
+    },
+    "services/nfs": {
+        "list_endpoint": "/api/v1.0/services/nfs/",
+        "schema": "/api/v1.0/services/nfs/schema/"
+    },
+    "services/nis": {
+        "list_endpoint": "/api/v1.0/services/nis/",
+        "schema": "/api/v1.0/services/nis/schema/"
+    },
+    "services/nt4": {
+        "list_endpoint": "/api/v1.0/services/nt4/",
+        "schema": "/api/v1.0/services/nt4/schema/"
+    },
+    "services/rsyncd": {
+        "list_endpoint": "/api/v1.0/services/rsyncd/",
+        "schema": "/api/v1.0/services/rsyncd/schema/"
+    },
+    "services/rsyncmod": {
+        "list_endpoint": "/api/v1.0/services/rsyncmod/",
+        "schema": "/api/v1.0/services/rsyncmod/schema/"
+    },
+    "services/services": {
+        "list_endpoint": "/api/v1.0/services/services/",
+        "schema": "/api/v1.0/services/services/schema/"
+    },
+    "services/smart": {
+        "list_endpoint": "/api/v1.0/services/smart/",
+        "schema": "/api/v1.0/services/smart/schema/"
+    },
+    "services/snmp": {
+        "list_endpoint": "/api/v1.0/services/snmp/",
+        "schema": "/api/v1.0/services/snmp/schema/"
+    },
+    "services/ssh": {
+        "list_endpoint": "/api/v1.0/services/ssh/",
+        "schema": "/api/v1.0/services/ssh/schema/"
+    },
+    "services/tftp": {
+        "list_endpoint": "/api/v1.0/services/tftp/",
+        "schema": "/api/v1.0/services/tftp/schema/"
+    },
+    "services/ups": {
+        "list_endpoint": "/api/v1.0/services/ups/",
+        "schema": "/api/v1.0/services/ups/schema/"
+    },
+    "sharing/afp": {
+        "list_endpoint": "/api/v1.0/sharing/afp/",
+        "schema": "/api/v1.0/sharing/afp/schema/"
+    },
+    "sharing/cifs": {
+        "list_endpoint": "/api/v1.0/sharing/cifs/",
+        "schema": "/api/v1.0/sharing/cifs/schema/"
+    },
+    "sharing/nfs": {
+        "list_endpoint": "/api/v1.0/sharing/nfs/",
+        "schema": "/api/v1.0/sharing/nfs/schema/"
+    },
+    "storage/disk": {
+        "list_endpoint": "/api/v1.0/storage/disk/",
+        "schema": "/api/v1.0/storage/disk/schema/"
+    },
+    "storage/replication": {
+        "list_endpoint": "/api/v1.0/storage/replication/",
+        "schema": "/api/v1.0/storage/replication/schema/"
+    },
+    "storage/scrub": {
+        "list_endpoint": "/api/v1.0/storage/scrub/",
+        "schema": "/api/v1.0/storage/scrub/schema/"
+    },
+    "storage/snapshot": {
+        "list_endpoint": "/api/v1.0/storage/snapshot/",
+        "schema": "/api/v1.0/storage/snapshot/schema/"
+    },
+    "storage/task": {
+        "list_endpoint": "/api/v1.0/storage/task/",
+        "schema": "/api/v1.0/storage/task/schema/"
+    },
+    "storage/volume": {
+        "list_endpoint": "/api/v1.0/storage/volume/",
+        "schema": "/api/v1.0/storage/volume/schema/"
+    },
+    "support/support": {
+        "list_endpoint": "/api/v1.0/support/support/",
+        "schema": "/api/v1.0/support/support/schema/"
+    },
+    "system/adminpassword": {
+        "list_endpoint": "/api/v1.0/system/adminpassword/",
+        "schema": "/api/v1.0/system/adminpassword/schema/"
+    },
+    "system/adminuser": {
+        "list_endpoint": "/api/v1.0/system/adminuser/",
+        "schema": "/api/v1.0/system/adminuser/schema/"
+    },
+    "system/advanced": {
+        "list_endpoint": "/api/v1.0/system/advanced/",
+        "schema": "/api/v1.0/system/advanced/schema/"
+    },
+    "system/alert": {
+        "list_endpoint": "/api/v1.0/system/alert/",
+        "schema": "/api/v1.0/system/alert/schema/"
+    },
+    "system/cronjob": {
+        "list_endpoint": "/api/v1.0/system/cronjob/",
+        "schema": "/api/v1.0/system/cronjob/schema/"
+    },
+    "system/email": {
+        "list_endpoint": "/api/v1.0/system/email/",
+        "schema": "/api/v1.0/system/email/schema/"
+    },
+    "system/initshutdown": {
+        "list_endpoint": "/api/v1.0/system/initshutdown/",
+        "schema": "/api/v1.0/system/initshutdown/schema/"
+    },
+    "system/ntpserver": {
+        "list_endpoint": "/api/v1.0/system/ntpserver/",
+        "schema": "/api/v1.0/system/ntpserver/schema/"
+    },
+    "system/reboot": {
+        "list_endpoint": "/api/v1.0/system/reboot/",
+        "schema": "/api/v1.0/system/reboot/schema/"
+    },
+    "system/registration": {
+        "list_endpoint": "/api/v1.0/system/registration/",
+        "schema": "/api/v1.0/system/registration/schema/"
+    },
+    "system/rsync": {
+        "list_endpoint": "/api/v1.0/system/rsync/",
+        "schema": "/api/v1.0/system/rsync/schema/"
+    },
+    "system/settings": {
+        "list_endpoint": "/api/v1.0/system/settings/",
+        "schema": "/api/v1.0/system/settings/schema/"
+    },
+    "system/shutdown": {
+        "list_endpoint": "/api/v1.0/system/shutdown/",
+        "schema": "/api/v1.0/system/shutdown/schema/"
+    },
+    "system/smarttest": {
+        "list_endpoint": "/api/v1.0/system/smarttest/",
+        "schema": "/api/v1.0/system/smarttest/schema/"
+    },
+    "system/ssl": {
+        "list_endpoint": "/api/v1.0/system/ssl/",
+        "schema": "/api/v1.0/system/ssl/schema/"
+    },
+    "system/sysctl": {
+        "list_endpoint": "/api/v1.0/system/sysctl/",
+        "schema": "/api/v1.0/system/sysctl/schema/"
+    },
+    "system/tunable": {
+        "list_endpoint": "/api/v1.0/system/tunable/",
+        "schema": "/api/v1.0/system/tunable/schema/"
+    }
+}
+
+
