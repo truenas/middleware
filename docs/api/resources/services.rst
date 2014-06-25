@@ -183,7 +183,7 @@ Update resource
                 "ad_use_default_domain": true,
                 "ad_dcname": "",
                 "ad_bindname": "admin",
-                "ad_bindpw": "mypw"
+                "ad_bindpw": "mypw",
                 "ad_unix_extensions": false,
                 "ad_timeout": 10,
                 "ad_domainname": "mydomain",
