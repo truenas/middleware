@@ -137,7 +137,7 @@ List resource
                 "ad_kpwdname": "",
                 "ad_krbname": "",
                 "ad_dns_timeout": 10,
-                "ad_adminpw": "",
+                "ad_bindpw": "",
                 "ad_verbose_logging": false,
                 "ad_allow_trusted_doms": false,
                 "ad_netbiosname": "NAS"
@@ -164,8 +164,8 @@ Update resource
         {
                 "ad_netbiosname": "mynas",
                 "ad_domainname": "mydomain",
-                "ad_adminname": "admin",
-                "ad_adminpw": "mypw"
+                "ad_bindname": "admin",
+                "ad_bindpw": "mypw"
         }
 
    **Example response**:
@@ -182,16 +182,15 @@ Update resource
                 "ad_use_keytab": false,
                 "ad_use_default_domain": true,
                 "ad_dcname": "",
-                "ad_adminname": "admin",
+                "ad_bindname": "admin",
+                "ad_bindpw": "mypw"
                 "ad_unix_extensions": false,
                 "ad_timeout": 10,
-                "svc": "activedirectory",
                 "ad_domainname": "mydomain",
                 "id": 1,
                 "ad_kpwdname": "",
                 "ad_krbname": "",
                 "ad_dns_timeout": 10,
-                "ad_adminpw": "mypw",
                 "ad_verbose_logging": false,
                 "ad_allow_trusted_doms": false,
                 "ad_netbiosname": "mynas"
@@ -199,8 +198,7 @@ Update resource
 
    :json string ad_domainname: domain name
    :json string ad_netbiosname: system hostname
-   :json string ad_adminname: domain Administrator account nam
-   :json string ad_adminpw: domain Administrator account password
+   :json string ad_bindpw: domain account password
    :json string ad_dcname: hostname of the domain controller to use
    :json string ad_gcname: hostname of the global catalog server to use
    :json string ad_keytab: kerberos keytab file
