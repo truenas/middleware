@@ -526,11 +526,6 @@ def generate_smb4_shares(smb4_shares):
         confset2(smb4_shares, "browseable = %s",
             "yes" if share.cifs_browsable else "no")
 
-        confset2(smb4_shares, "inherit owner = %s",
-            "yes" if share.cifs_inheritowner else "no")
-        confset2(smb4_shares, "inherit permissions = %s",
-            "yes" if share.cifs_inheritperms else "no")
-
         vfs_objects = []
         if share.cifs_recyclebin:
             vfs_objects.append('recycle')
@@ -565,9 +560,6 @@ def generate_smb4_shares(smb4_shares):
 
         confset2(smb4_shares, "guest only = %s",
             "yes" if share.cifs_guestonly else False)
-
-        confset2(smb4_shares, "inherit acls = %s",
-            "yes" if share.cifs_inheritacls else "no")
 
         confset1(smb4_shares, "nfs4:mode = special")
         confset1(smb4_shares, "nfs4:acedup = merge")
