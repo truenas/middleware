@@ -267,15 +267,15 @@ class NFS_ShareForm(ModelForm):
                     ])
                     valid = False
                     break
-                if ismp:
+                if os.stat(parent).st_dev != stat.st_dev:
+                    ismp = True
+                if ismp and len(forms) > 1:
                     self._fserrors = self.error_class([
                         _("You cannot share a mount point and subdirectories "
                             "all at once")
                     ])
                     valid = False
                     break
-                if os.stat(parent).st_dev != stat.st_dev:
-                    ismp = True
             except OSError:
                 pass
 
