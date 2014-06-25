@@ -1201,7 +1201,7 @@ The RsyncMod resource represents loader.conf(5).
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/system/rsyncmod/
+.. http:get:: /api/v1.0/services/rsyncmod/
 
    Returns a list of all rsyncmods.
 
@@ -1209,7 +1209,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/system/rsyncmod/ HTTP/1.1
+      GET /api/v1.0/services/rsyncmod/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -1239,7 +1239,7 @@ List resource
 Create resource
 +++++++++++++++
 
-.. http:post:: /api/v1.0/system/rsyncmod/
+.. http:post:: /api/v1.0/services/rsyncmod/
 
    Creates a new rsyncmod and returns the new rsyncmod object.
 
@@ -1247,7 +1247,7 @@ Create resource
 
    .. sourcecode:: http
 
-      POST /api/v1.0/system/rsyncmod/ HTTP/1.1
+      POST /api/v1.0/services/rsyncmod/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -1295,7 +1295,7 @@ Create resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/system/rsyncmod/(int:id)/
+.. http:put:: /api/v1.0/services/rsyncmod/(int:id)/
 
    Update rsyncmod `id`.
 
@@ -1303,7 +1303,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/system/rsyncmod/1/ HTTP/1.1
+      PUT /api/v1.0/services/rsyncmod/1/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -1350,7 +1350,7 @@ Update resource
 Delete resource
 +++++++++++++++
 
-.. http:delete:: /api/v1.0/system/rsyncmod/(int:id)/
+.. http:delete:: /api/v1.0/services/rsyncmod/(int:id)/
 
    Delete rsyncmod `id`.
 
@@ -1358,7 +1358,7 @@ Delete resource
 
    .. sourcecode:: http
 
-      DELETE /api/v1.0/system/rsyncmod/1/ HTTP/1.1
+      DELETE /api/v1.0/services/rsyncmod/1/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
