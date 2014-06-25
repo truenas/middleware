@@ -26,13 +26,15 @@
 #####################################################################
 import re
 
-from django.utils.translation import ugettext_lazy as _
+from django.core.validators import RegexValidator
 from django.db import models, transaction
+from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.contrib.IPAddressField import (IPAddressField, IP4AddressField,
     IP6AddressField)
 from freenasUI.freeadmin.models import Model
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
 
@@ -42,12 +44,18 @@ class GlobalConfiguration(Model):
         max_length=120,
         verbose_name=_("Hostname"),
         default='nas',
-        )
+        validators=[RegexValidator(
+            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+        )],
+    )
     gc_domain = models.CharField(
         max_length=120,
         verbose_name=_("Domain"),
         default='local',
-        )
+        validators=[RegexValidator(
+            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+        )],
+    )
     gc_ipv4gateway = IP4AddressField(
         blank=True,
         default='',
@@ -477,4 +485,8 @@ class StaticRoute(Model):
 
     def delete(self, *args, **kwargs):
         super(StaticRoute, self).delete(*args, **kwargs)
-        notifier().staticroute_delete(self)
+        try:
+            # TODO: async user notification
+            notifier().staticroute_delete(self)
+        except MiddlewareError:
+            pass

@@ -348,7 +348,18 @@ _sssd_config()
 		sssd_enable="YES"
 	fi
 	if dirsrv_enabled activedirectory; then
-		sssd_enable="YES"
+		local ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+			SELECT
+				ad_unix_extensions
+			FROM
+				services_activedirectory
+			ORDER BY
+				-id
+			LIMIT 1
+		")
+		if [ "${ad_unix}" = "1" ]; then
+			sssd_enable="YES"
+		fi
 	fi
 	echo "sssd_enable=\"${sssd_enable}\""
 }

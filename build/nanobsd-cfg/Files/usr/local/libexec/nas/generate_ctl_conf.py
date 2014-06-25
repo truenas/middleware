@@ -24,12 +24,12 @@ def main():
     cf_contents = []
 
     from freenasUI.services.models import iSCSITargetGlobalConfiguration
-    from freenasUI.services.models import iSCSITargetExtent
     from freenasUI.services.models import iSCSITargetPortal
     from freenasUI.services.models import iSCSITargetPortalIP
     from freenasUI.services.models import iSCSITargetAuthCredential
     from freenasUI.services.models import iSCSITarget
-    from freenasUI.services.models import iSCSITargetToExtent
+
+    gconf = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
 
     # Generate the auth section
     # Work around SQLite not supporting DISTINCT ON
@@ -72,20 +72,20 @@ def main():
     # Generate the portal-group section
     for portal in iSCSITargetPortal.objects.all():
         cf_contents.append("portal-group pg%s {\n" % portal.id)
-        disc_authmethod = iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_discoveryauthmethod
+        disc_authmethod = gconf.iscsi_discoveryauthmethod
         if disc_authmethod == "None":
             cf_contents.append("\tdiscovery-auth-group no-authentication\n")
         else:
-            cf_contents.append("\tdiscovery-auth-group %s\n" %
-                               iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_discoveryauthgroup)
-        listen = iSCSITargetPortalIP.objects.filter(id=portal.id)
+            cf_contents.append("\tdiscovery-auth-group ag%s\n" %
+                               gconf.iscsi_discoveryauthgroup)
+        listen = iSCSITargetPortalIP.objects.filter(iscsi_target_portalip_portal=portal)
         for obj in listen:
             cf_contents.append("\tlisten %s:%s\n" % (obj.iscsi_target_portalip_ip,
                                                      obj.iscsi_target_portalip_port))
         cf_contents.append("}\n\n")
 
     # Generate the target section
-    target_basename = iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_basename
+    target_basename = gconf.iscsi_basename
     for target in iSCSITarget.objects.all():
         cf_contents.append("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
         if target.iscsi_target_name:
@@ -94,7 +94,9 @@ def main():
             cf_contents.append("\tauth-group no-authentication\n")
         else:
             cf_contents.append("\tauth-group ag%s\n" % target.iscsi_target_authgroup)
-        cf_contents.append("\tportal-group pg%s\n" % target.iscsi_target_portalgroup)
+        cf_contents.append("\tportal-group pg%d\n" % (
+            target.iscsi_target_portalgroup.iscsi_target_portal_tag,
+        ))
         used_lunids = [
             o.iscsi_lunid
             for o in target.iscsitargettoextent_set.all().exclude(
@@ -122,11 +124,17 @@ def main():
             cf_contents.append("\t\t\tpath %s\n" % path)
             cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
             cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
-            cf_contents.append('\t\t\tdevice-id "FreeBSD iSCSI Disk"\n')
+            padded_serial = target.iscsi_target_serial
+            for i in xrange(32-len(target.iscsi_target_serial)):
+                padded_serial += " "
+            cf_contents.append('\t\t\tdevice-id "iSCSI Disk     %s"\n' % padded_serial)
             if size != "0":
                 if size.endswith('B'):
                     size = size.strip('B')
                 cf_contents.append("\t\t\tsize %s\n" % size)
+            cf_contents.append('\t\t\toption vendor "FreeBSD"\n')
+            cf_contents.append('\t\t\toption product "iSCSI Disk"\n')
+            cf_contents.append('\t\t\toption revision "0123"\n')
             cf_contents.append("\t\t}\n")
         cf_contents.append("}\n\n")
 

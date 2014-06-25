@@ -43,5 +43,5 @@ mkdir -p ${PORTOPTIONS}
 rm -f ${PORTSLIST}
 rm -f ${MAKECONF}
 
-. ${AVATAR_ROOT}/nanobsd/os-ports
+. ${AVATAR_ROOT}/build/nanobsd-cfg/os-ports
 

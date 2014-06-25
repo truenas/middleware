@@ -64,7 +64,7 @@ add_warden_hooks()
 {
 	local wt src dst share hooks
 
-	wt="${AVATAR_ROOT}/nanobsd/Files/etc/ix/templates/warden"
+	wt="${AVATAR_ROOT}/build/nanobsd-cfg/Files/etc/ix/templates/warden"
 	src="${AVATAR_ROOT}/src/pcbsd/warden"
 	dst="${NANO_WORLDDIR}/usr/local"
 	share="${dst}/share/warden"

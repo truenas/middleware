@@ -261,3 +261,7 @@ msgstr "ボリューム名"
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
 msgid "Close"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:918
+msgid "Confirm"
+msgstr ""

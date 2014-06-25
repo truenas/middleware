@@ -28,8 +28,8 @@ test_config_file = None
 sentinel_file = None
 
 def usage(argv):
-    print "Usage:"
-    print "    %s -f [JSON config file]" % argv[0]
+    print("Usage:")
+    print("    %s -f [JSON config file]" % argv[0])
 
 def main(argv):
 
@@ -71,7 +71,7 @@ def runTest():
     child1.logfile = sys.stdout
     child1.expect(pexpect.EOF)
     cmd = "bhyve -c 2 -m 2G -AI -H -P -g 0 -s 0:0,hostbridge -s 1:0,lpc -s 2:0,virtio-net,%s -s 3:0,virtio-blk,%s -l com1,stdio -s 31:0,virtio-blk,%s %s"  % (test_config['tap'], test_config['disk_img'], test_config['iso'], test_config['vm_name'])
-    print cmd
+    print(cmd)
     child2 = pexpect.spawn(cmd)
     child2.logfile = sys.stdout
     child2.expect(['Install'])

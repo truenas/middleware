@@ -3890,7 +3890,7 @@ class notifier:
         if name.startswith('carp'):
             reg = re.search(r'carp: (\S+)', data)
         else:
-            reg = re.search(r'status: (.+)$', data)
+            reg = re.search(r'status: (.+)$', data, re.MULTILINE)
 
         if proc.returncode != 0 or not reg:
             return _('Unknown')
@@ -4998,7 +4998,7 @@ class notifier:
         path = "/mnt/%s" % dataset
         if os.path.exists("%s/.windows" % path):
             share_type = "windows"
-        elif os.path.exists("%s/.windows" % path):
+        elif os.path.exists("%s/.apple" % path):
             share_type = "apple"
 
         return share_type

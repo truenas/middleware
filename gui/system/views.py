@@ -34,6 +34,7 @@ import signal
 import socket
 import string
 import subprocess
+import sysctl
 import time
 import urllib
 import xmlrpclib
@@ -70,10 +71,10 @@ log = logging.getLogger('system.views')
 def _system_info(request=None):
     # OS, hostname, release
     __, hostname, __ = os.uname()[0:3]
-    platform = subprocess.check_output(['sysctl', '-n', 'hw.model'])
-    physmem = str(int(int(
-        subprocess.check_output(['sysctl', '-n', 'hw.physmem'])
-    ) / 1048576)) + 'MB'
+    platform = sysctl.filter('hw.model')[0].value
+    physmem = '%dMB' % (
+        sysctl.filter('hw.physmem')[0].value / 1048576,
+    )
     # All this for a timezone, because time.asctime() doesn't add it in.
     date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
     uptime = subprocess.check_output(

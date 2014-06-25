@@ -257,6 +257,7 @@ class DatasetResource(DojoResource):
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, retval)
             )
+        return HttpResponse(status=204)
 
     def detail_uri_kwargs(self, bundle_or_obj):
         return {}
@@ -1819,7 +1820,7 @@ class PluginsResourceMixin(NestedMixin):
 
 class SnapshotResource(DojoResource):
 
-    id = fields.CharField(attribute='filesystem')
+    id = fields.CharField(attribute='fullname')
     name = fields.CharField(attribute='name')
     filesystem = fields.CharField(attribute='filesystem')
     fullname = fields.CharField(attribute='fullname')

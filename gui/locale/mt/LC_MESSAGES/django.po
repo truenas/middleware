@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2014-06-08 02:16+0000\n"
+"PO-Revision-Date: 2014-06-14 02:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: mt\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n==0 || ( n%100>1 && n%100<11) "
 "? 1 : (n%100>10 && n%100<20 ) ? 2 : 3);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1402193771.0\n"
+"X-POOTLE-MTIME: 1402712166.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -8919,4 +8919,20 @@ msgstr ""
 
 #: services/models.py:117
 msgid "Domain logons"
+msgstr ""
+
+#: network/admin.py:66
+msgid "Network connectivity will be interrupted. Do you want to proceed?"
+msgstr ""
+
+#: services/admin.py:67
+msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
+msgstr ""
+
+#: services/forms.py:1381
+msgid "Extent name must be unique."
+msgstr ""
+
+#: services/models.py:414
+msgid "Enable experimental target"
 msgstr ""
