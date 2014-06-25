@@ -1045,14 +1045,18 @@ class NFSShareResourceMixin(object):
 
     def hydrate(self, bundle):
         bundle = super(NFSShareResourceMixin, self).hydrate(bundle)
-        if 'nfs_paths' not in bundle.data:
-            return bundle
-        nfs_paths = bundle.data.get('nfs_paths')
-        for i, item in enumerate(nfs_paths):
+        nfs_paths = bundle.data.get('nfs_paths', [])
+        i = -1
+        for i, item in enumerate(bundle.obj.paths.all()):
+            bundle.data['path_set-%d-path' % i] = item.path
+            bundle.data['path_set-%d-share' % i] = item.share.id
+            bundle.data['path_set-%d-id' % i] = item.id
+        initial = i + 1
+        for i, item in enumerate(nfs_paths, i + 1):
             bundle.data['path_set-%d-path' % i] = item
             bundle.data['path_set-%d-id' % i] = ''
             bundle.data['path_set-%d-share' % i] = ''
-        bundle.data['path_set-INITIAL_FORMS'] = 0
+        bundle.data['path_set-INITIAL_FORMS'] = initial
         bundle.data['path_set-TOTAL_FORMS'] = i + 1
         return bundle
 
