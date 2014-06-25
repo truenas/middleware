@@ -171,7 +171,7 @@ class GroupField(forms.ChoiceField):
             self.choices = glist
 
     def clean(self, group):
-        if not self.required and group in ('-----', ''):
+        if not self.required and group in ('-----', '', None):
             return None
         if FreeNAS_Group(group, flags=FLAGS_DBINIT) is None:
             raise forms.ValidationError(
