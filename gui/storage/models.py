@@ -646,6 +646,7 @@ class MountPoint(Model):
             'nfs': [],
             'iscsitarget': [],
             'jails': [],
+            'collectd': [],
         }
 
         for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
