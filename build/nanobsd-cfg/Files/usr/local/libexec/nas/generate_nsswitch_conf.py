@@ -45,6 +45,9 @@ def main():
         nsswitch_conf['passwd'].append('winbind')
         nsswitch_conf['group'].append('winbind')
 
+    if nt4_enabled():
+        nsswitch_conf['hosts'].append('wins')
+
     if ldap_enabled():
         nsswitch_conf['passwd'].append('sss')
         nsswitch_conf['group'].append('sss')
