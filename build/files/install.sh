@@ -314,6 +314,7 @@ menu_install()
 	    _menuheight=$((${_menuheight} + ${_items}))
 	fi
 	if [ "${_items}" -eq 0 ]; then
+		# Inform the user
 		eval "dialog --title 'Choose destination media' --msgbox 'No drives available' 5 60" 2>${_tmpfile}
 		return 0
 	fi
