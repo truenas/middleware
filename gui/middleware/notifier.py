@@ -698,12 +698,14 @@ class notifier:
         return (True if res == 0 else False)
 
     def _restart_nt4(self):
+        self.__nt4stop = False
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("/etc/directoryservice/NT4/ctl restart")
         return (True if res == 0 else False)
 
     def _stop_nt4(self):
+        self.__nt4stop = False
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("/etc/directoryservice/NT4/ctl stop")
