@@ -32,7 +32,7 @@ from django.utils.translation import ugettext as _
 from django.utils.html import escapejs
 
 from freenasUI.api.resources import (
-    JailsResourceMixin, JailTemplateResourceMixin, NullMountPointResourceMixin
+    JailsResourceMixin, JailTemplateResourceMixin, JailMountPointResourceMixin
 )
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.options import BaseFreeAdmin
@@ -302,17 +302,17 @@ class JailTemplateFAdmin(BaseFreeAdmin):
         return actions
 
 
-class NullMountPointFAdmin(BaseFreeAdmin):
+class JailMountPointFAdmin(BaseFreeAdmin):
 
     icon_model = u"MountPointIcon"
     icon_object = u"MountPointIcon"
     icon_add = u"AddMountPointIcon"
     icon_view = u"ViewMountPointIcon"
 
-    resource_mixin = NullMountPointResourceMixin
+    resource_mixin = JailMountPointResourceMixin
 
     def get_datagrid_columns(self):
-        columns = super(NullMountPointFAdmin, self).get_datagrid_columns()
+        columns = super(JailMountPointFAdmin, self).get_datagrid_columns()
         columns.insert(3, {
             'name': 'mounted',
             'label': _('Mounted?'),
@@ -323,4 +323,4 @@ class NullMountPointFAdmin(BaseFreeAdmin):
 site.register(models.Jails, JailsFAdmin)
 site.register(models.JailsConfiguration, JailsConfigurationFAdmin)
 site.register(models.JailTemplate, JailTemplateFAdmin)
-site.register(models.NullMountPoint, NullMountPointFAdmin)
+site.register(models.JailMountPoint, JailMountPointFAdmin)

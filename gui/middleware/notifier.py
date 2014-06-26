@@ -2945,7 +2945,7 @@ class notifier:
         return plugin
 
     def update_pbi(self, plugin=None):
-        from freenasUI.jails.models import JailsConfiguration, NullMountPoint
+        from freenasUI.jails.models import JailsConfiguration, JailMountPoint
         from freenasUI.services.models import RPCToken
         from freenasUI.common.pipesubr import pipeopen
         ret = False
@@ -2987,7 +2987,7 @@ class notifier:
 
         jc = JailsConfiguration.objects.order_by("-id")[0]
 
-        mountpoints = NullMountPoint.objects.filter(jail=jail_name)
+        mountpoints = JailMountPoint.objects.filter(jail=jail_name)
         for mp in mountpoints:
             fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
             p = pipeopen("/sbin/umount -f '%s'" % fp)

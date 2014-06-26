@@ -1651,10 +1651,10 @@ class BsdGroupResourceMixin(object):
         return bundle
 
 
-class NullMountPointResourceMixin(object):
+class JailMountPointResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(NullMountPointResourceMixin, self).dehydrate(bundle)
+        bundle = super(JailMountPointResourceMixin, self).dehydrate(bundle)
         bundle.data['mounted'] = bundle.obj.mounted
         return bundle
 

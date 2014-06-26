@@ -762,7 +762,7 @@ SAMBA4_FOREST_LEVEL_CHOICES = (
     ('2008_R2', '2008_R2')
 )
 
-NULLMOUNTPOINT_CHOICES = (
+JAILMOUNTPOINT_CHOICES = (
     ('nullfs', 'nullfs'),
     ('tmpfs', 'tmpfs'),
     ('unionfs', 'unionfs')

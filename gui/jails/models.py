@@ -511,7 +511,7 @@ class JailTemplate(Model):
         verbose_name_plural = _("Jail Templates")
 
 
-class NullMountPoint(Model):
+class JailMountPoint(Model):
 
     jail = models.CharField(
         max_length=120,
@@ -532,9 +532,9 @@ class NullMountPoint(Model):
     fstype = models.CharField(
         max_length=300,
         verbose_name=_("Filesystem"),
-        choices=choices.NULLMOUNTPOINT_CHOICES,
+        choices=choices.JAILMOUNTPOINT_CHOICES,
         default='nullfs'
-    ) 
+    )
 
     class Meta:
         verbose_name = _(u"Storage")
@@ -546,7 +546,7 @@ class NullMountPoint(Model):
     def delete(self, *args, **kwargs):
         if self.mounted:
             self.umount()
-        super(NullMountPoint, self).delete(*args, **kwargs)
+        super(JailMountPoint, self).delete(*args, **kwargs)
 
     @property
     def mounted(self):
@@ -564,7 +564,7 @@ class NullMountPoint(Model):
         mount(
             self.source,
             self.destination_jail,
-            fstype=self.fstype,  
+            fstype=self.fstype,
             mntopts=mntopts,
         )
         return self.mounted

@@ -107,7 +107,7 @@ def jail_storage_add(request, jail_id):
     jail = models.Jails.objects.get(id=jail_id)
 
     if request.method == 'POST':
-        form = forms.NullMountPointForm(request.POST, jail=jail)
+        form = forms.JailMountPointForm(request.POST, jail=jail)
         if form.is_valid():
             form.save()
             return JsonResp(
@@ -115,7 +115,7 @@ def jail_storage_add(request, jail_id):
                 message=_("Storage successfully added.")
             )
     else:
-        form = forms.NullMountPointForm(jail=jail)
+        form = forms.JailMountPointForm(jail=jail)
 
     return render(request, 'jails/storage.html', {
         'form': form,
