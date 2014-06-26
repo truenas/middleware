@@ -240,6 +240,11 @@ class JailsFAdmin(BaseFreeAdmin):
         return actions
 
 
+class JailsConfigurationFAdmin(BaseFreeAdmin):
+
+    deletable = False
+
+
 class JailTemplateFAdmin(BaseFreeAdmin):
 
     create_modelform = "JailTemplateCreateForm"
@@ -314,5 +319,6 @@ class NullMountPointFAdmin(BaseFreeAdmin):
         return columns
 
 site.register(models.Jails, JailsFAdmin)
+site.register(models.JailsConfiguration, JailsConfigurationFAdmin)
 site.register(models.JailTemplate, JailTemplateFAdmin)
 site.register(models.NullMountPoint, NullMountPointFAdmin)

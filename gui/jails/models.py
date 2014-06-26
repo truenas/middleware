@@ -369,16 +369,13 @@ class JailsConfiguration(Model):
         blank=True,
     )
 
-    def save(self, *args, **kwargs):
-        super(JailsConfiguration, self).save(*args, **kwargs)
-        notifier().start("ix-warden")
-
     class Meta:
         verbose_name = _("Jails Configuration")
         verbose_name_plural = _("Jails Configuration")
 
-    class FreeAdmin:
-        deletable = False
+    def save(self, *args, **kwargs):
+        super(JailsConfiguration, self).save(*args, **kwargs)
+        notifier().start("ix-warden")
 
     def __init__(self, *args, **kwargs):
         super(JailsConfiguration, self).__init__(*args, **kwargs)
@@ -401,7 +398,7 @@ class JailsConfiguration(Model):
         if not self.jc_ipv4_network_start:
             self.jc_ipv4_network_start = str(st.usable_range[0]).split('/')[0]
         else:
-            self.jc_ipv4_network_start = self.jc_ipv4_network_start.split('/')[0]  
+            self.jc_ipv4_network_start = self.jc_ipv4_network_start.split('/')[0]
 
         if not self.jc_ipv4_network_end:
             self.jc_ipv4_network_end = str(st.usable_range[1]).split('/')[0]
