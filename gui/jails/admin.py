@@ -310,6 +310,7 @@ class JailMountPointFAdmin(BaseFreeAdmin):
     icon_view = u"ViewMountPointIcon"
 
     resource_mixin = JailMountPointResourceMixin
+    resource_name = 'jails/mountpoints'
 
     def get_datagrid_columns(self):
         columns = super(JailMountPointFAdmin, self).get_datagrid_columns()
