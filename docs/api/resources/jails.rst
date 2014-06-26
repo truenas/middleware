@@ -5,6 +5,103 @@ Jails
 Resources related to FreeBSD Jails.
 
 
+Configuration
+-------------
+
+The Configuration resource exposes settings related to jails.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/jails/configuration/
+
+   Returns the configuration dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/jails/configuration/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+          "id": 1,
+          "jc_collectionurl": "http://cdn.freenas.org/latest/RELEASE/x64/jails",
+          "jc_ipv4_network": "192.168.3.0/24",
+          "jc_ipv4_network_end": "192.168.3.254",
+          "jc_ipv4_network_start": "192.168.3.34",
+          "jc_ipv6_network": "",
+          "jc_ipv6_network_end": "",
+          "jc_ipv6_network_start": "",
+          "jc_path": "/mnt/tank/jails"
+        }
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:putt:: /api/v1.0/jails/configuration/
+
+   Updates the configuration dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/jails/configuration/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "jc_ipv4_network_start": "192.168.3.50"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+          "id": 1,
+          "jc_collectionurl": "http://cdn.freenas.org/latest/RELEASE/x64/jails",
+          "jc_ipv4_network": "192.168.3.0/24",
+          "jc_ipv4_network_end": "192.168.3.254",
+          "jc_ipv4_network_start": "192.168.3.50",
+          "jc_ipv6_network": "",
+          "jc_ipv6_network_end": "",
+          "jc_ipv6_network_start": "",
+          "jc_path": "/mnt/tank/jails"
+        }
+
+   :json string jc_collectionurl: URL for the jail index
+   :json string jc_ipv4_network: IPv4 network range for jails and plugins
+   :json string jc_ipv4_network_start: IPv4 Network Start Address
+   :json string jc_ipv4_network_end: IPv4 Network End Address
+   :json string jc_ipv6_network: IPv6 network range for jails and plugins
+   :json string jc_ipv6_network_start: IPv6 network start address for jails and plugins
+   :json string jc_ipv6_network_end: IPv6 network end address for jails and plugins
+   :json string jc_path: dataset the jails will reside within
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
 Jails
 --------
 
