@@ -1147,7 +1147,7 @@ class SystemDataset(Model):
         default=False,
         verbose_name=_("Reporting Database"),
         help_text=_(
-            'Save the Round-Robin Database (RRD) from the system statistics '
+            'Save the Round-Robin Database (RRD) used by system statistics '
             'collection daemon into the system dataset'
         )
     )
