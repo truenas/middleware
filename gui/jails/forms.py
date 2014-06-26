@@ -733,47 +733,39 @@ class JailsEditForm(ModelForm):
                 Warden().set(**args)
 
 
-class JailTemplateCreateForm(ModelForm):
+class JailTemplateForm(ModelForm):
 
     class Meta:
         fields = '__all__'
         model = JailTemplate
 
     def __init__(self, *args, **kwargs):
-        super(JailTemplateCreateForm, self).__init__(*args, **kwargs)
-        self.fields['jt_os'].widget.attrs['onChange'] = (
-            'jailtemplate_os(this);'
-        )
+        super(JailTemplateForm, self).__init__(*args, **kwargs)
 
-
-class JailTemplateEditForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = JailTemplate
-
-    def __init__(self, *args, **kwargs):
-        super(JailTemplateEditForm, self).__init__(*args, **kwargs)
-
-        obj = self.save(commit=False)
-        ninstances = int(obj.jt_instances)
-        if ninstances > 0:
-            self.fields['jt_name'].widget.attrs['readonly'] = True
-            self.fields['jt_arch'].widget.attrs['readonly'] = True
-            self.fields['jt_os'].widget.attrs['readonly'] = True
-            self.fields['jt_name'].widget.attrs['class'] = (
-                'dijitDisabled dijitTextBoxDisabled '
-                'dijitValidationTextBoxDisabled'
-            )
-        else:
+        if not self.instance.id:
             self.fields['jt_os'].widget.attrs['onChange'] = (
                 'jailtemplate_os(this);'
             )
-        if self.instance.jt_os == 'Linux':
-            self.fields['jt_arch'].widget.attrs['readOnly'] = 'readOnly'
-            self.fields['jt_arch'].widget.attrs['class'] = (
-                'dijitDisabled dijitSelectDisabled'
-            )
+        else:
+            obj = self.save(commit=False)
+            ninstances = int(obj.jt_instances)
+            if ninstances > 0:
+                self.fields['jt_name'].widget.attrs['readonly'] = True
+                self.fields['jt_arch'].widget.attrs['readonly'] = True
+                self.fields['jt_os'].widget.attrs['readonly'] = True
+                self.fields['jt_name'].widget.attrs['class'] = (
+                    'dijitDisabled dijitTextBoxDisabled '
+                    'dijitValidationTextBoxDisabled'
+                )
+            else:
+                self.fields['jt_os'].widget.attrs['onChange'] = (
+                    'jailtemplate_os(this);'
+                )
+            if self.instance.jt_os == 'Linux':
+                self.fields['jt_arch'].widget.attrs['readOnly'] = 'readOnly'
+                self.fields['jt_arch'].widget.attrs['class'] = (
+                    'dijitDisabled dijitSelectDisabled'
+                )
 
 
 class NullMountPointForm(ModelForm):
