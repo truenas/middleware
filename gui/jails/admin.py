@@ -243,6 +243,7 @@ class JailsFAdmin(BaseFreeAdmin):
 class JailsConfigurationFAdmin(BaseFreeAdmin):
 
     deletable = False
+    resource_name = 'jails/configuration'
 
 
 class JailTemplateFAdmin(BaseFreeAdmin):
