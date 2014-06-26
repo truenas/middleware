@@ -30,8 +30,8 @@
 #
 : ${NT4_CONFIG_PATH:="/etc/directoryservice/NT4"}
 : ${NT4_CONTROL_FILE:="${NT4_CONFIG_PATH}/ctl"}
-: ${NT4_NET_RPC_TIMEOUT:="10"}
-: ${NT4_DNS_TIMEOUT:="10"}
+: ${NT4_NET_RPC_TIMEOUT:="60"}
+: ${NT4_DNS_TIMEOUT:="60"}
 
 
 __NT4_proto()
@@ -294,9 +294,9 @@ NT4_status_domain()
 	: ${adminname:="$(NT4_get nt4_adminname)"}
 	: ${adminpw:="$(NT4_get nt4_adminpw)"}
 
-	NT4_log "NT4_status_domain: net rpc info -U ${adminname}"
+	NT4_log "NT4_status_domain: wbinfo -t"
 
-	__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/net rpc info -U "${adminname}%${adminpw}"
+	__NT4_tc "$(NT4_get nt4_timeout)" /usr/local/bin/wbinfo -t
 	res=$?
 
 	local ok="Not okay"
