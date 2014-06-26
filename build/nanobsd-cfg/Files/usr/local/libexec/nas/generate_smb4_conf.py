@@ -7,6 +7,8 @@ import string
 import tempfile
 import time
 
+from dns import resolver
+
 sys.path.extend([
     '/usr/local/www',
     '/usr/local/www/freenasUI'
@@ -155,8 +157,15 @@ def add_nt4_conf(smb4_conf):
     except:
         return
 
+    try:
+        answers = resolver.query(nt4.nt4_dcname, 'A')
+    except Exception as e:
+        print >> sys.stderr, "Unable to resolve %s" % nt4.nt4_dcname
+        return
+
+    dc_ip = answers[0]
     with open("/usr/local/etc/lmhosts", "w") as f:
-        f.write("%s\t%s\n" % (nt4.nt4_dcname, nt4.nt4_workgroup.upper()))
+        f.write("%s\t%s\n" % (dc_ip, nt4.nt4_workgroup.upper()))
         f.close()
 
     confset2(smb4_conf, "netbios name = %s", nt4.nt4_netbiosname.upper())
