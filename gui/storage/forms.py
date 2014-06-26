@@ -1078,6 +1078,7 @@ class AutoImportWizard(SessionWizardView):
         notifier().reload("disk")
         notifier().start("ix-system")
         notifier().start("ix-syslogd")
+        notifier().start("ix-warden")
         notifier().restart("system_datasets")
 
         return JsonResp(self.request, message=unicode(_("Volume imported")))

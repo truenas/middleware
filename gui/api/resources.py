@@ -1651,10 +1651,10 @@ class BsdGroupResourceMixin(object):
         return bundle
 
 
-class NullMountPointResourceMixin(object):
+class JailMountPointResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(NullMountPointResourceMixin, self).dehydrate(bundle)
+        bundle = super(JailMountPointResourceMixin, self).dehydrate(bundle)
         bundle.data['mounted'] = bundle.obj.mounted
         return bundle
 
@@ -1788,9 +1788,6 @@ class JailTemplateResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(JailTemplateResourceMixin, self).dehydrate(bundle)
         bundle.data['jt_instances'] = bundle.obj.jt_instances
-        bundle.data['_edit_url'] = reverse('jail_template_edit', kwargs={
-            'id': bundle.obj.id
-        })
         return bundle
 
 

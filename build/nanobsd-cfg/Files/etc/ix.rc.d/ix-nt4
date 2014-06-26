@@ -62,10 +62,14 @@ nt4_start()
 	then
 		NT4_init
 
-		NT4_log "nt4_start: trying to join domain"
-		if ! NT4_join_domain
+		NT4_status_domain >/dev/null 2>&1
+		if [ $? -ne 0 ]
 		then
-			return 1
+			NT4_log "nt4_start: trying to join domain"
+			if ! NT4_join_domain
+			then
+				return 1
+			fi
 		fi
 
 		setup_homedirs

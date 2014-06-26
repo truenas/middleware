@@ -106,11 +106,6 @@ nt4ctl_stop()
 		prev_cifs_started="$(cat "${cifs_file}")"
 	fi
 
-	if ! nt4_enabled
-	then
-		return 1
-	fi
-
 	if cifs_enabled
 	then
 		cifs_started=1

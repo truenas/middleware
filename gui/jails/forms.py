@@ -38,7 +38,7 @@ from freenasUI.jails.models import (
     JailsConfiguration,
     Jails,
     JailTemplate,
-    NullMountPoint
+    JailMountPoint
 )
 from freenasUI.jails.utils import guess_addresses
 from freenasUI.common.warden import (
@@ -733,50 +733,42 @@ class JailsEditForm(ModelForm):
                 Warden().set(**args)
 
 
-class JailTemplateCreateForm(ModelForm):
+class JailTemplateForm(ModelForm):
 
     class Meta:
         fields = '__all__'
         model = JailTemplate
 
     def __init__(self, *args, **kwargs):
-        super(JailTemplateCreateForm, self).__init__(*args, **kwargs)
-        self.fields['jt_os'].widget.attrs['onChange'] = (
-            'jailtemplate_os(this);'
-        )
+        super(JailTemplateForm, self).__init__(*args, **kwargs)
 
-
-class JailTemplateEditForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = JailTemplate
-
-    def __init__(self, *args, **kwargs):
-        super(JailTemplateEditForm, self).__init__(*args, **kwargs)
-
-        obj = self.save(commit=False)
-        ninstances = int(obj.jt_instances)
-        if ninstances > 0:
-            self.fields['jt_name'].widget.attrs['readonly'] = True
-            self.fields['jt_arch'].widget.attrs['readonly'] = True
-            self.fields['jt_os'].widget.attrs['readonly'] = True
-            self.fields['jt_name'].widget.attrs['class'] = (
-                'dijitDisabled dijitTextBoxDisabled '
-                'dijitValidationTextBoxDisabled'
-            )
-        else:
+        if not self.instance.id:
             self.fields['jt_os'].widget.attrs['onChange'] = (
                 'jailtemplate_os(this);'
             )
-        if self.instance.jt_os == 'Linux':
-            self.fields['jt_arch'].widget.attrs['readOnly'] = 'readOnly'
-            self.fields['jt_arch'].widget.attrs['class'] = (
-                'dijitDisabled dijitSelectDisabled'
-            )
+        else:
+            obj = self.save(commit=False)
+            ninstances = int(obj.jt_instances)
+            if ninstances > 0:
+                self.fields['jt_name'].widget.attrs['readonly'] = True
+                self.fields['jt_arch'].widget.attrs['readonly'] = True
+                self.fields['jt_os'].widget.attrs['readonly'] = True
+                self.fields['jt_name'].widget.attrs['class'] = (
+                    'dijitDisabled dijitTextBoxDisabled '
+                    'dijitValidationTextBoxDisabled'
+                )
+            else:
+                self.fields['jt_os'].widget.attrs['onChange'] = (
+                    'jailtemplate_os(this);'
+                )
+            if self.instance.jt_os == 'Linux':
+                self.fields['jt_arch'].widget.attrs['readOnly'] = 'readOnly'
+                self.fields['jt_arch'].widget.attrs['class'] = (
+                    'dijitDisabled dijitSelectDisabled'
+                )
 
 
-class NullMountPointForm(ModelForm):
+class JailMountPointForm(ModelForm):
 
     create = forms.BooleanField(
         label=('Create directory'),
@@ -798,7 +790,7 @@ class NullMountPointForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        model = NullMountPoint
+        model = JailMountPoint
         widgets = {
             'source': forms.widgets.TextInput(attrs={
                 'data-dojo-type': 'freeadmin.form.PathSelector',
@@ -845,7 +837,7 @@ class NullMountPointForm(ModelForm):
         if kwargs and 'jail' in kwargs:
             self.jail = kwargs.pop('jail')
 
-        super(NullMountPointForm, self).__init__(*args, **kwargs)
+        super(JailMountPointForm, self).__init__(*args, **kwargs)
 
         if kwargs and 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
@@ -894,7 +886,7 @@ class NullMountPointForm(ModelForm):
             self.fields['mounted'].widget = forms.widgets.HiddenInput()
 
     def save(self, *args, **kwargs):
-        obj = super(NullMountPointForm, self).save(*args, **kwargs)
+        obj = super(JailMountPointForm, self).save(*args, **kwargs)
         mounted = self.cleaned_data.get("mounted")
         if mounted == obj.mounted:
             return obj

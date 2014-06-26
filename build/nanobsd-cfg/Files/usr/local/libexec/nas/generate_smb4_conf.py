@@ -7,6 +7,8 @@ import string
 import tempfile
 import time
 
+from dns import resolver
+
 sys.path.extend([
     '/usr/local/www',
     '/usr/local/www/freenasUI'
@@ -150,13 +152,23 @@ def confset2(conf, line, var, space=4):
 
 
 def add_nt4_conf(smb4_conf):
+    rid_range_start = 20000
+    rid_range_end = 20000000
+
     try:
         nt4 = NT4.objects.all()[0]
     except:
         return
 
+    try:
+        answers = resolver.query(nt4.nt4_dcname, 'A')
+        dc_ip = answers[0]
+
+    except Exception as e:
+        dc_ip = nt4.nt4_dcname
+
     with open("/usr/local/etc/lmhosts", "w") as f:
-        f.write("%s\t%s\n" % (nt4.nt4_dcname, nt4.nt4_workgroup.upper()))
+        f.write("%s\t%s\n" % (dc_ip, nt4.nt4_workgroup.upper()))
         f.close()
 
     confset2(smb4_conf, "netbios name = %s", nt4.nt4_netbiosname.upper())
@@ -165,10 +177,18 @@ def add_nt4_conf(smb4_conf):
     confset1(smb4_conf, "security = domain")
     confset1(smb4_conf, "password server = *")
 
-    confset1(smb4_conf, "winbind uid = 10000-20000")
-    confset1(smb4_conf, "winbind gid = 10000-20000")
+    confset2(smb4_conf, "idmap config %s: backend = rid",
+        nt4.nt4_workgroup.upper())
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        nt4.nt4_workgroup.upper(), rid_range_start, rid_range_end
+    ))
+
+    confset1(smb4_conf, "winbind cache time = 7200")
+    confset1(smb4_conf, "winbind offline logon = yes")
     confset1(smb4_conf, "winbind enum users = yes")
     confset1(smb4_conf, "winbind enum groups = yes")
+    confset1(smb4_conf, "winbind nested groups = yes")
+
     confset1(smb4_conf, "template shell = /bin/sh")
 
     confset1(smb4_conf, "local master = no")

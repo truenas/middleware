@@ -313,6 +313,11 @@ menu_install()
 	    _menuheight=8
 	    _menuheight=$((${_menuheight} + ${_items}))
 	fi
+	if [ "${_items}" -eq 0 ]; then
+		# Inform the user
+		eval "dialog --title 'Choose destination media' --msgbox 'No drives available' 5 60" 2>${_tmpfile}
+		return 0
+	fi
 	eval "dialog --title 'Choose destination media' \
 	      --menu 'Select the drive where $AVATAR_PROJECT should be installed.' \
 	      ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
@@ -384,7 +389,10 @@ menu_install()
         # checks won't make sense, but others might (e.g. hardware sanity
         # checks).
         install_worker.sh -D / -m / pre-install
-	gpart destroy -F ${_disk}
+
+	# Destroy existing partition table, if there is any but tolerate
+	# failure.
+	gpart destroy -F ${_disk} || true
     fi
 
     # Run pc-sysinstall against the config generated

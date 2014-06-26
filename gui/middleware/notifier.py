@@ -686,24 +686,30 @@ class notifier:
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("service ix-nt4 status")
+        if self.__nt4stop == True:
+            return False
         return (True if res == 0 else False)
 
     def _start_nt4(self):
+        self.__nt4stop = False
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("/etc/directoryservice/NT4/ctl start")
         return (True if res == 0 else False)
 
     def _restart_nt4(self):
+        self.__nt4stop = False
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("/etc/directoryservice/NT4/ctl restart")
         return (True if res == 0 else False)
 
     def _stop_nt4(self):
+        self.__nt4stop = False
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("/etc/directoryservice/NT4/ctl stop")
+        self.__nt4stop = True
         return (True if res == 0 else False)
 
     def _started_activedirectory(self):
@@ -2939,7 +2945,7 @@ class notifier:
         return plugin
 
     def update_pbi(self, plugin=None):
-        from freenasUI.jails.models import JailsConfiguration, NullMountPoint
+        from freenasUI.jails.models import JailsConfiguration, JailMountPoint
         from freenasUI.services.models import RPCToken
         from freenasUI.common.pipesubr import pipeopen
         ret = False
@@ -2981,7 +2987,7 @@ class notifier:
 
         jc = JailsConfiguration.objects.order_by("-id")[0]
 
-        mountpoints = NullMountPoint.objects.filter(jail=jail_name)
+        mountpoints = JailMountPoint.objects.filter(jail=jail_name)
         for mp in mountpoints:
             fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
             p = pipeopen("/sbin/umount -f '%s'" % fp)
