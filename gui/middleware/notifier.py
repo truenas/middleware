@@ -683,9 +683,12 @@ class notifier:
         self._system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
 
     def _started_nt4(self):
+        self.__nt4stop = False
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("service ix-nt4 status")
+        if self.__nt4stop == True:
+            return False
         return (True if res == 0 else False)
 
     def _start_nt4(self):
@@ -704,6 +707,7 @@ class notifier:
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("/etc/directoryservice/NT4/ctl stop")
+        self.__nt4stop = True
         return (True if res == 0 else False)
 
     def _started_activedirectory(self):
