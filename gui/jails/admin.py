@@ -256,6 +256,7 @@ class JailTemplateFAdmin(BaseFreeAdmin):
     icon_view = u"ServicesIcon"
 
     resource_mixin = JailTemplateResourceMixin
+    resourcename = 'jails/templates'
 
     def get_datagrid_columns(self):
         columns = []
