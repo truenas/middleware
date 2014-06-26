@@ -386,24 +386,6 @@ def jail_linuxprogress(request):
 
     return HttpResponse(json.dumps(data), content_type="application/json")
 
-def jail_template_edit(request, id):
-
-    jt = models.JailTemplate.objects.get(id=id)
-
-    if request.method == 'POST':
-        form = forms.JailTemplateEditForm(request.POST, instance=jt)
-        if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_("Jail template successfully edited.")
-            )
-    else:
-        form = forms.JailTemplateEditForm(instance=jt)
-
-    return render(request, 'jails/template_edit.html', {
-        'form': form
-    })
 
 def jail_import(request):
     log.debug("XXX: jail_import()")
