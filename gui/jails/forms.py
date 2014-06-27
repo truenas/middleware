@@ -819,16 +819,12 @@ class JailMountPointForm(ModelForm):
                 _("This shouldn't happen, but the jail could not be found")
             )
 
-        full = "%s/%s%s" % (self.jc.jc_path, self.jail.jail_host, dest)
+        self._full = "%s/%s%s" % (self.jc.jc_path, self.jail.jail_host, dest)
 
-        if len(full) > 88:
+        if len(self._full) > 88:
             raise forms.ValidationError(
                 _("The full path cannot exceed 88 characters")
             )
-
-        create = self.cleaned_data.get('create')
-        if not os.path.exists(full) and create:
-            os.makedirs(full)
 
         return dest
 
@@ -838,6 +834,8 @@ class JailMountPointForm(ModelForm):
             self.jail = kwargs.pop('jail')
 
         super(JailMountPointForm, self).__init__(*args, **kwargs)
+
+        self._full = None
 
         if kwargs and 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
@@ -887,6 +885,10 @@ class JailMountPointForm(ModelForm):
 
     def save(self, *args, **kwargs):
         obj = super(JailMountPointForm, self).save(*args, **kwargs)
+        create = self.cleaned_data.get('create')
+        if self._full and not os.path.exists(self._full) and create:
+            os.makedirs(self._full)
+
         mounted = self.cleaned_data.get("mounted")
         if mounted == obj.mounted:
             return obj
