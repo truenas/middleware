@@ -155,6 +155,10 @@ Datasets
       POST /api/v1.0/storage/volume/tank/datasets/ HTTP/1.1
       Content-Type: application/json
 
+      {
+        "name": "foo"
+      }
+
    **Example response**:
 
    .. sourcecode:: http
