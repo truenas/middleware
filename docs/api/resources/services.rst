@@ -128,7 +128,6 @@ List resource
                 "ad_keytab": "",
                 "ad_use_keytab": false,
                 "ad_use_default_domain": true,
-                "ad_workgroup": "",
                 "ad_dcname": "",
                 "ad_adminname": "",
                 "ad_unix_extensions": false,
@@ -138,7 +137,7 @@ List resource
                 "ad_kpwdname": "",
                 "ad_krbname": "",
                 "ad_dns_timeout": 10,
-                "ad_adminpw": "",
+                "ad_bindpw": "",
                 "ad_verbose_logging": false,
                 "ad_allow_trusted_doms": false,
                 "ad_netbiosname": "NAS"
@@ -165,9 +164,8 @@ Update resource
         {
                 "ad_netbiosname": "mynas",
                 "ad_domainname": "mydomain",
-                "ad_workgroup": "WORKGROUP",
-                "ad_adminname": "admin",
-                "ad_adminpw": "mypw"
+                "ad_bindname": "admin",
+                "ad_bindpw": "mypw"
         }
 
    **Example response**:
@@ -183,18 +181,16 @@ Update resource
                 "ad_keytab": "",
                 "ad_use_keytab": false,
                 "ad_use_default_domain": true,
-                "ad_workgroup": "WORKGROUP",
                 "ad_dcname": "",
-                "ad_adminname": "admin",
+                "ad_bindname": "admin",
+                "ad_bindpw": "mypw",
                 "ad_unix_extensions": false,
                 "ad_timeout": 10,
-                "svc": "activedirectory",
                 "ad_domainname": "mydomain",
                 "id": 1,
                 "ad_kpwdname": "",
                 "ad_krbname": "",
                 "ad_dns_timeout": 10,
-                "ad_adminpw": "mypw",
                 "ad_verbose_logging": false,
                 "ad_allow_trusted_doms": false,
                 "ad_netbiosname": "mynas"
@@ -202,9 +198,7 @@ Update resource
 
    :json string ad_domainname: domain name
    :json string ad_netbiosname: system hostname
-   :json string ad_workgroup: workgroup or domain name in old format
-   :json string ad_adminname: domain Administrator account nam
-   :json string ad_adminpw: domain Administrator account password
+   :json string ad_bindpw: domain account password
    :json string ad_dcname: hostname of the domain controller to use
    :json string ad_gcname: hostname of the global catalog server to use
    :json string ad_keytab: kerberos keytab file
@@ -1283,7 +1277,7 @@ The RsyncMod resource represents loader.conf(5).
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/system/rsyncmod/
+.. http:get:: /api/v1.0/services/rsyncmod/
 
    Returns a list of all rsyncmods.
 
@@ -1291,7 +1285,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/system/rsyncmod/ HTTP/1.1
+      GET /api/v1.0/services/rsyncmod/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -1321,7 +1315,7 @@ List resource
 Create resource
 +++++++++++++++
 
-.. http:post:: /api/v1.0/system/rsyncmod/
+.. http:post:: /api/v1.0/services/rsyncmod/
 
    Creates a new rsyncmod and returns the new rsyncmod object.
 
@@ -1329,7 +1323,7 @@ Create resource
 
    .. sourcecode:: http
 
-      POST /api/v1.0/system/rsyncmod/ HTTP/1.1
+      POST /api/v1.0/services/rsyncmod/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -1377,7 +1371,7 @@ Create resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/system/rsyncmod/(int:id)/
+.. http:put:: /api/v1.0/services/rsyncmod/(int:id)/
 
    Update rsyncmod `id`.
 
@@ -1385,7 +1379,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/system/rsyncmod/1/ HTTP/1.1
+      PUT /api/v1.0/services/rsyncmod/1/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -1432,7 +1426,7 @@ Update resource
 Delete resource
 +++++++++++++++
 
-.. http:delete:: /api/v1.0/system/rsyncmod/(int:id)/
+.. http:delete:: /api/v1.0/services/rsyncmod/(int:id)/
 
    Delete rsyncmod `id`.
 
@@ -1440,7 +1434,7 @@ Delete resource
 
    .. sourcecode:: http
 
-      DELETE /api/v1.0/system/rsyncmod/1/ HTTP/1.1
+      DELETE /api/v1.0/services/rsyncmod/1/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -1896,6 +1890,7 @@ Update resource
       Content-Type: application/json
 
         {
+                "ups_port": "/dev/ugen0.1",
                 "ups_rmonitor": true
         }
 

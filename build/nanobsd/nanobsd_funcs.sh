@@ -184,6 +184,28 @@ make_conf_build ( ) (
 )
 
 build_world ( ) (
+	local BOOTSTRAP_MAKE
+
+	pprint 2 "building make"
+	log_file "${MAKEOBJDIRPREFIX}/_.make"
+
+	if [ $FREEBSD_RELEASE_MAJOR_VERSION -lt 10 ]; then
+		BOOTSTRAP_MAKE=make
+	else
+		BOOTSTRAP_MAKE=bmake
+	fi
+
+	cd ${NANO_SRC}
+	env \
+		TARGET=${NANO_ARCH%:*} \
+		TARGET_ARCH=${NANO_ARCH##*:} \
+		${NANO_PMAKE} \
+		SRCCONF=${SRCCONF} \
+		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
+		NO_CLEAN=1 -j 1 \
+		$BOOTSTRAP_MAKE \
+		> ${MAKEOBJDIRPREFIX}/_.make 2>&1
+
 	pprint 2 "run buildworld"
 	log_file "${MAKEOBJDIRPREFIX}/_.bw"
 

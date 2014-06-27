@@ -953,58 +953,81 @@ def shutdown():
         if ret.lower().startswith("n"):
             return False
 
-def show_ip():
-    p1 = subprocess.Popen("sockstat -4P tcp |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $6 }'|sort|uniq", shell=True, stdout=subprocess.PIPE)
-    addrsv4 = p1.communicate()[0].split('\n')[:-1]
-    urls = []
 
+def get_urls(addrs, ipv6=False):
+    urls = []
+    inet = ('inet6', 'prefixlen') if ipv6 else ('inet', 'broadcast')
+    for addr in addrs:
+        ip, port = addr.split(':')
+
+        ips = []
+        if ip == '*':
+            p1 = subprocess.Popen('ifconfig -a %s | grep %s | cut -f2 -d" "' % inet, shell=True, stdout=subprocess.PIPE)
+            out = p1.communicate()[0].strip('\n').strip(' ').split('\n')
+            if out:
+                ips = out
+        else:
+            ips = [ip]
+        ips = filter(lambda y: y != '::1' and not y.endswith('lo0'), ips)
+        for o in ips:
+            try:
+                if ipv6:
+                    url = 'http://[%s]' % o
+                else:
+                    url = 'http://%s' % o
+                if port != '80':
+                    url = '%s:%s' % (url, port)
+                r = requests.head(url, timeout=10)
+                assert r.status_code in (200, 302, 301)
+                urls.append(url)
+                continue
+            except Exception, e:
+                pass
+
+            try:
+                if ipv6:
+                    url = 'https://[%s]' % o
+                else:
+                    url = 'https://%s' % o
+                if port != '443':
+                    url = '%s:%s' % (o, port)
+                r = requests.head(url, timeout=10, verify=False)
+                assert r.status_code in (200, 302)
+                urls.append(url)
+                continue
+            except Exception, e:
+                pass
+        return urls
+
+
+def show_ip():
+    p1 = subprocess.Popen("sockstat -46P tcp |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $5\",\"$6 }'|sort|uniq", shell=True, stdout=subprocess.PIPE)
+
+    addrsv4 = []
+    addrsv6 = []
+    for line in p1.communicate()[0].strip('\n').split('\n'):
+        _type, addr = line.split(',')
+        if _type == 'tcp4':
+            addrsv4.append(addr)
+        else:
+            addrsv6.append(addr)
+
+    urls = []
     if addrsv4:
+        urls.extend(get_urls(addrsv4))
+    if addrsv6:
+        urls.extend(get_urls(addrsv6, ipv6=True))
+
+    if urls:
         print
         print _("You may try the following URLs to access the web user interface:")
         print
 
-        for addr in addrsv4:
-            ip, port = addr.split(':')
-
-            ips = []
-            if ip == '*':
-                p1 = subprocess.Popen('ifconfig -a inet | grep broadcast | cut -f2 -d" "', shell=True, stdout=subprocess.PIPE)
-                out = p1.communicate()[0].strip('\n').strip(' ').split('\n')
-                if out:
-                    ips = out
-            else:
-                ips = [ip]
-            for o in ips:
-                try:
-                    if port == '80':
-                        url = 'http://%s' % o
-                    else:
-                        url = 'http://%s:%s' % (o, port)
-                    r = requests.head(url, timeout=10)
-                    assert r.status_code in (200, 302, 301)
-                    urls.append(url)
-                    continue
-                except Exception, e:
-                    pass
-
-                try:
-                    if port == '443':
-                        url = 'https://%s' % o
-                    else:
-                        url = 'https://%s:%s' % (o, port)
-                    r = requests.head(url, timeout=10, verify=False)
-                    assert r.status_code in (200, 302)
-                    urls.append(url)
-                    continue
-                except Exception, e:
-                    pass
-
         for url in sorted(urls):
             print url
-        if not urls:
-            print _("No configured interfaces were found. Try to do it manually.")
-
-        print
+    else:
+        print _("No configured interfaces were found. Try to do it manually.")
+    print
 
 def main_menu():
     menu = [

@@ -107,16 +107,6 @@ def sysctl_int(oid):
     return int(sysctl(oid))
 
 
-def l2arc_enabled():
-    try:
-        return sysctl_int('kstat.zfs.misc.arcstats.l2_size') > 0
-    except:
-        return False
-
-
-L2ARC_ENABLED = l2arc_enabled()
-
-
 HW_PHYSMEM = sysctl_int('hw.physmem')
 
 DEF_KNOBS = {
@@ -205,28 +195,23 @@ def guess_vfs_zfs_arc_max():
 
 
 def guess_vfs_zfs_l2arc_headroom():
-    if L2ARC_ENABLED:
-        return 16
+    return 16
 
 
 def guess_vfs_zfs_l2arc_noprefetch():
-    if L2ARC_ENABLED:
-        return 0
+    return 0
 
 
 def guess_vfs_zfs_l2arc_norw():
-    if L2ARC_ENABLED:
-        return 0
+    return 0
 
 
 def guess_vfs_zfs_l2arc_write_max():
-    if L2ARC_ENABLED:
-        return 400000000
+    return 400000000
 
 
 def guess_vfs_zfs_l2arc_write_boost():
-    if L2ARC_ENABLED:
-        return 400000000
+    return 400000000
 
 
 # vfs.zfs.txg.synctime_ms

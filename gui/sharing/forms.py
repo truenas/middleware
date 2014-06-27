@@ -59,18 +59,6 @@ class CIFS_ShareForm(ModelForm):
         self.instance._original_cifs_default_permissions = \
             self.instance.cifs_default_permissions
 
-        self.fields['cifs_default_permissions'].widget.attrs['onChange'] = (
-            "cifs_default_permissions_toggle();"
-        )
-
-        if self.instance.cifs_default_permissions is True:
-            self.instance.cifs_inheritowner = False
-            self.fields['cifs_inheritowner'].widget.attrs['disabled'] = 'disabled'
-            self.instance.cifs_inheritperms = False
-            self.fields['cifs_inheritperms'].widget.attrs['disabled'] = 'disabled'
-            self.instance.cifs_inheritacls = False
-            self.fields['cifs_inheritacls'].widget.attrs['disabled'] = 'disabled'
-
     class Meta:
         fields = '__all__'
         model = models.CIFS_Share
@@ -267,15 +255,15 @@ class NFS_ShareForm(ModelForm):
                     ])
                     valid = False
                     break
-                if ismp:
+                if os.stat(parent).st_dev != stat.st_dev:
+                    ismp = True
+                if ismp and len(forms) > 1:
                     self._fserrors = self.error_class([
                         _("You cannot share a mount point and subdirectories "
                             "all at once")
                     ])
                     valid = False
                     break
-                if os.stat(parent).st_dev != stat.st_dev:
-                    ismp = True
             except OSError:
                 pass
 

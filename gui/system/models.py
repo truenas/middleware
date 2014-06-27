@@ -1145,7 +1145,11 @@ class SystemDataset(Model):
     )
     sys_rrd_usedataset = models.BooleanField(
         default=False,
-        verbose_name=_("RRD")
+        verbose_name=_("Reporting Database"),
+        help_text=_(
+            'Save the Round-Robin Database (RRD) used by system statistics '
+            'collection daemon into the system dataset'
+        )
     )
 
     class Meta:

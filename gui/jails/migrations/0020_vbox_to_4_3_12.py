@@ -10,14 +10,14 @@ class Migration(DataMigration):
         for jt in orm['jails.jailTemplate'].objects.all():
             if jt.jt_name == "VirtualBox-4.3.10":
                 jt.jt_name = "VirtualBox-4.3.12"
-                jt.jt_url = "http://download.freenas.org/9.2.1.6/RELEASE/x64/jails/freenas-virtualbox-4.3.12.tgz"
+                jt.jt_url = "http://download.freenas.org/jails/9.2/x64/freenas-virtualbox-4.3.12.tgz"
             jt.save()
 
     def backwards(self, orm):
         for jt in orm['jails.jailTemplate'].objects.all():
             if jt.jt_name == "VirtualBox-4.3.12":
                 jt.jt_name = "VirtualBox-4.3.10"
-                jt.jt_url = "http://download.freenas.org/9.2.1.6/RELEASE/x64/jails/freenas-virtualbox-4.3.10.tgz"
+                jt.jt_url = "http://download.freenas.org/9.2.0/RELEASE/x64/jails/freenas-virtualbox-4.3.10.tgz"
             jt.save()
 
     models = {

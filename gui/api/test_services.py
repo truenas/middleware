@@ -58,7 +58,6 @@ class ActiveDirectoryResourceTest(APITestCase):
             u'ad_use_default_domain': True,
             u'ad_use_keytab': False,
             u'ad_verbose_logging': False,
-            u'ad_workgroup': u'',
         })
 
     def test_Update(self):
@@ -68,7 +67,6 @@ class ActiveDirectoryResourceTest(APITestCase):
             data={
                 'ad_netbiosname': 'mynas',
                 'ad_domainname': 'mydomain',
-                'ad_workgroup': 'WORKGROUP',
                 'ad_bindname': 'admin',
                 'ad_bindpw': 'mypw',
             }
@@ -78,7 +76,6 @@ class ActiveDirectoryResourceTest(APITestCase):
         self.assertEqual(data['id'], self._obj.id)
         self.assertEqual(data['ad_netbiosname'], 'mynas')
         self.assertEqual(data['ad_domainname'], 'mydomain')
-        self.assertEqual(data['ad_workgroup'], 'WORKGROUP')
         self.assertEqual(data['ad_bindname'], 'admin')
 
     def test_Delete(self):

@@ -7,7 +7,11 @@
 #
 
 
+if [ "$USE_NEW_LAYOUT" ]; then
+SRCS_MANIFEST="${AVATAR_ROOT}/objs/repo-manifest"
+else
 SRCS_MANIFEST="${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/repo-manifest"
+fi
 
 if is_truenas ; then
     # Additional repos to checkout for build

@@ -35,11 +35,11 @@ from django.conf.urls import url
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, QueryDict
 from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
+from dojango.forms.models import inlineformset_factory
 from freenasUI import choices
 from freenasUI.account.forms import (
     bsdUsersForm,
@@ -55,6 +55,7 @@ from freenasUI.common.system import (
     get_sw_version,
 )
 from freenasUI.common.warden import Warden
+from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.jails.forms import JailCreateForm, JailsEditForm
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -906,12 +907,20 @@ class VolumeResourceMixin(NestedMixin):
                     zvol['volsize'][:-1],
                     zvol['volsize'][-1],
                 )
+                refer = '%s %siB' % (
+                    zvol['refer'][:-1],
+                    zvol['refer'][-1],
+                )
                 data = {
                     'id': uid.next(),
                     'name': name,
                     'status': mp.status,
                     'type': 'zvol',
                     'total_si': total_si,
+                    'avail_si': '-',
+                    'used': refer,
+                    'compression': zvol['compression'],
+                    'compressratio': zvol['compressratio'],
                 }
 
                 if self.is_webclient(bundle.request):
@@ -1037,15 +1046,25 @@ class NFSShareResourceMixin(object):
 
     def hydrate(self, bundle):
         bundle = super(NFSShareResourceMixin, self).hydrate(bundle)
-        if 'nfs_paths' not in bundle.data:
-            return bundle
-        nfs_paths = bundle.data.get('nfs_paths')
-        for i, item in enumerate(nfs_paths):
-            bundle.data['path_set-%d-path' % i] = item
-            bundle.data['path_set-%d-id' % i] = ''
-            bundle.data['path_set-%d-share' % i] = ''
+        if 'nfs_paths' not in bundle.data and bundle.obj.id:
+            qs = bundle.obj.paths.all()
+            initial = qs.count()
+            nfs_paths = []
+            for i, item in enumerate(qs):
+                bundle.data['path_set-%d-path' % i] = item.path
+                bundle.data['path_set-%d-id' % i] = item.id
+                bundle.data['path_set-%d-share' % i] = bundle.obj.id
+                nfs_paths.append(item.path)
+            bundle.data['nfs_paths'] = nfs_paths
+        else:
+            initial = 0
+            nfs_paths = bundle.data.get('nfs_paths', [])
+            for i, item in enumerate(nfs_paths):
+                bundle.data['path_set-%d-path' % i] = item
+                bundle.data['path_set-%d-id' % i] = ''
+                bundle.data['path_set-%d-share' % i] = bundle.obj.id
         bundle.data['path_set-INITIAL_FORMS'] = 0
-        bundle.data['path_set-TOTAL_FORMS'] = i + 1
+        bundle.data['path_set-TOTAL_FORMS'] = len(nfs_paths)
         return bundle
 
     def is_form_valid(self, bundle, form):
@@ -1053,20 +1072,30 @@ class NFSShareResourceMixin(object):
             NFS_Share,
             NFS_Share_Path,
             form=NFS_SharePathForm,
+            formset=FreeBaseInlineFormSet,
             extra=0,
         )
-        formset = fset(bundle.data, instance=bundle.obj, prefix="path_set")
-        valid = formset.is_valid()
+        formset = fset(
+            bundle.data,
+            instance=bundle.obj,
+            prefix="path_set",
+            parent=form,
+        )
+        valid = True
+        for frm in formset.forms:
+            valid &= frm.is_valid()
+        valid &= formset.is_valid()
         errors = {}
         if not valid:
             #if formset._errors:
             #    errors.update(formset._errors)
-            for form in formset:
-                errors.update(form._errors)
-        valid &= form.is_valid({'formset_nfs_share_path': formset})
+            for frm in formset:
+                errors.update(frm._errors)
+        valid &= form.is_valid(formsets={'formset_nfs_share_path': formset})
         if errors:
             form._errors.update(errors)
-        bundle.errors = dict(form._errors)
+        if form._errors:
+            bundle.errors = dict(form._errors)
         return valid
 
     def save_m2m(self, m2m_bundle):
@@ -1622,10 +1651,10 @@ class BsdGroupResourceMixin(object):
         return bundle
 
 
-class NullMountPointResourceMixin(object):
+class JailMountPointResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(NullMountPointResourceMixin, self).dehydrate(bundle)
+        bundle = super(JailMountPointResourceMixin, self).dehydrate(bundle)
         bundle.data['mounted'] = bundle.obj.mounted
         return bundle
 
@@ -1759,9 +1788,6 @@ class JailTemplateResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(JailTemplateResourceMixin, self).dehydrate(bundle)
         bundle.data['jt_instances'] = bundle.obj.jt_instances
-        bundle.data['_edit_url'] = reverse('jail_template_edit', kwargs={
-            'id': bundle.obj.id
-        })
         return bundle
 
 

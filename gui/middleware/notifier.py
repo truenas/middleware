@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-
+#
 # Copyright (c) 2010-2011 iXsystems, Inc.
 # All rights reserved.
 #
@@ -136,10 +136,10 @@ class StartNotify(threading.Thread):
         attach to the .pid file and wait for it to be removed
         """
         if self._verb in ('start', 'restart'):
-            fflags = select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND
+            fflags = select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
             _file = os.path.dirname(self._pidfile)
         else:
-            fflags = select.KQ_NOTE_WRITE|select.KQ_NOTE_DELETE
+            fflags = select.KQ_NOTE_WRITE | select.KQ_NOTE_DELETE
             if os.path.exists(self._pidfile):
                 _file = self._pidfile
             else:
@@ -148,7 +148,7 @@ class StartNotify(threading.Thread):
         evts = [
             select.kevent(fd,
                 filter=select.KQ_FILTER_VNODE,
-                flags=select.KQ_EV_ADD|select.KQ_EV_CLEAR,
+                flags=select.KQ_EV_ADD | select.KQ_EV_CLEAR,
                 fflags=fflags,
             )
         ]
@@ -179,6 +179,7 @@ class notifier:
     from os import system as __system
     from pwd import getpwnam as ___getpwnam
     IDENTIFIER = 'notifier'
+
     def _system(self, command):
         log.debug("Executing: %s", command)
         # TODO: python's signal class should be taught about sigprocmask(2)
@@ -234,7 +235,6 @@ class notifier:
             else:
                 raise ValueError("Internal error: Unknown command")
         f()
-
 
     __service2daemon = {
             'ssh': ('sshd', '/var/run/sshd.pid'),
@@ -686,24 +686,30 @@ class notifier:
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("service ix-nt4 status")
+        if self.__nt4stop == True:
+            return False
         return (True if res == 0 else False)
 
     def _start_nt4(self):
+        self.__nt4stop = False
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("/etc/directoryservice/NT4/ctl start")
         return (True if res == 0 else False)
 
     def _restart_nt4(self):
+        self.__nt4stop = False
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("/etc/directoryservice/NT4/ctl restart")
         return (True if res == 0 else False)
 
     def _stop_nt4(self):
+        self.__nt4stop = False
         res = False
         if self._get_stg_directoryservice() == 'nt4':
             res = self._system_nolog("/etc/directoryservice/NT4/ctl stop")
+        self.__nt4stop = True
         return (True if res == 0 else False)
 
     def _started_activedirectory(self):
@@ -921,10 +927,10 @@ class notifier:
         res = False
         if jail and plugin:
             if self._system_nolog("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
-                res = True 
-        else: 
+                res = True
+        else:
             if self._system_nolog("/usr/sbin/service ix-plugins status") == 0:
-                res = True 
+                res = True
         return res
 
     def pluginjail_running(self, pjail=None):
@@ -1412,8 +1418,8 @@ class notifier:
     def __prepare_zfs_vdev(self, disks, swapsize, encrypt, volume):
         vdevs = []
         for disk in disks:
-            self.__gpt_labeldisk(type = "freebsd-zfs",
-                                 devname = disk,
+            self.__gpt_labeldisk(type="freebsd-zfs",
+                                 devname=disk,
                                  swapsize=swapsize)
 
         doc = self._geom_confxml()
@@ -1517,7 +1523,7 @@ class notifier:
         if larger_ashift == 0:
             self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
 
-        #We've our pool, lets retrieve the GUID
+        # We've our pool, lets retrieve the GUID
         p1 = self._pipeopen("zpool get guid %s" % z_name)
         if p1.wait() == 0:
             line = p1.communicate()[0].split('\n')[1].strip()
@@ -1529,7 +1535,7 @@ class notifier:
         self.zfs_inherit_option(z_name, 'mountpoint')
 
         self._system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
-        #TODO: geli detach -l
+        # TODO: geli detach -l
 
     def get_swapsize(self):
         from freenasUI.system.models import Advanced
@@ -1574,7 +1580,7 @@ class notifier:
         if larger_ashift == 0:
             self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
 
-        #TODO: geli detach -l
+        # TODO: geli detach -l
         self._reload_disk()
 
     def create_zfs_vol(self, name, size, props=None, sparse=False):
@@ -1584,7 +1590,7 @@ class notifier:
         else:
             options = " "
         if props:
-            assert type(props) is types.DictType
+            assert isinstance(props, types.DictType)
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
@@ -1597,7 +1603,7 @@ class notifier:
         """Internal procedure to create ZFS volume"""
         options = " "
         if props:
-            assert type(props) is types.DictType
+            assert isinstance(props, types.DictType)
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
@@ -1610,7 +1616,7 @@ class notifier:
 
     def list_zfs_vols(self, volname):
         """Return a dictionary that contains all ZFS volumes list"""
-        zfsproc = self._pipeopen("/sbin/zfs list -H -o name,volsize,used,avail,refer -t volume -r '%s'" % (str(volname),))
+        zfsproc = self._pipeopen("/sbin/zfs list -H -o name,volsize,used,avail,refer,compression,compressratio -t volume -r '%s'" % (str(volname),))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_output = zfs_output.split('\n')
         retval = {}
@@ -1623,6 +1629,8 @@ class notifier:
                 'used': data[2],
                 'avail': data[3],
                 'refer': data[4],
+                'compression': data[5],
+                'compressratio': data[6],
             }
         return retval
 
@@ -1742,7 +1750,7 @@ class notifier:
         if geom_type == '':
             # Grab disk from the group
             disk = group['disks'][0]
-            self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk, swapsize=swapsize)
+            self.__gpt_labeldisk(type="freebsd-ufs", devname=disk, swapsize=swapsize)
             devname = self.part_type_from_device('ufs', disk)
             # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
             # generated automatically
@@ -1759,7 +1767,7 @@ class notifier:
                 self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
                 geom_vdev += " /dev/" + disk
-                #TODO gpt label disks
+                # TODO gpt label disks
             self._system("geom %s load" % (geom_type))
             p1 = self._pipeopen("geom %s label %s %s" % (geom_type, volume.vol_name, geom_vdev))
             stdout, stderr = p1.communicate()
@@ -1786,7 +1794,7 @@ class notifier:
             # Grab disk from the group
             disk = disks[0]
             self._system("umount -f /dev/ufs/" + u_name)
-            self.__gpt_unlabeldisk(devname = disk)
+            self.__gpt_unlabeldisk(devname=disk)
         else:
             g_name = provider.xpath("../name")[0].text
             self._system("swapoff -a")
@@ -1894,7 +1902,7 @@ class notifier:
                 if encrypt:
                     self._system('/sbin/geli detach %s' % (devname, ))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
-            #TODO: geli detach -l
+            # TODO: geli detach -l
 
         # Restore previous larger ashift state.
         if larger_ashift == 1:
@@ -2026,7 +2034,7 @@ class notifier:
             p1 = self._pipeopen('mount -p')
             stdout = p1.communicate()[0]
             if not p1.returncode:
-                flines = filter(lambda x: x and x.split()[0] == \
+                flines = filter(lambda x: x and x.split()[0] ==
                                                 '/dev/ufs/' + name,
                                 stdout.splitlines())
                 if flines:
@@ -2153,7 +2161,7 @@ class notifier:
                   the user doesn't need a directory; defaults to /mnt.
         homedir_mode - mode to use when creating the home directory;
                        defaults to 0755.
-        password_disabled - should password based logins be allowed for 
+        password_disabled - should password based logins be allowed for
                             the user? Defaults to False.
 
         XXX: the default for the home directory seems like a bad idea.
@@ -2350,7 +2358,7 @@ class notifier:
         if not os.path.isdir(sshpath):
             os.makedirs(sshpath)
         if not os.path.isdir(sshpath):
-            return # FIXME: need better error reporting here
+            return  # FIXME: need better error reporting here
         if pubkey == '' and os.path.exists(keypath):
             os.unlink(keypath)
         else:
@@ -2384,13 +2392,13 @@ class notifier:
         if exclude is None:
             exclude = []
 
-        if type(owner) is types.UnicodeType:
+        if isinstance(owner, types.UnicodeType):
             owner = owner.encode('utf-8')
 
-        if type(group) is types.UnicodeType:
+        if isinstance(group, types.UnicodeType):
             group = group.encode('utf-8')
 
-        if type(path) is types.UnicodeType:
+        if isinstance(path, types.UnicodeType):
             path = path.encode('utf-8')
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
@@ -2400,9 +2408,9 @@ class notifier:
 
         script = "/usr/local/bin/winacl"
         args = "-a reset"
-        if owner != None:
+        if owner is not None:
             args = "%s -O '%s'" % (args, owner)
-        if group != None:
+        if group is not None:
             args = "%s -G '%s'" % (args, group)
         apply_paths = exclude_path(path, exclude)
         apply_paths = map(lambda y: (y, ' -r '), apply_paths)
@@ -2414,7 +2422,6 @@ class notifier:
             log.debug("XXX: CMD = %s", cmd)
             self._system(cmd)
 
-
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False, acl='unix',
                              exclude=None):
@@ -2422,16 +2429,16 @@ class notifier:
         if exclude is None:
             exclude = []
 
-        if type(group) is types.UnicodeType:
+        if isinstance(group, types.UnicodeType):
             group = group.encode('utf-8')
 
-        if type(user) is types.UnicodeType:
+        if isinstance(user, types.UnicodeType):
             user = user.encode('utf-8')
 
-        if type(mode) is types.UnicodeType:
+        if isinstance(mode, types.UnicodeType):
             mode = mode.encode('utf-8')
 
-        if type(path) is types.UnicodeType:
+        if isinstance(path, types.UnicodeType):
             path = path.encode('utf-8')
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
@@ -2447,7 +2454,7 @@ class notifier:
             if not mode:
                 mode = '0755'
             script = "/usr/local/bin/winacl"
-            args=" -O '%s' -G '%s' -a reset " % (user, group)
+            args = " -O '%s' -G '%s' -a reset " % (user, group)
             if recursive:
                 apply_paths = exclude_path(path, exclude)
                 apply_paths = map(lambda y: (y, ' -r '), apply_paths)
@@ -2590,7 +2597,6 @@ class notifier:
 
         return True
 
-
     def validate_update(self, path):
 
         os.chdir(os.path.dirname(path))
@@ -2606,10 +2612,10 @@ class notifier:
                 size = os.stat(path).st_size
                 proc = subprocess.Popen([
                     "/usr/bin/tar",
-                    "-xSJpf", # -S for sparse
+                    "-xSJpf",  # -S for sparse
                     path,
                 ], stderr=f)
-                RE_TAR = re.compile(r"^In: (\d+)", re.M|re.S)
+                RE_TAR = re.compile(r"^In: (\d+)", re.M | re.S)
                 while True:
                     if proc.poll() is not None:
                         break
@@ -2618,13 +2624,13 @@ class notifier:
                     except:
                         break
                     time.sleep(1)
-                    #TODO: We don't need to read the whole file
+                    # TODO: We don't need to read the whole file
                     with open('/tmp/.upgrade_extract', 'r') as f2:
                         line = f2.read()
                     reg = RE_TAR.findall(line)
                     if reg:
                         current = Decimal(reg[-1])
-                        percent = (current / size ) * 100
+                        percent = (current / size) * 100
                         fp.write("2|%d\n" % percent)
                         fp.flush()
             err = proc.communicate()[1]
@@ -2727,7 +2733,7 @@ class notifier:
         wlist = Warden().list()
         for wj in wlist:
             wj = WardenJail(**wj)
-            if wj.host  == pjail:
+            if wj.host == pjail:
                 wjail = wj
                 break
 
@@ -2753,7 +2759,7 @@ class notifier:
         tmpdir = "%s/var/tmp" % pjail_path
 
         saved_tmpdir = None
-        if os.environ.has_key('TMPDIR'):  
+        if 'TMPDIR' in os.environ:
             saved_tmpdir = os.environ['TMPDIR']
         os.environ['TMPDIR'] = tmpdir
 
@@ -2796,21 +2802,21 @@ class notifier:
         if res[0] == 0 and res[1]:
             plugins = re.findall(r'^Name: (?P<name>\w+)$', res[1], re.M)
             if name in plugins:
-                #FIXME: do pbi_update instead
+                # FIXME: do pbi_update instead
                 pass
 
         if pbifile == "/var/tmp/firmware/pbifile.pbi":
             self._system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
-        p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG|PBI_ADD_FLAGS_FORCE, pbi="%s/%s" %
+        p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG | PBI_ADD_FLAGS_FORCE, pbi="%s/%s" %
             ("/.plugins", pbi))
         res = p.run(jail=True, jid=jail.jid)
         if res and res[0] == 0:
             qs = Plugins.objects.filter(plugin_name=name)
             if qs.count() > 0:
-		if qs[0].plugin_jail == pjail:
+                if qs[0].plugin_jail == pjail:
                     log.warn("Plugin named %s already exists in database, "
-                        "overwriting.", name)
+                             "overwriting.", name)
                     plugin = qs[0]
                 else:
                     plugin = Plugins()
@@ -2860,8 +2866,8 @@ class notifier:
             log.debug("install_pbi: plugin_path = %s, oauth_file = %s",
                 plugin_path, oauth_file)
 
-            fd = os.open(oauth_file, os.O_WRONLY|os.O_CREAT, 0600)
-            os.write(fd,"key = %s\n" % rpctoken.key)
+            fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
+            os.write(fd, "key = %s\n" % rpctoken.key)
             os.write(fd, "secret = %s\n" % rpctoken.secret)
             os.close(fd)
 
@@ -2878,7 +2884,7 @@ class notifier:
         elif res and res[0] != 0:
             # pbid seems to return 255 for any kind of error
             # lets use error str output to find out what happenned
-            if re.search(r'failed checksum', res[1], re.I|re.S|re.M):
+            if re.search(r'failed checksum', res[1], re.I | re.S | re.M):
                 raise MiddlewareError("The file %s seems to be "
                     "corrupt, please try download it again." % (
                         pbiname,
@@ -2936,10 +2942,10 @@ class notifier:
         if qs.count() > 0:
             plugin = qs[0]
 
-        return  plugin
+        return plugin
 
     def update_pbi(self, plugin=None):
-        from freenasUI.jails.models import JailsConfiguration, NullMountPoint
+        from freenasUI.jails.models import JailsConfiguration, JailMountPoint
         from freenasUI.services.models import RPCToken
         from freenasUI.common.pipesubr import pipeopen
         ret = False
@@ -2967,7 +2973,7 @@ class notifier:
         if not row:
             log.debug("update_pbi: plugins plugin not in database")
             return False
-        
+
         jail_name = row[0]
 
         jail = None
@@ -2981,7 +2987,7 @@ class notifier:
 
         jc = JailsConfiguration.objects.order_by("-id")[0]
 
-        mountpoints = NullMountPoint.objects.filter(jail=jail_name)
+        mountpoints = JailMountPoint.objects.filter(jail=jail_name)
         for mp in mountpoints:
             fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
             p = pipeopen("/sbin/umount -f '%s'" % fp)
@@ -3035,7 +3041,7 @@ class notifier:
         self.umount_filesystems_within("%s%s" % (jail_path, newprefix))
 
         # Create a PBI from the installed version
-        p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP|PBI_CREATE_FLAGS_OUTDIR,
+        p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP | PBI_CREATE_FLAGS_OUTDIR,
             outdir=oldpbitemp, pbidir=plugin.plugin_pbiname)
         out = p.run(True, jail.jid)
         if out[0] != 0:
@@ -3060,7 +3066,7 @@ class notifier:
             raise MiddlewareError("Unable to copy new PBI file to plugins directory")
 
         # Now we make the patch for the PBI upgrade
-        p = pbi_makepatch(flags=PBI_MAKEPATCH_FLAGS_OUTDIR|PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
+        p = pbi_makepatch(flags=PBI_MAKEPATCH_FLAGS_OUTDIR | PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
             outdir=pbitemp, oldpbi=oldpbifile, newpbi=newpbifile)
         out = p.run(True, jail.jid)
         if out[0] != 0:
@@ -3078,7 +3084,7 @@ class notifier:
             raise MiddlewareError("Unable to create PBP file")
 
         # Apply the upgrade patch to upgrade the PBI to the new version
-        p = pbi_patch(flags=PBI_PATCH_FLAGS_OUTDIR|PBI_PATCH_FLAGS_NOCHECKSIG,
+        p = pbi_patch(flags=PBI_PATCH_FLAGS_OUTDIR | PBI_PATCH_FLAGS_NOCHECKSIG,
             outdir=pbitemp, pbp="%s/%s" % (pbitemp, pbpfile))
         out = p.run(True, jail.jid)
         if out[0] != 0:
@@ -3111,9 +3117,9 @@ class notifier:
         log.debug("update_pbi: plugin_path = %s, oauth_file = %s",
             plugin_path, oauth_file)
 
-        fd = os.open(oauth_file, os.O_WRONLY|os.O_CREAT, 0600)
-        os.write(fd,"key = %s\n" % rpctoken.key)
-        os.write(fd,"secret = %s\n" % rpctoken.secret)
+        fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
+        os.write(fd, "key = %s\n" % rpctoken.key)
+        os.write(fd, "secret = %s\n" % rpctoken.secret)
         os.close(fd)
 
         self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, newname))
@@ -3128,7 +3134,6 @@ class notifier:
 
         log.debug("XXX: update_pbi: returning %s", ret)
         return ret
-
 
     def delete_pbi(self, plugin):
         ret = False
@@ -3189,7 +3194,7 @@ class notifier:
         rpath = os.path.normpath(rpath)
 
         try:
-            st = os.stat(rpath)
+            os.stat(rpath)
         except Exception as e:
             log.debug("stat %s: %s", rpath, e)
             return False
@@ -3210,7 +3215,7 @@ class notifier:
         jail_root = os.path.normpath(jail_root)
 
         try:
-            st = os.stat(jail_root)
+            os.stat(jail_root)
         except Exception as e:
             log.debug("stat %s: %s", jail_root, e)
             return False
@@ -3258,7 +3263,7 @@ class notifier:
 
     def checksum(self, path, algorithm='sha256'):
         algorithm2map = {
-            'sha256' : '/sbin/sha256 -q',
+            'sha256': '/sbin/sha256 -q',
         }
         hasher = self._pipeopen('%s %s' % (algorithm2map[algorithm], path))
         sum = hasher.communicate()[0].split('\n')[0]
@@ -3399,8 +3404,8 @@ class notifier:
                         disks.append({'name': device[0].text})
 
                 # Next thing is find out whether this is a raw block device or has GPT
-                #TODO: MBR?
-                search = doc.xpath("//class[name = 'PART']/geom[name = '%s/%s']/provider//config[type = 'freebsd-ufs']" % (geom,label))
+                # TODO: MBR?
+                search = doc.xpath("//class[name = 'PART']/geom[name = '%s/%s']/provider//config[type = 'freebsd-ufs']" % (geom, label))
                 if len(search) > 0:
                     label = search[0].xpath("../name")[0].text.split('/', 1)[1]
                 volumes.append({
@@ -3410,7 +3415,7 @@ class notifier:
                     'disks': {'vdevs': [{'disks': disks, 'name': geom}]},
                     })
 
-        pool_name = re.compile(r'pool: (?P<name>%s).*?id: (?P<id>\d+)' % (zfs.ZPOOL_NAME_RE, ), re.I|re.M|re.S)
+        pool_name = re.compile(r'pool: (?P<name>%s).*?id: (?P<id>\d+)' % (zfs.ZPOOL_NAME_RE, ), re.I | re.M | re.S)
         p1 = self._pipeopen("zpool import")
         res = p1.communicate()[0]
 
@@ -3541,7 +3546,6 @@ class notifier:
         self._encvolume_detach(volume)
         self.__rmdir_mountpoint(vol_mountpath)
 
-
     def __rmdir_mountpoint(self, path):
         """Remove a mountpoint directory designated by path
 
@@ -3574,7 +3578,6 @@ class notifier:
             except OSError as ose:
                 raise MiddlewareError('Failed to remove mountpoint %s: %s'
                                       % (path, str(ose), ))
-
 
     def zfs_scrub(self, name, stop=False):
         if stop:
@@ -3622,7 +3625,7 @@ class notifier:
                         )
                         if remotename in snaps:
                             replication = 'OK'
-                            #TODO: Multiple replication tasks
+                            # TODO: Multiple replication tasks
                             break
 
                 snaplist.insert(0,
@@ -3840,7 +3843,7 @@ class notifier:
             ncomponents = int(provider.xpath("../config/Components")[0].text)
             numbers = [int(node.text) for node in numbers]
             lacking = [x for x in xrange(ncomponents) if x not in numbers][0]
-            p1 = self._pipeopen("geom raid3 insert -n %d %s %s" % \
+            p1 = self._pipeopen("geom raid3 insert -n %d %s %s" %
                                         (lacking, str(geom_name), str(to_disk),))
             stdout, stderr = p1.communicate()
             if p1.returncode != 0:
@@ -3871,7 +3874,7 @@ class notifier:
             if not proto:
                 return _('Unknown')
             proto = proto.group(1)
-            ports = re.findall(r'laggport.+<(.*?)>', data, re.M|re.S)
+            ports = re.findall(r'laggport.+<(.*?)>', data, re.M | re.S)
             if proto == 'lacp':
                 # Only if all ports are ACTIVE,COLLECTING,DISTRIBUTING
                 # it is considered active
@@ -3933,7 +3936,7 @@ class notifier:
         if controller in self.__twcli:
             return self.__twcli[controller]
 
-        re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S|re.M)
+        re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S | re.M)
         proc = self._pipeopen("/usr/local/sbin/tw_cli /c%d show" % (controller, ))
         output = proc.communicate()[0]
 
@@ -4096,7 +4099,7 @@ class notifier:
         get the first partition that matches the type
         """
         doc = self._geom_confxml()
-        #TODO get from MBR as well?
+        # TODO get from MBR as well?
         search = doc.xpath("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-%s']/../name" % (device, name))
         if len(search) > 0:
             return search[0].text
@@ -4150,7 +4153,7 @@ class notifier:
                 prov2 = doc.xpath("//provider[@id = '%s']" % prov)[0]
                 disks.append(prov2.xpath("../name")[0].text)
         else:
-            #TODO log, could not get disks
+            # TODO log, could not get disks
             pass
         return disks
 
@@ -4208,8 +4211,8 @@ class notifier:
         """
         hptctlr = defaultdict(int)
 
-        re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S|re.M)
-        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S|re.M)
+        re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S | re.M)
+        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S | re.M)
         drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
 
         proc = self._pipeopen("camcontrol devlist -v")
@@ -4321,7 +4324,7 @@ class notifier:
                 if disk._original_state.get("disk_enabled"):
                     disk.save()
                 else:
-                    #Duplicated disk entries in database
+                    # Duplicated disk entries in database
                     disk.delete()
             else:
                 disk.save()
@@ -4338,7 +4341,7 @@ class notifier:
                     d.disk_size = mediasize[0].text
                 if d.disk_serial:
                     if d.disk_serial in serials:
-                        #Probably dealing with multipath here, do not add another
+                        # Probably dealing with multipath here, do not add another
                         continue
                     else:
                         serials.append(d.disk_serial)
@@ -4482,7 +4485,7 @@ class notifier:
             The string of the multipath name to be created
         """
         RE_NAME = re.compile(r'[a-z]+(\d+)')
-        numbers = sorted([int(RE_NAME.search(mp.name).group(1)) \
+        numbers = sorted([int(RE_NAME.search(mp.name).group(1))
                         for mp in self.multipath_all() if RE_NAME.match(mp.name)
                         ])
         if not numbers:
@@ -4515,7 +4518,7 @@ class notifier:
             for provref in geom.xpath("./consumer/provider/@ref"):
                 prov = doc.xpath("//provider[@id = '%s']" % provref)[0]
                 class_name = prov.xpath("../../name")[0].text
-                #For now just DISK is allowed
+                # For now just DISK is allowed
                 if class_name != 'DISK':
                     log.warn(
                         "A consumer that is not a disk (%s) is part of a "
@@ -4566,13 +4569,13 @@ class notifier:
             for provref in geom.xpath("./consumer/provider/@ref"):
                 prov = doc.xpath("//provider[@id = '%s']" % provref)[0]
                 class_name = prov.xpath("../../name")[0].text
-                #For now just DISK is allowed
+                # For now just DISK is allowed
                 if class_name != 'DISK':
                     continue
                 disk = prov.xpath("../name")[0].text
                 _disks.append(disk)
             qs = Disk.objects.filter(
-                Q(disk_name__in=_disks)|Q(disk_multipath_member__in=_disks)
+                Q(disk_name__in=_disks) | Q(disk_multipath_member__in=_disks)
                 )
             if qs.exists():
                 diskobj = qs[0]
@@ -4585,7 +4588,6 @@ class notifier:
                 diskobj.save()
 
         Disk.objects.exclude(id__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
-
 
     def _find_root_dev(self):
         """Find the root device.
@@ -4604,8 +4606,8 @@ class notifier:
         sw_name = get_sw_name()
         doc = self._geom_confxml()
 
-        for pref in doc.xpath("//class[name = 'LABEL']/geom/provider[" \
-                "starts-with(name, 'ufs/%ss')]/../consumer/provider/@ref" \
+        for pref in doc.xpath("//class[name = 'LABEL']/geom/provider["
+                "starts-with(name, 'ufs/%ss')]/../consumer/provider/@ref"
                 % (sw_name, )):
             prov = doc.xpath("//provider[@id = '%s']" % pref)[0]
             pid = prov.xpath("../consumer/provider/@ref")[0]
@@ -4924,7 +4926,7 @@ class notifier:
             '/usr/local/bin/ipmitool lan set %d access on' % channel
         )
         rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth USER "MD2,MD5"'  % channel
+            '/usr/local/bin/ipmitool lan set %d auth USER "MD2,MD5"' % channel
         )
         rv |= self._system_nolog(
             '/usr/local/bin/ipmitool lan set %d auth OPERATOR "MD2,MD5"' % (
@@ -4932,7 +4934,7 @@ class notifier:
             )
         )
         rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth ADMIN "MD2,MD5"'  % (
+            '/usr/local/bin/ipmitool lan set %d auth ADMIN "MD2,MD5"' % (
                 channel,
             )
         )
@@ -4954,11 +4956,11 @@ class notifier:
                 )
             )
         rv |= self._system_nolog('/usr/local/bin/ipmitool user enable 2')
-        #XXX: according to dwhite, this needs to be executed off the box via
+        # XXX: according to dwhite, this needs to be executed off the box via
         # the lanplus interface.
-        #rv |= self._system_nolog(
+        # rv |= self._system_nolog(
         #    '/usr/local/bin/ipmitool sol set enabled true 1'
-        #)
+        # )
         return rv
 
     def _restart_system_datasets(self):
@@ -4999,7 +5001,7 @@ class notifier:
         if os.path.exists("%s/.windows" % path):
             share_type = "windows"
         elif os.path.exists("%s/.apple" % path):
-            share_type = "apple"
+            share_type = "mac"
 
         return share_type
 
