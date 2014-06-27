@@ -938,6 +938,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: enter")
         super(FreeNAS_ActiveDirectory_Base, self).__init__()
 
+        self.kwargs = kwargs
         self.__set_defaults()
 
         if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
@@ -1008,6 +1009,10 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.gcount = 0
 
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: leave")
+
+    def reload(self, **kwargs):
+        self.kwargs.update(kwargs)
+        self.__init__(**self.kwargs)
 
     def _search(self, handle, basedn="", scope=ldap.SCOPE_SUBTREE,
         filter=None, attributes=None, attrsonly=0, serverctrls=None,
