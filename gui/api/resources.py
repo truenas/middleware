@@ -48,7 +48,7 @@ from freenasUI.account.forms import (
 from freenasUI.account.forms import bsdUserToGroupForm
 from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
 from freenasUI.api.utils import DojoResource
-from freenasUI.common import humanize_number_si
+from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.common.system import (
     get_sw_login_version,
     get_sw_name,
@@ -903,22 +903,14 @@ class VolumeResourceMixin(NestedMixin):
 
             zvols = bundle.obj.get_zvols() or {}
             for name, zvol in zvols.items():
-                total_si = '%s %siB' % (
-                    zvol['volsize'][:-1],
-                    zvol['volsize'][-1],
-                )
-                refer = '%s %siB' % (
-                    zvol['refer'][:-1],
-                    zvol['refer'][-1],
-                )
                 data = {
                     'id': uid.next(),
                     'name': name,
                     'status': mp.status,
                     'type': 'zvol',
-                    'total_si': total_si,
+                    'total_si': humanize_size(zvol['volsize']),
                     'avail_si': '-',
-                    'used': refer,
+                    'used': humanize_size(zvol['refer']),
                     'compression': zvol['compression'],
                     'compressratio': zvol['compressratio'],
                 }

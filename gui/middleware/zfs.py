@@ -672,7 +672,6 @@ def parse_status(name, doc, data):
         scrub['status'] = 'NONE'
         scrub['status_verbose'] = _('None requested')
 
-
     """
     Parse the resilver statistics from zpool status
     """
@@ -846,6 +845,7 @@ def list_datasets(path="", recursive=False, hierarchical=False,
     args = [
         "/sbin/zfs",
         "list",
+        "-p",
         "-H",
         "-t", "filesystem",
         "-s", "name",
