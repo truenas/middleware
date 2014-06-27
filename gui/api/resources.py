@@ -210,9 +210,9 @@ class DatasetResource(DojoResource):
 
     name = fields.CharField(attribute='name')
     pool = fields.CharField(attribute='pool')
-    used = fields.CharField(attribute='used')
-    avail = fields.CharField(attribute='avail')
-    refer = fields.CharField(attribute='refer')
+    used = fields.IntegerField(attribute='used')
+    avail = fields.IntegerField(attribute='avail')
+    refer = fields.IntegerField(attribute='refer')
     mountpoint = fields.CharField(attribute='mountpoint')
 
     class Meta:
