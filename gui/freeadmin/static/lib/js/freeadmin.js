@@ -1652,43 +1652,55 @@ require([
                 Menu.openStorage(item.gname);
             } else if(item.type == 'viewmodel') {
                 //  get the children and make sure we haven't opened this yet.
+                var opened = false;
                 var c = p.getChildren();
                 for(var i=0; i<c.length; i++){
                     if(c[i].title == item.name){
                         p.selectChild(c[i]);
-                        return;
+                        opened = true;
+                    } else {
+                        p.removeChild(c[i]);
+                        c[i].destroy();
                     }
                 }
-                var pane = new ContentPane({
-                    id: "data_"+item.app_name+"_"+item.model,
-                    href: item.url,
-                    title: item.name,
-                    closable: true,
-                    refreshOnShow: true,
-                    parseOnLoad: true
-                });
-                p.addChild(pane);
-                domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
-                p.selectChild(pane);
+                if(opened !== true) {
+                    var pane = new ContentPane({
+                        id: "data_"+item.app_name+"_"+item.model,
+                        href: item.url,
+                        title: item.name,
+                        closable: false,
+                        refreshOnShow: true,
+                        parseOnLoad: true
+                    });
+                    p.addChild(pane);
+                    domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                    p.selectChild(pane);
+                }
             } else {
                 //  get the children and make sure we haven't opened this yet.
+                var opened = false;
                 var c = p.getChildren();
                 for(var i=0; i<c.length; i++){
                     if(c[i].tab == item.gname){
                         p.selectChild(c[i]);
-                        return;
+                        opened = true;
+                    } else {
+                        p.removeChild(c[i]);
+                        c[i].destroy();
                     }
                 }
-                var pane = new ContentPane({
-                    href: item.url,
-                    title: item.name,
-                    closable: true,
-                    parseOnLoad: true
-                });
-                pane.tab = item.gname;
-                domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
-                p.addChild(pane);
-                p.selectChild(pane);
+                if(opened !== true) {
+                    var pane = new ContentPane({
+                        href: item.url,
+                        title: item.name,
+                        closable: false,
+                        parseOnLoad: true
+                    });
+                    pane.tab = item.gname;
+                    domClass.add(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                    p.addChild(pane);
+                    p.selectChild(pane);
+                }
             }
 
         };
