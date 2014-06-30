@@ -40,16 +40,8 @@ log = logging.getLogger('reporting.views')
 
 
 def _get_rrd_path():
-
-    try:
-        system_pool = SystemDataset.objects.order_by('-id')[0].sys_pool
-    except:
-        system_pool = None
-
-    rrdpath = '/mnt/%s/.system/rrd/localhost' % system_pool
-    if not(system_pool and os.path.exists(rrdpath)):
-        rrdpath = RRD_BASE_PATH
-    return rrdpath
+    # /var/db/collectd/rrd will be a symlink if using system dataset
+    return RRD_BASE_PATH
 
 
 def plugin2graphs(name):
