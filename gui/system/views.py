@@ -232,6 +232,7 @@ def home(request):
         registration = None
 
     return render(request, 'system/index.html', {
+        'focus_form': request.GET.get('tab', 'system.SysInfo'),
         'settings': settings,
         'email': email,
         'ssl': ssl,
