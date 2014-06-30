@@ -1537,27 +1537,33 @@ require([
     }
 
     viewModel = function(name, url, tab) {
+        var opened = false;
         var p = registry.byId("content");
         var c = p.getChildren();
         for(var i=0; i<c.length; i++){
             if(c[i].title == name){
                 c[i].href = url;
                 p.selectChild(c[i]);
-                return;
+                opened = true;
+            } else {
+                p.removeChild(c[i]);
+                c[i].destroy();
             }
         }
-        var pane = new ContentPane({
-            href: url,
-            title: name,
-            closable: true,
-            parseOnLoad: true,
-            refreshOnShow: true
-        });
-        if(tab)
-            pane.tab = tab;
-        domClass.add(pane.domNode, "objrefresh" );
-        p.addChild(pane);
-        p.selectChild(pane);
+        if(opened !== true) {
+            var pane = new ContentPane({
+                href: url,
+                title: name,
+                closable: false,
+                parseOnLoad: true,
+                refreshOnShow: true
+            });
+            if(tab)
+                pane.tab = tab;
+            domClass.add(pane.domNode, "objrefresh" );
+            p.addChild(pane);
+            p.selectChild(pane);
+        }
     }
 
     dojo._contentHandlers.text = (function(old){
