@@ -114,6 +114,9 @@ class CIFS_Share(Model):
 
 
 class AFP_Share(Model):
+    afp_path = PathField(
+        verbose_name=_("Path"),
+    )
     afp_name = models.CharField(
             max_length=120,
             verbose_name=_("Name"),
@@ -124,8 +127,6 @@ class AFP_Share(Model):
             verbose_name=_("Share Comment"),
             blank=True
             )
-    afp_path = PathField(
-            verbose_name=_("Path"))
     afp_allow = models.CharField(
             max_length=120,
             verbose_name=_("Allow List"),
