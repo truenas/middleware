@@ -329,6 +329,10 @@ device		amdsbwd
 device		viawd
 device		wbwd
 
+# NVM Express (NVMe) support
+device		nvme	# base NVMe driver
+device		nvd	# expose NVMe namespaces as disks, depends on nvme
+
 # VirtIO
 device		virtio
 device		virtio_pci
