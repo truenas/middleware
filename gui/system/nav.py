@@ -7,19 +7,49 @@ ICON = u'SystemIcon'
 ORDER = 1
 
 
+class Advanced(TreeNode):
+
+    gname = 'Advanced'
+    name = _(u'Advanced')
+    icon = u"SettingsIcon"
+    type = 'opensystem'
+
+
+class Email(TreeNode):
+
+    gname = 'Email'
+    name = _(u'Email')
+    icon = u"SettingsIcon"
+    type = 'opensystem'
+
+
+class General(TreeNode):
+
+    gname = 'General'
+    name = _(u'General')
+    icon = u"SettingsIcon"
+    type = 'opensystem'
+
+
 class Info(TreeNode):
 
     gname = 'SysInfo'
     name = _(u'System Information')
-    view = 'system_info'
     icon = u"InfoIcon"
     type = 'opensystem'
 
 
-class Settings(TreeNode):
+class SSL(TreeNode):
 
-    gname = 'Settings'
-    name = _(u'Settings')
-    view = 'system_settings'
+    gname = 'SSL'
+    name = _(u'SSL')
+    icon = u"SettingsIcon"
+    type = 'opensystem'
+
+
+class SystemDataset(TreeNode):
+
+    gname = 'SystemDataset'
+    name = _(u'System Dataset')
     icon = u"SettingsIcon"
     type = 'opensystem'

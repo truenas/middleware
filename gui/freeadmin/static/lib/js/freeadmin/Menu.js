@@ -15,7 +15,7 @@ define([
         constructor: function(/*Object*/ kwArgs){
             lang.mixin(this, kwArgs);
         },
-        openSystem: function(gname) {
+        openSystem: function(tab) {
             var opened = false;
             var p = registry.byId("content");
 
@@ -24,6 +24,16 @@ define([
               if(c[i].tab == 'system'){
                 p.selectChild(c[i]);
                 opened = c[i];
+                if(tab) {
+                    var tabnet = registry.byId("tab_systemsettings");
+                    if(tabnet) {
+                        var c2 = tabnet.getChildren();
+                        for(var j=0; j<c2.length; j++){
+                            if(c2[j].domNode.getAttribute("tab") == tab)
+                                tabnet.selectChild(c2[j]);
+                        }
+                    }
+                }
               } else {
                 p.removeChild(c[i]);
                 c[i].destroy();
