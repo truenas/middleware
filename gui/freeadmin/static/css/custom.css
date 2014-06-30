@@ -327,6 +327,16 @@ table.grid tr {
     border-bottom:1px #ccc solid;
 }
 
+.EmailIcon {
+    background-image:url('/static/images/ui/tree/email.png');
+    width:16px;
+    height:16px;
+}
+.SysDatasetIcon {
+    background-image:url('/static/images/ui/tree/sysdataset.png');
+    width:16px;
+    height:16px;
+}
 .SystemIcon {
     background-image:url('/static/images/ui/tree/system.png');
     width:16px;
@@ -344,6 +354,11 @@ table.grid tr {
 }
 .SettingsIcon {
     background-image:url('/static/images/ui/tree/settings.png');
+    width:16px;
+    height:16px;
+}
+.SSLIcon {
+    background-image:url('/static/images/ui/tree/ssl.png');
     width:16px;
     height:16px;
 }

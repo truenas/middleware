@@ -26,7 +26,7 @@ class Email(TreeNode):
 
     gname = 'Email'
     name = _(u'Email')
-    icon = u"SettingsIcon"
+    icon = 'EmailIcon'
     type = 'opensystem'
 
 
@@ -78,7 +78,7 @@ class SSL(TreeNode):
 
     gname = 'SSL'
     name = _(u'SSL')
-    icon = u"SettingsIcon"
+    icon = "SSLIcon"
     type = 'opensystem'
 
 
@@ -93,7 +93,7 @@ class SystemDataset(TreeNode):
 
     gname = 'SystemDataset'
     name = _(u'System Dataset')
-    icon = u"SettingsIcon"
+    icon = u"SysDatasetIcon"
     type = 'opensystem'
 
 
