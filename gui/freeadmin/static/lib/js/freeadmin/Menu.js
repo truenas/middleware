@@ -17,8 +17,6 @@ define([
         },
         openSystem: function(gname) {
             var opened = false;
-            var opened2 = false;
-            var opened3 = false;
             var p = registry.byId("content");
 
             var c = p.getChildren();
@@ -26,41 +24,21 @@ define([
               if(c[i].id == 'systemTab_Settings'){
                 p.selectChild(c[i]);
                 opened = c[i];
-              } else if(c[i].id == 'systemTab_SysInfo'){
-                p.selectChild(c[i]);
-                opened2 = c[i];
+              } else {
+                p.removeChild(c[i]);
+                c[i].destroy();
               }
-            }
-
-            if(gname == 'system.Settings') {
-              if(opened) p.selectChild(opened);
-              opened2 = true;
-            } else if(gname == 'system.SysInfo') {
-              if(opened2) p.selectChild(opened2);
-              opened = true;
             }
 
             if(opened == false) {
                 var pane = new ContentPane({
                     id: 'systemTab_Settings',
                     title: gettext('Settings'),
-                    closable: true,
+                    closable: false,
                     href: this.urlSettings,
                 });
                 p.addChild(pane);
                 p.selectChild(pane);
-            }
-
-            if(opened2 == false) {
-                var pane2 = new ContentPane({
-                    id: 'systemTab_SysInfo',
-                    title: gettext('System Information'),
-                    refreshOnShow: true,
-                    closable: true,
-                    href: this.urlInfo,
-                });
-                p.addChild(pane2);
-                p.selectChild(pane2);
             }
 
         },
@@ -84,8 +62,12 @@ define([
                         }
                     }
 
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
+
             if(opened != true) {
                 openurl = this.urlNetwork;
                 if(tab) {
@@ -93,8 +75,8 @@ define([
                 }
 
                 var pane = new ContentPane({
-                    title: gettext('Network Settings'),
-                    closable: true,
+                    title: gettext('Network'),
+                    closable: false,
                     //refreshOnShow: true,
                     href: openurl,
                 });
@@ -123,6 +105,9 @@ define([
                             }
                         }
                     }
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -132,7 +117,7 @@ define([
                 }
                 var pane = new ContentPane({
                     title: gettext('Shares'),
-                    closable: true,
+                    closable: false,
                     //refreshOnShow: true,
                     href: openurl,
                 });
@@ -161,12 +146,15 @@ define([
                     p.selectChild(c[i]);
                     opened = true;
                     if(onload) lang.hitch(this, onload)();
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
                 var pane = new ContentPane({
                     title: gettext('Services'),
-                    closable: true,
+                    closable: false,
                     href: href,
                     onLoad: function() {
                       onload();
@@ -202,6 +190,9 @@ define([
                             }
                         }
                     }
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -211,7 +202,7 @@ define([
                 }
                 var pane = new ContentPane({
                     title: gettext('Jails'),
-                    closable: true,
+                    closable: false,
                     href:openurl,
                     refreshOnShow: true
                 });
@@ -241,6 +232,9 @@ define([
                             }
                         }
                     }
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -250,7 +244,7 @@ define([
                 }
                 var pane = new ContentPane({
                     title: gettext('Plugins'),
-                    closable: true,
+                    closable: false,
                     href: openurl,
                     refreshOnShow: true
                 });
@@ -281,6 +275,9 @@ define([
                         }
                     }
 
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -290,7 +287,7 @@ define([
                 }
                 var pane = new ContentPane({
                     title: gettext('Account'),
-                    closable: true,
+                    closable: false,
                     href:openurl,
                 });
                 pane.tab = 'account';
@@ -320,6 +317,9 @@ define([
                             }
                         }
                     }
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -329,8 +329,8 @@ define([
                 }
                 var pane = new ContentPane({
                     title: gettext('Storage'),
-                    closable: true,
-                    href:openurl,
+                    closable: false,
+                    href: openurl,
                 });
                 pane.tab = 'storage';
                 p.addChild(pane);
@@ -360,6 +360,9 @@ define([
                         }
                     }
 
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -370,7 +373,7 @@ define([
 
                 var pane = new ContentPane({
                     title: 'iSCSI',
-                    closable: true,
+                    closable: false,
                     //refreshOnShow: true,
                     href: openurl,
                 });
