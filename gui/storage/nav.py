@@ -23,6 +23,13 @@ class ViewPeriodic(TreeNode):
     append_to = 'storage.Task'
 
 
+class ViewScrub(TreeNode):
+
+    gname = 'View'
+    type = 'openstorage'
+    append_to = 'storage.Scrub'
+
+
 class ViewSnap(TreeNode):
 
     gname = 'View'
