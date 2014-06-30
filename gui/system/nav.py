@@ -15,6 +15,13 @@ class Advanced(TreeNode):
     type = 'opensystem'
 
 
+class CronJobView(TreeNode):
+
+    gname = 'View'
+    type = 'opensystem'
+    append_to = 'system.CronJob'
+
+
 class Email(TreeNode):
 
     gname = 'Email'
@@ -39,6 +46,34 @@ class Info(TreeNode):
     type = 'opensystem'
 
 
+class InitShutdownView(TreeNode):
+
+    gname = 'View'
+    type = 'opensystem'
+    append_to = 'system.InitShutdown'
+
+
+class NTPServerView(TreeNode):
+
+    gname = 'View'
+    type = 'opensystem'
+    append_to = 'system.NTPServer'
+
+
+class RsyncView(TreeNode):
+
+    gname = 'View'
+    type = 'opensystem'
+    append_to = 'system.Rsync'
+
+
+class SMARTTestView(TreeNode):
+
+    gname = 'View'
+    type = 'opensystem'
+    append_to = 'system.SMARTTest'
+
+
 class SSL(TreeNode):
 
     gname = 'SSL'
@@ -47,9 +82,23 @@ class SSL(TreeNode):
     type = 'opensystem'
 
 
+class SysctlView(TreeNode):
+
+    gname = 'View'
+    type = 'opensystem'
+    append_to = 'system.Sysctl'
+
+
 class SystemDataset(TreeNode):
 
     gname = 'SystemDataset'
     name = _(u'System Dataset')
     icon = u"SettingsIcon"
     type = 'opensystem'
+
+
+class TunableView(TreeNode):
+
+    gname = 'View'
+    type = 'opensystem'
+    append_to = 'system.Tunable'
