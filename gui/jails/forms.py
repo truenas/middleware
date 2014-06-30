@@ -839,7 +839,7 @@ class JailMountPointForm(ModelForm):
 
         if kwargs and 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
-            if not self.jail:
+            if not self.jail and self.instance.id:
                 self.jail = Jails.objects.filter(
                     jail_host=self.instance.jail
                 )[0]
@@ -853,6 +853,8 @@ class JailMountPointForm(ModelForm):
         if self.jail:
             self.fields['jail'].initial = self.jail.jail_host
             self.fields['jail'].widget.attrs['readonly'] = True
+            jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
+            self.fields['destination'].widget.attrs['root'] = jail_path
 
         try:
             clean_path_execbit(self.jc.jc_path)
@@ -868,12 +870,10 @@ class JailMountPointForm(ModelForm):
         for wj in wlist:
             pjlist.append(wj[WARDEN_KEY_HOST])
 
-        self.fields['jail'].choices = [(pj, pj) for pj in pjlist]
+        self.fields['jail'].choices = [('', '')] + [(pj, pj) for pj in pjlist]
         self.fields['jail'].widget.attrs['onChange'] = (
             'addStorageJailChange(this);'
         )
-        jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
-        self.fields['destination'].widget.attrs['root'] = jail_path
 
         self.fields['mpjc_path'].widget = forms.widgets.HiddenInput()
         self.fields['mpjc_path'].initial = self.jc.jc_path
