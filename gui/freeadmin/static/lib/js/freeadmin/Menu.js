@@ -41,10 +41,14 @@ define([
             }
 
             if(opened == false) {
+                openurl = this.urlSystem;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
                 var pane = new ContentPane({
                     title: gettext('System'),
                     closable: false,
-                    href: this.urlSystem,
+                    href: openurl
                 });
                 pane.tab = 'system';
                 p.addChild(pane);
