@@ -13,13 +13,22 @@ class AFPShareFAdmin(BaseFreeAdmin):
     icon_view = u"ViewAllAppleSharesIcon"
     icon_object = u"AppleShareIcon"
     advanced_fields = (
+        'afp_allow',
         'afp_cachecnid',
-        'afp_sharecharset',
-        'afp_nofileid',
+        'afp_comment',
+        'afp_deny',
+        'afp_dperm',
+        'afp_fperm',
         'afp_nodev',
+        'afp_nofileid',
         'afp_nohex',
-        'afp_prodos',
         'afp_nostat',
+        'afp_prodos',
+        'afp_ro',
+        'afp_rw',
+        'afp_sharecharset',
+        'afp_umask',
+        'afp_upriv',
     )
     fields = (
         'afp_name',
