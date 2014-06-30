@@ -36,9 +36,17 @@ class CIFSShareFAdmin(BaseFreeAdmin):
     icon_view = u"ViewAllWindowsSharesIcon"
     icon_object = u"WindowsShareIcon"
     advanced_fields = (
+        'cifs_auxsmbconf',
+        'cifs_browsable',
+        'cifs_comment',
+        'cifs_default_permissions',
+        'cifs_guestok',
+        'cifs_guestonly',
         'cifs_hostsallow',
         'cifs_hostsdeny',
-        'cifs_auxsmbconf',
+        'cifs_recyclebin',
+        'cifs_ro',
+        'cifs_showhiddenfiles',
     )
     fields = (
         'cifs_name',
