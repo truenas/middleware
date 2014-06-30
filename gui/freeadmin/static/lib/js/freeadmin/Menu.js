@@ -21,7 +21,7 @@ define([
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-              if(c[i].id == 'systemTab_Settings'){
+              if(c[i].tab == 'system'){
                 p.selectChild(c[i]);
                 opened = c[i];
               } else {
@@ -32,11 +32,11 @@ define([
 
             if(opened == false) {
                 var pane = new ContentPane({
-                    id: 'systemTab_Settings',
-                    title: gettext('Settings'),
+                    title: gettext('System'),
                     closable: false,
-                    href: this.urlSettings,
+                    href: this.urlSystem,
                 });
+                pane.tab = 'system';
                 p.addChild(pane);
                 p.selectChild(pane);
             }

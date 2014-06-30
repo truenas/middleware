@@ -200,7 +200,7 @@ def reporting(request):
     return render(request, 'system/reporting.html')
 
 
-def settings(request):
+def home(request):
     try:
         settings = models.Settings.objects.order_by("-id")[0]
     except:
@@ -231,7 +231,7 @@ def settings(request):
     except:
         registration = None
 
-    return render(request, 'system/settings.html', {
+    return render(request, 'system/index.html', {
         'settings': settings,
         'email': email,
         'ssl': ssl,
