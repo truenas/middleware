@@ -48,8 +48,6 @@ class CIFSShareFAdmin(BaseFreeAdmin):
         'cifs_auxsmbconf',
         'cifs_browsable',
         'cifs_comment',
-        'cifs_default_permissions',
-        'cifs_guestok',
         'cifs_guestonly',
         'cifs_hostsallow',
         'cifs_hostsdeny',
