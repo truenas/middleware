@@ -75,7 +75,8 @@ class NFSShareFAdmin(BaseFreeAdmin):
     inlines = [
         {
             'form': 'NFS_SharePathForm',
-            'prefix': 'path_set'
+            'prefix': 'path_set',
+            'position': 'top',
         },
     ]
     resource_mixin = NFSShareResourceMixin
