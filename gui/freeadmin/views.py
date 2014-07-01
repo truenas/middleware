@@ -93,7 +93,8 @@ class JsonResp(HttpResponse):
                         errors[key] = [unicode(v) for v in val]
                 error = True
 
-            for name, fs in self.formsets.items():
+            for name, fsinfo in self.formsets.items():
+                fs = fsinfo['instance']
                 fserrors = fs.non_form_errors()
                 if fserrors:
                     error = True

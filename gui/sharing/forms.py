@@ -321,7 +321,7 @@ class NFS_ShareForm(ModelForm):
         return valid
 
     def is_valid(self, formsets):
-        paths = formsets.get("formset_nfs_share_path")
+        paths = formsets.get("formset_nfs_share_path")['instance']
         valid = False
         for form in paths:
             if (

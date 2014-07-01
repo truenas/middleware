@@ -1083,7 +1083,11 @@ class NFSShareResourceMixin(object):
             #    errors.update(formset._errors)
             for frm in formset:
                 errors.update(frm._errors)
-        valid &= form.is_valid(formsets={'formset_nfs_share_path': formset})
+        valid &= form.is_valid(formsets={
+            'formset_nfs_share_path': {
+                'instance': formset,
+            },
+        })
         if errors:
             form._errors.update(errors)
         if form._errors:

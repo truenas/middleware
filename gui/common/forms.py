@@ -115,7 +115,8 @@ class ModelForm(AdvMixin, MF):
         if valid is False:
             return valid
         if formsets is not None:
-            for name, fs in formsets.items():
+            for name, fsinfo in formsets.items():
+                fs = fsinfo['instance']
                 methodname = "clean%s" % (name, )
                 if hasattr(self, methodname):
                     valid &= getattr(self, methodname)(fs, fs.forms)
