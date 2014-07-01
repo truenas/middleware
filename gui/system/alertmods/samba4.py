@@ -1,5 +1,6 @@
 import os
 
+from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 from freenasUI.system.models import SystemDataset
@@ -10,7 +11,12 @@ class Samba4Alert(BaseAlert):
     def run(self):
         if not Volume.objects.all().exists():
             return None
-        systemdataset = SystemDataset.objects.all()[0]
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() == 'BACKUP'
+        ):
+            return None
+        systemdataset, volume, basename = notifier().system_dataset_settings()
         if not systemdataset.sys_pool:
             return [
                 Alert(
