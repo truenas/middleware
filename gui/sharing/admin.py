@@ -80,6 +80,10 @@ class NFSShareFAdmin(BaseFreeAdmin):
         },
     ]
     resource_mixin = NFSShareResourceMixin
+    advanced_fields = (
+        'nfs_ro',
+        'nfs_quiet',
+    )
     fields = (
         'nfs_paths',
         'nfs_comment',
