@@ -33,6 +33,7 @@ import urllib
 from django import forms as dforms
 from django.conf.urls import patterns, url
 from django.core.urlresolvers import reverse
+from django.db.models.fields.related import ForeignKey
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import TemplateDoesNotExist
@@ -593,12 +594,30 @@ class BaseFreeAdmin(object):
                         [inline],
                         -1)
                     inline = getattr(_temp, inline)
+
+                    """
+                    Do not add any extra empty form for the inline formset
+                    in case there is already any item in the relationship
+                    """
+                    extra = 1
+                    fk_name = None
+                    for field in inline._meta.model._meta.fields:
+                        if isinstance(field, ForeignKey) and m is field.rel.to:
+                            fk_name = field.name
+                            break
+                    if fk_name:
+                        qs = inline._meta.model.objects.filter(
+                            **{'%s__id' % fk_name: instance.id}
+                        )
+                        if qs.count() > 0:
+                            extra = 0
+
                     fset_fac = inlineformset_factory(
                         m,
                         inline._meta.model,
                         form=inline,
                         formset=FreeBaseInlineFormSet,
-                        extra=1,
+                        extra=extra,
                         **extrakw)
                     fsname = 'formset_%s' % (
                         inline._meta.model._meta.model_name,
