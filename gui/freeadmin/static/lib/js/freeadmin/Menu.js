@@ -33,6 +33,8 @@ define([
                                 tabnet.selectChild(c2[j]);
                         }
                     }
+                } else {
+                    c[i].refresh();
                 }
               } else {
                 p.removeChild(c[i]);
@@ -74,6 +76,8 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
 
                 } else {
@@ -118,6 +122,8 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
                 } else {
                   p.removeChild(c[i]);
@@ -158,6 +164,7 @@ define([
                 if(c[i].tab == 'services'){
                     c[i].href = href;
                     p.selectChild(c[i]);
+                    c[i].refresh();
                     opened = true;
                     if(onload) lang.hitch(this, onload)();
                 } else {
@@ -203,6 +210,8 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
                 } else {
                   p.removeChild(c[i]);
@@ -245,6 +254,8 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
                 } else {
                   p.removeChild(c[i]);
@@ -287,6 +298,8 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
 
                 } else {
@@ -330,6 +343,8 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
                 } else {
                   p.removeChild(c[i]);
@@ -372,6 +387,8 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
 
                 } else {
