@@ -60,11 +60,7 @@ def main(argv):
     browser.find_by_id('id_password').fill(test_config['password'])
     browser.find_by_id('dijit_form_Button_0_label').click()
 
-    # Enable SSH
-    browser.find_by_id('menuBar_System').click()
-    browser.find_by_id('content_tablist_systemTab_Settings').click()
-    browser.find_by_id('dijit_layout_TabContainer_0_tablist_dijit_layout_ContentPane_1').click()
-    time.sleep(3)
+    browser.find_by_id('tab_systemsettings_tablist_dijit_layout_ContentPane_1').click()
     browser.find_by_id('btn_AdvancedForm_FwUpdate_label').click()
     browser.find_by_id('btn_FirmwareTemporaryLocationForm_Ok_label').click()
 
