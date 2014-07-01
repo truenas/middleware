@@ -1544,6 +1544,7 @@ require([
             if(c[i].title == name){
                 c[i].href = url;
                 p.selectChild(c[i]);
+                c[i].refresh();
                 opened = true;
             } else {
                 p.removeChild(c[i]);
@@ -1657,6 +1658,7 @@ require([
                 for(var i=0; i<c.length; i++){
                     if(c[i].title == item.name){
                         p.selectChild(c[i]);
+                        c[i].refresh();
                         opened = true;
                     } else {
                         p.removeChild(c[i]);
@@ -1683,6 +1685,7 @@ require([
                 for(var i=0; i<c.length; i++){
                     if(c[i].tab == item.gname){
                         p.selectChild(c[i]);
+                        c[i].refresh();
                         opened = true;
                     } else {
                         p.removeChild(c[i]);
