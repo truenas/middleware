@@ -867,6 +867,28 @@ class FreeNAS_ActiveDirectory_Base(object):
         return kpws
 
     @staticmethod
+    def validate_credentials(domain, site=None, binddn=None, bindpw=None):
+        ret = None
+        best_host = FreeNAS_ActiveDirectory_Base.get_best_host(
+            FreeNAS_ActiveDirectory_Base.get_domain_controllers(domain, site)
+        ) 
+        
+        if best_host:
+            (dchost, dcport) = best_host
+            f = FreeNAS_LDAP(host=dchost, port=dcport,
+                binddn=binddn, bindpw=bindpw)
+
+            try:
+                f.open()
+                ret = True
+            except ldap.INVALID_CREDENTIALS:
+                ret = False
+            except Exception as e:
+                ret = True
+
+        return ret
+
+    @staticmethod
     def adset(val, default=None):
         ret = default
         if val:
@@ -957,8 +979,9 @@ class FreeNAS_ActiveDirectory_Base(object):
             if key in self.__keys():
                 self.__dict__[key] = kwargs[key]
 
-        self.binddn = self.adset(self.binddn,
-            self.bindname + '@' + self.domainname.upper())
+        if self.bindname and self.domainname:  
+            self.binddn = self.adset(self.binddn,
+                self.bindname + '@' + self.domainname.upper())
 
         host = port = None
         args = {'binddn': self.binddn, 'bindpw': self.bindpw}
