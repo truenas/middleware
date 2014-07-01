@@ -58,6 +58,7 @@ class CIFS_ShareForm(ModelForm):
             self.fields['cifs_guestonly'].widget.attrs['disabled'] = 'disabled'
         self.instance._original_cifs_default_permissions = \
             self.instance.cifs_default_permissions
+        self.fields['cifs_name'].required = False
 
     class Meta:
         fields = '__all__'
@@ -68,6 +69,13 @@ class CIFS_ShareForm(ModelForm):
         if path and not os.path.exists(path):
             raise forms.ValidationError(_('The path %s does not exist') % path)
         return path
+
+    def clean_cifs_name(self):
+        name = self.cleaned_data.get('cifs_name')
+        path = self.cleaned_data.get('cifs_path')
+        if path and not name:
+            name = path.rsplit('/', 1)[-1]
+        return name
 
     def clean_cifs_hostsallow(self):
         net = self.cleaned_data.get("cifs_hostsallow")
