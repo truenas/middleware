@@ -17,15 +17,14 @@ this.submitForm(this, e);
 <table class="form">
     {% block formset_top %}
     {% include "freeadmin/generic_model_inline.html" with position='top' %}
+    {% endblock %}
     {% block form %}
     {% csrf_token %}
     {% admin_form form %}
     {% endblock %}
-    {% endblock %}
     {% block formset_bottom %}
     {% include "freeadmin/generic_model_inline.html" with position='bottom' %}
     {% endblock %}
-    {% block buttons %}
     {% block buttons %}
     <tr>
         <td colspan="2">
