@@ -75,7 +75,7 @@ def home(request):
 
     tabs = appPool.hook_app_tabs('storage', request)
     return render(request, 'storage/index.html', {
-        'focused_tab': request.GET.get("tab", None),
+        'focused_tab': request.GET.get("tab", 'storage.Volumes.View'),
         'hook_tabs': tabs,
     })
 
