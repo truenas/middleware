@@ -42,7 +42,7 @@ class General(TreeNode):
 class Info(TreeNode):
 
     gname = 'SysInfo'
-    name = _(u'System Information')
+    name = _(u'Information')
     icon = u"InfoIcon"
     type = 'opensystem'
 
