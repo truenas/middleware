@@ -34,6 +34,10 @@ Building the System Quickstart Flow:
 % make checkout
 % make release
 
+- Updating the source tree, to pull in new source code changes
+
+% make update
+
 This will also fetch TrueOS and ports for the build from github.
 
 The End Result:
