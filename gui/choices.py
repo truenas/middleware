@@ -782,3 +782,9 @@ class SERIAL_CHOICES(object):
             ports = ['0x2f8']
         for p in ports:
             yield (p, p)
+
+
+TUNABLE_TYPES = (
+    ('loader', _('Loader')),
+    ('sysctl', _('Sysctl')),
+)

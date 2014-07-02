@@ -978,6 +978,12 @@ class Tunable(Model):
             max_length=50,
             verbose_name=_("Value"),
             )
+    tun_type = models.CharField(
+        verbose_name=_('Type'),
+        max_length=20,
+        choices=choices.TUNABLE_TYPES,
+        default='loader',
+    )
     tun_comment = models.CharField(
             max_length=100,
             verbose_name=_("Comment"),
