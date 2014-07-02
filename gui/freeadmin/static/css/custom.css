@@ -362,6 +362,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.TasksIcon {
+    background-image:url('/static/images/ui/tree/tasks.png');
+    width:16px;
+    height:16px;
+}
 .RebootIcon {
     background-image:url('/static/images/ui/tree/reboot.png');
     width:16px;
