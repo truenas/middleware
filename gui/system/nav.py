@@ -47,14 +47,6 @@ class Info(TreeNode):
     type = 'opensystem'
 
 
-class SSL(TreeNode):
-
-    gname = 'SSL'
-    name = _(u'SSL')
-    icon = "SSLIcon"
-    type = 'opensystem'
-
-
 class SystemDataset(TreeNode):
 
     gname = 'SystemDataset'
