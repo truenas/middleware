@@ -123,6 +123,20 @@ class RsyncFAdmin(BaseFreeAdmin):
         return columns
 
 
+class SettingsFAdmin(BaseFreeAdmin):
+
+    deletable = False
+
+    def get_extra_context(self, action):
+        try:
+            ssl = models.SSL.objects.order_by("-id")[0]
+        except:
+            ssl = None
+        return {
+            'ssl': ssl,
+        }
+
+
 class SMARTTestFAdmin(BaseFreeAdmin):
 
     icon_model = u"SMARTIcon"
@@ -147,4 +161,5 @@ class SMARTTestFAdmin(BaseFreeAdmin):
 
 site.register(models.CronJob, CronJobFAdmin)
 site.register(models.Rsync, RsyncFAdmin)
+site.register(models.Settings, SettingsFAdmin)
 site.register(models.SMARTTest, SMARTTestFAdmin)

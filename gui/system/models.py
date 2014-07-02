@@ -118,9 +118,6 @@ class Settings(Model):
     class Meta:
         verbose_name = _("Settings")
 
-    class FreeAdmin:
-        deletable = False
-
 
 class NTPServer(Model):
     ntp_address = models.CharField(
