@@ -58,6 +58,49 @@ define([
             }
 
         },
+        openTasks: function(tab) {
+            var opened = false;
+            var p = registry.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+              if(c[i].tab == 'tasks'){
+                p.selectChild(c[i]);
+                opened = c[i];
+                if(tab) {
+                    var tabnet = registry.byId("tab_tasks");
+                    if(tabnet) {
+                        var c2 = tabnet.getChildren();
+                        for(var j=0; j<c2.length; j++){
+                            if(c2[j].domNode.getAttribute("tab") == tab)
+                                tabnet.selectChild(c2[j]);
+                        }
+                    }
+                } else {
+                    c[i].refresh();
+                }
+              } else {
+                p.removeChild(c[i]);
+                c[i].destroy();
+              }
+            }
+
+            if(opened == false) {
+                openurl = this.urlTasks;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
+                var pane = new ContentPane({
+                    title: gettext('Tasks'),
+                    closable: false,
+                    href: openurl
+                });
+                pane.tab = 'tasks';
+                p.addChild(pane);
+                p.selectChild(pane);
+            }
+
+        },
         openNetwork: function(tab) {
             var opened = false;
             var p = registry.byId("content");
