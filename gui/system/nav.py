@@ -55,13 +55,6 @@ class SSL(TreeNode):
     type = 'opensystem'
 
 
-class SysctlView(TreeNode):
-
-    gname = 'View'
-    type = 'opensystem'
-    append_to = 'system.Sysctl'
-
-
 class SystemDataset(TreeNode):
 
     gname = 'SystemDataset'

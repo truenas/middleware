@@ -929,45 +929,6 @@ class SMARTTest(Model):
         ordering = ["smarttest_type"]
 
 
-class Sysctl(Model):
-    sysctl_mib = models.CharField(
-            max_length=50,
-            unique=True,
-            verbose_name=_("Variable"),
-            )
-    sysctl_value = models.CharField(
-            max_length=50,
-            verbose_name=_("Value"),
-            )
-    sysctl_comment = models.CharField(
-            max_length=100,
-            verbose_name=_("Comment"),
-            blank=True,
-            )
-    sysctl_enabled = models.BooleanField(
-            default=True,
-            verbose_name=_("Enabled"),
-            )
-
-    def __unicode__(self):
-        return unicode(self.sysctl_mib)
-
-    def delete(self):
-        super(Sysctl, self).delete()
-        notifier().reload("sysctl")
-
-    class Meta:
-        verbose_name = _("Sysctl")
-        verbose_name_plural = _("Sysctls")
-        ordering = ["sysctl_mib"]
-
-    class FreeAdmin:
-        icon_model = u"SysctlIcon"
-        icon_object = u"SysctlIcon"
-        icon_add = u"AddSysctlIcon"
-        icon_view = u"ViewSysctlIcon"
-
-
 class Tunable(Model):
     tun_var = models.CharField(
             max_length=50,
@@ -999,7 +960,10 @@ class Tunable(Model):
 
     def delete(self):
         super(Tunable, self).delete()
-        notifier().reload("loader")
+        if self.tun_type == 'loader':
+            notifier().reload("loader")
+        else:
+            notifier().reload("sysctl")
 
     class Meta:
         verbose_name = _("Tunable")
