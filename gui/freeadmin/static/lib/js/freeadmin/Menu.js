@@ -136,7 +136,7 @@ define([
                     openurl += '?tab='+tab;
                 }
                 var pane = new ContentPane({
-                    title: gettext('Shares'),
+                    title: gettext('Sharing'),
                     closable: false,
                     //refreshOnShow: true,
                     href: openurl,
