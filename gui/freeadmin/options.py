@@ -248,6 +248,9 @@ class BaseFreeAdmin(object):
     def urls(self):
         return self.get_urls()
 
+    def get_extra_context(self, action):
+        return {}
+
     def add(self, request, mf=None):
         """
         Magic happens here
@@ -649,6 +652,8 @@ class BaseFreeAdmin(object):
                 'edit',
             ),
         })
+
+        context.update(self.get_extra_context('edit'))
 
         template = "%s/%s_edit.html" % (
             m._meta.app_label,
