@@ -65,8 +65,6 @@ if is_truenas ; then
 	customize_cmd add_truenas_gui
 fi
 
-customize_cmd add_warden_hooks
-
 customize_cmd move_data
 
 customize_cmd add_data_to_fstab
