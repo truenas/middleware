@@ -33,6 +33,7 @@ import urllib
 from django import forms as dforms
 from django.conf.urls import patterns, url
 from django.core.urlresolvers import reverse
+from django.db.models.fields.related import ForeignKey
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import TemplateDoesNotExist
@@ -247,6 +248,9 @@ class BaseFreeAdmin(object):
     def urls(self):
         return self.get_urls()
 
+    def get_extra_context(self, action):
+        return {}
+
     def add(self, request, mf=None):
         """
         Magic happens here
@@ -307,7 +311,7 @@ class BaseFreeAdmin(object):
                     extrakw = {
                         'can_delete': False
                     }
-                    fset = inlineformset_factory(
+                    fset_fac = inlineformset_factory(
                         m,
                         inline._meta.model,
                         form=inline,
@@ -318,18 +322,22 @@ class BaseFreeAdmin(object):
                         fsname = 'formset_%s' % (
                             inline._meta.model._meta.model_name,
                         )
-                        formsets[fsname] = fset(
+                        fset = fset_fac(
                             request.POST,
                             prefix=prefix,
                             parent=mf,
                             instance=instance)
+                        formsets[fsname] = {
+                            'instance': fset,
+                            'position': inlineopts.get('position', 'bottom')
+                        }
                     except dforms.ValidationError:
                         pass
 
-            for name, fs in formsets.items():
-                for frm in fs.forms:
+            for name, fsinfo in formsets.items():
+                for frm in fsinfo['instance'].forms:
                     valid &= frm.is_valid()
-                valid &= fs.is_valid()
+                valid &= fsinfo['instance'].is_valid()
 
             valid &= mf.is_valid(formsets=formsets)
 
@@ -347,8 +355,8 @@ class BaseFreeAdmin(object):
                         )
                 try:
                     mf.save()
-                    for name, fs in formsets.items():
-                        fs.save()
+                    for name, fsinfo in formsets.items():
+                        fsinfo['instance'].save()
                     events = []
                     if hasattr(mf, "done") and callable(mf.done):
                         mf.done(request=request, events=events)
@@ -392,7 +400,7 @@ class BaseFreeAdmin(object):
                         [inline],
                         -1)
                     inline = getattr(_temp, inline)
-                    fset = inlineformset_factory(
+                    fset_fac = inlineformset_factory(
                         m,
                         inline._meta.model,
                         form=inline,
@@ -402,12 +410,16 @@ class BaseFreeAdmin(object):
                     fsname = 'formset_%s' % (
                         inline._meta.model._meta.model_name,
                     )
-                    formsets[fsname] = fset(
+                    fset = fset_fac(
                         prefix=prefix, instance=instance, parent=mf
                     )
-                    formsets[fsname].verbose_name = (
+                    fset.verbose_name = (
                         inline._meta.model._meta.verbose_name
                     )
+                    formsets[fsname] = {
+                        'instance': fset,
+                        'position': inlineopts.get('position', 'bottom'),
+                    }
 
         context.update({
             'form': mf,
@@ -484,7 +496,7 @@ class BaseFreeAdmin(object):
                     extrakw = {
                         'can_delete': True,
                     }
-                    fset = inlineformset_factory(
+                    fset_fac = inlineformset_factory(
                         m,
                         inline._meta.model,
                         form=inline,
@@ -495,18 +507,22 @@ class BaseFreeAdmin(object):
                         fsname = 'formset_%s' % (
                             inline._meta.model._meta.model_name,
                         )
-                        formsets[fsname] = fset(
+                        fset = fset_fac(
                             request.POST,
                             prefix=prefix,
                             parent=mf,
                             instance=instance)
+                        formsets[fsname] = {
+                            'instance': fset,
+                            'position': inlineopts.get('position', 'bottom'),
+                        }
                     except dforms.ValidationError:
                         pass
 
-            for name, fs in formsets.items():
-                for frm in fs.forms:
+            for name, fsinfo in formsets.items():
+                for frm in fsinfo['instance'].forms:
                     valid &= frm.is_valid()
-                valid &= fs.is_valid()
+                valid &= fsinfo['instance'].is_valid()
 
             valid &= mf.is_valid(formsets=formsets)
 
@@ -524,8 +540,8 @@ class BaseFreeAdmin(object):
                         )
                 try:
                     mf.save()
-                    for name, fs in formsets.items():
-                        fs.save()
+                    for name, fsinfo in formsets.items():
+                        fsinfo['instance'].save()
                     events = []
                     if hasattr(mf, "done") and callable(mf.done):
                         mf.done(request=request, events=events)
@@ -581,22 +597,44 @@ class BaseFreeAdmin(object):
                         [inline],
                         -1)
                     inline = getattr(_temp, inline)
-                    fset = inlineformset_factory(
+
+                    """
+                    Do not add any extra empty form for the inline formset
+                    in case there is already any item in the relationship
+                    """
+                    extra = 1
+                    fk_name = None
+                    for field in inline._meta.model._meta.fields:
+                        if isinstance(field, ForeignKey) and m is field.rel.to:
+                            fk_name = field.name
+                            break
+                    if fk_name:
+                        qs = inline._meta.model.objects.filter(
+                            **{'%s__id' % fk_name: instance.id}
+                        )
+                        if qs.count() > 0:
+                            extra = 0
+
+                    fset_fac = inlineformset_factory(
                         m,
                         inline._meta.model,
                         form=inline,
                         formset=FreeBaseInlineFormSet,
-                        extra=1,
+                        extra=extra,
                         **extrakw)
                     fsname = 'formset_%s' % (
                         inline._meta.model._meta.model_name,
                     )
-                    formsets[fsname] = fset(
+                    fset = fset_fac(
                         prefix=prefix, instance=instance, parent=mf,
                     )
-                    formsets[fsname].verbose_name = (
+                    fset.verbose_name = (
                         inline._meta.model._meta.verbose_name
                     )
+                    formsets[fsname] = {
+                        'instance': fset,
+                        'position': inlineopts.get('position', 'bottom'),
+                    }
 
         context.update({
             'form': mf,
@@ -614,6 +652,8 @@ class BaseFreeAdmin(object):
                 'edit',
             ),
         })
+
+        context.update(self.get_extra_context('edit'))
 
         template = "%s/%s_edit.html" % (
             m._meta.app_label,

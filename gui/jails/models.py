@@ -529,12 +529,6 @@ class JailMountPoint(Model):
         default=False,
         verbose_name=_("Read-Only"),
     )
-    fstype = models.CharField(
-        max_length=300,
-        verbose_name=_("Filesystem"),
-        choices=choices.JAILMOUNTPOINT_CHOICES,
-        default='nullfs'
-    )
 
     class Meta:
         verbose_name = _(u"Storage")
@@ -564,7 +558,7 @@ class JailMountPoint(Model):
         mount(
             self.source,
             self.destination_jail,
-            fstype=self.fstype,
+            fstype="nullfs",
             mntopts=mntopts,
         )
         return self.mounted

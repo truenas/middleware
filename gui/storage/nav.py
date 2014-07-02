@@ -32,13 +32,10 @@ class ViewScrub(TreeNode):
 
 class ViewSnap(TreeNode):
 
-    gname = 'View'
-    name = _(u'View Snapshots')
+    gname = 'Snapshots.View'
+    name = _(u'ZFS Snapshots')
     type = 'openstorage'
     icon = u'ViewAllPeriodicSnapIcon'
-    app_name = 'storage'
-    model = 'Task'
-    skip = True
 
 
 class AddVolume(TreeNode):

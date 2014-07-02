@@ -1,19 +1,5 @@
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_storage">
 
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Active Volumes"|force_escape|force_escape %}'
-  {% if focused_tab == "storage.Volumes.View" %}, selected:true{% endif %},
-  doLayout:false,
-  href: '{% url "freeadmin_storage_volume_datagrid" %}',
-  refreshOnShow: true" class="objrefresh" tab="storage.Volumes.View" id="tab_Volumes">
-  </div>
-
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Snapshots"|force_escape|force_escape %}'
-  {% if focused_tab == "storage.Snapshots.View" %}, selected: true{% endif %},
-  doLayout: true,
-  href: '{% url "storage_snapshots" %}',
-  refreshOnShow: true" class="objrefresh data_storage_Task" tab="storage.Snapshots.View" id="tab_Snapshots">
-  </div>
-
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Periodic Snapshot Tasks"|force_escape|force_escape %}'
   {% if focused_tab == "storage.Task.View" %}, selected: true{% endif %},
   doLayout: false,
@@ -21,11 +7,18 @@
   refreshOnShow: true" class="objrefresh data_storage_Task" tab="storage.Task.View" id="tab_Task">
   </div>
 
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Replication"|force_escape|force_escape %}'
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Replication Tasks"|escapejs %}'
   {% if focused_tab == "storage.Replication.View" %}, selected: true{% endif %},
   doLayout: false,
   href: '{% url "freeadmin_storage_replication_datagrid" %}',
   refreshOnShow: true" class="objrefresh data_storage_Replication" tab="storage.Replication.View" id="tab_Replication">
+  </div>
+
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Volumes"|force_escape|force_escape %}'
+  {% if focused_tab == "storage.Volumes.View" %}, selected:true{% endif %},
+  doLayout:false,
+  href: '{% url "freeadmin_storage_volume_datagrid" %}',
+  refreshOnShow: true" class="objrefresh" tab="storage.Volumes.View" id="tab_Volumes">
   </div>
 
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Scrubs"|escapejs %}'
@@ -33,6 +26,13 @@
   doLayout: false,
   href: '{% url "freeadmin_storage_scrub_datagrid" %}',
   refreshOnShow: true" class="objrefresh data_storage_Scrub" tab="storage.Scrub.View" id="tab_Scrub">
+  </div>
+
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Snapshots"|force_escape|force_escape %}'
+  {% if focused_tab == "storage.Snapshots.View" %}, selected: true{% endif %},
+  doLayout: true,
+  href: '{% url "storage_snapshots" %}',
+  refreshOnShow: true" class="objrefresh data_storage_Task" tab="storage.Snapshots.View" id="tab_Snapshots">
   </div>
 
 {% for tab in hook_tabs %}

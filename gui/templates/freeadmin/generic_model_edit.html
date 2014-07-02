@@ -15,41 +15,15 @@ this.submitForm(this, e);
 {% endblock %}
 {% if inline and saved %}<span class="saved">{% trans "Your changes have been successfully updated!" %}</span>{% endif %}
 <table class="form">
+    {% block formset_top %}
+    {% include "freeadmin/generic_model_inline.html" with position='top' %}
+    {% endblock %}
     {% block form %}
     {% csrf_token %}
     {% admin_form form %}
     {% endblock %}
-    {% block formset %}
-    <tr><td colspan="2">
-    {% for name, formset in formsets.items %}
-    <tr>
-        <td colspan="2">
-            <table>
-                {{ formset.management_form }}
-                <tr>
-                    <td colspan="2">
-                    {{ formset.verbose_name }}
-		    <input data-dojo-type="dijit.form.TextBox" type="hidden" name="{{ name }}-__all__" />
-                    </td>
-                </tr>
-                {% for form in formset %}
-                <tr>
-                    <td colspan="2">
-                        <table>
-                            {% admin_form form %}
-                        </table>
-                    </td>
-                </tr>
-                {% endfor %}
-                <tr>
-                    <td colspan="2">
-                    <a href="javascript:void(0);" onClick="add_formset(this, '{{ model.get_empty_formset_url }}', '{{ formset.prefix|escapejs }}');">{% trans "Add extra" %} {{ formset.verbose_name }}</a>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    {% endfor %}
+    {% block formset_bottom %}
+    {% include "freeadmin/generic_model_inline.html" with position='bottom' %}
     {% endblock %}
     {% block buttons %}
     <tr>

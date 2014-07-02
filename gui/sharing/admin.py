@@ -48,8 +48,6 @@ class CIFSShareFAdmin(BaseFreeAdmin):
         'cifs_auxsmbconf',
         'cifs_browsable',
         'cifs_comment',
-        'cifs_default_permissions',
-        'cifs_guestok',
         'cifs_guestonly',
         'cifs_hostsallow',
         'cifs_hostsdeny',
@@ -77,10 +75,15 @@ class NFSShareFAdmin(BaseFreeAdmin):
     inlines = [
         {
             'form': 'NFS_SharePathForm',
-            'prefix': 'path_set'
+            'prefix': 'path_set',
+            'position': 'top',
         },
     ]
     resource_mixin = NFSShareResourceMixin
+    advanced_fields = (
+        'nfs_ro',
+        'nfs_quiet',
+    )
     fields = (
         'nfs_paths',
         'nfs_comment',

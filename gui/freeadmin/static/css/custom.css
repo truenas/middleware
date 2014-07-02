@@ -357,8 +357,8 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.SSLIcon {
-    background-image:url('/static/images/ui/tree/ssl.png');
+.TasksIcon {
+    background-image:url('/static/images/ui/tree/tasks.png');
     width:16px;
     height:16px;
 }
@@ -919,21 +919,6 @@ table.grid tr {
 }
 .ViewNTPServerIcon {
     background-image:url('/static/images/ui/tree/view_ntp_servers.png');
-    width:16px;
-    height:16px;
-}
-.SysctlIcon {
-    background-image:url('/static/images/ui/tree/16x16_sysctls.png');
-    width:16px;
-    height:16px;
-}
-.AddSysctlIcon {
-    background-image:url('/static/images/ui/tree/16x16_add_sysctls.png');
-    width:16px;
-    height:16px;
-}
-.ViewSysctlIcon {
-    background-image:url('/static/images/ui/tree/16x16_view_sysctls.png');
     width:16px;
     height:16px;
 }

@@ -995,41 +995,8 @@ SYSCTL_TUNABLE_VARNAME_FORMAT = """Variable names must:
 SYSCTL_VARNAME_FORMAT_RE = \
     re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
-TUNABLE_VARNAME_FORMAT_RE = \
+LOADER_VARNAME_FORMAT_RE = \
     re.compile('[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
-
-
-class SysctlForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = models.Sysctl
-
-    def clean_sysctl_comment(self):
-        return self.cleaned_data.get('sysctl_comment').strip()
-
-    def clean_sysctl_mib(self):
-        value = self.cleaned_data.get('sysctl_mib').strip()
-        qs = models.Sysctl.objects.filter(sysctl_mib=value)
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            raise forms.ValidationError(_(
-                'This variable already exists'
-            ))
-        if SYSCTL_VARNAME_FORMAT_RE.match(value):
-            return value
-        raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
-
-    def clean_sysctl_value(self):
-        value = self.cleaned_data.get('sysctl_value')
-        if '"' in value or "'" in value:
-            raise forms.ValidationError(_('Quotes are not allowed'))
-        return value
-
-    def save(self):
-        super(SysctlForm, self).save()
-        notifier().reload("sysctl")
 
 
 class TunableForm(ModelForm):
@@ -1038,24 +1005,49 @@ class TunableForm(ModelForm):
         fields = '__all__'
         model = models.Tunable
 
-    def clean_ldr_comment(self):
-        return self.cleaned_data.get('ldr_comment').strip()
+    def clean_tun_comment(self):
+        return self.cleaned_data.get('tun_comment').strip()
 
-    def clean_ldr_value(self):
-        value = self.cleaned_data.get('ldr_value')
+    def clean_tun_value(self):
+        value = self.cleaned_data.get('tun_value')
         if '"' in value or "'" in value:
             raise forms.ValidationError(_('Quotes are not allowed'))
         return value
 
-    def clean_ldr_var(self):
-        value = self.cleaned_data.get('ldr_var').strip()
-        if TUNABLE_VARNAME_FORMAT_RE.match(value):
-            return value
-        raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
+    def clean_tun_var(self):
+        value = self.cleaned_data.get('tun_var').strip()
+        qs = models.Tunable.objects.filter(tun_var=value)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_(
+                'This variable already exists'
+            ))
+        return value
+
+    def clean(self):
+        cdata = self.cleaned_data
+        value = cdata.get('tun_value')
+        if value:
+            if (
+                cdata.get('tun_type') == 'loader' and
+                not LOADER_VARNAME_FORMAT_RE.match(value)
+            ) or (
+                cdata.get('tun_type') == 'sysctl' and
+                not SYSCTL_VARNAME_FORMAT_RE.match(value)
+            ):
+                self.errors['tun_var'] = self.error_class(
+                    [_(SYSCTL_TUNABLE_VARNAME_FORMAT)]
+                )
+                cdata.pop('tun_var', None)
+        return cdata
 
     def save(self):
         super(TunableForm, self).save()
-        notifier().reload("loader")
+        if self.cleaned_data.get('tun_type') == 'loader':
+            notifier().reload("loader")
+        else:
+            notifier().reload("sysctl")
 
 
 class InitShutdownForm(ModelForm):
