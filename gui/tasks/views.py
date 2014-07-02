@@ -24,11 +24,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.conf.urls import patterns
+from django.shortcuts import render
 
 
-urlpatterns = patterns(
-    'freenasUI.tasks.views',
-    url(r'^$', 'home', name="tasks_home"),
-)
-
+def home(request):
+    return render(request, 'tasks/index.html', {
+        'tab': request.GET.get('tab', 'tasks.CronJob'),
+    })
