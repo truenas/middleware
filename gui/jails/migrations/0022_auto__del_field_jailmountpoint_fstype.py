@@ -8,20 +8,20 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting field 'JailMountPoint.fstype'
-        db.delete_column(u'jails_jailmountpoint', 'fstype')
+        # Deleting field 'NullMountPoint.fstype'
+        db.delete_column(u'jails_nullmountpoint', 'fstype')
 
 
     def backwards(self, orm):
-        # Adding field 'JailMountPoint.fstype'
-        db.add_column(u'jails_jailmountpoint', 'fstype',
+        # Adding field 'NullMountPoint.fstype'
+        db.add_column(u'jails_nullmountpoint', 'fstype',
                       self.gf('django.db.models.fields.CharField')(default='nullfs', max_length=300),
                       keep_default=False)
 
 
     models = {
-        u'jails.jailmountpoint': {
-            'Meta': {'object_name': 'JailMountPoint'},
+        u'jails.nullmountpoint': {
+            'Meta': {'object_name': 'NullMountPoint'},
             'destination': ('django.db.models.fields.CharField', [], {'max_length': '300'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'jail': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
