@@ -14,11 +14,9 @@
 
 
 
-*FreeNAS® is © 2011-*
-*2*
-*014 iXsystems *
+*FreeNAS® is © 2011-2014 iXsystems
 
-*FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems. *
+FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 
 *FreeBSD is a registered trademark of the FreeBSD Foundation*
 
@@ -47,22 +45,20 @@ Preface
 
 Written by users of the FreeNAS® network-attached storage operating system.
 
-Version 9.2.2
+Version 9.3
 
 Published
-February 7, 2014
+XX, 2014
 
 Copyright © 2011-2014
 `iXsystems <http://www.ixsystems.com/>`_
 .
 
-This Guide covers the installation and use of FreeNAS® 9.2.2.
-If you are running a version of FreeNAS® that is earlier than FreeNAS® 9.2.2, it is recommended that you upgrade to or install FreeNAS® 9.2.2.
-This version fixes many bugs from previous versions and several features mentioned in this Guide were not available in earlier versions of FreeNAS®.
+This Guide covers the installation and use of FreeNAS® 9.3.
 
 The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide, visit
-`doc.freenas.org <http://doc.freenas.org/>`_
-and create a wiki login account. If you use IRC Freenode, you are welcome to join the #freenas channel where you will find other FreeNAS® users.
+read the instructions in the `https://github.com/freenas/freenas/blob/master/docs/userguide/README <README>`._
+If you use IRC Freenode, you are welcome to join the #freenas channel where you will find other FreeNAS® users.
 
 The FreeNAS® Users Guide is freely available for sharing and redistribution under the terms of the
 `Creative Commons Attribution License <http://creativecommons.org/licenses/by/3.0/>`_
