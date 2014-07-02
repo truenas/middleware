@@ -1061,6 +1061,7 @@ class InitShutdown(Model):
         icon_object = u"TunableIcon"
         icon_add = u"AddTunableIcon"
         icon_view = u"ViewTunableIcon"
+        menu_child_of = 'tasks'
 
 
 class Registration(Model):

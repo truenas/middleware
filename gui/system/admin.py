@@ -51,6 +51,7 @@ class CronJobFAdmin(BaseFreeAdmin):
         'cron_minute',
         'cron_month',
     )
+    menu_child_of = 'tasks'
     resource_mixin = CronJobResourceMixin
 
     def get_actions(self):
@@ -98,6 +99,7 @@ class RsyncFAdmin(BaseFreeAdmin):
         'rsync_preserveattr',
         'rsync_extra',
     )
+    menu_child_of = 'tasks'
     resource_mixin = RsyncResourceMixin
 
     def get_actions(self):
@@ -134,6 +136,7 @@ class SMARTTestFAdmin(BaseFreeAdmin):
         'smarttest_hour',
         'smarttest_month',
     )
+    menu_child_of = 'tasks'
     resource_mixin = SMARTTestResourceMixin
 
     def get_datagrid_columns(self):
