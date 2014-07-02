@@ -357,11 +357,6 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.SSLIcon {
-    background-image:url('/static/images/ui/tree/ssl.png');
-    width:16px;
-    height:16px;
-}
 .TasksIcon {
     background-image:url('/static/images/ui/tree/tasks.png');
     width:16px;
