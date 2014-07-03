@@ -15,52 +15,89 @@ define([
         constructor: function(/*Object*/ kwArgs){
             lang.mixin(this, kwArgs);
         },
-        openSystem: function(gname) {
+        openSystem: function(tab) {
             var opened = false;
-            var opened2 = false;
-            var opened3 = false;
             var p = registry.byId("content");
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-              if(c[i].id == 'systemTab_Settings'){
+              if(c[i].tab == 'system'){
                 p.selectChild(c[i]);
                 opened = c[i];
-              } else if(c[i].id == 'systemTab_SysInfo'){
-                p.selectChild(c[i]);
-                opened2 = c[i];
+                if(tab) {
+                    var tabnet = registry.byId("tab_systemsettings");
+                    if(tabnet) {
+                        var c2 = tabnet.getChildren();
+                        for(var j=0; j<c2.length; j++){
+                            if(c2[j].domNode.getAttribute("tab") == tab)
+                                tabnet.selectChild(c2[j]);
+                        }
+                    }
+                } else {
+                    c[i].refresh();
+                }
+              } else {
+                p.removeChild(c[i]);
+                c[i].destroy();
               }
             }
 
-            if(gname == 'system.Settings') {
-              if(opened) p.selectChild(opened);
-              opened2 = true;
-            } else if(gname == 'system.SysInfo') {
-              if(opened2) p.selectChild(opened2);
-              opened = true;
-            }
-
             if(opened == false) {
+                openurl = this.urlSystem;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
                 var pane = new ContentPane({
-                    id: 'systemTab_Settings',
-                    title: gettext('Settings'),
-                    closable: true,
-                    href: this.urlSettings,
+                    title: gettext('System'),
+                    closable: false,
+                    href: openurl
                 });
+                pane.tab = 'system';
                 p.addChild(pane);
                 p.selectChild(pane);
             }
 
-            if(opened2 == false) {
-                var pane2 = new ContentPane({
-                    id: 'systemTab_SysInfo',
-                    title: gettext('System Information'),
-                    refreshOnShow: true,
-                    closable: true,
-                    href: this.urlInfo,
+        },
+        openTasks: function(tab) {
+            var opened = false;
+            var p = registry.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+              if(c[i].tab == 'tasks'){
+                p.selectChild(c[i]);
+                opened = c[i];
+                if(tab) {
+                    var tabnet = registry.byId("tab_tasks");
+                    if(tabnet) {
+                        var c2 = tabnet.getChildren();
+                        for(var j=0; j<c2.length; j++){
+                            if(c2[j].domNode.getAttribute("tab") == tab)
+                                tabnet.selectChild(c2[j]);
+                        }
+                    }
+                } else {
+                    c[i].refresh();
+                }
+              } else {
+                p.removeChild(c[i]);
+                c[i].destroy();
+              }
+            }
+
+            if(opened == false) {
+                openurl = this.urlTasks;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
+                var pane = new ContentPane({
+                    title: gettext('Tasks'),
+                    closable: false,
+                    href: openurl
                 });
-                p.addChild(pane2);
-                p.selectChild(pane2);
+                pane.tab = 'tasks';
+                p.addChild(pane);
+                p.selectChild(pane);
             }
 
         },
@@ -82,10 +119,16 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
 
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
+
             if(opened != true) {
                 openurl = this.urlNetwork;
                 if(tab) {
@@ -93,8 +136,8 @@ define([
                 }
 
                 var pane = new ContentPane({
-                    title: gettext('Network Settings'),
-                    closable: true,
+                    title: gettext('Network'),
+                    closable: false,
                     //refreshOnShow: true,
                     href: openurl,
                 });
@@ -122,7 +165,12 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -131,8 +179,8 @@ define([
                     openurl += '?tab='+tab;
                 }
                 var pane = new ContentPane({
-                    title: gettext('Shares'),
-                    closable: true,
+                    title: gettext('Sharing'),
+                    closable: false,
                     //refreshOnShow: true,
                     href: openurl,
                 });
@@ -159,14 +207,18 @@ define([
                 if(c[i].tab == 'services'){
                     c[i].href = href;
                     p.selectChild(c[i]);
+                    c[i].refresh();
                     opened = true;
                     if(onload) lang.hitch(this, onload)();
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
                 var pane = new ContentPane({
                     title: gettext('Services'),
-                    closable: true,
+                    closable: false,
                     href: href,
                     onLoad: function() {
                       onload();
@@ -201,7 +253,12 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -211,7 +268,7 @@ define([
                 }
                 var pane = new ContentPane({
                     title: gettext('Jails'),
-                    closable: true,
+                    closable: false,
                     href:openurl,
                     refreshOnShow: true
                 });
@@ -240,7 +297,12 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -250,7 +312,7 @@ define([
                 }
                 var pane = new ContentPane({
                     title: gettext('Plugins'),
-                    closable: true,
+                    closable: false,
                     href: openurl,
                     refreshOnShow: true
                 });
@@ -279,8 +341,13 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
 
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -290,7 +357,7 @@ define([
                 }
                 var pane = new ContentPane({
                     title: gettext('Account'),
-                    closable: true,
+                    closable: false,
                     href:openurl,
                 });
                 pane.tab = 'account';
@@ -319,7 +386,12 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -329,8 +401,8 @@ define([
                 }
                 var pane = new ContentPane({
                     title: gettext('Storage'),
-                    closable: true,
-                    href:openurl,
+                    closable: false,
+                    href: openurl,
                 });
                 pane.tab = 'storage';
                 p.addChild(pane);
@@ -358,8 +430,13 @@ define([
                                     tabnet.selectChild(c2[j]);
                             }
                         }
+                    } else {
+                        c[i].refresh();
                     }
 
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
                 }
             }
             if(opened != true) {
@@ -370,7 +447,7 @@ define([
 
                 var pane = new ContentPane({
                     title: 'iSCSI',
-                    closable: true,
+                    closable: false,
                     //refreshOnShow: true,
                     href: openurl,
                 });

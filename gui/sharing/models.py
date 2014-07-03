@@ -33,6 +33,9 @@ from freenasUI.middleware.notifier import notifier
 
 
 class CIFS_Share(Model):
+    cifs_path = PathField(
+        verbose_name=_("Path")
+    )
     cifs_name = models.CharField(
             max_length=120,
             verbose_name=_("Name")
@@ -42,8 +45,6 @@ class CIFS_Share(Model):
             verbose_name=_("Comment"),
             blank=True,
             )
-    cifs_path = PathField(
-            verbose_name=_("Path"))
     cifs_default_permissions = models.BooleanField(
         verbose_name=_('Apply Default Permissions'),
         help_text=_('Recursively set sane default windows permissions on share'),
@@ -113,6 +114,9 @@ class CIFS_Share(Model):
 
 
 class AFP_Share(Model):
+    afp_path = PathField(
+        verbose_name=_("Path"),
+    )
     afp_name = models.CharField(
             max_length=120,
             verbose_name=_("Name"),
@@ -123,8 +127,6 @@ class AFP_Share(Model):
             verbose_name=_("Share Comment"),
             blank=True
             )
-    afp_path = PathField(
-            verbose_name=_("Path"))
     afp_allow = models.CharField(
             max_length=120,
             verbose_name=_("Allow List"),

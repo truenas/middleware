@@ -805,7 +805,6 @@ AD_show_config()
 	printf "ad_basedn:       %s\n" $(AD_get ad_basedn)
 	printf "ad_bindname:     %s\n" $(AD_get ad_bindname)
 	printf "ad_bindpw:       %s\n" $(AD_get ad_bindpw)
-	printf "ad_workgroup:    %s\n" $(AD_get ad_workgroup)
 	printf "ad_netbiosname:  %s\n" $(AD_get ad_netbiosname)
 	printf "ad_gchost:       %s\n" $(AD_get ad_gchost)
 	printf "ad_gcport:       %d\n" $(AD_get ad_gcport)
@@ -821,6 +820,7 @@ AD_show_config()
 	printf "ad_dns_timeout:  %s\n" $(AD_get ad_dns_timeout)
 	printf "ad_use_keytab:   %s\n" $(AD_get ad_use_keytab)
 	printf "ad_keytab:       %s\n" $(AD_get ad_keytab)
+	printf "ad_ssl:          %s\n" $(AD_get ad_ssl)
 	printf "+------------------------------------------+\n"
 }
 
@@ -936,7 +936,6 @@ AD_load_database_values()
 		ad_domainname,
 		ad_bindname,
 		ad_bindpw,
-		ad_workgroup,
 		ad_netbiosname,
 		ad_verbose_logging,
 		ad_unix_extensions,
@@ -949,7 +948,8 @@ AD_load_database_values()
 		ad_krbname,
 		ad_kpwdname,
 		ad_timeout,
-		ad_dns_timeout
+		ad_dns_timeout,
+		ad_ssl
  
 	FROM
 		services_activedirectory
@@ -996,6 +996,7 @@ AD_generate_config()
 		ad_kpwdport \
 		ad_timeout \
 		ad_dns_timeout \
+		ad_ssl \
 	"
 
 	: > "${AD_CONFIG_FILE}"
@@ -1095,11 +1096,12 @@ AD_init()
 		AD_set ad_krbname "${krbname}"
 	fi
 
-	krbsvc="$(echo "${krbname}"|cut -f1 -d/ -s)"
-	if [ -n "${krbsvc}" ]
-	then
-		AD_set ad_krbsvc "${krbsvc}"
-	fi
+#	XXX What is this for???	XXX
+#	krbsvc="$(echo "${krbname}"|cut -f1 -d/ -s)"
+#	if [ -n "${krbsvc}" ]
+#	then
+#		AD_set ad_krbsvc "${krbsvc}"
+#	fi
 
 	krbhost="$(echo "${krbname}"|cut -f1 -d:)"
 	krbport="$(echo "${krbname}"|cut -f2 -d: -s)"

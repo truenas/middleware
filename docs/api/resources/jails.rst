@@ -329,7 +329,7 @@ Delete resource
 MountPoints
 -----------
 
-The MountPoints resource represents filesystem mounts to jails.
+The MountPoints resource represents filesystem mounts (nullfs) to jails.
 
 List resource
 +++++++++++++
@@ -357,7 +357,6 @@ List resource
         {
           "id": 1,
           "destination": "/mnt",
-          "fstype": "nullfs",
           "jail": "transmission_1",
           "mounted": true,
           "readonly": false,
@@ -387,7 +386,6 @@ Create resource
 
         {
           "destination": "/mnt",
-          "fstype": "nullfs",
           "jail": "transmission_1",
           "mounted": true,
           "readonly": false,
@@ -405,7 +403,6 @@ Create resource
         {
           "id": 1,
           "destination": "/mnt",
-          "fstype": "nullfs",
           "jail": "transmission_1",
           "mounted": true,
           "readonly": false,
@@ -415,7 +412,6 @@ Create resource
    :json string jail: name of the jail
    :json string source: path source in the host
    :json string destination: path destination within the jail root
-   :json string fstype: type of the filesystem (nullfs/tmpfs/unionfs)
    :json string mounted: where the path is/should be mounted
    :json string readonly: mount as read-only
    :reqheader Content-Type: the request content type
@@ -451,7 +447,6 @@ Update resource
         {
           "id": 1,
           "destination": "/mnt",
-          "fstype": "nullfs",
           "jail": "transmission_1",
           "mounted": true,
           "readonly": false,
@@ -461,7 +456,6 @@ Update resource
    :json string jail: name of the jail
    :json string source: path source in the host
    :json string destination: path destination within the jail root
-   :json string fstype: type of the filesystem (nullfs/tmpfs/unionfs)
    :json string mounted: where the path is/should be mounted
    :json string readonly: mount as read-only
    :reqheader Content-Type: the request content type

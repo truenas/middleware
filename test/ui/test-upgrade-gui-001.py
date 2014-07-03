@@ -60,10 +60,7 @@ def main(argv):
     browser.find_by_id('id_password').fill(test_config['password'])
     browser.find_by_id('dijit_form_Button_0_label').click()
 
-    # Enable SSH
-    browser.find_by_id('menuBar_System').click()
-    browser.find_by_id('content_tablist_systemTab_Settings').click()
-    browser.find_by_id('dijit_layout_TabContainer_0_tablist_dijit_layout_ContentPane_1').click()
+    browser.find_by_id('tab_systemsettings_tablist_dijit_layout_ContentPane_1').click()
     browser.find_by_id('btn_AdvancedForm_FwUpdate_label').click()
     browser.find_by_id('btn_FirmwareTemporaryLocationForm_Ok_label').click()
 
@@ -73,8 +70,18 @@ def main(argv):
     sha256_checksum = get_sha256_checksum_from_file(test_config['upgrade_file'] + ".sha256.txt") 
     e.fill(sha256_checksum)
 
-    browser.find_by_id('btn_FirmwareUploadForm_Ok_label').click()
+    quit = False
 
+    while quit == False:
+        try:
+            if browser.is_text_present("System is rebooting", 20):
+                print "System is rebooting"
+                quit = True
+        except:
+            print "Found exception"
+            quit = True 
+
+    time.sleep(10)
     browser.quit()
 
 if __name__ == "__main__":

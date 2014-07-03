@@ -7,6 +7,7 @@ The following packages from FreeBSD ports must be installed:
   - lang/python27
   - misc/py-pexpect
   - devel/py-pip
+  - x11-servers/xorg-vfbserver
 
 Python packages
 ===============

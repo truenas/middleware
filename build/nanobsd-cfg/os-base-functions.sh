@@ -60,25 +60,6 @@ add_truenas_gui()
 	add_gui_encrypted "$gui" "$dst" "$dstCR"
 }
 
-add_warden_hooks()
-{
-	local wt src dst share hooks
-
-	wt="${AVATAR_ROOT}/build/nanobsd-cfg/Files/etc/ix/templates/warden"
-	src="${AVATAR_ROOT}/src/pcbsd/warden"
-	dst="${NANO_WORLDDIR}/usr/local"
-	share="${dst}/share/warden"
-	hooks="${share}/scripts/hooks"
-
-	pprint 2 "Adding warden hooks"
-
-	mkdir -p ${share}/bin >/dev/null 2>/dev/null
-	mkdir -p ${hooks} >/dev/null 2>/dev/null
-
-	cp ${wt}/jail-* ${hooks}/
-	chmod 755 ${hooks}/jail-*
-}
-
 # Move the $world/data to the /data partion
 move_data()
 {

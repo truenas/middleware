@@ -762,12 +762,6 @@ SAMBA4_FOREST_LEVEL_CHOICES = (
     ('2008_R2', '2008_R2')
 )
 
-JAILMOUNTPOINT_CHOICES = (
-    ('nullfs', 'nullfs'),
-    ('tmpfs', 'tmpfs'),
-    ('unionfs', 'unionfs')
-)
-
 SHARE_TYPE_CHOICES = (
     ('unix', 'UNIX'),
     ('windows', 'Windows'),
@@ -788,3 +782,9 @@ class SERIAL_CHOICES(object):
             ports = ['0x2f8']
         for p in ports:
             yield (p, p)
+
+
+TUNABLE_TYPES = (
+    ('loader', _('Loader')),
+    ('sysctl', _('Sysctl')),
+)

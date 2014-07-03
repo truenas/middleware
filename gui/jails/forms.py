@@ -819,16 +819,12 @@ class JailMountPointForm(ModelForm):
                 _("This shouldn't happen, but the jail could not be found")
             )
 
-        full = "%s/%s%s" % (self.jc.jc_path, self.jail.jail_host, dest)
+        self._full = "%s/%s%s" % (self.jc.jc_path, self.jail.jail_host, dest)
 
-        if len(full) > 88:
+        if len(self._full) > 88:
             raise forms.ValidationError(
                 _("The full path cannot exceed 88 characters")
             )
-
-        create = self.cleaned_data.get('create')
-        if not os.path.exists(full) and create:
-            os.makedirs(full)
 
         return dest
 
@@ -839,9 +835,11 @@ class JailMountPointForm(ModelForm):
 
         super(JailMountPointForm, self).__init__(*args, **kwargs)
 
+        self._full = None
+
         if kwargs and 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
-            if not self.jail:
+            if not self.jail and self.instance.id:
                 self.jail = Jails.objects.filter(
                     jail_host=self.instance.jail
                 )[0]
@@ -855,6 +853,8 @@ class JailMountPointForm(ModelForm):
         if self.jail:
             self.fields['jail'].initial = self.jail.jail_host
             self.fields['jail'].widget.attrs['readonly'] = True
+            jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
+            self.fields['destination'].widget.attrs['root'] = jail_path
 
         try:
             clean_path_execbit(self.jc.jc_path)
@@ -870,12 +870,10 @@ class JailMountPointForm(ModelForm):
         for wj in wlist:
             pjlist.append(wj[WARDEN_KEY_HOST])
 
-        self.fields['jail'].choices = [(pj, pj) for pj in pjlist]
+        self.fields['jail'].choices = [('', '')] + [(pj, pj) for pj in pjlist]
         self.fields['jail'].widget.attrs['onChange'] = (
             'addStorageJailChange(this);'
         )
-        jail_path = "%s/%s" % (self.jc.jc_path, self.jail.jail_host)
-        self.fields['destination'].widget.attrs['root'] = jail_path
 
         self.fields['mpjc_path'].widget = forms.widgets.HiddenInput()
         self.fields['mpjc_path'].initial = self.jc.jc_path
@@ -887,6 +885,10 @@ class JailMountPointForm(ModelForm):
 
     def save(self, *args, **kwargs):
         obj = super(JailMountPointForm, self).save(*args, **kwargs)
+        create = self.cleaned_data.get('create')
+        if self._full and not os.path.exists(self._full) and create:
+            os.makedirs(self._full)
+
         mounted = self.cleaned_data.get("mounted")
         if mounted == obj.mounted:
             return obj
