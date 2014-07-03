@@ -24,25 +24,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.shortcuts import render
+import logging
 
-from freenasUI.directoryservice.models import (
-    ActiveDirectory,
-    LDAP,
-    NIS,
-    NT4,
-)
+from freenasUI.freeadmin.tree import TreeNode
+from django.utils.translation import ugettext_lazy as _
 
-def directoryservice_home(request):
-
-    activedirectory = ActiveDirectory.objects.order_by("-id")[0]
-    ldap = LDAP.objects.order_by("-id")[0]
-    nis = NIS.objects.order_by("-id")[0]
-    nt4 = NT4.objects.order_by("-id")[0]
-
-    return render(request, 'directoryservice/index.html', {
-        'activedirectory': activedirectory,
-        'ldap': ldap, 
-        'nis': nis, 
-        'nt4': nt4
-    })
+NAME = _('Directory Service')
+ICON = u'DirectoryServiceIcon'

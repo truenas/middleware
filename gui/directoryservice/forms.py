@@ -34,14 +34,14 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
+from freenasUI.directoryservice import models
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
 
 log = logging.getLogger('directoryservice.form')
 
 
-class NT4(ModelForm):
+class NT4Form(ModelForm):
     nt4_adminpw2 = forms.CharField(
         max_length=50,
         label=_("Confirm Administrator Password"),
@@ -57,7 +57,7 @@ class NT4(ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(NT4, self).__init__(*args, **kwargs)
+        super(NT4Form, self).__init__(*args, **kwargs)
         if self.instance.nt4_adminpw:
             self.fields['nt4_adminpw'].required = False
         if self._api is True:
@@ -200,16 +200,16 @@ class ActiveDirectoryForm(ModelForm):
         if self.__original_changed():
             notifier()._clear_activedirectory_config()
         started = notifier().started("activedirectory")
-        if started is True and models.services.objects.get(
-            srv_service='directoryservice').srv_enable:
-            started = notifier().restart("activedirectory")
-        if started is False and models.services.objects.get(
-            srv_service='directoryservice').srv_enable:
-            raise ServiceFailed("activedirectory",
-                _("The activedirectory service failed to reload."))
+#        if started is True and models.services.objects.get(
+#            srv_service='directoryservice').srv_enable:
+#            started = notifier().restart("activedirectory")
+#        if started is False and models.services.objects.get(
+#            srv_service='directoryservice').srv_enable:
+#            raise ServiceFailed("activedirectory",
+#                _("The activedirectory service failed to reload."))
 
 
-class NIS(ModelForm):
+class NISForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.NIS
@@ -246,5 +246,5 @@ class LDAPForm(ModelForm):
     def save(self):
         super(LDAPForm, self).save()
         started = notifier().restart("ldap")
-        if started is False and models.services.objects.get(srv_service='directoryservice').srv_enable:
-            raise ServiceFailed("ldap", _("The ldap service failed to reload."))
+#        if started is False and models.services.objects.get(srv_service='directoryservice').srv_enable:
+#            raise ServiceFailed("ldap", _("The ldap service failed to reload."))
