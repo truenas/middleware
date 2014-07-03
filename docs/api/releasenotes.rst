@@ -31,6 +31,7 @@ Fields
  - service Dynamic DNS resource: ddns_ipserver
  - storage Replication resource: repl_compression
  - system Replication resource: repl_compression
+ - system Settings resource: stg_guihttpsredirect
  - directory service Active Directory resource: ad_keytab, ad_use_keytab
 
 
@@ -45,6 +46,7 @@ Backwardly incompatible changes
 * Fields removed
 
  - Active Directory resource: ad_workgroup
+ - Settings resource: stg_directoryservice
 
 * Resources renamed
 
