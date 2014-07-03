@@ -54,7 +54,19 @@ kerberos_start()
 
 			AD_log "kerberos_start: ${ok}"
 			rm -f "${pwfile}"
-			sleep 10
+
+			i=0
+			timeout="$(AD_get ad_timeout)"
+			while [ "${i}" -lt "${timeout}" ]
+			do
+				/usr/bin/klist -t
+				if [ "$?" = "0" ]
+				then
+					break
+				fi
+
+				: $(( i += 1 ))
+			done
 
 		elif [ -n "${bindname}" -a -n "${domainname}" -a -n "${bindpw}" ]
 		then
