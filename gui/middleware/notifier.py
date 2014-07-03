@@ -5007,7 +5007,7 @@ class notifier:
         avoiding code duplication.
         This should be removed once ix-crontab is rewritten in python.
         """
-        from freenasUI.system.models import Rsync
+        from freenasUI.tasks.models import Rsync
         oid = int(obj_or_id)
         rsync = Rsync.objects.get(id=oid)
         return rsync.commandline()
