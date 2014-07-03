@@ -23,8 +23,8 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
-        # Adding field 'NIS.ad_enable'
-        db.add_column(u'directoryservice_nis', 'ad_enable',
+        # Adding field 'NIS.nis_enable'
+        db.add_column(u'directoryservice_nis', 'nis_enable',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
@@ -39,8 +39,8 @@ class Migration(SchemaMigration):
         # Deleting field 'LDAP.ldap_enable'
         db.delete_column(u'directoryservice_ldap', 'ldap_enable')
 
-        # Deleting field 'NIS.ad_enable'
-        db.delete_column(u'directoryservice_nis', 'ad_enable')
+        # Deleting field 'NIS.nis_enable'
+        db.delete_column(u'directoryservice_nis', 'nis_enable')
 
 
     models = {
@@ -85,9 +85,9 @@ class Migration(SchemaMigration):
         },
         u'directoryservice.nis': {
             'Meta': {'object_name': 'NIS'},
-            'ad_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'nis_domain': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'nis_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nis_manycast': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nis_secure_mode': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nis_servers': ('django.db.models.fields.CharField', [], {'max_length': '8192', 'blank': 'True'})
