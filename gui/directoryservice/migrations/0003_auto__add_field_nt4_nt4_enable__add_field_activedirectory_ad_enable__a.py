@@ -10,23 +10,28 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'NT4.nt4_enable'
         db.add_column(u'directoryservice_nt4', 'nt4_enable',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=0),
                       keep_default=False)
+        db.execute("update directoryservice_nt4 set nt4_enable=0")
 
         # Adding field 'ActiveDirectory.ad_enable'
         db.add_column(u'directoryservice_activedirectory', 'ad_enable',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=0),
                       keep_default=False)
+        db.execute("update directoryservice_activedirectory set ad_enable=0")
 
         # Adding field 'LDAP.ldap_enable'
         db.add_column(u'directoryservice_ldap', 'ldap_enable',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=0),
                       keep_default=False)
+        db.execute("update directoryservice_ldap set ldap_enable=0")
 
         # Adding field 'NIS.nis_enable'
         db.add_column(u'directoryservice_nis', 'nis_enable',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=0),
                       keep_default=False)
+        db.execute("update directoryservice_nis set nis_enable=0")
+
 
 
     def backwards(self, orm):
@@ -53,7 +58,7 @@ class Migration(SchemaMigration):
             'ad_dcname': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ad_dns_timeout': ('django.db.models.fields.IntegerField', [], {'default': '10'}),
             'ad_domainname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ad_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'ad_enable': ('django.db.models.fields.BooleanField', [], {'default': '0'}),
             'ad_gcname': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ad_keytab': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'ad_kpwdname': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
@@ -75,7 +80,7 @@ class Migration(SchemaMigration):
             'ldap_binddn': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ldap_bindpw': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ldap_certfile': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'ldap_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'ldap_enable': ('django.db.models.fields.BooleanField', [], {'default': '0'}),
             'ldap_groupsuffix': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ldap_hostname': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ldap_machinesuffix': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
@@ -87,7 +92,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'NIS'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'nis_domain': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'nis_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'nis_enable': ('django.db.models.fields.BooleanField', [], {'default': '0'}),
             'nis_manycast': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nis_secure_mode': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nis_servers': ('django.db.models.fields.CharField', [], {'max_length': '8192', 'blank': 'True'})
@@ -98,7 +103,7 @@ class Migration(SchemaMigration):
             'nt4_adminname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'nt4_adminpw': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'nt4_dcname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'nt4_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'nt4_enable': ('django.db.models.fields.BooleanField', [], {'default': '0'}),
             'nt4_netbiosname': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'nt4_workgroup': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         }

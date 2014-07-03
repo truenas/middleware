@@ -259,7 +259,7 @@ class NIS(Model):
         verbose_name=_("Manycast"),
         help_text=_("Cause ypbind to use 'many-cast' instead of broadcast")
     )
-    ad_enable = models.BooleanField(
+    nis_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False,
     )
