@@ -25,9 +25,35 @@
 #
 #####################################################################
 from django.shortcuts import render
+from django.utils.translation import ugettext as _
+
+from freenasUI.freeadmin.views import JsonResp
+from freenasUI.tasks import models
 
 
 def home(request):
     return render(request, 'tasks/index.html', {
         'tab': request.GET.get('tab', 'tasks.CronJob'),
+    })
+
+
+def cron_run(request, oid):
+    cron = models.CronJob.objects.get(pk=oid)
+    if request.method == "POST":
+        cron.run()
+        return JsonResp(request, message=_("The cron process has started"))
+
+    return render(request, 'system/cron_run.html', {
+        'cron': cron,
+    })
+
+
+def rsync_run(request, oid):
+    rsync = models.Rsync.objects.get(pk=oid)
+    if request.method == "POST":
+        rsync.run()
+        return JsonResp(request, message=_("The rsync process has started"))
+
+    return render(request, 'system/rsync_run.html', {
+        'rsync': rsync,
     })

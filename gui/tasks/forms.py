@@ -9,7 +9,7 @@ from freenasUI import choices
 from freenasUI.common.forms import ModelForm, mchoicefield
 from freenasUI.freeadmin.forms import CronMultiple
 from freenasUI.middleware.notifier import notifier
-from freenasUI.system import models
+from freenasUI.tasks import models
 
 
 class CronJobForm(ModelForm):
