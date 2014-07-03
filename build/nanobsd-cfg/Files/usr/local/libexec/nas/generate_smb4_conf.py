@@ -41,13 +41,15 @@ from freenasUI.common.system import (
 )
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
-    DomainController,
     LDAP,
     NT4
 )
 from freenasUI.middleware.notifier import notifier
 
-from freenasUI.services.models import CIFS
+from freenasUI.services.models import (
+    CIFS,
+    DomainController
+)
 from freenasUI.sharing.models import CIFS_Share
 from freenasUI.storage.models import Task
 
