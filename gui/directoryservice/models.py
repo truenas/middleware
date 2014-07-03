@@ -63,6 +63,11 @@ class NT4(Model):
         verbose_name=_("Administrator Password"),
         help_text=_("Domain Administrator account password.")
     )
+    nt4_enable = models.BooleanField(
+        verbose_name=_("Enable"),
+        default=False,
+    )
+
 
     def __init__(self, *args, **kwargs):
         super(NT4, self).__init__(*args, **kwargs)
@@ -188,6 +193,10 @@ class ActiveDirectory(Model):
         verbose_name=_("DNS timeout"),
         help_text=_("Timeout for AD DNS queries."),
     )
+    ad_enable = models.BooleanField(
+        verbose_name=_("Enable"),
+        default=False,
+    )
 
     def __init__(self, *args, **kwargs):
         super(ActiveDirectory, self).__init__(*args, **kwargs)
@@ -249,6 +258,10 @@ class NIS(Model):
         default=False,
         verbose_name=_("Manycast"),
         help_text=_("Cause ypbind to use 'many-cast' instead of broadcast")
+    )
+    ad_enable = models.BooleanField(
+        verbose_name=_("Enable"),
+        default=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -340,6 +353,10 @@ class LDAP(Model):
         verbose_name=_("SSL Certificate"),
         blank=True,
         help_text=_("Upload your certificate file here.")
+    )
+    ldap_enable = models.BooleanField(
+        verbose_name=_("Enable"),
+        default=False,
     )
 
     def __init__(self, *args, **kwargs):

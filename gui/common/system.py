@@ -321,33 +321,20 @@ def service_enabled(name):
     return enabled
 
 
-def get_directoryservice():
-    directoryservice = None
-
+def ldap_enabled(name):
     db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
     h = sqlite3.connect(db)
     c = h.cursor()
 
-    sql = "select stg_directoryservice from system_settings"
+    enabled = False
+    sql = "select ldap_enable from directoryservice_ldap"
     c.execute(sql)
     row = c.fetchone()
-    if row and row[0]:
-        directoryservice = row[0]
+    if row and row[0] != 0:
+        enabled = True
 
     c.close()
     h.close()
-
-    return directoryservice
-
-
-def ldap_enabled():
-    enabled = False
-
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'ldap'
-    ):
-        enabled = True
 
     return enabled
 
@@ -371,14 +358,20 @@ def ldap_objects():
     return objects
 
 
-def activedirectory_enabled():
-    enabled = False
+def activedirectory_enabled(name):
+    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    h = sqlite3.connect(db)
+    c = h.cursor()
 
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'activedirectory'
-    ):
+    enabled = False
+    sql = "select ad_enable from directoryservice_activedirectory"
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0] != 0:
         enabled = True
+
+    c.close()
+    h.close()
 
     return enabled
 
@@ -426,15 +419,7 @@ def activedirectory_objects():
 
 
 def domaincontroller_enabled():
-    enabled = False
-
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'domaincontroller'
-    ):
-        enabled = True
-
-    return enabled
+    return service_enabled('domaincontroller')
 
 
 def domaincontroller_objects():
@@ -456,14 +441,20 @@ def domaincontroller_objects():
     return objects
 
 
-def nt4_enabled():
-    enabled = False
+def nt4_enabled(name):
+    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    h = sqlite3.connect(db)
+    c = h.cursor()
 
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'nt4'
-    ):
+    enabled = False
+    sql = "select nt4_enable from directoryservice_nt4"
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0] != 0:
         enabled = True
+
+    c.close()
+    h.close()
 
     return enabled
 
@@ -487,14 +478,20 @@ def nt4_objects():
     return objects
 
 
-def nis_enabled():
-    enabled = False
+def nis_enabled(name):
+    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    h = sqlite3.connect(db)
+    c = h.cursor()
 
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'nis'
-    ):
+    enabled = False
+    sql = "select nis_enable from directoryservice_nis"
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0] != 0:
         enabled = True
+
+    c.close()
+    h.close()
 
     return enabled
 

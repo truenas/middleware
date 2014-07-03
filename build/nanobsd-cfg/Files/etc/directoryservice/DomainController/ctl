@@ -27,12 +27,6 @@ cifs_enabled()
 	return 1
 }
 
-dc_enabled()
-{
-	dirsrv_enabled domaincontroller && return 0
-	return 1
-}
-
 cifs_start()
 {
 	dcctl_cmd ${python} ${notifier} start cifs
@@ -86,7 +80,7 @@ dcctl_start()
 		srv_set cifs 1
 	fi
 
-	if dc_enabled
+	if domaincontroller_enabled
 	then
 		dc_started=1
 	else		
@@ -118,7 +112,7 @@ dcctl_stop()
 		prev_cifs_started="$(cat "${cifs_file}")"
 	fi
 
-	if ! dc_enabled
+	if ! domaincontroller_enabled
 	then
 		srv_set directoryservice 1
 	fi

@@ -295,28 +295,18 @@ dirsrv_enabled()
 {
 	local dir="${1}"
 
-	if srv_enabled directoryservice
-	then
-		dirsrv=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
-		SELECT
-			stg_directoryservice
-
-		FROM
-			system_settings
-
-		WHERE
-			stg_directoryservice = '${dir}'
-		")
-
-		if [ -n "${dirsrv}" ]
-		then
-			return 0
-
-		elif [ -z "${dirsrv}" ]
-		then
-			return 1
-		fi
-	fi
+	case "${dir}" in 
+		activedirectory)
+			return activedirectory_enabled ;;
+		domaincontroller)
+			return domaincontroller_enabled ;;
+		ldap)
+			return ldap_enabled ;;
+		nis)
+			return nis_enabled ;;
+		nt4)
+			return nt4_enabled ;;
+	esac
 
 	return 2
 }

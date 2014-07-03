@@ -161,3 +161,24 @@ LDAP_init()
 	LDAP_load_database_values
 }
 
+ldap_enabled()
+{
+	enabled="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		ldap_enable
+	FROM
+		directoryservice_ldap
+	ORDER BY
+		-id
+	LIMIT 1")"
+
+	if [ "${enabled}" = "1" ]
+	then
+		return 0
+	elif [ "${enabled}"  = "0" ]
+	then
+		return 1
+	fi
+
+	return 2
+}

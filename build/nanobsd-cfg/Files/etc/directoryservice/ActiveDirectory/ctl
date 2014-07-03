@@ -21,12 +21,6 @@ adctl_cmd()
 	return 0
 }
 
-ad_enabled()
-{
-	dirsrv_enabled activedirectory && return 0
-	return 1
-}
-
 sssd_running()
 {
 	${service} sssd onestatus >/dev/null 2>&1
@@ -92,7 +86,7 @@ adctl_start()
 		srv_set cifs 1
 	fi
 
-	if ad_enabled
+	if activedirectory_enabled
 	then
 		ad_started=1
 	else		
@@ -154,7 +148,7 @@ adctl_stop()
 		prev_cifs_started="$(cat "${cifs_file}")"
 	fi
 
-	if ! ad_enabled
+	if ! activedirectory_enabled
 	then
 		srv_set directoryservice 1
 	fi

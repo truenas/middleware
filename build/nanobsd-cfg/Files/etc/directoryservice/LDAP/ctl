@@ -21,12 +21,6 @@ ldapctl_cmd()
 	return 0
 }
 
-ldap_enabled()
-{
-	dirsrv_enabled ldap && return 0
-	return 1
-}
-
 sssd_running()
 {
 	${service} sssd onestatus >/dev/null 2>&1

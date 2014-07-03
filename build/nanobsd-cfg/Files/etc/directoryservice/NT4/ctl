@@ -27,12 +27,6 @@ cifs_enabled()
 	return 1
 }
 
-nt4_enabled()
-{
-	dirsrv_enabled nt4 && return 0
-	return 1
-}
-
 cifs_start()
 {
 	nt4ctl_cmd ${python} ${notifier} start cifs

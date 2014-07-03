@@ -1137,3 +1137,25 @@ AD_init()
 	AD_generate_config
 	return 0
 }
+
+activedirectory_enabled()
+{
+	enabled="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		ad_enable
+	FROM
+		directoryservice_activedirectory
+	ORDER BY
+		-id
+	LIMIT 1")"
+
+	if [ "${enabled}" = "1" ]
+	then
+		return 0
+	elif [ "${enabled}"  = "0" ]
+	then
+		return 1
+	fi
+
+	return 2
+}

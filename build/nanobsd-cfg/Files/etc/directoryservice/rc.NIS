@@ -33,3 +33,25 @@
 : ${NIS_PWDSTR:='+:::::::::'}
 : ${NIS_GRPSTR:='+:*::'}
 : ${NIS_HOSTSSTR:='+::'}
+
+nis_enabled()
+{
+	enabled="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		nis_enable
+	FROM
+		directoryservice_nis
+	ORDER BY
+		-id
+	LIMIT 1")"
+
+	if [ "${enabled}" = "1" ]
+	then
+		return 0
+	elif [ "${enabled}"  = "0" ]
+	then
+		return 1
+	fi
+
+	return 2
+}

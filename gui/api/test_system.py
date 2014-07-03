@@ -688,7 +688,6 @@ class SettingsResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, {
             u'id': self._settings.id,
-            u'stg_directoryservice': u'',
             u'stg_guiaddress': u'0.0.0.0',
             u'stg_guihttpsport': 443,
             u'stg_guiport': 80,
