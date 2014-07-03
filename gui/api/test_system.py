@@ -109,7 +109,8 @@ class TunableResourceTest(APITestCase):
             u'tun_comment': u'',
             u'tun_enabled': True,
             u'tun_value': u'YES',
-            u'tun_var': u'xhci_load'
+            u'tun_var': u'xhci_load',
+            u'tun_type': u'loader',
         })
 
     def test_Retrieve(self):
@@ -128,13 +129,15 @@ class TunableResourceTest(APITestCase):
             u'tun_comment': u'',
             u'tun_enabled': True,
             u'tun_value': u'YES',
-            u'tun_var': u'xhci_load'
+            u'tun_var': u'xhci_load',
+            u'tun_type': u'loader',
         }])
 
     def test_Update(self):
         obj = models.Tunable.objects.create(
             tun_var='xhci_load',
             tun_value='YES',
+            tun_type='loader',
             tun_enabled=True
         )
         resp = self.api_client.put(
