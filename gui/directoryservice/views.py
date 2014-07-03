@@ -41,6 +41,7 @@ def directoryservice_home(request):
     nt4 = NT4.objects.order_by("-id")[0]
 
     return render(request, 'directoryservice/index.html', {
+        'focus_form': request.GET.get('tab', 'directoryservice'),
         'activedirectory': activedirectory,
         'ldap': ldap, 
         'nis': nis, 

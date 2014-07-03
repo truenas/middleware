@@ -357,7 +357,7 @@ def ldap_objects():
     h.row_factory = sqlite3.Row
     c = h.cursor()
 
-    results = c.execute("SELECT * FROM services_ldap ORDER BY -id")
+    results = c.execute("SELECT * FROM directoryservice_ldap ORDER BY -id")
 
     objects = []
     for row in results:
@@ -411,7 +411,7 @@ def activedirectory_objects():
     h.row_factory = sqlite3.Row
     c = h.cursor()
 
-    results = c.execute("SELECT * FROM services_activedirectory ORDER BY -id")
+    results = c.execute("SELECT * FROM directoryservice_activedirectory ORDER BY -id")
 
     objects = []
     for row in results:
@@ -473,7 +473,7 @@ def nt4_objects():
     h.row_factory = sqlite3.Row
     c = h.cursor()
 
-    results = c.execute("SELECT * FROM services_nt4 ORDER BY -id")
+    results = c.execute("SELECT * FROM directoryservice_nt4 ORDER BY -id")
 
     objects = []
     for row in results:
@@ -504,7 +504,7 @@ def nis_objects():
     h.row_factory = sqlite3.Row
     c = h.cursor()
 
-    results = c.execute("SELECT * FROM services_nis ORDER BY -id")
+    results = c.execute("SELECT * FROM directoryservice_nis ORDER BY -id")
 
     objects = []
     for row in results:

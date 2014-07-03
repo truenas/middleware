@@ -26,8 +26,62 @@
 #####################################################################
 import logging
 
-from freenasUI.freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
+
+from freenasUI.directoryservice.models import (
+    ActiveDirectory,
+    LDAP,
+    NIS, 
+    NT4
+)
+from freenasUI.freeadmin.tree import TreeNode
+
 
 NAME = _('Directory Service')
 ICON = u'DirectoryServiceIcon'
+BLACKLIST = [
+    'ActiveDirectory',
+    'LDAP',
+    'NIS',
+    'NT4'
+]
+ORDER = 40
+
+class ActiveDirectoryView(TreeNode):
+
+    gname = 'Active Directory'
+    name = _('Active Directory')
+    app_name = 'activedirectory'
+    type = 'opendirectoryservice'
+    icon = u'ActiveDirectoryIcon'
+    append_to = 'directoryservice'
+
+
+class NT4View(TreeNode):
+
+    gname = 'NT4'
+    name = _('NT4')
+    app_name = 'nt4'
+    type = 'opendirectoryservice'
+    icon = u'NT4Icon'
+    append_to = 'directoryservice'
+
+
+class NISView(TreeNode):
+
+    gname = 'NIS'
+    name = _('NIS')
+    app_name = 'nis'
+    type = 'opendirectoryservice'
+    icon = u'NISIcon'
+    append_to = 'directoryservice'
+
+
+class LDAPView(TreeNode):
+
+    gname = 'LDAP'
+    name = _('LDAP')
+    app_name = 'ldap'
+    type = 'opendirectoryservice'
+    icon = u'LDAPIcon'
+    append_to = 'directoryservice'
