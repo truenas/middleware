@@ -276,7 +276,7 @@ def add_activedirectory_conf(smb4_conf):
     ad_workgroup = None
     try:
         fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-        ad_workgroup = fad.upper()
+        ad_workgroup = fad.netbiosname.upper()
     except:
         return
 
