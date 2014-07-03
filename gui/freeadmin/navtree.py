@@ -101,7 +101,8 @@ class NavTree(object):
                 [name],
                 -1)
             return mod
-        except ImportError:
+        except ImportError as ie:
+            log.debug("Unable to import '%s' '%s': %s", where, name, ie)
             return None
 
     def register_option(self, opt, parent, replace=False, evaluate=True):

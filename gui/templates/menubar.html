@@ -72,6 +72,13 @@
     <span>{% trans "Account" %}</span>
   </div>
 
+  <div id="menuBar_DirectoryService" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openDirectoryService();" class="menu_icon right">
+    <img src="{{ STATIC_URL }}images/ui/menu/directoryservice.png" />
+    <br />
+    <span>{% trans "Directory" %}</span>
+    <!-- span>{% trans "Directory Service" %}</span -->
+  </div>
+
   {% else %}
   <div id="menuBar_Login" data-dojo-type="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
     <img src="{{ STATIC_URL }}images/ui/menu/login.png" />

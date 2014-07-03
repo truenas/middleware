@@ -216,3 +216,13 @@ DC_init()
 
 	return 0
 }
+
+domaincontroller_enabled()
+{
+	srv_enabled directoryservice
+}
+
+domaincontroller_set()
+{
+	srv_set domaincontroller "${1}"
+}

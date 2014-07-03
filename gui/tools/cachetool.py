@@ -38,10 +38,34 @@ sys.path.append(FREENASUI_PATH)
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
-from freenasUI.common.freenascache import *
-from freenasUI.common.freenasldap import *
-from freenasUI.common.freenasnt4 import *
-from freenasUI.common.freenasusers import *
+from freenasUI.common.system import (
+    activedirectory_enabled,
+    ldap_enabled,
+    nt4_enabled
+)
+
+from freenasUI.common.freenascache import (
+    FreeNAS_UserCache,
+    FreeNAS_GroupCache,
+    FreeNAS_Directory_UserCache,
+    FreeNAS_Directory_GroupCache,
+    FREENAS_CACHEDIR
+)
+
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FLAGS_DBINIT,
+    FLAGS_CACHE_READ_USER,
+    FLAGS_CACHE_WRITE_USER,
+    FLAGS_CACHE_READ_GROUP,
+    FLAGS_CACHE_WRITE_GROUP
+)
+
+from freenasUI.common.freenasnt4 import FreeNAS_NT4
+from freenasUI.common.freenasusers import (
+    FreeNAS_Users,
+    FreeNAS_Groups
+)
 
 
 def usage(keys):

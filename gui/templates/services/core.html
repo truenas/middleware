@@ -21,19 +21,17 @@
            <img id="cifs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "CIFS Settings"|force_escape|force_escape %}', '{{ cifs.get_edit_url }}');" title="{% trans "CIFS Settings" %}">
        </td>
    </tr>
-   {% if directoryservice %}
    <tr>
        <td>
-           <strong>{% trans "Directory Services" %}</strong>
+           <strong>{% trans "Domain Controller" %}</strong>
        </td>
        <td>
-       <img id="directoryservice_toggle" name="directoryservice_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s in srv %}{% if s.srv_service == "directoryservice" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+       <img id="domaincontroller_toggle" name="domaincontroller_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s in srv %}{% if s.srv_service == "domaincontroller" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="directoryservice_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Directory Service Settings"|force_escape|force_escape %}', '{{ directoryservice.get_edit_url }}');" title="{% trans "Directory Service Settings" %}">
+           <img id="domaincontroller_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Directory Service Settings"|force_escape|force_escape %}', '{{ domaincontroller.get_edit_url }}');" title="{% trans "Domain Controller Settings" %}">
        </td>
    </tr>
-   {% endif %}
   <tr>
        <td>
            <strong>{% trans "Dynamic DNS" %}</strong>

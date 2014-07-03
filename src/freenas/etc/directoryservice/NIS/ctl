@@ -20,7 +20,7 @@ nisctl_cmd()
 
 nisctl_start()
 {
-	srv_set directoryservice 1
+	nis_set 1
 
 	nisctl_cmd ${service} ix-passwd start
         nisctl_cmd ${service} ix-hostname start
@@ -29,7 +29,7 @@ nisctl_start()
 	then
 		nisctl_cmd ${service} ix-passwd start
         	nisctl_cmd ${service} ix-hostname start
-		srv_set directoryservice 0
+		nis_set 0
 		return 1
 	fi
 
@@ -37,7 +37,7 @@ nisctl_start()
 	then
 		nisctl_cmd ${service} ix-passwd start
         	nisctl_cmd ${service} ix-hostname start
-		srv_set directoryservice 0
+		nis_set 0
 		return 1
 	fi
 
@@ -45,7 +45,7 @@ nisctl_start()
 	then
 		nisctl_cmd ${service} ix-passwd start
         	nisctl_cmd ${service} ix-hostname start
-		srv_set directoryservice 0
+		nis_set 0
 		return 1
 	fi
 
@@ -60,7 +60,7 @@ nisctl_stop()
 	nisctl_cmd ${service} ix-hostname start
 	nisctl_cmd ${service} ix-passwd start
 
-	srv_set directoryservice 0
+	nis_set 0
 	. /etc/rc.conf.local
 }
 
