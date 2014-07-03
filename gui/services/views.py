@@ -33,7 +33,6 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.services import models
-from freenasUI.services.directoryservice import DirectoryService
 from freenasUI.services.forms import servicesForm
 
 log = logging.getLogger("services.views")
@@ -54,12 +53,9 @@ def index(request):
 def core(request):
 
     try:
-        directoryservice = DirectoryService.objects.order_by("-id")[0]
+        domaincontroller = models.DomainController.objects.order_by("-id")[0]
     except IndexError:
-        try:
-            directoryservice = DirectoryService.objects.create()
-        except:
-            directoryservice = None
+        domaincontroller = models.DomainController.objects.create()
 
     try:
         afp = models.AFP.objects.order_by("-id")[0]
@@ -136,7 +132,7 @@ def core(request):
         'tftp': tftp,
         'smart': smart,
         'ssh': ssh,
-        'directoryservice': directoryservice
+        'domaincontroller': domaincontroller
     })
 
 
@@ -167,7 +163,7 @@ def servicesToggleView(request, formname):
         'smartd_toggle': 'smartd',
         'ups_toggle': 'ups',
         'plugins_toggle': 'plugins',
-        'directoryservice_toggle': 'directoryservice'
+        'domaincontroller_toggle': 'domaincontroller'
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
