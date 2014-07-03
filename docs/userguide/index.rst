@@ -14,7 +14,7 @@
 
 
 
-*FreeNAS® is © 2011-2014 iXsystems
+FreeNAS® is © 2011-2014 iXsystems
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 
@@ -52,17 +52,16 @@ XX, 2014
 
 Copyright © 2011-2014
 `iXsystems <http://www.ixsystems.com/>`_
-.
 
 This Guide covers the installation and use of FreeNAS® 9.3.
 
-The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide, visit
-read the instructions in the `https://github.com/freenas/freenas/blob/master/docs/userguide/README <README>`._
-If you use IRC Freenode, you are welcome to join the #freenas channel where you will find other FreeNAS® users.
+The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide,
+read the instructions in the `README 
+<https://github.com/freenas/freenas/blob/master/docs/userguide/README>`_. If you use IRC Freenode, you are welcome to join the #freenas channel where you will find other FreeNAS® users.
 
 The FreeNAS® Users Guide is freely available for sharing and redistribution under the terms of the
-`Creative Commons Attribution License <http://creativecommons.org/licenses/by/3.0/>`_
-. This means that you have permission to copy, distribute, translate, and adapt the work as long as you attribute iXsystems as the original source of the Guide.
+`Creative Commons Attribution License
+<http://creativecommons.org/licenses/by/3.0/>`_. This means that you have permission to copy, distribute, translate, and adapt the work as long as you attribute iXsystems as the original source of the Guide.
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 
@@ -107,12 +106,7 @@ Windows® is a registered trademark of Microsoft Corporation in the United State
 **Typographic Conventions**
 
 
-The
-FreeNAS®
-
-9.2.2 Users
-Guide
-uses the following typographic conventions:
+The FreeNAS® 9.2.2 Users Guide uses the following typographic conventions:
 
 **bold text:**
 represents a command written at the command line. In usage examples, the font is changed to
@@ -122,9 +116,7 @@ with any command output displayed in unbolded text.
 *italic text:*
 used to represent device names, file name paths, or text that is input into a GUI field.
 
-**bold italic text:**
-** **
-used to emphasize an important point.
+**bold italic text:** used to emphasize an important point.
 
 Introduction
 ------------
@@ -195,7 +187,7 @@ Notable features in FreeNAS® include:
 
 
 
-What's New in 9.2.2
+What's New in 9.3
 ~~~~~~~~~~~~~~~~~~~
 
 
@@ -206,9 +198,7 @@ Before installing FreeNAS® you should be aware of the following known issues:
 
 *   **UPGRADES FROM FreeNAS® 0.7x ARE UNSUPPORTED.**
     The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you will have to manually recreate your configuration. However, you should be able to
-    `import <#1.6.3.2.Importing Volumes|outline>`_
-    supported FreeNAS® 0.7x
-    volumes.
+    import_supported FreeNAS® 0.7x volumes.
 
 
 
@@ -232,17 +222,8 @@ Before installing FreeNAS® you should be aware of the following known issues:
 Hardware Recommendations
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since FreeNAS® 9.2.2 is based on FreeBSD 9.2, it supports the same hardware found in
-the
-amd64
-and i386 sections
-
-of
-the
-`FreeBSD  <http://www.freebsd.org/releases/9.2R/hardware.html>`_
-`9.2 <http://www.freebsd.org/releases/9.2R/hardware.html>`_
-` Hardware Compatibility List <http://www.freebsd.org/releases/9.2R/hardware.html>`_
-.
+Since FreeNAS® 9.3 is based on FreeBSD 9.3, it supports the same hardware found in the amd64 and i386 sections of the `FreeBSD Hardware Compatibility List
+<http://www.freebsd.org/releases/9.3R/hardware.html>`__.
 
 Actual hardware requirements will vary depending upon what you are using your FreeNAS® system for. This section provides some guidelines to get you started. You can also skim through the
 `FreeNAS® Hardware Forum <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_
@@ -322,12 +303,8 @@ of the FreeBSD Hardware List lists the supported disk controllers. In addition, 
 `tw_cli <#1.11.6.tw_cli|outline>`_
 for managing 3ware RAID controllers.
 
-FreeNAS®
-supports hot pluggable drives. Make sure that AHCI is enabled in the BIOS.
-Note that hot plugging is
-**not the same**
-** **
-as a hot spare, which is not supported at this time.
+FreeNAS® supports hot pluggable drives. Make sure that AHCI is enabled in the BIOS.
+Note that hot plugging is **not the same** as a hot spare, which is not supported at this time.
 
 If you need reliable disk alerting, immediate reporting of a failed drive, and or swapping, use a fully manageable hardware RAID controller such as a LSI MegaRAID controller or a 3Ware twa-compatible controller. The current FreeBSD ZFS implementation will not notice that a drive is gone until you reboot or put the volume on high load. More information about LSI cards and FreeNAS® can be found in this
 `forum post <http://forums.freenas.org/showthread.php?11901-Confused-about-that-LSI-card-Join-the-crowd>`_
@@ -354,8 +331,7 @@ which is optimized for massive random access. These cards are expensive and are 
 If you will be using ZFS,
 `Disk Space Requirements for ZFS Storage Pools <http://download.oracle.com/docs/cd/E19253-01/819-5461/6n7ht6r12/index.html>`_
 recommends a minimum of 16 GB of disk space. Due to the way that ZFS creates swap,
-**you can not format less than 3 GB of **
-**space with ZFS**
+**you can not format less than 3 GB of space with ZFS**
 . However, on a drive that is below the minimum recommended size you lose a fair amount of storage space to swap: for example, on a 4 GB drive, 2 GB will be reserved for swap.
 
 If you are new to ZFS and are purchasing hardware, read through
@@ -391,17 +367,12 @@ Wake on LAN (WOL) support is dependent upon the FreeBSD driver for the interface
 `ifconfig(8) <http://www.freebsd.org/cgi/man.cgi?query=ifconfig>`_
 . To determine if WOL is supported on a particular interface, specify the interface name to the following command. In this example, the capabilities line indicates that WOL is supported for the
 *re0*
-interface:
+interface::
 
-**ifconfig -m em0**
-
-re0: flags=8943<UP,BROADCAST,RUNNING,PROMISC,SIMPLEX,MULTICAST> metric 0 mtu 1500
-
-options=42098<VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,WOL_MAGIC,VLAN_HWTSO>
-
-capabilities=5399b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,TSO4,WOL_UCAST,WOL_MCAST,
-
-WOL_MAGIC,VLAN_HWFILTER,VLAN_H WTSO>
+ ifconfig -m re0
+ re0: flags=8943<UP,BROADCAST,RUNNING,PROMISC,SIMPLEX,MULTICAST> metric 0 mtu 1500
+ options=42098<VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,WOL_MAGIC,VLAN_HWTSO>
+ capabilities=5399b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,TSO4,WOL_UCAST,WOL_MCAST, WOL_MAGIC,VLAN_HWFILTER,VLAN_H WTSO>
 
 If you find that WOL support is indicated but not working for a particular interface,
 `submit a bug  <#1.12.3.Support Database|outline>`_
@@ -433,14 +404,12 @@ requires a minimum of four disks and can tolerate the loss of two disks without 
 
 **RAID 10:**
 requires a minimum of four disks and number of disks is always even as this type of RAID mirrors striped sets. This type of RAID can survive the failure of any one drive. If you lose a second drive from the
-**same**
-** **
-mirrored set, you will lose the array. However, if you lose a second drive from a different mirrored set, the array will continue to operate in a degraded state. RAID 10 significantly outperforms RAIDZ2, especially on writes.
+**same** mirrored set, you will lose the array. However, if you lose a second drive from a different mirrored set, the array will continue to operate in a degraded state. RAID 10 significantly outperforms RAIDZ2, especially on writes.
 
 **RAID 60:**
 requires a minimum of eight disks. Combines RAID 0 striping with the distributed double parity of RAID 6 by striping 2 4-disk RAID 6 arrays. RAID 60 rebuild times are half that of RAID 6.
 
-**RAIDZ1: **
+**RAIDZ1:**
 ZFS software solution that is equivalent to RAID5. Its advantage over RAID 5 is that it
 avoids the
 `write-hole <http://blogs.oracle.com/bonwick/entry/raid_z>`_
@@ -457,8 +426,7 @@ triple-parity ZFS software solution. RAIDZ3 offers three parity drives and can o
 **NOTE:**
 instead of mixing ZFS RAID with hardware RAID, it is recommended that you place your hardware RAID controller in JBOD mode and let ZFS handle the RAID. According to
 `Wikipedia <http://en.wikipedia.org/wiki/ZFS#Data_Integrity>`_
-: “
-ZFS can not fully protect the user's data when using a hardware RAID controller, as it is not able to perform the automatic self-healing unless it controls the redundancy of the disks and data. ZFS prefers
+: ”ZFS can not fully protect the user's data when using a hardware RAID controller, as it is not able to perform the automatic self-healing unless it controls the redundancy of the disks and data. ZFS prefers
 direct, exclusive access to the disks, with nothing in between that interferes. If the user insists on using
 hardware-level RAID, the controller should be configured as JBOD mode (i.e. turn off RAID-functionality) for ZFS to be able to guarantee data integrity. Note that hardware RAID configured as
 JBOD may still detach disks that do not respond in time; and as such may require TLER/CCTL/ERC-
@@ -515,8 +483,7 @@ The following resources can also help you determine the RAID configuration best 
 
 
 
-**NOTE: **
-**NO RAID SOLUTION PROVIDES A REPLACEMENT FOR A RELIABLE BACKUP STRATEGY. BAD STUFF CAN STILL HAPPEN AND YOU WILL BE GLAD THAT YOU BACKED UP YOUR DATA WHEN IT DOES.**
+**NOTE: NO RAID SOLUTION PROVIDES A REPLACEMENT FOR A RELIABLE BACKUP STRATEGY. BAD STUFF CAN STILL HAPPEN AND YOU WILL BE GLAD THAT YOU BACKED UP YOUR DATA WHEN IT DOES.**
 See
 `Periodic Snapshot Tasks <#1.6.1.Periodic Snapshot Tasks|outline>`_
 and
@@ -576,24 +543,19 @@ a read-only point-in-time copy of a filesystem. Snapshots can be created quickly
 **Clone:**
 a writable copy of a snapshot which can only be created on the same ZFS volume. Clones provide an extremely space-efficient way to store many copies of mostly-shared data such as workspaces, software installations, and diskless clients. Clones do not inherit the properties of the parent dataset, but rather inherit the properties based on where the clone is created in the ZFS pool. Because a clone initially shares all its disk space with the original snapshot, its used property is initially zero. As changes are made to the clone, it uses more space.
 
-**Deduplication: **
-the process of eliminating duplicate copies of data in order to save space. Once
+**Deduplication:** the process of eliminating duplicate copies of data in order to save space. Once
 deduplicaton occurs, it can improve ZFS performance as less data is written and stored. However, the
 process of deduplicating the data is RAM intensive and a general rule of thumb is 5 GB RAM per TB
 of storage to be deduplicated.
 **In most cases, enabling compression will provide comparable performance.**
-** **
 In FreeNAS®, deduplication can be enabled at the dataset level and there is no way to
 undedup data once it is deduplicated: switching deduplication off has
 **NO AFFECT**
-** **
 on existing data. The more data you write to a deduplicated dataset, the more RAM it requires, and there is no upper
 bound on this. When the system starts storing the DDTs (dedup tables) on disk because they no longer fit into RAM, performance craters. Furthermore, importing an unclean pool can require between 3-5
 GB of RAM per TB of deduped data, and if the system doesn't have the needed RAM it will panic, with
 the only solution being to add more RAM or to recreate the pool.
-**Think carefully before enabling **
-**dedup!**
-** **
+**Think carefully before enabling dedup!**
 
 **ZIL:**
 (
@@ -620,7 +582,6 @@ for usage information.
 
 If you decide to create a dedicated log device to speed up NFS writes, the SSD can be half the size of system RAM as anything larger than that is unused capacity. The log device
 **should be mirrored on a ZFSv15 pool because if one of the log devices fails, the pool is unrecoverable**
-** **
 and the pool must be recreated and the data restored from a backup. The log device does not need to be mirrored on a ZFSv28 pool as the system will revert to using the ZIL if the log device fails and only the data in the device which had not been written to the pool will be lost (typically the last few seconds of writes). You can replace the lost log device in the
 `View Volumes <#1.6.3.9.Viewing Volumes|outline>`_
 → Volume Status screen. Note that a dedicated log device can not be shared between ZFS pools and that the same device cannot hold both a log and a cache device.
@@ -687,7 +648,7 @@ FreeNAS® 9.2.2 can be downloaded from
 
 The download page contains the following types of files. Download one file that meets your needs:
 
-*   **CD Installer: **
+*   **CD Installer:**
     this is a bootable installer that can be written to CDROM. This is described in more detail in
     `Installing from CDROM <#1.2.3.Installing from CDROM|outline>`_
     .
@@ -701,7 +662,7 @@ The download page contains the following types of files. Download one file that 
 
 
 
-*   **GUI Upgrade or Legacy Upgrade: **
+*   **GUI Upgrade or Legacy Upgrade:**
     this is a compressed firmware upgrade image. If your intent is to upgrade FreeNAS®, download the correct file for your architecture and version and see the section on
     `Upgrading FreeNAS® <#1.2.6.Upgrading FreeNAS®  |outline>`_
     . Download the GUI Upgrade if you are upgrading from version 8.2.0-BETA3 through 9.1.0. Download the legacy upgrade if you are upgrading from version 8.0.1BETA3 through 8.2.0-BETA2.
@@ -749,24 +710,15 @@ as it contains useful guidelines for minimizing the risk of losing your data.
 
 In order to install or run FreeNAS® within a virtual environment, you will need to create a virtual machine that meets the following minimum requirements:
 
-*   **at least**
-    204
-    8 MB base memory size (UFS)
-    or 4096 MB (ZFS)
+*   **at least** 2048 MB base memory size (UFS) or 4096 MB (ZFS)
 
 
 
-*   a virtual disk
-    **at least 2 GB in size**
-    ** **
-    to hold the operating system and swap
+*   a virtual disk **at least 2 GB in size** to hold the operating system and swap
 
 
 
-*   at least one more virtual disk
-    **at least 4 GB in size**
-    ** **
-    to be used as data storage
+*   at least one more virtual disk **at least 4 GB in size** to be used as data storage
 
 
 
@@ -806,12 +758,8 @@ Enter a name for the virtual machine, click the “Operating System” drop-down
 |100002010000028A000001B8AD594B93_png|
 
 Click “Next” to see the screen in Figure 2.2c. The base memory size must be changed to
-*at least 2048*
-* *
-*MB*
-.
-*If *
-*your system has enough memory, select at least 4096 MB so that you can use ZFS*
+*at least 2048 MB* .
+*If your system has enough memory, select at least 4096 MB so that you can use ZFS*
 . When finished, click “Next” to see the screen in Figure 2.2d.
 
 **Figure 2.2c: Select the Amount of Memory Reserved for the Virtual Machine**
@@ -862,8 +810,7 @@ You can now choose whether you want “Dynamically allocated” or “Fixed-size
 |100002010000023E000001BAFB464DC1_png|
 
 This screen is used to set the size (or upper limit) of the virtual machine.
-**In**
-**crease the default size to 2 or 4 GB**
+**Increase the default size to 2 or 4 GB**
 . Use the folder icon to browse to a directory on disk with sufficient space to hold the virtual machine.
 
 Once you make your selection and press “Next”, you will see a summary of your choices. Use the “Back” button to return to a previous screen if you need to change any values. Otherwise, click “Finish” to finish using the wizard. The virtual machine will be listed in the left frame, as seen in the example in Figure 2.2h.
@@ -884,9 +831,7 @@ Next, create the virtual disk(s) to be used for storage. Click the “Storage”
 |10000000000002B200000238AA2AAEAB_png|
 
 Click the “Add Attachment” button, select “Add Hard Disk” from the pop-up menu, then click the “Create New Disk” button. This will launch the Create New Virtual Hard Drive Wizard (seen in Figures 2.2e and 2.2f). Since this disk will be used for storage, create a size appropriate to your needs, making sure that it is
-**at**
-
-**least 4 GB**
+**at least 4 GB**
 in size.
 If you wish to practice RAID configurations, create as many virtual disks as you need. You will be able to create 2 disks on the IDE controller. If you need additional disks, click the “Add Controller” button to create another controller to attach disks to.
 
@@ -1000,17 +945,16 @@ Click “Next”. In the screen shown in Figure 2.2o, click “Other” then sel
 
 |10000201000003950000021FFB8F2015_png|
 
-Click “Next” and create a virtual disk file of 2
-** GB**
+Click “Next” and create a virtual disk file of
+**2 GB**
 to hold the FreeNAS®
 operating system, as shown in Figure 2.2p.
 
 Click “Next” then “Finish”. Your virtual machine will be listed in the left frame. Right-click the virtual machine and select “Edit Settings” to access the screen shown in Figure 2.2q.
 
 Increase the “Memory Configuration” to
-*at least 2048 MB*
+**at least 2048 MB**
 .
-** **
 
 Under “CPUs”, make sure that only 1 virtual processor is listed, otherwise you will be unable to start any FreeNAS® services.
 
@@ -1046,7 +990,7 @@ Insert the CDROM into the system and boot from it. Once the media has finished b
 **NOTE:**
 if the installer does not boot, check that the CD drive is listed first in the boot order in the BIOS. Some motherboards may require you to connect the CDROM to SATA0 (the first connector) in order to boot from CDROM. If it stalls during boot, check the SHA256 hash of your ISO against that listed in the Release Notes; if the hash does not match, re-download the file. If the hash is correct, try burning the CD again at a lower speed.
 
-Figure 2.3a: FreeNAS® Console Setup
+**Figure 2.3a: FreeNAS® Console Setup**
 
 
 
@@ -1065,17 +1009,17 @@ Press enter to return to the first menu, seen in Figure 2.3a. Highlight “3 Reb
 `Initial Setup <#1.2.5.Initial Setup|outline>`_
 .
 
-Figure 2.3b: Selecting Which Drive to Install Into
+**Figure 2.3b: Selecting Which Drive to Install Into**
 
 
 |10000000000002B50000016CE687B64A_png|
 
 
-Figure 2.3c: FreeNAS® Installation Warning
+**Figure 2.3c: FreeNAS® Installation Warning**
 
 |10000000000002CA000001595A6F0226_png|
 
-Figure 2.3d: FreeNAS® Installation Complete
+**Figure 2.3d: FreeNAS® Installation Complete**
 
 
 |10000000000002BF000000E0D845E216_png|
@@ -1088,16 +1032,9 @@ If your system does not have a CDROM drive to install from, you can instead writ
 file, uncompress the file, and write it to a compact flash card or USB thumbdrive that is 2 GB or larger. You then boot into that device to load the FreeNAS® operating system. This section demonstrates how to write the image using several different operating systems. The Unetbootin tool is not supported at this time.
 
 **DANGER!**
-The
-**dd**
-command demonstrated in this section is very powerful and can destroy any existing data on the specified device. Be
-**very sure**
-that you know the device name to write to and that you do not typo the device name when using
-**dd**
-!
-If you are uncomfortable writing the image yourself, download the
-*.iso*
-file instead and use the instructions in
+The **dd** command demonstrated in this section is very powerful and can destroy any existing data on the specified device. Be
+**very sure** that you know the device name to write to and that you do not typo the device name when using **dd**!
+If you are uncomfortable writing the image yourself, download the *.iso* file instead and use the instructions in
 `Installing from CDROM <#1.2.3.Installing from CDROM|outline>`_
 .
 
@@ -1110,32 +1047,20 @@ section.
 Using xzcat and dd on a FreeBSD or Linux System
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On a FreeBSD or Linux system, the
-**xzcat**
-and
-**dd**
-commands can be used to uncompress and write the
-*.xz*
+On a FreeBSD or Linux system, the **xzcat** and **dd** commands can be used to uncompress and write the *.xz*
 image to an inserted USB thumb drive or compact flash device. Example 2.4a demonstrates writing the image to the first USB device (
-*/dev/da0*
-) on a FreeBSD system. Substitute the filename of your
-*.xz*
+*/dev/da0* 
+) on a FreeBSD system. Substitute the filename of your *.xz*
 file and the device name representing the device to write to on your system.
 
-**Example 2.4a: Writing the Image to a USB Thumb Drive **
+**Example 2.4a: Writing the Image to a USB Thumb Drive**
+::
+ xzcat FreeNAS-9.2.2-RELEASE-x64.img.xz | dd of=/dev/da0 bs=64k
+ 0+244141 records in
+ 0+244141 records out
+ 2000000000 bytes transferred in 596.039857 secs (3355480 bytes/sec)
 
-**xzcat FreeNAS-9.2.2-RELEASE-x64.img.xz | dd of=/dev/da0 bs=64k**
-
-
-0+244141 records in
-
-0+244141 records out
-
-2000000000 bytes transferred in 596.039857 secs (3355480 bytes/sec)
-
-When using the
-**dd**
-command:
+When using the **dd** command:
 
 *   **of=**
     refers to the output file; in our case, the device name of the flash card or removable USB drive. You may have to increment the number in the name if it is not the first USB device. On Linux, use
@@ -1157,89 +1082,76 @@ Using Keka and dd on an OS X System
 On an OS X system, you can download and install
 `Keka <http://www.kekaosx.com/en/>`_
 to uncompress the image. In FINDER, navigate to the location where you saved the downloaded
-*.xz*
-file. Right-click the
-*.xz*
+*.xz* file. Right-click the *.xz*
 file and select “Open With Keka”. After a few minutes you will have a large file with the same name, but
-no
-*.xz*
-extension
+no *.xz* extension
 .
 
 Insert the USB thumb drive and go to Launchpad → Utilities → Disk Utility. Unmount any mounted partitions on the USB thumb drive. Check that the USB thumb drive has only one partition, otherwise you will get partition table errors on boot. If needed, use Disk Utility to setup one partition on the USB drive; selecting "free space" when creating the partition works fine.
 
-Next, determine the device name of the inserted USB thumb drive. From TERMINAL, navigate to your Desktop then type this command:
+Next, determine the device name of the inserted USB thumb drive. From TERMINAL, navigate to your Desktop then type this command::
 
-**diskutil list**
+ diskutil list
+ /dev/disk0
 
-/dev/disk0
+ #:
+ TYPE NAME
+ SIZE
+ IDENTIFIER
 
-#:
-TYPE NAME
-SIZE
-IDENTIFIER
+ 0:
+ GUID_partition_scheme
+ *500.1 GB
+ disk0
 
-0:
-GUID_partition_scheme
-*500.1 GB
-disk0
+ 1:
+ EFI
+ 209.7 MB
+ disk0s1
 
-1:
-EFI
-209.7 MB
-disk0s1
+ 2:
+ Apple_HFS Macintosh HD
+ 499.2 GB
+ disk0s2
 
-2:
-Apple_HFS Macintosh HD
-499.2 GB
-disk0s2
+ 3:
+ Apple_Boot Recovery HD
+ 650.0 MB
+ disk0s3
 
-3:
-Apple_Boot Recovery HD
-650.0 MB
-disk0s3
+ /dev/disk1
 
-/dev/disk1
+ #:
+ TYPE NAME
+ SIZE
+ IDENTIFIER
 
-#:
-TYPE NAME
-SIZE
-IDENTIFIER
+ 0:
+ FDisk_partition_scheme
+ *8.0 GB
+ disk1
 
-0:
-FDisk_partition_scheme
-*8.0 GB
-disk1
-
-1:
-DOS_FAT_32 UNTITLED
-8.0 GB
-disk1s1
+ 1:
+ DOS_FAT_32 UNTITLED
+ 8.0 GB
+ disk1s1
 
 This will show you which devices are available to the system. Locate your USB stick and record the path. If you are not sure which path is the correct one for the USB stick, remove the device, run the command again, and compare the difference. Once you are sure of the device name, navigate to the Desktop from TERMINAL, unmount the USB stick, and use the
-**dd**
-command to write the image to the USB stick. In Example 2.4b, the USB thumb drive is
-*/dev/disk1*
+**dd** command to write the image to the USB stick. In Example 2.4b, the USB thumb drive is */dev/disk1*
 . Substitute the name of your uncompressed file and the correct path to your USB thumb drive.
 
 **Example 2.4b: Using dd on an OS X System**
+::
 
+ diskutil unmountDisk /dev/disk1
+ Unmount of all volumes on disk1 was successful
 
-**diskutil unmountDisk /dev/disk1**
+ dd if=FreeNAS-9.2.2-RELEASE-x64.img of=/dev/disk1 bs=64k
 
-Unmount of all volumes on disk1 was successful
-
-**dd if=FreeNAS-9.2.2-RELEASE-x64.img of=/dev/disk1 bs=64k**
-
-**NOTE:**
-if you get the error “Resource busy” when you run the
-**dd**
+**NOTE:** if you get the error “Resource busy” when you run the **dd**
 command, go to Applications → Utilities → Disk Utility, find your USB thumb drive, and click on its partitions to make sure all of them are unmounted.
-If you get the error “dd: /dev/disk1: Permission denied”, run the
-**dd**
-command by typing
-**sudo dd if=FreeNAS-9.2.2-RELEASE-x64.img of=/dev/disk1 bs=64k**
-, which will prompt for your password.
+If you get the error “dd: /dev/disk1: Permission denied”, run the **dd** command by typing
+**sudo dd if=FreeNAS-9.2.2-RELEASE-x64.img of=/dev/disk1 bs=64k**, which will prompt for your password.
 
 
 The
@@ -1382,69 +1294,26 @@ If your FreeNAS® server is not connected to a network with a DHCP server, you c
 ).
 
 **Example 2.5a: Manually Setting an IP Address from the Console Menu**
+::
 
-
-Enter an option from 1-11:
-**1**
-
-
-1) em0
-
-
-Select an interface (q to quit):
-**1**
-
-
-Delete existing config? (y/n)
-**n**
-
-Configure interface for DHCP? (y/n)
-**n**
-
-
-Configure IPv4? (y/n)
-**y**
-
-
-Interface name: (press enter as can be blank)
-
-
-Several input formats are supported
-
-
-Example 1 CIDR Notation:
-
-
-192.168.1.1/24
-
-
-Example 2 IP and Netmask separate:
-
-
-IP: 192.168.1.1
-
-
-Netmask: 255.255.255.0, or /24 or 24
-
-
-IPv4 Address:
-192.168.1.108/24
-
-
-Saving interface configuration: Ok
-
-
-Configure IPv6? (y/n)
-n
-
-
-Restarting network: ok
-
-
-You may try the following URLs to access the web user interface:
-
-
-`http://192.168.1.108 <http://192.168.1.108/>`_
+ Enter an option from 1-11: 1
+ 1) em0
+ Select an interface (q to quit): 1
+ Delete existing config? (y/n) n
+ Configure interface for DHCP? (y/n) n
+ Configure IPv4? (y/n) y
+ Interface name: (press enter as can be blank)
+ Several input formats are supported
+ Example 1 CIDR Notation: 192.168.1.1/24
+ Example 2 IP and Netmask separate:
+ IP: 192.168.1.1
+ Netmask: 255.255.255.0, or /24 or 24
+ IPv4 Address: 192.168.1.108/24
+ Saving interface configuration: Ok
+ Configure IPv6? (y/n) n
+ Restarting network: ok
+ You may try the following URLs to access the web user interface:
+ `http://192.168.1.108 <http://192.168.1.108/>`_
 
 
 Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the FreeNAS® system. You should be prompted to create a password for the
@@ -1508,14 +1377,10 @@ When upgrading,
 Preparing for the Upgrade
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Before upgrading the system to 9.2.2, perform the following steps:
+Before upgrading the system, perform the following steps:
 
 #.  `Download <http://www.freenas.org/download-releases.html>`_
-    the
-    *.iso*
-    or .
-    *txz*
-    file that matches the system's architecture to the computer that you use to access the FreeNAS® system.
+    the *.iso* or .*txz* file that matches the system's architecture to the computer that you use to access the FreeNAS® system.
 
 
 
@@ -1523,9 +1388,7 @@ Before upgrading the system to 9.2.2, perform the following steps:
 
 
 
-#.  **Backup the FreeNAS® configuration**
-    ** **
-    in System → Settings → General → Save Config.
+#.  **Backup the FreeNAS® configuration** in System → Settings → General → Save Config.
 
 
 
@@ -1629,12 +1492,7 @@ When finished, click the Apply Update button to begin the upgrade progress. Behi
 
 
 
-Figure 2.
-6
-d: Upgrading
-FreeNAS®
-From the
-GUI
+**Figure 2.6d: Upgrading FreeNAS® From the GUI**
 
 
 |10000000000002D1000001F0BFB72532_png|
@@ -1683,13 +1541,11 @@ from the shell or select “10) Reboot” from the console menu. Watch the boot 
 *Boot: F1*
 refers to the default option (the newly upgraded version), so pressing
 *F2*
-will boot into the previous version.
+will boot into the previous version.::
 
-F1 FreeBSD
-
-F2 FreeBSD
-
-Boot: F1
+ F1 FreeBSD
+ F2 FreeBSD
+ Boot: F1
 
 **NOTE:**
 if a previously working FreeNAS® system hangs after a FreeNAS® upgrade, check to see if there is a BIOS/BMC firmware upgrade available as that may fix the issue.
@@ -1739,9 +1595,7 @@ If you wish to upgrade an existing ZFSv15 or ZFSv28 pool, be aware of the follow
 
 
 *   before performing any operation that may affect the data on a storage disk,
-    **always backup your **
-    **data first and verify the integrity of the backup.**
-    ** **
+    **always backup your data first and verify the integrity of the backup.**
     While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
 
 
@@ -1751,107 +1605,76 @@ To perform the ZFS version upgrade, open
 .
 The following commands will determine the pool state and version. In this example, the pool name is
 *volume1*
-and the ZFS version is 28.
+and the ZFS version is 28.::
 
 
-**zpool status**
+ zpool status
+ pool: volume1
+ state: ONLINE
+ status: The pool is formatted using a legacy on-disk format.
+ The pool can still be used, but some features are unavailable.
+ action: Upgrade the pool using 'zpool upgrade'. Once this is done, the
+ pool will no longer be accessible on software that does not support feature
+ flags.
+ scan: none requested
+ config:
+ NAME
+ STATE
+ READ WRITE CKSUM
+ volume1
+ ONLINE
+ 0
+ 0
+ 0
+ gptid/ea16925b-e96e-11e2-9ed5-e06995777a82
+ ONLINE
+ 0
+ 0
+ 0
+ gptid/ea8f3a7b-e96e-11e2-9ed5-e06995777a82
+ ONLINE
+ 0
+ 0
+ 0
+ gptid/eb064d06-e96e-11e2-9ed5-e06995777a82
+ ONLINE
+ 0
+ 0
+ 0
+ gptid/eb7ba402-e96e-11e2-9ed5-e06995777a82
+ ONLINE
+ 0
+ 0
+ 0
+ errors: No known data errors
 
-pool: volume1
+ zpool get version volume1
+ NAME
+ PROPERTY
+ VALUE
+ SOURCE
+ volume1
+ version
+ 28
+ local
 
-state: ONLINE
+Next, verify that the status of the pool is healthy::
 
-status: The pool is formatted using a legacy on-disk format.
-The pool can
-
-still be used, but some features are unavailable.
-
-action: Upgrade the pool using 'zpool upgrade'.
-Once this is done, the
-
-pool will no longer be accessible on software that does not support feature
-
-flags.
-
-scan: none requested
-
-config:
-
-NAME
-STATE
-READ WRITE CKSUM
-
-volume1
-ONLINE
-0
-0
-0
-
-gptid/ea16925b-e96e-11e2-9ed5-e06995777a82
-ONLINE
-0
-0
-0
-
-gptid/ea8f3a7b-e96e-11e2-9ed5-e06995777a82
-ONLINE
-0
-0
-0
-
-gptid/eb064d06-e96e-11e2-9ed5-e06995777a82
-ONLINE
-0
-0
-0
-
-gptid/eb7ba402-e96e-11e2-9ed5-e06995777a82
-ONLINE
-0
-0
-0
-
-errors: No known data errors
-
-
-**zpool get version volume1**
-
-NAME
-PROPERTY
-VALUE
-SOURCE
-
-volume1
-version
-28
-local
-
-Next, verify that the status of the pool is healthy:
-
-**zpool status -x**
-
-all pools are healthy
+ zpool status -x
+ all pools are healthy
 
 **NOTE:**
 do not upgrade the pool if its status does not show as healthy.
 
-To upgrade a pool named
-*volume1*
-:
+To upgrade a pool named *volume1* ::
 
-**zpool upgrade volume1**
-
-
-This system supports ZFS pool feature flags.
-
-Successfully upgraded 'volume1' from version 28 to feature flags.
-
-Enabled the following features on 'volume1':
-
-async_destroy
-
-empty_bpobj
-
-lz4_compress
+ zpool upgrade volume1
+ This system supports ZFS pool feature flags.
+ Successfully upgraded 'volume1' from version 28 to feature flags.
+ Enabled the following features on 'volume1':
+ async_destroy
+ empty_bpobj
+ lz4_compress
 
 The upgrade itself should only take a seconds and is non-disruptive. This means that you do not need to stop any sharing services in order to upgrade the pool. However, you should choose to upgrade when the pool is not being heavily used. The upgrade process will suspend I/O for a short period, but should be nearly instantaneous on a quiet pool.
 
