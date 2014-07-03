@@ -50,11 +50,19 @@ class NT4Form(ModelForm):
     )
 
     class Meta:
-        fields = '__all__'
         model = models.NT4
         widgets = {
             'nt4_adminpw': forms.widgets.PasswordInput(render_value=False),
         }
+        fields = [
+            'nt4_dcname',
+            'nt4_netbiosname',
+            'nt4_workgroup',
+            'nt4_adminname',
+            'nt4_adminpw',
+            'nt4_adminpw2',
+            'nt4_enable',
+        ]
 
     def __init__(self, *args, **kwargs):
         super(NT4Form, self).__init__(*args, **kwargs)
