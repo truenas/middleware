@@ -30,7 +30,6 @@ Fields
  - service CIFS resource: cifs_srv_domain_logons
  - service Dynamic DNS resource: ddns_ipserver
  - storage Replication resource: repl_compression
- - system Replication resource: repl_compression
  - system Settings resource: stg_guihttpsredirect
  - directory service Active Directory resource: ad_keytab, ad_use_keytab
 
