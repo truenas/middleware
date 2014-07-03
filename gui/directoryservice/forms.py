@@ -204,17 +204,25 @@ class ActiveDirectoryForm(ModelForm):
         return cdata
 
     def save(self):
+        enable = self.cleaned_data.get("ad_enable")
         super(ActiveDirectoryForm, self).save()
         if self.__original_changed():
             notifier()._clear_activedirectory_config()
+
         started = notifier().started("activedirectory")
-#        if started is True and models.services.objects.get(
-#            srv_service='directoryservice').srv_enable:
-#            started = notifier().restart("activedirectory")
-#        if started is False and models.services.objects.get(
-#            srv_service='directoryservice').srv_enable:
-#            raise ServiceFailed("activedirectory",
-#                _("The activedirectory service failed to reload."))
+        if enable:
+            if started == True:
+                started = notifier().restart("activedirectory")
+            if started == False:
+                started = notifier().start("activedirectory")
+            if started == False:
+                self.instance.ad_enable = False
+                super(ActiveDirectoryForm, self).save()
+                raise ServiceFailed("activedirectory",
+                    _("Active Directory failed to reload."))
+        else:
+            if started == True:
+                started = notifier().stop("activedirectory")
 
 
 class NISForm(ModelForm):

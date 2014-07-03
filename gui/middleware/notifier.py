@@ -724,12 +724,10 @@ class notifier:
         ret = False
         if activedirectory_enabled():
             f = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-            f.open()
-            if f.isOpen():
+            if f.connected():
                 ret = True
             else:
                 ret = False
-            f.close()
 
         return ret
 

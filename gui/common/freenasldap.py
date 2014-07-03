@@ -927,6 +927,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             'kpwdport',
             'dchandle',
             'gchandle',
+            'site',
             'flags'
         ]
 
@@ -990,21 +991,21 @@ class FreeNAS_ActiveDirectory_Base(object):
             (self.dchost, self.dcport) = self.__name_to_host(self.dcname)
         if not self.dchost:
             (self.dchost, self.dcport) = self.get_best_host(
-                self.get_domain_controllers(self.domainname))
+                self.get_domain_controllers(self.domainname, site=self.site))
             self.dcname = "%s:%d" % (self.dchost, self.dcport)
 
         if self.gcname:
             (self.gchost, self.gcport) = self.__name_to_host(self.gcname)
         if not self.gchost:
             (self.gchost, self.gcport) = self.get_best_host(
-                self.get_global_catalog_servers(self.domainname))
+                self.get_global_catalog_servers(self.domainname, site=self.site))
             self.gcname = "%s:%d" % (self.gchost, self.gcport)
 
         if self.krbname:
             (self.krbhost, self.krbport) = self.__name_to_host(self.krbname)
         if not self.krbhost:
             (self.krbhost, self.krbport) = self.get_best_host(
-                self.get_kerberos_servers(self.domainname))
+                self.get_kerberos_servers(self.domainname, site=self.site))
             self.krbname = "%s:%d" % (self.krbhost, self.krbport)
 
         if self.kpwdname:
@@ -1031,6 +1032,10 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.gcount = 0
 
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: leave")
+
+    def connected(self):
+        return self.validate_credentials(self.domainname, site=self.site,
+            binddn=self.binddn, bindpw=self.bindpw)
 
     def reload(self, **kwargs):
         self.kwargs.update(kwargs)
