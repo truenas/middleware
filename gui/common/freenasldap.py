@@ -428,8 +428,8 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         binddn = bindpw = None
         anonbind = ldap['ldap_anonbind']
         if not anonbind:
-            binddn = ldap['ldap_rootbasedn']
-            bindpw = ldap['ldap_rootbindpw']
+            binddn = ldap['ldap_binddn']
+            bindpw = ldap['ldap_bindpw']
         basedn = ldap['ldap_basedn']
 
         ssl = FREENAS_LDAP_NOSSL
@@ -452,8 +452,8 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**args)
 
-        self.rootbasedn = ldap['ldap_rootbasedn']
-        self.rootbindpw = ldap['ldap_rootbindpw']
+        self.binddn = ldap['ldap_binddn']
+        self.bindpw = ldap['ldap_bindpw']
         self.usersuffix = ldap['ldap_usersuffix']
         self.groupsuffix = ldap['ldap_groupsuffix']
         self.machinesuffix = ldap['ldap_machinesuffix']
@@ -506,8 +506,8 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**args)
 
-        self.rootbasedn = kwargs.get('rootbasedn', None)
-        self.rootbindpw = kwargs.get('rootbindpw', None)
+        self.binddn = kwargs.get('binddn', None)
+        self.bindpw = kwargs.get('bindpw', None)
         self.usersuffix = kwargs.get('usersuffix', None)
         self.groupsuffix = kwargs.get('groupsuffix', None)
         self.machinesuffix = kwargs.get('machinesuffix', None)
