@@ -2793,14 +2793,16 @@ S.M.A.R.T. Tests
 ~~~~~~~~~~~~~~~~
 
 `S.M.A.R.T. <http://en.wikipedia.org/wiki/S.M.A.R.T.>`_
-(Self-Monitoring, Analysis and Reporting Technology) is a monitoring system for computer hard disk drives to detect and report on various indicators of reliability. When a failure is anticipated by S.M.A.R.T., the drive should be replaced. Most modern ATA, IDE and SCSI-3 hard drives support S.M.A.R.T.--refer to your drive's documentation if you are unsure.
+(Self-Monitoring, Analysis and Reporting Technology) is a monitoring system for computer hard disk drives to detect and report on various indicators of
+reliability. When a failure is anticipated by S.M.A.R.T., the drive should be replaced. Most modern ATA, IDE and SCSI-3 hard drives support S.M.A.R.T.--refer
+to your drive's documentation if you are unsure.
 
-Figure 4.5a shows the configuration screen that appears when you click System → S.M.A.R.T. Tests → Add S.M.A.R.T. Test. The tests that you create will be listed under View S.M.A.R.T. Tests. After creating your tests, check the configuration in Services → S.M.A.R.T., then click the slider to ON for the S.M.A.R.T. service in Services → Control Services.
-T
-he S.M.A.R.T. service will not start if you have not created any volumes.
+Figure 4.5a shows the configuration screen that appears when you click System → S.M.A.R.T. Tests → Add S.M.A.R.T. Test. The tests that you create will
+be listed under View S.M.A.R.T. Tests. After creating your tests, check the configuration in Services → S.M.A.R.T., then click the slider to ON for the
+S.M.A.R.T. service in Services → Control Services. The S.M.A.R.T. service will not start if you have not created any volumes.
 
-**NOTE:**
-to prevent problems, do not enable the S.M.A.R.T. service if your disks are controlled by a RAID controller as it is the job of the controller to monitor S.M.A.R.T. and mark drives as Predictive Failure when they trip.
+**NOTE:** to prevent problems, do not enable the S.M.A.R.T. service if your disks are controlled by a RAID controller as it is the job of the controller to
+monitor S.M.A.R.T. and mark drives as Predictive Failure when they trip.
 
 **Figure 4.5a: Adding a S.M.A.R.T. Test**
 
@@ -2809,7 +2811,7 @@ to prevent problems, do not enable the S.M.A.R.T. service if your disks are cont
 
 Table 4.5a summarizes the configurable options when creating a S.M.A.R.T. test.
 
-**Table 4.5a: S.M.A.R.T. Test Options **
+**Table 4.5a: S.M.A.R.T. Test Options**
 
 +-------------------+---------------------------+---------------------------------------------------------------------------------------------------------------------+
 | **Setting**       | **Value**                 | **Description**                                                                                                     |
@@ -2841,9 +2843,7 @@ Table 4.5a summarizes the configurable options when creating a S.M.A.R.T. test.
 +-------------------+---------------------------+---------------------------------------------------------------------------------------------------------------------+
 
 
-You can verify which tests will run and when by typing
-**smartd -q showtests**
-within
+You can verify which tests will run and when by typing **smartd -q showtests** within
 `Shell <#1.9.2.Shell|outline>`_
 .
 
@@ -2852,9 +2852,7 @@ Settings
 
 The Settings tab, shown in Figure 4.6a, contains 4 tabs: General, Advanced, Email, and SSL.
 
-Figure
-4.6
-a: General Tab of Settings
+**Figure 4.6a: General Tab of Settings**
 
 |1000000000000299000001F1EE4FB0C6_png|
 
@@ -2907,40 +2905,31 @@ Table 4.6a summarizes the settings that can be configured using the General tab:
 | Timezone             | drop-down menu | select the timezone from the drop-down menu                                                                                                                                            |
 |                      |                |                                                                                                                                                                                        |
 +----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Syslog server        | string         | IP address or hostname of remote syslog server to send FreeNAS® logs to;                                                                                                               |
-|                      |                | once set, log entries will be written to both the FreeNAS® console and the remote server                                                                                               |
+| Syslog server        | string         | IP address or hostname of remote syslog server to send FreeNAS® logs to;                                                                                                              |
+|                      |                | once set, log entries will be written to both the FreeNAS® console and the remote server                                                                                              |
 |                      |                |                                                                                                                                                                                        |
 +----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Directory Service    | drop-down menu | can select one of                                                                                                                                                                      |
-|                      |                | `Active Directory <#1.8.4.1.Active Directory|outline>`_                                                                                                                                |
-|                      |                | *, *                                                                                                                                                                                   |
-|                      |                | `Domain Controller <#1.8.4.2.Domain Controller |outline>`_                                                                                                                             |
-|                      |                | *, *                                                                                                                                                                                   |
-|                      |                | `LDAP <#1.8.4.2.LDAP|outline>`_                                                                                                                                                        |
-|                      |                | *, *                                                                                                                                                                                   |
-|                      |                | `NIS <#1.8.4.3.NIS|outline>`_                                                                                                                                                          |
-|                      |                | , or                                                                                                                                                                                   |
-|                      |                | * *                                                                                                                                                                                    |
-|                      |                | `NT4 <#1.8.4.4.NT4|outline>`_                                                                                                                                                          |
-|                      |                | ; if a service is selected, an entry named                                                                                                                                             |
+|                      |                | *Active Directory*,                                                                                                                                                                    |                                               
+|                      |                | *Domain Controller*_                                                                                                                                                                   |                                                                                                                                                                               
+|                      |                | *LDAP*,_                                                                                                                                                                               |                                                                                                                                                                                   
+|                      |                | *NIS*, or_                                                                                                                                                                             |                                                                                                                                                                                  
+|                      |                | *NT4*;                                                                                                                                                                                 |
+|                      |                | if a service is selected, an entry named                                                                                                                                               |
 |                      |                | *Directory Services*                                                                                                                                                                   |
-|                      |                | will be added to Services → Control Services for managing that selected service                                                                                                        |
+|                      |                | will be added to Services → Control Services for managing that selected service                                                                                                    |
 |                      |                |                                                                                                                                                                                        |
 +----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-by default, logs are stored in RAM as there is no space on the embedded device to store logs. This means that logs are deleted whenever the system reboots. If you wish to save the system logs, either:
+**NOTE:** by default, logs are stored in RAM as there is no space on the embedded device to store logs. This means that logs are deleted whenever the system
+reboots. If you wish to save the system logs, either:
 
 *   configure a remote syslog server on another Unix-like operating system, or
 
 
 
-*   create a ZFS dataset called
-    *syslog*
-    and reboot the system; FreeNAS® will automatically create a
-    *log/*
-    directory in this dataset which contains the logs
+*   create a ZFS dataset called *syslog* and reboot the system; FreeNAS® will automatically create a *log/* directory in this dataset which contains the logs
 
 
 
@@ -2948,19 +2937,14 @@ If you make any changes, click the Save button.
 
 This tab also contains the following buttons:
 
-**Factory Restore:**
-resets the configuration database to the default base version. However, it does not delete user SSH keys or any other data stored in a user's home directory. Since any configuration changes stored in the configuration database will be erased, this option is handy if you mess up your system or wish to return a test system to the original configuration.
+**Factory Restore:** resets the configuration database to the default base version. However, it does not delete user SSH keys or any other data stored in a
+user's home directory. Since any configuration changes stored in the configuration database will be erased, this option is handy if you mess up your system or
+wish to return a test system to the original configuration.
 
-**Save Config:**
-used to create a backup copy of the current configuration database in the
-format
-*hostname-version-architecture*
-.
-**Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade. **
-This
+**Save Config:** used to create a backup copy of the current configuration database in the format *hostname-version-architecture*.
+**Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade.** This
 `forum post <http://forums.freenas.org/showthread.php?10735-How-to-automate-FreeNAS-configuration-database-backup>`_
-contains a script to
-backup the configuration which could be customized and added as a
+contains a script to backup the configuration which could be customized and added as a
 `cron job <#1.4.1.Cron Jobs|outline>`_
 . This
 `forum post <http://forums.freenas.org/showthread.php?12333-Backup-config-only-if-changed>`_
@@ -2968,17 +2952,15 @@ contains an alternate script which only saves a copy of the configuration when i
 `forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`_
 contains a script for backing up the configuration from another system.
 
-**Upload Config:**
-allows you to browse to location of saved configuration file in order to restore that configuration.
+**Upload Config:** allows you to browse to location of saved configuration file in order to restore that configuration.
 
 Advanced Tab
 ^^^^^^^^^^^^
 
-The Advanced tab, shown in Figure 4.6b, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in Table 4.6b.
+The Advanced tab, shown in Figure 4.6b, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in
+Table 4.6b.
 
-**Figure **
-**4.6**
-**b: Advanced Tab**
+**Figure 4.6b: Advanced Tab**
 
 
 
@@ -2993,8 +2975,7 @@ The Advanced tab, shown in Figure 4.6b, allows you to set some miscellaneous set
 |                                         |                                  |                                                                                                                                                                                                                                                                 |
 +-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Use Serial Console                      | checkbox                         | do                                                                                                                                                                                                                                                              |
-|                                         |                                  | **not**                                                                                                                                                                                                                                                         |
-|                                         |                                  | ** **                                                                                                                                                                                                                                                           |
+|                                         |                                  | **not**                                                                                                                                                                                                                                                         |                                                                                                                                                                                                                                                          
 |                                         |                                  | check this box if your serial port is disabled                                                                                                                                                                                                                  |
 |                                         |                                  |                                                                                                                                                                                                                                                                 |
 +-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -3057,56 +3038,49 @@ If you make any changes, click the Save button.
 
 This tab also contains the following buttons:
 
-**Rebuild LDAP/AD Cache:**
-click if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs automatically once a day as a cron job.
+**Rebuild LDAP/AD Cache:** click if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs automatically once a day
+as a cron job.
 
-**Save Debug:**
-used to generate a text file of diagnostic information. t will prompt for the location to save the ASCII text file.
+**Save Debug:** used to generate a text file of diagnostic information. t will prompt for the location to save the ASCII text file.
 
-**Firmware Update:**
-used to
+**Firmware Update:** used to
 `Upgrade FreeNAS® <#1.2.6.3.Using the GUI to Upgrade a 9.x System to a Later 9.x Version |outline>`_
 .
 
 Autotune
 """"""""
 
-FreeNAS® provides an autotune script which attempts to optimize the system depending upon the hardware which is installed. For example, if a ZFS volume exists on a system with limited RAM, the autotune script will automatically adjust some ZFS sysctl values in an attempt to minimize ZFS memory starvation issues. It should only be used as a temporary measure on a system that hangs until the underlying hardware issue is addressed by adding more RAM. Autotune will always slow the system down as it caps the ARC.
+FreeNAS® provides an autotune script which attempts to optimize the system depending upon the hardware which is installed. For example, if a ZFS volume
+exists on a system with limited RAM, the autotune script will automatically adjust some ZFS sysctl values in an attempt to minimize ZFS memory starvation
+issues. It should only be used as a temporary measure on a system that hangs until the underlying hardware issue is addressed by adding more RAM. Autotune
+will always slow the system down as it caps the ARC.
 
-The “Enable autotune” checkbox in System → Settings → Advanced
-is unchecked by default; check it if you would like the autotuner to run at boot time. If you would like the script to run immediately, reboot the system.
+The “Enable autotune” checkbox in System → Settings → Advanced is unchecked by default; check it if you would like the autotuner to run at boot
+time. If you would like the script to run immediately, reboot the system.
 
 If autotuner finds any settings that need adjusting, the changed values will appear in System →
 `Sysctls <#1.4.8.Sysctls|outline>`_
-(for
-*sysctl.conf*
-values) and in System →
+(for *sysctl.conf* values) and in System →
 `Tunables <#1.4.10.Tunables|outline>`_
-(for
-*loader.conf*
-values). If you do not like the changes, you can modify the values that are displayed in the GUI and your changes will override the values that were created by the autotune script. However, if you delete a sysctl or tunable that was created by autotune, it will be recreated at next boot. This is because autotune only creates values that do not already exist.
+(for *loader.conf* values). If you do not like the changes, you can modify the values that are displayed in the GUI and your changes will override the values
+that were created by the autotune script. However, if you delete a sysctl or tunable that was created by autotune, it will be recreated at next boot. This is
+because autotune only creates values that do not already exist.
 
-If you are trying to increase the performance of your FreeNAS® system and suspect that the current hardware may be limiting performance, try enabling autotune.
+If you are trying to increase the performance of your FreeNAS® system and suspect that the current hardware may be limiting performance, try enabling
+autotune.
 
-If you wish to read the script to see which checks are performed, the script is located in
-*/usr/local/bin/autotune*
-.
+If you wish to read the script to see which checks are performed, the script is located in */usr/local/bin/autotune*.
 
 Email Tab
 ^^^^^^^^^
 
-The Email tab, shown in Figure 4.6c, is used to configure the email settings on the FreeNAS® system. Table 4.6c summarizes the settings that can be configured using the Email tab.
+The Email tab, shown in Figure 4.6c, is used to configure the email settings on the FreeNAS® system. Table 4.6c summarizes the settings that can be
+configured using the Email tab.
 
-**NOTE:**
-it is important to configure the system so that it can successfully send emails. An automatic script send a nightly email to the
-*root*
-user account containing important information such as the health of the disks. Alert events are also emailed to the
-*root*
-user account.
+**NOTE:** it is important to configure the system so that it can successfully send emails. An automatic script send a nightly email to the *root* user account
+containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
 
-**Figure **
-**4.6c**
-**: Email Tab**
+**Figure 4.6c: Email Tab**
 
 
 |10000000000002C1000001F84303F765_png|
@@ -3167,32 +3141,21 @@ user account.
 SSL Tab
 ^^^^^^^
 
-When you change the Protocol value to HTTPS in System → Settings → General, an unsigned RSA certificate and key are auto-generated. Once generated, the certificate and key will be displayed in the SSL Certificate field in System → Settings → SSL, shown in Figure 4.6d.
-If you already have your own signed certificate that you wish to use for SSL/TLS connections, replace the values in the SSL certificate field with a copy/paste of your own key and certificate. The certificate can be used to secure the HTTP connection (enabled in the Settings → General Tab) to the FreeNAS® system.
+When you change the Protocol value to HTTPS in System → Settings → General, an unsigned RSA certificate and key are auto-generated. Once generated,
+the certificate and key will be displayed in the SSL Certificate field in System → Settings → SSL, shown in Figure 4.6d. If you already have your own
+signed certificate that you wish to use for SSL/TLS connections, replace the values in the SSL certificate field with a copy/paste of your own key and certificate. The certificate can be used to secure the HTTP connection (enabled in the Settings → General Tab) to the FreeNAS® system.
 
 Table 4.6d summarizes the settings that can be configured using the SSL tab. This
 `howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
 shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 4.6d.
 
 
-
-
-
-
-
-
-
-
-**Figure **
-**4.6d**
-**: SSL Tab**
+**Figure 4.6d: SSL Tab**
 
 
 |100000000000025A00000201DD9E6537_png|
 
-**Table 4.6d: **
-SSL
-** Tab's Configuration Settings**
+**Table 4.6d: SSL Tab's Configuration Settings**
 
 
 +---------------------+--------+------------------------------------------------------------------------------------------------------------------+
@@ -3231,15 +3194,15 @@ SSL
 +---------------------+--------+------------------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-FreeNAS® will check the validity of the certificate and key and will fallback to HTTP if they
-appear to be invalid.
+**NOTE:** FreeNAS® will check the validity of the certificate and key and will fallback to HTTP if they appear to be invalid.
 
 Sysctls
 ~~~~~~~
 
 `sysctl(8) <http://www.freebsd.org/cgi/man.cgi?query=sysctl>`_
-is an interface that is used to make changes to the FreeBSD kernel running on a FreeNAS® system. It can be used to tune the system in order to meet the specific needs of a network. Over five hundred system variables can be set using sysctl(8). Each variable is known as a MIB as it is comprised of a dotted set of components. Since these MIBs are specific to the kernel feature that is being tuned, descriptions can be found in many FreeBSD man pages (e.g.
+is an interface that is used to make changes to the FreeBSD kernel running on a FreeNAS® system. It can be used to tune the system in order to meet the
+specific needs of a network. Over five hundred system variables can be set using sysctl(8). Each variable is known as a MIB as it is comprised of a dotted set
+of components. Since these MIBs are specific to the kernel feature that is being tuned, descriptions can be found in many FreeBSD man pages (e.g.
 `sysctl(3) <http://www.freebsd.org/cgi/man.cgi?query=sysctl&sektion=3>`_
 ,
 `tcp(4) <http://www.freebsd.org/cgi/man.cgi?query=tcp>`_
@@ -3249,10 +3212,10 @@ and
 `FreeBSD Handbook <http://www.freebsd.org/handbook>`_
 .
 
-**DANGER!**
-changing the value of a sysctl MIB is an advanced feature that immediately affects the kernel of the FreeNAS® system.
-**Do not change a MIB on a production system unless you understand the ramifications of that change.**
-A badly configured MIB could cause the system to become unbootable, unreachable via the network, or can cause the system to panic under load. Certain changes may break assumptions made by the FreeNAS® software. This means that you should always test the impact of any changes on a test system first.
+**DANGER!** changing the value of a sysctl MIB is an advanced feature that immediately affects the kernel of the FreeNAS® system.
+**Do not change a MIB on a production system unless you understand the ramifications of that change.** A badly configured MIB could cause the system to become
+unbootable, unreachable via the network, or can cause the system to panic under load. Certain changes may break assumptions made by the FreeNAS® software.
+This means that you should always test the impact of any changes on a test system first.
 
 FreeNAS® provides a graphical interface for managing sysctl MIBs. To add a sysctl, go to System → Sysctls → Add Sysctl, shown in Figure 4.7a.
 
@@ -3289,53 +3252,42 @@ Table 4.7a summarizes the options when adding a sysctl.
 +-------------+-------------------+-----------------------------------------------------------------------------------+
 
 
-As soon as you add or edit a sysctl, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that value will persist across reboots and upgrades.
+As soon as you add or edit a sysctl, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that value will
+persist across reboots and upgrades.
 
-Note that any sysctl that is read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by attempting to change it from
+Note that any sysctl that is read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by attempting to change it
+from
 `Shell <#1.11.2.Shell|outline>`_
-. For example, to change the value of
-*net.inet.tcp.delay_ack*
-to
-*1*
-, use the command
-**sysctl net.inet.tcp.delay_ack=1**
-. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get an error, the setting is now applied. However, for the setting to be persistent across reboots, the sysctl must be added in System → Sysctls.
+. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command 
+**sysctl net.inet.tcp.delay_ack=1**. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get an
+error, the setting is now applied. However, for the setting to be persistent across reboots, the sysctl must be added in System → Sysctls.
 
-Any MIBs that you add will be listed in System → Sysctls → View Sysctls. To change the value of a MIB, click its Edit button. To remove a MIB, click its Delete button.
+Any MIBs that you add will be listed in System → Sysctls → View Sysctls. To change the value of a MIB, click its Edit button. To remove a MIB, click
+its Delete button.
 
-At this time, the GUI does not display the sysctl MIBs that are pre-set in the installation image.
-9.2.2 ships with the following MIBs set:
+At this time, the GUI does not display the sysctl MIBs that are pre-set in the installation image. 9.3 ships with the following MIBs set::
 
-kern.metadelay=3
-
-kern.dirdelay=4
-
-kern.filedelay=5
-
-kern.coredump=0
-
-net.inet.tcp.delayed_ack=0
+ kern.metadelay=3
+ kern.dirdelay=4
+ kern.filedelay=5
+ kern.coredump=0
+ net.inet.tcp.delayed_ack=0
 
 
-**Do not add or edit the default MIBS as sysctls**
-** **
-as doing so will overwrite the default values which may render the system unusable
-.
+**Do not add or edit the default MIBS as sysctls** as doing so will overwrite the default values which may render the system unusable.
 
 System Information
 ~~~~~~~~~~~~~~~~~~
 
 System → System Information displays general information about the FreeNAS® system. An example is seen in Figure 4.8a.
 
-The information includes the hostname, the build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, and the current load average.
+The information includes the hostname, the build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, and the
+current load average.
 
-To change the system's hostname, click its “Edit” button, type in the new hostname, and click “OK”. The hostname must include the domain name. If the network does not use a domain name add
-*.local*
-to the end of the hostname.
+To change the system's hostname, click its “Edit” button, type in the new hostname, and click “OK”. The hostname must include the domain name. If
+the network does not use a domain name add *.local* to the end of the hostname.
 
-**Figure 4.**
-**8**
-**a: System Information Tab**
+**Figure 4.8a: System Information Tab**
 
 
 Tunables
@@ -3343,18 +3295,21 @@ Tunables
 
 When a FreeBSD-based system boots,
 `loader.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=loader.conf>`_
-is read to determine if any parameters should be passed to the kernel or if any additional kernel modules (such as drivers) should be loaded. Since loader values are specific to the kernel parameter or driver to be loaded, descriptions can be found in the man page for the specified driver and in many sections of the
+is read to determine if any parameters should be passed to the kernel or if any additional kernel modules (such as drivers) should be loaded. Since loader
+values are specific to the kernel parameter or driver to be loaded, descriptions can be found in the man page for the specified driver and in many sections of
+the
 `FreeBSD Handbook <http://www.freebsd.org/handbook>`_
 .
 
-FreeNAS® provides a graphical interface for managing loader values. This advanced functionality is intended to make it easier to load additional kernel modules at boot time. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default FreeNAS® image does not load every possible hardware driver. This is a necessary evil as some drivers conflict with one another or cause stability issues, some are rarely used, and some drivers
-just don't belong on a standard NAS system. If you need a driver that is not automatically loaded, you need to add a tunable.
+FreeNAS® provides a graphical interface for managing loader values. This advanced functionality is intended to make it easier to load additional kernel
+modules at boot time. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default
+FreeNAS® image does not load every possible hardware driver. This is a necessary evil as some drivers conflict with one another or cause stability issues,
+some are rarely used, and some drivers just don't belong on a standard NAS system. If you need a driver that is not automatically loaded, you need to add a
+tunable.
 
-**DANGER!**
-adding a tunable is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
-**very important**
-** **
-that you do not have a typo when adding a tunable as this could halt the boot process. Fixing this problem requires physical access to the FreeNAS® system and knowledge of how to use the boot loader prompt as described in
+**DANGER!** adding a tunable is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
+**very important** that you do not have a typo when adding a tunable as this could halt the boot process. Fixing this problem requires physical access to the
+FreeNAS® system and knowledge of how to use the boot loader prompt as described in
 `Recovering  <#1.4.10.1.Recovering From Incorrect Tunables|outline>`_
 `From Incorrect Tunables <#1.4.9.1.Recovering From Incorrect Tunables|outline>`_
 . This means that you should always test the impact of any changes on a test system first.
@@ -3365,7 +3320,10 @@ To add a tunable, go to System → Tunables → Add Tunable, as seen in Figure 4
 
 |1000000000000127000001015F4550E1_png|
 
-Table 4.9a summarizes the options when adding a tunable. The changes you make will not take effect until the system is rebooted as loader settings are only read when the kernel is loaded at boot time. As long as the tunable exists, your changes will persist at each boot and across upgrades. Any tunables that you add will be listed alphabetically in System → Tunables → View Tunables. To change the value of a tunable, click its Edit button. To remove a tunable, click its Delete button.
+Table 4.9a summarizes the options when adding a tunable. The changes you make will not take effect until the system is rebooted as loader settings are only
+read when the kernel is loaded at boot time. As long as the tunable exists, your changes will persist at each boot and across upgrades. Any tunables that you
+add will be listed alphabetically in System → Tunables → View Tunables. To change the value of a tunable, click its Edit button. To remove a tunable,
+click its Delete button.
 
 **Table 4.9a: Adding a Tunable**
 
@@ -3390,67 +3348,44 @@ Table 4.9a summarizes the options when adding a tunable. The changes you make wi
 +-------------+-------------------+---------------------------------------------------------------------------+
 
 
-At this time, the GUI does not display the tunables that are pre-set in the installation image.
-9.2.2 ships with the following tunables set:
+At this time, the GUI does not display the tunables that are pre-set in the installation image. 9.3 ships with the following tunables set::
 
-autoboot_delay="2"
+ autoboot_delay="2"
+ loader_logo="freenas-logo"
+ loader_menu_title="Welcome to FreeNAS"
+ loader_brand="freenas-brand"
+ loader_version=" "
+ debug.debugger_on_panic=1
+ debug.ddb.textdump.pending=1
+ hw.hptrr.attach_generic=0
+ kern.ipc.nmbclusters="262144"
+ vfs.mountroot.timeout="30"
+ hint.isp.0.role=2
+ hint.isp.1.role=2
+ hint.isp.2.role=2
+ hint.isp.3.role=2
+ module_path="/boot/modules;/usr/local/modules"
+ net.inet6.ip6.auto_linklocal="0"
 
-loader_logo="freenas-logo"
+**Do not add or edit the default tunables** as doing so will overwrite the default values which may render the system unusable.
 
-loader_menu_title="Welcome to FreeNAS"
+The ZFS version used in 9.2.2 deprecates the following tunables::
 
-loader_brand="freenas-brand"
+ vfs.zfs.write_limit_override
+ vfs.zfs.write_limit_inflated
+ vfs.zfs.write_limit_max
+ vfs.zfs.write_limit_min
+ vfs.zfs.write_limit_shift
+ vfs.zfs.no_write_throttle
 
-loader_version=" "
-
-debug.debugger_on_panic=1
-
-debug.ddb.textdump.pending=1
-
-hw.hptrr.attach_generic=0
-
-kern.ipc.nmbclusters="262144"
-
-vfs.mountroot.timeout="30"
-
-hint.isp.0.role=2
-
-hint.isp.1.role=2
-
-hint.isp.2.role=2
-
-hint.isp.3.role=2
-
-module_path="/boot/modules;/usr/local/modules"
-
-net.inet6.ip6.auto_linklocal="0"
-
-**Do not add or edit the default tunables**
-** **
-as doing so will overwrite the default values which may render the system unusable.
-
-The ZFS version used in 9.2.2 deprecates the following tunables:
-
-vfs.zfs.write_limit_override
-
-vfs.zfs.write_limit_inflated
-
-vfs.zfs.write_limit_max
-
-vfs.zfs.write_limit_min
-
-vfs.zfs.write_limit_shift
-
-vfs.zfs.no_write_throttle
-
-If you upgrade from an earlier version of FreeNAS® where these tunables are set, they will automatically be deleted for you. You should not try to add these tunables back.
+If you upgrade from an earlier version of FreeNAS® where these tunables are set, they will automatically be deleted for you. You should not try to add these
+tunables back.
 
 Recovering From Incorrect Tunables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a tunable is preventing the system from booting, you will need physical access to the FreeNAS® system. Watch the boot messages and press the number 3 key or the Esc key to select “3.
-**Esc**
-ape to loader prompt” when you see the FreeNAS® boot menu shown in Figure 4.9b.
+If a tunable is preventing the system from booting, you will need physical access to the FreeNAS® system. Watch the boot messages and press the number 3 key
+or the Esc key to select “3. **Esc**ape to loader prompt” when you see the FreeNAS® boot menu shown in Figure 4.9b.
 
 **Figure 4.9b: FreeNAS® Boot Menu**
 
@@ -3459,40 +3394,33 @@ ape to loader prompt” when you see the FreeNAS® boot menu shown in Figure 4.9
 
 The boot loader prompt provides a minimal set of commands described in
 `loader(8) <http://www.freebsd.org/cgi/man.cgi?query=loader>`_
-. Once at the prompt, use the
-**unset**
-command to disable a problematic value, the
-**set**
-command to modify the problematic value, or the
-**unload**
-command to prevent the problematic driver from loading.
+. Once at the prompt, use the **unset** command to disable a problematic value, the
+**set** command to modify the problematic value, or the
+**unload** command to prevent the problematic driver from loading.
 
 Example 4.9a demonstrates several examples using these commands at the boot loader prompt. The first command disables the current value associated with the
-*kern.ipc.nmbclusters*
-MIB and will fail with a “no such file or directory” error message if a current tunable does not exist to set this value. The second command disables ACPI. The third command instructs the system not to load the fuse driver. When finished, type
-**boot**
-to continue the boot process.
+*kern.ipc.nmbclusters* MIB and will fail with a “no such file or directory” error message if a current tunable does not exist to set this value. The
+second command disables ACPI. The third command instructs the system not to load the fuse driver. When finished, type **boot** to continue the boot process.
 
 **Example 4.9a: Sample Commands at the Boot Loader Prompt**
+::
 
+ Type '?' for a list of commands, 'help' for more detailed help.
+ OK
+ 
+ unset kern.ipc.nmbclusters
+ OK
 
-Type '?' for a list of commands, 'help' for more detailed help.
+ set hint.acpi.0.disabled=1
+ OK
 
-OK
-**unset kern.ipc.nmbclusters**
+ unload fuse
+ OK
 
-OK
-**set hint.acpi.0.disabled=1**
+ boot
 
-
-OK
-**unload fuse**
-
-
-OK
-**boot**
-
-Any changes made at the boot loader prompt only effect the current boot. This means that you need to edit or remove the problematic tunable in System → Tunables → View Tunables to make your change permanent and to prevent future boot errors.
+Any changes made at the boot loader prompt only effect the current boot. This means that you need to edit or remove the problematic tunable in System →
+Tunables → View Tunables to make your change permanent and to prevent future boot errors.
 
 Network Configuration
 ---------------------
@@ -3510,9 +3438,7 @@ The Network section of the administrative GUI contains the following components 
 
 
 *   `IPMI <#1.5.3.IPMI|outline>`_
-    :
-    ** **
-    provides side-band management should the appliance become unavailable through the graphical administrative interface.
+    : provides side-band management should the appliance become unavailable through the graphical administrative interface.
 
 
 
@@ -3543,20 +3469,19 @@ Global Configuration
 
 Network → Global Configuration, shown in Figure 5.1a, allows you to set non-interface specific network settings.
 
-Table 5.1a summarizes the settings that can be configured using the Global Configuration tab. The hostname and domain will be pre-filled for you, as seen in Figure 5.1a, but can be changed to meet the local network's requirements.
+Table 5.1a summarizes the settings that can be configured using the Global Configuration tab. The hostname and domain will be pre-filled for you, as seen in
+Figure 5.1a, but can be changed to meet the local network's requirements.
 
 If you will be using
 `Active Directory <#1.8.4.1.Active Directory|outline>`_
 , set the IP address of the DNS server used in the realm.
 
-If your network does not have a DNS server or NFS, SSH, or FTP users are receiving “reverse DNS” or timeout errors, add an entry for the IP address of the FreeNAS® system in the “Host name database” field.
+If your network does not have a DNS server or NFS, SSH, or FTP users are receiving “reverse DNS” or timeout errors, add an entry for the IP address of
+the FreeNAS® system in the “Host name database” field.
 
-**NOTE:**
-if you add a gateway to the Internet, make sure that the FreeNAS® system is protected by a properly configured firewall.
+**NOTE:** if you add a gateway to the Internet, make sure that the FreeNAS® system is protected by a properly configured firewall.
 
 **Figure 5.1a: Global Configuration**
-
-**Screen**
 
 |10000000000002E8000001F895B2C752_png|
 
@@ -3606,25 +3531,26 @@ if you add a gateway to the Internet, make sure that the FreeNAS® system is pro
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-In many cases, a FreeNAS® configuration will deliberately exclude default gateway information as a way to make it more difficult for a remote attacker to communicate with the server. While this is a reasonable precaution, such a configuration does
-**not**
-** **
-restrict inbound traffic from sources within the local network. However, omitting a default gateway will prevent the FreeNAS® system from communicating with DNS servers, time servers, and mail servers that are located outside of the local network. In this case, it is recommended that
+**NOTE:** In many cases, a FreeNAS® configuration will deliberately exclude default gateway information as a way to make it more difficult for a remote
+attacker to communicate with the server. While this is a reasonable precaution, such a configuration does **not** restrict inbound traffic from sources within
+the local network. However, omitting a default gateway will prevent the FreeNAS® system from communicating with DNS servers, time servers, and mail servers
+that are located outside of the local network. In this case, it is recommended that
 `Static Routes <#1.5.5.Static Routes|outline>`_
 be added in order to reach external DNS, NTP, and mail servers which are configured with static IP addresses.
 
 Interfaces
 ~~~~~~~~~~
 
-Network → Interfaces is used to view which interfaces have been manually configured, to add a manually configured interface, and to edit an interface's manual configuration.
+Network → Interfaces is used to view which interfaces have been manually configured, to add a manually configured interface, and to edit an interface's
+manual configuration.
 
-**NOTE:**
-typically the interface used to access the FreeNAS® administrative GUI is configured by DHCP. This interface will not appear in this screen, even though it is already dynamically configured and in use.
+**NOTE:** typically the interface used to access the FreeNAS® administrative GUI is configured by DHCP. This interface will not appear in this screen, even
+though it is already dynamically configured and in use.
 
-Figure 5.2a shows the screen that opens when you click Interfaces → Add Interface. Table 5.2a summarizes the configuration options when you Add an interface or Edit an already configured interface.
+Figure 5.2a shows the screen that opens when you click Interfaces → Add Interface. Table 5.2a summarizes the configuration options when you Add an
+interface or Edit an already configured interface.
 
-Figure 5.2a: Adding or Editing an Interface
+**Figure 5.2a: Adding or Editing an Interface**
 
 |1000000000000182000001C49B157EE6_png|
 
@@ -3673,39 +3599,38 @@ Figure 5.2a: Adding or Editing an Interface
 +---------------------+----------------+-----------------------------------------------------------------------------------------------------------------------+
 
 
-This screen also allows you to configure an alias for the interface. If you wish to set multiple aliases, click the “Add extra alias” link for each alias you wish to configure. To delete an alias, highlight the interface in the tree to access its "Edit" screen. Be sure to check the "Delete" checkbox associated with the alias. If you instead click the "Delete" button at the bottom of this screen, you will delete the whole interface, not just the alias.
+This screen also allows you to configure an alias for the interface. If you wish to set multiple aliases, click the “Add extra alias” link for each alias
+you wish to configure. To delete an alias, highlight the interface in the tree to access its "Edit" screen. Be sure to check the "Delete" checkbox associated
+with the alias. If you instead click the "Delete" button at the bottom of this screen, you will delete the whole interface, not just the alias.
 
-When configuring multiple interfaces, they can not be members of the same subnet. Check the subnet mask if you receive an error when setting the IP addresses on multiple interfaces.
+When configuring multiple interfaces, they can not be members of the same subnet. Check the subnet mask if you receive an error when setting the IP addresses
+on multiple interfaces.
 
-When configuring an interface for both IPv4 and IPv6, this screen will not let you set both addresses as primary. In other words, you will get an error if you fill in both the
-*IPv4 address*
-and
-*IPv6 address*
-fields. Instead, set one of these address fields and create an alias for the other address.
+When configuring an interface for both IPv4 and IPv6, this screen will not let you set both addresses as primary. In other words, you will get an error if you
+fill in both the *IPv4 address* and
+*IPv6 address* fields. Instead, set one of these address fields and create an alias for the other address.
 
 IPMI
 ~~~~
 
-Beginning with version 9.2.1, FreeNAS® provides a graphical screen for configuring an IPMI interface. This screen will only appear if the system hardware includes a Baseboard Management Controller (BMC) and the IPMI kernel module is loaded.
+Beginning with version 9.2.1, FreeNAS® provides a graphical screen for configuring an IPMI interface. This screen will only appear if the system hardware
+includes a Baseboard Management Controller (BMC) and the IPMI kernel module is loaded.
 
-IPMI provides side-band management should the system become unavailable through the graphical administrative interface. This allows for a few vital functions, such as checking the log, accessing the BIOS setup, and powering on the system without requiring physical access to the system. IPMI can also be used to allow another person remote access to the system in order to assist with a configuration or troubleshooting issue. Before configuring IPMI, ensure that the management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may be a dedicated IPMI interface.
+IPMI provides side-band management should the system become unavailable through the graphical administrative interface. This allows for a few vital functions,
+such as checking the log, accessing the BIOS setup, and powering on the system without requiring physical access to the system. IPMI can also be used to allow another person remote access to the system in order to assist with a configuration or troubleshooting issue. Before configuring IPMI, ensure that the management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may be a dedicated IPMI interface.
 
 Before configuring IPMI, add a
 `tunable <#1.4.9.Tunables|outline>`_
-with a "Variable" of
-*ipmi_load*
-and a "Value" of
-*YES*
-. This will configure the system to load the driver at bootup. Then, to load the
-*ipmi*
-kernel module now, without
-rebooting, type this from
+with a "Variable" of *ipmi_load* and a "Value" of
+*YES*. This will configure the system to load the driver at bootup. Then, to load the
+*ipmi* kernel module now, without rebooting, type this from
 `Shell <#1.12.2.Shell|outline>`_
 :
 
 **kldload ipmi**
 
-Once the module is loaded, IPMI should be configured from Network → IPMI. Figure 5.3a shows the configuration screen and Table 5.3a summarizes the options when configuring IPMI.
+Once the module is loaded, IPMI should be configured from Network → IPMI. Figure 5.3a shows the configuration screen and Table 5.3a summarizes the options
+when configuring IPMI.
 
 **Figure 5.3a: IPMI Configuration**
 
@@ -3736,122 +3661,109 @@ Once the module is loaded, IPMI should be configured from Network → IPMI. Figu
 +----------------------+----------------+-----------------------------------------------------------------------------+
 
 
-Once configured, you can access the IPMI interface using a web browser and the IP address you specified in the configuration. The management interface will prompt for a username and the password that you configured. Refer to the documentation for the IPMI device to determine the default administrative username.
+Once configured, you can access the IPMI interface using a web browser and the IP address you specified in the configuration. The management interface will
+prompt for a username and the password that you configured. Refer to the documentation for the IPMI device to determine the default administrative username.
 
-The default username is
-*ADMIN*
-(in all caps). Once you have logged into the management interface, you can change the administrative username as well as create additional users. The appearance of the utility and the functions that are available within the IPMI management utility will vary depending upon the hardware.
+The default username is *ADMIN* (in all caps). Once you have logged into the management interface, you can change the administrative username as well as
+create additional users. The appearance of the utility and the functions that are available within the IPMI management utility will vary depending upon the
+hardware.
 
 Link Aggregations
 ~~~~~~~~~~~~~~~~~
 
 FreeNAS® uses FreeBSD's
 `lagg(4) <http://www.freebsd.org/cgi/man.cgi?query=lagg>`_
-interface to provide link aggregation and link failover. The lagg interface allows aggregation of multiple network interfaces
-into a single
-virtual lagg interface
-,
-providing fault-tolerance and high-speed
-multi-link throughput
-.
-The aggregation protocols supported by lagg determine which ports are used for outgoing
-traffic and
-whether a specific port accepts
-incoming traffic
-. The
-link state of the lagg interface is used to validate if the port is
-active
-or not
-.
+interface to provide link aggregation and link failover. The lagg interface allows aggregation of multiple network interfaces into a single virtual lagg
+interface, providing fault-tolerance and high-speed multi-link throughput. The aggregation protocols supported by lagg determine which ports are used for
+outgoing traffic and whether a specific port accepts incoming traffic. The link state of the lagg interface is used to validate if the port is active or not.
 
 
-Aggregation works best on switches supporting LACP, which distributes traffic bi-directionally while
-responding to failure of individual links. FreeNAS® also supports active/passive failover between pairs of links.
-T
-he LACP, FEC and load-balance modes select the output interface using a hash that includes the Ethernet source and destination address, VLAN tag (if available), IP source and destination address, and flow label (IPv6 only). The benefit can only be observed when multiple clients are transfer
-r
-ing files
-**from**
-** **
-your NAS. The flow entering
-**into**
-* *
-your NAS depends on the Ethernet switch load-balance algorithm.
+Aggregation works best on switches supporting LACP, which distributes traffic bi-directionally while responding to failure of individual links. FreeNAS® also
+supports active/passive failover between pairs of links. The LACP, FEC and load-balance modes select the output interface using a hash that includes the
+Ethernet source and destination address, VLAN tag (if available), IP source and destination address, and flow label (IPv6 only). The benefit can only be
+observed when multiple clients are transferring files **from** your NAS. The flow entering
+**into** your NAS depends on the Ethernet switch load-balance algorithm.
 
 
-The lagg driver currently supports the following aggregation protocols
-:
+The lagg driver currently supports the following aggregation protocols:
 
 
-**Failover:**
-the default protocol. Sends traffic only through the active port. If the master port becomes unavailable, the next active port is used. The first interface added is the master port; any interfaces added after that are used as failover devices. By default, received traffic is only accepted when received through the active port. This constraint can be relaxed, which is useful for certain bridged network setups, by setting
-*net.link.lagg.failover_rx_all*
-to a non-zero value in System →
+**Failover:** the default protocol. Sends traffic only through the active port. If the master port becomes unavailable, the next active port is used. The
+first interface added is the master port; any interfaces added after that are used as failover devices. By default, received traffic is only accepted when
+received through the active port. This constraint can be relaxed, which is useful for certain bridged network setups, by setting
+*net.link.lagg.failover_rx_all* to a non-zero value in System →
 `Sysctls <#1.4.8.Sysctls|outline>`_
 → Add Sysctl.
 
-**FEC:**
-supports Cisco EtherChannel on older Cisco switches. This is a static setup and does not negotiate aggregation with the peer or exchange frames to monitor the link.
+**FEC:** supports Cisco EtherChannel on older Cisco switches. This is a static setup and does not negotiate aggregation with the peer or exchange frames to
+monitor the link.
 
-**LACP:**
-supports the IEEE 802.3ad Link Aggregation Control Protocol (LACP) and the Marker Protocol. LACP will negotiate a set of aggregable links with the peer into one or more link aggregated groups (LAGs). Each LAG is composed of ports of the same speed, set to full-duplex operation. The traffic will be balanced across the ports in the LAG with the greatest total speed; in most cases there will only be one LAG which contains all ports. In the event of changes in physical connectivity, link aggregation will quickly converge to a new configuration. LACP must be configured on the switch as well.
+**LACP:** supports the IEEE 802.3ad Link Aggregation Control Protocol (LACP) and the Marker Protocol. LACP will negotiate a set of aggregable links with the
+peer into one or more link aggregated groups (LAGs). Each LAG is composed of ports of the same speed, set to full-duplex operation. The traffic will be
+balanced across the ports in the LAG with the greatest total speed; in most cases there will only be one LAG which contains all ports. In the event of changes
+in physical connectivity, link aggregation will quickly converge to a new configuration. LACP must be configured on the switch as well.
 
-**Load Balance:**
-balances outgoing traffic across the active ports based on hashed protocol header information and accepts incoming traffic from any active port. This is a static setup and does not negotiate aggregation with the peer or exchange frames to monitor the link. The hash includes the Ethernet source and destination address, VLAN tag (if available), and IP source and destination address. Requires a switch which supports IEEE 802.3ad static link aggregation.
+**Load Balance:** balances outgoing traffic across the active ports based on hashed protocol header information and accepts incoming traffic from any active
+port. This is a static setup and does not negotiate aggregation with the peer or exchange frames to monitor the link. The hash includes the Ethernet source
+and destination address, VLAN tag (if available), and IP source and destination address. Requires a switch which supports IEEE 802.3ad static link
+aggregation.
 
-**Round Robin:**
-distributes outgoing traffic using a round-robin scheduler through all active ports and accepts incoming traffic from any active port. This mode can cause unordered packet arrival at the client. This has a side effect of limiting throughput as reordering packets can be CPU intensive on the client. Requires a switch which supports IEEE 802.3ad static link aggregation.
+**Round Robin:** distributes outgoing traffic using a round-robin scheduler through all active ports and accepts incoming traffic from any active port. This
+mode can cause unordered packet arrival at the client. This has a side effect of limiting throughput as reordering packets can be CPU intensive on the client. Requires a switch which supports IEEE 802.3ad static link aggregation.
 
-**None:**
-this protocol disables any traffic without disabling the lagg interface itself.
+**None:** this protocol disables any traffic without disabling the lagg interface itself.
 
-**NOTE:**
-the FreeNAS® system must be rebooted after configuring the lagg device and
-TCP access will be lost during reboot.
+**NOTE:** the FreeNAS® system must be rebooted after configuring the lagg device and TCP access will be lost during reboot.
 
-**Do not**
-configure t
-he interfaces used in the lagg device before creating the lagg
-device.
+**Do not** configure the interfaces used in the lagg device before creating the lagg device.
 
 Considerations When Using LACP, MPIO, NFS, or ESXi
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-LACP bonds Ethernet connections in order to improve bandwidth. For example, four physical interfaces can be used to create one mega interface. However, it cannot increase the bandwidth for a single conversation. It is designed to increase bandwidth when multiple clients are simultaneously accessing the same system. It also assumes that quality Ethernet hardware is used and it will not make much difference when using inferior Ethernet chipsets such as a Realtek.
+LACP bonds Ethernet connections in order to improve bandwidth. For example, four physical interfaces can be used to create one mega interface. However, it
+cannot increase the bandwidth for a single conversation. It is designed to increase bandwidth when multiple clients are simultaneously accessing the same
+system. It also assumes that quality Ethernet hardware is used and it will not make much difference when using inferior Ethernet chipsets such as a Realtek.
 
-LACP reads the sender and receiver IP addresses and, if they are deemed to belong to the same TCP connection, always sends the packet over the same interface to ensure that TCP does not need to reorder packets. This makes LACP ideal for load balancing many simultaneous TCP connections, but does nothing for increasing the speed over one TCP connection.
+LACP reads the sender and receiver IP addresses and, if they are deemed to belong to the same TCP connection, always sends the packet over the same interface
+to ensure that TCP does not need to reorder packets. This makes LACP ideal for load balancing many simultaneous TCP connections, but does nothing for
+increasing the speed over one TCP connection.
 
-MPIO operates at the iSCSI protocol level. For example, if you create four IP addresses and there are
-four simultaneous TCP connections, MPIO will send the data over all available links. When configuring MPIO, make sure that the IP addresses on the interfaces are configured to be on separate subnets with non-overlapping netmasks or configure static routes to do point-to-point communication. Otherwise, all packets will pass through one interface.
+MPIO operates at the iSCSI protocol level. For example, if you create four IP addresses and there are four simultaneous TCP connections, MPIO will send the
+data over all available links. When configuring MPIO, make sure that the IP addresses on the interfaces are configured to be on separate subnets with
+non-overlapping netmasks or configure static routes to do point-to-point communication. Otherwise, all packets will pass through one interface.
 
-LACP and other forms of link aggregation generally do not work well with virtualization solutions. In a virtualized environment, consider the use of iSCSI MPIO through the creation of an
+LACP and other forms of link aggregation generally do not work well with virtualization solutions. In a virtualized environment, consider the use of iSCSI
+MPIO through the creation of an
 `iSCSI Portal <#1.8.7.4.Portals|outline>`_
 . This allows an iSCSI initiator to recognize multiple links to a target, utilizing them for increased bandwidth or redundancy. This
 `how-to <http://fojta.wordpress.com/2010/04/13/iscsi-and-esxi-multipathing-and-jumbo-frames/>`_
 contains instructions for configuring MPIO on ESXi.
 
-NFS does not understand MPIO. Therefore, you will need one fast interface since creating an iSCSI portal will not improve bandwidth when using NFS. LACP does not work well to increase the bandwidth for point-to-point NFS (one server and one client). LACP is a good solution for link redundancy or for one server and many clients.
+NFS does not understand MPIO. Therefore, you will need one fast interface since creating an iSCSI portal will not improve bandwidth when using NFS. LACP does
+not work well to increase the bandwidth for point-to-point NFS (one server and one client). LACP is a good solution for link redundancy or for one server and
+many clients.
 
 Creating a Link Aggregation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Before creating a link aggregation, double-check that no interfaces have been manually configured in Network → Interfaces → View Interfaces. If any configured interfaces exist, delete them as lagg creation will fail if any interfaces are manually configured.
+Before creating a link aggregation, double-check that no interfaces have been manually configured in Network → Interfaces → View Interfaces. If any
+configured interfaces exist, delete them as lagg creation will fail if any interfaces are manually configured.
 
 Figure 5.4a shows the configuration options when adding a lagg interface using Network → Link Aggregations → Create Link Aggregation.
 
-Figure 5.4a: Creating a lagg Interface
+**Figure 5.4a: Creating a lagg Interface**
 
 
 |100000000000021700000197330084C6_png|
 
-**NOTE:**
-if interfaces are installed but do not appear in the Physical NICs in the LAGG list, check that a FreeBSD driver for the interface exists
+**NOTE:** if interfaces are installed but do not appear in the Physical NICs in the LAGG list, check that a FreeBSD driver for the interface exists
 `here <http://www.freebsd.org/releases/9.2R/hardware.html#ETHERNET>`_
 .
 
 Select the desired aggregation protocol, highlight the interface(s) to associate with the lagg device, and click the OK button.
 
-Once the lagg device has been created, it will be listed in the tree under an entry which indicates the type of protocol. As seen in Figure 5.4b, it will also appear in View Link Aggregations.
+Once the lagg device has been created, it will be listed in the tree under an entry which indicates the type of protocol. As seen in Figure 5.4b, it will also
+appear in View Link Aggregations.
 
 **Figure 5.4b: Viewing Link Aggregations**
 
@@ -3861,7 +3773,10 @@ Click a link aggregation entry to see the buttons to edit that lagg interface, d
 
 If you click the Edit button for a lagg, you will see the configuration screen shown in Figure 5.4c. Table 5.4a describes the options in this screen.
 
-After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be lost at this point, and if so, the system must be rebooted from the console setup menu. You may also have to change your switch settings to communicate through the new lagg interface. After reboot, if the IP address was set manually, you may also have to manually enter a default gateway from the console setup menu option in order to get access into the GUI through the new lagg interface.
+After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be lost at this point, and if
+so, the system must be rebooted from the console setup menu. You may also have to change your switch settings to communicate through the new lagg interface.
+After reboot, if the IP address was set manually, you may also have to manually enter a default gateway from the console setup menu option in order to get
+access into the GUI through the new lagg interface.
 
 **Figure 5.4c: Editing a lagg**
 
@@ -3906,13 +3821,13 @@ After creating the lagg interface, set the IP address manually or with DHCP and 
 +---------------------+----------------+----------------------------------------------------------------------------------+
 
 
-This screen also allows you to configure an alias for the lagg interface. If you wish to set multiple aliases, click the “Add extra Alias” link for each alias you wish to configure.
+This screen also allows you to configure an alias for the lagg interface. If you wish to set multiple aliases, click the “Add extra Alias” link for each
+alias you wish to configure.
 
-If you click the Edit Members button, click the entry for a member, then click its Edit button, you will
-see the configuration screen shown in Figure 5.4d. The configurable options are summarized in Table 5.4b.
+If you click the Edit Members button, click the entry for a member, then click its Edit button, you will see the configuration screen shown in Figure 5.4d.
+The configurable options are summarized in Table 5.4b.
 
-**Figure 5.4d: Editing a **
-**Member Interface**
+**Figure 5.4d: Editing a Member Interface**
 
 |100000000000038A000001F41B7DFD86_png|
 
@@ -3939,14 +3854,16 @@ see the configuration screen shown in Figure 5.4d. The configurable options are 
 +----------------------+----------------+------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-options can be set at either the lagg level (using the Edit button) or the individual parent interface level (using the Edit Members button). Typically, changes are made at the lagg level (Figure 5.4c) as each interface member will inherit from the lagg. If you instead configure the interface level (Figure 5.4d), you will have to repeat the configuration for each interface within the lagg. However, some lagg options can only be set by editing the interface. For instance, the MTU of a lagg is inherited from the interface. To set an MTU on a lagg, set all the interfaces to the same MTU.
+**NOTE:** options can be set at either the lagg level (using the Edit button) or the individual parent interface level (using the Edit Members button).
+Typically, changes are made at the lagg level (Figure 5.4c) as each interface member will inherit from the lagg. If you instead configure the interface level
+(Figure 5.4d), you will have to repeat the configuration for each interface within the lagg. However, some lagg options can only be set by editing the
+interface. For instance, the MTU of a lagg is inherited from the interface. To set an MTU on a lagg, set all the interfaces to the same MTU.
 
 To see if the link aggregation is load balancing properly, run the following command from
 `Shell <#1.9.2.Shell|outline>`_
-:
+::
 
-**systat -ifstat**
+ systat -ifstat
 
 More information about this command can be found at
 `systat(1) <http://www.freebsd.org/cgi/man.cgi?query=systat>`_
@@ -3955,14 +3872,14 @@ More information about this command can be found at
 Network Summary
 ~~~~~~~~~~~~~~~
 
-Network → Network Summary allows you to quickly view the addressing information of every configured interface. For each interface name, the configured IP address(es),
-DNS
-server(s), and default gateway will be displayed.
+Network → Network Summary allows you to quickly view the addressing information of every configured interface. For each interface name, the configured IP
+address(es), DNS server(s), and default gateway will be displayed.
 
 Static Routes
 ~~~~~~~~~~~~~
 
-By default, no static routes are defined on the FreeNAS® system. Should you need a static route to reach portions of your network, add the route using Network → Static Routes → Add Static Route, shown in Figure 5.6a.
+By default, no static routes are defined on the FreeNAS® system. Should you need a static route to reach portions of your network, add the route using
+Network → Static Routes → Add Static Route, shown in Figure 5.6a.
 
 **Figure 5.6a: Adding a Static Route**
 
@@ -4001,14 +3918,16 @@ VLANs
 
 FreeNAS® uses FreeBSD's
 `vlan(4) <http://www.freebsd.org/cgi/man.cgi?query=vlan>`_
-interface to demultiplex frames with IEEE 802.1q tags. This allows nodes on different VLANs to communicate through a layer 3 switch or router. A vlan interface must be assigned a parent interface and a numeric VLAN tag. A single parent can be assigned to multiple vlan interfaces provided they have different tags. If you click Network → VLANs → Add VLAN, you will see the screen shown in Figure 5.7a.
+interface to demultiplex frames with IEEE 802.1q tags. This allows nodes on different VLANs to communicate through a layer 3 switch or router. A vlan
+interface must be assigned a parent interface and a numeric VLAN tag. A single parent can be assigned to multiple vlan interfaces provided they have different
+tags. If you click Network → VLANs → Add VLAN, you will see the screen shown in Figure 5.7a.
 
-**NOTE: **
-VLAN tagging is the only 802.1q feature that is implemented. Additionally, not all Ethernet interfaces support full VLAN processing–see the HARDWARE section of
+**NOTE:** VLAN tagging is the only 802.1q feature that is implemented. Additionally, not all Ethernet interfaces support full VLAN processing–see the
+HARDWARE section of
 `vlan(4) <http://www.freebsd.org/cgi/man.cgi?query=vlan>`_
 for details.
 
-Figure 5.7a: Adding a VLAN
+**Figure 5.7a: Adding a VLAN**
 
 
 |100000000000013A000000F8F965FD90_png|
@@ -4042,11 +3961,12 @@ Table 5.7a summarizes the configurable fields.
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 
 
-The parent interface of a vlan has to be up, but it can have an IP address or it can be unconfigured, depending upon the requirements of the VLAN configuration. This makes it difficult for the GUI to do the right thing without trampling the configuration. To remedy this, after adding the VLAN, go to Network →
+The parent interface of a vlan has to be up, but it can have an IP address or it can be unconfigured, depending upon the requirements of the VLAN
+configuration. This makes it difficult for the GUI to do the right thing without trampling the configuration. To remedy this, after adding the VLAN, go to
+Network →
 `Interfaces  <#1.5.2.Interfaces|outline>`_
-→ Add Interface. Select the parent interface from the NIC drop-down menu and in the Options field, type
-*up*
-. This will bring up the parent interface. If an IP address is required, it can be configured using the rest of the options in the Add Interface screen.
+→ Add Interface. Select the parent interface from the NIC drop-down menu and in the Options field, type *up*. This will bring up the parent interface. If
+an IP address is required, it can be configured using the rest of the options in the Add Interface screen.
 
 Storage Configuration
 ---------------------
@@ -4078,11 +3998,15 @@ These configurations are described in more detail in this section.
 Periodic Snapshot Tasks
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-A periodic snapshot task allows you to schedule the creation of read-only versions of ZFS volumes and datasets at a given point in time. Snapshots can be created quickly and, if little data changes, new snapshots take up very little space. For example, a snapshot where no files have changed takes 0 MB of storage, but as you make changes to files, the snapshot size changes to reflect the size of the changes.
+A periodic snapshot task allows you to schedule the creation of read-only versions of ZFS volumes and datasets at a given point in time. Snapshots can be
+created quickly and, if little data changes, new snapshots take up very little space. For example, a snapshot where no files have changed takes 0 MB of
+storage, but as you make changes to files, the snapshot size changes to reflect the size of the changes.
 
-Snapshots provide a clever way of keeping a history of files, should you need to recover an older copy or even a deleted file. For this reason, many administrators take snapshots often (e.g. every 15 minutes), store them for a period of time (e.g. for a month), and store them on another system (e.g. using
+Snapshots provide a clever way of keeping a history of files, should you need to recover an older copy or even a deleted file. For this reason, many
+administrators take snapshots often (e.g. every 15 minutes), store them for a period of time (e.g. for a month), and store them on another system (e.g. using
 `Replication Tasks <#1.6.2.Replication Tasks|outline>`_
-). Such a strategy allows the administrator to roll the system back to a specific time or, if there is a catastrophic loss, an off-site snapshot can restore the system up to the last snapshot interval.
+). Such a strategy allows the administrator to roll the system back to a specific time or, if there is a catastrophic loss, an off-site snapshot can restore
+the system up to the last snapshot interval.
 
 Before you can create a snapshot, you need to have an existing ZFS volume. How to create a volume is described in
 `ZFS Volume Manager <#1.6.3.4.ZFS Volume Manager|outline>`_
@@ -4091,12 +4015,13 @@ Before you can create a snapshot, you need to have an existing ZFS volume. How t
 Creating a Periodic Snapshot Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To create a periodic snapshot task, click Storage → Periodic Snapshot Tasks → Add Periodic Snapshot which will open the screen shown in Figure 6.1a. Table 6.1a summarizes the fields in this screen.
+To create a periodic snapshot task, click Storage → Periodic Snapshot Tasks → Add Periodic Snapshot which will open the screen shown in Figure 6.1a.
+Table 6.1a summarizes the fields in this screen.
 
-**NOTE:**
-if you just need a one-time snapshot, instead use Storage → Volumes → View Volumes and click the Create Snapshot button for the volume or dataset that you wish to snapshot.
+**NOTE:** if you just need a one-time snapshot, instead use Storage → Volumes → View Volumes and click the Create Snapshot button for the volume or
+dataset that you wish to snapshot.
 
-Figure 6.1a: Creating a ZFS Periodic Snapshot
+**Figure 6.1a: Creating a ZFS Periodic Snapshot**
 
 
 |1000000000000267000001E2C69857F7_png|
@@ -4139,49 +4064,48 @@ Figure 6.1a: Creating a ZFS Periodic Snapshot
 +----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-If the Recursive box is checked, you do not need to create snapshots for every dataset individually as they are included in the snapshot. The downside is that there is no way to exclude certain datasets from being included in a recursive snapshot.
+If the Recursive box is checked, you do not need to create snapshots for every dataset individually as they are included in the snapshot. The downside is that
+there is no way to exclude certain datasets from being included in a recursive snapshot.
 
 Once you click the OK button, a snapshot will be taken and this task will be repeated according to your settings.
 
 Managing Periodic Snapshot Tasks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-After creating a periodic snapshot task, an entry for the snapshot task will be added to View Periodic Snapshot Tasks, as seen in the example in Figure 6.1b. Click an entry to access its Modify and Delete buttons.
+After creating a periodic snapshot task, an entry for the snapshot task will be added to View Periodic Snapshot Tasks, as seen in the example in Figure 6.1b.
+Click an entry to access its Modify and Delete buttons.
 
 **Figure 6.1b: View Periodic Snapshot Tasks**
 
 |10000000000003AE000001EC7F2141B9_png|
 
-If you click the ZFS Snapshots tab (above the Add Periodic Snapshot button), you can review the listing of available snapshots. An example is shown in Figure 6.1c.
+If you click the ZFS Snapshots tab (above the Add Periodic Snapshot button), you can review the listing of available snapshots. An example is shown in Figure
+6.1c.
 
-**NOTE:**
-if snapshots do not appear, check that the current time does not conflict with the begin, end, and interval settings. If the snapshot was attempted but failed, an entry will be added to
-*/var/log/messages*
-. This log file can be viewed in
+**NOTE:** if snapshots do not appear, check that the current time does not conflict with the begin, end, and interval settings. If the snapshot was attempted
+but failed, an entry will be added to */var/log/messages*. This log file can be viewed in
 `Shell <#1.9.2.Shell|outline>`_
 .
 
-Figure 6.1c: Viewing Available Snapshots
+**Figure 6.1c: Viewing Available Snapshots**
 
 
 |100000000000054E000001EE38B1A8BB_png|
 
 The most recent snapshot for a volume or dataset will be listed last and will have 3 icons. The icons associated with a snapshot allow you to:
 
-**Clone Snapshot:**
-will prompt for the name of the clone to create. The clone will be a writable copy of the snapshot. Since a clone is really a dataset which can be mounted, the clone will appear in the Active Volumes tab, instead of the Periodic Snapshots tab, and will have the word
-*clone*
-in its name.
+**Clone Snapshot:** will prompt for the name of the clone to create. The clone will be a writable copy of the snapshot. Since a clone is really a dataset
+which can be mounted, the clone will appear in the Active Volumes tab, instead of the Periodic Snapshots tab, and will have the word *clone* in its name.
 
-**Destroy Snapshot:**
-a pop-up message will ask you to confirm this action. Child clones must be destroyed before their parent snapshot can be destroyed. While creating a snapshot is instantaneous, deleting a snapshot can be I/O intensive and can take a long time, especially when deduplication is enabled.
+**Destroy Snapshot:** a pop-up message will ask you to confirm this action. Child clones must be destroyed before their parent snapshot can be destroyed.
+While creating a snapshot is instantaneous, deleting a snapshot can be I/O intensive and can take a long time, especially when deduplication is enabled.
 In order to delete a block in a snapshot, ZFS has to walk all the allocated blocks to see if that block is used anywhere else; if it is not, it can be freed.
 
-**Rollback Snapshot:**
-a pop-up message will ask if you are sure that you want to rollback to this snapshot state. If you click Yes, any files that have changed since the snapshot was taken will be reverted back to their state at the time of the snapshot.
+**Rollback Snapshot:** a pop-up message will ask if you are sure that you want to rollback to this snapshot state. If you click Yes, any files that have
+changed since the snapshot was taken will be reverted back to their state at the time of the snapshot.
 
-**NOTE:**
-rollback is a potentially dangerous operation and will cause any configured replication tasks to fail as the replication system uses the existing snapshot when doing an incremental backup. If you do need to restore the data within a snapshot, the recommended steps are:
+**NOTE:** rollback is a potentially dangerous operation and will cause any configured replication tasks to fail as the replication system uses the existing
+snapshot when doing an incremental backup. If you do need to restore the data within a snapshot, the recommended steps are:
 
 #.  Clone the desired snapshot.
 
@@ -4199,22 +4123,21 @@ This approach will never destroy any on-disk data and has no impact on replicati
 
 Periodic snapshots can be configured to appear as
 `shadow copies <#1.7.3.4.Configuring Shadow Copies|outline>`_
-in newer versions of Windows Explorer. Users can access the files in the shadow copy using Explorer without requiring any interaction with the FreeNAS® graphical administrative interface.
+in newer versions of Windows Explorer. Users can access the files in the shadow copy using Explorer without requiring any interaction with the FreeNAS®
+graphical administrative interface.
 
-The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the Define filter icon (near the text “No filter applied”). When creating a filter:
+The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the Define filter icon (near the text
+“No filter applied”). When creating a filter:
 
 *   select the column or leave the default of Any Column.
 
 
 
-*   select the condition. Possible conditions are:
-    *contains*
-    (default),
+*   select the condition. Possible conditions are: *contains* (default),
     *is, starts with, ends with, does *
     *not contain, is not, does not start with, does not end with*
     , and
-    *is empty*
-    .
+    *is empty*.
 
 
 
@@ -4226,138 +4149,95 @@ The ZFS Snapshots screen allows you to create filters to view snapshots by selec
 
 
 
-If you create multiple filters, select the filter you wish to use before leaving the define filter screen. Once a filter is selected, the “No filter applied” text will change to “Clear filter”. If you click “Clear filter”, a pop-up message will indicate that this will remove the filter and all available snapshots will be listed.
+If you create multiple filters, select the filter you wish to use before leaving the define filter screen. Once a filter is selected, the “No filter
+applied” text will change to “Clear filter”. If you click “Clear filter”, a pop-up message will indicate that this will remove the filter and all
+available snapshots will be listed.
 
 Replication Tasks
 ~~~~~~~~~~~~~~~~~
 
-A replication task allows you to automate the copy of ZFS snapshots to another system over an encrypted connection. This allows you to create an off-site backup of a ZFS dataset or pool.
+A replication task allows you to automate the copy of ZFS snapshots to another system over an encrypted connection. This allows you to create an off-site
+backup of a ZFS dataset or pool.
 
-This section will refer to the system generating the ZFS snapshots as
-*PUSH*
-and the system to receive a copy of the ZFS snapshots as
-*PULL*
-.
+This section will refer to the system generating the ZFS snapshots as *PUSH*
+and the system to receive a copy of the ZFS snapshots as *PULL*.
 
 Before you can configure a replication task, the following pre-requisites must be met:
 
-*   a ZFS volume must exist on both
-    *PUSH*
-    and
-    *PULL*
-    .
+*   a ZFS volume must exist on both *PUSH* and
+    *PULL*.
 
 
 
-*   a periodic snapshot task must be created on
-    *PUSH*
-    . You will not be able to create a replication task before the first snapshot exists.
+*   a periodic snapshot task must be created on *PUSH*. You will not be able to create a replication task before the first snapshot exists.
 
 
 
-*   the SSH service must be enabled on
-    *PULL*
-    . The first time the service is enabled, it will generate the required SSH keys.
+*   the SSH service must be enabled on *PULL*. The first time the service is enabled, it will generate the required SSH keys.
 
 
 
 A replication task uses the following keys:
 
-*   **/data/ssh/replication.pub:**
-    the RSA public key used for authenticating the
-    *PUSH*
-    replication user. This key needs to be copied to the
-    replication
-    * *
-    user account on
-    *PULL*
-    .
+*   **/data/ssh/replication.pub:** the RSA public key used for authenticating the *PUSH* replication user. This key needs to be copied to the replication
+    user account on *PULL*.
 
 
 
-*   **/etc/ssh/ssh_host_rsa_key.pub:**
-    the RSA host public key of
-    *PULL*
-    used to authenticate the receiving side in order to prevent a man-in-the-middle attack. This key needs to be copied to the replication task on
-    *PUSH*
-    .
+*   **/etc/ssh/ssh_host_rsa_key.pub:** the RSA host public key of *PULL* used to authenticate the receiving side in order to prevent a man-in-the-middle
+    attack. This key needs to be copied to the replication task on *PUSH*.
 
 
 
 This section will demonstrate how to configure a replication task between the following two FreeNAS® systems:
 
-*   *192.168.2.2*
-    will be referred to as
-    *PUSH*
-    . This system has a periodic snapshot task for the ZFS dataset
-    */mnt/local/data*
-    .
+*   *192.168.2.2* will be referred to as *PUSH*. This system has a periodic snapshot task for the ZFS dataset
+    */mnt/local/data*.
 
 
 
-*   *192.168.2.6*
-    will be referred to as
-    *PULL*
-    . This system has an existing ZFS volume named
-    */mnt/remote*
-    which will store the pushed snapshots.
+*   *192.168.2.6* will be referred to as *PULL* . This system has an existing ZFS volume named
+    */mnt/remote* which will store the pushed snapshots.
 
 
 
 Configure PULL
 ^^^^^^^^^^^^^^
 
-A copy of the public key for the replication user on
-*PUSH*
-needs to be pasted to the public key of the replication user on the
-*PULL*
-system.
-* *
+A copy of the public key for the replication user on *PUSH* needs to be pasted to the public key of the replication user on the *PULL* system.
 
-
-To obtain a copy of the replication key: on
-*PUSH*
-go to Storage → View Replication Tasks. Click the View Public Key button and copy its contents. An example is shown in Figure 6.2a.
+To obtain a copy of the replication key: on *PUSH* go to Storage → View Replication Tasks. Click the View Public Key button and copy its contents. An
+example is shown in Figure 6.2a.
 
 **Figure 6.2a: Copy the Replication Key**
 
 |100000000000033D000001B86EE0E351_png|
 
-Go to
-*PULL*
-and click Account → Users → View Users. Click the Modify User button for the user account you will be using for replication (by default this is the
-*root*
-user).
-Paste the copied key into the “SSH Public Key” field and click OK. If a key already exists, append the new text after the existing key.
+Go to *PULL* and click Account → Users → View Users. Click the Modify User button for the user account you will be using for replication (by default
+this is the *root* user). Paste the copied key into the “SSH Public Key” field and click OK. If a key already exists, append the new text after the
+existing key.
 
-On
-*PULL*
-, ensure that the SSH service is enabled in Services → Control Services. Start it if it is not
-already running.
+On *PULL*, ensure that the SSH service is enabled in Services → Control Services. Start it if it is not already running.
 
 Configure PUSH
 ^^^^^^^^^^^^^^
 
-On
-*PUSH*
-, verify that a periodic snapshot task has been created and that at least one snapshot is listed in Storage → Periodic Snapshot Tasks → View Periodic Snapshot Tasks → ZFS Snapshots.
+On *PUSH*, verify that a periodic snapshot task has been created and that at least one snapshot is listed in Storage → Periodic Snapshot Tasks → View
+Periodic Snapshot Tasks → ZFS Snapshots.
 
 To create the replication task, click Storage → Replication Tasks → Add Replication Task. Figure 6.2b shows the required configuration for our example:
 
-*   the Volume/Dataset is
-    *local/data*
+*   the Volume/Dataset is *local/data*
 
 
 
 
-*   the Remote ZFS Volume/Dataset is
-    *remote*
+*   the Remote ZFS Volume/Dataset is *remote*
 
 
 
 
-*   the Remote hostname is
-    *192.168.2.6*
+*   the Remote hostname is *192.168.2.6*
 
 
 
@@ -4366,10 +4246,8 @@ To create the replication task, click Storage → Replication Tasks → Add Repl
 
 
 
-*   once the Remote hostname is input, click the SSH Key Scan button; assuming the address is
-    reachable and the SSH service is running on
-    *PULL*
-    , its key will automatically be populated to the Remote hostkey box
+*   once the Remote hostname is input, click the SSH Key Scan button; assuming the address is reachable and the SSH service is running on *PULL*, its key will
+    automatically be populated to the Remote hostkey box
 
 
 
@@ -4455,18 +4333,16 @@ Table 6.2a summarizes the available options in the Add Replication Task screen.
 +---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
 
 
-By default, replication occurs when snapshots occur. For example, if snapshots are scheduled for every 2 hours, replication occurs every 2 hours. The Begin and End times can be used to create a window of time where replication occurs. Change the default times (which allow replication to occur at any time of the day a snapshot occurs) if snapshot tasks are scheduled during office hours but the replication itself should occur after office hours. For the End time, consider how long replication will take so that it finishes before the next day's office hours begin.
+By default, replication occurs when snapshots occur. For example, if snapshots are scheduled for every 2 hours, replication occurs every 2 hours. The Begin
+and End times can be used to create a window of time where replication occurs. Change the default times (which allow replication to occur at any time of the
+day a snapshot occurs) if snapshot tasks are scheduled during office hours but the replication itself should occur after office hours. For the End time,
+consider how long replication will take so that it finishes before the next day's office hours begin.
 
-Once the replication task is created, it will appear in the View Replication Tasks of
-*PUSH.*
+Once the replication task is created, it will appear in the View Replication Tasks of *PUSH.*
 
-*PUSH*
-will immediately attempt to replicate its latest snapshot to
-*PULL*
-. If the replication is successful, the snapshot will appear in the Storage → Periodic Snapshot Tasks → View Periodic Snapshot Tasks → ZFS Snapshots tab of
-*PULL*
-, as seen in Figure 6.2c.
-If the snapshot is not replicated, see the next section for troubleshooting tips.
+*PUSH* will immediately attempt to replicate its latest snapshot to
+*PULL*. If the replication is successful, the snapshot will appear in the Storage → Periodic Snapshot Tasks → View Periodic Snapshot Tasks → ZFS
+Snapshots tab of *PULL*, as seen in Figure 6.2c. If the snapshot is not replicated, see the next section for troubleshooting tips.
 
 **Figure 6.2c: Verifying the Snapshot was Replicated**
 
@@ -4475,124 +4351,84 @@ If the snapshot is not replicated, see the next section for troubleshooting tips
 Troubleshooting Replication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have followed all of the steps above and have
-*PUSH*
-snapshots that are not replicating to
-*PULL*
-, check to see if SSH is working properly. On
-*PUSH*
-, open
+If you have followed all of the steps above and have *PUSH* snapshots that are not replicating to *PULL*, check to see if SSH is working properly. On *PUSH*,
+open
 `Shell <#1.9.2.Shell|outline>`_
-and try to
-**ssh**
-into
-*PULL*
-. Replace
-*hostname_or_ip*
-with the value for
-*PULL*
-:
+and try to **ssh** into *PULL*. Replace
+*hostname_or_ip* with the value for
+*PULL*::
 
-**ssh -vv -i /data/ssh/replication hostname_or_ip**
+ ssh -vv -i /data/ssh/replication hostname_or_ip
 
-This command should not ask for a password. If it asks for a password, SSH authentication is not working. Go to Storage → Replication Tasks → View Replication Tasks and click the “View Public Key” button.
-Make sure that it matches one of the values in
-*/~/.ssh/authorized_keys*
-on
-*PULL, *
-where ~
-represents the home directory of the replication user
-.
+This command should not ask for a password. If it asks for a password, SSH authentication is not working. Go to Storage → Replication Tasks → View
+Replication Tasks and click the “View Public Key” button. Make sure that it matches one of the values in */~/.ssh/authorized_keys* on
+*PULL, * where ~ represents the home directory of the replication user.
 
 
-Also check
-*/var/log/auth.log*
-on
-*PULL*
-and
-*/var/log/messages*
-on
-*PUSH*
-to see if either log gives an indication of the error.
+Also check */var/log/auth.log* on
+*PULL* and
+*/var/log/messages* on
+*PUSH* to see if either log gives an indication of the error.
 
-If the key is correct and replication is still not working, try deleting all snapshots on
-*PULL*
-except for the most recent one. In Storage → Periodic Snapshot Tasks → View Periodic Snapshot Tasks → ZFS Snapshots check the box next to every snapshot except for the last one (the one with 3 icons instead of 2), then click the global Destroy button at the bottom of the screen.
+If the key is correct and replication is still not working, try deleting all snapshots on *PULL* except for the most recent one. In Storage → Periodic
+Snapshot Tasks → View Periodic Snapshot Tasks → ZFS Snapshots check the box next to every snapshot except for the last one (the one with 3 icons
+instead of 2), then click the global Destroy button at the bottom of the screen.
 
-Once you have only one snapshot, open Shell on
-*PUSH*
-and use the
-**zfs send**
-command. To continue our example, the ZFS snapshot on the
-*local/data*
-dataset of
-*PUSH*
-is named
-*auto-20110922.1753-2h*
-, the IP address of
-*PULL*
-is
-*192.168.2.6*
-, and the ZFS volume on
-*PULL*
-is
-*remote*
-. Note that the
-**@**
-is used to separate the volume/dataset name from the snapshot name.
+Once you have only one snapshot, open Shell on *PUSH* and use the
+**zfs send** command. To continue our example, the ZFS snapshot on the
+*local/data* dataset of
+*PUSH* is named
+*auto-20110922.1753-2h*, the IP address of
+*PULL* is
+*192.168.2.6*, and the ZFS volume on
+*PULL* is
+*remote*. Note that the
+**@** is used to separate the volume/dataset name from the snapshot name.::
 
-**zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication \ 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h**
+ zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication \ 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
-**NOTE:**
-if this command fails with the error “cannot receive new filesystem stream: destination has snapshots”, check the box “initialize remote side for once” in the replication task and try again. If the
-**zfs send**
-command still fails, you will need to open Shell on
-*PULL*
-and use the
-**zfs destroy -R volume_name@snapshot_name**
-command to delete the stuck snapshot. You can then use the
-**zfs list -t snapshot**
-on
-*PULL*
-to confirm if the snapshot successfully replicated.
+**NOTE:** if this command fails with the error “cannot receive new filesystem stream: destination has snapshots”, check the box “initialize remote side
+for once” in the replication task and try again. If the **zfs send** command still fails, you will need to open Shell on
+*PULL* and use the
+**zfs destroy -R volume_name@snapshot_name** command to delete the stuck snapshot. You can then use the
+**zfs list -t snapshot** on
+*PULL* to confirm if the snapshot successfully replicated.
 
-After successfully transmitting the snapshot, recheck again after the time period between snapshots lapses to see if the next snapshot successfully transmitted. If it is still not working, you can manually send an incremental backup of the last snapshot that is on both systems to the current one with this command:
+After successfully transmitting the snapshot, recheck again after the time period between snapshots lapses to see if the next snapshot successfully
+transmitted. If it is still not working, you can manually send an incremental backup of the last snapshot that is on both systems to the current one with this
+command::
 
-**zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication \ 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h**
+ zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication \ 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
 Volumes
 ~~~~~~~
 
-Since the storage disks are separate from the FreeNAS® operating system, you do not actually have a NAS (network-attached storage) system until you configure your disks into at least one volume. The FreeNAS® graphical interface supports the creation of both
+Since the storage disks are separate from the FreeNAS® operating system, you do not actually have a NAS (network-attached storage) system until you configure
+your disks into at least one volume. The FreeNAS® graphical interface supports the creation of both
 `UFS <http://en.wikipedia.org/wiki/Unix_File_System>`_
 and
 `ZFS <http://en.wikipedia.org/wiki/Zfs>`_
 volumes. ZFS volumes are recommended to get the most out of your FreeNAS® system.
 
-**NOTE:**
-in ZFS terminology, the storage that is managed by ZFS is referred to as a pool. When configuring the ZFS pool using the FreeNAS® graphical interface, the term volume is used to refer to either a UFS volume or a ZFS pool.
+**NOTE:** in ZFS terminology, the storage that is managed by ZFS is referred to as a pool. When configuring the ZFS pool using the FreeNAS® graphical
+interface, the term volume is used to refer to either a UFS volume or a ZFS pool.
 
 Proper storage design is important for any NAS.
-**It is recommended that you read through this entire chapter first, before configuring your storage disks, so that you are aware of all of the possible features, know which ones will benefit your setup most, and are aware of any caveats or hardware **
-**restrictions.**
+**It is recommended that you read through this entire chapter first, before configuring your storage disks, so that you are aware of all of the possible features, know which ones will benefit your setup most, and are aware of any caveats or hardware restrictions.**
 
 
 Auto Importing Volumes
 ^^^^^^^^^^^^^^^^^^^^^^
 
-If you click Storage → Volumes → Auto Import Volume, you can configure FreeNAS® to use an
-**existing**
-software UFS or ZFS RAID volume. This action is typically performed when an existing
-FreeNAS® system is re-installed (rather than upgraded). Since the operating system is separate from
-the disks, a new installation does not affect the data on the disks; however, the new operating system
-needs to be configured to use the existing volume.
+If you click Storage → Volumes → Auto Import Volume, you can configure FreeNAS® to use an **existing** software UFS or ZFS RAID volume. This action
+is typically performed when an existing FreeNAS® system is re-installed (rather than upgraded). Since the operating system is separate from the disks, a new
+installation does not affect the data on the disks; however, the new operating system needs to be configured to use the existing volume.
 
-Supported volumes are UFS GEOM stripes (RAID0), UFS GEOM mirrors (RAID1), UFS GEOM
-RAID3, as well as existing ZFS pools.
-UFS RAID5 is not supported as it is an unmaintained summer of code project which was never integrated into FreeBSD.
+Supported volumes are UFS GEOM stripes (RAID0), UFS GEOM mirrors (RAID1), UFS GEOM RAID3, as well as existing ZFS pools. UFS RAID5 is not supported as it is
+an unmaintained summer of code project which was never integrated into FreeBSD.
 
-Beginning with version 8.3.1, the import of existing GELI-encrypted ZFS pools is also supported.
-However, the pool must be decrypted before it can be imported.
+Beginning with version 8.3.1, the import of existing GELI-encrypted ZFS pools is also supported. However, the pool must be decrypted before it can be
+imported.
 
 Figure 6.3a shows the initial pop-up window that appears when you select to auto import a volume.
 
@@ -4605,52 +4441,44 @@ If you are importing a UFS RAID or an existing, unencrypted ZFS pool, select “
 
 
 
-
-
-
-
 **Figure 6.3b: Auto Importing a Non-Encrypted Volume**
 
 
 |100000000000026600000151FC5B0A5B_png|
 
-Existing software RAID volumes should be available for selection from the drop-down menu. In the example shown in Figure 6.3b, the FreeNAS® system has an existing, unencrypted ZFS pool. Once the volume is selected, click the “OK” button to import the volume.
+Existing software RAID volumes should be available for selection from the drop-down menu. In the example shown in Figure 6.3b, the FreeNAS® system has an
+existing, unencrypted ZFS pool. Once the volume is selected, click the “OK” button to import the volume.
 
-FreeNAS® will not import a dirty volume. If an existing UFS RAID does not show in the drop-down menu, you will need to
-**fsck**
-the volume.
+FreeNAS® will not import a dirty volume. If an existing UFS RAID does not show in the drop-down menu, you will need to **fsck** the volume.
 
-If an existing ZFS pool does not show in the drop-down menu, run
-**zpool import**
-from
+If an existing ZFS pool does not show in the drop-down menu, run **zpool import** from
 `Shell <#1.9.2.Shell|outline>`_
 to import the pool.
 
-If you plan to physically install ZFS formatted disks from another system, be sure to export the drives on that system to prevent an “in use by another machine” error during the import.
+If you plan to physically install ZFS formatted disks from another system, be sure to export the drives on that system to prevent an “in use by another
+machine” error during the import.
 
-If you suspect that your hardware is not being detected, run
-**camcontrol devlist**
-from Shell. If the disk does not appear in the output, check to see if the controller driver is supported or if it needs to be loaded by creating a
+If you suspect that your hardware is not being detected, run **camcontrol devlist** from Shell. If the disk does not appear in the output, check to see if the
+controller driver is supported or if it needs to be loaded by creating a
 `tunable <#1.4.9.Tunables|outline>`_
 .
 
 Auto Importing a GELI-Encrypted ZFS Pool
 """"""""""""""""""""""""""""""""""""""""
 
-If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In Figure 6.3a, select “Yes: Decrypt disks” to access the screen shown in Figure 6.3c.
+If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In Figure 6.3a, select “Yes: Decrypt
+disks” to access the screen shown in Figure 6.3c.
 
 **Figure 6.3c: Decrypting the Disks Before Importing the ZFS Pool**
 
 
 |10000000000002990000017C9E48C038_png|
 
-Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click OK to decrypt the disks.
+Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click OK to
+decrypt the disks.
 
-**NOTE:**
-the encryption key is required to decrypt the pool. If the pool can not be decrypted, it can not be re-imported after a failed upgrade or lost configuration. This means that it is
-**very important**
-** **
-to save a copy of the key and to remember the passphrase that was configured for the key. The
+**NOTE:** the encryption key is required to decrypt the pool. If the pool can not be decrypted, it can not be re-imported after a failed upgrade or lost
+configuration. This means that it is **very important** to save a copy of the key and to remember the passphrase that was configured for the key. The
 `View Volumes <#1.6.3.7.1.Key Management for Encrypted Volumes|outline>`_
 screen is used to manage the keys for encrypted volumes.
 
@@ -4659,9 +4487,11 @@ Once the pool is decrypted, it should appear in the drop-down menu of Figure 6.3
 Importing Volumes
 ^^^^^^^^^^^^^^^^^
 
-The Volume → Import Volume screen, shown in Figure 6.3d, is used to import a single disk or partition that has been formatted with a supported filesystem. FreeNAS® supports the import of disks that have been formatted with UFS, NTFS, MSDOS, or EXT2. The import is meant to be a temporary measure in order to copy the data from a disk to a volume. Only one disk can be imported at a time.
+The Volume → Import Volume screen, shown in Figure 6.3d, is used to import a single disk or partition that has been formatted with a supported filesystem.
+FreeNAS® supports the import of disks that have been formatted with UFS, NTFS, MSDOS, or EXT2. The import is meant to be a temporary measure in order to copy
+the data from a disk to a volume. Only one disk can be imported at a time.
 
-Figure 6.3d: Importing a Volume
+**Figure 6.3d: Importing a Volume**
 
 
 |10000000000002160000016D814978F6_png|
@@ -4670,33 +4500,30 @@ Input a name for the volume, use the drop-down menu to select the disk or partit
 
 Before importing a disk, be aware of the following caveats:
 
-*   FreeNAS®
-    will not import a dirty filesystem. If a supported filesystem does not show in the drop-down menu, you will need to
-    **fsck**
-
-    or run a disk check on
-    the filesystem.
+*   FreeNAS® will not import a dirty filesystem. If a supported filesystem does not show in the drop-down menu, you will need to **fsck** or run a disk check
+    on the filesystem.
 
 
 
-*   FreeNAS®
-    can not import dynamic NTFS volumes at this time. A future version of FreeBSD may address this issue.
+*   FreeNAS® can not import dynamic NTFS volumes at this time. A future version of FreeBSD may address this issue.
 
 
 
-*   if an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the drive.
+*   if an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the
+    drive.
 
 
 
 UFS Volume Manager
 ^^^^^^^^^^^^^^^^^^
 
-While the UFS filesystem is supported, it is not recommended as it does not provide any ZFS features such as compression, encryption, deduplication, copy-on-write, lightweight snapshots, or the ability to provide early detection and correction of corrupt data. If you are using UFS as a temporary solution until you can afford better hardware, note that you will have to destroy your existing UFS volume in order to create a ZFS pool, then restore your data from backup.
+While the UFS filesystem is supported, it is not recommended as it does not provide any ZFS features such as compression, encryption, deduplication,
+copy-on-write, lightweight snapshots, or the ability to provide early detection and correction of corrupt data. If you are using UFS as a temporary solution
+until you can afford better hardware, note that you will have to destroy your existing UFS volume in order to create a ZFS pool, then restore your data from
+backup.
 
-**NOTE:**
-it is not recommended to create a UFS volume larger than 5TB as it will be inefficient to
-**fsck**
-, causing long delays at system boot if the system was not shutdown cleanly.
+**NOTE:** it is not recommended to create a UFS volume larger than 5TB as it will be inefficient to
+**fsck**, causing long delays at system boot if the system was not shutdown cleanly.
 
 To format your disks with UFS, go to Storage → Volumes → UFS Volume Manager (legacy) which will open the screen shown in Figure 6.3e.
 
@@ -4744,19 +4571,20 @@ Table 6.3a summarizes the available options.
 +---------------------+-----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-The Add Volume button warns that
-**creating a volume destroys all existing data on selected disk(s).**
-** **
-In other words, creating storage using UFS Volume Manager is a destructive action that reformats the selected disks. If your intent is to not overwrite the data on an existing volume, see if the volume format is supported by the
+The Add Volume button warns that **creating a volume destroys all existing data on selected disk(s).** In other words, creating storage using UFS Volume
+Manager is a destructive action that reformats the selected disks. If your intent is to not overwrite the data on an existing volume, see if the volume format
+is supported by the
 `auto-import <#1.6.3.1.Auto Importing Volumes|outline>`_
 or
 `import <#1.6.3.2.Importing Volumes|outline>`_
-actions. If so, perform the supported action instead. If the current storage format is not supported, you will need to backup the data to an external media, format the disks, then restore the data to the new volume.
+actions. If so, perform the supported action instead. If the current storage format is not supported, you will need to backup the data to an external media,
+format the disks, then restore the data to the new volume.
 
 ZFS Volume Manager
 ^^^^^^^^^^^^^^^^^^
 
-If you have unformatted disks or wish to overwrite the filesystem (and data) on your disks, use the ZFS Volume Manager to format the desired disks into a ZFS pool.
+If you have unformatted disks or wish to overwrite the filesystem (and data) on your disks, use the ZFS Volume Manager to format the desired disks into a ZFS
+pool.
 
 If you are new to RAID concepts or would like an overview of the differences between hardware RAID and ZFS RAIDZ*, skim through the section on
 `Hardware Recommendations <#1.1.4.Hardware Recommendations|outline>`_
@@ -4764,7 +4592,7 @@ before using ZFS Volume Manager.
 
 If you click on Storage → Volumes → ZFS Volume Manager, you will see a screen similar to the example shown in Figure 6.3f.
 
-Figure 6.3f: Creating a ZFS Pool Using Volume Manager
+**Figure 6.3f: Creating a ZFS Pool Using Volume Manager**
 
 
 |10000000000003A1000001F0749B2C74_png|
@@ -4783,7 +4611,6 @@ Table 6.3b: Options When Creating a ZFS Volume
 |                  |                | ; it is                                                                                |
 |                  |                | recommended to choose a name that will stick out in the logs (e.g.                     |
 |                  |                | **not**                                                                                |
-|                  |                | ** **                                                                                  |
 |                  |                | *data*                                                                                 |
 |                  |                | or                                                                                     |
 |                  |                | *freenas*                                                                              |
@@ -4813,97 +4640,93 @@ Table 6.3b: Options When Creating a ZFS Volume
 +------------------+----------------+----------------------------------------------------------------------------------------+
 
 
-To configure the pool, drag the slider to select the desired number of disks. The ZFS Volume Manager will automatically select the optimal configuration and the resulting storage capacity, which takes swap into account, will be displayed. If you wish to change the layout or the number of disks, use the mouse to drag the slider to the desired volume layout.
-The drop-down menu showing the optimal configuration can also be clicked to change the configuration, though the GUI will turn red if the selected configuration is not recommended.
+To configure the pool, drag the slider to select the desired number of disks. The ZFS Volume Manager will automatically select the optimal configuration and
+the resulting storage capacity, which takes swap into account, will be displayed. If you wish to change the layout or the number of disks, use the mouse to
+drag the slider to the desired volume layout. The drop-down menu showing the optimal configuration can also be clicked to change the configuration, though
+the GUI will turn red if the selected configuration is not recommended.
 
-**NOTE:**
-for performance and capacity reasons, this screen will not allow you to create a volume from disks of differing sizes. While it is not recommended, it is possible to create a volume in this situation by using the “Manual setup” button and following the instructions in
+**NOTE:** for performance and capacity reasons, this screen will not allow you to create a volume from disks of differing sizes. While it is not recommended,
+it is possible to create a volume in this situation by using the “Manual setup” button and following the instructions in
 `Manual Volume Creation <#1.6.3.4.2.Manual Volume Creation|outline>`_
 .
 
-ZFS Volume Manager will allow you to save save a non-optimal configuration. It will still work, but will perform less efficiently than an optimal configuration. However, the GUI will not allow you to select a configuration if the number of disks selected is not enough to create that configuration. Click the tool tip icon to access a link to this documentation.
+ZFS Volume Manager will allow you to save save a non-optimal configuration. It will still work, but will perform less efficiently than an optimal
+configuration. However, the GUI will not allow you to select a configuration if the number of disks selected is not enough to create that configuration.
+Click the tool tip icon to access a link to this documentation.
 
-The Add Volume button warns that
-**creating a volume will destroys any existing data on the selected **
-**disk(s)**
-. In other words, creating a new volume reformats the selected disks. If your intent is to not overwrite the data on an existing volume, see if the volume format is supported by the
+The Add Volume button warns that **creating a volume will destroys any existing data on the selected disk(s)**. In other words, creating a new volume
+reformats the selected disks. If your intent is to not overwrite the data on an existing volume, see if the volume format is supported by the
 `auto-import <#1.6.3.1.Auto Importing Volumes|outline>`_
 or
 `import <#1.6.3.2.Importing Volumes|outline>`_
-actions. If so, perform the supported action
-instead
-. If the current storage format is not supported, you will need to backup the data to an external media, format the disks, then restore the data to the new volume.
+actions. If so, perform the supported action instead. If the current storage format is not supported, you will need to backup the data to an external media,
+format the disks, then restore the data to the new volume.
 
-The ZFS Volume Manager will automatically select the optimal layout for the new pool, depending upon the number of disks selected. The following formats are supported:
+The ZFS Volume Manager will automatically select the optimal layout for the new pool, depending upon the number of disks selected. The following formats are
+supported:
 
-*   **Stripe:**
-    requires at least one disk
-
-
-
-*   **Mirror:**
-    requires at least two disks
+*   **Stripe:** requires at least one disk
 
 
 
-*   **RAIDZ1:**
-    requires at least three disks
+*   **Mirror:** requires at least two disks
 
 
 
-*   **RAIDZ2:**
-    requires at least four disks
+*   **RAIDZ1:** requires at least three disks
 
 
 
-*   **RAIDZ3:**
-    requires at least five disks
+*   **RAIDZ2:** requires at least four disks
 
 
 
-*   **log device:**
-    add a dedicated log device (slog)
+*   **RAIDZ3:** requires at least five disks
 
 
 
-*   **cache device:**
-    add a dedicated cache device
+*   **log device:** add a dedicated log device (slog)
 
 
 
-If you have more than five disks and are using ZFS, consider the number of disks to use for best performance and scalability. An overview of the various RAID levels and recommended disk group sizes can be found in the
+*   **cache device:** add a dedicated cache device
+
+
+
+If you have more than five disks and are using ZFS, consider the number of disks to use for best performance and scalability. An overview of the various RAID
+levels and recommended disk group sizes can be found in the
 `RAID Overview <#1.1.4.6.RAID Overview|outline>`_
 section. More information about log and cache devices can be found in the
 `ZFS Overview <#1.1.4.7.ZFS Overview|outline>`_
 section.
 
-Depending upon the size and number of disks, the type of controller, and whether or not encryption is selected, creating the volume may take some time. Once the volume is created, the screen will refresh and the new volume will be listed under Storage → Volumes.
+Depending upon the size and number of disks, the type of controller, and whether or not encryption is selected, creating the volume may take some time. Once
+the volume is created, the screen will refresh and the new volume will be listed under Storage → Volumes.
 
 Encryption
 """"""""""
 
 Beginning with 8.3.1, FreeNAS® supports
 `GELI <http://www.freebsd.org/cgi/man.cgi?query=geli>`_
-full disk encryption when creating ZFS volumes. It is important to understand the following when considering whether or not encryption is right for your FreeNAS® system:
+full disk encryption when creating ZFS volumes. It is important to understand the following when considering whether or not encryption is right for your
+FreeNAS® system:
 
-*   This is
-    **not**
-    the encryption method used by Oracle ZFSv30. That version of ZFS has not been open sourced and is the property of Oracle.
-
-
-
-*   This is full disk encryption and
-    **not**
-    ** **
-    per-filesystem encryption. The underlying drives are first encrypted, then the pool is created on top of the encrypted devices.
+*   This is **not** the encryption method used by Oracle ZFSv30. That version of ZFS has not been open sourced and is the property of Oracle.
 
 
 
-*   This type of encryption is primarily targeted at users who store sensitive data and want to retain the ability to remove disks from the pool without having to first wipe the disk's contents.
+*   This is full disk encryption and **not** per-filesystem encryption. The underlying drives are first encrypted, then the pool is created on top of the
+    encrypted devices.
 
 
 
-*   This design is only suitable for safe disposal of disks independent of the encryption key. As long as the key and the disks are intact, the system is vulnerable to being decrypted. The key should be protected by a strong passphrase and any backups of the key should be securely stored.
+*   This type of encryption is primarily targeted at users who store sensitive data and want to retain the ability to remove disks from the pool without
+    having to first wipe the disk's contents.
+
+
+
+*   This design is only suitable for safe disposal of disks independent of the encryption key. As long as the key and the disks are intact, the system is
+    vulnerable to being decrypted. The key should be protected by a strong passphrase and any backups of the key should be securely stored.
 
 
 
@@ -4911,8 +4734,8 @@ full disk encryption when creating ZFS volumes. It is important to understand th
 
 
 
-**IMPORTANT NOTE:**
-the per-drive GELI master keys are not backed up along with with the user keys. If a bit error occurs in the last sector of an encrypted disk, this may mean the data on that disk is completely lost. Until this issue is resolved, it is important to read
+**IMPORTANT NOTE:** the per-drive GELI master keys are not backed up along with with the user keys. If a bit error occurs in the last sector of an encrypted
+disk, this may mean the data on that disk is completely lost. Until this issue is resolved, it is important to read
 `this forum post <http://forums.freenas.org/threads/please-validate-my-backup-plan-rotating-offsite-backup-disks-from-single-freenas-primary-storage.17316/#post-93073>`_
 which explains how to back up your master keys manually.
 `this forum post <http://forums.freenas.org/threads/recover-encryption-key.16593/#post-85497>`_
@@ -4926,7 +4749,9 @@ gives an in-depth explanation of how the various key types are used by GELI. To 
 
 *   If the system has a lot of disks, there will be a performance hit if the CPU does not support
     `AES-NI <http://en.wikipedia.org/wiki/AES-NI#Supporting_CPUs>`_
-    or if no crypto hardware is installed. Without hardware acceleration, there will be about a 20% performance hit for a single disk. Performance degradation will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the processor does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This
+    or if no crypto hardware is installed. Without hardware acceleration, there will be about a 20% performance hit for a single disk. Performance degradation
+    will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the
+    processor does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This
     `forum post <http://forums.freenas.org/showthread.php?12157-Encryption-performance-benchmarks>`_
     compares the performance of various CPUs.
 
@@ -4940,7 +4765,8 @@ gives an in-depth explanation of how the various key types are used by GELI. To 
 
 
 
-*   There is no way to convert an existing, unencrypted volume. Instead, the data must be backed up, the existing pool must be destroyed, a new encrypted volume must be created, and the backup restored to the new volume.
+*   There is no way to convert an existing, unencrypted volume. Instead, the data must be backed up, the existing pool must be destroyed, a new encrypted
+    volume must be created, and the backup restored to the new volume.
 
 
 
@@ -4950,40 +4776,47 @@ gives an in-depth explanation of how the various key types are used by GELI. To 
 
 
 
-**NOTE:**
-the encryption facility used by FreeNAS® is designed to protect against physical theft of the disks. It is not designed to protect against unauthorized software access. Ensure that only authorized users have access to the administrative GUI and that proper permissions are set on shares if sensitive data stored on the system.
+**NOTE:** the encryption facility used by FreeNAS® is designed to protect against physical theft of the disks. It is not designed to protect against
+unauthorized software access. Ensure that only authorized users have access to the administrative GUI and that proper permissions are set on shares if
+sensitive data stored on the system.
 
 Creating an Encrypted Volume
 ''''''''''''''''''''''''''''
 
-To create an encrypted volume, check the “Encryption” box shown in Figure 6.3f. Input the volume
-name, select the disks to add to the volume, and click the Add Volume button to make the encrypted volume.
+To create an encrypted volume, check the “Encryption” box shown in Figure 6.3f. Input the volume name, select the disks to add to the volume, and click
+the Add Volume button to make the encrypted volume.
 
-Once the volume is created,
-**it is extremely important**
-** **
-to set a passphrase on the key, make a backup of the key, and create a recovery key. Without these, it is impossible to re-import the disks at a later time.
+Once the volume is created, **it is extremely important** to set a passphrase on the key, make a backup of the key, and create a recovery key. Without these,
+it is impossible to re-import the disks at a later time.
 
 To perform these tasks, go to Storage → Volumes -> View Volumes. This screen is shown in Figure 6.3o.
 
-To set a passphrase on the key, click the volume name and then the "Create Passphrase" button (the key shaped icon in Figure 6.3o). You will be prompted to input the password used to access the FreeNAS® administrative GUI, and then to input and repeat the desired passphrase. Unlike a password, a passphrase can contain spaces and is typically a series of words. A good passphrase is easy to remember (like the line to a song or piece of literature) but hard to guess (people who know you should not be able to guess the passphrase).
+To set a passphrase on the key, click the volume name and then the "Create Passphrase" button (the key shaped icon in Figure 6.3o). You will be prompted to
+input the password used to access the FreeNAS® administrative GUI, and then to input and repeat the desired passphrase. Unlike a password, a passphrase can
+contain spaces and is typically a series of words. A good passphrase is easy to remember (like the line to a song or piece of literature) but hard to guess
+(people who know you should not be able to guess the passphrase).
 
-When you set the passphrase, a warning message will remind you to create a new recovery key as a new passphrase needs a new recovery key. This way, if the passphrase is forgotten, the associated recovery key can be used instead. To create the recovery key, click the "Add recovery key" button (second last key icon in Figure 6.3o). This screen will prompt you to input the password used to access the FreeNAS® administrative GUI and then to select the directory in which to save the key. Note that the recovery key is saved to the client system, not on the FreeNAS® system.
+When you set the passphrase, a warning message will remind you to create a new recovery key as a new passphrase needs a new recovery key. This way, if the
+passphrase is forgotten, the associated recovery key can be used instead. To create the recovery key, click the "Add recovery key" button (second last key
+icon in Figure 6.3o). This screen will prompt you to input the password used to access the FreeNAS® administrative GUI and then to select the directory in
+which to save the key. Note that the recovery key is saved to the client system, not on the FreeNAS® system.
 
-Finally, download a copy of the encryption key, using the "Download key" button (the key icon with a down arrow in Figure 6.3o). Again, the encryption key is saved to the client system, not on the FreeNAS® system. You will be prompted to input the password used to access the FreeNAS® administrative GUI before the selecting the directory in which to store the key.
+Finally, download a copy of the encryption key, using the "Download key" button (the key icon with a down arrow in Figure 6.3o). Again, the encryption key is
+saved to the client system, not on the FreeNAS® system. You will be prompted to input the password used to access the FreeNAS® administrative GUI before the
+selecting the directory in which to store the key.
 
-The passphrase, recovery key, and encryption key need to be protected. Do not reveal the passphrase to others. On the system containing the downloaded keys, take care that that system and its backups are protected. Anyone who has the keys has the ability to re-import the disks should they be discarded or stolen.
+The passphrase, recovery key, and encryption key need to be protected. Do not reveal the passphrase to others. On the system containing the downloaded keys,
+take care that that system and its backups are protected. Anyone who has the keys has the ability to re-import the disks should they be discarded or stolen.
 
 Manual Volume Creation
 """"""""""""""""""""""
 
-The "Manual Setup" button shown in Figure 6.3f can be used to create a non-optimal ZFS volume. While this is
-**not**
-** **
-recommended, it can, for example, be used to create a volume containing disks of different sizes or to put more than the recommended number of disks into a vdev.
+The "Manual Setup" button shown in Figure 6.3f can be used to create a non-optimal ZFS volume. While this is **not** recommended, it can, for example, be used
+to create a volume containing disks of different sizes or to put more than the recommended number of disks into a vdev.
 
-**NOTE:**
-when using disks of differing sizes, the volume is limited by the size of the smallest disk. When using more disks than are recommended for a vdev, you increase resilvering time and the risk that more than the allowable number of disks will fail before a resilver completes. For these reasons, it is recommended to instead let the ZFS Volume Manager create an optimal pool for you, as described in
+**NOTE:** when using disks of differing sizes, the volume is limited by the size of the smallest disk. When using more disks than are recommended for a vdev,
+you increase resilvering time and the risk that more than the allowable number of disks will fail before a resilver completes. For these reasons, it is
+recommended to instead let the ZFS Volume Manager create an optimal pool for you, as described in
 `ZFS Volume Manager <#1.6.3.4.ZFS Volume Manager|outline>`_
 , using same-size disks.
 
@@ -5040,31 +4873,27 @@ Figure 6.3g shows the "Manual Setup" screen and Table 6.3c summarizes the availa
 Extending a ZFS Volume
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The “Volume to extend” drop-down menu in Storage → Volumes → ZFS Volume Manager, shown in Figure 6.3h, can be used to add additional disks to an existing ZFS volume. This drop-down empty will be empty if an existing ZFS volume does not exist.
+The “Volume to extend” drop-down menu in Storage → Volumes → ZFS Volume Manager, shown in Figure 6.3h, can be used to add additional disks to an
+existing ZFS volume. This drop-down empty will be empty if an existing ZFS volume does not exist.
 
 **Figure 6.3h: Volume to Extend Field**
 
 
 |10000000000002F5000001C1A3854FFC_png|
 
-**NOTE: **
-if the existing volume is encrypted, a warning message will remind you that the operation of
-extending a volume will reset the passphrase and recovery key. After extending the volume, you should
-immediately
+**NOTE:** if the existing volume is encrypted, a warning message will remind you that the operation of extending a volume will reset the passphrase and
+recovery key. After extending the volume, you should immediately
 `recreate both <#1.6.3.4.2.Creating an Encrypted Volume|outline>`_
 .
 
-Once an existing volume has been selected from the drop-down menu, drag and drop the desired disk(s) and select the desired volume layout. For example you can:
+Once an existing volume has been selected from the drop-down menu, drag and drop the desired disk(s) and select the desired volume layout. For example you
+can:
 
-*   select an SSD or disk with a volume layout of
-    *Log (ZIL)*
-    to add a log device to the ZFS pool. Selecting 2 SSDs or disks will mirror the log device.
-
+*   select an SSD or disk with a volume layout of *Log (ZIL)* to add a log device to the ZFS pool. Selecting 2 SSDs or disks will mirror the log device.
 
 
-*   select an SSD or disk with a volume layout of
-    *Cache (L2ARC)*
-    to add a cache device to the ZFS pool.
+
+*   select an SSD or disk with a volume layout of *Cache (L2ARC)* to add a cache device to the ZFS pool.
 
 
 
@@ -5072,20 +4901,18 @@ Once an existing volume has been selected from the drop-down menu, drag and drop
 
 
 
-When adding disks to increase the capacity of a volume, ZFS supports the addition of virtual devices, known as vdevs, to an existing ZFS pool. A vdev can be a single disk, a stripe, a mirror, a RAIDZ1, RAIDZ2, or a RAIDZ3.
-**Once a vdev is created, you can not add more drives to that vdev**
-** **
-; however, you can stripe a new vdev (and its disks) with the
-**same type of existing vdev**
-** **
-in order to increase the overall size of ZFS the pool. In other words, when you extend a ZFS volume, you are really striping similar vdevs. Here are some examples:
+When adding disks to increase the capacity of a volume, ZFS supports the addition of virtual devices, known as vdevs, to an existing ZFS pool. A vdev can be a
+single disk, a stripe, a mirror, a RAIDZ1, RAIDZ2, or a RAIDZ3. **Once a vdev is created, you can not add more drives to that vdev**; however, you can stripe
+a new vdev (and its disks) with the **same type of existing vdev** in order to increase the overall size of ZFS the pool. In other words, when you extend a
+ZFS volume, you are really striping similar vdevs. Here are some examples:
 
 *   to extend a ZFS stripe, add one or more disks. Since there is no redundancy, you do not have to add the same amount of disks as the existing stripe.
 
 
 
-*   to extend a ZFS mirror, add the same number of drives. The resulting striped mirror is a RAID
-    10. For example, if you have 10 drives, you could start by creating a mirror of two drives, extending this mirror by creating another mirror of two drives, and repeating three more times until all 10 drives have been added.
+*   to extend a ZFS mirror, add the same number of drives. The resulting striped mirror is a RAID 10. For example, if you have 10 drives, you could start by
+    creating a mirror of two drives, extending this mirror by creating another mirror of two drives, and repeating three more times until all 10 drives have
+    been added.
 
 
 
@@ -5097,29 +4924,35 @@ in order to increase the overall size of ZFS the pool. In other words, when you 
 
 
 
-If you try to add an incorrect number of disks to the existing vdev, an error message will appear, indicating the number of disks that are needed. You will need to select the correct number of disks in order to continue.
+If you try to add an incorrect number of disks to the existing vdev, an error message will appear, indicating the number of disks that are needed. You will
+need to select the correct number of disks in order to continue.
 
 Creating ZFS Datasets
 ^^^^^^^^^^^^^^^^^^^^^
 
-An existing ZFS volume can be divided into datasets. Permissions, compression, deduplication, and quotas can be set on a per dataset basis, allowing more granular control over access to storage data. A dataset is similar to a folder in that you can set permissions; it is also similar to a filesystem in that you can set properties such as quotas and compression as well as create snapshots.
+An existing ZFS volume can be divided into datasets. Permissions, compression, deduplication, and quotas can be set on a per dataset basis, allowing more
+granular control over access to storage data. A dataset is similar to a folder in that you can set permissions; it is also similar to a filesystem in that
+you can set properties such as quotas and compression as well as create snapshots.
 
-**NOTE:**
-ZFS provides thick provisioning using quotas and thin provisioning using reserved space.
+**NOTE:** ZFS provides thick provisioning using quotas and thin provisioning using reserved space.
 
 If you select an existing ZFS volume → Create ZFS Dataset, you will see the screen shown in Figure 6.3i.
 
-Once a dataset is created, you can click on that dataset and select Create ZFS Dataset, thus creating a nested dataset, or a dataset within a dataset. You can also create a zvol within a dataset. When creating datasets, double-check that you are using the Create ZFS Dataset option for the intended volume or dataset. If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining Create ZFS Dataset will be for the volume.
+Once a dataset is created, you can click on that dataset and select Create ZFS Dataset, thus creating a nested dataset, or a dataset within a dataset. You can
+also create a zvol within a dataset. When creating datasets, double-check that you are using the Create ZFS Dataset option for the intended volume or dataset.
+If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining Create ZFS Dataset will be for the volume.
 
-Figure 6.3i: Creating a ZFS Dataset
+**Figure 6.3i: Creating a ZFS Dataset**
 
 
 
-Table 6.3d summarizes the options available when creating a ZFS dataset. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced. These attributes can also be changed after dataset creation in Storage → Volumes →
+Table 6.3d summarizes the options available when creating a ZFS dataset. Some settings are only available in Advanced Mode. To see these settings, either
+click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System
+→ Settings → Advanced. These attributes can also be changed after dataset creation in Storage → Volumes →
 `View Volumes <#1.6.3.9.Viewing Volumes|outline>`_
 .
 
-Table 6.3d: ZFS Dataset Options
+**Table 6.3d: ZFS Dataset Options**
 
 
 +--------------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -5188,83 +5021,54 @@ Table 6.3d: ZFS Dataset Options
 Deduplication
 """""""""""""
 
-The
-*ZFS Deduplication*
-option warns that enabling dedup may have drastic performance implications and that compression should be used instead.
-Before checking the deduplication box, read the section on deduplication in the
+The *ZFS Deduplication* option warns that enabling dedup may have drastic performance implications and that compression should be used instead. Before
+checking the deduplication box, read the section on deduplication in the
 `ZFS Overview <#1.1.4.7.ZFS Overview|outline>`_
 first. This
 `article <http://constantin.glez.de/blog/2011/07/zfs-dedupe-or-not-dedupe>`_
 provides a good description of the value v.s. cost considerations for deduplication.
 
-**Unless you have a lot of RAM and a lot of duplicate data, do not change the default deduplication setting of “Off”.**
-** **
-The dedup tables used during deduplication need ~8 GB of RAM per 1TB of data to be deduplicated. For performance reasons, consider using compression rather than turning this option on.
+**Unless you have a lot of RAM and a lot of duplicate data, do not change the default deduplication setting of “Off”.** The dedup tables used during
+deduplication need ~8 GB of RAM per 1TB of data to be deduplicated. For performance reasons, consider using compression rather than turning this option on.
 
-I
-f deduplication is changed to
-*On*
-, duplicate data blocks are removed synchronously. The result is that only unique data is stored and common components are shared among files. If deduplication is changed to
-*Verify*
-, ZFS will do a byte-to-byte comparison when two blocks have the same signature to make sure that the block contents are identical. Since hash collisions are extremely rare, verify is usually not worth the performance hit.
+If deduplication is changed to *On*, duplicate data blocks are removed synchronously. The result is that only unique data is stored and common components are
+shared among files. If deduplication is changed to *Verify*, ZFS will do a byte-to-byte comparison when two blocks have the same signature to make sure that
+the block contents are identical. Since hash collisions are extremely rare, verify is usually not worth the performance hit.
 
-**NOTE:**
-once deduplication is enabled, the only way to disable it is to use the
-**zfs set dedup=off dataset_name**
-command from
+**NOTE:** once deduplication is enabled, the only way to disable it is to use the
+**zfs set dedup=off dataset_name** command from
 `Shell <#1.9.2.Shell|outline>`_
-. However, any data that is already stored as deduplicated will not be un-deduplicated as only newly stored data after the property change will not be deduplicated. The only way to remove existing deduplicated data is to copy all of the data off of the dataset, set the property to off, then copy the data back in again. Alternately, create a new dataset with the
-*ZFS Deduplication*
-left as disabled, copy the data to the new dataset, and destroy the original dataset.
+. However, any data that is already stored as deduplicated will not be un-deduplicated as only newly stored data after the property change will not be
+deduplicated. The only way to remove existing deduplicated data is to copy all of the data off of the dataset, set the property to off, then copy the data
+back in again. Alternately, create a new dataset with the *ZFS Deduplication* left as disabled, copy the data to the new dataset, and destroy the original
+dataset.
 
 Compression
 """""""""""
 
-M
-ost media (e.g.
-*.mp3*
-,
-*.mp4*
-,
-*.avi*
-) is already compressed, meaning that you will increase CPU utilization for no gain if you store these files on a compressed dataset. However, if you have raw
-*.wav*
-rips of CDs or
-*.vob*
-rips of DVDs, you will see a performance gain using a compressed dataset. When selecting a compression type, you need to balance performance with the amount of compression. The following compression algorithms are supported:
+Most media (e.g. *.mp3*, *.mp4*, *.avi*) is already compressed, meaning that you will increase CPU utilization for no gain if you store these files on a
+compressed dataset. However, if you have raw *.wav* rips of CDs or *.vob* rips of DVDs, you will see a performance gain using a compressed dataset. When
+selecting a compression type, you need to balance performance with the amount of compression. The following compression algorithms are supported:
 
-*   **lz4: **
-    recommended compression method as it allows compressed datasets to operate at near real-time speed.
+*   **lz4:** recommended compression method as it allows compressed datasets to operate at near real-time speed.
 
 
 
-*   **gzip: **
-    varies from levels 1 to 9 where
-    *gzip fastest*
-    (level 1) gives the least compression and
-    *gzip *
-    *maximum*
-    (level 9) provides the best compression but is discouraged due to its performance
-    impact.
+*   **gzip:** varies from levels 1 to 9 where *gzip fastest* (level 1) gives the least compression and
+    *gzip maximum* (level 9) provides the best compression but is discouraged due to its performance impact.
 
 
 
-*   **zle: **
-    fast and simple algorithm to eliminate runs of zeroes.
-    * *
+*   **zle:** fast and simple algorithm to eliminate runs of zeroes.
 
 
 
-*   **lzjb: **
-    provides decent data compression, but is considered deprecated as lz4 provides much better performance.
+*   **lzjb:** provides decent data compression, but is considered deprecated as lz4 provides much better performance.
 
 
 
-If you leave the default of
-*Inherit*
-or select
-*Off*
-, compression will not be used on the dataset.
+If you leave the default of *Inherit* or select
+*Off*, compression will not be used on the dataset.
 
 Creating a zvol
 ^^^^^^^^^^^^^^^
@@ -5273,13 +5077,11 @@ A zvol is a feature of ZFS that creates a block device over ZFS. This allows you
 `iSCSI device extent <#1.8.7.2.Extents|outline>`_
 .
 
-To create a zvol,
-select an existing ZFS volume or dataset
-→
-Create zvol which will open the screen
-shown in Figure 6.3j.
+To create a zvol, select an existing ZFS volume or dataset → Create zvol which will open the screen shown in Figure 6.3j.
 
-The configuration options are described in Table 6.3e. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced.
+The configuration options are described in Table 6.3e. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced
+Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System →
+Settings → Advanced.
 
 **Figure 6.3j: Creating a zvol**
 
@@ -5325,23 +5127,23 @@ Storage → Volumes → View Disks allows you to view all of the disks recognize
 
 |10000000000004E8000001EACF908077_png|
 
-For each device, the current configuration of the options described in Table 6.3e is displayed. Click a disk's entry and then its Edit button to change its configuration.
+For each device, the current configuration of the options described in Table 6.3e is displayed. Click a disk's entry and then its Edit button to change its
+configuration.
 
-Clicking a disk's entry will also display its Wipe button which can be used to blank a disk while providing a progress bar of the wipe's status. Use this option before discarding a disk.
+Clicking a disk's entry will also display its Wipe button which can be used to blank a disk while providing a progress bar of the wipe's status. Use this
+option before discarding a disk.
 
-**NOTE:**
-should a disk's serial number not be displayed in this screen, use the
-**smartctl**
-command within
+**NOTE:** should a disk's serial number not be displayed in this screen, use the
+**smartctl** command within
 `Shell <#1.9.2.Shell|outline>`_
-. For example, to determine the serial number of disk ada0, type
-**smartctl -a /dev/ada0 | grep Serial**
+. For example, to determine the serial number of disk ada0, type **smartctl -a /dev/ada0 | grep Serial**
 .
 
 Viewing Volumes
 ^^^^^^^^^^^^^^^
 
-If you click Storage → Volumes → View Volumes, you can view and further configure existing volumes, ZFS datasets, and zvols. The example shown in Figure 6.3l demonstrates one ZFS volume with two datasets and one zvol.
+If you click Storage → Volumes → View Volumes, you can view and further configure existing volumes, ZFS datasets, and zvols. The example shown in
+Figure 6.3l demonstrates one ZFS volume with two datasets and one zvol.
 
 Buttons are provided to provide quick access to
 `ZFS Volume Manager <#1.6.3.4.ZFS Volume Manager|outline>`_
@@ -5365,84 +5167,81 @@ button will be added to
 
 If you click the entry for a ZFS volume, eight icons will appear at the bottom of the screen. In order from left to right, these icons allow you to:
 
-#.  **Detach Volume:**
-    allows you to either detach a disk before removing it from the system (also known as a ZFS export) or to delete the contents of the volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 6.3m, will show the current used space, provide the check box “Mark the disks as new (destroy data)”, prompt you to make sure that you want to do this, warn you if the volume has any associated shares and ask if you wish to delete them, and the browser will turn red to alert you that you are about to do something that will make the data inaccessible.
-    **If you do not check the box to mark the disks as new, the volume will be exported (ZFS volumes only). **
-    This means that the data is not destroyed and the volume can be re-imported at a later time. If you will be moving a ZFS drive from one system to another, perform this
+#.  **Detach Volume:** allows you to either detach a disk before removing it from the system (also known as a ZFS export) or to delete the contents of the
+    volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 6.3m, will show the
+    current used space, provide the check box “Mark the disks as new (destroy data)”, prompt you to make sure that you want to do this, warn you if the
+    volume has any associated shares and ask if you wish to delete them, and the browser will turn red to alert you that you are about to do something that
+    will make the data inaccessible. **If you do not check the box to mark the disks as new, the volume will be exported (ZFS volumes only).** This means that
+    the data is not destroyed and the volume can be re-imported at a later time. If you will be moving a ZFS drive from one system to another, perform this
     `export <http://docs.huihoo.com/opensolaris/solaris-zfs-administration-guide/html/ch04s06.html>`_
-    action first. This operation flushes any unwritten data to disk, writes data to the disk indicating that the export was done, and removes all knowledge of the pool from the system.
-    **If you do check the box to mark the disks as new, the volume and all of its data, datasets, and zvols will be destroyed and the underlying disks will be returned to their raw state. **
+    action first. This operation flushes any unwritten data to disk, writes data to the disk indicating that the export was done, and removes all knowledge of
+    the pool from the system.
+    **If you do check the box to mark the disks as new, the volume and all of its data, datasets, and zvols will be destroyed and the underlying disks will be returned to their raw state.**
 
 
 
-#.  **Scrub Volume:**
-
-    ZFS scrubs and how to schedule them are described in more detail in
+#.  **Scrub Volume:** ZFS scrubs and how to schedule them are described in more detail in
     `ZFS  <#1.6.4.ZFS Scrubs|outline>`_
     `Scrubs <#1.6.4.ZFS Scrubs|outline>`_
-    . This button allows you to manually initiate a scrub. A scrub is I/O intensive and can negatively impact performance, meaning that you should not initiate one while the system is busy. A cancel button is provided should you need to cancel a scrub.
+    . This button allows you to manually initiate a scrub. A scrub is I/O intensive and can negatively impact performance, meaning that you should not
+    initiate one while the system is busy. A cancel button is provided should you need to cancel a scrub.
 
 
 
-**NOTE: **
-if you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off.
+**NOTE:** if you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off.
 
 **Figure 6.3m: Detaching or Deleting a Volume**
 
 |100000000000032B00000215E25408A6_png|
 
-#.  **Edit ZFS Options:**
-    allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only applied when a file is written.
+#.  **Edit ZFS Options:** allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is
+    newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only
+    applied when a file is written.
 
 
 
-#.  **Create ZFS Dataset: **
-    allows you to create a dataset.
+#.  **Create ZFS Dataset:** allows you to create a dataset.
 
 
 
-#.  **Create zvol: **
-    allows you to create a zvol to use as an iSCSI device extent.
+#.  **Create zvol:** allows you to create a zvol to use as an iSCSI device extent.
 
 
 
-#.  **Change Permissions:**
-    allows you to edit the volume's user, group, Unix rwx permissions, type of ACL,
-    and to enable recursive permissions on the volume's subdirectories.
+#.  **Change Permissions:** allows you to edit the volume's user, group, Unix rwx permissions, type of ACL, and to enable recursive permissions on the
+    volume's subdirectories.
 
 
 
-#.  **Create Snapshot:**
-    allows you to configure the snapshot's name and whether or not it is recursive before manually creating a one-time snapshot. If you wish to schedule the regular creation of snapshots, instead create a
+#.  **Create Snapshot:** allows you to configure the snapshot's name and whether or not it is recursive before manually creating a one-time snapshot. If you
+    wish to schedule the regular creation of snapshots, instead create a
     `periodic snapshot task <#1.6.1.Periodic Snapshot Tasks|outline>`_
     .
 
 
 
-#.  **Volume Status:**
-    a
-    s seen in the example in Figure 6.3n, this screen shows the device name and status of each disk in the ZFS pool as well as any read, write, or checksum errors.
-    It also indicates the status of the latest
+#.  **Volume Status:** as seen in the example in Figure 6.3n, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
+    write, or checksum errors. It also indicates the status of the latest
     `ZFS scrub <#1.6.4.ZFS Scrubs|outline>`_
-    . If you click the entry for a device, buttons will appear to edit the device's options (shown in Figure 6.3o), offline the device, or replace the device (as described in
+    . If you click the entry for a device, buttons will appear to edit the device's options (shown in Figure 6.3o), offline the device, or replace the device
+    (as described in
     `Replacing a Failed Drive <#1.6.3.12.Replacing a Failed Drive or SSD|outline>`_
     ).
 
 
 
-Figure 6.3n: Volume Status
+**Figure 6.3n: Volume Status**
 
 |100000000000028F000001982A79D88A_png|
 
-If you click a disk in Volume Status and click its “Edit Disk” button, you will see the screen shown in Figure 6.3o. Table 6.3f summarizes the configurable options.
+If you click a disk in Volume Status and click its “Edit Disk” button, you will see the screen shown in Figure 6.3o. Table 6.3f summarizes the
+configurable options.
 
-Figure 6.3o: Editing a Disk
+**Figure 6.3o: Editing a Disk**
 
 |1000000000000181000001977D3920D2_jpg|
 
-Table 6.3f: Disk
-
-**Options**
+**Table 6.3f: Disk Options**
 
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Setting                                                | Value          | Description                                                                                                          |
@@ -5484,16 +5283,18 @@ Table 6.3f: Disk
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the HDD Standby, Advanced Power Management, and Acoustic Level settings. As of 8.3.1, changes to these settings are applied immediately.
+**NOTE:** versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the HDD Standby, Advanced Power Management, and Acoustic Level
+settings. As of 8.3.1, changes to these settings are applied immediately.
 
-A ZFS dataset only has five icons as the scrub volume, create ZFS volume, and volume status buttons
-only apply to volumes. In a dataset, the Detach Volume button is replaced with the Destroy Dataset button. If you click the Destroy Dataset button, the browser will turn red to indicate that this is a destructive action. The pop-up warning message will warn that destroying the dataset will delete all of the files and snapshots of that dataset.
+A ZFS dataset only has five icons as the scrub volume, create ZFS volume, and volume status buttons only apply to volumes. In a dataset, the Detach Volume
+button is replaced with the Destroy Dataset button. If you click the Destroy Dataset button, the browser will turn red to indicate that this is a destructive
+action. The pop-up warning message will warn that destroying the dataset will delete all of the files and snapshots of that dataset.
 
 Key Management for Encrypted Volumes
 """"""""""""""""""""""""""""""""""""
 
-If you check the “Enable full disk encryption” box during the creation of a ZFS volume, five encryption icons will be added to the icons that are typically seen when
+If you check the “Enable full disk encryption” box during the creation of a ZFS volume, five encryption icons will be added to the icons that are
+typically seen when
 `viewing a volume <#1.6.3.7.Viewing Volumes|outline>`_
 . An example is seen in Figure 6.3p.
 
@@ -5504,58 +5305,45 @@ If you check the “Enable full disk encryption” box during the creation of a 
 
 These icons are used to:
 
-**Create/Change Passphrase:**
-click this icon to set and confirm the passphrase associated with the GELI encryption key.
-**Remember this passphrase as you can not re-import an encrypted volume without it.**
-** **
-In other words, if you forget the passphrase, it is possible for the data on the volume to become inaccessible. An example would be a failed USB stick that requires a new installation on a new USB stick and a re-import of the existing pool, or the physical removal of disks when moving from an older hardware system to a new system. Protect this passphrase as anyone who knows it could re-import your encrypted volume, thus thwarting the reason for encrypting the disks in the first place.
+**Create/Change Passphrase:** click this icon to set and confirm the passphrase associated with the GELI encryption key.
+**Remember this passphrase as you can not re-import an encrypted volume without it.** In other words, if you forget the passphrase, it is possible for the
+data on the volume to become inaccessible. An example would be a failed USB stick that requires a new installation on a new USB stick and a re-import of the
+existing pool, or the physical removal of disks when moving from an older hardware system to a new system. Protect this passphrase as anyone who knows it
+could re-import your encrypted volume, thus thwarting the reason for encrypting the disks in the first place.
 
-When you click this icon, a red warning is displayed:
-*Remember to add a new recovery key as this action invalidates the previous recovery key.*
-Setting a passphrase invalidates the existing key. Once you set the passphrase, immediately click the
-*Add recovery key*
-button to create a new recovery key. Once the passphrase is set, the name of this icon will change to Change Passphrase.
+When you click this icon, a red warning is displayed: *Remember to add a new recovery key as this action invalidates the previous recovery key.* Setting a
+passphrase invalidates the existing key. Once you set the passphrase, immediately click the *Add recovery key* button to create a new recovery key. Once the
+passphrase is set, the name of this icon will change to Change Passphrase.
 
-**Download Key:**
-click this icon to download a backup copy of the GELI encryption key. Since the GELI encryption key is separate from the FreeNAS® configuration database,
-**it is highly recommended to make a backup of the key. If the key is every lost or destroyed and there is no **
-**backup key, the data on the disks is inaccessible.**
-** **
+**Download Key:** click this icon to download a backup copy of the GELI encryption key. Since the GELI encryption key is separate from the FreeNAS®
+configuration database,
+**it is highly recommended to make a backup of the key. If the key is every lost or destroyed and there is no backup key, the data on the disks is inaccessible.**
 
-**Encryption Re-key:**
-generates a new GELI encryption key. Typically this is only performed when the administrator suspects that the current key may be compromised.
-This action also removes the current passphrase
-.
+**Encryption Re-key:** generates a new GELI encryption key. Typically this is only performed when the administrator suspects that the current key may be
+compromised. This action also removes the current passphrase.
 
-**Add recovery key:**
-generates a new recovery key and prompts for a location to download a backup copy of the recovery key. This recovery key can be used if the passphrase is forgotten.
-**Always immediately**
-** **
-add a recovery key whenever the passphrase is changed.
+**Add recovery key:** generates a new recovery key and prompts for a location to download a backup copy of the recovery key. This recovery key can be used if
+the passphrase is forgotten. **Always immediately** add a recovery key whenever the passphrase is changed.
 
-**Remove recover key:**
-Typically this is only performed when the administrator suspects that the current recovery key may be compromised.
-**Immediately**
-** **
-create a new passphrase and recovery key.
+**Remove recover key:** Typically this is only performed when the administrator suspects that the current recovery key may be compromised.
+**Immediately** create a new passphrase and recovery key.
 
 Each of these icons will prompt for the password used to access the FreeNAS® administrative GUI.
 
 Setting Permissions
 ^^^^^^^^^^^^^^^^^^^
 
-Setting permissions is an important aspect of configuring volumes. The graphical administrative interface is meant to set the
-**initial**
-permissions for a volume or dataset in order to make it available as a share. Once a share is available, the client operating system should be used to fine-tune the permissions of the files and directories that are created by the client.
+Setting permissions is an important aspect of configuring volumes. The graphical administrative interface is meant to set the **initial** permissions for a
+volume or dataset in order to make it available as a share. Once a share is available, the client operating system should be used to fine-tune the
+permissions of the files and directories that are created by the client.
 
 `Sharing <#1.7.Sharing Configuration|outline>`_
 contains configuration examples for several types of permission scenarios. This section provides an overview of the screen that is used to set permissions.
 
-Once a volume or dataset is created, it will be listed by its mount point name in Storage →
-Volumes →
-View Volumes. If you click the Change Permissions icon for a specific volume/dataset, you will see the screen shown in Figure 6.3q. Table 6.3g summarizes the options in this screen.
+Once a volume or dataset is created, it will be listed by its mount point name in Storage → Volumes → View Volumes. If you click the Change
+Permissions icon for a specific volume/dataset, you will see the screen shown in Figure 6.3q. Table 6.3g summarizes the options in this screen.
 
-Figure 6.3q: Changing Permissions on a Volume or Dataset
+**Figure 6.3q: Changing Permissions on a Volume or Dataset**
 
 |10000000000001720000018E06DDC591_png|
 
@@ -5584,20 +5372,21 @@ Figure 6.3q: Changing Permissions on a Volume or Dataset
 |                            |                  |                                                                                                                                               |
 +----------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------------------------------+
 | Set permission recursively | checkbox         | if checked, permissions will also apply to subdirectories of the volume or dataset; if data already exists on the volume/dataset,             |
-|                            |                  | **it is recommended to instead change the permissions recursively on the client side to **                                                    |
-|                            |                  | **prevent a performance lag on the FreeNAS® system **                                                                                         |
+|                            |                  | **it is recommended to instead change the permissions recursively on the client side to prevent a performance lag on the FreeNAS® system**   |
 |                            |                  |                                                                                                                                               |
 +----------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-When in doubt, or if you have a mix of operating systems in your network, select Unix ACLs as all clients understand them. Windows ACLs are appropriate when the network contains only Windows clients and are the preferred option within an Active Directory domain. Windows ACLs add a superset of permissions that augment those provided by Unix ACLs. While Windows clients also understand Unix ACLs, they won't benefit from the extra permissions provided by Active Directory and Windows ACLs when Unix ACLs are used.
+When in doubt, or if you have a mix of operating systems in your network, select Unix ACLs as all clients understand them. Windows ACLs are appropriate when
+the network contains only Windows clients and are the preferred option within an Active Directory domain. Windows ACLs add a superset of permissions that
+augment those provided by Unix ACLs. While Windows clients also understand Unix ACLs, they won't benefit from the extra permissions provided by Active
+Directory and Windows ACLs when Unix ACLs are used.
 
-I
-f you change your mind about the type of ACL, you do not have to recreate the volume. That is, existing data is not lost if the type of ACL is changed. However, if you change from Windows ACLs to Unix ACLs, the extended permissions provided by Windows ACLs will be removed from the existing files.
+If you change your mind about the type of ACL, you do not have to recreate the volume. That is, existing data is not lost if the type of ACL is changed.
+However, if you change from Windows ACLs to Unix ACLs, the extended permissions provided by Windows ACLs will be removed from the existing files.
 
-When you select Windows ACLs, the
-*Mode*
-will become greyed out as it only applies to Unix permissions. The default Windows ACLs are always set to what Windows sets on new files and directories by default. The Windows client should then be used to fine-tune the permissions as required.
+When you select Windows ACLs, the *Mode* will become greyed out as it only applies to Unix permissions. The default Windows ACLs are always set to what
+Windows sets on new files and directories by default. The Windows client should then be used to fine-tune the permissions as required.
 
 Viewing Multipaths
 ^^^^^^^^^^^^^^^^^^
@@ -5610,55 +5399,62 @@ support on systems containing hardware that is capable of multipath. An example 
 
 Multipath hardware adds fault tolerance to a NAS as the data is still available even if one disk I/O path has a failure.
 
-FreeNAS® automatically detects active/active and active/passive multipath-capable hardware. Any multipath-capable devices that are detected will be placed in multipath units with the parent devices hidden. The configuration will be displayed in Storage → Volumes → View Multipaths, as seen in the example in Figure 6.3r. Note that this option will not be displayed in the Storage → Volumes tree on systems that do not contain multipath-capable hardware.
+FreeNAS® automatically detects active/active and active/passive multipath-capable hardware. Any multipath-capable devices that are detected will be placed in
+multipath units with the parent devices hidden. The configuration will be displayed in Storage → Volumes → View Multipaths, as seen in the example in
+Figure 6.3r. Note that this option will not be displayed in the Storage → Volumes tree on systems that do not contain multipath-capable hardware.
 
 **Figure 6.3r: Viewing Multipaths**
 
 
 |1000020100000398000000DC97182069_png|
 
-Figure 6.3q provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is capable of active/read.
+Figure 6.3q provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
+capable of active/read.
 
 Replacing a Failed Drive
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you are using any form of redundant RAID, you should replace a failed drive as soon as possible to repair the degraded state of the RAID. Depending upon the capability of your hardware, you may or may not need to reboot in order to replace the failed drive. AHCI capable hardware does not require a reboot.
+If you are using any form of redundant RAID, you should replace a failed drive as soon as possible to repair the degraded state of the RAID. Depending upon
+the capability of your hardware, you may or may not need to reboot in order to replace the failed drive. AHCI capable hardware does not require a reboot.
 
 **NOTE:**
 a stripe (RAID0) does not provide redundancy. If you lose a disk in a stripe, you will need to recreate the volume and restore the data from backup.
 
-Before physically removing the failed device, go to Storage → Volumes → View Volumes → Volume Status and locate the failed disk. Once you have located the failed device in the GUI, perform the
+Before physically removing the failed device, go to Storage → Volumes → View Volumes → Volume Status and locate the failed disk. Once you have
+located the failed device in the GUI, perform the
 following steps:
 
-#.  If the disk is formatted with ZFS, click the disk's entry then its “Offline” button in order to change that disk's status to OFFLINE. This step is needed to properly remove the device from the ZFS pool and to prevent swap issues. If your hardware supports hot-pluggable disks, click the disk's “Offline” button, pull the disk, then skip to step 3. If there is no “Offline” button but only a “Replace” button, then the disk is already offlined and you can safely skip this step.
+#.  If the disk is formatted with ZFS, click the disk's entry then its “Offline” button in order to change that disk's status to OFFLINE. This step is
+    needed to properly remove the device from the ZFS pool and to prevent swap issues. If your hardware supports hot-pluggable disks, click the disk's
+    “Offline” button, pull the disk, then skip to step 3. If there is no “Offline” button but only a “Replace” button, then the disk is already
+    offlined and you can safely skip this step.
 
 
 
-**NOTE:**
-if the process of changing the disk's status to OFFLINE fails with a “disk offline failed - no valid replicas” message, you will need to scrub the ZFS volume first using its Scrub Volume button in Storage → Volumes → View Volumes. Once the scrub completes, try to Offline the disk again before proceeding.
+**NOTE:** if the process of changing the disk's status to OFFLINE fails with a “disk offline failed - no valid replicas” message, you will need to scrub
+the ZFS volume first using its Scrub Volume button in Storage → Volumes → View Volumes. Once the scrub completes, try to Offline the disk again before
+proceeding.
 
-#.  If the hardware is not AHCI capable, shutdown the system in order to physically replace the disk. When finished, return to the GUI and locate the OFFLINE disk.
+#.  If the hardware is not AHCI capable, shutdown the system in order to physically replace the disk. When finished, return to the GUI and locate the OFFLINE
+    disk.
 
 
 
-#.  Once the disk is showing as OFFLINE, click the disk again and then click its “Replace” button. Select the replacement disk from the drop-down menu and click the “Replace Disk” button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool. Once you click the “Replace Disk” button, the ZFS pool will start to resilver. You can use the
-    **zpool status**
-    command in
+#.  Once the disk is showing as OFFLINE, click the disk again and then click its “Replace” button. Select the replacement disk from the drop-down menu
+    and click the “Replace Disk” button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
+    Once you click the “Replace Disk” button, the ZFS pool will start to resilver. You can use the **zpool status** command in
     `Shell <#1.9.2.Shell|outline>`_
     to monitor the status of the resilvering.
 
 
 
-#.  If the replaced disk continues to be listed after resilvering is complete, click its entry and use the “Detach” button to remove the disk from the list.
+#.  If the replaced disk continues to be listed after resilvering is complete, click its entry and use the “Detach” button to remove the disk from the
+    list.
 
 
 
-In the example shown in Figure 6.3s, a failed disk is being replaced by disk
-*ada2 *
-in the
-volume named
-* *
-*volume1. *
+In the example shown in Figure 6.3s, a failed disk is being replaced by disk *ada2 * in the volume named
+*volume1*.
 
 **Figure 6.3s: Replacing a Failed Disk**
 
@@ -5673,44 +5469,45 @@ If the ZFS pool is encrypted, additional steps are needed when replacing a faile
 First, make sure that a
 `passphrase has been set <#1.6.3.4.2.Creating an Encrypted Volume|outline>`_
 
-**before**
-** **
-attempting to replace the failed drive. Then, follow the steps 1 and 2 as described above. During step 3, you will be prompted to input the passphrase for the pool. Wait until the resilvering is complete.
+**before** attempting to replace the failed drive. Then, follow the steps 1 and 2 as described above. During step 3, you will be prompted to input the
+passphrase for the pool. Wait until the resilvering is complete.
 
 Next, restore the encryption keys to the pool.
 **If the following additional steps are not performed before the next reboot, you may lose access to the pool permanently.**
-** **
 
 #.  Highlight the pool that contains the disk you just replaced and click the “Encryption Re-key” button in the GUI. You will need to enter the
-    *root*
-    password.
+    *root* password.
 
 
 
-#.  Highlight the pool that contains the disk you just replaced and click the “Create Passphrase” button and enter the new passphrase. You can reuse the old passphrase if desired.
+#.  Highlight the pool that contains the disk you just replaced and click the “Create Passphrase” button and enter the new passphrase. You can reuse the
+    old passphrase if desired.
 
 
 
-#.  Highlight the pool that contains the disk you just replaced and click the “Download Key” button in order to save the new encryption key. Since the old key will no longer function, any old keys can be safely discarded.
+#.  Highlight the pool that contains the disk you just replaced and click the “Download Key” button in order to save the new encryption key. Since the 
+    old key will no longer function, any old keys can be safely discarded.
 
 
 
-#.  Highlight the pool that contains the disk you just replaced and click the “Add Recovery Key” button in order to save the new recovery key. The old recovery key will no longer function, so it can be safely discarded.
+#.  Highlight the pool that contains the disk you just replaced and click the “Add Recovery Key” button in order to save the new recovery key. The old
+    recovery key will no longer function, so it can be safely discarded.
 
 
 
 Removing a Log or Cache Device
 """"""""""""""""""""""""""""""
 
-If you have added any log or cache devices, these devices will also appear in Storage → Volumes → View Volumes → Volume Status. If you click the device, you can either use its "Replace" button to replace the device as described above, or click its "Remove" button to remove the device.
+If you have added any log or cache devices, these devices will also appear in Storage → Volumes → View Volumes → Volume Status. If you click the
+device, you can either use its "Replace" button to replace the device as described above, or click its "Remove" button to remove the device.
 
-Before performing either of these operations, verify the version of ZFS running on the system by running
-**zpool upgrade -v|more**
-from
+Before performing either of these operations, verify the version of ZFS running on the system by running **zpool upgrade -v|more** from
 `Shell <#1.12.2.Shell|outline>`_
 .
 
-If the pool is running ZFSv15, and a non-mirrored log device fails, is replaced, or removed, the pool is unrecoverable and the pool must be recreated and the data restored from a backup. For other ZFS versions, removing or replacing the log device will lose any data in the device which had not yet been written. This is typically the last few seconds of writes.
+If the pool is running ZFSv15, and a non-mirrored log device fails, is replaced, or removed, the pool is unrecoverable and the pool must be recreated and the
+data restored from a backup. For other ZFS versions, removing or replacing the log device will lose any data in the device which had not yet been written.
+This is typically the last few seconds of writes.
 
 Removing or replacing a cache device will not result in any data loss, but may have an impact on read performance until the device is replaced.
 
@@ -5721,508 +5518,449 @@ The recommended method for expanding the size of a ZFS pool is to pre-plan the n
 `ZFS Volume Manager <#1.6.3.5.Extending a ZFS Volume|outline>`_
 as additional capacity is needed.
 
-However, this is not an option if you do not have open drive ports or the ability to add a SAS/SATA HBA card. In this case, you can replace one disk at a time with a larger disk, wait for the resilvering process to incorporate the new disk into the pool completes, then repeat with another disk until all of the disks have been replaced. This process is slow and places the system in a degraded state. Since a failure at this point could be disastrous,
+However, this is not an option if you do not have open drive ports or the ability to add a SAS/SATA HBA card. In this case, you can replace one disk at a time
+with a larger disk, wait for the resilvering process to incorporate the new disk into the pool completes, then repeat with another disk until all of the disks
+have been replaced. This process is slow and places the system in a degraded state. Since a failure at this point could be disastrous,
 **do not attempt this method unless the system has a reliable backup.**
-** **
 
-**NOTE:**
-this method requires the ZFS property autoexpand. This property became available starting with FreeNAS® version 8.3.0. If you are running an earlier version of FreeNAS®, upgrade before attempting this method.
+**NOTE:** this method requires the ZFS property autoexpand. This property became available starting with FreeNAS® version 8.3.0. If you are running an
+earlier version of FreeNAS®, upgrade before attempting this method.
 
-Check and verify that the autoexpand property is enabled
-**before**
-** **
-attempting to grow the pool. If it is not, the pool will not recognize that the disk capacity has increased. By default, this property is enabled in FreeNAS® versions 8.3.1 and higher. To verify the property, use
+Check and verify that the autoexpand property is enabled **before** attempting to grow the pool. If it is not, the pool will not recognize that the disk
+capacity has increased. By default, this property is enabled in FreeNAS® versions 8.3.1 and higher. To verify the property, use
 `Shell <#1.9.2.Shell|outline>`_
-. This example checks the ZFS volume named
-*Vol1*
-:
+. This example checks the ZFS volume named *Vol1*::
 
 
-**zpool get all Vol1**
+ zpool get all Vol1
+ NAME
+ PROPERTY
+ VALUE
+ SOURCE
 
-NAME
-PROPERTY
-VALUE
-SOURCE
+ Vol1
+ size
+ 4.53T
+ -
 
-Vol1
-size
-4.53T
--
+ Vol1
+ capacity
+ 31%
+ -
 
-Vol1
-capacity
-31%
--
+ Vol1
+ altroot
+ /mnt
+ local
 
-Vol1
-altroot
-/mnt
-local
+ Vol1
+ health
+ ONLINE
+ -
 
-Vol1
-health
-ONLINE
--
+ Vol1
+ guid
+ 8068631824452460057
+ default
 
-Vol1
-guid
-8068631824452460057
-default
+ Vol1
+ version
+ 28
+ default
 
-Vol1
-version
-28
-default
+ Vol1
+ bootfs
+ -
+ default
 
-Vol1
-bootfs
--
-default
+ Vol1
+ delegation
+ on
+ default
 
-Vol1
-delegation
-on
-default
+ Vol1
+ autoreplace
+ off
+ default
 
-Vol1
-autoreplace
-off
-default
+ Vol1
+ cachefile
+ /data/zfs/zpool.cache
+ local
 
-Vol1
-cachefile
-/data/zfs/zpool.cache
-local
+ Vol1
+ failmode
+ wait
+ default
 
-Vol1
-failmode
-wait
-default
+ Vol1
+ listsnapshots
+ off
+ default
 
-Vol1
-listsnapshots
-off
-default
+ Vol1 
+ autoexpand 
+ on 
+ local
 
-**Vol1 **
-**autoexpand **
-**on **
-**local**
+ Vol1
+ dedupditto
+ 0
+ default
 
-Vol1
-dedupditto
-0
-default
+ Vol1
+ dedupratio
+ 1.00x
+ -
 
-Vol1
-dedupratio
-1.00x
--
+ Vol1
+ free
+ 3.12T
+ -
 
-Vol1
-free
-3.12T
--
+ Vol1
+ allocated
+ 1.41T
+ -
 
-Vol1
-allocated
-1.41T
--
+ Vol1
+ readonly
+ off
+ -
 
-Vol1
-readonly
-off
--
+ Vol1
+ comment
+ -
+ default
 
-Vol1
-comment
--
-default
+If autoexpansion is not enabled, enable it by specifying the name of the ZFS volume::
 
-If autoexpansion is not enabled, enable it by specifying the name of the ZFS volume:
+ zpool set autoexpand=on Vol1 
 
-**zpool set autoexpand=on Vol1**
-
-Verify that autoexpand is now enabled by repeating
-**zpool get all Vol1**
-.
+Verify that autoexpand is now enabled by repeating **zpool get all Vol1**.
 
 You are now ready to replace one drive with a larger drive using the instructions in
 `Replacing a Failed Drive <#1.6.3.12.Replacing a Failed Drive or SSD|outline>`_
 .
 
-Replace one drive at a time and wait for the resilver process to complete on the replaced drive before replacing the next drive. Once all the drives are replaced and the resilver completes, you should see the added space in the pool.
+Replace one drive at a time and wait for the resilver process to complete on the replaced drive before replacing the next drive. Once all the drives are
+replaced and the resilver completes, you should see the added space in the pool.
 
-You can view the status of the resilver process by running
-**zpool status Vol1**
-.
+You can view the status of the resilver process by running **zpool status Vol1**.
 
 Enabling ZFS Pool Expansion After Drive Replacement
 """""""""""""""""""""""""""""""""""""""""""""""""""
 
-It is recommended to enable the autoexpand property before you start replacing drives. If the property is not enabled before replacing some or all of the drives, extra configuration is needed to inform ZFS of the expanded capacity.
+It is recommended to enable the autoexpand property before you start replacing drives. If the property is not enabled before replacing some or all of the
+drives, extra configuration is needed to inform ZFS of the expanded capacity.
 
-Verify that autoexpand is set as described in the previous section. Then, bring each of the drives back online with the following command, replacing the volume name and
-GPT ID for each disk in the ZFS pool:
+Verify that autoexpand is set as described in the previous section. Then, bring each of the drives back online with the following command, replacing the
+volume name and GPT ID for each disk in the ZFS pool::
 
-**zpool online -e Vol1 gptid/xxx**
+ zpool online -e Vol1 gptid/xxx
 
-Online one drive at a time and check the status using the following example. If a drive starts to resilver, you need to wait for the resilver to complete before proceeding to online the next drive.
+Online one drive at a time and check the status using the following example. If a drive starts to resilver, you need to wait for the resilver to complete
+before proceeding to online the next drive.
 
-To find the GPT ID information for the drives, use
-**zpool status [Pool_Name]**
-which will also show you if any drives are failed or in the process of being resilvered:
+To find the GPT ID information for the drives, use **zpool status [Pool_Name]** which will also show you if any drives are failed or in the process of being
+resilvered::
 
-**zpool status Vol1**
+ zpool status Vol1
+ pool: Vol1
+ state: ONLINE
+ scan: scrub repaired 0 in 16h24m with 0 errors on Sun Mar 10 17:24:20 2013
+ config:
+ NAME
+ STATE
+ READ WRITE CKSUM
 
-pool: Vol1
+ Vol1
+ ONLINE
+ 0
+ 0
+ 0
 
-state: ONLINE
+ raidz1-0
+ ONLINE
+ 0
+ 0
+ 0
 
-scan: scrub repaired 0 in 16h24m with 0 errors on Sun Mar 10 17:24:20 2013
+ gptid/d5ed48a4-634a-11e2-963c-00e081740bfe
+ ONLINE
+ 0
+ 0
+ 0
 
-config:
+ gptid/03121538-62d9-11e2-99bd-00e081740bfe
+ ONLINE
+ 0
+ 0
+ 0
 
-NAME
-STATE
-READ WRITE CKSUM
+ gptid/252754e1-6266-11e2-8088-00e081740bfe
+ ONLINE
+ 0
+ 0
+ 0
 
-Vol1
-ONLINE
-0
-0
-0
+ gptid/9092045a-601d-11e2-892e-00e081740bfe
+ ONLINE
+ 0
+ 0
+ 0
 
-raidz1-0
-ONLINE
-0
-0
-0
+ gptid/670e35bc-5f9a-11e2-92ca-00e081740bfe
+ ONLINE
+ 0
+ 0
+ 0
 
-gptid/d5ed48a4-634a-11e2-963c-00e081740bfe
-ONLINE
-0
-0
-0
+ errors: No known data errors
 
-gptid/03121538-62d9-11e2-99bd-00e081740bfe
-ONLINE
-0
-0
-0
+After onlining all of the disks, type **zpool status** to see if the drives start to resilver. If this happens, wait for the resilvering process to complete.
 
-gptid/252754e1-6266-11e2-8088-00e081740bfe
-ONLINE
-0
-0
-0
+Next, export and then import the pool::
 
-gptid/9092045a-601d-11e2-892e-00e081740bfe
-ONLINE
-0
-0
-0
+ zpool export Vol1
 
-gptid/670e35bc-5f9a-11e2-92ca-00e081740bfe
-ONLINE
-0
-0
-0
+ zpool import -R /mnt Vol1
 
+Once the import completes, all of the drive space should be available. Verify that the increased size is recognized::
 
-errors: No known data errors
+ zpool list Vol1
+ NAME
+ SIZE
+ ALLOC
+ FREE
+ CAP
+ DEDUP
+ HEALTH
+ ALTROOT
 
-After onlining all of the disks, type
-**zpool status**
-to see if the drives start to resilver. If this happens, wait for the resilvering process to complete.
+ Vol1
+ 9.06T
+ 1.41T
+ 7.24T
+ 31%
+ 1.00x
+ ONLINE
+ /mnt
 
-Next, export and then import the pool:
-
-**zpool export Vol1**
-
-**zpool import -R /mnt Vol1**
-
-Once the import completes, all of the drive space should be available. Verify that the increased size is recognized:
-
-**zpool list Vol1**
-
-NAME
-SIZE
-ALLOC
-FREE
-CAP
-DEDUP
-HEALTH
-ALTROOT
-
-Vol1
-9.06T
-1.41T
-7.24T
-31%
-1.00x
-ONLINE
-/mnt
-
-If you cannot see the extra space, you may need to run
-**zpool online -e <pool> <device>**
-for every device listed in
-**zpool status**
-.
+If you cannot see the extra space, you may need to run **zpool online -e <pool> <device>** for every device listed in
+**zpool status**.
 
 Splitting a Mirrored ZFS Storage Pool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-ZFSv28 provides the ability to to split a
-**mirrored**
-** **
-storage pool, which detaches a disk or disks in the original ZFS volume in order to create another identical ZFS volume on another system.
+ZFSv28 provides the ability to to split a **mirrored** storage pool, which detaches a disk or disks in the original ZFS volume in order to create another
+identical ZFS volume on another system.
 
-**NOTE:**
-zpool split only works on mirrored ZFS volumes.
+**NOTE:** zpool split only works on mirrored ZFS volumes.
 
-In this example, a ZFS mirror named
-*test*
-contains three drives:
+In this example, a ZFS mirror named *test* contains three drives::
 
-**zpool status**
+ zpool status
+ pool: test
+ state: ONLINE
+ scan: resilvered 568K in 0h0m with 0 errors on Wed Jul 6 16:10:58 2011
+ config:
+ NAME
+ STATE
+ READ WRITE CKSUM
 
-pool: test
+ test
+ ONLINE
+ 0
+ 0
+ 0
 
-state: ONLINE
+ mirror-0
+ ONLINE
+ 0
+ 0
+ 0
 
-scan: resilvered 568K in 0h0m with 0 errors on Wed Jul
-6 16:10:58 2011
+ da1
+ ONLINE
+ 0
+ 0
+ 0
 
-config:
+ da0
+ ONLINE
+ 0
+ 0
+ 0
 
-NAME
-STATE
-READ WRITE CKSUM
+ da4
+ ONLINE
+ 0
+ 0
+ 0
 
-test
-ONLINE
-0
-0
-0
+The following command splits from the existing three disk mirror *test* a new ZFS volume named
+*migrant* containing one disk,
+*da4*. Disks
+*da0* and
+*da1* remain in
+*test*.::
 
-mirror-0
-ONLINE
-0
-0
-0
+ zpool split test migrant da4
 
-da1
-ONLINE
-0
-0
-0
+At this point, *da4* can be physically removed and installed to a new system as the new pool is exported as it is created. Once physically installed, import
+the identical pool on the new system::
 
-da0
-ONLINE
-0
-0
-0
+ zpool import migrant
 
-da4
-ONLINE
-0
-0
-0
+This makes the ZFS volume *migrant* available with a single disk. Be aware that properties come along with the clone, so the new pool will be mounted where
+the old pool was mounted if the mountpoint property was set on the original pool.
 
-The following command splits from the existing three disk mirror
-*test*
-a new ZFS volume named
-*migrant*
-containing one disk,
-*da4*
-. Disks
-*da0*
-and
-*da1*
-remain in
-*test*
-.
+Verify the status of the new pool::
 
-**zpool split test migrant da4**
+ zpool status
+ pool: migrant
+ state: ONLINE
+ scan: resilvered 568K in 0h0m with 0 errors on Wed Jul 6 16:10:58 2011
+ config:
 
-At this point,
-*da4*
-can be physically removed and installed to a new system as the new pool is exported as it is created. Once physically installed, import the identical pool on the new system:
+ NAME
+ STATE
+ READ WRITE CKSUM
 
-**zpool import migrant**
+ migrant
+ ONLINE
+ 0
+ 0
+ 0
 
-This makes the ZFS volume
-*migrant*
-available with a single disk. Be aware that properties come along with the clone, so the new pool will be mounted where the old pool was mounted if the mountpoint property was set on the original pool.
+ da4
+ ONLINE
+ 0
+ 0
+ 0
 
-Verify the status of the new pool:
+ errors: No known data errors
 
-**zpool status**
+On the original system, the status now looks like this::
 
-pool: migrant
+ zpool status
+ pool: test
+ state: ONLINE
+ scan: resilvered 568K in 0h0m with 0 errors on Wed Jul 6 16:10:58 2011
+ config:
 
-state: ONLINE
+ NAME
+ STATE
+ READ WRITE CKSUM
 
-scan: resilvered 568K in 0h0m with 0 errors on Wed Jul
-6 16:10:58 2011
+ test
+ ONLINE
+ 0
+ 0
+ 0
 
-config:
+ mirror-0
+ ONLINE
+ 0
+ 0
+ 0
 
-NAME
-STATE
-READ WRITE CKSUM
+ da1
+ ONLINE
+ 0
+ 0
+ 0
 
-migrant
-ONLINE
-0
-0
-0
+ da0
+ ONLINE
+ 0
+ 0
+ 0
 
-da4
-ONLINE
-0
-0
-0
+ errors: No known data errors
 
-errors: No known data errors
+At this point, it is recommended to add disks to create a full mirror set. This example adds two disks named *da2* and
+*da3*::
 
-On the original system, the status now looks like this:
+ zpool attach migrant da4 da2
 
-**zpool status**
+ zpool attach migrant da4 da3
 
-pool: test
+The *migrant* volume now looks like this::
 
-state: ONLINE
+ zpool status
+ pool: migrant
+ state: ONLINE
+ scan: resilvered 572K in 0h0m with 0 errors on Wed Jul 6 16:43:27 2011
+ config:
 
-scan: resilvered 568K in 0h0m with 0 errors on Wed Jul
-6 16:10:58 2011
+ NAME
+ STATE
+ READ WRITE CKSUM
 
-config:
+ migrant
+ ONLINE
+ 0
+ 0
+ 0
 
-NAME
-STATE
-READ WRITE CKSUM
+ mirror-0
+ ONLINE
+ 0
+ 0
+ 0
 
-test
-ONLINE
-0
-0
-0
+ da4
+ ONLINE
+ 0
+ 0
+ 0
 
-mirror-0
-ONLINE
-0
-0
-0
+ da2
+ ONLINE
+ 0
+ 0
+ 0
 
-da1
-ONLINE
-0
-0
-0
+ da3
+ ONLINE
+ 0
+ 0
+ 0
 
-da0
-ONLINE
-0
-0
-0
+Now that the new system has been cloned, you can detach *da4* and install it back to the original system. Before physically removing the disk, run this
+command on the new system::
 
-errors: No known data errors
+ zpool detach migrant da4
 
-At this point, it is recommended to add disks to create a full mirror set. This example adds two disks named
-*da2*
-and
-*da3*
-:
+Once the disk is physically re-installed, run this command on the original system::
 
-**zpool attach migrant da4 da2**
+ zpool attach orig da0 da4
 
-**zpool attach migrant da4 da3**
+Should you ever need to create a new clone, remember to remove the old clone first::
 
-The
-*migrant*
-volume now looks like this:
-
-**zpool status**
-
-pool: migrant
-
-state: ONLINE
-
-scan: resilvered 572K in 0h0m with 0 errors on Wed Jul
-6 16:43:27 2011
-
-config:
-
-NAME
-STATE
-READ WRITE CKSUM
-
-migrant
-ONLINE
-0
-0
-0
-
-mirror-0
-ONLINE
-0
-0
-0
-
-da4
-ONLINE
-0
-0
-0
-
-da2
-ONLINE
-0
-0
-0
-
-da3
-ONLINE
-0
-0
-0
-
-Now that the new system has been cloned, you can detach
-*da4*
-and install it back to the original system. Before physically removing the disk, run this command on the new system:
-
-**zpool detach migrant da4**
-
-Once the disk is physically re-installed, run this command on the original system:
-
-**zpool attach orig da0 da4**
-
-Should you ever need to create a new clone, remember to remove the old clone first:
-
-**zpool destroy migrant**
+ zpool destroy migrant
 
 ZFS Scrubs
 ~~~~~~~~~~
 
-Storage → ZFS Scrubs allows you to schedule and manage scrubs on a ZFS volume. Performing a ZFS scrub on a regular basis helps to identify data integrity problems, detects silent data corruptions caused by transient hardware issues, and provides early alerts to disk failures. If you have consumer-quality drives, consider a weekly scrubbing schedule. If you have datacenter-quality drives, consider a monthly scrubbing schedule.
+Storage → ZFS Scrubs allows you to schedule and manage scrubs on a ZFS volume. Performing a ZFS scrub on a regular basis helps to identify data integrity
+problems, detects silent data corruptions caused by transient hardware issues, and provides early alerts to disk failures. If you have consumer-quality
+drives, consider a weekly scrubbing schedule. If you have datacenter-quality drives, consider a monthly scrubbing schedule.
 
 D
-epending upon the amount of data, a scrub can take a long time. Scrubs are I/O intensive and can negatively impact performance. They should be scheduled for evenings or weekends to minimize the impact to users.
+epending upon the amount of data, a scrub can take a long time. Scrubs are I/O intensive and can negatively impact performance. They should be scheduled for
+evenings or weekends to minimize the impact to users.
 
 A ZFS scrub only checks used disk space. To check unused disk space, schedule a
 `S.M.A.R.T. Test <#1.4.6.S.M.A.R.T. Tests|outline>`_
+*Type* of
+*Long Self-Test* to run once or twice a month.
 
-*Type*
-of
-*Long Self-Test*
-to run once or twice a month.
-
-When you create a volume that is formatted with ZFS, a ZFS scrub is automatically scheduled for you. An entry of the same volume name is added to Storage → ZFS Scrubs and a summary of this entry can be viewed in Storage → ZFS Scrubs → View ZFS Scrubs. Figure 6.4a displays the default settings for the volume named
-*volume1. *
-Table 6.4a summarizes the options in this screen.
+When you create a volume that is formatted with ZFS, a ZFS scrub is automatically scheduled for you. An entry of the same volume name is added to
+Storage → ZFS Scrubs and a summary of this entry can be viewed in Storage → ZFS Scrubs → View ZFS Scrubs. Figure 6.4a displays the default
+settings for the volume named *volume1. * Table 6.4a summarizes the options in this screen.
 
 **Figure 6.4a: Viewing a Volume's Default Scrub Settings**
 
@@ -6276,46 +6014,54 @@ Table 6.4a summarizes the options in this screen.
 You should review the default selections and, if necessary, modify them to meet the needs of your environment.
 
 While a delete button is provided,
-**deleting a scrub is not recommended as a scrub provides an early indication of disk issues that could lead to a disk failure.**
-If you find that a scrub is too intensive for your hardware, consider disabling the scrub as a temporary measure until the hardware can be upgraded.
+**deleting a scrub is not recommended as a scrub provides an early indication of disk issues that could lead to a disk failure.** If you find that a scrub is
+too intensive for your hardware, consider disabling the scrub as a temporary measure until the hardware can be upgraded.
 
 If you do delete a scrub, you can create a new scrub task by clicking Storage → Volumes → ZFS Scrubs → Add ZFS Scrub.
 
 Sharing Configuration
 ---------------------
 
-Once you have a volume, create at least one share so that the storage is accessible by the other computers in your network. The type of share you create depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds.
+Once you have a volume, create at least one share so that the storage is accessible by the other computers in your network. The type of share you create
+depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds.
 
-**NOTE:**
-shares are created to provide and control access to an area of storage. Before creating your shares, it is recommended to make a list of the users that will need access to storage data, which operating systems these users are using, whether or not all users should have the same permissions to the stored data, and whether or not these users should authenticate before accessing the data. This information can help you determine which type of share(s) you need to create, whether or not you need to create multiple datasets in order to divide up the storage into areas with differing access and permission requirements, and how complex it will be to setup your permission requirements. It should be noted that a share is used to provide access to data. If you delete a share, it removes access to data
-but does not delete the data itself.
+**NOTE:** shares are created to provide and control access to an area of storage. Before creating your shares, it is recommended to make a list of the users
+that will need access to storage data, which operating systems these users are using, whether or not all users should have the same permissions to the stored
+data, and whether or not these users should authenticate before accessing the data. This information can help you determine which type of share(s) you need to
+create, whether or not you need to create multiple datasets in order to divide up the storage into areas with differing access and permission requirements,
+and how complex it will be to setup your permission requirements. It should be noted that a share is used to provide access to data. If you delete a share, it
+removes access to data but does not delete the data itself.
 
 The following types of shares and services are available:
 
-**Apple (AFP) Shares**
-: the Apple File Protocol (AFP) type of share is a good choice if all of your computers run Mac OS X.
+**Apple (AFP) Shares**: the Apple File Protocol (AFP) type of share is a good choice if all of your computers run Mac OS X.
 
-**Unix (NFS) Shares**
-: the Network File System (NFS) type of share is accessible by Mac OS X, Linux, BSD, and the professional/enterprise versions (not the home editions) of Windows. It is a good choice if there are many different operating systems in your network. Depending upon the operating system, it may require the installation or configuration of client software on the desktop.
+**Unix (NFS) Shares**: the Network File System (NFS) type of share is accessible by Mac OS X, Linux, BSD, and the professional/enterprise versions (not the
+home editions) of Windows. It is a good choice if there are many different operating systems in your network. Depending upon the operating system, it may
+require the installation or configuration of client software on the desktop.
 
-**Windows (CIFS) Shares**
-: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is slower than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network containing only Windows systems. However, it is a poor choice if the CPU on the FreeNAS® system is limited; if your CPU is maxed out, you need to upgrade the CPU or consider another type of share.
+**Windows (CIFS) Shares**: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is slower
+than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network containing
+only Windows systems. However, it is a poor choice if the CPU on the FreeNAS® system is limited; if your CPU is maxed out, you need to upgrade the CPU or
+consider another type of share.
 
-I
-f you are looking for a solution that allows fast access from any operating system, consider configuring the FTP service instead of a share and use a cross-platform FTP and file manager client application such as
+If you are looking for a solution that allows fast access from any operating system, consider configuring the FTP service instead of a share and use a
+cross-platform FTP and file manager client application such as
 `Filezilla <http://filezilla-project.org/>`_
 . Secure FTP can be configured if the data needs to be encrypted.
 
 If data security is a concern and your network's users are familiar with SSH command line utilities or
 `WinSCP <http://winscp.net/>`_
-, consider configuring the SSH service instead of a share. It will be slower than unencrypted FTP due to the overhead of encryption, but the data passing through the network will be encrypted.
+, consider configuring the SSH service instead of a share. It will be slower than unencrypted FTP due to the overhead of encryption, but the data passing
+through the network will be encrypted.
 
-**NOTE: **
-while the GUI will let you do it, it is a bad idea to share the same volume or dataset using
-multiple types of access methods. Different types of shares and services use different file locking methods. For example, if the same volume is configured to use both NFS and FTP, NFS will lock a file for editing by an NFS user, but a FTP user can simultaneously edit or delete that file. This will result in
-lost edits and confused users. Another example: if a volume is configured for both AFP and CIFS, Windows users may be confused by the extra filenames used by Mac files and delete the ones they don't understand; this will corrupt the files on the AFP share. Pick the one type of share or service that makes the most sense for the types of clients that will access that volume, and configure that volume
-for that one type of share or service.
-If you need to support multiple types of shares, divide the volume into datasets and use one dataset per share.
+**NOTE:** while the GUI will let you do it, it is a bad idea to share the same volume or dataset using multiple types of access methods. Different types of
+shares and services use different file locking methods. For example, if the same volume is configured to use both NFS and FTP, NFS will lock a file for
+editing by an NFS user, but a FTP user can simultaneously edit or delete that file. This will result in lost edits and confused users. Another example: if a
+volume is configured for both AFP and CIFS, Windows users may be confused by the extra filenames used by Mac files and delete the ones they don't understand;
+this will corrupt the files on the AFP share. Pick the one type of share or service that makes the most sense for the types of clients that will access that
+volume, and configure that volume for that one type of share or service. If you need to support multiple types of shares, divide the volume into datasets and
+use one dataset per share.
 
 This section will demonstrate how to create AFP, NFS, and CIFS shares. FTP and SSH configurations are described in
 `Services Configuration <#1.8.Services Configuration|outline>`_
@@ -6326,16 +6072,20 @@ Apple (AFP) Shares
 
 FreeNAS® uses the
 `Netatalk <http://netatalk.sourceforge.net/>`_
-AFP server to share data with Apple systems. Configuring AFP shares is a multi-step process that requires you to create or import users and groups, set volume/dataset permissions, create the AFP share(s), configure the
+AFP server to share data with Apple systems. Configuring AFP shares is a multi-step process that requires you to create or import users and groups, set
+volume/dataset permissions, create the AFP share(s), configure the
 `AFP <#1.8.2.AFP|outline>`_
 service, then enable the AFP service in Services → Control Services.
 
-This section describes the configuration screen for creating the AFP share. It then provides configuration examples for creating a guest share, configuring Time Machine to backup to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
+This section describes the configuration screen for creating the AFP share. It then provides configuration examples for creating a guest share, configuring
+Time Machine to backup to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
 
 Creating AFP Shares
 ^^^^^^^^^^^^^^^^^^^
 
-If you click Sharing → Apple (AFP) Shares → Add Apple (AFP) Share, you will see the screen shown in Figure 7.1a. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced.
+If you click Sharing → Apple (AFP) Shares → Add Apple (AFP) Share, you will see the screen shown in Figure 7.1a. Some settings are only available in
+Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box
+“Show advanced fields by default” in System → Settings → Advanced.
 
 Table 7.1a summarizes the available options when creating an AFP share. Refer to
 `Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_
@@ -6344,12 +6094,12 @@ for a more detailed explanation of the available options.
 Once you press the OK button when creating the AFP share, a pop-up menu will ask “Would you like to enable this service?” Click Yes and Services
 → Control Services will open and indicate whether or not the AFP service successfully started.
 
-Figure 7.1a: Creating an AFP Share
+**Figure 7.1a: Creating an AFP Share**
 
 
 |10000000000002EF000001DDC96811A8_png|
 
-Table 7.1a: AFP Share Configuration Options
+**Table 7.1a: AFP Share Configuration Options**
 
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Setting                      | Value         | Description                                                                                                                                                 |
@@ -6411,20 +6161,19 @@ Table 7.1a: AFP Share Configuration Options
 Connecting to AFP Shares As Guest
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-AFP supports guest logins, meaning that all of your Mac OS X users can access the AFP share without requiring their user accounts to first be created on or imported into the the FreeNAS® system.
+AFP supports guest logins, meaning that all of your Mac OS X users can access the AFP share without requiring their user accounts to first be created on or
+imported into the the FreeNAS® system.
 
-**NOTE:**
-if you create a guest share as well a share that requires authentication, AFP will only map users who login as guest to the guest share. This means that if a user logs in to the share that requires authentication, the permissions on the guest share may prevent that user from writing to the guest share. The only way to allow both guest and authenticated users to write to a guest share is to set the permissions on the guest share to 777 or to add the authenticated users to a guest group and set the permissions to 77x.
+**NOTE:** if you create a guest share as well a share that requires authentication, AFP will only map users who login as guest to the guest share. This means
+that if a user logs in to the share that requires authentication, the permissions on the guest share may prevent that user from writing to the guest share.
+The only way to allow both guest and authenticated users to write to a guest share is to set the permissions on the guest share to 777 or to add the
+authenticated users to a guest group and set the permissions to 77x.
 
 In this configuration example, the AFP share has been configured for guest access as follows:
 
-#.  A ZFS volume named
-    */mnt/data*
-    has its permissions set to the built-in
-    *nobody*
-    user account and
-    *nobody*
-    group.
+#.  A ZFS volume named */mnt/data* has its permissions set to the built-in
+    *nobody* user account and
+    *nobody* group.
 
 
 
@@ -6432,26 +6181,21 @@ In this configuration example, the AFP share has been configured for guest acces
 
 
 
-*   Name:
-    *freenas*
-    (this is the name that will appear to Mac OS X clients)
+*   Name: *freenas* (this is the name that will appear to Mac OS X clients)
 
 
 
-*   Path:
-    */mnt/data*
-
-
-
-
-*   Allow List: set to
-    *nobody*
+*   Path: */mnt/data*
 
 
 
 
-*   Read-write Access: set to
-    *nobody*
+*   Allow List: set to *nobody*
+
+
+
+
+*   Read-write Access: set to *nobody*
 
 
 
@@ -6460,8 +6204,7 @@ In this configuration example, the AFP share has been configured for guest acces
 
 
 
-*   Server Name:
-    *freenas*
+*   Server Name: *freenas*
 
 
 
@@ -6470,19 +6213,16 @@ In this configuration example, the AFP share has been configured for guest acces
 
 
 
-*   *nobody*
-    is selected in the Guest account drop-down menu
+*   *nobody* is selected in the Guest account drop-down menu
 
 
 
-Once the AFP service has been started
-in Services → Control Services, Mac OS X users can connect to the AFP share by clicking Go → Connect to Server. In the example shown in Figure 7.1b, the user has input
-*afp://*
-followed by the IP address of the FreeNAS® system.
+Once the AFP service has been started in Services → Control Services, Mac OS X users can connect to the AFP share by clicking Go → Connect to Server.
+In the example shown in Figure 7.1b, the user has input *afp://* followed by the IP address of the FreeNAS® system.
 
-Click the Connect button. Once connected, Finder will automatically open. The name of the AFP share will be displayed in the SHARED section in the left frame and the contents of the share will be displayed in the right frame. In the example shown in Figure 7.1c,
-*/mnt/data*
-has one folder named images. The user can now copy files to and from the share.
+Click the Connect button. Once connected, Finder will automatically open. The name of the AFP share will be displayed in the SHARED section in the left frame
+and the contents of the share will be displayed in the right frame. In the example shown in Figure 7.1c, */mnt/data* has one folder named images. The user can
+now copy files to and from the share.
 
 **Figure 7.1b: Connect to Server Dialogue**
 
@@ -6499,13 +6239,11 @@ To disconnect from the volume, click the eject button in the Shared sidebar.
 Using Time Machine
 ^^^^^^^^^^^^^^^^^^
 
-Mac OS X includes the Time Machine application which can be used to schedule automatic backups. In this configuration example, Time Machine will be configured to backup to an AFP share on a FreeNAS® system. To configure the AFP share on the FreeNAS® system:
+Mac OS X includes the Time Machine application which can be used to schedule automatic backups. In this configuration example, Time Machine will be configured
+to backup to an AFP share on a FreeNAS® system. To configure the AFP share on the FreeNAS® system:
 
-#.  A ZFS dataset named
-    */mnt/data/backup_user1*
-    with a quota of
-    *60G*
-    was created in Storage → Volumes → Create ZFS Dataset.
+#.  A ZFS dataset named */mnt/data/backup_user1* with a quota of
+    *60G* was created in Storage → Volumes → Create ZFS Dataset.
 
 
 
@@ -6513,14 +6251,12 @@ Mac OS X includes the Time Machine application which can be used to schedule aut
 
 
 
-*   Username:
-    *user1*
+*   Username: *user1*
 
 
 
 
-*   Home Directory:
-    */mnt/data/backup_user1*
+*   Home Directory: */mnt/data/backup_user1*
 
 
 
@@ -6529,26 +6265,21 @@ Mac OS X includes the Time Machine application which can be used to schedule aut
 
 
 
-#.  An AFP share with a Name of
-    *backup_user1*
-    has been created with the following attributes:
+#.  An AFP share with a Name of *backup_user1* has been created with the following attributes:
 
 
 
-*   Path:
-    */mnt/data/backup_user1*
-
-
-
-
-*   Allow List: set to
-    *user1*
+*   Path: */mnt/data/backup_user1*
 
 
 
 
-*   Read-write Access: set to
-    *user1*
+*   Allow List: set to *user1*
+
+
+
+
+*   Read-write Access: set to *user1*
 
 
 
@@ -6569,21 +6300,23 @@ Mac OS X includes the Time Machine application which can be used to schedule aut
 
 
 
-To configure Time Machine on the Mac OS X client, go to System Preferences → Time Machine which will open the screen shown in Figure 7.1e. Click ON and a pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as
-*backup_user1 on "freenas"*
-. Highlight the entry representing the FreeNAS® system and click the “Use Backup Disk” button. A connection bar will open and will prompt for the user account's password--in this example, the password for the
-*user1*
-account.
+To configure Time Machine on the Mac OS X client, go to System Preferences → Time Machine which will open the screen shown in Figure 7.1e. Click ON and a
+pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the entry
+representing the FreeNAS® system and click the “Use Backup Disk” button. A connection bar will open and will prompt for the user account's
+password--in this example, the password for the *user1* account.
 
-Time Machine will create a full backup after waiting two minutes. It will then create a one hour incremental backup for the next 24 hours, and then one backup each day, each week and each month.
-**Since the oldest backups are deleted when the ZFS dataset becomes full, make sure that the quota size you set is sufficient to hold the backups.**
-Note that a default installation of Mac OS X is ~21 GB in size.
+Time Machine will create a full backup after waiting two minutes. It will then create a one hour incremental backup for the next 24 hours, and then one backup
+each day, each week and each month.
+**Since the oldest backups are deleted when the ZFS dataset becomes full, make sure that the quota size you set is sufficient to hold the backups.** Note that
+a default installation of Mac OS X is ~21 GB in size.
 
-If you receive a “Time Machine could not complete the backup. The backup disk image could not be created (error 45)” error when backing up to the FreeNAS® system, you will need to create a sparsebundle image using
+If you receive a “Time Machine could not complete the backup. The backup disk image could not be created (error 45)” error when backing up to the
+FreeNAS® system, you will need to create a sparsebundle image using
 `these instructions <http://forum1.netgear.com/showthread.php?t=49482>`_
 .
 
-If you receive the message “Time Machine completed a verification of your backups. To improve reliability, Time Machine must create a new backup for you.” and you do not want to perform another complete backup or lose past backups, follow the instructions in this
+If you receive the message “Time Machine completed a verification of your backups. To improve reliability, Time Machine must create a new backup for
+you.” and you do not want to perform another complete backup or lose past backups, follow the instructions in this
 `post <http://www.garth.org/archives/2011,08,27,169,fix-time-machine-sparsebundle-nas-based-backup-errors.html>`_
 . Note that this can occur after performing a scrub as Time Machine may mistakenly believe that the sparsebundle backup is corrupt.
 
@@ -6595,32 +6328,36 @@ If you receive the message “Time Machine completed a verification of your back
 Unix (NFS) Shares
 ~~~~~~~~~~~~~~~~~
 
-FreeNAS® supports the Network File System (NFS) for sharing volumes over a network. Once the NFS share is configured, clients use the
-**mount**
-command to mount the share. Once mounted, the share appears as just another directory on the client system. Some Linux distros require the installation of additional software in order to mount an NFS share. On Windows systems, enable Services for NFS in the Ultimate or Enterprise editions or install an NFS client application.
+FreeNAS® supports the Network File System (NFS) for sharing volumes over a network. Once the NFS share is configured, clients use the **mount** command to
+mount the share. Once mounted, the share appears as just another directory on the client system. Some Linux distros require the installation of additional
+software in order to mount an NFS share. On Windows systems, enable Services for NFS in the Ultimate or Enterprise editions or install an NFS client
+application.
 
-**NOTE:**
-for performance reasons,
+**NOTE:** for performance reasons,
 `iSCSI <#1.8.7.iSCSI|outline>`_
 is preferred to NFS shares when FreeNAS is installed on ESXi. If you are considering creating NFS shares on ESXi, read through the performance analysis at
 `Running ZFS over NFS as a VMware Store <http://blog.laspina.ca/ubiquitous/running-zfs-over-nfs-as-a-vmware-store>`_
 .
 
-Configuring NFS is a multi-step process that requires you to create NFS share(s), configure NFS in Services → NFS, then start NFS in Services → Services. It does not require you to create users or groups as NFS uses IP addresses to determine which systems are allowed to access the NFS share.
+Configuring NFS is a multi-step process that requires you to create NFS share(s), configure NFS in Services → NFS, then start NFS in Services → 
+Services. It does not require you to create users or groups as NFS uses IP addresses to determine which systems are allowed to access the NFS share.
 
-This section demonstrates how to create an NFS share, provides a configuration example, demonstrates how to connect to the share from various operating systems, and provides some troubleshooting tips.
+This section demonstrates how to create an NFS share, provides a configuration example, demonstrates how to connect to the share from various operating
+systems, and provides some troubleshooting tips.
 
 Creating NFS Shares
 ^^^^^^^^^^^^^^^^^^^
 
-To create an NFS share, click Sharing → Unix (NFS) Shares → Add Unix (NFS) Share, shown in Figure 7.2a. Table 7.2a summarizes the options in this screen.
+To create an NFS share, click Sharing → Unix (NFS) Shares → Add Unix (NFS) Share, shown in Figure 7.2a. Table 7.2a summarizes the options in this
+screen.
 
 **Figure 7.2a: Creating an NFS Share**
 
 
 |10000000000003460000019B3868D5D2_png|
 
-Once you press the OK button when creating the NFS share, a pop-up menu will ask “Would you like to enable this service?” Click Yes and Services → Control Services will open and indicate whether or not the NFS service successfully started.
+Once you press the OK button when creating the NFS share, a pop-up menu will ask “Would you like to enable this service?” Click Yes and Services → 
+Control Services will open and indicate whether or not the NFS service successfully started.
 
 **Table 7.2a: NFS Share Options**
 
@@ -6681,9 +6418,9 @@ Once you press the OK button when creating the NFS share, a pop-up menu will ask
 When creating the NFS share, keep the following points in mind:
 
 
-#.  The Maproot and Mapall options are exclusive, meaning you can only use one or the other--the GUI will not let you use both. The Mapall options supersede the Maproot options. If you only wish to restrict the
-    *root*
-    user's permissions, set the Maproot option. If you wish to restrict the permissions of all users, set the Mapall option.
+#.  The Maproot and Mapall options are exclusive, meaning you can only use one or the other--the GUI will not let you use both. The Mapall options supersede
+    the Maproot options. If you only wish to restrict the *root* user's permissions, set the Maproot option. If you wish to restrict the permissions of all
+    users, set the Mapall option.
 
 
 
@@ -6701,81 +6438,59 @@ When creating the NFS share, keep the following points in mind:
 
 To better understand these restrictions, consider the following scenario where there are:
 
-*   2 networks named
-    *10.0.0.0/8*
-    and
+*   2 networks named *10.0.0.0/8* and
     *20.0.0.0/8*
 
 
 
 
-*   a ZFS volume named
-    *volume1*
-    with 2 datasets named
-    *dataset1*
-    and
+*   a ZFS volume named *volume1* with 2 datasets named
+    *dataset1* and
     *dataset2*
 
 
 
 
-*   *dataset1*
-    has a directory named
+*   *dataset1* has a directory named
     *directory1*
 
 
 
 
-Because of restriction #3, you will receive an error
-if you try to create one NFS share as follows:
+Because of restriction #3, you will receive an error if you try to create one NFS share as follows:
 
-*   **Authorized networks:**
-
-    *10.0.0.0/8 20.0.0.0/8 *
+*   **Authorized networks:** *10.0.0.0/8 20.0.0.0/8 *
 
 
 
-*   **Path:**
-
-    */mnt/volume1/dataset1*
-    and /
+*   **Path:** */mnt/volume1/dataset1* and /
     *mnt/volume1/dataset1/directory1*
 
 
 
 
-Instead, you should select the Path of
-*/mnt/volume1/dataset1*
-and check the “All directories” box.
+Instead, you should select the Path of */mnt/volume1/dataset1* and check the “All directories” box.
 
 However, you could restrict that directory to one of the networks by creating two shares as follows.
 
 First NFS share:
 
-*   **Authorized networks:**
-
-    *10.0.0.0/8*
+*   **Authorized networks:** *10.0.0.0/8*
 
 
 
 
-*   **Path:**
-
-    */mnt/volume1/dataset1 *
+*   **Path:** */mnt/volume1/dataset1 *
 
 
 
 Second NFS share:
 
-*   **Authorized networks:**
-
-    *20.0.0.0/8 *
+*   **Authorized networks:** *20.0.0.0/8 *
 
 
 
-*   **Path:**
-
-    */mnt/volume1/dataset1/directory1*
+*   **Path:** */mnt/volume1/dataset1/directory1*
 
 
 
@@ -6785,60 +6500,37 @@ Note that this requires the creation of two shares as it can not be accomplished
 Sample NFS Share Configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default the Mapall options shown in Figure 7.2a show as
-*N/A*
-. This means that when a user connects to the NFS share, they connect with the permissions associated with their user account. This is a security risk if a user is able to connect as
-*root*
-as they will have
-complete
-* *
-access to the share.
+By default the Mapall options shown in Figure 7.2a show as *N/A*. This means that when a user connects to the NFS share, they connect with the permissions
+associated with their user account. This is a security risk if a user is able to connect as *root* as they will have complete access to the share.
 
 A better scenario is to do the following:
 
-#.  Specify the built-in
-    *nobody*
-    account to be used for NFS access.
+#.  Specify the built-in *nobody* account to be used for NFS access.
 
 
 
 #.  In the
     `permissions <#1.6.3.9.Setting Permissions|outline>`_
-    of the volume/dataset that is being shared, change the owner and group to
-    *nobody*
-    and set the permissions according to your specifications.
+    of the volume/dataset that is being shared, change the owner and group to *nobody* and set the permissions according to your specifications.
 
 
 
-#.  Select
-    *nobody*
-    in the Mapall User and Mapall Group drop-down menus for the share in Sharing → Unix (NFS) Shares.
+#.  Select *nobody* in the Mapall User and Mapall Group drop-down menus for the share in Sharing → Unix (NFS) Shares.
 
 
 
-With this configuration, it does not matter which user account connects to the NFS share, as it will be mapped to the
-*nobody*
-user account and will only have the permissions that you specified on the volume/dataset. For example, even if the
-*root*
-user is able to connect, it will not gain
-*root*
-access to the share.
+With this configuration, it does not matter which user account connects to the NFS share, as it will be mapped to the *nobody* user account and will only
+have the permissions that you specified on the volume/dataset. For example, even if the *root* user is able to connect, it will not gain
+*root* access to the share.
 
 Connecting to the NFS Share
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In the following examples, an NFS share
-on a FreeNAS® system with the IP address of
-*192.168.2.2*
-has been configured as follows:
+In the following examples, an NFS share on a FreeNAS® system with the IP address of *192.168.2.2* has been configured as follows:
 
-#.  A ZFS volume named
-    */mnt/data*
-    has its permissions set to the
-    *nobody*
-    user account and the
-    *nobody*
-    group.
+#.  A ZFS volume named */mnt/data* has its permissions set to the
+    *nobody* user account and the
+    *nobody* group.
 
 
 
@@ -6846,20 +6538,17 @@ has been configured as follows:
 
 
 
-*   Path:
-    */mnt/data*
+*   Path: */mnt/data*
 
 
 
 
-*   Authorized Network:
-    *192.168.2.0/24*
+*   Authorized Network: *192.168.2.0/24*
 
 
 
 
-*   MapAll User and MapAll Group are both set to
-    *nobody*
+*   MapAll User and MapAll Group are both set to *nobody*
 
 
 
@@ -6871,61 +6560,47 @@ has been configured as follows:
 From BSD or Linux Clients
 """""""""""""""""""""""""
 
-To make this share accessible on a BSD or a Linux system, run the following command as the superuser (or with
-**sudo**
-) from the client system. Repeat on each client that needs access to the NFS share:
+To make this share accessible on a BSD or a Linux system, run the following command as the superuser (or with **sudo**) from the client system. Repeat on each
+client that needs access to the NFS share::
 
-**mount -t nfs 192.168.2.2:/mnt/data /mnt**
+ mount -t nfs 192.168.2.2:/mnt/data /mnt
 
-The
-**mount**
-command uses the following options:
+The **mount** command uses the following options:
 
-*   **-t nfs:**
-    specifies the type of share.
+*   **-t nfs:** specifies the type of share.
 
 
 
-*   **192.168.2.2:**
-    replace with the IP address of the FreeNAS® system
+*   **192.168.2.2:** replace with the IP address of the FreeNAS® system
 
 
 
-*   **/mnt/data:**
-    replace with the name of the NFS share
+*   **/mnt/data:** replace with the name of the NFS share
 
 
 
-*   **/mnt:**
-    a mount point on the client system. This must be an existing,
-    **empty**
-    ** **
-    directory. The data in the NFS share will be made available to the client in this directory.
+*   **/mnt:** a mount point on the client system. This must be an existing, **empty** directory. The data in the NFS share will be made available to the
+    client in this directory.
 
 
 
-The
-**mount**
-command should return to the command prompt without any error messages, indicating that the share was successfully mounted.
+The **mount** command should return to the command prompt without any error messages, indicating that the share was successfully mounted.
 
-Once mounted, this configuration allows users on the client system to copy files to and from
-*/mnt*
-(the mount point) and all files will be owned by
-*nobody:nobody*
-. Any changes to
-*/mnt*
-will be saved to the FreeNAS® system's
-*/mnt/data*
-volume.
+Once mounted, this configuration allows users on the client system to copy files to and from */mnt* (the mount point) and all files will be owned by
+*nobody:nobody*. Any changes to
+*/mnt* will be saved to the FreeNAS® system's
+*/mnt/data* volume.
 
-Should you wish to make any changes to the NFS share's settings or wish to make the share inaccessible, first unmount the share on the client as the superuser:
+Should you wish to make any changes to the NFS share's settings or wish to make the share inaccessible, first unmount the share on the client as the
+superuser::
 
-**umount /mnt**
+ umount /mnt
 
 From Microsoft Clients
 """"""""""""""""""""""
 
-Windows systems can connect to NFS shares using Services for NFS (refer to the documentation for your version of Windows for instructions on how to find, activate, and use this service) or a third-party NFS client. Connecting to NFS shares is often faster than connecting to CIFS shares due to the
+Windows systems can connect to NFS shares using Services for NFS (refer to the documentation for your version of Windows for instructions on how to find,
+activate, and use this service) or a third-party NFS client. Connecting to NFS shares is often faster than connecting to CIFS shares due to the
 `single-threaded limitation <http://www.samba.org/samba/docs/man/Samba-Developers-Guide/architecture.html>`_
 of Samba.
 
@@ -6951,13 +6626,11 @@ provides an open source graphical NFS client. To use this client, you will need 
 
 
 Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 7.2b, the user has connected to the example
-*/mnt/data*
-share of the FreeNAS® system at
+*/mnt/data* share of the FreeNAS® system at
 *192.168.2.2*
 .
 
-**NOTE:**
-Nekodrive does not support Explorer drive mapping via NFS. If you need this functionality,
+**NOTE:** Nekodrive does not support Explorer drive mapping via NFS. If you need this functionality,
 `try this utility <http://www.citi.umich.edu/projects/nfsv4/windows/readme.html>`_
 instead.
 
@@ -6969,16 +6642,13 @@ instead.
 From Mac OS X Clients
 """""""""""""""""""""
 
-To mount the NFS volume from a Mac OS X client, click on Go → Connect to Server. In the Server Address field, input
-*nfs://*
-followed by the IP address of the FreeNAS® system and the name of the volume/dataset being shared by NFS. The example shown in Figure 7.2c continues with our example of
+To mount the NFS volume from a Mac OS X client, click on Go → Connect to Server. In the Server Address field, input *nfs://* followed by the IP address of
+the FreeNAS® system and the name of the volume/dataset being shared by NFS. The example shown in Figure 7.2c continues with our example of
 *192.168.2.2:/mnt/data. *
 
-Once connected, Finder will automatically open. The IP address of the FreeNAS® system will be displayed in the SHARED section in the left frame and the contents of the share will be displayed in the right frame. In the example shown in Figure 7.2d,
-*/mnt/data*
-has one folder named
-*images*
-. The user can now copy files to and from the share.
+Once connected, Finder will automatically open. The IP address of the FreeNAS® system will be displayed in the SHARED section in the left frame and the
+contents of the share will be displayed in the right frame. In the example shown in Figure 7.2d, */mnt/data* has one folder named
+*images*. The user can now copy files to and from the share.
 
 **Figure 7.2c: Mounting the NFS Share from Mac OS X**
 
@@ -6992,25 +6662,24 @@ has one folder named
 Troubleshooting
 ^^^^^^^^^^^^^^^
 
-Some NFS clients do not support the NLM (Network Lock Manager) protocol used by NFS. You will know that this is the case if the client receives an error that all or part of the file may be locked when a file transfer is attempted. To resolve this error, add the option
-**-o nolock**
-when running the
-**mount**
-command on the client in order to allow write access to the NFS share.
+Some NFS clients do not support the NLM (Network Lock Manager) protocol used by NFS. You will know that this is the case if the client receives an error that
+all or part of the file may be locked when a file transfer is attempted. To resolve this error, add the option **-o nolock** when running the
+**mount** command on the client in order to allow write access to the NFS share.
 
-If you receive an error about a “time out giving up” when trying to mount the share from a Linux system, make sure that the portmapper service is running on the Linux client and start it if it is not. If portmapper is running and you still receive timeouts, force it to use TCP by including
-**-o tcp**
-in your
-**mount**
-command.
+If you receive an error about a “time out giving up” when trying to mount the share from a Linux system, make sure that the portmapper service is running
+on the Linux client and start it if it is not. If portmapper is running and you still receive timeouts, force it to use TCP by including **-o tcp** in your
+**mount** command.
 
-If you receive an error “RPC: Program not registered”, upgrade to the latest version of FreeNAS® and restart the NFS service after the upgrade in order to clear the NFS cache.
+If you receive an error “RPC: Program not registered”, upgrade to the latest version of FreeNAS® and restart the NFS service after the upgrade in order
+to clear the NFS cache.
 
-If your clients are receiving “reverse DNS” or errors, add an entry for the IP address of the FreeNAS® system in the “Host name database” field of Network →
+If your clients are receiving “reverse DNS” or errors, add an entry for the IP address of the FreeNAS® system in the “Host name database” field of
+Network →
 `Global Configuration <#1.5.1.Global Configuration|outline>`_
 .
 
-If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of Network →
+If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
+Network →
 `Global Configuration <#1.5.1.Global Configuration|outline>`_
 .
 
@@ -7019,9 +6688,13 @@ Windows (CIFS) Shares
 
 FreeNAS® uses
 `Samba <http://samba.org/>`_
-to share volumes using Microsoft's CIFS protocol. CIFS is built into the Windows and Mac OS X operating systems and most Linux and BSD systems pre-install the Samba client which provides support for CIFS. If your distro did not, install the Samba client using your distro's software repository.
+to share volumes using Microsoft's CIFS protocol. CIFS is built into the Windows and Mac OS X operating systems and most Linux and BSD systems pre-install
+the Samba client which provides support for CIFS. If your distro did not, install the Samba client using your distro's software repository.
 
-Configuring CIFS shares is a multi-step process that requires you to set permissions, create CIFS share(s), configure the CIFS service in Services → CIFS, then enable the CIFS service in Services → Control Services. If your Windows network has a Windows server running Active Directory, you will also need to configure the Active Directory service in Services → Directory Services → Active Directory. Depending upon your authentication requirements, you may need to create or import users and groups.
+Configuring CIFS shares is a multi-step process that requires you to set permissions, create CIFS share(s), configure the CIFS service in Services → CIFS,
+then enable the CIFS service in Services → Control Services. If your Windows network has a Windows server running Active Directory, you will also need to
+configure the Active Directory service in Services → Directory Services → Active Directory. Depending upon your authentication requirements, you may
+need to create or import users and groups.
 
 This section will demonstrate some common configuration scenarios:
 
@@ -7053,12 +6726,15 @@ This section will demonstrate some common configuration scenarios:
 Creating CIFS Shares
 ^^^^^^^^^^^^^^^^^^^^
 
-Figure 7.3a shows the configuration screen that appears when you click Sharing → Windows (CIFS Shares) → Add Windows (CIFS) Share. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced.
+Figure 7.3a shows the configuration screen that appears when you click Sharing → Windows (CIFS Shares) → Add Windows (CIFS) Share. Some settings are
+only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always display these settings by
+checking the box “Show advanced fields by default” in System → Settings → Advanced.
 
 Table 7.3a summarizes the options when creating a CIFS share.
 
 `smb.conf(5) <http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html>`_
-provides more details for each configurable option. Once you press the OK button when creating the CIFS share, a pop-up menu will ask “Would you like to enable this service?” Click Yes and Services → Control Services will open and indicate whether or not the CIFS service successfully started.
+provides more details for each configurable option. Once you press the OK button when creating the CIFS share, a pop-up menu will ask “Would you like to
+enable this service?” Click Yes and Services → Control Services will open and indicate whether or not the CIFS service successfully started.
 
 **Figure 7.3a: Adding a CIFS Share**
 
@@ -7094,7 +6770,7 @@ provides more details for each configurable option. Once you press the OK button
 |                              |               | **UNIX**                                                                                                                                                                                              |
 |                              |               | permissions on new files and directories are inherited from parent directory; this can be useful on large systems with many users as it allows a single homes share to be used flexibly by each user; |
 |                              |               | **do not check if Type of ACL is set to Windows in the Volume's permissions**                                                                                                                         |
-|                              |               | ** **                                                                                                                                                                                                 |
+|                              |               |                                                                                                                                                                                                       |
 |                              |               |                                                                                                                                                                                                       |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Inherit ACLs                 | checkbox      |                                                                                                                                                                                                       |
@@ -7136,14 +6812,12 @@ provides more details for each configurable option. Once you press the OK button
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-hostname lookups add some time to accessing the CIFS share. If you only use IP addresses, uncheck the “Hostnames lookups” box in Services →
+**NOTE:** hostname lookups add some time to accessing the CIFS share. If you only use IP addresses, uncheck the “Hostnames lookups” box in Services →
 `CIFS <#1.8.4.CIFS|outline>`_
 .
 
-If you wish some files on a shared volume to be hidden and inaccessible to users, put a
-*veto files=*
-line in the Auxiliary Parameters field. The syntax for this line and some examples can be found
+If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the Auxiliary Parameters field. The syntax for
+this line and some examples can be found
 `here <http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html#VETOFILES>`_
 .
 
@@ -7152,8 +6826,7 @@ Configuring a Share
 
 The process for configuring a share is as follows:
 
-#.  **If you are not using Active Directory or LDAP, create a user account for each user **
-    in Account → Users → Add User with the following attributes:
+#.  **If you are not using Active Directory or LDAP, create a user account for each user** in Account → Users → Add User with the following attributes:
 
 
 
@@ -7169,21 +6842,16 @@ The process for configuring a share is as follows:
 
 
 
-#.  If you are not using Active Directory or LDAP, create a group
-    in Account → Groups →
-    Add
-    Group. Once the group is created, click its Members button and add the user accounts that you
-    created in step 1.
+#.  If you are not using Active Directory or LDAP, create a group in Account → Groups → Add Group. Once the group is created, click its Members button
+    and add the user accounts that you created in step 1.
 
 
 
-#.  **Give the group permission to the volume**
-    in Storage → View Volumes. When setting the permissions:
+#.  **Give the group permission to the volume** in Storage → View Volumes. When setting the permissions:
 
 
 
-*   set Owner(user) to
-    *nobody*
+*   set Owner(user) to *nobody*
 
 
 
@@ -7196,9 +6864,7 @@ The process for configuring a share is as follows:
 
 
 
-#.  **Create a CIFS share**
-    in Sharing → CIFS Shares → Add CIFS Share
-    with the following attributes:
+#.  **Create a CIFS share** in Sharing → CIFS Shares → Add CIFS Share with the following attributes:
 
 
 
@@ -7214,23 +6880,23 @@ The process for configuring a share is as follows:
 
 
 
-**NOTE: **
-be careful about unchecking the Browsable to Network Clients box. When this box is checked (the default), other users will see the names of every share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If this box is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they can still access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and password control.
+**NOTE:** be careful about unchecking the Browsable to Network Clients box. When this box is checked (the default), other users will see the names of every
+share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If this box is
+unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they can still access the
+share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and password control.
 
-#.  **Configure the CIFS service in Services → CIFS **
-    as follows:
-    ** **
-
-
-
-*   Workgroup: if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default Windows workgroup name is
-    *WORKGROUP*
+#.  **Configure the CIFS service in Services → CIFS** as follows:
 
 
 
+*   Workgroup: if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
+    Windows workgroup name is *WORKGROUP*
 
-#.  **Start the CIFS service**
-    in Services → Control Services. Click the click the red OFF button next to CIFS. After a second or so, it will change to a blue ON, indicating that the service has been enabled.
+
+
+
+#.  **Start the CIFS service** in Services → Control Services. Click the click the red OFF button next to CIFS. After a second or so, it will change to a
+    blue ON, indicating that the service has been enabled.
 
 
 
@@ -7239,11 +6905,8 @@ be careful about unchecking the Browsable to Network Clients box. When this box 
 
 
 
-To test the share from a Windows system, open Explorer and click on Network. For this configuration example, a system named
-*FREENAS*
-should appear with a share named
-*backups*
-. An example is seen in Figure 7.3b:
+To test the share from a Windows system, open Explorer and click on Network. For this configuration example, a system named *FREENAS* should appear with a
+share named *backups*. An example is seen in Figure 7.3b:
 
 **Figure 7.3b: Accessing the CIFS Share from a Windows Computer**
 
@@ -7251,11 +6914,11 @@ should appear with a share named
 |100002010000031D000002804075756D_png|
 
 
-If you click on
-*backups*
-, a Windows Security pop-up screen should prompt for the user's username and password. Once authenticated, the user can copy data to and from the CIFS share.
+If you click on *backups*, a Windows Security pop-up screen should prompt for the user's username and password. Once authenticated, the user can copy data to
+and from the CIFS share.
 
-To prevent Windows Explorer from hanging when accessing the share, map the share as a network drive. To do this, right-click the share and select "Map network drive..." as seen in Figure 7.3c:
+To prevent Windows Explorer from hanging when accessing the share, map the share as a network drive. To do this, right-click the share and select "Map network
+drive..." as seen in Figure 7.3c:
 
 **Figure 7.3c: Mapping the Share as a Network Drive**
 
@@ -7270,8 +6933,9 @@ Choose a drive letter from the drop-down menu and click the Finish button as sho
 
 |1000000000000319000002766C465264_jpg|
 
-**NOTE:**
-since the share is group writable, any authenticated user can change the data in the share. If you wish to setup shares where a group of users have access to some folders but only individuals have access to other folders (where all these folders reside on the same volume), create these directories and set their permissions using
+**NOTE:** since the share is group writable, any authenticated user can change the data in the share. If you wish to setup shares where a group of users have
+access to some folders but only individuals have access to other folders (where all these folders reside on the same volume), create these directories and set
+their permissions using
 `Shell <#1.9.2.Shell|outline>`_
 . Instructions for doing so can be found at the forum post
 `Set Permission to allow users to share a common folder & have private personal folder <http://forums.freenas.org/showthread.php?1122-Set-Permission-to-allow-users-to-share-a-common-folder-amp-have-private-personal-folder>`_
@@ -7281,40 +6945,43 @@ Configuring Shadow Copies
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `Shadow Copies <http://en.wikipedia.org/wiki/Shadow_copy>`_
-, also known as the Volume Shadow Copy Service (VSS) or Previous Versions, is a Microsoft service for creating volume snapshots. Shadow copies allow you to easily restore previous versions of files from within Windows Explorer. Shadow Copy support is built into Vista and Windows 7. Windows XP or 2000 users need to install the
+, also known as the Volume Shadow Copy Service (VSS) or Previous Versions, is a Microsoft service for creating volume snapshots. Shadow copies allow you to
+easily restore previous versions of files from within Windows Explorer. Shadow Copy support is built into Vista and Windows 7. Windows XP or 2000 users need
+to install the
 `Shadow Copy client <http://www.microsoft.com/download/en/details.aspx?displaylang=en&id=16220>`_
 .
 
-When you create a periodic snapshot task on a ZFS volume that is configured as a CIFS share in FreeNAS®, it is automatically configured to support shadow copies.
+When you create a periodic snapshot task on a ZFS volume that is configured as a CIFS share in FreeNAS®, it is automatically configured to support shadow
+copies.
 
 Prerequisites
 """""""""""""
 
 Before using shadow copies with FreeNAS®, be aware of the following caveats:
 
-*   if the Windows system is not fully patched to the latest service pack, Shadow Copies may not work. If you are unable to see any previous versions of files to restore, use Windows Update to make sure that the system is fully up-to-date.
+*   if the Windows system is not fully patched to the latest service pack, Shadow Copies may not work. If you are unable to see any previous versions of files
+    to restore, use Windows Update to make sure that the system is fully up-to-date.
 
 
 
-*   at this time, shadow copy support only works for ZFS pools or datasets. This means that the CIFS share must be configured on a volume or dataset, not on a directory. Directory support will be added in a future version of FreeNAS®.
+*   at this time, shadow copy support only works for ZFS pools or datasets. This means that the CIFS share must be configured on a volume or dataset, not on a
+    directory. Directory support will be added in a future version of FreeNAS®.
 
 
 
-*   since directories can not be shadow copied at this time, if you configure “Enable home directories” on the CIFS service, any data stored in the user's home directory will not be shadow copied.
+*   since directories can not be shadow copied at this time, if you configure “Enable home directories” on the CIFS service, any data stored in the
+    user's home directory will not be shadow copied.
 
 
 
-*   shadow copies will not work with a manual snapshot, you must create a periodic snapshot task for the pool or dataset being shared by CIFS
-    or a recursive task for a parent dataset
-    .
-    At this time, if multiple snapshot tasks are created for the same pool/dataset being shared by CIFS, shadow copies will only work on the last executed task at the time the CIFS service started. A future version of FreeNAS® will address this limitation.
+*   shadow copies will not work with a manual snapshot, you must create a periodic snapshot task for the pool or dataset being shared by CIFS or a recursive
+    task for a parent dataset. At this time, if multiple snapshot tasks are created for the same pool/dataset being shared by CIFS, shadow copies will only
+    work on the last executed task at the time the CIFS service started. A future version of FreeNAS® will address this limitation.
 
 
 
-*   the periodic snapshot task should be created and at least one snapshot should exist
-    **before**
-    * *
-    creating the CIFS share. If you created the CIFS share first, restart the CIFS service in Services → Control Services.
+*   the periodic snapshot task should be created and at least one snapshot should exist **before** creating the CIFS share. If you created the CIFS share
+    first, restart the CIFS service in Services → Control Services.
 
 
 
@@ -7322,35 +6989,26 @@ Before using shadow copies with FreeNAS®, be aware of the following caveats:
 
 
 
-*   users can not delete shadow copies on the Windows system due to the way Samba works. Instead, the administrator can remove snapshots from the FreeNAS® administrative GUI. The only way to disable shadow copies completely is to remove the periodic snapshot task and delete all snapshots
-    associated with the CIFS share.
+*   users can not delete shadow copies on the Windows system due to the way Samba works. Instead, the administrator can remove snapshots from the FreeNAS®
+    administrative GUI. The only way to disable shadow copies completely is to remove the periodic snapshot task and delete all snapshots associated with the
+    CIFS share.
 
 
 
 Configuration Example
 """""""""""""""""""""
 
-In this example, a Windows 7 computer has two users:
-*user1*
-and
-*user2*
-. To configure FreeNAS® to provide shadow copy support:
+In this example, a Windows 7 computer has two users: *user1* and
+*user2*. To configure FreeNAS® to provide shadow copy support:
 
-#.  For the ZFS volume named
-    */mnt/data*
-    , create two ZFS datasets in Storage → Volumes → /mnt/data → Create ZFS Dataset. The first dataset is named
-    */mnt/data/user1*
-    and the second dataset is named
-    */mnt/data/user2*
-    .
+#.  For the ZFS volume named */mnt/data*, create two ZFS datasets in Storage → Volumes → /mnt/data → Create ZFS Dataset. The first dataset is
+    named */mnt/data/user1*
+    and the second dataset is named */mnt/data/user2*.
 
 
 
-#.  If you are not using Active Directory or LDAP, create two users,
-    *user1*
-    and
-    *user2*
-    in Account → Users → Add User. Each user has the following attributes:
+#.  If you are not using Active Directory or LDAP, create two users, *user1* and
+    *user2* in Account → Users → Add User. Each user has the following attributes:
 
 
 
@@ -7362,64 +7020,43 @@ and
 
 
 
-#.  Set the permissions on
-    */mnt/data/user1*
-    so that the Owner(user) and Owner(group) is
-    *user1*
-    . Set the permissions on
-    */mnt/data/user2*
-    so that the Owner(user) and Owner(group) is
-    *user2*
-    . For each dataset's permissions, tighten the Mode so that Other can not read or execute the information on the dataset.
+#.  Set the permissions on */mnt/data/user1* so that the Owner(user) and Owner(group) is
+    *user1*. Set the permissions on
+    */mnt/data/user2* so that the Owner(user) and Owner(group) is
+    *user2*. For each dataset's permissions, tighten the Mode so that Other can not read or execute the information on the dataset.
 
 
 
-#.  Create two periodic snapshot tasks in Storage → Periodic Snapshot Tasks → Add Periodic Snapshot, one for each dataset.
-    Alternatively, you can create one periodic snapshot task for the entire
-    *data*
-    volume.
-    ** **
-    **Before continuing to the next step,**
-    ** **
-    confirm that at least one snapshot for each dataset is displayed in the ZFS Snapshots tab. When creating your snapshots, keep in mind how often your users need to access modified files and during which days and time of day they are likely to make changes.
+#.  Create two periodic snapshot tasks in Storage → Periodic Snapshot Tasks → Add Periodic Snapshot, one for each dataset. Alternatively, you can
+    create one periodic snapshot task for the entire *data* volume.
+    **Before continuing to the next step,** confirm that at least one snapshot for each dataset is displayed in the ZFS Snapshots tab. When creating your
+    snapshots, keep in mind how often your users need to access modified files and during which days and time of day they are likely to make changes.
 
 
 
-#.  Create two CIFS shares in Sharing → Windows (CIFS) Shares → Add Windows (CIFS) Share. The first CIFS share is named
-    *user1*
-    and has a Path of
-    */mnt/data/user1*
-    ; the second CIFS share is named
-    *user2*
-    and has a Path of
-    */mnt/data/user2*
-    . When creating the first share, click the No button when the pop-up button asks if the CIFS service should be started. When the last share is created, click the Yes button when the pop-up button prompts to start the CIFS service. Verify that the CIFS service is set to ON in Services → Control Services.
+#.  Create two CIFS shares in Sharing → Windows (CIFS) Shares → Add Windows (CIFS) Share. The first CIFS share is named *user1* and has a Path of
+    */mnt/data/user1*; the second CIFS share is named
+    *user2* and has a Path of
+    */mnt/data/user2*. When creating the first share, click the No button when the pop-up button asks if the CIFS service should be started. When the last
+    share is created, click the Yes button when the pop-up button prompts to start the CIFS service. Verify that the CIFS service is set to ON in Services
+    → Control Services.
 
 
 
-#.  From a Windows system, login as
-    *user1*
-    and open Windows Explorer → Network → FREENAS. Two shares should appear, named
-    *user1*
-    and
-    *user2*
-    . Due to the permissions on the datasets,
-    *user1*
-    should receive an error if they click on the
-    *user2*
-    share. Due to the permissions on the datasets,
-    *user1*
-    should be able to create, add, and delete files and folders from the
-    *user1*
-    share.
+#.  From a Windows system, login as *user1* and open Windows Explorer → Network → FREENAS. Two shares should appear, named
+    *user1* and
+    *user2*. Due to the permissions on the datasets,
+    *user1* should receive an error if they click on the
+    *user2* share. Due to the permissions on the datasets,
+    *user1* should be able to create, add, and delete files and folders from the
+    *user1* share.
 
 
 
-Figure 7.3e provides an example of using shadow copies while logged in as
-*user1*
-. In this example, the user right-clicked
-*modified file*
-and selected “Restore previous versions” from the menu. This particular file has three versions: the current version, plus two previous versions stored on the FreeNAS® system. The user can choose to open one of the previous versions, copy a previous version to the current folder, or restore one of the previous versions, which will overwrite the existing file on the Windows system.
+Figure 7.3e provides an example of using shadow copies while logged in as *user1*. In this example, the user right-clicked
+*modified file* and selected “Restore previous versions” from the menu. This particular file has three versions: the current version, plus two previous
+versions stored on the FreeNAS® system. The user can choose to open one of the previous versions, copy a previous version to the current folder, or restore
+one of the previous versions, which will overwrite the existing file on the Windows system.
 
 **Figure 7.3e: Viewing Previous Versions within Explorer**
 
@@ -7429,9 +7066,8 @@ and selected “Restore previous versions” from the menu. This particular file
 Services Configuration
 ----------------------
 
-The Services section of the
-GUI
-allows you to configure, start, and stop the various services that ship with the FreeNAS® system. FreeNAS® supports the following built-in services:
+The Services section of the GUI allows you to configure, start, and stop the various services that ship with the FreeNAS® system. FreeNAS® supports the
+following built-in services:
 
 *   `AFP <#1.8.3.AFP|outline>`_
 
