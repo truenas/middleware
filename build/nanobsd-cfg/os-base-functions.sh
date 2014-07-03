@@ -60,25 +60,6 @@ add_truenas_gui()
 	add_gui_encrypted "$gui" "$dst" "$dstCR"
 }
 
-add_warden_hooks()
-{
-	local wt src dst share hooks
-
-	wt="${AVATAR_ROOT}/build/nanobsd-cfg/Files/etc/ix/templates/warden"
-	src="${AVATAR_ROOT}/src/pcbsd/warden"
-	dst="${NANO_WORLDDIR}/usr/local"
-	share="${dst}/share/warden"
-	hooks="${share}/scripts/hooks"
-
-	pprint 2 "Adding warden hooks"
-
-	mkdir -p ${share}/bin >/dev/null 2>/dev/null
-	mkdir -p ${hooks} >/dev/null 2>/dev/null
-
-	cp ${wt}/jail-* ${hooks}/
-	chmod 755 ${hooks}/jail-*
-}
-
 # Move the $world/data to the /data partion
 move_data()
 {
@@ -210,17 +191,6 @@ remove_var_db_pkg()
 	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
 	# bsnmpd complains about no such directory found
 	mkdir ${NANO_WORLDDIR}/var/db/pkg
-}
-
-fix_easy_install_pth()
-{
-	local site_packages
-
-	site_packages="$NANO_WORLDDIR/usr/local/lib/$PYTHON_DEFAULT_VERSION/site-packages"
-
-	env PYTHONPATH=$site_packages \
-		python ${AVATAR_ROOT}/tools/sanitize_pth.py -f \
-		$site_packages
 }
 
 create_var_home_symlink()
@@ -367,39 +337,41 @@ last_orders() {
 		# gui image's bin directory.
 
 		if is_truenas ; then
-			tar -cpvf - \
+			tar -c -p -v -f ${gui_upgrade_bname}.tar \
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
 				-s '@^updatep2$@bin/updatep2@' \
-				-C "$AVATAR_ROOT/nanobsd/Files/root" \
+				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
 					update updatep1 updatep2 \
 				-C "$NANO_WORLDDIR" \
 					etc/avatar.conf \
-				-C "$AVATAR_ROOT/nanobsd/Installer" \
+				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Installer" \
 					. \
 				-C "${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer" \
 					. \
-				-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
+				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
 					. \
 				-C "$NANO_DISKIMGDIR" \
-					${firmware_img##*/} \
-				| ${NANO_XZ} ${PXZ_ACCEL} -9 -cz > "$gui_upgrade_bname.txz"
+					${firmware_img##*/}
+				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
+				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
 		else
-			tar -cpvf - \
+			tar -c -p -v -f ${gui_upgrade_bname}.tar \
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
 				-s '@^updatep2$@bin/updatep2@' \
-				-C "$AVATAR_ROOT/nanobsd/Files/root" \
+				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
 					update updatep1 updatep2 \
 				-C "$NANO_WORLDDIR" \
 					etc/avatar.conf \
-				-C "$AVATAR_ROOT/nanobsd/Installer" \
+				-C "$AVATAR_ROOT/build/nanobsd-cfg/Installer" \
 					. \
-				-C "$AVATAR_ROOT/nanobsd/GUI_Upgrade" \
+				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
 					. \
 				-C "$NANO_DISKIMGDIR" \
-					${firmware_img##*/} \
-				| ${NANO_XZ} ${PXZ_ACCEL} -9 -cz > "$gui_upgrade_bname.txz"
+					${firmware_img##*/}
+				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
+				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
 		fi
 		) > "${gui_image_log}" 2>&1
 		(

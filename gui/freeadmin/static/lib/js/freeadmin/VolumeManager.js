@@ -480,28 +480,14 @@ define([
           }
         }
 
-        this._isOptimal = null;
         if(manual !== true) {
           for(var key in this._optimalCheck) {
             if(this._optimalCheck[key](numDisksRow)) {
               // .set will trigger onChange, ignore it once
               this.vdevtype._stopEvent = true;
               this.vdevtype.set('value', key);
-              this._isOptimal = true;
               break;
             }
-          }
-          if(this._isOptimal !== true) {
-            var vdevtype = this.vdevtype.get("value");
-            if(this._optimalCheck[vdevtype] !== undefined) {
-              this._isOptimal = false;
-            }
-          }
-        } else {
-          var vdevtype = this.vdevtype.get("value");
-          var optimalf = this._optimalCheck[vdevtype];
-          if(optimalf !== undefined) {
-            this._isOptimal = optimalf(numDisksRow);
           }
         }
 
@@ -512,22 +498,6 @@ define([
         }
         this.dapCapacity.innerHTML = humanizeSize(this.getCapacity());
         this.dapNumCol.innerHTML = sprintf("%dx%dx%s", this.getCurrentCols(), this.getCurrentRows(), diskSize);
-        if(this._isOptimal !== null) {
-          domStyle.set(this.dapOptimalRow, "display", "");
-          if(this._isOptimal) {
-            domStyle.set(this.dapOptimal, "fontWeight", "");
-            domStyle.set(this.dapOptimal, "color", "");
-            this._optimalTooltip.set('content', gettext("Your configuration is optimal!<br /><br />It means you'll have the best performance possible for this number of disks and type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>."));
-            this.dapOptimal.innerHTML = 'optimal';
-          } else {
-            domStyle.set(this.dapOptimal, "fontWeight", "bold");
-            domStyle.set(this.dapOptimal, "color", "red");
-            this._optimalTooltip.set('content', gettext("Your configuration is not optimal!<br /><br />It means this number of disks will not provide the best performance for that type of disk group.<br /><br />For further explanation please refer to the <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target='_blank'>documentation</a>."));
-            this.dapOptimal.innerHTML = 'non-optimal';
-          }
-        } else {
-          domStyle.set(this.dapOptimalRow, "display", "none");
-        }
       },
       colorActive: function() {
         /*
@@ -540,29 +510,23 @@ define([
 
         var cols = this.disks.length / this.rows;
         var cssclass;
-        if(this._isOptimal == true) {
-          cssclass = "optimal";
-        } else if(this._isOptimal == false) {
-          cssclass = "nonoptimal";
-        } else {
-          cssclass = "active";
-        }
+        cssclass = "active";
         query("tr", this.dapTable).forEach(function(item, idx) {
           if(idx == 0) return;
           query("td", item).forEach(function(item, idx) {
             if(idx > cols) {
-              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
+              domClass.remove(item, ["active"]);
             } else {
-              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
+              domClass.remove(item, ["active"]);
               domClass.add(item, cssclass);
             }
           });
         });
         query("th", this.dapTable).forEach(function(item, idx) {
             if(idx > cols) {
-              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
+              domClass.remove(item, ["active"]);
             } else {
-              domClass.remove(item, ["active", "optimal", "nonoptimal"]);
+              domClass.remove(item, ["active"]);
               domClass.add(item, cssclass);
             }
         });
@@ -825,23 +789,6 @@ define([
         this.dapDelete = Button({
           label: "X"
         }, this.dapDelete);
-
-        this._optimalTooltip = new TooltipDialog({
-          connectId: [this.dapOptimalHelp],
-          onMouseLeave: function() {
-            popup.close(me._optimalTooltip);
-            //me._tpDialog.destroyRecursive();
-          }
-        });
-
-        on(this.dapOptimalHelp, mouse.enter, function() {
-          popup.open({
-            popup: me._optimalTooltip,
-            around: me.dapOptimalHelp,
-            orient: ["above", "after", "below-alt"]
-          });
-        });
-
 
         if(this.can_delete === true) {
           on(this.dapDelete, "click", lang.hitch(this, this.remove));
@@ -1223,8 +1170,8 @@ define([
             commonDialog({
               style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
               name: gettext('ZFS Volume Manager'),
-              url: me.manualUrl
-              //nodes: [this,]
+              url: me.manualUrl,
+              nodes: [registry.byId("tab_Volume")]
             });
 
           }

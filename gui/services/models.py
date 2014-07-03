@@ -410,9 +410,11 @@ class iSCSITargetGlobalConfiguration(Model):
             null=True,
             )
     iscsi_experimental_target = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name=_('Enable experimental target'),
     )
+## The multithreaded mode should be retired as it is only really relevant
+## to iSCSI, which is deprecated.
     iscsi_multithreaded = models.BooleanField(
         default=False,
         verbose_name=_('Enable multithreaded mode'),
@@ -1572,17 +1574,6 @@ class ActiveDirectory(Model):
             verbose_name=_("Domain Name (DNS/Realm-Name)"),
             help_text=_("Domain Name, eg example.com")
             )
-    ad_netbiosname = models.CharField(
-            max_length=120,
-            verbose_name=_("NetBIOS Name"),
-            help_text=_("System hostname"),
-            blank=True
-            )
-    ad_workgroup = models.CharField(
-            max_length=120,
-            verbose_name=_("Workgroup Name"),
-            help_text=_("Workgroup or domain name in old format, eg WORKGROUP")
-            )
     ad_bindname = models.CharField(
             max_length=120,
             verbose_name=_("Domain Account Name"),
@@ -1597,6 +1588,12 @@ class ActiveDirectory(Model):
     #
     # AD Advanced settings
     #
+    ad_netbiosname = models.CharField(
+            max_length=120,
+            verbose_name=_("NetBIOS Name"),
+            help_text=_("System hostname"),
+            blank=True
+            )
     ad_use_keytab = models.BooleanField(
             default=False,
             verbose_name=_("Use keytab"),
@@ -1616,6 +1613,11 @@ class ActiveDirectory(Model):
                 "This parameter specifies whether to use SSL/TLS, e.g."
                 " on/off/start_tls"
                 )
+            )
+    ad_certfile = models.TextField(
+            verbose_name=_("SSL Certificate"),
+            blank=True,
+            help_text=_("Upload your certificate file here.")
             )
     ad_verbose_logging = models.BooleanField(
             default=False,
@@ -1692,9 +1694,11 @@ class ActiveDirectory(Model):
         deletable = False
         icon_model = "ActiveDirectoryIcon"
         advanced_fields = (
+            'ad_netbiosname',
             'ad_use_keytab',
             'ad_keytab',
             'ad_ssl',
+            'ad_certfile',
             'ad_verbose_logging',
             'ad_unix_extensions',
             'ad_allow_trusted_doms',
@@ -1824,10 +1828,9 @@ class LDAP(Model):
         )
     )
     ldap_tls_cacertfile = models.TextField(
-            verbose_name=_("Self signed certificate"),
+            verbose_name=_("SSL Certificate"),
             blank=True,
-            help_text=_("Place the contents of your self signed certificate "
-                "file here.")
+            help_text=_("Upload your certificate file here.")
             )
     ldap_options = models.TextField(
             max_length=120,

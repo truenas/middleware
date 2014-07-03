@@ -51,6 +51,7 @@ class CronJobFAdmin(BaseFreeAdmin):
         'cron_minute',
         'cron_month',
     )
+    menu_child_of = 'tasks'
     resource_mixin = CronJobResourceMixin
 
     def get_actions(self):
@@ -98,6 +99,7 @@ class RsyncFAdmin(BaseFreeAdmin):
         'rsync_preserveattr',
         'rsync_extra',
     )
+    menu_child_of = 'tasks'
     resource_mixin = RsyncResourceMixin
 
     def get_actions(self):
@@ -121,6 +123,20 @@ class RsyncFAdmin(BaseFreeAdmin):
         return columns
 
 
+class SettingsFAdmin(BaseFreeAdmin):
+
+    deletable = False
+
+    def get_extra_context(self, action):
+        try:
+            ssl = models.SSL.objects.order_by("-id")[0]
+        except:
+            ssl = None
+        return {
+            'ssl': ssl,
+        }
+
+
 class SMARTTestFAdmin(BaseFreeAdmin):
 
     icon_model = u"SMARTIcon"
@@ -134,6 +150,7 @@ class SMARTTestFAdmin(BaseFreeAdmin):
         'smarttest_hour',
         'smarttest_month',
     )
+    menu_child_of = 'tasks'
     resource_mixin = SMARTTestResourceMixin
 
     def get_datagrid_columns(self):
@@ -144,4 +161,5 @@ class SMARTTestFAdmin(BaseFreeAdmin):
 
 site.register(models.CronJob, CronJobFAdmin)
 site.register(models.Rsync, RsyncFAdmin)
+site.register(models.Settings, SettingsFAdmin)
 site.register(models.SMARTTest, SMARTTestFAdmin)

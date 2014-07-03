@@ -718,8 +718,8 @@ Create resource
    :json string iscsi_target_alias: optional user-friendly string of the target
    :json string iscsi_target_serial: serial number for the logical unit
    :json string iscsi_target_flags: rw, ro
-   :json integer iscsi_target_portalgroup: id of a portal group
-   :json integer iscsi_target_initiatorgroup: id of a initiator group
+   :json integer iscsi_target_portalgroup: id of a portal (from /services/iscsi/portal/ resource)
+   :json integer iscsi_target_initiatorgroup: id of an initiator (from /services/iscsi/authorizedinitiator/ resource)
    :json string iscsi_target_authtype: None, Auto, CHAP, CHAP Mutual
    :json integer iscsi_target_authgroup: Authentication Group ID
    :json string iscsi_target_initialdigest: the method can be accepted by the target. Auto means both none and authentication
@@ -776,8 +776,8 @@ Update resource
    :json string iscsi_target_alias: optional user-friendly string of the target
    :json string iscsi_target_serial: serial number for the logical unit
    :json string iscsi_target_flags: rw, ro
-   :json integer iscsi_target_portalgroup: id of a portal group
-   :json integer iscsi_target_initiatorgroup: id of a initiator group
+   :json integer iscsi_target_portalgroup: id of a portal (from /services/iscsi/portal/ resource)
+   :json integer iscsi_target_initiatorgroup: id of an initiator (from /services/iscsi/authorizedinitiator/ resource)
    :json string iscsi_target_authtype: None, Auto, CHAP, CHAP Mutual
    :json integer iscsi_target_authgroup: Authentication Group ID
    :json string iscsi_target_initialdigest: the method can be accepted by the target. Auto means both none and authentication

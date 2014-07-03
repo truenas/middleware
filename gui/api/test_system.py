@@ -503,91 +503,6 @@ class SMARTTestResourceTest(APITestCase):
         self.assertHttpAccepted(resp)
 
 
-class SysctlResourceTest(APITestCase):
-
-    def setUp(self):
-        super(SysctlResourceTest, self).setUp()
-
-    def tearDown(self):
-        super(SysctlResourceTest, self).tearDown()
-
-    def test_get_list_unauthorzied(self):
-        self.assertHttpUnauthorized(
-            self.client.get(self.get_api_url(), format='json')
-        )
-
-    def test_Create_sysctl(self):
-        resp = self.api_client.post(
-            self.get_api_url(),
-            format='json',
-            data={
-                'sysctl_mib': 'kern.coredump',
-                'sysctl_enabled': True,
-                'sysctl_value': '1',
-            }
-        )
-        self.assertHttpCreated(resp)
-        self.assertValidJSON(resp.content)
-
-        data = self.deserialize(resp)
-        self.assertEqual(data, {
-            u'id': 1,
-            u'sysctl_comment': u'',
-            u'sysctl_enabled': True,
-            u'sysctl_mib': u'kern.coredump',
-            u'sysctl_value': u'1',
-        })
-
-    def test_Retrieve_sysctl(self):
-        sysctl = models.Sysctl.objects.create(
-            sysctl_mib='kern.coredump',
-            sysctl_value='2',
-        )
-        resp = self.api_client.get(
-            self.get_api_url(),
-            format='json',
-        )
-        self.assertHttpOK(resp)
-        data = self.deserialize(resp)
-        self.assertEqual(data, [
-            {
-                u'id': sysctl.id,
-                u'sysctl_comment': sysctl.sysctl_comment,
-                u'sysctl_enabled': sysctl.sysctl_enabled,
-                u'sysctl_mib': sysctl.sysctl_mib,
-                u'sysctl_value': sysctl.sysctl_value,
-            }
-        ])
-
-    def test_Update_sysctl(self):
-        sysctl = models.Sysctl.objects.create(
-            sysctl_mib='kern.coredump',
-            sysctl_value='1',
-        )
-        resp = self.api_client.put(
-            '%s%d/' % (self.get_api_url(), sysctl.id),
-            format='json',
-            data={
-                'sysctl_value': '2',
-            }
-        )
-        self.assertHttpOK(resp)
-        data = self.deserialize(resp)
-        self.assertEqual(data['id'], sysctl.id)
-        self.assertEqual(data['sysctl_value'], '2')
-
-    def test_Delete_sysctl(self):
-        sysctl = models.Sysctl.objects.create(
-            sysctl_mib='kern.coredump',
-            sysctl_value='1',
-        )
-        resp = self.api_client.delete(
-            '%s%d/' % (self.get_api_url(), sysctl.id),
-            format='json',
-        )
-        self.assertHttpAccepted(resp)
-
-
 class TunableResourceTest(APITestCase):
 
     def test_get_list_unauthorzied(self):
@@ -831,9 +746,78 @@ class EmailResourceTest(APITestCase):
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
-        self.assertEqual(data['id'], self._advanced.id)
+        self.assertEqual(data['id'], self._obj.id)
         self.assertEqual(data['em_fromemail'], 'dev@ixsystems.com')
         self.assertEqual(data['em_outgoingserver'], 'mail.ixsystems.com')
+
+    def test_Delete(self):
+        resp = self.api_client.delete(
+            '%s%d/' % (self.get_api_url(), 1),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+
+class SSLResourceTest(APITestCase):
+
+    def setUp(self):
+        super(SSLResourceTest, self).setUp()
+        self._obj = models.SSL.objects.create()
+
+    def test_get_list_unauthorzied(self):
+        self.assertHttpUnauthorized(
+            self.client.get(self.get_api_url(), format='json')
+        )
+
+    def test_Create(self):
+        resp = self.api_client.post(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpMethodNotAllowed(resp)
+
+    def test_Retrieve(self):
+        resp = self.api_client.get(
+            self.get_api_url(),
+            format='json',
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data, {
+            u'id': self._obj.id,
+            u'ssl_certfile': u'',
+            u'ssl_city': None,
+            u'ssl_common': None,
+            u'ssl_country': None,
+            u'ssl_email': None,
+            u'ssl_org': None,
+            u'ssl_passphrase': None,
+            u'ssl_state': None,
+            u'ssl_unit': None
+        })
+
+    def test_Update(self):
+        resp = self.api_client.put(
+            '%s%d/' % (self.get_api_url(), self._obj.id),
+            format='json',
+            data={
+                "ssl_city": 'Curitiba',
+                "ssl_common": 'iXsystems',
+                "ssl_country": 'BR',
+                "ssl_email": 'william@ixsystems.com',
+                "ssl_org": 'iXsystems',
+                "ssl_state": 'Parana',
+            }
+        )
+        self.assertHttpOK(resp)
+        data = self.deserialize(resp)
+        self.assertEqual(data['id'], self._obj.id)
+        self.assertEqual(data['ssl_city'], 'Curitiba')
+        self.assertEqual(data['ssl_common'], 'iXsystems')
+        self.assertEqual(data['ssl_country'], 'BR')
+        self.assertEqual(data['ssl_email'], 'william@ixsystems.com')
+        self.assertEqual(data['ssl_org'], 'iXsystems')
+        self.assertEqual(data['ssl_state'], 'Parana')
 
     def test_Delete(self):
         resp = self.api_client.delete(

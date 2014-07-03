@@ -33,7 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.tree import TreeNode
 from freenasUI.jails.models import (
     Jails,
-    NullMountPoint
+    JailMountPoint
 )
 from freenasUI.jails.utils import jail_path_configured
 from freenasUI.common.warden import (
@@ -51,7 +51,7 @@ BLACKLIST = [
     'JailsQuerySet',
     'Jails',
     'JailTemplate',
-    'NullMountPoint'
+    'JailMountPoint'
 ]
 ORDER = 70
 
@@ -199,7 +199,7 @@ def init(tree_roots, nav, request):
         jail_node.append_child(storage_node)
 
         storage_order = 1
-        nmps = NullMountPoint.objects.filter(jail=jail.jail_host)
+        nmps = JailMountPoint.objects.filter(jail=jail.jail_host)
         for nmp in nmps:
             storage_node_view = self.new_storage_node_view(nmp)
             storage_node_view.order = storage_order
@@ -250,9 +250,9 @@ class Base(object):
         storage_node_view.name = nmp.destination
         storage_node_view.gname = nmp.id
         storage_node_view.type = 'editobject'
-        storage_node_view.view = 'freeadmin_jails_nullmountpoint_edit'
+        storage_node_view.view = 'freeadmin_jails_jailmountpoint_edit'
         storage_node_view.kwargs = {'oid': nmp.id}
-        storage_node_view.model = 'NullMountPoint'
+        storage_node_view.model = 'JailMountPoint'
         storage_node_view.icon = u'SettingsIcon'
         storage_node_view.app_name = 'jails'
 
@@ -266,7 +266,7 @@ class Base(object):
         storage_node_add.type = 'editobject'
         storage_node_add.view = 'jail_storage_add'
         storage_node_add.kwargs = {'jail_id': jail.id}
-        storage_node_add.model = 'NullMountPoint'
+        storage_node_add.model = 'JailMountPoint'
         storage_node_add.icon = u'JailStorageIcon'
         storage_node_add.app_name = 'jails'
 

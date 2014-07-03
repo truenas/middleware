@@ -33,6 +33,9 @@ from freenasUI.middleware.notifier import notifier
 
 
 class CIFS_Share(Model):
+    cifs_path = PathField(
+        verbose_name=_("Path")
+    )
     cifs_name = models.CharField(
             max_length=120,
             verbose_name=_("Name")
@@ -42,8 +45,6 @@ class CIFS_Share(Model):
             verbose_name=_("Comment"),
             blank=True,
             )
-    cifs_path = PathField(
-            verbose_name=_("Path"))
     cifs_default_permissions = models.BooleanField(
         verbose_name=_('Apply Default Permissions'),
         help_text=_('Recursively set sane default windows permissions on share'),
@@ -82,20 +83,6 @@ class CIFS_Share(Model):
         ),
         default=False,
     )
-    cifs_inheritowner = models.BooleanField(
-            verbose_name=_("Inherit Owner"),
-            help_text=_("The ownership of new files and directories is normally governed by effective uid of the connected user. This option allows the Samba administrator to specify that the ownership for new files and directories should be controlled by the ownership of the parent directory. For windows shares it is NOT recommended to set this. The desired behavior can be achieved using ACL's. This probably won't do what you want it to do."),
-            default=False)
-    cifs_inheritperms = models.BooleanField(
-            verbose_name=_("Inherit Permissions"),
-            help_text=_("New directories inherit the mode of the parent directory, including bits such as setgid. New files inherit their read/write bits from the parent directory. For windows shares it is NOT recommended to set this. The desired behavior can be achieved using ACL's. This probably won't do what you want it to do."),
-            default=False)
-    cifs_inheritacls = models.BooleanField(
-            verbose_name=_("Inherit ACL's"),
-            help_text=_(
-"This parameter can be used to ensure that if default acls exist on parent directories, they are always honored when creating a new file or subdirectory in these parent directories. The default behavior is to use the unix mode specified when creating the directory. For windows shares it is NOT recommended to set this. The desired behavior can be achieved using ACL's. This probably won't do what you want it to do."
-),
-            default=False)
     cifs_hostsallow = models.TextField(
             blank=True,
             verbose_name=_("Hosts Allow"),
@@ -127,6 +114,9 @@ class CIFS_Share(Model):
 
 
 class AFP_Share(Model):
+    afp_path = PathField(
+        verbose_name=_("Path"),
+    )
     afp_name = models.CharField(
             max_length=120,
             verbose_name=_("Name"),
@@ -137,8 +127,6 @@ class AFP_Share(Model):
             verbose_name=_("Share Comment"),
             blank=True
             )
-    afp_path = PathField(
-            verbose_name=_("Path"))
     afp_allow = models.CharField(
             max_length=120,
             verbose_name=_("Allow List"),
@@ -193,12 +181,12 @@ class AFP_Share(Model):
     )
     afp_fperm = models.CharField(
             max_length=3,
-            default="755",
+            default="644",
             verbose_name=_("Default file permission"),
             )
     afp_dperm = models.CharField(
             max_length=3,
-            default="644",
+            default="755",
             verbose_name=_("Default directory permission"),
             )
     afp_umask = models.CharField(
@@ -314,7 +302,6 @@ class NFS_Share(Model):
     class Meta:
         verbose_name = _("Unix (NFS) Share")
         verbose_name_plural = _("Unix (NFS) Shares")
-        ordering = ["paths__path"]
 
 
 class NFS_Share_Path(Model):

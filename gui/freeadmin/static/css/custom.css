@@ -327,6 +327,16 @@ table.grid tr {
     border-bottom:1px #ccc solid;
 }
 
+.EmailIcon {
+    background-image:url('/static/images/ui/tree/email.png');
+    width:16px;
+    height:16px;
+}
+.SysDatasetIcon {
+    background-image:url('/static/images/ui/tree/sysdataset.png');
+    width:16px;
+    height:16px;
+}
 .SystemIcon {
     background-image:url('/static/images/ui/tree/system.png');
     width:16px;
@@ -344,6 +354,11 @@ table.grid tr {
 }
 .SettingsIcon {
     background-image:url('/static/images/ui/tree/settings.png');
+    width:16px;
+    height:16px;
+}
+.TasksIcon {
+    background-image:url('/static/images/ui/tree/tasks.png');
     width:16px;
     height:16px;
 }
@@ -904,21 +919,6 @@ table.grid tr {
 }
 .ViewNTPServerIcon {
     background-image:url('/static/images/ui/tree/view_ntp_servers.png');
-    width:16px;
-    height:16px;
-}
-.SysctlIcon {
-    background-image:url('/static/images/ui/tree/16x16_sysctls.png');
-    width:16px;
-    height:16px;
-}
-.AddSysctlIcon {
-    background-image:url('/static/images/ui/tree/16x16_add_sysctls.png');
-    width:16px;
-    height:16px;
-}
-.ViewSysctlIcon {
-    background-image:url('/static/images/ui/tree/16x16_view_sysctls.png');
     width:16px;
     height:16px;
 }

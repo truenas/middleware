@@ -605,6 +605,7 @@ class ZFSVolumeWizardForm(forms.Form):
         choices=choices.ZFS_DEDUP,
         initial="off",
     )
+
     def __init__(self, *args, **kwargs):
         super(ZFSVolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
@@ -632,9 +633,9 @@ class ZFSVolumeWizardForm(forms.Form):
         if len(disks) >= 3:
             grouptype_choices += (('raidz', 'RAID-Z'), )
         if len(disks) >= 4:
-            grouptype_choices += ( ('raidz2', 'RAID-Z2'), )
+            grouptype_choices += (('raidz2', 'RAID-Z2'), )
         if len(disks) >= 5:
-            grouptype_choices += ( ('raidz3', 'RAID-Z3'), )
+            grouptype_choices += (('raidz3', 'RAID-Z3'), )
         self.fields['group_type'].choices = grouptype_choices
 
         #dedup = _dedup_enabled()
@@ -666,7 +667,7 @@ class ZFSVolumeWizardForm(forms.Form):
                         '%s ' if serial else '',
                         ele.enclosure.devname,
                     )
-                except Exception, e:
+                except Exception:
                     pass
             disks.append(Disk(
                 info['devname'],
@@ -832,7 +833,7 @@ class ZFSVolumeWizardForm(forms.Form):
                 try:
                     notifier().zpool_enclosure_sync(volume.vol_name)
                 except Exception, e:
-                   log.error("Error syncing enclosure: %s", e)
+                    log.error("Error syncing enclosure: %s", e)
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
@@ -1078,6 +1079,7 @@ class AutoImportWizard(SessionWizardView):
         notifier().reload("disk")
         notifier().start("ix-system")
         notifier().start("ix-syslogd")
+        notifier().start("ix-warden")
         notifier().restart("system_datasets")
 
         return JsonResp(self.request, message=unicode(_("Volume imported")))
@@ -1619,13 +1621,13 @@ class ZVol_CreateForm(Form):
         required=False,
         initial=False,
     )
-    zvol_blocksize = forms.CharField(
+    zvol_blocksize = forms.ChoiceField(
         label=_('Block size'),
         help_text=_(
             'The default blocksize for volumes is 8 Kbytes. Any power '
             'of 2 from 512 bytes to 128 Kbytes is valid.'),
         required=False,
-        max_length=8,
+        choices=(('', 'Inherit'), ) + choices.ZFS_RECORDSIZE,
     )
 
     advanced_fields = (
@@ -1728,16 +1730,16 @@ class MountPointAccessForm(Form):
 
         exclude = []
         if basename:
-             exclude = ['/mnt/%s' % basename]
+            exclude = ['/mnt/%s' % basename]
 
         notifier().mp_change_permission(
-             path=path,
-             exclude=exclude,
-             user=self.cleaned_data['mp_user'],
-             group=self.cleaned_data['mp_group'],
-             mode=self.cleaned_data['mp_mode'].__str__(),
-             recursive=self.cleaned_data['mp_recursive'],
-             acl=self.cleaned_data['mp_acl'],
+            path=path,
+            exclude=exclude,
+            user=self.cleaned_data['mp_user'],
+            group=self.cleaned_data['mp_group'],
+            mode=self.cleaned_data['mp_mode'].__str__(),
+            recursive=self.cleaned_data['mp_recursive'],
+            acl=self.cleaned_data['mp_acl'],
         )
 
 

@@ -65,8 +65,6 @@ if is_truenas ; then
 	customize_cmd add_truenas_gui
 fi
 
-customize_cmd add_warden_hooks
-
 customize_cmd move_data
 
 customize_cmd add_data_to_fstab
@@ -96,8 +94,6 @@ customize_cmd remove_packages
 customize_cmd remove_var_cache_pkg
 
 customize_cmd remove_var_db_pkg
-
-customize_cmd fix_easy_install_pth
 
 customize_cmd create_var_home_symlink
 

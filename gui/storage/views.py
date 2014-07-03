@@ -75,7 +75,7 @@ def home(request):
 
     tabs = appPool.hook_app_tabs('storage', request)
     return render(request, 'storage/index.html', {
-        'focused_tab': request.GET.get("tab", None),
+        'focused_tab': request.GET.get("tab", 'storage.Volumes.View'),
         'hook_tabs': tabs,
     })
 
@@ -343,7 +343,7 @@ def dataset_create(request, fs):
                     notifier().dataset_init_unix(dataset_name)
                 elif dataset_share_type == "windows":
                     notifier().dataset_init_windows(dataset_name)
-                elif dataset_share_type == "apple":
+                elif dataset_share_type == "mac":
                     notifier().dataset_init_apple(dataset_name)
                 return JsonResp(
                     request,

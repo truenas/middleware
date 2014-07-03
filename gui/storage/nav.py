@@ -23,15 +23,19 @@ class ViewPeriodic(TreeNode):
     append_to = 'storage.Task'
 
 
-class ViewSnap(TreeNode):
+class ViewScrub(TreeNode):
 
     gname = 'View'
-    name = _(u'View Snapshots')
+    type = 'openstorage'
+    append_to = 'storage.Scrub'
+
+
+class ViewSnap(TreeNode):
+
+    gname = 'Snapshots.View'
+    name = _(u'ZFS Snapshots')
     type = 'openstorage'
     icon = u'ViewAllPeriodicSnapIcon'
-    app_name = 'storage'
-    model = 'Task'
-    skip = True
 
 
 class AddVolume(TreeNode):

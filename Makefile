@@ -48,14 +48,14 @@ clean:
 	${ENV_SETUP} build/build_cleanup.py
 	rm -rf ${NANO_LABEL}-${VERSION}-* release.build.log
 .if defined(USE_NEW_LAYOUT)
-	rm -rf ../obj
+	rm -rf objs
 .else
 	rm -rf FreeBSD nas_source
 .endif
 
 clean-packages:
 .if defined(USE_NEW_LAYOUT)
-	find ../obj/os-base/*/ports -type f -delete
+	find objs/os-base/*/ports -type f -delete
 .else
 	find os-base/*/ports -type f -delete
 .endif
@@ -63,7 +63,7 @@ clean-packages:
 clean-package:
 .if defined(p)
 .if defined(USE_NEW_LAYOUT)
-	find ../obj/os-base/*/ports -name "${p}*" | xargs rm -fr
+	find objs/os-base/*/ports -name "${p}*" | xargs rm -fr
 .else
 	find os-base/*/ports -name "${p}*" | xargs rm -fr
 .endif
@@ -82,7 +82,7 @@ clean-ui-package:
 
 distclean: clean
 .if defined(USE_NEW_LAYOUT)
-	rm -fr ../extra-src
+	rm -fr extra-src
 .endif
 
 save-build-env:
@@ -108,7 +108,7 @@ truenas: git-verify
 	env NANO_LABEL=TrueNAS script -a ${RELEASE_LOGFILE} ${MAKE} build
 	mkdir -p TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 .if defined(USE_NEW_LAYOUT)
-	mv ../obj/os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+	mv objs/os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 .else
 	mv os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 .endif

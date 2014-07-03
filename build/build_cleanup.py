@@ -23,15 +23,16 @@ def main(starting_path):
     for dir in mount:
         os.system("umount -f %s" % dir.split(" ")[2])
 
-    if os.path.exists("os-base"):
-        cmd = "chflags -R noschg os-base"
-        ret = os.system(cmd)
-        if ret:
-            error_and_exit(cmd, starting_path)
-        cmd = "rm -rf os-base"
-        ret = os.system(cmd)
-        if ret:
-            error_and_exit(cmd, starting_path)
+    for objdir in "objs" "os-base":
+        if os.path.exists(objdir):
+            cmd = "chflags -R noschg %s" % (objdir)
+            ret = os.system(cmd)
+            if ret:
+                error_and_exit(cmd, starting_path)
+            cmd = "rm -rf %s" % (objdir)
+            ret = os.system(cmd)
+            if ret:
+                error_and_exit(cmd, starting_path)
 
     os.chdir(starting_path)
 

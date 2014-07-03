@@ -155,8 +155,13 @@ mp_to_task_map = {}
 # Since the snapshot we make have the name 'foo@auto-%Y%m%d.%H%M-{expire time}'
 # format, we just keep one task.
 TaskObjects = Task.objects.filter(task_enabled=True)
+taskpath = {'recursive': [], 'nonrecursive': []}
 for task in TaskObjects:
     if isMatchingTime(task, snaptime):
+        if task.task_recursive:
+            taskpath['recursive'].append(task.task_filesystem)
+        else:
+            taskpath['nonrecursive'].append(task.task_filesystem)
         fs = task.task_filesystem
         expire_time = ('%s%s' % (task.task_ret_count, task.task_ret_unit[0])).__str__()
         tasklist = []
@@ -167,6 +172,8 @@ for task in TaskObjects:
             tasklist = [task]
         mp_to_task_map[(fs, expire_time)] = tasklist
 
+re_path = re.compile("^((" + '|'.join(taskpath['nonrecursive']) +
+                     ")@|(" + '|'.join(taskpath['recursive']) + ")[@/])")
 # Only proceed further if we are  going to generate any snapshots for this run
 if len(mp_to_task_map) > 0:
 
@@ -185,7 +192,10 @@ if len(mp_to_task_map) > 0:
                 snap_infodict = snapname_match.groupdict()
                 snap_ret_policy = '%s%s' % (snap_infodict['retcount'], snap_infodict['retunit'])
                 if snap_expired(snap_infodict, snaptime):
-                    snapshots_pending_delete.add(snapshot_name)
+                    # Only delete the snapshot if there's a snapshot task enabled that created it.
+                    if re_path:
+                        if re_path.match(snapshot_name):
+                            snapshots_pending_delete.add(snapshot_name)
                 else:
                     if mp_to_task_map.has_key((fs, snap_ret_policy)):
                         if snapshots.has_key((fs, snap_ret_policy)):

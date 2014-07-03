@@ -45,6 +45,7 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
 from freenasUI.common.samba import (
     SAMBA_PROVISIONED_FILE,
     Samba4
@@ -750,12 +751,7 @@ class NT4(ModelForm):
 
 
 class ActiveDirectoryForm(ModelForm):
-    ad_bindpw2 = forms.CharField(
-        max_length=50,
-        label=_("Confirm Domain Account Password"),
-        widget=forms.widgets.PasswordInput(),
-        required=False,
-    )
+    ad_certfile = FileField(label=_("Certificate"), required=False)
     ad_keytab = FileField(label=_("Kerberos keytab"), required=False)
 
     class Meta:
@@ -769,7 +765,6 @@ class ActiveDirectoryForm(ModelForm):
         for name in (
             'ad_domainname',
             'ad_netbiosname',
-            'ad_workgroup',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
             'ad_use_keytab',
@@ -789,8 +784,6 @@ class ActiveDirectoryForm(ModelForm):
         if self.instance._original_ad_domainname != self.instance.ad_domainname:
             return True
         if self.instance._original_ad_netbiosname != self.instance.ad_netbiosname:
-            return True
-        if self.instance._original_ad_workgroup != self.instance.ad_workgroup:
             return True
         if self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms:
             return True
@@ -814,16 +807,7 @@ class ActiveDirectoryForm(ModelForm):
         super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
         if self.instance.ad_bindpw:
             self.fields['ad_bindpw'].required = False
-        if self._api is True:
-            del self.fields['ad_bindpw2']
         self.__original_save()
-
-    def clean_ad_bindpw2(self):
-        password1 = self.cleaned_data.get("ad_bindpw")
-        password2 = self.cleaned_data.get("ad_bindpw2")
-        if password1 != password2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
-        return password2
 
     def clean_ad_keytab(self):
         filename = "/data/krb5.keytab"
@@ -843,10 +827,43 @@ class ActiveDirectoryForm(ModelForm):
 
         return filename
 
+    def clean_ad_certfile(self):
+        filename = "/data/activedirectory_certfile"
+
+        ad_certfile = self.cleaned_data.get("ad_certfile", None)
+        if ad_certfile and ad_certfile != filename:  
+            if hasattr(ad_certfile, 'temporary_file_path'):
+                shutil.move(ad_certfile.temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as f:
+                    for c in ad_certfile.chunks():
+                        f.write(c)
+                    f.close()
+
+            os.chmod(filename, 0400)
+            self.instance.ad_certfile = filename
+
+        return filename
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ad_bindpw"):
             cdata['ad_bindpw'] = self.instance.ad_bindpw
+
+        if self.instance.ad_use_keytab == False:
+            bindname = cdata.get("ad_bindname")
+            bindpw = cdata.get("ad_bindpw")
+            domain = cdata.get("ad_domainname")
+            binddn = "%s@%s" % (bindname, domain)
+
+            ret = FreeNAS_ActiveDirectory.validate_credentials(
+                domain, binddn=binddn, bindpw=bindpw
+            )
+            if ret == False:
+                raise forms.ValidationError(
+                    _("Incorrect password.")
+                )
+
         return cdata
 
     def save(self):
@@ -862,9 +879,6 @@ class ActiveDirectoryForm(ModelForm):
             raise ServiceFailed("activedirectory",
                 _("The activedirectory service failed to reload."))
 
-ActiveDirectoryForm.base_fields.keyOrder.remove('ad_bindpw2')
-ActiveDirectoryForm.base_fields.keyOrder.insert(5, 'ad_bindpw2')
-
 
 class NIS(ModelForm):
     class Meta:
@@ -873,7 +887,7 @@ class NIS(ModelForm):
 
 
 class LDAPForm(ModelForm):
-    ldap_tls_cacertfile = FileField(label=_("Self signed certificate"), required=False)
+    ldap_tls_cacertfile = FileField(label=_("Certificate"), required=False)
 
     class Meta:
         fields = '__all__'
@@ -1334,14 +1348,14 @@ class iSCSITargetExtentForm(ModelForm):
                 if "zvol/" + zvol not in used_zvol:
                     diskchoices["zvol/" + zvol] = "%s (%s)" % (
                         zvol,
-                        attrs['volsize'])
+                        humanize_size(attrs['volsize']))
                 zsnapshots = _notifier.zfs_snapshot_list(path=zvol).values()
                 if not zsnapshots:
                     continue
                 for snap in zsnapshots[0]:
                     diskchoices["zvol/" + snap.fullname] = "%s (%s)" % (
                         snap.fullname,
-                        attrs['volsize'])
+                        humanize_size(attrs['volsize']))
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.

@@ -52,9 +52,14 @@ def main(argv):
     test_config = json.load(config_file)
     config_file.close()
     checkpreReqBhyve()
-    runTest()
 
-def runTest():
+    while True:
+        try:
+            runVm()
+        except:
+            pass
+
+def runVm():
     global test_config
     global test_config_file
     global sentinel_file

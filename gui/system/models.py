@@ -118,9 +118,6 @@ class Settings(Model):
     class Meta:
         verbose_name = _("Settings")
 
-    class FreeAdmin:
-        deletable = False
-
 
 class NTPServer(Model):
     ntp_address = models.CharField(
@@ -932,45 +929,6 @@ class SMARTTest(Model):
         ordering = ["smarttest_type"]
 
 
-class Sysctl(Model):
-    sysctl_mib = models.CharField(
-            max_length=50,
-            unique=True,
-            verbose_name=_("Variable"),
-            )
-    sysctl_value = models.CharField(
-            max_length=50,
-            verbose_name=_("Value"),
-            )
-    sysctl_comment = models.CharField(
-            max_length=100,
-            verbose_name=_("Comment"),
-            blank=True,
-            )
-    sysctl_enabled = models.BooleanField(
-            default=True,
-            verbose_name=_("Enabled"),
-            )
-
-    def __unicode__(self):
-        return unicode(self.sysctl_mib)
-
-    def delete(self):
-        super(Sysctl, self).delete()
-        notifier().reload("sysctl")
-
-    class Meta:
-        verbose_name = _("Sysctl")
-        verbose_name_plural = _("Sysctls")
-        ordering = ["sysctl_mib"]
-
-    class FreeAdmin:
-        icon_model = u"SysctlIcon"
-        icon_object = u"SysctlIcon"
-        icon_add = u"AddSysctlIcon"
-        icon_view = u"ViewSysctlIcon"
-
-
 class Tunable(Model):
     tun_var = models.CharField(
             max_length=50,
@@ -981,6 +939,12 @@ class Tunable(Model):
             max_length=50,
             verbose_name=_("Value"),
             )
+    tun_type = models.CharField(
+        verbose_name=_('Type'),
+        max_length=20,
+        choices=choices.TUNABLE_TYPES,
+        default='loader',
+    )
     tun_comment = models.CharField(
             max_length=100,
             verbose_name=_("Comment"),
@@ -996,7 +960,10 @@ class Tunable(Model):
 
     def delete(self):
         super(Tunable, self).delete()
-        notifier().reload("loader")
+        if self.tun_type == 'loader':
+            notifier().reload("loader")
+        else:
+            notifier().reload("sysctl")
 
     class Meta:
         verbose_name = _("Tunable")
@@ -1061,6 +1028,7 @@ class InitShutdown(Model):
         icon_object = u"TunableIcon"
         icon_add = u"AddTunableIcon"
         icon_view = u"ViewTunableIcon"
+        menu_child_of = 'tasks'
 
 
 class Registration(Model):
@@ -1145,7 +1113,11 @@ class SystemDataset(Model):
     )
     sys_rrd_usedataset = models.BooleanField(
         default=False,
-        verbose_name=_("RRD")
+        verbose_name=_("Reporting Database"),
+        help_text=_(
+            'Save the Round-Robin Database (RRD) used by system statistics '
+            'collection daemon into the system dataset'
+        )
     )
 
     class Meta:

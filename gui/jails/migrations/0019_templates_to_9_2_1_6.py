@@ -11,18 +11,19 @@ class Migration(DataMigration):
     def forwards(self, orm):
         version_regex = re.compile('9.2.[0-9\.]+')
         for jt in orm['jails.jailTemplate'].objects.all():
-            m = re.match('.+download.freenas.org/(9.2([0-9\.]+)?)/.+', jt.jt_url)
+            m = re.match('.+download.freenas.org/'
+                '(9.2[0-9\.]+?/RELEASE/(x86|x64)/jails/).+', jt.jt_url)
             if m:
-                new_url = jt.jt_url.replace(m.group(1), "9.2.1.6")
+                new_url = jt.jt_url.replace(m.group(1), "jails/9.2/%s/" % m.group(2))
                 jt.jt_url = new_url
                 jt.save()  
 
     def backwards(self, orm):
         version_regex = re.compile('9.2.[0-9\.]+')
         for jt in orm['jails.jailTemplate'].objects.all():
-            m = re.match('.+download.freenas.org/(9.2([0-9\.]+)?)/.+', jt.jt_url)
+            m = re.match('.+download.freenas.org/(jails/9.2/(x86|x64))/.+', jt.jt_url)
             if m:
-                new_url = jt.jt_url.replace(m.group(1), "9.2.0")
+                new_url = jt.jt_url.replace(m.group(1), "9.2.0/RELEASE/%s/jails" % m.group(2))
                 jt.jt_url = new_url
                 jt.save()  
 

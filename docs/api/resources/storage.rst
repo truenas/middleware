@@ -155,6 +155,10 @@ Datasets
       POST /api/v1.0/storage/volume/tank/datasets/ HTTP/1.1
       Content-Type: application/json
 
+      {
+        "name": "foo"
+      }
+
    **Example response**:
 
    .. sourcecode:: http
@@ -164,12 +168,12 @@ Datasets
       Content-Type: application/json
 
       {
-        "avail": "2.44G",
+        "avail": 3514769408,
         "mountpoint": "/mnt/tank/foo",
         "name": "foo",
         "pool": "tank",
-        "refer": "144K",
-        "used": "144K"
+        "refer": 73728,
+        "used": 73728
       }
 
    :resheader Content-Type: content type of the response
@@ -195,12 +199,12 @@ Datasets
       Content-Type: application/json
 
       [{
-        "avail": "2.44G",
+        "avail": 3514769408,
         "mountpoint": "/mnt/tank/foo",
         "name": "foo",
         "pool": "tank",
-        "refer": "144K",
-        "used": "144K"}
+        "refer": 73728,
+        "used": 73728
       }]
 
    :resheader Content-Type: content type of the response
