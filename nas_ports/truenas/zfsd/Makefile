@@ -24,6 +24,7 @@ USE_XZ=		yes
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
 
+EXTRACT_ONLY=
 WRKSRC=/usr/nas_source/zfsd
 
 # no checksum, we just used git!
