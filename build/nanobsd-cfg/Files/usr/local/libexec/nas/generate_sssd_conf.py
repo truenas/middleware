@@ -548,8 +548,7 @@ def add_activedirectory(sc):
     kwargs = {
         'domain': activedirectory.ad_domainname,
         'binddn': "%s@%s" % (activedirectory.ad_bindname, activedirectory.ad_domainname.upper()),
-        'bindpw': activedirectory.ad_bindpw,
-        'netbiosname': activedirectory.ad_workgroup
+        'bindpw': activedirectory.ad_bindpw
     }
 
     ad = FreeNAS_ActiveDirectory(**kwargs)

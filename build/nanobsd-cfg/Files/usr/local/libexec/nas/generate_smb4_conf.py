@@ -27,6 +27,10 @@ from freenasUI.account.models import (
     bsdGroups,
     bsdGroupMembership
 )
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FLAGS_DBINIT
+)
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
@@ -267,8 +271,15 @@ def add_activedirectory_conf(smb4_conf):
     except:
         pass
 
-    confset2(smb4_conf, "netbios name = %s", ad.ad_netbiosname.upper())
-    confset2(smb4_conf, "workgroup = %s", ad.ad_workgroup.upper())
+    ad_workgroup = None
+    try:
+        fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+        ad_workgroup = fad.upper()
+    except:
+        return
+
+    confset2(smb4_conf, "netbios name = %s", ad_workgroup)
+    confset2(smb4_conf, "workgroup = %s", fad..upper())
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
     confset1(smb4_conf, "security = ADS")
     confset1(smb4_conf, "client use spnego = yes")
@@ -294,15 +305,15 @@ def add_activedirectory_conf(smb4_conf):
     if ad.ad_unix_extensions:
         confset1(smb4_conf, "winbind nss info = rfc2307")
 
-        confset2(smb4_conf, "idmap config %s: backend = ad", ad.ad_workgroup)
-        confset2(smb4_conf, "idmap config %s: schema_mode = rfc2307", ad.ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: backend = ad", ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: schema_mode = rfc2307", ad_workgroup)
         confset1(smb4_conf, "idmap config %s: range = %d-%d" %(
-            ad.ad_workgroup, ad_range_start, ad_range_end
+            ad_workgroup, ad_range_start, ad_range_end
         ))
     else:
-        confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: backend = rid", ad_workgroup)
         confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
-            ad.ad_workgroup, rid_range_start, rid_range_end
+            ad_workgroup, rid_range_start, rid_range_end
         ))
 
     confset2(smb4_conf, "allow trusted domains = %s",
