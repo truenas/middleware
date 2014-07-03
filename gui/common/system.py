@@ -384,7 +384,7 @@ def activedirectory_has_unix_extensions():
     c = h.cursor()
 
     c.execute("SELECT ad_unix_extensions " \
-        "FROM services_activedirectory ORDER BY -id LIMIT 1")
+        "FROM directoryservice_activedirectory ORDER BY -id LIMIT 1")
     row = c.fetchone()
 
     try:
