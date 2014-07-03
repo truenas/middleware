@@ -63,7 +63,7 @@ nt4ctl_start()
 	then
 		nt4_started=1
 	else		
-		srv_set directoryservice 1
+		nt4_set 1
 	fi
 
 	echo ${cifs_started} > "${cifs_file}"
@@ -75,12 +75,12 @@ nt4ctl_start()
 
 	if ! nt4ctl_cmd ${service} ix-nt4 quietstart
 	then
-		srv_set directoryservice 0
+		nt4_set 0
 		return 1
 	fi
 	if ! nt4ctl_cmd ${service} ix-nt4 status
 	then
-		srv_set directoryservice 0
+		nt4_set 0
 		return 1
 	fi
 
@@ -115,20 +115,20 @@ nt4ctl_stop()
 	then
 		nt4ctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
-		srv_set directoryservice 0
+		nt4_set 0
 		nt4ctl_cmd ${service} ix-samba start
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
 		nt4ctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
-		srv_set directoryservice 0
+		nt4_set 0
 		nt4ctl_cmd ${service} ix-samba start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then
 		nt4ctl_cmd ${service} samba_server forcestop
-		srv_set directoryservice 0
+		nt4_set 0
 		srv_set cifs 1
 		nt4ctl_cmd ${service} ix-samba start
 		cifs_start
@@ -136,13 +136,13 @@ nt4ctl_stop()
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
 	then
 		nt4ctl_cmd ${service} samba_server forcestop
-		srv_set directoryservice 0
+		nt4_set 0
 		srv_set cifs 1
 		nt4ctl_cmd ${service} ix-samba start
 		cifs_start
 	fi
 
-	srv_set directoryservice 0
+	nt4_set 0
 	return 0
 }
 

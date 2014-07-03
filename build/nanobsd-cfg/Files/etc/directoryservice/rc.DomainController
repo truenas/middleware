@@ -221,3 +221,8 @@ domaincontroller_enabled()
 {
 	srv_enabled directoryservice
 }
+
+domaincontroller_set()
+{
+	srv_set domaincontroller "${1}"
+}

@@ -295,6 +295,11 @@ dirsrv_enabled()
 {
 	local dir="${1}"
 
+	if [ -z "${dir}" ]
+	then
+		return 0
+	fi
+
 	case "${dir}" in 
 		activedirectory)
 			return activedirectory_enabled ;;
@@ -306,6 +311,32 @@ dirsrv_enabled()
 			return nis_enabled ;;
 		nt4)
 			return nt4_enabled ;;
+	esac
+
+	return 2
+}
+
+dirsrv_set()
+{
+	local dir="${1}"
+	local enable="${2}"
+
+	if [ -z "${dir}" -o -z "${enable}" ]
+	then
+		return 0
+	fi
+
+	case "${dir}" in 
+		activedirectory)
+			return activedirectory_set "${enable}" ;;
+		domaincontroller)
+			return domaincontroller_set "${enable}" ;;
+		ldap)
+			return ldap_enabled "${enable}" ;;
+		nis)
+			return nis_enabled "${enable}" ;;
+		nt4)
+			return nt4_enabled "${enable}" ;;
 	esac
 
 	return 2

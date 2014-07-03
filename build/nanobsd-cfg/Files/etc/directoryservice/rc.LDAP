@@ -182,3 +182,22 @@ ldap_enabled()
 
 	return 2
 }
+
+ldap_set()
+{
+	local enable="${1}"
+
+	if [ -z "${enable}" ]
+	then
+		return 0
+	fi
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	UPDATE
+		directoryservice_ldap
+	SET
+		ldap_enable = ${enable}
+	"
+
+	return $?
+}

@@ -55,3 +55,22 @@ nis_enabled()
 
 	return 2
 }
+
+nis_set()
+{
+	local enable="${1}"
+
+	if [ -z "${enable}" ]
+	then
+		return 0
+	fi
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	UPDATE
+		directoryservice_nis
+	SET
+		nis_enable = ${enable}
+	"
+
+	return $?
+}
