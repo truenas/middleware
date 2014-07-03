@@ -38,31 +38,31 @@ log = logging.getLogger("directoryservice.forms")
 
 class NT4(Model):
     nt4_dcname = models.CharField(
-            max_length=120,
-            verbose_name=_("Domain Controller"),
-            help_text=_("Hostname of the domain controller to use."),
-            )
+        max_length=120,
+        verbose_name=_("Domain Controller"),
+        help_text=_("Hostname of the domain controller to use."),
+    )
     nt4_netbiosname = models.CharField(
-            max_length=120,
-            verbose_name=_("NetBIOS Name"),
-            help_text=_("System hostname"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("NetBIOS Name"),
+        help_text=_("System hostname"),
+        blank=True
+    )
     nt4_workgroup = models.CharField(
-            max_length=120,
-            verbose_name=_("Workgroup Name"),
-            help_text=_("Workgroup or domain name in old format, eg WORKGROUP")
-            )
+        max_length=120,
+        verbose_name=_("Workgroup Name"),
+        help_text=_("Workgroup or domain name in old format, eg WORKGROUP")
+    )
     nt4_adminname = models.CharField(
-            max_length=120,
-            verbose_name=_("Administrator Name"),
-            help_text=_("Domain Administrator account name")
-            )
+        max_length=120,
+        verbose_name=_("Administrator Name"),
+        help_text=_("Domain Administrator account name")
+    )
     nt4_adminpw = models.CharField(
-            max_length=120,
-            verbose_name=_("Administrator Password"),
-            help_text=_("Domain Administrator account password.")
-            )
+        max_length=120,
+        verbose_name=_("Administrator Password"),
+        help_text=_("Domain Administrator account password.")
+    )
 
     def __init__(self, *args, **kwargs):
         super(NT4, self).__init__(*args, **kwargs)
@@ -86,108 +86,108 @@ class NT4(Model):
 
 class ActiveDirectory(Model):
     ad_domainname = models.CharField(
-            max_length=120,
-            verbose_name=_("Domain Name (DNS/Realm-Name)"),
-            help_text=_("Domain Name, eg example.com")
-            )
+        max_length=120,
+        verbose_name=_("Domain Name (DNS/Realm-Name)"),
+        help_text=_("Domain Name, eg example.com")
+    )
     ad_bindname = models.CharField(
-            max_length=120,
-            verbose_name=_("Domain Account Name"),
-            help_text=_("Domain account name to bind as")
-            )
+        max_length=120,
+        verbose_name=_("Domain Account Name"),
+        help_text=_("Domain account name to bind as")
+    )
     ad_bindpw = models.CharField(
-            max_length=120,
-            verbose_name=_("Domain Account Password"),
-            help_text=_("Domain Account password.")
-            )
+        max_length=120,
+        verbose_name=_("Domain Account Password"),
+        help_text=_("Domain Account password.")
+    )
 
     #
     # AD Advanced settings
     #
     ad_netbiosname = models.CharField(
-            max_length=120,
-            verbose_name=_("NetBIOS Name"),
-            help_text=_("System hostname"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("NetBIOS Name"),
+        help_text=_("System hostname"),
+        blank=True
+    )
     ad_use_keytab = models.BooleanField(
-            default=False,
-            verbose_name=_("Use keytab"),
-            )
+        default=False,
+        verbose_name=_("Use keytab"),
+    )
     ad_keytab = models.TextField(
-            verbose_name=_("Kerberos keytab"),
-            help_text=_("Kerberos keytab file"),
-            blank=True,
-            null=True,
-            )
+        verbose_name=_("Kerberos keytab"),
+        help_text=_("Kerberos keytab file"),
+        blank=True,
+        null=True,
+    )
     ad_ssl = models.CharField(
-            choices=choices.LDAP_SSL_CHOICES,
-            default='off',
-            max_length=120,
-            verbose_name=_("Encryption Mode"),
-            help_text=_(
-                "This parameter specifies whether to use SSL/TLS, e.g."
-                " on/off/start_tls"
-                )
-            )
+        choices=choices.LDAP_SSL_CHOICES,
+        default='off',
+        max_length=120,
+        verbose_name=_("Encryption Mode"),
+        help_text=_(
+            "This parameter specifies whether to use SSL/TLS, e.g."
+            " on/off/start_tls"
+        )
+    )
     ad_certfile = models.TextField(
-            verbose_name=_("SSL Certificate"),
-            blank=True,
-            help_text=_("Upload your certificate file here.")
-            )
+        verbose_name=_("SSL Certificate"),
+        blank=True,
+        help_text=_("Upload your certificate file here.")
+    )
     ad_verbose_logging = models.BooleanField(
-            default=False,
-            verbose_name=_("Verbose logging"),
-            )
+        default=False,
+        verbose_name=_("Verbose logging"),
+    )
     ad_unix_extensions = models.BooleanField(
-            default=False,
-            verbose_name=_("UNIX extensions"),
-            help_text=_("Set this if your Active Directory has UNIX extensions.")
-            )
+        default=False,
+        verbose_name=_("UNIX extensions"),
+        help_text=_("Set this if your Active Directory has UNIX extensions.")
+    )
     ad_allow_trusted_doms = models.BooleanField(
-            default=False,
-            verbose_name=_("Allow Trusted Domains"),
-            help_text=_("Set this if you want to allow Trusted Domains.")
-            )
+        default=False,
+        verbose_name=_("Allow Trusted Domains"),
+        help_text=_("Set this if you want to allow Trusted Domains.")
+    )
     ad_use_default_domain = models.BooleanField(
-            default=True,
-            verbose_name=_("Use default domain"),
-            help_text=_("Set this if you want to use the default domain for users and groups.")
-            )
+        default=True,
+        verbose_name=_("Use default domain"),
+        help_text=_("Set this if you want to use the default domain for users and groups.")
+    )
     ad_dcname = models.CharField(
-            max_length=120,
-            blank=True,
-            verbose_name=_("Domain Controller"),
-            help_text=_("Hostname of the domain controller to use."),
-            )
+        max_length=120,
+        blank=True,
+        verbose_name=_("Domain Controller"),
+        help_text=_("Hostname of the domain controller to use."),
+    )
     ad_gcname = models.CharField(
-            max_length=120,
-            blank=True,
-            verbose_name=_("Global Catalog Server"),
-            help_text=_("Hostname of the global catalog server to use."),
-            )
+        max_length=120,
+        blank=True,
+        verbose_name=_("Global Catalog Server"),
+        help_text=_("Hostname of the global catalog server to use."),
+    )
     ad_krbname = models.CharField(
-            max_length=120,
-            blank=True,
-            verbose_name=_("Kerberos Server"),
-            help_text=_("Hostname of the kerberos server to use."),
-            )
+        max_length=120,
+        blank=True,
+        verbose_name=_("Kerberos Server"),
+        help_text=_("Hostname of the kerberos server to use."),
+    )
     ad_kpwdname = models.CharField(
-            max_length=120,
-            blank=True,
-            verbose_name=_("Kerberos Password Server"),
-            help_text=_("Hostname of the kerberos password server to use."),
-            )
+        max_length=120,
+        blank=True,
+        verbose_name=_("Kerberos Password Server"),
+        help_text=_("Hostname of the kerberos password server to use."),
+    )
     ad_timeout = models.IntegerField(
-            default=10,
-            verbose_name=_("AD timeout"),
-            help_text=_("Timeout for AD related commands."),
-            )
+        default=10,
+        verbose_name=_("AD timeout"),
+        help_text=_("Timeout for AD related commands."),
+    )
     ad_dns_timeout = models.IntegerField(
-            default=10,
-            verbose_name=_("DNS timeout"),
-            help_text=_("Timeout for AD DNS queries."),
-            )
+        default=10,
+        verbose_name=_("DNS timeout"),
+        help_text=_("Timeout for AD DNS queries."),
+    )
 
     def __init__(self, *args, **kwargs):
         super(ActiveDirectory, self).__init__(*args, **kwargs)
@@ -225,31 +225,31 @@ class ActiveDirectory(Model):
             'ad_kpwdname',
             'ad_timeout',
             'ad_dns_timeout'
-            )
+        )
 
 
 class NIS(Model):
     nis_domain = models.CharField(
-            max_length=120,
-            verbose_name=_("NIS domain"),
-            help_text=_("NIS domain name")
-            )
+        max_length=120,
+        verbose_name=_("NIS domain"),
+        help_text=_("NIS domain name")
+    )
     nis_servers = models.CharField(
-            blank=True,
-            max_length=8192,
-            verbose_name=_("NIS servers"),
-            help_text=_("Comma delimited list of NIS servers")
-            )
+        blank=True,
+        max_length=8192,
+        verbose_name=_("NIS servers"),
+        help_text=_("Comma delimited list of NIS servers")
+    )
     nis_secure_mode = models.BooleanField(
-            default=False,
-            verbose_name=_("Secure mode"),
-            help_text=_("Cause ypbind to run in secure mode")
-            )
+        default=False,
+        verbose_name=_("Secure mode"),
+        help_text=_("Cause ypbind to run in secure mode")
+    )
     nis_manycast = models.BooleanField(
-            default=False,
-            verbose_name=_("Manycast"),
-            help_text=_("Cause ypbind to use 'many-cast' instead of broadcast")
-            )
+        default=False,
+        verbose_name=_("Manycast"),
+        help_text=_("Cause ypbind to use 'many-cast' instead of broadcast")
+    )
 
     def __init__(self, *args, **kwargs):
         super(NIS, self).__init__(*args, **kwargs)
@@ -265,67 +265,67 @@ class NIS(Model):
 
 class LDAP(Model):
     ldap_hostname = models.CharField(
-            max_length=120,
-            verbose_name=_("Hostname"),
-            blank=True,
-            help_text=_("The name or IP address of the LDAP server")
-            )
+        max_length=120,
+        verbose_name=_("Hostname"),
+        blank=True,
+        help_text=_("The name or IP address of the LDAP server")
+    )
     ldap_basedn = models.CharField(
-            max_length=120,
-            verbose_name=_("Base DN"),
-            blank=True,
-            help_text=_("The default base Distinguished Name (DN) to use for "
-                "searches, eg dc=test,dc=org")
-            )
+        max_length=120,
+        verbose_name=_("Base DN"),
+        blank=True,
+        help_text=_("The default base Distinguished Name (DN) to use for "
+            "searches, eg dc=test,dc=org")
+    )
+    ldap_binddn = models.CharField(
+        max_length=120,
+        verbose_name=_("Bind DN"),
+        blank=True,
+        help_text=_("The distinguished name with which to bind to the "
+            "directory server, e.g. cn=admin,dc=test,dc=org")
+    )
+    ldap_bindpw = models.CharField(
+        max_length=120,
+        verbose_name=_("Bind password"),
+        blank=True,
+        help_text=_("The credentials with which to bind.")
+    )
     ldap_anonbind = models.BooleanField(
         verbose_name=_("Allow Anonymous Binding"),
         default=False,
     )
-    ldap_binddn = models.CharField(
-            max_length=120,
-            verbose_name=_("Root bind DN"),
-            blank=True,
-            help_text=_("The distinguished name with which to bind to the "
-                "directory server, e.g. cn=admin,dc=test,dc=org")
-            )
-    ldap_bindpw = models.CharField(
-            max_length=120,
-            verbose_name=_("Root bind password"),
-            blank=True,
-            help_text=_("The credentials with which to bind.")
-            )
     ldap_usersuffix = models.CharField(
-            max_length=120,
-            blank=True,
-            verbose_name=_("User Suffix"),
-            help_text=_("This parameter specifies the suffix that is used for "
-                "users when these are added to the LDAP directory, e.g. "
-                "ou=Users")
-            )
+        max_length=120,
+        blank=True,
+        verbose_name=_("User Suffix"),
+        help_text=_("This parameter specifies the suffix that is used for "
+            "users when these are added to the LDAP directory, e.g. "
+            "ou=Users")
+    )
     ldap_groupsuffix = models.CharField(
-            max_length=120,
-            blank=True,
-            verbose_name=_("Group Suffix"),
-            help_text=_("This parameter specifies the suffix that is used "
-                "for groups when these are added to the LDAP directory, e.g. "
-                "ou=Groups")
-            )
+        max_length=120,
+        blank=True,
+        verbose_name=_("Group Suffix"),
+        help_text=_("This parameter specifies the suffix that is used "
+            "for groups when these are added to the LDAP directory, e.g. "
+            "ou=Groups")
+    )
     ldap_passwordsuffix = models.CharField(
-            max_length=120,
-            verbose_name=_("Password Suffix"),
-            blank=True,
-            help_text=_("This parameter specifies the suffix that is used for "
-                "passwords when these are added to the LDAP directory, e.g. "
-                "ou=Passwords")
-            )
+        max_length=120,
+        verbose_name=_("Password Suffix"),
+        blank=True,
+        help_text=_("This parameter specifies the suffix that is used for "
+            "passwords when these are added to the LDAP directory, e.g. "
+            "ou=Passwords")
+    )
     ldap_machinesuffix = models.CharField(
-            max_length=120,
-            verbose_name=_("Machine Suffix"),
-            blank=True,
-            help_text=_("This parameter specifies the suffix that is used for "
-                "machines when these are added to the LDAP directory, e.g. "
-                "ou=Computers")
-            )
+        max_length=120,
+        verbose_name=_("Machine Suffix"),
+        blank=True,
+        help_text=_("This parameter specifies the suffix that is used for "
+            "machines when these are added to the LDAP directory, e.g. "
+            "ou=Computers")
+    )
     ldap_ssl = models.CharField(
         choices=choices.LDAP_SSL_CHOICES,
         default='off',
@@ -337,10 +337,10 @@ class LDAP(Model):
         )
     )
     ldap_certfile = models.TextField(
-            verbose_name=_("SSL Certificate"),
-            blank=True,
-            help_text=_("Upload your certificate file here.")
-            )
+        verbose_name=_("SSL Certificate"),
+        blank=True,
+        help_text=_("Upload your certificate file here.")
+    )
 
     def __init__(self, *args, **kwargs):
         super(LDAP, self).__init__(*args, **kwargs)
@@ -353,3 +353,10 @@ class LDAP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "LDAPIcon"
+        advanced_fields = (
+            'ldap_anonbind',
+            'ldap_passwordsuffix',
+            'ldap_machinesuffix',
+            'ldap_ssl',
+            'ldap_certfile',
+        )
