@@ -30,10 +30,10 @@ from freenasUI.common.system import (
     ldap_enabled
 )
 from freenasUI.directoryservice.models import (
-    services,
     ActiveDirectory,
     LDAP
 )
+from freenasUI.services.models import services
 from freenasUI.system.models import Settings
 
 SSSD_CONFIGFILE	="/usr/local/etc/sssd/sssd.conf"
@@ -545,14 +545,12 @@ def add_activedirectory(sc):
             setattr(ad_section, key, d[key])
 
     activedirectory = ActiveDirectory.objects.all()[0]
-    kwargs = {
-        'domain': activedirectory.ad_domainname,
-        'binddn': "%s@%s" % (activedirectory.ad_bindname, activedirectory.ad_domainname.upper()),
-        'bindpw': activedirectory.ad_bindpw
-    }
 
-    ad = FreeNAS_ActiveDirectory(**kwargs)
-    ad_section.ldap_uri = "ldap://%s" % ad.host
+    #
+    # XXX re-work this to use ad object
+    #
+    ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+    ad_section.ldap_uri = "ldap://%s" % ad.dchost
     ad_section.ldap_search_base = ad.basedn
     ad_section.ldap_default_bind_dn = ad.binddn
     ad_section.ldap_default_authtok_type = 'password'
