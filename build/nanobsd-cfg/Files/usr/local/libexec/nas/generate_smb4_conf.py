@@ -208,8 +208,8 @@ def set_ldap_password():
     except:
         return
 
-    if ldap.ldap_rootbindpw:
-        p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_rootbindpw)
+    if ldap.ldap_bindpw:
+        p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_bindpw)
         out = p.communicate()
         if out and out[1]:
             for line in out[1].split('\n'):
@@ -233,7 +233,7 @@ def add_ldap_conf(smb4_conf):
         )
     )
 
-    confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_rootbasedn)
+    confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_binddn)
     confset2(smb4_conf, "ldap suffix = %s", ldap.ldap_basedn)
     confset2(smb4_conf, "ldap user suffix = %s", ldap.ldap_usersuffix)
     confset2(smb4_conf, "ldap group suffix = %s", ldap.ldap_groupsuffix)
