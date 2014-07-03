@@ -321,7 +321,7 @@ def service_enabled(name):
     return enabled
 
 
-def ldap_enabled(name):
+def ldap_enabled():
     db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
     h = sqlite3.connect(db)
     c = h.cursor()
@@ -358,7 +358,7 @@ def ldap_objects():
     return objects
 
 
-def activedirectory_enabled(name):
+def activedirectory_enabled():
     db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
     h = sqlite3.connect(db)
     c = h.cursor()
@@ -441,7 +441,7 @@ def domaincontroller_objects():
     return objects
 
 
-def nt4_enabled(name):
+def nt4_enabled():
     db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
     h = sqlite3.connect(db)
     c = h.cursor()
@@ -478,7 +478,7 @@ def nt4_objects():
     return objects
 
 
-def nis_enabled(name):
+def nis_enabled():
     db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
     h = sqlite3.connect(db)
     c = h.cursor()
