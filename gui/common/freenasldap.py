@@ -1026,8 +1026,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.gchandle.open()
 
         self.basedn = self.adset(self.basedn, self.get_baseDN())
-        self.netbiosname = self.adset(self.netbiosname,
-            self.get_netbios_name())
+        self.netbiosname = self.get_netbios_name()
         self.ucount = 0
         self.gcount = 0
 
