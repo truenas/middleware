@@ -35,14 +35,14 @@ from freenasUI.common.system import (
     ldap_enabled,
     nt4_enabled
 )
-from freenasUI.middleware.notifier import notifier
-from freenasUI.services.models import (
+from freenasUI.directoryservice.models import (
     ActiveDirectory,
     CIFS,
     DomainController,
     LDAP,
     NT4
 )
+from freenasUI.middleware.notifier import notifier
 
 from freenasUI.sharing.models import CIFS_Share
 from freenasUI.storage.models import Task

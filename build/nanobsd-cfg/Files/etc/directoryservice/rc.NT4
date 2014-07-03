@@ -358,7 +358,7 @@ NT4_load_database_values()
 		nt4_adminpw
 
 	FROM
-		services_nt4
+		directoryservice_nt4
 
 	ORDER BY
 		-id

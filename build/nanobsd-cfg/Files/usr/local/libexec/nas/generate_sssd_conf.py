@@ -29,12 +29,12 @@ from freenasUI.common.system import (
     domaincontroller_enabled,
     ldap_enabled
 )
-from freenasUI.system.models import Settings
-from freenasUI.services.models import (
+from freenasUI.directoryservice.models import (
     services,
     ActiveDirectory,
     LDAP
 )
+from freenasUI.system.models import Settings
 
 SSSD_CONFIGFILE	="/usr/local/etc/sssd/sssd.conf"
 

@@ -61,7 +61,7 @@ ldap_func()
 	#
 	local IFS="|"
 	read hostname basedn pwencryption anonbind ssl machinesuffix\
-		groupsuffix usersuffix passwordsuffix rootbasedn<<-__LDAP__
+		groupsuffix usersuffix passwordsuffix basedn<<-__LDAP__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ldap_hostname,
@@ -73,10 +73,10 @@ ldap_func()
 		ldap_groupsuffix,
 		ldap_usersuffix,
 		ldap_passwordsuffix,
-		ldap_rootbasedn
+		ldap_basedn
 
 	FROM
-		services_ldap
+		directoryservice_ldap
 
 	ORDER BY
 		-id
@@ -99,7 +99,7 @@ __LDAP__
 	Group Suffix:           ${groupsuffix}
 	User Suffix:            ${usersuffix}
 	Password Suffix:        ${passwordsuffix}
-	Root Base DN:           ${rootbasedn}
+	Base DN:                ${basedn}
 __EOF__
 	section_footer
 

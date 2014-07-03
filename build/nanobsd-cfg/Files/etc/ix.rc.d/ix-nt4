@@ -17,10 +17,10 @@ get_workgroup()
 		nt4_workgroup
 
 	FROM
-		services_nt4
+		directoryservice_nt4
 
 	ORDER BY
-		-services_nt4.id
+		-directoryservice_nt4.id
 
 	LIMIT 1;
 	"

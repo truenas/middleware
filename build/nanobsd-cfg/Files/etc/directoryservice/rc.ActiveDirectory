@@ -952,7 +952,7 @@ AD_load_database_values()
 		ad_ssl
  
 	FROM
-		services_activedirectory
+		directoryservice_activedirectory
 
 	ORDER BY
 		-id	

@@ -17,19 +17,19 @@ save_certificate()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		ldap_tls_cacertfile
+		ldap_certfile
 
 	FROM
-		services_ldap
+		directoryservice_ldap
 
 	WHERE
 		id = ${ldap_id}
 
-	" | while read -r ldap_tls_cacertfile
+	" | while read -r ldap_certfile
 	do
-		if [ -f "${ldap_tls_cacertfile}" ]
+		if [ -f "${ldap_certfile}" ]
 		then
-			cp "${ldap_tls_cacertfile}" "${LDAPCACERT}"
+			cp "${ldap_certfile}" "${LDAPCACERT}"
 			break
 		fi
 
@@ -43,12 +43,12 @@ generate_ldapconf()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		services_ldap.id as ldap_id,
+		directoryservice_ldap.id as ldap_id,
 		ldap_hostname, 	 
 		ldap_basedn, 	 
 		ldap_anonbind, 	 
-		ldap_rootbasedn, 	 
-		ldap_rootbindpw, 	 
+		ldap_basedn, 	 
+		ldap_bindpw, 	 
 		ldap_pwencryption, 	 
 		ldap_usersuffix, 	 
 		ldap_groupsuffix, 	 
@@ -66,15 +66,15 @@ generate_ldapconf()
 		) as ldap_options
 
 	FROM
-		services_ldap
+		directoryservice_ldap
 
 	ORDER BY
-		-services_ldap.id
+		-directoryservice_ldap.id
 
 	LIMIT 1
 	" | \
-	while eval read ldap_id ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn \
-		ldap_rootbindpw ldap_pwencryption ldap_usersuffix ldap_groupsuffix \
+	while eval read ldap_id ldap_hostname ldap_basedn ldap_anonbind ldap_basedn \
+		ldap_bindpw ldap_pwencryption ldap_usersuffix ldap_groupsuffix \
 		ldap_passwordsuffix ldap_machinesuffix ldap_ssl ldap_options;
 	do
 		[ -z "${ldap_hostname}" -o -z "${ldap_basedn}" ] && return 1
@@ -146,18 +146,18 @@ ldap_status()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ldap_anonbind, 	 
-		ldap_rootbasedn, 	 
-		ldap_rootbindpw, 	 
+		ldap_basedn, 	 
+		ldap_bindpw, 	 
 		ldap_ssl
 	FROM
-		services_ldap
+		directoryservice_ldap
 
 	ORDER BY
-		-services_ldap.id
+		-directoryservice_ldap.id
 
 	LIMIT 1
 	" | \
-	while eval read ldap_anonbind ldap_rootbasedn ldap_rootbindpw ldap_ssl
+	while eval read ldap_anonbind ldap_basedn ldap_bindpw ldap_ssl
 	do
 		local res=1
 		local ldapsearch=/usr/local/bin/ldapsearch
@@ -175,9 +175,9 @@ ldap_status()
 			local cmd
 		
 			chmod 400 "${temp}"
-			echo -n "${ldap_rootbindpw}" > "${temp}"
+			echo -n "${ldap_bindpw}" > "${temp}"
 
-			echo "${ldapsearch} ${options} -D "'${ldap_rootbasedn}'" -y "${temp}"" > "${cmdfile}"
+			echo "${ldapsearch} ${options} -D "'${ldap_basedn}'" -y "${temp}"" > "${cmdfile}"
 			cmd=$(cat ${cmdfile})
 			eval "${cmd}" >/dev/null 2>&1
 			res=$?
