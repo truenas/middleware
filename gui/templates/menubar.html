@@ -1,6 +1,12 @@
 <div data-dojo-type="dijit.MenuBar" id="navMenu">
   {% if user.is_authenticated %}
 
+  <div id="menuBar_Account" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openAccount();" class="menu_icon">
+    <img src="{{ STATIC_URL }}images/ui/menu/account.png" />
+    <br />
+    <span>{% trans "Account" %}</span>
+  </div>
+
   <div id="menuBar_System" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openSystem();" class="menu_icon">
     <img src="{{ STATIC_URL }}images/ui/menu/system.png" />
     <br />
@@ -64,12 +70,6 @@
     <img src="{{ STATIC_URL }}images/ui/menu/help.png" />
     <br />
     <span>{% trans "Help" %}</span>
-  </div>
-
-  <div id="menuBar_Account" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openAccount();" class="menu_icon right">
-    <img src="{{ STATIC_URL }}images/ui/menu/account.png" />
-    <br />
-    <span>{% trans "Account" %}</span>
   </div>
 
   <div id="menuBar_DirectoryService" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openDirectoryService();" class="menu_icon right">
