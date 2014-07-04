@@ -247,7 +247,7 @@ class NavTree(object):
             name=_('Display System Processes'),
             action='displayprocs',
             icon='TopIcon',
-            order=997,
+            order=985,
         )
         tree_roots.register(nav)
 
@@ -256,7 +256,16 @@ class NavTree(object):
             name=_('Shell'),
             icon='ShellIcon',
             action='shell',
-            order=998,
+            order=990,
+        )
+        tree_roots.register(nav)
+
+        nav = TreeRoot(
+            'logout',
+            name=_('Log Out'),
+            icon='LogOutIcon',
+            action='logout',
+            order=995,
         )
         tree_roots.register(nav)
 

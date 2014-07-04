@@ -1643,8 +1643,8 @@ require([
                 Menu.openAccount(item.gname);
             } else if(item.type == 'iscsi') {
                 Menu.openISCSI(item.gname);
-            } else if(item.type == 'logout') {
-                dWindow.location='/account/logout/';
+            } else if(item.action == 'logout') {
+                window.location='/account/logout/';
             } else if(item.action == 'displayprocs') {
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {
