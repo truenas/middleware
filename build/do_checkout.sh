@@ -62,7 +62,7 @@ do_git_update()
 #                            this is on by default right now.
 # example:
 #
-#    generic_checkout_git FREEBSD "${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/src"
+#    generic_checkout_git FREEBSD "${AVATAR_ROOT}/FreeBSD/src"
 #
 # This will checkout into the top level the repo under $GIT_FREEBSD_REPO
 # into the directory FreeBSD/src under your build directory.
@@ -181,8 +181,10 @@ checkout_source()
         generic_checkout_git ${repo}
     done
 
+
+    mkdir -p ${AVATAR_ROOT}/FreeBSD
     # Nuke newly created files to avoid build errors.
-    git_status_ok="${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.git_status_ok"
+    git_status_ok="${AVATAR_ROOT}/FreeBSD/.git_status_ok"
     rm -rf "$git_status_ok"
     (
      cd $GIT_FREEBSD_CHECKOUT_PATH && git status --porcelain
@@ -190,7 +192,7 @@ checkout_source()
     awk '$1 == "??" { print $2 }' < "$git_status_ok" |  xargs rm -Rf
 
     # Mark git clone/pull as being done already.
-    echo "$NANO_LABEL" > ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled
+    echo "$NANO_LABEL" > ${AVATAR_ROOT}/FreeBSD/.pulled
 }
 
 main()
