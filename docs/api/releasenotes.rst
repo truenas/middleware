@@ -12,6 +12,10 @@ Resources
 
  - LLDP service settings: /api/v1.0/services/lldp/
  - System version: /api/v1.0/system/version/
+ - Jails Configuration settings: /api/v1.0/jails/configuration/
+ - Jails: /api/v1.0/jails/jails/
+ - Jails Mountpoints: /api/v1.0/jails/mountpoints/
+ - Jails Templates: /api/v1.0/jails/templates/
 
 * Endpoints added to existing resources
 
