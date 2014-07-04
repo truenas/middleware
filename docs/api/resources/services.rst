@@ -343,7 +343,6 @@ List resource
                 "cifs_srv_loglevel": "0",
                 "cifs_srv_guest": "nobody",
                 "cifs_srv_filemask": "",
-                "cifs_srv_easupport": false,
                 "cifs_srv_smb_options": "",
                 "id": 1,
                 "cifs_srv_aio_ws": 4096,
@@ -353,7 +352,6 @@ List resource
                 "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
                 "cifs_srv_homedir": null,
-                "cifs_srv_dosattr": true,
                 "cifs_srv_homedir_browseable_enable": false,
                 "cifs_srv_homedir_enable": false,
                 "cifs_srv_aio_enable": false,
@@ -390,7 +388,7 @@ Update resource
       Content-Type: application/json
 
         {
-                "cifs_srv_dosattr": false
+                "cifs_srv_hostlookup": false
         }
 
    **Example response**:
@@ -407,7 +405,6 @@ Update resource
                 "cifs_srv_loglevel": "0",
                 "cifs_srv_guest": "nobody",
                 "cifs_srv_filemask": "",
-                "cifs_srv_easupport": false,
                 "cifs_srv_smb_options": "",
                 "id": 1,
                 "cifs_srv_aio_ws": 4096,
@@ -417,7 +414,6 @@ Update resource
                 "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
                 "cifs_srv_homedir": null,
-                "cifs_srv_dosattr": false,
                 "cifs_srv_homedir_browseable_enable": false,
                 "cifs_srv_homedir_enable": false,
                 "cifs_srv_aio_enable": false,
@@ -447,8 +443,6 @@ Update resource
    :json string cifs_srv_guest: guest account
    :json string cifs_srv_filemask: file mask
    :json string cifs_srv_dirmask: directory mask
-   :json boolean cifs_srv_easupport: ea support
-   :json boolean cifs_srv_dosattr: support dos file attributes
    :json boolean cifs_srv_nullpw: allow empty password
    :json boolean cifs_srv_allow_execute_always:  controls the behaviour of smbd(8) when receiving a protocol request of "open for execution"
    :json string cifs_srv_max_protocol: highest protocol version that will be supported by the server
