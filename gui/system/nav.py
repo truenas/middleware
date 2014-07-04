@@ -21,6 +21,7 @@ class Advanced(TreeNode):
     name = _(u'Advanced')
     icon = u"SettingsIcon"
     type = 'opensystem'
+    order = -90
 
 
 class Email(TreeNode):
@@ -29,6 +30,7 @@ class Email(TreeNode):
     name = _(u'Email')
     icon = 'EmailIcon'
     type = 'opensystem'
+    order = -85
 
 
 class General(TreeNode):
@@ -37,6 +39,7 @@ class General(TreeNode):
     name = _(u'General')
     icon = u"SettingsIcon"
     type = 'opensystem'
+    order = -95
 
 
 class Info(TreeNode):
@@ -45,6 +48,7 @@ class Info(TreeNode):
     name = _(u'Information')
     icon = u"InfoIcon"
     type = 'opensystem'
+    order = -100
 
 
 class SystemDataset(TreeNode):
@@ -53,6 +57,7 @@ class SystemDataset(TreeNode):
     name = _(u'System Dataset')
     icon = u"SysDatasetIcon"
     type = 'opensystem'
+    order = -80
 
 
 class TunableView(TreeNode):
