@@ -31,6 +31,7 @@ Fields
  - service Dynamic DNS resource: ddns_ipserver
  - storage Replication resource: repl_compression
  - system Settings resource: stg_guihttpsredirect
+ - system Tunable resource: tun_type
  - directory service Active Directory resource: ad_keytab, ad_use_keytab
 
 
@@ -41,6 +42,7 @@ Backwardly incompatible changes
 
  - Admin Password resource has been removed: /api/v1.0/system/adminpassword/ . It has been replaced by users passwords in 9.2.
  - Admin User resource has been removed: /api/v1.0/system/adminuser/ . Since 9.2 the "root" user is the admin.
+ - Sysctl resource has been removed: /api/v1.0/system/sysctl/ . Sysctl has been merged into /api/v1.0/system/tunable/
 
 * Fields removed
 
