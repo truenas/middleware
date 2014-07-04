@@ -151,6 +151,7 @@ class Volumes(TreeNode):
     gname = 'Volumes'
     name = _(u'Volumes')
     icon = u'VolumesIcon'
+    order = -1
 
     def _gen_dataset(self, node, dataset):
         if dataset.name.startswith('.'):
