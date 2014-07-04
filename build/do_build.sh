@@ -25,9 +25,6 @@ main()
 {
 	local _nanobsd="${AVATAR_ROOT}/build/nanobsd/nanobsd.sh"
 
-	export AVATAR_COMPONENT=os-base
-	export NANO_OBJ=${AVATAR_ROOT}/${AVATAR_COMPONENT}/${NANO_ARCH}
-
 	local _cmd="${_nanobsd} -c ${NANO_CFG_BASE}/${AVATAR_COMPONENT} ${NANO_ARGS} -w -k -j ${MAKE_JOBS}"
 	echo ${_cmd}
 
