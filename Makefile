@@ -47,26 +47,14 @@ update: git-verify
 clean:
 	${ENV_SETUP} build/build_cleanup.py
 	rm -rf ${NANO_LABEL}-${VERSION}-* release.build.log
-.if defined(USE_NEW_LAYOUT)
-	rm -rf objs
-.else
-	rm -rf FreeBSD nas_source
-.endif
+	rm -rf objs os-base
 
 clean-packages:
-.if defined(USE_NEW_LAYOUT)
 	find objs/os-base/*/ports -type f -delete
-.else
-	find os-base/*/ports -type f -delete
-.endif
 
 clean-package:
 .if defined(p)
-.if defined(USE_NEW_LAYOUT)
 	find objs/os-base/*/ports -name "${p}*" | xargs rm -fr
-.else
-	find os-base/*/ports -name "${p}*" | xargs rm -fr
-.endif
 .else
 	@echo "Clean a single package from object tree"
 	@echo "" 
@@ -81,9 +69,7 @@ clean-ui-package:
 	${MAKE} clean-package p=freenas-ui
 
 distclean: clean
-.if defined(USE_NEW_LAYOUT)
-	rm -fr extra-src
-.endif
+	rm -fr FreeBSD nas_source
 
 save-build-env:
 	${ENV_SETUP} build/save_build.sh
@@ -106,12 +92,8 @@ cdrom:
 truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
 	env NANO_LABEL=TrueNAS script -a ${RELEASE_LOGFILE} ${MAKE} build
-	mkdir -p TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
-.if defined(USE_NEW_LAYOUT)
-	mv objs/os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
-.else
-	mv os-base/amd64/TrueNAS-${VERSION}-* TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
-.endif
+	mkdir -p objs/TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+	mv objs/os-base/amd64/TrueNAS-${VERSION}-* objs/TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
 
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com
