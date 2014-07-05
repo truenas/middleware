@@ -10,11 +10,7 @@ TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
 
-if [ "$USE_NEW_LAYOUT" ]; then
-	OBJ=objs
-else
-	OBJ=
-fi
+OBJ=objs
 
 TARBALL="${TOP}/${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}.tar"
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
