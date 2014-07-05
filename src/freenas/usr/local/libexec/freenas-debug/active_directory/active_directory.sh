@@ -71,7 +71,6 @@ active_directory_func()
 	read workgroup netbiosname adminname domainname dcname unix trusted <<-__AD__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		ad_workgroup,
 		ad_netbiosname,
 		ad_adminname,
 		ad_domainname,
@@ -80,7 +79,7 @@ active_directory_func()
 		ad_allow_trusted_doms
 
 	FROM
-		services_activedirectory
+		directoryservice_activedirectory
 
 	ORDER BY
 		-id

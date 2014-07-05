@@ -96,10 +96,10 @@ get_trusted()
 		ad_allow_trusted_doms
 
 	FROM
-		services_activedirectory
+		directoryservice_activedirectory
 
 	ORDER BY
-		-services_activedirectory.id
+		-directoryservice_activedirectory.id
 
 	LIMIT 1;
 	"
@@ -112,10 +112,10 @@ get_workgroup()
 		ad_workgroup
 
 	FROM
-		services_activedirectory
+		directoryservice_activedirectory
 
 	ORDER BY
-		-services_activedirectory.id
+		-directoryservice_activedirectory.id
 
 	LIMIT 1;
 	"
@@ -144,7 +144,7 @@ has_unix_extensions()
 		ad_unix_extensions
 
 	FROM
-		services_activedirectory
+		directoryservice_activedirectory
 
 	ORDER BY
 		-id

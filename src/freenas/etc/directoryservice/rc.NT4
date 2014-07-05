@@ -358,7 +358,7 @@ NT4_load_database_values()
 		nt4_adminpw
 
 	FROM
-		services_nt4
+		directoryservice_nt4
 
 	ORDER BY
 		-id
@@ -398,4 +398,45 @@ NT4_init()
 	fi
 
 	return 0
+}
+
+nt4_enabled()
+{
+	enabled="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		nt4_enable
+	FROM
+		directoryservice_nt4
+	ORDER BY
+		-id
+	LIMIT 1")"
+
+	if [ "${enabled}" = "1" ]
+	then
+		return 0
+	elif [ "${enabled}"  = "0" ]
+	then
+		return 1
+	fi
+
+	return 2
+}
+
+nt4_set()
+{
+	local enable="${1}"
+
+	if [ -z "${enable}" ]
+	then
+		return 0
+	fi
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	UPDATE
+		directoryservice_nt4
+	SET
+		nt4_enable = ${enable}
+	"
+
+	return $?
 }

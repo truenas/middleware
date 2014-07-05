@@ -19,7 +19,7 @@ generate_crontab()
 	cp /conf/base/etc/crontab /etc/crontab
 	# Generate cronjobs
 	${FREENAS_SQLITE_CMD} -separator "" ${FREENAS_CONFIG} \
-	"SELECT $sf FROM system_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
+	"SELECT $sf FROM tasks_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
 	while eval read -r $f; do
 		# Note that echo -e will do the wrong thing with certain characters. Read the commit
 		# history for more details.
@@ -39,7 +39,7 @@ generate_crontab()
 	local rsync_command
 	# Generate rsync
 	${FREENAS_SQLITE_CMD} -separator "" ${FREENAS_CONFIG} \
-	"SELECT $sf FROM system_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
+	"SELECT $sf FROM tasks_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
 	while eval read -r $f; do
 		# FIXME: this is time consuming, ideally whole ix-crontab should be rewritten in python
 		rsync_command=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py rsync_command ${id})

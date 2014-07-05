@@ -63,7 +63,7 @@ def ping_host(host, ping6=False):
 
     cmd = "/sbin/ping -q -t %d -o %s" % (tseconds, host)
     if ping6:
-        cmd = "/sbin/ping6 -q -o %s" % host
+        cmd = "/sbin/ping6 -q -o %s -c 1" % host
 
     p = pipeopen(cmd)
 
@@ -78,7 +78,10 @@ def ping_host(host, ping6=False):
         t = time.time()
 
     if p.returncode != 0:
-        p.terminate()
+        try:
+            p.terminate()
+        except:
+            pass
         return False
 
     return True

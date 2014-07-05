@@ -16,14 +16,7 @@ is_truenas() {
 # The FreeNAS source and build tree is rooted here.
 : ${AVATAR_ROOT=$(pwd)}
 
-## XX: Remove conditional when we switch to USE_NEW_LAYOUT
-if [ "$USE_NEW_LAYOUT" ] ; then
-: ${EXTRA_SRC=extra-src}
-else
-: ${EXTRA_SRC=}
-fi
-
-: ${TRUENAS_COMPONENTS_ROOT=${AVATAR_ROOT}/${EXTRA_SRC}/nas_source/truenas-components}
+: ${TRUENAS_COMPONENTS_ROOT=${AVATAR_ROOT}/nas_source/truenas-components}
 
 # The website for this avatar project.
 : ${AVATAR_PROJECT_SITE=http://www.freenas.org}
@@ -77,13 +70,13 @@ fi
 NANO_CFG_BASE=$AVATAR_ROOT/build/nanobsd-cfg
 
 # Where the FreeBSD ports tree lives.
-NANO_PORTS="$AVATAR_ROOT/${EXTRA_SRC}/FreeBSD/ports"
+NANO_PORTS="$AVATAR_ROOT/FreeBSD/ports"
 
 # Where our private ports tree lives.
 NAS_PORTS="$AVATAR_ROOT/nas_ports"
 
 # Where the FreeBSD source tree lives.
-NANO_SRC="$AVATAR_ROOT/${EXTRA_SRC}/FreeBSD/src"
+NANO_SRC="$AVATAR_ROOT/FreeBSD/src"
 
 # Where the nanobsd tools live.
 NANO_TOOLS="$AVATAR_ROOT/build/nanobsd"

@@ -156,7 +156,6 @@ class Migration(DataMigration):
         u'system.settings': {
             'Meta': {'object_name': 'Settings'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'stg_directoryservice': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'stg_guiaddress': ('django.db.models.fields.CharField', [], {'default': "'0.0.0.0'", 'max_length': '120', 'blank': 'True'}),
             'stg_guihttpsport': ('django.db.models.fields.IntegerField', [], {'default': '443'}),
             'stg_guihttpsredirect': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),

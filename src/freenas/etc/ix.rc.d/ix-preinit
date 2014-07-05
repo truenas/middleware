@@ -17,7 +17,7 @@ do_preinit()
 	local sf=$(var_to_sf $f)
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT $sf FROM system_initshutdown WHERE ini_when = 'preinit' ORDER BY id" | \
+	"SELECT $sf FROM tasks_initshutdown WHERE ini_when = 'preinit' ORDER BY id" | \
 	while eval read -r $f; do
 		if [ "${ini_type}" = "command" ]; then
 			eval ${ini_command}

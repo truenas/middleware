@@ -9,18 +9,19 @@
 <script type="text/javascript">
 menuSetURLs = function() {
 
+    Menu.urlAccount = '{% url "account_home" %}';
+    Menu.urlDirectoryService = '{% url "directoryservice_home" %}';
+    Menu.urlISCSI = '{% url "services_iscsi" %}';
+    Menu.urlJails = '{% url "jails_home" %}';
+    Menu.urlNetwork = '{% url "network_home" %}';
+    Menu.urlPlugins = '{% url "plugins_home" %}';
+    Menu.urlReporting = '{% url "system_reporting" %}';
+    Menu.urlServices = '{% url "services_home" %}';
+    Menu.urlSharing = '{% url "sharing_home" %}';
+    Menu.urlStorage = '{% url "storage_home" %}';
+    Menu.urlSupport = '{% url "support_home" %}';
     Menu.urlSystem = '{% url "system_home" %}';
     Menu.urlTasks = '{% url "tasks_home" %}';
-    Menu.urlReporting = '{% url "system_reporting" %}';
-    Menu.urlNetwork = '{% url "network_home" %}';
-    Menu.urlSharing = '{% url "sharing_home" %}';
-    Menu.urlServices = '{% url "services_home" %}';
-    Menu.urlPlugins = '{% url "plugins_home" %}';
-    Menu.urlAccount = '{% url "account_home" %}';
-    Menu.urlStorage = '{% url "storage_home" %}';
-    Menu.urlJails = '{% url "jails_home" %}';
-    Menu.urlISCSI = '{% url "services_iscsi" %}';
-    Menu.urlSupport = '{% url "support_home" %}';
     Menu.urlTree = '{% url "freeadmin_menu" %}';
 
 }

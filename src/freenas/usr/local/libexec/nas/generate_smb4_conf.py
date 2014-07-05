@@ -27,6 +27,10 @@ from freenasUI.account.models import (
     bsdGroups,
     bsdGroupMembership
 )
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FLAGS_DBINIT
+)
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
@@ -35,15 +39,17 @@ from freenasUI.common.system import (
     ldap_enabled,
     nt4_enabled
 )
-from freenasUI.middleware.notifier import notifier
-from freenasUI.services.models import (
+from freenasUI.directoryservice.models import (
     ActiveDirectory,
-    CIFS,
-    DomainController,
     LDAP,
     NT4
 )
+from freenasUI.middleware.notifier import notifier
 
+from freenasUI.services.models import (
+    CIFS,
+    DomainController
+)
 from freenasUI.sharing.models import CIFS_Share
 from freenasUI.storage.models import Task
 
@@ -202,8 +208,8 @@ def set_ldap_password():
     except:
         return
 
-    if ldap.ldap_rootbindpw:
-        p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_rootbindpw)
+    if ldap.ldap_bindpw:
+        p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % ldap.ldap_bindpw)
         out = p.communicate()
         if out and out[1]:
             for line in out[1].split('\n'):
@@ -227,7 +233,7 @@ def add_ldap_conf(smb4_conf):
         )
     )
 
-    confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_rootbasedn)
+    confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_binddn)
     confset2(smb4_conf, "ldap suffix = %s", ldap.ldap_basedn)
     confset2(smb4_conf, "ldap user suffix = %s", ldap.ldap_usersuffix)
     confset2(smb4_conf, "ldap group suffix = %s", ldap.ldap_groupsuffix)
@@ -267,8 +273,15 @@ def add_activedirectory_conf(smb4_conf):
     except:
         pass
 
+    ad_workgroup = None
+    try:
+        fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+        ad_workgroup = fad.netbiosname.upper()
+    except:
+        return
+
     confset2(smb4_conf, "netbios name = %s", ad.ad_netbiosname.upper())
-    confset2(smb4_conf, "workgroup = %s", ad.ad_workgroup.upper())
+    confset2(smb4_conf, "workgroup = %s", ad_workgroup)
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
     confset1(smb4_conf, "security = ADS")
     confset1(smb4_conf, "client use spnego = yes")
@@ -294,15 +307,15 @@ def add_activedirectory_conf(smb4_conf):
     if ad.ad_unix_extensions:
         confset1(smb4_conf, "winbind nss info = rfc2307")
 
-        confset2(smb4_conf, "idmap config %s: backend = ad", ad.ad_workgroup)
-        confset2(smb4_conf, "idmap config %s: schema_mode = rfc2307", ad.ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: backend = ad", ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: schema_mode = rfc2307", ad_workgroup)
         confset1(smb4_conf, "idmap config %s: range = %d-%d" %(
-            ad.ad_workgroup, ad_range_start, ad_range_end
+            ad_workgroup, ad_range_start, ad_range_end
         ))
     else:
-        confset2(smb4_conf, "idmap config %s: backend = rid", ad.ad_workgroup)
+        confset2(smb4_conf, "idmap config %s: backend = rid", ad_workgroup)
         confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
-            ad.ad_workgroup, rid_range_start, rid_range_end
+            ad_workgroup, rid_range_start, rid_range_end
         ))
 
     confset2(smb4_conf, "allow trusted domains = %s",

@@ -12,6 +12,7 @@ Contents:
    :glob:
    :maxdepth: 3
 
+   releasenotes
    authentication
    resources/index
 

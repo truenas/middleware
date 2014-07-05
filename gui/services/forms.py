@@ -45,7 +45,6 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
 from freenasUI.common.samba import (
     SAMBA_PROVISIONED_FILE,
     Samba4
@@ -55,7 +54,6 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Interfaces
 from freenasUI.services import models
-from freenasUI.services.directoryservice import DirectoryService
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, MountPoint, Disk
 from freenasUI.storage.widgets import UnixPermissionField
@@ -83,24 +81,6 @@ class servicesForm(ModelForm):
             obj.save()
             started = True
 
-        elif obj.srv_service == "directoryservice":
-            directoryservice = DirectoryService.objects.order_by("-id")[0]
-            for ds in directory_services:
-                if ds != directoryservice.svc:
-                    method = getattr(_notifier, "_started_%s" % ds)
-                    started = method()
-                    if started:
-                        _notifier.stop(ds)
-
-            if obj.srv_enable:
-                started = _notifier.start(directoryservice.svc)
-                if models.services.objects.get(srv_service='cifs').srv_enable:
-                    self.enabled_svcs.append('cifs')
-            else:
-                started = _notifier.stop(directoryservice.svc)
-                if not models.services.objects.get(srv_service='cifs').srv_enable:
-                    self.disabled_svcs.append('cifs')
-
         else:
             """
             Using rc.d restart verb and depend on rc_var service_enable
@@ -127,9 +107,7 @@ class servicesForm(ModelForm):
             if obj.srv_enable:
                 obj.srv_enable = False
                 obj.save()
-                if obj.srv_service == 'directoryservice':
-                    _notifier.stop(directoryservice.svc)
-                elif obj.srv_service == 'ups':
+                if obj.srv_service == 'ups':
                     _notifier.stop(obj.srv_service)
 
         return obj
@@ -710,215 +688,6 @@ class UPSForm(ModelForm):
             models.services.objects.get(srv_service='ups').srv_enable
         ):
             raise ServiceFailed("ups", _("The UPS service failed to reload."))
-
-
-class NT4(ModelForm):
-    nt4_adminpw2 = forms.CharField(
-        max_length=50,
-        label=_("Confirm Administrator Password"),
-        widget=forms.widgets.PasswordInput(),
-        required=False,
-    )
-
-    class Meta:
-        fields = '__all__'
-        model = models.NT4
-        widgets = {
-            'nt4_adminpw': forms.widgets.PasswordInput(render_value=False),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(NT4, self).__init__(*args, **kwargs)
-        if self.instance.nt4_adminpw:
-            self.fields['nt4_adminpw'].required = False
-        if self._api is True:
-            del self.fields['nt4_adminpw2']
-
-    def clean_nt4_adminpw2(self):
-        password1 = self.cleaned_data.get("nt4_adminpw")
-        password2 = self.cleaned_data.get("nt4_adminpw2")
-        if password1 != password2:
-            raise forms.ValidationError(
-                _("The two password fields didn't match.")
-            )
-        return password2
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("nt4_adminpw"):
-            cdata['nt4_adminpw'] = self.instance.nt4_adminpw
-        return cdata
-
-
-class ActiveDirectoryForm(ModelForm):
-    ad_certfile = FileField(label=_("Certificate"), required=False)
-    ad_keytab = FileField(label=_("Kerberos keytab"), required=False)
-
-    class Meta:
-        fields = '__all__'
-        model = models.ActiveDirectory
-        widgets = {
-            'ad_bindpw': forms.widgets.PasswordInput(render_value=False),
-        }
-
-    def __original_save(self):
-        for name in (
-            'ad_domainname',
-            'ad_netbiosname',
-            'ad_allow_trusted_doms',
-            'ad_use_default_domain',
-            'ad_use_keytab',
-            'ad_keytab',
-            'ad_unix_extensions',
-            'ad_verbose_logging',
-            'ad_bindname',
-            'ad_bindpw'
-        ):
-            setattr(
-                self.instance,
-                "_original_%s" % name,
-                getattr(self.instance, name)
-            )
-
-    def __original_changed(self):
-        if self.instance._original_ad_domainname != self.instance.ad_domainname:
-            return True
-        if self.instance._original_ad_netbiosname != self.instance.ad_netbiosname:
-            return True
-        if self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms:
-            return True
-        if self.instance._original_ad_use_default_domain != self.instance.ad_use_default_domain:
-            return True
-        if self.instance._original_ad_unix_extensions != self.instance.ad_unix_extensions:
-            return True
-        if self.instance._original_ad_verbose_logging != self.instance.ad_verbose_logging:
-            return True
-        if self.instance._original_ad_bindname != self.instance.ad_bindname:
-            return True
-        if self.instance._original_ad_bindpw != self.instance.ad_bindpw:
-            return True
-        if self.instance._original_ad_keytab != self.instance.ad_keytab:
-            return True
-        if self.instance._original_ad_use_keytab != self.instance.ad_use_keytab:
-            return True
-        return False
-
-    def __init__(self, *args, **kwargs):
-        super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
-        if self.instance.ad_bindpw:
-            self.fields['ad_bindpw'].required = False
-        self.__original_save()
-
-    def clean_ad_keytab(self):
-        filename = "/data/krb5.keytab"
-
-        ad_keytab = self.cleaned_data.get("ad_keytab", None)
-        if ad_keytab and ad_keytab != filename:
-            if hasattr(ad_keytab, 'temporary_file_path'):
-                shutil.move(ad_keytab.temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as f:
-                    for c in ad_keytab.chunks():
-                        f.write(c)
-                    f.close()
-
-            os.chmod(filename, 0400)
-            self.instance.ad_keytab = filename
-
-        return filename
-
-    def clean_ad_certfile(self):
-        filename = "/data/activedirectory_certfile"
-
-        ad_certfile = self.cleaned_data.get("ad_certfile", None)
-        if ad_certfile and ad_certfile != filename:  
-            if hasattr(ad_certfile, 'temporary_file_path'):
-                shutil.move(ad_certfile.temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as f:
-                    for c in ad_certfile.chunks():
-                        f.write(c)
-                    f.close()
-
-            os.chmod(filename, 0400)
-            self.instance.ad_certfile = filename
-
-        return filename
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("ad_bindpw"):
-            cdata['ad_bindpw'] = self.instance.ad_bindpw
-
-        if self.instance.ad_use_keytab == False:
-            bindname = cdata.get("ad_bindname")
-            bindpw = cdata.get("ad_bindpw")
-            domain = cdata.get("ad_domainname")
-            binddn = "%s@%s" % (bindname, domain)
-
-            ret = FreeNAS_ActiveDirectory.validate_credentials(
-                domain, binddn=binddn, bindpw=bindpw
-            )
-            if ret == False:
-                raise forms.ValidationError(
-                    _("Incorrect password.")
-                )
-
-        return cdata
-
-    def save(self):
-        super(ActiveDirectoryForm, self).save()
-        if self.__original_changed():
-            notifier()._clear_activedirectory_config()
-        started = notifier().started("activedirectory")
-        if started is True and models.services.objects.get(
-            srv_service='directoryservice').srv_enable:
-            started = notifier().restart("activedirectory")
-        if started is False and models.services.objects.get(
-            srv_service='directoryservice').srv_enable:
-            raise ServiceFailed("activedirectory",
-                _("The activedirectory service failed to reload."))
-
-
-class NIS(ModelForm):
-    class Meta:
-        fields = '__all__'
-        model = models.NIS
-
-
-class LDAPForm(ModelForm):
-    ldap_tls_cacertfile = FileField(label=_("Certificate"), required=False)
-
-    class Meta:
-        fields = '__all__'
-        model = models.LDAP
-        widgets = {
-            'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True),
-        }
-
-    def clean_ldap_tls_cacertfile(self):
-        filename = "/data/ldap_tls_cacertfile"
-
-        ldap_tls_cacertfile = self.cleaned_data.get("ldap_tls_cacertfile", None)
-        if ldap_tls_cacertfile and ldap_tls_cacertfile != filename:  
-            if hasattr(ldap_tls_cacertfile, 'temporary_file_path'):
-                shutil.move(ldap_tls_cacertfile.temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as f:
-                    for c in ldap_tls_cacertfile.chunks():
-                        f.write(c)
-                    f.close()
-
-            os.chmod(filename, 0400)
-            self.instance.ldap_tls_cacertfile = filename
-
-        return filename
-
-    def save(self):
-        super(LDAPForm, self).save()
-        started = notifier().restart("ldap")
-        if started is False and models.services.objects.get(srv_service='directoryservice').srv_enable:
-            raise ServiceFailed("ldap", _("The ldap service failed to reload."))
 
 
 class LLDPForm(ModelForm):

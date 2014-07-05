@@ -15,7 +15,7 @@ check_sandbox()
     local status=0
     local repo_name
 
-    if [ ! -e ${AVATAR_ROOT}/${EXTRA_SRC}/FreeBSD/.pulled ]; then
+    if [ ! -e ${AVATAR_ROOT}/FreeBSD/.pulled ]; then
         status=1
     fi
 

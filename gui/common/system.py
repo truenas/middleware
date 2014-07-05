@@ -321,33 +321,20 @@ def service_enabled(name):
     return enabled
 
 
-def get_directoryservice():
-    directoryservice = None
-
+def ldap_enabled():
     db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
     h = sqlite3.connect(db)
     c = h.cursor()
 
-    sql = "select stg_directoryservice from system_settings"
+    enabled = False
+    sql = "select ldap_enable from directoryservice_ldap"
     c.execute(sql)
     row = c.fetchone()
-    if row and row[0]:
-        directoryservice = row[0]
+    if row and row[0] != 0:
+        enabled = True
 
     c.close()
     h.close()
-
-    return directoryservice
-
-
-def ldap_enabled():
-    enabled = False
-
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'ldap'
-    ):
-        enabled = True
 
     return enabled
 
@@ -357,7 +344,7 @@ def ldap_objects():
     h.row_factory = sqlite3.Row
     c = h.cursor()
 
-    results = c.execute("SELECT * FROM services_ldap ORDER BY -id")
+    results = c.execute("SELECT * FROM directoryservice_ldap ORDER BY -id")
 
     objects = []
     for row in results:
@@ -372,13 +359,19 @@ def ldap_objects():
 
 
 def activedirectory_enabled():
-    enabled = False
+    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    h = sqlite3.connect(db)
+    c = h.cursor()
 
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'activedirectory'
-    ):
+    enabled = False
+    sql = "select ad_enable from directoryservice_activedirectory"
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0] != 0:
         enabled = True
+
+    c.close()
+    h.close()
 
     return enabled
 
@@ -391,7 +384,7 @@ def activedirectory_has_unix_extensions():
     c = h.cursor()
 
     c.execute("SELECT ad_unix_extensions " \
-        "FROM services_activedirectory ORDER BY -id LIMIT 1")
+        "FROM directoryservice_activedirectory ORDER BY -id LIMIT 1")
     row = c.fetchone()
 
     try:
@@ -411,7 +404,7 @@ def activedirectory_objects():
     h.row_factory = sqlite3.Row
     c = h.cursor()
 
-    results = c.execute("SELECT * FROM services_activedirectory ORDER BY -id")
+    results = c.execute("SELECT * FROM directoryservice_activedirectory ORDER BY -id")
 
     objects = []
     for row in results:
@@ -426,15 +419,7 @@ def activedirectory_objects():
 
 
 def domaincontroller_enabled():
-    enabled = False
-
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'domaincontroller'
-    ):
-        enabled = True
-
-    return enabled
+    return service_enabled('domaincontroller')
 
 
 def domaincontroller_objects():
@@ -457,13 +442,19 @@ def domaincontroller_objects():
 
 
 def nt4_enabled():
-    enabled = False
+    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    h = sqlite3.connect(db)
+    c = h.cursor()
 
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'nt4'
-    ):
+    enabled = False
+    sql = "select nt4_enable from directoryservice_nt4"
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0] != 0:
         enabled = True
+
+    c.close()
+    h.close()
 
     return enabled
 
@@ -473,7 +464,7 @@ def nt4_objects():
     h.row_factory = sqlite3.Row
     c = h.cursor()
 
-    results = c.execute("SELECT * FROM services_nt4 ORDER BY -id")
+    results = c.execute("SELECT * FROM directoryservice_nt4 ORDER BY -id")
 
     objects = []
     for row in results:
@@ -488,13 +479,19 @@ def nt4_objects():
 
 
 def nis_enabled():
-    enabled = False
+    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    h = sqlite3.connect(db)
+    c = h.cursor()
 
-    if (
-        service_enabled('directoryservice') and
-        get_directoryservice() == 'nis'
-    ):
+    enabled = False
+    sql = "select nis_enable from directoryservice_nis"
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0] != 0:
         enabled = True
+
+    c.close()
+    h.close()
 
     return enabled
 
@@ -504,7 +501,7 @@ def nis_objects():
     h.row_factory = sqlite3.Row
     c = h.cursor()
 
-    results = c.execute("SELECT * FROM services_nis ORDER BY -id")
+    results = c.execute("SELECT * FROM directoryservice_nis ORDER BY -id")
 
     objects = []
     for row in results:
