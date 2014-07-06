@@ -255,6 +255,12 @@ disk_is_freenas()
         if [ -d /tmp/data_old/usr/local/fusionio ]; then
             cp -pR /tmp/data_old/usr/local/fusionio /tmp/
         fi
+	if [ -f /tmp/data_old/boot.config ]; then
+	    cp /tmp/data_old/boot.config /tmp/
+	fi
+	if [ -f /tmp/data_old/boot/loader.conf.local ]; then
+	    cp /tmp/data_old/boot/loader.conf.local /tmp/
+	fi
         umount /tmp/data_old
     fi
     rmdir /tmp/data_old
@@ -439,6 +445,12 @@ menu_install()
         if [ -d /tmp/fusionio ]; then
             cp -pR /tmp/fusionio /tmp/data/usr/local/
         fi
+	if [ -f /tmp/boot.config ]; then
+	    cp /tmp/boot.config /tmp/data/
+	fi
+	if [ -f /tmp/loader.conf.local ]; then
+	    cp /tmp/loader.conf.local /tmp/data/boot/
+	fi
 
         if is_truenas ; then
             install_worker.sh -D /tmp/data -m / install

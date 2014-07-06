@@ -77,6 +77,9 @@ do
 	fi
 done
 cp /boot/loader.conf.local ${tmpdir}/boot/loader.conf.local || true
+if [ -f /boot.config ]; then
+	cp /boot.config ${tmpdir}/
+fi
 
 umount $tmpdir
 trap - 1 2 15 EXIT
