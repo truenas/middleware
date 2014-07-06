@@ -52,4 +52,9 @@ menuentry "FreeNAS Installer" {
   kfreebsd_loadenv /boot/device.hints
   set kFreeBSD.vfs.root.mountfrom=cd9660:/dev/iso9660/%CDROM_LABEL%
   set kFreeBSD.xconsole=YES
+
+  # The following delay during mounting of root file
+  # system is needed because mounting of an IPMI CD-ROM
+  # sometimes slow.
+  set kFreeBSD.vfs.mountroot.timeout=180
 }
