@@ -39,6 +39,8 @@ clean:
 clean-packages:
 	find os-base -name "*.tbz" -delete
 
+distclean: clean
+
 save-build-env:
 	${ENV_SETUP} build/save_build.sh
 
