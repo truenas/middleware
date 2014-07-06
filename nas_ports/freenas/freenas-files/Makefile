@@ -117,6 +117,7 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/samba/samba-backtrace ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba/samba-backtrace
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/sas2flash ${STAGEDIR}/${PREFIX}/usr/local/sbin/sas2flash
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/save_rrds.sh ${STAGEDIR}/${PREFIX}/usr/local/sbin/save_rrds.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/scrub ${STAGEDIR}/${PREFIX}/usr/local/sbin/scrub
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/www/data
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/www/data/django.fcgi ${STAGEDIR}/${PREFIX}/usr/local/www/data/django.fcgi
