@@ -45,7 +45,7 @@ BLACKLIST = [
     'NIS',
     'NT4'
 ]
-ORDER = 40
+ORDER = 25
 
 class ActiveDirectoryView(TreeNode):
 
