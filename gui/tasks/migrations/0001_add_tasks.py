@@ -7,6 +7,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ('system', '0073_auto__del_sysctl'),
+    )
+
     def forwards(self, orm):
         db.rename_table(
             u'system_cronjob',
