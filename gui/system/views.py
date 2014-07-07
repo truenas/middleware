@@ -43,7 +43,11 @@ from django.contrib.auth import login, get_backends
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import (
+    HttpResponse,
+    HttpResponseRedirect,
+    StreamingHttpResponse,
+)
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -175,7 +179,9 @@ def config_save(request):
     except:
         pass
 
-    response = HttpResponse(wrapper, content_type='application/octet-stream')
+    response = StreamingHttpResponse(
+        wrapper, content_type='application/octet-stream'
+    )
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = \
         'attachment; filename="%s-%s-%s.db"' % (
