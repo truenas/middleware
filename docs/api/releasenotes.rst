@@ -36,7 +36,10 @@ Fields
  - storage Replication resource: repl_compression
  - system Settings resource: stg_guihttpsredirect
  - system Tunable resource: tun_type
- - directory service Active Directory resource: ad_keytab, ad_use_keytab
+ - directory service ActiveDirectory resource: ad_certfile, ad_enable, ad_keytab, ad_ssl, ad_use_keytab
+ - directory service LDAP resource: ldap_binddn, ldap_enable
+ - directory service NIS resource: nis_enable
+ - directory service NT4 resource: nt4_enable
 
 
 Backwardly incompatible changes
@@ -52,6 +55,10 @@ Backwardly incompatible changes
 
  - Active Directory resource: ad_workgroup
  - Settings resource: stg_directoryservice
+
+* Fields renamed
+
+ - directory service LDAP resource: ldap_rootbasedn -> ldap_basedn, ldap_rootbindpw -> ldap_bindpw, ldap_tls_cacertfile -> ldap_certfile
 
 * Resources renamed
 
