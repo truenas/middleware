@@ -59,3 +59,7 @@ Backwardly incompatible changes
  - InitShutdown resource moved from /api/v1.0/system/initshutdown/ to /api/v1.0/tasks/initshutdown/
  - Rsync resource moved from /api/v1.0/system/rsync/ to /api/v1.0/tasks/rsync/
  - SMARTTest resource moved from /api/v1.0/system/smarttest/ to /api/v1.0/tasks/smarttest/
+ - ActiveDirectory resourced move from /api/v1.0/services/activedirectory/ to /api/v1.0/directoryservice/activedirectory/
+ - LDAP resourced move from /api/v1.0/services/ldap/ to /api/v1.0/directoryservice/ldap/
+ - NIS resourced move from /api/v1.0/services/nis/ to /api/v1.0/directoryservice/nis/
+ - NT4 resourced move from /api/v1.0/services/nt4/ to /api/v1.0/directoryservice/nt4/
