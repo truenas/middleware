@@ -34,6 +34,9 @@ List resource
       Content-Type: application/json
 
         {
+                "ad_enable": false,
+                "ad_certfile": "",
+                "ad_ssl": "off",
                 "ad_gcname": "",
                 "ad_keytab": "",
                 "ad_use_keytab": false,
@@ -87,6 +90,9 @@ Update resource
       Content-Type: application/json
 
         {
+                "ad_enable": false,
+                "ad_certfile": "",
+                "ad_ssl": "off",
                 "ad_gcname": "",
                 "ad_keytab": "",
                 "ad_use_keytab": false,
@@ -106,6 +112,9 @@ Update resource
                 "ad_netbiosname": "mynas"
         }
 
+   :json string ad_enable: enable active directory
+   :json string ad_certfile: ssl certificate
+   :json string ad_ssl: encryption mode (on/off/start_tls)
    :json string ad_domainname: domain name
    :json string ad_netbiosname: system hostname
    :json string ad_bindpw: domain account password
@@ -187,34 +196,34 @@ Update resource
 
         {
                 "ldap_hostname": "ldaphostname",
-                "ldap_tls_cacertfile": "",
                 "ldap_groupsuffix": "",
-                "ldap_rootbindpw": "",
-                "ldap_options": "ldap_version 3\ntimelimit 30\nbind_timelimit 30\nbind_policy soft\npam_ldap_attribute uid",
-                "ldap_pwencryption": "clear",
                 "ldap_passwordsuffix": "",
                 "ldap_anonbind": false,
                 "ldap_ssl": "off",
                 "ldap_machinesuffix": "",
                 "ldap_basedn": "dc=test,dc=org",
                 "ldap_usersuffix": "",
-                "ldap_rootbasedn": "",
+                "ldap_basedn": "",
+                "ldap_bindpw": "",
+                "ldap_binddn": "",
+                "ldap_enable": false,
+                "ldap_certfile": "",
                 "id": 1
         }
 
    :json string ldap_hostname: name or IP address of the LDAP server
    :json string ldap_basedn: default base Distinguished Name (DN) to use for searches
    :json boolean ldap_anonbind: allow anonymous binding
-   :json string ldap_rootbasedn: distinguished name with which to bind to the directory server
-   :json string ldap_rootbindpw: credentials with which to bind
-   :json string ldap_pwencryption: clear, crypt, md5, nds, racf, ad, exop
+   :json string ldap_basedn: distinguished name with which to bind to the directory server
+   :json string ldap_bindpw: credentials with which to bind
+   :json string ldap_binddn: distinguished name with which to bind to the directory server
    :json string ldap_usersuffix: suffix that is used for users
    :json string ldap_groupsuffix: suffix that is used for groups
    :json string ldap_passwordsuffix: suffix that is used for password
    :json string ldap_machinesuffix: suffix that is used for machines
    :json string ldap_ssl: off, on, start_tls
-   :json string ldap_tls_cacertfile: contents of your self signed certificate
-   :json string ldap_options: parameters are added to ldap.conf
+   :json string ldap_certfile: contents of your self signed certificate
+   :json boolean ldap_enable: enable ldap directory service
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
@@ -252,6 +261,7 @@ List resource
                 "nis_secure_mode": false,
                 "nis_manycast": false,
                 "id": 1,
+                "nis_enable": false,
                 "nis_domain": ""
         }
 
@@ -290,6 +300,7 @@ Update resource
                 "nis_secure_mode": false,
                 "nis_manycast": false,
                 "id": 1,
+                "nis_enable": false,
                 "nis_domain": "nisdomain"
         }
 
@@ -297,6 +308,7 @@ Update resource
    :json string nis_servers: comma delimited list of NIS servers
    :json boolean nis_secure_mode: cause ypbind to run in secure mode
    :json boolean nis_manycast: cause ypbind to use "many-cast" instead of broadcast
+   :json boolean nis_enable: enable nis
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
@@ -335,6 +347,7 @@ List resource
                 "nt4_workgroup": "",
                 "nt4_netbiosname": "NAS",
                 "nt4_adminpw": "",
+                "nt4_enable": "false",
                 "id": 1
         }
 
@@ -361,7 +374,7 @@ Update resource
                 "nt4_dcname": "mydcname",
                 "nt4_workgroup": "WORKGROUP",
                 "nt4_netbiosname": "netbios",
-                "nt4_adminpw": "mypw",
+                "nt4_adminpw": "mypw"
         }
 
    **Example response**:
@@ -378,6 +391,7 @@ Update resource
                 "nt4_workgroup": "WORKGROUP",
                 "nt4_netbiosname": "netbios",
                 "nt4_adminpw": "mypw",
+                "nt4_enable": "false",
                 "id": 1
         }
 
@@ -386,6 +400,7 @@ Update resource
    :json string nt4_workgroup: workgroup or domain name in old format
    :json string nt4_adminname: domain Administrator account name
    :json string nt4_adminpw: domain Administrator account password
+   :json string nt4_enable: enable NT4
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
