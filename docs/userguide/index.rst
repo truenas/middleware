@@ -7137,7 +7137,8 @@ This section demonstrates how to start a FreeNAS® service then describes the av
 Control Services
 ~~~~~~~~~~~~~~~~
 
-Services → Control Services, shown in Figure 8.1a, allows you to quickly determine which services are currently running, to start and stop services, and to configure services. By default, all services (except for the S.M.A.R.T. service) are off until you start them.
+Services → Control Services, shown in Figure 8.1a, allows you to quickly determine which services are currently running, to start and stop services, and
+to configure services. By default, all services (except for the S.M.A.R.T. service) are off until you start them.
 
 Figure 8.1a: Control Services
 
@@ -7148,21 +7149,22 @@ A service is stopped if its icon is a red OFF. A service is running if its icon 
 
 To configure a service, click the wrench icon associated with the service or click the name of the service in the Services section of the tree menu.
 
-If a service does not start, go to System → Settings → Advanced and check the box “Show console messages in the footer”. Console messages will now show at the bottom of your browser. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy messages. Watch these messages for errors when you stop and start the problematic service.
+If a service does not start, go to System → Settings → Advanced and check the box “Show console messages in the footer”. Console messages will
+now show at the bottom of your browser. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to
+copy messages. Watch these messages for errors when you stop and start the problematic service.
 
 If you would like to read the system logs to get more information about a service failure, open
 `Shell <#1.9.2.Shell|outline>`_
-and type
-**more /var/log/messages**
-.
+and type **more /var/log/messages**.
 
 AFP
 ~~~
 
-The Apple Filing Protocol (AFP) is a network protocol that offers file services for Mac computers.
-Before configuring this service, you should first create your AFP Shares in Sharing →
+The Apple Filing Protocol (AFP) is a network protocol that offers file services for Mac computers. Before configuring this service, you should first create
+your AFP Shares in Sharing →
 `Apple (AFP) Shares <#1.7.1.Apple (AFP) Shares|outline>`_
-→ Add Apple (AFP) Share. After configuring this service, go to Services → Control Services to start the service. The AFP shares will not be available on the network if this service is not running.
+→ Add Apple (AFP) Share. After configuring this service, go to Services → Control Services to start the service. The AFP shares will not be available
+on the network if this service is not running.
 
 Starting this service will open the following ports on the FreeNAS® system:
 
@@ -7180,7 +7182,7 @@ Starting this service will open the following ports on the FreeNAS® system:
 
 Figure 8.2a shows the configuration options which are described in Table 8.2a.
 
-Figure 8.2a: AFP Configuration
+**Figure 8.2a: AFP Configuration**
 
 
 |100000000000028C0000015BBA05D342_png|
@@ -7211,26 +7213,23 @@ Figure 8.2a: AFP Configuration
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------------+
 
 
-When configuring home directories, it is recommended to create a dataset to hold the home directories which contains a child dataset for each user. As an example, create a dataset named
-*volume1/homedirs *
-and browse to this dataset when configuring the “Home directories” field of the AFP service. Then, as you create each user, first create a child dataset for that user. For example, create a dataset named
-*volume1/homedirs/user1*
-. When you create the
-*user1*
-user, browse to the
-*volume1/homedirs/user1 *
-dataset in the “Home Directory” field of the “Add New User” screen.
+When configuring home directories, it is recommended to create a dataset to hold the home directories which contains a child dataset for each user. As an
+example, create a dataset named *volume1/homedirs* and browse to this dataset when configuring the “Home directories” field of the AFP service. Then, as
+you create each user, first create a child dataset for that user. For example, create a dataset named *volume1/homedirs/user1*. When you create the
+*user1* user, browse to the
+*volume1/homedirs/user1* dataset in the “Home Directory” field of the “Add New User” screen.
 
 Troubleshooting
 ^^^^^^^^^^^^^^^
 
 If you receive a “Something wrong with the volume's CNID DB” error message, run the following command from
 `Shell <#1.9.2.Shell|outline>`_
-, replacing the path to the problematic AFP share:
+, replacing the path to the problematic AFP share::
 
-**dbd -rf /path/to/share**
+ dbd -rf /path/to/share
 
-This command may take a while, depending upon the size of the volume or dataset being shared. This command will wipe the CNID database and rebuild it from the CNIIDs stored in the AppleDouble files.
+This command may take a while, depending upon the size of the volume or dataset being shared. This command will wipe the CNID database and rebuild it from the
+CNIIDs stored in the AppleDouble files.
 
 CIFS
 ~~~~
@@ -7239,10 +7238,10 @@ The Common Internet File System (CIFS) is a network protocol that offers file se
 `CIFS client <http://www.samba.org/samba/GUI/>`_
 can also connect to CIFS shares. Before configuring this service, you should first create your CIFS shares in Sharing →
 `Windows (CIFS) Shares <#1.7.3.Windows (CIFS) Shares|outline>`_
-→ Add Windows (CIFS) Share. After configuring this service, go to Services → Control Services to start the service. The CIFS shares will not be available on the network if this service is not running.
+→ Add Windows (CIFS) Share. After configuring this service, go to Services → Control Services to start the service. The CIFS shares will not be
+available on the network if this service is not running.
 
-**NOTE:**
-after starting the CIFS service, it may take several minutes for the
+**NOTE:** after starting the CIFS service, it may take several minutes for the
 `master browser election <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/NetworkBrowsing.html#id2581357>`_
 to occur and for the FreeNAS® system to become available in Windows Explorer.
 
@@ -7268,11 +7267,7 @@ Figure 8.3a shows the configuration options which are described in Table 8.3a. T
 `smb.conf(5) <http://samba.org/samba/docs/man/manpages-3/smb.conf.5.html>`_
 .
 
-Figure
-8
-.
-3
-a: Configuring CIFS
+**Figure 8.3a: Configuring CIFS**
 
 
 
@@ -7283,9 +7278,8 @@ a: Configuring CIFS
 | Setting                          | Value          | Description                                                                                                                                                                                  |
 |                                  |                |                                                                                                                                                                                              |
 +==================================+================+==============================================================================================================================================================================================+
-| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the hostname of the FreeNAS® system; it                                                                                            |
+| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the hostname of the FreeNAS® system; it                                                                                           |
 |                                  |                | **must**                                                                                                                                                                                     |
-|                                  |                | ** **                                                                                                                                                                                        |
 |                                  |                | be different from the                                                                                                                                                                        |
 |                                  |                | *Workgroup*                                                                                                                                                                                  |
 |                                  |                | name                                                                                                                                                                                         |
@@ -7297,8 +7291,7 @@ a: Configuring CIFS
 | Description                      | string         | optional                                                                                                                                                                                     |
 |                                  |                |                                                                                                                                                                                              |
 +----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| DOS Charset                      | drop-down menu | the character set Samba uses when communicating with DOS and Windows 9x/M                                                                                                                    |
-|                                  |                | E                                                                                                                                                                                            |
+| DOS Charset                      | drop-down menu | the character set Samba uses when communicating with DOS and Windows 9x/ME                                                                                                                   |
 |                                  |                | clients; default is                                                                                                                                                                          |
 |                                  |                | *CP437*                                                                                                                                                                                      |
 |                                  |                |                                                                                                                                                                                              |
@@ -7321,8 +7314,8 @@ a: Configuring CIFS
 | Use syslog                       |                |                                                                                                                                                                                              |
 |                                  |                |                                                                                                                                                                                              |
 +----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Local Master                     | checkbox       | determines whether or not the FreeNAS® system participates in a browser election                                                                                                             |
-|                                  |                | ; should be disabled when network contains an AD or LDAP server and is not necessary if                                                                                                      |
+| Local Master                     | checkbox       | determines whether or not the FreeNAS® system participates in a browser election;                                                                                                           |
+|                                  |                | should be disabled when network contains an AD or LDAP server and is not necessary if                                                                                                        |
 |                                  |                | Vista or                                                                                                                                                                                     |
 |                                  |                | Windows                                                                                                                                                                                      |
 |                                  |                |                                                                                                                                                                                              |
@@ -7370,15 +7363,13 @@ a: Configuring CIFS
 |                                  |                | *smb.conf*                                                                                                                                                                                   |
 |                                  |                | ; for example,                                                                                                                                                                               |
 |                                  |                | **hide dot files = yes**                                                                                                                                                                     |
-|                                  |                |                                                                                                                                                                                              |
 |                                  |                | hides files beginning with a dot in home directories                                                                                                                                         |
 |                                  |                |                                                                                                                                                                                              |
 +----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Unix Extensions                  | checkbox       | allows non-Windows CIFS clients to access symbolic links and hard links, has no affect on Windows clients                                                                                    |
 |                                  |                |                                                                                                                                                                                              |
 +----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Zeroconf share discovery         | checkbox       | e                                                                                                                                                                                            |
-|                                  |                | nable if                                                                                                                                                                                     |
+| Zeroconf share discovery         | checkbox       | enable if                                                                                                                                                                                    |
 |                                  |                | Mac clients will be connecting to the CIFS share                                                                                                                                             |
 |                                  |                |                                                                                                                                                                                              |
 +----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -7393,52 +7384,48 @@ a: Configuring CIFS
 +----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-Beginning with FreeNAS® 8.0.3-RELEASE, changes to CIFS settings and CIFS shares take effect immediately. For previous versions, changes will not take effect until you manually stop and start the CIFS service.
+Beginning with FreeNAS® 8.0.3-RELEASE, changes to CIFS settings and CIFS shares take effect immediately. For previous versions, changes will not take effect
+until you manually stop and start the CIFS service.
 
 
-**NOTE:**
-do not set the
-*directory name cache size*
-as an auxiliary parameter. Due to differences in how Linux and BSD handle file descriptors, directory name caching is disabled on BSD systems in order to improve performance.
+**NOTE:** do not set the
+*directory name cache size* as an auxiliary parameter. Due to differences in how Linux and BSD handle file descriptors, directory name caching is disabled on
+BSD systems in order to improve performance.
 
 Troubleshooting Tips
 ^^^^^^^^^^^^^^^^^^^^
 
-Samba is single threaded, so CPU speed makes a big difference in CIFS performance. Your typical
-2.5Ghz Intel quad core or greater should be capable to handle speeds in excess of Gb LAN while low power CPUs such as Intel Atoms and AMD C-30s\E-350\E-450 will not be able to achieve more than about 30-40MB/sec typically. Remember that other loading such as ZFS loading will also require CPU resources and may cause Samba performance to be less than optimal
-.
+Samba is single threaded, so CPU speed makes a big difference in CIFS performance. Your typical 2.5Ghz Intel quad core or greater should be capable to handle
+speeds in excess of Gb LAN while low power CPUs such as Intel Atoms and AMD C-30s\E-350\E-450 will not be able to achieve more than about 30-40MB/sec
+typically. Remember that other loading such as ZFS loading will also require CPU resources and may cause Samba performance to be less than optimal.
 
-Samba's
-“
-write cache
-”
-parameter has been reported to improve write performance in some configurations and can be added to the Auxiliary Parameters field. Use an integer value which is a multiple of _SC_PAGESIZE (typically 4096) to avoid memory fragmentation. This will increase
-Samba's memory requirements and should not be used on systems with limited RAM.
+Samba's “write cache” parameter has been reported to improve write performance in some configurations and can be added to the Auxiliary Parameters field.
+Use an integer value which is a multiple of _SC_PAGESIZE (typically 4096) to avoid memory fragmentation. This will increase Samba's memory requirements and
+should not be used on systems with limited RAM.
 
 If you wish to increase network performance, read the Samba section on
 `socket options <http://samba.org/samba/docs/man/manpages-3/smb.conf.5.html#SOCKETOPTIONS%7C>`_
-. It indicates which options are available and recommends that you experiment to see which are supported by your clients and improve your network's performance.
+. It indicates which options are available and recommends that you experiment to see which are supported by your clients and improve your network's
+performance.
 
-Windows automatically caches file sharing information. If you make changes to a CIFS share or to the permissions of a volume/dataset being shared by CIFS and are no longer able to access the share, try logging out and back into the Windows system.
-Alternately, users can type
-**net use /delete ***
-from the command line to clear their SMB sessions.
+Windows automatically caches file sharing information. If you make changes to a CIFS share or to the permissions of a volume/dataset being shared by CIFS and
+are no longer able to access the share, try logging out and back into the Windows system. Alternately, users can type **net use /delete *** from the command
+line to clear their SMB sessions.
 
-Windows also automatically caches login information. If you wish users to be prompted to login every time access is required, reduce the cache settings on the client computers.
+Windows also automatically caches login information. If you wish users to be prompted to login every time access is required, reduce the cache settings on the
+client computers.
 
 Where possible, avoid using a mix of case in filenames as this may cause confusion for Windows users.
 `Representing and resolving filenames with Samba <http://oreilly.com/openbook/samba/book/ch05_04.html>`_
 explains this in more detail.
 
-If permissions work for Windows users but not for OS X users, try disabling
-*Unix Extensions*
-and restarting the CIFS service.
+If permissions work for Windows users but not for OS X users, try disabling *Unix Extensions* and restarting the CIFS service.
 
 If the CIFS service will not start, run this command from
 `Shell <#1.9.2.Shell|outline>`_
-to see if there is an error in the configuration:
+to see if there is an error in the configuration::
 
-**testparm /usr/local/etc/smb.conf**
+ testparm /usr/local/etc/smb.conf
 
 The
 `Common Errors <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/domain-member.html#id2573692>`_
@@ -7472,43 +7459,43 @@ FreeNAS® supports the following directory services:
 This section summarizes each of these services and their available configurations within the FreeNAS® GUI.
 
 
-**NOTE:**
-at this time,
-**only one directory service can be configured**
-. That service must first be selected in the System → Settings → General → Directory Service drop-down menu. Once selected, a Directory Service entry will be added to Services → Control Services so that the service can be started, stopped, and configured.
+**NOTE:** at this time,
+**only one directory service can be configured**. That service must first be selected in the System → Settings → General → Directory Service
+drop-down menu. Once selected, a Directory Service entry will be added to Services → Control Services so that the service can be started, stopped, and
+configured.
 
 Active Directory
 ^^^^^^^^^^^^^^^^
 
-Active Directory (AD) is a service for sharing resources in a Windows network. AD can be configured on a Windows server that is running Windows Server 2000 or higher or on a Unix-like operating
-system that is running
+Active Directory (AD) is a service for sharing resources in a Windows network. AD can be configured on a Windows server that is running Windows Server 2000 or
+higher or on a Unix-like operating system that is running
 `Samba version 4 <http://wiki.samba.org/index.php/Samba4/HOWTO#Step_4:_Provision_Samba4>`_
-. Since AD provides authentication and authorization services for the users in a network, you do not have to recreate these user accounts on the FreeNAS® system. Instead, configure the Active Directory service so that it can import the account information and imported users can be authorized to access the CIFS shares on the FreeNAS® system.
+. Since AD provides authentication and authorization services for the users in a network, you do not have to recreate these user accounts on the FreeNAS®
+system. Instead, configure the Active Directory service so that it can import the account information and imported users can be authorized to access the CIFS
+shares on the FreeNAS® system.
 
-**NOTE:**
-if your network contains an NT4 domain controller, or any domain controller containing a version which is earlier than Windows 2000, configure
+**NOTE:** if your network contains an NT4 domain controller, or any domain controller containing a version which is earlier than Windows 2000, configure
 `NT4 <#1.8.4.4.NT4|outline>`_
 instead.
 
-Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running FreeNAS® 9.2.2-RELEASE, it is strongly recommended that you upgrade before attempting Active Directory integration.
+Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running FreeNAS® 9.3-RELEASE, it is strongly
+recommended that you upgrade before attempting Active Directory integration.
 
-**Before configuring the Active Directory service**
-, ensure name resolution is properly configured by
+**Before configuring the Active Directory service**, ensure name resolution is properly configured by
 **ping**
 ing the domain name of the Active Directory domain controller from
 `Shell <#1.9.2.Shell|outline>`_
-on the FreeNAS® system. If the
-**ping**
-fails, check the DNS server and default gateway settings in Network →
+on the FreeNAS® system. If the **ping** fails, check the DNS server and default gateway settings in Network →
 `Global  <#1.5.1.Global Configuration|outline>`_
 `Configuration <#1.5.1.Global Configuration|outline>`_
 on the FreeNAS® system.
 
-Next, add a DNS record for the FreeNAS® system on the Windows server and verify that you can
-**ping**
-the hostname of the FreeNAS® system from the domain controller.
+Next, add a DNS record for the FreeNAS® system on the Windows server and verify that you can **ping** the hostname of the FreeNAS® system from the domain
+controller.
 
-Active Directory relies on Kerberos, which is a time sensitive protocol. This means that the time on both the FreeNAS® system and the Active Directory Domain Controller can not be out of sync by more than a few minutes. The best way to ensure that the same time is running on both systems is to configure both systems to:
+Active Directory relies on Kerberos, which is a time sensitive protocol. This means that the time on both the FreeNAS® system and the Active Directory Domain
+Controller can not be out of sync by more than a few minutes. The best way to ensure that the same time is running on both systems is to configure both
+systems to:
 
 *   use the same NTP server (set in System →
     `NTP Servers <#1.4.3.NTP Servers|outline>`_
@@ -7525,13 +7512,15 @@ Active Directory relies on Kerberos, which is a time sensitive protocol. This me
 
 
 
-Figure 8.4a shows the screen that appears when you click Services → Directory Services → Active Directory. Table 8.4a describes the configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced.
+Figure 8.4a shows the screen that appears when you click Services → Directory Services → Active Directory. Table 8.4a describes the configurable
+options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always
+display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced.
 
-Figure 8.4a: Configuring Active Directory
+**Figure 8.4a: Configuring Active Directory**
 
 |10000000000002EB00000195BD451959_png|
 
-Table 8.4a: Active Directory Configuration Options
+**Table 8.4a: Active Directory Configuration Options**
 
 
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -7545,9 +7534,8 @@ Table 8.4a: Active Directory Configuration Options
 |                          |               | )                                                                                                                                                                                                                                    |
 |                          |               |                                                                                                                                                                                                                                      |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | automatically populated with the hostname of the FreeNAS® system;                                                                                                                                                                    |
+| NetBIOS Name             | string        | automatically populated with the hostname of the FreeNAS® system;                                                                                                                                                                   |
 |                          |               | **use caution when changing this setting**                                                                                                                                                                                           |
-|                          |               | ** **                                                                                                                                                                                                                                |
 |                          |               | as setting an                                                                                                                                                                                                                        |
 |                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_                                                                                           |
 |                          |               |                                                                                                                                                                                                                                      |
@@ -7582,7 +7570,6 @@ Table 8.4a: Active Directory Configuration Options
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | UNIX extensions          | checkbox      | only available in Advanced Mode;                                                                                                                                                                                                     |
 |                          |               | ** only**                                                                                                                                                                                                                            |
-|                          |               | ** **                                                                                                                                                                                                                                |
 |                          |               | check this box if the AD server has been explicitly configured to map permissions for UNIX users; checking this box provides persistent UIDs and GUIDs, otherwise, users/groups get mapped to the UID/GUID range configured in Samba |
 |                          |               |                                                                                                                                                                                                                                      |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -7616,148 +7603,138 @@ Table 8.4a: Active Directory Configuration Options
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-Active Directory places restrictions on which characters are allowed in Domain and NetBIOS names. If you are having problems connecting to the realm,
+**NOTE:** Active Directory places restrictions on which characters are allowed in Domain and NetBIOS names. If you are having problems connecting to the
+realm,
 `verify <http://support.microsoft.com/kb/909264>`_
-that your settings do not include any disallowed characters. Also, the Administrator Password cannot contain the
-*$*
-character. If a
-*$*
-exists in the domain administrator's password, kinit will report a “Password Incorrect” error and ldap_bind will report an “Invalid credentials (49)” error.
+that your settings do not include any disallowed characters. Also, the Administrator Password cannot contain the *$* character. If a
+*$* exists in the domain administrator's password, kinit will report a “Password Incorrect” error and ldap_bind will report an “Invalid credentials
+(49)” error.
 
-Once you have configured the Active Directory service, start it in Services → Control Services → Directory Services. It may take a few minutes for the Active Directory information to be populated to the FreeNAS® system. Once populated, the AD users and groups will be available in the drop-down menus of the permissions screen of a volume/dataset. For performance reasons, every available user may not show in the listing. However, it will autocomplete all applicable users if you start typing in a username.
+Once you have configured the Active Directory service, start it in Services → Control Services → Directory Services. It may take a few minutes for the
+Active Directory information to be populated to the FreeNAS® system. Once populated, the AD users and groups will be available in the drop-down menus of the
+permissions screen of a volume/dataset. For performance reasons, every available user may not show in the listing. However, it will autocomplete all
+applicable users if you start typing in a username.
 
 You can verify which Active Directory users and groups have been imported to the FreeNAS® system by using these commands within the FreeNAS®
 `Shell <#1.9.2.Shell|outline>`_
 :
+::
 
-**wbinfo -u**
+ wbinfo -u
 
 (to view users)
+::
 
-
-**wbinfo -g **
+ wbinfo -g
 (to view groups)
 
 
-In addition,
-**wbinfo -t**
-will test the connection and, if successful, will give a message similar to:
+In addition, **wbinfo -t** will test the connection and, if successful, will give a message similar to::
 
-checking the trust secret for domain YOURDOMAIN via RPC calls succeeded
+ checking the trust secret for domain YOURDOMAIN via RPC calls succeeded
 
-To manually check that a specified user can authenticate:
+To manually check that a specified user can authenticate::
 
-**net ads join -S dcname -U username**
+ net ads join -S dcname -U username
 
-If no users or groups are listed in the output of those commands, these commands will provide more troubleshooting information:
+If no users or groups are listed in the output of those commands, these commands will provide more troubleshooting information::
 
-**getent passwd**
+ getent passwd
 
-**getent group**
+ getent group
 
 Using a Keytab
 """"""""""""""
 
-Kerberos keytabs are used to do Active Directory joins without a password. This means that the password for the Active Directory administrator account does not need to be saved into the FreeNAS® configuration database, which is a security risk in some environments.
+Kerberos keytabs are used to do Active Directory joins without a password. This means that the password for the Active Directory administrator account does
+not need to be saved into the FreeNAS® configuration database, which is a security risk in some environments.
 
-When using a keytab, it is recommended to create and use a less privileged account for performing the required LDAP queries as the password for that account will be stored in the FreeNAS® configuration database. Create this account on the domain controller, then input that account name and its associated password into the
-*Domain Account Name*
-and
-*Domain Account Password*
-fields in the screen shown in Figure 8.4a.
+When using a keytab, it is recommended to create and use a less privileged account for performing the required LDAP queries as the password for that account
+will be stored in the FreeNAS® configuration database. Create this account on the domain controller, then input that account name and its associated password
+into the *Domain Account Name* and
+*Domain Account Password* fields in the screen shown in Figure 8.4a.
 
-The keytab itself can be created on a Windows system using these commands. The text in red needs to be modified to the actual values used in the domain.
+The keytab itself can be created on a Windows system using these commands::
 
-**ktpass.exe -out hostname.keytab host/**
-**hostname@DOMAINNAME**
-** -ptype KRB5_NT_PRINCIPAL -mapuser **
-**DOMAIN\username**
-** -pass **
-**userpass**
+ ktpass.exe -out hostname.keytab host/
+ hostname@DOMAINNAME
+ -ptype KRB5_NT_PRINCIPAL -mapuser
+ DOMAIN\username
+ -pass
+ userpass
 
-
-
-**setspn -A host/**
-**hostname@DOMAINNAME DOMAIN\username**
+ setspn -A host/
+ hostname@DOMAINNAME DOMAIN\username
 
 
 where:
 
-*   **hostname**
-    is the fully qualified hostname of the domain controller
+*   **hostname** is the fully qualified hostname of the domain controller
 
 
 
-*   **DOMAINNAME**
-    is the domain name in all caps
+*   **DOMAINNAME** is the domain name in all caps
 
 
 
-*   **DOMAIN**
-    is the pre-Windows 2000 short name for the domain
+*   **DOMAIN** is the pre-Windows 2000 short name for the domain
 
 
 
-*   **username**
-    is the privileged account name
+*   **username** is the privileged account name
 
 
 
-*   **userpass**
-    is the password associated with username
+*   **userpass** is the password associated with username
 
 
 
 This will create a keytab with sufficient privileges to grant tickets for CIFS and LDAP.
 
-Once the keytab is generated, transfer it to the FreeNAS® system, check the
-*Use keytab*
-box and browse to the location of the keytab.
+Once the keytab is generated, transfer it to the FreeNAS® system, check the *Use keytab* box and browse to the location of the keytab.
 
 Troubleshooting Tips
 """"""""""""""""""""
 
-I
-f you are running AD in a 2003/2008 mixed domain, see this
+If you are running AD in a 2003/2008 mixed domain, see this
 `forum post <http://forums.freenas.org/showthread.php?1931-2008R2-2003-mixed-domain>`_
 for instructions on how to prevent the secure channel key from becoming corrupt.
 
 Active Directory uses DNS to determine the location of the domain controllers and global catalog servers in the network. Use the
 **host -t srv _ldap._tcp.domainname.com**
-command to determine the network's SRV records and, if necessary, change the weight and/or priority of the SRV record to reflect the fastest server. More information about SRV records can be found in the Technet article
+command to determine the network's SRV records and, if necessary, change the weight and/or priority of the SRV record to reflect the fastest server. More
+information about SRV records can be found in the Technet article
 `How DNS  <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_
 `Support for Active Directory Works <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_
 .
 
-The realm that is used depends upon the priority in the SRV DNS record, meaning that DNS can override your Active Directory settings. If you are unable to connect to the correct realm, check the SRV records on the DNS server.
+The realm that is used depends upon the priority in the SRV DNS record, meaning that DNS can override your Active Directory settings. If you are unable to
+connect to the correct realm, check the SRV records on the DNS server.
 `This article <http://www.informit.com/guides/content.aspx?g=security&seqNum=37&rll=1>`_
 describes how to configure KDC discovery over DNS and provides some examples of records with differing priorities.
 
-If the cache becomes out of sync due to an AD server being taken off and back online, resync the cache using System → Settings → Advanced → Rebuild LDAP/AD Cache.
+If the cache becomes out of sync due to an AD server being taken off and back online, resync the cache using System → Settings → Advanced →
+Rebuild LDAP/AD Cache.
 
 An expired password for the administrator account will cause kinit to fail so ensure that the password is still valid.
 
-Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the name field. Make sure it is the same name as the one set in the
-*Hostname*
-field in Network → Global Configuration and the
-*NetBIOS Name*
-in Services → Directory Services → Active Directory settings. Make sure the hostname of the domain controller is set in the
-*Domain Controller*
-field of Services → Directory Services → Active Directory.
+Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the name field. Make sure it is the same
+name as the one set in the *Hostname* field in Network → Global Configuration and the
+*NetBIOS Name* in Services → Directory Services → Active Directory settings. Make sure the hostname of the domain controller is set in the
+*Domain Controller* field of Services → Directory Services → Active Directory.
 
 Domain Controller
 ^^^^^^^^^^^^^^^^^^
 
-Beginning with FreeNAS® 9.2.1, FreeNAS® uses Samba4, meaning that it can be configured to act as the domain controller for a network.
-Refer to the
+Beginning with FreeNAS® 9.2.1, FreeNAS® uses Samba4, meaning that it can be configured to act as the domain controller for a network. Refer to the
 `Samba FAQ <https://wiki.samba.org/index.php/FAQ>`_
 for further information.
 
-**NOTE:**
-creating a domain controller is a complex process that requires a good understanding of how Active Directory works. While FreeNAS® makes it easy to input the needed settings into the administrative graphical interface, it can't tell you what those settings should be. Refer to the
+**NOTE:** creating a domain controller is a complex process that requires a good understanding of how Active Directory works. While FreeNAS® makes it easy
+to input the needed settings into the administrative graphical interface, it can't tell you what those settings should be. Refer to the
 `Samba AD DC HOWTO <http://wiki.samba.org/index.php/Samba_AD_DC_HOWTO>`_
-for more information about creating a new domain. The current implementation does not support a configuration that allows FreeNAS® to join an existing domain as a domain controller. This limitation will be addressed in a future version of FreeNAS®.
+for more information about creating a new domain. The current implementation does not support a configuration that allows FreeNAS® to join an existing domain
+as a domain controller. This limitation will be addressed in a future version of FreeNAS®.
 
 Figure 8.4b shows the configuration screen for creating a domain controller and Table 8.4b summarizes the available options.
 
@@ -7824,36 +7801,21 @@ LDAP
 
 FreeNAS® includes an
 `OpenLDAP <http://www.openldap.org/>`_
-client for accessing information from an
-LDAP
-server. An
-LDAP
+client for accessing information from an LDAP server. An LDAP server provides directory services for finding network resources such as users and their
+associated permissions. Examples of LDAP servers include Microsoft Server (2000 and newer), Mac OS X Server, Novell eDirectory, and OpenLDAP running on a BSD
+or Linux system. If an LDAP server is running on your network, you should configure the FreeNAS® LDAP service so that the network's users can authenticate to
+the LDAP server and thus be provided authorized access to the data stored on the FreeNAS® system.
 
-server provides directory services for finding network resources such as users and their associated permissions. Examples of
-LDAP
-servers include Microsoft Server (2000 and newer), Mac
-OS
-X Server, Novell eDirectory, and OpenLDAP running on a BSD or Linux system. If an
-LDAP
-server is running on your network, you should configure the FreeNAS®
-LDAP
-service so that the network's users can authenticate to the
-LDAP
-server and thus be provided authorized access to the data stored on the FreeNAS® system.
-
-**NOTE:**
-LDAP will not work with CIFS shares until the LDAP directory has been configured for and populated with Samba attributes. The most popular script for performing this task is
+**NOTE:** LDAP will not work with CIFS shares until the LDAP directory has been configured for and populated with Samba attributes. The most popular script
+for performing this task is
 `smbldap-tools <http://download.gna.org/smbldap-tools/>`_
 and instructions for using it can be found at
 `The Linux Samba-OpenLDAP Howto <http://download.gna.org/smbldap-tools/docs/samba-ldap-howto/#htoc29>`_
 .
 
-Figure 8.4c shows the
-LDAP
-Configuration screen that is seen when you click Services → Directory Services → LDAP.
+Figure 8.4c shows the LDAP Configuration screen that is seen when you click Services → Directory Services → LDAP.
 
-**Figure 8.4c: Configuring **
-**LDAP**
+**Figure 8.4c: Configuring LDAP**
 
 
 |100000000000022A000001A5020C73E1_png|
@@ -7862,9 +7824,7 @@ Table 8.4c summarizes the available configuration options. If you are new to LDA
 `OpenLDAP Software 2.4 Administrator's Guide <http://www.openldap.org/doc/admin24/>`_
 .
 
-**Table 8.4c: **
-**LDAP**
-** Configuration Options**
+**Table 8.4c: LDAP Configuration Options**
 
 
 +-------------------------+----------------+--------------------------------------------------------------------------------------------------+
@@ -7950,32 +7910,30 @@ Table 8.4c summarizes the available configuration options. If you are new to LDA
 +-------------------------+----------------+--------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-FreeNAS® automatically appends the root DN. This means that you should not include the scope and root DN when configuring the user, group, password, and machine suffixes.
+**NOTE:** FreeNAS® automatically appends the root DN. This means that you should not include the scope and root DN when configuring the user, group,
+password, and machine suffixes.
 
 After configuring the LDAP service, start it in Services → Control Services → Directory Services. If the service will not start, refer to the
 `Common errors encountered when using OpenLDAP Software <http://www.openldap.org/doc/admin24/appendix-common-errors.html>`_
 for common errors and how to fix them. When troubleshooting LDAP, open
 `Shell <#1.9.2.Shell|outline>`_
-and look for error messages in
-*/var/log/auth.log.*
+and look for error messages in */var/log/auth.log.*
 
-To verify that the users have been imported, type
-**getent passwd**
-from
+To verify that the users have been imported, type **getent passwd** from
 `Shell <#1.9.2.Shell|outline>`_
-. To verify that the groups have been imported, type
-**getent group**
-.
+. To verify that the groups have been imported, type **getent group**.
 
 NIS
 ^^^
 
-Network Information Service (NIS) is a service which maintains and distributes a central directory of Unix user and group information, hostnames, email aliases and other text-based tables of information. If a NIS server is running on your network, the FreeNAS® system can be configured to import the users and groups from the NIS directory.
+Network Information Service (NIS) is a service which maintains and distributes a central directory of Unix user and group information, hostnames, email
+aliases and other text-based tables of information. If a NIS server is running on your network, the FreeNAS® system can be configured to import the users
+and groups from the NIS directory.
 
 After configuring this service, start it in Services → Control Services → Directory Services.
 
-Figure 8.4d shows the configuration screen which opens when you click Services → Directory Services → NIS. Table 8.4d summarizes the configuration options.
+Figure 8.4d shows the configuration screen which opens when you click Services → Directory Services → NIS. Table 8.4d summarizes the configuration
+options.
 
 **Figure 8.4d: NIS Configuration**
 
@@ -8023,7 +7981,7 @@ After configuring the NT4 service, start it in Services → Control Services →
 
 |10000000000002DE000001EF50F27494_png|
 
-**Table 8.4e: NT4 Configuration Options **
+**Table 8.4e: NT4 Configuration Options**
 
 +------------------------+-----------+---------------------------------------------------------------------+
 | **Setting**            | **Value** | **Description**                                                     |
@@ -8050,19 +8008,16 @@ After configuring the NT4 service, start it in Services → Control Services →
 Dynamic DNS
 ~~~~~~~~~~~
 
-Dynamic
-DNS
-(DDNS) is useful if your FreeNAS® system is connected to an
-ISP
-that periodically changes the IP address of the system. With dynamic
-DNS
-, the system can automatically associate its current IP address with a domain name, allowing you to access the FreeNAS® system even if the IP address changes. DDNS requires you to register with a DDNS service such as
+Dynamic DNS (DDNS) is useful if your FreeNAS® system is connected to an ISP that periodically changes the IP address of the system. With dynamic DNS, the
+system can automatically associate its current IP address with a domain name, allowing you to access the FreeNAS® system even if the IP address changes. DDNS
+requires you to register with a DDNS service such as
 `DynDNS <http://www.dyndns.com/>`_
 .
 
-Figure 8.5a shows the DDNS configuration screen and Table 8.5a summarizes the configuration options. The values you need to input will be given to you by the DDNS provider. After configuring DDNS, don't forget to start the DDNS service in Services → Control Services.
+Figure 8.5a shows the DDNS configuration screen and Table 8.5a summarizes the configuration options. The values you need to input will be given to you by the
+DDNS provider. After configuring DDNS, don't forget to start the DDNS service in Services → Control Services.
 
-Figure 8.5a: Configuring DDNS
+**Figure 8.5a: Configuring DDNS**
 
 
 
@@ -8110,30 +8065,31 @@ FTP
 
 FreeNAS® uses the
 `proftpd <http://www.proftpd.org/>`_
-FTP server to provide FTP services. Once the FTP service is configured and started, clients can browse and download data using a web browser or FTP client software. The advantage of FTP is that easy-to-use cross-platform utilities are available to manage uploads to and downloads from the FreeNAS® system. The disadvantage of FTP is that it is considered to be an insecure protocol, meaning that it should not be used to transfer sensitive files. If you are concerned about sensitive data, see
+FTP server to provide FTP services. Once the FTP service is configured and started, clients can browse and download data using a web browser or FTP client
+software. The advantage of FTP is that easy-to-use cross-platform utilities are available to manage uploads to and downloads from the FreeNAS® system. The
+disadvantage of FTP is that it is considered to be an insecure protocol, meaning that it should not be used to transfer sensitive files. If you are concerned
+about sensitive data, see
 `Encrypting FTP <#1.8.6.3.Encrypting FTP|outline>`_
 .
 
-This section provides an overview of the FTP configuration options. It then provides examples for configuring anonymous FTP, specified user access within a chroot environment, encrypting FTP connections, and troubleshooting tips.
+This section provides an overview of the FTP configuration options. It then provides examples for configuring anonymous FTP, specified user access within a
+chroot environment, encrypting FTP connections, and troubleshooting tips.
 
 FTP Configuration Options
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Figure 8.6a shows the configuration screen for Services → FTP. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced.
+Figure 8.6a shows the configuration screen for Services → FTP. Some settings are only available in Advanced Mode. To see these settings, either click the
+Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System → 
+Settings → Advanced.
 
-Figure 8.6a: Configuring
-FTP
+**Figure 8.6a: Configuring FTP**
 
 
 |1000000000000373000001E07E2BF2D0_png|
 
-Table 8.6a summarizes the available options when configuring the
-FTP
-server:
+Table 8.6a summarizes the available options when configuring the FTP server:
 
-**Table 8.6a: **
-FTP
-** Configuration Options**
+**Table 8.6a: FTP Configuration Options**
 
 
 +--------------------------------------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -8319,36 +8275,31 @@ FTP
 +--------------------------------------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-The following example demonstrates the auxiliary parameters that will prevent all users from performing the FTP DELETE command:
+The following example demonstrates the auxiliary parameters that will prevent all users from performing the FTP DELETE command::
 
-<Limit DELE>
-
-DenyAll
-
-</Limit>
+ <Limit DELE>
+ DenyAll
+ </Limit>
 
 
 Anonymous FTP
 ^^^^^^^^^^^^^
 
-Anonymous FTP may be appropriate for a small network where the FreeNAS® system is not accessible from the Internet and everyone in your internal network needs easy access to the stored data. Anonymous FTP does not require you to create a user account for every user. In addition, passwords are not required so you don't have to manage changed passwords on the FreeNAS® system.
+Anonymous FTP may be appropriate for a small network where the FreeNAS® system is not accessible from the Internet and everyone in your internal network
+needs easy access to the stored data. Anonymous FTP does not require you to create a user account for every user. In addition, passwords are not required so
+you don't have to manage changed passwords on the FreeNAS® system.
 
 To configure anonymous FTP:
 
-#.  **Give the built-in ftp user account permissions**
-    to the volume/dataset to be shared in Storage → Volumes as follows:
+#.  **Give the built-in ftp user account permissions** to the volume/dataset to be shared in Storage → Volumes as follows:
 
 
 
-*   Owner(user): select the built-in
-    *ftp*
-    user from the drop-down menu
+*   Owner(user): select the built-in *ftp* user from the drop-down menu
 
 
 
-*   Owner(group): select the built-in
-    *ftp*
-    group from the drop-down menu
+*   Owner(group): select the built-in *ftp* group from the drop-down menu
 
 
 
@@ -8356,18 +8307,15 @@ To configure anonymous FTP:
 
 
 
-**NOTE: **
-for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will be accessing FreeNAS® via FTP.
+**NOTE:** for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will
+be accessing FreeNAS® via FTP.
 
 
-#.  **Configure anonymous FTP**
-    in Services → FTP
-    by setting the following attributes:
+#.  **Configure anonymous FTP** in Services → FTP by setting the following attributes:
 
 
 
-*   check the box
-    *Allow Anonymous Login*
+*   check the box *Allow Anonymous Login*
 
 
 
@@ -8376,14 +8324,13 @@ for FTP, the type of client does not matter when it comes to the type of ACL. Th
 
 
 
-#.  **Start the FTP service**
-    in Control Services. Click the red OFF button next to FTP. After a second or so, it will change to a blue ON , indicating that the service has been enabled.
+#.  **Start the FTP service** in Control Services. Click the red OFF button next to FTP. After a second or so, it will change to a blue ON , indicating that
+    the service has been enabled.
 
 
 
 
-#.  **Test the connection**
-    from a client using a utility such as
+#.  **Test the connection** from a client using a utility such as
     `Filezilla <http://filezilla-project.org/>`_
     .
 
@@ -8391,14 +8338,12 @@ for FTP, the type of client does not matter when it comes to the type of ACL. Th
 
 In the example shown in Figure 8.6b, a user has input the following information into the Filezilla client:
 
-*   IP address of the FreeNAS® server:
-    *192.168.1.113*
+*   IP address of the FreeNAS® server: *192.168.1.113*
 
 
 
 
-*   Username:
-    *anonymous*
+*   Username: *anonymous*
 
 
 
@@ -8412,46 +8357,44 @@ In the example shown in Figure 8.6b, a user has input the following information 
 
 |100000000000038300000122BD3F6150_png|
 
-The messages within the client indicate that the FTP connection is successful. The user can now navigate the contents of the root folder on the remote site—this is the volume/dataset that was specified in the FTP service configuration. The user can also transfer files between the local site (their system) and the remote site (the FreeNAS® system).
+The messages within the client indicate that the FTP connection is successful. The user can now navigate the contents of the root folder on the remote
+site—this is the volume/dataset that was specified in the FTP service configuration. The user can also transfer files between the local site (their system)
+and the remote site (the FreeNAS® system).
 
 Specified User Access in chroot
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you require your users to authenticate before accessing the data on the FreeNAS® system, you will need to either create a user account for each user or import existing user accounts using
+If you require your users to authenticate before accessing the data on the FreeNAS® system, you will need to either create a user account for each user or
+import existing user accounts using
 `Active  <#1.8.2.Active Directory|outline>`_
 `Directory <#1.8.4.1.Active Directory|outline>`_
 or
 `LDAP <#1.8.4.2.LDAP|outline>`_
-. If you then create a ZFS dataset for each user, you can chroot each user so that they are limited to the contents of their own home directory. Datasets provide the added benefit of configuring a quota so that the size of the user's home directory is limited to the size of the quota.
+. If you then create a ZFS dataset for each user, you can chroot each user so that they are limited to the contents of their own home directory. Datasets
+provide the added benefit of configuring a quota so that the size of the user's home directory is limited to the size of the quota.
 
 To configure this scenario:
 
-#.  **Create a ZFS dataset for each user**
-    in Storage → Volumes. Click an existing ZFS volume → Create ZFS Dataset and set an appropriate quota for each dataset. Repeat this process to create a dataset for every user that will need access to the FTP service.
+#.  **Create a ZFS dataset for each user** in Storage → Volumes. Click an existing ZFS volume → Create ZFS Dataset and set an appropriate quota for
+    each dataset. Repeat this process to create a dataset for every user that will need access to the FTP service.
 
 
 
-#.  **If you are not using AD or LDAP, create a user account for each user**
-    in Account → Users → Add User. For each user, browse to the dataset created for that user in the
-    *Home Directory*
-    field. Repeat this process to create a user account for every user that will need access to the FTP service, making sure to assign each user their own dataset.
+#.  **If you are not using AD or LDAP, create a user account for each user** in Account → Users → Add User. For each user, browse to the dataset
+    created for that user in the *Home Directory* field. Repeat this process to create a user account for every user that will need access to the FTP service,
+    making sure to assign each user their own dataset.
 
 
 
-#.  **Set the permissions for each dataset **
-    in Storage → Volumes. Click the Change Permissions
-    button for a dataset to assign a user account as Owner of that dataset and to set the desired
-    permissions for that user. Repeat for each dataset.
+#.  **Set the permissions for each dataset** in Storage → Volumes. Click the Change Permissions button for a dataset to assign a user account as Owner of
+    that dataset and to set the desired permissions for that user. Repeat for each dataset.
 
 
 
-**NOTE: **
-for FTP, the type of client does not matter when it comes to the type of ACL. This means that
-you always use Unix ACLs, even if Windows clients will be accessing FreeNAS® via FTP.
+**NOTE:** for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will
+be accessing FreeNAS® via FTP.
 
-#.  **Configure FTP**
-    in Services → FTP
-    with the following attributes:
+#.  **Configure FTP** in Services → FTP with the following attributes:
 
 
 
@@ -8459,114 +8402,110 @@ you always use Unix ACLs, even if Windows clients will be accessing FreeNAS® vi
 
 
 
-*   make sure the boxes for
-    *Allow Anonymous Login*
-    and
-    *Allow Root Login*
-    are
+*   make sure the boxes for *Allow Anonymous Login*
+    and *Allow Root Login* are
     **unchecked**
-    ** **
 
 
 
-*   check the box
-    *Allow Local User Login *
+*   check the box *Allow Local User Login*
 
 
 
-*   check the box
-    *Always Chroot*
+*   check the box *Always Chroot*
 
 
 
 
-#.  **Start the FTP service**
-    in Control Services. Click the red OFF button next to FTP. After a second or so, it will change to a blue ON , indicating that the service has been enabled.
+#.  **Start the FTP service** in Control Services. Click the red OFF button next to FTP. After a second or so, it will change to a blue ON, indicating that
+    the service has been enabled.
 
 
 
-#.  **Test the connection from a client**
-    using a utility such as Filezilla.
+#.  **Test the connection from a client** using a utility such as Filezilla.
 
 
 
-To test this configuration in Filezilla, use the IP address of the FreeNAS® system, the Username of a user that has been associated with a dataset, and the Password for that user. The messages should indicate that the authorization and the FTP connection are successful. The user can now navigate the contents of the root folder on the remote site—this time it is not the entire volume but the dataset that was created for that user. The user should be able to transfer files between the local site (their system) and the remote site (their dataset on the FreeNAS® system).
+To test this configuration in Filezilla, use the IP address of the FreeNAS® system, the Username of a user that has been associated with a dataset, and the
+Password for that user. The messages should indicate that the authorization and the FTP connection are successful. The user can now navigate the contents of
+the root folder on the remote site—this time it is not the entire volume but the dataset that was created for that user. The user should be able to
+transfer files between the local site (their system) and the remote site (their dataset on the FreeNAS® system).
 
 Encrypting FTP
 ^^^^^^^^^^^^^^
 
 To configure any FTP scenario to use encrypted connections:
 
-#.  **Enable TLS**
-    in Services → FTP. Check the box
-    *Enable TLS*
-    .
-    Once you press OK, a certificate and key will automatically be generated for you and proftpd will restart and be configured to use that certificate. If you prefer to use your own certificate, delete the automatically generated one that appears in the
-    *Certificate and private key field*
+#.  **Enable TLS** in Services → FTP. Check the box
+    *Enable TLS*. Once you press OK, a certificate and key will automatically be generated for you and proftpd will restart and be configured to use that
+    certificate. If you prefer to use your own certificate, delete the automatically generated one that appears in the *Certificate and private key field*
     and paste in your own certificate and key.
 
 
 
-#.  **Specify secure FTP when accessing the FreeNAS® system.**
-    For example, in Filezilla input
-    *ftps://IP_address*
-    (for an implicit connection) or
+#.  **Specify secure FTP when accessing the FreeNAS® system.** For example, in Filezilla input
+    *ftps://IP_address* (for an implicit connection) or
     *ftpes://IP_address*
-    (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the certificate of the FreeNAS® system. Click OK to accept the certificate and negotiate an encrypted connection.
+    (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the certificate of the FreeNAS®
+    system. Click OK to accept the certificate and negotiate an encrypted connection.
 
 
 
-To force encrypted connections, add the following line to Auxiliary Parameters:
+To force encrypted connections, add the following line to Auxiliary Parameters::
 
-TLS Required on
+ TLS Required on
 
 Troubleshooting
 ^^^^^^^^^^^^^^^
 
 The FTP service will not start if it can not resolve the system's hostname to an IP address using DNS. To see if the FTP service is running, open
 `Shell <#1.9.2.Shell|outline>`_
-and issue the command:
+and issue the command::
 
-**sockstat -4p 21**
+ sockstat -4p 21
 
-If there is nothing listening on port 21, proftpd isn't running. To see the error message that occurs when FreeNAS® tries to start the FTP service,
-go to System → Settings → Advanced, check the box “Show
-console messages in the footer” and click Save
-. Next, go to Services → Control Services and switch the FTP service off then back on in the GUI. Watch the console messages at the bottom of the browser for errors.
+If there is nothing listening on port 21, proftpd isn't running. To see the error message that occurs when FreeNAS® tries to start the FTP service, go to
+System → Settings → Advanced, check the box “Show console messages in the footer” and click Save. Next, go to Services → Control Services and
+switch the FTP service off then back on in the GUI. Watch the console messages at the bottom of the browser for errors.
 
-If the error refers to DNS, either create an entry in your local DNS server with the FreeNAS® system's hostname and IP address or
-add an entry for the IP address of the FreeNAS® system in the “Host name database” field of Network →
+If the error refers to DNS, either create an entry in your local DNS server with the FreeNAS® system's hostname and IP address or add an entry for the IP
+address of the FreeNAS® system in the “Host name database” field of Network →
 `Global Configuration <#1.5.1.Global Configuration|outline>`_
 .
 
 iSCSI
 ~~~~~
 
-iSCSI is a protocol standard for the consolidation of storage data. iSCSI allows FreeNAS® to act like a storage area network (SAN) over an existing Ethernet network. Specifically, it exports disk devices over an Ethernet network that iSCSI clients (called initiators) can attach to and mount. Traditional SANs operate over fibre channel networks which require a fibre channel infrastructure such as fibre channel HBAs, fibre channel switches, and discrete cabling. iSCSI can be used over an existing Ethernet network, although dedicated networks can be built for iSCSI traffic in an effort to boost performance. iSCSI also provides an advantage in an environment that uses Windows shell programs; these programs tend to filter “Network Location” but iSCSI mounts are not filtered. FreeNAS® uses
+iSCSI is a protocol standard for the consolidation of storage data. iSCSI allows FreeNAS® to act like a storage area network (SAN) over an existing Ethernet
+network. Specifically, it exports disk devices over an Ethernet network that iSCSI clients (called initiators) can attach to and mount. Traditional SANs
+operate over fibre channel networks which require a fibre channel infrastructure such as fibre channel HBAs, fibre channel switches, and discrete cabling.
+iSCSI can be used over an existing Ethernet network, although dedicated networks can be built for iSCSI traffic in an effort to boost performance. iSCSI also
+provides an advantage in an environment that uses Windows shell programs; these programs tend to filter “Network Location” but iSCSI mounts are not
+filtered. FreeNAS® uses
 `istgt <http://www.peach.ne.jp/archives/istgt/>`_
 to provide iSCSI.
 
 Before configuring the iSCSI service, you should be familiar with the following iSCSI terminology:
 
-**CHAP:**
-an authentication method which uses a shared secret and three-way authentication to determine if a system is authorized to access the storage device and to periodically confirm that the session has not been hijacked by another system. In iSCSI, the initiator (client) performs the CHAP authentication.
+**CHAP:** an authentication method which uses a shared secret and three-way authentication to determine if a system is authorized to access the storage device
+and to periodically confirm that the session has not been hijacked by another system. In iSCSI, the initiator (client) performs the CHAP authentication.
 
-**Mutual CHAP:**
-a superset of CHAP in that both ends of the communication authenticate to each other.
+**Mutual CHAP:** a superset of CHAP in that both ends of the communication authenticate to each other.
 
-**Initiator:**
-a client which has authorized access to the storage data on the FreeNAS® system. The client requires initiator software to connect to the iSCSI share.
+**Initiator:** a client which has authorized access to the storage data on the FreeNAS® system. The client requires initiator software to connect to the
+iSCSI share.
 
-**Target:**
-a storage resource on the FreeNAS® system.
+**Target:** a storage resource on the FreeNAS® system.
 
-**Extent:**
-the storage unit to be shared. It can either be a file or a device.
+**Extent:** the storage unit to be shared. It can either be a file or a device.
 
-**LUN:**
-stands for Logical Unit Number and represents a logical SCSI device. An initiator negotiates with a target to establish connectivity to a LUN; the result is an iSCSI connection that emulates a connection to a SCSI hard disk. Initiators treat iSCSI LUNs the same way as they would a raw SCSI or IDE hard drive; rather than mounting remote directories, initiators format and directly manage filesystems on iSCSI LUNs.
+**LUN:** stands for Logical Unit Number and represents a logical SCSI device. An initiator negotiates with a target to establish connectivity to a LUN; the
+result is an iSCSI connection that emulates a connection to a SCSI hard disk. Initiators treat iSCSI LUNs the same way as they would a raw SCSI or IDE hard
+drive; rather than mounting remote directories, initiators format and directly manage filesystems on iSCSI LUNs.
 
-FreeNAS® supports multiple iSCSI drives. When configuring multiple iSCSI LUNs, create a new target for each LUN. Portal groups and initiator groups can be reused without any issue. Since istgt multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there is more than one target per LUN.
+FreeNAS® supports multiple iSCSI drives. When configuring multiple iSCSI LUNs, create a new target for each LUN. Portal groups and initiator groups can be
+reused without any issue. Since istgt multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
+is more than one target per LUN.
 
 In order to configure iSCSI:
 
@@ -8623,14 +8562,14 @@ The rest of this section describes these steps in more detail.
 Authorized Accesses
 ^^^^^^^^^^^^^^^^^^^
 
-If you will be using CHAP or mutual CHAP to provide authentication, you must create an authorized access in Services → ISCSI → Authorized Accesses → Add Authorized Access. This screen is shown in Figure 8.7a.
+If you will be using CHAP or mutual CHAP to provide authentication, you must create an authorized access in Services → ISCSI → Authorized Accesses
+→ Add Authorized Access. This screen is shown in Figure 8.7a.
 
-**NOTE:**
-this screen sets login authentication. This is different from discovery authentication which is set in
+**NOTE:** this screen sets login authentication. This is different from discovery authentication which is set in
 `Target Global Configuration <#1.8.7.5. Target Global Configuration|outline>`_
 .
 
-Figure 8.7a: Adding an iSCSI Authorized Access
+**Figure 8.7a: Adding an iSCSI Authorized Access**
 
 |100000000000017F00000171394D6770_png|
 
@@ -8669,23 +8608,16 @@ Table 8.7a summarizes the settings that can be configured when adding an authori
 +-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-CHAP does not work with GlobalSAN initiators on Mac OS X.
+**NOTE:** CHAP does not work with GlobalSAN initiators on Mac OS X.
 
-As authorized accesses are added, they will be listed under View Authorized Accesses. In the example shown in Figure 8.7b, three users (
-*test1*
-,
-*test2*
-, and
-*test3*
-) and two groups (
-*1*
-and
-*2*
-) have been created, with group 1 consisting of one CHAP user and group 2 consisting of one mutual CHAP user and one CHAP user. Click an
-authorized access entry to display its Edit and Delete buttons.
+As authorized accesses are added, they will be listed under View Authorized Accesses. In the example shown in Figure 8.7b, three users (*test1*,
+*test2*, and
+*test3*) and two groups (
+*1* and
+*2*) have been created, with group 1 consisting of one CHAP user and group 2 consisting of one mutual CHAP user and one CHAP user. Click an authorized access
+entry to display its Edit and Delete buttons.
 
-Figure 8.7b: Viewing Authorized Accesses
+**Figure 8.7b: Viewing Authorized Accesses**
 
 
 |1000000000000272000001EAD978110B_png|
@@ -8695,40 +8627,38 @@ Extents
 
 In iSCSI, the target virtualizes something and presents it as a device to the iSCSI client. That something can be a device extent or a file extent:
 
-**Device extent:**
-virtualizes an unformatted physical disk, RAID controller,
+**Device extent:** virtualizes an unformatted physical disk, RAID controller,
 `zvol <#1.6.3.6.Creating a zvol|outline>`_
 , zvol snapshot, or an existing
 `HAST device <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/disks-hast.html>`_
 .
 
-Virtualizing a single disk is slow as there is no caching but virtualizing a hardware RAID controller has higher performance due to its cache. This type of virtualization does a pass-through to the disk or hardware RAID controller. None of the benefits of ZFS are provided and performance is limited to the capabilities of the disk or controller.
+Virtualizing a single disk is slow as there is no caching but virtualizing a hardware RAID controller has higher performance due to its cache. This type of
+virtualization does a pass-through to the disk or hardware RAID controller. None of the benefits of ZFS are provided and performance is limited to the
+capabilities of the disk or controller.
 
-Virtualizing a zvol adds the benefits of ZFS such as its read cache and write cache. Even if the client formats the device extent with a different filesystem, as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots.
+Virtualizing a zvol adds the benefits of ZFS such as its read cache and write cache. Even if the client formats the device extent with a different filesystem,
+as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots.
 
-**File extent:**
-allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
+**File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
 
-In theory, a zvol and a file extent should have identical performance. In practice, a file extent outperforms in reads/writes but this is only noticeable at 10 GB Ethernet speeds or higher. For high performance, file extents are recommended at this time. Future changes to FreeBSD's zvol code will increase its performance.
+In theory, a zvol and a file extent should have identical performance. In practice, a file extent outperforms in reads/writes but this is only noticeable at
+10 GB Ethernet speeds or higher. For high performance, file extents are recommended at this time. Future changes to FreeBSD's zvol code will increase its
+performance.
 
 Adding an Extent
 """"""""""""""""
 
-To add an extent, go to Services → ISCSI → Extents → Add Extent. In the example shown in Figure 8.7c, the device extent is using the
-*export*
-zvol that was previously created from the
-*/mnt/volume1*
-volume.
+To add an extent, go to Services → ISCSI → Extents → Add Extent. In the example shown in Figure 8.7c, the device extent is using the *export*
+zvol that was previously created from the */mnt/volume1* volume.
 
-**NOTE:**
-in FreeNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on the disk, resulting in data loss. This bug was fixed in 8.3.1.
+**NOTE:** in FreeNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on
+the disk, resulting in data loss. This bug was fixed in 8.3.1.
 
-Table 8.7b summarizes the settings that can be configured when creating an extent.
-Note that
+Table 8.7b summarizes the settings that can be configured when creating an extent. Note that
 **file extent creation will fail if you do not append the name of the file to be created to the volume/dataset name.**
-** **
 
-Figure 8.7c: Adding an iSCSI Extent
+**Figure 8.7c: Adding an iSCSI Extent**
 
 
 |10000000000002AB000001EBE6248ABC_png|
@@ -8785,25 +8715,23 @@ Figure 8.7c: Adding an iSCSI Extent
 Initiators
 ^^^^^^^^^^
 
-The next step is to configure authorized initiators, or the systems which are allowed to connect to the iSCSI targets on the FreeNAS® system. To configure which systems can connect, use Services → ISCSI → Initiators → Add Initiator, shown in Figure 8.7d.
+The next step is to configure authorized initiators, or the systems which are allowed to connect to the iSCSI targets on the FreeNAS® system. To configure
+which systems can connect, use Services → ISCSI → Initiators → Add Initiator, shown in Figure 8.7d.
 
-Figure 8.7d: Adding an iSCSI Initiator
+**Figure 8.7d: Adding an iSCSI Initiator**
 
 
 |100000000000022A00000107CAD88F71_png|
 
-**NOTE:**
-beginning with 8.2.0, FreeNAS® contains
+**NOTE:** beginning with 8.2.0, FreeNAS® contains
 `iscontrol(8) <http://www.freebsd.org/cgi/man.cgi?query=iscontrol>`_
-. This utility allows the FreeNAS® system to act as an initiator (rather than a target) and must be run from the command line. If you create a custom configuration for
-**iscontrol**
-, back it up as it will not survive a reboot of the system.
+. This utility allows the FreeNAS® system to act as an initiator (rather than a target) and must be run from the command line. If you create a custom
+configuration for **iscontrol**, back it up as it will not survive a reboot of the system.
 
 Table 8.7c summarizes the settings that can be configured when adding an initiator.
 
 
-**Table **
-**8.7c: Initiator Configuration Settings**
+**Table 8.7c: Initiator Configuration Settings**
 
 
 +--------------------+--------+----------------------------------------------------------------------------+
@@ -8826,14 +8754,13 @@ Table 8.7c summarizes the settings that can be configured when adding an initiat
 +--------------------+--------+----------------------------------------------------------------------------+
 
 
-In the example shown in Figure 8.7e, two groups have been created. Group 1 allows connections from any initiator on any network; Group 2 allows connections from any initiator on the
-*10.10.1.0/24*
-network. Click an initiator's entry to display its Edit and Delete buttons.
+In the example shown in Figure 8.7e, two groups have been created. Group 1 allows connections from any initiator on any network; Group 2 allows connections
+from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to display its Edit and Delete buttons.
 
-**NOTE:**
-if you delete an initiator, a warning will indicate if any targets or target/extent mappings depend upon the initiator. If you confirm the delete, these will be deleted as well.
+**NOTE:** if you delete an initiator, a warning will indicate if any targets or target/extent mappings depend upon the initiator. If you confirm the delete,
+these will be deleted as well.
 
-Figure 8.7e: Sample iSCSI Initiator Configuration
+**Figure 8.7e: Sample iSCSI Initiator Configuration**
 
 
 |100000000000026E000001F5B9108435_png|
@@ -8841,11 +8768,13 @@ Figure 8.7e: Sample iSCSI Initiator Configuration
 Portals
 ^^^^^^^
 
-A portal specifies the IP address and port number to be used for iSCSI connections. Services → ISCSI → Portals → Add Portal will bring up the screen shown in Figure 8.7f.
+A portal specifies the IP address and port number to be used for iSCSI connections. Services → ISCSI → Portals → Add Portal will bring up the
+screen shown in Figure 8.7f.
 
-Table 8.7d summarizes the settings that can be configured when adding a portal. If you need to assign additional IP addresses to the portal, click the link “Add extra Portal IP”.
+Table 8.7d summarizes the settings that can be configured when adding a portal. If you need to assign additional IP addresses to the portal, click the link
+“Add extra Portal IP”.
 
-Figure 8.7f: Adding an iSCSI Portal
+**Figure 8.7f: Adding an iSCSI Portal**
 
 
 |100000000000020D000001AC8D7B7E46_png|
@@ -8874,12 +8803,11 @@ Figure 8.7f: Adding an iSCSI Portal
 +-------------+----------------+-----------------------------------------------------------------------------+
 
 
-FreeNAS® systems with multiple IP addresses or interfaces can use a portal to provide services on different interfaces or subnets. This can be used to configure multi-path I/O (MPIO). MPIO is more efficient than a link aggregation.
+FreeNAS® systems with multiple IP addresses or interfaces can use a portal to provide services on different interfaces or subnets. This can be used to
+configure multi-path I/O (MPIO). MPIO is more efficient than a link aggregation.
 
-If the
-FreeNAS® system has multiple configured interfaces, p
-ortals can also be used to provide
-network access control. For example, consider a system with four interfaces configured with the following addresses:
+If the FreeNAS® system has multiple configured interfaces, portals can also be used to provide network access control. For example, consider a system with
+four interfaces configured with the following addresses:
 
 192.168.1.1/24
 
@@ -8889,54 +8817,46 @@ network access control. For example, consider a system with four interfaces conf
 
 192.168.4.1/24
 
-You could create a portal containing the first two IP addresses (group ID 1) and
-a portal containing the remaining two IP addresses (group ID 2). You could then create a target named A with a Portal Group
-ID of 1 and a second target named B with a Portal Group ID of 2. In this scenario, istgt would listen on all four interfaces, but connections to target A would be limited to the first two networks and connections to target B would be limited to the last two networks.
+You could create a portal containing the first two IP addresses (group ID 1) and a portal containing the remaining two IP addresses (group ID 2). You could
+then create a target named A with a Portal Group ID of 1 and a second target named B with a Portal Group ID of 2. In this scenario, istgt would listen on all
+four interfaces, but connections to target A would be limited to the first two networks and connections to target B would be limited to the last two networks.
 
-Another scenario would be to create a portal which includes every IP address
-**except**
-for the one used by a management interface. This would prevent iSCSI connections to the management interface.
+Another scenario would be to create a portal which includes every IP address **except** for the one used by a management interface. This would prevent iSCSI
+connections to the management interface.
 
 Target Global Configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Services → iSCSI → Target Global Configuration, shown in Figures 8.7g, contains settings that apply to all iSCSI shares.
-Table 8.7e summarizes the settings that can be configured in the Target Global Configuration screen. The integer values in the table are used to tune network performance; most of these values are described in
+Services → iSCSI → Target Global Configuration, shown in Figures 8.7g, contains settings that apply to all iSCSI shares. Table 8.7e summarizes the
+settings that can be configured in the Target Global Configuration screen. The integer values in the table are used to tune network performance; most of these
+values are described in
 `RFC 3720 <http://tools.ietf.org/html/rfc3720>`_
 .
 
-LUC (Logical Unit Controller) is an API provided by istgt to control removable media by providing functions to list targets, load or unload a media to a unit, change media file, or reset a LUN.
+LUC (Logical Unit Controller) is an API provided by istgt to control removable media by providing functions to list targets, load or unload a media to a unit,
+change media file, or reset a LUN.
 
-In order to dynamically add or remove
-**targets**
-without restarting the iSCSI service, which can disrupt iSCSI initiators, set the following options:
+In order to dynamically add or remove **targets** without restarting the iSCSI service, which can disrupt iSCSI initiators, set the following options:
 
-*   check the
-    *Enable LUC*
-    box
+*   check the *Enable LUC* box
 
 
 
-*   leave the
-    *Controller IP address*
-    and
-    *Control Authorized Network*
-    at their default values
+*   leave the *Controller IP address* and
+    *Control Authorized Network* at their default values
 
 
 
-*   change the
-    *Controller Auth Method*
-    to
-    *None*
+*   change the *Controller Auth Method*
+    to *None*
 
 
 
 
-**NOTE:**
-the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an existing extent.
+**NOTE:** the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
+existing extent.
 
-Figure 8.7g: iSCSI Target Global Configuration Variables
+**Figure 8.7g: iSCSI Target Global Configuration Variables**
 
 |100000000000029F00000203E6A9CBB4_png|
 
@@ -9068,40 +8988,40 @@ Figure 8.7g: iSCSI Target Global Configuration Variables
 |                                 |                              |                                                                                                                                                                                                                                                                                                                 |
 +---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-If the settings in this screen differ from the settings on the initiator, set them to be the same. When
-making changes, always match the larger setting.
+If the settings in this screen differ from the settings on the initiator, set them to be the same. When making changes, always match the larger setting.
 
-If you are changing integer values to optimize the connection, refer to the iSCSI initiator's documentation. For example, the following modifications are recommended if the iSCSI initiator is running on Xenserver:
+If you are changing integer values to optimize the connection, refer to the iSCSI initiator's documentation. For example, the following modifications are
+recommended if the iSCSI initiator is running on Xenserver:
 
-*   Max. pre-send R2T:
-    *255*
-
-
-
-*   MaxOutstandingR2T:
-    *64*
+*   Max. pre-send R2T: *255*
 
 
 
-*   First burst length:
-    *262,144*
+*   MaxOutstandingR2T: *64*
 
 
 
-*   Max burst length:
-    *2,097,152*
+*   First burst length: *262,144*
+
+
+
+*   Max burst length: *2,097,152*
 
 
 
 Targets
 ^^^^^^^
 
-Next, create a Target using Services → ISCSI → Targets → Add Target, as shown in Figure 8.7h. A target combines a portal ID, allowed initiator ID, and an authentication method. Table 8.7f summarizes the settings that can be configured when creating a Target.
+Next, create a Target using Services → ISCSI → Targets → Add Target, as shown in Figure 8.7h. A target combines a portal ID, allowed initiator ID,
+and an authentication method. Table 8.7f summarizes the settings that can be configured when creating a Target.
 
-**NOTE:**
-an iSCSI target creates a block device that may be accessible to multiple initiators. A clustered filesystem is required on the block device, such as VMFS used by VMware ESX/ESXi, in order for multiple initiators to mount the block device read/write. If a traditional filesystem such as EXT, XFS, FAT, NTFS, UFS, or ZFS is placed on the block device, care must be taken that only one initiator at a time has read/write access or the result will be filesystem corruption. If you need to support multiple clients to the same data on a non-clustered filesystem, use CIFS or NFS instead of iSCSI or create multiple iSCSI targets (one per client).
+**NOTE:** an iSCSI target creates a block device that may be accessible to multiple initiators. A clustered filesystem is required on the block device, such
+as VMFS used by VMware ESX/ESXi, in order for multiple initiators to mount the block device read/write. If a traditional filesystem such as EXT, XFS, FAT,
+NTFS, UFS, or ZFS is placed on the block device, care must be taken that only one initiator at a time has read/write access or the result will be filesystem
+corruption. If you need to support multiple clients to the same data on a non-clustered filesystem, use CIFS or NFS instead of iSCSI or create multiple iSCSI
+targets (one per client).
 
-Figure 8.7h: Adding an iSCSI Target
+**Figure 8.7h: Adding an iSCSI Target**
 
 |10000000000001BD000001C3DC193DAA_png|
 
@@ -9170,9 +9090,10 @@ Figure 8.7h: Adding an iSCSI Target
 Target/Extents
 ^^^^^^^^^^^^^^
 
-The last step is associating an extent to a target within Services → ISCSI → Target/Extents → Add Target/Extent. This screen is shown in Figure 8.7i. Use the drop-down menus to select the existing target and extent.
+The last step is associating an extent to a target within Services → ISCSI → Target/Extents → Add Target/Extent. This screen is shown in Figure
+8.7i. Use the drop-down menus to select the existing target and extent.
 
-Figure 8.7i: Associating iSCSI Targets/Extents
+**Figure 8.7i: Associating iSCSI Targets/Extents**
 
 |100000000000012A000000AEE11388A7_png|
 
@@ -9193,9 +9114,11 @@ Table 8.7g summarizes the settings that can be configured when associating targe
 +---------+----------------+-------------------------------+
 
 
-It is recommended to always associate extents to targets in a 1:1 manner, even though the GUI will allow multiple extents to be associated with the same target.
+It is recommended to always associate extents to targets in a 1:1 manner, even though the GUI will allow multiple extents to be associated with the same
+target.
 
-Once iSCSI has been configured, don't forget to start it in Services → Control Services. Click the red OFF button next to iSCSI. After a second or so, it will change to a blue ON, indicating that the service has started.
+Once iSCSI has been configured, don't forget to start it in Services → Control Services. Click the red OFF button next to iSCSI. After a second or so, it
+will change to a blue ON, indicating that the service has started.
 
 Connecting to iSCSI Share
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -9222,25 +9145,19 @@ comes with NetBSD, and
 `iscsid(8) <http://www.openbsd.org/cgi-bin/man.cgi?query=iscsid>`_
 comes with OpenBSD.
 
-Some Linux distros provide the command line utility
-**iscsiadm**
-from
+Some Linux distros provide the command line utility **iscsiadm** from
 `Open-iSCSI <http://www.open-iscsi.org/>`_
 . Use a web search to see if a package exists for your distribution should the command not exist on your Linux system.
 
-If you add a LUN while
-**iscsiadm**
-is already connected, it will not see the new LUN until you rescan using
-**iscsiadm -m node -R**
-. Alternately, use
-**iscsiadm -m discovery -t st -p <portal_IP>**
-to find the new LUN and
-**iscsiadm -m node -T <LUN_Name> -l**
-to log into the LUN.
+If you add a LUN while **iscsiadm** is already connected, it will not see the new LUN until you rescan using
+**iscsiadm -m node -R**. Alternately, use
+**iscsiadm -m discovery -t st -p <portal_IP>** to find the new LUN and
+**iscsiadm -m node -T <LUN_Name> -l** to log into the LUN.
 
 Instructions for connecting from a VMware ESXi Server can be found at
 `How to configure FreeNAS 8 for iSCSI and connect to ESX(i) <http://www.vladan.fr/how-to-configure-freenas-8-for-iscsi-and-connect-to-esxi/>`_
-. Note that the requirements for booting vSphere 4.x off iSCSI differ between ESX and ESXi. ESX requires a hardware iSCSI adapter while ESXi requires specific iSCSI boot firmware support. The magic is on the booting host side, meaning that there is no difference to the FreeNAS® configuration. See the
+. Note that the requirements for booting vSphere 4.x off iSCSI differ between ESX and ESXi. ESX requires a hardware iSCSI adapter while ESXi requires specific
+iSCSI boot firmware support. The magic is on the booting host side, meaning that there is no difference to the FreeNAS® configuration. See the
 `iSCSI SAN Configuration Guide <http://www.vmware.com/pdf/vsphere4/r41/vsp_41_iscsi_san_cfg.pdf>`_
 for details.
 
@@ -9250,16 +9167,15 @@ If you can see the target but not connect to it, check the discovery authenticat
 
 If the LUN is not discovered by ESXi, make sure that promiscuous mode is set to Accept in the vswitch.
 
-To determine which initiators are connected, type
-**istgtcontrol info**
-within
+To determine which initiators are connected, type **istgtcontrol info** within
 `Shell <#1.9.2.Shell|outline>`_
 .
 
 Growing LUNs
 ^^^^^^^^^^^^
 
-The method used to grow the size of an existing iSCSI LUN depends on whether the LUN is backed by a file extent or a zvol. Both methods are described in this section.
+The method used to grow the size of an existing iSCSI LUN depends on whether the LUN is backed by a file extent or a zvol. Both methods are described in this
+section.
 
 After the LUN is expanded using one of the methods below, use the tools from the initiator software to grow the partitions and the filesystems it contains.
 
@@ -9272,45 +9188,41 @@ Before growing a zvol based LUN, make sure that all initiators are disconnected.
 
 Open
 `Shell <#1.9.2.Shell|outline>`_
-and identify the zvol to be grown:
+and identify the zvol to be grown::
 
-**zfs list -t volume**
+ zfs list -t volume
+ NAME
+ USED
+ AVAIL
+ REFER
+ MOUNTPOINT
 
-NAME
-USED
-AVAIL
-REFER
-MOUNTPOINT
+ tank/iscsi_zvol
+ 4G
+ 17.5G
+ 33.9M
+ -
 
-tank/iscsi_zvol
-4G
-17.5G
-33.9M
--
+Then, grow the zvol. This example grows *tank/iscsi_zvol* from 4G to 6G::
 
-Then, grow the zvol. This example grows
-*tank/iscsi_zvol*
-from 4G to 6G:
+ zfs set volsize=6G tank/iscsi_zvol
 
-**zfs set volsize=6G tank/iscsi_zvol**
+ zfs set refreservation=6G tank/iscsi_zvol**
 
-**zfs set refreservation=6G tank/iscsi_zvol**
+Verify that the changes have taken effect::
 
-Verify that the changes have taken effect:
+ zfs list -t volume
+ NAME
+ USED
+ AVAIL
+ REFER
+ MOUNTPOINT
 
-**zfs list -t volume**
-
-NAME
-USED
-AVAIL
-REFER
-MOUNTPOINT
-
-tank/iscsi_zvol
-6G
-17.5G
-33.9M
--
+ tank/iscsi_zvol
+ 6G
+ 17.5G
+ 33.9M
+ -
 
 You can now start the iSCSI service and allow initiators to connect.
 
@@ -9323,44 +9235,37 @@ Before growing a file extent based LUN, make sure that all initiators are discon
 
 Then, go to Services → iSCSI → File Extents → View File Extents to determine the path of the file extent to grow. Open
 `Shell <#1.9.2.Shell|outline>`_
-to grow the extent. This example grows
-*/mnt/volume1/data*
-by 2G:
+to grow the extent. This example grows */mnt/volume1/data* by 2G::
 
-**truncate -s +2g /mnt/volume1/data**
+ truncate -s +2g /mnt/volume1/data
 
-Go back to Services → iSCSI → File Extents → View File Extents and click the Edit button for the file extent. Set the size to 0 as this causes the iSCSI target to use the new size of the file.
+Go back to Services → iSCSI → File Extents → View File Extents and click the Edit button for the file extent. Set the size to 0 as this causes the
+iSCSI target to use the new size of the file.
 
 You can now start the iSCSI service and allow initiators to connect.
 
 NFS
 ~~~
 
-Network File System (NFS) is a protocol for sharing files on a network. Before configuring this service, you should first create your NFS Shares in Sharing → Unix (NFS) Shares → Add Unix (NFS) Share. After configuring this service, go to Services → Control Panel to start the service.
+Network File System (NFS) is a protocol for sharing files on a network. Before configuring this service, you should first create your NFS Shares in Sharing
+→ Unix (NFS) Shares → Add Unix (NFS) Share. After configuring this service, go to Services → Control Panel to start the service.
 
 Starting this service will open the following ports on the FreeNAS® system:
 
-*   TCP and UDP 111 (used by
-    **rpcbind**
-    )
+*   TCP and UDP 111 (used by **rpcbind**)
 
 
 
-*   TCP 2049 (used by
-    **nfsd**
-    )
+*   TCP 2049 (used by **nfsd**)
 
 
 
-Additionally,
-**mountd**
-and
-**rpcbind**
-will each bind to a randomly available UDP port.
+Additionally, **mountd** and
+**rpcbind** will each bind to a randomly available UDP port.
 
 Figure 8.8a shows the configuration screen and Table 8.8a summarizes the configuration options for the NFS service.
 
-Figure 8.8a: Configuring NFS
+**Figure 8.8a: Configuring NFS**
 
 
 |10000000000002A2000001D87E290272_png|
@@ -9412,9 +9317,7 @@ Services → Rsync is used to configure an rsync server when using rsync module 
 `Configuring Rsync Module Mode <#1.4.5.2.Configuring Rsync Module Mode Between Two FreeNAS® Systems|outline>`_
 for a configuration example.
 
-This section describes the configurable options for the
-**rsyncd**
-service and rsync modules.
+This section describes the configurable options for the **rsyncd** service and rsync modules.
 
 Figure 8.9a shows the rsyncd configuration screen which is accessed from Services → Rsync → Configure Rsyncd.
 
@@ -9542,15 +9445,15 @@ Figure 8.10a shows the configuration screen that appears when you click Services
 |1000000000000277000001997C795E8C_png|
 
 **NOTE:**
-
 **smartd**
-will wake up at every
-*Check Interval*
-configured in Figure 8.10a. It will check the times you configured in your tests (described in Figure 4.5a) to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it does not make sense to set a check interval value higher than 60 minutes. For example, if you set the check interval for 120 minutes and the smart test to every hour, the test will only be run every 2 hours since the daemon only wakes up every 2 hours.
+will wake up at every *Check Interval* configured in Figure 8.10a. It will check the times you configured in your tests (described in Figure 4.5a) to see if
+any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it does not make sense to set a check interval value higher
+than 60 minutes. For example, if you set the check interval for 120 minutes and the smart test to every hour, the test will only be run every 2 hours since
+the daemon only wakes up every 2 hours.
 
 Table 8.10a summarizes the options in the S.M.A.R.T configuration screen.
 
-**Table 8.10a: S.M.A.R.T Configuration Options **
+**Table 8.10a: S.M.A.R.T Configuration Options**
 
 +-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
 | **Setting**     | **Value**                  | **Description**                                                                                                                                           |
@@ -9596,25 +9499,21 @@ Table 8.10a summarizes the options in the S.M.A.R.T configuration screen.
 SNMP
 ~~~~
 
-SNMP (Simple Network Management Protocol) is used to monitor network-attached devices for conditions that warrant administrative attention. FreeNAS® can be configured as a
+SNMP (Simple Network Management Protocol) is used to monitor network-attached devices for conditions that warrant administrative attention. FreeNAS® can be
+configured as a
 `bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_
 server using FreeBSD's simple and extensible SNMP daemon. When you start the SNMP service, the following port will be enabled on the FreeNAS® system:
 
-*   UDP 161 (
-    **bsnmpd**
-    listens here for SNMP requests)
+*   UDP 161 (**bsnmpd** listens here for SNMP requests)
 
 
 
-Available MIBS are located in
-*/usr/share/SNMP/mibs*
-and
-*/usr/local/share/SNMP/mibs*
-.
+Available MIBS are located in */usr/share/SNMP/mibs* and
+*/usr/local/share/SNMP/mibs*.
 
 Figure 8.11a shows the SNMP configuration screen. Table 8.11a summarizes the configuration options.
 
-Figure 8.11a: Configuring SNMP
+**Figure 8.11a: Configuring SNMP**
 
 
 |10000000000002AF000001B05B9731AC_png|
@@ -9635,8 +9534,7 @@ Figure 8.11a: Configuring SNMP
 | Community            | string | password used on the SNMP network, default is                  |
 |                      |        | *public*                                                       |
 |                      |        | and                                                            |
-|                      |        | **should **                                                    |
-|                      |        | **be changed for security reasons**                            |
+|                      |        | **should be changed for security reasons**                     |
 |                      |        |                                                                |
 +----------------------+--------+----------------------------------------------------------------+
 | Auxiliary Parameters | string | additional                                                     |
@@ -9649,33 +9547,30 @@ Figure 8.11a: Configuring SNMP
 SSH
 ~~~
 
-Secure Shell (SSH) allows for files to be transferred securely over an encrypted network. If you configure your FreeNAS® system as an SSH server, the users in your network will need to use
+Secure Shell (SSH) allows for files to be transferred securely over an encrypted network. If you configure your FreeNAS® system as an SSH server, the users
+in your network will need to use
 `SSH  <http://en.wikipedia.org/wiki/Comparison_of_SSH_clients>`_
 `client software <http://en.wikipedia.org/wiki/Comparison_of_SSH_clients>`_
 in order to transfer files using SSH.
 
-This section shows the FreeNAS® SSH configuration options, demonstrates an example configuration that restricts users to their home directory, and provides some troubleshooting tips.
+This section shows the FreeNAS® SSH configuration options, demonstrates an example configuration that restricts users to their home directory, and provides
+some troubleshooting tips.
 
 SSH Configuration Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Figure 8.12a shows the Services →
-SSH
-configuration screen.
-Once you have configured SSH, don't forget to start it in Services → Control Services.
+Figure 8.12a shows the Services → SSH configuration screen. Once you have configured SSH, don't forget to start it in Services → Control Services.
 
-Figure 8.12a:
-SSH
-Configuration
+**Figure 8.12a: SSH Configuration**
 
 
 |10000000000001950000012301F7AD89_png|
 
-Table 8.12a summarizes the configuration options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced.
+Table 8.12a summarizes the configuration options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode
+button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System → Settings →
+Advanced.
 
-**Table 8.12a: **
-SSH
-** Configuration Options**
+**Table 8.12a: SSH Configuration Options**
 
 
 +-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -9689,11 +9584,10 @@ SSH
 |                               |                | by default                                                                                                                                     |
 |                               |                |                                                                                                                                                |
 +-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Login as Root with password   | checkbox       | **for security reasons, root logins are discouraged and disabled by **                                                                         |
-|                               |                | **default;**                                                                                                                                   |
+| Login as Root with password   | checkbox       | **for security reasons, root logins are discouraged and disabled by default**                                                                  |
 |                               |                | if enabled, password must be set for                                                                                                           |
 |                               |                | *root*                                                                                                                                         |
-|                               |                | user in Account → Users → View Users                                                                                                           |
+|                               |                | user in Account → Users → View Users                                                                                                    |
 |                               |                |                                                                                                                                                |
 +-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
 | Allow Password Authentication | checkbox       | if unchecked, key based authentication for all users is required; requires                                                                     |
@@ -9734,94 +9628,66 @@ SSH
 +-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-A few sshd_config(5) options that are useful to input in the
-*Extra Options*
-field include:
+A few sshd_config(5) options that are useful to input in the *Extra Options* field include:
 
-*   **ClientAliveInterval**
-    : increase this number if ssh connections tend to drop
+*   **ClientAliveInterval**: increase this number if ssh connections tend to drop
 
 
 
-*   **ClientMaxStartup**
-    : defaults to 10; increase if you have more users
+*   **ClientMaxStartup**: defaults to 10; increase if you have more users
 
 
 
 Chrooting Command Line SFTP Users
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default when you configure SSH, users can use the
-**ssh**
-command to login to the FreeNAS® system. A user's home directory will be the volume/dataset specified in the
-*Home Directory*
-field of their user account on the FreeNAS® system. Users can also use the
-**scp**
-and
-**sftp**
-commands to transfer files between their local computer and their home directory on the FreeNAS® system.
+By default when you configure SSH, users can use the **ssh** command to login to the FreeNAS® system. A user's home directory will be the volume/dataset
+specified in the *Home Directory* field of their user account on the FreeNAS® system. Users can also use the
+**scp** and
+**sftp** commands to transfer files between their local computer and their home directory on the FreeNAS® system.
 
-While these commands will default to the user's home directory, users are able to navigate outside of their home directory which can pose a security risk. SSH supports using a
+While these commands will default to the user's home directory, users are able to navigate outside of their home directory which can pose a security risk. SSH
+supports using a
 `chroot <http://en.wikipedia.org/wiki/Chroot>`_
-to confine users to only the
-**sftp**
-command and to be limited to the contents of their own home directory. To configure this scenario on FreeNAS®, perform the following steps.
+to confine users to only the **sftp** command and to be limited to the contents of their own home directory. To configure this scenario on FreeNAS®, perform
+the following steps.
 
-**NOTE:**
-some utilities such as WinSCP can
+**NOTE:** some utilities such as WinSCP can
 `bypass the chroot <http://winscp.net/eng/docs/faq_breaks_permissions>`_
-. This section assumes that users are accessing the chroot using the command line
-**sftp**
-.
+. This section assumes that users are accessing the chroot using the command line **sftp**.
 
-#.  **Create a ZFS dataset for each user requiring sftp access**
-    in Storage → Volumes.
+#.  **Create a ZFS dataset for each user requiring sftp access** in Storage → Volumes.
 
 
 
-#.  **If you are not using Active Directory or LDAP, create a user account **
-    for each user in Account → Users → Add User. In the
-    *Home Directory*
-    field, browse to the location of the
-    dataset you created for that user. Repeat this process to create a user account for every user that will need access to the SSH service.
+#.  **If you are not using Active Directory or LDAP, create a user account** 
+    for each user in Account → Users → Add User. In the *Home Directory* field, browse to the location of the dataset you created for that user.
+    Repeat this process to create a user account for every user that will need access to the SSH service.
 
 
 
-#.  **Create a group **
-    named
-    *sftp*
-    in Account → Groups → Add Group. Then, click on the
-    *sftp*
-    group in View Groups and add the users who are to be restricted to their home directories when using
-    **sftp**
-    .
+#.  **Create a group** named
+    *sftp* in Account → Groups → Add Group. Then, click on the
+    *sftp* group in View Groups and add the users who are to be restricted to their home directories when using
+    **sftp**.
 
 
 
-#.  **Set permissions for each dataset**
-    in Storage → Volume → View Volumes. SSH chroot is
-    **very specific**
-    ** **
-    with regards to the required permissions (see the ChrootDirectory keyword in
+#.  **Set permissions for each dataset** in Storage → Volume → View Volumes. SSH chroot is
+    **very specific** with regards to the required permissions (see the ChrootDirectory keyword in
     `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_
     for details).
     **Your configuration will not work if the permissions on the datasets used by SSH chroot users differ from those shown in Figure 8.12b.**
-    ** **
 
 
 
 #.  Create a home directory within each dataset using
     `Shell <#1.9.2.Shell|outline>`_
-    . Due to the permissions required by SSH chroot, the user will not have permissions to write to the root of their own dataset until you
-    do this. Since your intention is to limit them to the contents of their home directory, manually create a home directory for each user
-    **within their own dataset**
-    and change the ownership of the directory to the user. Example 8.12a demonstrates the commands used to create a home directory called
-    *user1*
-    for the user account
-    *user1*
-    on dataset
-    */mnt/volume1/user1*
-    :
+    . Due to the permissions required by SSH chroot, the user will not have permissions to write to the root of their own dataset until you do this. Since
+    your intention is to limit them to the contents of their home directory, manually create a home directory for each user **within their own dataset**
+    and change the ownership of the directory to the user. Example 8.12a demonstrates the commands used to create a home directory called *user1* for the user
+    account *user1* on dataset
+    */mnt/volume1/user1*:
 
 
 
@@ -9831,89 +9697,75 @@ some utilities such as WinSCP can
 |10000000000001780000016131448D93_png|
 
 **Example 8.12a: Creating a User's Home Directory**
+::
 
+ mkdir /mnt/
+ volume
+ 1/user1/user1
 
-**mkdir /mnt/**
-**volume**
-**1/user1/user1**
+ chown user1:user1 /mnt/
+ volume
+ 1/user1/user1
 
-**chown user1:user1 /mnt/**
-**volume**
-**1/user1/user1**
-
-#.  **Configure SSH**
-    in Services → SSH. Add these lines to the Extra Options section
-    :
-
-
-
-Match Group sftp
-
-ChrootDirectory %h
-
-ForceCommand internal-sftp
-
-AllowTcpForwarding no
-
-#.  **Start the SSH service**
-    in Control Services. Click the red OFF button next to SSH. After a second or so, it will change to a blue ON, indicating that the service has been enabled.
+#.  **Configure SSH** in Services → SSH. Add these lines to the Extra Options section:
+::
 
 
 
-#.  **Test the connection**
-    from a client by running
-    **sftp**
-    ,
-    **ssh**
-    , and
-    **scp**
-    as the user. The
-    **sftp**
-    command should work but be limited to the user's home directory and the
-    **ssh**
-    and
-    **scp**
-    commands should fail.
+ Match Group sftp
+ ChrootDirectory %h
+ ForceCommand internal-sftp
+ AllowTcpForwarding no
+
+#.  **Start the SSH service** in Control Services. Click the red OFF button next to SSH. After a second or so, it will change to a blue ON, indicating that
+    the service has been enabled.
+
+
+
+#.  **Test the connection** from a client by running
+    **sftp**,
+    **ssh**, and
+    **scp** as the user. The
+    **sftp** command should work but be limited to the user's home directory and the
+    **ssh** and
+    **scp** commands should fail.
 
 
 
 Troubleshooting SSH Connections
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you add any
-*Extra Options*
-in the SSH configuration screen, be aware that the keywords listed in
+If you add any *Extra Options* in the SSH configuration screen, be aware that the keywords listed in
 `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_
 are case sensitive. This means that your configuration will fail to do what you intended if you do not match the upper and lowercase letters of the keyword.
 
-If your clients are receiving “reverse DNS” or timeout errors, add an entry for the IP address of the FreeNAS® system in the
-*Host name database*
-field of Network → Global Configuration.
+If your clients are receiving “reverse DNS” or timeout errors, add an entry for the IP address of the FreeNAS® system in the *Host name database* field
+of Network → Global Configuration.
 
-When configuring SSH, always test your configuration as an SSH user account to ensure that the user is limited to what you have configured and that they have permission to transfer files within the
-intended directories. If the user account is experiencing problems, the SSH error messages are usually pretty specific to what the problem is. Type the following command within
+When configuring SSH, always test your configuration as an SSH user account to ensure that the user is limited to what you have configured and that they have
+permission to transfer files within the intended directories. If the user account is experiencing problems, the SSH error messages are usually pretty specific
+to what the problem is. Type the following command within
 `Shell <#1.9.2.Shell|outline>`_
-to read these messages as they occur:
+to read these messages as they occur::
 
-**tail -f /var/log/messages**
+ tail -f /var/log/messages
 
-Additional messages regarding authentication errors may be found in
-*/var/log/auth.log*
-.
+Additional messages regarding authentication errors may be found in */var/log/auth.log*.
 
 TFTP
 ~~~~
 
-Trivial File Transfer Protocol (TFTP) is a light-weight version of FTP usually used to transfer configuration or boot files between machines, such as routers, in a local environment. TFTP provides an extremely limited set of commands and provides no authentication.
+Trivial File Transfer Protocol (TFTP) is a light-weight version of FTP usually used to transfer configuration or boot files between machines, such as routers,
+in a local environment. TFTP provides an extremely limited set of commands and provides no authentication.
 
-If the FreeNAS® system will be used to store images and configuration files for the network's devices, configure and start the TFTP service. Starting the TFTP service will open UDP port 69.
+If the FreeNAS® system will be used to store images and configuration files for the network's devices, configure and start the TFTP service. Starting the
+TFTP service will open UDP port 69.
 
-**NOTE:**
-in versions of FreeNAS® prior to 8.3.0, TFTP is limited to a maximum file size of 32MB.
+**NOTE:** in versions of FreeNAS® prior to 8.3.0, TFTP is limited to a maximum file size of 32MB.
 
 Figure 8.13a shows the TFTP configuration screen and Table 8.13a summarizes the available options:
 
-Figure 8.13a: TFTP Configuration
+**Figure 8.13a: TFTP Configuration**
 
 
 |10000000000001A10000014C23FFB30C_png|
@@ -9958,7 +9810,8 @@ UPS
 
 FreeNAS® uses
 `NUT <http://www.networkupstools.org/>`_
-(Network UPS Tools) to provide UPS support. If the FreeNAS® system is connected to a UPS device, configure the UPS service then start it in Services → Control Services.
+(Network UPS Tools) to provide UPS support. If the FreeNAS® system is connected to a UPS device, configure the UPS service then start it in Services →
+Control Services.
 
 Figure 8.14a shows the UPS configuration screen:
 
@@ -10004,8 +9857,7 @@ Table 8.14a summarizes the options in the UPS Configuration screen.
 | Shutdown mode             | drop-down menu | choices are                                                                                           |
 |                           |                | *UPS goes on battery*                                                                                 |
 |                           |                | and                                                                                                   |
-|                           |                | *UPS reaches low *                                                                                    |
-|                           |                | *battery *                                                                                            |
+|                           |                | *UPS reaches low battery*                                                                             |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Shutdown timer            | integer        | in seconds; will initiate shutdown after this many seconds after UPS enters                           |
@@ -10052,48 +9904,52 @@ Table 8.14a summarizes the options in the UPS Configuration screen.
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:**
-
-for USB devices, the easiest way to determine the correct device name is to check the box “Show console messages” in System → Settings → Advanced. Plug in the USB device and the console messages will give the name of the
-*/dev/ugenX.X*
-device; where the X's are the numbers that show on the console.
+**NOTE:** for USB devices, the easiest way to determine the correct device name is to check the box “Show console messages” in System → Settings
+→ Advanced. Plug in the USB device and the console messages will give the name of the */dev/ugenX.X* device; where the X's are the numbers that show on
+the console.
 
 `upsc(8) <http://www.networkupstools.org/docs/man/upsc.html>`_
 can be used to get status variables from the UPS daemon such as the current charge and input voltage. It can be run from
 `Shell <#1.9.2.Shell|outline>`_
 using the following syntax. The man page gives some other usage examples.
+::
 
-**upsc ups@localhost**
+ upsc ups@localhost
 
 `upscmd(8) <http://www.networkupstools.org/docs/man/upscmd.html>`_
-can be used to send commands directly to the UPS, assuming that the hardware supports the command being sent. Only users with administrative rights can use this command. These users are created in the
-*Extra users*
-field.
+can be used to send commands directly to the UPS, assuming that the hardware supports the command being sent. Only users with administrative rights can use
+this command. These users are created in the *Extra users* field.
 
 Plugins
 -------
 
-FreeNAS® 8.2.0 introduced the ability to extend the built-in NAS services by providing a mechanism for installing additional software. This mechanism was known as the Plugins architecture and is based on
+FreeNAS® 8.2.0 introduced the ability to extend the built-in NAS services by providing a mechanism for installing additional software. This mechanism was
+known as the Plugins architecture and is based on
 `FreeBSD jails <http://en.wikipedia.org/wiki/Freebsd_jail>`_
 and
 `PC-BSD PBIs <http://wiki.pcbsd.org/index.php/AppCafe®/9.2>`_
 . This allowed users to install and configure additional applications once they had created and configured a plugins jail.
 
-FreeNAS® 9.x simplifies this procedure by providing two methods for software installation. The Plugins method, described in this section, is meant for users who prefer to browse for, install, and configure available software using the GUI. This method is very easy to use, but is limited in the amount of software that is available. Each application will automatically be installed into its own jail, meaning that this method may not be suitable for users who wish to run multiple applications within the same jail.
+FreeNAS® 9.x simplifies this procedure by providing two methods for software installation. The Plugins method, described in this section, is meant for users
+who prefer to browse for, install, and configure available software using the GUI. This method is very easy to use, but is limited in the amount of software
+that is available. Each application will automatically be installed into its own jail, meaning that this method may not be suitable for users who wish to run
+multiple applications within the same jail.
 
 The
 `Jails <#1.10.Jails|outline>`_
-method provides much more control over software installation but assumes that the user is comfortable working from the command line can and has a good understanding of networking basics and software installation on FreeBSD-based systems.
+method provides much more control over software installation but assumes that the user is comfortable working from the command line can and has a good
+understanding of networking basics and software installation on FreeBSD-based systems.
 
-It is recommended that users skim through both the Plugins and Jails sections in order to become familiar with the features and limitations of each and to choose the method that best meets their software needs.
+It is recommended that users skim through both the Plugins and Jails sections in order to become familiar with the features and limitations of each and to
+choose the method that best meets their software needs.
 
-D
-ue to ABI (application binary interface) changes, FreeNAS® 8.x PBIs can not be installed on a 9.x system.
+Due to ABI (application binary interface) changes, FreeNAS® 8.x PBIs can not be installed on a 9.x system.
 
 Installing a FreeNAS® PBI Using Plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A FreeNAS® PBI is a self-contained application installer which has been designed to integrate into the FreeNAS® GUI. A FreeNAS® PBI offers several advantages:
+A FreeNAS® PBI is a self-contained application installer which has been designed to integrate into the FreeNAS® GUI. A FreeNAS® PBI offers several
+advantages:
 
 *   the FreeNAS® GUI provides a browser for viewing the list of available FreeNAS® PBIs. This list is also available at
     `Available FreeNAS® PBIs <#1.9.2.Available FreeNAS® PBIs|outline>`_
@@ -10122,23 +9978,24 @@ To install a FreeNAS® PBI using the plugins method, click Plugins. As seen in F
 
 |1000000000000556000001EE3E0B22FB_png|
 
-**NOTE:**
-if the list of available PBIs is not displayed, open
+**NOTE:** if the list of available PBIs is not displayed, open
 `Shell <#1.12.2.Shell|outline>`_
-and verify that the FreeNAS® system can
-**ping**
-an address on the Internet. If it cannot, you may have to add a default gateway address and/or DNS server address in Network →
+and verify that the FreeNAS® system can **ping** an address on the Internet. If it cannot, you may have to add a default gateway address and/or DNS server
+address in Network →
 `Global Configuration <#1.5.1.Global Configuration|outline>`_
 .
 
-Highlight the entry of the PBI you would like to install, then click its Install button. In the example shown in Figure 9.1b, the transmission PBI is selected for installation.
+Highlight the entry of the PBI you would like to install, then click its Install button. In the example shown in Figure 9.1b, the transmission PBI is selected
+for installation.
 
 **Figure 9.1b: Selecting a PBI to Install**
 
 
 |100000000000037E000001EB84FBFF52_png|
 
-Click “OK” to start the installation. It will take a few minutes as the system will first download and configure a jail to contain the installed software. It will then install the PBI and add it to the “Installed” tab as shown in Figure 9.1c. Be patient as it may take a few minutes for the installation to finish.
+Click “OK” to start the installation. It will take a few minutes as the system will first download and configure a jail to contain the installed
+software. It will then install the PBI and add it to the “Installed” tab as shown in Figure 9.1c. Be patient as it may take a few minutes for the
+installation to finish.
 
 **Figure 9.1c: Viewing Installed PBIs**
 
@@ -10162,74 +10019,81 @@ As seen in the example shown in Figure 9.1c, entries for the installed PBI will 
 
 
 
-The entry in the Installed tab of Plugins will display the plugin name and version, the name of the PBI that was installed, the name of the jail that was created, whether the application status is ON or OFF, and a button to delete the application and its associated jail. If a newer version of the application is available, a button to update the application will also appear.
+The entry in the Installed tab of Plugins will display the plugin name and version, the name of the PBI that was installed, the name of the jail that was
+created, whether the application status is ON or OFF, and a button to delete the application and its associated jail. If a newer version of the application is
+available, a button to update the application will also appear.
 
-The "Service status" of a PBI must be turned to "ON" before the installed application is available. Before starting the service, check to see if it has any configuration options by clicking its entry in the Plugins section of the tree. If the application is configurable, this will open a graphical screen that contains its available configuration options. The options that are available will vary by PBI. PBIs which are not configurable will instead display a message with a hyperlink for accessing the software. That hyperlink will not work until the PBI is started.
+The "Service status" of a PBI must be turned to "ON" before the installed application is available. Before starting the service, check to see if it has any
+configuration options by clicking its entry in the Plugins section of the tree. If the application is configurable, this will open a graphical screen that
+contains its available configuration options. The options that are available will vary by PBI. PBIs which are not configurable will instead display a message
+with a hyperlink for accessing the software. That hyperlink will not work until the PBI is started.
 
-You should always review a PBI's configuration options before attempting to start it as some PBIs have options that need to be set before their service will successfully start. If you have never configured this application before, check the application's website to see what documentation is available. A link to the website for each available PBI can be found in
+You should always review a PBI's configuration options before attempting to start it as some PBIs have options that need to be set before their service will
+successfully start. If you have never configured this application before, check the application's website to see what documentation is available. A link to
+the website for each available PBI can be found in
 `Available FreeNAS® PBIs <#1.9.2.Available FreeNAS® PBIs|outline>`_
 .
 
-If the application requires access to the data stored on the FreeNAS® system, click the entry for the associated jail in the Jails section of the tree and add a storage as described
+If the application requires access to the data stored on the FreeNAS® system, click the entry for the associated jail in the Jails section of the tree and
+add a storage as described
 `here <#1.10.2.2.2.Adding Storage|outline>`_
 .
 
-If you need to access the shell of the jail containing the application to complete or test your configuration, click the entry for the associated jail in the Jails section of the tree. You can then click its shell icon as described in
+If you need to access the shell of the jail containing the application to complete or test your configuration, click the entry for the associated jail in the
+Jails section of the tree. You can then click its shell icon as described in
 `Managing Jails <#1.10.2.1.Managing Jails|outline>`_
 .
 
-Once the configuration is complete, click the red OFF button in the entry for the PBI. If the service successfully starts, it will change to a blue ON. If it fails to start, click the jail's shell icon and type
-**tail /var/log/messages**
-to see if any errors were logged.
+Once the configuration is complete, click the red OFF button in the entry for the PBI. If the service successfully starts, it will change to a blue ON. If it
+fails to start, click the jail's shell icon and type **tail /var/log/messages** to see if any errors were logged.
 
 Updating an Installed FreeNAS® PBI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a newer version of a FreeNAS® PBI becomes available in the official repository, an "Update" button will be added to the entry of the PBI in the "Installed" tab. In the example shown in Figure 9.1d, a newer version of Minidlna is available.
+If a newer version of a FreeNAS® PBI becomes available in the official repository, an "Update" button will be added to the entry of the PBI in the
+"Installed" tab. In the example shown in Figure 9.1d, a newer version of Minidlna is available.
 
 **Figure 9.1d: Updating an Installed PBI**
 
 
 |10000000000003900000019AB1074006_png|
 
-Click the "OK" button and the latest version of the PBI will automatically be downloaded and installed. Once the update is complete, the entry for the PBI will be refreshed to show the new version number and the "Update" button will disappear.
+Click the "OK" button and the latest version of the PBI will automatically be downloaded and installed. Once the update is complete, the entry for the PBI
+will be refreshed to show the new version number and the "Update" button will disappear.
 
 Installing Additional PBIs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The "Available" tab of Plugins contains an "Upload" button. This button allows you to install PBIs that are not yet available in the official repository. These PBIs include FreeNAS® PBIs which are still being tested as well as
+The "Available" tab of Plugins contains an "Upload" button. This button allows you to install PBIs that are not yet available in the official repository.
+These PBIs include FreeNAS® PBIs which are still being tested as well as
 `PC-BSD PBIs <http://pbibuild64.pcbsd.org/index.php?ver=9>`_
-. These PBIs must be manually downloaded first and should end in a
-*.pbi*
-extension. When downloading a PBI, make sure
-that it matches the architecture (32- or 64-bit) of the FreeNAS® system and
-that it was developed for 9.x as 8.x and 10.x PBIs will not work on a 9.x FreeNAS® system.
+. These PBIs must be manually downloaded first and should end in a *.pbi* extension. When downloading a PBI, make sure that it matches the architecture (32-
+or 64-bit) of the FreeNAS® system and that it was developed for 9.x as 8.x and 10.x PBIs will not work on a 9.x FreeNAS® system.
 
-Once you have downloaded the PBI, click the "Upload" button. As seen in the example in Figure 9.1e, this will prompt you to browse to the location of the downloaded PBI. Once the PBI is selected, click the "Upload" button to install the PBI. In this example, the user is installing the PC-BSD PBI for webmin.
+Once you have downloaded the PBI, click the "Upload" button. As seen in the example in Figure 9.1e, this will prompt you to browse to the location of the
+downloaded PBI. Once the PBI is selected, click the "Upload" button to install the PBI. In this example, the user is installing the PC-BSD PBI for webmin.
 
 **Figure 9.1e: Installing a Previously Downloaded PBI**
 
 
 |10000000000002DD000001883EEDE3BA_png|
 
-When the installation is complete, an entry for the PBI will be added to the "Installed" tab and its associated jail will be listed under "Jails". However, if it is not a FreeNAS® PBI, it will not be added to "Plugins". In other words, if the application requires any configuration, you will have to perform it from the command line of the jail's shell instead of the GUI.
+When the installation is complete, an entry for the PBI will be added to the "Installed" tab and its associated jail will be listed under "Jails". However, if
+it is not a FreeNAS® PBI, it will not be added to "Plugins". In other words, if the application requires any configuration, you will have to perform it from
+the command line of the jail's shell instead of the GUI.
 
 Deleting a PBI
 ^^^^^^^^^^^^^^
 
-When you install a PBI using the Plugins method, an associated jail is created. If you decide to delete a PBI, the associated jail is also deleted as it is no longer required.
-**Before deleting a PBI,**
-** **
-make sure that you don't have any data or configuration in the jail that you do not want to lose. If you do, back it up first, before deleting the PBI.
+When you install a PBI using the Plugins method, an associated jail is created. If you decide to delete a PBI, the associated jail is also deleted as it is no
+longer required. **Before deleting a PBI,** make sure that you don't have any data or configuration in the jail that you do not want to lose. If you do, back
+it up first, before deleting the PBI.
 
-In the example shown in Figure 9.1f, the CouchPotato PBI has been installed and the user has clicked its "Delete" button. As described in the previous sections, this PBI appears in the Plugins portion of the tree, its associated jail,
-*couchpotato_1*
-, appears in the Jails portion of the tree, and the PBI shows as installed in the Installed tab of Plugins. A pop-up message asks the user if they are sure that they want to delete.
-**This is the one and only warning.**
-** **
-If the user clicks "Yes", this PBI will be removed from the Plugins portion of the tree, its associated jail,
-*couchpotato_1*
-, will be deleted, and the PBI will no longer show as installed in the Installed tab of Plugins.
+In the example shown in Figure 9.1f, the CouchPotato PBI has been installed and the user has clicked its "Delete" button. As described in the previous
+sections, this PBI appears in the Plugins portion of the tree, its associated jail, *couchpotato_1* , appears in the Jails portion of the tree, and the PBI
+shows as installed in the Installed tab of Plugins. A pop-up message asks the user if they are sure that they want to delete.
+**This is the one and only warning.** If the user clicks "Yes", this PBI will be removed from the Plugins portion of the tree, its associated jail,
+*couchpotato_1*, will be deleted, and the PBI will no longer show as installed in the Installed tab of Plugins.
 
 **Figure 9.1f: Deleting an Installed PBI**
 
@@ -10316,11 +10180,11 @@ Currently, the following FreeNAS® PBIs are available:
 
 
 
-**NOTE:**
-only a small sub-set of these PBIs are available for 32-bit systems as most applications are 64-bit.
+**NOTE:** only a small sub-set of these PBIs are available for 32-bit systems as most applications are 64-bit.
 
 
-While the FreeNAS® Plugins system makes it easy to install a PBI, it is still up to you to know how to configure and use the installed application. When in doubt, refer to the documentation for that application.
+While the FreeNAS® Plugins system makes it easy to install a PBI, it is still up to you to know how to configure and use the installed application. When in
+doubt, refer to the documentation for that application.
 
 PBI Requests
 ^^^^^^^^^^^^
