@@ -14,7 +14,7 @@ Active Directory service integration.
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/services/activedirectory/
+.. http:get:: /api/v1.0/directoryservice/activedirectory/
 
    Returns the active directory settings dictionary.
 
@@ -22,7 +22,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/services/activedirectory/ HTTP/1.1
+      GET /api/v1.0/directoryservice/activedirectory/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -60,7 +60,7 @@ List resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/services/activedirectory/
+.. http:put:: /api/v1.0/directoryservice/activedirectory/
 
    Update active directory.
 
@@ -68,7 +68,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/services/activedirectory/ HTTP/1.1
+      PUT /api/v1.0/directoryservice/activedirectory/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -132,7 +132,7 @@ The LDAP resource represents the configuration settings for LDAP service.
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/services/ldap/
+.. http:get:: /api/v1.0/directoryservice/ldap/
 
    Returns the LDAP settings dictionary.
 
@@ -140,7 +140,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/services/ldap/ HTTP/1.1
+      GET /api/v1.0/directoryservice/ldap/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -161,7 +161,7 @@ List resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/services/ldap/
+.. http:put:: /api/v1.0/directoryservice/ldap/
 
    Update LDAP.
 
@@ -169,7 +169,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/services/ldap/ HTTP/1.1
+      PUT /api/v1.0/directoryservice/ldap/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -228,7 +228,7 @@ The NIS resource represents the configuration settings for NIS service.
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/services/nis/
+.. http:get:: /api/v1.0/directoryservice/nis/
 
    Returns the NIS settings dictionary.
 
@@ -236,7 +236,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/services/nis/ HTTP/1.1
+      GET /api/v1.0/directoryservice/nis/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -262,7 +262,7 @@ List resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/services/nis/
+.. http:put:: /api/v1.0/directoryservice/nis/
 
    Update NIS.
 
@@ -270,7 +270,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/services/nis/ HTTP/1.1
+      PUT /api/v1.0/directoryservice/nis/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -310,7 +310,7 @@ The NT4 resource represents the configuration settings for NT4 service.
 List resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/services/nt4/
+.. http:get:: /api/v1.0/directoryservice/nt4/
 
    Returns the NT4 settings dictionary.
 
@@ -318,7 +318,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/services/nt4/ HTTP/1.1
+      GET /api/v1.0/directoryservice/nt4/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -345,7 +345,7 @@ List resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/services/nt4/
+.. http:put:: /api/v1.0/directoryservice/nt4/
 
    Update NT4.
 
@@ -353,7 +353,7 @@ Update resource
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/services/nt4/ HTTP/1.1
+      PUT /api/v1.0/directoryservice/nt4/ HTTP/1.1
       Content-Type: application/json
 
         {
