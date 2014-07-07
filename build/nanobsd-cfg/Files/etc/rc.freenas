@@ -670,7 +670,7 @@ jail_pre_start()
 			readonly
 
 		FROM
-			jails_nullmountpoint
+			jails_jailmountpoint
 
 		WHERE
 			jail = '${jail}'
@@ -794,7 +794,7 @@ jail_post_stop()
 			destination
 
 		FROM
-			jails_nullmountpoint	
+			jails_jailmountpoint
 
 		WHERE
 			jail = '${jail}'
@@ -831,7 +831,7 @@ jail_pre_delete()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 		DELETE FROM
-			jails_nullmountpoint
+			jails_jailmountpoint
 
 		WHERE
 			jail = '${jail}'
