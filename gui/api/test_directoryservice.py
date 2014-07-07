@@ -52,6 +52,9 @@ class ActiveDirectoryResourceTest(APITestCase):
             u'ad_use_default_domain': True,
             u'ad_use_keytab': False,
             u'ad_verbose_logging': False,
+            u'ad_certfile': u'',
+            u'ad_enable': False,
+            u'ad_ssl': u'off',
         })
 
     def test_Update(self):
@@ -112,14 +115,14 @@ class LDAPResourceTest(APITestCase):
             u'ldap_groupsuffix': u'',
             u'ldap_hostname': u'',
             u'ldap_machinesuffix': u'',
-            u'ldap_options': u'',
             u'ldap_passwordsuffix': u'',
-            u'ldap_pwencryption': u'clear',
-            u'ldap_rootbasedn': u'',
-            u'ldap_rootbindpw': u'',
+            u'ldap_basedn': u'',
+            u'ldap_bindpw': u'',
+            u'ldap_binddn': u'',
             u'ldap_ssl': u'off',
-            u'ldap_tls_cacertfile': u'',
-            u'ldap_usersuffix': u''
+            u'ldap_usersuffix': u'',
+            u'ldap_enable': False,
+            u'ldap_certfile': u'',
         })
 
     def test_Update(self):
@@ -175,7 +178,8 @@ class NISResourceTest(APITestCase):
             u'nis_domain': u'',
             u'nis_manycast': False,
             u'nis_secure_mode': False,
-            u'nis_servers': u''
+            u'nis_servers': u'',
+            u'nis_enable': False,
         })
 
     def test_Update(self):
@@ -233,7 +237,8 @@ class NT4ResourceTest(APITestCase):
             u'nt4_adminpw': u'',
             u'nt4_dcname': u'',
             u'nt4_netbiosname': u'NAS',
-            u'nt4_workgroup': u''
+            u'nt4_workgroup': u'',
+            u'nt4_enable': False,
         })
 
     def test_Update(self):
