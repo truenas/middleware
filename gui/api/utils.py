@@ -33,6 +33,7 @@ from django.contrib.auth import authenticate
 from django.db.models.fields.related import ForeignKey
 from django.http import QueryDict
 
+from freenasUI.account.models import bsdUsers
 from freenasUI.freeadmin.apppool import appPool
 
 from tastypie.authentication import (
@@ -52,6 +53,11 @@ class DjangoAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
         if request.user.is_authenticated():
             return True
+
+        # Allow access to the API of no root password has been set yet
+        if not bsdUsers.has_root_password():
+            return True
+
         return False
 
     # Optional but recommended

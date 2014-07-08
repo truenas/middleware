@@ -159,6 +159,11 @@ class bsdUsers(Model):
     is_staff = True
     objects = UserManager()
 
+    @classmethod
+    def has_root_password(cls):
+        qs = cls.objects.filter(bsdusr_uid=0).exclude(bsdusr_unixhash='*')
+        return qs.exists()
+
     @property
     def bsdusr_sshpubkey(self):
         keysfile = '%s/.ssh/authorized_keys' % self.bsdusr_home
