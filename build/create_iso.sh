@@ -109,6 +109,11 @@ main()
 	else
 		echo "Hey, where are the install filess?"
 	fi
+	if [ -d ${NANO_OBJ}/_.data ]; then
+		mkdir -p ${NANO_OBJ}/_.instufs/data
+		tar -C ${NANO_OBJ}/_.data -cf - . |
+			tar -C ${NANO_OBJ}/_.instufs/data -xf -
+	fi
 
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
 	if is_truenas ; then

@@ -498,6 +498,8 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	/usr/local/bin/update_freenas -R /tmp/data -M /FreeNAS-MANIFEST install
 	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
+	cp -R /data /tmp/data
+	chown -R www:www /tmp/data/*
 	umount /tmp/data
 	rmdir /tmp/data
 	read foo
