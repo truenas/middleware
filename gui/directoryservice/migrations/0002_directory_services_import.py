@@ -10,6 +10,10 @@ from django.db import models
 class Migration(DataMigration):
     no_dry_run = True
 
+    depends_on = (
+        ('services', '0123_auto__del_field_activedirectory_ad_workgroup'),
+    )
+
     def forwards(self, orm):
         try:
             activedirectory = orm['services.ActiveDirectory'].objects.all()[0]
