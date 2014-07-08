@@ -97,6 +97,6 @@ customize_cmd remove_var_db_pkg
 
 customize_cmd create_var_home_symlink
 
-customize_cmd add_netcli_shell_to_etc_shells
+customize_cmd add_netcli_to_etc_shells
 
 late_customize_cmd freenas_custom
