@@ -1190,11 +1190,11 @@ When finished, click the Apply Update button to begin the upgrade progress. Behi
 **Figure 2.6d: Upgrading FreeNAS® From the GUI**
 
 
-|10000000000002D1000001F0BFB72532_png|
+|Figure26d_png|
 
 **Figure 2.6e: Step 2 of 2**
 
-|10000000000002FA000001E9AA5ABD0D_png|
+|Figure26e_png|
 
 Unlocking an Encrypted Volume
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1209,7 +1209,7 @@ will prompt for the passphrase or recovery key. You can also select which servic
 **Figure 2.6f: Unlocking an Encrypted Volume**
 
 
-|10000000000002EE00000236CD5A0F75_png|
+|Figure26f_png|
 
 If Something Goes Wrong
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -1510,7 +1510,7 @@ If you click Groups → View Groups, you will see a screen similar to Figure 3.2
 **Figure 3.2a: FreeNAS® Groups Management**
 
 
-|10000000000002B1000001EDAEAA5CF9_png|
+|Figure32a_png|
 
 All groups that came with the operating system will be listed. Each group has an entry indicating the group ID, group name, whether or not it is a built-in
 group which was installed with FreeNAS®, and whether or not the group's members are allowed to use **sudo**. If you click a group entry, a Members button
@@ -1521,7 +1521,7 @@ If you click the Add Group button, you will see the screen shown in Figure 3.2b.
 **Figure 3.2b: Creating a New Group**
 
 
-|10000000000002400000014CFA486E78_png|
+|Figure32b_png|
 
 **Table 3.2a: Options When Creating a Group**
 
@@ -1559,7 +1559,7 @@ that the built-in groups do not provide a Delete Group button.
 **Figure 3.2c: Assigning a User as a Member of a Group**
 
 
-|100000000000037A000001F472E304C4_png|
+|Figure32c_png|
 
 Users
 ~~~~~
@@ -1589,7 +1589,7 @@ Figure 3.2d.
 **Figure 3.2d: Managing User Accounts**
 
 
-|10000000000004BC000001E97FA3DC88_png|
+|Figure32d_png|
 
 Each account entry indicates the user ID, username, primary group ID, home directory, default shell, full name, whether or not it is a built-in user that came
 with the FreeNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, and whether or not the user
@@ -1621,7 +1621,7 @@ default” in System → Settings → Advanced. Table 3.2b summarizes the option
 **Figure 3.2e: Adding or Editing a User Account**
 
 
-|100000000000026B000001AA72839EBC_jpg|
+|Figure32e_jpg|
 
 **Table 3.2b: User Account Configuration**
 
@@ -1753,7 +1753,7 @@ Figure 4.1a shows the screen that opens when you click System → Cron Jobs → 
 
 **Figure 4.1a: Creating a Cron Job**
 
-|10000000000002B1000001DFB89D50FB_png|
+|Figure41a_png|
 
 Table 4.1a summarizes the configurable options when creating a cron job.
 
@@ -1822,7 +1822,7 @@ When scheduling a script, make sure that the script is executable and has been f
 **Figure 4.2a: Add an Init/Shutdown Script**
 
 
-|10000000000001F40000013D5D55C1C6_png|
+|Figure42a_png|
 
 **Table 4.2a: Options When Adding an Init/Shutdown Script**
 
@@ -1876,7 +1876,7 @@ explains these options in more detail.
 **Figure 4.3a: Default NTP Configuration**
 
 
-|10000000000002E3000001E636F5AB70_png|
+|Figure43a_png|
 
 **Figure 4.3b: Add or Edit a NTP Server**
 
@@ -1962,7 +1962,7 @@ configured when creating an rsync task.
 
 **Figure 4.4a: Adding an Rsync Task**
 
-|1000000000000231000001C0FC056B3B_png|
+|Figure44a_png|
 
 **Table 4.4a: Rsync Configuration Options**
 
@@ -2118,12 +2118,12 @@ To finish the configuration, start the rsync service on *PULL* in Services → C
 **Figure 4.4b: Configuring the Rsync Client**
 
 
-|1000000000000230000001BF3B7F7314_png|
+|Figure44b_png|
 
 **Figure 4.4c: Configuring the Rsync Server**
 
 
-|10000000000002FC000001F4677F2595_png|
+|Figure44c_png|
 
 Configuring Rsync over SSH Mode Between Two FreeNAS® Systems
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2197,7 +2197,7 @@ if necessary, remove any extra spaces representing line breaks.
 **Figure 4.4d: Pasting the User's SSH Public Key**
 
 
-|10000000000003BD000001E785E8303B_png|
+|Figure44d_png|
 
 While on *PULL*, verify that the SSH service is running in Services → Control Services and start it if it is not.
 
@@ -2302,7 +2302,7 @@ The Settings tab, shown in Figure 4.6a, contains 4 tabs: General, Advanced, Emai
 
 **Figure 4.6a: General Tab of Settings**
 
-|1000000000000299000001F1EE4FB0C6_png|
+|Figure46a_png|
 
 General Tab
 ^^^^^^^^^^^
@@ -2520,7 +2520,7 @@ containing important information such as the health of the disks. Alert events a
 **Figure 4.6c: Email Tab**
 
 
-|10000000000002C1000001F84303F765_png|
+|Figure46c_png|
 
 
 
@@ -2590,7 +2590,7 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 **Figure 4.6d: SSL Tab**
 
 
-|100000000000025A00000201DD9E6537_png|
+|Figure46d_png|
 
 **Table 4.6d: SSL Tab's Configuration Settings**
 
@@ -2654,12 +2654,7 @@ and
 unbootable, unreachable via the network, or can cause the system to panic under load. Certain changes may break assumptions made by the FreeNAS® software.
 This means that you should always test the impact of any changes on a test system first.
 
-FreeNAS® provides a graphical interface for managing sysctl MIBs. To add a sysctl, go to System → Sysctls → Add Sysctl, shown in Figure 4.7a.
-
-**Figure 4.7a: Adding a Sysctl**
-
-
-|1000000000000126000000FBE02571B5_png|
+FreeNAS® provides a graphical interface for managing sysctl MIBs. To add a sysctl, go to System → Sysctls → Add Sysctl.
 
 Table 4.7a summarizes the options when adding a sysctl.
 
@@ -2752,7 +2747,7 @@ To add a tunable, go to System → Tunables → Add Tunable, as seen in Figure 4
 
 **Figure 4.9a: Adding a Tunable**
 
-|1000000000000127000001015F4550E1_png|
+|Figure49a_png|
 
 Table 4.9a summarizes the options when adding a tunable. The changes you make will not take effect until the system is rebooted as loader settings are only
 read when the kernel is loaded at boot time. As long as the tunable exists, your changes will persist at each boot and across upgrades. Any tunables that you
@@ -2894,7 +2889,7 @@ the FreeNAS® system in the “Host name database” field.
 
 **Figure 5.1a: Global Configuration**
 
-|10000000000002E8000001F895B2C752_png|
+|Figure51a_png|
 
 **Table 5.1a: Global Configuration Settings**
 
@@ -3154,7 +3149,7 @@ Figure 5.4a shows the configuration options when adding a lagg interface using N
 **Figure 5.4a: Creating a lagg Interface**
 
 
-|100000000000021700000197330084C6_png|
+|Figure54a_png|
 
 **NOTE:** if interfaces are installed but do not appear in the Physical NICs in the LAGG list, check that a FreeBSD driver for the interface exists
 `here <http://www.freebsd.org/releases/9.2R/hardware.html#ETHERNET>`_
@@ -3167,7 +3162,7 @@ appear in View Link Aggregations.
 
 **Figure 5.4b: Viewing Link Aggregations**
 
-|100000000000020D000001F8277BDF48_png|
+|Figure54b_png|
 
 Click a link aggregation entry to see the buttons to edit that lagg interface, delete the link aggregation, or edit the lagg's member interfaces.
 
@@ -3181,7 +3176,7 @@ access into the GUI through the new lagg interface.
 **Figure 5.4c: Editing a lagg**
 
 
-|10000000000002AF000001F1B648933C_png|
+|Figure54c_png|
 
 **Table 5.4a: Configurable Options for a lagg**
 
@@ -3229,7 +3224,7 @@ The configurable options are summarized in Table 5.4b.
 
 **Figure 5.4d: Editing a Member Interface**
 
-|100000000000038A000001F41B7DFD86_png|
+|Figure54d_png|
 
 **Table 5.4b: Configuring a Member Interface**
 
