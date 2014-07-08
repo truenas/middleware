@@ -165,6 +165,10 @@ class ResourceMixin(object):
         )
 
     def is_webclient(self, request):
+        # Do not treat passwordless API auth as webclient
+        if not bsdUsers.has_root_password():
+            return None
+
         if (
             request.META.get('HTTP_X_REQUESTED_FROM') == 'WebUI' or
             not request.META.get('HTTP_AUTHORIZATION', '').startswith('Basic')
