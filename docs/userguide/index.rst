@@ -3400,7 +3400,7 @@ dataset that you wish to snapshot.
 **Figure 6.1a: Creating a ZFS Periodic Snapshot**
 
 
-|1000000000000267000001E2C69857F7_png|
+|Figure61a_png|
 
 **Table 6.1a: Options When Creating a Periodic Snapshot**
 
@@ -3453,7 +3453,7 @@ Click an entry to access its Modify and Delete buttons.
 
 **Figure 6.1b: View Periodic Snapshot Tasks**
 
-|10000000000003AE000001EC7F2141B9_png|
+|Figure61b_png|
 
 If you click the ZFS Snapshots tab (above the Add Periodic Snapshot button), you can review the listing of available snapshots. An example is shown in Figure
 6.1c.
@@ -3464,7 +3464,7 @@ but failed, an entry will be added to */var/log/messages*. This log file can be 
 **Figure 6.1c: Viewing Available Snapshots**
 
 
-|100000000000054E000001EE38B1A8BB_png|
+|Figure61c_png|
 
 The most recent snapshot for a volume or dataset will be listed last and will have 3 icons. The icons associated with a snapshot allow you to:
 
@@ -3554,7 +3554,7 @@ example is shown in Figure 6.2a.
 
 **Figure 6.2a: Copy the Replication Key**
 
-|100000000000033D000001B86EE0E351_png|
+|Figure62a_png|
 
 Go to *PULL* and click Account → Users → View Users. Click the Modify User button for the user account you will be using for replication (by default
 this is the *root* user). Paste the copied key into the “SSH Public Key” field and click OK. If a key already exists, append the new text after the
@@ -3586,7 +3586,7 @@ Table 6.2a summarizes the available options in the Add Replication Task screen.
 **Figure 6.2b: Adding a Replication Task**
 
 
-|1000000000000405000001A6B477C9AE_png|
+|Figure62b_png|
 
 **Table 6.2a: Adding a Replication Task**
 
@@ -3764,14 +3764,14 @@ If you are importing a UFS RAID or an existing, unencrypted ZFS pool, select “
 **Figure 6.3a: Initial Auto Import Volume Screen**
 
 
-|100000000000027600000153F572D1A1_png|
+|Figure63a_png|
 
 
 
 **Figure 6.3b: Auto Importing a Non-Encrypted Volume**
 
 
-|100000000000026600000151FC5B0A5B_png|
+|Figure63b_png|
 
 Existing software RAID volumes should be available for selection from the drop-down menu. In the example shown in Figure 6.3b, the FreeNAS® system has an
 existing, unencrypted ZFS pool. Once the volume is selected, click the “OK” button to import the volume.
@@ -3795,7 +3795,7 @@ disks” to access the screen shown in Figure 6.3c.
 **Figure 6.3c: Decrypting the Disks Before Importing the ZFS Pool**
 
 
-|10000000000002990000017C9E48C038_png|
+|Figure63c_png|
 
 Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click OK to
 decrypt the disks.
@@ -3816,7 +3816,7 @@ the data from a disk to a volume. Only one disk can be imported at a time.
 **Figure 6.3d: Importing a Volume**
 
 
-|10000000000002160000016D814978F6_png|
+|Figure63d_png|
 
 Input a name for the volume, use the drop-down menu to select the disk or partition that you wish to import, and select the type of filesystem on the disk.
 
@@ -3846,7 +3846,7 @@ To format your disks with UFS, go to Storage → Volumes → UFS Volume Manager 
 **Figure 6.3e: Creating a UFS Volume**
 
 
-|100000000000024B0000015CFFDFDC80_png|
+|Figure63e_png|
 
 Table 6.3a summarizes the available options.
 
@@ -3906,7 +3906,7 @@ If you click on Storage → Volumes → ZFS Volume Manager, you will see a scree
 **Figure 6.3f: Creating a ZFS Pool Using Volume Manager**
 
 
-|10000000000003A1000001F0749B2C74_png|
+|Figure63f_png|
 
 Table 6.3b summarizes the configuration options of this screen.
 
@@ -4089,7 +4089,7 @@ Figure 6.3g shows the "Manual Setup" screen and Table 6.3c summarizes the availa
 **Figure 6.3g: Creating a Non-Optimal ZFS Volume**
 
 
-|10000000000002FB000001C024B7C06D_png|
+|Figure63g_png|
 
 **Table 6.3c: Manual Setup Options**
 
@@ -4143,7 +4143,7 @@ existing ZFS volume. This drop-down empty will be empty if an existing ZFS volum
 **Figure 6.3h: Volume to Extend Field**
 
 
-|10000000000002F5000001C1A3854FFC_png|
+|Figure63h_png|
 
 **NOTE:** if the existing volume is encrypted, a warning message will remind you that the operation of extending a volume will reset the passphrase and
 recovery key. After extending the volume, you should immediately recreate both using the instructions in Creating an Encrypted Volume.
@@ -4318,7 +4318,7 @@ Settings → Advanced.
 **Figure 6.3j: Creating a zvol**
 
 
-|100000000000023B00000194713ECE99_png|
+|Figure63j_png|
 
 **Table 6.3e: zvol Configuration Options**
 
@@ -4357,7 +4357,7 @@ Storage → Volumes → View Disks allows you to view all of the disks recognize
 **Figure 6.3k: Viewing Disks**
 
 
-|10000000000004E8000001EACF908077_png|
+|Figure63k_png|
 
 For each device, the current configuration of the options described in Table 6.3e is displayed. Click a disk's entry and then its Edit button to change its
 configuration.
@@ -4380,7 +4380,7 @@ multipath-capable hardware, an extra button will be added to View Multipaths.
 
 **Figure 6.3l: Viewing Volumes**
 
-|10000000000003D6000001C4C62B96CF_png|
+|Figure63l_png|
 
 If you click the entry for a ZFS volume, eight icons will appear at the bottom of the screen. In order from left to right, these icons allow you to:
 
@@ -4403,7 +4403,7 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
 
 **Figure 6.3m: Detaching or Deleting a Volume**
 
-|100000000000032B00000215E25408A6_png|
+|Figure63m_png|
 
 #.  **Edit ZFS Options:** allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is
     newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only
@@ -4425,7 +4425,7 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
 
 **Figure 6.3n: Volume Status**
 
-|100000000000028F000001982A79D88A_png|
+|Figure63n_png|
 
 If you click a disk in Volume Status and click its “Edit Disk” button, you will see the screen shown in Figure 6.3o. Table 6.3f summarizes the
 configurable options.
@@ -4492,7 +4492,7 @@ typically seen when Viewing Volumes. An example is seen in Figure 6.3p.
 **Figure 6.3p: Encryption Icons Associated with an Encrypted ZFS Volume**
 
 
-|1000000000000377000001F18C3BCAE8_png|
+|Figure63p_png|
 
 These icons are used to:
 
@@ -4536,7 +4536,7 @@ Permissions icon for a specific volume/dataset, you will see the screen shown in
 
 **Figure 6.3q: Changing Permissions on a Volume or Dataset**
 
-|10000000000001720000018E06DDC591_png|
+|Figure63q_png|
 
 **Table 6.3g: Options When Changing Permissions**
 
@@ -4641,7 +4641,7 @@ In the example shown in Figure 6.3s, a failed disk is being replaced by disk *ad
 **Figure 6.3s: Replacing a Failed Disk**
 
 
-|100000000000026B000001F2DE16903D_png|
+|Figure63s_png|
 
 Replacing a Failed Drive in an Encrypted Pool
 """""""""""""""""""""""""""""""""""""""""""""
@@ -4907,7 +4907,7 @@ settings for the volume named *volume1. * Table 6.4a summarizes the options in t
 **Figure 6.4a: Viewing a Volume's Default Scrub Settings**
 
 
-|10000000000003780000016DE5BE4BC7_png|
+|Figure64a_png|
 
 
 **Table 6.4a: ZFS Scrub Options**
@@ -5032,7 +5032,7 @@ Once you press the OK button when creating the AFP share, a pop-up menu will ask
 **Figure 7.1a: Creating an AFP Share**
 
 
-|10000000000002EF000001DDC96811A8_png|
+|Figure71a_png|
 
 **Table 7.1a: AFP Share Configuration Options**
 
@@ -5233,7 +5233,7 @@ screen.
 **Figure 7.2a: Creating an NFS Share**
 
 
-|10000000000003460000019B3868D5D2_png|
+|Figure72a_png|
 
 Once you press the OK button when creating the NFS share, a pop-up menu will ask “Would you like to enable this service?” Click Yes and Services → 
 Control Services will open and indicate whether or not the NFS service successfully started.
@@ -5528,7 +5528,7 @@ enable this service?” Click Yes and Services → Control Services will open an
 **Figure 7.3a: Adding a CIFS Share**
 
 
-|10000000000001E6000001C49A1423E2_png|
+|Figure73a_png|
 
 **Table 7.3a: Options for a CIFS Share**
 
@@ -5794,7 +5794,7 @@ following built-in services:
 
 * Directory Services
 
-* Dynamic DNS_
+* Dynamic DNS
 
 * FTP_
 
@@ -5802,17 +5802,17 @@ following built-in services:
 
 * NFS
 
-* Rsync_
+* Rsync
 
-* S.M.A.R.T._
+* S.M.A.R.T.
 
-* SNMP_
+* SNMP
 
-* SSH_
+* SSH
 
 * TFTP
 
-* UPS_
+* UPS
 
 This section demonstrates how to start a FreeNAS® service then describes the available configuration options for each FreeNAS® service.
 
@@ -5825,7 +5825,7 @@ to configure services. By default, all services (except for the S.M.A.R.T. servi
 Figure 8.1a: Control Services
 
 
-|10000000000001E800000200D184B89D_png|
+|Figure81a_png|
 
 A service is stopped if its icon is a red OFF. A service is running if its icon is a blue ON. To start or stop a service, click its ON/OFF icon.
 
@@ -5857,7 +5857,7 @@ Figure 8.2a shows the configuration options which are described in Table 8.2a.
 **Figure 8.2a: AFP Configuration**
 
 
-|100000000000028C0000015BBA05D342_png|
+|Figure82a_png|
 
 **Table 8.2a: AFP Configuration Options**
 
@@ -6153,7 +6153,7 @@ display these settings by checking the box “Show advanced fields by default”
 
 **Figure 8.4a: Configuring Active Directory**
 
-|10000000000002EB00000195BD451959_png|
+|Figure84a_png|
 
 **Table 8.4a: Active Directory Configuration Options**
 
@@ -6358,7 +6358,7 @@ Figure 8.4b shows the configuration screen for creating a domain controller and 
 **Figure 8.4b: Domain Controller Settings**
 
 
-|10000000000002E5000001C53C1210DD_png|
+|Figure84b_png|
 
 **Table 8.4b: Domain Controller Configuration Options**
 
@@ -6435,7 +6435,7 @@ Figure 8.4c shows the LDAP Configuration screen that is seen when you click Serv
 **Figure 8.4c: Configuring LDAP**
 
 
-|100000000000022A000001A5020C73E1_png|
+|Figure84c_png|
 
 Table 8.4c summarizes the available configuration options. If you are new to LDAP terminology, skim through the
 `OpenLDAP Software 2.4 Administrator's Guide <http://www.openldap.org/doc/admin24/>`_
@@ -6552,7 +6552,7 @@ options.
 **Figure 8.4d: NIS Configuration**
 
 
-|1000000000000266000001D916254B1A_png|
+|Figure84d_png|
 
 **Table 8.4d: NIS Configuration Options**
 
@@ -6591,7 +6591,7 @@ After configuring the NT4 service, start it in Services → Control Services →
 **Figure 8.4e: NT4 Configuration Options**
 
 
-|10000000000002DE000001EF50F27494_png|
+|Figure84e_png|
 
 **Table 8.4e: NT4 Configuration Options**
 
@@ -6695,7 +6695,7 @@ Settings → Advanced.
 **Figure 8.6a: Configuring FTP**
 
 
-|1000000000000373000001E07E2BF2D0_png|
+|Figure86a_png|
 
 Table 8.6a summarizes the available options when configuring the FTP server:
 
@@ -7137,7 +7137,7 @@ entry to display its Edit and Delete buttons.
 **Figure 8.7b: Viewing Authorized Accesses**
 
 
-|1000000000000272000001EAD978110B_png|
+|Figure87b_png|
 
 Extents
 ^^^^^^^
@@ -7176,7 +7176,7 @@ Table 8.7b summarizes the settings that can be configured when creating an exten
 **Figure 8.7c: Adding an iSCSI Extent**
 
 
-|10000000000002AB000001EBE6248ABC_png|
+|Figure87c_png|
 
 
 **Table 8.7b: Extent Configuration Settings**
@@ -7278,7 +7278,7 @@ these will be deleted as well.
 **Figure 8.7e: Sample iSCSI Initiator Configuration**
 
 
-|100000000000026E000001F5B9108435_png|
+|Figure87e_png|
 
 Portals
 ^^^^^^^
@@ -7292,7 +7292,7 @@ Table 8.7d summarizes the settings that can be configured when adding a portal. 
 **Figure 8.7f: Adding an iSCSI Portal**
 
 
-|100000000000020D000001AC8D7B7E46_png|
+|Figure87f_png|
 
 **Table 8.7d: Portal Configuration Settings**
 
@@ -7366,7 +7366,7 @@ existing extent.
 
 **Figure 8.7g: iSCSI Target Global Configuration Variables**
 
-|100000000000029F00000203E6A9CBB4_png|
+|Figure87g_png|
 
 **Table 8.7f: Target Global Configuration Settings**
 
@@ -7595,7 +7595,7 @@ The last step is associating an extent to a target within Services → ISCSI →
 
 **Figure 8.7i: Associating iSCSI Targets/Extents**
 
-|100000000000012A000000AEE11388A7_png|
+|Figure87i_png|
 
 Table 8.7g summarizes the settings that can be configured when associating targets and extents.
 
@@ -7735,7 +7735,7 @@ Figure 8.8a shows the configuration screen and Table 8.8a summarizes the configu
 **Figure 8.8a: Configuring NFS**
 
 
-|10000000000002A2000001D87E290272_png|
+|Figure88a_png|
 
 **Table 8.8a: NFS Configuration Options**
 
@@ -7897,7 +7897,7 @@ Figure 8.10a shows the configuration screen that appears when you click Services
 
 **Figure 8.10a: S.M.A.R.T Configuration Options**
 
-|1000000000000277000001997C795E8C_png|
+|Figure810a_png|
 
 **NOTE:**
 **smartd**
@@ -7969,7 +7969,7 @@ Figure 8.11a shows the SNMP configuration screen. Table 8.11a summarizes the con
 **Figure 8.11a: Configuring SNMP**
 
 
-|10000000000002AF000001B05B9731AC_png|
+|Figure811a_png|
 
 **Table 8.11a: SNMP Configuration Options**
 
@@ -8132,7 +8132,7 @@ the following steps.
 **Figure 8.12b: Permissions Required by SSH Chroot**
 
 
-|10000000000001780000016131448D93_png|
+|Figure812b_png|
 
 **Example 8.12a: Creating a User's Home Directory**
 ::
@@ -8246,7 +8246,7 @@ Figure 8.14a shows the UPS configuration screen:
 **Figure 8.14a: UPS Configuration Screen**
 
 
-|100000000000032D000001F960A4A7FB_png|
+|Figure814a_png|
 
 Table 8.14a summarizes the options in the UPS Configuration screen.
 
