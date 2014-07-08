@@ -229,6 +229,7 @@ add_port devel/libevent2
 add_port sysutils/tmux OPTIONS_FILE_SET+=LIBEVENT2
 add_port devel/py-dbus
 add_port net/netatalk3 OPTIONS_FILE_SET+=PAM \
+	OPTIONS_FILE_SET+=ACL \
 	OPTIONS_FILE_SET+=SENDFILE \
 	OPTIONS_FILE_SET+=MDNSRESPONDER \
 	OPTIONS_FILE_UNSET+=AVAHI \
