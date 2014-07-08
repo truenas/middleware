@@ -20,7 +20,7 @@ check_build_sanity()
     # just to get a build error.
     local mypwd=`pwd`
     local mypwdlen=`pwd | wc -c | awk '{print $1}'`  # use awk to cleanup wc output
-    local pwdmaxlen="45"
+    local pwdmaxlen="25"
     if [ $mypwdlen -ge $pwdmaxlen ] ; then
         cat <<PWD_ERROR
 =================================================================
