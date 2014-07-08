@@ -70,7 +70,7 @@ upgrade_version_to_avatar_conf()
     mv $destconf.$$ $destconf
 }
 
-build_config()
+build_config_old()
 {
     # build_config ${_disk} ${_image} ${_config_file}
 
@@ -89,6 +89,29 @@ packageType=tar
 disk0=${_disk}
 partition=image
 image=${_image}
+bootManager=bsd
+commitDiskPart
+EOF
+}
+build_config()
+{
+    # build_config ${_disk} ${_image} ${_config_file}
+
+    local _disk=$1
+    local _image=$2
+    local _config_file=$3
+
+    cat << EOF > "${_config_file}"
+# Added to stop pc-sysinstall from complaining
+installMode=fresh
+installInteractive=no
+installType=FreeBSD
+installMedium=dvd
+packageType=tar
+
+disk0=${_disk}
+partscheme=GPT
+partition=all
 bootManager=bsd
 commitDiskPart
 EOF
@@ -460,6 +483,25 @@ menu_install()
         rmdir /tmp/data
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
+    else
+	set -x
+	# For non-upgrade installs, the partition was erased.
+	# A boot partition was created, so we need to add another
+	# partition
+	gpart add -t freebsd-ufs ${_disk}
+	# Add the boot loader
+	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
+	# And now create the filesystem
+	newfs /dev/${_disk}p2
+	mkdir -p /tmp/data
+	mount /dev/${_disk}p2 /tmp/data
+	/usr/local/bin/update_freenas -R /tmp/data -M /FreeNAS-MANIFEST install
+	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
+	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
+	umount /tmp/data
+	rmdir /tmp/data
+	read foo
+	set +x
     fi
 
     if is_truenas ; then

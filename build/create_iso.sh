@@ -86,6 +86,30 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/usr/local/install
 	mkdir -p ${INSTALLUFSDIR}/usr/local/sbin
 
+	# Copy python and sqlite3 to the installation directory
+	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/lib/python* ./usr/local/bin/python* ./usr/local/lib/libsqlite* ) |
+		tar -xf - -C ${INSTALLUFSDIR}
+	# Copy the installation scripts and modules as well
+	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/etc/freenas.conf ./usr/local/lib/freenasOS \
+			./usr/local/bin/update_freenas) |
+		tar -xf - -C ${INSTALLUFSDIR}
+# SEF
+# Build packages here.
+
+#	if [ -f build/create_package.py ]; then
+#	# -R <root> -N <name> -V <version> output_file
+#		mkdir -p ${NANO_OBJ}/_.instufs/cdrom/FreeNAS/Packages
+#		python build/create_package.py -R "${NANO_WORLDDIR}" -N freenas -V ${VERSION} ${NANO_OBJ}/_.instufs/cdrom/FreeNAS/Packages/freenas-${VERSION}.tgz
+#	#Usage: build/create_manifest.py [-P package_directory] [-N <release_notes_file>] [-R release_name] -T <train_name> -S <manifest_version> pkg=version[:upgrade_from[,...]]  [...] -o manifest
+#		env PYTHONPATH="${NANO_WORLDDIR}/usr/local/lib" python build/create_manifest.py -P ${NANO_OBJ}/_.instufs/cdrom/FreeNAS -o ${NANO_OBJ}/_.instufs/FreeNAS-MANIFEST -R FreeNAS -T FreeNAS-EXPERIMENTAL -S 100 freenas=${VERSION}
+	if [ -d ${NANO_OBJ}/_.packages/Packages ]; then
+		mkdir -p ${NANO_OBJ}/_.instufs/cdrom/FreeNAS
+		cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.instufs/cdrom/FreeNAS
+		cp ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST ${NANO_OBJ}/_.instufs
+	else
+		echo "Hey, where are the install filess?"
+	fi
+
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
 	if is_truenas ; then
 		cp -p ${TRUENAS_COMPONENTS_ROOT}/build/files/install_sata_dom.sh \
