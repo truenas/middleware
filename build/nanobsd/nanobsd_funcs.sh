@@ -420,7 +420,7 @@ setup_nanobsd ( ) (
 
 	if ! is_truenas ; then
 		# pick up config files from the special partition
-		echo "mount -o ro /dev/${NANO_DRIVE}s3" > conf/default/etc/remount
+		# echo "mount -o ro /dev/${NANO_DRIVE}s3" > conf/default/etc/remount
 	fi
 
 	# Put /tmp on the /var ramdisk (could be symlink already)

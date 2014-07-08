@@ -45,6 +45,7 @@ do-build:
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/etc
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/lib/freenasOS
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/libexec
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/sbin
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
@@ -236,5 +237,15 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli ${STAGEDIR}/${PREFIX}/etc/netcli
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli.sh ${STAGEDIR}/${PREFIX}/etc/netcli.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/find_alias_for_smtplib.py ${STAGEDIR}/${PREFIX}/etc/find_alias_for_smtplib.py
+	# Installation scripts
+	${INSTALL_DATA} ${WRKSRC}/freenas/etc/freenas.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/freenas.conf
+
+.for script in Configuration.py Manifest.py Package.py ixExceptions.py __init__.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/lib/freenasOS/${script} ${STAGEDIR}/${PREFIX}/usr/local/lib/freenasOS/${script}
+.endfor
+.for script in check_packages.py create_manifest.py create_package.py diff_packages.py pkgify.py update_freenas.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/${script} ${STAGEDIR}/${PREFIX}/usr/local/bin/${script:R}
+.endfor
+
 
 .include <bsd.port.mk>
