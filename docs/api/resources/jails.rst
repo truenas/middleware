@@ -53,7 +53,7 @@ List resource
 Update resource
 +++++++++++++
 
-.. http:get:: /api/v1.0/jails/configuration/
+.. http:put:: /api/v1.0/jails/configuration/
 
    Update the configuration dictionary.
 
@@ -61,7 +61,7 @@ Update resource
 
    .. sourcecode:: http
 
-      POST /api/v1.0/jails/configuration/ HTTP/1.1
+      PUT /api/v1.0/jails/configuration/ HTTP/1.1
       Content-Type: application/json
 
         {
