@@ -1,19 +1,5 @@
 |INSERT COVER IMAGE HERE|
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FreeNAS® is © 2011-2014 iXsystems
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
@@ -21,23 +7,6 @@ FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 *FreeBSD is a registered trademark of the FreeBSD Foundation*
 
 *Cover art by Jenny Rosenberg*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 Preface
 =======
@@ -104,8 +73,8 @@ Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc., a non-p
 
 Windows® is a registered trademark of Microsoft Corporation in the United States and other countries.
 
-**Typographic Conventions**
-
+Typographic Conventions
+-----------------------
 
 The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 
@@ -127,103 +96,71 @@ system that has been optimized for file storage and sharing.
 
 Notable features in FreeNAS® include:
 
-*   supports AFP, CIFS, FTP, NFS, SSH (including SFTP), and TFTP as file sharing mechanisms
+* supports AFP, CIFS, FTP, NFS, SSH (including SFTP), and TFTP as file sharing mechanisms
 
+* supports exporting file or device extents via iSCSI
 
+* supports Active Directory or LDAP for user authentication as well as manual user and group creation
 
-*   supports exporting file or device extents via iSCSI
+* supports the creation and import of UFS2 based volumes, including gmirror, gstripe, and graid3
 
+* supports the creation and import of
+  `ZFS <http://en.wikipedia.org/wiki/ZFS>`_
+  pools, enabling many features not available in UFS2 such as quotas, snapshots, compression, replication, and datasets for sharing subsets of volumes
 
+* upgrade procedure saves the current operating system to an inactive partition, allowing for an easy reversal of an undesirable upgrade
 
-*   supports Active Directory or LDAP for user authentication as well as manual user and group creation
+* system notifications are automatically mailed to the root user account
 
+* `Django <http://en.wikipedia.org/wiki/Django_%28Web_framework%29>`_
+  driven graphical user interface available through a web browser
 
+* secure replication, automatic ZFS snapshots, scheduling of ZFS scrubs, and cron management are all configurable through the graphical interface
 
-*   supports the creation and import of UFS2 based volumes, including gmirror, gstripe, and graid3
+* support for menu localization and keyboard layouts
 
+* SMART monitoring and UPS management in GUI
 
+* support for Windows ACLs and UNIX filesystem permissions
 
-*   supports the creation and import of
-    `ZFS <http://en.wikipedia.org/wiki/ZFS>`_
-    pools, enabling many features not available in UFS2 such as quotas, snapshots, compression, replication, and datasets for sharing subsets of volumes
+* periodic ZFS snapshots are visible in Windows as shadow copies
 
-
-
-*   upgrade procedure saves the current operating system to an inactive partition, allowing for an easy reversal of an undesirable upgrade
-
-
-
-*   system notifications are automatically mailed to the root user account
-
-
-
-*   `Django <http://en.wikipedia.org/wiki/Django_%28Web_framework%29>`_
-    driven graphical user interface available through a web browser
-
-
-
-*   secure replication, automatic ZFS snapshots, scheduling of ZFS scrubs, and cron management are all configurable through the graphical interface
-
-
-
-*   support for menu localization and keyboard layouts
-
-
-
-*   SMART monitoring and UPS management in GUI
-
-
-
-*   support for Windows ACLs and UNIX filesystem permissions
-
-
-
-*   periodic ZFS snapshots are visible in Windows as shadow copies
-
-
-
-*   includes
-    `tmux <http://sourceforge.net/projects/tmux/>`_
-    , a BSD-licensed utility similar to GNU screen
-
-
-
+* includes
+  `tmux <http://sourceforge.net/projects/tmux/>`_
+  , a BSD-licensed utility similar to GNU screen
 
 What's New in 9.3
 ~~~~~~~~~~~~~~~~~~~
 
+FreeNAS® 9.3 fixes this list of bugs and includes the following features:
+
+* Based on FreeBSD 9.3 which adds these features and supports this hardware.
+
+* FreeNAS® is now 64-bit only. 
+
+* The "IP Server" field has been added to Dynamic DNS. 
 
 Known Issues
 ~~~~~~~~~~~~
 
 Before installing FreeNAS® you should be aware of the following known issues:
 
-*   **UPGRADES FROM FreeNAS® 0.7x ARE UNSUPPORTED.**
-    The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you will have to manually recreate your
-    configuration. However, you should be able to import_supported FreeNAS® 0.7x volumes.
+* **UPGRADES FROM FreeNAS® 0.7x ARE UNSUPPORTED.**
+  The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you will have to manually recreate your configuration.
+  However, you should be able to import_supported FreeNAS® 0.7x volumes.
 
+* **The ZFS upgrade procedure is non-reversible.** Do not upgrade your ZFS version unless you are absolutely sure that you will never want to go back to the
+  previous version. There is no reversing a ZFS pool upgrade, and there is no way for a system with an older version of ZFS to access pools that have been
+  upgraded.
 
+* The available space reported in the parent zpool may not reflect reality and can be confusing because the available space represented by datasets or zvols
+  can exceed that of the parent zpool.
 
-*   **The ZFS upgrade procedure is non-reversible.**
-    Do not upgrade your ZFS version unless you are absolutely sure that you will never want to go back to the previous version. There is no reversing a ZFS
-    pool upgrade, and there is no way for a system with an older version of ZFS to access pools that have been upgraded.
+* Disks with certain configurations can get probed by GEOM and become essentially unwritable without manual intervention. For instance, if you use disks that
+  previously had a gmirror on them, the system may pick that up and the disks will be unavailable until the existing gmirror is stopped and destroyed.
 
-
-
-*   The available space reported in the parent zpool may not reflect reality and can be confusing because the available space represented by datasets or zvols
-    can exceed that of the parent zpool.
-
-
-
-*   Disks with certain configurations can get probed by GEOM and become essentially unwritable without manual intervention. For instance, if you use disks
-    that previously had a gmirror on them, the system may pick that up and the disks will be unavailable until the existing gmirror is stopped and destroyed.
-
-
-
-*   The mps driver for 6G LSI SAS HBAs is version 16, which requires phase 16 firmware on the controller. Running older firmware can cause many woes,
-    including the failure to probe all of the attached disks, which can lead to degraded or unavailable arrays.
-
-
+* The mps driver for 6G LSI SAS HBAs is version 16, which requires phase 16 firmware on the controller. Running older firmware can cause many woes,
+  including the failure to probe all of the attached disks, which can lead to degraded or unavailable arrays.
 
 Hardware Recommendations
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -445,20 +382,13 @@ on using hardware-level RAID, the controller should be configured as JBOD mode (
 integrity. Note that hardware RAID configured as JBOD may still detach disks that do not respond in time; and as such may require TLER/CCTL/ERC-enabled disks
 to prevent drive dropouts. These limitations do not apply when using a non-RAID controller, which is the preferred method of supplying disks to ZFS.”
 
-
 When determining the type of RAIDZ to use, consider whether your goal is to maximum disk space or maximum performance:
 
-*   RAIDZ1 maximizes disk space and generally performs well when data is written and read in large chunks (128K or more).
+* RAIDZ1 maximizes disk space and generally performs well when data is written and read in large chunks (128K or more).
 
+* RAIDZ2 offers better data availability and significantly better mean time to data loss (MTTDL) than RAIDZ1.
 
-
-*   RAIDZ2 offers better data availability and significantly better mean time to data loss (MTTDL) than RAIDZ1.
-
-
-
-*   A mirror consumes more disk space but generally performs better with small random reads.
-
-
+* A mirror consumes more disk space but generally performs better with small random reads.
 
 For better performance, a mirror is strongly favored over any RAIDZ, particularly for large, uncacheable, random read loads.
 
@@ -466,19 +396,11 @@ Array sizes beyond 12 disks are not recommended. The recommended number of disks
 
 The following resources can also help you determine the RAID configuration best suited to your storage needs:
 
-*   `What is the Best RAIDZ Configuration <http://forums.freenas.org/showthread.php?312-what-is-the-best-raidz-configuration-and-how-to-set-it-up>`_
+* `What is the Best RAIDZ Configuration <http://forums.freenas.org/showthread.php?312-what-is-the-best-raidz-configuration-and-how-to-set-it-up>`_
 
+* `Getting the Most out of ZFS Pools <http://forums.freenas.org/showthread.php?16-Getting-the-most-out-of-ZFS-pools%21>`_
 
-
-
-*   `Getting the Most out of ZFS Pools <http://forums.freenas.org/showthread.php?16-Getting-the-most-out-of-ZFS-pools%21>`_
-
-
-
-
-*   `A Closer Look at ZFS, Vdevs and Performance <http://constantin.glez.de/blog/2010/06/closer-look-zfs-vdevs-and-performance>`_
-
-
+* `A Closer Look at ZFS, Vdevs and Performance <http://constantin.glez.de/blog/2010/06/closer-look-zfs-vdevs-and-performance>`_
 
 **NOTE: NO RAID SOLUTION PROVIDES A REPLACEMENT FOR A RELIABLE BACKUP STRATEGY. BAD STUFF CAN STILL HAPPEN AND YOU WILL BE GLAD THAT YOU BACKED UP YOUR DATA WHEN IT DOES.**
 See Periodic Snapshot Tasks and Replication Tasks if you would like to use ZFS snapshots and rsync as part of your backup strategy.
@@ -493,28 +415,15 @@ If you are new to ZFS, the
 `Wikipedia entry on ZFS <http://en.wikipedia.org/wiki/Zfs>`_
 provides an excellent starting point to learn about its features. These resources are also useful to bookmark and refer to as needed:
 
-*   `FreeBSD ZFS Tuning Guide <http://wiki.freebsd.org/ZFSTuningGuide>`_
+* `FreeBSD ZFS Tuning Guide <http://wiki.freebsd.org/ZFSTuningGuide>`_
 
+* `ZFS Administration Guide <http://download.oracle.com/docs/cd/E19253-01/819-5461/index.html>`_
 
+* `Becoming a ZFS Ninja (video) <http://blogs.oracle.com/video/entry/becoming_a_zfs_ninja>`_
 
+* `Slideshow explaining VDev, zpool, ZIL and L2ARC and other newbie mistakes! <http://forums.freenas.org/threads/slideshow-explaining-vdev-zpool-zil-and-l2arc-for-noobs.7775/>`_
 
-*   `ZFS Administration Guide <http://download.oracle.com/docs/cd/E19253-01/819-5461/index.html>`_
-
-
-
-
-*   `Becoming a ZFS Ninja (video) <http://blogs.oracle.com/video/entry/becoming_a_zfs_ninja>`_
-
-
-
-
-*   `Slideshow explaining VDev, zpool, ZIL and L2ARC and other newbie mistakes! <http://forums.freenas.org/threads/slideshow-explaining-vdev-zpool-zil-and-l2arc-for-noobs.7775/>`_
-
-
-
-*   `A Crash Course on ZFS <http://www.bsdnow.tv/tutorials/zfs>`_
-
-
+* `A Crash Course on ZFS <http://www.bsdnow.tv/tutorials/zfs>`_
 
 The following is a glossary of terms used by ZFS:
 
@@ -602,30 +511,17 @@ Before installing, it is important to remember that the FreeNAS® operating syst
 
 This section describes the following:
 
-*   Getting FreeNAS®
+* Getting FreeNAS®
 
+* FreeNAS® in a Virtual Environment
 
+* Installing from CDROM
 
-*   FreeNAS® in a Virtual Environment
+* Burning an IMG File
 
+* Initial Setup
 
-
-*   Installing from CDROM
-
-
-
-*   Burning an IMG File
-
-
-
-*   Initial Setup
-
-
-
-
-*   Upgrading FreeNAS®
-
-
+* Upgrading FreeNAS®
 
 Getting FreeNAS®
 ~~~~~~~~~~~~~~~~
@@ -636,46 +532,27 @@ FreeNAS® 9.3 can be downloaded from
 
 The download page contains the following types of files. Download one file that meets your needs:
 
-*   **CD Installer:** this is a bootable installer that can be written to CDROM. This is described in more detail in Installing from CDROM.
+* **CD Installer:** this is a bootable installer that can be written to CDROM. This is described in more detail in Installing from CDROM.
 
+* **Disk Image:** this is a compressed image of the operating system that needs to be written to a USB or compact flash device. Burning an IMG File
+  describes how to write the image.
 
-
-*   **Disk Image:** this is a compressed image of the operating system that needs to be written to a USB or compact flash device. Burning an IMG File
-    describes how to write the image.
-
-
-
-*   **GUI Upgrade or Legacy Upgrade:** this is a compressed firmware upgrade image. If your intent is to upgrade FreeNAS®, download the correct file for
-    your architecture and version and see the section on Upgrading FreeNAS®. Download the GUI Upgrade if you are upgrading from version 8.2.0-BETA3 through
-    9.1.0. Download the legacy upgrade if you are upgrading from version 8.0.1BETA3 through 8.2.0-BETA2.
-
-
+* **GUI Upgrade:** this is a compressed firmware upgrade image. If your intent is to upgrade FreeNAS®, download this file and see the section on Upgrading
+  FreeNAS®.
 
 Each file has an associated SHA256 hash which should be used to verify the integrity of the downloaded file before writing it to the installation media. The
 command you use to verify the checksum varies by operating system:
 
-*   on a BSD system use the command **sha256 name_of_file**
+* on a BSD system use the command **sha256 name_of_file**
 
+* on a Linux system use the command **sha256sum name_of_file**
 
+* on a Mac system use the command **shasum -a 256 name_of_file**
 
-
-*   on a Linux system use the command **sha256sum name_of_file**
-
-
-
-
-*   on a Mac system use the command **shasum -a 256 name_of_file**
-
-
-
-
-*   on a Windows system or Mac system, you can install a utility such as
-    `HashCalc <http://www.slavasoft.com/hashcalc/>`_
-    or
-    `HashTab <http://implbits.com/HashTab.aspx>`_
-
-
-
+* on a Windows system or Mac system, you can install a utility such as
+  `HashCalc <http://www.slavasoft.com/hashcalc/>`_
+  or
+  `HashTab <http://implbits.com/HashTab.aspx>`_
 
 FreeNAS® in a Virtual Environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -690,21 +567,13 @@ as it contains useful guidelines for minimizing the risk of losing your data.
 
 In order to install or run FreeNAS® within a virtual environment, you will need to create a virtual machine that meets the following minimum requirements:
 
-*   **at least** 2048 MB base memory size (UFS) or 4096 MB (ZFS)
+* **at least** 2048 MB base memory size (UFS) or 4096 MB (ZFS)
 
+* a virtual disk **at least 2 GB in size** to hold the operating system and swap
 
+* at least one more virtual disk **at least 4 GB in size** to be used as data storage
 
-*   a virtual disk **at least 2 GB in size** to hold the operating system and swap
-
-
-
-*   at least one more virtual disk **at least 4 GB in size** to be used as data storage
-
-
-
-*   a bridged adapter
-
-
+* a bridged adapter
 
 This section demonstrates how to create and access a virtual machine within the VirtualBox and VMware ESXi environments.
 
@@ -756,13 +625,9 @@ Click “Create” to launch the “Create Virtual Hard Drive Wizard” shown in
 
 Select one of the following types:
 
-*   **VDI:** select this option if you downloaded the ISO.
+* **VDI:** select this option if you downloaded the ISO.
 
-
-
-*   **VMDK:** select this option if you converted the *.img* file to VMDK format using the instructions in Running FreeNAS® from a USB Image.
-
-
+* **VMDK:** select this option if you converted the *.img* file to VMDK format using the instructions in Running FreeNAS® from a USB Image.
 
 Once you make a selection, click the “Next” button to see the screen in Figure 2.2f.
 
@@ -943,7 +808,7 @@ Release Notes; if the hash does not match, re-download the file. If the hash is 
 
 **Figure 2.3a: FreeNAS® Console Setup**
 
-
+|Figure23a_png|
 
 Press enter to select the default option of “1 Install/Upgrade to hard drive/flash device, etc.”. The next menu, seen in Figure 2.3b, will list all
 available drives, including any inserted USB thumb drives which will begin with *da*. In this example, the user is installing into VirtualBox and has created
@@ -1009,14 +874,10 @@ file and the device name representing the device to write to on your system.
 
 When using the **dd** command:
 
-*   **of=** refers to the output file; in our case, the device name of the flash card or removable USB drive. You may have to increment the number in the name
-    if it is not the first USB device. On Linux, use */dev/sdX,* where *X* refers to the letter of the USB device.
+* **of=** refers to the output file; in our case, the device name of the flash card or removable USB drive. You may have to increment the number in the name
+  if it is not the first USB device. On Linux, use */dev/sdX,* where *X* refers to the letter of the USB device.
 
-
-
-*   **bs=** refers to the block size
-
-
+* **bs=** refers to the block size
 
 Using Keka and dd on an OS X System
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1084,7 +945,7 @@ Once both utilities are installed, launch the 7-Zip File Manager and browse to t
 
 **Figure 2.4a: Using 7-Zip to Extract Image File**
 
-
+|Figure24a_png|
 
 Click the Extract button, browse to the path to extract to, and click OK. The extracted image will end in *.img* and is now ready to be written to a USB
 device using Win32DiskImager.
@@ -1094,7 +955,7 @@ its drive letter from the Device drop-down menu. Click the Write button and the 
 
 **Figure 2.4b: Using Win32DiskImager to Write the Image**
 
-
+|Figure24b_png|
 
 
 Troubleshooting
@@ -1160,7 +1021,6 @@ need to go to Storage → Volumes → Auto Import Volume to re-import your volum
 **9) Shell:** enters a shell in order to run FreeBSD commands. To leave the shell, type
 **exit.**
 
-
 **10) Reboot:** reboots the system.
 
 **11) Shutdown:** halts the system.
@@ -1200,36 +1060,29 @@ system. You should be prompted to create a password for the *root* user, as seen
 
 **Figure 2.5b: Set the Root Password**
 
-
+|Figure25b_png|
 
 Setting a password is mandatory and the password can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess
 password. Once the password has been input and confirmed, you should see the administrative GUI as shown in the example in Figure 2.5c.
 
 **Figure 2.5c: FreeNAS® Graphical Configuration Menu**
 
+|Figure25c_png|
 
 If you are unable to access the IP address from a browser, check the following:
 
-*   Are proxy settings enabled in the browser configuration? If so, disable the settings and try connecting again.
+* Are proxy settings enabled in the browser configuration? If so, disable the settings and try connecting again.
 
+* If the page does not load, make sure that you can **ping** the FreeNAS® system's IP address. If the address is in a private IP address range, you will
+  only be able to access the system from within the private network.
 
+* If the user interface loads but is unresponsive or seems to be missing menu items, try using a different web browser. IE9 has known issues and will not
+  display the graphical administrative interface correctly if compatibility mode is turned on. If you can't access the GUI using Internet Explorer, use
+  `Firefox <http://www.mozilla.com/en-US/firefox/all.html>`_
+  instead.
 
-*   If the page does not load, make sure that you can **ping** the FreeNAS® system's IP address. If the address is in a private IP address range, you will
-    only be able to access the system from within the private network.
-
-
-
-*   If the user interface loads but is unresponsive or seems to be missing menu items, try using a different web browser. IE9 has known issues and will not
-    display the graphical administrative interface correctly if compatibility mode is turned on. If you can't access the GUI using Internet Explorer, use
-    `Firefox <http://www.mozilla.com/en-US/firefox/all.html>`_
-    instead.
-
-
-
-*   If you receive “An error occurred!” messages when attempting to configure an item in the GUI, make sure that the browser is set to allow cookies from
-    the FreeNAS® system.
-
-
+* If you receive “An error occurred!” messages when attempting to configure an item in the GUI, make sure that the browser is set to allow cookies from
+  the FreeNAS® system.
 
 This
 `blog post <http://fortysomethinggeek.blogspot.com/2012/10/ipad-iphone-connect-with-freenas-or-any.html>`_
@@ -1245,10 +1098,8 @@ indicate that your current version requires an ISO upgrade, you can use either u
 
 When upgrading, **be aware of the following caveats:**
 
-*   Neither upgrade method can be used to migrate from FreeNAS 0.7x. Instead, install FreeNAS® and either auto-import supported software RAID or import
-    supported filesystems. You will need to recreate your configuration as the installation process will not import 0.7 configuration settings.
-
-
+* Neither upgrade method can be used to migrate from FreeNAS 0.7x. Instead, install FreeNAS® and either auto-import supported software RAID or import
+  supported filesystems. You will need to recreate your configuration as the installation process will not import 0.7 configuration settings.
 
 Preparing for the Upgrade
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1258,27 +1109,15 @@ Before upgrading the system, perform the following steps:
 #.  `Download <http://www.freenas.org/download-releases.html>`_
     the *.iso* or .*txz* file that matches the system's architecture to the computer that you use to access the FreeNAS® system.
 
-
-
 #.  Locate and confirm the SHA256 hash for the file that you downloaded in the Release Notes for the version that you are upgrading to.
-
-
 
 #.  **Backup the FreeNAS® configuration** in System → Settings → General → Save Config.
 
-
-
 #.  If any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key.
-
-
 
 #.  Warn users that the FreeNAS® shares will be unavailable during the upgrade; you should schedule the upgrade for a time that will least impact users.
 
-
-
 #.  Stop all services in Services → Control Services.
-
-
 
 Using the ISO to Upgrade
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1298,10 +1137,6 @@ installed on a thumb drive. Press enter to start the upgrade. Once the installer
 2.6b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
 
 Press enter and FreeNAS® will indicate that the upgrade is complete and that you should reboot, as seen in Figure 2.6c.
-
-
-
-
 
 **Figure 2.6a: Upgrading a FreeNAS® Installation**
 
@@ -1339,28 +1174,18 @@ Browse to the location of the downloaded *.txz* file, then paste its SHA256 sum.
 
 When finished, click the Apply Update button to begin the upgrade progress. Behind the scenes, the following steps are occurring:
 
-*   the SHA256 hash is confirmed and an error will display if it does not match; if you get this error, double-check that you pasted the correct checksum and
-    try pasting again
+* the SHA256 hash is confirmed and an error will display if it does not match; if you get this error, double-check that you pasted the correct checksum and
+  try pasting again
 
+* the new image is uncompressed and written to the USB compact or flash drive; this can take a few minutes so be patient
 
+* once the new image is written, you will momentarily lose your connection as the FreeNAS® system will automatically reboot into the new version of the
+  operating system
 
-*   the new image is uncompressed and written to the USB compact or flash drive; this can take a few minutes so be patient
+* FreeNAS® will actually reboot twice: once the new operating system loads, the upgrade process applies the new database schema and reboots again
 
-
-
-*   once the new image is written, you will momentarily lose your connection as the FreeNAS® system will automatically reboot into the new version of the
-    operating system
-
-
-
-*   FreeNAS® will actually reboot twice: once the new operating system loads, the upgrade process applies the new database schema and reboots again
-
-
-
-*   assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server; refresh your browser after a moment to see if you can access
-    the system
-
-
+* assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server; refresh your browser after a moment to see if you can access
+  the system
 
 **Figure 2.6d: Upgrading FreeNAS® From the GUI**
 
@@ -1421,15 +1246,9 @@ If the upgrade completely fails, don't panic. The data is still on your disks an
 
 #.  Perform a fresh installation.
 
-
-
 #.  Import your volumes in Storage → Auto Import Volume.
 
-
-
 #.  Restore the configuration in System → Settings → Upload Config.
-
-
 
 Upgrading a ZFS Pool
 ^^^^^^^^^^^^^^^^^^^^
@@ -1442,24 +1261,16 @@ unless you upgrade the pool. This means that the pool will not understand any fe
 
 If you wish to upgrade an existing ZFSv15 or ZFSv28 pool, be aware of the following caveats first:
 
-*   the ZFS version upgrade must be performed from the command line, it can not be performed using the GUI.
+* the ZFS version upgrade must be performed from the command line, it can not be performed using the GUI.
 
+* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version** or downgrade to an earlier
+  version of FreeNAS® that does not support feature flags.
 
-
-*   the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version** or downgrade to an earlier
-    version of FreeNAS® that does not support feature flags.
-
-
-
-
-*   before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
-    While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
-
-
+* before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
+  While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
 
 To perform the ZFS version upgrade, open Shell. The following commands will determine the pool state and version. In this example, the pool name is *volume1*
 and the ZFS version is 28.::
-
 
  zpool status
  pool: volume1
@@ -1565,72 +1376,44 @@ options are available:
 
 #.  Auto-import an existing UFS disk, gstripe (RAID0), gmirror (RAID1), or graid3 (RAID3) in Storage → Volumes → Auto Import Volume.
 
-
-
 #.  Auto-import an existing ZFS disk, stripe, mirror, RAIDZ1, RAIDZ2, or RAIDZ3 in Storage → Volumes → Auto Import Volume. Auto-importing is described
     in more detail in Auto Importing_Volumes.
-
-
 
 #.  Import a disk that is formatted with UFS, NTFS, MSDOS, or EXT2 in Storage → Volumes → Import Volume. This is described in more detail in
     Importing Volumes.
 
-
-
 #.  Format disk(s) with UFS and optionally create a gstripe (RAID0), gmirror (RAID1), or graid3 (RAID3) in Storage → Volumes → UFS Volume Manager.
 
-
-
 #.  Format disk(s) with ZFS and optionally create a stripe, mirror, RAIDZ1, RAIDZ2, or RAIDZ3 in Storage → Volumes → ZFS Volume Manager.
-
-
 
 If you format your disk(s) with ZFS, additional options are available:
 
 #.  Divide the ZFS pool into datasets to provide more flexibility when configuring user access to data. Dataset creation is described in Creating ZFS
     Datasets.
 
-
-
 #.  Create a Zvol to be used when configuring an iSCSI device extent. Zvol creation is described in Creating a zvol.
-
-
 
 Create Users/Groups or Integrate with AD/LDAP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 FreeNAS® supports a variety of user access scenarios:
 
-*   the use of an anonymous or guest account that everyone in the network uses to access the stored data
+* the use of an anonymous or guest account that everyone in the network uses to access the stored data
 
+* the creation of individual user accounts where each user has access to their own ZFS dataset
 
+* the addition of individual user accounts to groups where each group has access to their own volume or ZFS dataset
 
-*   the creation of individual user accounts where each user has access to their own ZFS dataset
-
-
-
-*   the addition of individual user accounts to groups where each group has access to their own volume or ZFS dataset
-
-
-
-*   the import of existing accounts from an OpenLDAP or Active Directory server
-
-
+* the import of existing accounts from an OpenLDAP or Active Directory server
 
 When configuring your FreeNAS® system, **select one of the following,** depending upon whether or not the network has an existing OpenLDAP or Active
 Directory domain. OpenLDAP and Active Directory are mutually exclusive, meaning that you can not use both but must choose one or the other.
 
 #.  Manually create users and groups. User management is described in Users and group management is described in Groups.
 
-
-
 #.  Import existing Active Directory account information using the instructions in Active Directory.
 
-
-
 #.  Import existing OpenLDAP account information using the instructions in LDAP.
-
-
 
 Configure Permissions
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1656,37 +1439,24 @@ FreeNAS® supports several types of shares and sharing services for providing st
 create depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds. The following
 types of shares and services are available:
 
-*   **Apple (AFP):** FreeNAS® uses Netatalk to provide sharing services to Apple clients. This type of share is a good choice if all of your computers run
-    Mac OS X. Configuration examples can be found in Apple (AFP) Shares.
+* **Apple (AFP):** FreeNAS® uses Netatalk to provide sharing services to Apple clients. This type of share is a good choice if all of your computers run
+  Mac OS X. Configuration examples can be found in Apple (AFP) Shares.
 
+* **Unix (NFS):** this type of share is accessible by Mac OS X, Linux, BSD, and professional/enterprise versions of Windows. It is a good choice if there
+  are many different operating systems in your network. Configuration examples can be found in Unix (NFS) Shares.
 
+* **Windows (CIFS):** FreeNAS® uses Samba to provide the SMB/CIFS sharing service. This type of share is accessible by Windows, Mac OS X, Linux, and BSD
+  computers, but it is slower than an NFS share. If your network contains only Windows systems, this is a good choice. Configuration examples can be found
+  in Windows (CIFS) Shares.
 
-*   **Unix (NFS):** this type of share is accessible by Mac OS X, Linux, BSD, and professional/enterprise versions of Windows. It is a good choice if there
-    are many different operating systems in your network. Configuration examples can be found in Unix (NFS) Shares.
+* **FTP:** this service provides fast access from any operating system, using a cross-platform FTP and file manager client application such as Filezilla.
+  FreeNAS® supports encryption and chroot for FTP. Configuration examples can be found in FTP.
 
+* **SSH:** this service provides encrypted connections from any operating system using SSH command line utilities or the graphical WinSCP application for
+  Windows clients. Configuration examples can be found in SSH.
 
-
-*   **Windows (CIFS):** FreeNAS® uses Samba to provide the SMB/CIFS sharing service. This type of share is accessible by Windows, Mac OS X, Linux, and BSD
-    computers, but it is slower than an NFS share. If your network contains only Windows systems, this is a good choice. Configuration examples can be found
-    in Windows (CIFS) Shares.
-
-
-
-
-*   **FTP:** this service provides fast access from any operating system, using a cross-platform FTP and file manager client application such as Filezilla.
-    FreeNAS® supports encryption and chroot for FTP. Configuration examples can be found in FTP.
-
-
-
-*   **SSH:** this service provides encrypted connections from any operating system using SSH command line utilities or the graphical WinSCP application for
-    Windows clients. Configuration examples can be found in SSH.
-
-
-
-*   **iSCSI:** FreeNAS® uses istgt to export virtual disk drives that are accessible to clients running iSCSI initiator software. Configuration examples can
-    be found in iSCSI.
-
-
+* **iSCSI:** FreeNAS® uses istgt to export virtual disk drives that are accessible to clients running iSCSI initiator software. Configuration examples can
+  be found in iSCSI.
 
 Start Applicable Service(s)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1719,13 +1489,9 @@ Account Configuration
 The Account Configuration section of the administrative GUI describes how to manually create and manage users and groups. This section contains the following
 entries:
 
-*   Groups: used to manage UNIX-style groups on the FreeNAS® system.
+* Groups: used to manage UNIX-style groups on the FreeNAS® system.
 
-
-
-*   Users: used to manage UNIX-style accounts on the FreeNAS® system.
-
-
+* Users: used to manage UNIX-style accounts on the FreeNAS® system.
 
 Each of these entries are described in more detail in this section.
 
@@ -1803,21 +1569,13 @@ to assign permissions which will be used by shares, you will need to do **one of
 
 #.  Create a guest account that all users will use.
 
-
-
 #.  Create a user account for every user in the network where the name of each account is the same as a logon name used on a computer. For example, if a
     Windows system has a login name of *bobsmith*, you should create a user account with the name *bobsmith* on FreeNAS®. If your intent is to assign groups
     of users different permissions to shares, you will need to also create groups and assign users to the groups.
 
-
-
 #.  If your network uses Active Directory to manage user accounts and permissions, enable the Active Directory_service.
 
-
-
 #.  If your network uses an OpenLDAP server to manage user accounts and permissions, enable the LDAP service.
-
-
 
 User accounts can be given permissions to volumes or datasets. If you wish to use groups to manage permissions, you should create the user accounts first,
 then assign the accounts as members of the groups. This section demonstrates how to create a user account.
@@ -1839,21 +1597,13 @@ is allowed to use **sudo**. To reorder the list, click the desired column.
 
 If you click a user account, the following buttons will appear for that account:
 
-*   **Change Password:** provides fields to enter and confirm the new password.
+* **Change Password:** provides fields to enter and confirm the new password.
 
+* **Modify User:** used to modify the account's settings, as listed in Table 3.2b.
 
+* **Auxiliary Groups:** used to make the account a member of additional groups.
 
-*   **Modify User:** used to modify the account's settings, as listed in Table 3.2b.
-
-
-
-*   **Auxiliary Groups:** used to make the account a member of additional groups.
-
-
-
-*   **Change E-mail:** used to change the email address associated with the account.
-
-
+* **Change E-mail:** used to change the email address associated with the account.
 
 **NOTE:** it is important to set the email address for the built-in *root* user account as important system messages are sent to the
 *root* user. For security reasons, password logins are disabled for the
@@ -1968,42 +1718,24 @@ System Configuration
 
 The System section of the administrative GUI contains the following entries:
 
-*   **Cron Jobs:** provides a graphical front-end to
-    `crontab(5) <http://www.freebsd.org/cgi/man.cgi?query=crontab&sektion=5>`_
+* **Cron Jobs:** provides a graphical front-end to
+  `crontab(5) <http://www.freebsd.org/cgi/man.cgi?query=crontab&sektion=5>`_
 
+* **Init/Shutdown Scripts:** used to configure a command or script to automatically execute during system startup or shutdown
 
+* **NTP Servers:** used to configure NTP server settings
 
-*   **Init/Shutdown Scripts:** used to configure a command or script to automatically execute during system startup or shutdown
+* **Rsync Tasks:** allows you to schedule rsync tasks
 
+* **S.M.A.R.T. Tests:** allows you to schedule which S.M.A.R.T. tests to run on a per-disk basis
 
+* **Settings:** used to configure system wide settings such as timezone, email setup, HTTPS access, and firmware upgrades
 
-*   **NTP Servers:** used to configure NTP server settings
+* **Sysctls:** provides a front-end for tuning the FreeNAS® system by interacting with the underlying FreeBSD kernel
 
+* **System Information:** provides general FreeNAS® system information such as hostname, operating system version, platform, and uptime
 
-
-*   **Rsync Tasks:** allows you to schedule rsync tasks
-
-
-
-*   **S.M.A.R.T. Tests:** allows you to schedule which S.M.A.R.T. tests to run on a per-disk basis
-
-
-
-*   **Settings:** used to configure system wide settings such as timezone, email setup, HTTPS access, and firmware upgrades
-
-
-
-*   **Sysctls:** provides a front-end for tuning the FreeNAS® system by interacting with the underlying FreeBSD kernel
-
-
-
-*   **System Information:** provides general FreeNAS® system information such as hostname, operating system version, platform, and uptime
-
-
-
-*   **Tunables:** provides a front-end to load additional kernel modules at boot time
-
-
+* **Tunables:** provides a front-end to load additional kernel modules at boot time
 
 Each of these is described in more detail in this section.
 
@@ -2199,13 +1931,9 @@ is a utility that automatically copies specified data from one system to another
 
 To configure rsync, you need to configure both ends of the connection:
 
-*   **the rsync server:** this system pulls (receives) the data. This system is referred to as *PULL* in the configuration examples.
+* **the rsync server:** this system pulls (receives) the data. This system is referred to as *PULL* in the configuration examples.
 
-
-
-*   **the rsync client:** this system pushes (sends) the data. This system is referred to as *PUSH* in the configuration examples.
-
-
+* **the rsync client:** this system pushes (sends) the data. This system is referred to as *PUSH* in the configuration examples.
 
 FreeNAS® can be configured as either an rsync client or an rsync server. The opposite end of the connection can be another FreeNAS® system or any other
 system running rsync. In FreeNAS® terminology, an rysnc task defines which data is synchronized between the two systems. If you are synchronizing data
@@ -2213,17 +1941,13 @@ between two FreeNAS® systems, create the rsync task on the rsync client.
 
 FreeNAS® supports two modes of rsync operation:
 
-*   **rsync module mode:** exports a directory tree, and its configured settings, as a symbolic name over an unencrypted connection. This mode requires that
-    at least one module be defined on the rsync server. It can be defined in the FreeNAS® GUI under Services → Rsync → Rsync Modules. In other
-    operating systems, the module is defined in
-    `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_
-    .
+* **rsync module mode:** exports a directory tree, and its configured settings, as a symbolic name over an unencrypted connection. This mode requires that
+  at least one module be defined on the rsync server. It can be defined in the FreeNAS® GUI under Services → Rsync → Rsync Modules. In other
+  operating systems, the module is defined in
+  `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_
+  .
 
-
-
-*   **rsync over SSH:** synchronizes over an encrypted connection. Requires the configuration of SSH user and host public keys.
-
-
+* **rsync over SSH:** synchronizes over an encrypted connection. Requires the configuration of SSH user and host public keys.
 
 This section summarizes the options when creating an Rsync Task. It then provides a configuration example between two FreeNAS® systems for each mode of rsync
 operation.
@@ -2346,74 +2070,44 @@ Configuring Rsync Module Mode Between Two FreeNAS® Systems
 
 This configuration example will configure rsync module mode between the two following FreeNAS® systems:
 
-*   *192.168.2.2* has existing data in
-    */mnt/local/images*. It will be the rsync client, meaning that an rsync task needs to be defined. It will be referred to as
-    *PUSH.*
+* *192.168.2.2* has existing data in
+  */mnt/local/images*. It will be the rsync client, meaning that an rsync task needs to be defined. It will be referred to as
+  *PUSH.*
 
-
-
-*   *192.168.2.6* has an existing volume named
-    */mnt/remote*. It will be the rsync server, meaning that it will receive the contents of
-    */mnt/local/images*. An rsync module needs to be defined on this system and the rsyncd service needs to be started. It will be referred to as
-    *PULL.*
-
-
+* *192.168.2.6* has an existing volume named
+  */mnt/remote*. It will be the rsync server, meaning that it will receive the contents of
+  */mnt/local/images*. An rsync module needs to be defined on this system and the rsyncd service needs to be started. It will be referred to as
+  *PULL.*
 
 On *PUSH*, an rsync task is defined in System → Rsync Tasks → Add Rsync Task as shown in Figure 4.5b. In this example:
 
-*   the Path points to */usr/local/images*, the directory to be copied
+* the Path points to */usr/local/images*, the directory to be copied
 
+* the Remote Host points to *192.168.2.6*, the IP address of the rsync server
 
+* the Rsync Mode is *Rsync module*
 
-*   the Remote Host points to *192.168.2.6*, the IP address of the rsync server
+* the Remote Module Name is *backups*; this will need to be defined on the rsync server
 
+* the Direction is *Push*
 
+* the rsync is scheduled to occur every 15 minutes
 
-*   the Rsync Mode is *Rsync module*
+* the User is set to *root* so it has permission to write anywhere
 
-
-
-*   the Remote Module Name is *backups*; this will need to be defined on the rsync server
-
-
-
-*   the Direction is *Push*
-
-
-
-
-*   the rsync is scheduled to occur every 15 minutes
-
-
-
-*   the User is set to *root* so it has permission to write anywhere
-
-
-
-*   the Preserve Permissions checkbox is checked so that the original permissions are not overwritten by the *root* user
-
-
+* the Preserve Permissions checkbox is checked so that the original permissions are not overwritten by the *root* user
 
 On *PULL*, an rsync module is defined in Services → Rsync Modules → Add Rsync Module, shown in Figure 4.4c. In this example:
 
-*   the Module Name is *backups*; this needs to match the setting on the rsync client
+* the Module Name is *backups*; this needs to match the setting on the rsync client
 
+* the Path is */mnt/remote*; a directory called
+  *images* will be created to hold the contents of
+  */usr/local/images*
 
+* the User is set to *root* so it has permission to write anywhere
 
-*   the Path is */mnt/remote*; a directory called
-    *images* will be created to hold the contents of
-    */usr/local/images*
-
-
-
-
-*   the User is set to *root* so it has permission to write anywhere
-
-
-
-*   Hosts allow is set to *192.168.2.2*, the IP address of the rsync client
-
-
+* Hosts allow is set to *192.168.2.2*, the IP address of the rsync client
 
 Descriptions of the configurable options can be found in Rsync Modules.
 
@@ -2437,23 +2131,14 @@ Configuring Rsync over SSH Mode Between Two FreeNAS® Systems
 SSH replication mode does not require the creation of an rsync module or for the rsync service to be running on the rsync server. It does require SSH to be
 configured before creating the rsync task:
 
-*   a public/private key pair for the rsync user account (typically *root*) must be generated on
-    *PUSH* and the public key copied to the same user account on
-    *PULL*
+* a public/private key pair for the rsync user account (typically *root*) must be generated on
+  *PUSH* and the public key copied to the same user account on
+  *PULL*
 
+* to mitigate the risk of man-in-the-middle attacks, the public host key of *PULL* must be copied to
+  *PUSH*
 
-
-
-*   to mitigate the risk of man-in-the-middle attacks, the public host key of *PULL* must be copied to
-    *PUSH*
-
-
-
-
-*   the SSH service must be running on *PULL*
-
-
-
+* the SSH service must be running on *PULL*
 
 To create the public/private key pair for the rsync user account, open Shell_on *PUSH*. The / filesystem must first be mounted as read-write. The following
 example generates an RSA type public/private key pair for the *root* user. When creating the key pair, do not enter the passphrase as the key is meant to be
@@ -2532,34 +2217,20 @@ Next, copy the host key of *PULL* using Shell on
 You are now ready to create the rsync task on *PULL*. To configure rsync SSH mode using the systems in our previous example, the configuration would be as
 follows:
 
-*   the Path points to */mnt/local/images*, the directory to be copied
+* the Path points to */mnt/local/images*, the directory to be copied
 
+* the Remote Host points to *192.168.2.6*, the IP address of the rsync server
 
+* the Rsync Mode is *Rsync over SSH*
 
-*   the Remote Host points to *192.168.2.6*, the IP address of the rsync server
+* the rsync is scheduled to occur every 15 minutes
 
+* the User is set to *root* so it has permission to write anywhere; the public key for this user must be generated on
+  *PUSH* and copied to
+  *PULL*
 
-
-*   the Rsync Mode is *Rsync over SSH*
-
-
-
-
-*   the rsync is scheduled to occur every 15 minutes
-
-
-
-*   the User is set to *root* so it has permission to write anywhere; the public key for this user must be generated on
-    *PUSH* and copied to
-    *PULL*
-
-
-
-
-*   the *Preserve Permissions* checkbox is checked so that the original permissions are not overwritten by the
-    *root* user
-
-
+* the *Preserve Permissions* checkbox is checked so that the original permissions are not overwritten by the
+  *root* user
 
 Once you save the rsync task, the rsync will automatically occur according to your schedule. In this example, the contents of */mnt/local/images/* will
 automatically appear in */mnt/remote/images/* after 15 minutes. If the content does not appear, use Shell on
@@ -2702,13 +2373,9 @@ Table 4.6a summarizes the settings that can be configured using the General tab:
 **NOTE:** by default, logs are stored in RAM as there is no space on the embedded device to store logs. This means that logs are deleted whenever the system
 reboots. If you wish to save the system logs, either:
 
-*   configure a remote syslog server on another Unix-like operating system, or
+* configure a remote syslog server on another Unix-like operating system, or
 
-
-
-*   create a ZFS dataset called *syslog* and reboot the system; FreeNAS® will automatically create a *log/* directory in this dataset which contains the logs
-
-
+* create a ZFS dataset called *syslog* and reboot the system; FreeNAS® will automatically create a *log/* directory in this dataset which contains the logs
 
 If you make any changes, click the Save button.
 
@@ -2737,7 +2404,7 @@ Table 4.6b.
 
 **Figure 4.6b: Advanced Tab**
 
-
+|Figure46b_png|
 
 **Table 4.6b: Advanced Tab's Configuration Settings**
 
@@ -3057,6 +2724,7 @@ the network does not use a domain name add *.local* to the end of the hostname.
 
 **Figure 4.8a: System Information Tab**
 
+|Figure48a_png|
 
 Tunables
 ~~~~~~~~
@@ -3193,33 +2861,19 @@ Network Configuration
 
 The Network section of the administrative GUI contains the following components for viewing and configuring the FreeNAS® system's network settings:
 
-*   Global Configuration: used to to set non-interface specific network settings.
+* Global Configuration: used to to set non-interface specific network settings.
 
+* Interfaces: used to configure a specified interface's network settings.
 
+* IPMI: configures hardware side-band management should the appliance become unavailable through the graphical administrative interface.
 
-*   Interfaces: used to configure a specified interface's network settings.
+* Link Aggregations: used to configure link aggregation and link failover.
 
+* Network Summary: provides an overview of the current network settings.
 
+* Static Routes: used to add static routes.
 
-*   IPMI: configures hardware side-band management should the appliance become unavailable through the graphical administrative interface.
-
-
-
-*   Link Aggregations: used to configure link aggregation and link failover.
-
-
-
-*   Network Summary: provides an overview of the current network settings.
-
-
-
-*   Static Routes: used to add static routes.
-
-
-
-*   VLANs: used to configure IEEE 802.1q tagging.
-
-
+* VLANs: used to configure IEEE 802.1q tagging.
 
 Each of these is described in more detail in this section.
 
@@ -3386,7 +3040,7 @@ when configuring IPMI.
 
 **Figure 5.3a: IPMI Configuration**
 
-
+|Figure53a_png|
 
 **Table 5.3a: IPMI Options**
 
@@ -3429,16 +3083,13 @@ interface to provide link aggregation and link failover. The lagg interface allo
 interface, providing fault-tolerance and high-speed multi-link throughput. The aggregation protocols supported by lagg determine which ports are used for
 outgoing traffic and whether a specific port accepts incoming traffic. The link state of the lagg interface is used to validate if the port is active or not.
 
-
 Aggregation works best on switches supporting LACP, which distributes traffic bi-directionally while responding to failure of individual links. FreeNAS® also
 supports active/passive failover between pairs of links. The LACP, FEC and load-balance modes select the output interface using a hash that includes the
 Ethernet source and destination address, VLAN tag (if available), IP source and destination address, and flow label (IPv6 only). The benefit can only be
 observed when multiple clients are transferring files **from** your NAS. The flow entering
 **into** your NAS depends on the Ethernet switch load-balance algorithm.
 
-
 The lagg driver currently supports the following aggregation protocols:
-
 
 **Failover:** the default protocol. Sends traffic only through the active port. If the master port becomes unavailable, the next active port is used. The
 first interface added is the master port; any interfaces added after that are used as failover devices. By default, received traffic is only accepted when
@@ -3718,21 +3369,13 @@ Storage Configuration
 
 The Storage section of the graphical interface allows you to configure the following:
 
-*   Periodic Snapshot Tasks: used to schedule the automatic creation of ZFS snapshots.
+* Periodic Snapshot Tasks: used to schedule the automatic creation of ZFS snapshots.
 
+* Replication Tasks: used to schedule the replication of snapshots over an encrypted connection.
 
+* Volumes: used to create and manage storage volumes.
 
-*   Replication Tasks: used to schedule the replication of snapshots over an encrypted connection.
-
-
-
-*   Volumes: used to create and manage storage volumes.
-
-
-
-*   ZFS Scrubs: used to schedule ZFS scrubs as part of ongoing disk maintenance.
-
-
+* ZFS Scrubs: used to schedule ZFS scrubs as part of ongoing disk maintenance.
 
 These configurations are described in more detail in this section.
 
@@ -3845,15 +3488,9 @@ snapshot when doing an incremental backup. If you do need to restore the data wi
 
 #.  Clone the desired snapshot.
 
-
-
 #.  Share the clone with the share type or service running on the FreeNAS® system.
 
-
-
 #.  Once users have recovered the needed data, destroy the clone in the Active Volumes tab.
-
-
 
 This approach will never destroy any on-disk data and has no impact on replication.
 
@@ -3863,25 +3500,16 @@ Explorer without requiring any interaction with the FreeNAS® graphical administ
 The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the Define filter icon (near the text
 “No filter applied”). When creating a filter:
 
-*   select the column or leave the default of Any Column.
+* select the column or leave the default of Any Column.
 
-
-
-*   select the condition. Possible conditions are: *contains* (default),
-    *is, starts with, ends with, does *
-    *not contain, is not, does not start with, does not end with*
-    , and
-    *is empty*.
-
-
+* select the condition. Possible conditions are: *contains* (default),
+  *is, starts with, ends with, does *
+  *not contain, is not, does not start with, does not end with*, and
+  *is empty*.
 
 *   input a value that meets your view criteria.
 
-
-
 *   click the Filter button to save your filter and exit the define filter screen. Alternately, click the + button to add another filter.
-
-
 
 If you create multiple filters, select the filter you wish to use before leaving the define filter screen. Once a filter is selected, the “No filter
 applied” text will change to “Clear filter”. If you click “Clear filter”, a pop-up message will indicate that this will remove the filter and all
@@ -3898,42 +3526,28 @@ and the system to receive a copy of the ZFS snapshots as *PULL*.
 
 Before you can configure a replication task, the following pre-requisites must be met:
 
-*   a ZFS volume must exist on both *PUSH* and
-    *PULL*.
+* a ZFS volume must exist on both *PUSH* and
+  *PULL*.
 
+* a periodic snapshot task must be created on *PUSH*. You will not be able to create a replication task before the first snapshot exists.
 
-
-*   a periodic snapshot task must be created on *PUSH*. You will not be able to create a replication task before the first snapshot exists.
-
-
-
-*   the SSH service must be enabled on *PULL*. The first time the service is enabled, it will generate the required SSH keys.
-
-
+* the SSH service must be enabled on *PULL*. The first time the service is enabled, it will generate the required SSH keys.
 
 A replication task uses the following keys:
 
-*   **/data/ssh/replication.pub:** the RSA public key used for authenticating the *PUSH* replication user. This key needs to be copied to the replication
-    user account on *PULL*.
+* **/data/ssh/replication.pub:** the RSA public key used for authenticating the *PUSH* replication user. This key needs to be copied to the replication
+  user account on *PULL*.
 
-
-
-*   **/etc/ssh/ssh_host_rsa_key.pub:** the RSA host public key of *PULL* used to authenticate the receiving side in order to prevent a man-in-the-middle
-    attack. This key needs to be copied to the replication task on *PUSH*.
-
-
+* **/etc/ssh/ssh_host_rsa_key.pub:** the RSA host public key of *PULL* used to authenticate the receiving side in order to prevent a man-in-the-middle
+  attack. This key needs to be copied to the replication task on *PUSH*.
 
 This section will demonstrate how to configure a replication task between the following two FreeNAS® systems:
 
-*   *192.168.2.2* will be referred to as *PUSH*. This system has a periodic snapshot task for the ZFS dataset
-    */mnt/local/data*.
+* *192.168.2.2* will be referred to as *PUSH*. This system has a periodic snapshot task for the ZFS dataset
+  */mnt/local/data*.
 
-
-
-*   *192.168.2.6* will be referred to as *PULL* . This system has an existing ZFS volume named
-    */mnt/remote* which will store the pushed snapshots.
-
-
+* *192.168.2.6* will be referred to as *PULL* . This system has an existing ZFS volume named
+  */mnt/remote* which will store the pushed snapshots.
 
 Configure PULL
 ^^^^^^^^^^^^^^
@@ -3961,29 +3575,16 @@ Periodic Snapshot Tasks → ZFS Snapshots.
 
 To create the replication task, click Storage → Replication Tasks → Add Replication Task. Figure 6.2b shows the required configuration for our example:
 
-*   the Volume/Dataset is *local/data*
+* the Volume/Dataset is *local/data*
 
+* the Remote ZFS Volume/Dataset is *remote*
 
+* the Remote hostname is *192.168.2.6*
 
+* the Begin and End times are at their default values, meaning that replication will occur whenever a snapshot is created
 
-*   the Remote ZFS Volume/Dataset is *remote*
-
-
-
-
-*   the Remote hostname is *192.168.2.6*
-
-
-
-
-*   the Begin and End times are at their default values, meaning that replication will occur whenever a snapshot is created
-
-
-
-*   once the Remote hostname is input, click the SSH Key Scan button; assuming the address is reachable and the SSH service is running on *PULL*, its key will
-    automatically be populated to the Remote hostkey box
-
-
+* once the Remote hostname is input, click the SSH Key Scan button; assuming the address is reachable and the SSH service is running on *PULL*, its key will
+  automatically be populated to the Remote hostkey box
 
 Table 6.2a summarizes the available options in the Add Replication Task screen.
 
@@ -4080,7 +3681,7 @@ Snapshots tab of *PULL*, as seen in Figure 6.2c. If the snapshot is not replicat
 
 **Figure 6.2c: Verifying the Snapshot was Replicated**
 
-
+|Figure62c_png|
 
 Troubleshooting Replication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -4095,7 +3696,6 @@ open Shell and try to **ssh** into *PULL*. Replace
 This command should not ask for a password. If it asks for a password, SSH authentication is not working. Go to Storage → Replication Tasks → View
 Replication Tasks and click the “View Public Key” button. Make sure that it matches one of the values in */~/.ssh/authorized_keys* on
 *PULL, * where ~ represents the home directory of the replication user.
-
 
 Also check */var/log/auth.log* on
 *PULL* and
@@ -4227,19 +3827,13 @@ Input a name for the volume, use the drop-down menu to select the disk or partit
 
 Before importing a disk, be aware of the following caveats:
 
-*   FreeNAS® will not import a dirty filesystem. If a supported filesystem does not show in the drop-down menu, you will need to **fsck** or run a disk check
-    on the filesystem.
+* FreeNAS® will not import a dirty filesystem. If a supported filesystem does not show in the drop-down menu, you will need to **fsck** or run a disk check
+  on the filesystem.
 
+* FreeNAS® can not import dynamic NTFS volumes at this time. A future version of FreeBSD may address this issue.
 
-
-*   FreeNAS® can not import dynamic NTFS volumes at this time. A future version of FreeBSD may address this issue.
-
-
-
-*   if an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the
-    drive.
-
-
+* if an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the
+  drive.
 
 UFS Volume Manager
 ^^^^^^^^^^^^^^^^^^
@@ -4321,7 +3915,7 @@ If you click on Storage → Volumes → ZFS Volume Manager, you will see a scree
 
 Table 6.3b summarizes the configuration options of this screen.
 
-Table 6.3b: Options When Creating a ZFS Volume
+**Table 6.3b: Options When Creating a ZFS Volume**
 
 
 +------------------+----------------+----------------------------------------------------------------------------------------+
@@ -4382,33 +3976,19 @@ media, format the disks, then restore the data to the new volume.
 The ZFS Volume Manager will automatically select the optimal layout for the new pool, depending upon the number of disks selected. The following formats are
 supported:
 
-*   **Stripe:** requires at least one disk
+* **Stripe:** requires at least one disk
 
+* **Mirror:** requires at least two disks
 
+* **RAIDZ1:** requires at least three disks
 
-*   **Mirror:** requires at least two disks
+* **RAIDZ2:** requires at least four disks
 
+* **RAIDZ3:** requires at least five disks
 
+* **log device:** add a dedicated log device (slog)
 
-*   **RAIDZ1:** requires at least three disks
-
-
-
-*   **RAIDZ2:** requires at least four disks
-
-
-
-*   **RAIDZ3:** requires at least five disks
-
-
-
-*   **log device:** add a dedicated log device (slog)
-
-
-
-*   **cache device:** add a dedicated cache device
-
-
+* **cache device:** add a dedicated cache device
 
 If you have more than five disks and are using ZFS, consider the number of disks to use for best performance and scalability. An overview of the various RAID
 levels and recommended disk group sizes can be found in the RAID Overview section. More information about log and cache devices can be found in the ZFS
@@ -4425,28 +4005,18 @@ Beginning with 8.3.1, FreeNAS® supports
 full disk encryption when creating ZFS volumes. It is important to understand the following when considering whether or not encryption is right for your
 FreeNAS® system:
 
-*   This is **not** the encryption method used by Oracle ZFSv30. That version of ZFS has not been open sourced and is the property of Oracle.
+* This is **not** the encryption method used by Oracle ZFSv30. That version of ZFS has not been open sourced and is the property of Oracle.
 
+* This is full disk encryption and **not** per-filesystem encryption. The underlying drives are first encrypted, then the pool is created on top of the
+  encrypted devices.
 
+* This type of encryption is primarily targeted at users who store sensitive data and want to retain the ability to remove disks from the pool without
+  having to first wipe the disk's contents.
 
-*   This is full disk encryption and **not** per-filesystem encryption. The underlying drives are first encrypted, then the pool is created on top of the
-    encrypted devices.
+* This design is only suitable for safe disposal of disks independent of the encryption key. As long as the key and the disks are intact, the system is
+  vulnerable to being decrypted. The key should be protected by a strong passphrase and any backups of the key should be securely stored.
 
-
-
-*   This type of encryption is primarily targeted at users who store sensitive data and want to retain the ability to remove disks from the pool without
-    having to first wipe the disk's contents.
-
-
-
-*   This design is only suitable for safe disposal of disks independent of the encryption key. As long as the key and the disks are intact, the system is
-    vulnerable to being decrypted. The key should be protected by a strong passphrase and any backups of the key should be securely stored.
-
-
-
-*   On the other hand, if the key is lost, the data on the disks is inaccessible. Always backup the key!
-
-
+* On the other hand, if the key is lost, the data on the disks is inaccessible. Always backup the key!
 
 **IMPORTANT NOTE:** the per-drive GELI master keys are not backed up along with with the user keys. If a bit error occurs in the last sector of an encrypted
 disk, this may mean the data on that disk is completely lost. Until this issue is resolved, it is important to read
@@ -4457,37 +4027,25 @@ gives an in-depth explanation of how the various key types are used by GELI. To 
 `this bug report <https://bugs.freenas.org/issues/2375>`_
 .
 
-*   The encryption key is per ZFS volume (pool). If you create multiple pools, each pool has its own encryption key.
+* The encryption key is per ZFS volume (pool). If you create multiple pools, each pool has its own encryption key.
 
+* If the system has a lot of disks, there will be a performance hit if the CPU does not support
+  `AES-NI <http://en.wikipedia.org/wiki/AES-NI#Supporting_CPUs>`_
+  or if no crypto hardware is installed. Without hardware acceleration, there will be about a 20% performance hit for a single disk. Performance degradation
+  will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the
+  processor does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This
+  `forum post <http://forums.freenas.org/showthread.php?12157-Encryption-performance-benchmarks>`_
+  compares the performance of various CPUs.
 
+* Data in the ARC cache and the contents of RAM are unencrypted.
 
-*   If the system has a lot of disks, there will be a performance hit if the CPU does not support
-    `AES-NI <http://en.wikipedia.org/wiki/AES-NI#Supporting_CPUs>`_
-    or if no crypto hardware is installed. Without hardware acceleration, there will be about a 20% performance hit for a single disk. Performance degradation
-    will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the
-    processor does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This
-    `forum post <http://forums.freenas.org/showthread.php?12157-Encryption-performance-benchmarks>`_
-    compares the performance of various CPUs.
+* Swap is always encrypted, even on unencrypted volumes.
 
+* There is no way to convert an existing, unencrypted volume. Instead, the data must be backed up, the existing pool must be destroyed, a new encrypted
+  volume must be created, and the backup restored to the new volume.
 
-
-*   Data in the ARC cache and the contents of RAM are unencrypted.
-
-
-
-*   Swap is always encrypted, even on unencrypted volumes.
-
-
-
-*   There is no way to convert an existing, unencrypted volume. Instead, the data must be backed up, the existing pool must be destroyed, a new encrypted
-    volume must be created, and the backup restored to the new volume.
-
-
-
-*   Hybrid pools are not supported. In other words, newly created vdevs must match the existing encryption scheme. When extending a volume, Volume Manager
-    will automatically encrypt the new vdev being added to the existing encrypted pool.
-
-
+* Hybrid pools are not supported. In other words, newly created vdevs must match the existing encryption scheme. When extending a volume, Volume Manager
+  will automatically encrypt the new vdev being added to the existing encrypted pool.
 
 **NOTE:** the encryption facility used by FreeNAS® is designed to protect against physical theft of the disks. It is not designed to protect against
 unauthorized software access. Ensure that only authorized users have access to the administrative GUI and that proper permissions are set on shares if
@@ -4598,40 +4156,26 @@ recovery key. After extending the volume, you should immediately recreate both u
 Once an existing volume has been selected from the drop-down menu, drag and drop the desired disk(s) and select the desired volume layout. For example you
 can:
 
-*   select an SSD or disk with a volume layout of *Log (ZIL)* to add a log device to the ZFS pool. Selecting 2 SSDs or disks will mirror the log device.
+* select an SSD or disk with a volume layout of *Log (ZIL)* to add a log device to the ZFS pool. Selecting 2 SSDs or disks will mirror the log device.
 
+* select an SSD or disk with a volume layout of *Cache (L2ARC)* to add a cache device to the ZFS pool.
 
-
-*   select an SSD or disk with a volume layout of *Cache (L2ARC)* to add a cache device to the ZFS pool.
-
-
-
-*   add additional disks to increase the capacity of the ZFS pool. The caveats to doing this are described below.
-
-
+* add additional disks to increase the capacity of the ZFS pool. The caveats to doing this are described below.
 
 When adding disks to increase the capacity of a volume, ZFS supports the addition of virtual devices, known as vdevs, to an existing ZFS pool. A vdev can be a
 single disk, a stripe, a mirror, a RAIDZ1, RAIDZ2, or a RAIDZ3. **Once a vdev is created, you can not add more drives to that vdev**; however, you can stripe
 a new vdev (and its disks) with the **same type of existing vdev** in order to increase the overall size of ZFS the pool. In other words, when you extend a
 ZFS volume, you are really striping similar vdevs. Here are some examples:
 
-*   to extend a ZFS stripe, add one or more disks. Since there is no redundancy, you do not have to add the same amount of disks as the existing stripe.
+* to extend a ZFS stripe, add one or more disks. Since there is no redundancy, you do not have to add the same amount of disks as the existing stripe.
 
+* to extend a ZFS mirror, add the same number of drives. The resulting striped mirror is a RAID 10. For example, if you have 10 drives, you could start by
+  creating a mirror of two drives, extending this mirror by creating another mirror of two drives, and repeating three more times until all 10 drives have
+  been added.
 
+* to extend a three drive RAIDZ1, add three additional drives. The result is a RAIDZ+0, similar to RAID 50 on a hardware controller.
 
-*   to extend a ZFS mirror, add the same number of drives. The resulting striped mirror is a RAID 10. For example, if you have 10 drives, you could start by
-    creating a mirror of two drives, extending this mirror by creating another mirror of two drives, and repeating three more times until all 10 drives have
-    been added.
-
-
-
-*   to extend a three drive RAIDZ1, add three additional drives. The result is a RAIDZ+0, similar to RAID 50 on a hardware controller.
-
-
-
-*   to extend a RAIDZ2 requires a minimum of four additional drives. The result is a RAIDZ2+0, similar to RAID 60 on a hardware controller.
-
-
+* to extend a RAIDZ2 requires a minimum of four additional drives. The result is a RAIDZ2+0, similar to RAID 60 on a hardware controller.
 
 If you try to add an incorrect number of disks to the existing vdev, an error message will appear, indicating the number of disks that are needed. You will
 need to select the correct number of disks in order to continue.
@@ -4653,7 +4197,7 @@ If you get confused when creating a dataset on a volume, click all existing data
 
 **Figure 6.3i: Creating a ZFS Dataset**
 
-
+|Figure63i_png|
 
 Table 6.3d summarizes the options available when creating a ZFS dataset. Some settings are only available in Advanced Mode. To see these settings, either
 click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by default” in System
@@ -4753,22 +4297,14 @@ Most media (e.g. *.mp3*, *.mp4*, *.avi*) is already compressed, meaning that you
 compressed dataset. However, if you have raw *.wav* rips of CDs or *.vob* rips of DVDs, you will see a performance gain using a compressed dataset. When
 selecting a compression type, you need to balance performance with the amount of compression. The following compression algorithms are supported:
 
-*   **lz4:** recommended compression method as it allows compressed datasets to operate at near real-time speed.
+* **lz4:** recommended compression method as it allows compressed datasets to operate at near real-time speed.
 
+* **gzip:** varies from levels 1 to 9 where *gzip fastest* (level 1) gives the least compression and
+  *gzip maximum* (level 9) provides the best compression but is discouraged due to its performance impact.
 
+* **zle:** fast and simple algorithm to eliminate runs of zeroes.
 
-*   **gzip:** varies from levels 1 to 9 where *gzip fastest* (level 1) gives the least compression and
-    *gzip maximum* (level 9) provides the best compression but is discouraged due to its performance impact.
-
-
-
-*   **zle:** fast and simple algorithm to eliminate runs of zeroes.
-
-
-
-*   **lzjb:** provides decent data compression, but is considered deprecated as lz4 provides much better performance.
-
-
+* **lzjb:** provides decent data compression, but is considered deprecated as lz4 provides much better performance.
 
 If you leave the default of *Inherit* or select
 *Off*, compression will not be used on the dataset.
@@ -4864,13 +4400,9 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
     the pool from the system.
     **If you do check the box to mark the disks as new, the volume and all of its data, datasets, and zvols will be destroyed and the underlying disks will be returned to their raw state.**
 
-
-
 #.  **Scrub Volume:** ZFS scrubs and how to schedule them are described in more detail in ZFS Scrubs. This button allows you to manually initiate a scrub. A
     scrub is I/O intensive and can negatively impact performance, meaning that you should not initiate one while the system is busy. A cancel button is
     provided should you need to cancel a scrub.
-
-
 
 **NOTE:** if you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off.
 
@@ -4882,31 +4414,19 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
     newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only
     applied when a file is written.
 
-
-
 #.  **Create ZFS Dataset:** allows you to create a dataset.
 
-
-
 #.  **Create zvol:** allows you to create a zvol to use as an iSCSI device extent.
-
-
 
 #.  **Change Permissions:** allows you to edit the volume's user, group, Unix rwx permissions, type of ACL, and to enable recursive permissions on the
     volume's subdirectories.
 
-
-
 #.  **Create Snapshot:** allows you to configure the snapshot's name and whether or not it is recursive before manually creating a one-time snapshot. If you
     wish to schedule the regular creation of snapshots, instead create a periodic snapshot task.
-
-
 
 #.  **Volume Status:** as seen in the example in Figure 6.3n, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
     write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the
     device's options (shown in Figure 6.3o), offline the device, or replace the device (as described in Replacing a Failed Drive).
-
-
 
 **Figure 6.3n: Volume Status**
 
@@ -5105,8 +4625,6 @@ following steps:
     “Offline” button, pull the disk, then skip to step 3. If there is no “Offline” button but only a “Replace” button, then the disk is already
     offlined and you can safely skip this step.
 
-
-
 **NOTE:** if the process of changing the disk's status to OFFLINE fails with a “disk offline failed - no valid replicas” message, you will need to scrub
 the ZFS volume first using its Scrub Volume button in Storage → Volumes → View Volumes. Once the scrub completes, try to Offline the disk again before
 proceeding.
@@ -5114,19 +4632,13 @@ proceeding.
 #.  If the hardware is not AHCI capable, shutdown the system in order to physically replace the disk. When finished, return to the GUI and locate the OFFLINE
     disk.
 
-
-
 #.  Once the disk is showing as OFFLINE, click the disk again and then click its “Replace” button. Select the replacement disk from the drop-down menu
     and click the “Replace Disk” button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
     Once you click the “Replace Disk” button, the ZFS pool will start to resilver. You can use the **zpool status** command in Shell to monitor the
     status of the resilvering.
 
-
-
 #.  If the replaced disk continues to be listed after resilvering is complete, click its entry and use the “Detach” button to remove the disk from the
     list.
-
-
 
 In the example shown in Figure 6.3s, a failed disk is being replaced by disk *ada2* in the volume named
 *volume1*.
@@ -5151,22 +4663,14 @@ Next, restore the encryption keys to the pool.
 #.  Highlight the pool that contains the disk you just replaced and click the “Encryption Re-key” button in the GUI. You will need to enter the
     *root* password.
 
-
-
 #.  Highlight the pool that contains the disk you just replaced and click the “Create Passphrase” button and enter the new passphrase. You can reuse the
     old passphrase if desired.
-
-
 
 #.  Highlight the pool that contains the disk you just replaced and click the “Download Key” button in order to save the new encryption key. Since the 
     old key will no longer function, any old keys can be safely discarded.
 
-
-
 #.  Highlight the pool that contains the disk you just replaced and click the “Add Recovery Key” button in order to save the new recovery key. The old
     recovery key will no longer function, so it can be safely discarded.
-
-
 
 Removing a Log or Cache Device
 """"""""""""""""""""""""""""""
@@ -5395,8 +4899,7 @@ Storage → ZFS Scrubs allows you to schedule and manage scrubs on a ZFS volume.
 problems, detects silent data corruptions caused by transient hardware issues, and provides early alerts to disk failures. If you have consumer-quality
 drives, consider a weekly scrubbing schedule. If you have datacenter-quality drives, consider a monthly scrubbing schedule.
 
-D
-epending upon the amount of data, a scrub can take a long time. Scrubs are I/O intensive and can negatively impact performance. They should be scheduled for
+Depending upon the amount of data, a scrub can take a long time. Scrubs are I/O intensive and can negatively impact performance. They should be scheduled for
 evenings or weekends to minimize the impact to users.
 
 A ZFS scrub only checks used disk space. To check unused disk space, schedule a S.M.A.R.T. Test_ *Type* of
@@ -5410,9 +4913,6 @@ settings for the volume named *volume1. * Table 6.4a summarizes the options in t
 
 
 |10000000000003780000016DE5BE4BC7_png|
-
-
-
 
 
 **Table 6.4a: ZFS Scrub Options**
@@ -5615,47 +5115,23 @@ In this configuration example, the AFP share has been configured for guest acces
     *nobody* user account and
     *nobody* group.
 
-
-
 #.  An AFP share has been created with the following attributes:
-
-
 
 *   Name: *freenas* (this is the name that will appear to Mac OS X clients)
 
-
-
 *   Path: */mnt/data*
-
-
-
 
 *   Allow List: set to *nobody*
 
-
-
-
 *   Read-write Access: set to *nobody*
-
-
-
 
 #.  Services → AFP has been configured as follows:
 
-
-
 *   Server Name: *freenas*
-
-
-
 
 *   Guest Access: checkbox is checked
 
-
-
 *   *nobody* is selected in the Guest account drop-down menu
-
-
 
 Once the AFP service has been started in Services → Control Services, Mac OS X users can connect to the AFP share by clicking Go → Connect to Server.
 In the example shown in Figure 7.1b, the user has input *afp://* followed by the IP address of the FreeNAS® system.
@@ -5685,60 +5161,29 @@ to backup to an AFP share on a FreeNAS® system. To configure the AFP share on t
 #.  A ZFS dataset named */mnt/data/backup_user1* with a quota of
     *60G* was created in Storage → Volumes → Create ZFS Dataset.
 
-
-
 #.  A user account was created as follows:
-
-
 
 *   Username: *user1*
 
-
-
-
 *   Home Directory: */mnt/data/backup_user1*
-
-
-
 
 *   the Full Name, E-mail, and Password fields were set where the Username and Password match the values for the user on the Mac OS X system
 
-
-
 #.  An AFP share with a Name of *backup_user1* has been created with the following attributes:
-
-
 
 *   Path: */mnt/data/backup_user1*
 
-
-
-
 *   Allow List: set to *user1*
-
-
-
 
 *   Read-write Access: set to *user1*
 
-
-
-
 *   Time Machine: checkbox is checked
-
-
 
 #.  Services → AFP has been configured as follows:
 
-
-
 *   Guest Access: checkbox is unchecked
 
-
-
 #.  The AFP service has been started in Services → Control Services.
-
-
 
 To configure Time Machine on the Mac OS X client, go to System Preferences → Time Machine which will open the screen shown in Figure 7.1e. Click ON and a
 pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the entry
@@ -5861,52 +5306,30 @@ When creating the NFS share, keep the following points in mind:
     the Maproot options. If you only wish to restrict the *root* user's permissions, set the Maproot option. If you wish to restrict the permissions of all
     users, set the Mapall option.
 
-
-
 #.  Each volume or dataset is considered to be its own filesystem and NFS is not able to cross filesystem boundaries.
-
-
 
 #.  The network or host must be unique per share and per filesystem or directory.
 
-
-
 #.  The “All directories” option can only be used once per share per filesystem.
-
-
 
 To better understand these restrictions, consider the following scenario where there are:
 
-*   2 networks named *10.0.0.0/8* and
-    *20.0.0.0/8*
+* 2 networks named *10.0.0.0/8* and
+  *20.0.0.0/8*
 
+* a ZFS volume named *volume1* with 2 datasets named
+  *dataset1* and
+  *dataset2*
 
-
-
-*   a ZFS volume named *volume1* with 2 datasets named
-    *dataset1* and
-    *dataset2*
-
-
-
-
-*   *dataset1* has a directory named
-    *directory1*
-
-
-
+* *dataset1* has a directory named
+  *directory1*
 
 Because of restriction #3, you will receive an error if you try to create one NFS share as follows:
 
-*   **Authorized networks:** *10.0.0.0/8 20.0.0.0/8 *
+* **Authorized networks:** *10.0.0.0/8 20.0.0.0/8 *
 
-
-
-*   **Path:** */mnt/volume1/dataset1* and /
-    *mnt/volume1/dataset1/directory1*
-
-
-
+* **Path:** */mnt/volume1/dataset1* and /
+  *mnt/volume1/dataset1/directory1*
 
 Instead, you should select the Path of */mnt/volume1/dataset1* and check the “All directories” box.
 
@@ -5914,25 +5337,15 @@ However, you could restrict that directory to one of the networks by creating tw
 
 First NFS share:
 
-*   **Authorized networks:** *10.0.0.0/8*
+* **Authorized networks:** *10.0.0.0/8*
 
-
-
-
-*   **Path:** */mnt/volume1/dataset1 *
-
-
+* **Path:** */mnt/volume1/dataset1 *
 
 Second NFS share:
 
-*   **Authorized networks:** *20.0.0.0/8 *
+* **Authorized networks:** *20.0.0.0/8 *
 
-
-
-*   **Path:** */mnt/volume1/dataset1/directory1*
-
-
-
+* **Path:** */mnt/volume1/dataset1/directory1*
 
 Note that this requires the creation of two shares as it can not be accomplished in one share.
 
@@ -5946,16 +5359,10 @@ A better scenario is to do the following:
 
 #.  Specify the built-in *nobody* account to be used for NFS access.
 
-
-
 #.  In the permissions_screen of the volume/dataset that is being shared, change the owner and group to *nobody* and set the permissions according to your
     specifications.
 
-
-
 #.  Select *nobody* in the Mapall User and Mapall Group drop-down menus for the share in Sharing → Unix (NFS) Shares.
-
-
 
 With this configuration, it does not matter which user account connects to the NFS share, as it will be mapped to the *nobody* user account and will only
 have the permissions that you specified on the volume/dataset. For example, even if the *root* user is able to connect, it will not gain
@@ -5970,30 +5377,15 @@ In the following examples, an NFS share on a FreeNAS® system with the IP addres
     *nobody* user account and the
     *nobody* group.
 
-
-
 #.  A NFS share has been created with the following attributes:
-
-
 
 *   Path: */mnt/data*
 
-
-
-
 *   Authorized Network: *192.168.2.0/24*
-
-
-
 
 *   MapAll User and MapAll Group are both set to *nobody*
 
-
-
-
 *   the All Directories checkbox has been checked
-
-
 
 From BSD or Linux Clients
 """""""""""""""""""""""""
@@ -6005,22 +5397,14 @@ client that needs access to the NFS share::
 
 The **mount** command uses the following options:
 
-*   **-t nfs:** specifies the type of share.
+* **-t nfs:** specifies the type of share.
 
+* **192.168.2.2:** replace with the IP address of the FreeNAS® system
 
+* **/mnt/data:** replace with the name of the NFS share
 
-*   **192.168.2.2:** replace with the IP address of the FreeNAS® system
-
-
-
-*   **/mnt/data:** replace with the name of the NFS share
-
-
-
-*   **/mnt:** a mount point on the client system. This must be an existing, **empty** directory. The data in the NFS share will be made available to the
-    client in this directory.
-
-
+* **/mnt:** a mount point on the client system. This must be an existing, **empty** directory. The data in the NFS share will be made available to the
+  client in this directory.
 
 The **mount** command should return to the command prompt without any error messages, indicating that the share was successfully mounted.
 
@@ -6049,19 +5433,12 @@ Instructions for connecting from an Enterprise version of Windows 7 can be found
 `Nekodrive <http://code.google.com/p/nekodrive/downloads/list>`_
 provides an open source graphical NFS client. To use this client, you will need to install the following on the Windows system:
 
-*   `7zip <http://www.7-zip.org/>`_
-    to extract the Nekodrive download files
+* `7zip <http://www.7-zip.org/>`_
+  to extract the Nekodrive download files
 
+* NFSClient and NFSLibrary from the Nekodrive download page; once downloaded, extract these files using 7zip
 
-
-*   NFSClient and NFSLibrary from the Nekodrive download page; once downloaded, extract these files using 7zip
-
-
-
-*   `.NET Framework 4.0 <http://www.microsoft.com/download/en/details.aspx?id=17851>`_
-
-
-
+* `.NET Framework 4.0 <http://www.microsoft.com/download/en/details.aspx?id=17851>`_
 
 Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 7.2b, the user has connected to the example
 */mnt/data* share of the FreeNAS® system at
@@ -6132,21 +5509,13 @@ need to create or import users and groups.
 
 This section will demonstrate some common configuration scenarios:
 
-*   If you would like an overview of the configurable parameters, see Creating CIFS Shares.
+* If you would like an overview of the configurable parameters, see Creating CIFS Shares.
 
+* If you would like each user to authenticate before accessing the share, see Configuring Local User Access.
 
+* If you would like to use Shadow Copies, see Configuring Shadow Copies.
 
-*   If you would like each user to authenticate before accessing the share, see Configuring Local User Access.
-
-
-
-*   If you would like to use Shadow Copies, see Configuring Shadow Copies.
-
-
-
-*   If you are having problems accessing your CIFS share, see Troubleshooting Tips.
-
-
+* If you are having problems accessing your CIFS share, see Troubleshooting Tips.
 
 Creating CIFS Shares
 ^^^^^^^^^^^^^^^^^^^^
@@ -6252,57 +5621,30 @@ The process for configuring a share is as follows:
 
 #.  **If you are not using Active Directory or LDAP, create a user account for each user** in Account → Users → Add User with the following attributes:
 
+* Username and Password: matches the username and password on the client system
 
+* Home Directory: browse to the volume to be shared
 
-*   Username and Password: matches the username and password on the client system
-
-
-
-*   Home Directory: browse to the volume to be shared
-
-
-
-*   Repeat this process to create a user account for every user that will need access to the CIFS share
-
-
+* Repeat this process to create a user account for every user that will need access to the CIFS share
 
 #.  If you are not using Active Directory or LDAP, create a group in Account → Groups → Add Group. Once the group is created, click its Members button
     and add the user accounts that you created in step 1.
 
-
-
 #.  **Give the group permission to the volume** in Storage → View Volumes. When setting the permissions:
 
+* set Owner(user) to *nobody*
 
+* set the Owner(group) to the one you created in Step 2
 
-*   set Owner(user) to *nobody*
-
-
-
-
-*   set the Owner(group) to the one you created in Step 2
-
-
-
-*   Mode: check the write checkbox for the Group as it is unchecked by default
-
-
+* Mode: check the write checkbox for the Group as it is unchecked by default
 
 #.  **Create a CIFS share** in Sharing → CIFS Shares → Add CIFS Share with the following attributes:
 
+* Name: input the name of the share
 
+* Path: browse to the volume to be shared
 
-*   Name: input the name of the share
-
-
-
-*   Path: browse to the volume to be shared
-
-
-
-*   keep the Browsable to Network Clients box checked
-
-
+* keep the Browsable to Network Clients box checked
 
 **NOTE:** be careful about unchecking the Browsable to Network Clients box. When this box is checked (the default), other users will see the names of every
 share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If this box is
@@ -6311,23 +5653,13 @@ share from the command line. Unchecking this option provides limited security an
 
 #.  **Configure the CIFS service in Services → CIFS** as follows:
 
-
-
-*   Workgroup: if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
-    Windows workgroup name is *WORKGROUP*
-
-
-
+* Workgroup: if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
+  Windows workgroup name is *WORKGROUP*
 
 #.  **Start the CIFS service** in Services → Control Services. Click the click the red OFF button next to CIFS. After a second or so, it will change to a
     blue ON, indicating that the service has been enabled.
 
-
-
 #.  **Test the share.**
-
-
-
 
 To test the share from a Windows system, open Explorer and click on Network. For this configuration example, a system named *FREENAS* should appear with a
 share named *backups*. An example is seen in Figure 7.3b:
@@ -6381,41 +5713,27 @@ Prerequisites
 
 Before using shadow copies with FreeNAS®, be aware of the following caveats:
 
-*   if the Windows system is not fully patched to the latest service pack, Shadow Copies may not work. If you are unable to see any previous versions of files
-    to restore, use Windows Update to make sure that the system is fully up-to-date.
+* if the Windows system is not fully patched to the latest service pack, Shadow Copies may not work. If you are unable to see any previous versions of files
+  to restore, use Windows Update to make sure that the system is fully up-to-date.
 
+* at this time, shadow copy support only works for ZFS pools or datasets. This means that the CIFS share must be configured on a volume or dataset, not on a
+  directory. Directory support will be added in a future version of FreeNAS®.
 
+* since directories can not be shadow copied at this time, if you configure “Enable home directories” on the CIFS service, any data stored in the
+  user's home directory will not be shadow copied.
 
-*   at this time, shadow copy support only works for ZFS pools or datasets. This means that the CIFS share must be configured on a volume or dataset, not on a
-    directory. Directory support will be added in a future version of FreeNAS®.
+* shadow copies will not work with a manual snapshot, you must create a periodic snapshot task for the pool or dataset being shared by CIFS or a recursive
+  task for a parent dataset. At this time, if multiple snapshot tasks are created for the same pool/dataset being shared by CIFS, shadow copies will only
+  work on the last executed task at the time the CIFS service started. A future version of FreeNAS® will address this limitation.
 
+* the periodic snapshot task should be created and at least one snapshot should exist **before** creating the CIFS share. If you created the CIFS share
+  first, restart the CIFS service in Services → Control Services.
 
+* appropriate permissions must be configured on the volume/dataset being shared by CIFS.
 
-*   since directories can not be shadow copied at this time, if you configure “Enable home directories” on the CIFS service, any data stored in the
-    user's home directory will not be shadow copied.
-
-
-
-*   shadow copies will not work with a manual snapshot, you must create a periodic snapshot task for the pool or dataset being shared by CIFS or a recursive
-    task for a parent dataset. At this time, if multiple snapshot tasks are created for the same pool/dataset being shared by CIFS, shadow copies will only
-    work on the last executed task at the time the CIFS service started. A future version of FreeNAS® will address this limitation.
-
-
-
-*   the periodic snapshot task should be created and at least one snapshot should exist **before** creating the CIFS share. If you created the CIFS share
-    first, restart the CIFS service in Services → Control Services.
-
-
-
-*   appropriate permissions must be configured on the volume/dataset being shared by CIFS.
-
-
-
-*   users can not delete shadow copies on the Windows system due to the way Samba works. Instead, the administrator can remove snapshots from the FreeNAS®
-    administrative GUI. The only way to disable shadow copies completely is to remove the periodic snapshot task and delete all snapshots associated with the
-    CIFS share.
-
-
+* users can not delete shadow copies on the Windows system due to the way Samba works. Instead, the administrator can remove snapshots from the FreeNAS®
+  administrative GUI. The only way to disable shadow copies completely is to remove the periodic snapshot task and delete all snapshots associated with the
+  CIFS share.
 
 Configuration Example
 """""""""""""""""""""
@@ -6427,34 +5745,22 @@ In this example, a Windows 7 computer has two users: *user1* and
     named */mnt/data/user1*
     and the second dataset is named */mnt/data/user2*.
 
-
-
 #.  If you are not using Active Directory or LDAP, create two users, *user1* and
     *user2* in Account → Users → Add User. Each user has the following attributes:
 
+* Username and Password: matches that user's username and password on the Windows system
 
-
-*   Username and Password: matches that user's username and password on the Windows system
-
-
-
-*   Home Directory: browse to the dataset created for that user
-
-
+* Home Directory: browse to the dataset created for that user
 
 #.  Set the permissions on */mnt/data/user1* so that the Owner(user) and Owner(group) is
     *user1*. Set the permissions on
     */mnt/data/user2* so that the Owner(user) and Owner(group) is
     *user2*. For each dataset's permissions, tighten the Mode so that Other can not read or execute the information on the dataset.
 
-
-
 #.  Create two periodic snapshot tasks in Storage → Periodic Snapshot Tasks → Add Periodic Snapshot, one for each dataset. Alternatively, you can
     create one periodic snapshot task for the entire *data* volume.
     **Before continuing to the next step,** confirm that at least one snapshot for each dataset is displayed in the ZFS Snapshots tab. When creating your
     snapshots, keep in mind how often your users need to access modified files and during which days and time of day they are likely to make changes.
-
-
 
 #.  Create two CIFS shares in Sharing → Windows (CIFS) Shares → Add Windows (CIFS) Share. The first CIFS share is named *user1* and has a Path of
     */mnt/data/user1*; the second CIFS share is named
@@ -6463,8 +5769,6 @@ In this example, a Windows 7 computer has two users: *user1* and
     share is created, click the Yes button when the pop-up button prompts to start the CIFS service. Verify that the CIFS service is set to ON in Services
     → Control Services.
 
-
-
 #.  From a Windows system, login as *user1* and open Windows Explorer → Network → FREENAS. Two shares should appear, named
     *user1* and
     *user2*. Due to the permissions on the datasets,
@@ -6472,8 +5776,6 @@ In this example, a Windows 7 computer has two users: *user1* and
     *user2* share. Due to the permissions on the datasets,
     *user1* should be able to create, add, and delete files and folders from the
     *user1* share.
-
-
 
 Figure 7.3e provides an example of using shadow copies while logged in as *user1*. In this example, the user right-clicked
 *modified file* and selected “Restore previous versions” from the menu. This particular file has three versions: the current version, plus two previous
@@ -6491,68 +5793,31 @@ Services Configuration
 The Services section of the GUI allows you to configure, start, and stop the various services that ship with the FreeNAS® system. FreeNAS® supports the
 following built-in services:
 
-*   AFP
+* AFP
 
+* CIFS
 
+* Directory Services
 
+* Dynamic DNS_
 
-*   CIFS
+* FTP_
 
+* iSCSI
 
+* NFS
 
+* Rsync_
 
-*   Directory Services
+* S.M.A.R.T._
 
+* SNMP_
 
+* SSH_
 
+* TFTP
 
-*   Dynamic DNS_
-
-
-
-
-*   FTP_
-
-
-
-
-*   iSCSI
-
-
-
-
-*   NFS
-
-
-
-
-*   Rsync_
-
-
-
-*   S.M.A.R.T._
-
-
-
-*   SNMP_
-
-
-
-
-*   SSH_
-
-
-
-
-*   TFTP
-
-
-
-
-*   UPS_
-
-
-
+* UPS_
 
 This section demonstrates how to start a FreeNAS® service then describes the available configuration options for each FreeNAS® service.
 
@@ -6586,17 +5851,11 @@ the service. The AFP shares will not be available on the network if this service
 
 Starting this service will open the following ports on the FreeNAS® system:
 
-*   TCP 548 (afpd)
+* TCP 548 (afpd)
 
+* TCP 4799 (cnid_metadata)
 
-
-*   TCP 4799 (cnid_metadata)
-
-
-
-*   UDP 5353 and a random UDP port (avahi)
-
-
+* UDP 5353 and a random UDP port (avahi)
 
 Figure 8.2a shows the configuration options which are described in Table 8.2a.
 
@@ -6663,21 +5922,13 @@ to occur and for the FreeNAS® system to become available in Windows Explorer.
 
 Starting this service will open the following ports on the FreeNAS® system:
 
-*   TCP 139 (smbd)
+* TCP 139 (smbd)
 
+* TCP 445 (smbd)
 
+* UDP 137 (nmbd)
 
-*   TCP 445 (smbd)
-
-
-
-*   UDP 137 (nmbd)
-
-
-
-*   UDP 138 (nmbd)
-
-
+* UDP 138 (nmbd)
 
 Figure 8.3a shows the configuration options which are described in Table 8.3a. This configuration screen is really a front-end to
 `smb.conf(5) <http://samba.org/samba/docs/man/manpages-3/smb.conf.5.html>`_
@@ -6685,7 +5936,7 @@ Figure 8.3a shows the configuration options which are described in Table 8.3a. T
 
 **Figure 8.3a: Configuring CIFS**
 
-
+|Figure83a_png|
 
 **Table 8.3a: CIFS Configuration Options**
 
@@ -6803,7 +6054,6 @@ Figure 8.3a shows the configuration options which are described in Table 8.3a. T
 Beginning with FreeNAS® 8.0.3-RELEASE, changes to CIFS settings and CIFS shares take effect immediately. For previous versions, changes will not take effect
 until you manually stop and start the CIFS service.
 
-
 **NOTE:** do not set the
 *directory name cache size* as an auxiliary parameter. Due to differences in how Linux and BSD handle file descriptors, directory name caching is disabled on
 BSD systems in order to improve performance.
@@ -6850,25 +6100,15 @@ Directory Services
 
 FreeNAS® supports the following directory services:
 
-*   Active Directory (for Windows 2000 and higher networks)
+* Active Directory (for Windows 2000 and higher networks)
 
+* Domain Controller (for configuring FreeNAS® as a domain controller)
 
+* LDAP
 
-*   Domain Controller (for configuring FreeNAS® as a domain controller)
+* NIS
 
-
-
-*   LDAP
-
-
-
-*   NIS
-
-
-
-*   NT4 (for Windows networks older than Windows 2000)
-
-
+* NT4 (for Windows networks older than Windows 2000)
 
 This section summarizes each of these services and their available configurations within the FreeNAS® GUI.
 
@@ -6906,18 +6146,11 @@ Active Directory relies on Kerberos, which is a time sensitive protocol. This me
 Controller can not be out of sync by more than a few minutes. The best way to ensure that the same time is running on both systems is to configure both
 systems to:
 
-*   use the same NTP server (set in System → NTP Servers on the FreeNAS® system)
+* use the same NTP server (set in System → NTP Servers on the FreeNAS® system)
 
+* have the same timezone
 
-
-*   have the same timezone
-
-
-
-*   be set to either localtime or universal time at the BIOS level
-
-
-
+* be set to either localtime or universal time at the BIOS level
 
 Figure 8.4a shows the screen that appears when you click Services → Directory Services → Active Directory. Table 8.4a describes the configurable
 options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always
@@ -7068,25 +6301,15 @@ The keytab itself can be created on a Windows system using these commands::
 
 where:
 
-*   **hostname** is the fully qualified hostname of the domain controller
+* **hostname** is the fully qualified hostname of the domain controller
 
+* **DOMAINNAME** is the domain name in all caps
 
+* **DOMAIN** is the pre-Windows 2000 short name for the domain
 
-*   **DOMAINNAME** is the domain name in all caps
+* **username** is the privileged account name
 
-
-
-*   **DOMAIN** is the pre-Windows 2000 short name for the domain
-
-
-
-*   **username** is the privileged account name
-
-
-
-*   **userpass** is the password associated with username
-
-
+* **userpass** is the password associated with username
 
 This will create a keytab with sufficient privileges to grant tickets for CIFS and LDAP.
 
@@ -7413,7 +6636,7 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 
 **Figure 8.5a: Configuring DDNS**
 
-
+|Figure85a_png|
 
 **Table 8.5a: DDNS Configuration Options**
 
@@ -7685,62 +6908,35 @@ To configure anonymous FTP:
 
 #.  **Give the built-in ftp user account permissions** to the volume/dataset to be shared in Storage → Volumes as follows:
 
+* Owner(user): select the built-in *ftp* user from the drop-down menu
 
+* Owner(group): select the built-in *ftp* group from the drop-down menu
 
-*   Owner(user): select the built-in *ftp* user from the drop-down menu
-
-
-
-*   Owner(group): select the built-in *ftp* group from the drop-down menu
-
-
-
-*   Mode: review that the permissions are appropriate for the share
-
-
+* Mode: review that the permissions are appropriate for the share
 
 **NOTE:** for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will
 be accessing FreeNAS® via FTP.
 
-
 #.  **Configure anonymous FTP** in Services → FTP by setting the following attributes:
 
+* check the box *Allow Anonymous Login*
 
-
-*   check the box *Allow Anonymous Login*
-
-
-
-
-*   Path: browse to the volume/dataset/directory to be shared
-
-
+* Path: browse to the volume/dataset/directory to be shared
 
 #.  **Start the FTP service** in Control Services. Click the red OFF button next to FTP. After a second or so, it will change to a blue ON , indicating that
     the service has been enabled.
-
-
-
 
 #.  **Test the connection** from a client using a utility such as
     `Filezilla <http://filezilla-project.org/>`_
     .
 
-
-
 In the example shown in Figure 8.6b, a user has input the following information into the Filezilla client:
 
-*   IP address of the FreeNAS® server: *192.168.1.113*
+* IP address of the FreeNAS® server: *192.168.1.113*
 
+* Username: *anonymous*
 
-
-
-*   Username: *anonymous*
-
-
-
-
-*   Password: the email address of the user
+* Password: the email address of the user
 
 
 
@@ -7766,53 +6962,32 @@ To configure this scenario:
 #.  **Create a ZFS dataset for each user** in Storage → Volumes. Click an existing ZFS volume → Create ZFS Dataset and set an appropriate quota for
     each dataset. Repeat this process to create a dataset for every user that will need access to the FTP service.
 
-
-
 #.  **If you are not using AD or LDAP, create a user account for each user** in Account → Users → Add User. For each user, browse to the dataset
     created for that user in the *Home Directory* field. Repeat this process to create a user account for every user that will need access to the FTP service,
     making sure to assign each user their own dataset.
 
-
-
 #.  **Set the permissions for each dataset** in Storage → Volumes. Click the Change Permissions button for a dataset to assign a user account as Owner of
     that dataset and to set the desired permissions for that user. Repeat for each dataset.
-
-
 
 **NOTE:** for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will
 be accessing FreeNAS® via FTP.
 
 #.  **Configure FTP** in Services → FTP with the following attributes:
 
+* Path: browse to the parent volume containing the datasets
 
+* make sure the boxes for *Allow Anonymous Login*
+  and *Allow Root Login* are
+  **unchecked**
 
-*   Path: browse to the parent volume containing the datasets
+* check the box *Allow Local User Login*
 
-
-
-*   make sure the boxes for *Allow Anonymous Login*
-    and *Allow Root Login* are
-    **unchecked**
-
-
-
-*   check the box *Allow Local User Login*
-
-
-
-*   check the box *Always Chroot*
-
-
-
+* check the box *Always Chroot*
 
 #.  **Start the FTP service** in Control Services. Click the red OFF button next to FTP. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
 
-
-
 #.  **Test the connection from a client** using a utility such as Filezilla.
-
-
 
 To test this configuration in Filezilla, use the IP address of the FreeNAS® system, the Username of a user that has been associated with a dataset, and the
 Password for that user. The messages should indicate that the authorization and the FTP connection are successful. The user can now navigate the contents of
@@ -7829,15 +7004,11 @@ To configure any FTP scenario to use encrypted connections:
     certificate. If you prefer to use your own certificate, delete the automatically generated one that appears in the *Certificate and private key field*
     and paste in your own certificate and key.
 
-
-
 #.  **Specify secure FTP when accessing the FreeNAS® system.** For example, in Filezilla input
     *ftps://IP_address* (for an implicit connection) or
     *ftpes://IP_address*
     (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the certificate of the FreeNAS®
     system. Click OK to accept the certificate and negotiate an encrypted connection.
-
-
 
 To force encrypted connections, add the following line to Auxiliary Parameters::
 
@@ -7896,35 +7067,19 @@ In order to configure iSCSI:
 
 #.  Decide if you will use authentication, and if so, whether it will be CHAP or mutual CHAP. If using authentication, create an authorized access.
 
-
-
 #.  Create either a device extent or a file extent to be used as storage.
-
-
 
 #.  Determine which hosts are allowed to connect using iSCSI and create an initiator.
 
-
-
 #.  Create at least one portal.
-
-
 
 #.  Review the target global configuration parameters.
 
-
-
 #.  Create a target.
-
-
 
 #.  Associate a target with an extent.
 
-
-
 #.  Start the iSCSI service in Services → Control Services.
-
-
 
 The rest of this section describes these steps in more detail.
 
@@ -8203,20 +7358,13 @@ change media file, or reset a LUN.
 
 In order to dynamically add or remove **targets** without restarting the iSCSI service, which can disrupt iSCSI initiators, set the following options:
 
-*   check the *Enable LUC* box
+* check the *Enable LUC* box
 
+* leave the *Controller IP address* and
+  *Control Authorized Network* at their default values
 
-
-*   leave the *Controller IP address* and
-    *Control Authorized Network* at their default values
-
-
-
-*   change the *Controller Auth Method*
-    to *None*
-
-
-
+* change the *Controller Auth Method*
+  to *None*
 
 **NOTE:** the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
 existing extent.
@@ -8358,21 +7506,13 @@ If the settings in this screen differ from the settings on the initiator, set th
 If you are changing integer values to optimize the connection, refer to the iSCSI initiator's documentation. For example, the following modifications are
 recommended if the iSCSI initiator is running on Xenserver:
 
-*   Max. pre-send R2T: *255*
+* Max. pre-send R2T: *255*
 
+* MaxOutstandingR2T: *64*
 
+* First burst length: *262,144*
 
-*   MaxOutstandingR2T: *64*
-
-
-
-*   First burst length: *262,144*
-
-
-
-*   Max burst length: *2,097,152*
-
-
+* Max burst length: *2,097,152*
 
 Targets
 ^^^^^^^
@@ -8588,13 +7728,9 @@ Network File System (NFS) is a protocol for sharing files on a network. Before c
 
 Starting this service will open the following ports on the FreeNAS® system:
 
-*   TCP and UDP 111 (used by **rpcbind**)
+* TCP and UDP 111 (used by **rpcbind**)
 
-
-
-*   TCP 2049 (used by **nfsd**)
-
-
+* TCP 2049 (used by **nfsd**)
 
 Additionally, **mountd** and
 **rpcbind** will each bind to a randomly available UDP port.
@@ -8754,21 +7890,13 @@ service to monitor disk S.M.A.R.T. data for disk health. To fully configure S.M.
 
 #.  Schedule when to run the S.M.A.R.T. tests in System → S.M.A.R.T. Tests → Add S.M.A.R.T. Test.
 
-
-
 #.  Enable or disable S.M.A.R.T. for each disk member of a volume in Volumes → View Volumes. By default, this is already enabled on all disks that support
     S.M.A.R.T.
 
-
-
 #.  Check the configuration of the S.M.A.R.T. service as described in this section.
-
-
 
 #.  Start the S.M.A.R.T. service in Services →
     Control Services
-
-
 
 Figure 8.10a shows the configuration screen that appears when you click Services → S.M.A.R.T.
 
@@ -8836,9 +7964,7 @@ configured as a
 `bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_
 server using FreeBSD's simple and extensible SNMP daemon. When you start the SNMP service, the following port will be enabled on the FreeNAS® system:
 
-*   UDP 161 (**bsnmpd** listens here for SNMP requests)
-
-
+* UDP 161 (**bsnmpd** listens here for SNMP requests)
 
 Available MIBS are located in */usr/share/SNMP/mibs* and
 */usr/local/share/SNMP/mibs*.
@@ -8962,13 +8088,9 @@ Advanced.
 
 A few sshd_config(5) options that are useful to input in the *Extra Options* field include:
 
-*   **ClientAliveInterval**: increase this number if ssh connections tend to drop
+* **ClientAliveInterval**: increase this number if ssh connections tend to drop
 
-
-
-*   **ClientMaxStartup**: defaults to 10; increase if you have more users
-
-
+* **ClientMaxStartup**: defaults to 10; increase if you have more users
 
 Chrooting Command Line SFTP Users
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -8990,20 +8112,14 @@ the following steps.
 
 #.  **Create a ZFS dataset for each user requiring sftp access** in Storage → Volumes.
 
-
-
 #.  **If you are not using Active Directory or LDAP, create a user account** 
     for each user in Account → Users → Add User. In the *Home Directory* field, browse to the location of the dataset you created for that user.
     Repeat this process to create a user account for every user that will need access to the SSH service.
-
-
 
 #.  **Create a group** named
     *sftp* in Account → Groups → Add Group. Then, click on the
     *sftp* group in View Groups and add the users who are to be restricted to their home directories when using
     **sftp**.
-
-
 
 #.  **Set permissions for each dataset** in Storage → Volume → View Volumes. SSH chroot is
     **very specific** with regards to the required permissions (see the ChrootDirectory keyword in
@@ -9011,16 +8127,12 @@ the following steps.
     for details).
     **Your configuration will not work if the permissions on the datasets used by SSH chroot users differ from those shown in Figure 8.12b.**
 
-
-
 #.  Create a home directory within each dataset using Shell. Due to the permissions required by SSH chroot, the user will not have permissions to write to the
     root of their own dataset until you do this. Since your intention is to limit them to the contents of their home directory, manually create a home
     directory for each user **within their own dataset** and change the ownership of the directory to the user. Example 8.12a demonstrates the commands used
     to create a home directory called *user1* for the user account
     *user1* on dataset
     */mnt/volume1/user1*:
-
-
 
 **Figure 8.12b: Permissions Required by SSH Chroot**
 
@@ -9047,8 +8159,6 @@ the following steps.
 #.  **Start the SSH service** in Control Services. Click the red OFF button next to SSH. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
 
-
-
 #.  **Test the connection** from a client by running
     **sftp**,
     **ssh**, and
@@ -9056,8 +8166,6 @@ the following steps.
     **sftp** command should work but be limited to the user's home directory and the
     **ssh** and
     **scp** commands should fail.
-
-
 
 Troubleshooting SSH Connections
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -9273,22 +8381,13 @@ Installing a FreeNAS® PBI Using Plugins
 A FreeNAS® PBI is a self-contained application installer which has been designed to integrate into the FreeNAS® GUI. A FreeNAS® PBI offers several
 advantages:
 
-*   the FreeNAS® GUI provides a browser for viewing the list of available FreeNAS® PBIs. This list is also available at
-    Available FreeNAS® PBIs.
+* the FreeNAS® GUI provides a browser for viewing the list of available FreeNAS® PBIs. This list is also available at Available FreeNAS® PBIs.
 
+* the FreeNAS® GUI provides buttons for installing, starting, upgrading, and deleting FreeNAS® PBIs.
 
+* if the FreeNAS® PBIs has configuration options, a screen will be added to the FreeNAS® GUI so that these options can be configured from the GUI.
 
-*   the FreeNAS® GUI provides buttons for installing, starting, upgrading, and deleting FreeNAS® PBIs.
-
-
-
-*   if the FreeNAS® PBIs has configuration options, a screen will be added to the FreeNAS® GUI so that these options can be configured from the GUI.
-
-
-
-*   FreeNAS® PBIs can be installed using either the Plugins or the Jails method.
-
-
+* FreeNAS® PBIs can be installed using either the Plugins or the Jails method.
 
 To install a FreeNAS® PBI using the plugins method, click Plugins. As seen in Figure 9.1a, the list of available FreeNAS® PBIs will be displayed.
 
@@ -9323,17 +8422,11 @@ Managing an Installed FreeNAS® PBI
 
 As seen in the example shown in Figure 9.1c, entries for the installed PBI will appear in the following locations:
 
-*   the Installed tab of Plugins
+* the Installed tab of Plugins
 
+* the Plugins section of the tree
 
-
-*   the Plugins section of the tree
-
-
-
-*   the Jails section of the tree
-
-
+* the Jails section of the tree
 
 The entry in the Installed tab of Plugins will display the plugin name and version, the name of the PBI that was installed, the name of the jail that was
 created, whether the application status is ON or OFF, and a button to delete the application and its associated jail. If a newer version of the application is
@@ -9415,80 +8508,35 @@ Available FreeNAS® PBIs
 
 Currently, the following FreeNAS® PBIs are available:
 
-*   `Bacula (storage daemon) <http://bacula.org/>`_
+* `Bacula (storage daemon) <http://bacula.org/>`_
 
+* `btsync <http://www.bittorrent.com/sync>`_
 
+* `CouchPotato <https://couchpota.to/>`_
 
+* `CrashPlan <http://www.code42.com/crashplan/>`_
 
-*   `btsync <http://www.bittorrent.com/sync>`_
+* `Firefly <https://en.wikipedia.org/wiki/Firefly_Media_Server>`_
 
+* `Gamez <https://github.com/mdlesk/Gamez>`_
 
+* `HTPC Manager <http://htpc.io/>`_
 
+* `Maraschino <http://www.maraschinoproject.com/>`_
 
-*   `CouchPotato <https://couchpota.to/>`_
+* `MiniDLNA <https://wiki.archlinux.org/index.php/MiniDLNA>`_
 
+* `mylar <https://github.com/evilhero/mylar>`_
 
+* `ownCloud <http://owncloud.org/>`_
 
+* `Plex Media Server <http://www.plexapp.com/>`_
 
-*   `CrashPlan <http://www.code42.com/crashplan/>`_
+* `SABnzbd <http://sabnzbd.org/>`_
 
+* `Sick Beard <http://sickbeard.com/>`_
 
-
-
-*   `Firefly <https://en.wikipedia.org/wiki/Firefly_Media_Server>`_
-
-
-
-
-*   `Gamez <https://github.com/mdlesk/Gamez>`_
-
-
-
-
-*   `HTPC Manager <http://htpc.io/>`_
-
-
-
-
-*   `Maraschino <http://www.maraschinoproject.com/>`_
-
-
-
-
-*   `MiniDLNA <https://wiki.archlinux.org/index.php/MiniDLNA>`_
-
-
-
-
-*   `mylar <https://github.com/evilhero/mylar>`_
-
-
-
-
-*   `ownCloud <http://owncloud.org/>`_
-
-
-
-
-*   `Plex Media Server <http://www.plexapp.com/>`_
-
-
-
-
-*   `SABnzbd <http://sabnzbd.org/>`_
-
-
-
-
-*   `Sick Beard <http://sickbeard.com/>`_
-
-
-
-
-*   `Transmission <http://www.transmissionbt.com/>`_
-
-
-
+* `Transmission <http://www.transmissionbt.com/>`_
 
 **NOTE:** only a small sub-set of these PBIs are available for 32-bit systems as most applications are 64-bit.
 
@@ -9543,26 +8591,18 @@ The following types of jails can be created:
     software are managed from the command line of the jail. Further, the other types of jails do not support the ability to install FreeNAS® PBIs. If you
     plan to install FreeNAS® PBIs, install a plugin jail.
 
-
-
 #.  **Port jail:** this type of jail supports the installation of FreeBSD ports and FreeBSD pkgng packages. It does
     **not** support the installation of FreeNAS® PBIs, meaning that any software installed in this type of jail must be managed from the command line of the
     jail.
 
-
-
 #.  **Standard jail:** this type of jail is functionally the same as a port jail. A distinction is made for those users who prefer to separate network
     servers, such as DHCP or DNS services, from other installed software.
-
-
 
 #.  **Linux jail:** 
     due to the
     `FreeBSD linux binary compatibility layer <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/linuxemu.html>`_
     , Linux can be installed into a jail and software can be installed using the package management system provided by the installed Linux distro. At this
     time, the Linux distro must be a 32-bit version and any applications installed into the jail must be available as a 32-bit binary.
-
-
 
 Table 10a summarizes the type of software which can be installed into each type of jail. Click the name of the type of software for instructions on how to
 install that type of software.
@@ -9602,29 +8642,15 @@ installed into that jail.
 
 The rest of this section describes the following:
 
-*   Jails Configuration_
+* Jails Configuration_
 
+* Adding Jails
 
+* Jail Templates
 
+* Installing FreeNAS® PBIs
 
-*   Adding Jails
-
-
-
-
-*   Jail Templates
-
-
-
-*   Installing FreeNAS® PBIs
-
-
-
-
-*   Installing non-PBI Software
-
-
-
+* Installing non-PBI Software
 
 Jails Configuration
 ~~~~~~~~~~~~~~~~~~~
@@ -9936,19 +8962,13 @@ accessed by expanding the jail's name in the tree view and clicking Edit.
 Most of these settings were previously described in Table 10.2a and can be changed using this screen after jail creation. The following settings differ
 between the “Add Jail” and “Edit Jail” screens:
 
-*   **Jail Name:** this setting is read-only once the jail has been created.
+* **Jail Name:** this setting is read-only once the jail has been created.
 
+* **IPv4 aliases:** once a jail has been created, this field can be used to add additional IPv4 addresses, which are known as aliases. When adding multiple
+  aliases, use a comma delimited list.
 
-
-*   **IPv4 aliases:** once a jail has been created, this field can be used to add additional IPv4 addresses, which are known as aliases. When adding multiple
-    aliases, use a comma delimited list.
-
-
-
-*   **IPv6 aliases:** once a jail has been created, this field can be used to add additional IPv6 addresses. When adding multiple aliases, use a comma
-    delimited list.
-
-
+* **IPv6 aliases:** once a jail has been created, this field can be used to add additional IPv6 addresses. When adding multiple aliases, use a comma
+  delimited list.
 
 **NOTE:** if you need to modify the IP address information for a jail, use it's "Edit Jail" button instead of the associated networking commands from the
 command line of the jail.
@@ -9967,16 +8987,11 @@ view and clicking Storage → Add Storage, shown in Figure 10.2d.
 
 Browse to the “Source” and “Destination”, where:
 
-*   **Source:** is the directory or dataset on the FreeNAS® system you would like to gain access to from the jail. This directory
-    **must** 
-    reside outside of the volume or dataset being used by the jail. This is why it is recommended to create a separate dataset to store jails, as the
-    dataset holding the jails will always be separate from any datasets used for storage on the FreeNAS® system.
+* **Source:** is the directory or dataset on the FreeNAS® system you would like to gain access to from the jail. This directory
+  **must**  reside outside of the volume or dataset being used by the jail. This is why it is recommended to create a separate dataset to store jails, as the
+  dataset holding the jails will always be separate from any datasets used for storage on the FreeNAS® system.
 
-
-
-*   **Destination:** select the directory within the jail which will be linked to the “Source” storage area.
-
-
+* **Destination:** select the directory within the jail which will be linked to the “Source” storage area.
 
 **Figure 10.2d: Adding Storage to a Jail**
 
@@ -9997,31 +9012,19 @@ This means that the workflow for adding storage is usually as follows:
     */etc/group* (to find the group account) inside of the jail. Typically, the user and group names are similar to the application name. Also, the UID and
     GID are usually the same as the port number used by the service.
 
-
-
 #.  On the FreeNAS® system, create a user account and group account to match the name of the user and group used by the application in the jail.
-
-
 
 #.  On the FreeNAS® system, determine if you want the jail to have access to existing data or if you want to set aside an area of storage for the jail to
     use.
-
-
 
 #.  If the jail should access existing data, edit the permissions of the volume or dataset so that the user and group account has the desired read and write
     access. If multiple applications or jails are to have access to the same data, you will need to create a separate group and add each needed user account
     to that group.
 
-
-
 #.  If you are instead setting aside an area of storage for that jail (or individual application), create a dataset. Then, edit the permissions of that
     dataset so that the user and group account has the desired read and write access.
 
-
-
 #.  Use the "Add Storage" button of the jail and select the configured volume/dataset as the "Source".
-
-
 
 If you wish to prevent writes to the storage, check the box “Read-Only”.
 
@@ -10067,22 +9070,16 @@ To view the default templates, click Jails → View Jail Templates. A listing of
 
 **Figure 10.3a: Listing of Default Jail Templates**
 
-
+|Figure103a_png|
 
 The listing contains the following columns:
 
-*   **Name:** will appear in the "type" drop-down menu when adding a new jail.
+* **Name:** will appear in the "type" drop-down menu when adding a new jail.
 
+* **URL:** when adding a new jail, the template will be downloaded from this location.
 
-
-*   **URL:** when adding a new jail, the template will be downloaded from this location.
-
-
-
-*   **Instances:** indicates if the template has been used to create a jail. In this example, no templates have been used to create a jail, so all of the
-    instances are set to *0*.
-
-
+* **Instances:** indicates if the template has been used to create a jail. In this example, no templates have been used to create a jail, so all of the
+  instances are set to *0*.
 
 Creating Your Own Templates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -10215,7 +9212,6 @@ package, use this command::
 
  pkg install audiotag
 
-
 When prompted, type **y** to complete the installation. The installation messages will indicate if the package and its dependencies successfully download and
 install.
 
@@ -10270,25 +9266,17 @@ Compiling FreeBSD Ports with make
 
 Typically, software is installed using packages. Occasionally you may prefer to compile the port yourself. Compiling the port offers the following advantages:
 
-*   not every port has an available package. This is usually due to licensing restrictions or known, unaddressed security vulnerabilities.
+* not every port has an available package. This is usually due to licensing restrictions or known, unaddressed security vulnerabilities.
 
+* sometimes the package is out-of-date and you need a feature that became available in the newer version.
 
-
-*   sometimes the package is out-of-date and you need a feature that became available in the newer version.
-
-
-
-*   some ports provide compile options that are not available in the pre-compiled package. These options are used to add additional features or to strip out
-    the features you do not need.
-
-
+* some ports provide compile options that are not available in the pre-compiled package. These options are used to add additional features or to strip out
+  the features you do not need.
 
 Compiling the port yourself has the following dis-advantages:
 
-*   it takes time. Depending upon the size of the application, the amount of dependencies, the amount of CPU and RAM on the system, and the current load on
-    the FreeNAS® system, the amount of time can range from a few minutes to a few hours or even to a few days.
-
-
+* it takes time. Depending upon the size of the application, the amount of dependencies, the amount of CPU and RAM on the system, and the current load on
+  the FreeNAS® system, the amount of time can range from a few minutes to a few hours or even to a few days.
 
 **NOTE:** if the port doesn't provide any compile options, you are better off saving your time and the FreeNAS® system's resources by using the
 **pkg install** command instead.
@@ -10316,8 +9304,6 @@ you to change their default settings.
 Before you can compile a port, the ports collection must be installed within the jail. From within the jail, use the **portsnap** utility::
 
  portsnap fetch extract
-
-
 
 This command will download the ports collection and extract it to the jail's */usr/ports/* directory.
 
@@ -10428,7 +9414,6 @@ The startup script will also indicate if any additional parameters are available
  # NAME_dir="/usr/local/etc/openvpn"
  # --cd directory
 
-
 Reporting
 ---------
 
@@ -10445,47 +9430,29 @@ to provide reporting statistics. The following collectd plugins are enabled in *
 *   `CPU usage <https://collectd.org/wiki/index.php/Plugin:CPU>`_
     : collects the amount of time spent by the CPU in various states such as executing user code, executing system code, and being idle.
 
-
-
 *   `system load <https://collectd.org/wiki/index.php/Plugin:Load>`_
     : provides a rough overview of system utilization over a one, five, and fifteen minute average.
-
-
 
 *   `disk <https://collectd.org/wiki/index.php/Plugin:Disk>`_
     : shows the average time a disk I/O operation took to complete.
 
-
-
 *   `physical memory <https://collectd.org/wiki/index.php/Plugin:Memory>`_
     : displays physical memory usage.
-
-
 
 *   `swap utilization <https://collectd.org/wiki/index.php/Plugin:Swap>`_
     : displays the amount of free and used swap space.
 
-
-
 *   `interface <https://collectd.org/wiki/index.php/Plugin:Interface>`_
     : shows received and transmitted traffic in bits per second for each configured interface.
-
-
 
 *   `disk space <https://collectd.org/wiki/index.php/Plugin:DF>`_
     : displays free and used space for each volume and dataset. However, the disk space used by an individual zvol is not displayed as it is a block device.
 
-
-
 *   `processes <https://collectd.org/wiki/index.php/Plugin:Processes>`_
     : displays the number of processes, grouped by state.
 
-
-
 *   `uptime <https://collectd.org/wiki/index.php/Plugin:Uptime>`_
     : keeps track of the system uptime, the average running time, and the maximum reached uptime.
-
-
 
 Reporting data is saved, allowing you to view and monitor usage trends over time. Reporting data is saved to */data/rrd_dir.tar.bz2* and should be preserved
 across system upgrades and at shutdown.
@@ -10598,29 +9565,17 @@ Help
 
 The Help button in the upper right corner provides a pop-up menu containing hyperlinks to the various FreeNAS® online resources, including:
 
-*   the Community Forum
+* the Community Forum
 
+* each mailing list
 
+* the web interface to the IRC channel
 
-*   each mailing list
+* the Bug Tracker page which links to the bug database, video walkthroughs, forums, and the documentation wiki
 
+* the online FreeBSD manual pages
 
-
-*   the web interface to the IRC channel
-
-
-
-*   the Bug Tracker page which links to the bug database, video walkthroughs, forums, and the documentation wiki
-
-
-
-*   the online FreeBSD manual pages
-
-
-
-*   a link to professional support
-
-
+* a link to professional support
 
 These resources are discussed in more detail in the next section.
 
@@ -10651,35 +9606,21 @@ Behind the scenes, an alert script checks for various alert conditions, such as 
 A javascript retrieves the current alert status every 5 minutes and will change the solid green alert icon to flashing red if a new alert is detected. Some of
 the conditions that trigger an alert include:
 
-*   a ZFS volume's capacity goes over 80%
+* a ZFS volume's capacity goes over 80%
 
+* non-optimal multipath states
 
+* UPS ONBATT/LOWBATT event
 
-*   non-optimal multipath states
+* ZFS pool status changes from HEALTHY
 
+* the system is unable to bind to the WebGUI Address set in System → Settings → General
 
+* the system can not find an IP address configured on an iSCSI portal
 
-*   UPS ONBATT/LOWBATT event
-
-
-
-*   ZFS pool status changes from HEALTHY
-
-
-
-*   the system is unable to bind to the WebGUI Address set in System → Settings → General
-
-
-
-*   the system can not find an IP address configured on an iSCSI portal
-
-
-
-*   the status of a LSI MegaRAID SAS controller has changed;
-    `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
-    is included for managing these devices
-
-
+* the status of a LSI MegaRAID SAS controller has changed;
+  `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
+  is included for managing these devices
 
 Section 3: Getting Help
 =======================
@@ -10693,35 +9634,17 @@ describe your error message or the function that you are trying to implement.
 
 The rest of this section discusses the following resources which are available to FreeNAS® users:
 
-*   Website and Social Media_
+* Website and Social Media_
 
+* Forums
 
+* Support Database_
 
+* IRC
 
-*   Forums
+* Mailing Lists
 
-
-
-
-*   Support Database_
-
-
-
-
-*   IRC
-
-
-
-
-*   Mailing Lists
-
-
-
-
-*   Professional Support
-
-
-
+* Professional Support
 
 Website and Social Media
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10732,24 +9655,13 @@ contains links to all of the available documentation, support, and social media 
 
 Users are welcome to network on the FreeNAS® social media sites:
 
-*   `LinkedIn <http://www.linkedin.com/groups/FreeNAS8-3903140>`_
+* `LinkedIn <http://www.linkedin.com/groups/FreeNAS8-3903140>`_
 
+* `Google+ <https://plus.google.com/110373675402281849911/posts>`_
 
+* `Facebook <https://www.facebook.com/freenascommunity>`_
 
-
-*   `Google+ <https://plus.google.com/110373675402281849911/posts>`_
-
-
-
-
-*   `Facebook <https://www.facebook.com/freenascommunity>`_
-
-
-
-
-*   `Twitter <http://twitter.com/freenasteam>`_
-
-
+* `Twitter <http://twitter.com/freenasteam>`_
 
 Forums
 ~~~~~~
@@ -10762,195 +9674,121 @@ that topic.
 
 The following categories are available under **Forum Information:**
 
+* `Forum Guidelines <http://forums.freenas.org/forums/forum-guidelines-read-before-posting.26/>`_
+  : read this first before creating a forum post.
 
-*   `Forum Guidelines <http://forums.freenas.org/forums/forum-guidelines-read-before-posting.26/>`_
-    : read this first before creating a forum post.
-
-
-
-*   `Announcements <http://forums.freenas.org/forums/announcements.27/>`_
-    : subscribe to this forum if you wish to receive announcements about new FreeNAS® versions and features.
-
-
+* `Announcements <http://forums.freenas.org/forums/announcements.27/>`_
+  : subscribe to this forum if you wish to receive announcements about new FreeNAS® versions and features.
 
 The following categories are available under **Help and Support:**
 
 
-*   `FreeNAS 4 N00bs <http://forums.freenas.org/forumdisplay.php?5-FreeNAS-4-N00bs>`_
-    : post here if you are new to FreeNAS® and are unsure which category best matches your question.
+* `FreeNAS 4 N00bs <http://forums.freenas.org/forumdisplay.php?5-FreeNAS-4-N00bs>`_
+  : post here if you are new to FreeNAS® and are unsure which category best matches your question.
 
+* `Feature Requests <http://forums.freenas.org/forumdisplay.php?6-Feature-Requests>`_
+  : for the discussion of upcoming features.
 
+* `Bug Reporting <http://forums.freenas.org/forumdisplay.php?7-Bug-Reporting>`_
+  : use this forum if you think you have found a bug in FreeNAS® and want to discuss it before creating a support ticket.
 
-*   `Feature Requests <http://forums.freenas.org/forumdisplay.php?6-Feature-Requests>`_
-    : for the discussion of upcoming features.
+* `Hardware <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_
+  : for the discussion of hardware and tips for getting the most out of your hardware.
 
+* `User Authentication <http://forums.freenas.org/forumdisplay.php?19-User-Authentication>`_
+  : LDAP and Active Directory.
 
+* `Sharing <http://forums.freenas.org/forumdisplay.php?20-Sharing>`_
+  : AFP, CIFS, NFS, and iSCSI.
 
-*   `Bug Reporting <http://forums.freenas.org/forumdisplay.php?7-Bug-Reporting>`_
-    : use this forum if you think you have found a bug in FreeNAS® and want to discuss it before creating a support ticket.
+* `Storage <http://forums.freenas.org/forumdisplay.php?21-Storage>`_
+  : replication, snapshots, volumes, and ZFS.
 
+* `Networking <http://forums.freenas.org/forumdisplay.php?22-Networking>`_
+  : networking hardware, performance, link aggregation, VLANs, DDNS, FTP, SNMP, SSH, and TFTP.
 
+* `Installation <http://forums.freenas.org/forumdisplay.php?32-Installation>`_
+  : installing help or advice before performing the installation.
 
-*   `Hardware <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_
-    : for the discussion of hardware and tips for getting the most out of your hardware.
-
-
-
-*   `User Authentication <http://forums.freenas.org/forumdisplay.php?19-User-Authentication>`_
-    : LDAP and Active Directory.
-
-
-
-*   `Sharing <http://forums.freenas.org/forumdisplay.php?20-Sharing>`_
-    : AFP, CIFS, NFS, and iSCSI.
-
-
-
-*   `Storage <http://forums.freenas.org/forumdisplay.php?21-Storage>`_
-    : replication, snapshots, volumes, and ZFS.
-
-
-
-*   `Networking <http://forums.freenas.org/forumdisplay.php?22-Networking>`_
-    : networking hardware, performance, link aggregation, VLANs, DDNS, FTP, SNMP, SSH, and TFTP.
-
-
-
-*   `Installation <http://forums.freenas.org/forumdisplay.php?32-Installation>`_
-    : installing help or advice before performing the installation.
-
-
-
-*   `Plugins <http://forums.freenas.org/forumdisplay.php?34-Plugins>`_
-    : provides a discussion area for creating and troubleshooting PBIs.
-
-
+* `Plugins <http://forums.freenas.org/forumdisplay.php?34-Plugins>`_
+  : provides a discussion area for creating and troubleshooting PBIs.
 
 The following categories are available under **Development:**
 
 
-*   `FreeNAS <http://forums.freenas.org/forumdisplay.php?9-FreeNAS>`_
-    : general development discussion.
+* `FreeNAS <http://forums.freenas.org/forumdisplay.php?9-FreeNAS>`_
+  : general development discussion.
 
+* `nanobsd <http://forums.freenas.org/forumdisplay.php?10-nanobsd>`_
+  : the embedded operating system FreeNAS® is based upon.
 
+* `Django <http://forums.freenas.org/forumdisplay.php?11-Django>`_
+  : the web framework used by the FreeNAS® graphical administrative interface.
 
-*   `nanobsd <http://forums.freenas.org/forumdisplay.php?10-nanobsd>`_
-    : the embedded operating system FreeNAS® is based upon.
-
-
-
-*   `Django <http://forums.freenas.org/forumdisplay.php?11-Django>`_
-    : the web framework used by the FreeNAS® graphical administrative interface.
-
-
-
-*   `Dojo Toolkit <http://forums.freenas.org/forumdisplay.php?12-Dojo-Toolkit>`_
-    : the javascript toolkit used to create widgets and handle client side processing.
-
-
+* `Dojo Toolkit <http://forums.freenas.org/forumdisplay.php?12-Dojo-Toolkit>`_
+  : the javascript toolkit used to create widgets and handle client side processing.
 
 The following categories are available under **How-To Guides:**
 
+* `Hacking <http://forums.freenas.org/forumdisplay.php?14-Hacking>`_
+  : undocumented tricks for getting the most out of your FreeNAS® system.
 
-*   `Hacking <http://forums.freenas.org/forumdisplay.php?14-Hacking>`_
-    : undocumented tricks for getting the most out of your FreeNAS® system.
+* `Installation <http://forums.freenas.org/forumdisplay.php?15-Installation>`_
+  : specific installation scenarios (hardware and/or software).
 
+* `Configuration <http://forums.freenas.org/forumdisplay.php?16-Configuration>`_
+  : specific configuration scenarios (e.g. software or client configuration).
 
-
-*   `Installation <http://forums.freenas.org/forumdisplay.php?15-Installation>`_
-    : specific installation scenarios (hardware and/or software).
-
-
-
-*   `Configuration <http://forums.freenas.org/forumdisplay.php?16-Configuration>`_
-    : specific configuration scenarios (e.g. software or client configuration).
-
-
-
-*   `Hardware <http://forums.freenas.org/forumdisplay.php?17-Hardware>`_
-    : instructions for setting up specific hardware.
-
-
+* `Hardware <http://forums.freenas.org/forumdisplay.php?17-Hardware>`_
+  : instructions for setting up specific hardware.
 
 If you are looking for tips on how to test and increase the performance of your system, check out the
 `Performance <http://forums.freenas.org/forumdisplay.php?37-Performance>`_
 forum.
 
-
 The following categories are available under **Community Forum:**
 
+* `Off-topic <http://forums.freenas.org/forumdisplay.php?23-Off-topic>`_
+  : want to discuss something of interest to FreeNAS® users but which is not necessarily related to FreeNAS®? This is your place.
 
-*   `Off-topic <http://forums.freenas.org/forumdisplay.php?23-Off-topic>`_
-    : want to discuss something of interest to FreeNAS® users but which is not necessarily related to FreeNAS®? This is your place.
+* `Resources <http://forums.freenas.org/forumdisplay.php?24-Resources>`_
+  : blogs, reviews, and other sources of FreeNAS® information not listed at
+  `freenas.org <http://freenas.org/>`_
+  .
 
-
-
-*   `Resources <http://forums.freenas.org/forumdisplay.php?24-Resources>`_
-    : blogs, reviews, and other sources of FreeNAS® information not listed at
-    `freenas.org <http://freenas.org/>`_
-    .
-
-
-
-*   `Introductions <http://forums.freenas.org/forumdisplay.php?25-Introductions>`_
-    : FreeNAS® Community meet 'n greet - introduce yourself and let us know who we are chatting with.
-
-
+* `Introductions <http://forums.freenas.org/forumdisplay.php?25-Introductions>`_
+  : FreeNAS® Community meet 'n greet - introduce yourself and let us know who we are chatting with.
 
 The following language-specific categories are available under **International**, allowing FreeNAS® users to interact with each other in their native
 language:
 
-*   `Dutch - Nederlands <http://forums.freenas.org/forumdisplay.php?35-Dutch-Nederlands>`_
+* `Dutch - Nederlands <http://forums.freenas.org/forumdisplay.php?35-Dutch-Nederlands>`_
 
+* `French - Francais <http://forums.freenas.org/forumdisplay.php?29-French-Francais>`_
 
+* `German - Deutsch <http://forums.freenas.org/forumdisplay.php?31-German-Deutsch>`_
 
-*   `French - Francais <http://forums.freenas.org/forumdisplay.php?29-French-Francais>`_
+* `Italian - Italiano <http://forums.freenas.org/forumdisplay.php?30-Italian-Italiano>`_
 
+* `Portuguese - Português <http://forums.freenas.org/forums/portuguese-português.44/>`_
 
+* `Russian - Русский <http://forums.freenas.org/forumdisplay.php?38-Russian-Русский>`_
 
+* `Spanish - Espanol <http://forums.freenas.org/forumdisplay.php?33-Spanish-Espanol>`_
 
-*   `German - Deutsch <http://forums.freenas.org/forumdisplay.php?31-German-Deutsch>`_
-
-
-
-
-*   `Italian - Italiano <http://forums.freenas.org/forumdisplay.php?30-Italian-Italiano>`_
-
-
-
-
-*   `Portuguese - Português <http://forums.freenas.org/forums/portuguese-português.44/>`_
-
-
-
-*   `Russian - Русский <http://forums.freenas.org/forumdisplay.php?38-Russian-Русский>`_
-
-
-
-
-*   `Spanish - Espanol <http://forums.freenas.org/forumdisplay.php?33-Spanish-Espanol>`_
-
-
-
-*   `Turkish - Türkçe <http://forums.freenas.org/forumdisplay.php?36-Turkish-T%FCrk%E7e>`_
-
-
+* `Turkish - Türkçe <http://forums.freenas.org/forumdisplay.php?36-Turkish-T%FCrk%E7e>`_
 
 If you wish to ask a question on the forum, you will need to click the “Sign Up Now!” link to create an account and login using that account.
 
 When asking a question on the forum, it is important that you:
 
-*   First check to see if the question has already been asked. If you find a similar question, do not create a new thread. Instead use the “Reply” link
-    at the bottom of the post to add your comments to the existing thread.
+* First check to see if the question has already been asked. If you find a similar question, do not create a new thread. Instead use the “Reply” link
+  at the bottom of the post to add your comments to the existing thread.
 
-
-
-*   Review the available categories to see which one is most closely related to your question. Click on that category and use the “Post New Thread”
-    button to open the editor. After typing your post and before you click the “Create Thread” button, make sure the “Watch this thread...” box is
-    checked. If you want to be notified by email, also check the “and receive email notifications” box. That way you will be notified whenever anyone
-    answers your question.
-
-
+* Review the available categories to see which one is most closely related to your question. Click on that category and use the “Post New Thread”
+  button to open the editor. After typing your post and before you click the “Create Thread” button, make sure the “Watch this thread...” box is
+  checked. If you want to be notified by email, also check the “and receive email notifications” box. That way you will be notified whenever anyone
+  answers your question.
 
 Support Database
 ~~~~~~~~~~~~~~~~
@@ -10965,50 +9803,32 @@ your report contains the information that the developers need in order to implem
 
 As part of your research, perform the following steps:
 
-*   Determine if you are running the latest release of FreeNAS®. FreeNAS® developers tend to fix bugs rapidly and new features are being implemented as
-    FreeNAS® matures. If you are not running the latest version, it is quite likely that the bug has already been fixed or the missing feature has been
-    implemented. If this is the case, your best course of action is to backup your data and configuration and perform an upgrade to the latest version.
+* Determine if you are running the latest release of FreeNAS®. FreeNAS® developers tend to fix bugs rapidly and new features are being implemented as
+  FreeNAS® matures. If you are not running the latest version, it is quite likely that the bug has already been fixed or the missing feature has been
+  implemented. If this is the case, your best course of action is to backup your data and configuration and perform an upgrade to the latest version.
 
-
-
-*   If you are running the latest version, use the search feature to see if a similar issue already exists. If one does, do not create a new issue. Instead,
-    add a comment to the existing issue if you have additional information to add.
-
-
+* If you are running the latest version, use the search feature to see if a similar issue already exists. If one does, do not create a new issue. Instead,
+  add a comment to the existing issue if you have additional information to add.
 
 If a similar issue does not already exist, keep the following points in mind as you create a new issue:
 
 #.  You will need to register for an account, confirm you registration email address, and be logged in before you can create a new issue.
 
-
-
 #.  In the Tracker drop-down menu, select *Bug* if you are reporting a bug or
     *Feature* if you are making a feature request.
 
-
-
 #.  In the Subject field, include descriptive keywords that describe the issue. This is useful for other users who search for a similar problem.
-
-
 
 #.  In the Description section, describe the problem, how to recreate it, and include the text of any error messages. If you are requesting a feature,
     describe the benefit provided by the feature and, if applicable, provide examples of other products that use that feature or the URL of the homepage for
     the software.
 
-
-
 #.  If you would like to include a screenshot or log of your configuration or error, use the Browse button next to the Files field to upload the file.
-
-
 
 #.  Leave all of the other fields at their default values as these are used by developers as they take action on the issue.
 
-
-
 #.  Press the Preview link to read through your ticket before submitting it. Make sure it includes all of the information that someone else would need to
     understand your problem or request. Once you are satisfied with your ticket, click the Create Ticket button to submit it.
-
-
 
 An email will automatically be sent to the address you used when registering whenever a comment or action occurs on your issue.
 
@@ -11028,25 +9848,17 @@ version of the channel from a web browser.
 
 To get the most out of the IRC channel, keep the following points in mind:
 
-*   Do not ask “can anyone help me?”; instead, just ask your question. If someone knows the answer, they will try to assist you.
+* Do not ask “can anyone help me?”; instead, just ask your question. If someone knows the answer, they will try to assist you.
 
+* Do not ask a question and then leave. Users who know the answer can not help you if you disappear.
 
+* Do not take it personally if no one answers or demand that someone answers your question. Maybe no one who knows the answer is available, maybe your
+  question is really hard, or maybe it is a question that has already been answered many times in the other support resources. Try asking again in a few
+  hours or research the other resources to see if you have missed anything.
 
-*   Do not ask a question and then leave. Users who know the answer can not help you if you disappear.
-
-
-
-*   Do not take it personally if no one answers or demand that someone answers your question. Maybe no one who knows the answer is available, maybe your
-    question is really hard, or maybe it is a question that has already been answered many times in the other support resources. Try asking again in a few
-    hours or research the other resources to see if you have missed anything.
-
-
-
-*   Do not post error messages in the channel as the IRC software will probably kick you out. Instead, use a pasting service such as
-    `pastebin <http://www.pastebin.com/>`_
-    and paste the resulting URL into the IRC discussion.
-
-
+* Do not post error messages in the channel as the IRC software will probably kick you out. Instead, use a pasting service such as
+  `pastebin <http://www.pastebin.com/>`_
+  and paste the resulting URL into the IRC discussion.
 
 Mailing Lists
 ~~~~~~~~~~~~~
@@ -11057,40 +9869,28 @@ author.
 
 The following mailing lists are available:
 
-*   `Freenas-announce <http://lists.freenas.org/mailman/listinfo/freenas-announce>`_
-    : this is a low-volume, read-only list where major milestones, such as new releases, are announced.
+* `Freenas-announce <http://lists.freenas.org/mailman/listinfo/freenas-announce>`_
+  : this is a low-volume, read-only list where major milestones, such as new releases, are announced.
 
+* `Freenas-commit <http://lists.freenas.org/mailman/listinfo/freenas-commit>`_
+  : this is a read-only list. As code changes in the FreeNAS® repository, the commit message is automatically sent to this list.
 
+* `Freenas-devel <http://lists.freenas.org/mailman/listinfo/freenas-devel>`_
+  : FreeNAS® developers are subscribed to this list. Technical questions about the current FreeNAS® release can be posted here.
 
-*   `Freenas-commit <http://lists.freenas.org/mailman/listinfo/freenas-commit>`_
-    : this is a read-only list. As code changes in the FreeNAS® repository, the commit message is automatically sent to this list.
+* `Freenas-docs <http://lists.freenas.org/mailman/listinfo/freenas-docs>`_
+  : this list is for discussion regarding
+  `FreeNAS® documentation <http://doc.freenas.org/>`_
+  .
 
+* `Freenas-testing <http://lists.freenas.org/mailman/listinfo/freenas-testing>`_
+  : FreeNAS® developers are subscribed to this list. Technical questions about the upcoming FreeNAS release and feedback on testing snapshots can be posted
+  here.
 
-
-*   `Freenas-devel <http://lists.freenas.org/mailman/listinfo/freenas-devel>`_
-    : FreeNAS® developers are subscribed to this list. Technical questions about the current FreeNAS® release can be posted here.
-
-
-
-*   `Freenas-docs <http://lists.freenas.org/mailman/listinfo/freenas-docs>`_
-    : this list is for discussion regarding
-    `FreeNAS® documentation <http://doc.freenas.org/>`_
-    .
-
-
-
-*   `Freenas-testing <http://lists.freenas.org/mailman/listinfo/freenas-testing>`_
-    : FreeNAS® developers are subscribed to this list. Technical questions about the upcoming FreeNAS release and feedback on testing snapshots can be posted
-    here.
-
-
-
-*   `Freenas-translations <http://lists.freenas.org/mailman/listinfo/freenas-translations>`_
-    : this list is for discussion regarding
-    `FreeNAS® localization <http://pootle.freenas.org/>`_
-    and translating FreeNAS® documentation.
-
-
+* `Freenas-translations <http://lists.freenas.org/mailman/listinfo/freenas-translations>`_
+  : this list is for discussion regarding
+  `FreeNAS® localization <http://pootle.freenas.org/>`_
+  and translating FreeNAS® documentation.
 
 **NOTE:** the mailing lists were migrated from SourceForge to Mailman in December, 2013. Archives of the SourceForge mailing lists are available at
 `Gmane <http://dir.gmane.org/index.php?prefix=gmane.os.freenas>`_
@@ -11112,51 +9912,30 @@ Several command line utilities which are provided with FreeNAS® are demonstrate
 
 The following utilities can be used for benchmarking and performance testing:
 
-*   **Iperf**: used for measuring maximum TCP and UDP bandwidth performance
+* **Iperf**: used for measuring maximum TCP and UDP bandwidth performance
 
+* **Netperf**: a tool for measuring network performance
 
+* **IOzone**: filesystem benchmark utility used to perform a broad filesystem analysis
 
-*   **Netperf**: a tool for measuring network performance
+* **arcstat.py**_and
+  **arc_summary.py**: used to gather ZFS ARC statistics
 
-
-
-*   **IOzone**: filesystem benchmark utility used to perform a broad filesystem analysis
-
-
-
-*   **arcstat.py**_and
-    **arc_summary.py**: used to gather ZFS ARC statistics
-
-
-
-*   **XDD**: a tool for measuring and characterizing disk subsystem I/O
-
-
+* **XDD**: a tool for measuring and characterizing disk subsystem I/O
 
 The following utilities are specific to RAID controllers:
 
-*   **tw_cli**:_used to monitor and maintain 3ware RAID controllers
+* **tw_cli**:_used to monitor and maintain 3ware RAID controllers
 
-
-
-*   **MegaCli**:_used to configure and manage LSI MegaRAID SAS family of RAID controllers
-
-
-
+* **MegaCli**:_used to configure and manage LSI MegaRAID SAS family of RAID controllers
 
 This section also describes the following utilities:
 
-*   **freenas-debug**: the backend used to dump FreeNAS® debugging information
+* **freenas-debug**: the backend used to dump FreeNAS® debugging information
 
+* **tmux**: a terminal multiplexer similar to GNU screen
 
-
-*   **tmux**: a terminal multiplexer similar to GNU screen
-
-
-
-*   **Dmidecode**: reports information about system hardware as described in the system's BIOS
-
-
+* **Dmidecode**: reports information about system hardware as described in the system's BIOS
 
 Iperf
 ~~~~~
@@ -11370,20 +10149,11 @@ as it describes the tests, the many command line switches, and how to interpret 
 If you have never used this tool before, these resources provide good starting points on which tests to run, when to run them, and how to interpret the
 results:
 
-*   `How To Measure Linux Filesystem I/O Performance With iozone <http://www.cyberciti.biz/tips/linux-filesystem-benchmarking-with-iozone.html>`_
+* `How To Measure Linux Filesystem I/O Performance With iozone <http://www.cyberciti.biz/tips/linux-filesystem-benchmarking-with-iozone.html>`_
 
+* `Analyzing NFS Client Performance with IOzone <http://www.iozone.org/docs/NFSClientPerf_revised.pdf>`_
 
-
-
-*   `Analyzing NFS Client Performance with IOzone <http://www.iozone.org/docs/NFSClientPerf_revised.pdf>`_
-
-
-
-
-*   `10 iozone Examples for Disk I/O Performance Measurement on Linux <http://www.thegeekstuff.com/2011/05/iozone-examples/>`_
-
-
-
+* `10 iozone Examples for Disk I/O Performance Measurement on Linux <http://www.thegeekstuff.com/2011/05/iozone-examples/>`_
 
 You can receive a summary of the available switches by typing the following command. As you can see from the number of options, IOzone is comprehensive and it
 may take some time to learn how to use the tests effectively.
@@ -11524,27 +10294,18 @@ and that what works for one person's network may not benefit yours.
 
 In particular, the value of pre-fetching depends upon the amount of memory and the type of workload, as seen in these two examples:
 
-*   `Understanding ZFS: Prefetch  <http://www.cuddletech.com/blog/pivot/entry.php?id=1040>`_
+* `Understanding ZFS: Prefetch  <http://www.cuddletech.com/blog/pivot/entry.php?id=1040>`_
 
-
-
-*   `ZFS prefetch algorithm can cause performance drawbacks <http://southbrain.com/south/2008/04/the-nightmare-comes-slowly-zfs.html>`_
-
-
-
+* `ZFS prefetch algorithm can cause performance drawbacks <http://southbrain.com/south/2008/04/the-nightmare-comes-slowly-zfs.html>`_
 
 Using the Scripts
 ^^^^^^^^^^^^^^^^^
 
 FreeNAS® provides two command line scripts which an be manually run from Shell:
 
-*   **arc_summary.py:** provides a summary of the statistics
+* **arc_summary.py:** provides a summary of the statistics
 
-
-
-*   **arcstat.py:** used to watch the statistics in real time
-
-
+* **arcstat.py:** used to watch the statistics in real time
 
 The advantage of these scripts is that they can be used to provide real time (right now) information, whereas the current GUI reporting mechanism is designed
 to only provide graphs charted over time.
@@ -11776,7 +10537,6 @@ This command provides a brief description of the fields in the output::
 		vfs.zfs.trim.max_interval	1
 		vfs.zfs.trim.timeout		30
 		vfs.zfs.trim.txg_delay		32
-
 
 When reading the tunable values, 0 means no, 1 typically means yes, and any other number represents a value. To receive a brief description of a **sysctl**
 value, use **sysctl -d**. For example::
@@ -12116,14 +10876,9 @@ the FreeNAS® community, bring it up on one of the resources mentioned in FreeNA
 
 This section demonstrates how you can:
 
-*   Assist with Localization
+* Assist with Localization
 
-
-
-*   Test Upcoming Versions
-
-
-
+* Test Upcoming Versions
 
 Assist with Localization
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -12170,7 +10925,6 @@ in Figure 15.1b, a user has selected string number 46 in the German translation;
 
 
 Simply type in the translated text and click the Submit button to save your change.
-
 
 Test an Upcoming Version
 ~~~~~~~~~~~~~~~~~~~~~~~~
