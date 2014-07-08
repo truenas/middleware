@@ -49,25 +49,25 @@ List resource
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
-
+   
 Update resource
-+++++++++++++++
++++++++++++++
 
-.. http:putt:: /api/v1.0/jails/configuration/
+.. http:get:: /api/v1.0/jails/configuration/
 
-   Updates the configuration dictionary.
+   Update the configuration dictionary.
 
    **Example request**:
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/jails/configuration/ HTTP/1.1
+      POST /api/v1.0/jails/configuration/ HTTP/1.1
       Content-Type: application/json
 
         {
-                "jc_ipv4_network_start": "192.168.3.50"
+          "jc_ipv4_network_start": "192.168.3.50"
         }
-
+        
    **Example response**:
 
    .. sourcecode:: http
