@@ -8,6 +8,7 @@ pre-install()
 
 post-install()
 {
+        set -x -e 
         local dstCR
         dstCR=/usr/local/www/freenasUI
 	echo "Adding freenas web gui"

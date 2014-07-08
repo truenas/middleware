@@ -542,4 +542,10 @@ install_ports()
 	if [ $install_info_hack -eq 1 ]; then
 		rm -f ${NANO_WORLDDIR}/usr/bin/install-info
 	fi
+
+	# Workaround until pkg bug: https://github.com/freebsd/pkg/issues/857
+	# is fixed to detect errors in pkg-install scripts
+	ls ${NANO_WORLDDIR}/data/freenas-v1.db ${NANO_WORLDDIR}/data/factory-v1.db
+
+	
 }
