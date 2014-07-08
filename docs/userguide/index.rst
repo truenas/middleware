@@ -37,8 +37,7 @@ FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 
 
 
-Section 1: Introduction and Installation
-========================================
+
 
 Preface
 =======
@@ -116,6 +115,9 @@ unbolded text.
 *italic text:* used to represent device names, file name paths, or text that is input into a GUI field.
 
 **bold italic text:** used to emphasize an important point.
+
+Section 1: Introduction and Installation
+========================================
 
 Introduction
 ------------
@@ -1033,47 +1035,16 @@ Next, determine the device name of the inserted USB thumb drive. From TERMINAL, 
  diskutil list
  /dev/disk0
 
- #:
- TYPE NAME
- SIZE
- IDENTIFIER
-
- 0:
- GUID_partition_scheme
- *500.1 GB
- disk0
-
- 1:
- EFI
- 209.7 MB
- disk0s1
-
- 2:
- Apple_HFS Macintosh HD
- 499.2 GB
- disk0s2
-
- 3:
- Apple_Boot Recovery HD
- 650.0 MB
- disk0s3
+ #:	TYPE NAME		SIZE		IDENTIFIER
+ 0:	GUID_partition_scheme	*500.1 GB	disk0
+ 1:	EFI			209.7 MB	disk0s1
+ 2:	Apple_HFS Macintosh HD	499.2 GB	disk0s2
+ 3:	Apple_Boot Recovery HD	650.0 MB	disk0s3
 
  /dev/disk1
-
- #:
- TYPE NAME
- SIZE
- IDENTIFIER
-
- 0:
- FDisk_partition_scheme
- *8.0 GB
- disk1
-
- 1:
- DOS_FAT_32 UNTITLED
- 8.0 GB
- disk1s1
+ #:	TYPE NAME		SIZE		IDENTIFIER
+ 0:	FDisk_partition_scheme	*8.0 GB		disk1
+ 1:	DOS_FAT_32 UNTITLED	8.0 GB		disk1s1
 
 This will show you which devices are available to the system. Locate your USB stick and record the path. If you are not sure which path is the correct one for
 the USB stick, remove the device, run the command again, and compare the difference. Once you are sure of the device name, navigate to the Desktop from
@@ -1493,52 +1464,24 @@ and the ZFS version is 28.::
  zpool status
  pool: volume1
  state: ONLINE
- status: The pool is formatted using a legacy on-disk format.
- The pool can still be used, but some features are unavailable.
- action: Upgrade the pool using 'zpool upgrade'. Once this is done, the
- pool will no longer be accessible on software that does not support feature
- flags.
+ status: The pool is formatted using a legacy on-disk format. The pool can still be used, but some features are unavailable.
+ action: Upgrade the pool using 'zpool upgrade'. Once this is done, the pool will no longer be accessible on software that does not
+	 support feature flags.
  scan: none requested
  config:
- NAME
- STATE
- READ WRITE CKSUM
- volume1
- ONLINE
- 0
- 0
- 0
- gptid/ea16925b-e96e-11e2-9ed5-e06995777a82
- ONLINE
- 0
- 0
- 0
- gptid/ea8f3a7b-e96e-11e2-9ed5-e06995777a82
- ONLINE
- 0
- 0
- 0
- gptid/eb064d06-e96e-11e2-9ed5-e06995777a82
- ONLINE
- 0
- 0
- 0
- gptid/eb7ba402-e96e-11e2-9ed5-e06995777a82
- ONLINE
- 0
- 0
- 0
+ 
+ NAME						STATE	READ WRITE CKSUM
+ volume1					ONLINE  0    0     0
+ gptid/ea16925b-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
+ gptid/ea8f3a7b-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
+ gptid/eb064d06-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
+ gptid/eb7ba402-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
+ 
  errors: No known data errors
 
  zpool get version volume1
- NAME
- PROPERTY
- VALUE
- SOURCE
- volume1
- version
- 28
- local
+ NAME		PROPERTY	VALUE	SOURCE
+ volume1	version		28	local
 
 Next, verify that the status of the pool is healthy::
 
@@ -1576,20 +1519,14 @@ FreeNAS® uses a configuration database to store its settings. While you can use
 line are not written to the configuration database. This means that any changes made at the command line will not persist after a reboot and will be
 overwritten by the values in the configuration database during an upgrade.
 
-Quick Start Guide and Account Configuration
--------------------------------------------
-
-This section contains a Quick Start Guide to get you started with your FreeNAS® configuration. It is followed by the account section of the GUI which allows
-you to change the administrative password and manage users and groups.
-
 Quick Start Guide
-~~~~~~~~~~~~~~~~~
+-----------------
 
 This section demonstrates the initial preparation that should be performed before you start to configure the FreeNAS® system. It then provides an overview of
 the configuration workflow.
 
 Set the Root Password
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 The first time you access the FreeNAS® administrative interface, a pop-up window will prompt you to set the *root* password. You should set a hard to guess
 password as anyone who knows this password can gain access to the FreeNAS® administrative GUI.
@@ -1600,7 +1537,7 @@ kept physically secure and that the administrative GUI should be behind a proper
 
 
 Set the Administrative Email Address
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 FreeNAS® provides an Alert icon in the upper right corner to provide a visual indication of events that warrant administrative attention. The alert system
 automatically emails the *root* user account whenever an alert is issued. FreeNAS® also sends a daily email to the
@@ -1610,7 +1547,7 @@ To set the email address for the *root* account, go to Account → Users → Vie
 *root* user account and input the email address of the person to receive the administrative emails.
 
 Enable Console Logging
-^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 To view system messages within the graphical administrative interface, go to System → Settings → Advanced. Check the box “Show console messages in
 the footer” and click Save. The output of **tail -f /var/log/messages** will now be displayed at the bottom of the screen. If you click the console
@@ -1619,7 +1556,7 @@ messages area, it will pop-up as a window, allowing you to scroll through the ou
 You are now ready to start configuring the FreeNAS® system. Typically, the configuration workflow will use the following steps in their listed order.
 
 Configure Storage
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 FreeNAS® supports the creation of both UFS and ZFS volumes; however, ZFS volumes are recommended to get the most out of your FreeNAS® system.
 
@@ -1660,7 +1597,7 @@ If you format your disk(s) with ZFS, additional options are available:
 
 
 Create Users/Groups or Integrate with AD/LDAP
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 FreeNAS® supports a variety of user access scenarios:
 
@@ -1696,7 +1633,7 @@ Directory domain. OpenLDAP and Active Directory are mutually exclusive, meaning 
 
 
 Configure Permissions
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 Setting permissions is an important aspect of configuring access to storage data. The graphical administrative interface is meant to set the **initial**
 permissions in order to make a volume or dataset accessible as a share. Once a share is available, the client operating system should be used to fine-tune the
@@ -1709,7 +1646,7 @@ Before creating your shares, determine which users should have access to which d
 shares should be created to meet the permissions needs of your environment.
 
 Configure Sharing
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 Once your volumes have been configured with permissions, you are ready to configure the type of share or service that you determine is suitable for your
 network.
@@ -1752,7 +1689,7 @@ types of shares and services are available:
 
 
 Start Applicable Service(s)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have configured your share or service, you will need to start its associated service(s) in order to implement the configuration. By default, all
 services are off until you start them. The status of services is managed using Services → Control Services. To start a service, click its red OFF button.
@@ -1760,7 +1697,7 @@ After a second or so, it will change to a blue ON, indicating that the service h
 if there are any error messages.
 
 Test Configuration from Client
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the service successfully starts, try to make a connection to the service from a client system. For example, use Windows Explorer to try to connect to a
 CIFS share, use an FTP client such as Filezilla to try to connect to an FTP share, or use Finder on a Mac OS X system to try to connect to an AFP share.
@@ -1769,7 +1706,7 @@ If the service starts correctly and you can make a connection but receive permis
 accessed.
 
 Backup the Configuration
-^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have tested your configuration, be sure to back it up. Go to System → Settings and click the Save Config button. Your browser will provide an
 option to save a copy of the configuration database.
@@ -1777,7 +1714,7 @@ option to save a copy of the configuration database.
 You should **backup your configuration whenever you make configuration changes and always before upgrading FreeNAS®**.
 
 Account Configuration
-~~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 The Account Configuration section of the administrative GUI describes how to manually create and manage users and groups. This section contains the following
 entries:
@@ -1793,7 +1730,7 @@ entries:
 Each of these entries are described in more detail in this section.
 
 Groups
-^^^^^^
+~~~~~~
 
 The Groups interface allows you to manage UNIX-style groups on the FreeNAS® system.
 
@@ -1859,7 +1796,7 @@ that the built-in groups do not provide a Delete Group button.
 |100000000000037A000001F472E304C4_png|
 
 Users
-^^^^^
+~~~~~
 
 FreeNAS® supports users, groups, and permissions, allowing great flexibility in configuring which users have access to the data stored on FreeNAS®. In order
 to assign permissions which will be used by shares, you will need to do **one of the following**:
@@ -2536,37 +2473,18 @@ used for an automated task.::
  f5:b0:06:d1:33:e4:95:cf:04:aa:bb:6e:a4:b7:2b:df root@freenas.local
  The key's randomart image is:
  +--[ RSA 2048]----+
- |
- .o. oo
- |
- |
- o+o. .
- |
- |
- . =o +
- |
- |
- + +
- o
- |
- |
- S o .
- |
- |
- .o
- |
- |
- o.
- |
- |
- o oo
- |
- |
- **oE
- |
- +--+
- |  |
- +==+
+ |        .o. oo   |
+ |         o+o. .  |
+ |       . =o +    |
+ |        + +   o  |
+ |       S o .     |
+ |       .o        |
+ |      o.         |
+ |    o oo         |
+ |     **oE        |
+ |-----------------|
+ |                 |
+ |-----------------|
 
 
 FreeNAS® supports the following types of SSH keys: DSA, and RSA. When creating the key, specify the type you wish to use or, if you are generating the key
@@ -4199,7 +4117,7 @@ Once you have only one snapshot, open Shell on *PUSH* and use the
 *remote*. Note that the
 **@** is used to separate the volume/dataset name from the snapshot name.::
 
- zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication \ 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
+ zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
 **NOTE:** if this command fails with the error “cannot receive new filesystem stream: destination has snapshots”, check the box “initialize remote side
 for once” in the replication task and try again. If the **zfs send** command still fails, you will need to open Shell on
@@ -4212,7 +4130,7 @@ After successfully transmitting the snapshot, recheck again after the time perio
 transmitted. If it is still not working, you can manually send an incremental backup of the last snapshot that is on both systems to the current one with this
 command::
 
- zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication \ 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
+ zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
 Volumes
 ~~~~~~~
@@ -5284,105 +5202,26 @@ the ZFS volume named *Vol1*::
 
 
  zpool get all Vol1
- NAME
- PROPERTY
- VALUE
- SOURCE
-
- Vol1
- size
- 4.53T
- -
-
- Vol1
- capacity
- 31%
- -
-
- Vol1
- altroot
- /mnt
- local
-
- Vol1
- health
- ONLINE
- -
-
- Vol1
- guid
- 8068631824452460057
- default
-
- Vol1
- version
- 28
- default
-
- Vol1
- bootfs
- -
- default
-
- Vol1
- delegation
- on
- default
-
- Vol1
- autoreplace
- off
- default
-
- Vol1
- cachefile
- /data/zfs/zpool.cache
- local
-
- Vol1
- failmode
- wait
- default
-
- Vol1
- listsnapshots
- off
- default
-
- Vol1 
- autoexpand 
- on 
- local
-
- Vol1
- dedupditto
- 0
- default
-
- Vol1
- dedupratio
- 1.00x
- -
-
- Vol1
- free
- 3.12T
- -
-
- Vol1
- allocated
- 1.41T
- -
-
- Vol1
- readonly
- off
- -
-
- Vol1
- comment
- -
- default
+ NAME	PROPERTY	VALUE			SOURCE
+ Vol1	size		4.53T			-
+ Vol1	capacity	31%			-
+ Vol1	altroot		/mnt			local
+ Vol1	health		ONLINE			-
+ Vol1	guid		8068631824452460057	default
+ Vol1	version		28			default
+ Vol1	bootfs		-			default
+ Vol1	delegation	on			default
+ Vol1	autoreplace	off			default
+ Vol1	cachefile	/data/zfs/zpool.cache	local
+ Vol1	failmode	wait			default
+ Vol1	listsnapshots	off			default
+ Vol1 	autoexpand 	on 			local
+ Vol1	dedupditto	0			default
+ Vol1	dedupratio	1.00x			-
+ Vol1	free		3.12T			-
+ Vol1	allocated	1.41T			-
+ Vol1	readonly	off			-
+ Vol1	comment		-			default
 
 If autoexpansion is not enabled, enable it by specifying the name of the ZFS volume::
 
@@ -5419,51 +5258,14 @@ resilvered::
  state: ONLINE
  scan: scrub repaired 0 in 16h24m with 0 errors on Sun Mar 10 17:24:20 2013
  config:
- NAME
- STATE
- READ WRITE CKSUM
-
- Vol1
- ONLINE
- 0
- 0
- 0
-
- raidz1-0
- ONLINE
- 0
- 0
- 0
-
- gptid/d5ed48a4-634a-11e2-963c-00e081740bfe
- ONLINE
- 0
- 0
- 0
-
- gptid/03121538-62d9-11e2-99bd-00e081740bfe
- ONLINE
- 0
- 0
- 0
-
- gptid/252754e1-6266-11e2-8088-00e081740bfe
- ONLINE
- 0
- 0
- 0
-
- gptid/9092045a-601d-11e2-892e-00e081740bfe
- ONLINE
- 0
- 0
- 0
-
- gptid/670e35bc-5f9a-11e2-92ca-00e081740bfe
- ONLINE
- 0
- 0
- 0
+ NAME						STATE	READ WRITE CKSUM
+ Vol1						ONLINE  0    0     0
+ raidz1-0					ONLINE  0    0     0
+ gptid/d5ed48a4-634a-11e2-963c-00e081740bfe	ONLINE  0    0     0
+ gptid/03121538-62d9-11e2-99bd-00e081740bfe	ONLINE  0    0     0
+ gptid/252754e1-6266-11e2-8088-00e081740bfe	ONLINE  0    0     0
+ gptid/9092045a-601d-11e2-892e-00e081740bfe	ONLINE  0    0     0
+ gptid/670e35bc-5f9a-11e2-92ca-00e081740bfe	ONLINE  0    0     0
 
  errors: No known data errors
 
@@ -5478,23 +5280,8 @@ Next, export and then import the pool::
 Once the import completes, all of the drive space should be available. Verify that the increased size is recognized::
 
  zpool list Vol1
- NAME
- SIZE
- ALLOC
- FREE
- CAP
- DEDUP
- HEALTH
- ALTROOT
-
- Vol1
- 9.06T
- 1.41T
- 7.24T
- 31%
- 1.00x
- ONLINE
- /mnt
+ NAME	SIZE	ALLOC	FREE	CAP	DEDUP	HEALTH	ALTROOT
+ Vol1	9.06T	1.41T	7.24T	31%	1.00x	ONLINE	/mnt
 
 If you cannot see the extra space, you may need to run **zpool online -e <pool> <device>** for every device listed in
 **zpool status**.
@@ -5510,43 +5297,16 @@ identical ZFS volume on another system.
 In this example, a ZFS mirror named *test* contains three drives::
 
  zpool status
- pool: test
+  pool: test
  state: ONLINE
  scan: resilvered 568K in 0h0m with 0 errors on Wed Jul 6 16:10:58 2011
  config:
- NAME
- STATE
- READ WRITE CKSUM
-
- test
- ONLINE
- 0
- 0
- 0
-
- mirror-0
- ONLINE
- 0
- 0
- 0
-
- da1
- ONLINE
- 0
- 0
- 0
-
- da0
- ONLINE
- 0
- 0
- 0
-
- da4
- ONLINE
- 0
- 0
- 0
+ NAME		STATE	READ WRITE CKSUM
+ test		ONLINE  0    0     0
+ mirror-0	ONLINE  0    0     0
+ da1		ONLINE  0    0     0
+ da0		ONLINE  0    0     0
+ da4		ONLINE  0    0     0
 
 The following command splits from the existing three disk mirror *test* a new ZFS volume named
 *migrant* containing one disk,
@@ -5568,64 +5328,29 @@ the old pool was mounted if the mountpoint property was set on the original pool
 Verify the status of the new pool::
 
  zpool status
- pool: migrant
+  pool: migrant
  state: ONLINE
  scan: resilvered 568K in 0h0m with 0 errors on Wed Jul 6 16:10:58 2011
  config:
-
- NAME
- STATE
- READ WRITE CKSUM
-
- migrant
- ONLINE
- 0
- 0
- 0
-
- da4
- ONLINE
- 0
- 0
- 0
+ NAME		STATE	READ WRITE CKSUM
+ migrant	ONLINE  0    0     0
+ da4		ONLINE  0    0     0
 
  errors: No known data errors
 
 On the original system, the status now looks like this::
 
  zpool status
- pool: test
+  pool: test
  state: ONLINE
  scan: resilvered 568K in 0h0m with 0 errors on Wed Jul 6 16:10:58 2011
  config:
 
- NAME
- STATE
- READ WRITE CKSUM
-
- test
- ONLINE
- 0
- 0
- 0
-
- mirror-0
- ONLINE
- 0
- 0
- 0
-
- da1
- ONLINE
- 0
- 0
- 0
-
- da0
- ONLINE
- 0
- 0
- 0
+ NAME		STATE	READ WRITE CKSUM
+ test		ONLINE  0    0     0
+ mirror-0	ONLINE  0    0     0
+ da1		ONLINE  0    0     0
+ da0		ONLINE  0    0     0
 
  errors: No known data errors
 
@@ -5639,44 +5364,16 @@ At this point, it is recommended to add disks to create a full mirror set. This 
 The *migrant* volume now looks like this::
 
  zpool status
- pool: migrant
+  pool: migrant
  state: ONLINE
  scan: resilvered 572K in 0h0m with 0 errors on Wed Jul 6 16:43:27 2011
  config:
-
- NAME
- STATE
- READ WRITE CKSUM
-
- migrant
- ONLINE
- 0
- 0
- 0
-
- mirror-0
- ONLINE
- 0
- 0
- 0
-
- da4
- ONLINE
- 0
- 0
- 0
-
- da2
- ONLINE
- 0
- 0
- 0
-
- da3
- ONLINE
- 0
- 0
- 0
+ NAME		STATE	READ WRITE CKSUM
+ migrant	ONLINE  0    0     0
+ mirror-0	ONLINE  0    0     0
+ da4		ONLINE  0    0     0
+ da2		ONLINE  0    0     0
+ da3		ONLINE  0    0     0
 
 Now that the new system has been cloned, you can detach *da4* and install it back to the original system. Before physically removing the disk, run this
 command on the new system::
@@ -7364,15 +7061,9 @@ into the *Domain Account Name* and
 
 The keytab itself can be created on a Windows system using these commands::
 
- ktpass.exe -out hostname.keytab host/
- hostname@DOMAINNAME
- -ptype KRB5_NT_PRINCIPAL -mapuser
- DOMAIN\username
- -pass
- userpass
+ ktpass.exe -out hostname.keytab host/ hostname@DOMAINNAME -ptype KRB5_NT_PRINCIPAL -mapuser DOMAIN\username -pass userpass
 
- setspn -A host/
- hostname@DOMAINNAME DOMAIN\username
+ setspn -A host/ hostname@DOMAINNAME DOMAIN\username
 
 
 where:
@@ -8857,17 +8548,8 @@ Before growing a zvol based LUN, make sure that all initiators are disconnected.
 Open Shell_and identify the zvol to be grown::
 
  zfs list -t volume
- NAME
- USED
- AVAIL
- REFER
- MOUNTPOINT
-
- tank/iscsi_zvol
- 4G
- 17.5G
- 33.9M
- -
+ NAME			USED	AVAIL	REFER	MOUNTPOINT
+ tank/iscsi_zvol	4G	17.5G	33.9M	-
 
 Then, grow the zvol. This example grows *tank/iscsi_zvol* from 4G to 6G::
 
@@ -8878,17 +8560,8 @@ Then, grow the zvol. This example grows *tank/iscsi_zvol* from 4G to 6G::
 Verify that the changes have taken effect::
 
  zfs list -t volume
- NAME
- USED
- AVAIL
- REFER
- MOUNTPOINT
-
- tank/iscsi_zvol
- 6G
- 17.5G
- 33.9M
- -
+ NAME			USED	AVAIL	REFER	MOUNTPOINT
+ tank/iscsi_zvol	6G	17.5G	33.9M	-
 
 You can now start the iSCSI service and allow initiators to connect.
 
@@ -9357,13 +9030,9 @@ the following steps.
 **Example 8.12a: Creating a User's Home Directory**
 ::
 
- mkdir /mnt/
- volume
- 1/user1/user1
+ mkdir /mnt/volume1/user1/user1
 
- chown user1:user1 /mnt/
- volume
- 1/user1/user1
+ chown user1:user1 /mnt/volume1/user1/user1
 
 #.  **Configure SSH** in Services → SSH. Add these lines to the Extra Options section:
 ::
@@ -10702,19 +10371,8 @@ into the jail, these commands will run its startup script and verify that the se
  openvpn is running as pid 45560.
 
  sockstat -4
- USER
- COMMAND
- PID
- FD PROTO
- LOCAL ADDRESS
- FOREIGN ADDRESS
-
- root
- openvpn
- 48386 4
- udp4
- *:54789
- *:*
+ USER	COMMAND		PID	FD	PROTO	LOCAL ADDRESS	FOREIGN ADDRESS
+ root	openvpn		48386 	4	udp4	*:54789		*:*
 
 If you instead receive an error::
 
