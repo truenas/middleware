@@ -42,6 +42,7 @@ usr/local/libexec/nas/generate_sssd_conf.py
 usr/local/libexec/nas/register_mdns.py
 usr/local/libexec/samba/samba-backtrace
 usr/local/sbin/sas2flash
+usr/local/sbin/save_rrds.sh
 usr/local/sbin/scrub
 usr/local/www/data/django.fcgi
 etc/ix.rc.d/ix-activedirectory

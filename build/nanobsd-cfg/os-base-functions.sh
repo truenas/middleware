@@ -185,14 +185,6 @@ remove_var_cache_pkg()
 	fi
 }
 
-remove_var_db_pkg()
-{
-	# Eats up ~7 MB on the install image.
-	rm -Rf ${NANO_WORLDDIR}/var/db/pkg
-	# bsnmpd complains about no such directory found
-	mkdir ${NANO_WORLDDIR}/var/db/pkg
-}
-
 create_var_home_symlink()
 {
 	# Create a link to a non-persistent location that ix-activedirectory
@@ -203,7 +195,7 @@ create_var_home_symlink()
 	ln -sfh /var/home $NANO_WORLDDIR/home
 }
 
-add_netcli_shell()
+add_netcli_to_etc_shells()
 {
 	echo "/etc/netcli.sh" >> ${NANO_WORLDDIR}/etc/shells
 }
@@ -542,4 +534,10 @@ install_ports()
 	if [ $install_info_hack -eq 1 ]; then
 		rm -f ${NANO_WORLDDIR}/usr/bin/install-info
 	fi
+
+	# Workaround until pkg bug: https://github.com/freebsd/pkg/issues/857
+	# is fixed to detect errors in pkg-install scripts
+	ls ${NANO_WORLDDIR}/data/freenas-v1.db ${NANO_WORLDDIR}/data/factory-v1.db
+
+	
 }

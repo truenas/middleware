@@ -32,7 +32,7 @@ List resource
       Content-Type: application/json
 
         {
-                "iscsi_experimental_target": false,
+                "iscsi_experimental_target": true,
                 "iscsi_multithreaded": false,
                 "iscsi_maxconnect": 8,
                 "iscsi_luc_authnetwork": "",
@@ -88,7 +88,7 @@ Update resource
       Content-Type: application/json
 
         {
-                "iscsi_experimental_target": false,
+                "iscsi_experimental_target": true,
                 "iscsi_multithreaded": false,
                 "iscsi_maxconnect": 16,
                 "iscsi_luc_authnetwork": "",

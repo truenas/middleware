@@ -21,7 +21,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/ssytem/advanced/ HTTP/1.1
+      GET /api/v1.0/system/advanced/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -174,7 +174,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/ssytem/email/ HTTP/1.1
+      GET /api/v1.0/system/email/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -556,7 +556,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/ssytem/ssl/ HTTP/1.1
+      GET /api/v1.0/system/ssl/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
@@ -818,7 +818,7 @@ List resource
 
    .. sourcecode:: http
 
-      GET /api/v1.0/ssytem/version/ HTTP/1.1
+      GET /api/v1.0/system/version/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:

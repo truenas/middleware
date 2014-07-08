@@ -65,6 +65,7 @@ kerberos_start()
 					break
 				fi
 
+				sleep 1
 				: $(( i += 1 ))
 			done
 
@@ -100,6 +101,7 @@ kerberos_start()
 					break
 				fi
 
+				sleep 1
 				: $(( i += 1 ))
 			done
 		fi

@@ -7,21 +7,21 @@
         "list_endpoint": "/api/v1.0/account/users/",
         "schema": "/api/v1.0/account/users/schema/"
     },
+    "jails/configuration": {
+        "list_endpoint": "/api/v1.0/jails/configuration/",
+        "schema": "/api/v1.0/jails/configuration/schema/"
+    },
     "jails/jails": {
         "list_endpoint": "/api/v1.0/jails/jails/",
         "schema": "/api/v1.0/jails/jails/schema/"
     },
-    "jails/jailsconfiguration": {
-        "list_endpoint": "/api/v1.0/jails/jailsconfiguration/",
-        "schema": "/api/v1.0/jails/jailsconfiguration/schema/"
+    "jails/mountpoints": {
+        "list_endpoint": "/api/v1.0/jails/mountpoints/",
+        "schema": "/api/v1.0/jails/mountpoints/schema/"
     },
-    "jails/jailtemplate": {
-        "list_endpoint": "/api/v1.0/jails/jailtemplate/",
-        "schema": "/api/v1.0/jails/jailtemplate/schema/"
-    },
-    "jails/nullmountpoint": {
-        "list_endpoint": "/api/v1.0/jails/nullmountpoint/",
-        "schema": "/api/v1.0/jails/nullmountpoint/schema/"
+    "jails/templates": {
+        "list_endpoint": "/api/v1.0/jails/templates/",
+        "schema": "/api/v1.0/jails/templates/schema/"
     },
     "network/alias": {
         "list_endpoint": "/api/v1.0/network/alias/",
@@ -119,6 +119,10 @@
         "list_endpoint": "/api/v1.0/services/ldap/",
         "schema": "/api/v1.0/services/ldap/schema/"
     },
+    "services/lldp": {
+        "list_endpoint": "/api/v1.0/services/lldp/",
+        "schema": "/api/v1.0/services/lldp/schema/"
+    },
     "services/nfs": {
         "list_endpoint": "/api/v1.0/services/nfs/",
         "schema": "/api/v1.0/services/nfs/schema/"
@@ -203,14 +207,6 @@
         "list_endpoint": "/api/v1.0/support/support/",
         "schema": "/api/v1.0/support/support/schema/"
     },
-    "system/adminpassword": {
-        "list_endpoint": "/api/v1.0/system/adminpassword/",
-        "schema": "/api/v1.0/system/adminpassword/schema/"
-    },
-    "system/adminuser": {
-        "list_endpoint": "/api/v1.0/system/adminuser/",
-        "schema": "/api/v1.0/system/adminuser/schema/"
-    },
     "system/advanced": {
         "list_endpoint": "/api/v1.0/system/advanced/",
         "schema": "/api/v1.0/system/advanced/schema/"
@@ -267,10 +263,17 @@
         "list_endpoint": "/api/v1.0/system/sysctl/",
         "schema": "/api/v1.0/system/sysctl/schema/"
     },
+    "system/systemdataset": {
+        "list_endpoint": "/api/v1.0/system/systemdataset/",
+        "schema": "/api/v1.0/system/systemdataset/schema/"
+    },
     "system/tunable": {
         "list_endpoint": "/api/v1.0/system/tunable/",
         "schema": "/api/v1.0/system/tunable/schema/"
+    },
+    "system/version": {
+        "list_endpoint": "/api/v1.0/system/version/",
+        "schema": "/api/v1.0/system/version/schema/"
     }
 }
-
 

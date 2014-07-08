@@ -31,6 +31,13 @@
     <span>{% trans "Storage" %}</span>
   </div>
 
+  <div id="menuBar_DirectoryService" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openDirectoryService();" class="menu_icon">
+    <img src="{{ STATIC_URL }}images/ui/menu/directoryservice.png" />
+    <br />
+    <span>{% trans "Directory" %}</span>
+    <!-- span>{% trans "Directory Service" %}</span -->
+  </div>
+
   <div id="menuBar_Sharing" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openSharing();" class="menu_icon">
     <img src="{{ STATIC_URL }}images/ui/menu/sharing.png" />
     <br />
@@ -64,13 +71,6 @@
     <img src="{{ STATIC_URL }}images/ui/menu/help.png" />
     <br />
     <span>{% trans "Help" %}</span>
-  </div>
-
-  <div id="menuBar_DirectoryService" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openDirectoryService();" class="menu_icon right">
-    <img src="{{ STATIC_URL }}images/ui/menu/directoryservice.png" />
-    <br />
-    <span>{% trans "Directory" %}</span>
-    <!-- span>{% trans "Directory Service" %}</span -->
   </div>
 
   {% else %}

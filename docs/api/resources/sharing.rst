@@ -33,7 +33,6 @@ List resource
 
       [
         {
-                "cifs_inheritperms": false,
                 "cifs_hostsallow": "",
                 "cifs_name": "My Test Share",
                 "cifs_default_permissions": true,
@@ -45,7 +44,6 @@ List resource
                 "cifs_comment": "",
                 "cifs_path": "/mnt/tank/MyShare",
                 "cifs_ro": false,
-                "cifs_inheritowner": false,
                 "cifs_guestonly": true,
                 "id": 1,
                 "cifs_browsable": true
@@ -86,7 +84,6 @@ Create resource
       Content-Type: application/json
 
         {
-                "cifs_inheritperms": false,
                 "cifs_hostsallow": "",
                 "cifs_name": "My Test Share",
                 "cifs_default_permissions": true,
@@ -98,7 +95,6 @@ Create resource
                 "cifs_comment": "",
                 "cifs_path": "/mnt/tank/MyShare",
                 "cifs_ro": false,
-                "cifs_inheritowner": false,
                 "cifs_guestonly": true,
                 "id": 1,
         }
@@ -110,13 +106,11 @@ Create resource
    :json string cifs_hostsdeny: explicitly denied hosts
    :json string cifs_auxsmbconf: auxiliar parameters to append to smb.conf
    :json string cifs_default_permissions: recursively set sane default windows permissions on share
-   :json boolean cifs_inheritperms: inherit permissions
    :json boolean cifs_guestok: allow guests
    :json boolean cifs_guestonly: only guests are allowed
    :json boolean cifs_showhiddenfiles: show hidden files
    :json boolean cifs_recyclebin: enable recycle bin
    :json boolean cifs_ro: readonly share
-   :json boolean cifs_inheritowner: inherit owners
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -149,7 +143,6 @@ Update resource
       Content-Type: application/json
 
         {
-                "cifs_inheritperms": false,
                 "cifs_hostsallow": "",
                 "cifs_name": "My Test Share",
                 "cifs_default_permissions": true,
@@ -161,7 +154,6 @@ Update resource
                 "cifs_comment": "",
                 "cifs_path": "/mnt/tank/MyShare",
                 "cifs_ro": false,
-                "cifs_inheritowner": false,
                 "cifs_guestonly": true,
                 "id": 1,
         }
@@ -173,13 +165,11 @@ Update resource
    :json string cifs_hostsdeny: explicitly denied hosts
    :json string cifs_auxsmbconf: auxiliar parameters to append to smb.conf
    :json string cifs_default_permissions: recursively set sane default windows permissions on share
-   :json boolean cifs_inheritperms: inherit permissions
    :json boolean cifs_guestok: allow guests
    :json boolean cifs_guestonly: only guests are allowed
    :json boolean cifs_showhiddenfiles: show hidden files
    :json boolean cifs_recyclebin: enable recycle bin
    :json boolean cifs_ro: readonly share
-   :json boolean cifs_inheritowner: inherit owners
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
@@ -439,14 +429,14 @@ List resource
                 "afp_upriv": true,
                 "id": 1,
                 "afp_comment": "",
-                "afp_fperm": "755",
+                "afp_fperm": "644",
                 "afp_deny": "",
                 "afp_nostat": false,
                 "afp_name": "test share",
                 "afp_nodev": false,
                 "afp_rw": "",
                 "afp_allow": "",
-                "afp_dperm": "644",
+                "afp_dperm": "755",
                 "afp_ro": "",
                 "afp_sharepw": "",
                 "afp_path": "/mnt/tank",
@@ -492,14 +482,14 @@ Create resource
                 "afp_upriv": true,
                 "id": 1,
                 "afp_comment": "",
-                "afp_fperm": "755",
+                "afp_fperm": "644",
                 "afp_deny": "",
                 "afp_nostat": false,
                 "afp_name": "test share",
                 "afp_nodev": false,
                 "afp_rw": "",
                 "afp_allow": "",
-                "afp_dperm": "644",
+                "afp_dperm": "755",
                 "afp_ro": "",
                 "afp_sharepw": "",
                 "afp_path": "/mnt/tank",
