@@ -112,7 +112,7 @@ main()
 	if [ -d ${NANO_OBJ}/_.data ]; then
 		mkdir -p ${NANO_OBJ}/_.instufs/data
 		tar -C ${NANO_OBJ}/_.data -cf - . |
-			tar -C ${NANO_OBJ}/_.instufs/data -xf -
+			tar -C ${NANO_OBJ}/_.instufs/data -xpf -
 	fi
 
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
