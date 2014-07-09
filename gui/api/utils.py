@@ -158,7 +158,11 @@ class ResourceMixin(object):
         Make sure only OAuth2 is allowed to POST/PUT/DELETE
         """
         if self.is_webclient(request):
-            allowed = ['get']
+            try:
+                self.is_authenticated(request)
+                allowed = ['get']
+            except:
+                pass
         return super(ResourceMixin, self).method_check(
             request,
             allowed=allowed
