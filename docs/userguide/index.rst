@@ -8389,7 +8389,7 @@ To install a FreeNAS® PBI using the plugins method, click Plugins. As seen in F
 **Figure 9.1a: Using Plugins to Install a PBI**
 
 
-|1000000000000556000001EE3E0B22FB_png|
+|Figure91a_png|
 
 **NOTE:** if the list of available PBIs is not displayed, open Shell and verify that the FreeNAS® system can
 **ping** an address on the Internet. If it cannot, you may have to add a default gateway address and/or DNS server address in Network → Global
@@ -8401,7 +8401,7 @@ for installation.
 **Figure 9.1b: Selecting a PBI to Install**
 
 
-|100000000000037E000001EB84FBFF52_png|
+|Figure91b_png|
 
 Click “OK” to start the installation. It will take a few minutes as the system will first download and configure a jail to contain the installed
 software. It will then install the PBI and add it to the “Installed” tab as shown in Figure 9.1c. Be patient as it may take a few minutes for the
@@ -8410,7 +8410,7 @@ installation to finish.
 **Figure 9.1c: Viewing Installed PBIs**
 
 
-|1000000000000351000001F25FDB25AB_png|
+|Figure91c_png|
 
 Managing an Installed FreeNAS® PBI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -8454,7 +8454,7 @@ If a newer version of a FreeNAS® PBI becomes available in the official reposito
 **Figure 9.1d: Updating an Installed PBI**
 
 
-|10000000000003900000019AB1074006_png|
+|Figure91d_png|
 
 Click the "OK" button and the latest version of the PBI will automatically be downloaded and installed. Once the update is complete, the entry for the PBI
 will be refreshed to show the new version number and the "Update" button will disappear.
@@ -8474,7 +8474,7 @@ downloaded PBI. Once the PBI is selected, click the "Upload" button to install t
 **Figure 9.1e: Installing a Previously Downloaded PBI**
 
 
-|10000000000002DD000001883EEDE3BA_png|
+|Figure91e_png|
 
 When the installation is complete, an entry for the PBI will be added to the "Installed" tab and its associated jail will be listed under "Jails". However, if
 it is not a FreeNAS® PBI, it will not be added to "Plugins". In other words, if the application requires any configuration, you will have to perform it from
@@ -8496,7 +8496,7 @@ shows as installed in the Installed tab of Plugins. A pop-up message asks the us
 **Figure 9.1f: Deleting an Installed PBI**
 
 
-|1000000000000348000001E9B764361C_png|
+|Figure91f_png|
 
 Available FreeNAS® PBIs
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -8656,7 +8656,7 @@ access the screen shown in Figure 10.1a.
 **Figure 10.1a: Global Jail Configuration**
 
 
-|10000000000002A2000001AA8352FB64_png|
+|Figure101a_png|
 
 **NOTE:** if you have already used the Plugins method, all of the fields in this screen will automatically be filled in. You should still double-check that
 the pre-configured values are appropriate for your jails.
@@ -8723,7 +8723,7 @@ To create a jail, click Jails → Add Jails to access the screen shown in Figure
 **Figure 10.2a: Creating a Jail**
 
 
-|10000000000002FD000001EA0AB33970_png|
+|Figure102a_png|
 
 
 **Table 10.2a: Jail Configuration Options**
@@ -8875,7 +8875,7 @@ for the jail named *pluginjail* has been clicked.
 **Figure 10.2b: Created Jails Added to the GUI**
 
 
-|100000000000029B000001F9B804C953_png|
+|Figure102b_png|
 
 Click a jail's entry to access its configuration icons. In order, from left to right, these icons are used to:
 
@@ -8952,7 +8952,7 @@ accessed by expanding the jail's name in the tree view and clicking Edit.
 **Figure 10.2c: Jail's Edit Settings**
 
 
-|10000000000002C4000001ED511B66EF_png|
+|Figure102c_png|
 
 Most of these settings were previously described in Table 10.2a and can be changed using this screen after jail creation. The following settings differ
 between the “Add Jail” and “Edit Jail” screens:
@@ -8991,7 +8991,7 @@ Browse to the “Source” and “Destination”, where:
 **Figure 10.2d: Adding Storage to a Jail**
 
 
-|10000000000002C30000020A7F861DA6_png|
+|Figure102d_png|
 
 When you are adding storage, it is typically because the user and group account associated with an application installed inside of a jail needs to access data
 stored on the FreeNAS® system. Before selecting the "Source", it is important to first ensure that the permissions of the selected directory or dataset grant
@@ -9051,7 +9051,7 @@ To delete the storage, click its “Delete” button.
 **Figure 10.2e: Example Storage**
 
 
-|1000000000000263000001F6A0162F91_png|
+|Figure102e_png|
 
 Jail Templates
 ~~~~~~~~~~~~~~
@@ -9105,7 +9105,7 @@ To add the template, click Jails → Add Jail Templates which will open the scre
 **Figure 10.3b: Adding A Custom Jail Template**
 
 
-|100000000000025600000180A291AF63_png|
+|Figure103b_png|
 
 Table 10.3a summarizes the fields in this screen.
 
@@ -9169,7 +9169,7 @@ To install a FreeNAS® PBI, go to Jails → View Jails and click the plugin jail
 **Figure 10.4a: Select Plugin Jail to Install Into**
 
 
-|100000000000029F000001F0A36F7687_png|
+|Figure104a_png|
 
 Click the “Upload Plugin” button. When prompted, “Browse” to the location of the downloaded PBI then click the “Upload” button to install the
 PBI. A status bar will indicate the progress of the installation. Once installed, the application will appear under the Plugins entry of the tree. In the
@@ -9180,7 +9180,7 @@ You can now configure and manage the installed software as described in Installi
 **Figure 10.4b: FreeNAS PBI Successfully Installed**
 
 
-|10000000000002A1000001AC682CFEED_png|
+|Figure104b_png|
 
 Installing non-PBI Software
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -9416,7 +9416,7 @@ Reporting displays several graphs, as seen in the example in Figure 11a. Click t
 
 Figure 11a: Reporting Graphs
 
-|100000000000033C000001F3B917EE92_png|
+|Figure11a_png|
 
 FreeNAS® uses
 `collectd <https://collectd.org/>`_
@@ -9494,7 +9494,7 @@ the text into the box that opens, and click the OK button to complete the paste 
 **Figure 12.2a: Web Shell**
 
 
-|10000000000002A100000215C3C73768_png|
+|Figure122a_png|
 
 While you are in Shell, you will not have access to any of the other GUI menus. If you are using Shell for troubleshooting purposes and need to leave the
 Shell in order to modify a configuration, click the x in the window's upper right corner. The next time you enter Shell, you will return to your last session.
@@ -9522,7 +9522,7 @@ instructions in Creating an Encrypted Volume_ before performing a reboot.
 **Figure 12.3a: Reboot Warning Message**
 
 
-|100000000000025A00000181AFAC67DC_png|
+|Figure123a_png|
 
 If a scrub or resilver is in progress when a reboot is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the reboot request and to periodically run **zpool status** from Shell until it is verified that the scrub or resilver process is
@@ -9545,7 +9545,7 @@ an option that will negatively impact users of the FreeNAS® system.
 **Figure 12.4a: Shutdown Warning Message**
 
 
-|100000000000026F000001988EEC0562_png|
+|Figure124a_png|
 
 If a scrub or resilver is in progress when a shutdown is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to “Cancel” the shutdown request and to periodically run **zpool status** from Shell_ until it is verified that the scrub or resilver
@@ -9591,7 +9591,7 @@ degraded the state of the pool.
 **Figure 12.7a: Example Alert Message**
 
 
-|10000000000001860000009EEEECF771_png|
+|Figure127a_png|
 
 Informational messages will have a green OK while messages requiring attention will be listed as a red CRITICAL. CRITICAL messages will also be emailed to the
 root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that
@@ -10826,7 +10826,7 @@ screen. This line shows information on the current session and is used to enter 
 **Figure 14.9a: tmux Session**
 
 
-|10000000000002A9000001C464676B50_png|
+|Figure149a_png|
 
 To create a second window, press *ctrl b* then
 *"*. To close a window, type
@@ -11018,7 +11018,7 @@ are laid out in an order that is similar to the tree menu of the FreeNAS® GUI.
 **Figure 16.1a: FreeNAS® API Documentation**
 
 
-|10000000000003AC000002E942993BA8_png|
+|Figure161a_png|
 
 A Simple API Example
 ~~~~~~~~~~~~~~~~~~~~
