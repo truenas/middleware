@@ -297,11 +297,7 @@ class FilteredSelectField(forms.fields.MultipleChoiceField):
 
 
 class bsdUsersForm(ModelForm, bsdUserGroupMixin):
-    """
-    # Yanked from django/contrib/auth/
-    A form that creates a user, with no privileges,
-    from the given username and password.
-    """
+
     bsdusr_username = forms.CharField(
         label=_("Username"),
         max_length=16)
