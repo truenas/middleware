@@ -132,11 +132,38 @@ Notable features in FreeNAS® include:
 What's New in 9.3
 ~~~~~~~~~~~~~~~~~~~
 
-FreeNAS® 9.3 fixes this list of bugs and includes the following features:
+FreeNAS® 9.3 fixes this list of bugs.
 
-* Based on FreeBSD 9.3 which adds these features and supports this hardware.
+It is based on FreeBSD 9.3 which adds these features and supports this hardware.
 
-* FreeNAS® is now 64-bit only. 
+FreeNAS® is now 64-bit only. 
+
+The GUI has been reorganized as follows:
+
+* System → System Information is now System → Information.
+
+* System → Settings has been divided into System → General, System → Advanced, System → Email and System → System Dataset.
+
+* System → Sysctls and System → Tunables have been merged into System → Tunables. The "Type" field has been added to System → Tunables so you
+  can specify whether a "Loader" or a "Sysctl" is being created.
+  
+* NTP Servers has been moved to System → General.
+
+* System → Settings → SSL has been moved to System → General → Set SSL Certificate.
+  
+* A new Tasks menu has been added and the following have been moved to Tasks: Cron Jobs, Init/Shutdown Scripts, Rsync Tasks, and S.M.A.R.T Tests.
+
+* A ZFS Snapshots menu has been added to Storage.
+
+* Services → Directory Services has been renamed to Directory Service and moved as its own item in the tree.
+
+* Services → Directory Services → Domain Controller has been moved to Services → Domain Controller.
+
+* Services → LLDP has been added.
+
+* Log Out has been moved from the upper right corner to the tree menu.
+
+The following features have been added:
 
 * The "IP Server" field has been added to Dynamic DNS. 
 
@@ -1718,24 +1745,643 @@ System Configuration
 
 The System section of the administrative GUI contains the following entries:
 
+* **Information:** provides general FreeNAS® system information such as hostname, operating system version, platform, and uptime
+
+* **General:** used to general settings such as HTTPS access, the language, and the timezone
+
+* **Advanced:** used to configure advanced settings such as the serial console, swap, console messages, and advanced fields
+
+* **Email:** used to configure the email address to receive notifications
+
+* **System Dataset:** used to configure the location of the system dataset
+
+* **Tunables:** provides a front-end for tuning in real-time and to load additional kernel modules at boot time
+
+Each of these is described in more detail in this section.
+
+Information
+~~~~~~~~~~~~~~~~~~
+
+System → Information displays general information about the FreeNAS® system. An example is seen in Figure 4.8a.
+
+The information includes the hostname, the build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, and the
+current load average.
+
+To change the system's hostname, click its “Edit” button, type in the new hostname, and click “OK”. The hostname must include the domain name. If
+the network does not use a domain name add *.local* to the end of the hostname.
+
+**Figure 4.8a: System Information Tab**
+
+|Figure48a_png|
+
+General
+~~~~~~~
+
+The General tab, shown in Figure 4.6a, contains 4 tabs: General, Advanced, Email, and SSL.
+
+**Figure 4.6a: General Tab of Settings**
+
+|Figure46a_png|
+
+Table 4.6a summarizes the settings that can be configured using the General tab:
+
+**Table 4.6a: General Tab's Configuration Settings**
+
+
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Setting              | Value          | Description                                                                                                                                                                            |
+|                      |                |                                                                                                                                                                                        |
++======================+================+========================================================================================================================================================================================+
+| Protocol             | drop-down menu | protocol to use when connecting to the administrative                                                                                                                                  |
+|                      |                | GUI                                                                                                                                                                                    |
+|                      |                | from a browser; if you change the default of                                                                                                                                           |
+|                      |                | *HTTP*                                                                                                                                                                                 |
+|                      |                | to                                                                                                                                                                                     |
+|                      |                | *HTTPS*                                                                                                                                                                                |
+|                      |                | , an unsigned certificate and RSA key will be generated and you will be logged out in order to accept the certificate                                                                  |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| WebGUI IPv4 Address  | drop-down menu | choose from a list of recent IP addresses to limit the one to use when accessing the administrative GUI; the built-in HTTP server will automatically bind to the wildcard address of   |
+|                      |                | *0.0.0.0*                                                                                                                                                                              |
+|                      |                | (any address) and will issue an alert if                                                                                                                                               |
+|                      |                | the specified address becomes unavailable                                                                                                                                              |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| WebGUI IPv6 Address  | drop-down menu | choose from a list of recent IPv6 addresses to limit the one to use when accessing the administrative GUI; the built-in HTTP server will automatically bind to the wildcard address of |
+|                      |                | *::*                                                                                                                                                                                   |
+|                      |                | (any address) and will issue an alert if the specified address becomes unavailable                                                                                                     |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| WebGUI HTTP Port     | integer        | allows you to configure a non-standard port for accessing the administrative GUI over HTTP; changing this setting may require you to                                                   |
+|                      |                | `change a firefox configuration setting <http://www.redbrick.dcu.ie/%7Ed_fens/articles/Firefox:_This_Address_is_Restricted>`_                                                          |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| WebGUI HTTPS Port    | integer        | allows you to configure a non-standard port for accessing the administrative GUI over HTTPS                                                                                            |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Language             | drop-down menu | select the localization from the drop-down menu and reload the browser; you can view the status of localization at                                                                     |
+|                      |                | `pootle.freenas.org <http://pootle.freenas.org/>`_                                                                                                                                     |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Console Keyboard Map | drop-down menu | select the keyboard layout                                                                                                                                                             |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Timezone             | drop-down menu | select the timezone from the drop-down menu                                                                                                                                            |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Syslog server        | string         | IP address or hostname of remote syslog server to send FreeNAS® logs to;                                                                                                              |
+|                      |                | once set, log entries will be written to both the FreeNAS® console and the remote server                                                                                              |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Directory Service    | drop-down menu | can select one of                                                                                                                                                                      |
+|                      |                | *Active Directory*,                                                                                                                                                                    |                                               
+|                      |                | *Domain Controller*_                                                                                                                                                                   |                                                                                                                                                                               
+|                      |                | *LDAP*,_                                                                                                                                                                               |                                                                                                                                                                                   
+|                      |                | *NIS*, or_                                                                                                                                                                             |                                                                                                                                                                                  
+|                      |                | *NT4*;                                                                                                                                                                                 |
+|                      |                | if a service is selected, an entry named                                                                                                                                               |
+|                      |                | *Directory Services*                                                                                                                                                                   |
+|                      |                | will be added to Services → Control Services for managing that selected service                                                                                                    |
+|                      |                |                                                                                                                                                                                        |
++----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
+**NOTE:** by default, logs are stored in RAM as there is no space on the embedded device to store logs. This means that logs are deleted whenever the system
+reboots. If you wish to save the system logs, either:
+
+* configure a remote syslog server on another Unix-like operating system, or
+
+* create a ZFS dataset called *syslog* and reboot the system; FreeNAS® will automatically create a *log/* directory in this dataset which contains the logs
+
+If you make any changes, click the Save button.
+
+This tab also contains the following buttons:
+
+**Factory Restore:** resets the configuration database to the default base version. However, it does not delete user SSH keys or any other data stored in a
+user's home directory. Since any configuration changes stored in the configuration database will be erased, this option is handy if you mess up your system or
+wish to return a test system to the original configuration.
+
+**Save Config:** used to create a backup copy of the current configuration database in the format *hostname-version-architecture*.
+**Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade.** This
+`forum post <http://forums.freenas.org/showthread.php?10735-How-to-automate-FreeNAS-configuration-database-backup>`_
+contains a script to backup the configuration which could be customized and added as a cron job. This
+`forum post <http://forums.freenas.org/showthread.php?12333-Backup-config-only-if-changed>`_
+contains an alternate script which only saves a copy of the configuration when it changes. And this
+`forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`_
+contains a script for backing up the configuration from another system.
+
+**Upload Config:** allows you to browse to location of saved configuration file in order to restore that configuration.
+
+The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful operation of time
+sensitive applications such as Active Directory.
+
+By default, FreeNAS® is pre-configured to use three public NTP servers. If your network is using Active Directory, ensure that the FreeNAS® system and the
+Active Directory Domain Controller have been configured to use the same NTP servers.
+
+Figure 4.3a shows the default NTP configuration for FreeNAS®. If you wish to change a default server to match the settings used by your network's domain
+controller, click an entry to access its “Edit” button. Alternately, you can delete the default NTP servers and click “Add NTP Server” to create
+your own. Figure 4.3b shows the “Add NTP Server” screen and Table 4.3a summarizes the options when adding or editing an NTP server.
+`ntp.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=ntp.conf>`_
+explains these options in more detail.
+
+**Figure 4.3a: Default NTP Configuration**
+
+
+|Figure43a_png|
+
+**Figure 4.3b: Add or Edit a NTP Server**
+
+
+|100000000000011C0000016E12EDFEE5_jpg|
+
+**Table 4.3a: NTP Server Options**
+
+
++-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
+| **Setting** | **Value** | **Description**                                                                                                       |
+|             |           |                                                                                                                       |
+|             |           |                                                                                                                       |
++=============+===========+=======================================================================================================================+
+| Address     | string    | name of NTP server                                                                                                    |
+|             |           |                                                                                                                       |
++-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
+| Burst       | checkbox  | recommended when *Max. Poll* is greater than *10*; only use on your own servers i.e. **do not**                       |
+|             |           | use with a public NTP server                                                                                          |
+|             |           |                                                                                                                       |
++-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
+| IBurst      | checkbox  | speeds the initial synchronization (seconds instead of minutes)                                                       |
+|             |           |                                                                                                                       |
++-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
+| Prefer      | checkbox  | should only be used for NTP servers that are known to be highly accurate, such as those with time monitoring hardware |
+|             |           |                                                                                                                       |
++-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
+| Min. Poll   | integer   | power of 2 in seconds; can not be lower than                                                                          |
+|             |           | *4*                                                                                                                   |
+|             |           | or higher than                                                                                                        |
+|             |           | *Max. Poll*                                                                                                           |
+|             |           |                                                                                                                       |
+|             |           |                                                                                                                       |
++-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
+| Max. Poll   | integer   | power of 2 in seconds; can not be higher than                                                                         |
+|             |           | *17*                                                                                                                  |
+|             |           | or lower than                                                                                                         |
+|             |           | *Min. Poll*                                                                                                           |
+|             |           |                                                                                                                       |
+|             |           |                                                                                                                       |
++-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
+| Force       | checkbox  | forces the addition of the NTP server, even if it is currently unreachable                                            |
+|             |           |                                                                                                                       |
++-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
+
+When you change the Protocol value to HTTPS in System → Settings → General, an unsigned RSA certificate and key are auto-generated. Once generated,
+the certificate and key will be displayed in the SSL Certificate field in System → Settings → SSL, shown in Figure 4.6d. If you already have your own
+signed certificate that you wish to use for SSL/TLS connections, replace the values in the SSL certificate field with a copy/paste of your own key and certificate. The certificate can be used to secure the HTTP connection (enabled in the Settings → General Tab) to the FreeNAS® system.
+
+Table 4.6d summarizes the settings that can be configured using the SSL tab. This
+`howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
+shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 4.6d.
+
+
+**Figure 4.6d: SSL Tab**
+
+
+|Figure46d_png|
+
+**Table 4.6d: SSL Tab's Configuration Settings**
+
+
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+| Setting             | Value  | Description                                                                                                      |
+|                     |        |                                                                                                                  |
++=====================+========+==================================================================================================================+
+| Organization        | string | optional                                                                                                         |
+|                     |        |                                                                                                                  |
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+| Organizational Unit | string | optional                                                                                                         |
+|                     |        |                                                                                                                  |
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+| Email Address       | string | optional                                                                                                         |
+|                     |        |                                                                                                                  |
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+| Locality            | string | optional                                                                                                         |
+|                     |        |                                                                                                                  |
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+| State               | string | optional                                                                                                         |
+|                     |        |                                                                                                                  |
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+| Country             | string | optional                                                                                                         |
+|                     |        |                                                                                                                  |
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+| Common Name         | string | optional                                                                                                         |
+|                     |        |                                                                                                                  |
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+| Passphrase          | string | if the certificate was created with a passphrase, input and confirm it; the value will appear as dots in the GUI |
+|                     |        |                                                                                                                  |
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+| SSL                 | string | paste the                                                                                                        |
+| Certificate         |        | private                                                                                                          |
+|                     |        | key and certificate                                                                                              |
+|                     |        | into the box                                                                                                     |
+|                     |        |                                                                                                                  |
++---------------------+--------+------------------------------------------------------------------------------------------------------------------+
+
+
+**NOTE:** FreeNAS® will check the validity of the certificate and key and will fallback to HTTP if they appear to be invalid.
+
+Advanced
+~~~~~~~~
+
+The Advanced tab, shown in Figure 4.6b, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in
+Table 4.6b.
+
+**Figure 4.6b: Advanced Tab**
+
+|Figure46b_png|
+
+**Table 4.6b: Advanced Tab's Configuration Settings**
+
+
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Setting                                 | Value                            | Description                                                                                                                                                                                                                                                     |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++=========================================+==================================+=================================================================================================================================================================================================================================================================+
+| Enable Console Menu                     | checkbox                         | unchecking this box removes the console menu shown in Figure 2.5a                                                                                                                                                                                               |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Use Serial Console                      | checkbox                         | do                                                                                                                                                                                                                                                              |
+|                                         |                                  | **not**                                                                                                                                                                                                                                                         |                                                                                                                                                                                                                                                          
+|                                         |                                  | check this box if your serial port is disabled                                                                                                                                                                                                                  |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Serial Port Address                     | string                           | serial port address written in hex                                                                                                                                                                                                                              |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Serial Port Speed                       | drop-down menu                   | select the speed used by the serial port                                                                                                                                                                                                                        |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Enable screen saver                     | checkbox                         | enables/disables the console screen saver                                                                                                                                                                                                                       |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Enable powerd (Power Saving Daemon)     | checkbox                         | `powerd(8) <http://www.freebsd.org/cgi/man.cgi?query=powerd>`_                                                                                                                                                                                                  |
+|                                         |                                  | monitors the system state and sets the CPU frequency accordingly                                                                                                                                                                                                |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Swap size                               | non-zero integer representing GB | by default, all data disks are created with this amount of swap; this setting does not affect log or cache devices as they are created without swap                                                                                                             |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Show console messages in the footer     | checkbox                         | will display console messages in real time at bottom of browser; click the console to bring up a scrollable screen; check the “Stop refresh” box in the scrollable screen to pause updating and uncheck the box to continue to watch the messages as they occur |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Show tracebacks in case of fatal errors | checkbox                         | provides a pop-up of diagnostic information when a fatal error occurs                                                                                                                                                                                           |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Show advanced fields by default         | checkbox                         | several GUI menus provide an Advanced Mode button to access additional features; enabling this shows these features by default                                                                                                                                  |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Enable autotune                         | checkbox                         | enables the                                                                                                                                                                                                                                                     |
+|                                         |                                  | autotune                                                                                                                                                                                                                      |
+|                                         |                                  | script which attempts to optimize the system depending upon the hardware which is installed                                                                                                                                                                     |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Enable debug kernel                     | checkbox                         | if checked, next boot will boot into a debug version of the kernel                                                                                                                                                                                              |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Enable automatic upload of              | checkbox                         | if checked, kernel crash dumps are automatically sent                                                                                                                                                                                                           |
+| kernel crash dumps                      |                                  | to the FreeNAS® development team for diagnosis                                                                                                                                                                                                                  |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| MOTD banner                             | string                           | input the message to be seen when a user logs in via                                                                                                                                                                                                            |
+|                                         |                                  | SSH                                                                                                                                                                                                                                                             |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| System dataset pool                     | drop-down menu                   | by default, the                                                                                                                                                                                                                                                 |
+|                                         |                                  | *.system*                                                                                                                                                                                                                                                       |
+|                                         |                                  | dataset is automatically created in the first ZFS volume in order to store persistent Samba permissions, collecting core files, and storing system log files; the drop-down menu can be used to select a different ZFS volume                                   |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Use system dataset for syslog           | checkbox                         | uncheck this box if you don't want logging to spin up the disks and it will write to                                                                                                                                                                            |
+|                                         |                                  | */var/log/*                                                                                                                                                                                                                                                     |
+|                                         |                                  | instead of the                                                                                                                                                                                                                                                  |
+|                                         |                                  | *.system*                                                                                                                                                                                                                                                       |
+|                                         |                                  | dataset                                                                                                                                                                                                                                                         |
+|                                         |                                  |                                                                                                                                                                                                                                                                 |
++-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
+If you make any changes, click the Save button.
+
+This tab also contains the following buttons:
+
+**Rebuild LDAP/AD Cache:** click if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs automatically once a day
+as a cron job.
+
+**Save Debug:** used to generate a text file of diagnostic information. t will prompt for the location to save the ASCII text file.
+
+**Firmware Update:** used to Upgrade FreeNAS®.
+
+Autotune
+^^^^^^^^
+
+FreeNAS® provides an autotune script which attempts to optimize the system depending upon the hardware which is installed. For example, if a ZFS volume
+exists on a system with limited RAM, the autotune script will automatically adjust some ZFS sysctl values in an attempt to minimize ZFS memory starvation
+issues. It should only be used as a temporary measure on a system that hangs until the underlying hardware issue is addressed by adding more RAM. Autotune
+will always slow the system down as it caps the ARC.
+
+The “Enable autotune” checkbox in System → Settings → Advanced is unchecked by default; check it if you would like the autotuner to run at boot
+time. If you would like the script to run immediately, reboot the system.
+
+If autotuner finds any settings that need adjusting, the changed values will appear in System → Sysctls (for *sysctl.conf* values) and in System →
+Tunables (for *loader.conf* values). If you do not like the changes, you can modify the values that are displayed in the GUI and your changes will override
+the values that were created by the autotune script. However, if you delete a sysctl or tunable that was created by autotune, it will be recreated at next
+boot. This is because autotune only creates values that do not already exist.
+
+If you are trying to increase the performance of your FreeNAS® system and suspect that the current hardware may be limiting performance, try enabling
+autotune.
+
+If you wish to read the script to see which checks are performed, the script is located in */usr/local/bin/autotune*.
+
+Email
+~~~~~
+
+The Email tab, shown in Figure 4.6c, is used to configure the email settings on the FreeNAS® system. Table 4.6c summarizes the settings that can be
+configured using the Email tab.
+
+**NOTE:** it is important to configure the system so that it can successfully send emails. An automatic script send a nightly email to the *root* user account
+containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
+
+**Figure 4.6c: Email Tab**
+
+
+|Figure46c_png|
+
+
+
+**Table 4.6c: Email Tab's Configuration Settings**
+
+
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Setting              | Value                | Description                                                                                     |
+|                      |                      |                                                                                                 |
++======================+======================+=================================================================================================+
+| From email           | string               | the                                                                                             |
+|                      |                      | **From**                                                                                        |
+|                      |                      | email address to be used when sending email notifications                                       |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Outgoing mail server | string or IP address | hostname or IP address of SMTP server                                                           |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Port to connect to   | integer              | SMTP                                                                                            |
+|                      |                      | port number, typically 25, 465 (secure                                                          |
+|                      |                      | SMTP                                                                                            |
+|                      |                      | ), or 587 (submission)                                                                          |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| TLS/                 | drop-down menu       | encryption type; choices are                                                                    |
+| SSL                  |                      | *Plain*                                                                                         |
+|                      |                      | ,                                                                                               |
+|                      |                      | *SSL*                                                                                           |
+|                      |                      | , or                                                                                            |
+|                      |                      | *TLS*                                                                                           |
+|                      |                      |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Use                  | checkbox             | enables/disables                                                                                |
+| SMTP                 |                      | `SMTP AUTH <http://en.wikipedia.org/wiki/SMTP_Authentication>`_                                 |
+| Authentication       |                      | using PLAIN SASL                                                                                |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Username             | string               | used to authenticate with SMTP server                                                           |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Password             | string               | used to authenticate with SMTP server                                                           |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Send Test Mail       | button               | click to check that configured email settings are working; this will fail if you do not set the |
+|                      |                      | **To**                                                                                          |
+|                      |                      | email address                                                                                   |
+|                      |                      | by clicking the Change E-mail button for the                                                    |
+|                      |                      | *root*                                                                                          |
+|                      |                      | account in Accounts → Users → View Users                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+
+System Dataset
+~~~~~~~~~~~~~~
+
+Tunables
+~~~~~~~~
+
+`sysctl(8) <http://www.freebsd.org/cgi/man.cgi?query=sysctl>`_
+is an interface that is used to make changes to the FreeBSD kernel running on a FreeNAS® system. It can be used to tune the system in order to meet the
+specific needs of a network. Over five hundred system variables can be set using sysctl(8). Each variable is known as a MIB as it is comprised of a dotted set
+of components. Since these MIBs are specific to the kernel feature that is being tuned, descriptions can be found in many FreeBSD man pages (e.g.
+`sysctl(3) <http://www.freebsd.org/cgi/man.cgi?query=sysctl&sektion=3>`_
+,
+`tcp(4) <http://www.freebsd.org/cgi/man.cgi?query=tcp>`_
+and
+`tuning(7) <http://www.freebsd.org/cgi/man.cgi?query=tuning>`_
+) and in many sections of the
+`FreeBSD Handbook <http://www.freebsd.org/handbook>`_
+.
+
+**DANGER!** changing the value of a sysctl MIB is an advanced feature that immediately affects the kernel of the FreeNAS® system.
+**Do not change a MIB on a production system unless you understand the ramifications of that change.** A badly configured MIB could cause the system to become
+unbootable, unreachable via the network, or can cause the system to panic under load. Certain changes may break assumptions made by the FreeNAS® software.
+This means that you should always test the impact of any changes on a test system first.
+
+FreeNAS® provides a graphical interface for managing sysctl MIBs. To add a sysctl, go to System → Sysctls → Add Sysctl.
+
+Table 4.7a summarizes the options when adding a sysctl.
+
+**Table 4.7a: Adding a Sysctl**
+
+
++-------------+-------------------+-----------------------------------------------------------------------------------+
+| **Setting** | **Value**         | **Description**                                                                   |
+|             |                   |                                                                                   |
+|             |                   |                                                                                   |
++-------------+-------------------+-----------------------------------------------------------------------------------+
+| Variable    | string            | must be in dotted format e.g.                                                     |
+|             |                   | *kern.ipc.shmmax*                                                                 |
+|             |                   |                                                                                   |
+|             |                   |                                                                                   |
++-------------+-------------------+-----------------------------------------------------------------------------------+
+| Value       | integer or string | value to associate with the MIB;                                                  |
+|             |                   | **do not make this up**                                                           |
+|             |                   | , refer to the suggested values in a man page, FreeBSD Handbook page, or tutorial |
+|             |                   |                                                                                   |
++-------------+-------------------+-----------------------------------------------------------------------------------+
+| Comment     | string            | optional, but a useful reminder for the reason behind using this MIB/value        |
+|             |                   |                                                                                   |
++-------------+-------------------+-----------------------------------------------------------------------------------+
+| Enabled     | checkbox          | uncheck if you would like to disable the sysctl without deleting it               |
+|             |                   |                                                                                   |
++-------------+-------------------+-----------------------------------------------------------------------------------+
+
+
+As soon as you add or edit a sysctl, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that value will
+persist across reboots and upgrades.
+
+Note that any sysctl that is read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by attempting to change it
+from Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command  
+**sysctl net.inet.tcp.delay_ack=1**. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get an
+error, the setting is now applied. However, for the setting to be persistent across reboots, the sysctl must be added in System → Sysctls.
+
+Any MIBs that you add will be listed in System → Sysctls → View Sysctls. To change the value of a MIB, click its Edit button. To remove a MIB, click
+its Delete button.
+
+At this time, the GUI does not display the sysctl MIBs that are pre-set in the installation image. 9.3 ships with the following MIBs set::
+
+ kern.metadelay=3
+ kern.dirdelay=4
+ kern.filedelay=5
+ kern.coredump=0
+ net.inet.tcp.delayed_ack=0
+
+
+**Do not add or edit the default MIBS as sysctls** as doing so will overwrite the default values which may render the system unusable.
+
+When a FreeBSD-based system boots,
+`loader.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=loader.conf>`_
+is read to determine if any parameters should be passed to the kernel or if any additional kernel modules (such as drivers) should be loaded. Since loader
+values are specific to the kernel parameter or driver to be loaded, descriptions can be found in the man page for the specified driver and in many sections of
+the
+`FreeBSD Handbook <http://www.freebsd.org/handbook>`_
+.
+
+FreeNAS® provides a graphical interface for managing loader values. This advanced functionality is intended to make it easier to load additional kernel
+modules at boot time. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default
+FreeNAS® image does not load every possible hardware driver. This is a necessary evil as some drivers conflict with one another or cause stability issues,
+some are rarely used, and some drivers just don't belong on a standard NAS system. If you need a driver that is not automatically loaded, you need to add a
+tunable.
+
+**DANGER!** adding a tunable is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
+**very important** that you do not have a typo when adding a tunable as this could halt the boot process. Fixing this problem requires physical access to the
+FreeNAS® system and knowledge of how to use the boot loader prompt as described in Recovering From Incorrect Tunables. This means that you should always test
+the impact of any changes on a test system first.
+
+To add a tunable, go to System → Tunables → Add Tunable, as seen in Figure 4.9a.
+
+**Figure 4.9a: Adding a Tunable**
+
+|Figure49a_png|
+
+Table 4.9a summarizes the options when adding a tunable. The changes you make will not take effect until the system is rebooted as loader settings are only
+read when the kernel is loaded at boot time. As long as the tunable exists, your changes will persist at each boot and across upgrades. Any tunables that you
+add will be listed alphabetically in System → Tunables → View Tunables. To change the value of a tunable, click its Edit button. To remove a tunable,
+click its Delete button.
+
+**Table 4.9a: Adding a Tunable**
+
++-------------+-------------------+---------------------------------------------------------------------------+
+| **Setting** | **Value**         | **Description**                                                           |
+|             |                   |                                                                           |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Variable    | string            | typically the name of the driver to load, as indicated by its man page    |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Value       | integer or string | value to associate with variable; typically this is set to                |
+|             |                   | *YES*                                                                     |
+|             |                   | to enable the driver specified by the variable                            |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Comment     | string            | optional, but a useful reminder for the reason behind adding this tunable |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Enabled     | checkbox          | uncheck if you would like to disable the tunable without deleting it      |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+
+
+At this time, the GUI does not display the tunables that are pre-set in the installation image. 9.3 ships with the following tunables set::
+
+ autoboot_delay="2"
+ loader_logo="freenas-logo"
+ loader_menu_title="Welcome to FreeNAS"
+ loader_brand="freenas-brand"
+ loader_version=" "
+ debug.debugger_on_panic=1
+ debug.ddb.textdump.pending=1
+ hw.hptrr.attach_generic=0
+ kern.ipc.nmbclusters="262144"
+ vfs.mountroot.timeout="30"
+ hint.isp.0.role=2
+ hint.isp.1.role=2
+ hint.isp.2.role=2
+ hint.isp.3.role=2
+ module_path="/boot/modules;/usr/local/modules"
+ net.inet6.ip6.auto_linklocal="0"
+
+**Do not add or edit the default tunables** as doing so will overwrite the default values which may render the system unusable.
+
+The ZFS version used in 9.2.2 deprecates the following tunables::
+
+ vfs.zfs.write_limit_override
+ vfs.zfs.write_limit_inflated
+ vfs.zfs.write_limit_max
+ vfs.zfs.write_limit_min
+ vfs.zfs.write_limit_shift
+ vfs.zfs.no_write_throttle
+
+If you upgrade from an earlier version of FreeNAS® where these tunables are set, they will automatically be deleted for you. You should not try to add these
+tunables back.
+
+Recovering From Incorrect Tunables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If a tunable is preventing the system from booting, you will need physical access to the FreeNAS® system. Watch the boot messages and press the number 3 key
+or the Esc key to select “3. **Esc**ape to loader prompt” when you see the FreeNAS® boot menu shown in Figure 4.9b.
+
+**Figure 4.9b: FreeNAS® Boot Menu**
+
+
+|10000000000002D10000018F743DB34E_png|
+
+The boot loader prompt provides a minimal set of commands described in
+`loader(8) <http://www.freebsd.org/cgi/man.cgi?query=loader>`_
+. Once at the prompt, use the **unset** command to disable a problematic value, the
+**set** command to modify the problematic value, or the
+**unload** command to prevent the problematic driver from loading.
+
+Example 4.9a demonstrates several examples using these commands at the boot loader prompt. The first command disables the current value associated with the
+*kern.ipc.nmbclusters* MIB and will fail with a “no such file or directory” error message if a current tunable does not exist to set this value. The
+second command disables ACPI. The third command instructs the system not to load the fuse driver. When finished, type **boot** to continue the boot process.
+
+**Example 4.9a: Sample Commands at the Boot Loader Prompt**
+::
+
+ Type '?' for a list of commands, 'help' for more detailed help.
+ OK
+ 
+ unset kern.ipc.nmbclusters
+ OK
+
+ set hint.acpi.0.disabled=1
+ OK
+
+ unload fuse
+ OK
+
+ boot
+
+Any changes made at the boot loader prompt only effect the current boot. This means that you need to edit or remove the problematic tunable in System →
+Tunables → View Tunables to make your change permanent and to prevent future boot errors.
+
+Tasks
+--------------------
+
+The Tasks section of the administrative GUI can be used to perform the following tasks:
+
 * **Cron Jobs:** provides a graphical front-end to
   `crontab(5) <http://www.freebsd.org/cgi/man.cgi?query=crontab&sektion=5>`_
 
 * **Init/Shutdown Scripts:** used to configure a command or script to automatically execute during system startup or shutdown
 
-* **NTP Servers:** used to configure NTP server settings
-
 * **Rsync Tasks:** allows you to schedule rsync tasks
 
 * **S.M.A.R.T. Tests:** allows you to schedule which S.M.A.R.T. tests to run on a per-disk basis
-
-* **Settings:** used to configure system wide settings such as timezone, email setup, HTTPS access, and firmware upgrades
-
-* **Sysctls:** provides a front-end for tuning the FreeNAS® system by interacting with the underlying FreeBSD kernel
-
-* **System Information:** provides general FreeNAS® system information such as hostname, operating system version, platform, and uptime
-
-* **Tunables:** provides a front-end to load additional kernel modules at boot time
 
 Each of these is described in more detail in this section.
 
@@ -1856,72 +2502,6 @@ When scheduling a script, make sure that the script is executable and has been f
 |             |                | *Shutdown*                                                        |
 |             |                |                                                                   |
 +-------------+----------------+-------------------------------------------------------------------+
-
-
-NTP Servers
-~~~~~~~~~~~
-
-The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful operation of time
-sensitive applications such as Active Directory.
-
-By default, FreeNAS® is pre-configured to use three public NTP servers. If your network is using Active Directory, ensure that the FreeNAS® system and the
-Active Directory Domain Controller have been configured to use the same NTP servers.
-
-Figure 4.3a shows the default NTP configuration for FreeNAS®. If you wish to change a default server to match the settings used by your network's domain
-controller, click an entry to access its “Edit” button. Alternately, you can delete the default NTP servers and click “Add NTP Server” to create
-your own. Figure 4.3b shows the “Add NTP Server” screen and Table 4.3a summarizes the options when adding or editing an NTP server.
-`ntp.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=ntp.conf>`_
-explains these options in more detail.
-
-**Figure 4.3a: Default NTP Configuration**
-
-
-|Figure43a_png|
-
-**Figure 4.3b: Add or Edit a NTP Server**
-
-
-|100000000000011C0000016E12EDFEE5_jpg|
-
-**Table 4.3a: NTP Server Options**
-
-
-+-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| **Setting** | **Value** | **Description**                                                                                                       |
-|             |           |                                                                                                                       |
-|             |           |                                                                                                                       |
-+=============+===========+=======================================================================================================================+
-| Address     | string    | name of NTP server                                                                                                    |
-|             |           |                                                                                                                       |
-+-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Burst       | checkbox  | recommended when *Max. Poll* is greater than *10*; only use on your own servers i.e. **do not**                       |
-|             |           | use with a public NTP server                                                                                          |
-|             |           |                                                                                                                       |
-+-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| IBurst      | checkbox  | speeds the initial synchronization (seconds instead of minutes)                                                       |
-|             |           |                                                                                                                       |
-+-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Prefer      | checkbox  | should only be used for NTP servers that are known to be highly accurate, such as those with time monitoring hardware |
-|             |           |                                                                                                                       |
-+-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Min. Poll   | integer   | power of 2 in seconds; can not be lower than                                                                          |
-|             |           | *4*                                                                                                                   |
-|             |           | or higher than                                                                                                        |
-|             |           | *Max. Poll*                                                                                                           |
-|             |           |                                                                                                                       |
-|             |           |                                                                                                                       |
-+-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Max. Poll   | integer   | power of 2 in seconds; can not be higher than                                                                         |
-|             |           | *17*                                                                                                                  |
-|             |           | or lower than                                                                                                         |
-|             |           | *Min. Poll*                                                                                                           |
-|             |           |                                                                                                                       |
-|             |           |                                                                                                                       |
-+-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Force       | checkbox  | forces the addition of the NTP server, even if it is currently unreachable                                            |
-|             |           |                                                                                                                       |
-+-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-
 
 Rsync Tasks
 ~~~~~~~~~~~
@@ -2294,562 +2874,6 @@ Table 4.5a summarizes the configurable options when creating a S.M.A.R.T. test.
 
 
 You can verify which tests will run and when by typing **smartd -q showtests** within Shell.
-
-Settings
-~~~~~~~~
-
-The Settings tab, shown in Figure 4.6a, contains 4 tabs: General, Advanced, Email, and SSL.
-
-**Figure 4.6a: General Tab of Settings**
-
-|Figure46a_png|
-
-General Tab
-^^^^^^^^^^^
-
-Table 4.6a summarizes the settings that can be configured using the General tab:
-
-**Table 4.6a: General Tab's Configuration Settings**
-
-
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting              | Value          | Description                                                                                                                                                                            |
-|                      |                |                                                                                                                                                                                        |
-+======================+================+========================================================================================================================================================================================+
-| Protocol             | drop-down menu | protocol to use when connecting to the administrative                                                                                                                                  |
-|                      |                | GUI                                                                                                                                                                                    |
-|                      |                | from a browser; if you change the default of                                                                                                                                           |
-|                      |                | *HTTP*                                                                                                                                                                                 |
-|                      |                | to                                                                                                                                                                                     |
-|                      |                | *HTTPS*                                                                                                                                                                                |
-|                      |                | , an unsigned certificate and RSA key will be generated and you will be logged out in order to accept the certificate                                                                  |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| WebGUI IPv4 Address  | drop-down menu | choose from a list of recent IP addresses to limit the one to use when accessing the administrative GUI; the built-in HTTP server will automatically bind to the wildcard address of   |
-|                      |                | *0.0.0.0*                                                                                                                                                                              |
-|                      |                | (any address) and will issue an alert if                                                                                                                                               |
-|                      |                | the specified address becomes unavailable                                                                                                                                              |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| WebGUI IPv6 Address  | drop-down menu | choose from a list of recent IPv6 addresses to limit the one to use when accessing the administrative GUI; the built-in HTTP server will automatically bind to the wildcard address of |
-|                      |                | *::*                                                                                                                                                                                   |
-|                      |                | (any address) and will issue an alert if the specified address becomes unavailable                                                                                                     |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| WebGUI HTTP Port     | integer        | allows you to configure a non-standard port for accessing the administrative GUI over HTTP; changing this setting may require you to                                                   |
-|                      |                | `change a firefox configuration setting <http://www.redbrick.dcu.ie/%7Ed_fens/articles/Firefox:_This_Address_is_Restricted>`_                                                          |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| WebGUI HTTPS Port    | integer        | allows you to configure a non-standard port for accessing the administrative GUI over HTTPS                                                                                            |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Language             | drop-down menu | select the localization from the drop-down menu and reload the browser; you can view the status of localization at                                                                     |
-|                      |                | `pootle.freenas.org <http://pootle.freenas.org/>`_                                                                                                                                     |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Console Keyboard Map | drop-down menu | select the keyboard layout                                                                                                                                                             |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Timezone             | drop-down menu | select the timezone from the drop-down menu                                                                                                                                            |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Syslog server        | string         | IP address or hostname of remote syslog server to send FreeNAS® logs to;                                                                                                              |
-|                      |                | once set, log entries will be written to both the FreeNAS® console and the remote server                                                                                              |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Directory Service    | drop-down menu | can select one of                                                                                                                                                                      |
-|                      |                | *Active Directory*,                                                                                                                                                                    |                                               
-|                      |                | *Domain Controller*_                                                                                                                                                                   |                                                                                                                                                                               
-|                      |                | *LDAP*,_                                                                                                                                                                               |                                                                                                                                                                                   
-|                      |                | *NIS*, or_                                                                                                                                                                             |                                                                                                                                                                                  
-|                      |                | *NT4*;                                                                                                                                                                                 |
-|                      |                | if a service is selected, an entry named                                                                                                                                               |
-|                      |                | *Directory Services*                                                                                                                                                                   |
-|                      |                | will be added to Services → Control Services for managing that selected service                                                                                                    |
-|                      |                |                                                                                                                                                                                        |
-+----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-
-
-**NOTE:** by default, logs are stored in RAM as there is no space on the embedded device to store logs. This means that logs are deleted whenever the system
-reboots. If you wish to save the system logs, either:
-
-* configure a remote syslog server on another Unix-like operating system, or
-
-* create a ZFS dataset called *syslog* and reboot the system; FreeNAS® will automatically create a *log/* directory in this dataset which contains the logs
-
-If you make any changes, click the Save button.
-
-This tab also contains the following buttons:
-
-**Factory Restore:** resets the configuration database to the default base version. However, it does not delete user SSH keys or any other data stored in a
-user's home directory. Since any configuration changes stored in the configuration database will be erased, this option is handy if you mess up your system or
-wish to return a test system to the original configuration.
-
-**Save Config:** used to create a backup copy of the current configuration database in the format *hostname-version-architecture*.
-**Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade.** This
-`forum post <http://forums.freenas.org/showthread.php?10735-How-to-automate-FreeNAS-configuration-database-backup>`_
-contains a script to backup the configuration which could be customized and added as a cron job. This
-`forum post <http://forums.freenas.org/showthread.php?12333-Backup-config-only-if-changed>`_
-contains an alternate script which only saves a copy of the configuration when it changes. And this
-`forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`_
-contains a script for backing up the configuration from another system.
-
-**Upload Config:** allows you to browse to location of saved configuration file in order to restore that configuration.
-
-Advanced Tab
-^^^^^^^^^^^^
-
-The Advanced tab, shown in Figure 4.6b, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in
-Table 4.6b.
-
-**Figure 4.6b: Advanced Tab**
-
-|Figure46b_png|
-
-**Table 4.6b: Advanced Tab's Configuration Settings**
-
-
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting                                 | Value                            | Description                                                                                                                                                                                                                                                     |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+=========================================+==================================+=================================================================================================================================================================================================================================================================+
-| Enable Console Menu                     | checkbox                         | unchecking this box removes the console menu shown in Figure 2.5a                                                                                                                                                                                               |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Use Serial Console                      | checkbox                         | do                                                                                                                                                                                                                                                              |
-|                                         |                                  | **not**                                                                                                                                                                                                                                                         |                                                                                                                                                                                                                                                          
-|                                         |                                  | check this box if your serial port is disabled                                                                                                                                                                                                                  |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Serial Port Address                     | string                           | serial port address written in hex                                                                                                                                                                                                                              |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Serial Port Speed                       | drop-down menu                   | select the speed used by the serial port                                                                                                                                                                                                                        |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable screen saver                     | checkbox                         | enables/disables the console screen saver                                                                                                                                                                                                                       |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable powerd (Power Saving Daemon)     | checkbox                         | `powerd(8) <http://www.freebsd.org/cgi/man.cgi?query=powerd>`_                                                                                                                                                                                                  |
-|                                         |                                  | monitors the system state and sets the CPU frequency accordingly                                                                                                                                                                                                |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Swap size                               | non-zero integer representing GB | by default, all data disks are created with this amount of swap; this setting does not affect log or cache devices as they are created without swap                                                                                                             |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Show console messages in the footer     | checkbox                         | will display console messages in real time at bottom of browser; click the console to bring up a scrollable screen; check the “Stop refresh” box in the scrollable screen to pause updating and uncheck the box to continue to watch the messages as they occur |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Show tracebacks in case of fatal errors | checkbox                         | provides a pop-up of diagnostic information when a fatal error occurs                                                                                                                                                                                           |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Show advanced fields by default         | checkbox                         | several GUI menus provide an Advanced Mode button to access additional features; enabling this shows these features by default                                                                                                                                  |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable autotune                         | checkbox                         | enables the                                                                                                                                                                                                                                                     |
-|                                         |                                  | autotune                                                                                                                                                                                                                      |
-|                                         |                                  | script which attempts to optimize the system depending upon the hardware which is installed                                                                                                                                                                     |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable debug kernel                     | checkbox                         | if checked, next boot will boot into a debug version of the kernel                                                                                                                                                                                              |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable automatic upload of              | checkbox                         | if checked, kernel crash dumps are automatically sent                                                                                                                                                                                                           |
-| kernel crash dumps                      |                                  | to the FreeNAS® development team for diagnosis                                                                                                                                                                                                                  |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| MOTD banner                             | string                           | input the message to be seen when a user logs in via                                                                                                                                                                                                            |
-|                                         |                                  | SSH                                                                                                                                                                                                                                                             |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| System dataset pool                     | drop-down menu                   | by default, the                                                                                                                                                                                                                                                 |
-|                                         |                                  | *.system*                                                                                                                                                                                                                                                       |
-|                                         |                                  | dataset is automatically created in the first ZFS volume in order to store persistent Samba permissions, collecting core files, and storing system log files; the drop-down menu can be used to select a different ZFS volume                                   |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Use system dataset for syslog           | checkbox                         | uncheck this box if you don't want logging to spin up the disks and it will write to                                                                                                                                                                            |
-|                                         |                                  | */var/log/*                                                                                                                                                                                                                                                     |
-|                                         |                                  | instead of the                                                                                                                                                                                                                                                  |
-|                                         |                                  | *.system*                                                                                                                                                                                                                                                       |
-|                                         |                                  | dataset                                                                                                                                                                                                                                                         |
-|                                         |                                  |                                                                                                                                                                                                                                                                 |
-+-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-
-
-If you make any changes, click the Save button.
-
-This tab also contains the following buttons:
-
-**Rebuild LDAP/AD Cache:** click if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs automatically once a day
-as a cron job.
-
-**Save Debug:** used to generate a text file of diagnostic information. t will prompt for the location to save the ASCII text file.
-
-**Firmware Update:** used to Upgrade FreeNAS®.
-
-Autotune
-""""""""
-
-FreeNAS® provides an autotune script which attempts to optimize the system depending upon the hardware which is installed. For example, if a ZFS volume
-exists on a system with limited RAM, the autotune script will automatically adjust some ZFS sysctl values in an attempt to minimize ZFS memory starvation
-issues. It should only be used as a temporary measure on a system that hangs until the underlying hardware issue is addressed by adding more RAM. Autotune
-will always slow the system down as it caps the ARC.
-
-The “Enable autotune” checkbox in System → Settings → Advanced is unchecked by default; check it if you would like the autotuner to run at boot
-time. If you would like the script to run immediately, reboot the system.
-
-If autotuner finds any settings that need adjusting, the changed values will appear in System → Sysctls (for *sysctl.conf* values) and in System →
-Tunables (for *loader.conf* values). If you do not like the changes, you can modify the values that are displayed in the GUI and your changes will override
-the values that were created by the autotune script. However, if you delete a sysctl or tunable that was created by autotune, it will be recreated at next
-boot. This is because autotune only creates values that do not already exist.
-
-If you are trying to increase the performance of your FreeNAS® system and suspect that the current hardware may be limiting performance, try enabling
-autotune.
-
-If you wish to read the script to see which checks are performed, the script is located in */usr/local/bin/autotune*.
-
-Email Tab
-^^^^^^^^^
-
-The Email tab, shown in Figure 4.6c, is used to configure the email settings on the FreeNAS® system. Table 4.6c summarizes the settings that can be
-configured using the Email tab.
-
-**NOTE:** it is important to configure the system so that it can successfully send emails. An automatic script send a nightly email to the *root* user account
-containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
-
-**Figure 4.6c: Email Tab**
-
-
-|Figure46c_png|
-
-
-
-**Table 4.6c: Email Tab's Configuration Settings**
-
-
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Setting              | Value                | Description                                                                                     |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| From email           | string               | the                                                                                             |
-|                      |                      | **From**                                                                                        |
-|                      |                      | email address to be used when sending email notifications                                       |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Outgoing mail server | string or IP address | hostname or IP address of SMTP server                                                           |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Port to connect to   | integer              | SMTP                                                                                            |
-|                      |                      | port number, typically 25, 465 (secure                                                          |
-|                      |                      | SMTP                                                                                            |
-|                      |                      | ), or 587 (submission)                                                                          |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| TLS/                 | drop-down menu       | encryption type; choices are                                                                    |
-| SSL                  |                      | *Plain*                                                                                         |
-|                      |                      | ,                                                                                               |
-|                      |                      | *SSL*                                                                                           |
-|                      |                      | , or                                                                                            |
-|                      |                      | *TLS*                                                                                           |
-|                      |                      |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Use                  | checkbox             | enables/disables                                                                                |
-| SMTP                 |                      | `SMTP AUTH <http://en.wikipedia.org/wiki/SMTP_Authentication>`_                                 |
-| Authentication       |                      | using PLAIN SASL                                                                                |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Username             | string               | used to authenticate with SMTP server                                                           |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Password             | string               | used to authenticate with SMTP server                                                           |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Send Test Mail       | button               | click to check that configured email settings are working; this will fail if you do not set the |
-|                      |                      | **To**                                                                                          |
-|                      |                      | email address                                                                                   |
-|                      |                      | by clicking the Change E-mail button for the                                                    |
-|                      |                      | *root*                                                                                          |
-|                      |                      | account in Accounts → Users → View Users                                                        |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-
-
-SSL Tab
-^^^^^^^
-
-When you change the Protocol value to HTTPS in System → Settings → General, an unsigned RSA certificate and key are auto-generated. Once generated,
-the certificate and key will be displayed in the SSL Certificate field in System → Settings → SSL, shown in Figure 4.6d. If you already have your own
-signed certificate that you wish to use for SSL/TLS connections, replace the values in the SSL certificate field with a copy/paste of your own key and certificate. The certificate can be used to secure the HTTP connection (enabled in the Settings → General Tab) to the FreeNAS® system.
-
-Table 4.6d summarizes the settings that can be configured using the SSL tab. This
-`howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
-shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 4.6d.
-
-
-**Figure 4.6d: SSL Tab**
-
-
-|Figure46d_png|
-
-**Table 4.6d: SSL Tab's Configuration Settings**
-
-
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Setting             | Value  | Description                                                                                                      |
-|                     |        |                                                                                                                  |
-+=====================+========+==================================================================================================================+
-| Organization        | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Organizational Unit | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Email Address       | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Locality            | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| State               | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Country             | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Common Name         | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Passphrase          | string | if the certificate was created with a passphrase, input and confirm it; the value will appear as dots in the GUI |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| SSL                 | string | paste the                                                                                                        |
-| Certificate         |        | private                                                                                                          |
-|                     |        | key and certificate                                                                                              |
-|                     |        | into the box                                                                                                     |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-
-
-**NOTE:** FreeNAS® will check the validity of the certificate and key and will fallback to HTTP if they appear to be invalid.
-
-Sysctls
-~~~~~~~
-
-`sysctl(8) <http://www.freebsd.org/cgi/man.cgi?query=sysctl>`_
-is an interface that is used to make changes to the FreeBSD kernel running on a FreeNAS® system. It can be used to tune the system in order to meet the
-specific needs of a network. Over five hundred system variables can be set using sysctl(8). Each variable is known as a MIB as it is comprised of a dotted set
-of components. Since these MIBs are specific to the kernel feature that is being tuned, descriptions can be found in many FreeBSD man pages (e.g.
-`sysctl(3) <http://www.freebsd.org/cgi/man.cgi?query=sysctl&sektion=3>`_
-,
-`tcp(4) <http://www.freebsd.org/cgi/man.cgi?query=tcp>`_
-and
-`tuning(7) <http://www.freebsd.org/cgi/man.cgi?query=tuning>`_
-) and in many sections of the
-`FreeBSD Handbook <http://www.freebsd.org/handbook>`_
-.
-
-**DANGER!** changing the value of a sysctl MIB is an advanced feature that immediately affects the kernel of the FreeNAS® system.
-**Do not change a MIB on a production system unless you understand the ramifications of that change.** A badly configured MIB could cause the system to become
-unbootable, unreachable via the network, or can cause the system to panic under load. Certain changes may break assumptions made by the FreeNAS® software.
-This means that you should always test the impact of any changes on a test system first.
-
-FreeNAS® provides a graphical interface for managing sysctl MIBs. To add a sysctl, go to System → Sysctls → Add Sysctl.
-
-Table 4.7a summarizes the options when adding a sysctl.
-
-**Table 4.7a: Adding a Sysctl**
-
-
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| **Setting** | **Value**         | **Description**                                                                   |
-|             |                   |                                                                                   |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| Variable    | string            | must be in dotted format e.g.                                                     |
-|             |                   | *kern.ipc.shmmax*                                                                 |
-|             |                   |                                                                                   |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| Value       | integer or string | value to associate with the MIB;                                                  |
-|             |                   | **do not make this up**                                                           |
-|             |                   | , refer to the suggested values in a man page, FreeBSD Handbook page, or tutorial |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| Comment     | string            | optional, but a useful reminder for the reason behind using this MIB/value        |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| Enabled     | checkbox          | uncheck if you would like to disable the sysctl without deleting it               |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-
-
-As soon as you add or edit a sysctl, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that value will
-persist across reboots and upgrades.
-
-Note that any sysctl that is read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by attempting to change it
-from Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command  
-**sysctl net.inet.tcp.delay_ack=1**. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get an
-error, the setting is now applied. However, for the setting to be persistent across reboots, the sysctl must be added in System → Sysctls.
-
-Any MIBs that you add will be listed in System → Sysctls → View Sysctls. To change the value of a MIB, click its Edit button. To remove a MIB, click
-its Delete button.
-
-At this time, the GUI does not display the sysctl MIBs that are pre-set in the installation image. 9.3 ships with the following MIBs set::
-
- kern.metadelay=3
- kern.dirdelay=4
- kern.filedelay=5
- kern.coredump=0
- net.inet.tcp.delayed_ack=0
-
-
-**Do not add or edit the default MIBS as sysctls** as doing so will overwrite the default values which may render the system unusable.
-
-System Information
-~~~~~~~~~~~~~~~~~~
-
-System → System Information displays general information about the FreeNAS® system. An example is seen in Figure 4.8a.
-
-The information includes the hostname, the build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, and the
-current load average.
-
-To change the system's hostname, click its “Edit” button, type in the new hostname, and click “OK”. The hostname must include the domain name. If
-the network does not use a domain name add *.local* to the end of the hostname.
-
-**Figure 4.8a: System Information Tab**
-
-|Figure48a_png|
-
-Tunables
-~~~~~~~~
-
-When a FreeBSD-based system boots,
-`loader.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=loader.conf>`_
-is read to determine if any parameters should be passed to the kernel or if any additional kernel modules (such as drivers) should be loaded. Since loader
-values are specific to the kernel parameter or driver to be loaded, descriptions can be found in the man page for the specified driver and in many sections of
-the
-`FreeBSD Handbook <http://www.freebsd.org/handbook>`_
-.
-
-FreeNAS® provides a graphical interface for managing loader values. This advanced functionality is intended to make it easier to load additional kernel
-modules at boot time. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default
-FreeNAS® image does not load every possible hardware driver. This is a necessary evil as some drivers conflict with one another or cause stability issues,
-some are rarely used, and some drivers just don't belong on a standard NAS system. If you need a driver that is not automatically loaded, you need to add a
-tunable.
-
-**DANGER!** adding a tunable is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
-**very important** that you do not have a typo when adding a tunable as this could halt the boot process. Fixing this problem requires physical access to the
-FreeNAS® system and knowledge of how to use the boot loader prompt as described in Recovering From Incorrect Tunables. This means that you should always test
-the impact of any changes on a test system first.
-
-To add a tunable, go to System → Tunables → Add Tunable, as seen in Figure 4.9a.
-
-**Figure 4.9a: Adding a Tunable**
-
-|Figure49a_png|
-
-Table 4.9a summarizes the options when adding a tunable. The changes you make will not take effect until the system is rebooted as loader settings are only
-read when the kernel is loaded at boot time. As long as the tunable exists, your changes will persist at each boot and across upgrades. Any tunables that you
-add will be listed alphabetically in System → Tunables → View Tunables. To change the value of a tunable, click its Edit button. To remove a tunable,
-click its Delete button.
-
-**Table 4.9a: Adding a Tunable**
-
-+-------------+-------------------+---------------------------------------------------------------------------+
-| **Setting** | **Value**         | **Description**                                                           |
-|             |                   |                                                                           |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Variable    | string            | typically the name of the driver to load, as indicated by its man page    |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Value       | integer or string | value to associate with variable; typically this is set to                |
-|             |                   | *YES*                                                                     |
-|             |                   | to enable the driver specified by the variable                            |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Comment     | string            | optional, but a useful reminder for the reason behind adding this tunable |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Enabled     | checkbox          | uncheck if you would like to disable the tunable without deleting it      |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-
-
-At this time, the GUI does not display the tunables that are pre-set in the installation image. 9.3 ships with the following tunables set::
-
- autoboot_delay="2"
- loader_logo="freenas-logo"
- loader_menu_title="Welcome to FreeNAS"
- loader_brand="freenas-brand"
- loader_version=" "
- debug.debugger_on_panic=1
- debug.ddb.textdump.pending=1
- hw.hptrr.attach_generic=0
- kern.ipc.nmbclusters="262144"
- vfs.mountroot.timeout="30"
- hint.isp.0.role=2
- hint.isp.1.role=2
- hint.isp.2.role=2
- hint.isp.3.role=2
- module_path="/boot/modules;/usr/local/modules"
- net.inet6.ip6.auto_linklocal="0"
-
-**Do not add or edit the default tunables** as doing so will overwrite the default values which may render the system unusable.
-
-The ZFS version used in 9.2.2 deprecates the following tunables::
-
- vfs.zfs.write_limit_override
- vfs.zfs.write_limit_inflated
- vfs.zfs.write_limit_max
- vfs.zfs.write_limit_min
- vfs.zfs.write_limit_shift
- vfs.zfs.no_write_throttle
-
-If you upgrade from an earlier version of FreeNAS® where these tunables are set, they will automatically be deleted for you. You should not try to add these
-tunables back.
-
-Recovering From Incorrect Tunables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If a tunable is preventing the system from booting, you will need physical access to the FreeNAS® system. Watch the boot messages and press the number 3 key
-or the Esc key to select “3. **Esc**ape to loader prompt” when you see the FreeNAS® boot menu shown in Figure 4.9b.
-
-**Figure 4.9b: FreeNAS® Boot Menu**
-
-
-|10000000000002D10000018F743DB34E_png|
-
-The boot loader prompt provides a minimal set of commands described in
-`loader(8) <http://www.freebsd.org/cgi/man.cgi?query=loader>`_
-. Once at the prompt, use the **unset** command to disable a problematic value, the
-**set** command to modify the problematic value, or the
-**unload** command to prevent the problematic driver from loading.
-
-Example 4.9a demonstrates several examples using these commands at the boot loader prompt. The first command disables the current value associated with the
-*kern.ipc.nmbclusters* MIB and will fail with a “no such file or directory” error message if a current tunable does not exist to set this value. The
-second command disables ACPI. The third command instructs the system not to load the fuse driver. When finished, type **boot** to continue the boot process.
-
-**Example 4.9a: Sample Commands at the Boot Loader Prompt**
-::
-
- Type '?' for a list of commands, 'help' for more detailed help.
- OK
- 
- unset kern.ipc.nmbclusters
- OK
-
- set hint.acpi.0.disabled=1
- OK
-
- unload fuse
- OK
-
- boot
-
-Any changes made at the boot loader prompt only effect the current boot. This means that you need to edit or remove the problematic tunable in System →
-Tunables → View Tunables to make your change permanent and to prevent future boot errors.
 
 Network Configuration
 ---------------------
@@ -3364,368 +3388,17 @@ Storage Configuration
 
 The Storage section of the graphical interface allows you to configure the following:
 
+* Volumes: used to create and manage storage volumes.
+
 * Periodic Snapshot Tasks: used to schedule the automatic creation of ZFS snapshots.
 
 * Replication Tasks: used to schedule the replication of snapshots over an encrypted connection.
 
-* Volumes: used to create and manage storage volumes.
-
 * ZFS Scrubs: used to schedule ZFS scrubs as part of ongoing disk maintenance.
 
+* ZFS Snapshots:
+
 These configurations are described in more detail in this section.
-
-Periodic Snapshot Tasks
-~~~~~~~~~~~~~~~~~~~~~~~
-
-A periodic snapshot task allows you to schedule the creation of read-only versions of ZFS volumes and datasets at a given point in time. Snapshots can be
-created quickly and, if little data changes, new snapshots take up very little space. For example, a snapshot where no files have changed takes 0 MB of
-storage, but as you make changes to files, the snapshot size changes to reflect the size of the changes.
-
-Snapshots provide a clever way of keeping a history of files, should you need to recover an older copy or even a deleted file. For this reason, many
-administrators take snapshots often (e.g. every 15 minutes), store them for a period of time (e.g. for a month), and store them on another system (e.g. using
-Replication Tasks). Such a strategy allows the administrator to roll the system back to a specific time or, if there is a catastrophic loss, an off-site
-snapshot can restore the system up to the last snapshot interval.
-
-Before you can create a snapshot, you need to have an existing ZFS volume. How to create a volume is described in ZFS Volume Manager.
-
-Creating a Periodic Snapshot Task
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To create a periodic snapshot task, click Storage → Periodic Snapshot Tasks → Add Periodic Snapshot which will open the screen shown in Figure 6.1a.
-Table 6.1a summarizes the fields in this screen.
-
-**NOTE:** if you just need a one-time snapshot, instead use Storage → Volumes → View Volumes and click the Create Snapshot button for the volume or
-dataset that you wish to snapshot.
-
-**Figure 6.1a: Creating a ZFS Periodic Snapshot**
-
-
-|Figure61a_png|
-
-**Table 6.1a: Options When Creating a Periodic Snapshot**
-
-
-+----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting        | Value                      | Description                                                                                                                                                                  |
-|                |                            |                                                                                                                                                                              |
-+================+============================+==============================================================================================================================================================================+
-| Enabled        | checkbox                   | uncheck to disable the scheduled replication task without deleting it                                                                                                        |
-|                |                            |                                                                                                                                                                              |
-+----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Volume/Dataset | drop-down menu             | select an existing ZFS volume, dataset, or zvol; if you select a volume, separate snapshots will also be created for each of its datasets                                    |
-|                |                            |                                                                                                                                                                              |
-+----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Recursive      | checkbox                   | select this box to take separate snapshots of the volume/dataset and each of its child datasets; if unchecked, only one snapshot is taken of the volume/dataset specified in |
-|                |                            | *Filesystem / Volume*                                                                                                                                                        |
-|                |                            |                                                                                                                                                                              |
-+----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Lifetime       | integer and drop-down menu | how long to keep the snapshot on this system; if the snapshot is replicated, it is not removed from the receiving system when the lifetime expires                           |
-|                |                            |                                                                                                                                                                              |
-+----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Begin          | drop-down menu             | do not create snapshots before this time of day                                                                                                                              |
-|                |                            |                                                                                                                                                                              |
-+----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| End            | drop-down menu             | do not create snapshots after this time of day                                                                                                                               |
-|                |                            |                                                                                                                                                                              |
-+----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Interval       | drop-down menu             | how often to take snapshot between                                                                                                                                           |
-|                |                            | *Begin*                                                                                                                                                                      |
-|                |                            | and                                                                                                                                                                          |
-|                |                            | *End*                                                                                                                                                                        |
-|                |                            | times                                                                                                                                                                        |
-|                |                            |                                                                                                                                                                              |
-+----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Weekday        | checkboxes                 | which days of the week to take snapshots                                                                                                                                     |
-|                |                            |                                                                                                                                                                              |
-+----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-
-
-If the Recursive box is checked, you do not need to create snapshots for every dataset individually as they are included in the snapshot. The downside is that
-there is no way to exclude certain datasets from being included in a recursive snapshot.
-
-Once you click the OK button, a snapshot will be taken and this task will be repeated according to your settings.
-
-Managing Periodic Snapshot Tasks
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-After creating a periodic snapshot task, an entry for the snapshot task will be added to View Periodic Snapshot Tasks, as seen in the example in Figure 6.1b.
-Click an entry to access its Modify and Delete buttons.
-
-**Figure 6.1b: View Periodic Snapshot Tasks**
-
-|Figure61b_png|
-
-If you click the ZFS Snapshots tab (above the Add Periodic Snapshot button), you can review the listing of available snapshots. An example is shown in Figure
-6.1c.
-
-**NOTE:** if snapshots do not appear, check that the current time does not conflict with the begin, end, and interval settings. If the snapshot was attempted
-but failed, an entry will be added to */var/log/messages*. This log file can be viewed in Shell.
-
-**Figure 6.1c: Viewing Available Snapshots**
-
-
-|Figure61c_png|
-
-The most recent snapshot for a volume or dataset will be listed last and will have 3 icons. The icons associated with a snapshot allow you to:
-
-**Clone Snapshot:** will prompt for the name of the clone to create. The clone will be a writable copy of the snapshot. Since a clone is really a dataset
-which can be mounted, the clone will appear in the Active Volumes tab, instead of the Periodic Snapshots tab, and will have the word *clone* in its name.
-
-**Destroy Snapshot:** a pop-up message will ask you to confirm this action. Child clones must be destroyed before their parent snapshot can be destroyed.
-While creating a snapshot is instantaneous, deleting a snapshot can be I/O intensive and can take a long time, especially when deduplication is enabled.
-In order to delete a block in a snapshot, ZFS has to walk all the allocated blocks to see if that block is used anywhere else; if it is not, it can be freed.
-
-**Rollback Snapshot:** a pop-up message will ask if you are sure that you want to rollback to this snapshot state. If you click Yes, any files that have
-changed since the snapshot was taken will be reverted back to their state at the time of the snapshot.
-
-**NOTE:** rollback is a potentially dangerous operation and will cause any configured replication tasks to fail as the replication system uses the existing
-snapshot when doing an incremental backup. If you do need to restore the data within a snapshot, the recommended steps are:
-
-#.  Clone the desired snapshot.
-
-#.  Share the clone with the share type or service running on the FreeNAS® system.
-
-#.  Once users have recovered the needed data, destroy the clone in the Active Volumes tab.
-
-This approach will never destroy any on-disk data and has no impact on replication.
-
-Periodic snapshots can be configured to appear as Shadow Copies in newer versions of Windows Explorer. Users can access the files in the shadow copy using
-Explorer without requiring any interaction with the FreeNAS® graphical administrative interface.
-
-The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the Define filter icon (near the text
-“No filter applied”). When creating a filter:
-
-* select the column or leave the default of Any Column.
-
-* select the condition. Possible conditions are: *contains* (default),
-  *is, starts with, ends with, does *
-  *not contain, is not, does not start with, does not end with*, and
-  *is empty*.
-
-*   input a value that meets your view criteria.
-
-*   click the Filter button to save your filter and exit the define filter screen. Alternately, click the + button to add another filter.
-
-If you create multiple filters, select the filter you wish to use before leaving the define filter screen. Once a filter is selected, the “No filter
-applied” text will change to “Clear filter”. If you click “Clear filter”, a pop-up message will indicate that this will remove the filter and all
-available snapshots will be listed.
-
-Replication Tasks
-~~~~~~~~~~~~~~~~~
-
-A replication task allows you to automate the copy of ZFS snapshots to another system over an encrypted connection. This allows you to create an off-site
-backup of a ZFS dataset or pool.
-
-This section will refer to the system generating the ZFS snapshots as *PUSH*
-and the system to receive a copy of the ZFS snapshots as *PULL*.
-
-Before you can configure a replication task, the following pre-requisites must be met:
-
-* a ZFS volume must exist on both *PUSH* and
-  *PULL*.
-
-* a periodic snapshot task must be created on *PUSH*. You will not be able to create a replication task before the first snapshot exists.
-
-* the SSH service must be enabled on *PULL*. The first time the service is enabled, it will generate the required SSH keys.
-
-A replication task uses the following keys:
-
-* **/data/ssh/replication.pub:** the RSA public key used for authenticating the *PUSH* replication user. This key needs to be copied to the replication
-  user account on *PULL*.
-
-* **/etc/ssh/ssh_host_rsa_key.pub:** the RSA host public key of *PULL* used to authenticate the receiving side in order to prevent a man-in-the-middle
-  attack. This key needs to be copied to the replication task on *PUSH*.
-
-This section will demonstrate how to configure a replication task between the following two FreeNAS® systems:
-
-* *192.168.2.2* will be referred to as *PUSH*. This system has a periodic snapshot task for the ZFS dataset
-  */mnt/local/data*.
-
-* *192.168.2.6* will be referred to as *PULL* . This system has an existing ZFS volume named
-  */mnt/remote* which will store the pushed snapshots.
-
-Configure PULL
-^^^^^^^^^^^^^^
-
-A copy of the public key for the replication user on *PUSH* needs to be pasted to the public key of the replication user on the *PULL* system.
-
-To obtain a copy of the replication key: on *PUSH* go to Storage → View Replication Tasks. Click the View Public Key button and copy its contents. An
-example is shown in Figure 6.2a.
-
-**Figure 6.2a: Copy the Replication Key**
-
-|Figure62a_png|
-
-Go to *PULL* and click Account → Users → View Users. Click the Modify User button for the user account you will be using for replication (by default
-this is the *root* user). Paste the copied key into the “SSH Public Key” field and click OK. If a key already exists, append the new text after the
-existing key.
-
-On *PULL*, ensure that the SSH service is enabled in Services → Control Services. Start it if it is not already running.
-
-Configure PUSH
-^^^^^^^^^^^^^^
-
-On *PUSH*, verify that a periodic snapshot task has been created and that at least one snapshot is listed in Storage → Periodic Snapshot Tasks → View
-Periodic Snapshot Tasks → ZFS Snapshots.
-
-To create the replication task, click Storage → Replication Tasks → Add Replication Task. Figure 6.2b shows the required configuration for our example:
-
-* the Volume/Dataset is *local/data*
-
-* the Remote ZFS Volume/Dataset is *remote*
-
-* the Remote hostname is *192.168.2.6*
-
-* the Begin and End times are at their default values, meaning that replication will occur whenever a snapshot is created
-
-* once the Remote hostname is input, click the SSH Key Scan button; assuming the address is reachable and the SSH service is running on *PULL*, its key will
-  automatically be populated to the Remote hostkey box
-
-Table 6.2a summarizes the available options in the Add Replication Task screen.
-
-**Figure 6.2b: Adding a Replication Task**
-
-
-|Figure62b_png|
-
-**Table 6.2a: Adding a Replication Task**
-
-
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| **Setting**               | **Value**      | **Description**                                                                                                     |
-|                           |                |                                                                                                                     |
-|                           |                |                                                                                                                     |
-+===========================+================+=====================================================================================================================+
-| Enabled                   | checkbox       | uncheck to disable the scheduled replication task without deleting it                                               |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Volume/Dataset            | drop-down menu | the ZFS volume or dataset on                                                                                        |
-|                           |                | *PUSH*                                                                                                              |
-|                           |                | containing the snapshots to be replicated; the drop-down menu will be empty if a snapshot does not already exist    |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Remote ZFS Volume/Dataset | string         | the ZFS volume on                                                                                                   |
-|                           |                | *PULL*                                                                                                              |
-|                           |                | that will store the snapshots;                                                                                      |
-|                           |                | */mnt/*                                                                                                             |
-|                           |                | is assumed and should not be included in the path                                                                   |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Recursively replicate     | checkbox       | if checked will replicate child datasets and replace previous snapshot stored on                                    |
-|                           |                | *PULL*                                                                                                              |
-|                           |                |                                                                                                                     |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Initialize remote side    | checkbox       | does a reset once operation which destroys the replication data on                                                  |
-|                           |                | *PULL*                                                                                                              |
-|                           |                | before reverting to normal operation; use this option if replication gets stuck                                     |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Limit (kB/s)              | integer        | limits replication speed to specified value in kilobytes/second; default of                                         |
-|                           |                | *0*                                                                                                                 |
-|                           |                | is unlimited                                                                                                        |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Begin                     | drop-down menu | the replication can not start before this time; the times selected in the                                           |
-|                           |                | *Begin*                                                                                                             |
-|                           |                | and                                                                                                                 |
-|                           |                | *End*                                                                                                               |
-|                           |                | fields set the replication window for when replication can occur                                                    |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| End                       | drop-down menu | the replication must start by this time; once started, replication will occur until it is finished (see NOTE below) |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Remote hostname           | string         | IP address or DNS name of                                                                                           |
-|                           |                | *PULL*                                                                                                              |
-|                           |                |                                                                                                                     |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Remote port               | string         | must match port being used by SSH service on                                                                        |
-|                           |                | *PULL*                                                                                                              |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Dedicated User Enabled    | checkbox       | allows a user account other than root to be used for replication                                                    |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Dedicated User            | drop-down menu | only available if                                                                                                   |
-|                           |                | *Dedicated User Enabled*                                                                                            |
-|                           |                | is checked; select the user account to be used for replication                                                      |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Enable High Speed Ciphers | checkbox       | note that the cipher is quicker because it has a lower strength                                                     |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Remote hostkey            | string         | use the SSH Key Scan button to retrieve the public key of                                                           |
-|                           |                | *PULL*                                                                                                              |
-|                           |                |                                                                                                                     |
-|                           |                |                                                                                                                     |
-+---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-
-
-By default, replication occurs when snapshots occur. For example, if snapshots are scheduled for every 2 hours, replication occurs every 2 hours. The Begin
-and End times can be used to create a window of time where replication occurs. Change the default times (which allow replication to occur at any time of the
-day a snapshot occurs) if snapshot tasks are scheduled during office hours but the replication itself should occur after office hours. For the End time,
-consider how long replication will take so that it finishes before the next day's office hours begin.
-
-Once the replication task is created, it will appear in the View Replication Tasks of *PUSH.*
-
-*PUSH* will immediately attempt to replicate its latest snapshot to
-*PULL*. If the replication is successful, the snapshot will appear in the Storage → Periodic Snapshot Tasks → View Periodic Snapshot Tasks → ZFS
-Snapshots tab of *PULL*, as seen in Figure 6.2c. If the snapshot is not replicated, see the next section for troubleshooting tips.
-
-**Figure 6.2c: Verifying the Snapshot was Replicated**
-
-|Figure62c_png|
-
-Troubleshooting Replication
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If you have followed all of the steps above and have *PUSH* snapshots that are not replicating to *PULL*, check to see if SSH is working properly. On *PUSH*,
-open Shell and try to **ssh** into *PULL*. Replace
-*hostname_or_ip* with the value for
-*PULL*::
-
- ssh -vv -i /data/ssh/replication hostname_or_ip
-
-This command should not ask for a password. If it asks for a password, SSH authentication is not working. Go to Storage → Replication Tasks → View
-Replication Tasks and click the “View Public Key” button. Make sure that it matches one of the values in */~/.ssh/authorized_keys* on
-*PULL, * where ~ represents the home directory of the replication user.
-
-Also check */var/log/auth.log* on
-*PULL* and
-*/var/log/messages* on
-*PUSH* to see if either log gives an indication of the error.
-
-If the key is correct and replication is still not working, try deleting all snapshots on *PULL* except for the most recent one. In Storage → Periodic
-Snapshot Tasks → View Periodic Snapshot Tasks → ZFS Snapshots check the box next to every snapshot except for the last one (the one with 3 icons
-instead of 2), then click the global Destroy button at the bottom of the screen.
-
-Once you have only one snapshot, open Shell on *PUSH* and use the
-**zfs send** command. To continue our example, the ZFS snapshot on the
-*local/data* dataset of
-*PUSH* is named
-*auto-20110922.1753-2h*, the IP address of
-*PULL* is
-*192.168.2.6*, and the ZFS volume on
-*PULL* is
-*remote*. Note that the
-**@** is used to separate the volume/dataset name from the snapshot name.::
-
- zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
-
-**NOTE:** if this command fails with the error “cannot receive new filesystem stream: destination has snapshots”, check the box “initialize remote side
-for once” in the replication task and try again. If the **zfs send** command still fails, you will need to open Shell on
-*PULL* and use the
-**zfs destroy -R volume_name@snapshot_name** command to delete the stuck snapshot. You can then use the
-**zfs list -t snapshot** on
-*PULL* to confirm if the snapshot successfully replicated.
-
-After successfully transmitting the snapshot, recheck again after the time period between snapshots lapses to see if the next snapshot successfully
-transmitted. If it is still not working, you can manually send an incremental backup of the last snapshot that is on both systems to the current one with this
-command::
-
- zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
 Volumes
 ~~~~~~~
@@ -4887,6 +4560,359 @@ Should you ever need to create a new clone, remember to remove the old clone fir
 
  zpool destroy migrant
 
+Periodic Snapshot Tasks
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A periodic snapshot task allows you to schedule the creation of read-only versions of ZFS volumes and datasets at a given point in time. Snapshots can be
+created quickly and, if little data changes, new snapshots take up very little space. For example, a snapshot where no files have changed takes 0 MB of
+storage, but as you make changes to files, the snapshot size changes to reflect the size of the changes.
+
+Snapshots provide a clever way of keeping a history of files, should you need to recover an older copy or even a deleted file. For this reason, many
+administrators take snapshots often (e.g. every 15 minutes), store them for a period of time (e.g. for a month), and store them on another system (e.g. using
+Replication Tasks). Such a strategy allows the administrator to roll the system back to a specific time or, if there is a catastrophic loss, an off-site
+snapshot can restore the system up to the last snapshot interval.
+
+Before you can create a snapshot, you need to have an existing ZFS volume. How to create a volume is described in ZFS Volume Manager.
+
+Creating a Periodic Snapshot Task
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To create a periodic snapshot task, click Storage → Periodic Snapshot Tasks → Add Periodic Snapshot which will open the screen shown in Figure 6.1a.
+Table 6.1a summarizes the fields in this screen.
+
+**NOTE:** if you just need a one-time snapshot, instead use Storage → Volumes → View Volumes and click the Create Snapshot button for the volume or
+dataset that you wish to snapshot.
+
+**Figure 6.1a: Creating a ZFS Periodic Snapshot**
+
+
+|Figure61a_png|
+
+**Table 6.1a: Options When Creating a Periodic Snapshot**
+
+
++----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Setting        | Value                      | Description                                                                                                                                                                  |
+|                |                            |                                                                                                                                                                              |
++================+============================+==============================================================================================================================================================================+
+| Enabled        | checkbox                   | uncheck to disable the scheduled replication task without deleting it                                                                                                        |
+|                |                            |                                                                                                                                                                              |
++----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Volume/Dataset | drop-down menu             | select an existing ZFS volume, dataset, or zvol; if you select a volume, separate snapshots will also be created for each of its datasets                                    |
+|                |                            |                                                                                                                                                                              |
++----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Recursive      | checkbox                   | select this box to take separate snapshots of the volume/dataset and each of its child datasets; if unchecked, only one snapshot is taken of the volume/dataset specified in |
+|                |                            | *Filesystem / Volume*                                                                                                                                                        |
+|                |                            |                                                                                                                                                                              |
++----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Lifetime       | integer and drop-down menu | how long to keep the snapshot on this system; if the snapshot is replicated, it is not removed from the receiving system when the lifetime expires                           |
+|                |                            |                                                                                                                                                                              |
++----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Begin          | drop-down menu             | do not create snapshots before this time of day                                                                                                                              |
+|                |                            |                                                                                                                                                                              |
++----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| End            | drop-down menu             | do not create snapshots after this time of day                                                                                                                               |
+|                |                            |                                                                                                                                                                              |
++----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Interval       | drop-down menu             | how often to take snapshot between                                                                                                                                           |
+|                |                            | *Begin*                                                                                                                                                                      |
+|                |                            | and                                                                                                                                                                          |
+|                |                            | *End*                                                                                                                                                                        |
+|                |                            | times                                                                                                                                                                        |
+|                |                            |                                                                                                                                                                              |
++----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Weekday        | checkboxes                 | which days of the week to take snapshots                                                                                                                                     |
+|                |                            |                                                                                                                                                                              |
++----------------+----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
+If the Recursive box is checked, you do not need to create snapshots for every dataset individually as they are included in the snapshot. The downside is that
+there is no way to exclude certain datasets from being included in a recursive snapshot.
+
+Once you click the OK button, a snapshot will be taken and this task will be repeated according to your settings.
+
+Managing Periodic Snapshot Tasks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+After creating a periodic snapshot task, an entry for the snapshot task will be added to View Periodic Snapshot Tasks, as seen in the example in Figure 6.1b.
+Click an entry to access its Modify and Delete buttons.
+
+**Figure 6.1b: View Periodic Snapshot Tasks**
+
+|Figure61b_png|
+
+If you click the ZFS Snapshots tab (above the Add Periodic Snapshot button), you can review the listing of available snapshots. An example is shown in Figure
+6.1c.
+
+**NOTE:** if snapshots do not appear, check that the current time does not conflict with the begin, end, and interval settings. If the snapshot was attempted
+but failed, an entry will be added to */var/log/messages*. This log file can be viewed in Shell.
+
+**Figure 6.1c: Viewing Available Snapshots**
+
+
+|Figure61c_png|
+
+The most recent snapshot for a volume or dataset will be listed last and will have 3 icons. The icons associated with a snapshot allow you to:
+
+**Clone Snapshot:** will prompt for the name of the clone to create. The clone will be a writable copy of the snapshot. Since a clone is really a dataset
+which can be mounted, the clone will appear in the Active Volumes tab, instead of the Periodic Snapshots tab, and will have the word *clone* in its name.
+
+**Destroy Snapshot:** a pop-up message will ask you to confirm this action. Child clones must be destroyed before their parent snapshot can be destroyed.
+While creating a snapshot is instantaneous, deleting a snapshot can be I/O intensive and can take a long time, especially when deduplication is enabled.
+In order to delete a block in a snapshot, ZFS has to walk all the allocated blocks to see if that block is used anywhere else; if it is not, it can be freed.
+
+**Rollback Snapshot:** a pop-up message will ask if you are sure that you want to rollback to this snapshot state. If you click Yes, any files that have
+changed since the snapshot was taken will be reverted back to their state at the time of the snapshot.
+
+**NOTE:** rollback is a potentially dangerous operation and will cause any configured replication tasks to fail as the replication system uses the existing
+snapshot when doing an incremental backup. If you do need to restore the data within a snapshot, the recommended steps are:
+
+#.  Clone the desired snapshot.
+
+#.  Share the clone with the share type or service running on the FreeNAS® system.
+
+#.  Once users have recovered the needed data, destroy the clone in the Active Volumes tab.
+
+This approach will never destroy any on-disk data and has no impact on replication.
+
+Periodic snapshots can be configured to appear as Shadow Copies in newer versions of Windows Explorer. Users can access the files in the shadow copy using
+Explorer without requiring any interaction with the FreeNAS® graphical administrative interface.
+
+The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the Define filter icon (near the text
+“No filter applied”). When creating a filter:
+
+* select the column or leave the default of Any Column.
+
+* select the condition. Possible conditions are: *contains* (default),
+  *is, starts with, ends with, does *
+  *not contain, is not, does not start with, does not end with*, and
+  *is empty*.
+
+*   input a value that meets your view criteria.
+
+*   click the Filter button to save your filter and exit the define filter screen. Alternately, click the + button to add another filter.
+
+If you create multiple filters, select the filter you wish to use before leaving the define filter screen. Once a filter is selected, the “No filter
+applied” text will change to “Clear filter”. If you click “Clear filter”, a pop-up message will indicate that this will remove the filter and all
+available snapshots will be listed.
+
+Replication Tasks
+~~~~~~~~~~~~~~~~~
+
+A replication task allows you to automate the copy of ZFS snapshots to another system over an encrypted connection. This allows you to create an off-site
+backup of a ZFS dataset or pool.
+
+This section will refer to the system generating the ZFS snapshots as *PUSH*
+and the system to receive a copy of the ZFS snapshots as *PULL*.
+
+Before you can configure a replication task, the following pre-requisites must be met:
+
+* a ZFS volume must exist on both *PUSH* and
+  *PULL*.
+
+* a periodic snapshot task must be created on *PUSH*. You will not be able to create a replication task before the first snapshot exists.
+
+* the SSH service must be enabled on *PULL*. The first time the service is enabled, it will generate the required SSH keys.
+
+A replication task uses the following keys:
+
+* **/data/ssh/replication.pub:** the RSA public key used for authenticating the *PUSH* replication user. This key needs to be copied to the replication
+  user account on *PULL*.
+
+* **/etc/ssh/ssh_host_rsa_key.pub:** the RSA host public key of *PULL* used to authenticate the receiving side in order to prevent a man-in-the-middle
+  attack. This key needs to be copied to the replication task on *PUSH*.
+
+This section will demonstrate how to configure a replication task between the following two FreeNAS® systems:
+
+* *192.168.2.2* will be referred to as *PUSH*. This system has a periodic snapshot task for the ZFS dataset
+  */mnt/local/data*.
+
+* *192.168.2.6* will be referred to as *PULL* . This system has an existing ZFS volume named
+  */mnt/remote* which will store the pushed snapshots.
+
+Configure PULL
+^^^^^^^^^^^^^^
+
+A copy of the public key for the replication user on *PUSH* needs to be pasted to the public key of the replication user on the *PULL* system.
+
+To obtain a copy of the replication key: on *PUSH* go to Storage → View Replication Tasks. Click the View Public Key button and copy its contents. An
+example is shown in Figure 6.2a.
+
+**Figure 6.2a: Copy the Replication Key**
+
+|Figure62a_png|
+
+Go to *PULL* and click Account → Users → View Users. Click the Modify User button for the user account you will be using for replication (by default
+this is the *root* user). Paste the copied key into the “SSH Public Key” field and click OK. If a key already exists, append the new text after the
+existing key.
+
+On *PULL*, ensure that the SSH service is enabled in Services → Control Services. Start it if it is not already running.
+
+Configure PUSH
+^^^^^^^^^^^^^^
+
+On *PUSH*, verify that a periodic snapshot task has been created and that at least one snapshot is listed in Storage → Periodic Snapshot Tasks → View
+Periodic Snapshot Tasks → ZFS Snapshots.
+
+To create the replication task, click Storage → Replication Tasks → Add Replication Task. Figure 6.2b shows the required configuration for our example:
+
+* the Volume/Dataset is *local/data*
+
+* the Remote ZFS Volume/Dataset is *remote*
+
+* the Remote hostname is *192.168.2.6*
+
+* the Begin and End times are at their default values, meaning that replication will occur whenever a snapshot is created
+
+* once the Remote hostname is input, click the SSH Key Scan button; assuming the address is reachable and the SSH service is running on *PULL*, its key will
+  automatically be populated to the Remote hostkey box
+
+Table 6.2a summarizes the available options in the Add Replication Task screen.
+
+**Figure 6.2b: Adding a Replication Task**
+
+
+|Figure62b_png|
+
+**Table 6.2a: Adding a Replication Task**
+
+
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| **Setting**               | **Value**      | **Description**                                                                                                     |
+|                           |                |                                                                                                                     |
+|                           |                |                                                                                                                     |
++===========================+================+=====================================================================================================================+
+| Enabled                   | checkbox       | uncheck to disable the scheduled replication task without deleting it                                               |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Volume/Dataset            | drop-down menu | the ZFS volume or dataset on                                                                                        |
+|                           |                | *PUSH*                                                                                                              |
+|                           |                | containing the snapshots to be replicated; the drop-down menu will be empty if a snapshot does not already exist    |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Remote ZFS Volume/Dataset | string         | the ZFS volume on                                                                                                   |
+|                           |                | *PULL*                                                                                                              |
+|                           |                | that will store the snapshots;                                                                                      |
+|                           |                | */mnt/*                                                                                                             |
+|                           |                | is assumed and should not be included in the path                                                                   |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Recursively replicate     | checkbox       | if checked will replicate child datasets and replace previous snapshot stored on                                    |
+|                           |                | *PULL*                                                                                                              |
+|                           |                |                                                                                                                     |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Initialize remote side    | checkbox       | does a reset once operation which destroys the replication data on                                                  |
+|                           |                | *PULL*                                                                                                              |
+|                           |                | before reverting to normal operation; use this option if replication gets stuck                                     |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Limit (kB/s)              | integer        | limits replication speed to specified value in kilobytes/second; default of                                         |
+|                           |                | *0*                                                                                                                 |
+|                           |                | is unlimited                                                                                                        |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Begin                     | drop-down menu | the replication can not start before this time; the times selected in the                                           |
+|                           |                | *Begin*                                                                                                             |
+|                           |                | and                                                                                                                 |
+|                           |                | *End*                                                                                                               |
+|                           |                | fields set the replication window for when replication can occur                                                    |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| End                       | drop-down menu | the replication must start by this time; once started, replication will occur until it is finished (see NOTE below) |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Remote hostname           | string         | IP address or DNS name of                                                                                           |
+|                           |                | *PULL*                                                                                                              |
+|                           |                |                                                                                                                     |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Remote port               | string         | must match port being used by SSH service on                                                                        |
+|                           |                | *PULL*                                                                                                              |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Dedicated User Enabled    | checkbox       | allows a user account other than root to be used for replication                                                    |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Dedicated User            | drop-down menu | only available if                                                                                                   |
+|                           |                | *Dedicated User Enabled*                                                                                            |
+|                           |                | is checked; select the user account to be used for replication                                                      |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Enable High Speed Ciphers | checkbox       | note that the cipher is quicker because it has a lower strength                                                     |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Remote hostkey            | string         | use the SSH Key Scan button to retrieve the public key of                                                           |
+|                           |                | *PULL*                                                                                                              |
+|                           |                |                                                                                                                     |
+|                           |                |                                                                                                                     |
++---------------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+
+
+By default, replication occurs when snapshots occur. For example, if snapshots are scheduled for every 2 hours, replication occurs every 2 hours. The Begin
+and End times can be used to create a window of time where replication occurs. Change the default times (which allow replication to occur at any time of the
+day a snapshot occurs) if snapshot tasks are scheduled during office hours but the replication itself should occur after office hours. For the End time,
+consider how long replication will take so that it finishes before the next day's office hours begin.
+
+Once the replication task is created, it will appear in the View Replication Tasks of *PUSH.*
+
+*PUSH* will immediately attempt to replicate its latest snapshot to
+*PULL*. If the replication is successful, the snapshot will appear in the Storage → Periodic Snapshot Tasks → View Periodic Snapshot Tasks → ZFS
+Snapshots tab of *PULL*, as seen in Figure 6.2c. If the snapshot is not replicated, see the next section for troubleshooting tips.
+
+**Figure 6.2c: Verifying the Snapshot was Replicated**
+
+|Figure62c_png|
+
+Troubleshooting Replication
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have followed all of the steps above and have *PUSH* snapshots that are not replicating to *PULL*, check to see if SSH is working properly. On *PUSH*,
+open Shell and try to **ssh** into *PULL*. Replace
+*hostname_or_ip* with the value for
+*PULL*::
+
+ ssh -vv -i /data/ssh/replication hostname_or_ip
+
+This command should not ask for a password. If it asks for a password, SSH authentication is not working. Go to Storage → Replication Tasks → View
+Replication Tasks and click the “View Public Key” button. Make sure that it matches one of the values in */~/.ssh/authorized_keys* on
+*PULL, * where ~ represents the home directory of the replication user.
+
+Also check */var/log/auth.log* on
+*PULL* and
+*/var/log/messages* on
+*PUSH* to see if either log gives an indication of the error.
+
+If the key is correct and replication is still not working, try deleting all snapshots on *PULL* except for the most recent one. In Storage → Periodic
+Snapshot Tasks → View Periodic Snapshot Tasks → ZFS Snapshots check the box next to every snapshot except for the last one (the one with 3 icons
+instead of 2), then click the global Destroy button at the bottom of the screen.
+
+Once you have only one snapshot, open Shell on *PUSH* and use the
+**zfs send** command. To continue our example, the ZFS snapshot on the
+*local/data* dataset of
+*PUSH* is named
+*auto-20110922.1753-2h*, the IP address of
+*PULL* is
+*192.168.2.6*, and the ZFS volume on
+*PULL* is
+*remote*. Note that the
+**@** is used to separate the volume/dataset name from the snapshot name.::
+
+ zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
+
+**NOTE:** if this command fails with the error “cannot receive new filesystem stream: destination has snapshots”, check the box “initialize remote side
+for once” in the replication task and try again. If the **zfs send** command still fails, you will need to open Shell on
+*PULL* and use the
+**zfs destroy -R volume_name@snapshot_name** command to delete the stuck snapshot. You can then use the
+**zfs list -t snapshot** on
+*PULL* to confirm if the snapshot successfully replicated.
+
+After successfully transmitting the snapshot, recheck again after the time period between snapshots lapses to see if the next snapshot successfully
+transmitted. If it is still not working, you can manually send an incremental backup of the last snapshot that is on both systems to the current one with this
+command::
+
+ zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
+ 
 ZFS Scrubs
 ~~~~~~~~~~
 
@@ -4957,6 +4983,461 @@ While a delete button is provided,
 too intensive for your hardware, consider disabling the scrub as a temporary measure until the hardware can be upgraded.
 
 If you do delete a scrub, you can create a new scrub task by clicking Storage → Volumes → ZFS Scrubs → Add ZFS Scrub.
+
+ZFS Snapshots
+~~~~~~~~~~~~~
+
+Directory Service
+-----------------
+
+FreeNAS® supports the following directory services:
+
+* Active Directory (for Windows 2000 and higher networks)
+
+* LDAP
+
+* NIS
+
+* NT4 (for Windows networks older than Windows 2000)
+
+This section summarizes each of these services and their available configurations within the FreeNAS® GUI.
+
+
+**NOTE:** at this time,
+**only one directory service can be configured**. That service must first be selected in the System → Settings → General → Directory Service
+drop-down menu. Once selected, a Directory Service entry will be added to Services → Control Services so that the service can be started, stopped, and
+configured.
+
+Active Directory
+~~~~~~~~~~~~~~~~
+
+Active Directory (AD) is a service for sharing resources in a Windows network. AD can be configured on a Windows server that is running Windows Server 2000 or
+higher or on a Unix-like operating system that is running
+`Samba version 4 <http://wiki.samba.org/index.php/Samba4/HOWTO#Step_4:_Provision_Samba4>`_
+. Since AD provides authentication and authorization services for the users in a network, you do not have to recreate these user accounts on the FreeNAS®
+system. Instead, configure the Active Directory service so that it can import the account information and imported users can be authorized to access the CIFS
+shares on the FreeNAS® system.
+
+**NOTE:** if your network contains an NT4 domain controller, or any domain controller containing a version which is earlier than Windows 2000, configure
+Directory Services → NT4 instead.
+
+Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running FreeNAS® 9.3-RELEASE, it is strongly
+recommended that you upgrade before attempting Active Directory integration.
+
+**Before configuring the Active Directory service**, ensure name resolution is properly configured by
+**ping**
+ing the domain name of the Active Directory domain controller from Shell on the FreeNAS® system. If the **ping** fails, check the DNS server and default
+gateway settings in Network → Global Configuration on the FreeNAS® system.
+
+Next, add a DNS record for the FreeNAS® system on the Windows server and verify that you can **ping** the hostname of the FreeNAS® system from the domain
+controller.
+
+Active Directory relies on Kerberos, which is a time sensitive protocol. This means that the time on both the FreeNAS® system and the Active Directory Domain
+Controller can not be out of sync by more than a few minutes. The best way to ensure that the same time is running on both systems is to configure both
+systems to:
+
+* use the same NTP server (set in System → NTP Servers on the FreeNAS® system)
+
+* have the same timezone
+
+* be set to either localtime or universal time at the BIOS level
+
+Figure 8.4a shows the screen that appears when you click Services → Directory Services → Active Directory. Table 8.4a describes the configurable
+options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always
+display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced.
+
+**Figure 8.4a: Configuring Active Directory**
+
+|Figure84a_png|
+
+**Table 8.4a: Active Directory Configuration Options**
+
+
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Setting                  | Value         | Description                                                                                                                                                                                                                          |
+|                          |               |                                                                                                                                                                                                                                      |
++==========================+===============+======================================================================================================================================================================================================================================+
+| Domain Name              | string        | name of Active Directory domain (e.g.                                                                                                                                                                                                |
+|                          |               | *example.com*                                                                                                                                                                                                                        |
+|                          |               | ) or child domain (e.g.                                                                                                                                                                                                              |
+|                          |               | *sales.example.com*                                                                                                                                                                                                                  |
+|                          |               | )                                                                                                                                                                                                                                    |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name             | string        | automatically populated with the hostname of the FreeNAS® system;                                                                                                                                                                   |
+|                          |               | **use caution when changing this setting**                                                                                                                                                                                           |
+|                          |               | as setting an                                                                                                                                                                                                                        |
+|                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_                                                                                           |
+|                          |               |                                                                                                                                                                                                                                      |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Workgroup Name           | string        | name of Windows server's workgroup (for older Microsoft clients)                                                                                                                                                                     |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Domain Account           | string        | name of the                                                                                                                                                                                                                          |
+| Name                     |               | Active Directory administrator                                                                                                                                                                                                       |
+|                          |               | account                                                                                                                                                                                                                              |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Domain Account           | string        | password for the                                                                                                                                                                                                                     |
+| Password                 |               | Active Directory administrator account                                                                                                                                                                                               |
+|                          |               |                                                                                                                                                                                                                                      |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Use keytab               | checkbox      | only available in Advanced Mode;                                                                                                                                                                                                     |
+|                          |               | if selected, browse to the                                                                                                                                                                                                           |
+|                          |               | *Kerberos keytab*                                                                                                                                                                                                                    |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Kerberos keytab          | browse button | only available in Advanced Mode;                                                                                                                                                                                                     |
+|                          |               | browse to the location of the keytab created using the instructions in                                                                                                                                                               |
+|                          |               | Using a Keytab                                                                                                                                                                                                                       |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Verbose logging          | checkbox      | only available in Advanced Mode; if checked, logs attempts to join the domain to                                                                                                                                                     |
+|                          |               | */var/log/messages*                                                                                                                                                                                                                  |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| UNIX extensions          | checkbox      | only available in Advanced Mode;                                                                                                                                                                                                     |
+|                          |               | ** only**                                                                                                                                                                                                                            |
+|                          |               | check this box if the AD server has been explicitly configured to map permissions for UNIX users; checking this box provides persistent UIDs and GUIDs, otherwise, users/groups get mapped to the UID/GUID range configured in Samba |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Allow Trusted Domains    | checkbox      | only available in Advanced Mode; should only be enabled if network has active                                                                                                                                                        |
+|                          |               | `domain/forest trusts <http://technet.microsoft.com/en-us/library/cc757352%28WS.10%29.aspx>`_                                                                                                                                        |
+|                          |               | and you need to manage files on multiple domains; use with caution as it will generate more winbindd traffic, slowing down the ability to filter through user/group information                                                      |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Use default domain       | checkbox      | only available in Advanced Mode; when unchecked, the domain name is prepended to the username; if                                                                                                                                    |
+|                          |               | *Allow Trusted Domains*                                                                                                                                                                                                              |
+|                          |               | is checked and multiple domains use the same usernames, uncheck this box to prevent name collisions                                                                                                                                  |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Domain Controller        | string        | only available in Advanced Mode; can be used to specify hostname of domain controller to use                                                                                                                                         |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Global Catalog Server    | string        | only available in Advanced Mode; can be used to specify hostname of global catalog server to use                                                                                                                                     |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Kerberos Server          | string        | only available in Advanced Mode; can be used to specify hostname of kerberos server to use                                                                                                                                           |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Kerberos Password Server | string        | only available in Advanced Mode; can be used to specify hostname of kerberos password server to use                                                                                                                                  |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| AD timeout               | integer       | only available in Advanced Mode; in seconds, increase if the AD service does not start after connecting to the domain                                                                                                                |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| DNS timeout              | integer       | only available in Advanced Mode; in seconds, increase if AD DNS queries timeout                                                                                                                                                      |
+|                          |               |                                                                                                                                                                                                                                      |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
+**NOTE:** Active Directory places restrictions on which characters are allowed in Domain and NetBIOS names. If you are having problems connecting to the
+realm,
+`verify <http://support.microsoft.com/kb/909264>`_
+that your settings do not include any disallowed characters. Also, the Administrator Password cannot contain the *$* character. If a
+*$* exists in the domain administrator's password, kinit will report a “Password Incorrect” error and ldap_bind will report an “Invalid credentials
+(49)” error.
+
+Once you have configured the Active Directory service, start it in Services → Control Services → Directory Services. It may take a few minutes for the
+Active Directory information to be populated to the FreeNAS® system. Once populated, the AD users and groups will be available in the drop-down menus of the
+permissions screen of a volume/dataset. For performance reasons, every available user may not show in the listing. However, it will autocomplete all
+applicable users if you start typing in a username.
+
+You can verify which Active Directory users and groups have been imported to the FreeNAS® system by using these commands within the FreeNAS® Shell:
+::
+
+ wbinfo -u
+
+(to view users)
+::
+
+ wbinfo -g
+(to view groups)
+
+
+In addition, **wbinfo -t** will test the connection and, if successful, will give a message similar to::
+
+ checking the trust secret for domain YOURDOMAIN via RPC calls succeeded
+
+To manually check that a specified user can authenticate::
+
+ net ads join -S dcname -U username
+
+If no users or groups are listed in the output of those commands, these commands will provide more troubleshooting information::
+
+ getent passwd
+
+ getent group
+
+Using a Keytab
+^^^^^^^^^^^^^^
+
+Kerberos keytabs are used to do Active Directory joins without a password. This means that the password for the Active Directory administrator account does
+not need to be saved into the FreeNAS® configuration database, which is a security risk in some environments.
+
+When using a keytab, it is recommended to create and use a less privileged account for performing the required LDAP queries as the password for that account
+will be stored in the FreeNAS® configuration database. Create this account on the domain controller, then input that account name and its associated password
+into the *Domain Account Name* and
+*Domain Account Password* fields in the screen shown in Figure 8.4a.
+
+The keytab itself can be created on a Windows system using these commands::
+
+ ktpass.exe -out hostname.keytab host/ hostname@DOMAINNAME -ptype KRB5_NT_PRINCIPAL -mapuser DOMAIN\username -pass userpass
+
+ setspn -A host/ hostname@DOMAINNAME DOMAIN\username
+
+
+where:
+
+* **hostname** is the fully qualified hostname of the domain controller
+
+* **DOMAINNAME** is the domain name in all caps
+
+* **DOMAIN** is the pre-Windows 2000 short name for the domain
+
+* **username** is the privileged account name
+
+* **userpass** is the password associated with username
+
+This will create a keytab with sufficient privileges to grant tickets for CIFS and LDAP.
+
+Once the keytab is generated, transfer it to the FreeNAS® system, check the *Use keytab* box and browse to the location of the keytab.
+
+Troubleshooting Tips
+^^^^^^^^^^^^^^^^^^^^
+
+If you are running AD in a 2003/2008 mixed domain, see this
+`forum post <http://forums.freenas.org/showthread.php?1931-2008R2-2003-mixed-domain>`_
+for instructions on how to prevent the secure channel key from becoming corrupt.
+
+Active Directory uses DNS to determine the location of the domain controllers and global catalog servers in the network. Use the
+**host -t srv _ldap._tcp.domainname.com**
+command to determine the network's SRV records and, if necessary, change the weight and/or priority of the SRV record to reflect the fastest server. More
+information about SRV records can be found in the Technet article
+`How DNS  <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_
+`Support for Active Directory Works <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_
+.
+
+The realm that is used depends upon the priority in the SRV DNS record, meaning that DNS can override your Active Directory settings. If you are unable to
+connect to the correct realm, check the SRV records on the DNS server.
+`This article <http://www.informit.com/guides/content.aspx?g=security&seqNum=37&rll=1>`_
+describes how to configure KDC discovery over DNS and provides some examples of records with differing priorities.
+
+If the cache becomes out of sync due to an AD server being taken off and back online, resync the cache using System → Settings → Advanced →
+Rebuild LDAP/AD Cache.
+
+An expired password for the administrator account will cause kinit to fail so ensure that the password is still valid.
+
+Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the name field. Make sure it is the same
+name as the one set in the *Hostname* field in Network → Global Configuration and the
+*NetBIOS Name* in Services → Directory Services → Active Directory settings. Make sure the hostname of the domain controller is set in the
+*Domain Controller* field of Services → Directory Services → Active Directory.
+
+LDAP
+~~~~
+
+FreeNAS® includes an
+`OpenLDAP <http://www.openldap.org/>`_
+client for accessing information from an LDAP server. An LDAP server provides directory services for finding network resources such as users and their
+associated permissions. Examples of LDAP servers include Microsoft Server (2000 and newer), Mac OS X Server, Novell eDirectory, and OpenLDAP running on a BSD
+or Linux system. If an LDAP server is running on your network, you should configure the FreeNAS® LDAP service so that the network's users can authenticate to
+the LDAP server and thus be provided authorized access to the data stored on the FreeNAS® system.
+
+**NOTE:** LDAP will not work with CIFS shares until the LDAP directory has been configured for and populated with Samba attributes. The most popular script
+for performing this task is
+`smbldap-tools <http://download.gna.org/smbldap-tools/>`_
+and instructions for using it can be found at
+`The Linux Samba-OpenLDAP Howto <http://download.gna.org/smbldap-tools/docs/samba-ldap-howto/#htoc29>`_
+.
+
+Figure 8.4c shows the LDAP Configuration screen that is seen when you click Services → Directory Services → LDAP.
+
+**Figure 8.4c: Configuring LDAP**
+
+
+|Figure84c_png|
+
+Table 8.4c summarizes the available configuration options. If you are new to LDAP terminology, skim through the
+`OpenLDAP Software 2.4 Administrator's Guide <http://www.openldap.org/doc/admin24/>`_
+.
+
+**Table 8.4c: LDAP Configuration Options**
+
+
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Setting                 | Value          | Description                                                                                      |
+|                         |                |                                                                                                  |
++=========================+================+==================================================================================================+
+| Hostname                | string         | hostname or IP address of                                                                        |
+|                         |                | LDAP                                                                                             |
+|                         |                | server                                                                                           |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Base DN                 | string         | top level of the                                                                                 |
+|                         |                | LDAP                                                                                             |
+|                         |                | directory tree to be used when searching for resources (e.g.                                     |
+|                         |                | *dc=test,dc=org*                                                                                 |
+|                         |                | )                                                                                                |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read/write access to any client |
+| Binding                 |                |                                                                                                  |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Root bind DN            | string         | name of administrative account on LDAP server (e.g.                                              |
+|                         |                | *cn=Manager,dc=test,dc=org)*                                                                     |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Root bind password      | string         | password for                                                                                     |
+|                         |                | *Root bind DN*                                                                                   |
+|                         |                |                                                                                                  |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Password Encryption     | drop-down menu | select a type supported by the LDAP server, choices are:                                         |
+|                         |                | *clear*                                                                                          |
+|                         |                | (unencrypted),                                                                                   |
+|                         |                | *crypt*                                                                                          |
+|                         |                | ,                                                                                                |
+|                         |                | *md5*                                                                                            |
+|                         |                | ,                                                                                                |
+|                         |                | *nds*                                                                                            |
+|                         |                | ,                                                                                                |
+|                         |                | *racf*                                                                                           |
+|                         |                | ,                                                                                                |
+|                         |                | *ad*                                                                                             |
+|                         |                | ,                                                                                                |
+|                         |                | *exop*                                                                                           |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| User Suffix             | string         | optional, can be added to name when user account added to                                        |
+|                         |                | LDAP                                                                                             |
+|                         |                | directory (e.g. dept. or company name)                                                           |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Group Suffix            | string         | optional, can be added to name when group added to                                               |
+|                         |                | LDAP                                                                                             |
+|                         |                | directory (e.g. dept. or company name)                                                           |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Password Suffix         | string         | optional, can be added to password when password added to                                        |
+|                         |                | LDAP                                                                                             |
+|                         |                | directory                                                                                        |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Machine Suffix          | string         | optional, can be added to name when system added to                                              |
+|                         |                | LDAP                                                                                             |
+|                         |                | directory (e.g. server, accounting)                                                              |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Encryption Mode         | drop-down menu | choices are                                                                                      |
+|                         |                | *Off*                                                                                            |
+|                         |                | ,                                                                                                |
+|                         |                | *SSL*                                                                                            |
+|                         |                | , or                                                                                             |
+|                         |                | *TLS*                                                                                            |
+|                         |                |                                                                                                  |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Self signed certificate | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used         |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Auxiliary Parameters    | string         | `ldap.conf(5) <http://www.openldap.org/software/man.cgi?query=ldap.conf>`_                       |
+|                         |                | options, one per line, not covered by other options in this screen                               |
+|                         |                |                                                                                                  |
++-------------------------+----------------+--------------------------------------------------------------------------------------------------+
+
+
+**NOTE:** FreeNAS® automatically appends the root DN. This means that you should not include the scope and root DN when configuring the user, group,
+password, and machine suffixes.
+
+After configuring the LDAP service, start it in Services → Control Services → Directory Services. If the service will not start, refer to the
+`Common errors encountered when using OpenLDAP Software <http://www.openldap.org/doc/admin24/appendix-common-errors.html>`_
+for common errors and how to fix them. When troubleshooting LDAP, open Shell and look for error messages in */var/log/auth.log.*
+
+To verify that the users have been imported, type **getent passwd** from Shell. To verify that the groups have been imported, type
+**getent group**.
+
+NIS
+~~~
+
+Network Information Service (NIS) is a service which maintains and distributes a central directory of Unix user and group information, hostnames, email
+aliases and other text-based tables of information. If a NIS server is running on your network, the FreeNAS® system can be configured to import the users
+and groups from the NIS directory.
+
+After configuring this service, start it in Services → Control Services → Directory Services.
+
+Figure 8.4d shows the configuration screen which opens when you click Services → Directory Services → NIS. Table 8.4d summarizes the configuration
+options.
+
+**Figure 8.4d: NIS Configuration**
+
+
+|Figure84d_png|
+
+**Table 8.4d: NIS Configuration Options**
+
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
+| **Setting** | **Value** | **Description**                                                                                                            |
+|             |           |                                                                                                                            |
+|             |           |                                                                                                                            |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
+| NIS domain  | string    | name of NIS domain                                                                                                         |
+|             |           |                                                                                                                            |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
+| NIS servers | string    | comma delimited list of hostnames or IP addresses                                                                          |
+|             |           |                                                                                                                            |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
+| Secure mode | checkbox  | if checked,                                                                                                                |
+|             |           | `ypbind(8) <http://www.freebsd.org/cgi/man.cgi?query=ypbind>`_                                                             |
+|             |           | will refuse to bind to any NIS server that is not running as root on a TCP port number over 1024                           |
+|             |           |                                                                                                                            |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
+| Manycast    | checkbox  | if checked                                                                                                                 |
+|             |           | , ypbind                                                                                                                   |
+|             |           | will bind to the server that responds the fastest; this is useful when no local NIS server is available on the same subnet |
+|             |           |                                                                                                                            |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
+
+
+NT4
+~~~
+
+This service should only be configured if the Windows network's domain controller is running NT4. If it is not, you should configure Active Directory instead.
+
+Figure 8.4e shows the configuration screen that appears when you click Services → Directory Services → NT4. These options are summarized in Table 8.4e.
+
+After configuring the NT4 service, start it in Services → Control Services → Directory Services.
+
+**Figure 8.4e: NT4 Configuration Options**
+
+
+|Figure84e_png|
+
+**Table 8.4e: NT4 Configuration Options**
+
++------------------------+-----------+---------------------------------------------------------------------+
+| **Setting**            | **Value** | **Description**                                                     |
+|                        |           |                                                                     |
+|                        |           |                                                                     |
++========================+===========+=====================================================================+
+| Domain Controller      | string    | hostname of domain controller                                       |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| NetBIOS Name           | string    | hostname of FreeNAS® system                                         |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| Workgroup Name         | string    | name of Windows server's workgroup                                  |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| Administrator Name     | string    | name of the domain administrator account                            |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| Administrator Password | string    | input and confirm the password for the domain administrator account |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+
 
 Sharing Configuration
 ---------------------
@@ -5792,13 +6273,15 @@ following built-in services:
 
 * CIFS
 
-* Directory Services
+* Domain Controller
 
 * Dynamic DNS
 
 * FTP_
 
 * iSCSI
+
+* LLDP
 
 * NFS
 
@@ -6090,258 +6573,8 @@ The
 `Common Errors <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/domain-member.html#id2573692>`_
 section of the Samba documentation contains additional troubleshooting tips.
 
-Directory Services
-~~~~~~~~~~~~~~~~~~
-
-FreeNAS® supports the following directory services:
-
-* Active Directory (for Windows 2000 and higher networks)
-
-* Domain Controller (for configuring FreeNAS® as a domain controller)
-
-* LDAP
-
-* NIS
-
-* NT4 (for Windows networks older than Windows 2000)
-
-This section summarizes each of these services and their available configurations within the FreeNAS® GUI.
-
-
-**NOTE:** at this time,
-**only one directory service can be configured**. That service must first be selected in the System → Settings → General → Directory Service
-drop-down menu. Once selected, a Directory Service entry will be added to Services → Control Services so that the service can be started, stopped, and
-configured.
-
-Active Directory
-^^^^^^^^^^^^^^^^
-
-Active Directory (AD) is a service for sharing resources in a Windows network. AD can be configured on a Windows server that is running Windows Server 2000 or
-higher or on a Unix-like operating system that is running
-`Samba version 4 <http://wiki.samba.org/index.php/Samba4/HOWTO#Step_4:_Provision_Samba4>`_
-. Since AD provides authentication and authorization services for the users in a network, you do not have to recreate these user accounts on the FreeNAS®
-system. Instead, configure the Active Directory service so that it can import the account information and imported users can be authorized to access the CIFS
-shares on the FreeNAS® system.
-
-**NOTE:** if your network contains an NT4 domain controller, or any domain controller containing a version which is earlier than Windows 2000, configure
-Directory Services → NT4 instead.
-
-Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running FreeNAS® 9.3-RELEASE, it is strongly
-recommended that you upgrade before attempting Active Directory integration.
-
-**Before configuring the Active Directory service**, ensure name resolution is properly configured by
-**ping**
-ing the domain name of the Active Directory domain controller from Shell on the FreeNAS® system. If the **ping** fails, check the DNS server and default
-gateway settings in Network → Global Configuration on the FreeNAS® system.
-
-Next, add a DNS record for the FreeNAS® system on the Windows server and verify that you can **ping** the hostname of the FreeNAS® system from the domain
-controller.
-
-Active Directory relies on Kerberos, which is a time sensitive protocol. This means that the time on both the FreeNAS® system and the Active Directory Domain
-Controller can not be out of sync by more than a few minutes. The best way to ensure that the same time is running on both systems is to configure both
-systems to:
-
-* use the same NTP server (set in System → NTP Servers on the FreeNAS® system)
-
-* have the same timezone
-
-* be set to either localtime or universal time at the BIOS level
-
-Figure 8.4a shows the screen that appears when you click Services → Directory Services → Active Directory. Table 8.4a describes the configurable
-options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always
-display these settings by checking the box “Show advanced fields by default” in System → Settings → Advanced.
-
-**Figure 8.4a: Configuring Active Directory**
-
-|Figure84a_png|
-
-**Table 8.4a: Active Directory Configuration Options**
-
-
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting                  | Value         | Description                                                                                                                                                                                                                          |
-|                          |               |                                                                                                                                                                                                                                      |
-+==========================+===============+======================================================================================================================================================================================================================================+
-| Domain Name              | string        | name of Active Directory domain (e.g.                                                                                                                                                                                                |
-|                          |               | *example.com*                                                                                                                                                                                                                        |
-|                          |               | ) or child domain (e.g.                                                                                                                                                                                                              |
-|                          |               | *sales.example.com*                                                                                                                                                                                                                  |
-|                          |               | )                                                                                                                                                                                                                                    |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | automatically populated with the hostname of the FreeNAS® system;                                                                                                                                                                   |
-|                          |               | **use caution when changing this setting**                                                                                                                                                                                           |
-|                          |               | as setting an                                                                                                                                                                                                                        |
-|                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_                                                                                           |
-|                          |               |                                                                                                                                                                                                                                      |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Workgroup Name           | string        | name of Windows server's workgroup (for older Microsoft clients)                                                                                                                                                                     |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Account           | string        | name of the                                                                                                                                                                                                                          |
-| Name                     |               | Active Directory administrator                                                                                                                                                                                                       |
-|                          |               | account                                                                                                                                                                                                                              |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Account           | string        | password for the                                                                                                                                                                                                                     |
-| Password                 |               | Active Directory administrator account                                                                                                                                                                                               |
-|                          |               |                                                                                                                                                                                                                                      |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Use keytab               | checkbox      | only available in Advanced Mode;                                                                                                                                                                                                     |
-|                          |               | if selected, browse to the                                                                                                                                                                                                           |
-|                          |               | *Kerberos keytab*                                                                                                                                                                                                                    |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos keytab          | browse button | only available in Advanced Mode;                                                                                                                                                                                                     |
-|                          |               | browse to the location of the keytab created using the instructions in                                                                                                                                                               |
-|                          |               | Using a Keytab                                                                                                                                                                                                                       |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Verbose logging          | checkbox      | only available in Advanced Mode; if checked, logs attempts to join the domain to                                                                                                                                                     |
-|                          |               | */var/log/messages*                                                                                                                                                                                                                  |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| UNIX extensions          | checkbox      | only available in Advanced Mode;                                                                                                                                                                                                     |
-|                          |               | ** only**                                                                                                                                                                                                                            |
-|                          |               | check this box if the AD server has been explicitly configured to map permissions for UNIX users; checking this box provides persistent UIDs and GUIDs, otherwise, users/groups get mapped to the UID/GUID range configured in Samba |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow Trusted Domains    | checkbox      | only available in Advanced Mode; should only be enabled if network has active                                                                                                                                                        |
-|                          |               | `domain/forest trusts <http://technet.microsoft.com/en-us/library/cc757352%28WS.10%29.aspx>`_                                                                                                                                        |
-|                          |               | and you need to manage files on multiple domains; use with caution as it will generate more winbindd traffic, slowing down the ability to filter through user/group information                                                      |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Use default domain       | checkbox      | only available in Advanced Mode; when unchecked, the domain name is prepended to the username; if                                                                                                                                    |
-|                          |               | *Allow Trusted Domains*                                                                                                                                                                                                              |
-|                          |               | is checked and multiple domains use the same usernames, uncheck this box to prevent name collisions                                                                                                                                  |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Controller        | string        | only available in Advanced Mode; can be used to specify hostname of domain controller to use                                                                                                                                         |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Global Catalog Server    | string        | only available in Advanced Mode; can be used to specify hostname of global catalog server to use                                                                                                                                     |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Server          | string        | only available in Advanced Mode; can be used to specify hostname of kerberos server to use                                                                                                                                           |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Password Server | string        | only available in Advanced Mode; can be used to specify hostname of kerberos password server to use                                                                                                                                  |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| AD timeout               | integer       | only available in Advanced Mode; in seconds, increase if the AD service does not start after connecting to the domain                                                                                                                |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| DNS timeout              | integer       | only available in Advanced Mode; in seconds, increase if AD DNS queries timeout                                                                                                                                                      |
-|                          |               |                                                                                                                                                                                                                                      |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-
-
-**NOTE:** Active Directory places restrictions on which characters are allowed in Domain and NetBIOS names. If you are having problems connecting to the
-realm,
-`verify <http://support.microsoft.com/kb/909264>`_
-that your settings do not include any disallowed characters. Also, the Administrator Password cannot contain the *$* character. If a
-*$* exists in the domain administrator's password, kinit will report a “Password Incorrect” error and ldap_bind will report an “Invalid credentials
-(49)” error.
-
-Once you have configured the Active Directory service, start it in Services → Control Services → Directory Services. It may take a few minutes for the
-Active Directory information to be populated to the FreeNAS® system. Once populated, the AD users and groups will be available in the drop-down menus of the
-permissions screen of a volume/dataset. For performance reasons, every available user may not show in the listing. However, it will autocomplete all
-applicable users if you start typing in a username.
-
-You can verify which Active Directory users and groups have been imported to the FreeNAS® system by using these commands within the FreeNAS® Shell:
-::
-
- wbinfo -u
-
-(to view users)
-::
-
- wbinfo -g
-(to view groups)
-
-
-In addition, **wbinfo -t** will test the connection and, if successful, will give a message similar to::
-
- checking the trust secret for domain YOURDOMAIN via RPC calls succeeded
-
-To manually check that a specified user can authenticate::
-
- net ads join -S dcname -U username
-
-If no users or groups are listed in the output of those commands, these commands will provide more troubleshooting information::
-
- getent passwd
-
- getent group
-
-Using a Keytab
-""""""""""""""
-
-Kerberos keytabs are used to do Active Directory joins without a password. This means that the password for the Active Directory administrator account does
-not need to be saved into the FreeNAS® configuration database, which is a security risk in some environments.
-
-When using a keytab, it is recommended to create and use a less privileged account for performing the required LDAP queries as the password for that account
-will be stored in the FreeNAS® configuration database. Create this account on the domain controller, then input that account name and its associated password
-into the *Domain Account Name* and
-*Domain Account Password* fields in the screen shown in Figure 8.4a.
-
-The keytab itself can be created on a Windows system using these commands::
-
- ktpass.exe -out hostname.keytab host/ hostname@DOMAINNAME -ptype KRB5_NT_PRINCIPAL -mapuser DOMAIN\username -pass userpass
-
- setspn -A host/ hostname@DOMAINNAME DOMAIN\username
-
-
-where:
-
-* **hostname** is the fully qualified hostname of the domain controller
-
-* **DOMAINNAME** is the domain name in all caps
-
-* **DOMAIN** is the pre-Windows 2000 short name for the domain
-
-* **username** is the privileged account name
-
-* **userpass** is the password associated with username
-
-This will create a keytab with sufficient privileges to grant tickets for CIFS and LDAP.
-
-Once the keytab is generated, transfer it to the FreeNAS® system, check the *Use keytab* box and browse to the location of the keytab.
-
-Troubleshooting Tips
-""""""""""""""""""""
-
-If you are running AD in a 2003/2008 mixed domain, see this
-`forum post <http://forums.freenas.org/showthread.php?1931-2008R2-2003-mixed-domain>`_
-for instructions on how to prevent the secure channel key from becoming corrupt.
-
-Active Directory uses DNS to determine the location of the domain controllers and global catalog servers in the network. Use the
-**host -t srv _ldap._tcp.domainname.com**
-command to determine the network's SRV records and, if necessary, change the weight and/or priority of the SRV record to reflect the fastest server. More
-information about SRV records can be found in the Technet article
-`How DNS  <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_
-`Support for Active Directory Works <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_
-.
-
-The realm that is used depends upon the priority in the SRV DNS record, meaning that DNS can override your Active Directory settings. If you are unable to
-connect to the correct realm, check the SRV records on the DNS server.
-`This article <http://www.informit.com/guides/content.aspx?g=security&seqNum=37&rll=1>`_
-describes how to configure KDC discovery over DNS and provides some examples of records with differing priorities.
-
-If the cache becomes out of sync due to an AD server being taken off and back online, resync the cache using System → Settings → Advanced →
-Rebuild LDAP/AD Cache.
-
-An expired password for the administrator account will cause kinit to fail so ensure that the password is still valid.
-
-Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the name field. Make sure it is the same
-name as the one set in the *Hostname* field in Network → Global Configuration and the
-*NetBIOS Name* in Services → Directory Services → Active Directory settings. Make sure the hostname of the domain controller is set in the
-*Domain Controller* field of Services → Directory Services → Active Directory.
-
 Domain Controller
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 Beginning with FreeNAS® 9.2.1, FreeNAS® uses Samba4, meaning that it can be configured to act as the domain controller for a network. Refer to the
 `Samba FAQ <https://wiki.samba.org/index.php/FAQ>`_
@@ -6411,210 +6644,6 @@ Figure 8.4b shows the configuration screen for creating a domain controller and 
 | Administrator password | string         | password to be used for the Active Directory administrator account                                                                                                                        |
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-
-
-LDAP
-^^^^
-
-FreeNAS® includes an
-`OpenLDAP <http://www.openldap.org/>`_
-client for accessing information from an LDAP server. An LDAP server provides directory services for finding network resources such as users and their
-associated permissions. Examples of LDAP servers include Microsoft Server (2000 and newer), Mac OS X Server, Novell eDirectory, and OpenLDAP running on a BSD
-or Linux system. If an LDAP server is running on your network, you should configure the FreeNAS® LDAP service so that the network's users can authenticate to
-the LDAP server and thus be provided authorized access to the data stored on the FreeNAS® system.
-
-**NOTE:** LDAP will not work with CIFS shares until the LDAP directory has been configured for and populated with Samba attributes. The most popular script
-for performing this task is
-`smbldap-tools <http://download.gna.org/smbldap-tools/>`_
-and instructions for using it can be found at
-`The Linux Samba-OpenLDAP Howto <http://download.gna.org/smbldap-tools/docs/samba-ldap-howto/#htoc29>`_
-.
-
-Figure 8.4c shows the LDAP Configuration screen that is seen when you click Services → Directory Services → LDAP.
-
-**Figure 8.4c: Configuring LDAP**
-
-
-|Figure84c_png|
-
-Table 8.4c summarizes the available configuration options. If you are new to LDAP terminology, skim through the
-`OpenLDAP Software 2.4 Administrator's Guide <http://www.openldap.org/doc/admin24/>`_
-.
-
-**Table 8.4c: LDAP Configuration Options**
-
-
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Setting                 | Value          | Description                                                                                      |
-|                         |                |                                                                                                  |
-+=========================+================+==================================================================================================+
-| Hostname                | string         | hostname or IP address of                                                                        |
-|                         |                | LDAP                                                                                             |
-|                         |                | server                                                                                           |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Base DN                 | string         | top level of the                                                                                 |
-|                         |                | LDAP                                                                                             |
-|                         |                | directory tree to be used when searching for resources (e.g.                                     |
-|                         |                | *dc=test,dc=org*                                                                                 |
-|                         |                | )                                                                                                |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read/write access to any client |
-| Binding                 |                |                                                                                                  |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Root bind DN            | string         | name of administrative account on LDAP server (e.g.                                              |
-|                         |                | *cn=Manager,dc=test,dc=org)*                                                                     |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Root bind password      | string         | password for                                                                                     |
-|                         |                | *Root bind DN*                                                                                   |
-|                         |                |                                                                                                  |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Password Encryption     | drop-down menu | select a type supported by the LDAP server, choices are:                                         |
-|                         |                | *clear*                                                                                          |
-|                         |                | (unencrypted),                                                                                   |
-|                         |                | *crypt*                                                                                          |
-|                         |                | ,                                                                                                |
-|                         |                | *md5*                                                                                            |
-|                         |                | ,                                                                                                |
-|                         |                | *nds*                                                                                            |
-|                         |                | ,                                                                                                |
-|                         |                | *racf*                                                                                           |
-|                         |                | ,                                                                                                |
-|                         |                | *ad*                                                                                             |
-|                         |                | ,                                                                                                |
-|                         |                | *exop*                                                                                           |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| User Suffix             | string         | optional, can be added to name when user account added to                                        |
-|                         |                | LDAP                                                                                             |
-|                         |                | directory (e.g. dept. or company name)                                                           |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Group Suffix            | string         | optional, can be added to name when group added to                                               |
-|                         |                | LDAP                                                                                             |
-|                         |                | directory (e.g. dept. or company name)                                                           |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Password Suffix         | string         | optional, can be added to password when password added to                                        |
-|                         |                | LDAP                                                                                             |
-|                         |                | directory                                                                                        |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Machine Suffix          | string         | optional, can be added to name when system added to                                              |
-|                         |                | LDAP                                                                                             |
-|                         |                | directory (e.g. server, accounting)                                                              |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Encryption Mode         | drop-down menu | choices are                                                                                      |
-|                         |                | *Off*                                                                                            |
-|                         |                | ,                                                                                                |
-|                         |                | *SSL*                                                                                            |
-|                         |                | , or                                                                                             |
-|                         |                | *TLS*                                                                                            |
-|                         |                |                                                                                                  |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Self signed certificate | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used         |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Auxiliary Parameters    | string         | `ldap.conf(5) <http://www.openldap.org/software/man.cgi?query=ldap.conf>`_                       |
-|                         |                | options, one per line, not covered by other options in this screen                               |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-
-
-**NOTE:** FreeNAS® automatically appends the root DN. This means that you should not include the scope and root DN when configuring the user, group,
-password, and machine suffixes.
-
-After configuring the LDAP service, start it in Services → Control Services → Directory Services. If the service will not start, refer to the
-`Common errors encountered when using OpenLDAP Software <http://www.openldap.org/doc/admin24/appendix-common-errors.html>`_
-for common errors and how to fix them. When troubleshooting LDAP, open Shell and look for error messages in */var/log/auth.log.*
-
-To verify that the users have been imported, type **getent passwd** from Shell. To verify that the groups have been imported, type
-**getent group**.
-
-NIS
-^^^
-
-Network Information Service (NIS) is a service which maintains and distributes a central directory of Unix user and group information, hostnames, email
-aliases and other text-based tables of information. If a NIS server is running on your network, the FreeNAS® system can be configured to import the users
-and groups from the NIS directory.
-
-After configuring this service, start it in Services → Control Services → Directory Services.
-
-Figure 8.4d shows the configuration screen which opens when you click Services → Directory Services → NIS. Table 8.4d summarizes the configuration
-options.
-
-**Figure 8.4d: NIS Configuration**
-
-
-|Figure84d_png|
-
-**Table 8.4d: NIS Configuration Options**
-
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
-| **Setting** | **Value** | **Description**                                                                                                            |
-|             |           |                                                                                                                            |
-|             |           |                                                                                                                            |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
-| NIS domain  | string    | name of NIS domain                                                                                                         |
-|             |           |                                                                                                                            |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
-| NIS servers | string    | comma delimited list of hostnames or IP addresses                                                                          |
-|             |           |                                                                                                                            |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
-| Secure mode | checkbox  | if checked,                                                                                                                |
-|             |           | `ypbind(8) <http://www.freebsd.org/cgi/man.cgi?query=ypbind>`_                                                             |
-|             |           | will refuse to bind to any NIS server that is not running as root on a TCP port number over 1024                           |
-|             |           |                                                                                                                            |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
-| Manycast    | checkbox  | if checked                                                                                                                 |
-|             |           | , ypbind                                                                                                                   |
-|             |           | will bind to the server that responds the fastest; this is useful when no local NIS server is available on the same subnet |
-|             |           |                                                                                                                            |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
-
-
-NT4
-^^^
-
-This service should only be configured if the Windows network's domain controller is running NT4. If it is not, you should configure Active Directory instead.
-
-Figure 8.4e shows the configuration screen that appears when you click Services → Directory Services → NT4. These options are summarized in Table 8.4e.
-
-After configuring the NT4 service, start it in Services → Control Services → Directory Services.
-
-**Figure 8.4e: NT4 Configuration Options**
-
-
-|Figure84e_png|
-
-**Table 8.4e: NT4 Configuration Options**
-
-+------------------------+-----------+---------------------------------------------------------------------+
-| **Setting**            | **Value** | **Description**                                                     |
-|                        |           |                                                                     |
-|                        |           |                                                                     |
-+========================+===========+=====================================================================+
-| Domain Controller      | string    | hostname of domain controller                                       |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| NetBIOS Name           | string    | hostname of FreeNAS® system                                         |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Workgroup Name         | string    | name of Windows server's workgroup                                  |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Administrator Name     | string    | name of the domain administrator account                            |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Administrator Password | string    | input and confirm the password for the domain administrator account |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
 
 
 Dynamic DNS
@@ -7714,6 +7743,9 @@ Go back to Services → iSCSI → File Extents → View File Extents and click t
 iSCSI target to use the new size of the file.
 
 You can now start the iSCSI service and allow initiators to connect.
+
+LLDP
+~~~~
 
 NFS
 ~~~
@@ -9509,6 +9541,13 @@ Due to the embedded nature of FreeNAS®, some FreeBSD components are missing and
 to the online FreeBSD man pages is available from Help. Most FreeBSD command line utilities should be available in Shell. Additional troubleshooting utilities
 that are provided by FreeNAS® are described in Useful Command Line Utilities.
 
+Log Out
+~~~~~~~
+
+To log out of the FreeNAS® GUI, simply click the Log Out button in the upper right corner. You will immediately be logged out. An informational message will
+indicate that you are logged out and will provide a hyperlink which you can click on to log back in. When logging back in, you will be prompted for the *root*
+password.
+
 Reboot
 ~~~~~~
 
@@ -9573,13 +9612,6 @@ The Help button in the upper right corner provides a pop-up menu containing hype
 * a link to professional support
 
 These resources are discussed in more detail in the next section.
-
-Log Out
-~~~~~~~
-
-To log out of the FreeNAS® GUI, simply click the Log Out button in the upper right corner. You will immediately be logged out. An informational message will
-indicate that you are logged out and will provide a hyperlink which you can click on to log back in. When logging back in, you will be prompted for the *root*
-password.
 
 Alert
 ~~~~~
@@ -10962,8 +10994,8 @@ You are now ready to build the image using the instructions in this
 .
 
 
-Using the FreeNAS® API
-----------------------
+Section 5: Using the FreeNAS® API
+=======================
 
 FreeNAS® provides a
 `reST <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html>`_
@@ -10978,7 +11010,7 @@ This section demonstrates how to install the necessary software to build a local
 through some code examples to get you started using the APIs.
 
 Building a Local Copy of the APIs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 If you plan to use the APIs, it is recommended that you build a local HTML copy of the API documentation so that you can easily determine which resources are
 available and learn more about how each resource works. This section demonstrates how to install the software and source needed to build the documentation
@@ -11021,7 +11053,7 @@ are laid out in an order that is similar to the tree menu of the FreeNAS® GUI.
 |Figure161a_png|
 
 A Simple API Example
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 The *freenas/examples/api/* directory contains some API usage examples. This section provides a walk-through of the
 *freenas/examples/api/newuser.py* script, shown below, as it provides a simple example that creates a user.
@@ -11144,7 +11176,7 @@ or *False*.
 *false*.
 
 A More Complex Example
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 This section provides a walk-through of a more complex example found in the *freenas/examples/api/startup.py* script. Use the searchbar within the API
 documentation to quickly locate the JSON parameters used in this example. This example defines a class and several methods which are used to create a ZFS 
