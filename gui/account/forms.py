@@ -385,9 +385,12 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         ]
         self.fields['bsdusr_password_disabled'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_bsdusr_password_disabled", '
-            '["id_bsdusr_locked"], false);')
+            '["id_bsdusr_locked", "id_bsdusr_sudo"], false);')
         self.fields['bsdusr_locked'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_bsdusr_locked", '
+            '["id_bsdusr_password_disabled"], false);')
+        self.fields['bsdusr_sudo'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_bsdusr_sudo", '
             '["id_bsdusr_password_disabled"], false);')
 
         if not self.instance.id:
@@ -448,12 +451,13 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 )
                 self.fields['bsdusr_mode'].widget.attrs['disabled'] = True
                 self.fields['bsdusr_mode'].required = False
-            if self.instance.bsdusr_locked is True:
+            if self.instance.bsdusr_locked or self.instance.bsdusr_sudo:
                 self.fields['bsdusr_password_disabled'].widget.attrs[
                     'disabled'
                 ] = True
             if self.instance.bsdusr_password_disabled is True:
                 self.fields['bsdusr_locked'].widget.attrs['disabled'] = True
+                self.fields['bsdusr_sudo'].widget.attrs['disabled'] = True
             self.fields['bsdusr_sshpubkey'].initial = (
                 self.instance.bsdusr_sshpubkey
             )
