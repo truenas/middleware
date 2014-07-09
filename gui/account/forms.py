@@ -492,10 +492,20 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 raise forms.ValidationError(_("This field is required"))
             return group
 
+    def clean_bsdusr_password(self):
+        bsdusr_password = self.cleaned_data.get('bsdusr_password')
+        # See bug #4098
+        if bsdusr_password and '?' in bsdusr_password:
+            raise forms.ValidationError(_(
+                'Passwords containing a question mark (?) are currently not '
+                'allowed due to problems with CIFS.'
+            ))
+        return bsdusr_password
+
     def clean_bsdusr_password2(self):
         bsdusr_password = self.cleaned_data.get("bsdusr_password", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
-        if bsdusr_password != bsdusr_password2:
+        if bsdusr_password and bsdusr_password != bsdusr_password2:
             raise forms.ValidationError(
                 _("The two password fields didn't match.")
             )
