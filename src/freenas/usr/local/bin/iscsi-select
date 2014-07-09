@@ -1,0 +1,64 @@
+#!/usr/local/bin/python
+"""Displays or sets the database value for which iSCSI target
+   to run.  Note that this only changes the database.  Rebooting
+   the system after this progtram has changed the database is
+   required to switch the iSCSI target."""
+
+import argparse
+import os
+import sys
+
+sys.path.extend([
+    '/usr/local/www',
+    '/usr/local/www/freenasUI'
+])
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
+
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
+
+from freenasUI.services.models import iSCSITargetGlobalConfiguration
+
+
+def main(arg):
+    """Accepts three possible values for arg:
+       None : Display curent database value of iscsi_experimental_target
+       ctl: Set iscsi_experimental_target to True
+       istgt: Set iscsi_experimental_target to False"""
+    gconf = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
+    if gconf.iscsi_experimental_target:
+        target = "ctl"
+    else:
+        target = "istgt"
+
+    if arg is None:
+        print target
+    else:
+        if arg == target:
+            print "iSCSI target is already %s. Not changing database." % arg
+        elif arg == "ctl":
+            gconf.iscsi_experimental_target = True
+            gconf.save()
+            print "iSCSI target changed in database. System Reboot is required."
+        elif arg == "istgt":
+            gconf.iscsi_experimental_target = False
+            gconf.save()
+            print "iSCSI target changed in database. System Reboot is required."
+
+if __name__ == "__main__":
+    if os.geteuid() != 0:
+        print "This program must be run as root"
+        exit(1)
+    parser = argparse.ArgumentParser(usage='%(prog)s -t [ctl|istgt]',
+                                     description="""
+            When called with no arguments, display the current iSCSI target.
+            When called with either -t ctl or -t istgt, switch the iSCSI
+            target to the value specified.  (Requires a reboot)""")
+    parser.add_argument('-t', choices=["ctl", "istgt"])
+    args = parser.parse_args()
+    if args.t is None:
+        main(None)
+    else:
+        main(args.t)
