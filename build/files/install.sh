@@ -486,22 +486,33 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
     else
 	set -x
 	# For non-upgrade installs, the partition was erased.
-	# A boot partition was created, so we need to add another
-	# partition
-	gpart add -t freebsd-ufs ${_disk}
+	# A boot partition was created, so we need to add two
+	# more partitions:  data and root
+	gpart add -t freebsd-ufs -s 20M -i 3 ${_disk}	# data, 20mbytes
+	gpart add -t freebsd-ufs -i 2 ${_disk}		# The rest of the disk
 	# Add the boot loader
 	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
-	# And now create the filesystem
-	newfs /dev/${_disk}p2
+	# And now create the filesystems
+	# /data first
+	newfs -n /dev/${_disk}p3
+	mkdir -p /tmp/data
+	mount /dev/${_disk}p3 /tmp/data
+	# Copy the databases over
+	cp -R /data/* /tmp/data
+	chown -R www:www /tmp/data
+	umount /tmp/data
+	rmdir /tmp/data
+	# And now root
+	newfs -n /dev/${_disk}p2
 	mkdir -p /tmp/data
 	mount /dev/${_disk}p2 /tmp/data
 	/usr/local/bin/update_freenas -R /tmp/data -M /FreeNAS-MANIFEST install
 	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
+	echo "/dev/${_disk}p3 /data ufs rw 2 2" >> /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
-	cp -R /data /tmp/data
-	chown -R www:www /tmp/data/*
 	umount /tmp/data
 	rmdir /tmp/data
+	# Hack, of course
 	read foo
 	set +x
     fi
