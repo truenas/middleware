@@ -714,46 +714,46 @@ are available from the
 download the VMware vSphere client which is used to create and manage virtual machines.
 
 Once the VMware vSphere client is installed, use it to connect to the ESXi server. To create a new virtual machine, click File → New → Virtual Machine.
-The New Virtual Machine Wizard will launch as seen in Figure 2.2m.
+The New Virtual Machine Wizard will launch as seen in Figure 2.2l.
 
-Click “Next” and input a name for the virtual machine. Click “Next” and highlight a datastore. An example is shown in Figure 2.2n. Click “Next”.
-In the screen shown in Figure 2.2o, click “Other” then select a FreeBSD architecture that matches the FreeNAS® architecture.
+Click “Next” and input a name for the virtual machine. Click “Next” and highlight a datastore. An example is shown in Figure 2.2m. Click “Next”.
+In the screen shown in Figure 2.2n, click “Other” then select a FreeBSD architecture that matches the FreeNAS® architecture.
 
-**Figure 2.2m: New Virtual Machine Wizard**
+**Figure 2.2l: New Virtual Machine Wizard**
 
 |10000201000003950000021F0BA6E10F_png|
 
-**Figure 2.2n: Select a Datastore**
+**Figure 2.2m: Select a Datastore**
 
 |10000201000003950000021F7988BEDD_png|
 
-**Figure 2.2o: Select the Operating System**
+**Figure 2.2n: Select the Operating System**
 
 |10000201000003950000021FFB8F2015_png|
 
-Click “Next” and create a virtual disk file of **2 GB** to hold the FreeNAS® operating system, as shown in Figure 2.2p.
+Click “Next” and create a virtual disk file of **2 GB** to hold the FreeNAS® operating system, as shown in Figure 2.2o.
 
 Click “Next” then “Finish”. Your virtual machine will be listed in the left frame. Right-click the virtual machine and select “Edit Settings”
-to access the screen shown in Figure 2.2q.
+to access the screen shown in Figure 2.2p.
 
 Increase the “Memory Configuration” to **at least 2048 MB**.
 
 Under “CPUs”, make sure that only 1 virtual processor is listed, otherwise you will be unable to start any FreeNAS® services.
 
 To create a storage disk, click Hard disk 1 → Add. In the “Device Type” menu, highlight “Hard Disk” and click” Next”. Select “Create a
-new virtual disk” and click “Next”. In the screen shown in Figure 2.2r, select the size of the disk. If you would like the size to be dynamically
+new virtual disk” and click “Next”. In the screen shown in Figure 2.2q, select the size of the disk. If you would like the size to be dynamically
 allocated as needed, check the box “Allocate and commit space on demand (Thin Provisioning)”. Click “Next”, then “Next”, then “Finish” to
 create the disk. Repeat to create the amount of storage disks needed to meet your requirements.
 
-**Figure 2.2p: Create a Disk for the Operating System**
+**Figure 2.2o: Create a Disk for the Operating System**
 
 |10000201000003950000021F038D89C4_png|
 
-**Figure 2.2q: Virtual Machine's Settings**
+**Figure 2.2p: Virtual Machine's Settings**
 
 |10000201000002C400000270A063501A_png|
 
-**Figure 2.2r: Creating a Storage Disk**
+**Figure 2.2q: Creating a Storage Disk**
 
 
 |100002010000028C00000200588B16CC_png|
@@ -951,14 +951,14 @@ specify the USB stick when using a wipe utility!
 Initial Setup
 -------------
 
-When you boot into FreeNAS®, the Console Setup, shown in Figure 2.5a, will appear at the end of the boot process. If you have access to the the FreeNAS®
+When you boot into FreeNAS®, the Console Setup, shown in Figure 2.6a, will appear at the end of the boot process. If you have access to the the FreeNAS®
 system's keyboard and monitor, this Console Setup menu can be used to administer the system should the administrative GUI become inaccessible.
 
 **NOTE:** you can access the Console Setup menu from within the FreeNAS® GUI by typing
 **/etc/netcli** from Shell. You can disable the Console Setup menu by unchecking the "Enable Console Menu" in System → Settings →
 Advanced.
 
-**Figure 2.5a: FreeNAS® Console Setup Menu**
+**Figure 2.6a: FreeNAS® Console Setup Menu**
 
 
 |10000000000001EB0000014DF2519984_png|
@@ -993,13 +993,13 @@ need to go to Storage → Volumes → Auto Import Volume to re-import your volum
 **11) Shutdown:** halts the system.
 
 During boot, FreeNAS® will automatically try to connect to a DHCP server from all live interfaces. If it successfully receives an IP address, it will display
-the IP address which can be used to access the graphical console. In the example seen in Figure 2.5a, the FreeNAS® system is accessible from
+the IP address which can be used to access the graphical console. In the example seen in Figure 2.6a, the FreeNAS® system is accessible from
 *http://192.168.1.70*.
 
 If your FreeNAS® server is not connected to a network with a DHCP server, you can use the network configuration wizard to manually configure the interface as
-seen in Example 2.5a. In this example, the FreeNAS® system has one network interface (*em0*).
+seen in Example 2.6a. In this example, the FreeNAS® system has one network interface (*em0*).
 
-**Example 2.5a: Manually Setting an IP Address from the Console Menu**
+**Example 2.6a: Manually Setting an IP Address from the Console Menu**
 ::
 
  Enter an option from 1-11: 1
@@ -1023,18 +1023,18 @@ seen in Example 2.5a. In this example, the FreeNAS® system has one network inte
 
 
 Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the FreeNAS®
-system. You should be prompted to create a password for the *root* user, as seen in Figure 2.5b.
+system. You should be prompted to create a password for the *root* user, as seen in Figure 2.6b.
 
-**Figure 2.5b: Set the Root Password**
+**Figure 2.6b: Set the Root Password**
 
-|Figure25b_png|
+|Figure26b_png|
 
 Setting a password is mandatory and the password can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess
-password. Once the password has been input and confirmed, you should see the administrative GUI as shown in the example in Figure 2.5c.
+password. Once the password has been input and confirmed, you should see the administrative GUI as shown in the example in Figure 2.6c.
 
-**Figure 2.5c: FreeNAS® Graphical Configuration Menu**
+**Figure 2.6c: FreeNAS® Graphical Configuration Menu**
 
-|Figure25c_png|
+|Figure26c_png|
 
 If you are unable to access the IP address from a browser, check the following:
 
@@ -1095,21 +1095,21 @@ Insert the CDROM into the system and boot from it. Once the media has finished b
 “1 Install/Upgrade to hard drive/flash device, etc.” As with a fresh install, the installer will present a screen showing all available drives; select
 the device FreeNAS® is installed into and press enter.
 
-The installer will recognize that an earlier version of FreeNAS® is installed on the device and will present the message shown in Figure 2.6a.
+The installer will recognize that an earlier version of FreeNAS® is installed on the device and will present the message shown in Figure 2.7a.
 
 **NOTE:** if you select to perform a *Fresh Install*, you will have to restore the backup of your configuration.
 
 To perform an upgrade, press enter to accept the default of *Upgrade Install*. Again, the installer will remind you that the operating system should be
 installed on a thumb drive. Press enter to start the upgrade. Once the installer has finished unpacking the new image, you will see the menu shown in Figure
-2.6b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
+2.7b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
 
-Press enter and FreeNAS® will indicate that the upgrade is complete and that you should reboot, as seen in Figure 2.6c.
+Press enter and FreeNAS® will indicate that the upgrade is complete and that you should reboot, as seen in Figure 2.7c.
 
-**Figure 2.6a: Upgrading a FreeNAS® Installation**
+**Figure 2.7a: Upgrading a FreeNAS® Installation**
 
 |10000000000002C20000017F0B9104CB_png|
 
-**Figure 2.6b: FreeNAS® will Preserve and Migrate Settings**
+**Figure 2.7b: FreeNAS® will Preserve and Migrate Settings**
 
 |10000000000002CF0000018CA87134B3_png|
 
@@ -1119,7 +1119,7 @@ database schema changes” line in the reboot cycle. This conversion can take a 
 for some reason you end up with database errors but the graphical administrative interface is accessible, go to Settings → General and use the Upload
 Config button to upload the configuration that you saved before you started the upgrade.
 
-**Figure 2.6c: Upgrade is Complete**
+**Figure 2.7c: Upgrade is Complete**
 
 |10000000000002C300000141704D5CD2_png|
 
@@ -1129,11 +1129,11 @@ Upgrading From the GUI
 To perform an upgrade using this method,
 `download <http://www.freenas.org/download-releases.html>`_
 the latest version of the *.txz* file that matches the architecture of the system (32- or 64-bit). Then, go to System → Settings → Advanced → 
-Firmware Update as shown in Figure 2.6d.
+Firmware Update as shown in Figure 2.7d.
 
 Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select “Memory device” to
 allow the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the Apply Update button to see the screen
-shown in Figure 2.6e.
+shown in Figure 2.7e.
 
 This screen again reminds you to backup your configuration before proceeding. If you have not yet, click the “click here” link.
 
@@ -1154,14 +1154,14 @@ When finished, click the Apply Update button to begin the upgrade progress. Behi
 * assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server; refresh your browser after a moment to see if you can access
   the system
 
-**Figure 2.6d: Upgrading FreeNAS® From the GUI**
+**Figure 2.7d: Upgrading FreeNAS® From the GUI**
 
 
-|Figure26d_png|
+|Figure27d_png|
 
-**Figure 2.6e: Step 2 of 2**
+**Figure 2.7e: Step 2 of 2**
 
-|Figure26e_png|
+|Figure27e_png|
 
 Unlocking an Encrypted Volume
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1170,13 +1170,13 @@ If your disks are encrypted and you have created a passphrase and saved the reco
 to prevent an unauthorized user from using an upgrade procedure to gain access to the data on the encrypted disks. After the upgrade, the locked volumes will
 be unavailable until they are unlocked with the passphrase and recovery key.
 
-To unlock the volume, go to Storage → Volumes → View Volumes and highlight the locked volume. As seen in Figure 2.6f, clicking the “Unlock” icon
+To unlock the volume, go to Storage → Volumes → View Volumes and highlight the locked volume. As seen in Figure 2.7f, clicking the “Unlock” icon
 will prompt for the passphrase or recovery key. You can also select which services to start when the volume is unlocked.
 
-**Figure 2.6f: Unlocking an Encrypted Volume**
+**Figure 2.7f: Unlocking an Encrypted Volume**
 
 
-|Figure26f_png|
+|Figure27f_png|
 
 If Something Goes Wrong
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -1463,25 +1463,25 @@ account information into FreeNAS® using Services → Directory Services → Act
 
 This section describes how to create a group and assign it user accounts. The next section will describe how to create user accounts.
 
-If you click Groups → View Groups, you will see a screen similar to Figure 3.2a.
+If you click Groups → View Groups, you will see a screen similar to Figure 4.1a.
 
-**Figure 3.2a: FreeNAS® Groups Management**
+**Figure 4.1a: FreeNAS® Groups Management**
 
 
-|Figure32a_png|
+|Figure41a_png|
 
 All groups that came with the operating system will be listed. Each group has an entry indicating the group ID, group name, whether or not it is a built-in
 group which was installed with FreeNAS®, and whether or not the group's members are allowed to use **sudo**. If you click a group entry, a Members button
 will appear. Click this button to view and modify that group's membership.
 
-If you click the Add Group button, you will see the screen shown in Figure 3.2b. Table 3.2a summarizes the available options when creating a group.
+If you click the Add Group button, you will see the screen shown in Figure 4.1b. Table 4.1a summarizes the available options when creating a group.
 
-**Figure 3.2b: Creating a New Group**
+**Figure 4.1b: Creating a New Group**
 
 
-|Figure32b_png|
+|Figure41b_png|
 
-**Table 3.2a: Options When Creating a Group**
+**Table 4.1a: Options When Creating a Group**
 
 
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -1508,16 +1508,16 @@ Once the group and users are created, you can assign users as members of a group
 assign users to. Highlight the user in the Member users list (which shows all user accounts on the system) and click the >> to move that user to the right
 frame. The user accounts which appear in the right frame will be added as members of that group.
 
-In the example shown in Figure 3.2c, the *data1* group has been created and the *user1* user account has been created with a primary group of *user1*. The
+In the example shown in Figure 4.1c, the *data1* group has been created and the *user1* user account has been created with a primary group of *user1*. The
 Members button for the *data1* group has been selected and *user1* has been added as a member of that group.
 
 To delete a group, click its Delete Group button. The pop-up message will ask whether or not you would also like to delete all members of that group. Note
 that the built-in groups do not provide a Delete Group button.
 
-**Figure 3.2c: Assigning a User as a Member of a Group**
+**Figure 4.1c: Assigning a User as a Member of a Group**
 
 
-|Figure32c_png|
+|Figure41c_png|
 
 Users
 -----
@@ -1542,12 +1542,12 @@ then assign the accounts as members of the groups. This section demonstrates how
 account information into FreeNAS® using Services → Active Directory or Services → LDAP.
 
 Account → Users → View Users provides a listing of all of the system accounts that were installed with the FreeNAS® operating system, as shown in
-Figure 3.2d.
+Figure 4.2a.
 
-**Figure 3.2d: Managing User Accounts**
+**Figure 4.2a: Managing User Accounts**
 
 
-|Figure32d_png|
+|Figure42a_png|
 
 Each account entry indicates the user ID, username, primary group ID, home directory, default shell, full name, whether or not it is a built-in user that came
 with the FreeNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, and whether or not the user
@@ -1572,16 +1572,16 @@ should not be available for use as a login account. For this reason, the default
 `nologin(8) <http://www.freebsd.org/cgi/man.cgi?query=nologin>`_
 . For security reasons, and to prevent breakage of system services, you should not modify the system accounts.
 
-To create a user account, click the Add New User button to open the screen shown in Figure 3.2e. Some settings are only available in Advanced Mode. To see
+To create a user account, click the Add New User button to open the screen shown in Figure 4.2b. Some settings are only available in Advanced Mode. To see
 these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box “Show advanced fields by
-default” in System → Settings → Advanced. Table 3.2b summarizes the options which are available when you create or modify a user account.
+default” in System → Settings → Advanced. Table 4.2a summarizes the options which are available when you create or modify a user account.
 
-**Figure 3.2e: Adding or Editing a User Account**
+**Figure 4.2b: Adding or Editing a User Account**
 
 
-|Figure32e_jpg|
+|Figure42b_jpg|
 
-**Table 3.2b: User Account Configuration**
+**Table 4.2a: User Account Configuration**
 
 
 +----------------------------+-----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -1671,6 +1671,7 @@ default” in System → Settings → Advanced. Table 3.2b summarizes the option
 +----------------------------+-----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
+
 System
 ======
 
@@ -1693,7 +1694,7 @@ Each of these is described in more detail in this section.
 Information
 -----------
 
-System → Information displays general information about the FreeNAS® system. An example is seen in Figure 4.8a.
+System → Information displays general information about the FreeNAS® system. An example is seen in Figure 5.1a.
 
 The information includes the hostname, the build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, and the
 current load average.
@@ -1701,22 +1702,22 @@ current load average.
 To change the system's hostname, click its “Edit” button, type in the new hostname, and click “OK”. The hostname must include the domain name. If
 the network does not use a domain name add *.local* to the end of the hostname.
 
-**Figure 4.8a: System Information Tab**
+**Figure 5.1a: System Information Tab**
 
-|Figure48a_png|
+|Figure51a_png|
 
 General
 -------
 
-The General tab, shown in Figure 4.6a, contains 4 tabs: General, Advanced, Email, and SSL.
+The General tab, shown in Figure 5.2a, contains 4 tabs: General, Advanced, Email, and SSL.
 
-**Figure 4.6a: General Tab of Settings**
+**Figure 5.2a: General Tab of Settings**
 
-|Figure46a_png|
+|Figure52a_png|
 
-Table 4.6a summarizes the settings that can be configured using the General tab:
+Table 5.2a summarizes the settings that can be configured using the General tab:
 
-**Table 4.6a: General Tab's Configuration Settings**
+**Table 5.2a: General Tab's Configuration Settings**
 
 
 +----------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -1809,23 +1810,18 @@ sensitive applications such as Active Directory.
 By default, FreeNAS® is pre-configured to use three public NTP servers. If your network is using Active Directory, ensure that the FreeNAS® system and the
 Active Directory Domain Controller have been configured to use the same NTP servers.
 
-Figure 4.3a shows the default NTP configuration for FreeNAS®. If you wish to change a default server to match the settings used by your network's domain
-controller, click an entry to access its “Edit” button. Alternately, you can delete the default NTP servers and click “Add NTP Server” to create
-your own. Figure 4.3b shows the “Add NTP Server” screen and Table 4.3a summarizes the options when adding or editing an NTP server.
+To change a default server to match the settings used by your network's domain
+controller, click an entry to access its “Edit” button. Figure 5.2b shows the “Add NTP Server” screen and Table 5.2b summarizes the options when
+adding or editing an NTP server.
 `ntp.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=ntp.conf>`_
 explains these options in more detail.
 
-**Figure 4.3a: Default NTP Configuration**
-
-
-|Figure43a_png|
-
-**Figure 4.3b: Add or Edit a NTP Server**
+**Figure 5.2b: Add or Edit a NTP Server**
 
 
 |100000000000011C0000016E12EDFEE5_jpg|
 
-**Table 4.3a: NTP Server Options**
+**Table 5.2b: NTP Server Options**
 
 
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
@@ -1865,20 +1861,14 @@ explains these options in more detail.
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 
 When you change the Protocol value to HTTPS in System → Settings → General, an unsigned RSA certificate and key are auto-generated. Once generated,
-the certificate and key will be displayed in the SSL Certificate field in System → Settings → SSL, shown in Figure 4.6d. If you already have your own
+the certificate and key will be displayed in the SSL Certificate field in System → Settings → SSL. If you already have your own
 signed certificate that you wish to use for SSL/TLS connections, replace the values in the SSL certificate field with a copy/paste of your own key and certificate. The certificate can be used to secure the HTTP connection (enabled in the Settings → General Tab) to the FreeNAS® system.
 
-Table 4.6d summarizes the settings that can be configured using the SSL tab. This
+Table 5.2c summarizes the settings that can be configured using the SSL tab. This
 `howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
-shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 4.6d.
+shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 5.2c.
 
-
-**Figure 4.6d: SSL Tab**
-
-
-|Figure46d_png|
-
-**Table 4.6d: SSL Tab's Configuration Settings**
+**Table 5.2c: SSL Tab's Configuration Settings**
 
 
 +---------------------+--------+------------------------------------------------------------------------------------------------------------------+
@@ -1922,14 +1912,14 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 Advanced
 --------
 
-The Advanced tab, shown in Figure 4.6b, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in
-Table 4.6b.
+The Advanced tab, shown in Figure 5.3a, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in
+Table 5.3a.
 
-**Figure 4.6b: Advanced Tab**
+**Figure 5.3a: Advanced Tab**
 
-|Figure46b_png|
+|Figure53a_png|
 
-**Table 4.6b: Advanced Tab's Configuration Settings**
+**Table 5.3a: Advanced Tab's Configuration Settings**
 
 
 +-----------------------------------------+----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -2034,20 +2024,20 @@ If you wish to read the script to see which checks are performed, the script is 
 Email
 -----
 
-The Email tab, shown in Figure 4.6c, is used to configure the email settings on the FreeNAS® system. Table 4.6c summarizes the settings that can be
+The Email tab, shown in Figure 5.4a, is used to configure the email settings on the FreeNAS® system. Table 5.4a summarizes the settings that can be
 configured using the Email tab.
 
 **NOTE:** it is important to configure the system so that it can successfully send emails. An automatic script send a nightly email to the *root* user account
 containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
 
-**Figure 4.6c: Email Tab**
+**Figure 5.4a: Email Tab**
 
 
-|Figure46c_png|
+|Figure54a_png|
 
 
 
-**Table 4.6c: Email Tab's Configuration Settings**
+**Table 5.4a: Email Tab's Configuration Settings**
 
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
@@ -2121,35 +2111,57 @@ and
 unbootable, unreachable via the network, or can cause the system to panic under load. Certain changes may break assumptions made by the FreeNAS® software.
 This means that you should always test the impact of any changes on a test system first.
 
-FreeNAS® provides a graphical interface for managing sysctl MIBs. To add a sysctl, go to System → Sysctls → Add Sysctl.
+When a FreeBSD-based system boots,
+`loader.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=loader.conf>`_
+is read to determine if any parameters should be passed to the kernel or if any additional kernel modules (such as drivers) should be loaded. Since loader
+values are specific to the kernel parameter or driver to be loaded, descriptions can be found in the man page for the specified driver and in many sections of
+the
+`FreeBSD Handbook <http://www.freebsd.org/handbook>`_
+.
 
-Table 4.7a summarizes the options when adding a sysctl.
+FreeNAS® provides a graphical interface for managing loader values. This advanced functionality is intended to make it easier to load additional kernel
+modules at boot time. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default
+FreeNAS® image does not load every possible hardware driver. This is a necessary evil as some drivers conflict with one another or cause stability issues,
+some are rarely used, and some drivers just don't belong on a standard NAS system. If you need a driver that is not automatically loaded, you need to add a
+tunable.
 
-**Table 4.7a: Adding a Sysctl**
+**DANGER!** adding a tunable is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
+**very important** that you do not have a typo when adding a tunable as this could halt the boot process. Fixing this problem requires physical access to the
+FreeNAS® system and knowledge of how to use the boot loader prompt as described in Recovering From Incorrect Tunables. This means that you should always test
+the impact of any changes on a test system first.
 
+To add a tunable or sysctl, go to System → Tunables → Add Tunable, as seen in Figure 5.6a.
 
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| **Setting** | **Value**         | **Description**                                                                   |
-|             |                   |                                                                                   |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| Variable    | string            | must be in dotted format e.g.                                                     |
-|             |                   | *kern.ipc.shmmax*                                                                 |
-|             |                   |                                                                                   |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| Value       | integer or string | value to associate with the MIB;                                                  |
-|             |                   | **do not make this up**                                                           |
-|             |                   | , refer to the suggested values in a man page, FreeBSD Handbook page, or tutorial |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| Comment     | string            | optional, but a useful reminder for the reason behind using this MIB/value        |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
-| Enabled     | checkbox          | uncheck if you would like to disable the sysctl without deleting it               |
-|             |                   |                                                                                   |
-+-------------+-------------------+-----------------------------------------------------------------------------------+
+**Figure 5.6a: Adding a Tunable**
 
+|Figure56a_png|
+
+Table 5.6a summarizes the options when adding a tunable. The changes you make will not take effect until the system is rebooted as loader settings are only
+read when the kernel is loaded at boot time. As long as the tunable exists, your changes will persist at each boot and across upgrades. Any tunables that you
+add will be listed alphabetically in System → Tunables → View Tunables. To change the value of a tunable, click its Edit button. To remove a tunable,
+click its Delete button.
+
+**Table 5.6a: Adding a Tunable**
+
++-------------+-------------------+---------------------------------------------------------------------------+
+| **Setting** | **Value**         | **Description**                                                           |
+|             |                   |                                                                           |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Variable    | string            | typically the name of the driver to load, as indicated by its man page    |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Value       | integer or string | value to associate with variable; typically this is set to                |
+|             |                   | *YES*                                                                     |
+|             |                   | to enable the driver specified by the variable                            |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Comment     | string            | optional, but a useful reminder for the reason behind adding this tunable |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Enabled     | checkbox          | uncheck if you would like to disable the tunable without deleting it      |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
 
 As soon as you add or edit a sysctl, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that value will
 persist across reboots and upgrades.
@@ -2172,59 +2184,6 @@ At this time, the GUI does not display the sysctl MIBs that are pre-set in the i
 
 
 **Do not add or edit the default MIBS as sysctls** as doing so will overwrite the default values which may render the system unusable.
-
-When a FreeBSD-based system boots,
-`loader.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=loader.conf>`_
-is read to determine if any parameters should be passed to the kernel or if any additional kernel modules (such as drivers) should be loaded. Since loader
-values are specific to the kernel parameter or driver to be loaded, descriptions can be found in the man page for the specified driver and in many sections of
-the
-`FreeBSD Handbook <http://www.freebsd.org/handbook>`_
-.
-
-FreeNAS® provides a graphical interface for managing loader values. This advanced functionality is intended to make it easier to load additional kernel
-modules at boot time. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default
-FreeNAS® image does not load every possible hardware driver. This is a necessary evil as some drivers conflict with one another or cause stability issues,
-some are rarely used, and some drivers just don't belong on a standard NAS system. If you need a driver that is not automatically loaded, you need to add a
-tunable.
-
-**DANGER!** adding a tunable is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
-**very important** that you do not have a typo when adding a tunable as this could halt the boot process. Fixing this problem requires physical access to the
-FreeNAS® system and knowledge of how to use the boot loader prompt as described in Recovering From Incorrect Tunables. This means that you should always test
-the impact of any changes on a test system first.
-
-To add a tunable, go to System → Tunables → Add Tunable, as seen in Figure 4.9a.
-
-**Figure 4.9a: Adding a Tunable**
-
-|Figure49a_png|
-
-Table 4.9a summarizes the options when adding a tunable. The changes you make will not take effect until the system is rebooted as loader settings are only
-read when the kernel is loaded at boot time. As long as the tunable exists, your changes will persist at each boot and across upgrades. Any tunables that you
-add will be listed alphabetically in System → Tunables → View Tunables. To change the value of a tunable, click its Edit button. To remove a tunable,
-click its Delete button.
-
-**Table 4.9a: Adding a Tunable**
-
-+-------------+-------------------+---------------------------------------------------------------------------+
-| **Setting** | **Value**         | **Description**                                                           |
-|             |                   |                                                                           |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Variable    | string            | typically the name of the driver to load, as indicated by its man page    |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Value       | integer or string | value to associate with variable; typically this is set to                |
-|             |                   | *YES*                                                                     |
-|             |                   | to enable the driver specified by the variable                            |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Comment     | string            | optional, but a useful reminder for the reason behind adding this tunable |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Enabled     | checkbox          | uncheck if you would like to disable the tunable without deleting it      |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-
 
 At this time, the GUI does not display the tunables that are pre-set in the installation image. 9.3 ships with the following tunables set::
 
@@ -2263,9 +2222,9 @@ Recovering From Incorrect Tunables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If a tunable is preventing the system from booting, you will need physical access to the FreeNAS® system. Watch the boot messages and press the number 3 key
-or the Esc key to select “3. **Esc**ape to loader prompt” when you see the FreeNAS® boot menu shown in Figure 4.9b.
+or the Esc key to select “3. Escape to loader prompt” when you see the FreeNAS® boot menu shown in Figure 5.6b.
 
-**Figure 4.9b: FreeNAS® Boot Menu**
+**Figure 5.6b: FreeNAS® Boot Menu**
 
 
 |10000000000002D10000018F743DB34E_png|
@@ -2276,11 +2235,11 @@ The boot loader prompt provides a minimal set of commands described in
 **set** command to modify the problematic value, or the
 **unload** command to prevent the problematic driver from loading.
 
-Example 4.9a demonstrates several examples using these commands at the boot loader prompt. The first command disables the current value associated with the
+Example 5.6a demonstrates several examples using these commands at the boot loader prompt. The first command disables the current value associated with the
 *kern.ipc.nmbclusters* MIB and will fail with a “no such file or directory” error message if a current tunable does not exist to set this value. The
 second command disables ACPI. The third command instructs the system not to load the fuse driver. When finished, type **boot** to continue the boot process.
 
-**Example 4.9a: Sample Commands at the Boot Loader Prompt**
+**Example 5.6a: Sample Commands at the Boot Loader Prompt**
 ::
 
  Type '?' for a list of commands, 'help' for more detailed help.
@@ -2326,15 +2285,15 @@ using syntax that can be perplexing to new Unix users. The FreeNAS® GUI makes i
 
 **NOTE:** due to a limitation in FreeBSD, users with account names that contain spaces or exceed 17 characters are unable to create cron jobs.
 
-Figure 4.1a shows the screen that opens when you click System → Cron Jobs → Add Cron Job.
+Figure 6.1a shows the screen that opens when you click System → Cron Jobs → Add Cron Job.
 
-**Figure 4.1a: Creating a Cron Job**
+**Figure 6.1a: Creating a Cron Job**
 
-|Figure41a_png|
+|Figure61a_png|
 
-Table 4.1a summarizes the configurable options when creating a cron job.
+Table 6.1a summarizes the configurable options when creating a cron job.
 
-**Table 4.1a: Cron Job Options**
+**Table 6.1a: Cron Job Options**
 
 
 +-------------------+-----------------------------+---------------------------------------------------------------------------------------------------------------------------------+
@@ -2388,7 +2347,7 @@ Init/Shutdown Scripts
 
 FreeNAS® provides the ability to schedule commands or scripts to run at system startup or shutdown.
 
-Figure 4.2a shows the screen that opens when you click System → Init/Shutdown Scripts → Add Init/Shutdown Script. Table 4.2a summarizes the available
+Figure 6.2a shows the screen that opens when you click System → Init/Shutdown Scripts → Add Init/Shutdown Script. Table 6.2a summarizes the available
 options.
 
 When scheduling a command, make sure that the command is in your path or give the full path to the command. One way to test the path is to type
@@ -2396,12 +2355,12 @@ When scheduling a command, make sure that the command is in your path or give th
 
 When scheduling a script, make sure that the script is executable and has been fully tested to ensure that it achieves the desired results.
 
-**Figure 4.2a: Add an Init/Shutdown Script**
+**Figure 6.2a: Add an Init/Shutdown Script**
 
 
-|Figure42a_png|
+|Figure62a_png|
 
-**Table 4.2a: Options When Adding an Init/Shutdown Script**
+**Table 6.2a: Options When Adding an Init/Shutdown Script**
 
 
 +-------------+----------------+-------------------------------------------------------------------+
@@ -2438,7 +2397,9 @@ Rsync Tasks
 -----------
 
 `Rsync <http://www.samba.org/ftp/rsync/rsync.html>`_
-is a utility that automatically copies specified data from one system to another over a network. Once the initial data is copied, rsync reduces the amount of data sent over the network by sending only the differences between the source and destination files. Rsync can be used for backups, mirroring data on multiple systems, or for copying files between systems.
+is a utility that automatically copies specified data from one system to another over a network. Once the initial data is copied, rsync reduces the amount of
+data sent over the network by sending only the differences between the source and destination files. Rsync can be used for backups, mirroring data on multiple
+systems, or for copying files between systems.
 
 To configure rsync, you need to configure both ends of the connection:
 
@@ -2465,14 +2426,14 @@ operation.
 
 **NOTE:** if there is a firewall between the two systems or if the other system has a built-in firewall, make sure that TCP port 873 is allowed.
 
-Figure 4.4a shows the screen that appears when you click System → Rsync Tasks → Add Rsync Task. Table 4.4a summarizes the options that can be
+Figure 6.3a shows the screen that appears when you click System → Rsync Tasks → Add Rsync Task. Table 6.3a summarizes the options that can be
 configured when creating an rsync task.
 
-**Figure 4.4a: Adding an Rsync Task**
+**Figure 6.3a: Adding an Rsync Task**
 
-|Figure44a_png|
+|Figure63a_png|
 
-**Table 4.4a: Rsync Configuration Options**
+**Table 6.3a: Rsync Configuration Options**
 
 
 +----------------------------------+-----------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -2587,7 +2548,7 @@ This configuration example will configure rsync module mode between the two foll
   */mnt/local/images*. An rsync module needs to be defined on this system and the rsyncd service needs to be started. It will be referred to as
   *PULL.*
 
-On *PUSH*, an rsync task is defined in System → Rsync Tasks → Add Rsync Task as shown in Figure 4.5b. In this example:
+On *PUSH*, an rsync task is defined in System → Rsync Tasks → Add Rsync Task as shown in Figure 6.3b. In this example:
 
 * the Path points to */usr/local/images*, the directory to be copied
 
@@ -2605,7 +2566,7 @@ On *PUSH*, an rsync task is defined in System → Rsync Tasks → Add Rsync Task
 
 * the Preserve Permissions checkbox is checked so that the original permissions are not overwritten by the *root* user
 
-On *PULL*, an rsync module is defined in Services → Rsync Modules → Add Rsync Module, shown in Figure 4.4c. In this example:
+On *PULL*, an rsync module is defined in Services → Rsync Modules → Add Rsync Module, shown in Figure 6.3c. In this example:
 
 * the Module Name is *backups*; this needs to match the setting on the rsync client
 
@@ -2623,15 +2584,15 @@ To finish the configuration, start the rsync service on *PULL* in Services → C
 */mnt/local/images/* will be mirrored to
 */mnt/remote/images/*.
 
-**Figure 4.4b: Configuring the Rsync Client**
+**Figure 6.3b: Configuring the Rsync Client**
 
 
-|Figure44b_png|
+|Figure63b_png|
 
-**Figure 4.4c: Configuring the Rsync Server**
+**Figure 6.3c: Configuring the Rsync Server**
 
 
-|Figure44c_png|
+|Figure63c_png|
 
 Rsync over SSH Mode
 ~~~~~~~~~~~~~~~~~~~
@@ -2699,13 +2660,13 @@ Next, view and copy the contents of the generated public key::
 
 
 Go to *PULL* and paste (or append) the copied key into the SSH Public Key field of Account → Users → View Users → root (or the specified rsync
-user account) → Modify User. The paste for the above example is shown in Figure 4.4d. When pasting the key, ensure that it is pasted as one long line and,
+user account) → Modify User. The paste for the above example is shown in Figure 6.3d. When pasting the key, ensure that it is pasted as one long line and,
 if necessary, remove any extra spaces representing line breaks.
 
-**Figure 4.4d: Pasting the User's SSH Public Key**
+**Figure 6.3d: Pasting the User's SSH Public Key**
 
 
-|Figure44d_png|
+|Figure63d_png|
 
 While on *PULL*, verify that the SSH service is running in Services → Control Services and start it if it is not.
 
@@ -2755,21 +2716,21 @@ S.M.A.R.T. Tests
 reliability. When a failure is anticipated by S.M.A.R.T., the drive should be replaced. Most modern ATA, IDE and SCSI-3 hard drives support S.M.A.R.T.--refer
 to your drive's documentation if you are unsure.
 
-Figure 4.5a shows the configuration screen that appears when you click System → S.M.A.R.T. Tests → Add S.M.A.R.T. Test. The tests that you create will
+Figure 6.4a shows the configuration screen that appears when you click System → S.M.A.R.T. Tests → Add S.M.A.R.T. Test. The tests that you create will
 be listed under View S.M.A.R.T. Tests. After creating your tests, check the configuration in Services → S.M.A.R.T., then click the slider to ON for the
 S.M.A.R.T. service in Services → Control Services. The S.M.A.R.T. service will not start if you have not created any volumes.
 
 **NOTE:** to prevent problems, do not enable the S.M.A.R.T. service if your disks are controlled by a RAID controller as it is the job of the controller to
 monitor S.M.A.R.T. and mark drives as Predictive Failure when they trip.
 
-**Figure 4.5a: Adding a S.M.A.R.T. Test**
+**Figure 6.4a: Adding a S.M.A.R.T. Test**
 
 
 |10000000000001DA0000021AE2615C27_png|
 
-Table 4.5a summarizes the configurable options when creating a S.M.A.R.T. test.
+Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 
-**Table 4.5a: S.M.A.R.T. Test Options**
+**Table 6.4a: S.M.A.R.T. Test Options**
 
 +-------------------+---------------------------+---------------------------------------------------------------------------------------------------------------------+
 | **Setting**       | **Value**                 | **Description**                                                                                                     |
@@ -2827,10 +2788,10 @@ Each of these is described in more detail in this section.
 Global Configuration
 --------------------
 
-Network → Global Configuration, shown in Figure 5.1a, allows you to set non-interface specific network settings.
+Network → Global Configuration, shown in Figure 7.1a, allows you to set non-interface specific network settings.
 
-Table 5.1a summarizes the settings that can be configured using the Global Configuration tab. The hostname and domain will be pre-filled for you, as seen in
-Figure 5.1a, but can be changed to meet the local network's requirements.
+Table 7.1a summarizes the settings that can be configured using the Global Configuration tab. The hostname and domain will be pre-filled for you, as seen in
+Figure 7.1a, but can be changed to meet the local network's requirements.
 
 If you will be using Active Directory, set the IP address of the DNS server used in the realm.
 
@@ -2839,11 +2800,11 @@ the FreeNAS® system in the “Host name database” field.
 
 **NOTE:** if you add a gateway to the Internet, make sure that the FreeNAS® system is protected by a properly configured firewall.
 
-**Figure 5.1a: Global Configuration**
+**Figure 7.1a: Global Configuration**
 
-|Figure51a_png|
+|Figure71a_png|
 
-**Table 5.1a: Global Configuration Settings**
+**Table 7.1a: Global Configuration Settings**
 
 
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------------+
@@ -2904,14 +2865,14 @@ manual configuration.
 **NOTE:** typically the interface used to access the FreeNAS® administrative GUI is configured by DHCP. This interface will not appear in this screen, even
 though it is already dynamically configured and in use.
 
-Figure 5.2a shows the screen that opens when you click Interfaces → Add Interface. Table 5.2a summarizes the configuration options when you Add an
+Figure 7.2a shows the screen that opens when you click Interfaces → Add Interface. Table 7.2a summarizes the configuration options when you Add an
 interface or Edit an already configured interface.
 
-**Figure 5.2a: Adding or Editing an Interface**
+**Figure 7.2a: Adding or Editing an Interface**
 
 |1000000000000182000001C49B157EE6_png|
 
-**Table 5.2a: Interface Configuration Settings**
+**Table 7.2a: Interface Configuration Settings**
 
 
 +---------------------+----------------+-----------------------------------------------------------------------------------------------------------------------+
@@ -2982,14 +2943,14 @@ Before configuring IPMI, add a Tunable_ with a "Variable" of *ipmi_load* and a "
 
  kldload ipmi
 
-Once the module is loaded, IPMI should be configured from Network → IPMI. Figure 5.3a shows the configuration screen and Table 5.3a summarizes the options
+Once the module is loaded, IPMI should be configured from Network → IPMI. Figure 7.3a shows the configuration screen and Table 7.3a summarizes the options
 when configuring IPMI.
 
-**Figure 5.3a: IPMI Configuration**
+**Figure 7.3a: IPMI Configuration**
 
-|Figure53a_png|
+|Figure73a_png|
 
-**Table 5.3a: IPMI Options**
+**Table 7.3a: IPMI Options**
 
 
 +----------------------+----------------+-----------------------------------------------------------------------------+
@@ -3096,12 +3057,12 @@ Creating a Link Aggregation
 Before creating a link aggregation, double-check that no interfaces have been manually configured in Network → Interfaces → View Interfaces. If any
 configured interfaces exist, delete them as lagg creation will fail if any interfaces are manually configured.
 
-Figure 5.4a shows the configuration options when adding a lagg interface using Network → Link Aggregations → Create Link Aggregation.
+Figure 7.4a shows the configuration options when adding a lagg interface using Network → Link Aggregations → Create Link Aggregation.
 
-**Figure 5.4a: Creating a lagg Interface**
+**Figure 7.4a: Creating a lagg Interface**
 
 
-|Figure54a_png|
+|Figure74a_png|
 
 **NOTE:** if interfaces are installed but do not appear in the Physical NICs in the LAGG list, check that a FreeBSD driver for the interface exists
 `here <http://www.freebsd.org/releases/9.2R/hardware.html#ETHERNET>`_
@@ -3109,28 +3070,28 @@ Figure 5.4a shows the configuration options when adding a lagg interface using N
 
 Select the desired aggregation protocol, highlight the interface(s) to associate with the lagg device, and click the OK button.
 
-Once the lagg device has been created, it will be listed in the tree under an entry which indicates the type of protocol. As seen in Figure 5.4b, it will also
+Once the lagg device has been created, it will be listed in the tree under an entry which indicates the type of protocol. As seen in Figure 7.4b, it will also
 appear in View Link Aggregations.
 
-**Figure 5.4b: Viewing Link Aggregations**
+**Figure 7.4b: Viewing Link Aggregations**
 
-|Figure54b_png|
+|Figure74b_png|
 
 Click a link aggregation entry to see the buttons to edit that lagg interface, delete the link aggregation, or edit the lagg's member interfaces.
 
-If you click the Edit button for a lagg, you will see the configuration screen shown in Figure 5.4c. Table 5.4a describes the options in this screen.
+If you click the Edit button for a lagg, you will see the configuration screen shown in Figure 7.4c. Table 7.4a describes the options in this screen.
 
 After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be lost at this point, and if
 so, the system must be rebooted from the console setup menu. You may also have to change your switch settings to communicate through the new lagg interface.
 After reboot, if the IP address was set manually, you may also have to manually enter a default gateway from the console setup menu option in order to get
 access into the GUI through the new lagg interface.
 
-**Figure 5.4c: Editing a lagg**
+**Figure 7.4c: Editing a lagg**
 
 
-|Figure54c_png|
+|Figure74c_png|
 
-**Table 5.4a: Configurable Options for a lagg**
+**Table 7.4a: Configurable Options for a lagg**
 
 +---------------------+----------------+----------------------------------------------------------------------------------+
 | **Setting**         | **Value**      | **Description**                                                                  |
@@ -3171,14 +3132,14 @@ access into the GUI through the new lagg interface.
 This screen also allows you to configure an alias for the lagg interface. If you wish to set multiple aliases, click the “Add extra Alias” link for each
 alias you wish to configure.
 
-If you click the Edit Members button, click the entry for a member, then click its Edit button, you will see the configuration screen shown in Figure 5.4d.
-The configurable options are summarized in Table 5.4b.
+If you click the Edit Members button, click the entry for a member, then click its Edit button, you will see the configuration screen shown in Figure 7.4d.
+The configurable options are summarized in Table 7.4b.
 
-**Figure 5.4d: Editing a Member Interface**
+**Figure 7.4d: Editing a Member Interface**
 
-|Figure54d_png|
+|Figure74d_png|
 
-**Table 5.4b: Configuring a Member Interface**
+**Table 7.4b: Configuring a Member Interface**
 
 +----------------------+----------------+------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**      | **Description**                                                                                |
@@ -3224,16 +3185,16 @@ Static Routes
 -------------
 
 By default, no static routes are defined on the FreeNAS® system. Should you need a static route to reach portions of your network, add the route using
-Network → Static Routes → Add Static Route, shown in Figure 5.6a.
+Network → Static Routes → Add Static Route, shown in Figure 7.6a.
 
-**Figure 5.6a: Adding a Static Route**
+**Figure 7.6a: Adding a Static Route**
 
 
 |1000000000000150000000D15F029EC2_png|
 
-The available options are summarized in Table 5.6a.
+The available options are summarized in Table 7.6a.
 
-**Table 5.6a: Static Route Options**
+**Table 7.6a: Static Route Options**
 
 
 +---------------------+-----------+-------------------------------------+
@@ -3265,21 +3226,21 @@ FreeNAS® uses FreeBSD's
 `vlan(4) <http://www.freebsd.org/cgi/man.cgi?query=vlan>`_
 interface to demultiplex frames with IEEE 802.1q tags. This allows nodes on different VLANs to communicate through a layer 3 switch or router. A vlan
 interface must be assigned a parent interface and a numeric VLAN tag. A single parent can be assigned to multiple vlan interfaces provided they have different
-tags. If you click Network → VLANs → Add VLAN, you will see the screen shown in Figure 5.7a.
+tags. If you click Network → VLANs → Add VLAN, you will see the screen shown in Figure 7.7a.
 
 **NOTE:** VLAN tagging is the only 802.1q feature that is implemented. Additionally, not all Ethernet interfaces support full VLAN processing–see the
 HARDWARE section of
 `vlan(4) <http://www.freebsd.org/cgi/man.cgi?query=vlan>`_
 for details.
 
-**Figure 5.7a: Adding a VLAN**
+**Figure 7.7a: Adding a VLAN**
 
 
 |100000000000013A000000F8F965FD90_png|
 
-Table 5.7a summarizes the configurable fields.
+Table 7.7a summarizes the configurable fields.
 
-**Table 5.7a: Adding a VLAN**
+**Table 7.7a: Adding a VLAN**
 
 
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
@@ -9499,8 +9460,6 @@ The Help button in the upper right corner provides a pop-up menu containing hype
 
 * the web interface to the IRC channel
 
-* the Bug Tracker page which links to the bug database, video walkthroughs, forums, and the documentation wiki
-
 * the online FreeBSD manual pages
 
 * a link to professional support
@@ -9709,48 +9668,6 @@ When asking a question on the forum, it is important that you:
   button to open the editor. After typing your post and before you click the “Create Thread” button, make sure the “Watch this thread...” box is
   checked. If you want to be notified by email, also check the “and receive email notifications” box. That way you will be notified whenever anyone
   answers your question.
-
-Bug Reporter
-------------
-
-If you encounter a traceback error when using FreeNAS® or suspect that you have found a software or documentation bug, go to
-`https://bugs.freenas.org/projects/freenas <https://bugs.freenas.org/projects/freenas>`_
-to see if your issue has already been reported. You do not need to register in order to search for existing issues. However, you will need to register if you
-wish to comment on an existing issue or create a new support issue.
-
-Before creating a new issue, take the time to research your bug or feature request first. This is to prevent duplicating an existing issue and to ensure that
-your report contains the information that the developers need in order to implement the fix or the feature.
-
-As part of your research, perform the following steps:
-
-* Determine if you are running the latest release of FreeNAS®. FreeNAS® developers tend to fix bugs rapidly and new features are being implemented as
-  FreeNAS® matures. If you are not running the latest version, it is quite likely that the bug has already been fixed or the missing feature has been
-  implemented. If this is the case, your best course of action is to backup your data and configuration and perform an upgrade to the latest version.
-
-* If you are running the latest version, use the search feature to see if a similar issue already exists. If one does, do not create a new issue. Instead,
-  add a comment to the existing issue if you have additional information to add.
-
-If a similar issue does not already exist, keep the following points in mind as you create a new issue:
-
-#.  You will need to register for an account, confirm you registration email address, and be logged in before you can create a new issue.
-
-#.  In the Tracker drop-down menu, select *Bug* if you are reporting a bug or
-    *Feature* if you are making a feature request.
-
-#.  In the Subject field, include descriptive keywords that describe the issue. This is useful for other users who search for a similar problem.
-
-#.  In the Description section, describe the problem, how to recreate it, and include the text of any error messages. If you are requesting a feature,
-    describe the benefit provided by the feature and, if applicable, provide examples of other products that use that feature or the URL of the homepage for
-    the software.
-
-#.  If you would like to include a screenshot or log of your configuration or error, use the Browse button next to the Files field to upload the file.
-
-#.  Leave all of the other fields at their default values as these are used by developers as they take action on the issue.
-
-#.  Press the Preview link to read through your ticket before submitting it. Make sure it includes all of the information that someone else would need to
-    understand your problem or request. Once you are satisfied with your ticket, click the Create Ticket button to submit it.
-
-An email will automatically be sent to the address you used when registering whenever a comment or action occurs on your issue.
 
 IRC
 ---
@@ -10800,12 +10717,56 @@ the FreeNAS® community, bring it up on one of the resources mentioned in FreeNA
 
 This section demonstrates how you can:
 
-* Assist with Localization
+* Report a Bug
 
-* Test Upcoming Versions
+* Localize
 
-Localization
+* Beta Test
+
+Report a Bug
 ------------
+
+If you encounter a traceback error when using FreeNAS® or suspect that you have found a software or documentation bug, go to
+`https://bugs.freenas.org/projects/freenas <https://bugs.freenas.org/projects/freenas>`_
+to see if your issue has already been reported. You do not need to register in order to search for existing issues. However, you will need to register if you
+wish to comment on an existing issue or create a new support issue.
+
+Before creating a new issue, take the time to research your bug or feature request first. This is to prevent duplicating an existing issue and to ensure that
+your report contains the information that the developers need in order to implement the fix or the feature.
+
+As part of your research, perform the following steps:
+
+* Determine if you are running the latest release of FreeNAS®. FreeNAS® developers tend to fix bugs rapidly and new features are being implemented as
+  FreeNAS® matures. If you are not running the latest version, it is quite likely that the bug has already been fixed or the missing feature has been
+  implemented. If this is the case, your best course of action is to backup your data and configuration and perform an upgrade to the latest version.
+
+* If you are running the latest version, use the search feature to see if a similar issue already exists. If one does, do not create a new issue. Instead,
+  add a comment to the existing issue if you have additional information to add.
+
+If a similar issue does not already exist, keep the following points in mind as you create a new issue:
+
+#.  You will need to register for an account, confirm you registration email address, and be logged in before you can create a new issue.
+
+#.  In the Tracker drop-down menu, select *Bug* if you are reporting a bug or
+    *Feature* if you are making a feature request.
+
+#.  In the Subject field, include descriptive keywords that describe the issue. This is useful for other users who search for a similar problem.
+
+#.  In the Description section, describe the problem, how to recreate it, and include the text of any error messages. If you are requesting a feature,
+    describe the benefit provided by the feature and, if applicable, provide examples of other products that use that feature or the URL of the homepage for
+    the software.
+
+#.  If you would like to include a screenshot or log of your configuration or error, use the Browse button next to the Files field to upload the file.
+
+#.  Leave all of the other fields at their default values as these are used by developers as they take action on the issue.
+
+#.  Press the Preview link to read through your ticket before submitting it. Make sure it includes all of the information that someone else would need to
+    understand your problem or request. Once you are satisfied with your ticket, click the Create Ticket button to submit it.
+
+An email will automatically be sent to the address you used when registering whenever a comment or action occurs on your issue.
+
+Localize
+---------
 
 FreeNAS® uses
 `Pootle <http://en.wikipedia.org/wiki/Pootle>`_
@@ -10850,8 +10811,8 @@ in Figure 15.1b, a user has selected string number 46 in the German translation;
 
 Simply type in the translated text and click the Submit button to save your change.
 
-Beta Testing
-------------
+Beta Test
+---------
 
 Prior to any release, there is a beta period where testing snapshots will be announced on the FreeNAS® website and social media sites. This beta period is
 meant to provide users an opportunity to test the upcoming release and to provide feedback on bugs and errors so that they can be fixed prior to release.
