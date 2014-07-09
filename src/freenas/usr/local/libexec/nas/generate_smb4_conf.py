@@ -247,8 +247,6 @@ def add_ldap_conf(smb4_conf):
     confset1(smb4_conf, "ldap replication sleep = 1000")
     confset1(smb4_conf, "ldap passwd sync = yes")
     confset1(smb4_conf, "ldapsam:trusted = yes")
-    confset1(smb4_conf, "idmap uid = 10000-39999")
-    confset1(smb4_conf, "idmap gid = 10000-39999")
 
     confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
     confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())

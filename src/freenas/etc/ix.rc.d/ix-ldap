@@ -214,10 +214,10 @@ ldap_start()
 {
 	if dirsrv_enabled ldap
 	then
-		if ! generate_ldapconf
-		then
-			return 1
-		fi
+#		if ! generate_ldapconf
+#		then
+#			return 1
+#		fi
 
 		if ! setup_homedirs
 		then

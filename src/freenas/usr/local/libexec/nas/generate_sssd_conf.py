@@ -488,9 +488,9 @@ def add_ldap(sc):
         ldap_section.ldap_group_search_base = "%s,%s" % (
             ldap.ldap_groupsuffix, ldap.ldap_basedn
         )
-    ldap_section.ldap_default_bind_dn = ldap.ldap_rootbasedn
+    ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
     ldap_section.ldap_default_authtok_type = 'password'
-    ldap_section.ldap_default_authtok = ldap.ldap_rootbindpw
+    ldap_section.ldap_default_authtok = ldap.ldap_bindpw
     
     if ldap.ldap_ssl == 'on':
         ldap_section.ldap_tls_cacert = ldap.ldap_tls_cacertfile

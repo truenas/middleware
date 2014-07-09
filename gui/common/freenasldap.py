@@ -84,6 +84,22 @@ class FreeNAS_LDAP_Exception(FreeNAS_LDAP_Directory_Exception):
     pass
 
 class FreeNAS_LDAP_Directory(object):
+    @staticmethod
+    def validate_credentials(hostname, port=389, binddn=None, bindpw=None):
+        ret = None
+        f = FreeNAS_LDAP(host=hostname, port=port,
+            binddn=binddn, bindpw=bindpw)
+
+        try:
+            f.open()
+            ret = True
+        except ldap.INVALID_CREDENTIALS:
+            ret = False
+        except Exception as e:
+            ret = True
+
+        return ret
+
     def __init__(self, **kwargs):
         log.debug("FreeNAS_LDAP_Directory.__init__: enter")
 
@@ -458,7 +474,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         self.groupsuffix = ldap['ldap_groupsuffix']
         self.machinesuffix = ldap['ldap_machinesuffix']
         self.passwordsuffix = ldap['ldap_passwordsuffix']
-        self.pwencryption = ldap['ldap_pwencryption']
         self.anonbind = ldap['ldap_anonbind']
 
         log.debug("FreeNAS_LDAP_Base.__db_init__: leave")
