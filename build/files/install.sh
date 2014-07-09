@@ -507,6 +507,8 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	mkdir -p /tmp/data
 	mount /dev/${_disk}p2 /tmp/data
 	/usr/local/bin/update_freenas -R /tmp/data -M /FreeNAS-MANIFEST install
+	# Need to link the manifest file
+	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
 	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
 	echo "/dev/${_disk}p3 /data ufs rw 2 2" >> /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
