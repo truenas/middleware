@@ -559,6 +559,13 @@ def debug(request):
     dump = "%s/ixdiagnose.tgz" % direc
 
     with mntlock(mntpt=mntpt):
+
+        # Be extra safe in case we have left over from previous run
+        if os.path.exists(direc):
+            opts = ["/bin/rm", "-r", "-f", direc]
+            p1 = pipeopen(' '.join(opts), allowfork=True)
+            p1.wait()
+
         opts = ["/usr/local/bin/ixdiagnose", "-d", direc, "-s", "-F"]
         p1 = pipeopen(' '.join(opts), allowfork=True)
         p1.communicate()
