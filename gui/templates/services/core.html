@@ -77,7 +77,7 @@
                <img id="lldp_toggle" name="lldp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "lldp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="lldp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "LLDP Settings"|escapejs %}', '{{ lldp.get_edit_url }}');" title="{% trans "NFS Settings" %}">
+           <img id="lldp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "LLDP Settings"|escapejs %}', '{{ lldp.get_edit_url }}');" title="{% trans "LLDP Settings" %}">
        </td>
    </tr>
    <tr>
