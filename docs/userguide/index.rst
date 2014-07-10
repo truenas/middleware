@@ -160,9 +160,13 @@ The GUI has been reorganized as follows:
 
 * Log Out has been moved from the upper right corner to the tree menu.
 
-The following features have been added:
+The following features have been added or changed:
 
-* The "IP Server" field has been added to Dynamic DNS. 
+* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox has been added.
+
+* The "Domain logons" checkbox has been added to Services → CIFS.
+
+* The "IP Server" field has been added to Services → Dynamic DNS. 
 
 Known Issues
 ------------
@@ -1306,8 +1310,7 @@ Set the Email Address
 ---------------------
 
 FreeNAS® provides an Alert icon in the upper right corner to provide a visual indication of events that warrant administrative attention. The alert system
-automatically emails the *root* user account whenever an alert is issued. FreeNAS® also sends a daily email to the
-*root * user which should be read in order to determine the overall health of the system.
+automatically emails the *root* user account whenever an alert is issued.
 
 To set the email address for the *root* account, go to Account → Users → View Users. Click the Change E-mail button associated with the
 *root* user account and input the email address of the person to receive the administrative emails.
@@ -1552,11 +1555,7 @@ is allowed to use **sudo**. To reorder the list, click the desired column.
 
 If you click a user account, the following buttons will appear for that account:
 
-* **Change Password:** provides fields to enter and confirm the new password.
-
 * **Modify User:** used to modify the account's settings, as listed in Table 3.2b.
-
-* **Auxiliary Groups:** used to make the account a member of additional groups.
 
 * **Change E-mail:** used to change the email address associated with the account.
 
@@ -2086,6 +2085,27 @@ containing important information such as the health of the disks. Alert events a
 
 System Dataset
 --------------
+
+System → Dataset, shown in Figure 5.5a, is used to select the pool which will contain the persistent system dataset. The system dataset stores debugging
+core files and Samba4 metadata such as the user/group cache and share level permissions. If the FreeNAS® system is configured to be a Domain Controller, all
+of the domain controller state is stored there as well, including domain controller users and groups.
+
+**Figure 5.5a: System Dataset**
+
+|Figure55a_png|
+
+The system dataset can optionally be configured to also store the system log and the Reporting information. If there are lots of log entries or reporting
+information, moving these to the system dataset will prevent */var/*
+from filling up as */var/* has limited space. 
+
+Use the drop-down menu to select the ZFS volume (pool) to contain the system dataset.
+
+To also store the system log on the system dataset, check the "Syslog" box.
+
+To also store the reporting information, check the "Reporting Database" box.
+
+If you change the pool storing the system dataset at a later time, FreeNAS® will automatically migrate the existing data in the system dataset to the new
+location. 
 
 Tunables
 --------
@@ -4021,7 +4041,9 @@ click the Advanced Mode button or configure the system to always display these s
 |                          |                     | for a comparison of the available algorithms                                                                                                                              |
 |                          |                     |                                                                                                                                                                           |
 +--------------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Share type               |                     |                                                                                                                                                                           |
+| Share type               | drop-down menu      | select the type of share that will be used on the dataset; choices are *UNIX*                                                                                             |
+|                          |                     | for an NFS share, *Windows* for a CIFS share, or                                                                                                                          |
+|                          |                     | *Mac* for an AFP share                                                                                                                                                    |
 |                          |                     |                                                                                                                                                                           |
 +--------------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Enable atime             | Inherit, On, or Off | controls whether the access time for files is updated when they are read; setting this property to                                                                        |
@@ -5160,29 +5182,13 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Binding                 |                |                                                                                                  |
 |                         |                |                                                                                                  |
 +-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Root bind DN            | string         | name of administrative account on LDAP server (e.g.                                              |
+| Bind DN                 | string         | name of administrative account on LDAP server (e.g.                                              |
 |                         |                | *cn=Manager,dc=test,dc=org)*                                                                     |
 |                         |                |                                                                                                  |
 +-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Root bind password      | string         | password for                                                                                     |
+| Bind password           | string         | password for                                                                                     |
 |                         |                | *Root bind DN*                                                                                   |
 |                         |                |                                                                                                  |
-|                         |                |                                                                                                  |
-+-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Password Encryption     | drop-down menu | select a type supported by the LDAP server, choices are:                                         |
-|                         |                | *clear*                                                                                          |
-|                         |                | (unencrypted),                                                                                   |
-|                         |                | *crypt*                                                                                          |
-|                         |                | ,                                                                                                |
-|                         |                | *md5*                                                                                            |
-|                         |                | ,                                                                                                |
-|                         |                | *nds*                                                                                            |
-|                         |                | ,                                                                                                |
-|                         |                | *racf*                                                                                           |
-|                         |                | ,                                                                                                |
-|                         |                | *ad*                                                                                             |
-|                         |                | ,                                                                                                |
-|                         |                | *exop*                                                                                           |
 |                         |                |                                                                                                  |
 +-------------------------+----------------+--------------------------------------------------------------------------------------------------+
 | User Suffix             | string         | optional, can be added to name when user account added to                                        |
@@ -5214,11 +5220,10 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 |                         |                |                                                                                                  |
 |                         |                |                                                                                                  |
 +-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Self signed certificate | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used         |
+| Certificate             | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used         |
 |                         |                |                                                                                                  |
 +-------------------------+----------------+--------------------------------------------------------------------------------------------------+
-| Auxiliary Parameters    | string         | `ldap.conf(5) <http://www.openldap.org/software/man.cgi?query=ldap.conf>`_                       |
-|                         |                | options, one per line, not covered by other options in this screen                               |
+| Enable                  | checkbox       |                                                                          _                       |
 |                         |                |                                                                                                  |
 +-------------------------+----------------+--------------------------------------------------------------------------------------------------+
 
@@ -5419,10 +5424,6 @@ Once you press the OK button when creating the AFP share, a pop-up menu will ask
 |                              |               |                                                                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Database Path                | string        | specify the path to store the CNID databases used by AFP (default is the root of the volume); the path must be writable                                     |
-|                              |               |                                                                                                                                                             |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Zero Device Numbers          | checkbox      | only available in Advanced Mode;                                                                                                                            |
-|                              |               | enable when the device number is not constant across a reboot                                                                                               |
 |                              |               |                                                                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | No Stat                      | checkbox      | only available in Advanced Mode;                                                                                                                            |
@@ -5867,7 +5868,7 @@ checking the box “Show advanced fields by default” in System → Settings �
 
 Table 10.3a summarizes the options when creating a CIFS share.
 
-`smb.conf(5) <http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html>`_
+`smb.conf(5) <http://www.sloop.net/smb.conf.html>`_
 provides more details for each configurable option. Once you press the OK button when creating the CIFS share, a pop-up menu will ask “Would you like to
 enable this service?” Click Yes and Services → Control Services will open and indicate whether or not the CIFS service successfully started.
 
@@ -5892,20 +5893,14 @@ enable this service?” Click Yes and Services → Control Services will open an
 | Path                         | browse button | select volume/dataset/directory to share                                                                                                                                                              |
 |                              |               |                                                                                                                                                                                                       |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Apply Default Permissions    | checkbox      | sets the ACLs to allow read/write for owner/group and read-only for others; should only be unchecked when                                                                                             |
+|                              |               | creating a share on a system that already has custom ACLs set                                                                                                                                         |
+|                              |               |                                                                                                                                                                                                       |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Export Read Only             | checkbox      | prohibits write access to the share                                                                                                                                                                   |
 |                              |               |                                                                                                                                                                                                       |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Browsable to Network Clients | checkbox      | enables Windows clients to browse the shared directory using Windows Explorer                                                                                                                         |
-|                              |               |                                                                                                                                                                                                       |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Inherit Owner                | checkbox      | if checked, ownership for new files and directories is inherited from parent directory rather than from the user                                                                                      |
-|                              |               |                                                                                                                                                                                                       |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Inherit Permissions          | checkbox      | if checked, the                                                                                                                                                                                       |
-|                              |               | **UNIX**                                                                                                                                                                                              |
-|                              |               | permissions on new files and directories are inherited from parent directory; this can be useful on large systems with many users as it allows a single homes share to be used flexibly by each user; |
-|                              |               | **do not check if Type of ACL is set to Windows in the Volume's permissions**                                                                                                                         |
-|                              |               |                                                                                                                                                                                                       |
 |                              |               |                                                                                                                                                                                                       |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Inherit ACLs                 | checkbox      |                                                                                                                                                                                                       |
@@ -6204,28 +6199,32 @@ Figure 11.2a shows the configuration options which are described in Table 8.2a.
 **Table 11.2a: AFP Configuration Options**
 
 
-+-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------------+
-| Setting                 | Value          | Description                                                                                                           |
-|                         |                |                                                                                                                       |
-+=========================+================+=======================================================================================================================+
-| Guest Access            | checkbox       | if checked, clients will not be prompted to authenticate before accessing the AFP share                               |
-|                         |                |                                                                                                                       |
-+-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------------+
-| Guest Account           | drop-down menu | select account to use for guest access; the selected account must have permissions to the volume/dataset being shared |
-|                         |                |                                                                                                                       |
-+-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------------+
-| Max Connections         | integer        | maximum number of simultaneous connections                                                                            |
-|                         |                |                                                                                                                       |
-+-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------------+
-| Enable home directories | checkbox       | if checked, any user home directories located under                                                                   |
-|                         |                | *Home directories*                                                                                                    |
-|                         |                | will be available over the share                                                                                      |
-|                         |                |                                                                                                                       |
-+-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------------+
-| Home directories        | Browse button  | select the volume or dataset which contains user home directories                                                     |
-|                         |                |                                                                                                                       |
-+-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------------+
-
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Setting                 | Value          | Description                                                                                                     |
+|                         |                |                                                                                                                 |
++=========================+================+=================================================================================================================+
+| Guest Access            | checkbox       | if checked, clients will not be prompted to authenticate before accessing the AFP share                         |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Guest Account           | drop-down menu | select account to use for guest access; the selected account must have permissions to the volume/dataset being  |
+|                         |                | shared                                                                                                          |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Max Connections         | integer        | maximum number of simultaneous connections                                                                      |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Enable home directories | checkbox       | if checked, any user home directories located under *Home directories* will be available over the share         |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Home directories        | Browse button  | select the volume or dataset which contains user home directories                                               |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Zero Device Numbers     | checkbox       | only available in Advanced Mode; enable when the device number is not constant across a reboot                  |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Database Path           |string          | specify the path to store the CNID databases used by AFP (default is the root of the volume); the path must be  |
+|                         |                | writable                                                                                                        |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 
 When configuring home directories, it is recommended to create a dataset to hold the home directories which contains a child dataset for each user. As an
 example, create a dataset named *volume1/homedirs* and browse to this dataset when configuring the “Home directories” field of the AFP service. Then, as
@@ -6278,115 +6277,155 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 **Table 11.3a: CIFS Configuration Options**
 
 
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting                          | Value          | Description                                                                                                                                                                                  |
-|                                  |                |                                                                                                                                                                                              |
-+==================================+================+==============================================================================================================================================================================================+
-| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the hostname of the FreeNAS® system; it                                                                                           |
-|                                  |                | **must**                                                                                                                                                                                     |
-|                                  |                | be different from the                                                                                                                                                                        |
-|                                  |                | *Workgroup*                                                                                                                                                                                  |
-|                                  |                | name                                                                                                                                                                                         |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Workgroup                        | string         | must match Windows workgroup name; this setting is ignored if the Active Directory or LDAP service is running                                                                                |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Description                      | string         | optional                                                                                                                                                                                     |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| DOS Charset                      | drop-down menu | the character set Samba uses when communicating with DOS and Windows 9x/ME                                                                                                                   |
-|                                  |                | clients; default is                                                                                                                                                                          |
-|                                  |                | *CP437*                                                                                                                                                                                      |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| UNIX Charset                     | drop-down menu | default is                                                                                                                                                                                   |
-|                                  |                | *UTF-8*                                                                                                                                                                                      |
-|                                  |                | which supports all characters in all languages                                                                                                                                               |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Log Level                        | drop-down menu | choices are                                                                                                                                                                                  |
-|                                  |                | *Minimum*                                                                                                                                                                                    |
-|                                  |                | ,                                                                                                                                                                                            |
-|                                  |                | *Normal*                                                                                                                                                                                     |
-|                                  |                | ,                                                                                                                                                                                            |
-|                                  |                | *Full*                                                                                                                                                                                       |
-|                                  |                | , or                                                                                                                                                                                         |
-|                                  |                | *Debug*                                                                                                                                                                                      |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Use syslog                       |                |                                                                                                                                                                                              |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Local Master                     | checkbox       | determines whether or not the FreeNAS® system participates in a browser election;                                                                                                           |
-|                                  |                | should be disabled when network contains an AD or LDAP server and is not necessary if                                                                                                        |
-|                                  |                | Vista or                                                                                                                                                                                     |
-|                                  |                | Windows                                                                                                                                                                                      |
-|                                  |                |                                                                                                                                                                                              |
-|                                  |                | 7 machines are present                                                                                                                                                                       |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Time Server for Domain           | checkbox       | determines whether or not the FreeNAS® system advertises itself as a time server to Windows clients; should be disabled when network contains an AD or LDAP server                           |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Guest Account                    | drop-down menu | account to be used for guest access; that account must have permission to access the shared volume/dataset                                                                                   |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| File mask                        | integer        | overrides default file creation mask of 0666 which creates files with read and write access for everybody                                                                                    |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Directory mask                   | integer        | overrides default directory creation mask of 0777 which grants directory read, write and execute access for everybody                                                                        |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| EA Support                       | checkbox       | enables extended attributes                                                                                                                                                                  |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Support DOS File Attributes      | checkbox       | allows a user who has write access to a file to modify the permissions, even if not the owner of the file                                                                                    |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow Empty Password             | checkbox       | if checked, users can just press enter when prompted for a password; requires that the username/password be the same for the FreeNAS® user account and the Windows user account              |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Auxiliary parameters             | string         | *smb.conf *                                                                                                                                                                                  |
-|                                  |                | options not covered elsewhere in this screen; see                                                                                                                                            |
-|                                  |                | `the  <http://oreilly.com/openbook/samba/book/appb_02.html>`_                                                                                                                                |
-|                                  |                | `Samba Guide <http://oreilly.com/openbook/samba/book/appb_02.html>`_                                                                                                                         |
-|                                  |                | for additional settings                                                                                                                                                                      |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable home directories          | checkbox       | if checked, a folder with the same name as the user account will be created for each user                                                                                                    |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable home directories browsing | checkbox       | users can browse (but not write to) other users' home directories                                                                                                                            |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Home directories                 | browse button  | select volume/dataset where the home directories will be created                                                                                                                             |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Homes auxiliary parameters       | string         | options specific to the [homes] section of                                                                                                                                                   |
-|                                  |                | *smb.conf*                                                                                                                                                                                   |
-|                                  |                | ; for example,                                                                                                                                                                               |
-|                                  |                | **hide dot files = yes**                                                                                                                                                                     |
-|                                  |                | hides files beginning with a dot in home directories                                                                                                                                         |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Unix Extensions                  | checkbox       | allows non-Windows CIFS clients to access symbolic links and hard links, has no affect on Windows clients                                                                                    |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Zeroconf share discovery         | checkbox       | enable if                                                                                                                                                                                    |
-|                                  |                | Mac clients will be connecting to the CIFS share                                                                                                                                             |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Hostnames lookups                | checkbox       | allows you to specify hostnames rather than IP addresses in the Hosts Allow or Hosts Deny fields of a CIFS share; uncheck if you only use IP addresses as it saves the time of a host lookup |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Server minimum protocol          |                |                                                                                                                                                                                              |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Server maximum protocol          |                |                                                                                                                                                                                              |
-|                                  |                |                                                                                                                                                                                              |
-+----------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Setting                          | Value          | Description                                                                                           |
+|                                  |                |                                                                                                       |
++==================================+================+=======================================================================================================+
+| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the hostname of the FreeNAS® system; it    |
+|                                  |                | **must**  be different from the                                                                       |                                                                                                                                                                       
+|                                  |                | *Workgroup* name                                                                                      |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Workgroup                        | string         | must match Windows workgroup name; this setting is ignored if the Active Directory or LDAP service is |
+|                                  |                | running                                                                                               |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Description                      | string         | optional                                                                                              |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| DOS Charset                      | drop-down menu | the character set Samba uses when communicating with DOS and Windows 9x/ME clients; default is        |
+|                                  |                | *CP437*                                                                                               |
+|                                  |                |                                                                                                       |
++------------------------------+----------------+-----------------------------------------------------------------------------------------------------------+
+| UNIX Charset                     | drop-down menu | default is *UTF-8* which supports all characters in all languages                                     |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Log Level                        | drop-down menu | choices are *Minimum*,                                                                                |
+|                                  |                | *Normal*, or                                                                                          |                                                                                                                                                                                  
+|                                  |                | *Debug*                                                                                               |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Use syslog                       | checkbox       | logs most events to syslog instead of the samba log files                                             |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Local Master                     | checkbox       | determines whether or not the FreeNAS® system participates in a browser election; should be disabled |
+|                                  |                | when network contains an AD or LDAP server and is not necessary if Vista or Windows 7 machines are    |
+|                                  |                | present                                                                                               |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Domain logons                    | checkbox       |                                                                                                       |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Time Server for Domain           | checkbox       | determines whether or not the FreeNAS® system advertises itself as a time server to Windows clients; |
+|                                  |                | should be disabled when network contains an AD or LDAP server                                         |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Guest Account                    | drop-down menu | account to be used for guest access; that account must have permission to access the shared           |
+|                                  |                | volume/dataset                                                                                        |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| File mask                        | integer        | overrides default file creation mask of 0666 which creates files with read and write access for       |
+|                                  |                | everybody                                                                                             |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Directory mask                   | integer        | overrides default directory creation mask of 0777 which grants directory read, write and execute      |
+|                                  |                | access for everybody                                                                                  |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+|                                  |                |                                                                                                       |
+| Allow Empty Password             | checkbox       | if checked, users can just press enter when prompted for a password; requires that the                |
+|                                  |                | username/password be the same for the FreeNAS® user account and the Windows user account             |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Auxiliary parameters             | string         | *smb.conf *                                                                                           |
+|                                  |                | options not covered elsewhere in this screen; see                                                     |
+|                                  |                | `the  <http://oreilly.com/openbook/samba/book/appb_02.html>`_                                         |
+|                                  |                | `Samba Guide <http://oreilly.com/openbook/samba/book/appb_02.html>`_                                  |
+|                                  |                | for additional settings                                                                               |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Enable home directories          | checkbox       | if checked, a folder with the same name as the user account will be created for each user             |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Enable home directories browsing | checkbox       | users can browse (but not write to) other users' home directories                                     |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Home directories                 | browse button  | select volume/dataset where the home directories will be created                                      |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Homes auxiliary parameters       | string         | options specific to the [homes] section of *smb.conf*; for example,                                   |
+|                                  |                | **hide dot files = yes** hides files beginning with a dot in home directories                         |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Unix Extensions                  | checkbox       | allows non-Windows CIFS clients to access symbolic links and hard links, has no affect on Windows     |
+|                                  |                | clients                                                                                               |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Zeroconf share discovery         | checkbox       | enable if                                                                                             |
+|                                  |                | Mac clients will be connecting to the CIFS share                                                      |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Hostnames lookups                | checkbox       | allows you to specify hostnames rather than IP addresses in the Hosts Allow or Hosts Deny fields of a |
+|                                  |                | CIFS share; uncheck if you only use IP addresses as it saves the time of a host lookup                |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Server minimum protocol          | drop-down menu | the minimum protocol version the server will support where the default of *------* sets automatic     |
+|                                  |                | negotiation; refer to Table 11.3b for descriptions                                                    |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Server maximum protocol          | drop-down menu | the maximum protocol version the server will support; refer to Table 11.3b for descriptions           |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Allow execute always             | checkbox       | if checked, Samba will allow the user to execute a file, even if that user's permissions are not set  |
+|                                  |                | to execute                                                                                            |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
+
+**Table 11.3b: Description of SMB Protocol Versions**
+
++----------------+------------------------------------------------------------+
+| Value          | Description                                                |
+|                |                                                            |
++================+============================================================+
+| CORE           | used by DOS                                                |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| COREPLUS       | used by DOS                                                |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| LANMAN1        | used by Windows for Workgroups, OS/2, and Windows 9x       |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| LANMAN2        | used by Windows for Workgroups, OS/2, and Windows 9x       |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| NT1            | used by Windows NT                                         |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB2           | used by Windows 7; same as SMB2_10                         |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB2_02        | used by Windows Vista                                      |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB2_10        | used by Windows 7                                          |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB2_22        | used by early Windows 8                                    |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB2_24        | used by Windows 8 beta                                     |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB3           | used by Windows 8                                          |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB3_00        | used by Windows 8, mostly the same as SMB2_24              |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+
+**NOTE:** Windows 8.1 and Windows Server 2012 R2 use SMB3.02 which is not yet supported by Samba. 
 
 Beginning with FreeNAS® 8.0.3-RELEASE, changes to CIFS settings and CIFS shares take effect immediately. For previous versions, changes will not take effect
 until you manually stop and start the CIFS service.
@@ -6426,7 +6465,17 @@ If permissions work for Windows users but not for OS X users, try disabling *Uni
 
 If the CIFS service will not start, run this command from Shell to see if there is an error in the configuration::
 
- testparm /usr/local/etc/smb.conf
+ testparm /usr/local/etc/smb4.conf
+
+If clients have problems connecting to the CIFS share, go to Services  → CIFS and verify that "Server maximum protocol" is set to "SMB2".
+
+It is recommended to use a dataset for CIFS sharing. When creating the dataset, make sure that the "Share type" is set to Windows.
+
+Do not use **chmod** to attempt to fix the permissions on a CIFS share as it destroys the Windows ACLs. The correct way to manage permissions on a CIFS share
+is to manage the share security from a Windows system as either the owner of the share or a member of the group the share is owned by. To do so, right-click
+on the share, click "Properties" and navigate to the "Security" tab. If you already destroyed the ACLs using **chmod**,
+**winacl** can be used to fix them. Type
+**winacl** from Shell for usage instructions. 
 
 The
 `Common Errors <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/domain-member.html#id2573692>`_
@@ -7252,130 +7301,109 @@ existing extent.
 **Table 11.7e: Target Global Configuration Settings**
 
 
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Setting**                     | **Value**                    | **Description**                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+=================================+==============================+=================================================================================================================================================================================================================================================================================================================+
-| Base Name                       | string                       | see the “Constructing iSCSI names using the iqn. format” section of                                                                                                                                                                                                                                             |
-|                                 |                              | `RFC 3721 <http://www.ietf.org/rfc/rfc3721.txt>`_                                                                                                                                                                                                                                                               |
-|                                 |                              | if you are unfamiliar with this format                                                                                                                                                                                                                                                                          |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Discovery Auth Method           | drop-down menu               | configures the authentication level required by the target for discovery of valid devices, where                                                                                                                                                                                                                |
-|                                 |                              | *None*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | will allow anonymous discovery,                                                                                                                                                                                                                                                                                 |
-|                                 |                              | *CHAP*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | and                                                                                                                                                                                                                                                                                                             |
-|                                 |                              | *Mutual CHAP*                                                                                                                                                                                                                                                                                                   |
-|                                 |                              | require authentication, and                                                                                                                                                                                                                                                                                     |
-|                                 |                              | *Auto*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | lets the initiator decide the authentication scheme                                                                                                                                                                                                                                                             |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Discovery Auth Group            | drop-down menu               | depends on Discovery Auth Method setting: required if set to                                                                                                                                                                                                                                                    |
-|                                 |                              | *CHAP*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | or                                                                                                                                                                                                                                                                                                              |
-|                                 |                              | *Mutual CHAP*                                                                                                                                                                                                                                                                                                   |
-|                                 |                              | , optional if set to                                                                                                                                                                                                                                                                                            |
-|                                 |                              | *Auto*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | , and not needed if set to                                                                                                                                                                                                                                                                                      |
-|                                 |                              | *None*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| I/O Timeout                     | integer representing seconds | sets the limit on how long an I/O can be outstanding before an error condition is returned; values range from 0-300 with a default of                                                                                                                                                                           |
-|                                 |                              | *30*                                                                                                                                                                                                                                                                                                            |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NOPIN Interval                  | integer                      | how often the target sends a NOP-IN packet to keep a discovered                                                                                                                                                                                                                                                 |
-|                                 | representing seconds         | session alive; values range from 0-300 with a default of                                                                                                                                                                                                                                                        |
-|                                 |                              | *20*                                                                                                                                                                                                                                                                                                            |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Max. Sessions                   | integer                      | limits the number of sessions the target portal will create/accept from initiator portals; values range from 1-65536 with a default of                                                                                                                                                                          |
-|                                 |                              | *16*                                                                                                                                                                                                                                                                                                            |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Max. Connections                | integer                      | the number of connections a single initiator can make to a single target; values range from 1-65536 with a default of                                                                                                                                                                                           |
-|                                 |                              | *8*                                                                                                                                                                                                                                                                                                             |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Max. pre-send R2T               | integer                      | values range from 1-255 with a default of                                                                                                                                                                                                                                                                       |
-|                                 |                              | *32*                                                                                                                                                                                                                                                                                                            |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| MaxOutstandingR2T               | integer                      | the maximum number of ready to receive packets (R2Ts) the target can have outstanding for a single iSCSI command, where larger values should yield performance increases until MaxOutstandingR2T exceeds the size of the largest Write I/O divided by MaxBurstLength; values range from 1-255 with a default of |
-|                                 |                              | *16*                                                                                                                                                                                                                                                                                                            |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| First burst length              | integer                      | maximum amount in bytes of unsolicited data an iSCSI initiator may send to the target during the execution of a single SCSI command; values range from 1- 2^32 with a default of                                                                                                                                |
-|                                 |                              | *65,536*                                                                                                                                                                                                                                                                                                        |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Max burst length                | integer                      | maximum write size in bytes the target is willing to receive between R2Ts; values range from 1-2^32 with a default of                                                                                                                                                                                           |
-|                                 |                              | *262,144*                                                                                                                                                                                                                                                                                                       |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Max receive data segment length | integer                      | in bytes; values range from 1-2^32 with a default of                                                                                                                                                                                                                                                            |
-|                                 |                              | *262,144*                                                                                                                                                                                                                                                                                                       |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| DefaultTime2Wait                | integer                      | minimum time in seconds to wait before attempting a logout or an active task reassignment after an unexpected connection termination or reset; values range from 1-300 with a default of                                                                                                                        |
-|                                 |                              | *2*                                                                                                                                                                                                                                                                                                             |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| DefaultTime2Retain              | integer                      | maximum time in seconds after Time2Wait before which an active task reassignment is still possible after an unexpected connection termination or reset; values range from 1-300 with a default of                                                                                                               |
-|                                 |                              | *60*                                                                                                                                                                                                                                                                                                            |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable LUC                      | checkbox                     | check if you need to dynamically add and remove targets; if checked, the next three fields are activated and required                                                                                                                                                                                           |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Controller IP address           | IP address                   | keep the default value of                                                                                                                                                                                                                                                                                       |
-|                                 |                              | *127.0.0.1*                                                                                                                                                                                                                                                                                                     |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Controller TCP port             | integer                      | possible values range from 1024-65535 with a default value of                                                                                                                                                                                                                                                   |
-|                                 |                              | *3261*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Controller Authorized netmask   | subnet mask                  | keep the default value of                                                                                                                                                                                                                                                                                       |
-|                                 |                              | *127.0.0.0/8*                                                                                                                                                                                                                                                                                                   |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Controller Auth Method          | drop-down menu               | choices are                                                                                                                                                                                                                                                                                                     |
-|                                 |                              | *None*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | ,                                                                                                                                                                                                                                                                                                               |
-|                                 |                              | *Auto*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | ,                                                                                                                                                                                                                                                                                                               |
-|                                 |                              | *CHAP*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | , or                                                                                                                                                                                                                                                                                                            |
-|                                 |                              | *Mutual CHAP*                                                                                                                                                                                                                                                                                                   |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Controller Auth Group           | drop-down menu               | required if Controller Auth Method is set to                                                                                                                                                                                                                                                                    |
-|                                 |                              | *CHAP*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | or                                                                                                                                                                                                                                                                                                              |
-|                                 |                              | *Mutual CHAP*                                                                                                                                                                                                                                                                                                   |
-|                                 |                              | , optional if set to                                                                                                                                                                                                                                                                                            |
-|                                 |                              | *Auto*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              | , and not needed if set to                                                                                                                                                                                                                                                                                      |
-|                                 |                              | *None*                                                                                                                                                                                                                                                                                                          |
-|                                 |                              |                                                                                                                                                                                                                                                                                                                 |
-+---------------------------------+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| **Setting**                     | **Value**                    | **Description**                                                                           |
+|                                 |                              |                                                                                           |
+|                                 |                              |                                                                                           |
++=================================+==============================+===========================================================================================+
+| Base Name                       | string                       | see the "Constructing iSCSI names using the iqn. format" section of                       |
+|                                 |                              | `RFC 3721 <http://www.ietf.org/rfc/rfc3721.txt>`_                                         |
+|                                 |                              | if you are unfamiliar with this format                                                    |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Discovery Auth Method           | drop-down menu               | configures the authentication level required by the target for discovery of valid         |
+|                                 |                              | devices, where *None* will allow anonymous discovery,                                     |
+|                                 |                              | *CHAP* and                                                                                |
+|                                 |                              | *Mutual CHAP* require authentication, and                                                 |
+|                                 |                              | *Auto* lets the initiator decide the authentication scheme                                |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Discovery Auth Group            | drop-down menu               | depends on Discovery Auth Method setting: required if set to *CHAP* or                    |
+|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
+|                                 |                              | *Auto*, and not needed if set to                                                          |
+|                                 |                              | *None*                                                                                    |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Enable experimental target      |checkbox                      | this option is for beta testers of kernel iSCSI; requires a reboot                        |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Enable multithreaded mode       | checkbox                     |                                                                                           |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| I/O Timeout                     | integer representing seconds | sets the limit on how long an I/O can be outstanding before an error condition is         |
+|                                 |                              | returned; values range from 0-300 with a default of *30*                                  |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| NOPIN Interval                  | integer representing seconds | how often the target sends a NOP-IN packet to keep a discovered session alive; values     |
+|                                 |                              | range from 0-300 with a default of *20*                                                   |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Max. Sessions                   | integer                      | limits the number of sessions the target portal will create/accept from initiator         |
+|                                 |                              | portals; values range from 1-65536 with a default of *16*                                 |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Max. Connections                | integer                      | the number of connections a single initiator can make to a single target; values range    |
+|                                 |                              | from 1-65536 with a default of *8*                                                        |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Max. pre-send R2T               | integer                      | values range from 1-255 with a default of *32*                                            |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| MaxOutstandingR2T               | integer                      | the maximum number of ready to receive packets (R2Ts) the target can have outstanding for |
+|                                 |                              | a single iSCSI command, where larger values should yield performance increases until      |
+|                                 |                              | *MaxOutstandingR2T* exceeds the size of the largest                                       |
+|                                 |                              | *Write I/O* divided by                                                                    |
+|                                 |                              | *MaxBurstLength*; values range from 1-255 with a default of                               | 
+|                                 |                              | *16*                                                                                      |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| First burst length              | integer                      | maximum amount in bytes of unsolicited data an iSCSI initiator may send to the target     |
+|                                 |                              | during the execution of a single SCSI command; values range from 1- 2^32 with a default   |
+|                                 |                              | of *65,536*                                                                               |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Max burst length                | integer                      | maximum write size in bytes the target is willing to receive between R2Ts; values range   |
+|                                 |                              | from 1-2^32 with a default of *262,144*                                                   |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Max receive data segment length | integer                      | in bytes; values range from 1-2^32 with a default of *262,144*                            |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| DefaultTime2Wait                | integer                      | minimum time in seconds to wait before attempting a logout or an active task reassignment |
+|                                 |                              | after an unexpected connection termination or reset; values range from 1-300 with a       |
+|                                 |                              | default of *2*                                                                            |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| DefaultTime2Retain              | integer                      | maximum time in seconds after Time2Wait before which an active task reassignment is still |
+|                                 |                              | possible after an unexpected connection termination or reset; values range from 1-300     |
+|                                 |                              | with a default of *60*                                                                    |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Enable LUC                      | checkbox                     | check if you need to dynamically add and remove targets; if checked, the next three       |
+|                                 |                              | fields are activated and required                                                         |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Controller IP address           | IP address                   | keep the default value of *127.0.0.1*                                                     |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Controller TCP port             | integer                      | possible values range from 1024-65535 with a default value of *3261*                      |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Controller Authorized netmask   | subnet mask                  | keep the default value of *127.0.0.0/8*                                                   |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Controller Auth Method          | drop-down menu               | choices are *None*,                                                                       |
+|                                 |                              | *Auto*,                                                                                   |
+|                                 |                              | *CHAP*, or                                                                                |
+|                                 |                              | *Mutual CHAP*                                                                             |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Controller Auth Group           | drop-down menu               | required if Controller Auth Method is set to *CHAP* or                                    |
+|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
+|                                 |                              | *Auto*, and not needed if set to                                                          |
+|                                 |                              | *None*                                                                                    |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 
 If the settings in this screen differ from the settings on the initiator, set them to be the same. When making changes, always match the larger setting.
 
@@ -7483,16 +7511,19 @@ Table 11.7g summarizes the settings that can be configured when associating targ
 **Table 11.7g: Target/Extents Configuration Settings**
 
 
-+---------+----------------+-------------------------------+
-| Setting | Value          | Description                   |
-|         |                |                               |
-+---------+----------------+-------------------------------+
-| Target  | drop-down menu | select the pre-created target |
-|         |                |                               |
-+---------+----------------+-------------------------------+
-| Extent  | drop-down menu | select the pre-created extent |
-|         |                |                               |
-+---------+----------------+-------------------------------+
++---------+----------------+--------------------------------------------------------------------------------------------------------+
+| Setting | Value          | Description                                                                                            |
+|         |                |                                                                                                        |
++---------+----------------+--------------------------------------------------------------------------------------------------------+
+| LUN ID  | drop-down menu | specify the ID of the LUN; the default of *Auto* will select the next available LUN ID, starting at 0  |
+|         |                |                                                                                                        |
++---------+----------------+--------------------------------------------------------------------------------------------------------+
+| Target  | drop-down menu | select the pre-created target                                                                          |
+|         |                |                                                                                                        |
++---------+----------------+--------------------------------------------------------------------------------------------------------+
+| Extent  | drop-down menu | select the pre-created extent                                                                          |
+|         |                |                                                                                                        |
++---------+----------------+--------------------------------------------------------------------------------------------------------+
 
 
 It is recommended to always associate extents to targets in a 1:1 manner, even though the GUI will allow multiple extents to be associated with the same
@@ -8394,9 +8425,11 @@ Currently, the following FreeNAS® PBIs are available:
 
 * `Firefly <https://en.wikipedia.org/wiki/Firefly_Media_Server>`_
 
-* `Gamez <https://github.com/mdlesk/Gamez>`_
+* `Headphones <https://github.com/rembo10/headphones>` 
 
 * `HTPC Manager <http://htpc.io/>`_
+
+* `LazyLibrarian <https://github.com/itsmegb/LazyLibrarian>` 
 
 * `Maraschino <http://www.maraschinoproject.com/>`_
 
@@ -8412,7 +8445,11 @@ Currently, the following FreeNAS® PBIs are available:
 
 * `Sick Beard <http://sickbeard.com/>`_
 
+* `Subsonic <http://subsonic.org/>` 
+
 * `Transmission <http://www.transmissionbt.com/>`_
+
+* `XDM <https://github.com/lad1337/XDM>` 
 
 While the FreeNAS® Plugins system makes it easy to install a PBI, it is still up to you to know how to configure and use the installed application. When in
 doubt, refer to the documentation for that application.
@@ -8476,6 +8513,8 @@ The following types of jails can be created:
     `FreeBSD linux binary compatibility layer <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/linuxemu.html>`_
     , Linux can be installed into a jail and software can be installed using the package management system provided by the installed Linux distro. At this
     time, the Linux distro must be a 32-bit version and any applications installed into the jail must be available as a 32-bit binary.
+    
+#.  **Virtualox jail:**
 
 Table 13a summarizes the type of software which can be installed into each type of jail. Click the name of the type of software for instructions on how to
 install that type of software.
@@ -8951,8 +8990,9 @@ The listing contains the following columns:
 
 * **URL:** when adding a new jail, the template will be downloaded from this location.
 
-* **Instances:** indicates if the template has been used to create a jail. In this example, no templates have been used to create a jail, so all of the
-  instances are set to *0*.
+* **Instances:** indicates if the template has been used to create a jail. In this example, one pluginjail, portjail, standard, and debian jail have been
+  created, so their instances show as *1*. The rest of the templates have not been used yet so their instances show as
+  *0*. 
 
 Creating Templates
 ~~~~~~~~~~~~~~~~~~
@@ -9327,8 +9367,9 @@ to provide reporting statistics. The following collectd plugins are enabled in *
 *   `uptime <https://collectd.org/wiki/index.php/Plugin:Uptime>`_
     : keeps track of the system uptime, the average running time, and the maximum reached uptime.
 
-Reporting data is saved, allowing you to view and monitor usage trends over time. Reporting data is saved to */data/rrd_dir.tar.bz2* and should be preserved
-across system upgrades and at shutdown.
+Reporting data is saved, allowing you to view and monitor usage trends over time. By default, reporting data is saved to /*data/rrd_dir.tar.bz2* and should be
+preserved across system upgrades and at shutdown. To instead save this data to the system dataset, check the "Reporting database" box in System → Settings
+→ System Dataset. 
 
 Use the magnifier buttons next to each graph to increase or decrease the displayed time increment from 10 minutes, hourly, daily, weekly, or monthly. You can
 also use the << and >> buttons to scroll through the output.
@@ -9546,7 +9587,7 @@ The following categories are available under **Forum Information:**
 The following categories are available under **Help and Support:**
 
 
-* `FreeNAS 4 N00bs <http://forums.freenas.org/forumdisplay.php?5-FreeNAS-4-N00bs>`_
+* `New to FreeNAS? <http://forums.freenas.org/forumdisplay.php?5-FreeNAS-4-N00bs>`_
   : post here if you are new to FreeNAS® and are unsure which category best matches your question.
 
 * `Feature Requests <http://forums.freenas.org/forumdisplay.php?6-Feature-Requests>`_
@@ -10850,6 +10891,9 @@ such as GET, PUT, POST, or DELETE.
 
 This section demonstrates how to install the necessary software to build a local copy of the reference documentation for the FreeNAS® APIs. It then walks
 through some code examples to get you started using the APIs.
+
+**NOTE:** an online version of the API is now hosted at `api.freenas.org <http://api.freenas.org>`
+. 
 
 Building a Local Copy
 ---------------------
