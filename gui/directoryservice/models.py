@@ -382,6 +382,8 @@ class LDAP(Model):
         icon_model = "LDAPIcon"
         advanced_fields = (
             'ldap_anonbind',
+            'ldap_usersuffix',
+            'ldap_groupsuffix',
             'ldap_passwordsuffix',
             'ldap_machinesuffix',
             'ldap_ssl',

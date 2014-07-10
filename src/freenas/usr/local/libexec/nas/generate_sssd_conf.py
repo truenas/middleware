@@ -484,14 +484,27 @@ def add_ldap(sc):
         ldap.ldap_hostname
     )
     ldap_section.ldap_search_base = ldap.ldap_basedn
+
     if ldap.ldap_usersuffix:
         ldap_section.ldap_user_search_base = "%s,%s" % (
             ldap.ldap_usersuffix, ldap.ldap_basedn
         )
+    else:
+        ldap_section.ldap_user_search_base = "%s%s" % (
+            ldap.ldap_basedn,
+            "?subtree?(objectclass=posixAccount)"
+        )
+
     if ldap.ldap_groupsuffix:
         ldap_section.ldap_group_search_base = "%s,%s" % (
             ldap.ldap_groupsuffix, ldap.ldap_basedn
         )
+    else:
+        ldap_section.ldap_group_search_base = "%s%s" % (
+            ldap.ldap_basedn,
+            "?subtree?(objectclass=posixGroup)"
+        )
+
     ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
     ldap_section.ldap_default_authtok_type = 'password'
     ldap_section.ldap_default_authtok = ldap.ldap_bindpw
