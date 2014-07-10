@@ -3,6 +3,7 @@
 . /etc/rc.freenas
 
 service=/usr/sbin/service
+status_file="/var/run/directoryservice.nis"
 
 nisctl_cmd()
 {
@@ -49,6 +50,7 @@ nisctl_start()
 		return 1
 	fi
 
+	touch "${status_file}"
 	return 0
 }
 
@@ -62,6 +64,8 @@ nisctl_stop()
 
 	nis_set 0
 	. /etc/rc.conf.local
+
+	rm -f "${status_file}"
 }
 
 nisctl_status()
