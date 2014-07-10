@@ -3,7 +3,7 @@
 . /etc/rc.freenas
 
 cifs_file="/tmp/.cifs_AD"
-status_file="/tmp/.nt4status"
+status_file="/var/run/directoryservice.nt4"
 service=/usr/sbin/service
 python=/usr/local/bin/python
 notifier=/usr/local/www/freenasUI/middleware/notifier.py

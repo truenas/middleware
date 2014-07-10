@@ -33,7 +33,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FreeNAS_LDAP
+)
 from freenasUI.directoryservice import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
@@ -284,17 +287,17 @@ class LDAPForm(ModelForm):
         if not cdata.get("ldap_bindpw"):
             cdata["ldap_bindpw"] = self.instance.ldap_bindpw
 
-            binddn = cdata.get("ldap_binddn")
-            bindpw = cdata.get("ldap_bindpw")
-            hostname = cdata.get("ldap_hostname")
+        binddn = cdata.get("ldap_binddn")
+        bindpw = cdata.get("ldap_bindpw")
+        hostname = cdata.get("ldap_hostname")
 
-            ret = FreeNAS_LDAP.validate_credentials(
-                hostname, binddn=binddn, bindpw=bindpw
+        ret = FreeNAS_LDAP.validate_credentials(
+            hostname, binddn=binddn, bindpw=bindpw
+        )
+        if ret == False:
+            raise forms.ValidationError(
+                _("Incorrect password.")
             )
-            if ret == False:
-                raise forms.ValidationError(
-                    _("Incorrect password.")
-                )
 
         return cdata
 

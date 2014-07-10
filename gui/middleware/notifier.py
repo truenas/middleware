@@ -635,15 +635,19 @@ class notifier:
         from freenasUI.common.freenasldap import FreeNAS_LDAP, FLAGS_DBINIT
         from freenasUI.common.system import ldap_enabled
 
+        if (self._system_nolog('/usr/sbin/service ix-ldap status') != 0):
+            return False
+
         ret = False
         if ldap_enabled():
-            f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
-            f.open()
-            if f.isOpen():
-                ret = True
-            else:
-                ret = False
-            f.close()
+            try:
+                f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+                f.open()
+                if f.isOpen():
+                    ret = True
+                f.close()
+            except:
+                pass
 
         return ret
 

@@ -428,6 +428,23 @@ class FreeNAS_LDAP_Directory(object):
 
 
 class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
+
+    def __keys(self):
+        return [
+            'host',
+            'port',
+            'anonbind',
+            'binddn',
+            'bindpw',
+            'basedn',
+            'ssl',
+            'usersuffix',
+            'groupsuffix',
+            'machinesuffix',
+            'passwordsuffix',
+            'certfile'
+        ]
+
     def __db_init__(self, **kwargs):
         log.debug("FreeNAS_LDAP_Base.__db_init__: enter")
 
@@ -532,7 +549,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         log.debug("FreeNAS_LDAP_Base.__no_db_init__: leave")
 
-    def __init__(self, **kwargs):
+    def __old_init__(self, **kwargs):
         log.debug("FreeNAS_LDAP_Base.__init__: enter")
 
         __initfunc__ = self.__no_db_init__
@@ -540,6 +557,45 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             __initfunc__ = self.__db_init__
 
         __initfunc__(**kwargs)
+        self.ucount = 0
+        self.gcount = 0
+
+        log.debug("FreeNAS_LDAP_Base.__init__: leave")
+
+    def __init__(self, **kwargs):
+        log.debug("FreeNAS_LDAP_Base.__init__: enter")
+        super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
+
+        self.kwargs = kwargs
+        self.flags = 0
+
+        if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
+            ldap = ldap_objects()[0]
+            for key in ldap.keys():
+                newkey = key.replace("ldap_", "")
+                if newkey == 'hostname':
+                    host = ldap[key]
+                    port = 389
+
+                    if ldap[key]:
+                        parts = ldap[key].split(':')
+                        if len(parts) > 1:
+                            host = parts[0]
+                            try:
+                                port = long(parts[1])
+                            except:
+                                port = 389
+
+                    self.__dict__['host'] = host
+                    self.__dict__['port'] = port
+              
+                else:
+                    self.__dict__[newkey] = ldap[key] if ldap[key] else None
+    
+        for key in kwargs:
+            if key in self.__keys():
+                self.__dict__[key] = kwargs[key]
+
         self.ucount = 0
         self.gcount = 0
 
