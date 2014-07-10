@@ -64,6 +64,7 @@ class NT4Form(ModelForm):
             'nt4_adminname',
             'nt4_adminpw',
             'nt4_adminpw2',
+            'nt4_use_default_domain',
             'nt4_enable',
         ]
 
@@ -231,6 +232,8 @@ class ActiveDirectoryForm(ModelForm):
             notifier()._clear_activedirectory_config()
 
         started = notifier().started("activedirectory")
+        super(ActiveDirectoryForm, self).save()
+
         if enable:
             if started == True:
                 started = notifier().restart("activedirectory")
@@ -244,8 +247,6 @@ class ActiveDirectoryForm(ModelForm):
         else:
             if started == True:
                 started = notifier().stop("activedirectory")
-
-        super(ActiveDirectoryForm, self).save()
 
 
 class NISForm(ModelForm):
@@ -303,7 +304,10 @@ class LDAPForm(ModelForm):
 
     def save(self):
         enable = self.cleaned_data.get("ldap_enable")
+
         started = notifier().started("ldap")
+        super(LDAPForm, self).save()
+
         if enable:
             if started == True:
                 started = notifier().restart("ldap")
@@ -317,5 +321,3 @@ class LDAPForm(ModelForm):
         else:
             if started == True:
                 started = notifier().stop("ldap")
-
-        super(LDAPForm, self).save()

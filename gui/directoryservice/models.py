@@ -63,6 +63,11 @@ class NT4(Model):
         verbose_name=_("Administrator Password"),
         help_text=_("Domain Administrator account password.")
     )
+    nt4_use_default_domain = models.BooleanField(
+        default=False,
+        verbose_name=_("Use default domain"),
+        help_text=_("Set this if you want to use the default domain for users and groups.")
+    )
     nt4_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False,
@@ -155,7 +160,7 @@ class ActiveDirectory(Model):
         help_text=_("Set this if you want to allow Trusted Domains.")
     )
     ad_use_default_domain = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_("Use default domain"),
         help_text=_("Set this if you want to use the default domain for users and groups.")
     )
@@ -339,6 +344,11 @@ class LDAP(Model):
             "machines when these are added to the LDAP directory, e.g. "
             "ou=Computers")
     )
+    ldap_use_default_domain = models.BooleanField(
+        default=False,
+        verbose_name=_("Use default domain"),
+        help_text=_("Set this if you want to use the default domain for users and groups.")
+    )
     ldap_ssl = models.CharField(
         choices=choices.LDAP_SSL_CHOICES,
         default='off',
@@ -375,5 +385,6 @@ class LDAP(Model):
             'ldap_passwordsuffix',
             'ldap_machinesuffix',
             'ldap_ssl',
+            'ldap_use_default_domain',
             'ldap_certfile',
         )

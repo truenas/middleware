@@ -639,15 +639,14 @@ class notifier:
             return False
 
         ret = False
-        if ldap_enabled():
-            try:
-                f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
-                f.open()
-                if f.isOpen():
-                    ret = True
-                f.close()
-            except:
-                pass
+        try:
+            f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+            f.open()
+            if f.isOpen():
+                ret = True
+            f.close()
+        except:
+            pass
 
         return ret
 
@@ -718,12 +717,12 @@ class notifier:
                 return False
 
         ret = False
-        if activedirectory_enabled():
+        try:
             f = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
             if f.connected():
                 ret = True
-            else:
-                ret = False
+        except:
+            pass
 
         return ret
 

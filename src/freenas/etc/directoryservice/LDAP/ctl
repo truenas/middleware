@@ -104,7 +104,7 @@ ldapctl_start()
 	ldapctl_cmd ${service} ix-nsswitch quietstart
 	ldapctl_cmd ${service} ix-pam quietstart
 
-	ldapctl_cmd $[service} ix-sssd start	
+	ldapctl_cmd ${service} ix-sssd start	
 	if sssd_running
 	then
 		sssd_restart
@@ -140,7 +140,7 @@ ldapctl_stop()
 
 	if ! ldap_enabled
 	then
-		return 1
+		ldap_set 1
 	fi
 
 	if cifs_enabled

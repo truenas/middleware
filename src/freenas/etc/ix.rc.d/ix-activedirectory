@@ -212,10 +212,18 @@ activedirectory_start()
 
 activedirectory_status()
 {
-	AD_init
+	local res=1
 
-	AD_log "activedirectory_status: checking status"
-	AD_status_domain >/dev/null
+	if dirsrv_enabled activedirectory
+	then
+		AD_init
+
+		AD_log "activedirectory_status: checking status"
+		AD_status_domain >/dev/null
+		res=$?
+	fi
+
+	return ${res}
 }
 
 activedirectory_stop()

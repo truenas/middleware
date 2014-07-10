@@ -194,6 +194,8 @@ def add_nt4_conf(smb4_conf):
     confset1(smb4_conf, "winbind enum users = yes")
     confset1(smb4_conf, "winbind enum groups = yes")
     confset1(smb4_conf, "winbind nested groups = yes")
+    confset2(smb4_conf, "winbind use default domain = %s",
+        "yes" if nt4.nt4_use_default_domain else "no")
 
     confset1(smb4_conf, "template shell = /bin/sh")
 
