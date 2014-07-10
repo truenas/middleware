@@ -571,7 +571,7 @@ def debug(request):
         p1.communicate()
 
         wrapper = FileWrapper(file(dump))
-        response = HttpResponse(
+        response = StreamingHttpResponse(
             wrapper,
             content_type='application/octet-stream',
         )
