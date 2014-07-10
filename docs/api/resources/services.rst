@@ -342,6 +342,97 @@ Update resource
    :statuscode 200: no error
 
 
+Domain Controller
+-----------------
+
+The Domain Controller resource represents the configuration settings for FreeNAS Domain Controller service.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/services/domaincontroller/
+
+   Returns the Domain Controller settings dictionary.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/services/domaincontroller/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "dc_dns_backend": "SAMBA_INTERNAL",
+                "dc_dns_forwarder": "",
+                "dc_domain": "",
+                "dc_forest_level": "2003",
+                "dc_passwd": "",
+                "dc_realm": "",
+                "dc_role": "dc",
+                "id": 1
+        }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/services/domaincontroller/
+
+   Update Domain Controller.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/services/domaincontroller/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "dc_forest_level": "2008"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "dc_dns_backend": "SAMBA_INTERNAL",
+                "dc_dns_forwarder": "",
+                "dc_domain": "",
+                "dc_forest_level": "2003",
+                "dc_passwd": "",
+                "dc_realm": "",
+                "dc_role": "dc",
+                "id": 1
+        }
+
+   :json string dc_realm: Realm Name, eg EXAMPLE.ORG
+   :json string dc_domain: Domain Name in old format, eg EXAMPLE
+   :json string dc_role: Server Role (dc)
+   :json string dc_dns_backend: DNS Backend (SAMBA_INTERNAL/BIND9_FLATFILE/BIND9_DLZ/NONE)
+   :json string dc_dns_forwarder: DNS Forwarder IP Address
+   :json string dc_forest_level: Domain and Forest Level (2000/2003/2008/2008_R2)
+   :json string dc_passwd: Administrator Password
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 200: no error
+
+
 DynamicDNS
 ----------
 
