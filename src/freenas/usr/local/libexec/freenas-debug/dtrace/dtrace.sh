@@ -46,6 +46,7 @@ dtrace_func()
 	section_footer
 
 	if [ ${loaded} = false ]; then
-		kldunload dtraceall
+		# Do not try to unload for now, I've got a kernel panic
+		# kldunload dtraceall
 	fi
 }
