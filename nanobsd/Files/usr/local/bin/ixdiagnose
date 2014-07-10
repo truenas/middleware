@@ -10,7 +10,7 @@
 
 # If there is a system dataset use it
 tmpdir="/var/db/system"
-if [ -e "${tmpdir}" ]; then tmpdir="/var/tmp"; fi
+if [ ! -e "${tmpdir}" ]; then tmpdir="/var/tmp"; fi
 
 mydir=`dirname $0`
 
