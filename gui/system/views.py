@@ -32,7 +32,6 @@ import re
 import shutil
 import signal
 import socket
-import string
 import subprocess
 import time
 import urllib
@@ -49,6 +48,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
 from freenasUI.account.models import bsdUsers
+from freenasUI.common.locks import mntlock
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.apppool import appPool
@@ -540,33 +540,38 @@ def debug(request):
     p1 = pipeopen("zfs list -H -o name")
     zfs = p1.communicate()[0]
     zfs = zfs.split()
-    dir = "/var/tmp/ixdiagnose"
-    for dataset in zfs:
-        if dataset.endswith(".system"):
-            p1 = pipeopen("zfs list -H -o mountpoint %s" % dataset)
-            mntpoint = p1.communicate()[0].strip()
-            dir = mntpoint + "/" + "ixdiagnose"
-            break
-    dump = "%s/ixdiagnose.tgz" % dir
 
-    opts = ["/usr/local/bin/ixdiagnose", "-d", dir, "-s", "-F"]
-    p1 = pipeopen(string.join(opts, ' '), allowfork=True)
-    debug = p1.communicate()[0]
-    p1.wait()
+    direc = "/var/tmp/ixdiagnose"
+    mntpt = '/var/tmp'
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+    if basename:
+        mntpoint = '/mnt/%s' % basename
+        if os.path.exists(mntpoint):
+            direc = '%s/ixdiagnose' % mntpoint
+            mntpt = mntpoint
+    dump = "%s/ixdiagnose.tgz" % direc
 
-    wrapper = FileWrapper(file(dump))
-    response = HttpResponse(wrapper, content_type='application/octet-stream')
-    response['Content-Length'] = os.path.getsize(dump)
-    response['Content-Disposition'] = \
-        'attachment; filename=debug-%s-%s.tgz' % (
-            hostname.encode('utf-8'),
-            time.strftime('%Y%m%d%H%M%S'))
+    with mntlock(mntpt=mntpt):
+        opts = ["/usr/local/bin/ixdiagnose", "-d", direc, "-s", "-F"]
+        p1 = pipeopen(' '.join(opts), allowfork=True)
+        p1.communicate()
 
-    opts = ["/bin/rm", "-r", "-f", dir]
-    p1 = pipeopen(string.join(opts, ' '), allowfork=True)
-    p1.wait()
+        wrapper = FileWrapper(file(dump))
+        response = HttpResponse(
+            wrapper,
+            content_type='application/octet-stream',
+        )
+        response['Content-Length'] = os.path.getsize(dump)
+        response['Content-Disposition'] = \
+            'attachment; filename=debug-%s-%s.tgz' % (
+                hostname.encode('utf-8'),
+                time.strftime('%Y%m%d%H%M%S'))
 
-    return response
+        opts = ["/bin/rm", "-r", "-f", direc]
+        p1 = pipeopen(' '.join(opts), allowfork=True)
+        p1.wait()
+
+        return response
 
 
 class UnixTransport(xmlrpclib.Transport):
