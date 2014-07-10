@@ -554,10 +554,6 @@ def debug(request):
     debug = p1.communicate()[0]
     p1.wait()
 
-    with open(dump, "r") as f:
-        freenas_dump = f.read().strip()
-        f.close()  
-
     wrapper = FileWrapper(file(dump))
     response = HttpResponse(wrapper, content_type='application/octet-stream')
     response['Content-Length'] = os.path.getsize(dump)
