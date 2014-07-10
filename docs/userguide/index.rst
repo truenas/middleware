@@ -189,7 +189,7 @@ Before installing FreeNAS® you should be aware of the following known issues:
 Hardware Recommendations
 ------------------------
 
-Since FreeNAS® 9.3 is based on FreeBSD 9.3, it supports the same hardware found in the amd64 and i386 sections of the `FreeBSD Hardware Compatibility List
+Since FreeNAS® 9.3 is based on FreeBSD 9.3, it supports the same hardware found in the amd64 section of the `FreeBSD Hardware Compatibility List
 <http://www.freebsd.org/releases/9.3R/hardware.html>`__.
 
 Actual hardware requirements will vary depending upon what you are using your FreeNAS® system for. This section provides some guidelines to get you started.
@@ -202,9 +202,7 @@ provides some specific recommendations if you are planning on purchasing hardwar
 Architecture
 ~~~~~~~~~~~~
 
-While FreeNAS® is available for both 32-bit and 64-bit architectures, 64-bit hardware is recommended for speed and performance. A 32-bit system can only
-address up to 4 GB of RAM, making it poorly suited to the RAM requirements of ZFS. If you only have access to a 32-bit system, consider using UFS instead of
-ZFS.
+Beginning with version 9.3, FreeNAS® is only available for 64-bit architectures.
 
 RAM
 ~~~
@@ -761,8 +759,7 @@ create the disk. Repeat to create the amount of storage disks needed to meet you
 Installing from CDROM
 ---------------------
 
-If you prefer to install FreeNAS® using a menu-driven installer, download the ISO image that matches the architecture of the system you will install onto
-(32- or 64-bit) and burn it to a CDROM.
+If you prefer to install FreeNAS® using a menu-driven installer, download either the *.iso* file and burn it to a CDROM.
 
 **NOTE:** the installer on the CDROM will recognize if a previous version of FreeNAS® is already installed, meaning the CDROM can also be used to upgrade
 FreeNAS®. However, the installer can not perform an upgrade from a FreeNAS® .7 system.
@@ -1128,7 +1125,7 @@ Upgrading From the GUI
 
 To perform an upgrade using this method,
 `download <http://www.freenas.org/download-releases.html>`_
-the latest version of the *.txz* file that matches the architecture of the system (32- or 64-bit). Then, go to System → Settings → Advanced → 
+the latest version of the *.txz* file. Then, go to System → Settings → Advanced → 
 Firmware Update as shown in Figure 2.7d.
 
 Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select “Memory device” to
@@ -8349,8 +8346,8 @@ Uploading Plugins
 The "Available" tab of Plugins contains an "Upload" button. This button allows you to install PBIs that are not yet available in the official repository.
 These PBIs include FreeNAS® PBIs which are still being tested as well as
 `PC-BSD PBIs <http://pbibuild64.pcbsd.org/index.php?ver=9>`_
-. These PBIs must be manually downloaded first and should end in a *.pbi* extension. When downloading a PBI, make sure that it matches the architecture (32-
-or 64-bit) of the FreeNAS® system and that it was developed for 9.x as 8.x and 10.x PBIs will not work on a 9.x FreeNAS® system.
+. These PBIs must be manually downloaded first and should end in a *.pbi* extension. When downloading a PBI, make sure that it is 64-bit and that it was
+developed for 9.x. 8.x and 10.x PBIs will not work on a 9.x FreeNAS® system.
 
 Once you have downloaded the PBI, click the "Upload" button. As seen in the example in Figure 12.3a, this will prompt you to browse to the location of the
 downloaded PBI. Once the PBI is selected, click the "Upload" button to install the PBI. In this example, the user is installing the PC-BSD PBI for webmin.
@@ -8416,9 +8413,6 @@ Currently, the following FreeNAS® PBIs are available:
 * `Sick Beard <http://sickbeard.com/>`_
 
 * `Transmission <http://www.transmissionbt.com/>`_
-
-**NOTE:** only a small sub-set of these PBIs are available for 32-bit systems as most applications are 64-bit.
-
 
 While the FreeNAS® Plugins system makes it easy to install a PBI, it is still up to you to know how to configure and use the installed application. When in
 doubt, refer to the documentation for that application.
@@ -10815,11 +10809,12 @@ Rolling a Custom Snapshot
 
 Users who wish to create their own custom ISO for testing purposes can download and compile the latest FreeNAS® source from the github repository.
 
-In order to build your own testing snapshot, you will need to install
+In order to build your own testing snapshot, you will need to install the amd64 version of
 `FreeBSD 9.3 <http://www.freebsd.org/releases/9.3R/announce.html>`_
-in a virtual environment or on a test system. If you are using a virtual environment, a 64-bit system with at least 4 GB of RAM is recommended. Download and
-`install <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/bsdinstall.html>`_
-the FreeBSD version (i386 or amd64) that matches the architecture that you wish to build.
+in a virtual environment or on a test system. If you are using a virtual environment, a 64-bit system with at least 4 GB of RAM is recommended. Installation
+intructions can be found
+`here <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/bsdinstall.html>`_
+.
 
 After booting into the newly installed FreeBSD system, become the superuser (type **su** and enter the
 *root* user's password) and run the following commands. First, install the software you'll need and refresh your path so it is aware of the new binaries::
