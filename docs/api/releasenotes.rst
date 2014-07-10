@@ -10,14 +10,15 @@ Resources
 
 * Resources added
 
- - LLDP service settings: /api/v1.0/services/lldp/
- - Jails Configuration settings: /api/v1.0/jails/configuration/
  - Jails: /api/v1.0/jails/jails/
+ - Jails Configuration: /api/v1.0/jails/configuration/
  - Jails Mountpoints: /api/v1.0/jails/mountpoints/
  - Jails Templates: /api/v1.0/jails/templates/
- - System reboot: /api/v1.0/system/reboot/ (existed since 9.2.1 but undocumented)
- - System shutdown: /api/v1.0/system/shutdown/ (existed since 9.2.1 but undocumented)
- - System version: /api/v1.0/system/version/
+ - Services Domain Controller: /api/v1.0/services/domaincontroller/
+ - Services LLDP: /api/v1.0/services/lldp/
+ - System Reboot: /api/v1.0/system/reboot/ (existed since 9.2.1 but undocumented)
+ - System Shutdown: /api/v1.0/system/shutdown/ (existed since 9.2.1 but undocumented)
+ - System Version: /api/v1.0/system/version/
 
 * Endpoints added to existing resources
 
