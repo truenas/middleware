@@ -35,8 +35,8 @@
 if true || [ ! \( "$OLD_AVATAR_PROJECT" = "FreeNAS" -a \
     "$NEW_AVATAR_PROJECT" = "FreeNAS" \) ] ; then
 
-    echo "Doing old upgrade" > /data/0005.run_update.sh.log
-    date >> /data/0005.run_update.sh.log
+    echo "Doing old upgrade" > /data/0200.run_update.sh.log
+    date >> /data/0200.run_update.sh.log
 
     if [ "$VERBOSE" != "" -a "$VERBOSE" != "0" ] ; then
         sh -x $SCRIPTDIR/bin/update $SCRIPTDIR/firmware.img
@@ -44,8 +44,8 @@ if true || [ ! \( "$OLD_AVATAR_PROJECT" = "FreeNAS" -a \
         sh $SCRIPTDIR/bin/update $SCRIPTDIR/firmware.img
     fi
 else
-    echo "Doing NEW upgrade" > /data/0005.run_update.sh.log
-    date >> /data/0005.run_update.sh.log
+    echo "Doing NEW upgrade" > /data/0200.run_update.sh.log
+    date >> /data/0200.run_update.sh.log
 
 . /etc/nanobsd.conf
 . /etc/rc.freenas
