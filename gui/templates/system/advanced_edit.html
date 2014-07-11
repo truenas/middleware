@@ -14,6 +14,12 @@
                     window.location='{% url "system_debug" %}';
                 </script>
             </button>
+            <button id="btn_{% cls_name form %}_PerfTest" data-dojo-type="dijit.form.Button" type="button">
+                {% trans "Performance Test" %}
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    editScaryObject('{% trans "Performance Test"|escapejs %}', '{% url "system_perftest" %}');
+                </script>
+            </button>
             <button id="btn_{% cls_name form %}_FwUpdate" data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Firmware Update" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
