@@ -8425,11 +8425,11 @@ Currently, the following FreeNAS® PBIs are available:
 
 * `Firefly <https://en.wikipedia.org/wiki/Firefly_Media_Server>`_
 
-* `Headphones <https://github.com/rembo10/headphones>` 
+* `Headphones <https://github.com/rembo10/headphones>`_
 
 * `HTPC Manager <http://htpc.io/>`_
 
-* `LazyLibrarian <https://github.com/itsmegb/LazyLibrarian>` 
+* `LazyLibrarian <https://github.com/itsmegb/LazyLibrarian>`_
 
 * `Maraschino <http://www.maraschinoproject.com/>`_
 
@@ -8445,11 +8445,11 @@ Currently, the following FreeNAS® PBIs are available:
 
 * `Sick Beard <http://sickbeard.com/>`_
 
-* `Subsonic <http://subsonic.org/>` 
+* `Subsonic <http://subsonic.org/>`_
 
 * `Transmission <http://www.transmissionbt.com/>`_
 
-* `XDM <https://github.com/lad1337/XDM>` 
+* `XDM <https://github.com/lad1337/XDM>`_
 
 While the FreeNAS® Plugins system makes it easy to install a PBI, it is still up to you to know how to configure and use the installed application. When in
 doubt, refer to the documentation for that application.
