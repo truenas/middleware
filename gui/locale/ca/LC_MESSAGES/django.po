@@ -9908,3 +9908,94 @@ msgstr ""
 #: services/models.py:414
 msgid "Enable experimental target"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "El servei AFP ha fallat de recàrrega-se"
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "El servei d'activedirectory ha fallat la recàrrega."
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "El servei AFP ha fallat de recàrrega-se"
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "Activa AIO"
+
+#: directoryservice/models.py:295
+#, fuzzy
+msgid "Bind DN"
+msgstr "DN de vinculaió Root"
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "Contrasenya antiga"
+
+#: services/forms.py:753
+#: services/forms.py:896
+#, fuzzy
+msgid "Certificate"
+msgstr "Certificat SSL"
+
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Contrasenya vinculada a Root"
+
+#: services/models.py:1623
+#: services/models.py:1835
+#, fuzzy
+msgid "Upload your certificate file here."
+msgstr "Col.loca aquí els continguts del teu fitxer de certificat auto signat."
+
+#: system/models.py:1148
+#, fuzzy
+msgid "Reporting Database"
+msgstr "Reportant"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "Informal"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+#, fuzzy
+msgid "Tasks"
+msgstr "Rsyncs"
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "Nom del Controlador de Domini"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+#, fuzzy
+msgid "Set SSL Certificate"
+msgstr "Certificat SSL"

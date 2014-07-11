@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-06-15 13:17+0000\n"
+"PO-Revision-Date: 2014-07-06 14:08+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1402838253.0\n"
+"X-POOTLE-MTIME: 1404655689.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapporteren"
@@ -65,7 +65,7 @@ msgstr "Er is een fout opgetreden"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr "Even geduld..."
+msgstr "Even geduld ..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -273,3 +273,23 @@ msgstr "ZFS-volumebeheerder"
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
 msgstr "Bevestigen"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:49
+msgid "System"
+msgstr "Systeem"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:94
+msgid "Tasks"
+msgstr "Taken"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:92
+msgid "Network"
+msgstr "Netwerk"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:182
+msgid "Sharing"
+msgstr "Delen"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:521
+msgid "Directory Service"
+msgstr "Adreslijstservice"

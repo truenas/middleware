@@ -9587,3 +9587,94 @@ msgstr ""
 #: services/models.py:414
 msgid "Enable experimental target"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "Службу AFP не вдалося перезавантажити."
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "Не вдалося перезапустити службу Active Directory."
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "Службу AFP не вдалося перезавантажити."
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "Включити"
+
+#: directoryservice/models.py:295
+#, fuzzy
+msgid "Bind DN"
+msgstr "Кореневий зв'язок DN"
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "Пароль адміністратора"
+
+#: services/forms.py:753
+#: services/forms.py:896
+#, fuzzy
+msgid "Certificate"
+msgstr "Сертифікат SSL"
+
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Пароль адміністратора"
+
+#: services/models.py:1623
+#: services/models.py:1835
+#, fuzzy
+msgid "Upload your certificate file here."
+msgstr "Помістіть сюди вміст файлу Вашого сертифікату."
+
+#: system/models.py:1148
+#, fuzzy
+msgid "Reporting Database"
+msgstr "Звіт"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "Інформаційні"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+#, fuzzy
+msgid "Tasks"
+msgstr "Завдання Rsync"
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "Ім'я контролера домену"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+#, fuzzy
+msgid "Set SSL Certificate"
+msgstr "Сертифікат SSL"

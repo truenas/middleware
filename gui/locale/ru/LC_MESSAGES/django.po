@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-01-24 01:18+0000\n"
+"PO-Revision-Date: 2014-06-20 19:39+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1390526287.0\n"
+"X-POOTLE-MTIME: 1403293193.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -8893,9 +8893,8 @@ msgid "SMB3_00"
 msgstr ""
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (быстрейший)"
+msgstr "lz4 (быстрейший)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
@@ -8903,7 +8902,7 @@ msgstr ""
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (лучшее сжатие)"
 
 #: choices.py:709
 msgid "data"
@@ -8938,44 +8937,37 @@ msgid "auth+!data"
 msgstr ""
 
 #: account/forms.py:398
-#, fuzzy
 msgid "Create Home Directory In"
-msgstr "Домашний Каталог"
+msgstr "Создать домашний каталог в"
 
 #: api/resources.py:1864
 #: api/resources.py:1875
-#, fuzzy
 msgid "Invalid snapshot"
-msgstr "Последний снимок"
+msgstr "Неверный снимок"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
-msgstr ""
+msgstr "Корень jail должен располагаться на томе!"
 
 #: jails/models.py:178
-#, fuzzy
 msgid "Comma delimited list of sysctl's"
-msgstr "Разделенный запятыми список серверов NIS"
+msgstr "Разделенный запятыми список sysctl"
 
 #: jails/models.py:493
-#, fuzzy
 msgid "Jail root is not configured!"
-msgstr "Не задан корень jail."
+msgstr "Не задан корень jail!"
 
 #: jails/models.py:537
-#, fuzzy
 msgid "Filesystem"
-msgstr "Тип файловой системы"
+msgstr "Файловая система"
 
 #: jails/utils.py:695
-#, fuzzy
 msgid "You need to create a volume to proceed!"
 msgstr "Вы должны создать том ZFS для продолжения!"
 
 #: jails/utils.py:739
-#, fuzzy
 msgid "Failed to create directory %(name)s: %(error)s"
-msgstr "Невозможно создать %(name)s: %(error)s"
+msgstr "Не удалось создать каталог %(name)s: %(error)s"
 
 #: middleware/notifier.py:3068
 msgid "No RPC Token!"
@@ -8983,83 +8975,73 @@ msgstr ""
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
-#, fuzzy
 msgid "Active"
-msgstr "Действие"
+msgstr "Активен"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "Резерв"
 
 #: middleware/notifier.py:3822
-#, fuzzy
 msgid "Init"
-msgstr "До инициализации"
+msgstr "Инициализация"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
-msgstr ""
+msgstr "Нет несущей"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
-msgstr ""
+msgstr "Деградированный"
 
 #: middleware/notifier.py:3849
 msgid "Down"
-msgstr ""
+msgstr "Лежит"
 
 #: network/admin.py:39
-#, fuzzy
 msgid "Media Status"
-msgstr "Состояние"
+msgstr "Состояние несущей"
 
 #: network/forms.py:311
-#, fuzzy
 msgid "Channel"
-msgstr "Изменить"
+msgstr "Канал"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
-msgstr ""
+msgstr "HTTP-прокси"
 
 #: network/nav.py:17
 #: templates/network/index.html:14
 msgid "IPMI"
-msgstr ""
+msgstr "IPMI"
 
 #: network/views.py:66
-#, fuzzy
 msgid "IPMI successfully edited"
-msgstr "успешно изменен"
+msgstr "IPMI успешно изменен"
 
 #: network/views.py:68
 msgid "IPMI failed"
-msgstr ""
+msgstr "сбой IPMI"
 
 #: plugins/admin.py:73
-#, fuzzy
 msgid "Install plugin"
 msgstr "Установить плагин"
 
 #: plugins/models.py:129
-#, fuzzy
 msgid "jail not found"
-msgstr "Страница не найдена"
+msgstr "jail не найден"
 
 #: services/forms.py:220
-#, fuzzy
 msgid "This path does not exist."
-msgstr "Путь %s не существует"
+msgstr "Этот путь не существует."
 
 #: services/forms.py:222
-#, fuzzy
 msgid "This path is not a directory."
-msgstr "Путь не является каталогом."
+msgstr "Этот путь не является каталогом."
 
 #: services/forms.py:754
-#, fuzzy
 msgid "Confirm Domain Account Password"
-msgstr "Подтвердите пароль администратора"
+msgstr "Подтвердите пароль учетного имени домена"
 
 #: services/forms.py:758
 #: services/models.py:1612
@@ -9068,34 +9050,32 @@ msgid "Kerberos keytab"
 msgstr "Файл Kerberos Keytab"
 
 #: services/forms.py:1081
-#, fuzzy
 msgid "LUN ID already exists."
-msgstr "Этот IP уже существует."
+msgstr "LUN с таким ID уже существует."
 
 #: services/models.py:109
 msgid "Use syslog"
-msgstr ""
+msgstr "Использовать syslog"
 
 #: services/models.py:233
 msgid "Server minimum protocol"
-msgstr ""
+msgstr "Минимальная версия протокола сервера"
 
 #: services/models.py:235
 msgid "The minimum protocol version that will be supported by the server"
-msgstr ""
+msgstr "Минимальная версия протокола, которая будет поддерживаться сервером"
 
 #: services/models.py:240
 msgid "Server maximum protocol"
-msgstr ""
+msgstr "Максимальная версия протокола сервера"
 
 #: services/models.py:243
 msgid "The highest protocol version that will be supported by the server"
-msgstr ""
+msgstr "Максимальная версия протокола, которая будет поддерживаться сервером"
 
 #: services/models.py:246
-#, fuzzy
 msgid "Allow execute always"
-msgstr "Разрешить повторяющиеся идентификаторы групп"
+msgstr "Всегда разрешать исполнение"
 
 #: services/models.py:248
 msgid ""
@@ -9109,29 +9089,38 @@ msgid ""
 "does not check execute permissions on \"open for execution\", thus re-"
 "establishing the behaviour of Samba 3.6 "
 msgstr ""
+"Это логический параметр управляет поведением smbd(8) при получении запроса \""
+"открыть для исполнения\" от клиента Windows. Начиная с Samba 3.6 и старше, "
+"право исполнения в ACL не проверялось, и клиент мог выполнять файла, даже "
+"если у него не было права исполнения. В Samba 4.0 это было исправлено, так "
+"что по умолчанию, то есть, когда этот параметр отключен, \"открытие для "
+"исполнения\" теперь запрещено если нет прав на исполнение. Если этот "
+"параметр включен, Samba не проверяет разрешения на исполнение для \"открыть "
+"для исполнения\", таким образом восстанавливая поведение Samba 3.6"
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
-msgstr ""
+msgstr "Обслуживать клиентов NFS по протоколу UDP"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
-msgstr ""
+msgstr "Включить многопоточный режим"
 
 #: services/models.py:874
 msgid "LUN ID"
-msgstr ""
+msgstr "LUN ID"
 
 #: services/models.py:914
-#, fuzzy
 msgid "IP Server"
-msgstr "NTP сервер"
+msgstr "IP Сервер"
 
 #: services/models.py:916
 msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
 "Defaults to checkip.dyndns.org:80 /."
 msgstr ""
+"IP клиента определяется вызовом 'url' с 'ip_server_name:port'. По умолчанию: "
+"checkip.dyndns.org:80 /."
 
 #: services/models.py:1292
 #, fuzzy
@@ -9186,24 +9175,20 @@ msgid "TLS IP address required"
 msgstr ""
 
 #: services/models.py:1595
-#, fuzzy
 msgid "Domain Account Name"
-msgstr "Доменное имя"
+msgstr "Учетная запись домена"
 
 #: services/models.py:1596
-#, fuzzy
 msgid "Domain account name to bind as"
-msgstr "Имя учетной записи администратора домена"
+msgstr "Учетная запись домена для подключения"
 
 #: services/models.py:1600
-#, fuzzy
 msgid "Domain Account Password"
-msgstr "Пароль учетной записи администратора домена."
+msgstr "Пароль учетной записи домена"
 
 #: services/models.py:1601
-#, fuzzy
 msgid "Domain Account password."
-msgstr "Пароль учетной записи администратора домена."
+msgstr "Пароль учетной записи домена."
 
 #: services/models.py:1609
 msgid "Use keytab"
@@ -9215,52 +9200,50 @@ msgid "Kerberos keytab file"
 msgstr "Файл Kerberos Keytab"
 
 #: services/models.py:1850
-#, fuzzy
 msgid "Interface Description"
-msgstr "Описание"
+msgstr "Описание интерфейса"
 
 #: services/models.py:1852
 msgid "Save received info in interface description / alias"
-msgstr ""
+msgstr "Сохранить полученную информацию в описании интерфейса"
 
 #: services/models.py:1855
-#, fuzzy
 msgid "Country Code"
-msgstr "Страна"
+msgstr "Код страны"
 
 #: services/models.py:1858
 msgid ""
 "Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
 msgstr ""
+"Укажите двух-буквенный код страны ISO 3166 (требуется для поддержки "
+"LLDPlocation)"
 
 #: services/models.py:1866
 msgid "Specify the physical location of the host"
-msgstr ""
+msgstr "Укажите физическое расположение хоста"
 
 #: services/models.py:1871
 #: services/models.py:1872
 #: templates/services/core.html:76
 msgid "LLDP"
-msgstr ""
+msgstr "LLDP"
 
 #: services/models.py:2058
 msgid "Realm"
-msgstr ""
+msgstr "Область"
 
 #: services/models.py:2059
 msgid "Realm Name, eg EXAMPLE.ORG"
-msgstr ""
+msgstr "Имя области, например, EXAMPLE.ORG"
 
 #: services/models.py:2064
-#, fuzzy
 msgid "Domain Name in old format, eg EXAMPLE"
-msgstr "Имя рабочей группы или домена в старом формате, например WORKGROUP"
+msgstr "Имя домена в старом формате, например, EXAMPLE"
 
 #: services/models.py:2068
 #: services/models.py:2069
-#, fuzzy
 msgid "Server Role"
-msgstr "Имя сервера"
+msgstr "Роль сервера"
 
 #: services/models.py:2075
 msgid "DNS Backend"
@@ -9288,13 +9271,12 @@ msgid "Domain and Forest Level, eg 2003"
 msgstr ""
 
 #: sharing/models.py:48
-#, fuzzy
 msgid "Apply Default Permissions"
-msgstr "Разрешения на файл по умолчанию"
+msgstr "Применить разрешения по умолчанию"
 
 #: sharing/models.py:49
 msgid "Recursively set sane default windows permissions on share"
-msgstr ""
+msgstr "Рекурсивно установить здравые windows права на ресурс"
 
 #: sharing/models.py:87
 msgid ""
@@ -9305,6 +9287,12 @@ msgid ""
 "is NOT recommended to set this. The desired behavior can be achieved using "
 "ACL's. This probably won't do what you want it to do."
 msgstr ""
+"Владелец новых файлов и каталогов обычно определяется uid подключенного "
+"пользователя. Эта опция позволяет администратору Samba указать, что владелец "
+"для новых файлов и каталогов должен определяться владельцем родительской "
+"директории. Для сетевых ресурсов windows это устанавливать НЕ рекомендуется. "
+"Это, вероятно, не будет делать то, что вы от него хотите. Желаемое поведение "
+"может быть достигнуто с путем использования ACL."
 
 #: sharing/models.py:91
 msgid ""
@@ -9314,11 +9302,15 @@ msgid ""
 "behavior can be achieved using ACL's. This probably won't do what you want "
 "it to do."
 msgstr ""
+"Новые каталоги наследуют режим родительского каталога, в том числе биты, "
+"такие как setgid. Новые файлы наследуют их биты чтения / записи из "
+"родительской директории. Для сетевых ресурсов windows НЕ рекомендуется "
+"устанавливать это. Это, вероятно, не будет делать то, что вы от него хотите. "
+"Желаемое поведение может быть достигнуто с помощью ACL."
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Inherit ACL's"
-msgstr "Наследуется"
+msgstr "Наследовать ACL"
 
 #: sharing/models.py:96
 msgid ""
@@ -9329,9 +9321,15 @@ msgid ""
 "NOT recommended to set this. The desired behavior can be achieved using "
 "ACL's. This probably won't do what you want it to do."
 msgstr ""
+"Этот параметр может быть использован для того, чтобы, если существуют списки "
+"ACL по умолчанию на родительские каталоги, они всегда уважались при создании "
+"нового файла или подкаталога в этих родительских каталогах. Поведение по "
+"умолчанию -- использовать права Unix указанные при создании каталога. Для "
+"сетевых ресурсов windows НЕ рекомендуется устанавливать это. Это, вероятно, "
+"не будет делать то, что вы от него хотите. Желаемое поведение может быть "
+"достигнуто с помощью ACL."
 
 #: sharing/models.py:246
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point ifselected. "
 "Otherwise, only the top level directory can be mounted."
@@ -9340,50 +9338,50 @@ msgstr ""
 "случае, только каталог верхнего уровня может быть смонтирован."
 
 #: storage/admin.py:130
-#, fuzzy
 msgid "Compression"
 msgstr "Сжатие"
 
 #: storage/admin.py:136
-#, fuzzy
 msgid "Compression Ratio"
 msgstr "Степень сжатия"
 
 #: storage/admin.py:297
-#, fuzzy
 msgid "Lock Volume"
-msgstr "Том"
+msgstr "Заблокировать Том"
 
 #: storage/admin.py:349
 msgid "Upgrade"
-msgstr ""
+msgstr "Обновить"
 
 #: storage/forms.py:120
 msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
-msgstr ""
+msgstr "Укажите размер с суффиксом IEC или 0, например, 10 GiB"
 
 #: storage/forms.py:558
 msgid ""
 "You are trying to add a virtual device of type '%(addtype)s' in a pool that "
 "has a virtual device of type '%(vdevtype)s'"
 msgstr ""
+"Вы пытаетесь добавить виртуальное устройство типа '%(addtype)s' в том "
+"содержащий виртуальные устройства типа '%(vdevtype)s'"
 
 #: storage/forms.py:568
 msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisted of %(vdevnum)s device(s)"
 msgstr ""
+"Вы пытаететесь добавить виртуальное устройство состоящее из %(addnum)s "
+"устройств в том содержащий виртуальное устройство из %(vdevnum)s устройств"
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
-#, fuzzy
 msgid "Encryption"
-msgstr "Ключ шифрования"
+msgstr "Шифрование"
 
 #: storage/forms.py:601
 #: templates/storage/zfswizard.html:51
 msgid "Initialize Safely"
-msgstr ""
+msgstr "Безопасная инициализация"
 
 #: storage/forms.py:906
 #, fuzzy
@@ -9399,32 +9397,27 @@ msgstr "Комментарии к общему ресурсу"
 
 #: storage/forms.py:1431
 #: storage/forms.py:1436
-#, fuzzy
 msgid "0=Unlimited; example: 1 GiB"
-msgstr "0 = без ограничений; например 1g"
+msgstr "0 = без ограничений; например 1GiB"
 
 #: storage/forms.py:1441
 #: storage/forms.py:1446
-#, fuzzy
 msgid "0=None; example: 1 GiB"
-msgstr "0 = Нет, например 1g"
+msgstr "0 = Нет, например 1GiB"
 
 #: storage/forms.py:1506
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\", \" \" and \".\"."
 msgstr ""
 "Наборы данных должны начинаться с буквы или цифры и могут так-же содержать "
-"\"-\", \"_\", \":\" и \".\"."
+"\"-\", \"_\", \":\", \" \" и \".\"."
 
 #: storage/forms.py:1606
-#, fuzzy
 msgid "Example: 1 GiB"
-msgstr "Например: 1g"
+msgstr "Например: 1GiB"
 
 #: storage/forms.py:1615
-#, fuzzy
 msgid ""
 "Creates a sparse volume with no reservation, also known as \"thin "
 "provisioning\". A \"sparse volume\" is a volume where the reservation is "
@@ -9432,204 +9425,176 @@ msgid ""
 "with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
 msgstr ""
 "Создает том без резервирования пространства, также известно как \"тонкий "
-"провижининг\". Подобрый том занимает места менее своего полного объема. Кск "
-"следствие это может привести к ошибкам ENOSPC при последующей записи если на "
-"пуле недостаточно места. (НЕ РЕКОМЕНДУЕТСЯ)"
+"провижининг\". Подобрый том занимает места менее своего полного объема. Как "
+"следствие, это может привести к ошибкам ENOSPC при последующей записи, если "
+"на пуле недостаточно места. (НЕ РЕКОМЕНДУЕТСЯ)"
 
 #: storage/forms.py:1655
 msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
-msgstr ""
+msgstr "Укажите размер с суффиксом IEC, например, 10 GiB"
 
 #: storage/forms.py:1684
-#, fuzzy
 msgid "Permission Type"
-msgstr "Права доступа к файлу"
+msgstr "Тип прав"
 
 #: storage/forms.py:1817
-#, fuzzy
 msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
-msgstr "Только [-a-zA-Z0-9_.] разрешены в имени снимка"
+msgstr "Только [-a-zA-Z0-9_. ] разрешены в имени снимка"
 
 #: storage/forms.py:1860
-#, fuzzy
 msgid "Only [-a-zA-Z0-9_./ ] permitted as clone name"
-msgstr "Только [-a-zA-Z0-9_./] разрешены в имени клона"
+msgstr "Только [-a-zA-Z0-9_./ ] разрешены в имени клона"
 
 # корневая связь - тупой перевод))
 #: storage/forms.py:2473
-#, fuzzy
 msgid "Root password"
 msgstr "Пароль администратора"
 
 #: storage/models.py:856
-#, fuzzy
 msgid "Last snapshot sent to remote side"
-msgstr ""
-"Последний снимок посланный удаленной машине (оставьте пустым для полной "
-"репликации)"
+msgstr "Последний снимок посланный удаленной стороне"
 
 #: storage/models.py:886
-#, fuzzy
 msgid "Replication Stream Compression"
-msgstr "Задания репликации"
+msgstr "Сжатие потока репликации"
 
 #: storage/models.py:909
-#, fuzzy
 msgid "Disabling will not stop any replications which are in progress."
-msgstr ""
-"Отключение остановит постановку в очередь новых заданий репликации. Уже "
-"поставленные в очередь или начатые репликации остановлены не будут."
+msgstr "Отключение не остановит уже начатые репликации."
 
 #: storage/models.py:946
 msgid "Sending %(snapshot)s (%(percent)s%%)"
-msgstr ""
+msgstr "Отправка %(snapshot)s (%(percent)s%%)"
 
 #: storage/models.py:951
 msgid "Sending"
-msgstr ""
+msgstr "Отправка"
 
 #: storage/views.py:980
-#, fuzzy
 msgid "Volume locked"
-msgstr "Том разблокирован"
+msgstr "Том заблокирован"
 
 #: storage/views.py:1151
-#, fuzzy
 msgid "The pool failed to upgraded: %s"
-msgstr "Том не удалось экспортировать"
+msgstr "Том не удалось обновить: %s"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
-msgstr ""
+msgstr "Том был обновлен"
 
 #: system/admin.py:59
 #: system/admin.py:66
 #: system/admin.py:106
 #: system/admin.py:113
 msgid "Run Now"
-msgstr ""
+msgstr "Запустить сейчас"
 
 #: system/forms.py:1018
-#, fuzzy
 msgid "This variable already exists"
-msgstr "Этот IP уже существует."
+msgstr "Эта переменная уже существует"
 
 #: system/forms.py:1124
-#, fuzzy
 msgid "System dataset pool"
-msgstr "Нативный набор данных"
+msgstr "Том системного набора данных"
 
 #: system/forms.py:1148
-#, fuzzy
 msgid "Unable to create system dataset!"
-msgstr "Не удалось найти шаблон!"
+msgstr "Не удалось создать системный набор данных!"
 
 #: system/forms.py:1155
-#, fuzzy
 msgid "Unable to migrate system dataset!"
-msgstr "Не удалось найти шаблон!"
+msgstr "Не удалось мигрировать системный набор данных!"
 
 #: system/models.py:80
-#, fuzzy
 msgid "WebGUI HTTP -> HTTPS Redirect"
-msgstr "HTTP порт web-интерфейса"
+msgstr "HTTP -> HTTPS перенаправление WEB-интерфейса"
 
 #: system/models.py:83
 msgid ""
 "Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled"
-msgstr ""
+msgstr "Перенаправлять HTTP (порт 80) на HTTPS, когда включен только HTTPS"
 
 #: system/models.py:203
-#, fuzzy
 msgid "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
-msgstr "Установите это равным скорости вашего последовательного порта"
+msgstr "Установите адрес вашего последовательного порта (0x3f8, 0x2f8, etc.)"
 
 #: system/models.py:205
-#, fuzzy
 msgid "Serial Port Address"
-msgstr "Скорость последовательно порта"
+msgstr "Адрес последовательно порта"
 
 #: system/models.py:1133
 msgid "Pool"
-msgstr ""
+msgstr "Том"
 
 #: system/models.py:1138
-#, fuzzy
 msgid "Syslog"
-msgstr "Сервер Syslog"
+msgstr "Syslog"
 
 #: system/models.py:1142
 msgid "RRD"
-msgstr ""
+msgstr "RRD"
 
 #: system/models.py:1146
 #: templates/system/settings.html:11
-#, fuzzy
 msgid "System Dataset"
-msgstr "Изменить набор данных"
+msgstr "Системный набор данных"
 
 #: system/views.py:191
-#, fuzzy
 msgid "The cron process has started"
-msgstr "Процесс проверки остановлен"
+msgstr "Процесс cron запущен"
 
 #: system/views.py:541
-#, fuzzy
 msgid "The rsync process has started"
-msgstr "Процесс проверки остановлен"
+msgstr "Процесс rsync запущен"
 
 #: system/alertmods/lsi_firmware.py:34
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s"
 msgstr ""
+"Версия firmware %(fwversion)s не соответствует версии драйвера %(drversion)s "
+"для /dev/mps%(mps)s"
 
 #: system/alertmods/replication_status.py:17
 msgid "Replication %(replication)s failed: %(message)s"
-msgstr ""
+msgstr "Репликация %(replication)s не удалась: %(message)s"
 
 #: system/alertmods/volume_version.py:24
 #: system/alertmods/volume_version.py:44
-#, fuzzy
 msgid "You need to upgrade the volume %s"
-msgstr "Вы должны создать том ZFS для продолжения!"
+msgstr "Вы должны обновить том ZFS %s"
 
 #: system/alertmods/zpool_capacity.py:28
 msgid ""
 "The capacity for the volume '%(volume)s' is currently at %(capacity)d%%, "
 "while the recommended value is below 80%%."
 msgstr ""
+"Использование тома '%(volume)s' в данный момент %(capacity)d%%, при "
+"рекомендуемом максимуме 80%%."
 
 #: templates/reporting/index.html:3
 msgid "CPU"
-msgstr ""
+msgstr "Процессор"
 
 #: templates/reporting/index.html:11
-#, fuzzy
 msgid "Partition"
-msgstr "Опции запуска"
+msgstr "Раздел"
 
 #: templates/services/core.html:82
-#, fuzzy
 msgid "LLDP Settings"
-msgstr "Настройки LDAP"
+msgstr "Настройки LLDP"
 
 #: templates/storage/lock.html:3
-#, fuzzy
 msgid "Do you want to lock this volume?"
-msgstr "Вы хотите разблокировать этот том?"
+msgstr "Вы хотите заблокировать этот том?"
 
 #: templates/storage/rekey.html:6
-#, fuzzy
 msgid ""
 "Remember to create a new passphrase as this action removes the current "
 "passphrase"
-msgstr ""
-"Не забудте добавить новый ключ восстановления, так как это действие делает "
-"предыдущий ключ недействительным"
+msgstr "Не забудте создать новый пароль, так как это действие удаляет текущий"
 
 #: templates/storage/replication_datagrid.html:16
-#, fuzzy
 msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS Volume/Dataset is required to "
 "create a replication task"
@@ -9638,63 +9603,61 @@ msgstr ""
 "для создания задания репликации"
 
 #: templates/storage/snapshots.html:102
-#, fuzzy
 msgid "Replication"
-msgstr "Репликация ZFS"
+msgstr "Репликация"
 
 #: templates/storage/upgrade_confirm.html:5
-#, fuzzy
 msgid "Are you sure you want to upgrade your pool?"
-msgstr "Вы уверены, что хотите удалить?"
+msgstr "Вы уверены, что хотите обновить ваш том?"
 
 #: templates/storage/upgrade_confirm.html:5
 msgid "This operation is irreversible!"
-msgstr ""
+msgstr "Эта операция необратима!"
 
 #: templates/storage/volumestatus_datagrid.html:6
 msgid "Resilver"
-msgstr ""
+msgstr "Восстановление"
 
 #: templates/storage/volumestatus_datagrid.html:17
 #: templates/storage/volumestatus_datagrid.html:33
 msgid "Date"
-msgstr ""
+msgstr "Дата"
 
 #: templates/storage/zfswizard.html:77
-#, fuzzy
 msgid "Deduplication"
-msgstr "Дедупликация ZFS"
+msgstr "Дедупликация"
 
 #: templates/system/cron_run.html:5
-#, fuzzy
 msgid "Would you like to run this cron job now?"
-msgstr "Вы хотите включить эту службу?"
+msgstr "Вы хотите запустить это задание сейчас?"
 
 #: templates/system/reboot_dialog2.html:4
 msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>REBOOT</strong>?"
 msgstr ""
+"Некоторые тома выполняют проверку/восстановление. Вы уверены что хотите "
+"выполнить <strong>ПЕРЕЗАГРУЗКУ</strong>?"
 
 #: templates/system/rsync_run.html:5
-#, fuzzy
 msgid "Would you like to run this rsync job now?"
-msgstr "Вы хотите включить эту службу?"
+msgstr "Вы хотите выполнить это задание rsync сейчас?"
 
 #: templates/system/shutdown_dialog2.html:4
 msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>SHUTDOWN</strong>?"
 msgstr ""
+"Некоторые тома выполняют проверку/восстановление. Вы уверены что хотите "
+"выполнить <strong>ВЫКЛЮЧЕНИЕ</strong>?"
 
 #: freeadmin/options.py:633
-#, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "Вы уверены, что хотите отсоединить?"
+msgstr "Вы уверены, что хотите изменить?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
-msgstr ""
+msgstr "Это изменение вызовет переключение. Хотите продолжать?"
 
 #: network/admin.py:63
 msgid "Network connectivity will be interrupted"
@@ -9707,16 +9670,108 @@ msgstr "Доменное имя"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
-msgstr ""
+msgstr "Сетевое соединение будет прервано. Хотите продолжать?"
 
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
 msgstr ""
+"Включение экспериментальной цели требует перезагрузки. Хотите продолжать?"
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
-msgstr ""
+msgstr "Имя экстента должно быть уникально."
 
 #: services/models.py:414
 msgid "Enable experimental target"
+msgstr "Включить экспериментальную цель"
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
 msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "Службу AFP не удалось перезагрузить."
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "Службу activedirectory не удалось перезагрузить."
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "Службу AFP не удалось перезагрузить."
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "Включено"
+
+#: directoryservice/models.py:295
+#, fuzzy
+msgid "Bind DN"
+msgstr "Корневая связь DN"
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "Пароль администратора"
+
+#: services/forms.py:753
+#: services/forms.py:896
+#, fuzzy
+msgid "Certificate"
+msgstr "Сертификат SSL"
+
+# корневая связь - тупой перевод))
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Пароль администратора"
+
+#: services/models.py:1623
+#: services/models.py:1835
+msgid "Upload your certificate file here."
+msgstr "Поместите сюда содержимое файла Вашего сертификата."
+
+#: system/models.py:1148
+#, fuzzy
+msgid "Reporting Database"
+msgstr "Отчёт"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "Информационные"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+#, fuzzy
+msgid "Tasks"
+msgstr "Задания Rsync"
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "Имя контролера домена"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+#, fuzzy
+msgid "Set SSL Certificate"
+msgstr "Сертификат SSL"

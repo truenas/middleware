@@ -245,3 +245,24 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:49
+msgid "System"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:94
+msgid "Tasks"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:92
+#, fuzzy
+msgid "Network"
+msgstr "Mrežne postavke"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:182
+msgid "Sharing"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:521
+msgid "Directory Service"
+msgstr ""

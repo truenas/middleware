@@ -9761,3 +9761,94 @@ msgstr ""
 #: services/models.py:414
 msgid "Enable experimental target"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "AFP服務重新載入時發生失敗"
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "Active Directory服務重新載入時失敗"
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "AFP服務重新載入時發生失敗"
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "啟用 "
+
+#: directoryservice/models.py:295
+#, fuzzy
+msgid "Bind DN"
+msgstr "Root 連接 DN"
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "舊密碼"
+
+#: services/forms.py:753
+#: services/forms.py:896
+#, fuzzy
+msgid "Certificate"
+msgstr "SSL 憑證"
+
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Root 連結密碼"
+
+#: services/models.py:1623
+#: services/models.py:1835
+#, fuzzy
+msgid "Upload your certificate file here."
+msgstr "請把自行簽署建立憑證的內容放置在這裡"
+
+#: system/models.py:1148
+#, fuzzy
+msgid "Reporting Database"
+msgstr "報表"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "非正式"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+#, fuzzy
+msgid "Tasks"
+msgstr "Rsync 排程"
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "網域控制站名稱"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+#, fuzzy
+msgid "Set SSL Certificate"
+msgstr "SSL 憑證"

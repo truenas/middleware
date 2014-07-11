@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-06-15 15:52+0000\n"
+"PO-Revision-Date: 2014-07-10 20:53+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1402847536.0\n"
+"X-POOTLE-MTIME: 1405025594.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1106,7 +1106,7 @@ msgstr "Fysieke NIC"
 
 #: network/models.py:384
 msgid "Destination network"
-msgstr "Bestemmingsnetwerk"
+msgstr "Doelnetwerk"
 
 #: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -1322,15 +1322,15 @@ msgstr "Dit veld is vereist voor \"Basismappen\"."
 
 #: services/forms.py:106
 msgid "The CIFS service failed to reload."
-msgstr "Herstarten van de CIFS-service is mislukt."
+msgstr "Opnieuw laden van de CIFS-service is mislukt."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
-msgstr "Herstarten van de AFP-service is mislukt."
+msgstr "Opnieuw laden van de AFP-service is mislukt."
 
 #: services/forms.py:130
 msgid "The NFS service failed to reload."
-msgstr "Herstarten van de NFS-service is mislukt."
+msgstr "Opnieuw laden van de NFS-service is mislukt."
 
 #~ msgid "This IP already exists."
 #~ msgstr "Dit IP adres bestaat al."
@@ -1368,15 +1368,15 @@ msgstr "Starten van de ftp-service is mislukt."
 
 #: services/forms.py:257
 msgid "The tftp service failed to reload."
-msgstr "Herstarten van de tftp-service is mislukt."
+msgstr "Opnieuw laden van de tftp-service is mislukt."
 
 #: services/forms.py:272
 msgid "The SSH service failed to reload."
-msgstr "Herstarten van de SSH-service is mislukt."
+msgstr "Opnieuw laden van de SSH-service is mislukt."
 
 #: services/forms.py:284 services/forms.py:315
 msgid "The Rsync service failed to reload."
-msgstr "Herstarten van de Rync-service is mislukt."
+msgstr "Opnieuw laden van de Rync-service is mislukt."
 
 #: services/forms.py:296
 msgid "The name cannot contain slash or a closing square backet."
@@ -1388,7 +1388,7 @@ msgstr "Wachtwoord bevestigen"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
-msgstr "Herstarten van de DynamicDNS-service is mislukt."
+msgstr "Opnieuw laden van de DynamicDNS-service is mislukt."
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
@@ -1408,7 +1408,7 @@ msgstr "De community mag alleen alfanumerieke tekens, _ of - bevatten"
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
-msgstr "Herstarten van de SNMP-service is mislukt."
+msgstr "Opnieuw laden van de SNMP-service is mislukt."
 
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
@@ -1428,7 +1428,7 @@ msgstr[1] "De volgende e-mailadressen zijn niet geldig: %(email)s"
 
 #: services/forms.py:437
 msgid "The UPS service failed to reload."
-msgstr "Herstarten van de UPS-service is mislukt."
+msgstr "Opnieuw laden van de UPS-service is mislukt."
 
 #: services/forms.py:442
 msgid "Confirm Administrator Password"
@@ -1436,11 +1436,11 @@ msgstr "Beheerderswachtwoord bevestigen"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
-msgstr "Herstarten van de activedirectory-service is mislukt."
+msgstr "Opnieuw laden van de activedirectory-service is mislukt."
 
 #: services/forms.py:494
 msgid "The ldap service failed to reload."
-msgstr "Herstarten van de ldap-service is mislukt."
+msgstr "Opnieuw laden van de ldap-service is mislukt."
 
 #: services/forms.py:498 services/models.py:598
 msgid "Secret"
@@ -1489,7 +1489,7 @@ msgstr "De peergebruiker is vereist als u een peergeheim instelt."
 #: services/forms.py:1027 services/forms.py:1086 services/models.py:514
 #: services/models.py:744
 msgid "The iSCSI service failed to reload."
-msgstr "Herstarten van de iSCSI-service is mislukt."
+msgstr "Opnieuw laden van de iSCSI-service is mislukt."
 
 #: services/forms.py:606
 msgid "LUN already exists in the same target."
@@ -1514,7 +1514,7 @@ msgstr "Controller Auth-groep"
 #: services/forms.py:656
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "De waarde moet zich bevinden tussen %(start)d en %(end)d, inclusief."
+msgstr "Deze waarde moet tussen %(start)d en %(end)d liggen."
 
 #: services/forms.py:669
 msgid ""
@@ -1604,7 +1604,7 @@ msgstr "Weet u zeker dat u wilt verwijderen?"
 
 #: services/forms.py:1147
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "Herstarten van de S.M.A.R.T.-service is mislukt."
+msgstr "Opnieuw laden van de S.M.A.R.T.-service is mislukt."
 
 #: services/models.py:51
 msgid "Service"
@@ -1699,7 +1699,7 @@ msgstr "Bestandsmasker"
 #: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
-"Gebruik deze optie om het bestandscreatiemasker te overschrijven (0666 is "
+"Gebruik deze optie om het bestandsaanmaakmasker te overschrijven (0666 is "
 "standaard)."
 
 #: services/models.py:127 services/models.py:1019
@@ -1999,8 +1999,7 @@ msgstr "LUC inschakelen"
 
 #: services/models.py:345
 msgid "Controller IP address"
-msgstr ""
-"Geautoriseerd netmask van Logical Unit Controller (127.0.0.0/8 is standaard)"
+msgstr "IP-adres van controller"
 
 #: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
@@ -2043,8 +2042,7 @@ msgstr ""
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
-msgstr ""
-"Geautoriseerd netmask van Logical Unit Controller (127.0.0.0/8 is standaard)"
+msgstr "Globale configuratie van target"
 
 #: services/models.py:396
 msgid "Extent Name"
@@ -2526,8 +2524,8 @@ msgstr "Aanmelding door lokale gebruiker toestaan"
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
-"Gebruik deze optie om het masker voor het aanmaken van bestanden te "
-"overschrijven (077 is standaard)."
+"Gebruik deze optie om het bestandsaanmaakmasker te overschrijven (077 is "
+"standaard)."
 
 #: services/models.py:1023
 msgid "Enable FXP"
@@ -2619,8 +2617,7 @@ msgstr ""
 
 #: services/models.py:1072
 msgid "Anonymous user upload bandwidth"
-msgstr ""
-"Downloadbandbreedte van anonieme gebruiker in KB/s. Nul betekent oneindig."
+msgstr "Uploadbandbreedte van anonieme gebruiker"
 
 #: services/models.py:1073
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
@@ -3227,9 +3224,7 @@ msgstr ""
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
-msgstr ""
-"Als dit waar is, is geen wachtwoord vereist om verbinding met de share te "
-"maken. Bevoegdheden van de gastaccount zijn van toepassing."
+msgstr "Alleen gasttoegang toestaan"
 
 #: sharing/models.py:66
 msgid ""
@@ -4364,7 +4359,7 @@ msgstr "Taal (vereist herladen van UI)"
 
 #: system/forms.py:214
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "Deze waarde moet tussen 0 en 65535 liggen."
+msgstr "U moet een getal tussen 1 en 65535 opgeven."
 
 #~ msgid "Number is required."
 #~ msgstr "Nummer is verplicht."
@@ -4524,8 +4519,8 @@ msgid ""
 "h)"
 msgstr ""
 "Het maximale poll-interval voor NTP-berichten, als macht van 2 in seconden. "
-"Standaard is dit 10 (1024 s), maar kan worden verhoogd tot een bovengrens "
-"van 17 (36,4 u)"
+"Standaard is dit 10 (1024 s), maar dit kan worden verhoogd tot een "
+"bovengrens van 17 (36,4 u)"
 
 #: system/models.py:144
 msgid "NTP Server"
@@ -6109,11 +6104,11 @@ msgstr "Geschiedenis"
 
 #: templates/system/rsync.html:48
 msgid "No rsync tasks defined."
-msgstr "Geen RSyncs gedefinieerd"
+msgstr "Geen rsync-taken gedefinieerd."
 
 #: templates/system/rsync.html:54
 msgid "Add rsync task"
-msgstr "Rsync toevoegen"
+msgstr "Rsync-taak toevoegen"
 
 #~ msgid "Add Rsync"
 #~ msgstr "Rsync toevoegen"
@@ -6151,15 +6146,15 @@ msgstr "Onbekend"
 
 #: templates/system/smarttest.html:38
 msgid "No S.M.A.R.T. tests defined"
-msgstr "Geen doelen gedefinieerd"
+msgstr "Geen S.M.A.R.T.-tests gedefinieerd"
 
 #: templates/system/smarttest.html:44
 msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T.-test toevoegen"
 
 #: templates/system/smarttest.html:46
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T.-test toevoegen"
 
 #~ msgid "No sysctl defined."
 #~ msgstr "Geen sysctl gedefinieerd"
@@ -6890,11 +6885,11 @@ msgstr "IPv4-netwerkbereik voor jails en plug-ins"
 
 #: jails/models.py:271
 msgid "IPv4 network start address for jails and plugins"
-msgstr "IPv4-netwerk-beginadres voor jails en plug-ins"
+msgstr "Beginadres van IPv4-netwerk voor jails en plug-ins"
 
 #: jails/models.py:276
 msgid "IPv4 network end address for jails and plugins"
-msgstr "IPv4-netwerk-eindadres voor jails en plug-ins"
+msgstr "Eindadres van IPv4-netwerk voor jails en plug-ins"
 
 #: jails/models.py:280
 msgid "IPv6 Network"
@@ -7846,7 +7841,7 @@ msgstr "IPv4-netwerk"
 
 #: jails/models.py:270
 msgid "IPv4 Network Start Address"
-msgstr "IPv4-netwerk-beginadres"
+msgstr "Beginadres van IPv4-netwerk"
 
 #: jails/models.py:275
 msgid "IPv4 Network End Address"
@@ -9006,7 +9001,6 @@ msgid "Active"
 msgstr "Actief"
 
 #: middleware/notifier.py:3821
-#, fuzzy
 msgid "Backup"
 msgstr "Back-up"
 
@@ -9023,7 +9017,6 @@ msgid "Degraded"
 msgstr "Gedegradeerd"
 
 #: middleware/notifier.py:3849
-#, fuzzy
 msgid "Down"
 msgstr "Buiten werking"
 
@@ -9079,7 +9072,7 @@ msgstr "Kerberos-keytab-bestand"
 
 #: services/forms.py:1081
 msgid "LUN ID already exists."
-msgstr "LUN ID bestaat al."
+msgstr "LUN-ID bestaat al."
 
 #: services/models.py:109
 msgid "Use syslog"
@@ -9327,9 +9320,8 @@ msgid "Lock Volume"
 msgstr "Volume vergrendelen"
 
 #: storage/admin.py:349
-#, fuzzy
 msgid "Upgrade"
-msgstr "Upgrade"
+msgstr "Upgrade uitvoeren"
 
 #: storage/forms.py:120
 msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
@@ -9598,7 +9590,6 @@ msgid "This operation is irreversible!"
 msgstr "Deze bewerking is onomkeerbaar!"
 
 #: templates/storage/volumestatus_datagrid.html:6
-#, fuzzy
 msgid "Resilver"
 msgstr "Resilvering"
 
@@ -9656,10 +9647,9 @@ msgid "Network connectivity will be interrupted. Do you want to proceed?"
 msgstr "Netwerkverbindingen zullen worden onderbroken. Wilt u doorgaan?"
 
 #: services/admin.py:67
-#, fuzzy
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
 msgstr ""
-"Inschakelen van experimental target vereist een herstart. Wilt u doorgaan?"
+"Inschakelen van 'experimental target' vereist een herstart. Wilt u doorgaan?"
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
@@ -9668,3 +9658,84 @@ msgstr "Extentnaam moet uniek zijn."
 #: services/models.py:414
 msgid "Enable experimental target"
 msgstr "Experimental target inschakelen"
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+"Wachtwoorden die een vraagteken (?) bevatten zijn momenteel niet toegestaan "
+"vanwege problemen met CIFS."
+
+#: directoryservice/forms.py:104
+msgid "NT4 failed to reload."
+msgstr "Opnieuw laden van NT4 is mislukt."
+
+#: directoryservice/forms.py:222
+msgid "Active Directory failed to reload."
+msgstr "Opnieuw laden van Active Directory is mislukt."
+
+#: directoryservice/forms.py:316
+msgid "LDAP failed to reload."
+msgstr "Opnieuw laden van LDAP is mislukt."
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+msgid "Enable"
+msgstr "Inschakelen"
+
+#: directoryservice/models.py:295
+msgid "Bind DN"
+msgstr "Bind-DN"
+
+#: directoryservice/models.py:302
+msgid "Bind password"
+msgstr "Bindwachtwoord"
+
+#: services/forms.py:753
+#: services/forms.py:896
+msgid "Certificate"
+msgstr "Certificaat"
+
+#: services/forms.py:864
+msgid "Incorrect password."
+msgstr "Wachtwoord onjuist."
+
+#: services/models.py:1623
+#: services/models.py:1835
+msgid "Upload your certificate file here."
+msgstr "Upload hier uw certificaatbestand."
+
+#: system/models.py:1148
+msgid "Reporting Database"
+msgstr "Rapportagedatabase"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+"De door de daemon voor systeemstatistiekengegevens gebruikte Round-Robin "
+"Database (RRD) in de systeemgegevensset opslaan"
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+msgid "Information"
+msgstr "Informatie"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+msgid "Tasks"
+msgstr "Taken"
+
+#: templates/services/core.html:32
+msgid "Domain Controller Settings"
+msgstr "Domeincontrollerinstellingen"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+msgid "Set SSL Certificate"
+msgstr "SSL-certificaat instellen"

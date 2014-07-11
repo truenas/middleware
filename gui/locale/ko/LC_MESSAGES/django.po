@@ -9361,3 +9361,94 @@ msgstr ""
 #: services/models.py:414
 msgid "Enable experimental target"
 msgstr ""
+
+#: choices.py:788
+#, fuzzy
+msgid "Loader"
+msgstr "Loader 추가하기"
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "AFP 서비스 재실행 실패."
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "active directory 서비스를 다시 시작하는데 실패하였습니다."
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "AFP 서비스 재실행 실패."
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "AIO 활성화"
+
+#: directoryservice/models.py:295
+msgid "Bind DN"
+msgstr ""
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "이전 암호"
+
+#: services/forms.py:753
+#: services/forms.py:896
+msgid "Certificate"
+msgstr ""
+
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "새 비밀번호"
+
+#: services/models.py:1623
+#: services/models.py:1835
+msgid "Upload your certificate file here."
+msgstr ""
+
+#: system/models.py:1148
+#, fuzzy
+msgid "Reporting Database"
+msgstr "보고서"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "시스템 정보"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+msgid "Tasks"
+msgstr ""
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "도메인 이름"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+msgid "Set SSL Certificate"
+msgstr ""

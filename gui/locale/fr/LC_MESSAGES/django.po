@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-05-31 15:05+0000\n"
-"Last-Translator: SmallGuy <zoreille.gfo@hotmail.fr>\n"
+"PO-Revision-Date: 2014-07-02 08:56+0000\n"
+"Last-Translator: skimpax <skimpax@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1401548711.0\n"
+"X-POOTLE-MTIME: 1404291372.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -477,7 +477,6 @@ msgstr "Pousser"
 
 # Pour Rsync. Si on met 'pousser' pour Push, pourquoi ne met-on pas 'tirer' pour Pull?
 #: choices.py:568
-#, fuzzy
 msgid "Pull"
 msgstr "Récupérer"
 
@@ -508,7 +507,6 @@ msgstr "Nom d'utilisateur"
 
 # Utilité des guillemets et virgules???
 #: account/forms.py:223
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
 "Requis. 16 caractères ou moins. Lettres, chiffres et '.', '-', '_' "
@@ -516,7 +514,6 @@ msgstr ""
 
 # Utilité des guillemets et virgules????
 #: account/forms.py:226
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr ""
 "Cette valeur ne peut contenir que des lettres, chiffres et les caractères "
@@ -690,14 +687,13 @@ msgid "User &"
 msgstr "Utilisateur &"
 
 #: account/models.py:94
-#, fuzzy
 msgid "Hashed UNIX password"
-msgstr "Condensat du mot de passe UNIX"
+msgstr ""
+"                  Mot de passe UNIX crypté                                "
 
 #: account/models.py:100
-#, fuzzy
 msgid "Hashed SMB password"
-msgstr "Condensat du mot de passe SMB"
+msgstr "Mot de passe SMB crypté"
 
 #: account/models.py:105
 msgid "Primary Group ID"
@@ -1330,9 +1326,8 @@ msgid "Plugin successfully updated"
 msgstr "Module mis à jour avec succès"
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "Pas d'adresses IP disponibles"
+msgstr "Module installé avec succès"
 
 #~ msgid "There was a problem importing the jail."
 #~ msgstr "Il y a eu un problème en important la prison"
@@ -4584,10 +4579,7 @@ msgstr "Interro. Min."
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
-msgstr ""
-"L'intervalle d'interrogation minimum pour les messages NTP, comme puissance "
-"de 2 en secondes. Réglé à 6 par défaut (64 s), mais peut être réduit jusqu'à "
-"4 (16 s)"
+msgstr "Configure le permissions saines par défaut pour Windows sur le partage"
 
 #: system/models.py:127 templates/system/ntpserver.html:10
 msgid "Max. Poll"
@@ -7666,8 +7658,8 @@ msgstr "Êtes-vous sûr de vouloir supprimer ?"
 #: templates/plugins/index.html:32
 msgid "You must configure a default route (Network->IPv4 Default Gateway)"
 msgstr ""
-"Vous devez configurer la route par défaut (Réseau->Passerelle IPv4 par "
-"défaut)"
+"Des pools de stockage sont en cours de resynchronisation/nettoyage, êtes-"
+"vous certain de vouloir <strong>ÉTEINDRE</strong>?"
 
 #: templates/jails/stop.html:3
 msgid "Stop "
@@ -8440,196 +8432,171 @@ msgstr ""
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "coeur"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
-#, fuzzy
 msgid "NT1"
-msgstr "NAT"
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
 msgstr "gzip (le plus rapide)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (meilleur compression)"
 
 #: api/resources.py:1864
 #: api/resources.py:1875
-#, fuzzy
 msgid "Invalid snapshot"
-msgstr "Dernier instantané"
+msgstr "Instantané invalide"
 
 #: jails/forms.py:94
 msgid "vanilla"
-msgstr ""
+msgstr "Vanille"
 
 #: jails/models.py:178
-#, fuzzy
 msgid "Comma delimited list of sysctl's"
-msgstr "Liste des serveurs NIS, séparés par une virgule"
+msgstr "Liste des sysctl séparés par une virgule"
 
 #: jails/models.py:338
-#, fuzzy
 msgid "IPv4 network range for jails and plugins"
-msgstr "Plage d'adresses IPv6 pour les prisons et modules"
+msgstr "Plage d'adresses IPv4 pour les jails et modules"
 
 #: jails/models.py:493
-#, fuzzy
 msgid "Jail root is not configured!"
-msgstr "Aucune racine configurée pour les Prisons"
+msgstr "La racine de la jail n'est pas configurée !"
 
 #: jails/models.py:537
-#, fuzzy
 msgid "Filesystem"
-msgstr "Type de système de fichiers"
+msgstr "Système de fichiers"
 
 #: jails/utils.py:695
-#, fuzzy
 msgid "You need to create a volume to proceed!"
-msgstr "Vous devez au préalable créer un volume ZFS !"
+msgstr "Vous devez au préalable créer un volume !"
 
 #: jails/utils.py:739
-#, fuzzy
 msgid "Failed to create directory %(name)s: %(error)s"
-msgstr "Impossible de créer le jeu de données %(name)s : %(error)s"
+msgstr "Impossible de créer le répertoire %(name)s : %(error)s"
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
-#, fuzzy
 msgid "Active"
-msgstr "Action"
+msgstr "Actif"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "Sauvegarde"
 
 #: middleware/notifier.py:3824
+#, fuzzy
 msgid "No carrier"
-msgstr ""
+msgstr "Pas de porteuse"
 
 #: middleware/notifier.py:3849
 msgid "Down"
-msgstr ""
+msgstr "Bas"
 
 #: network/forms.py:311
-#, fuzzy
 msgid "Channel"
-msgstr "Changer"
+msgstr "Canal"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
-msgstr ""
+msgstr "Proxy HTTP"
 
 #: network/models.py:82
-#, fuzzy
 msgid "Enable netwait feature"
-msgstr "Activer les réglages auto"
+msgstr "Activer la fonction netwait"
 
 #: network/nav.py:17
 #: templates/network/index.html:14
 msgid "IPMI"
-msgstr ""
+msgstr "Interface de Gestion Intelligente du Matériel"
 
 # Utilisé à 2 reprises dans storage/views.py sans nécessiter de féminin ni pluriel
 #: network/views.py:66
-#, fuzzy
 msgid "IPMI successfully edited"
-msgstr "modifié(e) avec succès"
+msgstr "IPMI modifié avec succès"
 
 #: network/views.py:68
 msgid "IPMI failed"
-msgstr ""
+msgstr "Interface de Gestion Intelligente du Matériel à échoué"
 
 #: plugins/admin.py:73
-#, fuzzy
 msgid "Install plugin"
 msgstr "Installer un module"
 
 #: plugins/forms.py:101
-#, fuzzy
 msgid "The plugin jail that the PBI is to be installed in."
-msgstr ""
-"Le chemin de la prison des modules ne peut pas faire partie du chemin de "
-"l'archive des modules."
+msgstr "Le chemin de la jail pour modules où le PBI doit être installé."
 
 #: plugins/models.py:129
-#, fuzzy
 msgid "jail not found"
-msgstr "Page Non Trouvée"
+msgstr "jail non trouvée"
 
 #: plugins/models.py:217
-#, fuzzy
 msgid "URL for the plugins repository"
-msgstr "Chemin vers le répertoire des modules"
+msgstr "URL du dépôt des modules"
 
 #: plugins/views.py:181
 #: plugins/views.py:242
-#, fuzzy
 msgid "Invalid plugin"
-msgstr "Préfixe invalide"
+msgstr "Module invalide"
 
 #: plugins/views.py:196
-#, fuzzy
 msgid "Jail does not exist"
-msgstr "Le chemin n'existe pas."
+msgstr "La jail n'existe pas"
 
 #: plugins/views.py:205
-#, fuzzy
 msgid "Failed to update plugin"
-msgstr "Impossible de télécharger le module."
+msgstr "Échec de mise à jour du module."
 
 #: plugins/views.py:224
 #: plugins/views.py:355
-#, fuzzy
 msgid "No available IP addresses"
-msgstr "Adresse IP de la prison"
+msgstr "Aucune adresse IP disponible "
 
 #: services/forms.py:220
-#, fuzzy
 msgid "This path does not exist."
-msgstr "Le chemin %s n'existe pas"
+msgstr "Le chemin n'existe pas"
 
 #: services/forms.py:222
-#, fuzzy
 msgid "This path is not a directory."
-msgstr "Le chemin n'est pas un répertoire."
+msgstr "Ce chemin n'est pas un répertoire."
 
 #: services/forms.py:671
 #: services/forms.py:679
-#, fuzzy
 msgid "Spaces or number signs are not allowed."
-msgstr "Les guillemets ne sont pas autorisés"
+msgstr "Les espaces ou les signes numériques ne sont pas autorisés."
 
 #: services/forms.py:758
 #: services/models.py:1612
@@ -8638,48 +8605,45 @@ msgid "Kerberos keytab"
 msgstr "Fichier Keytab pour Kerberos"
 
 #: services/forms.py:927
-#, fuzzy
 msgid "Peer Secret (Confirm)"
-msgstr "Secret (confirmation)"
+msgstr "Secret du pair (confirmation)"
 
 #: services/forms.py:1081
-#, fuzzy
 msgid "LUN ID already exists."
-msgstr "Cette adresse IP existe déjà."
+msgstr "Cet Identifiant LUN existe déjà."
 
 #: services/forms.py:1456
 msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
-msgstr ""
+msgstr "Numéro de série non trouvé et échec du glabel de %(disk)s: %(error)s"
 
 #: services/forms.py:1659
-#, fuzzy
 msgid "A target with that name already exists."
-msgstr "Un groupe avec ce nom existe déjà."
+msgstr "Une cible avec ce nom existe déjà."
 
+# Je ne suis pas pour traduire syslog
 #: services/models.py:109
 msgid "Use syslog"
-msgstr ""
+msgstr "Utiliser syslog"
 
 #: services/models.py:233
 msgid "Server minimum protocol"
-msgstr ""
+msgstr "Protocole minimum du serveur"
 
 #: services/models.py:235
 msgid "The minimum protocol version that will be supported by the server"
-msgstr ""
+msgstr "La version minimum du protocole qui sera supportée par le serveur"
 
 #: services/models.py:240
 msgid "Server maximum protocol"
-msgstr ""
+msgstr "Protocole maximum du serveur"
 
 #: services/models.py:243
 msgid "The highest protocol version that will be supported by the server"
-msgstr ""
+msgstr "La plus haute version de protocole qui sera supportée par le serveur"
 
 #: services/models.py:246
-#, fuzzy
 msgid "Allow execute always"
-msgstr "Autoriser les GID en doublon"
+msgstr "Toujours autoriser l’exécution"
 
 #: services/models.py:248
 msgid ""
@@ -8693,6 +8657,16 @@ msgid ""
 "does not check execute permissions on \"open for execution\", thus re-"
 "establishing the behaviour of Samba 3.6 "
 msgstr ""
+"Ce paramètre booléen contrôle le comportement de smbd(8) lors de la "
+"réception d'une requête \"ouvrir pour exécution\" depuis un client Windows. "
+"Avec Samba 3.6 et plus ancien, le droit d'exécution dans l'ACL n'était pas "
+"vérifié, si bien qu'un client pouvait exécuter un fichier même s'il n'avait "
+"pas les droits d'exécution sur le fichier. Dans Samba 4.0, ceci a été "
+"corrigé, si bien que par défaut, c'est a dire lorsque ce paramètre est réglé "
+"sur \"Faux\", \"ouverture pour execution\" est maintenant rejeté lorsque les "
+"permissions en exécution ne sont pas présentes. Si ce paramètre est réglé "
+"sur \"vrai\", Samba ne verifie pas les droits en executions lors de \""
+"ouverture pour exécution\", ceci rétablissant le comportement de Samba 3.6"
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
@@ -8715,6 +8689,10 @@ msgid ""
 "specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
 "and if IPv6 is enabled, ::1 to the list."
 msgstr ""
+"Précise les adresses IP spécifiques (séparées par des virgules) à attacher "
+"aux requêtes TCP et UDP. Cette option peut être précisée plusieurs fois. Si "
+"aucune IP n'est spécifiée ce sera attaché à INADDR_ANY. Cela ajoutera "
+"automatiquement 127.0.0.1 et si IPV6 est activé, ::1 à la liste."
 
 #: services/models.py:874
 msgid "LUN ID"
@@ -8725,63 +8703,55 @@ msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
 "Defaults to checkip.dyndns.org:80 /."
 msgstr ""
+"L'IP du client est détectée en appelant 'url' depuis ce 'ip_server_name:"
+"port'. Défaut à checkip.dyndns.org.80 /."
 
 #: services/models.py:1080
-#, fuzzy
 msgid "Monitor User"
-msgstr "Modifier l'utilisateur"
+msgstr "Utilisateur de contrôle"
 
 #: services/models.py:1085
-#, fuzzy
 msgid "Monitor Password"
-msgstr "Confirmer le mot de passe"
+msgstr "Mot de passe de contrôle"
 
 #: services/models.py:1196
-#, fuzzy
 msgid ""
 "Use this option to override the directory creation mask (077 by default)."
 msgstr ""
-"Utilisez cette option pour forcer le masque de création de répertoire (0777 "
+"Utilisez cette option pour forcer le masque de création de répertoire (077 "
 "par défaut)."
 
 #: services/models.py:1221
-#, fuzzy
 msgid "Perform Reverse DNS Lookups"
-msgstr "Exiger le DNS inversé des IP"
+msgstr "Effectuer les consultations DNS inverses"
 
 #: services/models.py:1300
-#, fuzzy
 msgid "TLS common name required"
-msgstr "Adresse IP requise pour TLS"
+msgstr "TLS \"common name\" requis"
 
 #: services/models.py:1308
-#, fuzzy
 msgid "TLS export certificate data"
-msgstr "Certificat auto-signé"
+msgstr "TLS exportation des données du certificats"
 
 #: services/models.py:1312
-#, fuzzy
 msgid "TLS no certificate request"
-msgstr "Certificat auto-signé"
+msgstr "TLS sans requête de certificat"
 
 #: services/models.py:1324
 msgid "TLS export standard vars"
-msgstr ""
+msgstr "TLS variables d'exportation standard"
 
 #: services/models.py:1332
-#, fuzzy
 msgid "TLS DNS name required"
-msgstr "Adresse IP requise pour TLS"
+msgstr "TLS nom DNS requis"
 
 #: services/models.py:1342
-#, fuzzy
 msgid "Place the contents of your certificate and private key here."
-msgstr "Placez ici le contenu du certificat auto-signé."
+msgstr "Placez les contenus de votre certificat et de votre clé privée ici."
 
 #: services/models.py:1438
-#, fuzzy
 msgid "SFTP Log Level"
-msgstr "Verbosité du journal"
+msgstr "Niveau de verbosité de l'historisation SFTP"
 
 #: services/models.py:1442
 msgid ""
@@ -8789,94 +8759,91 @@ msgid ""
 "transactions that sftp-server performs on behalf of the client. DEBUG2 and "
 "DEBUG3 each specify higher levels of debugging output. The default is ERROR."
 msgstr ""
+"Spécifie quels messages seront historisés par le serveur sftp. "
+"L'historisation des transactions INFO et VERBOSE que le serveur sftp réalise "
+"pour le client. Chacun de DEBUG2 et DEBUG3 spécifie des plus hauts niveaux "
+"de debug. Par défaut c'est ERROR."
 
 #: services/models.py:1569
 #: services/models.py:1570
-#, fuzzy
 msgid "NT4 Domain"
-msgstr "Domaine"
+msgstr "Domaine NT4"
 
 #: services/models.py:1595
-#, fuzzy
 msgid "Domain Account Name"
-msgstr "Nom de domaine"
+msgstr "Nom du compte de domaine"
 
 #: services/models.py:1609
 msgid "Use keytab"
-msgstr ""
+msgstr "Utiliser la touche de tabulation"
 
 #: services/models.py:1613
-#, fuzzy
 msgid "Kerberos keytab file"
 msgstr "Fichier Keytab pour Kerberos"
 
 #: services/models.py:1624
 msgid "Set this if your Active Directory has UNIX extensions."
-msgstr ""
+msgstr "À activer si votre \"Active Directory\" a des extensions UNIX."
 
 #: services/models.py:1634
 msgid "Set this if you want to use the default domain for users and groups."
 msgstr ""
+"À activer pour utiliser le domaine par défaut pour les utilisateurs et les "
+"groupes."
 
 #: services/models.py:1667
-#, fuzzy
 msgid "DNS timeout"
-msgstr "Délai dépassé"
+msgstr "DNS timeout"
 
 #: services/models.py:1710
-#, fuzzy
 msgid "NIS domain"
-msgstr "Domaine"
+msgstr "Domaine NIS"
 
 #: services/models.py:1711
-#, fuzzy
 msgid "NIS domain name"
-msgstr "Nom de domaine"
+msgstr "Nom de domaine NIS"
 
 #: services/models.py:1716
-#, fuzzy
 msgid "NIS servers"
-msgstr "Serveurs NTP"
+msgstr "Serveurs NIS"
 
 #: services/models.py:1721
-#, fuzzy
 msgid "Secure mode"
-msgstr "Mode d'alimentation"
+msgstr "Mode sécurisé "
 
 #: services/models.py:1735
 #: services/models.py:1736
-#, fuzzy
 msgid "NIS Domain"
-msgstr "Domaine"
+msgstr "Domaine NIS"
 
 #: services/models.py:1850
-#, fuzzy
 msgid "Interface Description"
-msgstr "Description"
+msgstr "Description de l'interface"
 
 #: services/models.py:1852
 msgid "Save received info in interface description / alias"
-msgstr ""
+msgstr "Sauvegarde l'information reçue dans l'interface description / alias"
 
 #: services/models.py:1858
 msgid ""
 "Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
 msgstr ""
+"Spécifie un code pays en deux lettres ISO3166 (requis pour supporter "
+"LLDPlocation)"
 
 #: services/models.py:1866
 msgid "Specify the physical location of the host"
-msgstr ""
+msgstr "Spécifie la localisation physique de l'hôte"
 
 #: services/models.py:1871
 #: services/models.py:1872
 #: templates/services/core.html:76
 msgid "LLDP"
-msgstr ""
+msgstr "LLDP"
 
 #: services/models.py:2009
-#, fuzzy
 msgid "Informational"
-msgstr "Informel"
+msgstr "Informatif"
 
 #: services/models.py:2010
 #, fuzzy
@@ -8897,10 +8864,8 @@ msgstr ""
 "pour désactiver"
 
 #: services/models.py:2025
-#, fuzzy
 msgid "Destination email address. Separate email addresses by commas"
-msgstr ""
-"Adresses e-mail de destination. Séparez les adresses par des points-virgules."
+msgstr "Adresses e-mail de destination. Séparez les adresses par des virgules."
 
 #: services/models.py:2058
 msgid "Realm"
@@ -8925,9 +8890,8 @@ msgid "DNS Backend, eg SAMBA_INTERNAL"
 msgstr ""
 
 #: services/models.py:2083
-#, fuzzy
 msgid "DNS Forwarder IP Address"
-msgstr "Adresse IP du contrôleur"
+msgstr "Adresse IP du DNS de translation"
 
 #: services/models.py:2087
 msgid "Domain Forest Level"
@@ -8945,25 +8909,21 @@ msgstr "Services d'annuaires"
 
 #: sharing/admin.py:81
 #: sharing/models.py:330
-#, fuzzy
 msgid "Paths"
-msgstr "Chemin"
+msgstr "Chemins"
 
 #: sharing/forms.py:136
 #: sharing/forms.py:141
-#, fuzzy
 msgid "The umask must be between 000 and 777."
-msgstr "Cette valeur doit être comprise entre 0 et 1000 inclus."
+msgstr "Le masque utilisateur (\"umask\") doit être compris entre 000 et 777."
 
 #: sharing/forms.py:174
-#, fuzzy
 msgid "This is not a valid network: %s"
-msgstr "Ce n'est pas un réseau valide"
+msgstr "Ce n'est pas un réseau valide: %s"
 
 #: sharing/models.py:48
-#, fuzzy
 msgid "Apply Default Permissions"
-msgstr "Permission de fichier par défaut"
+msgstr "Applique les permissions par défaut"
 
 #: sharing/models.py:87
 msgid ""
@@ -9023,35 +8983,35 @@ msgstr "Ajouter une clef de récupération"
 
 #: storage/admin.py:349
 msgid "Upgrade"
-msgstr ""
+msgstr "Mise à niveau"
 
 #: storage/admin.py:613
 msgid "When"
-msgstr ""
+msgstr "Quand"
 
 #: storage/forms.py:120
 msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
-msgstr ""
+msgstr "Spécifie la taille avec des suffixes IEC ou 0, par exemple 10GiB"
 
 #: storage/forms.py:568
 msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisted of %(vdevnum)s device(s)"
 msgstr ""
+"Vous tentez d'ajouter un dispositif virtuel (vdev) constitué de %(addnum)s "
+"dispositif(s) dans un pool constitué de %(vdevnum)s dispositif(s)"
 
 #: storage/forms.py:906
-#, fuzzy
 msgid ""
 "The selected disks were not verified for these import rules. Filesystem "
 "check failed."
 msgstr ""
-"Les disques sélectionnés n'ont pas été vérifiés pour cette règle "
-"d'importation."
+"Les disques sélectionnés n'ont pas été vérifiés pour ces règles "
+"d'importation. Échec de la vérification du système de fichier."
 
 #: storage/forms.py:1422
-#, fuzzy
 msgid "Share type"
-msgstr "Commentaire du partage"
+msgstr "Type de partage"
 
 #: storage/forms.py:1431
 #: storage/forms.py:1436
@@ -9060,29 +9020,34 @@ msgid "0=Unlimited; example: 1 GiB"
 msgstr "0=illimité; exemple: 1g"
 
 #: storage/forms.py:1455
+#, fuzzy
 msgid "Record Size"
-msgstr ""
+msgstr "Taille d'enregistrement"
 
 #: storage/forms.py:1459
+#, fuzzy
 msgid ""
 "Specifies a suggested block size for files in the file system. This property "
 "is designed solely for use with database workloads that access files in "
 "fixed-size records.  ZFS automatically tunes block sizes according to "
 "internal algorithms optimized for typical access patterns."
 msgstr ""
+"Spécifie une taille de bloc suggéré pour les fichiers dans le système de "
+"fichier. Cette propriété est conçue uniquement pour être utilisée avec des "
+"charges sur la base de données qui accèdent aux fichiers dans des "
+"enregistrements de taille fixe. ZFS ajuste automatiquement les tailles des "
+"blocs en accord avec des algorithmes optimisés pour des routines d'accès "
+"typique."
 
 #: storage/forms.py:1602
-#, fuzzy
 msgid "zvol name"
-msgstr "Nom du module"
+msgstr "Nom du zvol"
 
 #: storage/forms.py:1605
-#, fuzzy
 msgid "Size for this zvol"
-msgstr "Taille du Volume ZFS"
+msgstr "Taille du zvol"
 
 #: storage/forms.py:1615
-#, fuzzy
 msgid ""
 "Creates a sparse volume with no reservation, also known as \"thin "
 "provisioning\". A \"sparse volume\" is a volume where the reservation is "
@@ -9096,32 +9061,24 @@ msgstr ""
 "espace. (NON RECOMMANDE)"
 
 #: storage/forms.py:1624
-#, fuzzy
 msgid "Block size"
-msgstr "Taille du bloc logique"
+msgstr "Taille de bloc"
 
 #: storage/forms.py:1684
-#, fuzzy
 msgid "Permission Type"
-msgstr "Permission de fichier"
+msgstr "Type de permission"
 
 #: storage/forms.py:1817
-#, fuzzy
 msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
-msgstr ""
-"Seuls les caractères alphanumériques, '-', '_' et '.' sont autorisés en nom "
-"d'instantané"
+msgstr "Seuls les caractères [-a-zA-Z0-9_. ] sont autorisés en nom d'instantané"
 
 #: storage/forms.py:1860
-#, fuzzy
 msgid "Only [-a-zA-Z0-9_./ ] permitted as clone name"
-msgstr ""
-"Seuls les caractères alphanumériques, '-', '_', '.' et '/' sont autorisés en "
-"nom de clone"
+msgstr "Seuls les caractères [-a-zA-Z0-9_./ ] sont autorisés en nom de clone"
 
 #: storage/forms.py:2030
 msgid "Enable High Speed Ciphers"
-msgstr ""
+msgstr "Active les chiffrements haute vitesse"
 
 #: storage/forms.py:2237
 #, fuzzy
@@ -9129,14 +9086,13 @@ msgid "A scrub with this volume already exists."
 msgstr "Un groupe avec ce nom existe déjà."
 
 #: storage/forms.py:2312
-#, fuzzy
 msgid "Admin password"
-msgstr "Ancien mot de passe"
+msgstr "Mot de passe administrateur"
 
 #: storage/forms.py:2396
 #, fuzzy
 msgid "Recovery Key"
-msgstr "Ajouter une clef de récupération"
+msgstr "Clef de récupération"
 
 #: storage/forms.py:2417
 #, fuzzy
@@ -9144,53 +9100,45 @@ msgid "Jails/Plugins"
 msgstr "Modules"
 
 #: storage/forms.py:2460
-#, fuzzy
 msgid "Volume could not be imported"
-msgstr "Volume importé"
+msgstr "Le volume n'a pas pu être importé"
 
 #: storage/models.py:594
 msgid "Underlying provider"
-msgstr ""
+msgstr "Fournisseur sous-jacent"
 
 #: storage/models.py:811
-#, fuzzy
 msgid "Remote Dedicated User Enabled"
-msgstr "Utilisateur dédié activé"
+msgstr "Utilisateur dédié distant activé"
 
 #: storage/models.py:814
-#, fuzzy
 msgid "Remote Dedicated User"
-msgstr "Utilisateur dédié activé"
+msgstr "Utilisateur dédié distant"
 
 #: storage/models.py:825
 msgid "High Speed Encryption Ciphers"
-msgstr ""
+msgstr "Chiffrements haute vitesse"
 
 #: storage/models.py:856
-#, fuzzy
 msgid "Last snapshot sent to remote side"
-msgstr ""
-"Dernier instantané envoyé du côté distant (laisser vide pour une réplication "
-"complète)"
+msgstr "Dernier instantané envoyé du côté distant"
 
 #: storage/models.py:864
-#, fuzzy
 msgid "Remote ZFS Volume/Dataset"
-msgstr "Volume/Jeu de données"
+msgstr "Volume ZFS/Dataset distant"
 
 #: storage/models.py:866
-#, fuzzy
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
 "Datasetname not the mountpoint or filesystem path"
 msgstr ""
-"Devrait correspondre au nom du système de fichiers ZFS distant. e.g. : pool/"
-"dataset et non pas au point de montage ou au chemin du système de fichier"
+"Devrait correspondre au nom du système de fichiers ZFS distant. e.g. : nom "
+"du volume/nom du dataset et non pas au point de montage ou au chemin du "
+"système de fichier"
 
 #: storage/models.py:886
-#, fuzzy
 msgid "Replication Stream Compression"
-msgstr "Tâches de réplication"
+msgstr "Compression du flux de réplication"
 
 #: storage/models.py:903
 #, fuzzy
@@ -9199,11 +9147,11 @@ msgstr "Ne pas faire d'instantané après"
 
 #: storage/models.py:946
 msgid "Sending %(snapshot)s (%(percent)s%%)"
-msgstr ""
+msgstr "Envoi en cours %(snapshot)s (%(percent)s%%)"
 
 #: storage/models.py:951
 msgid "Sending"
-msgstr ""
+msgstr "Envoi en cours"
 
 #: storage/nav.py:40
 #: templates/storage/volume_datagrid.html:6
@@ -9226,12 +9174,12 @@ msgstr "Nom du volume"
 #: storage/views.py:1001
 #, fuzzy
 msgid "Volume failed unlocked"
-msgstr "Ajouter un volume"
+msgstr "Échec d'ouverture du volume"
 
 #: storage/views.py:1068
 #, fuzzy
 msgid "Encryption re-key succeeded"
-msgstr "Clé de chiffrement"
+msgstr "Réussite du ré-chiffrement de la clé"
 
 #: storage/views.py:1129
 #, fuzzy
@@ -9245,7 +9193,7 @@ msgstr "L'export du volume a echoué"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
-msgstr ""
+msgstr "Le pool a été mis à niveau"
 
 #: support/models.py:41
 #, fuzzy
@@ -9272,7 +9220,7 @@ msgstr "Instantanés supprimés avec succès."
 #: system/admin.py:106
 #: system/admin.py:113
 msgid "Run Now"
-msgstr ""
+msgstr "Exécuter maintenant"
 
 #: system/forms.py:86
 #, fuzzy
@@ -9312,20 +9260,24 @@ msgstr "Port du WebGUI"
 
 #: system/models.py:80
 msgid "WebGUI HTTP -> HTTPS Redirect"
-msgstr ""
+msgstr "Redirection WebGUI HTTP -> HTTPS"
 
 #: system/models.py:83
 msgid ""
 "Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled"
 msgstr ""
+"Rediriger HTTP (port 80) vers HTTPS seulement lorsque le protocole HTTPS est "
+"activé"
 
 #: system/models.py:203
 msgid "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
 msgstr ""
+"Activer cela pour faire correspondre l'adresse du port série (0x3f8, 0x2f8, "
+"etc.)"
 
 #: system/models.py:212
 msgid "Set this to match your serial port speed"
-msgstr ""
+msgstr "Activer cela pour faire correspondre la vitesse du port série"
 
 #: system/models.py:443
 #, fuzzy
@@ -9370,13 +9322,15 @@ msgstr "Les disques suivants ont déjà des tests de ce type: %s"
 
 #: system/alertmods/replication_status.py:17
 msgid "Replication %(replication)s failed: %(message)s"
-msgstr ""
+msgstr "Échec de la réplication %(replication)s: %(message)s"
 
 #: system/alertmods/zpool_capacity.py:28
 msgid ""
 "The capacity for the volume '%(volume)s' is currently at %(capacity)d%%, "
 "while the recommended value is below 80%%."
 msgstr ""
+"La capacité du volume '%(volume)s' est actuellement de %(capacity)d%%, alors "
+"que la valeur recommandée est inférieure à 80%%."
 
 #: templates/freeadmin/generic_model_datagrid.html:8
 #, fuzzy
@@ -9387,11 +9341,11 @@ msgstr "Ajouter %s"
 #: templates/jails/start.html:3
 #: templates/jails/stop.html:3
 msgid "?"
-msgstr ""
+msgstr "?"
 
 #: templates/reporting/index.html:3
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #: templates/reporting/index.html:11
 #, fuzzy
@@ -9408,10 +9362,12 @@ msgid ""
 "Remember to add a new recovery key as this action invalidates the previous "
 "recovery key"
 msgstr ""
+"Pensez à ajouter une nouvelle clé de récupération car cette action invalide "
+"la clé de récupération précédente"
 
 #: templates/storage/disk_editbulk.html:3
 msgid "Editing the following disks"
-msgstr ""
+msgstr "Édition des disques suivants"
 
 #: templates/storage/lock.html:3
 #, fuzzy
@@ -9423,6 +9379,8 @@ msgid ""
 "Remember to create a new passphrase as this action removes the current "
 "passphrase"
 msgstr ""
+"Pensez à créer une nouvelle phrase-de-passe car cette action supprime la "
+"phrase-de-passe actuelle"
 
 #: templates/storage/replication_datagrid.html:16
 #, fuzzy
@@ -9450,11 +9408,11 @@ msgstr "Êtes-vous sûr de vouloir supprimer ?"
 
 #: templates/storage/upgrade_confirm.html:5
 msgid "This operation is irreversible!"
-msgstr ""
+msgstr "Cette opération est irréversible!"
 
 #: templates/storage/volumestatus_datagrid.html:6
 msgid "Resilver"
-msgstr ""
+msgstr "Resynchronisation"
 
 #: templates/storage/volumestatus_datagrid.html:10
 #: templates/storage/volumestatus_datagrid.html:25
@@ -9465,11 +9423,11 @@ msgstr "En cours"
 #: templates/storage/volumestatus_datagrid.html:17
 #: templates/storage/volumestatus_datagrid.html:33
 msgid "Date"
-msgstr ""
+msgstr "Date"
 
 #: templates/storage/zpool_disk_replace.html:8
 msgid "WARNING: The recovery key of your volume will be invalidated!"
-msgstr ""
+msgstr "AVERTISSEMENT: La clé de récupération de votre volume sera invalidée!"
 
 #: templates/system/cron_run.html:5
 #, fuzzy
@@ -9486,161 +9444,146 @@ msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>SHUTDOWN</strong>?"
 msgstr ""
+"Des pools de stockage sont en cours de resynchronisation/nettoyage, êtes-"
+"vous certain de vouloir <strong>ÉTEINDRE</strong>?"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (bon partout)      "
 
 #: choices.py:698
 #: services/models.py:1531
 #: services/models.py:1639
 #: services/models.py:2103
 #: services/models.py:2104
-#, fuzzy
 msgid "Domain Controller"
-msgstr "Nom du contrôleur de domaine"
+msgstr "Contrôleur de Domaine"
 
 #: account/forms.py:398
-#, fuzzy
 msgid "Create Home Directory In"
-msgstr "Répertoire personnel"
+msgstr "Créer votre répertoire personnel dans"
 
 #: api/resources.py:437
 #: storage/views.py:778
 #: storage/views.py:1144
 msgid "Pool output could not be parsed. Is the pool imported?"
-msgstr ""
+msgstr "Le pool ne peut pas être analysé. Le pool est-il importé?"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
 msgstr ""
+"La racine de la prison doit obligatoirement être un volume ou un jeu de "
+"données !"
 
 #: middleware/notifier.py:3822
-#, fuzzy
 msgid "Init"
-msgstr "Pré-initialisation"
+msgstr "Initialisation"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
-msgstr ""
+msgstr "Degradé"
 
 #: network/admin.py:39
-#, fuzzy
 msgid "Media Status"
-msgstr "Statut"
+msgstr "Statut du média"
 
+# Je ne suis pas pour traduire jail
 #: plugins/forms.py:100
-#, fuzzy
 msgid "Plugin Jail"
-msgstr "Prison des modules PBI"
+msgstr "Jail pour modules"
 
 #: plugins/models.py:102
-#, fuzzy
 msgid "Plugin jail name"
-msgstr "Nom du module"
+msgstr "Nom de la jail pour module"
 
 #: plugins/models.py:103
-#, fuzzy
 msgid "Jail where the plugin is installed"
-msgstr "Aucun module n'est installé"
+msgstr "Jail où le module est installé"
 
 #: plugins/models.py:180
 #, fuzzy
 msgid "Plugin Kernel Module"
-msgstr "Module activé"
+msgstr "Module de Noyau Système"
 
 #: services/forms.py:754
-#, fuzzy
 msgid "Confirm Domain Account Password"
-msgstr "Confirmer le mot de passe de l'administrateur"
+msgstr "Confirmer le mot de passe du compte du domaine"
 
 #: services/models.py:298
-#, fuzzy
 msgid "Enable/disable home directories for afp user."
-msgstr "Active/désactive les répertoires personnels des utilisateurs samba."
+msgstr "Active/désactive les répertoires personnels des utilisateurs afp."
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
-msgstr ""
+msgstr "active le mode multithreaded"
 
 #: services/models.py:914
-#, fuzzy
 msgid "IP Server"
-msgstr "Serveur NTP"
+msgstr "IP du serveur"
 
 #: services/models.py:1018
-#, fuzzy
 msgid "UPS Mode"
 msgstr "Mode"
 
 #: services/models.py:1292
-#, fuzzy
 msgid "TLS allow dot login"
-msgstr "Autoriser la connexion de root"
+msgstr "TLS Autoriser \"dot login\""
 
 #: services/models.py:1449
 msgid "SFTP Log Facility"
-msgstr ""
+msgstr "Type d'historisation SFTP"
 
 #: services/models.py:1596
-#, fuzzy
 msgid "Domain account name to bind as"
-msgstr "Nom du compte administrateur du domaine."
+msgstr "Nom du compte de domaine à associer"
 
 #: services/models.py:1600
-#, fuzzy
 msgid "Domain Account Password"
-msgstr "Mot de passe du compte administrateur du domaine."
+msgstr "Mot de passe du compte de domaine"
 
 #: services/models.py:1601
-#, fuzzy
 msgid "Domain Account password."
-msgstr "Mot de passe du compte administrateur du domaine."
+msgstr "Mot de passe du compte du domaine."
 
 #: services/models.py:1619
-#, fuzzy
 msgid "Verbose logging"
-msgstr "Verbeux"
+msgstr "Journalisation verbeuse"
 
 #: services/models.py:1623
-#, fuzzy
 msgid "UNIX extensions"
 msgstr "Extensions Unix"
 
 #: services/models.py:1629
 msgid "Set this if you want to allow Trusted Domains."
-msgstr ""
+msgstr "À activer pour autoriser des domaines reconnus."
 
 #: services/models.py:1651
-#, fuzzy
 msgid "Kerberos Server"
-msgstr "Serveur de mots de passe Kerberos"
+msgstr "Serveur Kerberos"
 
 #: services/models.py:1662
-#, fuzzy
 msgid "AD timeout"
-msgstr "Délai dépassé"
+msgstr "AD timeout"
 
 #: services/models.py:1726
 msgid "Manycast"
-msgstr ""
+msgstr "Manycast"
 
 #: services/models.py:1855
-#, fuzzy
 msgid "Country Code"
-msgstr "Pays"
+msgstr "Code Pays"
 
 # Préciser WORKGROUP?
 #: services/models.py:2064
@@ -9654,12 +9597,12 @@ msgstr ""
 
 #: sharing/models.py:49
 msgid "Recursively set sane default windows permissions on share"
-msgstr ""
+msgstr "Configure le permissions saines par défaut pour Windows sur le partage"
 
 #: sharing/models.py:94
 #, fuzzy
 msgid "Inherit ACL's"
-msgstr "Hérité"
+msgstr "Hériter les ACL"
 
 #: sharing/models.py:96
 msgid ""
@@ -9692,14 +9635,12 @@ msgid "Compression Ratio"
 msgstr "Niveau de compression"
 
 #: storage/admin.py:508
-#, fuzzy
 msgid "Detach"
-msgstr "Détacher le volume"
+msgstr "Détacher"
 
 #: storage/admin.py:511
-#, fuzzy
 msgid "Replace"
-msgstr "Remplacer le disque"
+msgstr "Remplacer"
 
 #: storage/forms.py:71
 msgid ""
@@ -9707,40 +9648,41 @@ msgid ""
 "impact your ability to access your data.<br /> Consider using compression "
 "instead."
 msgstr ""
+"Activer dedup peut avoir des implications drastiques en terme de "
+"performance,<br /> ainsi qu'impacter votre capacité à accéder à vos données.<"
+"br /> Considérer plutôt l'utilisation de la compression."
 
 #: storage/forms.py:558
 msgid ""
 "You are trying to add a virtual device of type '%(addtype)s' in a pool that "
 "has a virtual device of type '%(vdevtype)s'"
 msgstr ""
+"Vous tentez d'ajouter un dispositf virtuel (vdev) du type '%(addtype)s' dans "
+"un pool qui a un dispositif virtuel (vdev) du type '%(vdevtype)s'"
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
-#, fuzzy
 msgid "Encryption"
-msgstr "Clé de chiffrement"
+msgstr "Chiffrement"
 
 #: storage/forms.py:601
 #: templates/storage/zfswizard.html:51
 msgid "Initialize Safely"
-msgstr ""
+msgstr "Initialiser prudemment"
 
 #: storage/forms.py:605
 #: storage/forms.py:1448
 #: storage/forms.py:1562
-#, fuzzy
 msgid "ZFS Deduplication"
-msgstr "Réplication ZFS"
+msgstr "Dé-duplication ZFS"
 
 #: storage/forms.py:1091
-#, fuzzy
 msgid "Yes: Decrypt disks"
-msgstr "Disques membres"
+msgstr "Oui: Décryptage des disques"
 
 #: storage/forms.py:1165
-#, fuzzy
 msgid "The following disks failed to attach: %s"
-msgstr "Les disques suivants ont déjà des tests de ce type: %s"
+msgstr "Échec du rattachement des disques suivants : %s"
 
 #: storage/forms.py:1441
 #: storage/forms.py:1446
@@ -9749,7 +9691,6 @@ msgid "0=None; example: 1 GiB"
 msgstr "0=Aucun; exemple: 1g"
 
 #: storage/forms.py:1506
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\", \" \" and \".\"."
@@ -9758,39 +9699,34 @@ msgstr ""
 "alphanumérique et peuvent contenir les caractères '-', '_', ':' et '.'."
 
 #: storage/forms.py:1606
-#, fuzzy
 msgid "Example: 1 GiB"
-msgstr "Exemple: 1g"
+msgstr "Exemple: 1GiB"
 
 #: storage/forms.py:1613
 #, fuzzy
 msgid "Sparse volume"
-msgstr "Nettoyer le volume"
+msgstr "Parsemer le volume"
 
 #: storage/forms.py:1655
 msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
-msgstr ""
+msgstr "Spécifie la taille avec des suffixes IEC, par exemple 10 GiB"
 
 #: storage/forms.py:2026
-#, fuzzy
 msgid "Dedicated User"
-msgstr "Utilisateur dédié activé"
+msgstr "Utilisateur dédié"
 
 #: storage/forms.py:2400
-#, fuzzy
 msgid "Restart services"
-msgstr "Contrôle des services"
+msgstr "Redémarrer les services"
 
 # A quoi correspond Root dans ce cas ?
 #: storage/forms.py:2473
-#, fuzzy
 msgid "Root password"
 msgstr "Mot de passe du super-utilisateur"
 
 #: storage/models.py:67
-#, fuzzy
 msgid "Encryption Type"
-msgstr "Clé de chiffrement"
+msgstr "Type de chiffrement"
 
 #: storage/models.py:898
 #, fuzzy
@@ -9842,11 +9778,11 @@ msgstr "Vitesse du port série"
 
 #: system/models.py:245
 msgid "Enable automatic upload of kernel crash dumps"
-msgstr ""
+msgstr "Active le chargement automatique du listage des crash du kernel"
 
 #: system/models.py:1133
 msgid "Pool"
-msgstr ""
+msgstr "Pool"
 
 #: system/models.py:1138
 #, fuzzy
@@ -9858,6 +9794,8 @@ msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s"
 msgstr ""
+"La version du firmware %(fwversion)s ne correspond pas à la version du "
+"driver %(drversion)s pour /dev/mps%(mps)s"
 
 #: system/alertmods/volume_version.py:24
 #: system/alertmods/volume_version.py:44
@@ -9898,37 +9836,136 @@ msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>REBOOT</strong>?"
 msgstr ""
+"Des pools de stockage sont en cours de resynchronisation/nettoyage, êtes-"
+"vous certain de vouloir <strong>REDÉMARRER</strong>?"
 
 #: freeadmin/options.py:633
-#, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "Êtes vous sure de vouloir détacher ?"
+msgstr "Êtes-vous sur de vouloir éditer celà ?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
 msgstr ""
+"Ce changement provoquera un événement de basculement. Etes-vous sur de "
+"vouloir continuer ? "
 
 #: network/admin.py:63
 msgid "Network connectivity will be interrupted"
 msgstr ""
 
 #: services/models.py:117
-#, fuzzy
 msgid "Domain logons"
-msgstr "Nom de domaine"
+msgstr "Connexions du domaine"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
-msgstr ""
+msgstr "La connexion réseau va être interrompue. Voulez-vous continuer ?"
 
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
 msgstr ""
+"Activer une cible expérimental demande un redémarrage du système. Voulez-"
+"vous continuer ?"
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
-msgstr ""
+msgstr "Le nom étendu doit être unique."
 
 #: services/models.py:414
+#, fuzzy
 msgid "Enable experimental target"
+msgstr "Activer la cible expérimentale"
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
 msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "Le rechargement du service AFP a échoué."
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "Le rechargement du service Active Directory a échoué."
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "Le rechargement du service AFP a échoué."
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "Activé"
+
+# A quoi correspond Root dans ce cas ?
+# Moi je pense fortement à la "racine"
+#: directoryservice/models.py:295
+#, fuzzy
+msgid "Bind DN"
+msgstr "DN du super-utilisateur"
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "Mot de passe administrateur"
+
+#: services/forms.py:753
+#: services/forms.py:896
+msgid "Certificate"
+msgstr "Certificat"
+
+# A quoi correspond Root dans ce cas ?
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Mot de passe du super-utilisateur"
+
+#: services/models.py:1623
+#: services/models.py:1835
+msgid "Upload your certificate file here."
+msgstr "Charger votre fichier certificat ici."
+
+#: system/models.py:1148
+#, fuzzy
+msgid "Reporting Database"
+msgstr "Rapport"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+"Sauvegarde la base de donnée cyclique (RRD: Round Robin Database) utilisée "
+"par le démon de collecte des statistiques dans le dataset système"
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "Informatif"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+#, fuzzy
+msgid "Tasks"
+msgstr "Tâches Rsyncs"
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "Nom du contrôleur de domaine"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+#, fuzzy
+msgid "Set SSL Certificate"
+msgstr "Certificat SSL"

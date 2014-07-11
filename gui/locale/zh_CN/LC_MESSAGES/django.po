@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-03-16 10:33+0000\n"
+"PO-Revision-Date: 2014-07-02 10:08+0000\n"
 "Last-Translator: yuhr123 <yuhr123@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1394965980.0\n"
+"X-POOTLE-MTIME: 1404295688.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6400,28 +6400,27 @@ msgstr "内建用户"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:312
-#, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb算法压缩（推荐）"
+msgstr "lzjb算法压缩（过时，不推荐）"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (最好)"
 
 #: choices.py:675
 msgid "Verbose"
@@ -6438,7 +6437,7 @@ msgstr "域控制器名称"
 
 #: choices.py:711
 msgid "auth"
-msgstr ""
+msgstr "身份认证"
 
 #: choices.py:714
 msgid "ctrl+!data"
@@ -6517,15 +6516,15 @@ msgstr ""
 
 #: jails/models.py:338
 msgid "IPv4 network range for jails and plugins"
-msgstr ""
+msgstr "用于 Jails 和插件的IPv4 地址范围"
 
 #: jails/models.py:343
 msgid "IPv4 network start address for jails and plugins"
-msgstr ""
+msgstr "IPv4 起始地址"
 
 #: jails/models.py:348
 msgid "IPv4 network end address for jails and plugins"
-msgstr ""
+msgstr "IPv4 结束地址"
 
 #: jails/models.py:352
 #, fuzzy
@@ -6539,7 +6538,7 @@ msgstr "IPv6 地址"
 
 #: jails/models.py:363
 msgid "IPv6 network end address for jails and plugins"
-msgstr ""
+msgstr "IPv4 结束地址"
 
 #: jails/models.py:366
 #, fuzzy
@@ -6548,15 +6547,15 @@ msgstr "连接数"
 
 #: jails/models.py:368
 msgid "URL for the jails index"
-msgstr ""
+msgstr "Jails镜像仓库索引URL"
 
 #: jails/models.py:486
 msgid "Template must have 0 instances!"
-msgstr ""
+msgstr "模板必须拥有 0 个实例！"
 
 #: jails/models.py:493
 msgid "Jail root is not configured!"
-msgstr ""
+msgstr "未配置 Jail 根目录！"
 
 #: jails/models.py:513
 #: jails/models.py:514
@@ -6576,11 +6575,11 @@ msgstr "文件系统类型"
 
 #: jails/nav.py:85
 msgid "Add Jail Templates"
-msgstr ""
+msgstr "添加 Jail 模板"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
-msgstr ""
+msgstr "执行此操作必须先创建一个用于存储的卷！"
 
 #: jails/utils.py:714
 #, fuzzy
@@ -6604,15 +6603,17 @@ msgstr "成功删除数据集。"
 
 #: middleware/notifier.py:3068
 msgid "No RPC Token!"
-msgstr ""
+msgstr "未找到 RPC Token！"
 
 #: middleware/notifier.py:3824
+#, fuzzy
 msgid "No carrier"
-msgstr ""
+msgstr "没有载体"
 
 #: middleware/notifier.py:3849
+#, fuzzy
 msgid "Down"
-msgstr ""
+msgstr "下"
 
 #: middleware/zfs.py:623
 #: middleware/zfs.py:691
@@ -7369,15 +7370,15 @@ msgstr ""
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
@@ -7385,11 +7386,11 @@ msgstr ""
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (多面手)"
 
 #: choices.py:672
 msgid "Fatal"
-msgstr ""
+msgstr "                  致命错误                "
 
 #: choices.py:677
 #, fuzzy
@@ -7412,14 +7413,13 @@ msgid "Local 5"
 msgstr "本地用户"
 
 #: choices.py:701
-#, fuzzy
 msgid "NIS"
 msgstr "网卡"
 
 #: choices.py:713
 #, fuzzy
 msgid "ctrl+data"
-msgstr "数据"
+msgstr "ctrl+data"
 
 #: account/forms.py:53
 #, fuzzy
@@ -7575,7 +7575,7 @@ msgstr "查看 %s"
 
 #: jails/utils.py:645
 msgid "Failed to install plugin: %s"
-msgstr ""
+msgstr "插件安装错误：%s"
 
 #: jails/views.py:95
 #, fuzzy
@@ -7589,11 +7589,11 @@ msgstr "成功导入Jail。"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "备份"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
-msgstr ""
+msgstr "已降级"
 
 #: middleware/zfs.py:673
 #: middleware/zfs.py:732
@@ -8373,28 +8373,28 @@ msgstr ""
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "CORE"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
 #, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (最快)"
+msgstr "lz4 (最快)"
 
 #: choices.py:686
 #, fuzzy
@@ -8424,16 +8424,15 @@ msgstr "本地用户"
 #: choices.py:693
 #, fuzzy
 msgid "Local 7"
-msgstr "本地用户"
+msgstr "Local 7"
 
 #: choices.py:700
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 #: choices.py:708
-#, fuzzy
 msgid "off"
-msgstr "关"
+msgstr "关闭"
 
 #: choices.py:710
 #, fuzzy
@@ -8442,7 +8441,7 @@ msgstr "数据"
 
 #: choices.py:712
 msgid "ctrl"
-msgstr ""
+msgstr "ctrl"
 
 #: choices.py:715
 #, fuzzy
@@ -8579,15 +8578,15 @@ msgstr "IPv4 地址"
 
 #: jails/models.py:353
 msgid "IPv6 network range for jails and plugins"
-msgstr ""
+msgstr "用于 Jails 和插件的IPv6 地址范围"
 
 #: jails/models.py:358
 msgid "IPv6 network start address for jails and plugins"
-msgstr ""
+msgstr "IPv6 起始地址"
 
 #: jails/models.py:422
 msgid "OS"
-msgstr ""
+msgstr "操作系统"
 
 #: jails/nav.py:70
 #, fuzzy
@@ -9400,3 +9399,94 @@ msgstr ""
 #: services/models.py:414
 msgid "Enable experimental target"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "AFP 服务未重新加载失败"
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "活动目录服务重新加载失败。"
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "AFP 服务未重新加载失败"
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "启用"
+
+#: directoryservice/models.py:295
+#, fuzzy
+msgid "Bind DN"
+msgstr "Root 绑定 DN"
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "旧密码"
+
+#: services/forms.py:753
+#: services/forms.py:896
+#, fuzzy
+msgid "Certificate"
+msgstr "SSL 凭证"
+
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Root 绑定密码"
+
+#: services/models.py:1623
+#: services/models.py:1835
+#, fuzzy
+msgid "Upload your certificate file here."
+msgstr "你的自签名证书内容放在这里。"
+
+#: system/models.py:1148
+#, fuzzy
+msgid "Reporting Database"
+msgstr "报表"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "非正式"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+#, fuzzy
+msgid "Tasks"
+msgstr "Rsync 任务"
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "域控制器名称"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+#, fuzzy
+msgid "Set SSL Certificate"
+msgstr "SSL 凭证"

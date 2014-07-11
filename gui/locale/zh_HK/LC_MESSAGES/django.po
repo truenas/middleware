@@ -9412,3 +9412,87 @@ msgstr ""
 #: services/models.py:414
 msgid "Enable experimental target"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "AFP服務重新啟動時無法恢復"
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "Active Directory 服務重新啟動時無法恢復"
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "AFP服務重新啟動時無法恢復"
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "已停用"
+
+#: directoryservice/models.py:295
+msgid "Bind DN"
+msgstr ""
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "舊密碼"
+
+#: services/forms.py:753
+#: services/forms.py:896
+msgid "Certificate"
+msgstr ""
+
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "新密碼"
+
+#: services/models.py:1623
+#: services/models.py:1835
+msgid "Upload your certificate file here."
+msgstr ""
+
+#: system/models.py:1148
+msgid "Reporting Database"
+msgstr ""
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "正常"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+msgid "Tasks"
+msgstr ""
+
+#: templates/services/core.html:32
+msgid "Domain Controller Settings"
+msgstr ""
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+msgid "Set SSL Certificate"
+msgstr ""

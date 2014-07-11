@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-04-01 08:58+0000\n"
-"Last-Translator: sukarra <jon.altia@gmail.com>\n"
+"PO-Revision-Date: 2014-06-19 05:30+0000\n"
+"Last-Translator: nekitoblack <alex.smith@nekitoblack.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1396342691.0\n"
+"X-POOTLE-MTIME: 1403155855.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Informes"
@@ -257,4 +257,25 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:49
+msgid "System"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:94
+msgid "Tasks"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:92
+#, fuzzy
+msgid "Network"
+msgstr "Configuración de Red"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:182
+msgid "Sharing"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:521
+msgid "Directory Service"
 msgstr ""

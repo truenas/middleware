@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2014-06-09 10:29+0000\n"
-"Last-Translator: mikro <markdo1998@gmail.com>\n"
+"PO-Revision-Date: 2014-06-30 12:29+0000\n"
+"Last-Translator: Bjarke <jugger@jugger.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1402309785.0\n"
+"X-POOTLE-MTIME: 1404131352.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1303,13 +1303,12 @@ msgid "Mount Points"
 msgstr ""
 
 #: plugins/views.py:52
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s blev opdateret."
+msgstr "Plugin succesfuldt opdateret."
 
 #: plugins/views.py:80
 msgid "Plugin successfully removed."
-msgstr "%s blev tilføjet."
+msgstr "Plugin succesfuldt fjernet."
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
@@ -7634,7 +7633,7 @@ msgstr "IPv6 bro aliaser"
 #: jails/models.py:296
 #, fuzzy
 msgid "This jail is required by %d plugin(s)"
-msgstr "Dette felt er påkrævet for anonym login"
+msgstr "Dette 'jail' er påkrævet af %d plugin(s)."
 
 #: jails/models.py:337
 #, fuzzy
@@ -8660,7 +8659,7 @@ msgstr ""
 #: jails/views.py:115
 #, fuzzy
 msgid "Storage successfully added."
-msgstr "%s blev slettet."
+msgstr "Diskareal succesfuldt tilføjet."
 
 #: jails/views.py:177
 #, fuzzy
@@ -9334,4 +9333,93 @@ msgstr ""
 
 #: services/models.py:414
 msgid "Enable experimental target"
+msgstr ""
+
+#: choices.py:788
+msgid "Loader"
+msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "AFP service kunne ikke genstartes."
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "Active Directory service kunne ikke genstarte."
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "AFP service kunne ikke genstartes."
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "Aktiver FXP (File eXchange Protocol)"
+
+#: directoryservice/models.py:295
+msgid "Bind DN"
+msgstr ""
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "Gammel adgangskode"
+
+#: services/forms.py:753
+#: services/forms.py:896
+msgid "Certificate"
+msgstr ""
+
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Ny adgangskode"
+
+#: services/models.py:1623
+#: services/models.py:1835
+msgid "Upload your certificate file here."
+msgstr ""
+
+#: system/models.py:1148
+msgid "Reporting Database"
+msgstr ""
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "Normal"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+msgid "Tasks"
+msgstr ""
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "Domæne navn"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+msgid "Set SSL Certificate"
 msgstr ""
