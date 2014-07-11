@@ -75,6 +75,10 @@ class NT4Form(ModelForm):
         if self._api is True:
             del self.fields['nt4_adminpw2']
 
+        self.fields["nt4_enable"].widget.attrs["onChange"] = (
+            "nt4_mutex_toggle();"
+        )
+
     def clean_nt4_adminpw2(self):
         password1 = self.cleaned_data.get("nt4_adminpw")
         password2 = self.cleaned_data.get("nt4_adminpw2")
@@ -169,6 +173,10 @@ class ActiveDirectoryForm(ModelForm):
             self.fields['ad_bindpw'].required = False
         self.__original_save()
 
+        self.fields["ad_enable"].widget.attrs["onChange"] = (
+            "ad_mutex_toggle();"
+        )
+
     def clean_ad_keytab(self):
         filename = "/data/krb5.keytab"
 
@@ -254,6 +262,12 @@ class NISForm(ModelForm):
         fields = '__all__'
         model = models.NIS
 
+    def __init__(self, *args, **kwargs):
+        super(NISForm, self).__init__(*args, **kwargs)
+        self.fields["nis_enable"].widget.attrs["onChange"] = (
+            "nis_mutex_toggle();"
+        )
+
 
 class LDAPForm(ModelForm):
     ldap_certfile = FileField(label=_("Certificate"), required=False)
@@ -264,6 +278,12 @@ class LDAPForm(ModelForm):
         widgets = {
             'ldap_bindpw': forms.widgets.PasswordInput(render_value=True),
         }
+
+    def __init__(self, *args, **kwargs):
+        super(LDAPForm, self).__init__(*args, **kwargs)
+        self.fields["ldap_enable"].widget.attrs["onChange"] = (
+            "ldap_mutex_toggle();"
+        )
 
     def clean_ldap_certfile(self):
         filename = "/data/ldap_certfile"

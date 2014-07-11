@@ -661,6 +661,78 @@ require([
       }
     }
 
+    get_directoryservice_set = function(enable) {
+        var fullset = [
+            "ad_enable",
+            "dc_enable",
+            "ldap_enable",
+            "nis_enable",
+            "nt4_enable"
+        ];
+
+        set = []
+        for (var index in fullset) {
+            if (fullset[index] != enable) {
+                set.push(fullset[index]);
+            }
+        }
+
+        return set;
+    }
+
+    directoryservice_mutex_toggle = function(ds_enable, ds_obj) {
+        xhr.get('/directoryservice/status/', {
+            sync: true 
+        }). then(function(data) {
+            s = JSON.parse(data);
+            set = get_directoryservice_set(ds_enable);
+            for (index in set) {
+                key = set[index]; 
+                if (s[key] == true) {
+                    ds_obj.set("disabled", true);
+                    break;
+                }
+            }
+        });
+    }
+
+    activedirectory_mutex_toggle = function() {
+        ad = registry.byId("id_ad_enable");
+        directoryservice_mutex_toggle('ad_enable', ad);
+    }
+
+    domaincontroller_mutex_toggle = function() {
+        var node = query("#domaincontroller_table");
+        xhr.get('/directoryservice/status/', {
+            sync: true 
+        }). then(function(data) {
+            s = JSON.parse(data);
+            set = get_directoryservice_set('dc_enable');
+            for (index in set) {
+                key = set[index]; 
+                if (s[key] == true) {
+                    node.onclick = null;
+                    break;
+                }
+            }
+        });
+    }
+
+    ldap_mutex_toggle = function() {
+        ldap = registry.byId("id_ldap_enable");
+        directoryservice_mutex_toggle('ldap_enable', ldap);
+    }
+
+    nis_mutex_toggle = function() {
+        nis = registry.byId("id_nis_enable");
+        directoryservice_mutex_toggle('nis_enable', nis);
+    }
+
+    nt4_mutex_toggle = function() {
+        nt4 = registry.byId("id_nt4_enable");
+        directoryservice_mutex_toggle('nt4_enable', nt4);
+    }
+
     mpAclChange = function(acl) {
       var mode = registry.byId("id_mp_mode");
       if(acl.get('value') === false) {
@@ -1455,7 +1527,6 @@ require([
     }
 
     processStack = function() {
-
         while(__stack.length > 0) {
             f = __stack.pop();
             try {

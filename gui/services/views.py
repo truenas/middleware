@@ -31,6 +31,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
+from freenasUI.directoryservice.views import get_directoryservice_status
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.services import models
 from freenasUI.services.forms import servicesForm
@@ -56,6 +57,13 @@ def core(request):
         domaincontroller = models.DomainController.objects.order_by("-id")[0]
     except IndexError:
         domaincontroller = models.DomainController.objects.create()
+
+    domaincontroller.onclick_enable = 'enable'
+    ds_status = get_directoryservice_status()
+    for key in ds_status:
+        if ds_status[key] == True and key != 'dc_enable':
+            domaincontroller.onclick_enable = 'disable'
+            break
 
     try:
         afp = models.AFP.objects.order_by("-id")[0]

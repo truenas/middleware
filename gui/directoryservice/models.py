@@ -73,7 +73,6 @@ class NT4(Model):
         default=False,
     )
 
-
     def __init__(self, *args, **kwargs):
         super(NT4, self).__init__(*args, **kwargs)
         self.svc = 'nt4'

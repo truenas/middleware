@@ -29,4 +29,5 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns(
     'freenasUI.directoryservice.views',
     url(r'^home/$', 'directoryservice_home', name="directoryservice_home"),
+    url(r'^status/$', 'directoryservice_status', name="directoryservice_status"),
 )
