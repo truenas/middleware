@@ -14,7 +14,7 @@ class SystemHook(AppHook):
         has_failover = hasattr(notifier, 'failover_status')
         btns = []
         if (
-            has_failover and notifier().failover_status in ('MASTER', 'SINGLE')
+            has_failover and notifier().failover_status() in ('MASTER', 'SINGLE')
             or not has_failover
         ):
             btns.append({
