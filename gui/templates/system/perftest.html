@@ -19,6 +19,8 @@ doSubmit({
 {% block form %}
 <p>{% trans "You are about to start a performance test." %}
 <br />
+{% trans "Running these tests can substantially impact performance on a production system and are only to be used for diagnostic purposes." %}
+<br />
 {% trans "Are you sure you want to proceed?" %}</p>
 {% endblock %}
 {% block buttons %}
