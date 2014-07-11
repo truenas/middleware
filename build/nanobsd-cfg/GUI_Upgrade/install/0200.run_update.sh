@@ -52,7 +52,10 @@ else
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin
 
-FREEBSD_RELEASE=`uname -r | cut -f1 -d-`
+upgrade_cleanup()
+{
+	find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
+}
 
 ROOTDEV=`/sbin/glabel status | /usr/bin/grep ${NANO_DRIVE}s1a | /usr/bin/awk '{print $3;}' | sed -e 's,s1a$,,g'`
 if [ -c /dev/${ROOTDEV} ]; then
@@ -62,7 +65,7 @@ if [ -c /dev/${ROOTDEV} ]; then
 	# TODO: Find a way so we do not hardcode this value.
 	if [ ${ROOTDEV_SIZE} -lt 3699999744 ]; then
 		warn "Root device too small!"
-		find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
+		upgrade_cleanup
 		exit 1
 	fi
 
@@ -81,7 +84,7 @@ if [ -c /dev/${ROOTDEV} ]; then
 		VOLUME_DEVICE=`mount | grep ${VOLUME_MOUNTPOINT} | awk '{print $1;}'`
 		if [ "${VOLUME_DEVICE##/dev/md}" != ${VOLUME_DEVICE} ]; then
 			warn "Can not do trampoline upgrade without backing storage."
-			find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
+			upgrade_cleanup
 			exit 1
 		fi
 
@@ -223,9 +226,9 @@ EOF
 	fi
 else
 	warn "Can not determine root device"
-	find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
+	upgrade_cleanup
 	exit 1
 fi
 
 fi
-find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
+upgrade_cleanup
