@@ -1,0 +1,33 @@
+{% extends "freeadmin/generic_form.html" %}
+{% block onSubmit %}
+console.log("here");
+doSubmit({
+    form: this,
+    event: e,
+    url: '{{ request.path }}',
+    progressbar: {
+      steps: [
+         {"label": gettext("Writing file")},
+	 {"label": gettext("Reading file")}
+      ],
+      poolUrl: '{% url "system_perftest_progress" %}',
+      fileUpload: false
+    }
+});
+{% endblock %}
+{% block form %}
+<p>{% trans "You are about to start a performance test." %}
+<br />
+{% trans "Are you sure you want to proceed?" %}</p>
+{% endblock %}
+{% block buttons %}
+<button id="btn_PerfTest_Ok" data-dojo-type="dijit.form.Button" type="submit">
+    {% trans "Yes" %}
+</button>
+<button id="btn_PerfTest_Cancel" data-dojo-type="dijit.form.Button" type="button">
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+    cancelDialog(this);
+    </script>
+    {% trans "No" %}
+</button>
+{% endblock %}

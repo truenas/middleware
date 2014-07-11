@@ -58,6 +58,7 @@ from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
@@ -68,6 +69,7 @@ VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 DDFILE = '/tmp/.upgrade_dd'
 RE_DD = re.compile(r"^(\d+) bytes", re.M | re.S)
+PERFTEST_SIZE = 40 * 1024 * 1024 * 1024  # 40 GiB
 
 log = logging.getLogger('system.views')
 
@@ -528,6 +530,105 @@ def firmware_progress(request):
             pass
 
     content = json.dumps(data)
+    return HttpResponse(content, content_type='application/json')
+
+
+def perftest(request):
+
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+
+    if request.method == 'GET':
+        return render(request, 'system/perftest.html')
+
+    if not basename:
+        raise MiddlewareError(
+            _('System dataset is required to perform this action.')
+        )
+
+    dump = '/mnt/%s/perftest.txz' % basename
+    perftestdataset = '%s/perftest' % basename
+
+    with mntlock(mntpt='/mnt/%s' % basename):
+
+        _n = notifier()
+
+        rv, errmsg = _n.create_zfs_dataset(
+            path=perftestdataset,
+            props={
+                'primarycache': 'metadata',
+                'secondarycache': 'metadata',
+                'compression': 'off',
+            },
+            _restart_collectd=False,
+        )
+
+        currdir = os.getcwd()
+        os.chdir('/mnt/%s' % perftestdataset)
+        with open('/mnt/%s/iozone.txt' % perftestdataset, 'w') as f:
+            p1 = subprocess.Popen(
+                '/usr/local/bin/iozone -r 128 -s %sk -i 0 -i 1' % (
+                    PERFTEST_SIZE / 1024,
+                ),
+                stdout=f,
+                stderr=subprocess.STDOUT,
+                shell=True,
+            )
+            p1.communicate()
+
+        os.chdir('..')
+        p1 = pipeopen('tar -cJf %s perftest' % dump)
+        p1.communicate()
+
+        os.chdir(currdir)
+
+        _n.destroy_zfs_dataset(perftestdataset)
+
+        return JsonResp(
+            request,
+            message='Performance test has completed.',
+            events=[
+                'window.location=\'%s\'' % reverse('system_perftest_download'),
+            ],
+        )
+
+
+def perftest_download(request):
+
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+    dump = '/mnt/%s/perftest.txz' % basename
+
+    wrapper = FileWrapper(file(dump))
+    response = StreamingHttpResponse(
+        wrapper,
+        content_type='application/octet-stream',
+    )
+    response['Content-Length'] = os.path.getsize(dump)
+    response['Content-Disposition'] = \
+        'attachment; filename=perftest-%s-%s.tgz' % (
+            socket.gethostname(),
+            time.strftime('%Y%m%d%H%M%S'))
+
+    return response
+
+
+def perftest_progress(request):
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+    iozonefile = '/mnt/%s/perftest/iozone.tmp' % basename
+    percent = 0
+    step = 1
+    indeterminate = False
+    if os.path.exists(iozonefile):
+        size = os.stat(iozonefile).st_size
+        percent = int((float(size) / PERFTEST_SIZE) * 100.0)
+        if percent == 100:
+            step = 2
+            percent = 0
+            indeterminate = True
+    content = json.dumps({
+        'step': step,
+        'percent': percent,
+        'indeterminate': indeterminate,
+    })
     return HttpResponse(content, content_type='application/json')
 
 
