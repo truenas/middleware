@@ -32,6 +32,13 @@
 #
 # Run the old updater if we're not absolutely certain we're FreeNAS.
 
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin
+
+upgrade_cleanup()
+{
+	find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
+}
+
 if true || [ ! \( "$OLD_AVATAR_PROJECT" = "FreeNAS" -a \
     "$NEW_AVATAR_PROJECT" = "FreeNAS" \) ] ; then
 
@@ -49,13 +56,6 @@ else
 
 . /etc/nanobsd.conf
 . /etc/rc.freenas
-
-PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin
-
-upgrade_cleanup()
-{
-	find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
-}
 
 ROOTDEV=`/sbin/glabel status | /usr/bin/grep ${NANO_DRIVE}s1a | /usr/bin/awk '{print $3;}' | sed -e 's,s1a$,,g'`
 if [ -c /dev/${ROOTDEV} ]; then
