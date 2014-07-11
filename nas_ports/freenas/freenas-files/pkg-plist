@@ -10,6 +10,7 @@ usr/local/bin/freenas-debug
 usr/local/bin/iscsi-select
 usr/local/bin/ixdiagnose
 usr/local/bin/mfistatus.py
+usr/local/bin/perftests-nas
 usr/local/bin/zilstat
 usr/local/bin/adtool
 usr/local/etc/avahi/avahi-daemon.conf
@@ -22,6 +23,8 @@ usr/local/etc/samba.gdb
 usr/local/etc/sudoers
 usr/local/libexec/freenas-debug/active_directory/active_directory.sh
 usr/local/libexec/freenas-debug/cache/cache.sh
+usr/local/libexec/freenas-debug/dtrace/disklatencycmd.d
+usr/local/libexec/freenas-debug/dtrace/dtrace.sh
 usr/local/libexec/freenas-debug/geom/geom.sh
 usr/local/libexec/freenas-debug/hardware/hardware.sh
 usr/local/libexec/freenas-debug/include.sh
@@ -45,6 +48,7 @@ usr/local/libexec/samba/samba-backtrace
 usr/local/sbin/sas2flash
 usr/local/sbin/save_rrds.sh
 usr/local/sbin/scrub
+usr/local/share/perftests-nas/tests/iozone
 usr/local/www/data/django.fcgi
 etc/ix.rc.d/ix-activedirectory
 etc/ix.rc.d/ix-afpd
