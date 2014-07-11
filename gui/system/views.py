@@ -145,13 +145,7 @@ def config_upload(request):
                 request.session['allow_reboot'] = True
                 return render(request, 'system/config_ok.html', variables)
 
-        if 'iframe' in request.GET:
-            return HttpResponse('<html><body><textarea>' +
-                                render_to_string('system/config_upload.html',
-                                                 variables) +
-                                '</textarea></boby></html>')
-        else:
-            return render(request, 'system/config_upload.html', variables)
+        return render(request, 'system/config_upload.html', variables)
     else:
         FIRMWARE_DIR = '/var/tmp/firmware'
         if os.path.exists(FIRMWARE_DIR):
