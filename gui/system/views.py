@@ -538,7 +538,13 @@ def perftest(request):
     systemdataset, volume, basename = notifier().system_dataset_settings()
 
     if request.method == 'GET':
-        return render(request, 'system/perftest.html')
+        p1 = subprocess.Popen([
+            '/usr/local/bin/perftests-nas', '-t',
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tests = p1.communicate()[0].strip('\n').split('\n')
+        return render(request, 'system/perftest.html', {
+            'tests': tests,
+        })
 
     if not basename:
         raise MiddlewareError(
@@ -564,18 +570,16 @@ def perftest(request):
 
         currdir = os.getcwd()
         os.chdir('/mnt/%s' % perftestdataset)
-        with open('/mnt/%s/iozone.txt' % perftestdataset, 'w') as f:
-            p1 = subprocess.Popen(
-                '/usr/local/bin/iozone -r 128 -s %sk -i 0 -i 1' % (
-                    PERFTEST_SIZE / 1024,
-                ),
-                stdout=f,
-                stderr=subprocess.STDOUT,
-                shell=True,
-            )
-            p1.communicate()
+
+        p1 = subprocess.Popen([
+            '/usr/local/bin/perftests-nas',
+            '-o', ('/mnt/%s' % perftestdataset).encode('utf8'),
+            '-s', str(PERFTEST_SIZE),
+        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p1.communicate()
 
         os.chdir('..')
+
         p1 = pipeopen('tar -cJf %s perftest' % dump)
         p1.communicate()
 
@@ -613,17 +617,39 @@ def perftest_download(request):
 
 def perftest_progress(request):
     systemdataset, volume, basename = notifier().system_dataset_settings()
-    iozonefile = '/mnt/%s/perftest/iozone.tmp' % basename
+    progressfile = '/mnt/%s/perftest/.progress' % basename
+
+    data = ''
+    try:
+        if os.path.exists(progressfile):
+            with open(progressfile, 'r') as f:
+                data = f.read()
+            data = data.strip('\n')
+    except:
+        pass
+
+    total = None
+    reg = re.search(r'^totaltests:(\d+)$', data, re.M)
+    if reg:
+        total = int(reg.groups()[0])
+
+    runningtest = data.rsplit('\n')[-1]
+    if ':' in runningtest:
+        runningtest = runningtest.split(':')[0]
+
     percent = 0
-    step = 1
+    step = len(data.split('\n'))
+    if total:
+        step -= total
     indeterminate = False
-    if os.path.exists(iozonefile):
-        size = os.stat(iozonefile).st_size
-        percent = int((float(size) / PERFTEST_SIZE) * 100.0)
-        if percent == 100:
-            step = 2
-            percent = 0
-            indeterminate = True
+    if runningtest == 'iozone':
+        iozonefile = '/mnt/%s/perftest/iozone.tmp' % basename
+        if os.path.exists(iozonefile):
+            size = os.stat(iozonefile).st_size
+            percent = int((float(size) / PERFTEST_SIZE) * 100.0) / 2
+            if percent == 50:
+                indeterminate = True
+
     content = json.dumps({
         'step': step,
         'percent': percent,

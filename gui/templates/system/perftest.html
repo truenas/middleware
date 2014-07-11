@@ -7,8 +7,9 @@ doSubmit({
     url: '{{ request.path }}',
     progressbar: {
       steps: [
-         {"label": gettext("Writing file")},
-	 {"label": gettext("Reading file")}
+         {% for test in tests %}
+         {"label": gettext("{{ test|escapejs }}")}{% if not forloop.last %},{%endif %}
+	 {% endfor %}
       ],
       poolUrl: '{% url "system_perftest_progress" %}',
       fileUpload: false
