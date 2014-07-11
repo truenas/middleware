@@ -629,6 +629,39 @@ AD_get_partitions()
 	AD_query "${basedn}" "" netbiosname|grep '^nETBIOSName'|cut -f2- -d:|xargs
 }
 
+AD_get_workgroup()
+{
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
+	local config="$(AD_query_rootDSE|egrep '^configurationNamingContext'|cut -f2- -d:|xargs)"
+
+
+	local dchost="$(AD_get ad_dchost)"
+	local dcport="$(AD_get ad_dcport)"
+	local binddn="$(AD_get ad_binddn)"
+	local bindpw="$(AD_get ad_bindpw)"
+	local basedn="$(AD_get basedn)"
+
+	local filter="(&(objectcategory=crossref)(nCName=${basedn}))"
+	AD_log "AD_get_workgroup: filter = ${filter}, attributes = ${attributes}"
+
+	cat<<-__EOF__>"${tmpfile}"
+	/usr/local/bin/ldapsearch \
+	    -H "ldap://${dchost}:${dcport}" \
+	    -D "${binddn}" \
+	    -w "${bindpw}" \
+	    -b "${config}" \
+	    -s sub\
+	    -x \
+	    -z 0 \
+	    -LLL \
+	    -l "${LDAP_TIMEOUT}" \
+	   "${filter}"
+__EOF__
+
+	eval $(cat "${tmpfile}")|grep '^nETBIOSName'|cut -f2- -d:|xargs
+	rm "${tmpfile}"
+}
+
 AD_get_partition()
 {
 	local ncname="${1}"
@@ -806,6 +839,7 @@ AD_show_config()
 	printf "ad_bindname:     %s\n" $(AD_get ad_bindname)
 	printf "ad_bindpw:       %s\n" $(AD_get ad_bindpw)
 	printf "ad_netbiosname:  %s\n" $(AD_get ad_netbiosname)
+	printf "ad_workgroup:    %s\n" $(AD_get ad_workgroup)
 	printf "ad_gchost:       %s\n" $(AD_get ad_gchost)
 	printf "ad_gcport:       %d\n" $(AD_get ad_gcport)
 	printf "ad_krbhost:      %s\n" $(AD_get ad_krbhost)
@@ -1068,6 +1102,14 @@ AD_init()
 		AD_set ad_basedn "${basedn}"
 	fi
 	AD_log "AD_init: basedn = $(AD_get ad_basedn)"
+
+	local workgroup=$(AD_get workgroup)
+	if [ -z "${workgroup}" ]
+	then
+		workgroup=$(AD_get_workgroup "${basedn}")
+		AD_set ad_workgroup "${workgroup}"
+	fi
+	AD_log "AD_init: workgroup = $(AD_get ad_workgroup)"
 
 	local gcname=$(AD_get ad_gcname)
 	if [ -z "${gcname}" ]
