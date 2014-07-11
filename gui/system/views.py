@@ -637,18 +637,11 @@ def perftest_progress(request):
     if ':' in runningtest:
         runningtest = runningtest.split(':')[0]
 
-    percent = 0
+    percent = None
     step = len(data.split('\n'))
     if total:
         step -= total
-    indeterminate = False
-    if runningtest == 'iozone':
-        iozonefile = '/mnt/%s/perftest/iozone.tmp' % basename
-        if os.path.exists(iozonefile):
-            size = os.stat(iozonefile).st_size
-            percent = int((float(size) / PERFTEST_SIZE) * 100.0) / 2
-            if percent == 50:
-                indeterminate = True
+    indeterminate = True
 
     content = json.dumps({
         'step': step,
