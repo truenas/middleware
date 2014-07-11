@@ -60,6 +60,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier, GELI_KEYPATH
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent, services
+from freenasUI.system.alert import alertPlugins
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 
@@ -1082,7 +1083,13 @@ class AutoImportWizard(SessionWizardView):
         notifier().start("ix-warden")
         notifier().restart("system_datasets")
 
-        return JsonResp(self.request, message=unicode(_("Volume imported")))
+        alertPlugins.run()
+
+        return JsonResp(
+            self.request,
+            message=unicode(_("Volume imported")),
+            events=['loadalert()'],
+        )
 
 
 class AutoImportChoiceForm(Form):

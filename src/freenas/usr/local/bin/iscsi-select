@@ -1,0 +1,90 @@
+#!/usr/local/bin/python
+#+
+# Copyright 2014 iXsystems, Inc.
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#####################################################################
+"""Displays or sets the database value for which iSCSI target
+   to run.  Note that this only changes the database.  Rebooting
+   the system after this progtram has changed the database is
+   required to switch the iSCSI target."""
+
+import argparse
+import os
+import sys
+
+sys.path.extend([
+    '/usr/local/www',
+    '/usr/local/www/freenasUI'
+])
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
+
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
+
+from freenasUI.services.models import iSCSITargetGlobalConfiguration
+
+
+def main(arg):
+    """Accepts three possible values for arg:
+       None : Display curent database value of iscsi_experimental_target
+       ctl: Set iscsi_experimental_target to True
+       istgt: Set iscsi_experimental_target to False"""
+    gconf = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
+    if gconf.iscsi_experimental_target:
+        target = "ctl"
+    else:
+        target = "istgt"
+
+    if arg is None:
+        print target
+    else:
+        if arg == target:
+            print "iSCSI target is already %s. Not changing database." % arg
+        elif arg == "ctl":
+            gconf.iscsi_experimental_target = True
+            gconf.save()
+            print "iSCSI target changed in database. System Reboot is required."
+        elif arg == "istgt":
+            gconf.iscsi_experimental_target = False
+            gconf.save()
+            print "iSCSI target changed in database. System Reboot is required."
+
+if __name__ == "__main__":
+    if os.geteuid() != 0:
+        print "This program must be run as root"
+        exit(1)
+    parser = argparse.ArgumentParser(usage='%(prog)s -t [ctl|istgt]',
+                                     description="""
+            When called with no arguments, display the current iSCSI target.
+            When called with either -t ctl or -t istgt, switch the iSCSI
+            target to the value specified.  (Requires a reboot)""")
+    parser.add_argument('-t', choices=["ctl", "istgt"])
+    args = parser.parse_args()
+    if args.t is None:
+        main(None)
+    else:
+        main(args.t)

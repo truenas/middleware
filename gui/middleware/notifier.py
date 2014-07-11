@@ -635,15 +635,18 @@ class notifier:
         from freenasUI.common.freenasldap import FreeNAS_LDAP, FLAGS_DBINIT
         from freenasUI.common.system import ldap_enabled
 
+        if (self._system_nolog('/usr/sbin/service ix-ldap status') != 0):
+            return False
+
         ret = False
-        if ldap_enabled():
+        try:
             f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
             f.open()
             if f.isOpen():
                 ret = True
-            else:
-                ret = False
             f.close()
+        except:
+            pass
 
         return ret
 
@@ -681,15 +684,12 @@ class notifier:
     def _started_nt4(self):
         res = False
         ret = self._system_nolog("service ix-nt4 status")
-        if self.__nt4stop == True:
-            return False
         if not ret:
             res = True
         return res
 
     def _start_nt4(self):
         res = False
-        self.__nt4stop = False
         ret = self._system_nolog("/etc/directoryservice/NT4/ctl start")
         if not ret:
             res = True
@@ -697,7 +697,6 @@ class notifier:
 
     def _restart_nt4(self):
         res = False
-        self.__nt4stop = False
         ret = self._system_nolog("/etc/directoryservice/NT4/ctl restart")
         if not ret:
             res = True
@@ -705,11 +704,7 @@ class notifier:
 
     def _stop_nt4(self):
         res = False
-        self.__nt4stop = False
         ret = self._system_nolog("/etc/directoryservice/NT4/ctl stop")
-        self.__nt4stop = True
-        if not ret:
-            res = True
         return res
 
     def _started_activedirectory(self):
@@ -722,12 +717,12 @@ class notifier:
                 return False
 
         ret = False
-        if activedirectory_enabled():
+        try:
             f = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
             if f.connected():
                 ret = True
-            else:
-                ret = False
+        except:
+            pass
 
         return ret
 

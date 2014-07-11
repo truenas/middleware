@@ -47,23 +47,13 @@ generate_ldapconf()
 		ldap_hostname, 	 
 		ldap_basedn, 	 
 		ldap_anonbind, 	 
-		ldap_basedn, 	 
+		ldap_binddn, 	 
 		ldap_bindpw, 	 
-		ldap_pwencryption, 	 
 		ldap_usersuffix, 	 
 		ldap_groupsuffix, 	 
 		ldap_passwordsuffix, 	 
 		ldap_machinesuffix, 	 
-		ldap_ssl,
-		trim(
-			rtrim(
-				replace(
-					replace(
-						replace(ldap_options, '\n', '|'),
-					x'0A', '|'),
-				x'0D', ''),
-			'|')
-		) as ldap_options
+		ldap_ssl
 
 	FROM
 		directoryservice_ldap
@@ -73,9 +63,9 @@ generate_ldapconf()
 
 	LIMIT 1
 	" | \
-	while eval read ldap_id ldap_hostname ldap_basedn ldap_anonbind ldap_basedn \
-		ldap_bindpw ldap_pwencryption ldap_usersuffix ldap_groupsuffix \
-		ldap_passwordsuffix ldap_machinesuffix ldap_ssl ldap_options;
+	while eval read ldap_id ldap_hostname ldap_basedn ldap_anonbind ldap_binddn \
+		ldap_bindpw ldap_usersuffix ldap_groupsuffix \
+		ldap_passwordsuffix ldap_machinesuffix ldap_ssl;
 	do
 		[ -z "${ldap_hostname}" -o -z "${ldap_basedn}" ] && return 1
 
@@ -146,7 +136,7 @@ ldap_status()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ldap_anonbind, 	 
-		ldap_basedn, 	 
+		ldap_binddn, 	 
 		ldap_bindpw, 	 
 		ldap_ssl
 	FROM
@@ -157,7 +147,7 @@ ldap_status()
 
 	LIMIT 1
 	" | \
-	while eval read ldap_anonbind ldap_basedn ldap_bindpw ldap_ssl
+	while eval read ldap_anonbind ldap_binddn ldap_bindpw ldap_ssl
 	do
 		local res=1
 		local ldapsearch=/usr/local/bin/ldapsearch
@@ -177,12 +167,12 @@ ldap_status()
 			chmod 400 "${temp}"
 			echo -n "${ldap_bindpw}" > "${temp}"
 
-			echo "${ldapsearch} ${options} -D "'${ldap_basedn}'" -y "${temp}"" > "${cmdfile}"
+			echo "${ldapsearch} ${options} -D "'${ldap_binddn}'" -y "${temp}"" > "${cmdfile}"
 			cmd=$(cat ${cmdfile})
 			eval "${cmd}" >/dev/null 2>&1
 			res=$?
 
-			rm -f "${temp}" "${cmdfile}"
+			#rm -f "${temp}" "${cmdfile}"
 		else		
 			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)
 			local cmd

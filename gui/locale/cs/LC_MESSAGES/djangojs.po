@@ -272,3 +272,26 @@ msgstr "Název svazku"
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:49
+#, fuzzy
+msgid "System"
+msgstr "Poplachový systém"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:94
+msgid "Tasks"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:92
+#, fuzzy
+msgid "Network"
+msgstr "Nastavení sítě"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:182
+#, fuzzy
+msgid "Sharing"
+msgstr "Sdílení"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:521
+msgid "Directory Service"
+msgstr ""

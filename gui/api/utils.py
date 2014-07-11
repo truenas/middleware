@@ -33,6 +33,7 @@ from django.contrib.auth import authenticate
 from django.db.models.fields.related import ForeignKey
 from django.http import QueryDict
 
+from freenasUI.account.models import bsdUsers
 from freenasUI.freeadmin.apppool import appPool
 
 from tastypie.authentication import (
@@ -52,6 +53,11 @@ class DjangoAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
         if request.user.is_authenticated():
             return True
+
+        # Allow access to the API of no root password has been set yet
+        if not bsdUsers.has_root_password():
+            return True
+
         return False
 
     # Optional but recommended
@@ -152,13 +158,21 @@ class ResourceMixin(object):
         Make sure only OAuth2 is allowed to POST/PUT/DELETE
         """
         if self.is_webclient(request):
-            allowed = ['get']
+            try:
+                self.is_authenticated(request)
+                allowed = ['get']
+            except:
+                pass
         return super(ResourceMixin, self).method_check(
             request,
             allowed=allowed
         )
 
     def is_webclient(self, request):
+        # Do not treat passwordless API auth as webclient
+        if not bsdUsers.has_root_password():
+            return None
+
         if (
             request.META.get('HTTP_X_REQUESTED_FROM') == 'WebUI' or
             not request.META.get('HTTP_AUTHORIZATION', '').startswith('Basic')

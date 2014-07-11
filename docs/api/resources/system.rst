@@ -437,6 +437,39 @@ Delete resource
    :statuscode 204: no error
 
 
+Reboot
+------
+
+Reboot the machine.
+
+List resource
++++++++++++++
+
+.. http:post:: /api/v1.0/system/reboot/
+
+   Reboot the machine.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/reboot/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Reboot process started.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 Settings
 --------
 
@@ -538,6 +571,39 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
+
+
+Shutdown
+--------
+
+Shutdown the machine.
+
+List resource
++++++++++++++
+
+.. http:post:: /api/v1.0/system/shutdown/
+
+   Shutdown the machine.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/shutdown/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Shutdown process started.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
 
 
 SSL

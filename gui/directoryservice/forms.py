@@ -33,7 +33,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FreeNAS_LDAP
+)
 from freenasUI.directoryservice import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
@@ -61,6 +64,7 @@ class NT4Form(ModelForm):
             'nt4_adminname',
             'nt4_adminpw',
             'nt4_adminpw2',
+            'nt4_use_default_domain',
             'nt4_enable',
         ]
 
@@ -70,6 +74,10 @@ class NT4Form(ModelForm):
             self.fields['nt4_adminpw'].required = False
         if self._api is True:
             del self.fields['nt4_adminpw2']
+
+        self.fields["nt4_enable"].widget.attrs["onChange"] = (
+            "nt4_mutex_toggle();"
+        )
 
     def clean_nt4_adminpw2(self):
         password1 = self.cleaned_data.get("nt4_adminpw")
@@ -85,6 +93,25 @@ class NT4Form(ModelForm):
         if not cdata.get("nt4_adminpw"):
             cdata['nt4_adminpw'] = self.instance.nt4_adminpw
         return cdata
+
+    def save(self):
+        enable = self.cleaned_data.get("nt4_enable")
+        started = notifier().started("nt4")
+        if enable:
+            if started == True:
+                started = notifier().restart("nt4")
+            if started == False:
+                started = notifier().start("nt4")
+            if started == False:
+                self.instance.ad_enable = False
+                super(NT4Form, self).save()
+                raise ServiceFailed("nt4",
+                    _("NT4 failed to reload."))
+        else:
+            if started == True:
+                started = notifier().stop("nt4")
+
+        super(NT4Form, self).save()
 
 
 class ActiveDirectoryForm(ModelForm):
@@ -146,6 +173,10 @@ class ActiveDirectoryForm(ModelForm):
             self.fields['ad_bindpw'].required = False
         self.__original_save()
 
+        self.fields["ad_enable"].widget.attrs["onChange"] = (
+            "ad_mutex_toggle();"
+        )
+
     def clean_ad_keytab(self):
         filename = "/data/krb5.keytab"
 
@@ -205,11 +236,12 @@ class ActiveDirectoryForm(ModelForm):
 
     def save(self):
         enable = self.cleaned_data.get("ad_enable")
-        super(ActiveDirectoryForm, self).save()
         if self.__original_changed():
             notifier()._clear_activedirectory_config()
 
         started = notifier().started("activedirectory")
+        super(ActiveDirectoryForm, self).save()
+
         if enable:
             if started == True:
                 started = notifier().restart("activedirectory")
@@ -230,6 +262,12 @@ class NISForm(ModelForm):
         fields = '__all__'
         model = models.NIS
 
+    def __init__(self, *args, **kwargs):
+        super(NISForm, self).__init__(*args, **kwargs)
+        self.fields["nis_enable"].widget.attrs["onChange"] = (
+            "nis_mutex_toggle();"
+        )
+
 
 class LDAPForm(ModelForm):
     ldap_certfile = FileField(label=_("Certificate"), required=False)
@@ -240,6 +278,12 @@ class LDAPForm(ModelForm):
         widgets = {
             'ldap_bindpw': forms.widgets.PasswordInput(render_value=True),
         }
+
+    def __init__(self, *args, **kwargs):
+        super(LDAPForm, self).__init__(*args, **kwargs)
+        self.fields["ldap_enable"].widget.attrs["onChange"] = (
+            "ldap_mutex_toggle();"
+        )
 
     def clean_ldap_certfile(self):
         filename = "/data/ldap_certfile"
@@ -259,8 +303,41 @@ class LDAPForm(ModelForm):
 
         return filename
 
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("ldap_bindpw"):
+            cdata["ldap_bindpw"] = self.instance.ldap_bindpw
+
+        binddn = cdata.get("ldap_binddn")
+        bindpw = cdata.get("ldap_bindpw")
+        hostname = cdata.get("ldap_hostname")
+
+        ret = FreeNAS_LDAP.validate_credentials(
+            hostname, binddn=binddn, bindpw=bindpw
+        )
+        if ret == False:
+            raise forms.ValidationError(
+                _("Incorrect password.")
+            )
+
+        return cdata
+
     def save(self):
+        enable = self.cleaned_data.get("ldap_enable")
+
+        started = notifier().started("ldap")
         super(LDAPForm, self).save()
-        started = notifier().restart("ldap")
-#        if started is False and models.services.objects.get(srv_service='directoryservice').srv_enable:
-#            raise ServiceFailed("ldap", _("The ldap service failed to reload."))
+
+        if enable:
+            if started == True:
+                started = notifier().restart("ldap")
+            if started == False:
+                started = notifier().start("ldap")
+            if started == False:
+                self.instance.ad_enable = False
+                super(LDAPForm, self).save()
+                raise ServiceFailed("ldap",
+                    _("LDAP failed to reload."))
+        else:
+            if started == True:
+                started = notifier().stop("ldap")

@@ -3,6 +3,7 @@
 . /etc/rc.freenas
 
 cifs_file="/tmp/.cifs_AD"
+status_file="/var/run/directoryservice.activedirectory"
 service=/usr/sbin/service
 python=/usr/local/bin/python
 notifier=/usr/local/www/freenasUI/middleware/notifier.py
@@ -135,6 +136,7 @@ adctl_start()
 	adctl_cmd ${service} ix-pam quietstart
 	adctl_cmd "${service} ix-cache quietstart &"
 
+	touch "${status_file}"
 	return 0
 }
 
@@ -204,6 +206,8 @@ adctl_stop()
 	fi
 
 	activedirectory_set 0
+	rm -f "${status_file}"
+
 	return 0
 }
 

@@ -32,7 +32,6 @@ import re
 import shutil
 import signal
 import socket
-import string
 import subprocess
 import sysctl
 import time
@@ -54,10 +53,12 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
 from freenasUI.account.models import bsdUsers
+from freenasUI.common.locks import mntlock
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
@@ -68,6 +69,7 @@ VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 DDFILE = '/tmp/.upgrade_dd'
 RE_DD = re.compile(r"^(\d+) bytes", re.M | re.S)
+PERFTEST_SIZE = 40 * 1024 * 1024 * 1024  # 40 GiB
 
 log = logging.getLogger('system.views')
 
@@ -143,13 +145,7 @@ def config_upload(request):
                 request.session['allow_reboot'] = True
                 return render(request, 'system/config_ok.html', variables)
 
-        if 'iframe' in request.GET:
-            return HttpResponse('<html><body><textarea>' +
-                                render_to_string('system/config_upload.html',
-                                                 variables) +
-                                '</textarea></boby></html>')
-        else:
-            return render(request, 'system/config_upload.html', variables)
+        return render(request, 'system/config_upload.html', variables)
     else:
         FIRMWARE_DIR = '/var/tmp/firmware'
         if os.path.exists(FIRMWARE_DIR):
@@ -531,6 +527,124 @@ def firmware_progress(request):
     return HttpResponse(content, content_type='application/json')
 
 
+def perftest(request):
+
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+
+    if request.method == 'GET':
+        p1 = subprocess.Popen([
+            '/usr/local/bin/perftests-nas', '-t',
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tests = p1.communicate()[0].strip('\n').split('\n')
+        return render(request, 'system/perftest.html', {
+            'tests': tests,
+        })
+
+    if not basename:
+        raise MiddlewareError(
+            _('System dataset is required to perform this action.')
+        )
+
+    dump = '/mnt/%s/perftest.txz' % basename
+    perftestdataset = '%s/perftest' % basename
+
+    with mntlock(mntpt='/mnt/%s' % basename):
+
+        _n = notifier()
+
+        rv, errmsg = _n.create_zfs_dataset(
+            path=perftestdataset,
+            props={
+                'primarycache': 'metadata',
+                'secondarycache': 'metadata',
+                'compression': 'off',
+            },
+            _restart_collectd=False,
+        )
+
+        currdir = os.getcwd()
+        os.chdir('/mnt/%s' % perftestdataset)
+
+        p1 = subprocess.Popen([
+            '/usr/local/bin/perftests-nas',
+            '-o', ('/mnt/%s' % perftestdataset).encode('utf8'),
+            '-s', str(PERFTEST_SIZE),
+        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p1.communicate()
+
+        os.chdir('..')
+
+        p1 = pipeopen('tar -cJf %s perftest' % dump)
+        p1.communicate()
+
+        os.chdir(currdir)
+
+        _n.destroy_zfs_dataset(perftestdataset)
+
+        return JsonResp(
+            request,
+            message='Performance test has completed.',
+            events=[
+                'window.location=\'%s\'' % reverse('system_perftest_download'),
+            ],
+        )
+
+
+def perftest_download(request):
+
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+    dump = '/mnt/%s/perftest.txz' % basename
+
+    wrapper = FileWrapper(file(dump))
+    response = StreamingHttpResponse(
+        wrapper,
+        content_type='application/octet-stream',
+    )
+    response['Content-Length'] = os.path.getsize(dump)
+    response['Content-Disposition'] = \
+        'attachment; filename=perftest-%s-%s.tgz' % (
+            socket.gethostname(),
+            time.strftime('%Y%m%d%H%M%S'))
+
+    return response
+
+
+def perftest_progress(request):
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+    progressfile = '/mnt/%s/perftest/.progress' % basename
+
+    data = ''
+    try:
+        if os.path.exists(progressfile):
+            with open(progressfile, 'r') as f:
+                data = f.read()
+            data = data.strip('\n')
+    except:
+        pass
+
+    total = None
+    reg = re.search(r'^totaltests:(\d+)$', data, re.M)
+    if reg:
+        total = int(reg.groups()[0])
+
+    runningtest = data.rsplit('\n')[-1]
+    if ':' in runningtest:
+        runningtest = runningtest.split(':')[0]
+
+    percent = None
+    step = len(data.split('\n'))
+    if total:
+        step -= total
+    indeterminate = True
+
+    content = json.dumps({
+        'step': step,
+        'percent': percent,
+        'indeterminate': indeterminate,
+    })
+    return HttpResponse(content, content_type='application/json')
+
+
 def restart_httpd(request):
     """ restart httpd """
     notifier().restart("http")
@@ -548,33 +662,44 @@ def debug(request):
     p1 = pipeopen("zfs list -H -o name")
     zfs = p1.communicate()[0]
     zfs = zfs.split()
-    dir = "/var/tmp/ixdiagnose"
-    for dataset in zfs:
-        if dataset.endswith(".system"):
-            p1 = pipeopen("zfs list -H -o mountpoint %s" % dataset)
-            mntpoint = p1.communicate()[0].strip()
-            dir = mntpoint + "/" + "ixdiagnose"
-            break
-    dump = "%s/ixdiagnose.tgz" % dir
+    direc = "/var/tmp/ixdiagnose"
+    mntpt = '/var/tmp'
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+    if basename:
+        mntpoint = '/mnt/%s' % basename
+        if os.path.exists(mntpoint):
+            direc = '%s/ixdiagnose' % mntpoint
+            mntpt = mntpoint
+    dump = "%s/ixdiagnose.tgz" % direc
 
-    opts = ["/usr/local/bin/ixdiagnose", "-d", dir, "-s", "-F"]
-    p1 = pipeopen(string.join(opts, ' '), allowfork=True)
-    p1.communicate()[0]
-    p1.wait()
+    with mntlock(mntpt=mntpt):
 
-    wrapper = FileWrapper(file(dump))
-    response = HttpResponse(wrapper, content_type='application/octet-stream')
-    response['Content-Length'] = os.path.getsize(dump)
-    response['Content-Disposition'] = \
-        'attachment; filename=debug-%s-%s.tgz' % (
-            hostname.encode('utf-8'),
-            time.strftime('%Y%m%d%H%M%S'))
+        # Be extra safe in case we have left over from previous run
+        if os.path.exists(direc):
+            opts = ["/bin/rm", "-r", "-f", direc]
+            p1 = pipeopen(' '.join(opts), allowfork=True)
+            p1.wait()
 
-    opts = ["/bin/rm", "-r", "-f", dir]
-    p1 = pipeopen(string.join(opts, ' '), allowfork=True)
-    p1.wait()
+        opts = ["/usr/local/bin/ixdiagnose", "-d", direc, "-s", "-F"]
+        p1 = pipeopen(' '.join(opts), allowfork=True)
+        p1.communicate()
 
-    return response
+        wrapper = FileWrapper(file(dump))
+        response = StreamingHttpResponse(
+            wrapper,
+            content_type='application/octet-stream',
+        )
+        response['Content-Length'] = os.path.getsize(dump)
+        response['Content-Disposition'] = \
+            'attachment; filename=debug-%s-%s.tgz' % (
+                hostname.encode('utf-8'),
+                time.strftime('%Y%m%d%H%M%S'))
+
+        opts = ["/bin/rm", "-r", "-f", direc]
+        p1 = pipeopen(' '.join(opts), allowfork=True)
+        p1.wait()
+
+        return response
 
 
 class UnixTransport(xmlrpclib.Transport):

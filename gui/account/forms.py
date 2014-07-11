@@ -297,11 +297,7 @@ class FilteredSelectField(forms.fields.MultipleChoiceField):
 
 
 class bsdUsersForm(ModelForm, bsdUserGroupMixin):
-    """
-    # Yanked from django/contrib/auth/
-    A form that creates a user, with no privileges,
-    from the given username and password.
-    """
+
     bsdusr_username = forms.CharField(
         label=_("Username"),
         max_length=16)
@@ -389,9 +385,12 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         ]
         self.fields['bsdusr_password_disabled'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_bsdusr_password_disabled", '
-            '["id_bsdusr_locked"], false);')
+            '["id_bsdusr_locked", "id_bsdusr_sudo"], false);')
         self.fields['bsdusr_locked'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_bsdusr_locked", '
+            '["id_bsdusr_password_disabled"], false);')
+        self.fields['bsdusr_sudo'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_bsdusr_sudo", '
             '["id_bsdusr_password_disabled"], false);')
 
         if not self.instance.id:
@@ -452,12 +451,13 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 )
                 self.fields['bsdusr_mode'].widget.attrs['disabled'] = True
                 self.fields['bsdusr_mode'].required = False
-            if self.instance.bsdusr_locked is True:
+            if self.instance.bsdusr_locked or self.instance.bsdusr_sudo:
                 self.fields['bsdusr_password_disabled'].widget.attrs[
                     'disabled'
                 ] = True
             if self.instance.bsdusr_password_disabled is True:
                 self.fields['bsdusr_locked'].widget.attrs['disabled'] = True
+                self.fields['bsdusr_sudo'].widget.attrs['disabled'] = True
             self.fields['bsdusr_sshpubkey'].initial = (
                 self.instance.bsdusr_sshpubkey
             )
@@ -492,10 +492,20 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 raise forms.ValidationError(_("This field is required"))
             return group
 
+    def clean_bsdusr_password(self):
+        bsdusr_password = self.cleaned_data.get('bsdusr_password')
+        # See bug #4098
+        if bsdusr_password and '?' in bsdusr_password:
+            raise forms.ValidationError(_(
+                'Passwords containing a question mark (?) are currently not '
+                'allowed due to problems with CIFS.'
+            ))
+        return bsdusr_password
+
     def clean_bsdusr_password2(self):
         bsdusr_password = self.cleaned_data.get("bsdusr_password", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
-        if bsdusr_password != bsdusr_password2:
+        if bsdusr_password and bsdusr_password != bsdusr_password2:
             raise forms.ValidationError(
                 _("The two password fields didn't match.")
             )

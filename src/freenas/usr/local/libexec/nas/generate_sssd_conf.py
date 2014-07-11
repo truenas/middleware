@@ -442,7 +442,10 @@ def sssd_setup():
 
 
 def add_ldap(sc):
-    ldap_cookie = 'FreeNAS_LDAP'
+    ldap = LDAP.objects.all()[0]
+    parts = ldap.ldap_hostname.split('.')
+
+    ldap_cookie = parts[0].upper()
     ldap_domain = 'domain/%s' % ldap_cookie
 
     ldap_section = None
@@ -465,7 +468,7 @@ def add_ldap(sc):
         { 'chpass_provider': 'ldap' },
         { 'ldap_schema': 'rfc2307bis' },
         { 'ldap_force_upper_case_realm': 'true' },
-        { 'use_fully_qualified_names': 'false' }
+        { 'use_fully_qualified_names': 'true' }
     ]
 
     for d in ldap_defaults:
@@ -473,24 +476,38 @@ def add_ldap(sc):
         if not key in ldap_section:
             setattr(ldap_section, key, d[key])
 
-    ldap = LDAP.objects.all()[0]
+    if ldap.ldap_use_default_domain:
+        ldap_section.use_fully_qualified_names = 'false'
 
     ldap_section.ldap_uri = "%s://%s" % (
         "ldaps" if ldap.ldap_ssl == 'on' else "ldap",
         ldap.ldap_hostname
     )
     ldap_section.ldap_search_base = ldap.ldap_basedn
+
     if ldap.ldap_usersuffix:
         ldap_section.ldap_user_search_base = "%s,%s" % (
             ldap.ldap_usersuffix, ldap.ldap_basedn
         )
+    else:
+        ldap_section.ldap_user_search_base = "%s%s" % (
+            ldap.ldap_basedn,
+            "?subtree?(objectclass=posixAccount)"
+        )
+
     if ldap.ldap_groupsuffix:
         ldap_section.ldap_group_search_base = "%s,%s" % (
             ldap.ldap_groupsuffix, ldap.ldap_basedn
         )
-    ldap_section.ldap_default_bind_dn = ldap.ldap_rootbasedn
+    else:
+        ldap_section.ldap_group_search_base = "%s%s" % (
+            ldap.ldap_basedn,
+            "?subtree?(objectclass=posixGroup)"
+        )
+
+    ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
     ldap_section.ldap_default_authtok_type = 'password'
-    ldap_section.ldap_default_authtok = ldap.ldap_rootbindpw
+    ldap_section.ldap_default_authtok = ldap.ldap_bindpw
     
     if ldap.ldap_ssl == 'on':
         ldap_section.ldap_tls_cacert = ldap.ldap_tls_cacertfile
@@ -505,7 +522,10 @@ def add_ldap(sc):
 
 
 def add_activedirectory(sc):
-    ad_cookie = 'FreeNAS_ActiveDirectory'
+    activedirectory = ActiveDirectory.objects.all()[0]
+    ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+
+    ad_cookie = ad.netbiosname
     ad_domain = 'domain/%s' % ad_cookie
 
     ad_section = None
@@ -536,7 +556,7 @@ def add_activedirectory(sc):
         { 'ldap_group_name': 'msSFU30Name' },
         { 'ldap_group_gid_number': 'gidNumber' },
         { 'ldap_force_upper_case_realm': 'true' },
-        { 'use_fully_qualified_names': 'false' }
+        { 'use_fully_qualified_names': 'true' }
     ]
 
     for d in ad_defaults:
@@ -544,12 +564,12 @@ def add_activedirectory(sc):
         if not key in ad_section:
             setattr(ad_section, key, d[key])
 
-    activedirectory = ActiveDirectory.objects.all()[0]
+    if activedirectory.ad_use_default_domain:
+        ad_section.use_fully_qualified_names = 'false'
 
     #
     # XXX re-work this to use ad object
     #
-    ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
     ad_section.ldap_uri = "ldap://%s" % ad.dchost
     ad_section.ldap_search_base = ad.basedn
     ad_section.ldap_default_bind_dn = ad.binddn
@@ -573,6 +593,9 @@ def main():
     if not sc['sssd']:
         sc['sssd'] = SSSDSectionSSSD()
         sc['sssd'].config_file_version = 2
+    sc['sssd'].full_name_format = r"%2$s\%1$s"
+    sc['sssd'].re_expression = r"(((?P<domain>[^\\]+)\\(?P<name>.+$))" \
+        r"|((?P<name>[^@]+)@(?P<domain>.+$))|(^(?P<name>[^@\\]+)$))"
 
     if not sc['nss']:
         sc['nss'] = SSSDSectionNSS()

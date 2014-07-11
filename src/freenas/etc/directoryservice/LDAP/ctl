@@ -3,6 +3,7 @@
 . /etc/rc.freenas
 
 cifs_file="/tmp/.cifs_LDAP"
+status_file="/var/run/directoryservice.ldap"
 service=/usr/sbin/service
 python=/usr/local/bin/python
 notifier=/usr/local/www/freenasUI/middleware/notifier.py
@@ -103,7 +104,7 @@ ldapctl_start()
 	ldapctl_cmd ${service} ix-nsswitch quietstart
 	ldapctl_cmd ${service} ix-pam quietstart
 
-	ldapctl_cmd $[service} ix-sssd start	
+	ldapctl_cmd ${service} ix-sssd start	
 	if sssd_running
 	then
 		sssd_restart
@@ -123,6 +124,7 @@ ldapctl_start()
 	cifs_restart
 
 	ldapctl_cmd "${service} ix-cache quietstart &"
+	touch "${status_file}"
 
 	return 0
 }
@@ -138,7 +140,7 @@ ldapctl_stop()
 
 	if ! ldap_enabled
 	then
-		return 1
+		ldap_set 1
 	fi
 
 	if cifs_enabled
@@ -190,6 +192,8 @@ ldapctl_stop()
 	fi
 
 	ldap_set 0
+	rm -f "${status_file}"
+
 	return 0
 }
 

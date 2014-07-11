@@ -246,7 +246,7 @@ for replication in replication_tasks:
 
     if known_latest_snapshot != '' and not resetonce:
         # Check if it matches remote snapshot
-        rzfscmd = '"zfs list -Hr -o name -t snapshot -d 1 %s | tail -n 1 | cut -d@ -f2"' % (remotefs_final)
+        rzfscmd = '"zfs list -Hr -o name -t snapshot -d 1 %s | tail -n 1 | cut -d@ -f2" || true' % (remotefs_final)
         sshproc = pipeopen('%s -p %d %s %s' % (sshcmd, remote_port, remote, rzfscmd))
         output = sshproc.communicate()[0]
         if output != '':

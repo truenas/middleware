@@ -9,14 +9,19 @@
 . /etc/rc.freenas
 
 
-generate_nsswitch_conf()
+generate_nsswitch_start()
 {
-	/usr/local/libexec/nas/generate_nsswitch_conf.py
+	/usr/local/libexec/nas/generate_nsswitch_conf.py start
+}
+
+generate_nsswitch_stop()
+{
+	/usr/local/libexec/nas/generate_nsswitch_conf.py stop
 }
 
 name="ix-nsswitch"
-start_cmd='generate_nsswitch_conf'
-stop_cmd='generate_nsswitch_conf'
+start_cmd='generate_nsswitch_start'
+stop_cmd='generate_nsswitch_stop'
 
 load_rc_config $name
 run_rc_command "$1"

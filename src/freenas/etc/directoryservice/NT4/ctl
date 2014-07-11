@@ -3,6 +3,7 @@
 . /etc/rc.freenas
 
 cifs_file="/tmp/.cifs_AD"
+status_file="/var/run/directoryservice.nt4"
 service=/usr/sbin/service
 python=/usr/local/bin/python
 notifier=/usr/local/www/freenasUI/middleware/notifier.py
@@ -87,6 +88,7 @@ nt4ctl_start()
 	cifs_restart
 
 	nt4ctl_cmd "${service} ix-cache quietstart &"
+	touch "${status_file}"
 
 	return 0
 }
@@ -143,12 +145,20 @@ nt4ctl_stop()
 	fi
 
 	nt4_set 0
+	rm -f "${status_file}"
+
 	return 0
 }
 
 nt4ctl_status()
 {
-	nt4ctl_cmd ${service} ix-nt4 status
+	if [ -f "${status_file}" ]
+	then
+		nt4ctl_cmd ${service} ix-nt4 status
+		return $?
+	fi
+
+	return 1
 }
 
 name="nt4ctl"

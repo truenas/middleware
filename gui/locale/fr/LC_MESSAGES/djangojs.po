@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-05-31 15:05+0000\n"
-"Last-Translator: SmallGuy <zoreille.gfo@hotmail.fr>\n"
+"PO-Revision-Date: 2014-07-02 08:56+0000\n"
+"Last-Translator: skimpax <skimpax@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1401548711.0\n"
+"X-POOTLE-MTIME: 1404291372.0\n"
 
 # Pour la fonction actuelle, "Graphiques" correspond plus.
 #~ msgid "Reporting"
@@ -271,7 +271,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Configuration manuelle"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
 #, fuzzy
@@ -280,4 +280,27 @@ msgstr "Nom du volume"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
+msgstr "Confirmer"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:49
+#, fuzzy
+msgid "System"
+msgstr "Alerte Système"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:92
+#, fuzzy
+msgid "Network"
+msgstr "Paramètres réseau"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:94
+msgid "Tasks"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:182
+#, fuzzy
+msgid "Sharing"
+msgstr "Partages"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:521
+msgid "Directory Service"
 msgstr ""

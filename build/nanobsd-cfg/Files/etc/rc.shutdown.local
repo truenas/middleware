@@ -1,1 +1,1 @@
-/bin/sh /root/save_rrds.sh
+/bin/sh /usr/local/sbin/save_rrds.sh

@@ -37,25 +37,30 @@ def main():
         'rpc': ['files']
     }
 
-    if activedirectory_enabled() and activedirectory_has_unix_extensions():
-        nsswitch_conf['passwd'].append('sss')
-        nsswitch_conf['group'].append('sss')
-    elif activedirectory_enabled() or \
-        domaincontroller_enabled() or nt4_enabled():
-        nsswitch_conf['passwd'].append('winbind')
-        nsswitch_conf['group'].append('winbind')
+    verb = "start"
+    if len(sys.argv) > 1:
+        verb = sys.argv[1].lower()
 
-    if nt4_enabled():
-        nsswitch_conf['hosts'].append('wins')
+    if verb == 'start':
+        if activedirectory_enabled() and activedirectory_has_unix_extensions():
+            nsswitch_conf['passwd'].append('sss')
+            nsswitch_conf['group'].append('sss')
+        elif activedirectory_enabled() or \
+            domaincontroller_enabled() or nt4_enabled():
+            nsswitch_conf['passwd'].append('winbind')
+            nsswitch_conf['group'].append('winbind')
 
-    if ldap_enabled():
-        nsswitch_conf['passwd'].append('sss')
-        nsswitch_conf['group'].append('sss')
+        if nt4_enabled():
+            nsswitch_conf['hosts'].append('wins')
 
-    if nis_enabled():
-        nsswitch_conf['passwd'].append('nis')
-        nsswitch_conf['group'].append('nis')
-        nsswitch_conf['hosts'].append('nis')
+        if ldap_enabled():
+            nsswitch_conf['passwd'].append('sss')
+            nsswitch_conf['group'].append('sss')
+
+        if nis_enabled():
+            nsswitch_conf['passwd'].append('nis')
+            nsswitch_conf['group'].append('nis')
+            nsswitch_conf['hosts'].append('nis')
 
     try:
         fd = os.open(NSSWITCH_CONF_PATH, os.O_WRONLY|os.O_CREAT|os.O_TRUNC, 0644)

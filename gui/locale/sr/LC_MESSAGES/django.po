@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2014-06-10 20:17+0000\n"
+"PO-Revision-Date: 2014-06-28 20:10+0000\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1402431422.0\n"
+"X-POOTLE-MTIME: 1403986228.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6645,20 +6645,20 @@ msgstr "Skup podataka uspešno ažuriran."
 
 #: middleware/notifier.py:3068
 msgid "No RPC Token!"
-msgstr ""
+msgstr "Nema RPC tokena"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
-msgstr ""
+msgstr "Nema nosioca"
 
 #: middleware/notifier.py:3849
 msgid "Down"
-msgstr ""
+msgstr "Dole"
 
 #: middleware/zfs.py:623
 #: middleware/zfs.py:691
 msgid "In Progress"
-msgstr ""
+msgstr "U toku"
 
 #: network/forms.py:380
 #, fuzzy
@@ -7555,7 +7555,7 @@ msgstr "N/A"
 
 #: jails/forms.py:785
 msgid "Create destination directory if it does not exist"
-msgstr ""
+msgstr "Kreirati odredišni direktorijum ako ne postoji"
 
 #: jails/models.py:74
 #, fuzzy
@@ -7615,11 +7615,11 @@ msgstr "JAIL je uspešno uvezen."
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "Bekap"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
-msgstr ""
+msgstr "Degradirani"
 
 #: middleware/zfs.py:673
 #: middleware/zfs.py:732
@@ -7633,20 +7633,20 @@ msgstr "IPv4 Addresa"
 
 #: network/forms.py:138
 msgid "Only one interface can be used for DHCP"
-msgstr ""
+msgstr "Samo jedan interfejs će biti upotrebljen za DHCP"
 
 #: network/forms.py:151
 msgid "Only one interface can have IPv6 autoconfiguration enabled"
-msgstr ""
+msgstr "Samo jedan interfejs može da ima omogućenu IPv6 autokonfiguraciju"
 
 #: network/forms.py:189
 #: network/forms.py:698
 msgid "The network %s is already in use by another NIC."
-msgstr ""
+msgstr "Mreža %s je već u upotrebi od strane drugog NIC-a"
 
 #: network/forms.py:446
 msgid "You need a domain, e.g. hostname.domain"
-msgstr ""
+msgstr "Potreban vam je domen, tj. hostname.domain"
 
 #: network/models.py:83
 msgid ""
@@ -8695,7 +8695,7 @@ msgstr "Lokalni Master"
 #: middleware/zfs.py:648
 #: middleware/zfs.py:711
 msgid "Completed"
-msgstr ""
+msgstr "Kompletirano"
 
 #: middleware/zfs.py:663
 #: middleware/zfs.py:722
@@ -8720,7 +8720,7 @@ msgstr "Promeni"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
-msgstr ""
+msgstr "HTTP Proxy"
 
 # ako % predstavlja user  kao users 
 #: network/views.py:66
@@ -9422,6 +9422,8 @@ msgstr "Da li ste sigurni da želite da odvojite?"
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
 msgstr ""
+"Ova promena će da prouzrokuje događaj za preuzimanje posla. Dali želite da "
+"nastavite?"
 
 #: network/admin.py:63
 msgid "Network connectivity will be interrupted"
@@ -9434,7 +9436,7 @@ msgstr "Ime domena"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
-msgstr ""
+msgstr "Mrežna konekcija će biti prekinuta. Dali želite da nastavite?"
 
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
@@ -9447,3 +9449,94 @@ msgstr ""
 #: services/models.py:414
 msgid "Enable experimental target"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "AFP servis nije uspeo ponovo da se učita."
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "Servis activnog directorijuma nije uspeo da se ponovo učita."
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "AFP servis nije uspeo ponovo da se učita."
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "Omogućeno"
+
+#: directoryservice/models.py:295
+#, fuzzy
+msgid "Bind DN"
+msgstr "Root vezivanje DN"
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "Stara šifra"
+
+#: services/forms.py:753
+#: services/forms.py:896
+#, fuzzy
+msgid "Certificate"
+msgstr "SSL sertifikat"
+
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Root lozinka za vezivanje"
+
+#: services/models.py:1623
+#: services/models.py:1835
+#, fuzzy
+msgid "Upload your certificate file here."
+msgstr "Postavite sadržaj vašeg samo potpisanog sertifikata ovde."
+
+#: system/models.py:1148
+#, fuzzy
+msgid "Reporting Database"
+msgstr "Izveštavanje"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "Neformalno"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+#, fuzzy
+msgid "Tasks"
+msgstr "Rsync Zadaci"
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "Ime Domen Kontrolera"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+#, fuzzy
+msgid "Set SSL Certificate"
+msgstr "SSL sertifikat"

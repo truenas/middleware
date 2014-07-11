@@ -61,8 +61,10 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/crashuploader ${STAGEDIR}/${PREFIX}/usr/local/bin/crashuploader
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/custom-upssched-cmd ${STAGEDIR}/${PREFIX}/usr/local/bin/custom-upssched-cmd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-debug ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-debug
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/iscsi-select ${STAGEDIR}/${PREFIX}/usr/local/bin/iscsi-select
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/ixdiagnose ${STAGEDIR}/${PREFIX}/usr/local/bin/ixdiagnose
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/mfistatus.py ${STAGEDIR}/${PREFIX}/usr/local/bin/mfistatus.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/perftests-nas ${STAGEDIR}/${PREFIX}/usr/local/bin/perftests-nas
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/zilstat ${STAGEDIR}/${PREFIX}/usr/local/bin/zilstat
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/adtool ${STAGEDIR}/${PREFIX}/usr/local/bin/adtool
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi
@@ -79,6 +81,7 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/active_directory
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cache
+	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/dtrace
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/geom
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/hardware
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ipmi
@@ -94,6 +97,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/fastcgi_params ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/fastcgi_params
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/active_directory/active_directory.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/active_directory/active_directory.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/cache/cache.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cache/cache.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/dtrace/* ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/dtrace/
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/geom/geom.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/geom/geom.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/hardware/hardware.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/hardware/hardware.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/include.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/include.sh
@@ -119,6 +123,8 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/sas2flash ${STAGEDIR}/${PREFIX}/usr/local/sbin/sas2flash
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/save_rrds.sh ${STAGEDIR}/${PREFIX}/usr/local/sbin/save_rrds.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/scrub ${STAGEDIR}/${PREFIX}/usr/local/sbin/scrub
+	${MKDIR} ${STAGEDIR}${PREFIX}/usr/local/share/perftests-nas/tests
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/perftests-nas/tests/* ${STAGEDIR}${PREFIX}/usr/local/share/perftests-nas/tests/
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/www/data
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/www/data/django.fcgi ${STAGEDIR}/${PREFIX}/usr/local/www/data/django.fcgi
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix.rc.d

@@ -84,6 +84,22 @@ class FreeNAS_LDAP_Exception(FreeNAS_LDAP_Directory_Exception):
     pass
 
 class FreeNAS_LDAP_Directory(object):
+    @staticmethod
+    def validate_credentials(hostname, port=389, binddn=None, bindpw=None):
+        ret = None
+        f = FreeNAS_LDAP(host=hostname, port=port,
+            binddn=binddn, bindpw=bindpw)
+
+        try:
+            f.open()
+            ret = True
+        except ldap.INVALID_CREDENTIALS:
+            ret = False
+        except Exception as e:
+            ret = True
+
+        return ret
+
     def __init__(self, **kwargs):
         log.debug("FreeNAS_LDAP_Directory.__init__: enter")
 
@@ -412,6 +428,24 @@ class FreeNAS_LDAP_Directory(object):
 
 
 class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
+
+    def __keys(self):
+        return [
+            'host',
+            'port',
+            'anonbind',
+            'binddn',
+            'bindpw',
+            'basedn',
+            'ssl',
+            'usersuffix',
+            'groupsuffix',
+            'machinesuffix',
+            'passwordsuffix',
+            'certfile',
+            'use_default_domain'
+        ]
+
     def __db_init__(self, **kwargs):
         log.debug("FreeNAS_LDAP_Base.__db_init__: enter")
 
@@ -458,7 +492,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         self.groupsuffix = ldap['ldap_groupsuffix']
         self.machinesuffix = ldap['ldap_machinesuffix']
         self.passwordsuffix = ldap['ldap_passwordsuffix']
-        self.pwencryption = ldap['ldap_pwencryption']
         self.anonbind = ldap['ldap_anonbind']
 
         log.debug("FreeNAS_LDAP_Base.__db_init__: leave")
@@ -517,7 +550,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         log.debug("FreeNAS_LDAP_Base.__no_db_init__: leave")
 
-    def __init__(self, **kwargs):
+    def __old_init__(self, **kwargs):
         log.debug("FreeNAS_LDAP_Base.__init__: enter")
 
         __initfunc__ = self.__no_db_init__
@@ -525,6 +558,61 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             __initfunc__ = self.__db_init__
 
         __initfunc__(**kwargs)
+        self.ucount = 0
+        self.gcount = 0
+
+        log.debug("FreeNAS_LDAP_Base.__init__: leave")
+
+    def __set_defaults(self): 
+        log.debug("FreeNAS_LDAP_Base.__set_defaults: enter")
+
+        for key in self.__keys():
+            if key in ('anonbind', 'use_default_domain'):
+                self.__dict__[key] = False
+            else:
+                self.__dict__[key] = None
+
+        self.flags = 0
+
+        log.debug("FreeNAS_LDAP_Base.__set_defaults: leave")
+
+    def __name_to_host(self, name):
+        host = None
+        port = 389
+        if name:
+            parts = name.split(':')
+            host = parts[0]
+            if len(parts) > 1:
+                port = long(parts[1])
+        return (host, port)
+
+    def __init__(self, **kwargs):
+        log.debug("FreeNAS_LDAP_Base.__init__: enter")
+
+        self.kwargs = kwargs
+        self.__set_defaults()
+
+        super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
+
+        if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
+            ldap = ldap_objects()[0]
+            for key in ldap.keys():
+                newkey = key.replace("ldap_", "")
+                if newkey == 'hostname':
+                    (host, port) = self.__name_to_host(ldap[key])
+                    self.__dict__['host'] = host
+                    self.__dict__['port'] = port
+
+                elif newkey in ('anonbind', 'use_default_domain'):
+                    self.__dict__[newkey] = \
+                        False if long(ldap[key]) == 0 else True
+                else:
+                    self.__dict__[newkey] = ldap[key] if ldap[key] else None
+    
+        for key in kwargs:
+            if key in self.__keys():
+                self.__dict__[key] = kwargs[key]
+
         self.ucount = 0
         self.gcount = 0
 
@@ -959,10 +1047,11 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def __init__(self, **kwargs):
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: enter")
-        super(FreeNAS_ActiveDirectory_Base, self).__init__()
 
         self.kwargs = kwargs
         self.__set_defaults()
+
+        super(FreeNAS_ActiveDirectory_Base, self).__init__()
 
         if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
             ad = activedirectory_objects()[0]
@@ -1487,13 +1576,23 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
                 "LDAP users not in cache")
             ldap_users = self.get_users()
 
+        parts = self.host.split('.')
+        host = parts[0].upper()
         for u in ldap_users:
             CN = str(u[0])
             if self.flags & FLAGS_CACHE_WRITE_USER:
                 self.__ducache[CN] = u
 
             u = u[1]
-            uid = str(u['uid'][0])
+            if self.use_default_domain:
+                uid = u['uid'][0]
+            else:
+                uid = "{}{}{}".format(
+                    host,
+                    FREENAS_AD_SEPARATOR,
+                    u['uid'][0]
+                )
+
             try:
                 pw = pwd.getpwnam(uid)
 
@@ -1602,7 +1701,6 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                 log.debug("FreeNAS_ActiveDirectory_Users.__get_users: leave")
                 return
 
-        self._save()
         for d in self.__domains:
             n = d['nETBIOSName']
             self.__users[n] = []
@@ -1613,9 +1711,6 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
             self.basedn = d['nCName']
             self.attributes = ['sAMAccountName']
             self.pagesize = FREENAS_LDAP_PAGESIZE
-
-            self.close()
-            self.open()
 
             if (self.flags & FLAGS_CACHE_READ_USER) \
                 and self.__loaded('du', n):
@@ -1641,7 +1736,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                     sAMAccountName = "{}{}{}".format(
                         n,
                         FREENAS_AD_SEPARATOR,
-                       u['sAMAccountName'][0]
+                        u['sAMAccountName'][0]
                     )
 
 
@@ -1662,7 +1757,6 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                 self.__loaded('u', n, True)
                 self.__loaded('du', n, True)
 
-        self._restore()
         log.debug("FreeNAS_ActiveDirectory_Users.__get_users: leave")
 
 
@@ -1762,13 +1856,23 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
                 "LDAP groups not in cache")
             ldap_groups = self.get_groups()
 
+        parts = self.host.split('.') 
+        host = parts[0].upper()
         for g in ldap_groups:
             CN = str(g[0])
             if self.flags & FLAGS_CACHE_WRITE_GROUP:
                 self.__dgcache[CN] = g
 
             g = g[1]
-            cn = str(g['cn'][0])
+            if self.use_default_domain:
+                cn = g['cn'][0]
+            else:
+                cn = "{}{}{}".format(
+                    host,
+                    FREENAS_AD_SEPARATOR,
+                    g['cn'][0]
+                )
+
             try:
                 gr = grp.getgrnam(cn)
 
@@ -1879,7 +1983,6 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                     "leave")
                 return
 
-        self._save()
         for d in self.__domains:
             n = d['nETBIOSName']
             self.__groups[n] = []
@@ -1890,9 +1993,6 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
             self.basedn = d['nCName']
             self.attributes = ['sAMAccountName']
             self.pagesize = FREENAS_LDAP_PAGESIZE
-
-            self.close()
-            self.open()
 
             if (self.flags & FLAGS_CACHE_READ_GROUP) \
                 and self.__loaded('dg', n):
@@ -1937,7 +2037,6 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                 self.__loaded('g', n, True)
                 self.__loaded('dg', n, True)
 
-        self._restore()
         log.debug("FreeNAS_ActiveDirectory_Groups.__get_groups: leave")
 
 
@@ -2008,8 +2107,20 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
             ldap_group = self.get_group(group)
 
         if ldap_group:
+            parts = self.host.split('.')
+            host = parts[0].upper()
+
+            if self.use_default_domain:
+                cn = ldap_group[1]['cn'][0]
+            else:
+                cn = "{}{}{}".format(
+                    host,
+                    FREENAS_AD_SEPARATOR,
+                    ldap_group[1]['cn'][0]
+                )
+
             try:
-                gr = grp.getgrnam(ldap_group[1]['cn'][0])
+                gr = grp.getgrnam(cn)
 
             except:
                 gr = None
@@ -2208,7 +2319,19 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
 
         if ldap_user:
             self.__CN = ldap_user[0]
-            uid = ldap_user[1]['uid'][0]
+
+            parts = self.host.split('.')
+            host = parts[0].upper()
+
+            if self.use_default_domain:
+                uid = ldap_user[1]['uid'][0]
+            else:
+                uid = "{}{}{}".format(
+                    host,
+                    FREENAS_AD_SEPARATOR,
+                    ldap_user[1]['uid'][0]
+                )
+
             try:
                 pw = pwd.getpwnam(uid)
 

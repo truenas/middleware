@@ -105,22 +105,6 @@ get_trusted()
 	"
 }
 
-get_workgroup()
-{
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_workgroup
-
-	FROM
-		directoryservice_activedirectory
-
-	ORDER BY
-		-directoryservice_activedirectory.id
-
-	LIMIT 1;
-	"
-}
-
 get_cifs_homedir()
 {
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -179,7 +163,7 @@ setup_homedirs()
 			done
 
 		else
-			local workgroup=$(get_workgroup)
+			local workgroup=$(AD_get ad_workgroup)
 			mkdir -p "/var/home/${workgroup}"
 		fi
 
@@ -212,10 +196,18 @@ activedirectory_start()
 
 activedirectory_status()
 {
-	AD_init
+	local res=1
 
-	AD_log "activedirectory_status: checking status"
-	AD_status_domain >/dev/null
+	if dirsrv_enabled activedirectory
+	then
+		AD_init
+
+		AD_log "activedirectory_status: checking status"
+		AD_status_domain >/dev/null
+		res=$?
+	fi
+
+	return ${res}
 }
 
 activedirectory_stop()

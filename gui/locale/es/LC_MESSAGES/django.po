@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-04-01 08:58+0000\n"
-"Last-Translator: sukarra <jon.altia@gmail.com>\n"
+"PO-Revision-Date: 2014-06-19 05:30+0000\n"
+"Last-Translator: nekitoblack <alex.smith@nekitoblack.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1396342691.0\n"
+"X-POOTLE-MTIME: 1403155855.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -208,7 +208,7 @@ msgstr "Martes"
 
 #: choices.py:148 templates/storage/tasks.html:61
 msgid "Wednesday"
-msgstr "MIércoles"
+msgstr "Miércoles"
 
 #: choices.py:149 templates/storage/tasks.html:64
 msgid "Thursday"
@@ -315,7 +315,7 @@ msgstr "El SAI tiene poca batería"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr "SAI esta funcionando con batería"
+msgstr "UPS esta funcionando con batería"
 
 #: choices.py:255
 msgid "Preferred"
@@ -752,7 +752,9 @@ msgstr "El usuario %s no es válido."
 #: freeadmin/forms.py:149
 #, python-format
 msgid "The group %s is not valid."
-msgstr "El grupo %s no es valido"
+msgstr ""
+"La salida de agrupaciones no puede ser parseada, está la agrupación "
+"importada?"
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
@@ -6732,29 +6734,27 @@ msgstr "Escritura"
 
 #: choices.py:52
 msgid "HTTP+HTTPS"
-msgstr "                  HTTP+HTTPS                "
+msgstr "HTTP+HTTPS"
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr "Sin cifrar"
+msgstr "No encriptado"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr "Cifrado, sin contraseña                "
+msgstr "Encriptado, sin contraseña"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr "Cifrado, con contraseña                "
+msgstr "Encriptado, sin contraseña"
 
 #: choices.py:304
 msgid "lz4 (recommended)"
-msgstr ""
-"                                    lz4 (recomendado)"
-"                                "
+msgstr "lz4 (recomendado)"
 
 #: choices.py:308
 msgid "zle (runs of zeros)"
-msgstr "                  zle (series de ceros)                "
+msgstr "zle (series de ceros)"
 
 #: choices.py:560
 msgid "Verify"
@@ -6868,55 +6868,51 @@ msgstr "Teléfono móvil"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LanMan1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LanMan2"
 
 #: choices.py:175
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_01"
 
 #: choices.py:312
-#, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb (recomendado)"
+msgstr "lzjb (legado, no recomendado)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (mejor compresión)"
 
 #: choices.py:698
 #: services/models.py:1531
 #: services/models.py:1639
 #: services/models.py:2103
 #: services/models.py:2104
-#, fuzzy
 msgid "Domain Controller"
-msgstr "Nombre del controlador de dominio"
+msgstr "Controlador de Dominio"
 
 #: choices.py:716
-#, fuzzy
 msgid "auth+!data"
 msgstr "auth+data"
 
 #: account/forms.py:58
-#, fuzzy
 msgid "Confirm New Password"
-msgstr "Confirma Contraseña"
+msgstr "Confirmar Contraseña"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
-msgstr ""
+msgstr "El directorio Home no puede contener \":\""
 
 #: account/models.py:139
 msgid "Built-in User"
-msgstr ""
+msgstr "Grupo de Usuario"
 
 #: api/resources.py:888
 #: storage/models.py:745
@@ -6942,7 +6938,7 @@ msgstr ""
 
 #: jails/forms.py:516
 msgid "autostart"
-msgstr ""
+msgstr "Inicio Automático"
 
 #: jails/forms.py:906
 #, fuzzy
@@ -7853,62 +7849,55 @@ msgstr ""
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "Núcleo+"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (todo redondo)"
 
 #: choices.py:677
-#, fuzzy
 msgid "Debug2"
-msgstr "Depurar"
+msgstr "Depurar2"
 
 #: choices.py:678
-#, fuzzy
 msgid "Debug3"
-msgstr "Depurar"
+msgstr "Depurar3"
 
 #: choices.py:688
 #, fuzzy
 msgid "Local 2"
-msgstr "Usuario Local"
+msgstr "Local 2"
 
 #: choices.py:691
 #, fuzzy
 msgid "Local 5"
-msgstr "Usuario Local"
+msgstr "Local 5"
 
 #: choices.py:701
-#, fuzzy
 msgid "NIS"
-msgstr "Tarjeta de Red NIC"
+msgstr "NIS"
 
 #: account/forms.py:53
-#, fuzzy
 msgid "New Password"
 msgstr "Nueva contraseña"
 
 #: account/forms.py:66
-#, fuzzy
 msgid "Passwords do not match"
-msgstr "El secreto no coincide"
+msgstr "La contraseña no coincide"
 
 #: account/forms.py:398
-#, fuzzy
 msgid "Create Home Directory In"
-msgstr "Directorio Personal"
+msgstr "Crear Directorio Home en"
 
 #: account/models.py:54
-#, fuzzy
 msgid "Built-in Group"
 msgstr "Grupos auxiliares"
 
@@ -7926,27 +7915,23 @@ msgstr "Ultima Instantanea"
 
 #: common/system.py:279
 msgid "Mount failed (%(retcode)s) -> %(output)s"
-msgstr ""
+msgstr "Montaje fallido (%(retcode)s) -> %(output)s"
 
 #: freeadmin/forms.py:220
-#, fuzzy
 msgid "A file is required"
 msgstr "Este campo es necesario"
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
-#, fuzzy
 msgid "Invalid address: %s"
-msgstr "Firmware inválido"
+msgstr "Firmware inválido: %s"
 
 #: freeadmin/forms.py:259
 #: freeadmin/forms.py:283
-#, fuzzy
 msgid "Invalid network: %s"
-msgstr "Suma de Comprobacion Erronea"
+msgstr "Red inválida: %s"
 
 #: freeadmin/navtree.py:576
-#, fuzzy
 msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
 msgstr "Un error ha ocurrido mientras se comunicaba con %(url)s: %(error)s"
 
@@ -7954,9 +7939,8 @@ msgstr "Un error ha ocurrido mientras se comunicaba con %(url)s: %(error)s"
 #: jails/forms.py:859
 #: jails/models.py:521
 #: templates/plugins/plugins.html:21
-#, fuzzy
 msgid "Jail"
-msgstr "Jail IP"
+msgstr "Jaula"
 
 #: jails/admin.py:186
 #, fuzzy
@@ -7977,17 +7961,17 @@ msgstr ""
 #: jails/forms.py:517
 #: jails/models.py:192
 msgid "VIMAGE"
-msgstr ""
+msgstr "Vimage"
 
 #: jails/forms.py:518
 #: jails/models.py:196
 #, fuzzy
 msgid "NAT"
-msgstr "N/D"
+msgstr "NAT"
 
 #: jails/forms.py:785
 msgid "Create destination directory if it does not exist"
-msgstr ""
+msgstr "Crear directorio destino si no existe"
 
 #: jails/models.py:74
 #, fuzzy
@@ -8870,98 +8854,88 @@ msgstr ""
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "Núcleo"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (más rápido)"
+msgstr "lz4 (rápido)"
 
 #: choices.py:686
-#, fuzzy
 msgid "Local 0"
-msgstr "Usuario Local"
+msgstr "Local 0"
 
 #: choices.py:687
-#, fuzzy
 msgid "Local 1"
-msgstr "Usuario Local"
+msgstr "Local 1"
 
 #: choices.py:689
 #, fuzzy
 msgid "Local 3"
-msgstr "Usuario Local"
+msgstr "Local 3"
 
 #: choices.py:690
 #, fuzzy
 msgid "Local 4"
-msgstr "Usuario Local"
+msgstr "Local 4"
 
 #: choices.py:692
 #, fuzzy
 msgid "Local 6"
-msgstr "Usuario Local"
+msgstr "Local 6"
 
 #: choices.py:693
 #, fuzzy
 msgid "Local 7"
-msgstr "Usuario Local"
+msgstr "Local 7"
 
 #: choices.py:700
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 #: choices.py:707
-#, fuzzy
 msgid "on"
-msgstr "Ninguno"
+msgstr "encendido"
 
 #: choices.py:708
-#, fuzzy
 msgid "off"
-msgstr "Apagado"
+msgstr "apagado"
 
 #: account/forms.py:534
-#, fuzzy
 msgid "Home directory must end with username"
-msgstr "El directorio Home no es modificable, déjelo en blanco"
+msgstr "El directorio home debe terminar con el nombre de usuario"
 
 #: account/models.py:146
-#, fuzzy
 msgid "Disable password login"
 msgstr "Deshabilitado el inicio de sesión con contraseña"
 
 #: account/models.py:265
-#, fuzzy
 msgid "Group Memberships"
-msgstr "Pertenencia a grupos"
+msgstr "Pertenencia a un grupo"
 
 #: freeadmin/navtree.py:611
-#, fuzzy
 msgid "Could not reverse url, skipping node %(node)s: %(error)s"
-msgstr "No puedo recuperar %(url)s: %(error)s"
+msgstr "No puedo recuperar url, pasando nodo %(node)s : %(error)s"
 
 #: jails/admin.py:89
 #: jails/models.py:183
-#, fuzzy
 msgid "Autostart"
-msgstr "Automático"
+msgstr "Inicio Automático"
 
 #: jails/admin.py:189
 #: jails/nav.py:264
@@ -9784,9 +9758,8 @@ msgid "Would you like to run this rsync job now?"
 msgstr "¿Quiere activar este servicio?"
 
 #: freeadmin/options.py:633
-#, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "¿Está seguro de que desea desconectar el disco?"
+msgstr "Está seguro que desea editar esto?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -9816,3 +9789,94 @@ msgstr ""
 #: services/models.py:414
 msgid "Enable experimental target"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: directoryservice/forms.py:104
+#, fuzzy
+msgid "NT4 failed to reload."
+msgstr "Ha fallado el reinicio del servicio AFP"
+
+#: directoryservice/forms.py:222
+#, fuzzy
+msgid "Active Directory failed to reload."
+msgstr "Ha fallado el reinicio del servicio AD (ActiveDirectory)"
+
+#: directoryservice/forms.py:316
+#, fuzzy
+msgid "LDAP failed to reload."
+msgstr "Ha fallado el reinicio del servicio AFP"
+
+#: directoryservice/models.py:67
+#: directoryservice/models.py:197
+#: directoryservice/models.py:263
+#: directoryservice/models.py:358
+#, fuzzy
+msgid "Enable"
+msgstr "Habilitado"
+
+#: directoryservice/models.py:295
+#, fuzzy
+msgid "Bind DN"
+msgstr "Union de raiz DN"
+
+#: directoryservice/models.py:302
+#, fuzzy
+msgid "Bind password"
+msgstr "Contraseña antigua"
+
+#: services/forms.py:753
+#: services/forms.py:896
+#, fuzzy
+msgid "Certificate"
+msgstr "Certificado SSL"
+
+#: services/forms.py:864
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Contraseña de root obligatoria"
+
+#: services/models.py:1623
+#: services/models.py:1835
+#, fuzzy
+msgid "Upload your certificate file here."
+msgstr "Coloque el contenido de su archivo Certificado autofirmado aquí"
+
+#: system/models.py:1148
+#, fuzzy
+msgid "Reporting Database"
+msgstr "Informe"
+
+#: system/models.py:1150
+msgid ""
+"Save the Round-Robin Database (RRD) used by system statistics collection "
+"daemon into the system dataset"
+msgstr ""
+
+#: system/nav.py:45
+#: templates/system/index.html:3
+#, fuzzy
+msgid "Information"
+msgstr "Informal"
+
+#: tasks/nav.py:4
+#: templates/menubar.html:13
+#: templates/tasks/index.html:1
+#, fuzzy
+msgid "Tasks"
+msgstr "Tareas RSyncs"
+
+#: templates/services/core.html:32
+#, fuzzy
+msgid "Domain Controller Settings"
+msgstr "Nombre del controlador de dominio"
+
+#: templates/system/settings_edit.html:30
+#: templates/system/settings_edit.html:32
+#, fuzzy
+msgid "Set SSL Certificate"
+msgstr "Certificado SSL"

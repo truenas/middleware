@@ -166,10 +166,7 @@ def login_wrapper(
         'sw_login_version': get_sw_login_version(),
         'sw_name': get_sw_name(),
     })
-    qs = models.bsdUsers.objects.filter(bsdusr_uid=0).exclude(
-        bsdusr_unixhash='*'
-    )
-    if not qs.exists():
+    if not models.bsdUsers.has_root_password():
         authentication_form = forms.NewPasswordForm
         extra_context.update({
             'reset_password': True,
