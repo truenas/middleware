@@ -11,7 +11,7 @@ import urllib2
 
 sys.path.append("/usr/local/lib")
 
-import freenasOS.ixExceptions
+import freenasOS.Exceptions
 import freenasOS.Manifest
 
 _config_file = "/usr/local/etc/freenas.conf"
@@ -36,7 +36,7 @@ _globalconfiguration = None
 def Configuration():
     global _globalconfiguration
     if _globalconfiguration is None:
-        _globalconfiguration = ixConfiguration()
+        _globalconfiguration = Configuration()
     return _globalconfiguration
 
 #
@@ -93,7 +93,7 @@ def FetchFileURL(url):
 
 
 def SystemManifest(root = None):
-    m = freenasOS.Manifest.ixManifest()
+    m = freenasOS.Manifest.Manifest()
     if root is None:
         prefix = ""
     else:
@@ -102,7 +102,7 @@ def SystemManifest(root = None):
         
     return m
 
-class ixConfiguration(object):
+class Configuration(object):
     MANIFEST_NAME = "LATEST"
     MANIFEST_PATH = "%s/%s/LATEST"
     PACKAGE_PATH = "%s/Packages/%s"
@@ -162,7 +162,7 @@ class ixConfiguration(object):
         print "trains = %s" % self.__trains
         print "current = %s" % self.__current_train
         if self.__trains is None:
-            raise ixManifestTrainError("Current train is not defined")
+            raise ManifestTrainError("Current train is not defined")
         return
 
     def AddSearch(self, s):
@@ -179,12 +179,12 @@ class ixConfiguration(object):
         if Train is None:
             Train = self.__current_train
         for loc in self.__search:
-            full_path = ixConfiguration.MANIFEST_PATH % (loc, Train)
+            full_path = Configuration.MANIFEST_PATH % (loc, Train)
             print full_path
             tf = FetchFile(full_path)
             if tf is not None:
                 print "%s -> %s" % (full_path, tf.name)
-                candidate = Manifest.ixManifest()
+                candidate = Manifest.Manifest()
                 candidate.load_file(tf)
                 if candidate.Sequence() > sequence:
                     return candidate
@@ -238,7 +238,7 @@ class ixConfiguration(object):
         return None
 
 if __name__ == "__main__":
-    cf = ixConfiguration()
+    cf = Configuration()
 
     man = cf.FindManifest()
     if man is not None:

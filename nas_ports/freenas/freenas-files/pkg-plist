@@ -29,7 +29,7 @@ usr/local/lib/freenasOS/Configuration.py
 usr/local/lib/freenasOS/Manifest.py
 usr/local/lib/freenasOS/Package.py
 usr/local/lib/freenasOS/__init__.py
-usr/local/lib/freenasOS/ixExceptions.py
+usr/local/lib/freenasOS/Exceptions.py
 usr/local/libexec/freenas-debug/active_directory/active_directory.sh
 usr/local/libexec/freenas-debug/cache/cache.sh
 usr/local/libexec/freenas-debug/dtrace/disklatencycmd.d

@@ -240,7 +240,7 @@ do-install:
 	# Installation scripts
 	${INSTALL_DATA} ${WRKSRC}/freenas/etc/freenas.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/freenas.conf
 
-.for script in Configuration.py Manifest.py Package.py ixExceptions.py __init__.py
+.for script in Configuration.py Manifest.py Package.py Exceptions.py __init__.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/lib/freenasOS/${script} ${STAGEDIR}/${PREFIX}/usr/local/lib/freenasOS/${script}
 .endfor
 .for script in check_packages.py create_manifest.py create_package.py diff_packages.py pkgify.py update_freenas.py
