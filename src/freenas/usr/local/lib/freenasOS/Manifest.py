@@ -12,7 +12,7 @@ import tempfile
 
 sys.path.append("/usr/local/lib")
 
-import freenasOS.ixExceptions
+import freenasOS.Exceptions
 import freenasOS.Configuration
 
 """
@@ -83,7 +83,7 @@ def FormatName(pkg, version, upgrade = None):
     else:
         return "%s-%s-%s" % (pkg, upgrade, version)
 
-class ixPackage(object):
+class Package(object):
     __name = None
     __version = None
     __checksum = None
@@ -132,7 +132,7 @@ class ixPackage(object):
 
         self.__upgrades.append({"Version" : ver, "Checksum" : hash})
 
-class ixManifest(object):
+class Manifest(object):
     __sequence = 0
     __version = None
     __train = None
@@ -165,7 +165,7 @@ class ixManifest(object):
     def load_file(self, file):
         """
         Given a file, load a JSON from it, and convert it
-        into an ixManifest.
+        into an Manifest.
         The first line may be "SIGNATURE=", which case it's
         a hash.
         """
@@ -183,7 +183,7 @@ class ixManifest(object):
         file_hash = hashlib.sha256(json_str).hexdigest()
         # Would need to now use this to verify a signature
         if file_hash == "":
-            raise ixManifestSignatureError
+            raise ManifestSignatureError
 
         # Now process and start converting things
         j = json.loads(json_str)
@@ -198,7 +198,7 @@ class ixManifest(object):
                 self.SetNotes(j[K])
             elif K == "Packages":
                 for P in j[K]:
-                    p = ixPackage(P["Name"], P["Version"], P["Checksum"])
+                    p = Package(P["Name"], P["Version"], P["Checksum"])
                     if "Upgrades" in P:
                         for U in P["Upgrades"]:
                             p.AddUpgrade(U["Version"], U["Checksum"])
@@ -220,13 +220,13 @@ class ixManifest(object):
     def json_string(self):
         h = self.dict()
         if h is None:
-            raise ixManifestConversionError
+            raise ManifestConversionError
         return json.dumps(h, sort_keys=True, indent=4, separators=(',', ': '))
 
     def store(self, path):
         json_str = self.json_string()
         if json_str is None:
-            raise ixManifestConversionError
+            raise ManifestConversionError
 
         with open(path, "w") as f:
             if self.__signature is not None:
@@ -284,13 +284,13 @@ class ixManifest(object):
         return None
 
 if __name__ == "__main__":
-    man = ixManifest()
+    man = Manifest()
     if man is None:
         print >> sys.stderr, "Cannot create manifest object"
         sys.exit(1)
     if len(sys.argv) == 3:
-        man1 = ixManifest()
-        man2 = ixManifest()
+        man1 = Manifest()
+        man2 = Manifest()
         man1.load_path(sys.argv[1])
         man2.load_path(sys.argv[2])
         print "%s sequence = %d, %s sequence = %d" % (sys.argv[1], man1.Sequence(), sys.argv[2], man2.Sequence())
@@ -308,18 +308,18 @@ if __name__ == "__main__":
         sys.exit(0)
     if len(sys.argv) > 1:
         for m in sys.argv[1:]:
-            man = ixManifest()
+            man = Manifest()
             man.load_path(m)
             print "%s" % man.dict()
     else:
         man.SetSequence(1)
         man.SetTrain("FreeNAS-Stable")
         man.SetVersion("FreeNAS-9.2.2")
-        p = ixPackage("base-os", "1.0", "abcd")
+        p = Package("base-os", "1.0", "abcd")
         p.AddUpgrade("0.9", "ffff")
         p.AddUpgrade("0.8", "aaaa")
         man.AddPackage(p)
-        man.AddPackage(ixPackage("samba", "4.0", "1234"))
+        man.AddPackage(Package("samba", "4.0", "1234"))
         man.store("/tmp/man.json")
         print "%s" % man.dict()
 

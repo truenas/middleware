@@ -69,7 +69,7 @@ if __name__ == "__main__":
     if (trainname is None) or (sequencenum == 0) or len(pkgs) == 0:
         usage()
 
-    mani = Manifest.ixManifest()
+    mani = Manifest.Manifest()
     mani.SetTrain(trainname)
     mani.SetSequence(sequencenum)
     gconfig = Configuration.Configuration()
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         else:
             print >> sys.stderr, "Can't find file for %s" % pkgfile
 
-        pkg = Manifest.ixPackage(name, version, hash)
+        pkg = Manifest.Package(name, version, hash)
         for U in upgrades:
             print "Upgrade package name is %s" % Manifest.FormatName(name, version, U)
             # See above for looking for upgrades.

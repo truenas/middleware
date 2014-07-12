@@ -93,7 +93,7 @@ generate_fstab()
 		mount /data
 		_doumount=1
 	fi
-	if [ `stat -f "%d:%i" /conf/base/etc/fstab` -eq `stat -f "%d:%i" /etc/fstab` ]; then	
+	if [ `stat -f "%d:%i" /conf/base/etc/fstab` = `stat -f "%d:%i" /etc/fstab` ]; then	
 		# Hard link.  Let's remove /etc/fstab and copy /conf/base/etc/fstab to it
 		rm /etc/fstab
 	fi

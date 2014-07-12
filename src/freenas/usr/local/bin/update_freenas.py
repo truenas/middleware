@@ -6,10 +6,9 @@ import getopt
 
 sys.path.append("/usr/local/lib")
 
-import freenasOS.Manifest
-import freenasOS.Configuration
+import freenasOS.Manifest as Manifest
+import freenasOS.Configuration as Configuration
 import freenasOS.Package as Installer
-from freenasOS.Configuration import Configuration
 
 debug = 0
 quiet = False
@@ -29,8 +28,8 @@ def CheckForUpdates(root = None):
     Returns the new manifest if there is an update,
     and None otherwise.
     """
-    conf = freenasOS.Configuration.ixConfiguration()
-    cur = freenasOS.Configuration.SystemManifest(root)
+    conf = Configuration.Configuration()
+    cur = Configuration.SystemManifest(root)
     m = conf.FindNewerManifest(cur.Sequence())
     if verbose > 1 or debug > 0:
         print >> sys.stderr, "Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence() if m is not None else 0)
@@ -55,9 +54,9 @@ def Install(root = None, manifest = None):
     if root is None:
         print >> sys.stderr, "Install must have target root specified"
         usage()
-    conf = freenasOS.Configuration.ixConfiguration()
+    conf = Configuration.Configuration()
     if manifest is not None:
-        cur = freenasOS.Manifest.ixManifest()
+        cur = Manifest.Manifest()
         try:
             cur.load_path(manifest)
         except Exception as e:
@@ -65,7 +64,7 @@ def Install(root = None, manifest = None):
             return False
     else:
         try:
-            cur = freenasOS.Configuration.SystemManifest()
+            cur = Configuration.SystemManifest()
         except:
             print >> sys.stderr, "Cannot get system manifest"
             return False
@@ -80,7 +79,7 @@ def Install(root = None, manifest = None):
     # the manifest directory.
     for pkg in cur.Packages():
         print "Package %s" % pkg.Name()
-        filename = freenasOS.Manifest.FormatName(pkg.Name(), pkg.Version())
+        filename = Manifest.FormatName(pkg.Name(), pkg.Version())
         f = conf.FindPackage(filename, pkg.Checksum())
         if f is None:
             print >> sys.stderr, "\tCould not find package file for %s" % filename
