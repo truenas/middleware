@@ -245,6 +245,7 @@ else
 		PXZ_ACCEL="-T 16"
 	else
 		PXZ_ACCEL="-T ${HW_PHYSMEM}"
+	fi
 fi
 export NANO_XZ
 export PXZ_ACCEL
