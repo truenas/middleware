@@ -252,6 +252,15 @@ class NavTree(object):
         tree_roots.register(nav)
 
         nav = TreeRoot(
+            'initialwizard',
+            name=_('Initial Wizard'),
+            icon='WizardIcon',
+            action='wizard',
+            order=987,
+        )
+        tree_roots.register(nav)
+
+        nav = TreeRoot(
             'shell',
             name=_('Shell'),
             icon='ShellIcon',

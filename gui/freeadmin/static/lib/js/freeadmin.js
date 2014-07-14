@@ -1766,6 +1766,8 @@ require([
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {
                 _webshell = new WebShell();
+            } else if(item.action == 'wizard') {
+                editObject(gettext("Initial Wizard"), wizardUrl, []);
             } else if(item.action == 'opensupport') {
                 Menu.openSupport();
             } else if(item.type == 'opensharing') {
