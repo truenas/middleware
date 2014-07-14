@@ -9050,3 +9050,26 @@ msgstr ""
 #: templates/system/settings_edit.html:32
 msgid "Set SSL Certificate"
 msgstr ""
+
+#: system/hook.py:22
+#: system/hook.py:24
+msgid "Performance Test"
+msgstr ""
+
+#: system/views.py:545
+msgid "System dataset is required to perform this action."
+msgstr ""
+
+#: templates/system/perftest.html:20
+msgid "You are about to start a performance test."
+msgstr ""
+
+#: templates/system/perftest.html:22
+msgid ""
+"Running these tests can substantially impact performance on a production "
+"system and are only to be used for diagnostic purposes."
+msgstr ""
+
+#: templates/system/perftest.html:24
+msgid "Are you sure you want to proceed?"
+msgstr ""
