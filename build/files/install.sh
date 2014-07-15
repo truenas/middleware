@@ -242,13 +242,25 @@ disk_is_freenas()
 {
     local _disk="$1"
     local _rv=1
+    local upgrade_style=""
 
+    # We have two kinds of potential upgrades here.
+    # The old kind, with 4 slices, and the new kind,
+    # with two partitions.
     mkdir -p /tmp/data_old
-    if ! [ -c /dev/${_disk}s4 ] ; then
-        return 1
+    if [ -c /dev/${_disk}s4 ]; then
+	upgrade_style="old"
+	if ! mount /dev/${_disk}s4 /tmp/data_old; then
+	    return 1
+	fi
+    elif [ -c /dev/${_disk}p3 ]; then
+	upgrade_style="new"
+	if ! mount /dev/${_disk}p3 /tmp/data_old ; then
+	    return 1
+	fi
     fi
-    if ! mount /dev/${_disk}s4 /tmp/data_old ; then
-        return 1
+    if [ "${upgrade_style}" = "" ]; then
+	return 1
     fi
     ls /tmp/data_old > /tmp/data_old.ls
     if [ -f /tmp/data_old/freenas-v1.db ]; then
@@ -258,7 +270,11 @@ disk_is_freenas()
     cp -pR /tmp/data_old/. /tmp/data_preserved
     umount /tmp/data_old
     if [ $_rv -eq 0 ]; then
-	mount /dev/${_disk}s1a /tmp/data_old
+	if [ "${upgrade_style}" = "old" ]; then
+	    mount /dev/${_disk}s1a /tmp/data_old
+	else
+	    mount /dev/${_disk}p2 /tmp/data_old
+	fi
         # ah my old friend, the can't see the mount til I access the mountpoint
         # bug
         ls /tmp/data_old > /dev/null
@@ -397,7 +413,14 @@ menu_install()
     then
         /etc/rc.d/dmesg start
         mkdir -p /tmp/data
-        mount /dev/${_disk}s1a /tmp/data
+	if [ -c /dev/${_disk}s1a ]; then
+		mount /dev/${_disk}s1a /tmp/data
+	elif [ -c /dev/${_disk}p2 ]; then
+		mount /dev/${_disk}p2 /tmp/data
+	else
+		echo "Unknown upgrade style" 1>&2
+		false
+	fi
 	# XXX need to find out why
 	ls /tmp/data > /dev/null
         # pre-avatar.conf build. Convert it!
@@ -413,6 +436,10 @@ menu_install()
         install_worker.sh -D /tmp/data -m / pre-install
         umount /tmp/data
         rmdir /tmp/data
+	if [ -c ${_disk}s4 ]; then
+	    # Destroy the partition
+	    gpart destroy -F ${_disk} || true
+	fi
     else
         # Run through some sanity checks on new installs ;).. some of the
         # checks won't make sense, but others might (e.g. hardware sanity
@@ -430,11 +457,21 @@ menu_install()
     export ROOTIMAGE=1
     # Hack #2
     ls $(get_product_path) > /dev/null
-    /rescue/pc-sysinstall -c ${_config_file}
+#    /rescue/pc-sysinstall -c ${_config_file}
     if [ ${_do_upgrade} -ne 0 ]; then
         # Mount: /data
+	set -x
         mkdir -p /tmp/data
-        mount /dev/${_disk}s4 /tmp/data
+	echo "At this point, not sure what to do"
+	read foo
+	if [ -c /dev/${_disk}s4 ]; then
+		mount /dev/${_disk}s4 /tmp/data
+	elif [ -c /dev/${_disk}p3 ]; then
+		mount /dev/${_disk}p3 /tmp/data
+	else
+		echo "Unknown partition type" 1>&2
+		false
+	fi
         ls /tmp/data > /dev/null
 
         cp -pR /tmp/data_preserved/ /tmp/data
@@ -449,8 +486,25 @@ menu_install()
 
         umount /tmp/data
         # Mount: /
-        mount /dev/${_disk}s1a /tmp/data
+	if [ -c /dev/${_disk}s1a ]; then
+		mount /dev/${_disk}s1a /tmp/data
+	elif [ -c /dev/${_disk}p2 ]; then
+		mount /dev/${_disk}p2 /tmp/data
+	else
+		echo "Unknown partitio type 2" 1>&2
+		false
+	fi
         ls /tmp/data > /dev/null
+	# Add the boot loader
+	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
+	/usr/local/bin/update_freenas -R /tmp/data -M /FreeNAS-MANIFEST install
+	# Need to link the manifest file
+	rm -f /tmp/data/conf/base/etc/manifest
+	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
+	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
+	echo "/dev/${_disk}p3 /data ufs rw 2 2" >> /tmp/data/etc/fstab
+	rm -f /tmp/data/conf/default/etc/fstab
+	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
 	if [ -f /tmp/hostid ]; then
             cp -p /tmp/hostid /tmp/data/conf/base/etc
 	fi
@@ -484,6 +538,7 @@ menu_install()
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     else
+	/rescue/pc-sysinstall -c ${_config_file}
 	set -x
 	# For non-upgrade installs, the partition was erased.
 	# A boot partition was created, so we need to add two

@@ -388,7 +388,7 @@ class PackageDB:
         conn.close()
         return True
 
-    def RemovePackageDirectories(self, pkgName, failDirectoryRemoveal = False):
+    def RemovePackageDirectories(self, pkgName, failDirectoryRemoval = False):
         # Remove the directories in a package.  This removes them from
         # both the filesystem and database.  If failDirectoryRemoval is True,
         # and a directory cannot be removed, return False.  Otherwise,
