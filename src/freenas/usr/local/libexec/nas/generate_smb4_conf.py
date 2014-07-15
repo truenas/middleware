@@ -407,7 +407,8 @@ def generate_smb4_conf(smb4_conf, role):
     confset1(smb4_conf, "getwd cache = yes")
     confset2(smb4_conf, "guest account = %s", cifs.cifs_srv_guest.encode('utf8'))
     confset1(smb4_conf, "map to guest = Bad User")
-    confset1(smb4_conf, "obey pam restrictions = Yes")
+    confset2(smb4_conf, "obey pam restrictions = %s",
+        "yes" if cifs.cifs_srv_obey_pam_restrictions else "no")
     confset1(smb4_conf, "directory name cache size = 0")
     confset1(smb4_conf, "kernel change notify = no")
 
