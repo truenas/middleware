@@ -243,25 +243,27 @@ disk_is_freenas()
     local _disk="$1"
     local _rv=1
     local upgrade_style=""
+    local os_part=""
+    local data_part=""
 
     # We have two kinds of potential upgrades here.
     # The old kind, with 4 slices, and the new kind,
     # with two partitions.
     mkdir -p /tmp/data_old
     if [ -c /dev/${_disk}s4 ]; then
-	upgrade_style="old"
-	if ! mount /dev/${_disk}s4 /tmp/data_old; then
-	    return 1
-	fi
+	os_part=/dev/${_disk}s1a
+	data_part=/dev/${_disk}s4
     elif [ -c /dev/${_disk}p3 ]; then
-	upgrade_style="new"
-	if ! mount /dev/${_disk}p3 /tmp/data_old ; then
-	    return 1
-	fi
+	os_part=/dev/${_disk}p2
+	data_part=/dev/${_disk}p3
     fi
-    if [ "${upgrade_style}" = "" ]; then
+    if [ "${data_part}" = ""]; then
 	return 1
     fi
+    if ! mount "${data_part}" /tmp/data_old ; then
+	return 1
+    fi
+
     ls /tmp/data_old > /tmp/data_old.ls
     if [ -f /tmp/data_old/freenas-v1.db ]; then
         _rv=0
@@ -270,11 +272,7 @@ disk_is_freenas()
     cp -pR /tmp/data_old/. /tmp/data_preserved
     umount /tmp/data_old
     if [ $_rv -eq 0 ]; then
-	if [ "${upgrade_style}" = "old" ]; then
-	    mount /dev/${_disk}s1a /tmp/data_old
-	else
-	    mount /dev/${_disk}p2 /tmp/data_old
-	fi
+	mount ${os_part} /tmp/data_old
         # ah my old friend, the can't see the mount til I access the mountpoint
         # bug
         ls /tmp/data_old > /dev/null
@@ -326,6 +324,8 @@ menu_install()
     local _menuheight
     local _msg
     local _dlv
+    local os_part
+    local data_part
 
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
@@ -464,14 +464,21 @@ menu_install()
         mkdir -p /tmp/data
 	echo "At this point, not sure what to do"
 	read foo
-	if [ -c /dev/${_disk}s4 ]; then
-		mount /dev/${_disk}s4 /tmp/data
-	elif [ -c /dev/${_disk}p3 ]; then
-		mount /dev/${_disk}p3 /tmp/data
-	else
-		echo "Unknown partition type" 1>&2
-		false
+	if [ ! -c /dev/${_disk}p3 ]; then
+		# For upgrading from old-style partitions, the
+		# partition map was destroyed.  pc-sysinstall starts
+		# the process for us.
+		/rescue/pc-sysinstall -c ${_config_file}
+		gpart add -t freebsd-ufs -s 20M -i 3 ${_disk}	# data, 20mbytes
+		gpart add -t freebsd-ufs -i 2 ${_disk}		# The rest of the disk
+		# And now create the filesystems
+		# /data first
+		newfs -n /dev/${_disk}p3
+		# Then root
+		newfs -n /dev/${_disk}p2
 	fi
+	# Mount the data partition
+	mount /dev/${_disk}p3 /tmp/data
         ls /tmp/data > /dev/null
 
         cp -pR /tmp/data_preserved/ /tmp/data
@@ -485,15 +492,8 @@ menu_install()
 	fi
 
         umount /tmp/data
-        # Mount: /
-	if [ -c /dev/${_disk}s1a ]; then
-		mount /dev/${_disk}s1a /tmp/data
-	elif [ -c /dev/${_disk}p2 ]; then
-		mount /dev/${_disk}p2 /tmp/data
-	else
-		echo "Unknown partitio type 2" 1>&2
-		false
-	fi
+        # Mount the root partition
+	mount /dev/${_disk}p2 /tmp/data
         ls /tmp/data > /dev/null
 	# Add the boot loader
 	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
