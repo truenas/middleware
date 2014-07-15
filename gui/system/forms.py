@@ -1123,3 +1123,7 @@ class InitialWizardVolumeForm(Form):
         if ndisks > 0:
             types.append('stripe')
         return types
+
+
+class InitialWizardConfirmForm(Form):
+    pass

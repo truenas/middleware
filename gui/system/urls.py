@@ -31,6 +31,7 @@ from freenasUI.system.forms import (
     FirmwareTemporaryLocationForm,
     FirmwareUploadForm,
     InitialWizard,
+    InitialWizardConfirmForm,
     InitialWizardShareForm,
     InitialWizardVolumeForm,
 )
@@ -38,7 +39,11 @@ from freenasUI.system.forms import (
 urlpatterns = patterns('freenasUI.system.views',
     url(r'^$', 'home', name="system_home"),
     url(r'^wizard/$', InitialWizard.as_view(
-        [InitialWizardVolumeForm, InitialWizardShareForm]
+        [
+            InitialWizardVolumeForm,
+            InitialWizardShareForm,
+            InitialWizardConfirmForm,
+        ]
     ), name='system_initialwizard'),
     url(r'^reboot/$', 'reboot', name="system_reboot"),
     url(r'^reboot/dialog/$', 'reboot_dialog', name="system_reboot_dialog"),
