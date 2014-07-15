@@ -21,9 +21,13 @@
     <tr>
       <td colspan="2">
     <fieldset>
-      <legend>Purpose</legend>
+      <legend>{% trans "Purpose" %}</legend>
         {{ wizard.form.volume_type.errors }}
-	{{ wizard.form.volume_type }}
+        <ul>
+        {% for cid, clabel in wizard.form.volume_type.field.choices %}
+        <li><input data-dojo-type="dijit.form.RadioButton" name="{{ wizard.form.volume_type.name }}" type="radio" value="{{ cid }}" {% if cid != 'auto' and cid not in wizard.form.types_avail %}disabled="disabled" class="dijitDisabled"{% endif %}/> {{ clabel }}
+        {% endfor %}</li>
+        </ul>
     </fieldset>
       </td>
     </tr>

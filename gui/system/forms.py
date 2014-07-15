@@ -1105,3 +1105,21 @@ class InitialWizardVolumeForm(Form):
                 _('Logs (RAID 0: No Reliability, Max Performance / Storage)')
             ),
         )
+
+        _n = notifier()
+        disks = _n.get_disks()
+        for volume in Volume.objects.all():
+            for disk in volume.get_disks():
+                disks.pop(disk, None)
+        self.types_avail = self._types_avail(disks)
+
+    def _types_avail(self, disks):
+        types = []
+        ndisks = len(disks)
+        if ndisks >= 4:
+            types.extend(['raid10', 'raidz2'])
+        if ndisks >= 3:
+            types.append('raidz1')
+        if ndisks > 0:
+            types.append('stripe')
+        return types
