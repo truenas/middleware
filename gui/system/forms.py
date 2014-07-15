@@ -148,13 +148,14 @@ class FileWizard(CommonWizard):
     file_storage = FileSystemStorage(location='/var/tmp/firmware')
 
 
-class InitialWizard(FileWizard):
+class InitialWizard(CommonWizard):
 
     template_done = 'system/initialwizard_done.html'
 
     def get_template_names(self):
         return [
-            'system/wizard_%s.html' % self.get_step_index(),
+            'system/initialwizard_%s.html' % self.get_step_index(),
+            'system/initialwizard.html',
             'system/wizard.html',
         ]
 
@@ -1071,14 +1072,36 @@ class InitialWizardShareForm(Form):
 class InitialWizardVolumeForm(Form):
 
     volume_name = forms.CharField(
-        label=_('Volume Name'),
+        label=_('Pool Name'),
         max_length=200,
     )
     volume_type = forms.ChoiceField(
         label=_('Type'),
-        choices=(
-            ('PERFORMANCE', _('Performance')),
-            ('SIZE', _('Size')),
-        ),
+        choices=(),
         widget=forms.RadioSelect,
     )
+
+    def __init__(self, *args, **kwargs):
+        super(InitialWizardVolumeForm, self).__init__(*args, **kwargs)
+        self.fields['volume_type'].choices = (
+            (
+                'auto',
+                _('Automatic')
+            ),
+            (
+                'raid10',
+                _('VMWare (RAID 10: Good Reliability, Good Performance)')
+            ),
+            (
+                'raidz2',
+                _('Backups (RAID Z2: Best Reliability, Less Storage)')
+            ),
+            (
+                'raidz1',
+                _('Media (RAID Z1: Less Reliability, More Storage)')
+            ),
+            (
+                'stripe',
+                _('Logs (RAID 0: No Reliability, Max Performance / Storage)')
+            ),
+        )

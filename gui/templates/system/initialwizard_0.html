@@ -1,0 +1,43 @@
+{% load freeadmin %}<div data-dojo-type="dijit.layout.ContentPane" class="objrefresh" doLayout="false">
+  <form data-dojo-type="dijit.form.Form" action="." enctype="multipart/form-data" method="post">{% csrf_token %}
+    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
+      {% block onSubmit %}
+      doSubmit({
+        form: this,
+        event: e,
+        url: '{{ request.path }}'
+      });
+      {% endblock %}
+    </script>
+  <table class="form">
+    {% block form %}
+    {% dojo_render wizard.management_form %}
+    <tr>
+      <td colspan="2">
+        {{ wizard.form.volume_name.errors }}
+        {{ wizard.form.volume_name.label }}: {{ wizard.form.volume_name }}
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">
+    <fieldset>
+      <legend>Purpose</legend>
+        {{ wizard.form.volume_type.errors }}
+	{{ wizard.form.volume_type }}
+    </fieldset>
+      </td>
+    </tr>
+    {% endblock %}
+    <tr>
+      <td colspan="2">
+        <button id="btn_{% cls_name wizard.form %}_Ok" class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
+          {% block oklabel %}{% trans "Next" %}{% endblock %}
+          <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            this.set('label', '{% trans "Please wait..."|escapejs %}');
+          </script>
+        </button>
+      </td>
+    </tr>
+  </table>
+  </form>
+</div>
