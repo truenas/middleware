@@ -15,7 +15,7 @@
     <tr>
       <td colspan="2">
         {{ wizard.form.volume_name.errors }}
-        {{ wizard.form.volume_name.label }}: {{ wizard.form.volume_name }}
+        {{ wizard.form.volume_name.label_tag }} {{ wizard.form.volume_name }}
       </td>
     </tr>
     <tr>
@@ -25,7 +25,7 @@
         {{ wizard.form.volume_type.errors }}
         <ul>
         {% for cid, clabel in wizard.form.volume_type.field.choices %}
-        <li><input data-dojo-type="dijit.form.RadioButton" name="{{ wizard.form.volume_type.name }}" type="radio" value="{{ cid }}" {% if cid != 'auto' and cid not in wizard.form.types_avail %}disabled="disabled" class="dijitDisabled"{% endif %}/> {{ clabel }}
+        <li><input data-dojo-type="dijit.form.RadioButton" name="{{ wizard.form.volume_type.html_name }}" type="radio" value="{{ cid }}" {% if cid != 'auto' and cid not in wizard.form.types_avail %}disabled="disabled" class="dijitDisabled"{% endif %} {% if wizard.form.volume_type.data = cid %}checked="checked"{% endif %}/> {{ clabel }}
         {% endfor %}</li>
         </ul>
     </fieldset>
