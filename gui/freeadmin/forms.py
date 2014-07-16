@@ -91,16 +91,20 @@ class UserField(forms.ChoiceField):
 
     def prepare_value(self, value):
         rv = super(UserField, self).prepare_value(value)
-        user = FreeNAS_User(rv, flags=FLAGS_DBINIT)
+        try:
+            user = FreeNAS_User(rv, flags=FLAGS_DBINIT)
+        except:
+            user = None
         if rv and not user:
             return 'nobody'
         return rv
 
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
-        users = FreeNAS_Users(
-            flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER
-        )
+        try: 
+            users = FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER)
+        except:
+            users = []
         if len(users) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
@@ -132,7 +136,12 @@ class UserField(forms.ChoiceField):
     def clean(self, user):
         if not self.required and user in ('-----', '', None):
             return None
-        if FreeNAS_User(user, flags=FLAGS_DBINIT) is None:
+        try:
+            u = FreeNAS_User(user, flags=FLAGS_DBINIT)
+        except:
+            u = None
+
+        if u is None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
 
@@ -146,16 +155,20 @@ class GroupField(forms.ChoiceField):
 
     def prepare_value(self, value):
         rv = super(GroupField, self).prepare_value(value)
-        group = FreeNAS_Group(rv, flags=FLAGS_DBINIT)
+        try:
+            group = FreeNAS_Group(rv, flags=FLAGS_DBINIT)
+        except:
+            group = None
         if rv and not group:
             return 'nobody'
         return rv
 
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
-        groups = FreeNAS_Groups(
-            flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP
-        )
+        try:
+            groups = FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP)
+        except:
+            groups = [] 
         if len(groups) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
@@ -173,7 +186,12 @@ class GroupField(forms.ChoiceField):
     def clean(self, group):
         if not self.required and group in ('-----', '', None):
             return None
-        if FreeNAS_Group(group, flags=FLAGS_DBINIT) is None:
+        try:
+            g = FreeNAS_Group(group, flags=FLAGS_DBINIT)
+        except:
+            g = None
+
+        if g is None:
             raise forms.ValidationError(
                 _("The group %s is not valid.") % group
             )

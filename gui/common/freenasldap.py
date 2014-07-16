@@ -957,10 +957,14 @@ class FreeNAS_ActiveDirectory_Base(object):
     @staticmethod
     def validate_credentials(domain, site=None, binddn=None, bindpw=None):
         ret = None
-        best_host = FreeNAS_ActiveDirectory_Base.get_best_host(
-            FreeNAS_ActiveDirectory_Base.get_domain_controllers(domain, site)
-        ) 
-        
+        best_host = None 
+
+        dcs = FreeNAS_ActiveDirectory_Base.get_domain_controllers(domain, site)
+        if not dcs:
+            raise FreeNAS_ActiveDirectory_Exception(
+                "Unable to find domain controllers for %s" % domain)
+
+        best_host = FreeNAS_ActiveDirectory_Base.get_best_host(dcs) 
         if best_host:
             (dchost, dcport) = best_host
             f = FreeNAS_LDAP(host=dchost, port=dcport,
@@ -1079,30 +1083,42 @@ class FreeNAS_ActiveDirectory_Base(object):
         if self.dcname:
             (self.dchost, self.dcport) = self.__name_to_host(self.dcname)
         if not self.dchost:
-            (self.dchost, self.dcport) = self.get_best_host(
-                self.get_domain_controllers(self.domainname, site=self.site))
+            dcs = self.get_domain_controllers(self.domainname, site=self.site)
+            if not dcs:
+                raise FreeNAS_ActiveDirectory_Exception(
+                    "Unable to find domain controllers for %s" % self.domainname)
+            (self.dchost, self.dcport) = self.get_best_host(dcs)
             self.dcname = "%s:%d" % (self.dchost, self.dcport)
 
         if self.gcname:
             (self.gchost, self.gcport) = self.__name_to_host(self.gcname)
         if not self.gchost:
-            (self.gchost, self.gcport) = self.get_best_host(
-                self.get_global_catalog_servers(self.domainname, site=self.site))
+            gcs = self.get_global_catalog_servers(self.domainname, site=self.site)
+            if not gcs: 
+                raise FreeNAS_ActiveDirectory_Exception(
+                    "Unable to find global catalog servers for %s" % self.domainname)
+            (self.gchost, self.gcport) = self.get_best_host(gcs)
             self.gcname = "%s:%d" % (self.gchost, self.gcport)
 
         if self.krbname:
             (self.krbhost, self.krbport) = self.__name_to_host(self.krbname)
         if not self.krbhost:
-            (self.krbhost, self.krbport) = self.get_best_host(
-                self.get_kerberos_servers(self.domainname, site=self.site))
+            krbs = self.get_kerberos_servers(self.domainname, site=self.site)
+            if not krbs: 
+                raise FreeNAS_ActiveDirectory_Exception(
+                    "Unable to find kerberos servers for %s" % self.domainname)
+            (self.krbhost, self.krbport) = self.get_best_host(krbs)
             self.krbname = "%s:%d" % (self.krbhost, self.krbport)
 
         if self.kpwdname:
             (self.kpwdhost, self.kpwdport) = self.__name_to_host(
                 self.kpwdname)
         if not self.kpwdhost:
-            (self.kpwdhost, self.kpwdport) = self.get_best_host(
-                self.get_kpasswd_servers(self.domainname)) 
+            kpwds = self.get_kpasswd_servers(self.domainname)
+            if not kpwds: 
+                raise FreeNAS_ActiveDirectory_Exception(
+                    "Unable to find kerberos password servers for %s" % self.domainname)
+            (self.kpwdhost, self.kpwdport) = self.get_best_host(kpwds)
             self.kpwdname = "%s:%d" % (self.kpwdhost, self.kpwdport)
 
         self.dchandle = FreeNAS_LDAP_Directory(
@@ -1706,6 +1722,9 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
             self.__users[n] = []
 
             dcs = self.get_domain_controllers(d['dnsRoot'])
+            if not dcs: 
+                raise FreeNAS_ActiveDirectory_Exception(
+                    "Unable to find domain controllers for %s" % d['dnsRoot'])
             (self.host, self.port) = self.get_best_host(dcs)
 
             self.basedn = d['nCName']
@@ -1988,6 +2007,9 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
             self.__groups[n] = []
 
             dcs = self.get_domain_controllers(d['dnsRoot'])
+            if not dcs: 
+                raise FreeNAS_ActiveDirectory_Exception(
+                    "Unable to find domain controllers for %s" % d['dnsRoot'])
             (self.host, self.port) = self.get_best_host(dcs)
 
             self.basedn = d['nCName']
