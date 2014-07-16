@@ -304,7 +304,7 @@ tr.odd:hover {
     padding-left:0px;
     text-decoration:bold;
 }
-table.form th {
+table.form tbody > tr > th {
     color:#50575F;
     background:#f5f5f5;
     padding:6px;
