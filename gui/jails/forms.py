@@ -75,6 +75,7 @@ from freenasUI.common.warden import (
     WARDEN_SET_FLAGS_NAT_ENABLE,
     WARDEN_SET_FLAGS_NAT_DISABLE,
     WARDEN_SET_FLAGS_MAC,
+    WARDEN_SET_FLAGS_IFACE,
     WARDEN_SET_FLAGS_FLAGS,
     WARDEN_KEY_HOST,
 )
@@ -134,7 +135,6 @@ class JailCreateForm(ModelForm):
 
         os.environ['EXTRACT_TARBALL_STATUSFILE'] = self.statusfile
         types = ((jt.jt_name, jt.jt_name) for jt in JailTemplate.objects.all())
-
         self.fields['jail_type'].choices = types
         self.fields['jail_type'].widget.attrs['onChange'] = (
             "jail_type_toggle();"
@@ -194,7 +194,6 @@ class JailCreateForm(ModelForm):
                 jc_ipv6_prefix = parts[1]
 
         jail_host = self.cleaned_data.get('jail_host')
-
         jail_ipv4 = self.cleaned_data.get('jail_ipv4')
         jail_ipv4_netmask = self.cleaned_data.get('jail_ipv4_netmask', jc_ipv4_netmask)
 
@@ -302,10 +301,9 @@ class JailCreateForm(ModelForm):
         if os.path.exists(createfile):
             os.unlink(createfile)
 
-        for key in (
-            'jail_bridge_ipv4', 'jail_bridge_ipv6', 'jail_defaultrouter_ipv4',
-            'jail_defaultrouter_ipv6', 'jail_mac', 'jail_flags'
-        ):
+        for key in ('jail_bridge_ipv4', 'jail_bridge_ipv6',
+            'jail_defaultrouter_ipv4', 'jail_defaultrouter_ipv6',
+            'jail_mac', 'jail_iface', 'jail_flags'):
             jail_set_args = {}
             jail_set_args['jail'] = jail_host
             jail_flags = WARDEN_FLAGS_NONE
@@ -332,6 +330,10 @@ class JailCreateForm(ModelForm):
                 elif key == 'jail_mac':
                     jail_flags |= WARDEN_SET_FLAGS_MAC
                     jail_set_args['mac'] = val
+
+                elif key == 'jail_iface':
+                    jail_flags |= WARDEN_SET_FLAGS_IFACE
+                    jail_set_args['iface'] = val
 
                 elif key == 'jail_flags':
                     jail_flags |= WARDEN_SET_FLAGS_FLAGS
@@ -590,6 +592,7 @@ class JailsEditForm(ModelForm):
             'jail_alias_bridge_ipv6',
             'jail_defaultrouter_ipv6',
             'jail_mac',
+            'jail_iface',
             'jail_vnet',
             'jail_nat',
             'jail_flags',
