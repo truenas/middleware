@@ -172,6 +172,13 @@ class Jails(Model):
         null=True,
         verbose_name=_("MAC")
     )
+    jail_iface = models.CharField(
+        max_length=300,
+        blank=True,
+        default='',
+        choices=choices.NICChoices(exclude_configured=False),
+        verbose_name=_("NIC")
+    )
     jail_flags = models.TextField(
         verbose_name=_("Sysctls"),
         blank=True,

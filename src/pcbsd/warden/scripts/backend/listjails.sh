@@ -100,6 +100,8 @@ do
     VNET="Disabled"
   fi
 
+  IFACE="`cat "${jail}/iface" 2>/dev/null`"
+
   if [ -e "${jail}/nat" ] ; then
     NAT="Enabled"
   else
@@ -206,6 +208,7 @@ do
 
 id: ${ID}
 host: ${HOST}
+iface: ${IFACE}
 ipv4: ${IP4}
 alias-ipv4: ${IPS4}
 bridge-ipv4: ${BRIDGEIP4}
