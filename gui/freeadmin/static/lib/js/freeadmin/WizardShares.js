@@ -52,7 +52,7 @@ define([
         name: "sharename"
       }, me.dapShareName);
 
-      me._shareSMB = new RadioButton({}, me.dapShareSMB);
+      me._shareCIFS = new RadioButton({}, me.dapShareCIFS);
       me._shareAFP = new RadioButton({}, me.dapShareAFP);
       me._shareNFS = new RadioButton({}, me.dapShareNFS);
 
@@ -69,8 +69,10 @@ define([
       }, me.dapShareDelete);
       on(me._shareDelete, "click", function() {
         for(var id in me._sharesList.selection) {
-          var row = me._sharesList.row(id);
-          me.remove(row.id);
+          if(me._sharesList.selection[id]) {
+            var row = me._sharesList.row(id);
+            me.remove(row.id);
+          }
         }
       });
 
@@ -95,6 +97,11 @@ define([
       me._sharesList.on("dgrid-select", function(event) {
         me._shareDelete.set('disabled', false);
         me._shareUpdate.set('disabled', false);
+
+        for(var id in me._sharesList.selection) {
+          if(me._sharesList.selection[id])
+            me.select(id);
+        }
       });
 
       this.inherited(arguments);
@@ -102,9 +109,13 @@ define([
     },
     add: function() {
       var me = this;
+      var purpose;
+      if(me._shareCIFS.get('value')) purpose = 'cifs';
+      else if(me._shareAFP.get('value')) purpose = 'afp';
+      else if(me._shareNFS.get('value')) purpose = 'nfs';
       me._store.put({
         name: me._shareName.get("value"),
-        label: me._shareName.get("value")
+        purpose: purpose
       });
       me._sharesList.refresh();
     },
@@ -115,6 +126,28 @@ define([
       if(Object.keys(me._sharesList.selection).length == 0) {
         me._shareDelete.set('disabled', true);
         me._shareUpdate.set('disabled', true);
+      }
+    },
+    select: function(id) {
+      var me = this;
+      var data = me._store.get(id);
+      me._shareName.set('value', data.name);
+      switch(data.purpose) {
+        case 'cifs':
+          me._shareCIFS.set('value', true);
+          me._shareAFP.set('value', false);
+          me._shareNFS.set('value', false);
+          break;
+        case 'afp':
+          me._shareCIFS.set('value', false);
+          me._shareAFP.set('value', true);
+          me._shareNFS.set('value', false);
+          break;
+        case 'nfs':
+          me._shareCIFS.set('value', false);
+          me._shareAFP.set('value', false);
+          me._shareNFS.set('value', true);
+          break;
       }
     }
   });
