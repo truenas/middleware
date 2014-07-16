@@ -841,7 +841,7 @@ require([
 
     }
 
-    rebuildAdLdapCache = function(url, sendbtn) {
+    rebuildDirectoryServiceCache = function(url, sendbtn) {
 
         sendbtn.set('disabled', true);
         form = getForm(sendbtn);

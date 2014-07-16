@@ -252,6 +252,12 @@ class CIFS(Model):
                 "Samba does not check execute permissions on \"open for execution\", "
                 "thus re-establishing the behaviour of Samba 3.6 ")
            )
+    cifs_srv_obey_pam_restrictions = models.BooleanField(
+           verbose_name=_("Obey pam restrictions"),
+           default=True,
+           help_text=_("this parameter controls whether or not Samba"
+               "should obey PAM's account and session management directives")
+           )
 
     class Meta:
         verbose_name = _(u"CIFS")

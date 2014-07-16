@@ -81,14 +81,19 @@ class NFSShareFAdmin(BaseFreeAdmin):
     ]
     resource_mixin = NFSShareResourceMixin
     advanced_fields = (
-        'nfs_ro',
+        'nfs_network',
+        'nfs_hosts',
         'nfs_quiet',
+        'nfs_maproot_user',
+        'nfs_maproot_group',
+        'nfs_mapall_user',
+        'nfs_mapall_group'
     )
     fields = (
         'nfs_paths',
         'nfs_comment',
-        'nfs_network',
-        'nfs_hosts',
+        'nfs_alldirs',
+        'nfs_ro'
     )
 
     def get_datagrid_columns(self):

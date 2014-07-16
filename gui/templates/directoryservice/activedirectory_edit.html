@@ -1,2 +1,13 @@
 {% extends "freeadmin/generic_model_edit.html" %}
 {% block oklabel %}{% trans "Save" %}{% endblock %}
+
+{% load freeadmin %}
+{% block buttons_extra %}
+{{ block.super }}
+<button id="btn_{% cls_name form %}_DirectoryServiceCache" data-dojo-type="dijit.form.Button">
+    {% trans "Rebuild Directory Service Cache" %}
+    <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+        rebuildDirectoryServiceCache('{% url "directoryservice_clearcache" %}', this);
+    </script>
+</button>
+{% endblock %}

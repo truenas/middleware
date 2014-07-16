@@ -9969,3 +9969,29 @@ msgstr "Nom du contrôleur de domaine"
 #, fuzzy
 msgid "Set SSL Certificate"
 msgstr "Certificat SSL"
+
+#: system/hook.py:22
+#: system/hook.py:24
+msgid "Performance Test"
+msgstr ""
+
+#: system/views.py:545
+msgid "System dataset is required to perform this action."
+msgstr ""
+
+#: templates/system/perftest.html:20
+#, fuzzy
+msgid "You are about to start a performance test."
+msgstr ""
+"Vous êtes sur le point d'ajouter une clef de récupération pour ce volume"
+
+#: templates/system/perftest.html:22
+msgid ""
+"Running these tests can substantially impact performance on a production "
+"system and are only to be used for diagnostic purposes."
+msgstr ""
+
+#: templates/system/perftest.html:24
+#, fuzzy
+msgid "Are you sure you want to proceed?"
+msgstr "Êtes-vous sûr de vouloir le supprimer ?"
