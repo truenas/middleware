@@ -11,9 +11,11 @@ define([
   "dijit/form/TextBox",
   "dijit/form/Button",
   "dijit/form/RadioButton",
-  "dijit/form/Select",
+  "dijit/form/MultiSelect",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
+  "dgrid/OnDemandGrid",
+  "dgrid/Selection",
   "dojox/timing",
   "dojox/string/sprintf",
   "dojo/text!freeadmin/templates/wizardshares.html"
@@ -30,9 +32,11 @@ define([
   TextBox,
   Button,
   RadioButton,
-  Select,
+  MultiSelect,
   TabContainer,
   ContentPane,
+  OnDemandGrid,
+  Selection,
   timing,
   sprintf,
   template) {
@@ -67,16 +71,17 @@ define([
         label: gettext("Update")
       }, me.dapShareUpdate);
 
-      me._memory = new Memory({
+      me._store = new Memory({
           idProperty: "name",
           data: []
       });
 
-      me._store = new ObjectStore({objectStore: me._memory});
-
-      me._sharesList = new Select({
+      me._sharesList = new (declare([OnDemandGrid, Selection]))({
         store: me._store,
-        style: "width: 350px;"
+        selectionMode: "single",
+        columns: {
+          name: "Name"
+        }
       }, me.dapSharesList);
 
       this.inherited(arguments);
@@ -84,11 +89,11 @@ define([
     },
     add: function() {
       var me = this;
-      me._memory.put({
+      me._store.put({
         name: me._shareName.get("value"),
         label: me._shareName.get("value")
       });
-      me._sharesList.setStore(me._store);
+      me._sharesList.refresh();
     }
   });
   return WizardShares;
