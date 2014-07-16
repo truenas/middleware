@@ -40,9 +40,9 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^$', 'home', name="system_home"),
     url(r'^wizard/$', InitialWizard.as_view(
         [
-            InitialWizardVolumeForm,
-            InitialWizardShareForm,
-            InitialWizardConfirmForm,
+            ('volume', InitialWizardVolumeForm),
+            ('shares', InitialWizardShareForm),
+            ('confirm', InitialWizardConfirmForm),
         ]
     ), name='system_initialwizard'),
     url(r'^reboot/$', 'reboot', name="system_reboot"),

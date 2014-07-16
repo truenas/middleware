@@ -154,7 +154,7 @@ class InitialWizard(CommonWizard):
 
     def get_template_names(self):
         return [
-            'system/initialwizard_%s.html' % self.get_step_index(),
+            'system/initialwizard_%s.html' % self.steps.current,
             'system/initialwizard.html',
             'system/wizard.html',
         ]
