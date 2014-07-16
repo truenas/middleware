@@ -2,12 +2,6 @@
 {% load freeadmin %}
 
 {% block buttons_extra %}
-            <button id="btn_{% cls_name form %}_ADCache" data-dojo-type="dijit.form.Button">
-            {% trans "Rebuild LDAP/AD Cache" %}
-                <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
-                rebuildAdLdapCache('{% url "system_clearcache" %}', this);
-                </script>
-            </button>
             <button id="btn_{% cls_name form %}_Debug" data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Save Debug" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
