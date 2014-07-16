@@ -8,6 +8,7 @@ define([
   "dojo/store/Memory",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
+  "dijit/form/CheckBox",
   "dijit/form/TextBox",
   "dijit/form/Button",
   "dijit/form/RadioButton",
@@ -29,6 +30,7 @@ define([
   Memory,
   _Widget,
   _Templated,
+  CheckBox,
   TextBox,
   Button,
   RadioButton,
@@ -55,6 +57,8 @@ define([
       me._shareCIFS = new RadioButton({}, me.dapShareCIFS);
       me._shareAFP = new RadioButton({}, me.dapShareAFP);
       me._shareNFS = new RadioButton({}, me.dapShareNFS);
+
+      me._shareGuest = new CheckBox({}, me.dapShareGuest);
 
       me._shareAdd = new Button({
         label: gettext("Add")
@@ -115,7 +119,8 @@ define([
       else if(me._shareNFS.get('value')) purpose = 'nfs';
       me._store.put({
         name: me._shareName.get("value"),
-        purpose: purpose
+        purpose: purpose,
+        allowguest: me._shareGuest.get('value')
       });
       me._sharesList.refresh();
     },
@@ -132,6 +137,7 @@ define([
       var me = this;
       var data = me._store.get(id);
       me._shareName.set('value', data.name);
+      me._shareGuest.set('value', data.allowguest);
       switch(data.purpose) {
         case 'cifs':
           me._shareCIFS.set('value', true);

@@ -5,9 +5,18 @@
     <br />
     <fieldset>
       <legend data-dojo-attach-point="dapFieldsetLegend">Purpose</legend>
-      <span data-dojo-attach-point="dapShareCIFS"></span> Windows (CIFS)<br />
-      <span data-dojo-attach-point="dapShareAFP"></span> Mac OS X (AFP)<br />
-      <span data-dojo-attach-point="dapShareNFS"></span> Generic Unix (NFS)<br />
+      <table style="padding: 0;" width="100%">
+        <tr>
+          <td>
+            <span data-dojo-attach-point="dapShareCIFS"></span> Windows (CIFS)<br />
+            <span data-dojo-attach-point="dapShareAFP"></span> Mac OS X (AFP)<br />
+            <span data-dojo-attach-point="dapShareNFS"></span> Generic Unix (NFS)<br />
+          </td>
+          <td text-align="right">
+            <span data-dojo-attach-point="dapShareGuest"></span> Allow Guest
+          </td>
+        </tr>
+      </table>
     </fieldset>
     <span data-dojo-attach-point="dapShareAdd"></span>
     <span data-dojo-attach-point="dapShareDelete"></span>
