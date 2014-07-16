@@ -60,15 +60,23 @@ define([
         label: gettext("Add")
       }, me.dapShareAdd);
       on(me._shareAdd, "click", function() {
-        console.log("click add");
         me.add();
       });
 
       me._shareDelete = new Button({
-        label: gettext("Delete")
+        label: gettext("Delete"),
+        disabled: true
       }, me.dapShareDelete);
-      me._shareDelete = new Button({
-        label: gettext("Update")
+      on(me._shareDelete, "click", function() {
+        for(var id in me._sharesList.selection) {
+          var row = me._sharesList.row(id);
+          me.remove(row.id);
+        }
+      });
+
+      me._shareUpdate = new Button({
+        label: gettext("Update"),
+        disabled: true
       }, me.dapShareUpdate);
 
       me._store = new Memory({
@@ -84,6 +92,11 @@ define([
         }
       }, me.dapSharesList);
 
+      me._sharesList.on("dgrid-select", function(event) {
+        me._shareDelete.set('disabled', false);
+        me._shareUpdate.set('disabled', false);
+      });
+
       this.inherited(arguments);
 
     },
@@ -94,6 +107,15 @@ define([
         label: me._shareName.get("value")
       });
       me._sharesList.refresh();
+    },
+    remove: function(id) {
+      var me = this;
+      me._store.remove(id);
+      me._sharesList.refresh();
+      if(Object.keys(me._sharesList.selection).length == 0) {
+        me._shareDelete.set('disabled', true);
+        me._shareUpdate.set('disabled', true);
+      }
     }
   });
   return WizardShares;
