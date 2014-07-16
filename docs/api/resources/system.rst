@@ -48,7 +48,7 @@ List resource
                 "adv_motd": "Welcome to FreeNAS",
                 "adv_consolemenu": true,
                 "id": 1,
-                "adv_serialport": "0x2f8"
+                "adv_serialport": "0x2f8",
                 "adv_serialspeed": "9600"
         }
 
@@ -98,7 +98,7 @@ Update resource
                 "adv_motd": "Welcome to FreeNAS",
                 "adv_consolemenu": true,
                 "id": 1,
-                "adv_serialport": "0x2f8"
+                "adv_serialport": "0x2f8",
                 "adv_serialspeed": "9600"
         }
 
