@@ -1350,3 +1350,7 @@ table.layoutTable > tr:first-child > td {
 #dgrid_apiclient .dgrid-column-name {
     width: 140px;
 }
+
+.dgrid-wizardshare {
+    height: 100px !important;
+}

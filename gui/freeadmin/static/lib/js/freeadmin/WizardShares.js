@@ -95,7 +95,8 @@ define([
         selectionMode: "single",
         columns: {
           name: "Name"
-        }
+        },
+        className: "dgrid-wizardshare"
       }, me.dapSharesList);
 
       me._sharesList.on("dgrid-select", function(event) {
