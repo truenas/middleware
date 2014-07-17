@@ -1,7 +1,9 @@
 define([
   "dojo/_base/declare",
   "dojo/data/ObjectStore",
+  "dojo/dom",
   "dojo/dom-attr",
+  "dojo/dom-construct",
   "dojo/dom-style",
   "dojo/on",
   "dojo/request/xhr",
@@ -23,7 +25,9 @@ define([
   ], function(
   declare,
   ObjectStore,
+  dom,
   domAttr,
+  domConstruct,
   domStyle,
   on,
   xhr,
@@ -127,6 +131,7 @@ define([
         allowguest: me._shareGuest.get('value')
       });
       me._sharesList.refresh();
+      me.dump();
     },
     remove: function(id) {
       var me = this;
@@ -136,6 +141,7 @@ define([
         me._shareDelete.set('disabled', true);
         me._shareUpdate.set('disabled', true);
       }
+      me.dump();
     },
     select: function(id) {
       var me = this;
@@ -159,6 +165,35 @@ define([
           me._shareNFS.set('value', true);
           break;
       }
+    },
+    dump: function() {
+      var me = this;
+      var dumpNode = dom.byId(me.id + "_dump");
+      if(dumpNode) {
+        domConstruct.empty(dumpNode);
+      } else {
+        dumpNode = domConstruct.create("div", {id: me.id + "_dump"}, me.domNode.parentNode);
+      }
+
+      me._store.query({}).forEach(function(obj, idx) {
+
+        new TextBox({
+          name: "shares-" + idx + "-name",
+          value: obj.name
+        }).placeAt(dumpNode);
+
+        new TextBox({
+          name: "shares-" + idx + "-purpose",
+          value: obj.purpose
+        }).placeAt(dumpNode);
+
+        new TextBox({
+          name: "shares-" + idx + "-allowguest",
+          value: obj.allowguest
+        }).placeAt(dumpNode);
+
+      });
+
     }
   });
   return WizardShares;
