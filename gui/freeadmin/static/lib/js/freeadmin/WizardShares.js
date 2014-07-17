@@ -66,7 +66,7 @@ define([
         invalidMessage: gettext('This field may only contain alphanumeric and the following characters: "_", "-", ".".')
       }, me.dapShareName);
 
-      me._shareCIFS = new RadioButton({}, me.dapShareCIFS);
+      me._shareCIFS = new RadioButton({checked: true}, me.dapShareCIFS);
       me._shareAFP = new RadioButton({}, me.dapShareAFP);
       me._shareNFS = new RadioButton({}, me.dapShareNFS);
 

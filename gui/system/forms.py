@@ -1107,6 +1107,7 @@ class InitialWizardVolumeForm(Form):
         label=_('Type'),
         choices=(),
         widget=forms.RadioSelect,
+        initial='auto',
     )
 
     def __init__(self, *args, **kwargs):
