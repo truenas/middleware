@@ -32,7 +32,7 @@ from freenasUI.system.forms import (
     FirmwareUploadForm,
     InitialWizard,
     InitialWizardConfirmForm,
-    InitialWizardShareForm,
+    InitialWizardShareFormSet,
     InitialWizardVolumeForm,
 )
 
@@ -41,7 +41,7 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^wizard/$', InitialWizard.as_view(
         [
             ('volume', InitialWizardVolumeForm),
-            ('shares', InitialWizardShareForm),
+            ('shares', InitialWizardShareFormSet),
             ('confirm', InitialWizardConfirmForm),
         ]
     ), name='system_initialwizard'),

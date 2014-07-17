@@ -40,6 +40,7 @@ from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 from django.forms import FileField
+from django.forms.formsets import formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.translation import ugettext_lazy as _
@@ -1054,19 +1055,24 @@ class SystemDatasetForm(ModelForm):
 
 class InitialWizardShareForm(Form):
 
-    share_name = forms.CharField(
+    name = forms.CharField(
         label=_('Share Name'),
         max_length=80,
     )
-    share_type = forms.MultipleChoiceField(
-        label=_('Type'),
+    purpose = forms.ChoiceField(
+        label=_('Purpose'),
         choices=(
             ('cifs', _('Windows (CIFS)')),
             ('afp', _('Apple (AFP)')),
             ('nfs', _('Unix (NFS)')),
         ),
-        widget=forms.widgets.CheckboxSelectMultiple,
     )
+    allowguest = forms.BooleanField(
+        label=_('Allow Guest'),
+        required=False,
+    )
+
+InitialWizardShareFormSet = formset_factory(InitialWizardShareForm)
 
 
 class InitialWizardVolumeForm(Form):

@@ -169,6 +169,8 @@ define([
     dump: function() {
       var me = this;
       var dumpNode = dom.byId(me.id + "_dump");
+
+      var total = 0;
       if(dumpNode) {
         domConstruct.empty(dumpNode);
       } else {
@@ -179,20 +181,37 @@ define([
 
         new TextBox({
           name: "shares-" + idx + "-name",
+        type: "hidden",
           value: obj.name
         }).placeAt(dumpNode);
 
         new TextBox({
           name: "shares-" + idx + "-purpose",
+        type: "hidden",
           value: obj.purpose
         }).placeAt(dumpNode);
 
         new TextBox({
           name: "shares-" + idx + "-allowguest",
+        type: "hidden",
           value: obj.allowguest
         }).placeAt(dumpNode);
 
+        total++;
+
       });
+
+      new TextBox({
+        name: "shares-TOTAL_FORMS",
+        type: "hidden",
+        value: total
+      }).placeAt(dumpNode);
+
+      new TextBox({
+        name: "shares-INITIAL_FORMS",
+        type: "hidden",
+        value: "0"
+      }).placeAt(dumpNode);
 
     }
   });
