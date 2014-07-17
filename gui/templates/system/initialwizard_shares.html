@@ -17,7 +17,7 @@
     <tr>
       <td colspan="2">
       {% dojo_render wizard.management_form %}
-      <div data-dojo-type="freeadmin/WizardShares"></div>
+      <div data-dojo-type="freeadmin/WizardShares" data-dojo-props="initial: '{{ form.data_to_store|escapejs }}'"></div>
       </td>
     </tr>
     {% endblock %}

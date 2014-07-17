@@ -40,7 +40,7 @@ from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 from django.forms import FileField
-from django.forms.formsets import formset_factory
+from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.translation import ugettext_lazy as _
@@ -1072,7 +1072,29 @@ class InitialWizardShareForm(Form):
         required=False,
     )
 
-InitialWizardShareFormSet = formset_factory(InitialWizardShareForm)
+
+class SharesBaseFormSet(BaseFormSet):
+
+    RE_FIELDS = re.compile(r'^shares-(\d+)-(.+)$')
+
+    def data_to_store(self):
+        """
+        Returns an array suitable to use in the dojo memory store.
+        """
+        keys = defaultdict(dict)
+        for key, val in self.data.items():
+            reg = self.RE_FIELDS.search(key)
+            if not reg:
+                continue
+            idx, name = reg.groups()
+            keys[idx][name] = val
+
+        return json.dumps(keys.values())
+
+InitialWizardShareFormSet = formset_factory(
+    InitialWizardShareForm,
+    formset=SharesBaseFormSet,
+)
 
 
 class InitialWizardVolumeForm(Form):
