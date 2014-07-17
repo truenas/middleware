@@ -5,6 +5,7 @@ define([
   "dojo/dom-attr",
   "dojo/dom-construct",
   "dojo/dom-style",
+  "dojo/json",
   "dojo/on",
   "dojo/request/xhr",
   "dojo/store/Memory",
@@ -29,6 +30,7 @@ define([
   domAttr,
   domConstruct,
   domStyle,
+  json,
   on,
   xhr,
   Memory,
@@ -49,6 +51,7 @@ define([
 
   var WizardShares = declare("freeadmin.WizardShares", [ _Widget, _Templated ], {
     templateString : template,
+    initial: "[]",
     postCreate: function() {
       var me = this;
 
@@ -94,7 +97,7 @@ define([
 
       me._store = new Memory({
           idProperty: "name",
-          data: []
+          data: json.parse(me.initial)
       });
 
       me._sharesList = new (declare([OnDemandGrid, Selection]))({
@@ -115,6 +118,8 @@ define([
             me.select(id);
         }
       });
+
+      me.dump();
 
       this.inherited(arguments);
 
