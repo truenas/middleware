@@ -16,6 +16,7 @@ define([
   "dijit/form/Button",
   "dijit/form/RadioButton",
   "dijit/form/MultiSelect",
+  "dijit/form/ValidationTextBox",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
   "dgrid/OnDemandGrid",
@@ -41,6 +42,7 @@ define([
   Button,
   RadioButton,
   MultiSelect,
+  ValidationTextBox,
   TabContainer,
   ContentPane,
   OnDemandGrid,
@@ -57,8 +59,11 @@ define([
 
       me.dapShareNameLabel.innerHTML = gettext("Share name") + ":";
 
-      me._shareName = new TextBox({
-        name: "sharename"
+      me._shareName = new ValidationTextBox({
+        name: "sharename",
+        required: true,
+        pattern: "[a-zA-Z0-9_\\-\\.]+",
+        invalidMessage: gettext('This field may only contain alphanumeric and the following characters: "_", "-", ".".')
       }, me.dapShareName);
 
       me._shareCIFS = new RadioButton({}, me.dapShareCIFS);
@@ -110,8 +115,8 @@ define([
       }, me.dapSharesList);
 
       me._sharesList.on("dgrid-select", function(event) {
-        me._shareDelete.set('disabled', false);
-        me._shareUpdate.set('disabled', false);
+        me._shareDelete.set("disabled", false);
+        me._shareUpdate.set("disabled", false);
 
         for(var id in me._sharesList.selection) {
           if(me._sharesList.selection[id])
@@ -127,13 +132,16 @@ define([
     add: function() {
       var me = this;
       var purpose;
-      if(me._shareCIFS.get('value')) purpose = 'cifs';
-      else if(me._shareAFP.get('value')) purpose = 'afp';
-      else if(me._shareNFS.get('value')) purpose = 'nfs';
+
+      if(!me.isValid()) return;
+
+      if(me._shareCIFS.get("value")) purpose = "cifs";
+      else if(me._shareAFP.get("value")) purpose = "afp";
+      else if(me._shareNFS.get("value")) purpose = "nfs";
       me._store.put({
         name: me._shareName.get("value"),
         purpose: purpose,
-        allowguest: me._shareGuest.get('value')
+        allowguest: me._shareGuest.get("value")
       });
       me._sharesList.refresh();
       me.dump();
@@ -143,33 +151,42 @@ define([
       me._store.remove(id);
       me._sharesList.refresh();
       if(Object.keys(me._sharesList.selection).length == 0) {
-        me._shareDelete.set('disabled', true);
-        me._shareUpdate.set('disabled', true);
+        me._shareDelete.set("disabled", true);
+        me._shareUpdate.set("disabled", true);
       }
       me.dump();
     },
     select: function(id) {
       var me = this;
       var data = me._store.get(id);
-      me._shareName.set('value', data.name);
-      me._shareGuest.set('value', data.allowguest);
+      me._shareName.set("value", data.name);
+      me._shareGuest.set("value", data.allowguest);
       switch(data.purpose) {
-        case 'cifs':
-          me._shareCIFS.set('value', true);
-          me._shareAFP.set('value', false);
-          me._shareNFS.set('value', false);
+        case "cifs":
+          me._shareCIFS.set("value", true);
+          me._shareAFP.set("value", false);
+          me._shareNFS.set("value", false);
           break;
-        case 'afp':
-          me._shareCIFS.set('value', false);
-          me._shareAFP.set('value', true);
-          me._shareNFS.set('value', false);
+        case "afp":
+          me._shareCIFS.set("value", false);
+          me._shareAFP.set("value", true);
+          me._shareNFS.set("value", false);
           break;
-        case 'nfs':
-          me._shareCIFS.set('value', false);
-          me._shareAFP.set('value', false);
-          me._shareNFS.set('value', true);
+        case "nfs":
+          me._shareCIFS.set("value", false);
+          me._shareAFP.set("value", false);
+          me._shareNFS.set("value", true);
           break;
       }
+    },
+    isValid: function() {
+      var me = this;
+      var valid = true;
+      if(!me._shareName.isValid()) {
+        me._shareName.focus();
+        valid = false;
+      }
+      return valid;
     },
     dump: function() {
       var me = this;
