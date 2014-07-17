@@ -260,8 +260,7 @@ class InitialWizard(CommonWizard):
         cleaned_data = self.get_all_cleaned_data()
         volume_name = cleaned_data.get('volume_name')
         volume_type = cleaned_data.get('volume_type')
-        share_name = cleaned_data.get('share_name')
-        share_type = cleaned_data.get('share_type')
+        shares = cleaned_data.get('formset-shares')
 
         with transaction.atomic():
             volume = Volume(
@@ -290,45 +289,51 @@ class InitialWizard(CommonWizard):
             )
             Scrub.objects.create(scrub_volume=volume)
 
-            errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
-                volume_name,
-                share_name
-            ))
+            services_restart = []
+            for share in shares:
+                if not share:
+                    continue
 
-            if errno > 0:
-                raise MiddlewareError(_('Failed to create ZFS: %s') % errmsg)
+                share_name = share.get('share_name')
+                share_purpose = share.get('share_purpose')
+                #share_allowguest = share.get('share_allowguest')
 
-            path = '/mnt/%s/%s' % (volume_name, share_name)
+                errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
+                    volume_name,
+                    share_name
+                ))
 
-            if 'cifs' in share_type:
-                CIFS_Share.objects.create(
-                    cifs_name=share_name,
-                    cifs_path=path,
-                )
-                services.objects.filter(srv_service='cifs').update(
+                if errno > 0:
+                    raise MiddlewareError(_('Failed to create ZFS: %s') % errmsg)
+
+                path = '/mnt/%s/%s' % (volume_name, share_name)
+
+                if 'cifs' == share_purpose:
+                    CIFS_Share.objects.create(
+                        cifs_name=share_name,
+                        cifs_path=path,
+                    )
+
+                if 'afp' == share_purpose:
+                    AFP_Share.objects.create(
+                        afp_name=share_name,
+                        afp_path=path,
+                    )
+
+                if 'nfs' == share_purpose:
+                    nfs_share = NFS_Share.objects.create(
+                        nfs_comment=share_name,
+                    )
+                    NFS_Share_Path.objects.create(
+                        share=nfs_share,
+                        path=path,
+                    )
+                services.objects.filter(srv_service=share_purpose).update(
                     srv_enable=True
                 )
 
-            if 'afp' in share_type:
-                AFP_Share.objects.create(
-                    afp_name=share_name,
-                    afp_path=path,
-                )
-                services.objects.filter(srv_service='afp').update(
-                    srv_enable=True
-                )
-
-            if 'nfs' in share_type:
-                nfs_share = NFS_Share.objects.create(
-                    nfs_comment=share_name,
-                )
-                NFS_Share_Path.objects.create(
-                    share=nfs_share,
-                    path=path,
-                )
-                services.objects.filter(srv_service='nfs').update(
-                    srv_enable=True
-                )
+                if share_purpose not in services_restart:
+                    services_restart.append(share_purpose)
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
@@ -338,14 +343,8 @@ class InitialWizard(CommonWizard):
         _n.restart("system_datasets")
         _n.restart("cron")
 
-        if 'cifs' in share_type:
-            _n.restart('cifs')
-
-        if 'afp' in share_type:
-            _n.restart('afp')
-
-        if 'nfs' in share_type:
-            _n.restart('nfs')
+        for service in services_restart:
+            _n.restart(service)
 
         return JsonResp(
             self.request,
@@ -1055,11 +1054,11 @@ class SystemDatasetForm(ModelForm):
 
 class InitialWizardShareForm(Form):
 
-    name = forms.CharField(
+    share_name = forms.CharField(
         label=_('Share Name'),
         max_length=80,
     )
-    purpose = forms.ChoiceField(
+    share_purpose = forms.ChoiceField(
         label=_('Purpose'),
         choices=(
             ('cifs', _('Windows (CIFS)')),
@@ -1067,7 +1066,7 @@ class InitialWizardShareForm(Form):
             ('nfs', _('Unix (NFS)')),
         ),
     )
-    allowguest = forms.BooleanField(
+    share_allowguest = forms.BooleanField(
         label=_('Allow Guest'),
         required=False,
     )

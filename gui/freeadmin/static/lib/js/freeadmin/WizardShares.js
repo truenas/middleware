@@ -202,19 +202,19 @@ define([
       me._store.query({}).forEach(function(obj, idx) {
 
         new TextBox({
-          name: "shares-" + idx + "-name",
+          name: "shares-" + idx + "-share_name",
         type: "hidden",
           value: obj.name
         }).placeAt(dumpNode);
 
         new TextBox({
-          name: "shares-" + idx + "-purpose",
+          name: "shares-" + idx + "-share_purpose",
         type: "hidden",
           value: obj.purpose
         }).placeAt(dumpNode);
 
         new TextBox({
-          name: "shares-" + idx + "-allowguest",
+          name: "shares-" + idx + "-share_allowguest",
         type: "hidden",
           value: obj.allowguest
         }).placeAt(dumpNode);
