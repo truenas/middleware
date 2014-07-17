@@ -84,6 +84,9 @@ define([
         label: gettext("Update"),
         disabled: true
       }, me.dapShareUpdate);
+      on(me._shareUpdate, "click", function() {
+        me.add();
+      });
 
       me._store = new Memory({
           idProperty: "name",
