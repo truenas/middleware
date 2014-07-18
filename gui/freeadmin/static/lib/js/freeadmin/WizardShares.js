@@ -69,8 +69,16 @@ define([
       me._shareCIFS = new RadioButton({checked: true}, me.dapShareCIFS);
       me._shareAFP = new RadioButton({}, me.dapShareAFP);
       me._shareNFS = new RadioButton({}, me.dapShareNFS);
+      on(me._shareAFP, "change", function() {
+        console.log("change");
+        if(this.get('value')) {
+          me._shareAFP_TM.set('disabled', false);
+        } else {
+          me._shareAFP_TM.set('disabled', true);
+        }
+      });
 
-      me._shareAFP_TM = new CheckBox({}, me.dapShareAFP_TM);
+      me._shareAFP_TM = new CheckBox({disabled: true}, me.dapShareAFP_TM);
       me._shareGuest = new CheckBox({}, me.dapShareGuest);
 
       me._shareAdd = new Button({
