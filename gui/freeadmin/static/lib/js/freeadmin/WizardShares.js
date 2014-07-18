@@ -70,7 +70,6 @@ define([
       me._shareAFP = new RadioButton({}, me.dapShareAFP);
       me._shareNFS = new RadioButton({}, me.dapShareNFS);
       on(me._shareAFP, "change", function() {
-        console.log("change");
         if(this.get('value')) {
           me._shareAFP_TM.set('disabled', false);
         } else {
@@ -214,27 +213,31 @@ define([
 
         new TextBox({
           name: "shares-" + idx + "-share_name",
-        type: "hidden",
+          type: "hidden",
           value: obj.name
         }).placeAt(dumpNode);
 
         new TextBox({
           name: "shares-" + idx + "-share_purpose",
-        type: "hidden",
+          type: "hidden",
           value: obj.purpose
         }).placeAt(dumpNode);
 
-        new TextBox({
-          name: "shares-" + idx + "-share_allowguest",
-        type: "hidden",
-          value: obj.allowguest
-        }).placeAt(dumpNode);
+        if(obj.allowguest) {
+          new TextBox({
+            name: "shares-" + idx + "-share_allowguest",
+            type: "hidden",
+            value: obj.allowguest
+          }).placeAt(dumpNode);
+        }
 
-        new TextBox({
-          name: "shares-" + idx + "-share_timemachine",
-        type: "hidden",
-          value: obj.timemachine
-        }).placeAt(dumpNode);
+        if(obj.timemachine) {
+          new TextBox({
+            name: "shares-" + idx + "-share_timemachine",
+            type: "hidden",
+            value: obj.timemachine
+          }).placeAt(dumpNode);
+        }
 
         total++;
 

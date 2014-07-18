@@ -1001,7 +1001,7 @@ class InitialWizardShareForm(Form):
 
 class SharesBaseFormSet(BaseFormSet):
 
-    RE_FIELDS = re.compile(r'^shares-(\d+)-(.+)$')
+    RE_FIELDS = re.compile(r'^shares-(\d+)-share_(.+)$')
 
     def data_to_store(self):
         """
