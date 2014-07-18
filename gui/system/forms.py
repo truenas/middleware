@@ -206,7 +206,7 @@ class InitialWizard(CommonWizard):
 
                 share_name = share.get('share_name')
                 share_purpose = share.get('share_purpose')
-                #share_allowguest = share.get('share_allowguest')
+                share_allowguest = share.get('share_allowguest')
 
                 errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
                     volume_name,
@@ -221,9 +221,13 @@ class InitialWizard(CommonWizard):
                 path = '/mnt/%s/%s' % (volume_name, share_name)
 
                 if 'cifs' == share_purpose:
+                    sharekwargs = {}
+                    if share_allowguest:
+                        sharekwargs['cifs_guestok'] = True
                     CIFS_Share.objects.create(
                         cifs_name=share_name,
                         cifs_path=path,
+                        **sharekwargs,
                     )
 
                 if 'afp' == share_purpose:
