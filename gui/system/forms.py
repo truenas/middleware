@@ -320,7 +320,7 @@ class InitialWizard(CommonWizard):
                 errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
                     volume_name,
                     share_name
-                ))
+                ), _restart_collectd=False)
 
                 if errno > 0:
                     raise MiddlewareError(_('Failed to create ZFS: %s') % errmsg)
@@ -356,10 +356,11 @@ class InitialWizard(CommonWizard):
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
-        _n.reload("disk")
+
+        _n.reload("disk")  # Reloads collectd as well
         _n.start("ix-system")
         _n.start("ix-syslogd")
-        _n.restart("system_datasets")
+        _n.restart("system_datasets")  # FIXME: may reload collectd again
         _n.restart("cron")
 
         for service in services_restart:
