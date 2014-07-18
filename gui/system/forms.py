@@ -183,24 +183,14 @@ class InitialWizard(CommonWizard):
             )
             mp.save()
 
-            _n = notifier()
-
-            disks = volume_form._get_unused_disks()
-
-            bysize = defaultdict(list)
-            for disk, attrs in disks.items():
-                size = int(attrs['capacity'])
-                # Some disks might have a few sectors of difference.
-                # We still want to group them together.
-                # This is not ideal but good enough for now.
-                size = size - (size % 10000)
-                bysize[size].append(disk)
+            bysize = volume_form._get_unused_disks_by_size()
 
             if volume_type == 'auto':
                 groups = volume_form._grp_autoselect(bysize)
             else:
                 groups = volume_form._grp_predefined(bysize, volume_type)
 
+            _n = notifier()
             _n.init(
                 "volume",
                 volume,
@@ -1057,7 +1047,7 @@ class InitialWizardVolumeForm(Form):
             ),
         )
 
-        self.types_avail = self._types_avail(self._get_unused_disks())
+        self.types_avail = self._types_avail(self._get_unused_disks_by_size())
 
     @staticmethod
     def _get_unused_disks():
@@ -1068,9 +1058,31 @@ class InitialWizardVolumeForm(Form):
                 disks.pop(disk, None)
         return disks
 
+    @classmethod
+    def _get_unused_disks_by_size(cls):
+        disks = cls._get_unused_disks()
+        bysize = defaultdict(list)
+        for disk, attrs in disks.items():
+            size = int(attrs['capacity'])
+            # Some disks might have a few sectors of difference.
+            # We still want to group them together.
+            # This is not ideal but good enough for now.
+            size = size - (size % 10000)
+            bysize[size].append(disk)
+        return bysize
+
+    @staticmethod
+    def _higher_disks_group(bysize):
+        higher = (None, 0)
+        for size, _disks in bysize.items():
+            if len(_disks) > higher[1]:
+                higher = (size, len(_disks))
+        return higher
+
     def _types_avail(self, disks):
         types = []
-        ndisks = len(disks)
+        ndisks = self._higher_disks_group(disks)[1]
+        log.error("ndisks %r - %r", ndisks, disks)
         if ndisks >= 4:
             types.extend(['raid10', 'raidz2'])
         if ndisks >= 3:
@@ -1079,7 +1091,8 @@ class InitialWizardVolumeForm(Form):
             types.append('stripe')
         return types
 
-    def _grp_type(self, num):
+    @staticmethod
+    def _grp_type(num):
         check = OrderedDict((
             ('mirror', lambda y: y == 2),
             (
@@ -1101,29 +1114,30 @@ class InitialWizardVolumeForm(Form):
                 return name
         return 'stripe'
 
-    @staticmethod
-    def _grp_autoselect(self, disks):
+    @classmethod
+    def _grp_autoselect(cls, disks):
 
+        higher = cls._higher_disks_group(disks)
         groups = OrderedDict()
         grpid = 0
 
-        for size, devs in disks.items():
+        for size, devs in [(higher[0], disks[higher[0]])]:
             num = len(devs)
             if num in (4, 8):
                 mod = 0
                 perrow = num / 2
                 rows = 2
-                vdevtype = self._grp_type(num / 2)
+                vdevtype = cls._grp_type(num / 2)
             elif num < 12:
                 mod = 0
                 perrow = num
                 rows = 1
-                vdevtype = self._grp_type(num)
+                vdevtype = cls._grp_type(num)
             elif num < 18:
                 mod = num % 2
                 rows = 2
                 perrow = (num - mod) / 2
-                vdevtype = self._grp_type(perrow)
+                vdevtype = cls._grp_type(perrow)
             elif num < 99:
                 div9 = int(num / 9)
                 div10 = int(num / 10)
@@ -1139,7 +1153,7 @@ class InitialWizardVolumeForm(Form):
                     rows = div10
                     mod = mod10
 
-                vdevtype = self._grp_type(perrow)
+                vdevtype = cls._grp_type(perrow)
             else:
                 perrow = num
                 rows = 1
@@ -1160,13 +1174,10 @@ class InitialWizardVolumeForm(Form):
                 grpid += 1
         return groups
 
-    @staticmethod
-    def _grp_predefined(disks, grptype):
+    @classmethod
+    def _grp_predefined(cls, disks, grptype):
 
-        higher = (None, 0)
-        for size, _disks in disks.items():
-            if len(_disks) > higher[1]:
-                higher = (size, len(_disks))
+        higher = cls._higher_disks_group(disks)
 
         maindisks = disks[higher[0]]
 
