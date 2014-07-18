@@ -986,15 +986,20 @@ class InitialWizardShareForm(Form):
             ('cifs', _('Windows (CIFS)')),
             ('afp', _('Apple (AFP)')),
             ('nfs', _('Unix (NFS)')),
+            ('iscsi', _('Block Storage (iSCSI)')),
         ),
     )
     share_allowguest = forms.BooleanField(
         label=_('Allow Guest'),
         required=False,
     )
-
     share_timemachine = forms.BooleanField(
-        label=_('TIme Machine'),
+        label=_('Time Machine'),
+        required=False,
+    )
+    share_iscsisize = forms.CharField(
+        label=_('iSCSI Size'),
+        max_length=255,
         required=False,
     )
 

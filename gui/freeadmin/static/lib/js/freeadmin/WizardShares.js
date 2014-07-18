@@ -69,6 +69,8 @@ define([
       me._shareCIFS = new RadioButton({checked: true}, me.dapShareCIFS);
       me._shareAFP = new RadioButton({}, me.dapShareAFP);
       me._shareNFS = new RadioButton({}, me.dapShareNFS);
+      me._shareiSCSI = new RadioButton({}, me.dapShareiSCSI);
+
       on(me._shareAFP, "change", function() {
         if(this.get('value')) {
           me._shareAFP_TM.set('disabled', false);
@@ -77,8 +79,20 @@ define([
         }
       });
 
+      on(me._shareiSCSI, "change", function() {
+        if(this.get('value')) {
+          me._shareiSCSI_size.set('disabled', false);
+        } else {
+          me._shareiSCSI_size.set('disabled', true);
+        }
+      });
+
       me._shareAFP_TM = new CheckBox({disabled: true}, me.dapShareAFP_TM);
       me._shareGuest = new CheckBox({}, me.dapShareGuest);
+      me._shareiSCSI_size = new TextBox({
+        style: "width: 50px;",
+        disabled: true
+      }, me.dapShareiSCSI_size);
 
       me._shareAdd = new Button({
         label: gettext("Add")
@@ -146,11 +160,13 @@ define([
       if(me._shareCIFS.get("value")) purpose = "cifs";
       else if(me._shareAFP.get("value")) purpose = "afp";
       else if(me._shareNFS.get("value")) purpose = "nfs";
+      else if(me._shareiSCSI.get("value")) purpose = "iscsi";
       me._store.put({
         name: me._shareName.get("value"),
         purpose: purpose,
         allowguest: me._shareGuest.get("value"),
-        timemachine: me._shareAFP_TM.get("value")
+        timemachine: me._shareAFP_TM.get("value"),
+        iscsisize: me._shareiSCSI_size.get("value")
       });
       me._sharesList.refresh();
       me.dump();
@@ -171,21 +187,31 @@ define([
       me._shareName.set("value", data.name);
       me._shareGuest.set("value", data.allowguest);
       me._shareAFP_TM.set("value", data.timemachine);
+      me._shareiSCSI_size.set("value", data.iscsisize);
       switch(data.purpose) {
         case "cifs":
           me._shareCIFS.set("value", true);
           me._shareAFP.set("value", false);
           me._shareNFS.set("value", false);
+          me._shareiSCSI.set("value", false);
           break;
         case "afp":
           me._shareCIFS.set("value", false);
           me._shareAFP.set("value", true);
           me._shareNFS.set("value", false);
+          me._shareiSCSI.set("value", false);
           break;
         case "nfs":
           me._shareCIFS.set("value", false);
           me._shareAFP.set("value", false);
           me._shareNFS.set("value", true);
+          me._shareiSCSI.set("value", false);
+          break;
+        case "iscsi":
+          me._shareCIFS.set("value", false);
+          me._shareAFP.set("value", false);
+          me._shareNFS.set("value", false);
+          me._shareiSCSI.set("value", true);
           break;
       }
     },
@@ -236,6 +262,14 @@ define([
             name: "shares-" + idx + "-share_timemachine",
             type: "hidden",
             value: obj.timemachine
+          }).placeAt(dumpNode);
+        }
+
+        if(obj.iscsisize) {
+          new TextBox({
+            name: "shares-" + idx + "-share_iscsisize",
+            type: "hidden",
+            value: obj.iscsisize
           }).placeAt(dumpNode);
         }
 
