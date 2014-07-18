@@ -173,87 +173,90 @@ class InitialWizard(CommonWizard):
                 return name
         return 'stripe'
 
-    def _grp_autoselect(self, disks, layout='SIZE'):
-
-        assert layout in ('SIZE', 'PERFORMANCE')
-
-        bysize = defaultdict(list)
-        for disk, info in disks.items():
-            bysize[info['capacity']].append(info['devname'])
+    def _grp_autoselect(self, disks):
 
         groups = OrderedDict()
         grpid = 0
 
-        if layout == 'PERFORMANCE':
-            for size, devs in bysize.items():
-                num = len(devs)
-                rows = int(num / 2)
+        for size, devs in disks.items():
+            num = len(devs)
+            if num in (4, 8):
+                mod = 0
+                perrow = num / 2
+                rows = 2
+                vdevtype = self._grp_type(num / 2)
+            elif num < 12:
+                mod = 0
+                perrow = num
+                rows = 1
+                vdevtype = self._grp_type(num)
+            elif num < 18:
                 mod = num % 2
-                for i in range(rows):
-                    groups[grpid] = {
-                        'type': 'mirror',
-                        'disks': devs[i * 2:2 * (i + 1)],
-                    }
-                    grpid += 1
-                if mod > 0:
-                    groups[grpid] = {
-                        'type': 'spare',
-                        'disks': devs[-mod:],
-                    }
-                    grpid += 1
+                rows = 2
+                perrow = (num - mod) / 2
+                vdevtype = self._grp_type(perrow)
+            elif num < 99:
+                div9 = int(num / 9)
+                div10 = int(num / 10)
+                mod9 = num % 9
+                mod10 = num % 10
 
-        else:
-            for size, devs in bysize.items():
-                num = len(devs)
-                if num in (4, 8):
-                    mod = 0
-                    perrow = num / 2
-                    rows = 2
-                    vdevtype = self._grp_type(num / 2)
-                elif num < 12:
-                    mod = 0
-                    perrow = num
-                    rows = 1
-                    vdevtype = self._grp_type(num)
-                elif num < 18:
-                    mod = num % 2
-                    rows = 2
-                    perrow = (num - mod) / 2
-                    vdevtype = self._grp_type(perrow)
-                elif num < 99:
-                    div9 = int(num / 9)
-                    div10 = int(num / 10)
-                    mod9 = num % 9
-                    mod10 = num % 10
-
-                    if mod9 >= 0.75 * div9 and mod10 >= 0.75 * div10:
-                        perrow = 9
-                        rows = div9
-                        mod = mod9
-                    else:
-                        perrow = 10
-                        rows = div10
-                        mod = mod10
-
-                    vdevtype = self._grp_type(perrow)
+                if mod9 >= 0.75 * div9 and mod10 >= 0.75 * div10:
+                    perrow = 9
+                    rows = div9
+                    mod = mod9
                 else:
-                    perrow = num
-                    rows = 1
-                    vdevtype = 'stripe'
-                    mod = 0
+                    perrow = 10
+                    rows = div10
+                    mod = mod10
 
-                for i in range(rows):
-                    groups[grpid] = {
-                        'type': vdevtype,
-                        'disks': devs[i * perrow:perrow * (i + 1)],
-                    }
-                    grpid += 1
-                if mod > 0:
-                    groups[grpid] = {
-                        'type': 'spare',
-                        'disks': devs[-mod:],
-                    }
-                    grpid += 1
+                vdevtype = self._grp_type(perrow)
+            else:
+                perrow = num
+                rows = 1
+                vdevtype = 'stripe'
+                mod = 0
+
+            for i in range(rows):
+                groups[grpid] = {
+                    'type': vdevtype,
+                    'disks': devs[i * perrow:perrow * (i + 1)],
+                }
+                grpid += 1
+            if mod > 0:
+                groups[grpid] = {
+                    'type': 'spare',
+                    'disks': devs[-mod:],
+                }
+                grpid += 1
+        return groups
+
+    def _grp_predefined(self, disks, grptype):
+
+        higher = (None, 0)
+        for size, _disks in disks.items():
+            if len(_disks) > higher[1]:
+                higher = (size, len(_disks))
+
+        maindisks = disks[higher[0]]
+
+        groups = OrderedDict()
+        grpid = 0
+
+        if grptype == 'raid10':
+            for i in range(len(maindisks) / 2):
+                groups[grpid] = {
+                    'type': 'mirror',
+                    'disks': maindisks[i * 2:2 * (i + 1)],
+                }
+                grpid += 1
+        else:
+            groups[grpid] = {
+                'type': grptype,
+                'disks': maindisks,
+
+            }
+
         return groups
 
     def done(self, form_list, **kwargs):
@@ -279,7 +282,23 @@ class InitialWizard(CommonWizard):
             _n = notifier()
 
             disks = _n.get_disks()
-            groups = self._grp_autoselect(disks, layout=volume_type)
+            for volume in Volume.objects.all():
+                for disk in volume.get_disks():
+                    disks.pop(disk, None)
+
+            bysize = defaultdict(list)
+            for disk, attrs in disks.items():
+                size = int(attrs['capacity'])
+                # Some disks might have a few sectors of difference.
+                # We still want to group them together.
+                # This is not ideal but good enough for now.
+                size = size - (size % 10000)
+                bysize[size].append(disk)
+
+            if volume_type == 'auto':
+                groups = self._grp_autoselect(bysize)
+            else:
+                groups = self._grp_predefined(bysize, volume_type)
 
             _n.init(
                 "volume",
