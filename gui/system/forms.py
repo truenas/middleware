@@ -160,110 +160,14 @@ class InitialWizard(CommonWizard):
             'system/wizard.html',
         ]
 
-    def _grp_type(self, num):
-        check = OrderedDict((
-            ('mirror', lambda y: y == 2),
-            ('raidz', lambda y: False if y < 3 else math.log(y - 1, 2) % 1 == 0),
-            ('raidz2', lambda y: False if y < 4 else math.log(y - 2, 2) % 1 == 0),
-            ('raidz3', lambda y: False if y < 5 else math.log(y - 3, 2) % 1 == 0),
-            ('stripe', lambda y: True),
-        ))
-        for name, func in check.items():
-            if func(num):
-                return name
-        return 'stripe'
-
-    def _grp_autoselect(self, disks):
-
-        groups = OrderedDict()
-        grpid = 0
-
-        for size, devs in disks.items():
-            num = len(devs)
-            if num in (4, 8):
-                mod = 0
-                perrow = num / 2
-                rows = 2
-                vdevtype = self._grp_type(num / 2)
-            elif num < 12:
-                mod = 0
-                perrow = num
-                rows = 1
-                vdevtype = self._grp_type(num)
-            elif num < 18:
-                mod = num % 2
-                rows = 2
-                perrow = (num - mod) / 2
-                vdevtype = self._grp_type(perrow)
-            elif num < 99:
-                div9 = int(num / 9)
-                div10 = int(num / 10)
-                mod9 = num % 9
-                mod10 = num % 10
-
-                if mod9 >= 0.75 * div9 and mod10 >= 0.75 * div10:
-                    perrow = 9
-                    rows = div9
-                    mod = mod9
-                else:
-                    perrow = 10
-                    rows = div10
-                    mod = mod10
-
-                vdevtype = self._grp_type(perrow)
-            else:
-                perrow = num
-                rows = 1
-                vdevtype = 'stripe'
-                mod = 0
-
-            for i in range(rows):
-                groups[grpid] = {
-                    'type': vdevtype,
-                    'disks': devs[i * perrow:perrow * (i + 1)],
-                }
-                grpid += 1
-            if mod > 0:
-                groups[grpid] = {
-                    'type': 'spare',
-                    'disks': devs[-mod:],
-                }
-                grpid += 1
-        return groups
-
-    def _grp_predefined(self, disks, grptype):
-
-        higher = (None, 0)
-        for size, _disks in disks.items():
-            if len(_disks) > higher[1]:
-                higher = (size, len(_disks))
-
-        maindisks = disks[higher[0]]
-
-        groups = OrderedDict()
-        grpid = 0
-
-        if grptype == 'raid10':
-            for i in range(len(maindisks) / 2):
-                groups[grpid] = {
-                    'type': 'mirror',
-                    'disks': maindisks[i * 2:2 * (i + 1)],
-                }
-                grpid += 1
-        else:
-            groups[grpid] = {
-                'type': grptype,
-                'disks': maindisks,
-
-            }
-
-        return groups
-
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
         volume_name = cleaned_data.get('volume_name')
         volume_type = cleaned_data.get('volume_type')
         shares = cleaned_data.get('formset-shares')
+
+        form_list = self.get_form_list()
+        volume_form = form_list['volume']
 
         with transaction.atomic():
             volume = Volume(
@@ -281,10 +185,7 @@ class InitialWizard(CommonWizard):
 
             _n = notifier()
 
-            disks = _n.get_disks()
-            for volume in Volume.objects.all():
-                for disk in volume.get_disks():
-                    disks.pop(disk, None)
+            disks = volume_form._get_unused_disks()
 
             bysize = defaultdict(list)
             for disk, attrs in disks.items():
@@ -296,9 +197,9 @@ class InitialWizard(CommonWizard):
                 bysize[size].append(disk)
 
             if volume_type == 'auto':
-                groups = self._grp_autoselect(bysize)
+                groups = volume_form._grp_autoselect(bysize)
             else:
-                groups = self._grp_predefined(bysize, volume_type)
+                groups = volume_form._grp_predefined(bysize, volume_type)
 
             _n.init(
                 "volume",
@@ -323,7 +224,9 @@ class InitialWizard(CommonWizard):
                 ), _restart_collectd=False)
 
                 if errno > 0:
-                    raise MiddlewareError(_('Failed to create ZFS: %s') % errmsg)
+                    raise MiddlewareError(
+                        _('Failed to create ZFS: %s') % errmsg
+                    )
 
                 path = '/mnt/%s/%s' % (volume_name, share_name)
 
@@ -1154,12 +1057,16 @@ class InitialWizardVolumeForm(Form):
             ),
         )
 
+        self.types_avail = self._types_avail(self._get_unused_disks())
+
+    @staticmethod
+    def _get_unused_disks():
         _n = notifier()
         disks = _n.get_disks()
         for volume in Volume.objects.all():
             for disk in volume.get_disks():
                 disks.pop(disk, None)
-        self.types_avail = self._types_avail(disks)
+        return disks
 
     def _types_avail(self, disks):
         types = []
@@ -1171,6 +1078,116 @@ class InitialWizardVolumeForm(Form):
         if ndisks > 0:
             types.append('stripe')
         return types
+
+    def _grp_type(self, num):
+        check = OrderedDict((
+            ('mirror', lambda y: y == 2),
+            (
+                'raidz',
+                lambda y: False if y < 3 else math.log(y - 1, 2) % 1 == 0
+            ),
+            (
+                'raidz2',
+                lambda y: False if y < 4 else math.log(y - 2, 2) % 1 == 0
+            ),
+            (
+                'raidz3',
+                lambda y: False if y < 5 else math.log(y - 3, 2) % 1 == 0
+            ),
+            ('stripe', lambda y: True),
+        ))
+        for name, func in check.items():
+            if func(num):
+                return name
+        return 'stripe'
+
+    @staticmethod
+    def _grp_autoselect(self, disks):
+
+        groups = OrderedDict()
+        grpid = 0
+
+        for size, devs in disks.items():
+            num = len(devs)
+            if num in (4, 8):
+                mod = 0
+                perrow = num / 2
+                rows = 2
+                vdevtype = self._grp_type(num / 2)
+            elif num < 12:
+                mod = 0
+                perrow = num
+                rows = 1
+                vdevtype = self._grp_type(num)
+            elif num < 18:
+                mod = num % 2
+                rows = 2
+                perrow = (num - mod) / 2
+                vdevtype = self._grp_type(perrow)
+            elif num < 99:
+                div9 = int(num / 9)
+                div10 = int(num / 10)
+                mod9 = num % 9
+                mod10 = num % 10
+
+                if mod9 >= 0.75 * div9 and mod10 >= 0.75 * div10:
+                    perrow = 9
+                    rows = div9
+                    mod = mod9
+                else:
+                    perrow = 10
+                    rows = div10
+                    mod = mod10
+
+                vdevtype = self._grp_type(perrow)
+            else:
+                perrow = num
+                rows = 1
+                vdevtype = 'stripe'
+                mod = 0
+
+            for i in range(rows):
+                groups[grpid] = {
+                    'type': vdevtype,
+                    'disks': devs[i * perrow:perrow * (i + 1)],
+                }
+                grpid += 1
+            if mod > 0:
+                groups[grpid] = {
+                    'type': 'spare',
+                    'disks': devs[-mod:],
+                }
+                grpid += 1
+        return groups
+
+    @staticmethod
+    def _grp_predefined(disks, grptype):
+
+        higher = (None, 0)
+        for size, _disks in disks.items():
+            if len(_disks) > higher[1]:
+                higher = (size, len(_disks))
+
+        maindisks = disks[higher[0]]
+
+        groups = OrderedDict()
+        grpid = 0
+
+        if grptype == 'raid10':
+            for i in range(len(maindisks) / 2):
+                groups[grpid] = {
+                    'type': 'mirror',
+                    'disks': maindisks[i * 2:2 * (i + 1)],
+                }
+                grpid += 1
+        else:
+            groups[grpid] = {
+                'type': grptype,
+                'disks': maindisks,
+
+            }
+
+        return groups
 
 
 class InitialWizardConfirmForm(Form):
