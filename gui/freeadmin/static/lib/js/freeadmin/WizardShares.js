@@ -70,6 +70,7 @@ define([
       me._shareAFP = new RadioButton({}, me.dapShareAFP);
       me._shareNFS = new RadioButton({}, me.dapShareNFS);
 
+      me._shareAFP_TM = new CheckBox({}, me.dapShareAFP_TM);
       me._shareGuest = new CheckBox({}, me.dapShareGuest);
 
       me._shareAdd = new Button({
@@ -141,7 +142,8 @@ define([
       me._store.put({
         name: me._shareName.get("value"),
         purpose: purpose,
-        allowguest: me._shareGuest.get("value")
+        allowguest: me._shareGuest.get("value"),
+        timemachine: me._shareAFP_TM.get("value")
       });
       me._sharesList.refresh();
       me.dump();
@@ -161,6 +163,7 @@ define([
       var data = me._store.get(id);
       me._shareName.set("value", data.name);
       me._shareGuest.set("value", data.allowguest);
+      me._shareAFP_TM.set("value", data.timemachine);
       switch(data.purpose) {
         case "cifs":
           me._shareCIFS.set("value", true);
@@ -217,6 +220,12 @@ define([
           name: "shares-" + idx + "-share_allowguest",
         type: "hidden",
           value: obj.allowguest
+        }).placeAt(dumpNode);
+
+        new TextBox({
+          name: "shares-" + idx + "-share_timemachine",
+        type: "hidden",
+          value: obj.timemachine
         }).placeAt(dumpNode);
 
         total++;

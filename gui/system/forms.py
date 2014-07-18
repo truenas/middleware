@@ -207,6 +207,7 @@ class InitialWizard(CommonWizard):
                 share_name = share.get('share_name')
                 share_purpose = share.get('share_purpose')
                 share_allowguest = share.get('share_allowguest')
+                share_timemachine = share.get('share_timemachine')
 
                 errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
                     volume_name,
@@ -220,20 +221,24 @@ class InitialWizard(CommonWizard):
 
                 path = '/mnt/%s/%s' % (volume_name, share_name)
 
+                sharekwargs = {}
+
                 if 'cifs' == share_purpose:
-                    sharekwargs = {}
                     if share_allowguest:
                         sharekwargs['cifs_guestok'] = True
                     CIFS_Share.objects.create(
                         cifs_name=share_name,
                         cifs_path=path,
-                        **sharekwargs,
+                        **sharekwargs
                     )
 
                 if 'afp' == share_purpose:
+                    if share_timemachine:
+                        sharekwargs['afp_timemachine'] = True
                     AFP_Share.objects.create(
                         afp_name=share_name,
                         afp_path=path,
+                        **sharekwargs
                     )
 
                 if 'nfs' == share_purpose:
@@ -985,6 +990,11 @@ class InitialWizardShareForm(Form):
     )
     share_allowguest = forms.BooleanField(
         label=_('Allow Guest'),
+        required=False,
+    )
+
+    share_timemachine = forms.BooleanField(
+        label=_('TIme Machine'),
         required=False,
     )
 
