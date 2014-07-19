@@ -72,7 +72,7 @@ main()
 
 	# copy /rescue and /boot from the image to the iso
 	tar -c -f - -C ${NANO_OBJ}/_.w --exclude boot/kernel-debug boot | tar -x -f - -C ${ISODIR}
-	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
+#	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
 	rm -rf ${INSTALLUFSDIR}/usr/local
