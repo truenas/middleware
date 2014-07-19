@@ -173,6 +173,7 @@ if [ -f build/create_package.py ]; then
 #	python build/create_package.py -R "${NANO_WORLDDIR}" -N freenas -V ${VERSION} ${NANO_OBJ}/_.instufs/cdrom/FreeNAS/Packages/freenas-${VERSION}.tgz
 ##Usage: build/create_manifest.py [-P package_directory] [-N <release_notes_file>] [-R release_name] -T <train_name> -S <manifest_version> pkg=version[:upgrade_from[,...]]  [...] -o manifest
 #	env PYTHONPATH="${NANO_WORLDDIR}/usr/local/lib" python build/create_manifest.py -P ${NANO_OBJ}/_.instufs/cdrom/FreeNAS -o ${NANO_OBJ}/_.instufs/FreeNAS-MANIFEST -R FreeNAS -T FreeNAS-EXPERIMENTAL -S 100 freenas=${VERSION}
+	rm -rf ${NANO_OBJ}/_.packages/Packages
 	mkdir -p ${NANO_OBJ}/_.packages/Packages
 	python build/create_package.py -R "${NANO_WORLDDIR}" -N freenas -V ${VERSION}-${REVISION:-0} ${NANO_OBJ}/_.packages/Packages/freenas-${VERSION}-${REVISION:-0}.tgz
 	env PYTHONPATH="${NANO_WORLDDIR}/usr/local/lib" python build/create_manifest.py -P ${NANO_OBJ}/_.packages -o ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST -R FreeNAS -T FreeNAS-EXPERIMENTAL -S 100 freenas=${VERSION}-${REVISION:-0}

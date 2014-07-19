@@ -253,9 +253,11 @@ disk_is_freenas()
     if [ -c /dev/${_disk}s4 ]; then
 	os_part=/dev/${_disk}s1a
 	data_part=/dev/${_disk}s4
+	upgrade_style="old"
     elif [ -c /dev/${_disk}p3 ]; then
 	os_part=/dev/${_disk}p2
 	data_part=/dev/${_disk}p3
+	upgrade_style="new"
     fi
     if [ "${data_part}" = ""]; then
 	return 1
@@ -269,9 +271,11 @@ disk_is_freenas()
         _rv=0
     fi
     # XXX side effect, shouldn't be here!
-    cp -pR /tmp/data_old/. /tmp/data_preserved
+    if [ "${upgrade_style}" = "old" ]; then
+	cp -pR /tmp/data_old/. /tmp/data_preserved
+    fi
     umount /tmp/data_old
-    if [ $_rv -eq 0 ]; then
+    if [ $_rv -eq 0 -a "${upgrade_style}" = "old" ]; then
 	mount ${os_part} /tmp/data_old
         # ah my old friend, the can't see the mount til I access the mountpoint
         # bug
@@ -301,7 +305,7 @@ disk_is_freenas()
         umount /tmp/data_old
     fi
     rmdir /tmp/data_old
-
+    return $_rv
 }
 
 menu_install()
@@ -326,6 +330,7 @@ menu_install()
     local _dlv
     local os_part
     local data_part
+    local upgrade_style
 
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
@@ -386,6 +391,13 @@ menu_install()
             _do_upgrade=1
             _action="upgrade"
         fi
+	if [ -c /dev/${_disk}s4 ]; then
+	    upgrade_style="old"
+	elif [ -c /dev/${_disk}p3 ]; then
+	    upgrade_style="new"
+	else
+	    echo "Unknown upgrade style" 1>&2
+	fi
     elif [ ${_satadom} -a -c /dev/ufs/TrueNASs4 ]; then
 	# Special hack for USB -> DOM upgrades
 	_disk_old=`glabel status | grep ' ufs/TrueNASs4 ' | awk '{ print $3 }' | sed -e 's,s4$,,g'`
@@ -413,9 +425,9 @@ menu_install()
     then
         /etc/rc.d/dmesg start
         mkdir -p /tmp/data
-	if [ -c /dev/${_disk}s1a ]; then
+	if [ "${upgrade_style}" = "old" ]; then
 		mount /dev/${_disk}s1a /tmp/data
-	elif [ -c /dev/${_disk}p2 ]; then
+	elif [ "${upgrade_style}" = "new" ]; then
 		mount /dev/${_disk}p2 /tmp/data
 	else
 		echo "Unknown upgrade style" 1>&2
@@ -437,7 +449,7 @@ menu_install()
         umount /tmp/data
         rmdir /tmp/data
 	if [ -c ${_disk}s4 ]; then
-	    # Destroy the partition
+	    # Destroy the partition for old-style upgrades
 	    gpart destroy -F ${_disk} || true
 	fi
     else
@@ -461,9 +473,10 @@ menu_install()
     if [ ${_do_upgrade} -ne 0 ]; then
         # Mount: /data
 	set -x
+	# For new-style upgrades -- we have a ${_disk}p3 --
+	# we don't need to back up the data, just touch the
+	# sentinal files.
         mkdir -p /tmp/data
-	echo "At this point, not sure what to do"
-	read foo
 	if [ ! -c /dev/${_disk}p3 ]; then
 		# For upgrading from old-style partitions, the
 		# partition map was destroyed.  pc-sysinstall starts
@@ -481,7 +494,9 @@ menu_install()
 	mount /dev/${_disk}p3 /tmp/data
         ls /tmp/data > /dev/null
 
-        cp -pR /tmp/data_preserved/ /tmp/data
+	if [ "${upgrade_style}" = "old" ]; then
+		cp -pR /tmp/data_preserved/ /tmp/data
+	fi
         : > /tmp/$NEED_UPDATE_SENTINEL
         : > /tmp/$CD_UPGRADE_SENTINEL
 
