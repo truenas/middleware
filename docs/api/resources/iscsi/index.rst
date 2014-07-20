@@ -32,7 +32,6 @@ List resource
       Content-Type: application/json
 
         {
-                "iscsi_experimental_target": true,
                 "iscsi_multithreaded": false,
                 "iscsi_maxconnect": 8,
                 "iscsi_luc_authnetwork": "",
@@ -88,7 +87,6 @@ Update resource
       Content-Type: application/json
 
         {
-                "iscsi_experimental_target": true,
                 "iscsi_multithreaded": false,
                 "iscsi_maxconnect": 16,
                 "iscsi_luc_authnetwork": "",
@@ -113,7 +111,6 @@ Update resource
                 "id": 1
         }
 
-   :json boolean iscsi_experimental_target: enable experimental target ctld(8) support
    :json string iscsi_basename: base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for details)
    :json string iscsi_discoveryauthmethod: None, Auto, CHAP, CHAP Mutual
    :json string iscsi_discoveryauthgroup: id of auth group

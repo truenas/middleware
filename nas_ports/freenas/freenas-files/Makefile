@@ -61,7 +61,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/crashuploader ${STAGEDIR}/${PREFIX}/usr/local/bin/crashuploader
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/custom-upssched-cmd ${STAGEDIR}/${PREFIX}/usr/local/bin/custom-upssched-cmd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-debug ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-debug
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/iscsi-select ${STAGEDIR}/${PREFIX}/usr/local/bin/iscsi-select
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/ixdiagnose ${STAGEDIR}/${PREFIX}/usr/local/bin/ixdiagnose
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/mfistatus.py ${STAGEDIR}/${PREFIX}/usr/local/bin/mfistatus.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/perftests-nas ${STAGEDIR}/${PREFIX}/usr/local/bin/perftests-nas
@@ -141,7 +140,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-hostname ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-hostname
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-inadyn ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-inadyn
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-inetd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-inetd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-istgt ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-istgt
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-jail ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-jail
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-kerberos ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-kerberos
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-kinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-kinit

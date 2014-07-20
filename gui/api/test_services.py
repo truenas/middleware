@@ -949,7 +949,6 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, {
             u'id': self._obj.id,
-            u'iscsi_experimental_target': True,
             u'iscsi_basename': u'iqn.2011-03.org.example.istgt',
             u'iscsi_defaultt2r': 60,
             u'iscsi_defaultt2w': 2,

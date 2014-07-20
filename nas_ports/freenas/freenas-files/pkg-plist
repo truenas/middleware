@@ -7,7 +7,6 @@ usr/local/bin/arcstat.py
 usr/local/bin/crashuploader
 usr/local/bin/custom-upssched-cmd
 usr/local/bin/freenas-debug
-usr/local/bin/iscsi-select
 usr/local/bin/ixdiagnose
 usr/local/bin/mfistatus.py
 usr/local/bin/perftests-nas
@@ -63,7 +62,6 @@ etc/ix.rc.d/ix-fstab
 etc/ix.rc.d/ix-hostname
 etc/ix.rc.d/ix-inadyn
 etc/ix.rc.d/ix-inetd
-etc/ix.rc.d/ix-istgt
 etc/ix.rc.d/ix-jail
 etc/ix.rc.d/ix-kerberos
 etc/ix.rc.d/ix-kinit
