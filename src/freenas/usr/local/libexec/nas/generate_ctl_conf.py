@@ -150,6 +150,9 @@ def main():
             cf_contents.append('\t\t\toption vendor "FreeBSD"\n')
             cf_contents.append('\t\t\toption product "iSCSI Disk"\n')
             cf_contents.append('\t\t\toption revision "0123"\n')
+            cf_contents.append('\t\t\toption naa %s\n' % t2e.iscsi_extent.iscsi_target_extent_naa)
+            if t2e.iscsi_extent.iscsi_target_extent_insecure_tpc:
+                cf_contents.append('\t\t\toption insecure_tpc on\n')
             cf_contents.append("\t\t}\n")
         cf_contents.append("}\n\n")
 

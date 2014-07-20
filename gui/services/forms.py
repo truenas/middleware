@@ -1239,6 +1239,7 @@ class iSCSITargetExtentForm(ModelForm):
 
     def save(self, commit=True):
         oExtent = super(iSCSITargetExtentForm, self).save(commit=False)
+        oExtent.iscsi_target_extent_naa = "0x3" + os.popen("uuidgen | sha256").read()[0:15]
         if commit and self.cleaned_data["iscsi_target_extent_type"] == 'Disk':
             if self.cleaned_data["iscsi_target_extent_disk"].startswith("zvol"):
                 oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_target_extent_disk"]
