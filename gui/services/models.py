@@ -581,12 +581,12 @@ class iSCSITargetExtent(Model):
             editable=False,
             unique=True,
             max_length=18,
-            verbose_name=_("NAA...used only by the initiator")
+            verbose_name=_("NAA...used only by the initiator"),
             )
     iscsi_target_extent_insecure_tpc = models.BooleanField(
             default=True,
-            verbose_name=_("Enable TPC")
-            help_text=_("Allow initiators to xcopy without authenticating to foreign targets.")
+            verbose_name=_("Enable TPC"),
+            help_text=_("Allow initiators to xcopy without authenticating to foreign targets."),
             )
 
     class Meta:
