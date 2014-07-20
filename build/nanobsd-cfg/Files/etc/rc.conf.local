@@ -494,11 +494,6 @@ _gen_conf()
 		echo "geli_${_provider}_flags=\"-p -k /data/geli/${key}.key\""
 	done
 
-	local iscsi_multithreaded=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_multithreaded FROM services_iscsitargetglobalconfiguration ORDER BY -id LIMIT 1")
-	if [ ${iscsi_multithreaded} -eq 1 ]; then
-		echo "istgt_args=\"-m 2\""
-	fi
-
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lldp_intdesc, lldp_country, lldp_location FROM services_lldp ORDER BY -id LIMIT 1" | \
 	while read -r lldp_intdesc lldp_country lldp_location; do
 		echo -n "ladvd_flags=\"-a"
