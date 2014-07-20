@@ -543,6 +543,13 @@ class iSCSITargetGlobalConfiguration(Model):
         verbose_name = _(u"Target Global Configuration")
         verbose_name_plural = _(u"Target Global Configuration")
 
+    class FreeAdmin:
+        deletable = False
+        menu_child_of = "services.ISCSI"
+        icon_model = u"SettingsIcon"
+        nav_extra = {'type': 'iscsi'}
+        resource_name = 'services/iscsi/globalconfiguration'
+
 
 class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(
