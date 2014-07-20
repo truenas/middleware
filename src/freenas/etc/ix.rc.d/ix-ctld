@@ -20,14 +20,10 @@ check_service()
 	if [ ${ison} -eq 0 ]; then
 		# The django ORM is expensive.  The service isn't on so bail out
 		# now without generating a config file.  This speeds up boot times
-		# when AFP isn't enabled.
+		# when iSCSI isn't enabled.
 		exit
 	fi
 
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_experimental_target from services_iscsitargetglobalconfiguration")" = "0" ]; then
-		# Experimental target not enabled
-		exit
-	fi
 }
 
 generate_ctl()

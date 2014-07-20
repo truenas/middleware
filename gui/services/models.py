@@ -543,6 +543,13 @@ class iSCSITargetGlobalConfiguration(Model):
         verbose_name = _(u"Target Global Configuration")
         verbose_name_plural = _(u"Target Global Configuration")
 
+    class FreeAdmin:
+        deletable = False
+        menu_child_of = "services.ISCSI"
+        icon_model = u"SettingsIcon"
+        nav_extra = {'type': 'iscsi'}
+        resource_name = 'services/iscsi/globalconfiguration'
+
 
 class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(
@@ -575,6 +582,18 @@ class iSCSITargetExtent(Model):
             verbose_name=_("Comment"),
             help_text=_("You may enter a description here for your "
                 "reference."),
+            )
+    iscsi_target_extent_naa = models.CharField(
+            blank=True,
+            editable=False,
+            unique=True,
+            max_length=18,
+            verbose_name=_("NAA...used only by the initiator"),
+            )
+    iscsi_target_extent_insecure_tpc = models.BooleanField(
+            default=True,
+            verbose_name=_("Enable TPC"),
+            help_text=_("Allow initiators to xcopy without authenticating to foreign targets."),
             )
 
     class Meta:

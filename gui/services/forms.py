@@ -33,7 +33,6 @@ import subprocess
 import sys
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
 from django.core.validators import validate_email
 from django.forms import FileField
 from django.utils.safestring import mark_safe
@@ -897,7 +896,6 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         self.fields['iscsi_toggleluc'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_iscsi_toggleluc", ["id_iscsi_lucip", "id_iscsi_lucport", "id_iscsi_luc_authnetwork", "id_iscsi_luc_authmethod", "id_iscsi_luc_authgroup"], true);'
 
         self.__lucenabled = self.instance.iscsi_toggleluc
-        self.__experimentaltgt = self.instance.iscsi_experimental_target
 
         ro = True
         if len(self.data) > 0:
@@ -924,13 +922,6 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
                     }
             )
         return f
-
-    def _target_changed(self):
-        return (
-            self.__experimentaltgt != self.cleaned_data.get(
-                'iscsi_experimental_target'
-            )
-        )
 
     def clean_iscsi_discoveryauthgroup(self):
         discoverymethod = self.cleaned_data['iscsi_discoveryauthmethod']
@@ -1034,15 +1025,6 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
             started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
-
-    def done(self, request=None, events=None, *args, **kwargs):
-        super(
-            iSCSITargetGlobalConfigurationForm,
-            self
-        ).done(request=request, events=events, *args, **kwargs)
-        if events is not None and self._target_changed():
-            request.session['allow_reboot'] = True
-            events.append('window.location=\'%s\'' % reverse('system_reboot'))
 
 
 class iSCSITargetExtentForm(ModelForm):
@@ -1239,6 +1221,7 @@ class iSCSITargetExtentForm(ModelForm):
 
     def save(self, commit=True):
         oExtent = super(iSCSITargetExtentForm, self).save(commit=False)
+        oExtent.iscsi_target_extent_naa = "0x3" + os.popen("uuidgen | sha256").read()[0:15]
         if commit and self.cleaned_data["iscsi_target_extent_type"] == 'Disk':
             if self.cleaned_data["iscsi_target_extent_disk"].startswith("zvol"):
                 oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_target_extent_disk"]

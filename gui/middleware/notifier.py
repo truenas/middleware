@@ -266,7 +266,7 @@ class notifier:
         """
 
         # FIXME: Ugly workaround for one service and multiple backend
-        if what == 'iscsitarget' and self._iscsi_experimental_target():
+        if what == 'iscsitarget':
             what = 'ctld'
 
         if what in self.__service2daemon:
@@ -288,7 +288,7 @@ class notifier:
         """
 
         # FIXME: Ugly workaround for one service and multiple backend
-        if what == 'iscsitarget' and self._iscsi_experimental_target():
+        if what == 'iscsitarget':
             what = 'ctld'
 
         if what in self.__service2daemon:
@@ -397,48 +397,21 @@ class notifier:
             pass
         self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
-    def _iscsi_experimental_target(self):
-        from freenasUI.services.models import iSCSITargetGlobalConfiguration
-        try:
-            return (
-                iSCSITargetGlobalConfiguration.objects.order_by(
-                    '-id'
-                )[0].iscsi_experimental_target is True
-            )
-        except:
-            return False
-
     def _restart_iscsitarget(self):
-        if self._iscsi_experimental_target():
-            self._system("/usr/sbin/service ix-ctld quietstart")
-            self._system("/usr/sbin/service ctld forcestop")
-            self._system("/usr/sbin/service ctld restart")
-        else:
-            self._system("/usr/sbin/service ix-istgt quietstart")
-            self._system("/usr/sbin/service istgt forcestop")
-            self._system("/usr/sbin/service istgt restart")
+        self._system("/usr/sbin/service ix-ctld quietstart")
+        self._system("/usr/sbin/service ctld forcestop")
+        self._system("/usr/sbin/service ctld restart")
 
     def _start_iscsitarget(self):
-        if self._iscsi_experimental_target():
-            self._system("/usr/sbin/service ix-ctld quietstart")
-            self._system("/usr/sbin/service ctld restart")
-        else:
-            self._system("/usr/sbin/service ix-istgt quietstart")
-            self._system("/usr/sbin/service istgt restart")
+        self._system("/usr/sbin/service ix-ctld quietstart")
+        self._system("/usr/sbin/service ctld restart")
 
     def _stop_iscsitarget(self):
-        if self._iscsi_experimental_target():
-            self._system("/usr/sbin/service ctld forcestop")
-        else:
-            self._system("/usr/sbin/service istgt forcestop")
+        self._system("/usr/sbin/service ctld forcestop")
 
     def _reload_iscsitarget(self):
-        if self._iscsi_experimental_target():
-            self._system("/usr/sbin/service ix-ctld quietstart")
-            self._system("/usr/sbin/service ctld reload")
-        else:
-            self._system("/usr/sbin/service ix-istgt quietstart")
-            self._system("/usr/sbin/service istgt reload")
+        self._system("/usr/sbin/service ix-ctld quietstart")
+        self._system("/usr/sbin/service ctld reload")
 
     def _start_collectd(self):
         self._system("/usr/sbin/service ix-collectd quietstart")
