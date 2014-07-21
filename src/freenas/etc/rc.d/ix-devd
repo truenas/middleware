@@ -215,15 +215,9 @@ if [ \${EVENT} = "LINK_UP" ]; then
     /usr/sbin/service ix-nfsd quietstart
     /usr/sbin/service mountd restart
     /usr/sbin/service nfsd restart
-    if [ "\$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_experimental_target FROM services_iscsitargetglobalconfiguration ORDER BY id DESC LIMIT 1")" = "1" ]; then
-        /usr/sbin/service ix-ctld quietstart
-        /usr/sbin/service ctld forcestop
-        /usr/sbin/service ctld restart
-    else
-        /usr/sbin/service ix-istgt quietstart
-        /usr/sbin/service istgt forcestop
-        /usr/sbin/service istgt restart
-    fi
+    /usr/sbin/service ix-ctld quietstart
+    /usr/sbin/service ctld forcestop
+    /usr/sbin/service ctld restart
     /usr/sbin/service ix-samba quietstart
     /usr/sbin/service samba_server forcestop
     /usr/sbin/service samba_server restart
