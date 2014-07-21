@@ -193,12 +193,29 @@ define([
         intermediateChanges: true,
         value: 'root'
       }, me.dapOwnershipUser);
+      me._ownershipUserCreate = new CheckBox({}, me.dapOwnershipUserCreate);
+      on(me._ownershipUserCreate, "change", function(value) {
+        if(value) {
+          me._ownershipUser.set('disabled', true);
+        } else {
+          me._ownershipUser.set('disabled', false);
+        }
+      });
+
       me._ownershipGroup = new FilteringSelect({
         store: me._storeGroups,
         searchAttr: 'name',
         intermediateChanges: true,
         value: 'wheel'
       }, me.dapOwnershipGroup);
+      me._ownershipGroupCreate = new CheckBox({}, me.dapOwnershipGroupCreate);
+      on(me._ownershipGroupCreate, "change", function(value) {
+        if(value) {
+          me._ownershipGroup.set('disabled', true);
+        } else {
+          me._ownershipGroup.set('disabled', false);
+        }
+      });
 
       me._ownershipReturn = new Button({label: gettext("Return")}, me.dapOwnershipReturn);
       me._ownershipCancel = new Button({label: gettext("Cancel")}, me.dapOwnershipCancel);
@@ -218,11 +235,11 @@ define([
       on(me._ownershipReturn, "click", function() {
 
         var valid = true;
-        if(!me._ownershipUser.isValid()) {
+        if(!me._ownershipUser.get('disabled') && !me._ownershipUser.isValid()) {
           me._ownershipUser.focus();
           valid = false;
         }
-        if(!me._ownershipGroup.isValid()) {
+        if(!me._ownershipGroup.get('disabled') && !me._ownershipGroup.isValid()) {
           me._ownershipGroup.focus();
           valid = false;
         }
@@ -248,12 +265,16 @@ define([
       var me = this;
       me._ownershipUser.set('value', me._ownershipSaved['user']);
       me._ownershipGroup.set('value', me._ownershipSaved['group']);
+      me._ownershipUserCreate.set('value', me._ownershipSaved['usercreate']);
+      me._ownershipGroupCreate.set('value', me._ownershipSaved['groupcreate']);
     },
     ownershipSave: function() {
       var me = this;
       me._ownershipSaved = {};
       me._ownershipSaved['user'] = me._ownershipUser.get('value');
       me._ownershipSaved['group'] = me._ownershipGroup.get('value');
+      me._ownershipSaved['usercreate'] = me._ownershipUserCreate.get('value');
+      me._ownershipSaved['groupcreate'] = me._ownershipGroupCreate.get('value');
     },
     add: function() {
       var me = this;
@@ -272,7 +293,9 @@ define([
         timemachine: me._shareAFP_TM.get("value"),
         iscsisize: me._shareiSCSI_size.get("value"),
         user: me._ownershipUser.get("value"),
-        group: me._ownershipGroup.get("value")
+        group: me._ownershipGroup.get("value"),
+        usercreate: me._ownershipUserCreate.get("value"),
+        groupcreate: me._ownershipGroupCreate.get("value")
       });
       me._sharesList.refresh();
       me.dump();
@@ -300,6 +323,14 @@ define([
       me._shareiSCSI_size.set("value", data.iscsisize);
       me._ownershipUser.set("value", data.user);
       me._ownershipGroup.set("value", data.group);
+      me._ownershipUserCreate.set("value", data.usercreate);
+      me._ownershipGroupCreate.set("value", data.groupcreate);
+      if(data.usercreate) {
+        me._ownershipUser.set("disabled", true);
+      }
+      if(data.groupcreate) {
+        me._ownershipGroup.set("disabled", true);
+      }
       switch(data.purpose) {
         case "cifs":
           me._shareCIFS.set("value", true);
@@ -405,6 +436,22 @@ define([
             name: "shares-" + idx + "-share_group",
             type: "hidden",
             value: obj.group
+          }).placeAt(dumpNode);
+        }
+
+        if(obj.usercreate) {
+          new TextBox({
+            name: "shares-" + idx + "-share_usercreate",
+            type: "hidden",
+            value: obj.usercreate
+          }).placeAt(dumpNode);
+        }
+
+        if(obj.groupcreate) {
+          new TextBox({
+            name: "shares-" + idx + "-share_groupcreate",
+            type: "hidden",
+            value: obj.groupcreate
           }).placeAt(dumpNode);
         }
 
