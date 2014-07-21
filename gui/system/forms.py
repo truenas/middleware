@@ -52,7 +52,15 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services.models import services
+from freenasUI.services.models import (
+    services,
+    iSCSITarget,
+    iSCSITargetAuthorizedInitiator,
+    iSCSITargetExtent,
+    iSCSITargetPortal,
+    iSCSITargetPortalIP,
+    iSCSITargetToExtent,
+)
 from freenasUI.sharing.models import (
     AFP_Share,
     CIFS_Share,
@@ -208,11 +216,19 @@ class InitialWizard(CommonWizard):
                 share_purpose = share.get('share_purpose')
                 share_allowguest = share.get('share_allowguest')
                 share_timemachine = share.get('share_timemachine')
+                share_iscsisize = share.get('share_iscsisize')
 
-                errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
-                    volume_name,
-                    share_name
-                ), _restart_collectd=False)
+                if share_purpose != 'iscsitarget':
+                    errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
+                        volume_name,
+                        share_name
+                    ), _restart_collectd=False)
+                else:
+                    errno, errmsg = _n.create_zfs_vol(
+                        '%s/%s' % (volume_name, share_name),
+                        share_iscsisize,
+                        sparse=True,
+                    )
 
                 if errno > 0:
                     raise MiddlewareError(
@@ -249,11 +265,51 @@ class InitialWizard(CommonWizard):
                         share=nfs_share,
                         path=path,
                     )
-                services.objects.filter(srv_service=share_purpose).update(
-                    srv_enable=True
-                )
+
+                if 'iscsitarget' == share_purpose:
+
+                    qs = iSCSITargetPortal.objects.all()
+                    if qs.exists():
+                        portal = qs[0]
+                    else:
+                        portal = iSCSITargetPortal.objects.create()
+                        iSCSITargetPortalIP.objects.create(
+                            iscsi_target_portalip_portal=portal,
+                            iscsi_target_portalip_ip='0.0.0.0',
+                        )
+
+                    qs = iSCSITargetAuthorizedInitiator.objects.all()
+                    if qs.exists():
+                        authini = qs[0]
+                    else:
+                        authini = (
+                            iSCSITargetAuthorizedInitiator.objects.create()
+                        )
+                    target = iSCSITarget.objects.create(
+                        iscsi_target_name=share_name,
+                        iscsi_target_portalgroup=portal,
+                        iscsi_target_initiatorgroup=authini,
+                    )
+
+                    iscsi_target_extent_path = 'zvol/%s/%s' % (
+                        volume_name,
+                        share_name,
+                    )
+
+                    extent = iSCSITargetExtent.objects.create(
+                        iscsi_target_extent_name=share_name,
+                        iscsi_target_extent_type='ZVOL',
+                        iscsi_target_extent_path=iscsi_target_extent_path,
+                    )
+                    iSCSITargetToExtent.objects.create(
+                        iscsi_target=target,
+                        iscsi_extent=extent,
+                    )
 
                 if share_purpose not in services_restart:
+                    services.objects.filter(srv_service=share_purpose).update(
+                        srv_enable=True
+                    )
                     services_restart.append(share_purpose)
 
         # This must be outside transaction block to make sure the changes
@@ -986,7 +1042,7 @@ class InitialWizardShareForm(Form):
             ('cifs', _('Windows (CIFS)')),
             ('afp', _('Apple (AFP)')),
             ('nfs', _('Unix (NFS)')),
-            ('iscsi', _('Block Storage (iSCSI)')),
+            ('iscsitarget', _('Block Storage (iSCSI)')),
         ),
     )
     share_allowguest = forms.BooleanField(

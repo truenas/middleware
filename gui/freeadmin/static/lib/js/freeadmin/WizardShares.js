@@ -177,7 +177,7 @@ define([
       if(me._shareCIFS.get("value")) purpose = "cifs";
       else if(me._shareAFP.get("value")) purpose = "afp";
       else if(me._shareNFS.get("value")) purpose = "nfs";
-      else if(me._shareiSCSI.get("value")) purpose = "iscsi";
+      else if(me._shareiSCSI.get("value")) purpose = "iscsitarget";
       me._store.put({
         name: me._shareName.get("value"),
         purpose: purpose,
@@ -228,7 +228,7 @@ define([
           me._shareNFS.set("value", true);
           me._shareiSCSI.set("value", false);
           break;
-        case "iscsi":
+        case "iscsitarget":
           me._shareCIFS.set("value", false);
           me._shareAFP.set("value", false);
           me._shareNFS.set("value", false);
