@@ -1058,6 +1058,14 @@ class InitialWizardShareForm(Form):
         max_length=255,
         required=False,
     )
+    share_user = forms.CharField(
+        max_length=100,
+        required=False,
+    )
+    share_group = forms.CharField(
+        max_length=100,
+        required=False,
+    )
 
 
 class SharesBaseFormSet(BaseFormSet):

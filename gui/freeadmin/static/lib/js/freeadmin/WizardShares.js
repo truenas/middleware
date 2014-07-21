@@ -171,6 +171,7 @@ define([
 
       me._shareOwnership = new Button({label: gettext("Ownership")}, me.dapShareOwnership);
       on(me._shareOwnership, "click", function() {
+        me.ownershipSave();
         domStyle.set(me.dapOwnership, "display", "");
         domStyle.set(me.dapMain, "display", "none");
         query(me.domNode).parents("table").query("tr.formButtons").forEach(function(item) {
@@ -186,15 +187,17 @@ define([
         url: "/account/bsdgroup/json/"
       });
 
-      me._onwershipUser = new FilteringSelect({
+      me._ownershipUser = new FilteringSelect({
         store: me._storeUsers,
         searchAttr: 'name',
-        intermediateChanges: true
+        intermediateChanges: true,
+        value: 'root'
       }, me.dapOwnershipUser);
-      me._onwershipGroup = new FilteringSelect({
+      me._ownershipGroup = new FilteringSelect({
         store: me._storeGroups,
         searchAttr: 'name',
-        intermediateChanges: true
+        intermediateChanges: true,
+        value: 'wheel'
       }, me.dapOwnershipGroup);
 
       me._ownershipReturn = new Button({label: gettext("Return")}, me.dapOwnershipReturn);
@@ -208,8 +211,19 @@ define([
         });
       };
 
-      on(me._ownershipCancel, "click", ownershipToShare);
+      on(me._ownershipCancel, "click", function() {
+        me.ownershipRestore();
+        ownershipToShare();
+      });
       on(me._ownershipReturn, "click", function() {
+        // Update the values in store if the item has already been saved
+        var result = me._store.get(me._shareName.get("value"));
+        if(result) {
+          result.user = me._ownershipUser.get("value");
+          result.group = me._ownershipGroup.get("value");
+          me._store.put(result);
+        }
+        me.dump();
         ownershipToShare();
       });
 
@@ -217,6 +231,17 @@ define([
 
       this.inherited(arguments);
 
+    },
+    ownershipRestore: function() {
+      var me = this;
+      me._ownershipUser.set('value', me._ownershipSaved['user']);
+      me._ownershipGroup.set('value', me._ownershipSaved['group']);
+    },
+    ownershipSave: function() {
+      var me = this;
+      me._ownershipSaved = {};
+      me._ownershipSaved['user'] = me._ownershipUser.get('value');
+      me._ownershipSaved['group'] = me._ownershipGroup.get('value');
     },
     add: function() {
       var me = this;
@@ -233,7 +258,9 @@ define([
         purpose: purpose,
         allowguest: me._shareGuest.get("value"),
         timemachine: me._shareAFP_TM.get("value"),
-        iscsisize: me._shareiSCSI_size.get("value")
+        iscsisize: me._shareiSCSI_size.get("value"),
+        user: me._ownershipUser.get("value"),
+        group: me._ownershipGroup.get("value")
       });
       me._sharesList.refresh();
       me.dump();
@@ -259,6 +286,8 @@ define([
       me._shareGuest.set("value", data.allowguest);
       me._shareAFP_TM.set("value", data.timemachine);
       me._shareiSCSI_size.set("value", data.iscsisize);
+      me._ownershipUser.set("value", data.user);
+      me._ownershipGroup.set("value", data.group);
       switch(data.purpose) {
         case "cifs":
           me._shareCIFS.set("value", true);
@@ -348,6 +377,22 @@ define([
             name: "shares-" + idx + "-share_iscsisize",
             type: "hidden",
             value: obj.iscsisize
+          }).placeAt(dumpNode);
+        }
+
+        if(obj.user) {
+          new TextBox({
+            name: "shares-" + idx + "-share_user",
+            type: "hidden",
+            value: obj.user
+          }).placeAt(dumpNode);
+        }
+
+        if(obj.group) {
+          new TextBox({
+            name: "shares-" + idx + "-share_group",
+            type: "hidden",
+            value: obj.group
           }).placeAt(dumpNode);
         }
 
