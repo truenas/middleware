@@ -101,9 +101,12 @@ define([
 
       me._shareAFP_TM = new CheckBox({disabled: true}, me.dapShareAFP_TM);
       me._shareGuest = new CheckBox({}, me.dapShareGuest);
-      me._shareiSCSI_size = new TextBox({
+      me._shareiSCSI_size = new ValidationTextBox({
         style: "width: 50px;",
-        disabled: true
+        disabled: true,
+        required: true,
+        pattern: "^[0-9]+(\\.[0-9]+)?[BKMGT]$",
+        invalidMessage: gettext('Specify the size using B, K, M, G, T prefixes.')
       }, me.dapShareiSCSI_size);
 
       me._shareAdd = new Button({
@@ -226,12 +229,19 @@ define([
           me._shareiSCSI.set("value", true);
           break;
       }
+      me._shareAdd.set('disabled', true);
+      me._shareUpdate.set('disabled', false);
     },
     isValid: function() {
       var me = this;
       var valid = true;
       if(!me._shareName.isValid()) {
         me._shareName.focus();
+        valid = false;
+      }
+      var iscsiselect = me._shareiSCSI.get('value');
+      if(iscsiselect && !me._shareiSCSI_size.isValid()) {
+        me._shareiSCSI_size.focus();
         valid = false;
       }
       return valid;
