@@ -151,7 +151,7 @@ add_nano_modules()
 
 add_nano_modules cc/cc_cdg cc/cc_chd cc/cc_cubic cc/cc_hd cc/cc_htcp cc/cc_vegas
 add_nano_modules cxgb cxgbe cyclic
-add_nano_modules dtrace ext2fs fdescfs geom ipmi krpc
+add_nano_modules dtrace ext2fs fdescfs geom ipmi khelp/h_ertt krpc
 add_nano_modules libiconv libmchain lindev linprocfs linsysfs linux
 add_nano_modules nfs_common nfsclient nfslock
 add_nano_modules ispfw/ispfw
@@ -216,14 +216,36 @@ unset PACKAGEROOT
 unset PACKAGESITE
 
 HW_NCPU=$(sysctl -n hw.ncpu)
+HW_PHYSMEM=$(sysctl -n hw.physmem)
+HW_PHYSMEM=$(expr ${HW_PHYSMEM} / 1073741824 - 4)
 
 # Can be overriden with env when calling, but use pxz by default
 # if it's installed.
 NANO_XZ=pxz
-if [ "$HW_NCPU" -lt 16 ]; then
-    PXZ_ACCEL="-T ${HW_NCPU}"
+
+# Assertions:
+# Beyond 16 threads pxz reaches a point of diminishing returns
+# A pxz thread needs 1GB of RAM
+
+# If the system has fewer than 16 cores use as many threads
+# as possible given the 1GB per thread rule
+# If it has 16 or more cores use 1 thread/GB capped out
+# by the limit of 16
+# This logic prevents explosions on systems with 4 cores and 96GB
+# of RAM or 40 cores and 8GB of RAM.
+# TODO: Refactor this logic.  It makes my brain hurt.
+if [ "${HW_NCPU}" -lt 16 ]; then
+	if [ ${HW_NCPU} -lt ${HW_PHYSMEM} ]; then
+		PXZ_ACCEL="-T ${HW_NCPU}"
+	else
+		PXZ_ACCEL="-T ${HW_PHYSMEM}"
+	fi
 else
-    PXZ_ACCEL="-T 16"
+	if [ ${HW_PHYSMEM} -gt 16 ]; then
+		PXZ_ACCEL="-T 16"
+	else
+		PXZ_ACCEL="-T ${HW_PHYSMEM}"
+	fi
 fi
 export NANO_XZ
 export PXZ_ACCEL

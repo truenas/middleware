@@ -9037,3 +9037,56 @@ msgstr ""
 #: templates/system/settings_edit.html:32
 msgid "Set SSL Certificate"
 msgstr ""
+
+#: system/hook.py:22
+#: system/hook.py:24
+msgid "Performance Test"
+msgstr ""
+
+#: system/views.py:545
+msgid "System dataset is required to perform this action."
+msgstr ""
+
+#: templates/system/perftest.html:20
+msgid "You are about to start a performance test."
+msgstr ""
+
+#: templates/system/perftest.html:22
+msgid ""
+"Running these tests can substantially impact performance on a production "
+"system and are only to be used for diagnostic purposes."
+msgstr ""
+
+#: templates/system/perftest.html:24
+msgid "Are you sure you want to proceed?"
+msgstr ""
+
+#: services/models.py:256
+msgid "Obey pam restrictions"
+msgstr ""
+
+#: services/models.py:258
+msgid ""
+"this parameter controls whether or not Sambashould obey PAM's account and "
+"session management directives"
+msgstr ""
+
+#: services/models.py:591
+msgid "NAA...used only by the initiator"
+msgstr ""
+
+#: services/models.py:595
+#, fuzzy
+msgid "Enable TPC"
+msgstr "əlil"
+
+#: services/models.py:596
+msgid "Allow initiators to xcopy without authenticating to foreign targets."
+msgstr ""
+
+#: templates/directoryservice/activedirectory_edit.html:8
+#: templates/directoryservice/ldap_edit.html:8
+#: templates/directoryservice/nis_edit.html:8
+#: templates/directoryservice/nt4_edit.html:8
+msgid "Rebuild Directory Service Cache"
+msgstr ""

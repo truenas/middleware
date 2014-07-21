@@ -386,16 +386,7 @@ _gen_conf()
 	_bool_svcconfig inadynmt_enable dynamicdns
 	_bool_svcconfig smartd_enable smartd
 	_bool_svcconfig ladvd_enable lldp
-
-	# iSCSI service might have experimental target enabled
-	# which enables ctld instead of istgt
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service='iscsitarget' ORDER BY id DESC LIMIT 1")" = "1" ]; then
-		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_experimental_target from services_iscsitargetglobalconfiguration ORDER BY id DESC LIMIT 1")" = "1" ]; then
-			echo "ctld_enable=\"YES\""
-		else
-			echo "istgt_enable=\"YES\""
-		fi
-	fi
+	_bool_svcconfig ctld_enable iscsitarget
 
 	_bool_svcconfig samba_server_enable cifs
 	if ! dirsrv_enabled domaincontroller ; then
@@ -502,11 +493,6 @@ _gen_conf()
 		_provider=`echo ${provider}|tr '/-' '_'`
 		echo "geli_${_provider}_flags=\"-p -k /data/geli/${key}.key\""
 	done
-
-	local iscsi_multithreaded=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_multithreaded FROM services_iscsitargetglobalconfiguration ORDER BY -id LIMIT 1")
-	if [ ${iscsi_multithreaded} -eq 1 ]; then
-		echo "istgt_args=\"-m 2\""
-	fi
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lldp_intdesc, lldp_country, lldp_location FROM services_lldp ORDER BY -id LIMIT 1" | \
 	while read -r lldp_intdesc lldp_country lldp_location; do

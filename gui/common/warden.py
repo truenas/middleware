@@ -76,6 +76,7 @@ WARDEN_KEY_MAC            = "mac"
 WARDEN_KEY_STATUS         = "status"
 WARDEN_KEY_TYPE           = "type"
 WARDEN_KEY_FLAGS          = "flags"
+WARDEN_KEY_IFACE          = "iface"
 
 #
 # Warden template dict keys
@@ -205,6 +206,7 @@ WARDEN_GET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags")
 WARDEN_GET_FLAGS_VNET			= warden_arg(0x00000800, "vnet")
 WARDEN_GET_FLAGS_NAT			= warden_arg(0x00001000, "nat")
 WARDEN_GET_FLAGS_MAC			= warden_arg(0x00002000, "mac")
+WARDEN_GET_FLAGS_IFACE			= warden_arg(0x00004000, "iface")
 WARDEN_GET_FLAGS = [
     WARDEN_GET_FLAGS_IPV4,
     WARDEN_GET_FLAGS_IPV6,
@@ -219,7 +221,8 @@ WARDEN_GET_FLAGS = [
     WARDEN_GET_FLAGS_FLAGS,
     WARDEN_GET_FLAGS_VNET,
     WARDEN_GET_FLAGS_NAT,
-    WARDEN_GET_FLAGS_MAC
+    WARDEN_GET_FLAGS_MAC,
+    WARDEN_GET_FLAGS_IFACE
 ]
 
 WARDEN_IMPORT = "import"
@@ -261,6 +264,7 @@ WARDEN_SET_FLAGS_VNET_DISABLE		= warden_arg(0x00001000, "vnet-disable" )
 WARDEN_SET_FLAGS_NAT_ENABLE		= warden_arg(0x00002000, "nat-enable" )
 WARDEN_SET_FLAGS_NAT_DISABLE		= warden_arg(0x00004000, "nat-disable" )
 WARDEN_SET_FLAGS_MAC			= warden_arg(0x00008000, "mac", True, "mac")
+WARDEN_SET_FLAGS_IFACE			= warden_arg(0x00010000, "iface", True, "iface")
 WARDEN_SET_FLAGS = [
     WARDEN_SET_FLAGS_IPV4,
     WARDEN_SET_FLAGS_IPV6,
@@ -277,7 +281,8 @@ WARDEN_SET_FLAGS = [
     WARDEN_SET_FLAGS_VNET_DISABLE,
     WARDEN_SET_FLAGS_NAT_ENABLE,
     WARDEN_SET_FLAGS_NAT_DISABLE,
-    WARDEN_SET_FLAGS_MAC
+    WARDEN_SET_FLAGS_MAC,
+    WARDEN_SET_FLAGS_IFACE
 ]
 
 WARDEN_START = "start"
@@ -378,6 +383,7 @@ class WardenJail(object):
         self.status = kwargs.get(WARDEN_KEY_STATUS)
         self.type = kwargs.get(WARDEN_KEY_TYPE)
         self.flags = kwargs.get(WARDEN_KEY_FLAGS)
+        self.iface = kwargs.get(WARDEN_KEY_IFACE)
 
 
 class WardenTemplate(object):
@@ -669,7 +675,8 @@ class warden_list(warden_base):
             'mac': WARDEN_KEY_MAC,
             'status': WARDEN_KEY_STATUS,
             'type': WARDEN_KEY_TYPE,
-            'flags': WARDEN_KEY_FLAGS
+            'flags': WARDEN_KEY_FLAGS,
+            'iface': WARDEN_KEY_IFACE
         } 
 
         lines = thestuff[1].splitlines()

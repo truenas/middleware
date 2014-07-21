@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2014-07-10 02:16+0000\n"
+"PO-Revision-Date: 2014-07-20 09:11+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: eu\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1404958592.0\n"
+"X-POOTLE-MTIME: 1405847500.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -9011,4 +9011,56 @@ msgstr ""
 #: templates/system/settings_edit.html:30
 #: templates/system/settings_edit.html:32
 msgid "Set SSL Certificate"
+msgstr ""
+
+#: system/hook.py:22
+#: system/hook.py:24
+msgid "Performance Test"
+msgstr ""
+
+#: system/views.py:545
+msgid "System dataset is required to perform this action."
+msgstr ""
+
+#: templates/system/perftest.html:20
+msgid "You are about to start a performance test."
+msgstr ""
+
+#: templates/system/perftest.html:22
+msgid ""
+"Running these tests can substantially impact performance on a production "
+"system and are only to be used for diagnostic purposes."
+msgstr ""
+
+#: templates/system/perftest.html:24
+msgid "Are you sure you want to proceed?"
+msgstr ""
+
+#: services/models.py:256
+msgid "Obey pam restrictions"
+msgstr ""
+
+#: services/models.py:258
+msgid ""
+"this parameter controls whether or not Sambashould obey PAM's account and "
+"session management directives"
+msgstr ""
+
+#: services/models.py:591
+msgid "NAA...used only by the initiator"
+msgstr ""
+
+#: services/models.py:595
+msgid "Enable TPC"
+msgstr ""
+
+#: services/models.py:596
+msgid "Allow initiators to xcopy without authenticating to foreign targets."
+msgstr ""
+
+#: templates/directoryservice/activedirectory_edit.html:8
+#: templates/directoryservice/ldap_edit.html:8
+#: templates/directoryservice/nis_edit.html:8
+#: templates/directoryservice/nt4_edit.html:8
+msgid "Rebuild Directory Service Cache"
 msgstr ""

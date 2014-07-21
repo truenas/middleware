@@ -25,6 +25,7 @@
 #
 #####################################################################
 import json
+import os
 
 from django.http import HttpResponse  
 from django.shortcuts import render
@@ -74,3 +75,19 @@ def directoryservice_status(request):
     data = get_directoryservice_status()
     content = json.dumps(data)
     return HttpResponse(content, content_type="application/json")
+
+
+def directoryservice_clearcache(request):
+    error = False
+    errmsg = ''
+
+    os.system(
+        "(/usr/local/bin/python "
+        "/usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1 &&"
+        " /usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py "
+        "fill >/dev/null 2>&1) &")
+
+    return HttpResponse(json.dumps({
+        'error': error,
+        'errmsg': errmsg,
+    }))

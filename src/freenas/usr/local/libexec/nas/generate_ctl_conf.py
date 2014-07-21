@@ -28,6 +28,7 @@ def main():
     from freenasUI.services.models import iSCSITargetPortalIP
     from freenasUI.services.models import iSCSITargetAuthCredential
     from freenasUI.services.models import iSCSITarget
+    from freenasUI.storage.models import Disk
 
     gconf = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
 
@@ -71,7 +72,7 @@ def main():
 
     # Generate the portal-group section
     for portal in iSCSITargetPortal.objects.all():
-        cf_contents.append("portal-group pg%s {\n" % portal.id)
+        cf_contents.append("portal-group pg%s {\n" % portal.iscsi_target_portal_tag)
         disc_authmethod = gconf.iscsi_discoveryauthmethod
         if disc_authmethod == "None":
             cf_contents.append("\tdiscovery-auth-group no-authentication\n")
@@ -118,9 +119,19 @@ def main():
                 cf_contents.append("\t\tlun %s {\n" % t2e.iscsi_lunid)
             path = t2e.iscsi_extent.iscsi_target_extent_path
             size = t2e.iscsi_extent.iscsi_target_extent_filesize
-            if not path.startswith("/mnt"):
-                path = "/dev/" + path
-                cf_contents.append("\t\t\toption unmap on\n")
+            if t2e.iscsi_extent.iscsi_target_extent_type == 'Disk':
+                disk = Disk.objects.filter(id=path).order_by('disk_enabled')
+                if not disk.exists():
+                    continue
+                disk = disk[0]
+                if disk.disk_multipath_name:
+                    path = "multipath/%s" % disk.disk_multipath_name
+                else:
+                    path = disk.identifier_to_device()
+            else:
+                if not path.startswith("/mnt"):
+                    path = "/dev/" + path
+                    cf_contents.append("\t\t\toption unmap on\n")
             cf_contents.append("\t\t\tpath %s\n" % path)
             cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
             cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
@@ -139,6 +150,9 @@ def main():
             cf_contents.append('\t\t\toption vendor "FreeBSD"\n')
             cf_contents.append('\t\t\toption product "iSCSI Disk"\n')
             cf_contents.append('\t\t\toption revision "0123"\n')
+            cf_contents.append('\t\t\toption naa %s\n' % t2e.iscsi_extent.iscsi_target_extent_naa)
+            if t2e.iscsi_extent.iscsi_target_extent_insecure_tpc:
+                cf_contents.append('\t\t\toption insecure_tpc on\n')
             cf_contents.append("\t\t}\n")
         cf_contents.append("}\n\n")
 

@@ -30,4 +30,6 @@ urlpatterns = patterns(
     'freenasUI.directoryservice.views',
     url(r'^home/$', 'directoryservice_home', name="directoryservice_home"),
     url(r'^status/$', 'directoryservice_status', name="directoryservice_status"),
+    url(r'^clearcache/$', 'directoryservice_clearcache', name="directoryservice_clearcache"),
+
 )

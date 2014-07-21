@@ -252,6 +252,12 @@ class CIFS(Model):
                 "Samba does not check execute permissions on \"open for execution\", "
                 "thus re-establishing the behaviour of Samba 3.6 ")
            )
+    cifs_srv_obey_pam_restrictions = models.BooleanField(
+           verbose_name=_("Obey pam restrictions"),
+           default=True,
+           help_text=_("this parameter controls whether or not Samba"
+               "should obey PAM's account and session management directives")
+           )
 
     class Meta:
         verbose_name = _(u"CIFS")
@@ -409,133 +415,17 @@ class iSCSITargetGlobalConfiguration(Model):
             blank=True,
             null=True,
             )
-    iscsi_experimental_target = models.BooleanField(
-        default=True,
-        verbose_name=_('Enable experimental target'),
-    )
-## The multithreaded mode should be retired as it is only really relevant
-## to iSCSI, which is deprecated.
-    iscsi_multithreaded = models.BooleanField(
-        default=False,
-        verbose_name=_('Enable multithreaded mode'),
-    )
-    iscsi_iotimeout = models.IntegerField(
-            max_length=120,
-            default=30,
-            verbose_name=_("I/O Timeout"),
-            help_text=_("I/O timeout in seconds (30 by default).")
-            )
-    iscsi_nopinint = models.IntegerField(
-            max_length=120,
-            default=20,
-            verbose_name=_("NOPIN Interval"),
-            help_text=_("NOPIN sending interval in seconds (20 by default).")
-            )
-    iscsi_maxsesh = models.IntegerField(
-            max_length=120,
-            default=16,
-            verbose_name=_("Max. sessions"),
-            help_text=_("Maximum number of sessions holding at same time (16 "
-                "by default).")
-            )
-    iscsi_maxconnect = models.IntegerField(
-            max_length=120,
-            default=8,
-            verbose_name=_("Max. connections"),
-            help_text=_("Maximum number of connections in each session (8 by "
-                "default).")
-            )
-    iscsi_r2t = models.IntegerField(
-            max_length=120,
-            default=32,
-            verbose_name=_("Max. pre-send R2T"),
-            help_text=_("Maximum number of pre-send R2T in each connection ("
-                "32 by default). The actual number is limited to QueueDepth "
-                "of the target."),
-            )
-    iscsi_maxoutstandingr2t = models.IntegerField(
-            max_length=120,
-            default=16,
-            verbose_name=_("MaxOutstandingR2T"),
-            help_text=_("iSCSI initial parameter (16 by default).")
-            )
-    iscsi_firstburst = models.IntegerField(
-            max_length=120,
-            default=65536,
-            verbose_name=_("First burst length"),
-            help_text=_("iSCSI initial parameter (65536 by default).")
-            )
-    iscsi_maxburst = models.IntegerField(
-            max_length=120,
-            default=262144,
-            verbose_name=_("Max burst length"),
-            help_text=_("iSCSI initial parameter (262144 by default).")
-            )
-    iscsi_maxrecdata = models.IntegerField(
-            max_length=120,
-            default=262144,
-            verbose_name=_("Max receive data segment length"),
-            help_text=_("iSCSI initial parameter (262144 by default).")
-            )
-    iscsi_defaultt2w = models.IntegerField(
-            max_length=120,
-            default=2,
-            verbose_name=_("DefaultTime2Wait"),
-            help_text=_("iSCSI initial parameter (2 by default).")
-            )
-    iscsi_defaultt2r = models.IntegerField(
-            max_length=120,
-            default=60,
-            verbose_name=_("DefaultTime2Retain"),
-            help_text=_("iSCSI initial parameter (60 by default)."),
-            )
-    iscsi_toggleluc = models.BooleanField(
-            default=False,
-            verbose_name=_("Enable LUC"))
-    iscsi_lucip = models.IPAddressField(
-            max_length=120,
-            default="127.0.0.1",
-            verbose_name=_("Controller IP address"),
-            help_text=_("Logical Unit Controller IP address "
-                "(127.0.0.1(localhost) by default)"),
-            blank=True,
-            null=True,
-            )
-    iscsi_lucport = models.IntegerField(
-            default=3261,
-            verbose_name=_("Controller TCP port"),
-            help_text=_("Logical Unit Controller TCP port (3261 by default)"),
-            blank=True,
-            null=True,
-            )
-    iscsi_luc_authnetwork = models.CharField(
-            max_length=120,
-            verbose_name=_("Controller Authorized Network"),
-            default="127.0.0.0/8",
-            help_text=_("Logical Unit Controller Authorized netmask "
-                "(127.0.0.0/8 by default)"),
-            blank=True,
-            )
-    iscsi_luc_authmethod = models.CharField(
-            max_length=120,
-            choices=choices.AUTHMETHOD_CHOICES,
-            default='CHAP',
-            verbose_name=_("Controller Auth Method"),
-            help_text=_("The method can be accepted in the controller."),
-            blank=True,
-            )
-    iscsi_luc_authgroup = models.IntegerField(
-            max_length=120,
-            verbose_name=_("Controller Auth Group"),
-            help_text=_("The istgtcontrol can access the targets with correct "
-                "user and secret in specific Auth Group."),
-            blank=True,
-            null=True,
-            )
 
     class Meta:
         verbose_name = _(u"Target Global Configuration")
         verbose_name_plural = _(u"Target Global Configuration")
+
+    class FreeAdmin:
+        deletable = False
+        menu_child_of = "services.ISCSI"
+        icon_model = u"SettingsIcon"
+        nav_extra = {'type': 'iscsi'}
+        resource_name = 'services/iscsi/globalconfiguration'
 
 
 class iSCSITargetExtent(Model):
@@ -569,6 +459,18 @@ class iSCSITargetExtent(Model):
             verbose_name=_("Comment"),
             help_text=_("You may enter a description here for your "
                 "reference."),
+            )
+    iscsi_target_extent_naa = models.CharField(
+            blank=True,
+            editable=False,
+            unique=True,
+            max_length=18,
+            verbose_name=_("NAA...used only by the initiator"),
+            )
+    iscsi_target_extent_insecure_tpc = models.BooleanField(
+            default=True,
+            verbose_name=_("Enable TPC"),
+            help_text=_("Allow initiators to xcopy without authenticating to foreign targets."),
             )
 
     class Meta:
@@ -794,19 +696,6 @@ class iSCSITarget(Model):
             default="10000001",
             help_text=_("Serial number for the logical unit")
             )
-    iscsi_target_type = models.CharField(
-            max_length=120,
-            choices=choices.ISCSI_TARGET_TYPE_CHOICES,
-            default='Disk',
-            verbose_name=_("Type"),
-            help_text=_("Logical Unit Type mapped to LUN."),
-            )
-    iscsi_target_flags = models.CharField(
-            max_length=120,
-            choices=choices.ISCSI_TARGET_FLAGS_CHOICES,
-            default='rw',
-            verbose_name=_("Target Flags"),
-            )
     iscsi_target_portalgroup = models.ForeignKey(
             iSCSITargetPortal,
             verbose_name=_("Portal Group ID"),
@@ -836,16 +725,10 @@ class iSCSITarget(Model):
             help_text=_("The method can be accepted by the target. Auto means "
                 "both none and authentication."),
             )
-    iscsi_target_queue_depth = models.IntegerField(
-            max_length=3,
-            default=32,
-            verbose_name=_("Queue Depth"),
-            help_text=_("0=disabled, 1-255=enabled command queuing with "
-                "specified depth. The recommended queue depth is 32."),
-            )
     iscsi_target_logical_blocksize = models.IntegerField(
             max_length=3,
-            default=512,
+            choices=choices.TARGET_BLOCKSIZE_CHOICES,
+            default=choices.TARGET_BLOCKSIZE_CHOICES[0][0],
             verbose_name=_("Logical Block Size"),
             help_text=_("You may specify logical block length (512 by "
                 "default). The recommended length for compatibility is 512."),

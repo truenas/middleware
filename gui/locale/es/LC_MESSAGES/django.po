@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-06-19 05:30+0000\n"
-"Last-Translator: nekitoblack <alex.smith@nekitoblack.net>\n"
+"PO-Revision-Date: 2014-07-12 00:31+0000\n"
+"Last-Translator: net0bsd <eescobedo@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1403155855.0\n"
+"X-POOTLE-MTIME: 1405125094.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6918,9 +6918,8 @@ msgstr "Grupo de Usuario"
 #: storage/models.py:745
 #: storage/models.py:755
 #: storage/models.py:772
-#, fuzzy
 msgid "Locked"
-msgstr "Bloquear usuario"
+msgstr "Bloqueado"
 
 #: api/resources.py:986
 #, fuzzy
@@ -6929,7 +6928,7 @@ msgstr "Cada %s dias"
 
 #: api/resources.py:992
 msgid "From %(begin)s through %(end)s, %(repeat)s"
-msgstr ""
+msgstr "From %(principio)s through %(final)s, %(repite)s"
 
 #: jails/forms.py:182
 #: jails/forms.py:629
@@ -7905,13 +7904,13 @@ msgstr "Grupos auxiliares"
 #: storage/views.py:778
 #: storage/views.py:1144
 msgid "Pool output could not be parsed. Is the pool imported?"
-msgstr ""
+msgstr "Salida de pool no se pudo analizar, esta el pool importado?"
 
 #: api/resources.py:1864
 #: api/resources.py:1875
 #, fuzzy
 msgid "Invalid snapshot"
-msgstr "Ultima Instantanea"
+msgstr "Instantánea no valida              "
 
 #: common/system.py:279
 msgid "Mount failed (%(retcode)s) -> %(output)s"
@@ -9795,11 +9794,13 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"Las contraseñas que contienen un signo de interrogación (?) Actualmente no "
+"se permiten debido a problemas con CIFS.                "
 
 #: directoryservice/forms.py:104
 #, fuzzy
 msgid "NT4 failed to reload."
-msgstr "Ha fallado el reinicio del servicio AFP"
+msgstr "NT4 recarga Fallada"
 
 #: directoryservice/forms.py:222
 #, fuzzy
@@ -9880,3 +9881,58 @@ msgstr "Nombre del controlador de dominio"
 #, fuzzy
 msgid "Set SSL Certificate"
 msgstr "Certificado SSL"
+
+#: system/hook.py:22
+#: system/hook.py:24
+msgid "Performance Test"
+msgstr ""
+
+#: system/views.py:545
+msgid "System dataset is required to perform this action."
+msgstr ""
+
+#: templates/system/perftest.html:20
+msgid "You are about to start a performance test."
+msgstr ""
+
+#: templates/system/perftest.html:22
+msgid ""
+"Running these tests can substantially impact performance on a production "
+"system and are only to be used for diagnostic purposes."
+msgstr ""
+
+#: templates/system/perftest.html:24
+#, fuzzy
+msgid "Are you sure you want to proceed?"
+msgstr "¿Está seguro de que quiere borrar?"
+
+#: services/models.py:256
+msgid "Obey pam restrictions"
+msgstr ""
+
+#: services/models.py:258
+msgid ""
+"this parameter controls whether or not Sambashould obey PAM's account and "
+"session management directives"
+msgstr ""
+
+#: services/models.py:591
+msgid "NAA...used only by the initiator"
+msgstr ""
+
+#: services/models.py:595
+#, fuzzy
+msgid "Enable TPC"
+msgstr "Habilitar SSL/TLS"
+
+#: services/models.py:596
+msgid "Allow initiators to xcopy without authenticating to foreign targets."
+msgstr ""
+
+#: templates/directoryservice/activedirectory_edit.html:8
+#: templates/directoryservice/ldap_edit.html:8
+#: templates/directoryservice/nis_edit.html:8
+#: templates/directoryservice/nt4_edit.html:8
+#, fuzzy
+msgid "Rebuild Directory Service Cache"
+msgstr "Permisos de Directorios"

@@ -1,4 +1,4 @@
-<div data-dojo-type="dijit.layout.TabContainer" style="width:100%;" id="tab_directoryservice" data-dojo-props="doLayout:true, nested: true" title="{% trans "Settings" %}">
+<div data-dojo-type="dijit.layout.TabContainer" style="width:100%;" id="tab_directoryservice" data-dojo-props="doLayout:true, nested: true" title="{% trans "Directory Service Settings" %}">
 
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Active Directory" %}', refreshOnShow:true, doLayout:false {% if focus_form == "directoryservice.ActiveDirectory" %},selected: true{% endif %}, href: '{{ activedirectory.get_edit_url }}?inline=true'"  tab="directoryservice.ActiveDirectory" class="objrefresh data_directoryservice_ActiveDirectory" onLoad="activedirectory_mutex_toggle();">
     </div>

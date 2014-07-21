@@ -145,13 +145,7 @@ def config_upload(request):
                 request.session['allow_reboot'] = True
                 return render(request, 'system/config_ok.html', variables)
 
-        if 'iframe' in request.GET:
-            return HttpResponse('<html><body><textarea>' +
-                                render_to_string('system/config_upload.html',
-                                                 variables) +
-                                '</textarea></boby></html>')
-        else:
-            return render(request, 'system/config_upload.html', variables)
+        return render(request, 'system/config_upload.html', variables)
     else:
         FIRMWARE_DIR = '/var/tmp/firmware'
         if os.path.exists(FIRMWARE_DIR):
@@ -358,23 +352,6 @@ def testmail(request):
     transaction.savepoint_rollback(sid)
 
     return JsonResp(request, error=error, message=errmsg)
-
-
-def clearcache(request):
-
-    error = False
-    errmsg = ''
-
-    os.system(
-        "(/usr/local/bin/python "
-        "/usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1 &&"
-        " /usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py "
-        "fill >/dev/null 2>&1) &")
-
-    return HttpResponse(json.dumps({
-        'error': error,
-        'errmsg': errmsg,
-    }))
 
 
 class DojoFileStore(object):

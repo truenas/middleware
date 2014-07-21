@@ -386,7 +386,7 @@ Acceptable formats are 255.255.255.0,
         yes = raw_input(_("Configure IPv6? (y/n) "))
         if yes.lower().startswith("y"):
             ip_prompt = prompt("IPv6 Address", iface.int_ipv6address)
-            mask_prompt = prompt("IPv6 Netmask", iface.int_v6netmaskbit)
+            mask_prompt = prompt("IPv6 Prefixlen", iface.int_v6netmaskbit)
 
             ip = mask = None
             ip = raw_input(ip_prompt)
@@ -403,13 +403,16 @@ Acceptable formats are 255.255.255.0,
             except:
                 while True:
                     mask = raw_input(mask_prompt)
-                    if not mask and iface.int_v6netmask:
-                        if int(mask) > 0 and int(mask) < 128:
-                            mask = iface.int_v6netmaskbit
-                            break
-                        else:
-                            print _("Enter ipv6 netmask as number of bits eg: 64")
-                            continue
+                    if not mask and iface.int_v6netmaskbit:
+                        mask = iface.int_v6netmaskbit
+                        break
+                    if mask.startswith("/"):
+                        mask = mask.lstrip("/")
+                    if int(mask) > 0 and int(mask) < 128:
+                        mask = int(mask)
+                    else:
+                        print _("Enter ipv6 prefixlen as number of bits, eg: 64")
+                        continue
 
             iface.int_interface = nic
             iface.int_ipv6address = ip

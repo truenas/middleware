@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2013-06-03 15:49+0000\n"
-"Last-Translator: ioza1964 <ioannis.a.za@gmail.com>\n"
+"PO-Revision-Date: 2014-07-17 12:16+0000\n"
+"Last-Translator: Playerthe12 <a7694987@drdrb.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1370274576.0\n"
+"X-POOTLE-MTIME: 1405599382.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -5691,7 +5691,7 @@ msgstr ""
 #: templates/services/plugins.html:31
 #, fuzzy
 msgid "Version"
-msgstr "Έκδοση OS"
+msgstr "Έκδοση"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
@@ -6924,7 +6924,6 @@ msgid "auth+!data"
 msgstr ""
 
 #: account/forms.py:58
-#, fuzzy
 msgid "Confirm New Password"
 msgstr "Επιβεβαίωση κωδικού"
 
@@ -6955,12 +6954,13 @@ msgstr ""
 
 #: jails/admin.py:265
 #: jails/models.py:434
+#, fuzzy
 msgid "URL"
-msgstr ""
+msgstr "Διεύθυνση(URL)"
 
 #: jails/forms.py:90
 msgid "type"
-msgstr ""
+msgstr "τύπος"
 
 #: jails/forms.py:182
 #: jails/forms.py:629
@@ -6993,7 +6993,7 @@ msgstr "IPv6 διεύθυνση"
 
 #: jails/models.py:173
 msgid "MAC"
-msgstr ""
+msgstr "MAC"
 
 #: jails/models.py:332
 #, fuzzy
@@ -7102,7 +7102,7 @@ msgstr ""
 #: middleware/zfs.py:623
 #: middleware/zfs.py:691
 msgid "In Progress"
-msgstr ""
+msgstr "Σε εξέλιξη"
 
 #: network/forms.py:380
 #, fuzzy
@@ -7140,7 +7140,7 @@ msgstr "Ομαδοποιήσεις συνδέσεων"
 #: network/nav.py:17
 #: templates/network/index.html:14
 msgid "IPMI"
-msgstr ""
+msgstr "IPMI"
 
 #: plugins/forms.py:84
 msgid ""
@@ -7179,12 +7179,12 @@ msgstr "Η διαδρομή δεν υπάρχει."
 #: services/forms.py:220
 #, fuzzy
 msgid "This path does not exist."
-msgstr "Η διαδρομή %s δεν υπάρχει"
+msgstr "Η διαδρομή δεν υπάρχει."
 
 #: services/forms.py:222
 #, fuzzy
 msgid "This path is not a directory."
-msgstr "Αυτό δεν είναι έγκυρο δίκτυο"
+msgstr "Η διαδρομή δεν είναι ένας κατάλογος."
 
 #: services/forms.py:671
 #: services/forms.py:679
@@ -7246,8 +7246,9 @@ msgid "Bind IP Addresses"
 msgstr "Διεύθυνση IP"
 
 #: services/models.py:418
+#, fuzzy
 msgid "Enable multithreaded mode"
-msgstr ""
+msgstr "Ενεργοποίησε την πολυνηματική (multithreaded) λειτουργία "
 
 #: services/models.py:914
 #, fuzzy
@@ -7829,7 +7830,7 @@ msgstr ""
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr ""
+msgstr "Μη κρυπτογραφημένο"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
@@ -7841,16 +7842,15 @@ msgstr ""
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:307
-#, fuzzy
 msgid "lz4 (recommended)"
-msgstr "lzjb (συνιστάται)"
+msgstr "lz4 (συνιστάται)"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
@@ -7865,8 +7865,9 @@ msgid "19200"
 msgstr ""
 
 #: choices.py:672
+#, fuzzy
 msgid "Fatal"
-msgstr ""
+msgstr "Καταστροφικό"
 
 #: choices.py:677
 #, fuzzy
@@ -7902,14 +7903,13 @@ msgid "ctrl+data"
 msgstr ""
 
 #: account/forms.py:66
-#, fuzzy
 msgid "Passwords do not match"
-msgstr "Τα Μυστικά δεν ταιριάζουν"
+msgstr "Οι κωδικοί πρόσβασης δεν ταιριάζουν"
 
 #: account/forms.py:398
 #, fuzzy
 msgid "Create Home Directory In"
-msgstr "Αρχικός Κατάλογος"
+msgstr "Δημιουργία Αρχικού Καταλόγου σε"
 
 #: account/models.py:54
 #, fuzzy
@@ -7935,19 +7935,19 @@ msgstr ""
 #: freeadmin/forms.py:220
 #, fuzzy
 msgid "A file is required"
-msgstr "Αυτό το πεδίο είναι υποχρεωτικό"
+msgstr "Ένα αρχείο απαιτείται"
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
 #, fuzzy
 msgid "Invalid address: %s"
-msgstr "Άκυρο firmware"
+msgstr "Μη έγκυρη διεύθυνση: %s"
 
 #: freeadmin/forms.py:259
 #: freeadmin/forms.py:283
 #, fuzzy
 msgid "Invalid network: %s"
-msgstr "Άκυρο checksum"
+msgstr "Μη έγκυρο δίκτυο: %s"
 
 #: freeadmin/navtree.py:576
 #, fuzzy
@@ -7969,8 +7969,9 @@ msgid "Upload Plugin"
 msgstr "Διαγραφή επέκτασης"
 
 #: jails/admin.py:200
+#, fuzzy
 msgid "Start"
-msgstr ""
+msgstr "Έναρξη"
 
 #: jails/admin.py:271
 msgid "Instances"
@@ -7979,7 +7980,7 @@ msgstr ""
 #: jails/forms.py:260
 #: jails/utils.py:628
 msgid "Unable to find template!"
-msgstr ""
+msgstr "Αδύνατη η εύρεση του προτύπου!"
 
 #: jails/forms.py:518
 #: jails/models.py:196
@@ -7988,7 +7989,7 @@ msgstr ""
 
 #: jails/forms.py:785
 msgid "Create destination directory if it does not exist"
-msgstr ""
+msgstr "Δημιούργησε κατάλογο προορισμού αν αυτός δεν υπάρχει"
 
 #: jails/models.py:74
 #, fuzzy
@@ -8022,9 +8023,8 @@ msgid "Jails Configuration"
 msgstr "Καθολική ρύθμιση"
 
 #: jails/models.py:428
-#, fuzzy
 msgid "Architecture"
-msgstr "Αρχιτεκτονική πρόσθετου"
+msgstr "Αρχιτεκτονική"
 
 #: jails/nav.py:85
 msgid "Add Jail Templates"
@@ -8032,7 +8032,7 @@ msgstr ""
 
 #: jails/utils.py:645
 msgid "Failed to install plugin: %s"
-msgstr ""
+msgstr "Αποτυχία εγκατάστασης προσθέτου: %s"
 
 #: jails/views.py:95
 #, fuzzy
@@ -8046,7 +8046,7 @@ msgstr "%s ενημερώθηκε(αν) με επιτυχία."
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "Αντίγραφο ασφαλείας"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
@@ -8073,7 +8073,7 @@ msgstr ""
 #: network/forms.py:189
 #: network/forms.py:698
 msgid "The network %s is already in use by another NIC."
-msgstr ""
+msgstr "Το δίκτυο %s είναι ήδη σε χρήση από άλλο NIC."
 
 #: network/forms.py:446
 msgid "You need a domain, e.g. hostname.domain"
@@ -8113,7 +8113,7 @@ msgstr ""
 #: plugins/admin.py:66
 #, fuzzy
 msgid "Install"
-msgstr "Εγκαταστάθηκε..."
+msgstr "Εγκατάσταση"
 
 #: plugins/models.py:102
 #, fuzzy
@@ -8138,19 +8138,19 @@ msgstr "Δεν μπόρεσα να ανακτήσω το %(url)s: %(error)s"
 #: plugins/views.py:242
 #, fuzzy
 msgid "Invalid plugin"
-msgstr "Άκυρο πρόθεμα"
+msgstr "Μη έγκυρο πρόσθετο"
 
 #: plugins/views.py:192
 #: plugins/views.py:250
 #, fuzzy
 msgid "Failed to download plugin"
-msgstr "Αδύνατη η απομάκρυνση του προσθέτου."
+msgstr "Αποτυχία λήψης προσθέτου"
 
 #: plugins/views.py:224
 #: plugins/views.py:355
 #, fuzzy
 msgid "No available IP addresses"
-msgstr "Διεύθυνση IP υποδομής επεκτάσεων"
+msgstr "Μη διαθέσιμες IP διευθύνσεις"
 
 #: services/forms.py:1081
 #, fuzzy
@@ -8206,13 +8206,14 @@ msgstr ""
 "Οι παράμετροι αυτοι θα προστεθούν στις γενικές ρυθμίσεις στο inadyn.conf."
 
 #: services/models.py:1016
+#, fuzzy
 msgid "Slave"
-msgstr ""
+msgstr "Δευτερεύων"
 
 #: services/models.py:1080
 #, fuzzy
 msgid "Monitor User"
-msgstr "Τροποποίηση Χρήστη"
+msgstr "Παρακολούθηση χρήστη"
 
 #: services/models.py:1177
 msgid "Display Login"
@@ -8826,29 +8827,28 @@ msgid ""
 msgstr ""
 
 #: choices.py:52
-#, fuzzy
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTP+HTTPS"
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "Πυρήνας"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
 #, fuzzy
@@ -8857,19 +8857,19 @@ msgstr "gzip (γρηγορότερο)"
 
 #: choices.py:569
 msgid "Verify"
-msgstr ""
+msgstr "Επαλήθευση"
 
 #: choices.py:609
 msgid "9600"
-msgstr ""
+msgstr "9600"
 
 #: choices.py:611
 msgid "38400"
-msgstr ""
+msgstr "38400"
 
 #: choices.py:612
 msgid "57600"
-msgstr ""
+msgstr "57600"
 
 #: choices.py:686
 #, fuzzy
@@ -8928,14 +8928,13 @@ msgid "auth+data"
 msgstr ""
 
 #: account/forms.py:53
-#, fuzzy
 msgid "New Password"
 msgstr "Νέος κωδικός πρόσβασης"
 
 #: account/forms.py:534
 #, fuzzy
 msgid "Home directory must end with username"
-msgstr "Ο αρχικός κατάλογος δεν είναι εγγράψιμος, αφήστε το κενό"
+msgstr "Ο αρχικός κατάλογος πρέπει να τελειώνει με το όνομα χρήστη"
 
 #: account/models.py:58
 #: account/models.py:154
@@ -8961,7 +8960,7 @@ msgstr "Δεν μπόρεσα να ανακτήσω το %(url)s: %(error)s"
 #: jails/models.py:183
 #, fuzzy
 msgid "Autostart"
-msgstr "Αυτόματο"
+msgstr "Αυτόματη εκκίνηση"
 
 #: jails/admin.py:186
 #, fuzzy
@@ -8975,8 +8974,9 @@ msgid "Add Storage"
 msgstr "Αποθήκη"
 
 #: jails/admin.py:201
+#, fuzzy
 msgid "Stop"
-msgstr ""
+msgstr "Διακοπή"
 
 #: jails/forms.py:94
 msgid "vanilla"
@@ -8985,7 +8985,7 @@ msgstr ""
 #: jails/forms.py:486
 #, fuzzy
 msgid "Path does not exist!"
-msgstr "Η διαδρομή δεν υπάρχει."
+msgstr "Η διαδρομή δεν υπάρχει!"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
@@ -9099,7 +9099,7 @@ msgstr "Καθολική ρύθμιση"
 #: jails/utils.py:573
 #, fuzzy
 msgid "Unable to determine IPv4 for plugin"
-msgstr "Αδύνατη η απομάκρυνση του προσθέτου."
+msgstr "Αδύνατος ο καθορισμός IPv4 για το πρόσθετο"
 
 #: jails/views.py:115
 #, fuzzy
@@ -9130,14 +9130,15 @@ msgstr "Τοπικός Master"
 
 #: middleware/zfs.py:648
 #: middleware/zfs.py:711
+#, fuzzy
 msgid "Completed"
-msgstr ""
+msgstr "Ολοκληρώθηκε"
 
 #: middleware/zfs.py:663
 #: middleware/zfs.py:722
 #, fuzzy
 msgid "Canceled"
-msgstr "Ακύρωση"
+msgstr "Ακυρώθηκε"
 
 #: network/admin.py:39
 #, fuzzy
@@ -9152,7 +9153,7 @@ msgstr "IPv6 διεύθυνση"
 #: network/forms.py:311
 #, fuzzy
 msgid "Channel"
-msgstr "Αλλαγή"
+msgstr "Κανάλι"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
@@ -9170,7 +9171,7 @@ msgstr ""
 #: plugins/admin.py:73
 #, fuzzy
 msgid "Install plugin"
-msgstr "Εγκατάσταση επέκτασης"
+msgstr "Εγκατάσταση προσθέτου"
 
 #: plugins/models.py:103
 #, fuzzy
@@ -9185,7 +9186,7 @@ msgstr "Η σελίδα δεν βρέθηκε"
 #: plugins/views.py:171
 #, fuzzy
 msgid "Plugin not installed"
-msgstr "Δεν υπάρχουν εγκατεστημένες επεκτάσεις"
+msgstr "Το πρόσθετο δεν εγκαταστάθηκε"
 
 #: plugins/views.py:205
 #, fuzzy
@@ -9261,7 +9262,7 @@ msgstr ""
 #: services/models.py:1018
 #, fuzzy
 msgid "UPS Mode"
-msgstr "Λειτουργία"
+msgstr "Λειτουργία UPS"
 
 #: services/models.py:1085
 #, fuzzy
@@ -9905,7 +9906,7 @@ msgstr ""
 #: freeadmin/options.py:633
 #, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "Είστε σίγουροι ότι θέλετε να τον αποσπάσετε;"
+msgstr "Είστε σίγουροι ότι θέλετε να επεξεργαστείτε αυτό;"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -9941,11 +9942,13 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"Ο κωδικός πρόσβασης περιέχει ένα ερωτηματικό (?) προς το παρόν αυτό δεν "
+"επιτρέπεται λόγω δημιουργίας προβλημάτων στο CIFS. "
 
 #: directoryservice/forms.py:104
 #, fuzzy
 msgid "NT4 failed to reload."
-msgstr "Απέτυχε η επαναφόρτωση της υπηρεσίας AFP."
+msgstr "Απέτυχε η επαναφόρτωση της υπηρεσίας ΝΤ4."
 
 #: directoryservice/forms.py:222
 #, fuzzy
@@ -9955,7 +9958,7 @@ msgstr "Απέτυχε η επαναφόρτωση της υπηρεσίας act
 #: directoryservice/forms.py:316
 #, fuzzy
 msgid "LDAP failed to reload."
-msgstr "Απέτυχε η επαναφόρτωση της υπηρεσίας AFP."
+msgstr "Απέτυχε η επαναφόρτωση του LDAP."
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
@@ -9963,7 +9966,7 @@ msgstr "Απέτυχε η επαναφόρτωση της υπηρεσίας AFP
 #: directoryservice/models.py:358
 #, fuzzy
 msgid "Enable"
-msgstr "Ενεργοποιημένο"
+msgstr "Ενεργοποίηση"
 
 #: directoryservice/models.py:295
 #, fuzzy
@@ -9979,12 +9982,12 @@ msgstr "Παλιός κωδικός"
 #: services/forms.py:896
 #, fuzzy
 msgid "Certificate"
-msgstr "Πιστοποιητικό SSL"
+msgstr "Πιστοποιητικό"
 
 #: services/forms.py:864
 #, fuzzy
 msgid "Incorrect password."
-msgstr "Root password δεσμεύοντας"
+msgstr "Εσφαλμένος κωδικός πρόσβασης."
 
 #: services/models.py:1623
 #: services/models.py:1835
@@ -10028,3 +10031,58 @@ msgstr "Domain Name ελεγκτή"
 #, fuzzy
 msgid "Set SSL Certificate"
 msgstr "Πιστοποιητικό SSL"
+
+#: system/hook.py:22
+#: system/hook.py:24
+msgid "Performance Test"
+msgstr ""
+
+#: system/views.py:545
+msgid "System dataset is required to perform this action."
+msgstr ""
+
+#: templates/system/perftest.html:20
+msgid "You are about to start a performance test."
+msgstr ""
+
+#: templates/system/perftest.html:22
+msgid ""
+"Running these tests can substantially impact performance on a production "
+"system and are only to be used for diagnostic purposes."
+msgstr ""
+
+#: templates/system/perftest.html:24
+#, fuzzy
+msgid "Are you sure you want to proceed?"
+msgstr "Είστε σίγουροι ότι θέλετε να διαγράψετε;"
+
+#: services/models.py:256
+msgid "Obey pam restrictions"
+msgstr ""
+
+#: services/models.py:258
+msgid ""
+"this parameter controls whether or not Sambashould obey PAM's account and "
+"session management directives"
+msgstr ""
+
+#: services/models.py:591
+msgid "NAA...used only by the initiator"
+msgstr ""
+
+#: services/models.py:595
+#, fuzzy
+msgid "Enable TPC"
+msgstr "Ενεργοποίηση SSL/TLS"
+
+#: services/models.py:596
+msgid "Allow initiators to xcopy without authenticating to foreign targets."
+msgstr ""
+
+#: templates/directoryservice/activedirectory_edit.html:8
+#: templates/directoryservice/ldap_edit.html:8
+#: templates/directoryservice/nis_edit.html:8
+#: templates/directoryservice/nt4_edit.html:8
+#, fuzzy
+msgid "Rebuild Directory Service Cache"
+msgstr "Άδεια για τον κατάλογο"
