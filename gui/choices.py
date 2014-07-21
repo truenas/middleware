@@ -220,19 +220,6 @@ CASEFOLDING_CHOICES = (
         ('uppercaseclient', _('Client sees uppercase, server sees lowercase')),
         )
 
-ISCSI_TARGET_TYPE_CHOICES = (
-        ('Disk', _('Disk')),
-        #Those types are not supported by istgt yet
-        #('DVD', _('DVD')),
-        #('Tape', _('Tape')),
-        #('Pass-thru Device', _('Pass')),
-        )
-
-ISCSI_TARGET_FLAGS_CHOICES = (
-        ('rw', _('read-write')),
-        ('ro', _('read-only')),
-        )
-
 AUTHMETHOD_CHOICES = (
         ('None',  _('None')),
         ('Auto',  _('Auto')),
