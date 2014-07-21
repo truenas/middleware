@@ -7446,11 +7446,8 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 | Setting                | Value      | Description                                                                                                         |
 |                        |            |                                                                                                                     |
 +========================+============+=====================================================================================================================+
-| Number of servers      | integer    | run                                                                                                                 |
-|                        |            | **sysctl -n kern.smp.cpus**                                                                                         |
-|                        |            | from                                                                                                                |
-|                        |            | Shell                                                                                     |
-|                        |            | to determine the number; do not exceed the number listed in the output of that command                              |
+| Number of servers      | integer    | run **sysctl -n kern.smp.cpus** from Shell to determine the number; do not exceed the number listed in the output   |
+|                        |            | of that command                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Serve UDP NFS clients  | checkbox   | check if NFS client needs to use UDP                                                                                |
@@ -7507,9 +7504,7 @@ Table 11.10a summarizes the options that can be configured for the rsync daemon:
 |                      |           |                                                                     |
 |                      |           |                                                                     |
 +----------------------+-----------+---------------------------------------------------------------------+
-| TCP Port             | integer   | port for                                                            |
-|                      |           | **rsyncd**                                                          |
-|                      |           | to listen on, default is                                            |
+| TCP Port             | integer   | port for **rsyncd** to listen on, default is                        |
 |                      |           | *873*                                                               |
 |                      |           |                                                                     |
 |                      |           |                                                                     |
@@ -7550,17 +7545,13 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 | Path                 | browse button  | volume/dataset to hold received data                                          |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
-| Access Mode          | drop-down menu | choices are                                                                   |
-|                      |                | *Read and Write*                                                              |
-|                      |                | ,                                                                             |
-|                      |                | *Read-only*                                                                   |
-|                      |                | , or                                                                          |
+| Access Mode          | drop-down menu | choices are *Read and Write*,                                                 |                                                                           |
+|                      |                | *Read-only*, or                                                               |
 |                      |                | *Write-only*                                                                  |
 |                      |                |                                                                               |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
-| Maximum connections  | integer        | *0*                                                                           |
-|                      |                | is unlimited                                                                  |
+| Maximum connections  | integer        | *0* is unlimited                                                              |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
 | User                 | drop-down menu | select user that file transfers to and from that module should take place as  |
@@ -7615,45 +7606,37 @@ Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 
 **Table 11.11a: S.M.A.R.T Configuration Options**
 
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Setting**     | **Value**                  | **Description**                                                                                                                                           |
-|                 |                            |                                                                                                                                                           |
-|                 |                            |                                                                                                                                                           |
-+=================+============================+===========================================================================================================================================================+
-| Check interval  | integer                    | in minutes, how often to wake up                                                                                                                          |
-|                 |                            | **smartd**                                                                                                                                                |
-|                 |                            | to check to see if any tests have been configured to run                                                                                                  |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Power mode      | drop-down menu             | the configured test is not performed if the system enters the specified power mode; choices are:                                                          |
-|                 |                            | *Never*                                                                                                                                                   |
-|                 |                            | ,                                                                                                                                                         |
-|                 |                            | *Sleep*                                                                                                                                                   |
-|                 |                            | ,                                                                                                                                                         |
-|                 |                            | *Standby*                                                                                                                                                 |
-|                 |                            | , or                                                                                                                                                      |
-|                 |                            | *Idle*                                                                                                                                                    |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Difference      | integer in degrees Celsius | default of                                                                                                                                                |
-|                 |                            | *0*                                                                                                                                                       |
-|                 |                            | disables this check, otherwise reports if the temperature of a drive has changed by N degrees Celsius since last report                                   |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Informational   | integer in degrees Celsius | default of                                                                                                                                                |
-|                 |                            | *0*                                                                                                                                                       |
-|                 |                            | disables this check, otherwise will message with a log level of LOG_INFO if the temperature is higher than specified degrees in Celsius                   |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Critical        | integer in degrees Celsius | default of                                                                                                                                                |
-|                 |                            | *0*                                                                                                                                                       |
-|                 |                            | disables this check, otherwise will message with a log level of LOG_CRIT and send an email if the temperature is higher than specified degrees in Celsius |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Email to report | string                     | email address of person to receive S.M.A.R.T. alert                                                                                                       |
-|                 |                            | ; separate multiple email recipients with a comma and no space                                                                                            |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| **Setting**     | **Value**                  | **Description**                                                                                             |
+|                 |                            |                                                                                                             |
+|                 |                            |                                                                                                             |
++=================+============================+=============================================================================================================+
+| Check interval  | integer                    | in minutes, how often to wake up **smartd** to check to see if any tests have been configured to run        |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Power mode      | drop-down menu             | the configured test is not performed if the system enters the specified power mode; choices are:            |
+|                 |                            | *Never*,                                                                                                    |                                                       
+|                 |                            | *Sleep*,                                                                                                    |                                      
+|                 |                            | *Standby*, or                                                                                               |
+|                 |                            | *Idle*                                                                                                      |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Difference      | integer in degrees Celsius | default of *0* disables this check, otherwise reports if the temperature of a drive has changed by N        |
+|                 |                            | degrees Celsius since last report                                                                           |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Informational   | integer in degrees Celsius | default of *0* disables this check, otherwise will message with a log level of LOG_INFO if the temperature  |
+|                 |                            | is higher than specified degrees in Celsius                                                                 |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Critical        | integer in degrees Celsius | default of *0* disables this check, otherwise will message with a log level of LOG_CRIT and send an email   |
+|                 |                            | if the temperature is higher than specified degrees in Celsius                                              |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Email to report | string                     | email address of person to receive S.M.A.R.T. alert; separate multiple email recipients with a comma and no |
+|                 |                            | space                                                                                                       |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
 
 
 SNMP
@@ -7679,27 +7662,25 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 **Table 11.12a: SNMP Configuration Options**
 
 
-+----------------------+--------+----------------------------------------------------------------+
-| Setting              | Value  | Description                                                    |
-|                      |        |                                                                |
-+======================+========+================================================================+
-| Location             | string | optional description of FreeNAS® system's location             |
-|                      |        |                                                                |
-+----------------------+--------+----------------------------------------------------------------+
-| Contact              | string | optional email address of FreeNAS® administrator               |
-|                      |        |                                                                |
-+----------------------+--------+----------------------------------------------------------------+
-| Community            | string | password used on the SNMP network, default is                  |
-|                      |        | *public*                                                       |
-|                      |        | and                                                            |
-|                      |        | **should be changed for security reasons**                     |
-|                      |        |                                                                |
-+----------------------+--------+----------------------------------------------------------------+
-| Auxiliary Parameters | string | additional                                                     |
-|                      |        | `bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_ |
-|                      |        | options not covered in this screen, one per line               |
-|                      |        |                                                                |
-+----------------------+--------+----------------------------------------------------------------+
++----------------------+------------+----------------------------------------------------------------+
+| **Setting**          | **Value**  | **Description**                                                |
+|                      |            |                                                                |
++======================+============+================================================================+
+| Location             | string     | optional description of FreeNAS® system's location            |
+|                      |            |                                                                |
++----------------------+------------+----------------------------------------------------------------+
+| Contact              | string     | optional email address of FreeNAS® administrator               |
+|                      |            |                                                                |
++----------------------+------------+----------------------------------------------------------------+
+| Community            | string     | password used on the SNMP network, default is *public* and     |
+|                      |            | **should be changed for security reasons**                     |
+|                      |            |                                                                |
++----------------------+------------+----------------------------------------------------------------+
+| Auxiliary Parameters | string     | additional                                                     |
+|                      |            | `bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_ |
+|                      |            | options not covered in this screen, one per line               |
+|                      |            |                                                                |
++----------------------+------------+----------------------------------------------------------------+
 
 
 SSH
@@ -7728,59 +7709,50 @@ Advanced.
 **Table 11.13a: SSH Configuration Options**
 
 
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting                       | Value          | Description                                                                                                                                    |
-|                               |                |                                                                                                                                                |
-+===============================+================+================================================================================================================================================+
-| TCP Port                      | integer        | port to open for                                                                                                                               |
-|                               |                | SSH                                                                                                                                            |
-|                               |                | connection requests;                                                                                                                           |
-|                               |                | *22*                                                                                                                                           |
-|                               |                | by default                                                                                                                                     |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Login as Root with password   | checkbox       | **for security reasons, root logins are discouraged and disabled by default**                                                                  |
-|                               |                | if enabled, password must be set for                                                                                                           |
-|                               |                | *root*                                                                                                                                         |
-|                               |                | user in Account → Users → View Users                                                                                                    |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow Password Authentication | checkbox       | if unchecked, key based authentication for all users is required; requires                                                                     |
-|                               |                | `additional setup <http://the.earth.li/%7Esgtatham/putty/0.55/htmldoc/Chapter8.html>`_                                                         |
-|                               |                | on both the                                                                                                                                    |
-|                               |                | SSH                                                                                                                                            |
-|                               |                | client and server                                                                                                                              |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow TCP Port Forwarding     | checkbox       | allows users to bypass firewall restrictions using                                                                                             |
-|                               |                | SSH                                                                                                                                            |
-|                               |                | 's                                                                                                                                             |
-|                               |                | `port  <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                                                                        |
-|                               |                | `forwarding feature <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                                                           |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Compress Connections          | checkbox       | may reduce latency over slow networks                                                                                                          |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Host Private Key              | string         | only available in Advanced Mode; allows you to paste a specific host key as the default key is changed with every installation                 |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| SFTP Log Level                | drop-down menu | only available in Advanced Mode; select the                                                                                                    |
-|                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                                                                 |
-|                               |                | level of the SFTP server                                                                                                                       |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| SFTP Log Facility             | drop-down menu | only available in Advanced Mode; select the                                                                                                    |
-|                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                                                                 |
-|                               |                | facility of the SFTP server                                                                                                                    |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Extra Options                 | string         | only available in Advanced Mode;                                                                                                               |
-|                               |                | additional                                                                                                                                     |
-|                               |                | `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_                                                                       |
-|                               |                | options not covered in this screen, one per line; these options are case-sensitive and mis-spellings may prevent the SSH service from starting |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| **Setting**                   | **Value**      | **Description**                                                                                          |
+|                               |                |                                                                                                          |
++===============================+================+==========================================================================================================+
+| TCP Port                      | integer        | port to open for SSH connection requests; *22* by default                                                |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Login as Root with password   | checkbox       | **for security reasons, root logins are discouraged and disabled by default** if enabled, password must  |
+|                               |                | be set for *root* user in Account → Users → View Users                                               |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Allow Password Authentication | checkbox       | if unchecked, key based authentication for all users is required; requires                               |
+|                               |                | `additional setup <http://the.earth.li/%7Esgtatham/putty/0.55/htmldoc/Chapter8.html>`_                   |
+|                               |                | on both the SSH client and server                                                                        |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Allow TCP Port Forwarding     | checkbox       | allows users to bypass firewall restrictions using SSH's                                                 |
+|                               |                | `port  <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                                  |
+|                               |                | `forwarding feature <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                     |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Compress Connections          | checkbox       | may reduce latency over slow networks                                                                    |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Host Private Key              | string         | only available in Advanced Mode; allows you to paste a specific host key as the default key is changed   |
+|                               |                | with every installation                                                                                  |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| SFTP Log Level                | drop-down menu | only available in Advanced Mode; select the                                                              |
+|                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                           |
+|                               |                | level of the SFTP server                                                                                 |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| SFTP Log Facility             | drop-down menu | only available in Advanced Mode; select the                                                              |
+|                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                           |
+|                               |                | facility of the SFTP server                                                                              |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Extra Options                 | string         | only available in Advanced Mode; additional                                                              |
+|                               |                | `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_                                 |
+|                               |                | options not covered in this screen, one per line; these options are case-sensitive and mis-spellings may |
+|                               |                | prevent the SSH service from starting                                                                    |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 
 
 A few sshd_config(5) options that are useful to input in the *Extra Options* field include:
@@ -7903,36 +7875,34 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 **Table 11.14a: TFTP Configuration Options**
 
 
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting         | Value         | Description                                                                                                                                     |
-|                 |               |                                                                                                                                                 |
-+=================+===============+=================================================================================================================================================+
-| Directory       | browse button | browse to the directory to be used for storage; some devices require a specific directory name, refer to the device's documentation for details |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow New Files | checkbox      | enable if network devices need to send files to the FreeNAS® system (e.g. backup their config)                                                  |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Port            | integer       | UDP port to listen for TFTP requests,                                                                                                           |
-|                 |               | *69*                                                                                                                                            |
-|                 |               | by default                                                                                                                                      |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Username        | drop-down     | account used for tftp requests; must have permission to the                                                                                     |
-|                 | menu          | *Directory*                                                                                                                                     |
-|                 |               |                                                                                                                                                 |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Umask           | integer       | umask for newly created files, default is                                                                                                       |
-|                 |               | *022*                                                                                                                                           |
-|                 |               | (everyone can read, nobody can write); some devices require a less strict umask                                                                 |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Extra options   | string        | additional                                                                                                                                      |
-|                 |               | `tftpd(8) <http://www.freebsd.org/cgi/man.cgi?query=tftpd>`_                                                                                    |
-|                 |               | options not shown in this screen, one per line                                                                                                  |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| **Setting**     | **Value**     | **Description**                                                                                                          |
+|                 |               |                                                                                                                          |
++=================+===============+==========================================================================================================================+
+| Directory       | browse button | browse to the directory to be used for storage; some devices require a specific directory name, refer to the device's    |
+|                 |               | documentation for details                                                                                                |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Allow New Files | checkbox      | enable if network devices need to send files to the FreeNAS® system (e.g. backup their config)                          |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Port            | integer       | UDP port to listen for TFTP requests, *69* by default                                                                    |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Username        | drop-down     | account used for tftp requests; must have permission to the *Directory*                                                  |
+|                 | menu          |                                                                                                                          |
+|                 |               |                                                                                                                          |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Umask           | integer       | umask for newly created files, default is *022* (everyone can read, nobody can write); some devices require a less       |
+|                 |               | strict umask                                                                                                             |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Extra options   | string        | additional                                                                                                               |
+|                 |               | `tftpd(8) <http://www.freebsd.org/cgi/man.cgi?query=tftpd>`_                                                             |
+|                 |               | options not shown in this screen, one per line                                                                           |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
 
 
 UPS
@@ -7960,9 +7930,7 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                |                                                                                                       |
 |                           |                |                                                                                                       |
 +===========================+================+=======================================================================================================+
-| UPS Mode                  | drop-down menu | select from                                                                                           |
-|                           |                | *Master*                                                                                              |
-|                           |                | or                                                                                                    |
+| UPS Mode                  | drop-down menu | select from *Master* or                                                                               |
 |                           |                | *Slave*                                                                                               |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -7973,8 +7941,8 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                | `http://www.networkupstools.org/stable-hcl.html <http://www.networkupstools.org/stable-hcl.html>`_    |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Port                      | drop-down      | select the serial or USB port the UPS is plugged into (see                                            |
-|                           | menu           | NOTE below)                                                                                           |
+| Port                      | drop-down      | select the serial or USB port the UPS is plugged into (see  NOTE below)                               |
+|                           | menu           |                                                                                                       |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Auxiliary Parameters      | string         | additional options from                                                                               |
@@ -7984,25 +7952,18 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 | Description               | string         | optional                                                                                              |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Shutdown mode             | drop-down menu | choices are                                                                                           |
-|                           |                | *UPS goes on battery*                                                                                 |
-|                           |                | and                                                                                                   |
+| Shutdown mode             | drop-down menu | choices are *UPS goes on battery* and                                                                 |
 |                           |                | *UPS reaches low battery*                                                                             |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Shutdown timer            | integer        | in seconds; will initiate shutdown after this many seconds after UPS enters                           |
-|                           |                | *UPS goes on battery*                                                                                 |
-|                           |                | , unless power is restored                                                                            |
+| Shutdown timer            | integer        | in seconds; will initiate shutdown after this many seconds after UPS enters *UPS goes on battery*,    |                                                                                 |
+|                           |                | unless power is restored                                                                              |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Monitor User              | string         | default is                                                                                            |
-|                           |                | *upsmon*                                                                                              |
+| Monitor User              | string         | default is *upsmon*                                                                                   |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Monitor Password          | string         | default is known value                                                                                |
-|                           |                | *fixmepass*                                                                                           |
-|                           |                | and should be changed;                                                                                |
-|                           |                | can not contain a space or #                                                                          |
+| Monitor Password          | string         | default is known value *fixmepass* and should be changed; can not contain a space or #                |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Extra users               | string         | defines the accounts that have administrative access; see                                             |
@@ -8011,25 +7972,17 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Remote monitor            | checkbox       | if enabled, be aware that the default is to listen on all interfaces and to use the known values user |
-|                           |                | *upsmon*                                                                                              |
-|                           |                | and password                                                                                          |
+|                           |                | *upsmon* and password                                                                                 |
 |                           |                | *fixmepass*                                                                                           |
 |                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Send Email Status Updates | checkbox       | if checked, activates the *To email* field                                                            |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Send Email Status Updates | checkbox       | if checked, activates the                                                                             |
-|                           |                | *To email*                                                                                            |
-|                           |                | field                                                                                                 |
+| To email                  | email address  | if *Send Email* box checked, email address of person to receive status updates                        |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| To email                  | email address  | if                                                                                                    |
-|                           |                | *Send Email*                                                                                          |
-|                           |                | box checked, email address of person to receive status updates                                        |
-|                           |                |                                                                                                       |
-+---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Email subject             | string         | if                                                                                                    |
-|                           |                | *Send Email*                                                                                          |
-|                           |                | box checked, subject of email updates                                                                 |
+| Email subject             | string         | if *Send Email* box checked, subject of email updates                                                 |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
@@ -8312,26 +8265,22 @@ you install software into a Linux jail, install the 32-bit version of the softwa
 **Table 13a: What Type of Software can be Installed Into a Jail?**
 
 
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| **Type of Jail** | FreeNAS® PBI                                             _ | FreeBSD pkgng package                                                             _ | FreeBSD port                                                        _ |
-|                  |                                                             |                                                                                     |                                                                       |
-+==================+=============================================================+=====================================================================================+=======================================================================+
-| Plugin           | yes                                                         | yes                                                                                 | yes                                                                   |
-|                  |                                                             |                                                                                     |                                                                       |
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| Port             | no                                                          | no, unless                                                                          | yes                                                                   |
-|                  |                                                             | *vanilla*                                                                           |                                                                       |
-|                  |                                                             | is unchecked during jail creation                                                   |                                                                       |
-|                  |                                                             |                                                                                     |                                                                       |
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| Standard         | no                                                          | no, unless                                                                          | yes                                                                   |
-|                  |                                                             | *vanilla*                                                                           |                                                                       |
-|                  |                                                             | is unchecked during jail creation                                                   |                                                                       |
-|                  |                                                             |                                                                                     |                                                                       |
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| Linux            | no                                                          | no                                                                                  | no                                                                    |
-|                  |                                                             |                                                                                     |                                                                       |
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
++------------------+---------------------+-----------------------------------------------------------+---------------------+
+| **Type of Jail** | **FreeNAS® PBI**   | **FreeBSD pkgng package**                                 | **FreeBSD port**    |
+|                  |                     |                                                           |                     |
++==================+=====================+===========================================================+=====================+
+| Plugin           | yes                 | yes                                                       | yes                 |
+|                  |                     |                                                           |                     |
++------------------+---------------------+-----------------------------------------------------------+---------------------+
+| Port             | no                  | no, unless  *vanilla*  is unchecked during jail creation  | yes                 |
+|                  |                     |                                                           |                     |
++------------------+---------------------+-----------------------------------------------------------+---------------------+
+| Standard         | no                  | no, unless  *vanilla* is unchecked during jail creation   | yes                 |
+|                  |                     |                                                           |                     |
++------------------+---------------------+-----------------------------------------------------------+---------------------+
+| Linux            | no                  | no                                                        | no                  |
+|                  |                     |                                                           |                     |
++------------------+---------------------+-----------------------------------------------------------+---------------------+
 
 
 The ability to create multiple jails and multiple types of jails offers great flexibility and application separation to the administrator. For example, one
@@ -8432,117 +8381,86 @@ To create a jail, click Jails → Add Jails to access the screen shown in Figure
 
 **Table 13.2a: Jail Configuration Options**
 
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Setting**               | **Value**      | **Description**                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+===========================+================+========================================================================================================================================================+
-| Jail Name                 | string         | mandatory; can only contain letters and numbers                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| type                      | drop-down menu | default choices are                                                                                                                                    |
-|                           |                | *pluginjail*                                                                                                                                           |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *portjail*                                                                                                                                             |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *standard*                                                                                                                                             |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *debian*                                                                                                                                               |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *gentoo*                                                                                                                                               |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *ubuntu*                                                                                                                                               |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *suse*                                                                                                                                                 |
-|                           |                | , and                                                                                                                                                  |
-|                           |                | *centos*                                                                                                                                               |
-|                           |                | ; on a 64-bit system,                                                                                                                                  |
-|                           |                | options are also available for creating the 32-bit versions of a plugin, port, or standard jail                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in                                                                       |
-|                           |                | Jails Configuration;_                                                                                                                                  |
-|                           |                | if you change the default address, make sure it is reachable within the FreeNAS® system's network and is not in use by any other host on the network  |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 netmask              | drop-down menu | select the subnet mask associated with                                                                                                                 |
-|                           |                | *IPv4 address*                                                                                                                                         |
-|                           |                |                                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if                                                                                               |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with                                                                                                                 |
-|                           |                | *IPv4 bridge address*                                                                                                                                  |
-|                           |                | ; will be greyed out for Linux jails or if                                                                                                             |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 default gateway      | string         | used to set the jail's default gateway IPv4 address; will be greyed out for Linux jails or if                                                          |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 address              | integer        | if IPv6 has been configured, will be automatically assigned the next free                                                                              |
-|                           |                | address from the range specified in                                                                                                                    |
-|                           |                | Jails Configuration_                                                                                                                                   |
-|                           |                |                                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 prefix length        | drop-down menu | select the prefix length associated with                                                                                                               |
-|                           |                | *IPv6 address*                                                                                                                                         |
-|                           |                |                                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if                                                                                               |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 bridge prefix length | drop-down menu | select the prefix length associated with                                                                                                               |
-|                           |                | *IPv6 address*                                                                                                                                         |
-|                           |                | ; will be greyed out for Linux jails or if                                                                                                             |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 default gateway      | string         | used to set the jail's default gateway IPv6 address; will be greyed out for Linux jails or if                                                          |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAC                       | string         | if a static MAC address is needed, input it here; requires                                                                                             |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | to be checked                                                                                                                                          |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Sysctls                   | string         | comma-delimited list of sysctls to set inside jail (e.g.                                                                                               |
-|                           |                | *allow.sysvipc=1,allow.raw_sockets=1*                                                                                                                  |
-|                           |                | )                                                                                                                                                      |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Autostart                 | checkbox       | uncheck if you want to start the jail manually                                                                                                         |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| VIMAGE                    | checkbox       | gives a jail its own virtualized network stack; requires promiscuous mode to be enabled on the interface; does not apply to Linux jails                |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NAT                       | checkbox       | enables Network Address Translation for the jail; will be greyed out for Linux jails or if                                                             |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| vanilla                   | checkbox       | uncheck this box if you plan to install FreeBSD packages into a                                                                                        |
-|                           |                | *portjail*                                                                                                                                             |
-|                           |                | or                                                                                                                                                     |
-|                           |                | *standard*                                                                                                                                             |
-|                           |                | jail                                                                                                                                                   |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| **Setting**               | **Value**      | **Description**                                                                                              |
+|                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++===========================+================+==============================================================================================================+
+| Jail Name                 | string         | mandatory; can only contain letters and numbers                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| type                      | drop-down menu | default choices are *pluginjail*,                                                                            |
+|                           |                | *portjail*,                                                                                                  |
+|                           |                | *standard*,                                                                                                  |
+|                           |                | *debian*,                                                                                                    |                
+|                           |                | *gentoo*,                                                                                                    |
+|                           |                | *ubuntu*,                                                                                                    |
+|                           |                | *suse*, and                                                                                                  |
+|                           |                | *centos*; on a 64-bit system, options are also available for creating the 32-bit versions of a plugin, port, |
+|                           |                | or standard jail                                                                                             |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in *Jails Configuration*; if   |
+|                           |                | you change the default address, make sure it is reachable within the FreeNAS® system's network and is not   |
+|                           |                |in use by any other host on the network                                                                       |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 netmask              | drop-down menu | select the subnet mask associated with *IPv4 address*                                                        |
+|                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if *VIMAGE* is unchecked                               |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with *IPv4 bridge address*; will be greyed out for Linux jails or if       |
+|                           |                | *VIMAGE* is unchecked                                                                                        |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 default gateway      | string         | used to set the jail's default gateway IPv4 address; will be greyed out for Linux jails or if *VIMAGE* is    |
+|                           |                | unchecked                                                                                                    |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 address              | integer        | if IPv6 has been configured, will be automatically assigned the next free address from the range specified   |
+|                           |                | in *Jails Configuration*_                                                                                    |
+|                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 prefix length        | drop-down menu | select the prefix length associated with *IPv6 address*                                                      |
+|                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if *VIMAGE* is unchecked                               |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 bridge prefix length | drop-down menu | select the prefix length associated with *IPv6 address*; will be greyed out for Linux jails or if            |
+|                           |                | *VIMAGE* is unchecked                                                                                        |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 default gateway      | string         | used to set the jail's default gateway IPv6 address; will be greyed out for Linux jails or if *VIMAGE* is    |
+|                           |                | unchecked                                                                                                    |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| MAC                       | string         | if a static MAC address is needed, input it here; requires *VIMAGE* to be checked                            |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| Sysctls                   | string         | comma-delimited list of sysctls to set inside jail (e.g. *allow.sysvipc=1,allow.raw_sockets=1*)              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| Autostart                 | checkbox       | uncheck if you want to start the jail manually                                                               |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| VIMAGE                    | checkbox       | gives a jail its own virtualized network stack; requires promiscuous mode to be enabled on the interface;    |
+|                           |                | does not apply to Linux jails                                                                                |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| NAT                       | checkbox       | enables Network Address Translation for the jail; will be greyed out for Linux jails or if *VIMAGE* is       |
+|                           |                | unchecked                                                                                                    |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| vanilla                   | checkbox       | uncheck this box if you plan to install FreeBSD packages into a *portjail* or                                |
+|                           |                | *standard* jail                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 
 
 **NOTE:** the IPv4 and IPv6 bridge interface is used to bridge the
@@ -8817,44 +8735,30 @@ Table 13.3a summarizes the fields in this screen.
 **Table 13.3a: Jail Template Options**
 
 
-+--------------+----------------+--------------------------------+
-| **Setting**  | **Value**      | **Description**                |
-|              |                |                                |
-|              |                |                                |
-+==============+================+================================+
-| Name         | string         | value will appear in the       |
-|              |                | *Name*                         |
-|              |                | column of View Jail Templates  |
-|              |                |                                |
-+--------------+----------------+--------------------------------+
-| OS           | drop-down menu | choices are                    |
-|              |                | *FreeBSD*                      |
-|              |                | or                             |
-|              |                | *Linux*                        |
-|              |                |                                |
-|              |                |                                |
-+--------------+----------------+--------------------------------+
-| Architecture | drop-down menu | choices are                    |
-|              |                | *x86*                          |
-|              |                | or                             |
-|              |                | *x64*                          |
-|              |                | ;                              |
-|              |                | *x86*                          |
-|              |                | is required                    |
-|              |                | if                             |
-|              |                | *Linux*                        |
-|              |                | is selected                    |
-|              |                |                                |
-+--------------+----------------+--------------------------------+
-| URL          | string         | input the full URL to the      |
-|              |                | *.tgz*                         |
-|              |                | file, including the protocol ( |
-|              |                | *ftp://*                       |
-|              |                | or                             |
-|              |                | *http://*                      |
-|              |                | )                              |
-|              |                |                                |
-+--------------+----------------+--------------------------------+
++--------------+----------------+----------------------------------------------------------------+
+| **Setting**  | **Value**      | **Description**                                                |
+|              |                |                                                                |
+|              |                |                                                                |
++==============+================+================================================================+
+| Name         | string         | value will appear in the *Name* column of View Jail Templates  |
+|              |                |                                                                |
++--------------+----------------+----------------------------------------------------------------+
+| OS           | drop-down menu | choices are  *FreeBSD* or                                      |
+|              |                | *Linux*                                                        |
+|              |                |                                                                |
+|              |                |                                                                |
++--------------+----------------+----------------------------------------------------------------+
+| Architecture | drop-down menu | choices are *x86* or                                           |
+|              |                | *x64*;                                                         |
+|              |                | *x86* is required if                                           |
+|              |                | *Linux* is selected                                            |
+|              |                |                                                                |
++--------------+----------------+----------------------------------------------------------------+
+| URL          | string         | input the full URL to the *.tgz* file, including the protocol  |
+|              |                | (*ftp://* or                                                   |
+|              |                | *http://*)                                                     |
+|              |                |                                                                |
++--------------+----------------+----------------------------------------------------------------+
 
 
 
@@ -10787,59 +10691,47 @@ or *False*.
 **Table 25.2a: Valid JSON Parameters for Users Create Resource**
 
 
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| **JSON Parameter**       | **Type** | **Description**                                                                                                                    |
-|                          |          |                                                                                                                                    |
-|                          |          |                                                                                                                                    |
-+==========================+==========+====================================================================================================================================+
-| bsdusr_username          | string   | maximum 32 characters, though a maximum of 8 is recommended for interoperability; can include numerals but can not include a space |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_full_name         | string   | may contain spaces and uppercase characters                                                                                        |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_password          | string   | can include a mix of upper and lowercase letters, characters, and                                                                  |
-|                          |          | numbers                                                                                                                            |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_uid               | integer  | by convention, user accounts have an ID greater than 1000 with a maximum allowable value of 65,535                                 |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_group             | integer  | if                                                                                                                                 |
-|                          |          | *bsdusr_creategroup*                                                                                                               |
-|                          |          | is set to                                                                                                                          |
-|                          |          | *False*                                                                                                                            |
-|                          |          | , specify the numeric ID of the group to create                                                                                    |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_creategroup       | boolean  | if set to                                                                                                                          |
-|                          |          | *True*                                                                                                                             |
-|                          |          | , a primary group with the same numeric ID as                                                                                      |
-|                          |          | *bsdusr_uid*                                                                                                                       |
-|                          |          | will be automatically created                                                                                                      |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_mode              | string   | sets default numeric UNIX permissions of user's home directory                                                                     |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_shell             | string   | specify full path to a UNIX shell that is installed on the system                                                                  |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_password_disabled | boolean  | if set to                                                                                                                          |
-|                          |          | *True*                                                                                                                             |
-|                          |          | , user is not allowed to login                                                                                                     |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_locked            | boolean  | if set to                                                                                                                          |
-|                          |          | *True*                                                                                                                             |
-|                          |          | , user is not allowed to login                                                                                                     |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_sudo              | boolean  | if set to                                                                                                                          |
-|                          |          | *True*                                                                                                                             |
-|                          |          | , sudo is enabled for the user                                                                                                     |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| **JSON Parameter**       | **Type** | **Description**                                                                                                      |
+|                          |          |                                                                                                                      |
+|                          |          |                                                                                                                      |
++==========================+==========+======================================================================================================================+
+| bsdusr_username          | string   | maximum 32 characters, though a maximum of 8 is recommended for interoperability; can include numerals but can not   |
+|                          |          | include a space                                                                                                      |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_full_name         | string   | may contain spaces and uppercase characters                                                                          |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_password          | string   | can include a mix of upper and lowercase letters, characters, and numbers                                            |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_uid               | integer  | by convention, user accounts have an ID greater than 1000 with a maximum allowable value of 65,535                   |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_group             | integer  | if *bsdusr_creategroup* is set to                                                                                    |
+|                          |          | *False*, specify the numeric ID of the group to create                                                               |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_creategroup       | boolean  | if set to *True*, a primary group with the same numeric ID as                                                        |
+|                          |          | *bsdusr_uid* will be automatically created                                                                           |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_mode              | string   | sets default numeric UNIX permissions of user's home directory                                                       |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_shell             | string   | specify full path to a UNIX shell that is installed on the system                                                    |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_password_disabled | boolean  | if set to *True*, user is not allowed to login                                                                       |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_locked            | boolean  | if set to *True*, user is not allowed to login                                                                       |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_sudo              | boolean  | if set to *True*, sudo is enabled for the user                                                                       |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
 
 
 **NOTE:** when using boolean values, JSON returns raw lowercase values whereas Python uses uppercase values. This means that you should use
