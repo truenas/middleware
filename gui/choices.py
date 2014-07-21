@@ -220,6 +220,13 @@ CASEFOLDING_CHOICES = (
         ('uppercaseclient', _('Client sees uppercase, server sees lowercase')),
         )
 
+TARGET_BLOCKSIZE_CHOICES = (
+        ('512', '512'),
+        ('1024', '1024'),
+        ('2048', '2048'),
+        ('4096', '4096'),
+        )
+
 AUTHMETHOD_CHOICES = (
         ('None',  _('None')),
         ('Auto',  _('Auto')),

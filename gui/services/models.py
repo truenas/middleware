@@ -727,7 +727,8 @@ class iSCSITarget(Model):
             )
     iscsi_target_logical_blocksize = models.IntegerField(
             max_length=3,
-            default=512,
+            choices=choices.TARGET_BLOCKSIZE_CHOICES,
+            default=choices.TARGET_BLOCKSIZE_CHOICES[0][0],
             verbose_name=_("Logical Block Size"),
             help_text=_("You may specify logical block length (512 by "
                 "default). The recommended length for compatibility is 512."),
