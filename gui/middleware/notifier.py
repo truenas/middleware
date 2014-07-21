@@ -3645,7 +3645,7 @@ class notifier:
 
         return True
 
-    def zfs_get_options(self, name=None, recursive=False, props=None):
+    def zfs_get_options(self, name=None, recursive=False, props=None, zfstype=None):
         noinherit_fields = ['quota', 'refquota', 'reservation', 'refreservation']
 
         if props is None:
@@ -3653,8 +3653,12 @@ class notifier:
         else:
             props = ','.join(props)
 
-        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source %s %s" % (
+        if zfstype is None:
+            zfstype = 'filesystem,volume'
+
+        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source -t %s %s %s" % (
             '-r' if recursive else '',
+            zfstype,
             props,
             "'%s'" % str(name) if name else '',
         ))
