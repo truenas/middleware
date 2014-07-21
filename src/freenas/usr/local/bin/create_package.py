@@ -16,6 +16,9 @@ verbose = False
 # Regular files get sha256 checksums.
 def ScanTree(root):
     global debug, verbose
+    flat_size = 0
+    # This is a list of files we've seen, by <st_dev, st_ino> keys.
+    seen_files = {}
     file_list = {}
     directory_list = {}
     for start, dirs, files in os.walk(root):
@@ -25,15 +28,24 @@ def ScanTree(root):
         for f in files:
             full_path = start + "/" + f
             if verbose or debug > 0: print >> sys.stderr, "looking at %s" % full_path
+            st = os.lstat(full_path)
+            size = None
             if os.path.islink(full_path):
                 buf = os.readlink(full_path)
+                size = len(buf)
                 if buf.startswith("/"): buf = buf[1:]
                 file_list[prefix + f] = hashlib.sha256(buf).hexdigest()
             elif os.path.isfile(full_path):
+                size = st.st_size
                 with open(full_path) as file:
                     file_list[prefix + f] = hashlib.sha256(file.read()).hexdigest()
 
-    return { "files" : file_list, "directories" : directory_list }
+            if size is not None and (st.st_dev, st.st_ino) not in seen_files:
+                flat_size += size
+                seen_files[st.st_dev, st.st_ino] = True
+
+    return { "files" : file_list, "directories" : directory_list, "flatsize" : flat_size }
+
 
 #
 # We need to be told a directory,
@@ -46,6 +58,7 @@ def usage():
 
 def main():
     global debug, verbose
+    # Some valid, but stupid, defaults.
     manifest = {
         "www" : "http://www.freenas.org",
         "arch" : "freebsd:9:x86:64",
@@ -93,6 +106,7 @@ def main():
     t = ScanTree(root)
     manifest["files"] = t["files"]
     manifest["directories"] = t["directories"]
+    manifest["flatsize"] = t["flatsize"]
     manifest_string = json.dumps(manifest, sort_keys=True,
                                  indent=4, separators=(',', ': '))
     print manifest_string

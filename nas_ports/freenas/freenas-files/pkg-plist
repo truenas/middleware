@@ -1,4 +1,5 @@
 usr/local/bin/extract-tarball
+usr/local/bin/install
 usr/local/bin/winacl
 usr/local/bin/autotune
 usr/local/bin/afpusers
@@ -10,14 +11,15 @@ usr/local/bin/create_manifest
 usr/local/bin/custom-upssched-cmd
 usr/local/bin/freenas-debug
 usr/local/bin/ixdiagnose
+usr/local/bin/manifest_util
 usr/local/bin/mfistatus.py
 usr/local/bin/perftests-nas
 usr/local/bin/pkgify
+usr/local/bin/update
 usr/local/bin/update_freenas
 usr/local/bin/zilstat
 usr/local/bin/adtool
 usr/local/etc/avahi/avahi-daemon.conf
-usr/local/etc/freenas.conf
 usr/local/etc/nginx/fastcgi_params
 usr/local/etc/nginx/nginx.conf
 usr/local/etc/rc.d/django
@@ -26,10 +28,12 @@ usr/local/etc/rc.d/pbid
 usr/local/etc/samba.gdb
 usr/local/etc/sudoers
 usr/local/lib/freenasOS/Configuration.py
+usr/local/lib/freenasOS/Installer.py
 usr/local/lib/freenasOS/Manifest.py
 usr/local/lib/freenasOS/Package.py
 usr/local/lib/freenasOS/__init__.py
 usr/local/lib/freenasOS/Exceptions.py
+usr/local/lib/freenasOS/Train.py
 usr/local/libexec/freenas-debug/active_directory/active_directory.sh
 usr/local/libexec/freenas-debug/cache/cache.sh
 usr/local/libexec/freenas-debug/dtrace/disklatencycmd.d
@@ -59,6 +63,7 @@ usr/local/sbin/save_rrds.sh
 usr/local/sbin/scrub
 usr/local/share/perftests-nas/tests/iozone
 usr/local/www/data/django.fcgi
+etc/freenas.conf
 etc/ix.rc.d/ix-activedirectory
 etc/ix.rc.d/ix-afpd
 etc/ix.rc.d/ix-aliases

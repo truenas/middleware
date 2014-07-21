@@ -90,8 +90,9 @@ main()
 	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/lib/python* ./usr/local/bin/python* ./usr/local/lib/libsqlite* ) |
 		tar -xf - -C ${INSTALLUFSDIR}
 	# Copy the installation scripts and modules as well
-	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/etc/freenas.conf ./usr/local/lib/freenasOS \
-			./usr/local/bin/update_freenas) |
+	( cd ${NANO_OBJ}/_.w ; tar -cf - ./etc/freenas.conf ./usr/local/lib/freenasOS \
+			./usr/local/bin/install ./usr/local/bin/update_freenas \
+			./usr/local/bin/manifest_util ) |
 		tar -xf - -C ${INSTALLUFSDIR}
 # SEF
 # Build packages here.
