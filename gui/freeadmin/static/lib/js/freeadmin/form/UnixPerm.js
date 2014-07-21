@@ -34,12 +34,13 @@ define([
             }
             this.disabled = value;
         },
-        setPerm: function(value) {
+        _setValueAttr: function(value) {
             var mode = parseInt(value, 8);
             for(i=0;i<this.boxes.length;i++) {
                 isset = (mode & Math.pow(2, 8 - i)) != 0;
                 this.boxes[i].set('checked', isset);
             }
+            this.value = value;
         },
         postCreate: function() {
 
@@ -90,7 +91,7 @@ define([
             this.boxes.push(ote);
             this.ote.appendChild(ote.domNode);
 
-            this.setPerm(this.value);
+            this.set('value', this.value);
             if(this.disabled == true || this.disabled == "true") {
                 this.set('disabled', true);
             }
