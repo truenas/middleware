@@ -7,6 +7,7 @@ define([
   "dojo/dom-style",
   "dojo/json",
   "dojo/on",
+  "dojo/query",
   "dojo/request/xhr",
   "dojo/store/Memory",
   "dijit/_Widget",
@@ -33,6 +34,7 @@ define([
   domStyle,
   json,
   on,
+  query,
   xhr,
   Memory,
   _Widget,
@@ -161,6 +163,31 @@ define([
           if(me._sharesList.selection[id])
             me.select(id);
         }
+      });
+
+      me._shareOwnership = new Button({label: gettext("Ownership")}, me.dapShareOwnership);
+      on(me._shareOwnership, "click", function() {
+        domStyle.set(me.dapOwnership, "display", "");
+        domStyle.set(me.dapMain, "display", "none");
+        query(me.domNode).parents("table").query("tr.formButtons").forEach(function(item) {
+          domStyle.set(item, "display", "none");
+        });
+      });
+
+      me._ownershipReturn = new Button({label: gettext("Return")}, me.dapOwnershipReturn);
+      me._ownershipCancel = new Button({label: gettext("Cancel")}, me.dapOwnershipCancel);
+
+      var ownershipToShare = function() {
+        domStyle.set(me.dapOwnership, "display", "none");
+        domStyle.set(me.dapMain, "display", "");
+        query(me.domNode).parents("table").query("tr.formButtons").forEach(function(item) {
+          domStyle.set(item, "display", "");
+        });
+      };
+
+      on(me._ownershipCancel, "click", ownershipToShare);
+      on(me._ownershipReturn, "click", function() {
+        ownershipToShare();
       });
 
       me.dump();
