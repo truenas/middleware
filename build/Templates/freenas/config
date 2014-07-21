@@ -1,0 +1,18 @@
+[Package]
+
+name = freenas
+comment = "FreeNAS OS"
+desc = "FreeNAS OS (derived from FreeBSD)"
+www = http://www.freenas.org/
+origin = system/os
+maintainer = dev@ixsystems.com
+prefix = /
+arch = freebsd:9:x86:64
+licenselogic = or
+licenses = [BSD, MIT, GPL]
+
+[Scripts]
+
+post-install = touch /boot/kernel/linker.hints
+	touch /boot/modules/linker.hints
+

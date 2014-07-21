@@ -448,7 +448,7 @@ menu_install()
         install_worker.sh -D /tmp/data -m / pre-install
         umount /tmp/data
         rmdir /tmp/data
-	if [ -c ${_disk}s4 ]; then
+	if [ -c /dev/${_disk}s4 ]; then
 	    # Destroy the partition for old-style upgrades
 	    gpart destroy -F ${_disk} || true
 	fi
@@ -512,7 +512,7 @@ menu_install()
         ls /tmp/data > /dev/null
 	# Add the boot loader
 	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
-	/usr/local/bin/update_freenas -R /tmp/data -M /FreeNAS-MANIFEST install
+	/usr/local/bin/install -C /etc/freenas.conf -M /FreeNAS-MANIFEST /tmp/data
 	# Need to link the manifest file
 	rm -f /tmp/data/conf/base/etc/manifest
 	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest

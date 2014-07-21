@@ -1,9 +1,9 @@
-class ManifestConversionError(Exception):
+class ConfigurationInvalidException(Exception):
     pass
 
-class ManifestTrainError(Exception):
+class ChecksumFailException(Exception):
     pass
 
-class ManifestSignatureError(Exception):
+class ManifestInvalidException(Exception):
     pass
 

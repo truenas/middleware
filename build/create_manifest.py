@@ -1,19 +1,21 @@
 #!/usr/local/bin/python -R
-
+            
 import os
 import sys
 import getopt
 import hashlib
-
+            
 sys.path.append("/usr/local/lib")
-
+                
 import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
-
+from freenasOS.Configuration import ChecksumFile
+import freenasOS.Package as Package
+        
 debug = 0
 quiet = False
 verbose = 0
-
+        
 #
 # Create a manifest.  This needs to be given a set of packages,
 # a train name, and a sequence number.  If package_directory is
@@ -21,9 +23,9 @@ verbose = 0
 #
 # TBD:  Sequence number should be automatically generated.
 #
-
+        
 def usage():
-    print >> sys.stderr, "Usage: %s [-P package_directory] [-N <release_notes_file>] [-R release_name] -T <train_name> -S <manifest_version> pkg=version[:upgrade_from[,...]]  [...]" % sys.argv[0]
+    print >> sys.stderr, "Usage: %s [-P package_directory] [-C configuration_file] [-o output_file] [-N <release_notes_file>] [-R release_name] -T <train_name> -S <manifest_version> pkg=version[:upgrade_from[,...]]  [...]" % sys.argv[0]
     print >> sys.stderr, "\tMultiple -P options allowed; multiple pkg arguments allowed"
     sys.exit(1)
 
@@ -35,16 +37,19 @@ if __name__ == "__main__":
     sequencenum = 0
     pkgs = []
     outfile = None
+    config_file = None
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "P:N:R:T:S:o:qvd")
+        opts, args = getopt.getopt(sys.argv[1:], "P:C:N:R:T:S:o:qvd")
     except getopt.GetoptError as err:
         print str(err)
         usage()
-
+                
     for o, a in opts:
         if o == "-P":
             searchdirs.append(a)
+        elif o == '-C':
+            config_file = a
         elif o == "-N":
             notesfile = a
         elif o == "-R":
@@ -65,14 +70,15 @@ if __name__ == "__main__":
             usage()
 
     pkgs = args
-
+    
     if (trainname is None) or (sequencenum == 0) or len(pkgs) == 0:
         usage()
-
-    mani = Manifest.Manifest()
+    
+    # We need a configuration to do searching
+    conf = Configuration.Configuration(file = config_file, nopkgdb = True)
+    mani = Manifest.Manifest(conf)
     mani.SetTrain(trainname)
     mani.SetSequence(sequencenum)
-    gconfig = Configuration.Configuration()
     if releasename is not None: mani.SetVersion(releasename)
     if notesfile is not None:
         notes = []
@@ -80,10 +86,11 @@ if __name__ == "__main__":
             for line in f:
                 notes.append(line)
         mani.SetNotes(notes)
+            
 
-    for loc in searchdirs:
-        gconfig.AddSearch(loc)
-
+    for loc in reversed(searchdirs):
+        conf.AddSearchLocation(loc, insert = True)
+        
     for P in pkgs:
         # Need to parse the name, which is pkg=version[:upgrade,upgrade,upgrade]
         upgrades = []
@@ -96,26 +103,44 @@ if __name__ == "__main__":
         if "=" not in P:
             usage()
         (name, version) = P.split("=")
-        pkgname = Manifest.FormatName(name, version)
+        pkg = Package.Package(name, version, None)
+        pkgname = pkg.FileName()
         print "Package file name is %s" % pkgname
-        pkgfile = gconfig.FindPackage(pkgname)
+        pkgfile = conf.FindPackageFile(pkg)
         hash = None
         if pkgfile is not None:
-            hash = hashlib.sha256(pkgfile.read()).hexdigest()
+            hash = ChecksumFile(pkgfile)
+            pkgfile.seek(0, os.SEEK_END)
+            size = pkgfile.tell()
+            pkgfile.seek(0)
         else:
-            print >> sys.stderr, "Can't find file for %s" % pkgfile
+            print >> sys.stderr, "Can't find file for %s" % name
 
-        pkg = Manifest.Package(name, version, hash)
+        pkg.SetChecksum(hash)
+        pkg.SetSize(size)
         for U in upgrades:
-            print "Upgrade package name is %s" % Manifest.FormatName(name, version, U)
-            # See above for looking for upgrades.
-            pkg.AddUpgrade(U, "unknown")
+            upgrade_file_name = pkg.FileName(U)
+            print "Delta package name is %s" % upgrade_file_name
+            upgrade_file = conf.FindPackageFile(pkg, U)
+            if upgrade_file is None:
+                print >> sys.stderr, "Could not find upgrade file %s" % upgrade_file_name
+            else:
+                hash = ChecksumFile(upgrade_file)
+                upgrade_file.seek(0, os.SEEKE_END)
+                size = pkgfile.tell()
+                upgrade_file.seek(0)
+                # See above for looking for upgrades.
+                pkg.AddUpdate(U, hash, size)
+
         mani.AddPackage(pkg)
+        
+    # Don't set the signature
+    mani.Validate()
 
     if outfile is None:
         outfile = sys.stdout
     else:
         outfile = open(outfile, "w")
-
-    print >>outfile, mani.json_string()
-    print hashlib.sha256(mani.json_string()).hexdigest()
+            
+    
+    print >>outfile, mani.String()

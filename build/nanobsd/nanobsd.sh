@@ -175,8 +175,11 @@ if [ -f build/create_package.py ]; then
 #	env PYTHONPATH="${NANO_WORLDDIR}/usr/local/lib" python build/create_manifest.py -P ${NANO_OBJ}/_.instufs/cdrom/FreeNAS -o ${NANO_OBJ}/_.instufs/FreeNAS-MANIFEST -R FreeNAS -T FreeNAS-EXPERIMENTAL -S 100 freenas=${VERSION}
 	rm -rf ${NANO_OBJ}/_.packages/Packages
 	mkdir -p ${NANO_OBJ}/_.packages/Packages
-	python build/create_package.py -R "${NANO_WORLDDIR}" -N freenas -V ${VERSION}-${REVISION:-0} ${NANO_OBJ}/_.packages/Packages/freenas-${VERSION}-${REVISION:-0}.tgz
+#	python build/create_package.py -R "${NANO_WORLDDIR}" -N freenas -V ${VERSION}-${REVISION:-0} ${NANO_OBJ}/_.packages/Packages/freenas-${VERSION}-${REVISION:-0}.tgz
+	set -x
+	python build/create_package.py -R "${NANO_WORLDDIR}" -T build/Templates/freenas -V ${VERSION}-${REVISION:-0} ${NANO_OBJ}/_.packages/Packages/freenas-${VERSION}-${REVISION:-0}.tgz
 	env PYTHONPATH="${NANO_WORLDDIR}/usr/local/lib" python build/create_manifest.py -P ${NANO_OBJ}/_.packages -o ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST -R FreeNAS -T FreeNAS-EXPERIMENTAL -S 100 freenas=${VERSION}-${REVISION:-0}
+	set +x
 fi
 
 if $do_image ; then

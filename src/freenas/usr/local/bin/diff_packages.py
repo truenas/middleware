@@ -13,6 +13,8 @@ kPkgDirsKey = "directories"
 kPkgRemovedFilesKey = "removed-files"
 kPkgRemovedDirsKey = "removed-directories"
 kPkgDeltaKey = "delta-version"
+kPkgFlatSizeKey = "flatsize"
+kPkgDeltaStyleKey = "style"
 
 def PackageName(m):
     return m[kPkgNameKey] if kPkgNameKey in m else None
@@ -41,6 +43,11 @@ def FindManifest(tf):
 # Given two manifests, come up with a set of
 # new or changed files/directories.  Also come
 # up with a list of removed files and directories.
+# Note that this does NOT compare the contents of
+# the package, so it is relying solely on the manifest
+# file being correct.  One side effect of this is that
+# it is currently unable to compute the flat size of
+# the package.
 def CompareManifests(m1, m2):
     print "\nm1 = %s\nm2 = %s\n" % (m1, m2)
     m1_files = m1[kPkgFilesKey]
@@ -84,19 +91,24 @@ def CompareManifests(m1, m2):
              kPkgDirsKey : modified_dirs }
     
 def usage():
-    print >> sys.stderr, "Usage: %s <pkg1> <pkg2> <delta_pg>" % sys.argv[0]
+    print >> sys.stderr, "Usage: %s <pkg1> <pkg2> [<delta_pg>]" % sys.argv[0]
+    print >> sys.stderr, "\tOutput file defaults to <pkg_name>-<old_version>-<new_version>.tgz"
     sys.exit(1)
 
 def main():
     # No options I can think of, yet anyway
     args = sys.argv[1:]
 
-    if len(args) != 3:
+    if len(args) < 2 or len(args) > 4:
         usage()
 
     pkg1 = args[0]
     pkg2 = args[1]
-    output_file = args[2]
+                           
+    if len(args) == 3:
+        output_file = args[2]
+    else:
+        output_file = None
 
     pkg1_tarfile = tarfile.open(pkg1, "r")
     (pkg1_manifest, dc) = FindManifest(pkg1_tarfile)
@@ -117,9 +129,13 @@ def main():
     # Everything in the p2 goes into new.
     # Except for the files and directories keys.
     new_manifest = pkg2_manifest.copy()
-    new_manifest.pop(kPkgFilesKey)
-    new_manifest.pop(kPkgDirsKey)
-    new_manifest[kPkgDeltaKey] = PackageVersion(pkg1_manifest)
+
+    for key in [kPkgFlatSizeKey, kPkgFilesKey, kPkgDirsKey, kPkgDeltaKey]:
+        if key in new_manifest:  new_manifest.pop(key)
+
+    new_manifest[kPkgDeltaKey] = { kPkgVersionKey: PackageVersion(pkg1_manifest),
+                                   kPkgDeltaStyleKey : "file"
+                                   }
 
     diffs = CompareManifests(pkg1_manifest, pkg2_manifest)
 
@@ -133,6 +149,11 @@ def main():
 #    print "\nPackage diffs = %s\n" % diffs
     new_manifest_string = json.dumps(new_manifest, sort_keys=True,
                                  indent=4, separators=(',', ': '))
+
+    if output_file is None:
+        output_file = "%s-%s-%s.tgz" % (PackageName(pkg1_manifest),
+                                        PackageVersion(pkg1_manifest),
+                                        PackageVersion(pkg2_manifest))
 
     new_tf = tarfile.open(output_file, "w:gz", format = tarfile.PAX_FORMAT)
     mani_file_info = tarfile.TarInfo(name = "+MANIFEST")

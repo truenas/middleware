@@ -1,2 +1,1 @@
-#+
-#Empty file to let imports work
+# Dummy file
