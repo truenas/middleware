@@ -9476,3 +9476,34 @@ msgstr ""
 #, fuzzy
 msgid "Are you sure you want to proceed?"
 msgstr "정말 제거 하시겠습니까?"
+
+#: services/models.py:256
+msgid "Obey pam restrictions"
+msgstr ""
+
+#: services/models.py:258
+msgid ""
+"this parameter controls whether or not Sambashould obey PAM's account and "
+"session management directives"
+msgstr ""
+
+#: services/models.py:591
+msgid "NAA...used only by the initiator"
+msgstr ""
+
+#: services/models.py:595
+#, fuzzy
+msgid "Enable TPC"
+msgstr "SSL/TLS 활성"
+
+#: services/models.py:596
+msgid "Allow initiators to xcopy without authenticating to foreign targets."
+msgstr ""
+
+#: templates/directoryservice/activedirectory_edit.html:8
+#: templates/directoryservice/ldap_edit.html:8
+#: templates/directoryservice/nis_edit.html:8
+#: templates/directoryservice/nt4_edit.html:8
+#, fuzzy
+msgid "Rebuild Directory Service Cache"
+msgstr "디렉토리 사용권한"
