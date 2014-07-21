@@ -70,10 +70,12 @@ define([
         var value = this.get('value');
         var result = me._store.get(value);
         if(result) {
-          me._shareAdd.set('disabled', true);
-          me._shareUpdate.set('disabled', false);
+          var row = me._sharesList.row(value);
+          me._sharesList.select(row);
         } else {
+          me._sharesList.clearSelection();
           me._shareAdd.set('disabled', false);
+          me._shareDelete.set('disabled', true);
           me._shareUpdate.set('disabled', true);
         }
       })
@@ -185,6 +187,10 @@ define([
       });
       me._sharesList.refresh();
       me.dump();
+      me.select(me._shareName.get("value"));
+      me._sharesList.clearSelection();
+      var row = me._sharesList.row(me._shareName.get("value"));
+      me._sharesList.select(row);
     },
     remove: function(id) {
       var me = this;
