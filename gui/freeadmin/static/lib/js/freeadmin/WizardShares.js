@@ -216,6 +216,18 @@ define([
         ownershipToShare();
       });
       on(me._ownershipReturn, "click", function() {
+
+        var valid = true;
+        if(!me._ownershipUser.isValid()) {
+          me._ownershipUser.focus();
+          valid = false;
+        }
+        if(!me._ownershipGroup.isValid()) {
+          me._ownershipGroup.focus();
+          valid = false;
+        }
+        if(!valid) return;
+
         // Update the values in store if the item has already been saved
         var result = me._store.get(me._shareName.get("value"));
         if(result) {
