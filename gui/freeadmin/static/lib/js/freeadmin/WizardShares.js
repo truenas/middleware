@@ -66,6 +66,18 @@ define([
         invalidMessage: gettext('This field may only contain alphanumeric and the following characters: "_", "-", ".".')
       }, me.dapShareName);
 
+      on(me._shareName, "keyup", function(evt) {
+        var value = this.get('value');
+        var result = me._store.get(value);
+        if(result) {
+          me._shareAdd.set('disabled', true);
+          me._shareUpdate.set('disabled', false);
+        } else {
+          me._shareAdd.set('disabled', false);
+          me._shareUpdate.set('disabled', true);
+        }
+      })
+
       me._shareCIFS = new RadioButton({checked: true}, me.dapShareCIFS);
       me._shareAFP = new RadioButton({}, me.dapShareAFP);
       me._shareNFS = new RadioButton({}, me.dapShareNFS);
