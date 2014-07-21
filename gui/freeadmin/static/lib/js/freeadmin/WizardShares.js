@@ -104,8 +104,10 @@ define([
       on(me._shareiSCSI, "change", function() {
         if(this.get('value')) {
           me._shareiSCSI_size.set('disabled', false);
+          me._shareOwnership.set('disabled', true);
         } else {
           me._shareiSCSI_size.set('disabled', true);
+          me._shareOwnership.set('disabled', false);
         }
       });
 
