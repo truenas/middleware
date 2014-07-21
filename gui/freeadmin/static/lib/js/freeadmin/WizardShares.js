@@ -1,5 +1,6 @@
 define([
   "dojo/_base/declare",
+  "dojo/data/ItemFileReadStore",
   "dojo/data/ObjectStore",
   "dojo/dom",
   "dojo/dom-attr",
@@ -13,6 +14,7 @@ define([
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
   "dijit/form/CheckBox",
+  "dijit/form/FilteringSelect",
   "dijit/form/TextBox",
   "dijit/form/Button",
   "dijit/form/RadioButton",
@@ -27,6 +29,7 @@ define([
   "dojo/text!freeadmin/templates/wizardshares.html"
   ], function(
   declare,
+  ItemFileReadStore,
   ObjectStore,
   dom,
   domAttr,
@@ -40,6 +43,7 @@ define([
   _Widget,
   _Templated,
   CheckBox,
+  FilteringSelect,
   TextBox,
   Button,
   RadioButton,
@@ -173,6 +177,25 @@ define([
           domStyle.set(item, "display", "none");
         });
       });
+
+      me._storeUsers = new ItemFileReadStore({
+        url: "/account/bsduser/json/"
+      });
+
+      me._storeGroups = new ItemFileReadStore({
+        url: "/account/bsdgroup/json/"
+      });
+
+      me._onwershipUser = new FilteringSelect({
+        store: me._storeUsers,
+        searchAttr: 'name',
+        intermediateChanges: true
+      }, me.dapOwnershipUser);
+      me._onwershipGroup = new FilteringSelect({
+        store: me._storeGroups,
+        searchAttr: 'name',
+        intermediateChanges: true
+      }, me.dapOwnershipGroup);
 
       me._ownershipReturn = new Button({label: gettext("Return")}, me.dapOwnershipReturn);
       me._ownershipCancel = new Button({label: gettext("Cancel")}, me.dapOwnershipCancel);
