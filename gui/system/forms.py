@@ -1072,6 +1072,10 @@ class InitialWizardShareForm(Form):
     share_groupcreate = forms.BooleanField(
         required=False,
     )
+    share_mode = forms.CharField(
+        max_length=3,
+        required=False,
+    )
 
 
 class SharesBaseFormSet(BaseFormSet):

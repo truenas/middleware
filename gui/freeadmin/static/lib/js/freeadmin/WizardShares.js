@@ -26,7 +26,8 @@ define([
   "dgrid/Selection",
   "dojox/timing",
   "dojox/string/sprintf",
-  "dojo/text!freeadmin/templates/wizardshares.html"
+  "dojo/text!freeadmin/templates/wizardshares.html",
+  "freeadmin/form/UnixPerm"
   ], function(
   declare,
   ItemFileReadStore,
@@ -55,7 +56,8 @@ define([
   Selection,
   timing,
   sprintf,
-  template) {
+  template,
+  UnixPerm) {
 
   var WizardShares = declare("freeadmin.WizardShares", [ _Widget, _Templated ], {
     templateString : template,
@@ -217,6 +219,8 @@ define([
         }
       });
 
+      me._ownershipMode = new UnixPerm({value: "755"}, me.dapOwnershipMode);
+
       me._ownershipReturn = new Button({label: gettext("Return")}, me.dapOwnershipReturn);
       me._ownershipCancel = new Button({label: gettext("Cancel")}, me.dapOwnershipCancel);
 
@@ -250,6 +254,9 @@ define([
         if(result) {
           result.user = me._ownershipUser.get("value");
           result.group = me._ownershipGroup.get("value");
+          result.usercreate = me._ownershipUserCreate.get("value");
+          result.groupcreate = me._ownershipGroupCreate.get("value");
+          result.mode = me._ownershipMode.get("value");
           me._store.put(result);
         }
         me.dump();
@@ -267,6 +274,7 @@ define([
       me._ownershipGroup.set('value', me._ownershipSaved['group']);
       me._ownershipUserCreate.set('value', me._ownershipSaved['usercreate']);
       me._ownershipGroupCreate.set('value', me._ownershipSaved['groupcreate']);
+      me._ownershipMode.set('value', me._ownershipSaved['mode']);
     },
     ownershipSave: function() {
       var me = this;
@@ -275,6 +283,7 @@ define([
       me._ownershipSaved['group'] = me._ownershipGroup.get('value');
       me._ownershipSaved['usercreate'] = me._ownershipUserCreate.get('value');
       me._ownershipSaved['groupcreate'] = me._ownershipGroupCreate.get('value');
+      me._ownershipSaved['mode'] = me._ownershipMode.get('value');
     },
     add: function() {
       var me = this;
@@ -295,7 +304,8 @@ define([
         user: me._ownershipUser.get("value"),
         group: me._ownershipGroup.get("value"),
         usercreate: me._ownershipUserCreate.get("value"),
-        groupcreate: me._ownershipGroupCreate.get("value")
+        groupcreate: me._ownershipGroupCreate.get("value"),
+        mode: me._ownershipMode.get("value")
       });
       me._sharesList.refresh();
       me.dump();
@@ -331,6 +341,7 @@ define([
       if(data.groupcreate) {
         me._ownershipGroup.set("disabled", true);
       }
+      me._ownershipMode.set("value", data.mode);
       switch(data.purpose) {
         case "cifs":
           me._shareCIFS.set("value", true);
@@ -452,6 +463,14 @@ define([
             name: "shares-" + idx + "-share_groupcreate",
             type: "hidden",
             value: obj.groupcreate
+          }).placeAt(dumpNode);
+        }
+
+        if(obj.mode) {
+          new TextBox({
+            name: "shares-" + idx + "-share_mode",
+            type: "hidden",
+            value: obj.mode
           }).placeAt(dumpNode);
         }
 
