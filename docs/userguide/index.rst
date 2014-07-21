@@ -1562,7 +1562,7 @@ is allowed to use **sudo**. To reorder the list, click the desired column.
 
 If you click a user account, the following buttons will appear for that account:
 
-* **Modify User:** used to modify the account's settings, as listed in Table 3.2b.
+* **Modify User:** used to modify the account's settings, as listed in Table 4.2b.
 
 * **Change E-mail:** used to change the email address associated with the account.
 
@@ -1609,7 +1609,7 @@ default” in System → Settings → Advanced. Table 4.2a summarizes the option
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Primary Group              | drop-down menu  | must uncheck *Create a new primary group* in order to access this menu; for security reasons, FreeBSD will                                            |
 |                            |                 | not give a user **su** permissions if                                                                                                                 |
-|                            |                 | *wheel* is their primary grou                                                                                                                         |
+|                            |                 | *wheel* is their primary group; to give a user                                                                                                        |
 |                            |                 | **su** access, add them to the                                                                                                                        |
 |                            |                 | *wheel* group in the Auxiliary groups section                                                                                                         |
 |                            |                 |                                                                                                                                                       |
@@ -1638,7 +1638,7 @@ default” in System → Settings → Advanced. Table 4.2a summarizes the option
 |                            |                 |                                                                                                                                                       |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Disable password login     | checkbox        | when checked, the user can not log into the FreeNAS® system or authenticate to a CIFS share; to undo this                                            |
+| Disable password login     | checkbox        | when checked, the user can not log into the system or authenticate to a CIFS share; to undo this                                                      |
 |                            |                 | setting, set a password for the user using the "Change Password" button for the user in "View Users";                                                 |
 |                            |                 | checking this box will grey out *Lock user* which is mutually exclusive                                                                               |
 |                            |                 |                                                                                                                                                       |
@@ -1724,7 +1724,7 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | WebGUI IPv6 Address  | drop-down menu | choose from a list of recent IPv6 addresses to limit the one to use when accessing the administrative GUI; the                 |
-|                      |                | built-in HTTP server will automatically bind to the wildcard address of *::* (any address) and will issue an alert             |
+|                      |                | built-in HTTP server will automatically bind to any address and will issue an alert                                            |
 |                      |                | if the specified address becomes unavailable                                                                                   |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
@@ -1746,8 +1746,8 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 | Timezone             | drop-down menu | select the timezone from the drop-down menu                                                                                    |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
-| Syslog server        | string         | IP address or hostname of remote syslog server to send FreeNAS® logs to; once set, log entries will be written to             |
-|                      |                | both the FreeNAS® console and the remote server                                                                               |
+| Syslog server        | string         | IP address or hostname of remote syslog server to send logs to; once set, log entries will be written to                       |
+|                      |                | both the console and the remote server                                                                                         |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Directory Service    | drop-down menu | can select one of *Active Directory*,                                                                                          |                                               
@@ -1755,7 +1755,7 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 |                      |                | *LDAP*,                                                                                                                        |                                                                                                                                                                                   
 |                      |                | *NIS*, or                                                                                                                      |                                                                                                                                                                                  
 |                      |                | *NT4*; if a service is selected, an entry named                                                                                |
-|                      |                | *Directory Services* will be added to Services → Control Services for managing that selected service                        |
+|                      |                | *Directory Services* will be added to Services → Control Services for managing that selected service                         |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 
@@ -1952,7 +1952,7 @@ Table 5.3a.
 | Enable debug kernel                     | checkbox                         | if checked, next boot will boot into a debug version of the kernel           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps are automatically sent to the FreeNAS®       |
+| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps are automatically sent to the                 |
 | crash dumps                             |                                  | development team for diagnosis                                               |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
@@ -2023,7 +2023,7 @@ containing important information such as the health of the disks. Alert events a
 
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Setting              | Value                | Description                                                                                     |
+| **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
 | From email           | string               | the **From** email address to be used when sending email notifications                          |
@@ -2053,9 +2053,8 @@ containing important information such as the health of the disks. Alert events a
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Send Test Mail       | button               | click to check that configured email settings are working; this will fail if you do not set the |
-|                      |                      | **To** email address by clicking the Change E-mail button for the                               |
-|                      |                      | *root*                                                                                          |
-|                      |                      | account in Accounts → Users → View Users                                                 |
+|                      |                      | **To** email address by clicking the "Change E-mail" button for the                             |
+|                      |                      | *root* account in Accounts → Users → View Users                                             |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -2420,7 +2419,7 @@ configured when creating an rsync task.
 |                                  |                             |                                                                                           |
 |                                  |                             |                                                                                           |
 +==================================+=============================+===========================================================================================+
-| Path                             | browse button               | browse to the volume/dataset/directory that you wish to copy; note that a path length     |
+| Path                             | browse button               | browse to the path that you wish to copy; note that a path length                         |
 |                                  |                             | greater than 255 characters will fail                                                     |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
@@ -2431,18 +2430,19 @@ configured when creating an rsync task.
 |                                  |                             | other than the default of *22*                                                            |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Rsync mode                       | drop-down menu              | choices are *Rsync module* or *Rsync over SSH*                                            | 
+| Rsync mode                       | drop-down menu              | choices are *Rsync module* or                                                             |
+|                                  |                             | *Rsync over SSH*                                                                          |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Remote Module Name/Remote Path   | string                      | when using *Rsync module* mode, at least one module must be defined in                    |                                                                                                         
+| Remote Module Name/Remote Path   | string                      | when using *Rsync module* mode, at least one module must be defined in                    |
 |                                  |                             | `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_                       |
-|                                  |                             | of rsync server or in Services → Rsync → Rsync Modules of another FreeNAS®        |
-|                                  |                             | system; when using *Rsync over SSH* mode, input the path on the remote host to push or    |   _
+|                                  |                             | of rsync server or in Services → Rsync → Rsync Modules of another                     |
+|                                  |                             | system; when using *Rsync over SSH* mode, input the path on the remote host to push or    |
 |                                  |                             | pull (e.g. */mnt/volume*)                                                                 |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Direction                        | drop-down menu              | choices are *Push* or                                                                     |
-|                                  |                             | *Pull*; default is to push from the FreeNAS® system to a remote host                     |                                                                                                                                                         
+|                                  |                             | *Pull*; default is to push to a remote host                                               |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Short Description                | string                      | optional                                                                                  |
@@ -3209,7 +3209,7 @@ Table 7.7a summarizes the configurable fields.
 
 
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
-| Setting           | Value          | Description                                                                                       |
+| **Setting**       | **Value**      | **Description**                                                                                   |
 |                   |                |                                                                                                   |
 +===================+================+===================================================================================================+
 | Virtual Interface | string         | use the format *vlanX* where                                                                      |
@@ -3217,7 +3217,7 @@ Table 7.7a summarizes the configurable fields.
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | Parent Interface  | drop-down menu | usually an Ethernet card connected to a properly configured switch port; if using a newly created |
-|                   |                | Link Aggregation,_it will not appear in the drop-down until the FreeNAS® system is rebooted      |
+|                   |                | Link Aggregation,_it will not appear in the drop-down until the system is rebooted                |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | VLAN Tag          | integer        | should match a numeric tag set up in the switched network                                         |
@@ -3492,7 +3492,7 @@ configurable options.
 **Table 8.1b: Disk Options**
 
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Setting                                                | Value          | Description                                                                                                          |
+| **Setting**                                            | **Value**      | **Description**                                                                                                      |
 |                                                        |                |                                                                                                                      |
 +========================================================+================+======================================================================================================================+
 | Name                                                   | string         | read-only value showing FreeBSD device name for disk                                                                 |
@@ -3790,9 +3790,8 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
 +===============+==================+================================================================================================+
 | Volume name   | string           | ZFS volumes must conform to these                                                              |
 |               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_          |
-|               |                  | ; it is recommended to choose a name that will stick out in the logs (e.g. **not**             |
-|               |                  | *data* or                                                                                      |
-|               |                  | *freenas*)                                                                                     |
+|               |                  | ; it is recommended to choose a name that will stick out in the logs (e.g.                     |
+|               |                  | **not data or freenas**)                                                                       |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
 | Encryption    | checkbox         | read the section on Encryption before choosing to use encryption                               |
@@ -3801,7 +3800,7 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
 | Member disks  | list             | highlight desired number of disks from list of available disks                                 |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
-| Deduplication | drop-down menu   | choices are *Off*,                                                                             |                                                                                             |
+| Deduplication | drop-down menu   | choices are *Off*,                                                                             |
 |               |                  | *Verify*, and                                                                                  |
 |               |                  | *On*; carefully consider the section on Deduplication before changing this setting             |
 |               |                  |                                                                                                |
@@ -3894,8 +3893,7 @@ Permissions icon for a specific volume/dataset, you will see the screen shown in
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | Set permission recursively | checkbox         | if checked, permissions will also apply to subdirectories of the volume or dataset; if data already exists |
-|                            |                  | on the volume/dataset, change the permissions on the **client side** to prevent a performance lag on the   |
-|                            |                  | FreeNAS® system                                                                                           |
+|                            |                  | on the volume/dataset, change the permissions on the **client side** to prevent a performance lag          |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 
@@ -4608,7 +4606,7 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 | Enable High Speed Ciphers | checkbox       | note that the cipher is quicker because it has a lower strength                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Remote hostkey            | string         | use the SSH Key Scan button to retrieve the public key of *PULL*                                             |                                                                                                                    |
+| Remote hostkey            | string         | use the SSH Key Scan button to retrieve the public key of *PULL*                                             |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 
@@ -4820,14 +4818,14 @@ display these settings by checking the box “Show advanced fields by default”
 
 
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting                  | Value         | Description                                                                                                                                |
+| **Setting**              | **Value**     | **Description**                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +==========================+===============+============================================================================================================================================+
 | Domain Name              | string        | name of Active Directory domain (e.g. *example.com*) or child domain (e.g.                                                                 |
 |                          |               | *sales.example.com*)                                                                                                                       |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | automatically populated with the hostname of the FreeNAS® system; **use caution when changing this setting**                              |
+| NetBIOS Name             | string        | automatically populated with the hostname of the system; **use caution when changing this setting**                                        |
 |                          |               | as setting an                                                                                                                              |
 |                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
 |                          |               |                                                                                                                                            |
@@ -5023,7 +5021,7 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 
 
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Setting                 | Value          | Description                                                                                           |
+| **Setting**             | **Value**      | **Description**                                                                                       |
 |                         |                |                                                                                                       |
 +=========================+================+=======================================================================================================+
 | Hostname                | string         | hostname or IP address of LDAP server                                                                 |
@@ -5033,11 +5031,11 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 |                         |                | *dc=test,dc=org*)                                                                                     |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read/write access to any client      |
+| Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read and write access to any client  |
 | Binding                 |                |                                                                                                       |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org)*                      |
+| Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org*)                      |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Bind password           | string         | password for *Root bind DN*                                                                           |                                                                                                |
@@ -5063,7 +5061,7 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Certificate             | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used              |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Enable                  | checkbox       |                                                                          _                            |
+| Enable                  | checkbox       | uncheck to disable the configuration without deleting it                 _                            |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
@@ -5101,7 +5099,7 @@ options.
 | **Setting** | **Value** | **Description**                                                                                                            |
 |             |           |                                                                                                                            |
 |             |           |                                                                                                                            |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
++=============+===========+============================================================================================================================+
 | NIS domain  | string    | name of NIS domain                                                                                                         |
 |             |           |                                                                                                                            |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
@@ -5710,7 +5708,7 @@ enable this service?” Click Yes and Services → Control Services will open an
 
 
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Setting                      | Value         | Description                                                                                                 |
+| **Setting**                  | **Value**     | **Description**                                                                                             |
 |                              |               |                                                                                                             |
 +==============================+===============+=============================================================================================================+
 | Name                         | string        | mandatory; name of share                                                                                    |
@@ -5739,7 +5737,7 @@ enable this service?” Click Yes and Services → Control Services will open an
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow Guest Access           | checkbox      | if checked, no password is required to connect to the share and all users share the permissions of the      |
-|                              |               | guest user defined in Services → CIFS                                                                   |
+|                              |               | guest user defined in Services → CIFS                                                                     |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Only Allow Guest Access      | checkbox      | requires *Allow guest access* to also be checked; forces guest access for all connections                   |
@@ -6006,7 +6004,7 @@ Starting this service will open the following ports on the FreeNAS® system:
 
 * UDP 5353 and a random UDP port (avahi)
 
-Figure 11.2a shows the configuration options which are described in Table 8.2a.
+Figure 11.2a shows the configuration options which are described in Table 11.2a.
 
 **Figure 11.2a: AFP Configuration**
 
@@ -6095,10 +6093,10 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 
 
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Setting                          | Value          | Description                                                                                           |
+| **Setting**                      | **Value**      | **Description**                                                                                       |
 |                                  |                |                                                                                                       |
 +==================================+================+=======================================================================================================+
-| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the hostname of the FreeNAS® system; it    |
+| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the system's hostname; it                   |
 |                                  |                | **must**  be different from the                                                                       |                                                                                                                                                                       
 |                                  |                | *Workgroup* name                                                                                      |
 |                                  |                |                                                                                                       |
@@ -6113,7 +6111,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 | DOS Charset                      | drop-down menu | the character set Samba uses when communicating with DOS and Windows 9x/ME clients; default is        |
 |                                  |                | *CP437*                                                                                               |
 |                                  |                |                                                                                                       |
-+------------------------------+----------------+-----------------------------------------------------------------------------------------------------------+
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | UNIX Charset                     | drop-down menu | default is *UTF-8* which supports all characters in all languages                                     |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6125,7 +6123,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 | Use syslog                       | checkbox       | logs most events to syslog instead of the samba log files                                             |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Local Master                     | checkbox       | determines whether or not the FreeNAS® system participates in a browser election; should be disabled |
+| Local Master                     | checkbox       | determines whether or not the system participates in a browser election; should be disabled           |
 |                                  |                | when network contains an AD or LDAP server and is not necessary if Vista or Windows 7 machines are    |
 |                                  |                | present                                                                                               |
 |                                  |                |                                                                                                       |
@@ -6133,7 +6131,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 | Domain logons                    | checkbox       |                                                                                                       |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Time Server for Domain           | checkbox       | determines whether or not the FreeNAS® system advertises itself as a time server to Windows clients; |
+| Time Server for Domain           | checkbox       | determines whether or not the system advertises itself as a time server to Windows clients;           |
 |                                  |                | should be disabled when network contains an AD or LDAP server                                         |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6154,10 +6152,8 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                | username/password be the same for the FreeNAS® user account and the Windows user account             |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Auxiliary parameters             | string         | *smb.conf *                                                                                           |
-|                                  |                | options not covered elsewhere in this screen; see                                                     |
-|                                  |                | `the  <http://oreilly.com/openbook/samba/book/appb_02.html>`_                                         |
-|                                  |                | `Samba Guide <http://oreilly.com/openbook/samba/book/appb_02.html>`_                                  |
+| Auxiliary parameters             | string         | *smb.conf* options not covered elsewhere in this screen; see                                          |
+|                                  |                | `the Samba Guide <http://oreilly.com/openbook/samba/book/appb_02.html>`_                              |
 |                                  |                | for additional settings                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6178,15 +6174,14 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                | clients                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Zeroconf share discovery         | checkbox       | enable if                                                                                             |
-|                                  |                | Mac clients will be connecting to the CIFS share                                                      |
+| Zeroconf share discovery         | checkbox       | enable if Mac clients will be connecting to the CIFS share                                            |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Hostnames lookups                | checkbox       | allows you to specify hostnames rather than IP addresses in the Hosts Allow or Hosts Deny fields of a |
 |                                  |                | CIFS share; uncheck if you only use IP addresses as it saves the time of a host lookup                |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Server minimum protocol          | drop-down menu | the minimum protocol version the server will support where the default of *------* sets automatic     |
+| Server minimum protocol          | drop-down menu | the minimum protocol version the server will support where the default sets automatic                 |
 |                                  |                | negotiation; refer to Table 11.3b for descriptions                                                    |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6379,7 +6374,7 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 
 
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Setting              | Value          | Description                                                                                                        |
+| **Setting**          | **Value**      | **Descripti                                                                                                        |
 |                      |                |                                                                                                                    |
 +======================+================+====================================================================================================================+
 | Provider             | drop-down menu | several providers are supported; if your provider is not listed, leave this field blank and specify the custom     |
@@ -7113,7 +7108,7 @@ Targets
 ~~~~~~~
 
 Next, create a Target using Services → ISCSI → Targets → Add Target, as shown in Figure 11.7h. A target combines a portal ID, allowed initiator ID,
-and an authentication method. Table 8.7f summarizes the settings that can be configured when creating a Target.
+and an authentication method. Table 11.7f summarizes the settings that can be configured when creating a Target.
 
 **NOTE:** an iSCSI target creates a block device that may be accessible to multiple initiators. A clustered filesystem is required on the block device, such
 as VMFS used by VMware ESX/ESXi, in order for multiple initiators to mount the block device read/write. If a traditional filesystem such as EXT, XFS, FAT,
@@ -7405,7 +7400,7 @@ Table 11.10a summarizes the options that can be configured for the rsync daemon:
 | **Setting**          | **Value** | **Description**                                                     |
 |                      |           |                                                                     |
 |                      |           |                                                                     |
-+----------------------+-----------+---------------------------------------------------------------------+
++======================+===========+=====================================================================+
 | TCP Port             | integer   | port for **rsyncd** to listen on, default is                        |
 |                      |           | *873*                                                               |
 |                      |           |                                                                     |
@@ -7568,10 +7563,10 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 | **Setting**          | **Value**  | **Description**                                                |
 |                      |            |                                                                |
 +======================+============+================================================================+
-| Location             | string     | optional description of FreeNAS® system's location            |
+| Location             | string     | optional description of system's location                      |
 |                      |            |                                                                |
 +----------------------+------------+----------------------------------------------------------------+
-| Contact              | string     | optional email address of FreeNAS® administrator               |
+| Contact              | string     | optional email address of administrator                        |
 |                      |            |                                                                |
 +----------------------+------------+----------------------------------------------------------------+
 | Community            | string     | password used on the SNMP network, default is *public* and     |
@@ -7785,7 +7780,7 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 |                 |               | documentation for details                                                                                                |
 |                 |               |                                                                                                                          |
 +-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
-| Allow New Files | checkbox      | enable if network devices need to send files to the FreeNAS® system (e.g. backup their config)                          |
+| Allow New Files | checkbox      | enable if network devices need to send files to the system (e.g. backup their config)                                    |
 |                 |               |                                                                                                                          |
 +-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
 | Port            | integer       | UDP port to listen for TFTP requests, *69* by default                                                                    |
@@ -8168,7 +8163,7 @@ you install software into a Linux jail, install the 32-bit version of the softwa
 
 
 +------------------+---------------------+-----------------------------------------------------------+---------------------+
-| **Type of Jail** | **FreeNAS® PBI**   | **FreeBSD pkgng package**                                 | **FreeBSD port**    |
+| **Type of Jail** | **FreeNAS PBI**     | **FreeBSD pkgng package**                                 | **FreeBSD port**    |
 |                  |                     |                                                           |                     |
 +==================+=====================+===========================================================+=====================+
 | Plugin           | yes                 | yes                                                       | yes                 |
@@ -8303,8 +8298,8 @@ To create a jail, click Jails → Add Jails to access the screen shown in Figure
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in *Jails Configuration*; if   |
-|                           |                | you change the default address, make sure it is reachable within the FreeNAS® system's network and is not   |
-|                           |                |in use by any other host on the network                                                                       |
+|                           |                | you change the default address, make sure it is reachable within the local network and is not                |
+|                           |                | in use by any other host on the network                                                                      |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv4 netmask              | drop-down menu | select the subnet mask associated with *IPv4 address*                                                        |
@@ -8478,7 +8473,7 @@ accessed by expanding the jail's name in the tree view and clicking Edit.
 
 |Figure132c_png|
 
-Most of these settings were previously described in Table 10.2a and can be changed using this screen after jail creation. The following settings differ
+Most of these settings were previously described in Table 13.2a and can be changed using this screen after jail creation. The following settings differ
 between the “Add Jail” and “Edit Jail” screens:
 
 * **Jail Name:** this setting is read-only once the jail has been created.
