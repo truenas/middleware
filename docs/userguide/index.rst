@@ -162,6 +162,10 @@ The GUI has been reorganized as follows:
 
 The following features have been added or changed:
 
+* Kernel iSCSI has replaced **istgt**.
+
+* Services → iSCSI → Target Global Configuration has been reduced to three configuration options used by kernel iSCSI.
+
 * The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox has been added.
 
 * The "Domain logons" checkbox has been added to Services → CIFS.
@@ -1401,23 +1405,21 @@ create depends upon the operating system(s) running in your network, your securi
 types of shares and services are available:
 
 * **Apple (AFP):** FreeNAS® uses Netatalk to provide sharing services to Apple clients. This type of share is a good choice if all of your computers run
-  Mac OS X. Configuration examples can be found in Apple (AFP) Shares.
+  Mac OS X.
 
 * **Unix (NFS):** this type of share is accessible by Mac OS X, Linux, BSD, and professional/enterprise versions of Windows. It is a good choice if there
-  are many different operating systems in your network. Configuration examples can be found in Unix (NFS) Shares.
+  are many different operating systems in your network.
 
 * **Windows (CIFS):** FreeNAS® uses Samba to provide the SMB/CIFS sharing service. This type of share is accessible by Windows, Mac OS X, Linux, and BSD
-  computers, but it is slower than an NFS share. If your network contains only Windows systems, this is a good choice. Configuration examples can be found
-  in Windows (CIFS) Shares.
+  computers, but it is slower than an NFS share. If your network contains only Windows systems, this is a good choice.
 
 * **FTP:** this service provides fast access from any operating system, using a cross-platform FTP and file manager client application such as Filezilla.
-  FreeNAS® supports encryption and chroot for FTP. Configuration examples can be found in FTP.
+  FreeNAS® supports encryption and chroot for FTP.
 
 * **SSH:** this service provides encrypted connections from any operating system using SSH command line utilities or the graphical WinSCP application for
-  Windows clients. Configuration examples can be found in SSH.
+  Windows clients.
 
-* **iSCSI:** FreeNAS® uses istgt to export virtual disk drives that are accessible to clients running iSCSI initiator software. Configuration examples can
-  be found in iSCSI.
+* **iSCSI:** FreeNAS® supports the export of virtual disk drives that are accessible to clients running iSCSI initiator software.
 
 Start Service(s)
 ----------------
@@ -6752,9 +6754,7 @@ network. Specifically, it exports disk devices over an Ethernet network that iSC
 operate over fibre channel networks which require a fibre channel infrastructure such as fibre channel HBAs, fibre channel switches, and discrete cabling.
 iSCSI can be used over an existing Ethernet network, although dedicated networks can be built for iSCSI traffic in an effort to boost performance. iSCSI also
 provides an advantage in an environment that uses Windows shell programs; these programs tend to filter “Network Location” but iSCSI mounts are not
-filtered. FreeNAS® uses
-`istgt <http://www.peach.ne.jp/archives/istgt/>`_
-to provide iSCSI.
+filtered.
 
 Before configuring the iSCSI service, you should be familiar with the following iSCSI terminology:
 
@@ -6775,7 +6775,7 @@ result is an iSCSI connection that emulates a connection to a SCSI hard disk. In
 drive; rather than mounting remote directories, initiators format and directly manage filesystems on iSCSI LUNs.
 
 FreeNAS® supports multiple iSCSI drives. When configuring multiple iSCSI LUNs, create a new target for each LUN. Portal groups and initiator groups can be
-reused without any issue. Since istgt multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
+reused without any issue. Since iSCSI multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
 is more than one target per LUN.
 
 In order to configure iSCSI:
@@ -7060,23 +7060,7 @@ Target Global Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Services → iSCSI → Target Global Configuration, shown in Figures 11.7g, contains settings that apply to all iSCSI shares. Table 11.7e summarizes the
-settings that can be configured in the Target Global Configuration screen. The integer values in the table are used to tune network performance; most of these
-values are described in
-`RFC 3720 <http://tools.ietf.org/html/rfc3720>`_
-.
-
-LUC (Logical Unit Controller) is an API provided by istgt to control removable media by providing functions to list targets, load or unload a media to a unit,
-change media file, or reset a LUN.
-
-In order to dynamically add or remove **targets** without restarting the iSCSI service, which can disrupt iSCSI initiators, set the following options:
-
-* check the *Enable LUC* box
-
-* leave the *Controller IP address* and
-  *Control Authorized Network* at their default values
-
-* change the *Controller Auth Method*
-  to *None*
+settings that can be configured in the Target Global Configuration screen.
 
 **NOTE:** the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
 existing extent.
@@ -7106,86 +7090,6 @@ existing extent.
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 | Discovery Auth Group            | drop-down menu               | depends on Discovery Auth Method setting: required if set to *CHAP* or                    |
-|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
-|                                 |                              | *Auto*, and not needed if set to                                                          |
-|                                 |                              | *None*                                                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Enable experimental target      |checkbox                      | this option is for beta testers of kernel iSCSI; requires a reboot                        |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Enable multithreaded mode       | checkbox                     |                                                                                           |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| I/O Timeout                     | integer representing seconds | sets the limit on how long an I/O can be outstanding before an error condition is         |
-|                                 |                              | returned; values range from 0-300 with a default of *30*                                  |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| NOPIN Interval                  | integer representing seconds | how often the target sends a NOP-IN packet to keep a discovered session alive; values     |
-|                                 |                              | range from 0-300 with a default of *20*                                                   |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max. Sessions                   | integer                      | limits the number of sessions the target portal will create/accept from initiator         |
-|                                 |                              | portals; values range from 1-65536 with a default of *16*                                 |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max. Connections                | integer                      | the number of connections a single initiator can make to a single target; values range    |
-|                                 |                              | from 1-65536 with a default of *8*                                                        |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max. pre-send R2T               | integer                      | values range from 1-255 with a default of *32*                                            |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| MaxOutstandingR2T               | integer                      | the maximum number of ready to receive packets (R2Ts) the target can have outstanding for |
-|                                 |                              | a single iSCSI command, where larger values should yield performance increases until      |
-|                                 |                              | *MaxOutstandingR2T* exceeds the size of the largest                                       |
-|                                 |                              | *Write I/O* divided by                                                                    |
-|                                 |                              | *MaxBurstLength*; values range from 1-255 with a default of                               | 
-|                                 |                              | *16*                                                                                      |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| First burst length              | integer                      | maximum amount in bytes of unsolicited data an iSCSI initiator may send to the target     |
-|                                 |                              | during the execution of a single SCSI command; values range from 1- 2^32 with a default   |
-|                                 |                              | of *65,536*                                                                               |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max burst length                | integer                      | maximum write size in bytes the target is willing to receive between R2Ts; values range   |
-|                                 |                              | from 1-2^32 with a default of *262,144*                                                   |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max receive data segment length | integer                      | in bytes; values range from 1-2^32 with a default of *262,144*                            |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| DefaultTime2Wait                | integer                      | minimum time in seconds to wait before attempting a logout or an active task reassignment |
-|                                 |                              | after an unexpected connection termination or reset; values range from 1-300 with a       |
-|                                 |                              | default of *2*                                                                            |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| DefaultTime2Retain              | integer                      | maximum time in seconds after Time2Wait before which an active task reassignment is still |
-|                                 |                              | possible after an unexpected connection termination or reset; values range from 1-300     |
-|                                 |                              | with a default of *60*                                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Enable LUC                      | checkbox                     | check if you need to dynamically add and remove targets; if checked, the next three       |
-|                                 |                              | fields are activated and required                                                         |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller IP address           | IP address                   | keep the default value of *127.0.0.1*                                                     |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller TCP port             | integer                      | possible values range from 1024-65535 with a default value of *3261*                      |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller Authorized netmask   | subnet mask                  | keep the default value of *127.0.0.0/8*                                                   |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller Auth Method          | drop-down menu               | choices are *None*,                                                                       |
-|                                 |                              | *Auto*,                                                                                   |
-|                                 |                              | *CHAP*, or                                                                                |
-|                                 |                              | *Mutual CHAP*                                                                             |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller Auth Group           | drop-down menu               | required if Controller Auth Method is set to *CHAP* or                                    |
 |                                 |                              | *Mutual CHAP*, optional if set to                                                         |
 |                                 |                              | *Auto*, and not needed if set to                                                          |
 |                                 |                              | *None*                                                                                    |
@@ -7363,8 +7267,6 @@ for details.
 If you can see the target but not connect to it, check the discovery authentication settings in Target Global Configuration.
 
 If the LUN is not discovered by ESXi, make sure that promiscuous mode is set to Accept in the vswitch.
-
-To determine which initiators are connected, type **istgtcontrol info** within Shell.
 
 Growing LUNs
 ~~~~~~~~~~~~
