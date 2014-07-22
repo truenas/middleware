@@ -178,6 +178,7 @@ class notifier:
 
     from os import system as __system
     from pwd import getpwnam as ___getpwnam
+    from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
 
     def _system(self, command):
@@ -2210,6 +2211,17 @@ class notifier:
 
         user = self.___getpwnam(username)
         return (user.pw_uid, user.pw_gid, user.pw_passwd, smb_hash)
+
+    def group_create(self, name):
+        command = '/usr/sbin/pw group add "%s"' % (
+            name,
+        )
+        proc = self._pipeopen(command)
+        proc.communicate()
+        if proc.returncode != 0:
+            raise MiddlewareError(_('Failed to create group %s') % name)
+        grnam = ___getgrnam(name)
+        return grnam.gr_gid
 
     def user_lock(self, username):
         self._system('/usr/local/bin/smbpasswd -d "%s"' % (username))
