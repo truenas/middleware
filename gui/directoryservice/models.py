@@ -128,6 +128,8 @@ def enum_to_idmap(enum):
 
 
 class idmap_ad(Model):
+    idmap_backend_name = "ad"
+
     idmap_ad_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -166,6 +168,8 @@ class idmap_ad(Model):
 
 
 class idmap_autorid(Model):
+    idmap_backend_name = "autorid"
+
     idmap_autorid_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -211,6 +215,8 @@ class idmap_autorid(Model):
 
 
 class idmap_hash(Model):
+    idmap_backend_name = "hash"
+
     idmap_hash_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
@@ -238,6 +244,8 @@ class idmap_hash(Model):
 
 
 class idmap_ldap(Model):
+    idmap_backend_name = "ldap"
+
     idmap_ldap_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -285,6 +293,8 @@ class idmap_ldap(Model):
 
 
 class idmap_nss(Model):
+    idmap_backend_name = "nss"
+
     idmap_nss_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -303,6 +313,8 @@ class idmap_nss(Model):
 
 
 class idmap_rfc2307(Model):
+    idmap_backend_name = "rfc2307"
+
     idmap_rfc2307_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -406,6 +418,8 @@ class idmap_rfc2307(Model):
 
 
 class idmap_rid(Model):
+    idmap_backend_name = "rid"
+
     idmap_rid_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -424,6 +438,8 @@ class idmap_rid(Model):
 
 
 class idmap_tdb(Model):
+    idmap_backend_name = "tdb"
+
     idmap_tdb_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
@@ -442,6 +458,8 @@ class idmap_tdb(Model):
 
 
 class idmap_tdb2(Model):
+    idmap_backend_name = "tdb2"
+
     idmap_tdb2_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
