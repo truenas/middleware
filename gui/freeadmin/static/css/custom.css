@@ -304,7 +304,7 @@ tr.odd:hover {
     padding-left:0px;
     text-decoration:bold;
 }
-table.form tbody > tr > th {
+table.form th {
     color:#50575F;
     background:#f5f5f5;
     padding:6px;
@@ -1052,11 +1052,6 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.WizardIcon {
-    background-image:url('/static/images/ui/tree/wizard.png');
-    width:16px;
-    height:16px;
-}
 .dijitTextArea {
     min-height:60px;
 }
@@ -1349,8 +1344,4 @@ table.layoutTable > tr:first-child > td {
 }
 #dgrid_apiclient .dgrid-column-name {
     width: 140px;
-}
-
-.dgrid-wizardshare {
-    height: 100px !important;
 }
