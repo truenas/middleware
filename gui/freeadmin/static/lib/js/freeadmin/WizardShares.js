@@ -348,10 +348,14 @@ define([
       me._ownershipUserCreate.set("value", data.usercreate);
       me._ownershipGroupCreate.set("value", data.groupcreate);
       if(data.usercreate) {
-        me._ownershipUser.set("disabled", true);
+        me._ownershipUserCreate.set("disabled", false);
+      } else {
+        me._ownershipUserCreate.set("disabled", true);
       }
       if(data.groupcreate) {
-        me._ownershipGroup.set("disabled", true);
+        me._ownershipGroupCreate.set("disabled", false);
+      } else {
+        me._ownershipGroupCreate.set("disabled", true);
       }
       me._ownershipMode.set("value", data.mode);
       switch(data.purpose) {
