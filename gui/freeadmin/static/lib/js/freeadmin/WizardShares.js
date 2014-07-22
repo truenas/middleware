@@ -14,7 +14,7 @@ define([
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
   "dijit/form/CheckBox",
-  "dijit/form/FilteringSelect",
+  "dijit/form/ComboBox",
   "dijit/form/TextBox",
   "dijit/form/Button",
   "dijit/form/RadioButton",
@@ -44,7 +44,7 @@ define([
   _Widget,
   _Templated,
   CheckBox,
-  FilteringSelect,
+  ComboBox,
   TextBox,
   Button,
   RadioButton,
@@ -186,39 +186,49 @@ define([
       me._storeUsers = new ItemFileReadStore({
         url: "/account/bsduser/json/"
       });
+      me._storeUsers.fetch();
 
       me._storeGroups = new ItemFileReadStore({
         url: "/account/bsdgroup/json/"
       });
+      me._storeGroups.fetch();
 
-      me._ownershipUser = new FilteringSelect({
+      me._ownershipUser = new ComboBox({
         store: me._storeUsers,
         searchAttr: 'name',
         intermediateChanges: true,
         value: 'root'
       }, me.dapOwnershipUser);
-      me._ownershipUserCreate = new CheckBox({}, me.dapOwnershipUserCreate);
-      on(me._ownershipUserCreate, "change", function(value) {
-        if(value) {
-          me._ownershipUser.set('disabled', true);
+      on(me._ownershipUser, "search", function(results, query, opts) {
+        if(results.length > 0) {
+          me._ownershipUserCreate.set('disabled', true);
+          me._ownershipUserCreate.set('value', false);
         } else {
-          me._ownershipUser.set('disabled', false);
+          me._ownershipUserCreate.set('disabled', false);
         }
       });
 
-      me._ownershipGroup = new FilteringSelect({
+      me._ownershipUserCreate = new CheckBox({disabled: true}, me.dapOwnershipUserCreate);
+      on(me._ownershipUserCreate, "change", function(value) {
+      });
+
+      me._ownershipGroup = new ComboBox({
         store: me._storeGroups,
         searchAttr: 'name',
         intermediateChanges: true,
         value: 'wheel'
       }, me.dapOwnershipGroup);
-      me._ownershipGroupCreate = new CheckBox({}, me.dapOwnershipGroupCreate);
-      on(me._ownershipGroupCreate, "change", function(value) {
-        if(value) {
-          me._ownershipGroup.set('disabled', true);
+      on(me._ownershipGroup, "search", function(results, query, opts) {
+        if(results.length > 0) {
+          me._ownershipGroupCreate.set('disabled', true);
+          me._ownershipGroupCreate.set('value', false);
         } else {
-          me._ownershipGroup.set('disabled', false);
+          me._ownershipGroupCreate.set('disabled', false);
         }
+      });
+
+      me._ownershipGroupCreate = new CheckBox({disabled: true}, me.dapOwnershipGroupCreate);
+      on(me._ownershipGroupCreate, "change", function(value) {
       });
 
       me._ownershipMode = new UnixPerm({value: "755"}, me.dapOwnershipMode);
