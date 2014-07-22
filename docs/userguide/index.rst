@@ -131,7 +131,9 @@ What's New in 9.3
 
 FreeNAS® 9.3 fixes this list of bugs.
 
-It is based on FreeBSD 9.3 which adds these features and supports this hardware.
+It is based on the stable version of FreeBSD 9.3 which adds these features, supports this hardware, and incorporates all of the
+`security releases <http://www.freebsd.org/security/advisories.html>`_
+issued since FreeBSD 9.3 RELEASE.
 
 FreeNAS® is now 64-bit only. 
 
@@ -162,18 +164,35 @@ The GUI has been reorganized as follows:
 
 The following features have been added or changed:
 
+* The "WebGUI -> HTTPS Port" field has been added to System → Settings → General.
+
+* The "Directory Services" field is now deprecated and has been removed from System → Settings → General. FreeNAS® now supports the
+  `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_
+  which provides support for multiple directory services.
+
+* The "Rebuild LDAP/AD Cache" button has been removed from System → Settings → Advanced. It has been renamed to "Rebuild Directory Service Cache" and now
+  appears in the configuration screen for each type of directory service in Services → Directory Services.
+
+* The "HTTP Proxy" field has been added to Network → Global Configuration.
+
+* A "Run Now" button has been added for the highlighted cron job in Tasks → Cron Jobs → View Cron Jobs.
+
 * The "Domain logons" checkbox has been added to Services → CIFS.
 
-* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox has been added.
+* The "Workgroup Name" field is deprecated and has been removed from Directory Service → Active Directory. The "Encryption Mode", "Certificate", and
+  "Enable" fields have been added to Directory Service → Active Directory.
+
+* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox and "Use default domain"
+  field have been added.
 
 * The "IP Server" field has been added to Services → Dynamic DNS.
 
-* Kernel iSCSI has replaced **istgt**.
+* Kernel iSCSI has replaced **istgt**. This adds support for VAAI acceleration for Windows 2012 clustering.
 
 * Services → iSCSI → Target Global Configuration has been reduced to three configuration options used by kernel iSCSI.
 
-* Support for Link Layer Discovery Protocol (LLDP) has been added. It allows network devices to advertise their identity, capabilities, and neighbors
-on an Ethernet LAN.
+* Support for Link Layer Discovery Protocol (LLDP) has been added. It allows network devices to advertise their identity, capabilities, and neighbors on an
+  Ethernet LAN.
 
 Known Issues
 ------------
@@ -1746,6 +1765,9 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 | WebGUI HTTPS Port    | integer        | allows you to configure a non-standard port for accessing the administrative GUI over HTTPS                                    |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
+| WebGUI -> HTTPS Port | checkbox       |                                                                                                                                |
+|                      |                |                                                                                                                                |
++----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Language             | drop-down menu | select the localization from the drop-down menu and reload the browser; you can view the status of localization at             |
 |                      |                | `pootle.freenas.org <http://pootle.freenas.org/>`_                                                                             |
 |                      |                |                                                                                                                                |
@@ -1758,14 +1780,6 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Syslog server        | string         | IP address or hostname of remote syslog server to send logs to; once set, log entries will be written to                       |
 |                      |                | both the console and the remote server                                                                                         |
-|                      |                |                                                                                                                                |
-+----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
-| Directory Service    | drop-down menu | can select one of *Active Directory*,                                                                                          |
-|                      |                | *Domain Controller*,                                                                                                           | 
-|                      |                | *LDAP*,                                                                                                                        |
-|                      |                | *NIS*, or                                                                                                                      |
-|                      |                | *NT4*; if a service is selected, an entry named                                                                                |
-|                      |                | *Directory Services* will be added to Services → Control Services for managing that selected service                         |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 
@@ -1985,9 +1999,6 @@ If you make any changes, click the Save button.
 
 This tab also contains the following buttons:
 
-**Rebuild LDAP/AD Cache:** click if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs automatically once a day
-as a cron job.
-
 **Save Debug:** used to generate a text file of diagnostic information. t will prompt for the location to save the ASCII text file.
 
 **Firmware Update:** used to Upgrade FreeNAS®.
@@ -2064,7 +2075,7 @@ containing important information such as the health of the disks. Alert events a
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Send Test Mail       | button               | click to check that configured email settings are working; this will fail if you do not set the |
 |                      |                      | **To** email address by clicking the "Change E-mail" button for the                             |
-|                      |                      | *root* account in Accounts → Users → View Users                                             |
+|                      |                      | *root* account in View Users                                                                    |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -2340,6 +2351,7 @@ Table 6.1a summarizes the configurable options when creating a cron job.
 |                   |                             |                                                                                                         |
 +-------------------+-----------------------------+---------------------------------------------------------------------------------------------------------+
 
+Created cron jobs will be listed in View Cron Jobs. If you highlight the entry for a cron job, buttons will be displayed to "Edit", "Delete", or "Run Now".
 
 Init/Shutdown Scripts
 ---------------------
@@ -2446,7 +2458,7 @@ configured when creating an rsync task.
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Remote Module Name/Remote Path   | string                      | when using *Rsync module* mode, at least one module must be defined in                    |
 |                                  |                             | `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_                       |
-|                                  |                             | of rsync server or in Services → Rsync → Rsync Modules of another                     |
+|                                  |                             | of rsync server or in the Rsync Modules of another                                        |
 |                                  |                             | system; when using *Rsync over SSH* mode, input the path on the remote host to push or    |
 |                                  |                             | pull (e.g. */mnt/volume*)                                                                 |
 |                                  |                             |                                                                                           |
@@ -2818,6 +2830,9 @@ the FreeNAS® system in the “Host name database” field.
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 | Nameserver 3           | IP address | tertiary DNS server                                                                                                  |
+|                        |            |                                                                                                                      |
++------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
+| HTTP Proxy             | string     |                                                                                                                      |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 | Enable netwait feature | checkbox   | if enabled, network services will not be started at boot time until the interface is able to ping the addresses      |
@@ -4850,14 +4865,6 @@ display these settings by checking the box “Show advanced fields by default”
 |                          |               | *sales.example.com*)                                                                                                                       |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | automatically populated with the hostname of the system; **use caution when changing this setting**                                        |
-|                          |               | as setting an                                                                                                                              |
-|                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Workgroup Name           | string        | name of Windows server's workgroup (for older Microsoft clients)                                                                           |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Domain Account Name      | string        | name of the Active Directory administrator account                                                                                         |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -4865,11 +4872,23 @@ display these settings by checking the box “Show advanced fields by default”
 |                          |               |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name             | string        | automatically populated with the hostname of the system; **use caution when changing this setting**                                        |
+|                          |               | as setting an                                                                                                                              |
+|                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Use keytab               | checkbox      | only available in Advanced Mode; if selected, browse to the *Kerberos keytab*                                                              |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Kerberos keytab          | browse button | only available in Advanced Mode; browse to the location of the keytab created using the instructions in Using a                            |
 |                          |               | Keytab                                                                                                                                     |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Encryption Mode          | drop-down     |                                                                                                                                            |
+|                          | menu          |                                                                                                                                            |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------|
+| Certificate              | browse button |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Verbose logging          | checkbox      | only available in Advanced Mode; if checked, logs attempts to join the domain to */var/log/messages*                                       |
@@ -4910,7 +4929,12 @@ display these settings by checking the box “Show advanced fields by default”
 | DNS timeout              | integer       | only available in Advanced Mode; in seconds, increase if AD DNS queries timeout                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Enable                   | checkbox      |                                                                                                                                            |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
+Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
+automatically once a day as a cron job.
 
 **NOTE:** Active Directory places restrictions on which characters are allowed in Domain and NetBIOS names. If you are having problems connecting to the
 realm,
@@ -5056,14 +5080,14 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 |                         |                | *dc=test,dc=org*)                                                                                     |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read and write access to any client  |
-| Binding                 |                |                                                                                                       |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org*)                      |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Bind password           | string         | password for *Root bind DN*                                                                           |                                                                                                |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read and write access to any client  |
+| Binding                 |                |                                                                                                       |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | User Suffix             | string         | optional, can be added to name when user account added to LDAP directory (e.g. dept. or company name) |                                                          |
@@ -5078,6 +5102,9 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Machine Suffix          | string         | optional, can be added to name when system added to LDAP directory (e.g. server, accounting)          |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Use default domain      | checkbox       |                                                                                                       |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Encryption Mode         | drop-down menu | choices are *Off*,                                                                                    |                                                                                               |
 |                         |                | *SSL*, or                                                                                             |
 |                         |                | *TLS*                                                                                                 |                                                                                                 |
@@ -5090,6 +5117,8 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
+Click the "Rebuild Directory Service Cache" button if you add a user to LDAP who needs immediate access to FreeNAS®; otherwise this occurs automatically once
+a day as a cron job.
 
 **NOTE:** FreeNAS® automatically appends the root DN. This means that you should not include the scope and root DN when configuring the user, group,
 password, and machine suffixes.
@@ -5141,6 +5170,8 @@ options.
 |             |           |                                                                                                                            |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
 
+Click the "Rebuild Directory Service Cache" button if you add a user to NIS who needs immediate access to FreeNAS®; otherwise this occurs automatically once
+a day as a cron job.
 
 NT4
 ---
@@ -5179,6 +5210,8 @@ After configuring the NT4 service, start it in Services → Control Services →
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
 
+Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
+automatically once a day as a cron job.
 
 Sharing
 =======
@@ -6898,10 +6931,6 @@ as far as FreeNAS® is concerned, the data benefits from ZFS features such as bl
 
 **File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
 
-In theory, a zvol and a file extent should have identical performance. In practice, a file extent outperforms in reads/writes but this is only noticeable at
-10 GB Ethernet speeds or higher. For high performance, file extents are recommended at this time. Future changes to FreeBSD's zvol code will increase its
-performance.
-
 To add an extent, go to Services → ISCSI → Extents → Add Extent. In the example shown in Figure 11.7c, the device extent is using the *export*
 zvol that was previously created from the */mnt/volume1* volume.
 
@@ -7640,7 +7669,7 @@ Advanced.
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Login as Root with password   | checkbox       | **for security reasons, root logins are discouraged and disabled by default** if enabled, password must  |
-|                               |                | be set for *root* user in Account → Users → View Users                                               |
+|                               |                | be set for *root* user in View Users                                                                     |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Allow Password Authentication | checkbox       | if unchecked, key based authentication for all users is required; requires                               |
@@ -9387,6 +9416,9 @@ A series of instructional videos are available for FreeNAS® 9.x. They include:
 * `Windows to FreeNAS backup <http://www.youtube.com/watch?v=vcmAAy-OVtI>`_
 
 * `Crashplan backup on Apple OS X with FreeNAS <http://www.youtube.com/watch?v=p7CHxFxlEU8>`_
+
+* `FreeNAS® 9.2.1.5: Shares Overview (AFP, NFS, CIFS, Time Machine)  <https://www.youtube.com/watch?v=rOueRnMNZtY>`_
+
 
 **NOTE:** videos are version-specific, meaning that some details of the tasks demonstrated may have changed in more recent versions of FreeNAS®. When in
 doubt, refer to the documentation specific to your version of FreeNAS®. 
