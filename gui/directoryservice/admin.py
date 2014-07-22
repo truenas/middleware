@@ -35,6 +35,7 @@ from freenasUI.freeadmin.site import site
 
 log = logging.getLogger('directoryservice.admin')
 
+
 class ActiveDirectoryFAdmin(BaseFreeAdmin):
     create_modelform = "ActiveDirectoryForm"
     edit_modelform = "ActiveDirectoryForm"

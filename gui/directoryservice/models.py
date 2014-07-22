@@ -157,6 +157,13 @@ class idmap_ad(Model):
         default='rfc2307'
     )
 
+    class Meta:
+        verbose_name = _("AD Idmap")
+        verbose_name_plural = _("AD Idmap")
+
+    class FreeAdmin:
+        deletable = False
+
 
 class idmap_autorid(Model):
     idmap_autorid_range_low = models.IntegerField(
@@ -195,6 +202,13 @@ class idmap_autorid(Model):
         default=False
     )
 
+    class Meta:
+        verbose_name = _("AutoRID Idmap")
+        verbose_name_plural = _("AutoRID Idmap")
+
+    class FreeAdmin:
+        deletable = False
+
 
 class idmap_hash(Model):
     idmap_hash_range_low = models.IntegerField(
@@ -214,6 +228,13 @@ class idmap_hash(Model):
            'of both user and group names is supported.'
         )
     )
+
+    class Meta:
+        verbose_name = _("Hash Idmap")
+        verbose_name_plural = _("Hash Idmap")
+
+    class FreeAdmin:
+        deletable = False
 
 
 class idmap_ldap(Model):
@@ -255,6 +276,13 @@ class idmap_ldap(Model):
             "SID/uid/gid map entries.")
     )
 
+    class Meta:
+        verbose_name = _("LDAP Idmap")
+        verbose_name_plural = _("LDAP Idmap")
+
+    class FreeAdmin:
+        deletable = False
+
 
 class idmap_nss(Model):
     idmap_nss_range_low = models.IntegerField(
@@ -265,6 +293,13 @@ class idmap_nss(Model):
         verbose_name=_("Range High"),
         default=90000000
     )
+
+    class Meta:
+        verbose_name = _("NSS Idmap")
+        verbose_name_plural = _("NSS Idmap")
+
+    class FreeAdmin:
+        deletable = False
 
 
 class idmap_rfc2307(Model):
@@ -362,6 +397,13 @@ class idmap_rfc2307(Model):
         blank=True
     )
 
+    class Meta:
+        verbose_name = _("RFC2307 Idmap")
+        verbose_name_plural = _("RFC2307 Idmap")
+
+    class FreeAdmin:
+        deletable = False
+
 
 class idmap_rid(Model):
     idmap_rid_range_low = models.IntegerField(
@@ -373,6 +415,13 @@ class idmap_rid(Model):
         default=90000000
     )
 
+    class Meta:
+        verbose_name = _("RID Idmap")
+        verbose_name_plural = _("RID Idmap")
+
+    class FreeAdmin:
+        deletable = False
+
 
 class idmap_tdb(Model):
     idmap_tdb_range_low = models.IntegerField(
@@ -383,6 +432,13 @@ class idmap_tdb(Model):
         verbose_name=_("Range High"),
         default=100000000
     )
+
+    class Meta:
+        verbose_name = _("TDB Idmap")
+        verbose_name_plural = _("TDB Idmap")
+
+    class FreeAdmin:
+        deletable = False
 
 
 class idmap_tdb2(Model):
@@ -402,6 +458,13 @@ class idmap_tdb2(Model):
             "mappings are then stored int tdb2 idmap database."
         )
     )
+
+    class Meta:
+        verbose_name = _("TDB2 Idmap")
+        verbose_name_plural = _("TDB2 Idmap")
+
+    class FreeAdmin:
+        deletable = False
 
 
 class directoryservice_idmap(Model):
