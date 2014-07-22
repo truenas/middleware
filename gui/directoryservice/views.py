@@ -450,7 +450,7 @@ def directoryservice_idmap_backend(request, obj_type, idmap_type):
             it = models.idmap_tdb2()
             it.save()
 
-            dsi.dsi_idmap_tdb = it
+            dsi.dsi_idmap_tdb2 = it
             dsi.save() 
 
     data = {

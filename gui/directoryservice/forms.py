@@ -142,9 +142,6 @@ class NT4Form(ModelForm):
         self.fields["nt4_enable"].widget.attrs["onChange"] = (
             "nt4_mutex_toggle();"
         )
-        self.fields["nt4_idmap_backend"].widget.attrs["onChange"] = (
-            "nt4_idmap_form_toggle();"
-        )
 
     def clean_nt4_adminpw2(self):
         password1 = self.cleaned_data.get("nt4_adminpw")
@@ -168,41 +165,6 @@ class NT4Form(ModelForm):
         return cdata
 
     def save(self):
-        nt4_idmap_backend = self.cleaned_data.get("nt4_idmap_backend")
-        nt4_idmap_backend_type = self.cleaned_data.get("nt4_idmap_backend_type")
-#        if not nt4_idmap_backend_type:
-
-
-#        dsidmap = models.directoryservice_idmap.objects.filter(
-#            dsi_directoryservice_type=models.DS_TYPE_NT4,
-#            dsi_idmap_type=models.IDMAP_TYPE_RID
-#        )
-
-
-#        if nt4_idmap_backend != self.instance._original_nt4_idmap_backend:
-        
-#            if not nt4_idmap_backend: 
-#                dsidmap = models.directoryservice_idmap.objects.filter(
-#                    dsi_directoryservice_type=models.DS_TYPE_NT4,
-#                    dsi_idmap_type=models.IDMAP_TYPE_RID
-#                )
-#        if not nt4_idmap_backend:
-#            idmap = models.idmap_rid()
-#            idmap.save() 
-# 
-#            dsidmap = models.directoryservice_idmap()
-#            dsidmap.dsi_directoryservice_type = models.DS_TYPE_NT4
-#            dsidmap.dsi_directoryservice_id = self.instance.id
-#            dsidmap.dsi_idmap_type = models.IDMAP_TYPE_RID
-#            dsidmap.dsi_idmap_id = idmap.id
-#            dsidmap.save()
-#
-#            idmap.idmap_ad_ds_type = dsidmap
-#            idmap.save() 
-#
-#            self.instance.nt4_idmap_backend = 'idmap_rid'
-#            self.instance.nt4_idmap_backend_type = dsidmap
-
         enable = self.cleaned_data.get("nt4_enable")
         started = notifier().started("nt4")
         if enable:
@@ -309,9 +271,6 @@ class ActiveDirectoryForm(ModelForm):
 
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "ad_mutex_toggle();"
-        )
-        self.fields["ad_idmap_backend"].widget.attrs["onChange"] = (
-            "ad_idmap_form_toggle();"
         )
 
     def clean_ad_keytab(self):
@@ -436,9 +395,6 @@ class LDAPForm(ModelForm):
         super(LDAPForm, self).__init__(*args, **kwargs)
         self.fields["ldap_enable"].widget.attrs["onChange"] = (
             "ldap_mutex_toggle();"
-        )
-        self.fields["ldap_idmap_backend"].widget.attrs["onChange"] = (
-            "ldap_idmap_form_toggle();"
         )
 
     def clean_ldap_certfile(self):

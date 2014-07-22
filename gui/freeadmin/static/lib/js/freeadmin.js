@@ -752,6 +752,7 @@ require([
         });
 
         var edit_url = "/directoryservice/" + idmap_backend + "/" + id + "/";
+
         console.log(edit_url);
 
         return (edit_url);
