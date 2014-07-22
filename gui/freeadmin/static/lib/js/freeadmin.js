@@ -269,14 +269,12 @@ require([
     }
 
     add_formset = function(a, url, name) {
-
         xhr.get(url, {
             query: {
                 fsname: name
             },
             sync: true
             }).then(function(data) {
-
                 var extra = registry.byId("id_"+name+"-TOTAL_FORMS");
                 var extran = extra.get("value");
                 data = data.replace(/__prefix__/g, extran);
@@ -734,6 +732,44 @@ require([
     nt4_mutex_toggle = function() {
         nt4 = registry.byId("id_nt4_enable");
         directoryservice_mutex_toggle('nt4_enable', nt4);
+    }
+
+    directoryservice_idmap_onload = function(eid, ds_type, edit_str) {
+        var widget = registry.byId(eid);
+        var idmap_backend = widget.get("value");
+        var idmap_url = "/directoryservice/idmap_backend/" +
+            ds_type + "/" + idmap_backend + "/";
+        var edit_url = null;
+        var id = -1;
+
+        console.log(idmap_url);
+
+        xhr.get(idmap_url, {
+            sync: true
+        }).then(function(data) {
+            obj = JSON.parse(data);
+            id = obj.idmap_id;
+        });
+
+        var edit_url = "/directoryservice/" + idmap_backend + "/" + id + "/";
+
+        console.log(edit_url);
+
+        var table = dojo.query("#" + eid)[0];
+        var td = table.parentNode;
+
+        var edit_func = function() {
+            editObject(edit_str, edit_url, [this,]);
+        }
+
+        var node = domConstruct.create("a", {
+            "href": "#",
+            "title": "Edit",
+            "innerHTML": "Edit",
+            "onClick": "editObject('" + edit_str  + "','" + edit_url + "'," + "[this,]);"
+        });
+
+        td.appendChild(node);
     }
 
     mpAclChange = function(acl) {

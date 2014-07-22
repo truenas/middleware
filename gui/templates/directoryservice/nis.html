@@ -1,8 +1,8 @@
-{% extends "freeadmin/generic_model_edit.html" %}
+{% extends "freeadmin/generic_form.html" %}
 {% block oklabel %}{% trans "Save" %}{% endblock %}
 
 {% load freeadmin %}
-{% block buttons_extra %}
+{% block extra_buttons %}
 {{ block.super }}
 <button id="btn_{% cls_name form %}_DirectoryServiceCache" data-dojo-type="dijit.form.Button">
     {% trans "Rebuild Directory Service Cache" %}

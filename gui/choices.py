@@ -788,3 +788,15 @@ TUNABLE_TYPES = (
     ('loader', _('Loader')),
     ('sysctl', _('Sysctl')),
 )
+
+IDMAP_CHOICES = (
+    ('idmap_ad', _('ad')),
+    ('idmap_autorid', _('autorid')),
+    ('idmap_hash', _('hash')),
+    ('idmap_ldap', _('ldap')),
+    ('idmap_nss', _('nss')),
+    ('idmap_rfc2307', _('rfc2307')),
+    ('idmap_rid', _('rid')),
+    ('idmap_tdb', _('tdb')),
+    ('idmap_tdb2', _('tdb2'))
+)
