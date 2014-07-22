@@ -205,7 +205,7 @@ def main():
         tf.add(root + file, arcname = file, recursive = False)
     # And now the directories
     for dir in manifest["directories"].keys():
-        print >> sys.stderr, "Adding %s to archive" % dir
+        if verbose or debug > 0:  print >> sys.stderr, "Adding %s to archive" % dir
         tf.add(root + dir, arcname = dir, recursive = False)
 
     return 0
