@@ -131,11 +131,11 @@ if __name__ == "__main__":
                 print >> sys.stderr, "Could not find upgrade file %s" % upgrade_file_name
             else:
                 hash = ChecksumFile(upgrade_file)
-                upgrade_file.seek(0, os.SEEKE_END)
-                size = pkgfile.tell()
+                upgrade_file.seek(0, os.SEEK_END)
+                size = upgrade_file.tell()
                 upgrade_file.seek(0)
                 # See above for looking for upgrades.
-                pkg.AddUpdate(U, hash, size)
+                pkg.AddUpdate(U, hash, size if size != 0 else None)
 
         mani.AddPackage(pkg)
         
