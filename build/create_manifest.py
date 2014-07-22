@@ -2,6 +2,7 @@
             
 import os
 import sys
+import time
 import getopt
 import hashlib
             
@@ -71,7 +72,11 @@ if __name__ == "__main__":
 
     pkgs = args
     
-    if (trainname is None) or (sequencenum == 0) or len(pkgs) == 0:
+    if sequencenum == 0:
+        # Use time
+        sequencenum = int(time.time())
+        
+    if (trainname is None) or len(pkgs) == 0:
         usage()
     
     # We need a configuration to do searching
