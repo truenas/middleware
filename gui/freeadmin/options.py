@@ -819,8 +819,11 @@ class BaseFreeAdmin(object):
         return render(request, template, context)
 
     def empty_formset(self, request):
-
         m = self._model
+
+        log.debug("XXX %s.forms", m._meta.app_label)
+        log.debug("XXX globals() = %s", globals())
+        log.debug("XXX locals() = %s", locals())
 
         if not m._admin.inlines:
             return None
