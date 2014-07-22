@@ -447,7 +447,6 @@ class Configuration(object):
                 full_pathname = location + path
             else:
                 full_pathname = location + "/" + path
-            print >> sys.stderr, "Looking for %s" % full_pathname
             if full_pathname.startswith("/"):
                 file_ref = TryOpenFile(full_pathname)
             elif full_pathname.startswith("file://"):
@@ -470,7 +469,6 @@ class Configuration(object):
                 # I give up
                 raise ConfigurationInvalidException
             train = temp_mani.Train()
-        print >> sys.stderr, "Train %s" % train
         for file in self.SearchForFile(train + "/LATEST"):
             temp_mani = Manifest.Manifest(self)
             temp_mani.LoadFile(file)
@@ -532,7 +530,7 @@ class Configuration(object):
             if o is not None:
                 # Figure out the name.
                 upgrade_name = package.FileName(curVers)
-                for file in self.SearchForFile("Package/%s" % upgrade_name):
+                for file in self.SearchForFile("Packages/%s" % upgrade_name):
                     if h is not None:
                         hash = ChecksumFile(file)
                         if hash == h:
