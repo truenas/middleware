@@ -32,7 +32,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.directoryservice import forms, models
+from freenasUI.directoryservice import forms, models, utils
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.services.models import services
@@ -334,7 +334,7 @@ def directoryservice_idmap_tdb2(request, id):
 
 
 def directoryservice_idmap_backend(request, obj_type, idmap_type):
-    data = forms.get_idmap(obj_type, idmap_type)
+    data = utils.get_idmap(obj_type, idmap_type)
     content = json.dumps(data)
     return HttpResponse(content, content_type="application/json")
 

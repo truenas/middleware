@@ -742,7 +742,7 @@ require([
         var edit_url = null;
         var id = -1;
 
-        console.log(idmap_url);
+        //console.log(idmap_url);
 
         xhr.get(idmap_url, {
             sync: true
@@ -751,9 +751,11 @@ require([
             id = obj.idmap_id;
         });
 
-        var edit_url = "/directoryservice/" + idmap_backend + "/" + id + "/";
+        if (id > 0) {
+            edit_url = "/directoryservice/" + idmap_backend + "/" + id + "/";
+        }
 
-        console.log(edit_url);
+        //console.log(edit_url);
 
         return (edit_url);
     }
