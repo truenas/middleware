@@ -164,18 +164,26 @@ The GUI has been reorganized as follows:
 
 The following features have been added or changed:
 
-* The "WebGUI -> HTTPS Port" field has been added to System → Settings → General.
+* The "WebGUI -> HTTPS Port" field has been added to System → General.
 
-* The "Directory Services" field is now deprecated and has been removed from System → Settings → General. FreeNAS® now supports the
+* The "System dataset pool" and "Use system dataset for syslog" fields have been removed from System → Advanced as these are now set in System
+  → System Dataset.
+
+* A "Performance Test" button has been added to System → Advanced.
+
+* The "Directory Services" field is now deprecated and has been removed from System → General. FreeNAS® now supports the
   `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_
   which provides support for multiple directory services.
 
-* The "Rebuild LDAP/AD Cache" button has been removed from System → Settings → Advanced. It has been renamed to "Rebuild Directory Service Cache" and now
-  appears in the configuration screen for each type of directory service in Services → Directory Services.
+* The "Rebuild LDAP/AD Cache" button has been removed from System → Advanced. It has been renamed to "Rebuild Directory Service Cache" and now appears in
+  the configuration screen for each type of directory service in Services → Directory Services.
 
 * The "HTTP Proxy" field has been added to Network → Global Configuration.
 
 * A "Run Now" button has been added for the highlighted cron job in Tasks → Cron Jobs → View Cron Jobs.
+
+* An "Upgrade" button has been added to the available icons for a highlighted volume in Storage → Volumes → View Volumes. This means that you no longer
+  need to upgrade a ZFS pool from the command line.
 
 * The "Domain logons" checkbox has been added to Services → CIFS.
 
@@ -184,12 +192,26 @@ The following features have been added or changed:
 
 * The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox and "Use default domain"
   field have been added.
+  
+* The "Enable" checkbox has been added to Directory Service → NIS.
+
+* The "Use default domain" and "Enable" checkboxes have been added to Directory Service → NT4.
+
+* The "Database Path" field has been moved from Sharing → Apple (AFP) Share → Add Apple (AFP) Share to Services → AFP.
+
+* The "Zero Device Numbers" field has been moved from Services → AFP to Sharing → Apple (AFP) Share → Add Apple (AFP) Share.
+
+* The "Obey pam restrictions" has been added to Services → CIFS.
 
 * The "IP Server" field has been added to Services → Dynamic DNS.
 
 * Kernel iSCSI has replaced **istgt**. This adds support for VAAI acceleration for Windows 2012 clustering.
 
+* The "Enable TPC" field has been added to Services → iSCSI → Extents → Add Extent.
+
 * Services → iSCSI → Target Global Configuration has been reduced to three configuration options used by kernel iSCSI.
+
+* The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from Services → iSCSI → Targets → Add Target.
 
 * Support for Link Layer Discovery Protocol (LLDP) has been added. It allows network devices to advertise their identity, capabilities, and neighbors on an
   Ethernet LAN.
@@ -1257,15 +1279,9 @@ If the upgrade completely fails, don't panic. The data is still on your disks an
 Upgrading a ZFS Pool
 ~~~~~~~~~~~~~~~~~~~~
 
-ZFS pools that are created using ZFS Volume Manager on FreeNAS® 9.x have
-`ZFS feature flags <http://blog.vx.sk/archives/35-New-features-in-open-source-ZFS.html>`_
-enabled. Feature flags are sometimes referred to as ZFS version 5000. ZFS pools that were created in FreeNAS® 8.3.x use ZFSv28. Any ZFS pools that were
-created in any previous 8.x versions of FreeNAS® use ZFSv15. If you auto-import a ZFS pool from any 8.x version, it will remain at its original ZFS version
-unless you upgrade the pool. This means that the pool will not understand any feature flags, such as LZ4 compression, until the pool is upgraded.
+Beginning with FreeNAS® 9.3, ZFS pools can be upgraded from the graphical administrative interface.
 
-If you wish to upgrade an existing ZFSv15 or ZFSv28 pool, be aware of the following caveats first:
-
-* the ZFS version upgrade must be performed from the command line, it can not be performed using the GUI.
+Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
 * the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version** or downgrade to an earlier
   version of FreeNAS® that does not support feature flags.
@@ -1273,47 +1289,15 @@ If you wish to upgrade an existing ZFSv15 or ZFSv28 pool, be aware of the follow
 * before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
 
-To perform the ZFS version upgrade, open Shell. The following commands will determine the pool state and version. In this example, the pool name is *volume1*
-and the ZFS version is 28.::
+To perform the ZFS pool upgrade, go to Storage → Volumes → View Volumes and highlight the volume (ZFS pool) to upgrade. Click the "Upgrade" button as seen
+in Figure 2.7g.
 
- zpool status
- pool: volume1
- state: ONLINE
- status: The pool is formatted using a legacy on-disk format. The pool can still be used, but some features are unavailable.
- action: Upgrade the pool using 'zpool upgrade'. Once this is done, the pool will no longer be accessible on software that does not
-	 support feature flags.
- scan: none requested
- config:
- 
- NAME						STATE	READ WRITE CKSUM
- volume1					ONLINE  0    0     0
- gptid/ea16925b-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
- gptid/ea8f3a7b-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
- gptid/eb064d06-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
- gptid/eb7ba402-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
- 
- errors: No known data errors
+**Figure 2.7g: Upgrading a ZFS Pool**
 
- zpool get version volume1
- NAME		PROPERTY	VALUE	SOURCE
- volume1	version		28	local
 
-Next, verify that the status of the pool is healthy::
+|Figure27g_png|
 
- zpool status -x
- all pools are healthy
-
-**NOTE:** do not upgrade the pool if its status does not show as healthy.
-
-To upgrade a pool named *volume1* ::
-
- zpool upgrade volume1
- This system supports ZFS pool feature flags.
- Successfully upgraded 'volume1' from version 28 to feature flags.
- Enabled the following features on 'volume1':
- async_destroy
- empty_bpobj
- lz4_compress
+The warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
 
 The upgrade itself should only take a seconds and is non-disruptive. This means that you do not need to stop any sharing services in order to upgrade the
 pool. However, you should choose to upgrade when the pool is not being heavily used. The upgrade process will suspend I/O for a short period, but should be
@@ -1727,15 +1711,15 @@ the network does not use a domain name add *.local* to the end of the hostname.
 General
 -------
 
-The General tab, shown in Figure 5.2a, contains 4 tabs: General, Advanced, Email, and SSL.
+System → General is shown in Figure 5.2a.
 
-**Figure 5.2a: General Tab of Settings**
+**Figure 5.2a: General Screen**
 
 |Figure52a_png|
 
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
-**Table 5.2a: General Tab's Configuration Settings**
+**Table 5.2a: General Configuration Settings**
 
 
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
@@ -1784,16 +1768,9 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:** by default, logs are stored in RAM as there is no space on the embedded device to store logs. This means that logs are deleted whenever the system
-reboots. If you wish to save the system logs, either:
+If you make any changes, click the "Save" button.
 
-* configure a remote syslog server on another Unix-like operating system, or
-
-* create a ZFS dataset called *syslog* and reboot the system; FreeNAS® will automatically create a *log/* directory in this dataset which contains the logs
-
-If you make any changes, click the Save button.
-
-This tab also contains the following buttons:
+This screen also contains the following buttons:
 
 **Factory Restore:** resets the configuration database to the default base version. However, it does not delete user SSH keys or any other data stored in a
 user's home directory. Since any configuration changes stored in the configuration database will be erased, this option is handy if you mess up your system or
@@ -1810,24 +1787,26 @@ contains a script for backing up the configuration from another system.
 
 **Upload Config:** allows you to browse to location of saved configuration file in order to restore that configuration.
 
-The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful operation of time
-sensitive applications such as Active Directory.
-
-By default, FreeNAS® is pre-configured to use three public NTP servers. If your network is using Active Directory, ensure that the FreeNAS® system and the
-Active Directory Domain Controller have been configured to use the same NTP servers.
-
-To change a default server to match the settings used by your network's domain
-controller, click an entry to access its “Edit” button. Figure 5.2b shows the “Add NTP Server” screen and Table 5.2b summarizes the options when
-adding or editing an NTP server.
+**NTP Servers:** The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful
+operation of time sensitive applications such as Active Directory. By default, FreeNAS® is pre-configured to use three public NTP servers. If your network is
+using Active Directory, ensure that the FreeNAS® system and the Active Directory Domain Controller have been configured to use the same NTP servers. To
+add a NTP server to match the settings used by your network's domain
+controller, click NTP Servers → Add NTP Server to open the screen shown in Figure 5.2b. Table 5.2b summarizes the options when adding an NTP server.
 `ntp.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=ntp.conf>`_
 explains these options in more detail.
 
-**Figure 5.2b: Add or Edit a NTP Server**
+**Set SSL Certificate:** If you change the "Protocol" value to "HTTPS" or "HTTP+HTTPS", an unsigned RSA certificate and key are auto-generated. To view these,
+click "Set SSL Certificate" and review its "SSL Certificate" field. If you already have a signed certificate that you wish to use for SSL/TLS connections,
+replace the values in the "SSL certificate" field with a copy/paste of your own key and certificate. Table 5.2c summarizes the settings that can be configured using the SSL tab. This
+`howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
+shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 5.2c.
+
+**Figure 5.2b: Add a NTP Server**
 
 
 |100000000000011C0000016E12EDFEE5_jpg|
 
-**Table 5.2b: NTP Server Options**
+**Table 5.2b: NTP Servers Configuration Options**
 
 
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
@@ -1849,15 +1828,13 @@ explains these options in more detail.
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 | Min. Poll   | integer   | power of 2 in seconds; can not be lower than                                                                          |
-|             |           | *4*                                                                                                                   |
-|             |           | or higher than                                                                                                        |
+|             |           | *4* or higher than                                                                                                    |
 |             |           | *Max. Poll*                                                                                                           |
 |             |           |                                                                                                                       |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 | Max. Poll   | integer   | power of 2 in seconds; can not be higher than                                                                         |
-|             |           | *17*                                                                                                                  |
-|             |           | or lower than                                                                                                         |
+|             |           | *17* or lower than                                                                                                    |
 |             |           | *Min. Poll*                                                                                                           |
 |             |           |                                                                                                                       |
 |             |           |                                                                                                                       |
@@ -1866,66 +1843,54 @@ explains these options in more detail.
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 
-When you change the Protocol value to HTTPS in System → Settings → General, an unsigned RSA certificate and key are auto-generated. Once generated,
-the certificate and key will be displayed in the SSL Certificate field in System → Settings → SSL. If you already have your own
-signed certificate that you wish to use for SSL/TLS connections, replace the values in the SSL certificate field with a copy/paste of your own key and certificate. The certificate can be used to secure the HTTP connection (enabled in the Settings → General Tab) to the FreeNAS® system.
-
-Table 5.2c summarizes the settings that can be configured using the SSL tab. This
-`howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
-shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 5.2c.
-
-**Table 5.2c: SSL Tab's Configuration Settings**
+**Table 5.2c: SSL Certificate Configuration Settings**
 
 
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Setting             | Value  | Description                                                                                                      |
-|                     |        |                                                                                                                  |
-+=====================+========+==================================================================================================================+
-| Organization        | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Organizational Unit | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Email Address       | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Locality            | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| State               | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Country             | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Common Name         | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Passphrase          | string | if the certificate was created with a passphrase, input and confirm it; the value will appear as dots in the GUI |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| SSL                 | string | paste the                                                                                                        |
-| Certificate         |        | private                                                                                                          |
-|                     |        | key and certificate                                                                                              |
-|                     |        | into the box                                                                                                     |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| **Setting**         | **Value**  | **Description**                                                                                                  |
+|                     |            |                                                                                                                  |
++=====================+============+==================================================================================================================+
+| Organization        | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Organizational Unit | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Email Address       | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Locality            | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| State               | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Country             | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Common Name         | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Passphrase          | string     | if the certificate was created with a passphrase, input and confirm it; the value will appear as dots in the GUI |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| SSL Certificate     | string     | paste the private key and certificate into the box; the validity of the certificate and key will be checked and  |
+|                     |            | the system will fallback to HTTP if either appears to be invalid                                                 |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
 
-
-**NOTE:** FreeNAS® will check the validity of the certificate and key and will fallback to HTTP if they appear to be invalid.
 
 Advanced
 --------
 
-The Advanced tab, shown in Figure 5.3a, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in
+System → Advanced, shown in Figure 5.3a, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in
 Table 5.3a.
 
-**Figure 5.3a: Advanced Tab**
+**Figure 5.3a: Advanced Screen**
 
 |Figure53a_png|
 
-**Table 5.3a: Advanced Tab's Configuration Settings**
+**Table 5.3a: Advanced Configuration Settings**
 
 
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
@@ -1983,25 +1948,18 @@ Table 5.3a.
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| System dataset pool                     | drop-down menu                   | by default, the *.system* dataset is automatically created in the first ZFS  |
-|                                         |                                  | volume in order to store persistent Samba permissions, collecting core files,|
-|                                         |                                  | and storing system log files; the drop-down menu can be used to select a     |
-|                                         |                                  | different ZFS volume                                                         |
-|                                         |                                  |                                                                              |
-+-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Use system dataset for syslog           | checkbox                         | uncheck this box if you don't want logging to spin up the disks and it will  |
-|                                         |                                  | write to */var/log/* instead of the system dataset                           |
-|                                         |                                  |                                                                              |
-+-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 
 
-If you make any changes, click the Save button.
+If you make any changes, click the "Save" button.
 
 This tab also contains the following buttons:
 
 **Save Debug:** used to generate a text file of diagnostic information. t will prompt for the location to save the ASCII text file.
 
 **Firmware Update:** used to Upgrade FreeNAS®.
+
+**Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
+warning is provided and the tests should be run at a time that will least impact users.
 
 Autotune
 ~~~~~~~~
@@ -2027,20 +1985,20 @@ If you wish to read the script to see which checks are performed, the script is 
 Email
 -----
 
-The Email tab, shown in Figure 5.4a, is used to configure the email settings on the FreeNAS® system. Table 5.4a summarizes the settings that can be
+System → Email, shown in Figure 5.4a, is used to configure the email settings on the FreeNAS® system. Table 5.4a summarizes the settings that can be
 configured using the Email tab.
 
 **NOTE:** it is important to configure the system so that it can successfully send emails. An automatic script send a nightly email to the *root* user account
 containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
 
-**Figure 5.4a: Email Tab**
+**Figure 5.4a: Email Screen**
 
 
 |Figure54a_png|
 
 
 
-**Table 5.4a: Email Tab's Configuration Settings**
+**Table 5.4a: Email Configuration Settings**
 
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
@@ -2082,11 +2040,11 @@ containing important information such as the health of the disks. Alert events a
 System Dataset
 --------------
 
-System → Dataset, shown in Figure 5.5a, is used to select the pool which will contain the persistent system dataset. The system dataset stores debugging
-core files and Samba4 metadata such as the user/group cache and share level permissions. If the FreeNAS® system is configured to be a Domain Controller, all
-of the domain controller state is stored there as well, including domain controller users and groups.
+System → System Dataset, shown in Figure 5.5a, is used to select the pool which will contain the persistent system dataset. The system dataset stores
+debugging core files and Samba4 metadata such as the user/group cache and share level permissions. If the FreeNAS® system is configured to be a Domain
+Controller, all of the domain controller state is stored there as well, including domain controller users and groups.
 
-**Figure 5.5a: System Dataset**
+**Figure 5.5a: System Dataset Screen**
 
 |Figure55a_png|
 
@@ -2106,10 +2064,11 @@ location.
 Tunables
 --------
 
+This section of the administrative GUI can be used to either set a FreeBSD sysctl or loader value. A
 `sysctl(8) <http://www.freebsd.org/cgi/man.cgi?query=sysctl>`_
-is an interface that is used to make changes to the FreeBSD kernel running on a FreeNAS® system. It can be used to tune the system in order to meet the
-specific needs of a network. Over five hundred system variables can be set using sysctl(8). Each variable is known as a MIB as it is comprised of a dotted set
-of components. Since these MIBs are specific to the kernel feature that is being tuned, descriptions can be found in many FreeBSD man pages (e.g.
+makes changes to the FreeBSD kernel running on a FreeNAS® system and can be used to tune the system. Over five hundred system variables can be set using
+sysctl(8). Each variable is known as a MIB as it is comprised of a dotted set of components. Since these MIBs are specific to the kernel feature that is being
+tuned, descriptions can be found in many FreeBSD man pages (e.g.
 `sysctl(3) <http://www.freebsd.org/cgi/man.cgi?query=sysctl&sektion=3>`_
 ,
 `tcp(4) <http://www.freebsd.org/cgi/man.cgi?query=tcp>`_
@@ -2117,42 +2076,36 @@ and
 `tuning(7) <http://www.freebsd.org/cgi/man.cgi?query=tuning>`_
 ) and in many sections of the
 `FreeBSD Handbook <http://www.freebsd.org/handbook>`_
-.
+. 
 
 **DANGER!** changing the value of a sysctl MIB is an advanced feature that immediately affects the kernel of the FreeNAS® system.
 **Do not change a MIB on a production system unless you understand the ramifications of that change.** A badly configured MIB could cause the system to become
 unbootable, unreachable via the network, or can cause the system to panic under load. Certain changes may break assumptions made by the FreeNAS® software.
 This means that you should always test the impact of any changes on a test system first.
 
-When a FreeBSD-based system boots,
+A loader is only loaded when a FreeBSD-based system boots, as
 `loader.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=loader.conf>`_
 is read to determine if any parameters should be passed to the kernel or if any additional kernel modules (such as drivers) should be loaded. Since loader
 values are specific to the kernel parameter or driver to be loaded, descriptions can be found in the man page for the specified driver and in many sections of
 the
 `FreeBSD Handbook <http://www.freebsd.org/handbook>`_
-.
-
-FreeNAS® provides a graphical interface for managing loader values. This advanced functionality is intended to make it easier to load additional kernel
-modules at boot time. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default
+. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default
 FreeNAS® image does not load every possible hardware driver. This is a necessary evil as some drivers conflict with one another or cause stability issues,
 some are rarely used, and some drivers just don't belong on a standard NAS system. If you need a driver that is not automatically loaded, you need to add a
-tunable.
+loader.
 
-**DANGER!** adding a tunable is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
-**very important** that you do not have a typo when adding a tunable as this could halt the boot process. Fixing this problem requires physical access to the
+**DANGER!** adding a loader is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
+**very important** that you do not have a typo when adding a loader as this could halt the boot process. Fixing this problem requires physical access to the
 FreeNAS® system and knowledge of how to use the boot loader prompt as described in Recovering From Incorrect Tunables. This means that you should always test
 the impact of any changes on a test system first.
 
-To add a tunable or sysctl, go to System → Tunables → Add Tunable, as seen in Figure 5.6a.
+To add a loader or sysctl, go to System → Tunables → Add Tunable, as seen in Figure 5.6a.
 
 **Figure 5.6a: Adding a Tunable**
 
 |Figure56a_png|
 
-Table 5.6a summarizes the options when adding a tunable. The changes you make will not take effect until the system is rebooted as loader settings are only
-read when the kernel is loaded at boot time. As long as the tunable exists, your changes will persist at each boot and across upgrades. Any tunables that you
-add will be listed alphabetically in System → Tunables → View Tunables. To change the value of a tunable, click its Edit button. To remove a tunable,
-click its Delete button.
+Table 5.6a summarizes the options when adding a tunable.
 
 **Table 5.6a: Adding a Tunable**
 
@@ -2160,13 +2113,16 @@ click its Delete button.
 | **Setting** | **Value**         | **Description**                                                           |
 |             |                   |                                                                           |
 |             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
++=============+===================+===========================================================================+
 | Variable    | string            | typically the name of the driver to load, as indicated by its man page    |
 |             |                   |                                                                           |
 +-------------+-------------------+---------------------------------------------------------------------------+
-| Value       | integer or string | value to associate with variable; typically this is set to                |
-|             |                   | *YES*                                                                     |
+| Value       | integer or string | value to associate with variable; typically this is set to *YES*          |
 |             |                   | to enable the driver specified by the variable                            |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Type        | drop-down menu    | choices are *Loader* or                                                   |
+|             |                   | *Sysctl*                                                                  |
 |             |                   |                                                                           |
 +-------------+-------------------+---------------------------------------------------------------------------+
 | Comment     | string            | optional, but a useful reminder for the reason behind adding this tunable |
@@ -2176,16 +2132,17 @@ click its Delete button.
 |             |                   |                                                                           |
 +-------------+-------------------+---------------------------------------------------------------------------+
 
-As soon as you add or edit a sysctl, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that value will
-persist across reboots and upgrades.
+**NOTE:** as soon as you add or edit a *Sysctl*, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that
+value will persist across reboots and upgrades.  However, when you add a *Loader*, the changes you make will not take effect until the system is rebooted as
+loaders are only read when the kernel is loaded at boot time. As long as the loader exists, your changes will persist at each boot and across upgrades. 
 
-Note that any sysctl that is read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by attempting to change it
-from Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command  
+Any sysctls or loaders that you add will be listed alphabetically in System → Tunables → View Tunables. To change the value of an existing tunable, click
+its Edit button. To remove a tunable, click its Delete button.
+
+Some sysctls are read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by first attempting to change it from
+Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command
 **sysctl net.inet.tcp.delay_ack=1**. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get an
 error, the setting is now applied. However, for the setting to be persistent across reboots, the sysctl must be added in System → Sysctls.
-
-Any MIBs that you add will be listed in System → Sysctls → View Sysctls. To change the value of a MIB, click its Edit button. To remove a MIB, click
-its Delete button.
 
 At this time, the GUI does not display the sysctl MIBs that are pre-set in the installation image. 9.3 ships with the following MIBs set::
 
@@ -2198,7 +2155,7 @@ At this time, the GUI does not display the sysctl MIBs that are pre-set in the i
 
 **Do not add or edit the default MIBS as sysctls** as doing so will overwrite the default values which may render the system unusable.
 
-At this time, the GUI does not display the tunables that are pre-set in the installation image. 9.3 ships with the following tunables set::
+At this time, the GUI does not display the loaders that are pre-set in the installation image. 9.3 ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="freenas-logo"
@@ -2219,7 +2176,7 @@ At this time, the GUI does not display the tunables that are pre-set in the inst
 
 **Do not add or edit the default tunables** as doing so will overwrite the default values which may render the system unusable.
 
-The ZFS version used in 9.2.2 deprecates the following tunables::
+The ZFS version used in 9.2.2 deprecates the following loaders::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
@@ -2229,7 +2186,7 @@ The ZFS version used in 9.2.2 deprecates the following tunables::
  vfs.zfs.no_write_throttle
 
 If you upgrade from an earlier version of FreeNAS® where these tunables are set, they will automatically be deleted for you. You should not try to add these
-tunables back.
+loaders back.
 
 Recovering From Incorrect Tunables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2930,7 +2887,8 @@ includes a Baseboard Management Controller (BMC) and the IPMI kernel module is l
 IPMI provides side-band management should the system become unavailable through the graphical administrative interface. This allows for a few vital functions,
 such as checking the log, accessing the BIOS setup, and powering on the system without requiring physical access to the system. IPMI can also be used to allow another person remote access to the system in order to assist with a configuration or troubleshooting issue. Before configuring IPMI, ensure that the management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may be a dedicated IPMI interface.
 
-Before configuring IPMI, add a Tunable_ with a "Variable" of *ipmi_load* and a "Value" of
+Before configuring IPMI, add a Tunable_ with a "Variable" of *ipmi_load*, a "Type" of
+*Loader* and a "Value" of
 *YES*. This will configure the system to load the driver at bootup. Then, to load the
 *ipmi* kernel module now, without rebooting, type this from Shell::
 
@@ -3477,13 +3435,7 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
 
 #.  **Scrub Volume:** ZFS scrubs and how to schedule them are described in more detail in ZFS Scrubs. This button allows you to manually initiate a scrub. A
     scrub is I/O intensive and can negatively impact performance, meaning that you should not initiate one while the system is busy. A cancel button is
-    provided should you need to cancel a scrub.
-
-**NOTE:** if you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off.
-
-**Figure 8.1h: Detaching or Deleting a Volume**
-
-|Figure81h_png|
+    provided should you need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off.
 
 #.  **Edit ZFS Options:** allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is
     newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only
@@ -3502,6 +3454,12 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
 #.  **Volume Status:** as seen in the example in Figure 8.1i, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
     write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the
     device's options (shown in Figure 8.1j), offline the device, or replace the device (as described in Replacing a Failed Drive).
+
+#.  **Upgrade:**
+
+**Figure 8.1h: Detaching or Deleting a Volume**
+
+|Figure81h_png|
 
 **Figure 8.1i: Volume Status**
 
@@ -3554,8 +3512,8 @@ configurable options.
 **NOTE:** versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the HDD Standby, Advanced Power Management, and Acoustic Level
 settings. As of 8.3.1, changes to these settings are applied immediately.
 
-A ZFS dataset only has five icons as the scrub volume, create ZFS volume, and volume status buttons only apply to volumes. In a dataset, the Detach Volume
-button is replaced with the Destroy Dataset button. If you click the Destroy Dataset button, the browser will turn red to indicate that this is a destructive
+A ZFS dataset only has six icons as the "Scrub Volume", "Volume Status", and "Upgrade" buttons only apply to volumes. In a dataset, the "Detach Volume" button
+is replaced with the "Destroy Dataset" button. If you click the Destroy Dataset button, the browser will turn red to indicate that this is a destructive
 action. The pop-up warning message will warn that destroying the dataset will delete all of the files and snapshots of that dataset.
 
 View Multipaths
@@ -3912,7 +3870,7 @@ Permissions icon for a specific volume/dataset, you will see the screen shown in
 | Mode                       | checkboxes       | check the desired **Unix** permissions for user, group, and other                                          |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
-| Type of ACL                | bullet selection | Unix and Windows ACLs are mutually exclusive, this means that                                              |
+| Type of ACL                | bullet selection | Unix and Windows/Mac ACLs are mutually exclusive, this means that                                          |
 |                            |                  | **you must select the correct type of ACL to match the share**; see the paragraphs below this Table for    |
 |                            |                  | more details                                                                                               |
 |                            |                  |                                                                                                            |
@@ -4404,9 +4362,6 @@ dataset that you wish to snapshot.
 | Setting        | Value                      | Description                                                                                                  |
 |                |                            |                                                                                                              |
 +================+============================+==============================================================================================================+
-| Enabled        | checkbox                   | uncheck to disable the scheduled replication task without deleting it                                        |
-|                |                            |                                                                                                              |
-+----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Volume/Dataset | drop-down menu             | select an existing ZFS volume, dataset, or zvol; if you select a volume, separate snapshots will also be     |
 |                |                            | created for each of its datasets                                                                             |
 |                |                            |                                                                                                              |
@@ -4432,7 +4387,9 @@ dataset that you wish to snapshot.
 | Weekday        | checkboxes                 | which days of the week to take snapshots                                                                     |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
-
+| Enabled        | checkbox                   | uncheck to disable the scheduled replication task without deleting it                                        |
+|                |                            |                                                                                                              |
++----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 
 If the Recursive box is checked, you do not need to create snapshots for every dataset individually as they are included in the snapshot. The downside is that
 there is no way to exclude certain datasets from being included in a recursive snapshot.
@@ -4601,9 +4558,6 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +===========================+================+==============================================================================================================+
-| Enabled                   | checkbox       | uncheck to disable the scheduled replication task without deleting it                                        |
-|                           |                |                                                                                                              |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Volume/Dataset            | drop-down menu | the ZFS volume or dataset on *PUSH* containing the snapshots to be replicated; the drop-down menu will be    |
 |                           |                | empty if a snapshot does not already exist                                                                   |
 |                           |                |                                                                                                              |
@@ -4629,6 +4583,9 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | End                       | drop-down menu | the replication must start by this time; once started, replication will occur until it is finished (see NOTE |
 |                           |                | below)                                                                                                       |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| Enabled                   | checkbox       | uncheck to disable the scheduled replication task without deleting it                                        |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Remote hostname           | string         | IP address or DNS name of *PULL*                                                                             |
@@ -4805,12 +4762,6 @@ FreeNAS® supports the following directory services:
 * NT4 (for Windows networks older than Windows 2000)
 
 This section summarizes each of these services and their available configurations within the FreeNAS® GUI.
-
-
-**NOTE:** at this time,
-**only one directory service can be configured**. That service must first be selected in the System → Settings → General → Directory Service
-drop-down menu. Once selected, a Directory Service entry will be added to Services → Control Services so that the service can be started, stopped, and
-configured.
 
 Active Directory
 ----------------
@@ -5169,6 +5120,9 @@ options.
 |             |           | on the same subnet                                                                                                         |
 |             |           |                                                                                                                            |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
+| Enable      | checkbox  |                                                                                                                            |
+|             |           |                                                                                                                            |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
 
 Click the "Rebuild Directory Service Cache" button if you add a user to NIS who needs immediate access to FreeNAS®; otherwise this occurs automatically once
 a day as a cron job.
@@ -5207,6 +5161,12 @@ After configuring the NT4 service, start it in Services → Control Services →
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
 | Administrator Password | string    | input and confirm the password for the domain administrator account |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| Use default domain     | checkbox  |                                                                     |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| Enable                 | checkbox  |                                                                     |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
 
@@ -5292,15 +5252,15 @@ Once you press the OK button when creating the AFP share, a pop-up menu will ask
 | Setting                      | Value         | Description                                                                                                 |
 |                              |               |                                                                                                             |
 +==============================+===============+=============================================================================================================+
+| Path                         | browse button | browse to the volume/dataset to share; do not nest additional volumes, datasets, or symbolic links beneath  |
+|                              |               | this path because Netatalk lacks complete support                                                           |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Name                         | string        | volume name that will appear in the Mac computer's "connect to server" dialogue; limited to 27 characters   |
 |                              |               | and can not contain a period                                                                                |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Share Comment                | string        | optional                                                                                                    |
-|                              |               |                                                                                                             |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Path                         | browse button | browse to the volume/dataset to share; do not nest additional volumes, datasets, or symbolic links beneath  |
-|                              |               | this path because Netatalk lacks complete support                                                           |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow List                   | string        | comma delimited list of allowed users and/or groups where groupname begins with a @                         |
@@ -5319,8 +5279,7 @@ Once you press the OK button when creating the AFP share, a pop-up menu will ask
 |                              |               | checking *Time Machine* on multiple shares may result in intermittent failed backups                        |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Database Path                | string        | specify the path to store the CNID databases used by AFP (default is the root of the volume); the path must |
-|                              |               | be writable                                                                                                 |
+| Zero Device Numbers          | checkbox      | only available in Advanced Mode; enable when the device number is not constant across a reboot              |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | No Stat                      | checkbox      | only available in Advanced Mode; if checked, AFP won't stat the volume path when enumerating the volumes    |
@@ -5491,6 +5450,9 @@ Control Services will open and indicate whether or not the NFS service successfu
 | Setting             | Value          | Description                                                                                                        |
 |                     |                |                                                                                                                    |
 +=====================+================+====================================================================================================================+
+| Path                | browse button  | browse to the volume/dataset/directory to share; click *Add extra path* to select multiple paths                   |
+|                     |                |                                                                                                                    |
++---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Comment             | string         | used to set the share name; if left empty, share name will be the list of selected Paths                           |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
@@ -5523,9 +5485,6 @@ Control Services will open and indicate whether or not the NFS service successfu
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Mapall Group        | drop-down menu | the specified group's permission are used by all clients                                                           |
-|                     |                |                                                                                                                    |
-+---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Path                | browse button  | browse to the volume/dataset/directory to share; click *Add extra path* to select multiple paths                   |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 
@@ -5770,13 +5729,13 @@ enable this service?” Click Yes and Services → Control Services will open an
 | **Setting**                  | **Value**     | **Description**                                                                                             |
 |                              |               |                                                                                                             |
 +==============================+===============+=============================================================================================================+
+| Path                         | browse button | select volume/dataset/directory to share                                                                    |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Name                         | string        | mandatory; name of share                                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Comment                      | string        | optional description                                                                                        |
-|                              |               |                                                                                                             |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Path                         | browse button | select volume/dataset/directory to share                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Apply Default Permissions    | checkbox      | sets the ACLs to allow read/write for owner/group and read-only for others; should only be unchecked when   |
@@ -6033,7 +5992,7 @@ Control Services
 Services → Control Services, shown in Figure 11.1a, allows you to quickly determine which services are currently running, to start and stop services, and
 to configure services. By default, all services (except for the S.M.A.R.T. service) are off until you start them.
 
-Figure 11.1a: Control Services
+**Figure 11.1a: Control Services**
 
 
 |Figure111a_png|
@@ -6091,9 +6050,6 @@ Figure 11.2a shows the configuration options which are described in Table 11.2a.
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Home directories        | Browse button  | select the volume or dataset which contains user home directories                                               |
-|                         |                |                                                                                                                 |
-+-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Zero Device Numbers     | checkbox       | only available in Advanced Mode; enable when the device number is not constant across a reboot                  |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Database Path           |string          | specify the path to store the CNID databases used by AFP (default is the root of the volume); the path must be  |
@@ -6251,7 +6207,9 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                | to execute                                                                                            |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-
+| Obey pam restrictions            | checkbox       |                                                                                                       |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 **Table 11.3b: Description of SMB Protocol Versions**
 
@@ -6949,50 +6907,37 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 **Table 11.7b: Extent Configuration Settings**
 
 
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting            | Value          | Description                                                                                                                                                       |
-|                    |                |                                                                                                                                                                   |
-+====================+================+===================================================================================================================================================================+
-| Extent Name        | string         | name of extent; if the                                                                                                                                            |
-|                    |                | *Extent size*                                                                                                                                                     |
-|                    |                | is not 0, it can not be an existing file within the volume/dataset                                                                                                |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Extent Type        | drop-down menu | select from                                                                                                                                                       |
-|                    |                | *File*                                                                                                                                                            |
-|                    |                | or                                                                                                                                                                |
-|                    |                | *Device*                                                                                                                                                          |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Path to the extent | browse button  | only appears if                                                                                                                                                   |
-|                    |                | *File*                                                                                                                                                            |
-|                    |                | is selected; either browse to an existing file and use 0 as the                                                                                                   |
-|                    |                | *Extent size*                                                                                                                                                     |
-|                    |                | ,                                                                                                                                                                 |
-|                    |                | **or**                                                                                                                                                            |
-|                    |                | ** **                                                                                                                                                             |
-|                    |                | browse to the volume or dataset, click the Close button, append the                                                                                               |
-|                    |                | *Extent Name*                                                                                                                                                     |
-|                    |                | to the path, and specify a value in                                                                                                                               |
-|                    |                | *Extent *                                                                                                                                                         |
-|                    |                | *size*                                                                                                                                                            |
-|                    |                |                                                                                                                                                                   |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Device             | drop-down menu | only appears if                                                                                                                                                   |
-|                    |                | *Device*                                                                                                                                                          |
-|                    |                | is selected; select the unformatted disk, controller, zvol, zvol snapshot, or HAST device                                                                         |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Extent size        | integer        | only appears if                                                                                                                                                   |
-|                    |                | *File*                                                                                                                                                            |
-|                    |                | is selected; if the size is specified as 0, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to create |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Comment            | string         | optional                                                                                                                                                          |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Setting            | Value          | Description                                                                                                          |
+|                    |                |                                                                                                                      |
++====================+================+======================================================================================================================+
+| Extent Name        | string         | name of extent; if the *Extent size* is not 0, it can not be an existing file within the volume/dataset              |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Extent Type        | drop-down menu | select from *File* or                                                                                                |
+|                    |                | *Device*                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use 0 as the                               |
+|                    |                | *Extent size*,                                                                                                       |
+|                    |                | **or** browse to the volume or dataset, click the Close button, append the                                           |
+|                    |                | *Extent Name* to the path, and specify a value in                                                                    |
+|                    |                | *Extent size*                                                                                                        |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Device             | drop-down menu | only appears if *Device* is selected; select the unformatted disk, controller, zvol, zvol snapshot, or HAST device   |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Extent size        | integer        | only appears if *File* is selected; if the size is specified as 0, the file must already exist and the actual file   |
+|                    |                | size will be used; otherwise specifies the size of the file to create                                                |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Comment            | string         | optional                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Enable TPC         | checkbox       |                                                                                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
 Initiators
 ~~~~~~~~~~
@@ -7178,63 +7123,40 @@ targets (one per client).
 **Table 11.7f: Target Settings**
 
 
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Setting**                 | **Value**      | **Description**                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+=============================+================+==================================================================================================================================================================================+
-| Target Name                 | string         | required value; base name will be appended automatically if it does not start with                                                                                               |
-|                             |                | *iqn*                                                                                                                                                                            |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Target Alias                | string         | optional user-friendly name                                                                                                                                                      |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Serial                      | string         | unique ID for target to allow for multiple LUNs; the default is generated from the system's MAC address                                                                          |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Target Flags                | drop-down menu | choices are                                                                                                                                                                      |
-|                             |                | *read-write*                                                                                                                                                                     |
-|                             |                | or                                                                                                                                                                               |
-|                             |                | *read-only*                                                                                                                                                                      |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Portal Group ID             | drop-down menu | leave empty or select number of existing portal to use                                                                                                                           |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Initiator Group ID          | drop-down menu | select which existing initiator group has access to the target                                                                                                                   |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Auth Method                 | drop-down menu | choices are                                                                                                                                                                      |
-|                             |                | *None*                                                                                                                                                                           |
-|                             |                | ,                                                                                                                                                                                |
-|                             |                | *Auto*                                                                                                                                                                           |
-|                             |                | ,                                                                                                                                                                                |
-|                             |                | *CHAP*                                                                                                                                                                           |
-|                             |                | , or                                                                                                                                                                             |
-|                             |                | *Mutual CHAP*                                                                                                                                                                    |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Authentication Group number | drop-down menu | *None*                                                                                                                                                                           |
-|                             |                | or integer representing number of existing authorized access                                                                                                                     |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Queue Depth                 | integer        | see                                                                                                                                                                              |
-|                             |                | `this post <http://storagefoo.blogspot.com/2006/04/queue-depths.html>`_                                                                                                          |
-|                             |                | for an explanation of the math involved; values are 0-255 where                                                                                                                  |
-|                             |                | *0*                                                                                                                                                                              |
-|                             |                | is disabled and default is                                                                                                                                                       |
-|                             |                | *32*                                                                                                                                                                             |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Logical Block Size          | integer        | should only be changed to emulate a physical disk's size or to increase the block size to allow for larger filesystems on an operating system limited by block count; default is |
-|                             |                | *512*                                                                                                                                                                            |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| **Setting**                 | **Value**      | **Description**                                                                                             |
+|                             |                |                                                                                                             |
+|                             |                |                                                                                                             |
++=============================+================+=============================================================================================================+
+| Target Name                 | string         | required value; base name will be appended automatically if it does not start with *iqn*                    |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Target Alias                | string         | optional user-friendly name                                                                                 |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Serial                      | string         | unique ID for target to allow for multiple LUNs; the default is generated from the system's MAC address     |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Portal Group ID             | drop-down menu | leave empty or select number of existing portal to use                                                      |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Initiator Group ID          | drop-down menu | select which existing initiator group has access to the target                                              |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Auth Method                 | drop-down menu | choices are *None*,                                                                                         |
+|                             |                | *Auto*,                                                                                                     |
+|                             |                | *CHAP*, or                                                                                                  |
+|                             |                | *Mutual CHAP*                                                                                               |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Authentication Group number | drop-down menu | *None*                                                                                                      |
+|                             |                | or integer representing number of existing authorized access                                                |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Logical Block Size          | integer        | should only be changed to emulate a physical disk's size or to increase the block size to allow for larger  |
+|                             |                | filesystems on an operating system limited by block count; default is *512*                                 |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 
 
 Target/Extents
