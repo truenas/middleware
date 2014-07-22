@@ -48,6 +48,7 @@ from django.utils.translation import ugettext as __
 
 from dojango import forms
 from freenasUI import choices
+from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -217,12 +218,63 @@ class InitialWizard(CommonWizard):
                 share_allowguest = share.get('share_allowguest')
                 share_timemachine = share.get('share_timemachine')
                 share_iscsisize = share.get('share_iscsisize')
+                share_user = share.get('share_user')
+                share_usercreate = share.get('share_usercreate')
+                share_group = share.get('share_group')
+                share_groupcreate = share.get('share_groupcreate')
+                share_mode = share.get('share_mode')
 
                 if share_purpose != 'iscsitarget':
                     errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
                         volume_name,
                         share_name
                     ), _restart_collectd=False)
+
+                    qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
+                    if not qs.exists():
+                        if not share_groupcreate:
+                            raise MiddlewareError(
+                                _('Group does not exist: %s') % share_group
+                            )
+                        gid = _n.group_create(share_group)
+                        group = bsdGroups.objects.create(
+                            bsdgrp_gid=gid,
+                            bsdgrp_group=share_group,
+                        )
+                    else:
+                        group = qs[0]
+
+                    qs = bsdUsers.objects.filter(bsdusr_username=share_user)
+                    if not qs.exists():
+                        if not share_usercreate:
+                            raise MiddlewareError(
+                                _('User does not exist: %s') % share_user
+                            )
+                        uid, gid, unixhash, smbhash = _n.user_create(
+                            share_user, share_user, '!', password_disabled=True
+                        )
+                        bsdUsers.objects.create(
+                            bsdusr_username=share_user,
+                            bsdusr_full_name=share_user,
+                            bsdusr_uid=uid,
+                            bsdusr_group=group,
+                            bsdusr_unixhash=unixhash,
+                            bsdusr_smbhash=smbhash,
+                        )
+
+                    if share_purpose in ('cifs', 'afp'):
+                        share_acl = 'windows'
+                    else:
+                        share_acl = 'unix'
+
+                    _n.mp_change_permission(
+                        path='/mnt/%s/%s' % (volume_name, share_name),
+                        user=share_user,
+                        group=share_group,
+                        mode=share_mode,
+                        recursive=False,
+                        acl=share_acl,
+                    )
                 else:
                     errno, errmsg = _n.create_zfs_vol(
                         '%s/%s' % (volume_name, share_name),
@@ -320,6 +372,7 @@ class InitialWizard(CommonWizard):
         _n.start("ix-syslogd")
         _n.restart("system_datasets")  # FIXME: may reload collectd again
         _n.restart("cron")
+        _n.reload("user")
 
         for service in services_restart:
             _n.restart(service)
