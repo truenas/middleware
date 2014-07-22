@@ -137,6 +137,7 @@ class ISCSITargetExtentFAdmin(BaseFreeAdmin):
     exclude_fields = (
         'id',
         'iscsi_target_extent_filesize',
+        'iscsi_target_extent_naa',
     )
 
 
