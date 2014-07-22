@@ -2220,7 +2220,7 @@ class notifier:
         proc.communicate()
         if proc.returncode != 0:
             raise MiddlewareError(_('Failed to create group %s') % name)
-        grnam = ___getgrnam(name)
+        grnam = self.___getgrnam(name)
         return grnam.gr_gid
 
     def user_lock(self, username):
