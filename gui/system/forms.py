@@ -1228,13 +1228,12 @@ class InitialWizardVolumeForm(Form):
     def _types_avail(self, disks):
         types = []
         ndisks = self._higher_disks_group(disks)[1]
-        log.error("ndisks %r - %r", ndisks, disks)
         if ndisks >= 4:
             types.extend(['raid10', 'raidz2'])
         if ndisks >= 3:
             types.append('raidz1')
         if ndisks > 0:
-            types.append('stripe')
+            types.extend(['auto', 'stripe'])
         return types
 
     @staticmethod
@@ -1345,6 +1344,14 @@ class InitialWizardVolumeForm(Form):
             }
 
         return groups
+
+    def clean(self):
+        volume_type = self.cleaned_data.get('volume_type')
+        if not volume_type:
+            self._errors['volume_type'] = self.error_class([
+                _('No available disks have been found.'),
+            ])
+        return self.cleaned_data
 
 
 class InitialWizardConfirmForm(Form):
