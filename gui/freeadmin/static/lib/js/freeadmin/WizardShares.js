@@ -194,10 +194,26 @@ define([
       me._storeGroups.fetch();
 
       me._ownershipUser = new ComboBox({
+        required: true,
         store: me._storeUsers,
         searchAttr: 'name',
         intermediateChanges: true,
-        value: 'root'
+        value: 'root',
+        invalidMessage: gettext('This user does not exist.'),
+        validator: function(value, constraints) {
+          var found;
+          me._storeUsers.fetch({query: {id: value}, onComplete: function(results) {
+            if(results.length > 0) {
+            found = true;
+            } else {
+            found = false;
+            }
+          }});
+          if(!found && !me._ownershipUserCreate.get("value")) {
+            return false;
+          }
+          return true;
+        }
       }, me.dapOwnershipUser);
       on(me._ownershipUser, "search", function(results, query, opts) {
         if(results.length > 0) {
@@ -213,10 +229,26 @@ define([
       });
 
       me._ownershipGroup = new ComboBox({
+        required: true,
         store: me._storeGroups,
         searchAttr: 'name',
         intermediateChanges: true,
-        value: 'wheel'
+        value: 'wheel',
+        invalidMessage: gettext('This group does not exist.'),
+        validator: function(value, constraints) {
+          var found;
+          me._storeGroups.fetch({query: {id: value}, onComplete: function(results) {
+            if(results.length > 0) {
+            found = true;
+            } else {
+            found = false;
+            }
+          }});
+          if(!found && !me._ownershipGroupCreate.get("value")) {
+            return false;
+          }
+          return true;
+        }
       }, me.dapOwnershipGroup);
       on(me._ownershipGroup, "search", function(results, query, opts) {
         if(results.length > 0) {
