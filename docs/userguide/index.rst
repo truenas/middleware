@@ -162,15 +162,18 @@ The GUI has been reorganized as follows:
 
 The following features have been added or changed:
 
+* The "Domain logons" checkbox has been added to Services → CIFS.
+
+* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox has been added.
+
+* The "IP Server" field has been added to Services → Dynamic DNS.
+
 * Kernel iSCSI has replaced **istgt**.
 
 * Services → iSCSI → Target Global Configuration has been reduced to three configuration options used by kernel iSCSI.
 
-* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox has been added.
-
-* The "Domain logons" checkbox has been added to Services → CIFS.
-
-* The "IP Server" field has been added to Services → Dynamic DNS. 
+* Support for Link Layer Discovery Protocol (LLDP) has been added. It allows network devices to advertise their identity, capabilities, and neighbors
+on an Ethernet LAN.
 
 Known Issues
 ------------
@@ -216,8 +219,8 @@ RAM
 ~~~
 
 The best way to get the most out of your FreeNAS® system is to install as much RAM as possible. If your RAM is limited, consider using UFS until you can
-afford better hardware. FreeNAS® with ZFS typically requires a minimum of 8 GB of RAM in order to provide good performance and stability. The more RAM, the
-better the performance, and the
+afford better hardware. FreeNAS® with ZFS requires a minimum of 8 GB of RAM in order to provide good stability regardless of the number of users or size of
+the pool. The more RAM, the better the performance, and the
 `FreeNAS® Forums <http://forums.freenas.org/>`_
 provide anecdotal evidence from users on how much performance is gained by adding more RAM. For systems with large disk capacity (greater than 8 TB), a
 general rule of thumb is 1 GB of RAM for every 1 TB of storage. This
@@ -225,8 +228,8 @@ general rule of thumb is 1 GB of RAM for every 1 TB of storage. This
 describes how RAM is used by ZFS.
 
 If you plan to use your server for home use, you can often soften the rule of thumb of 1 GB of RAM for every 1 TB of storage, though 8 GB of RAM is still the
-recommended minimum. If performance is inadequate you should consider adding more RAM as a first remedy. The sweet spot for most users in home/small business
-is 16GB of RAM.
+minimum. If performance is inadequate you should consider adding more RAM as a first remedy. The sweet spot for most users in home/small business is 16GB of
+RAM.
 
 It is possible to use ZFS on systems with less than 8 GB of RAM. However, FreeNAS® as distributed is configured to be suitable for systems meeting the sizing
 recommendations above. If you wish to use ZFS on a smaller memory system, some tuning will be necessary, and performance will be (likely substantially)
@@ -246,7 +249,12 @@ If you are installing FreeNAS® on a headless system, disable the shared memory 
 If you only plan to use UFS, you may be able to get by with as little as 2GB of RAM.
 
 If you don't have at least 8GB of RAM with ZFS or 2GB of RAM with UFS, you should consider getting more powerful hardware before using FreeNAS® to store your
-data. Otherwise, data loss may result.
+data. Otherwise, data loss may result. Plenty of users expect FreeNAS® to function with less than these requirements, just at reduced performance.  The
+bottom line is that these minimums are based on the feedback of many users. Users that do not meet these requirements and who ask for help in the forums or
+IRC will likely be ignored because of the abundance of information that FreeNAS® may not behave properly with less than 8GB of RAM.
+
+**NOTE:** adding an L2ARC is not a substitute for insufficient RAM as L2ARC needs RAM in order to function.  If you do not have enough RAM for a good sized
+ARC you will not be increasing performance, and in most cases you will actually hurt performance and could potentially cause system instability.
 
 **WARNING:** to ensure consistency for the checksumming and parity calculations performed by ZFS, ECC RAM is highly recommended. Using non-ECC RAM can cause
 unrecoverable damage to a zpool resulting in a loss of all data in the pool.
@@ -259,6 +267,8 @@ that is at least 2 GB in size. If you don't have compact flash, you can instead 
 inserted in the USB slot. While technically you can install FreeNAS® onto a hard drive, this is discouraged as you will lose the storage capacity of the
 drive. In other words, the operating system will take over the drive and will not allow you to store data on it, regardless of the size of the drive.
 
+**NOTE:** many devices that are labeled as 2GB are not really 2GB size.  For this reason, it is recommended to use media that is 4GB or larger.
+
 The FreeNAS® installation will partition the operating system drive into two partitions. One partition holds the current operating system and the other
 partition is used when you upgrade. This allows you to safely upgrade to a new image or to revert to an older image should you encounter problems.
 
@@ -269,7 +279,7 @@ named *xhci_load*, set its value to *YES*, and reboot the system.
 
 It is highly recommended that when using a USB stick, that only name brand USB sticks are used as off-brand sticks may not be fully compatible with FreeNAS®.
 
-**NOTE:** SD cards to USB converters are not recommended as these have caused problems for many users. When using a CF adapter, avoid the no-name brands to
+**NOTE:** SD card to USB converters are not recommended as these have caused problems for many users. When using a CF adapter, avoid the no-name brands to
 ensure compatibility, reliability, and performance.
 
 Storage Disks and Controllers
@@ -1614,7 +1624,7 @@ default” in System → Settings → Advanced. Table 4.2a summarizes the option
 |                            |                 | *wheel* group in the Auxiliary groups section                                                                                                         |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Home Directory             | browse button   | leave as */nonexistent* for system accounts, otherwise browse to the name of an                                                                       |
+| Create Home Directory In   | browse button   | leave as */nonexistent* for system accounts, otherwise browse to the name of an                                                                       |
 |                            |                 | **existing** volume or dataset that the user will be assigned permission to access                                                                    |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -1750,10 +1760,10 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 |                      |                | both the console and the remote server                                                                                         |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
-| Directory Service    | drop-down menu | can select one of *Active Directory*,                                                                                          |                                               
-|                      |                | *Domain Controller*,                                                                                                           |                                                                                                                                                                               
-|                      |                | *LDAP*,                                                                                                                        |                                                                                                                                                                                   
-|                      |                | *NIS*, or                                                                                                                      |                                                                                                                                                                                  
+| Directory Service    | drop-down menu | can select one of *Active Directory*,                                                                                          |
+|                      |                | *Domain Controller*,                                                                                                           | 
+|                      |                | *LDAP*,                                                                                                                        |
+|                      |                | *NIS*, or                                                                                                                      |
 |                      |                | *NT4*; if a service is selected, an entry named                                                                                |
 |                      |                | *Directory Services* will be added to Services → Control Services for managing that selected service                         |
 |                      |                |                                                                                                                                |
@@ -4432,7 +4442,22 @@ but failed, an entry will be added to */var/log/messages*. This log file can be 
 
 |Figure82c_png|
 
-The most recent snapshot for a volume or dataset will be listed last and will have 3 icons. The icons associated with a snapshot allow you to:
+The listing will include the name of the volume or dataset, the name of each snapshot, as well as the amount of used and referenced data, where:
+
+**Used:** indicates the amount of space consumed by this dataset and all its descendents. This value is checked against this dataset's quota and reservation.
+The space used does not include this dataset's reservation, but does take into account the reservations of any descendent datasets. The amount of space that
+a dataset consumes from its parent, as well as the amount of space that are freed if this dataset is recursively destroyed, is the greater of its space used
+and its reservation. When a snapshot is created, its space is initially shared between the snapshot and the filesystem, and possibly with previous snapshots.
+As the filesystem  changes, space  that was previously shared becomes unique to the snapshot, and is counted in the snapshot's space used. Additionally,
+deleting snapshots can increase the amount of space unique to (and used by) other snapshots. The  amount of space used, available, or referenced does not take
+into account pending changes. While pending changes are generally accounted for within a few  seconds, disk changes do not necessarily guarantee that the
+space usage information is updated immediately.
+
+**Refer:** indicates the amount of data that is accessible by this dataset, which may or may not be shared  with other  datasets  in  the pool. When a
+snapshot or clone is created, it initially references the same amount of space as the file system or snapshot it was created from, since its contents are
+identical.
+
+The most recent snapshot will have 3 icons. The icons associated with a snapshot allow you to:
 
 **Clone Snapshot:** will prompt for the name of the clone to create. The clone will be a writable copy of the snapshot. Since a clone is really a dataset
 which can be mounted, the clone will appear in the Active Volumes tab, instead of the Periodic Snapshots tab, and will have the word *clone* in its name.
@@ -5061,7 +5086,7 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Certificate             | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used              |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Enable                  | checkbox       | uncheck to disable the configuration without deleting it                 _                            |
+| Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                              |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
@@ -5241,7 +5266,8 @@ Once you press the OK button when creating the AFP share, a pop-up menu will ask
 | Share Comment                | string        | optional                                                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Path                         | browse button | browse to the volume/dataset to share                                                                       |
+| Path                         | browse button | browse to the volume/dataset to share; do not nest additional volumes, datasets, or symbolic links beneath  |
+|                              |               | this path because Netatalk lacks complete support                                                           |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow List                   | string        | comma delimited list of allowed users and/or groups where groupname begins with a @                         |
@@ -7623,8 +7649,7 @@ Advanced.
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Allow TCP Port Forwarding     | checkbox       | allows users to bypass firewall restrictions using SSH's                                                 |
-|                               |                | `port  <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                                  |
-|                               |                | `forwarding feature <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                     |
+|                               |                | `port forwarding feature <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Compress Connections          | checkbox       | may reduce latency over slow networks                                                                    |
@@ -7928,7 +7953,7 @@ Installing Plugins
 A FreeNAS® PBI is a self-contained application installer which has been designed to integrate into the FreeNAS® GUI. A FreeNAS® PBI offers several
 advantages:
 
-* the FreeNAS® GUI provides a browser for viewing the list of available FreeNAS® PBIs. This list is also available at Available FreeNAS® PBIs.
+* the FreeNAS® GUI provides a browser for viewing the list of available FreeNAS® PBIs.
 
 * the FreeNAS® GUI provides buttons for installing, starting, upgrading, and deleting FreeNAS® PBIs.
 
@@ -9353,6 +9378,16 @@ A series of instructional videos are available for FreeNAS® 9.x. They include:
 
 * `NASFeratu: Build Your Own NAS - FreeNAS Hardware Recommendations <https://www.youtube.com/watch?v=e1n3rHlUY3k>`_
 
+* `FreeNAS® 9.2.1: Plex Media Server Plugin (+ Initial Setup) <https://www.youtube.com/watch?v=3DnUWTliaOY>`_
+
+* `FreeNAS® 9.2.1.5 BitTorrent Sync Plugin (Btsync) <https://www.youtube.com/watch?v=9sb_9283BkA>`_
+
+* `FreeNAS 9.2.x with BT SYNC, transmission, Couchpotato, SickBeard and Plex  <https://www.youtube.com/watch?v=Vgh8VAR5iDU>`_
+
+* `Windows to FreeNAS backup <http://www.youtube.com/watch?v=vcmAAy-OVtI>`_
+
+* `Crashplan backup on Apple OS X with FreeNAS <http://www.youtube.com/watch?v=p7CHxFxlEU8>`_
+
 **NOTE:** videos are version-specific, meaning that some details of the tasks demonstrated may have changed in more recent versions of FreeNAS®. When in
 doubt, refer to the documentation specific to your version of FreeNAS®. 
 
@@ -9618,8 +9653,10 @@ results:
 You can receive a summary of the available switches by typing the following command. As you can see from the number of options, IOzone is comprehensive and it
 may take some time to learn how to use the tests effectively.
 
-Recent versions of FreeNAS® enable compression by default on newly created ZFS volumes. To properly test performance, use data that is not compressible by
-including following additional parameters: *-+w 0 -+y 0 -+C 0*.
+Starting with version 9.2.1, FreeNAS® enables compression on newly created ZFS pools by default. Since IOzone creates test data that is compressible, this
+can skew test results. To configure IOzone to generate incompressible test data, include the options *-+w 1 -+y 1 -+C 1*.
+
+Alternatively, consider temporarily disabling compression on the ZFS pool or dataset when running IOzone benchmarks.
 
 **NOTE:** if you prefer to visualize the collected data, scripts are available to render IOzone's output in
 `Gnuplot <http://www.gnuplot.info/>`_
