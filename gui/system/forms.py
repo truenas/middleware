@@ -735,7 +735,7 @@ class TunableForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        value = cdata.get('tun_value')
+        value = cdata.get('tun_var')
         if value:
             if (
                 cdata.get('tun_type') == 'loader' and
