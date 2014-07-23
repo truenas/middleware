@@ -338,7 +338,7 @@ class InitialWizard(CommonWizard):
                             iSCSITargetAuthorizedInitiator.objects.create()
                         )
                     target = iSCSITarget.objects.create(
-                        iscsi_target_name=share_name,
+                        iscsi_target_name='%sTarget' % share_name,
                         iscsi_target_portalgroup=portal,
                         iscsi_target_initiatorgroup=authini,
                     )
@@ -349,7 +349,7 @@ class InitialWizard(CommonWizard):
                     )
 
                     extent = iSCSITargetExtent.objects.create(
-                        iscsi_target_extent_name=share_name,
+                        iscsi_target_extent_name='%sExtent' % share_name,
                         iscsi_target_extent_type='ZVOL',
                         iscsi_target_extent_path=iscsi_target_extent_path,
                     )
