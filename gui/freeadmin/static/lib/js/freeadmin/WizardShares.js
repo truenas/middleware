@@ -234,6 +234,7 @@ define([
 
       me._ownershipUserCreate = new CheckBox({disabled: true}, me.dapOwnershipUserCreate);
       on(me._ownershipUserCreate, "change", function(value) {
+        me._ownershipUser.validate();
       });
 
       me._ownershipGroup = new ComboBox({
@@ -269,6 +270,7 @@ define([
 
       me._ownershipGroupCreate = new CheckBox({disabled: true}, me.dapOwnershipGroupCreate);
       on(me._ownershipGroupCreate, "change", function(value) {
+        me._ownershipGroup.validate();
       });
 
       me._ownershipMode = new UnixPerm({value: "755"}, me.dapOwnershipMode);
