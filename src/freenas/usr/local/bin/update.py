@@ -63,6 +63,8 @@ except getopt.GetoptError as err:
             
 root = None
 manifile = None
+verbose = 0
+debug = 0
             
 for o, a in opts:
     if o == "-v":
