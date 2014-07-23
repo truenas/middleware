@@ -3499,8 +3499,8 @@ configurable options.
 |                                                        |                | `AAM <http://en.wikipedia.org/wiki/Automatic_acoustic_management>`_                                                  |
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Enable                                                 | checkbox       | enabled by default if the disk supports S.M.A.R.T.; unchecking this box will disable any configured S.M.A.R.T Tests  |
-| `S.M.A.R.T <http://en.wikipedia.org/wiki/S.M.A.R.T.>`_ |                | for the disk                                    _                                                                    |                                                                                                           |
+| Enable S.M.A.R.T.                                      | checkbox       | enabled by default if the disk supports S.M.A.R.T.; unchecking this box will disable any configured S.M.A.R.T Tests  |
+|                                                      _ |                | for the disk                                    _                                                                    |
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | S.M.A.R.T. extra options                               | string         | `smartctl(8) <http://smartmontools.sourceforge.net/man/smartctl.8.html>`_                                            |
@@ -5034,14 +5034,14 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org*)                      |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Bind password           | string         | password for *Root bind DN*                                                                           |                                                                                                |
+| Bind password           | string         | password for *Root bind DN*                                                                           |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read and write access to any client  |
 | Binding                 |                |                                                                                                       |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| User Suffix             | string         | optional, can be added to name when user account added to LDAP directory (e.g. dept. or company name) |                                                          |
+| User Suffix             | string         | optional, can be added to name when user account added to LDAP directory (e.g. dept. or company name) |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Group Suffix            | string         | optional, can be added to name when group added to LDAP directory (e.g. dept. or company name)        |
@@ -5056,9 +5056,9 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Use default domain      | checkbox       |                                                                                                       |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Encryption Mode         | drop-down menu | choices are *Off*,                                                                                    |                                                                                               |
+| Encryption Mode         | drop-down menu | choices are *Off*,                                                                                    |
 |                         |                | *SSL*, or                                                                                             |
-|                         |                | *TLS*                                                                                                 |                                                                                                 |
+|                         |                | *TLS*                                                                                                 |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Certificate             | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used              |
@@ -5755,7 +5755,7 @@ enable this service?” Click Yes and Services → Control Services will open an
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow Guest Access           | checkbox      | if checked, no password is required to connect to the share and all users share the permissions of the      |
-|                              |               | guest user defined in Services → CIFS                                                                     |
+|                              |               | guest user defined in Services ->  CIFS                                                                     |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Only Allow Guest Access      | checkbox      | requires *Allow guest access* to also be checked; forces guest access for all connections                   |
@@ -6112,7 +6112,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                |                                                                                                       |
 +==================================+================+=======================================================================================================+
 | NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the system's hostname; it                   |
-|                                  |                | **must**  be different from the                                                                       |                                                                                                                                                                       
+|                                  |                | **must**  be different from the                                                                       |
 |                                  |                | *Workgroup* name                                                                                      |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6131,7 +6131,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Log Level                        | drop-down menu | choices are *Minimum*,                                                                                |
-|                                  |                | *Normal*, or                                                                                          |                                                                                                                                                                                  
+|                                  |                | *Normal*, or                                                                                          |
 |                                  |                | *Debug*                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6164,7 +6164,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 |                                  |                |                                                                                                       |
 | Allow Empty Password             | checkbox       | if checked, users can just press enter when prompted for a password; requires that the                |
-|                                  |                | username/password be the same for the FreeNAS® user account and the Windows user account             |
+|                                  |                | username/password be the same as the Windows user account                                             |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Auxiliary parameters             | string         | *smb.conf* options not covered elsewhere in this screen; see                                          |
@@ -7419,7 +7419,7 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 | Path                 | browse button  | volume/dataset to hold received data                                          |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
-| Access Mode          | drop-down menu | choices are *Read and Write*,                                                 |                                                                           |
+| Access Mode          | drop-down menu | choices are *Read and Write*,                                                 |
 |                      |                | *Read-only*, or                                                               |
 |                      |                | *Write-only*                                                                  |
 |                      |                |                                                                               |
