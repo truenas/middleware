@@ -15,19 +15,35 @@ def usage():
     print >> sys.stderr, "\tinstall\tInstall"
     sys.exit(1)
 
-def CheckForUpdates(root = None):
+def CheckForUpdates(root = None, handler = None):
     """
     Check for an updated manifest.
     Very simple, uses the configuration module.
     Returns the new manifest if there is an update,
     and None otherwise.
+    (It determines if there is an update if the latest-found
+    manifeset's sequence number is larger than the current
+    sequence number.)
+    The optional argument handler is a function that
+    will be called for each difference in the new manifest
+    (if there is one); it will be called with three
+    arguments:  operation, package, old package.
+    operation will be "delete", "upgrade", or "install";
+    old package will be None for delete and install.
     """
     conf = Configuration.Configuration(root)
     cur = conf.SystemManifest()
 #    m = conf.FindNewerManifest(cur.Sequence())
     m = conf.FindLatestManifest()
     print >> sys.stderr, "Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence() if m is not None else 0)
-    return m
+    if handler is not None and m is not None and cur.Sequence() != m.Sequence():
+        diffs = Manifest.CompareManifests(cur, m)
+        for (pkg, op, old) in diffs:
+            handler(op, pkg, old)
+
+    if m is not None and m.Sequence() > cur.Sequence():
+        return m
+    return None
 
 def Update(root = None):
     """
@@ -70,7 +86,17 @@ if len(args) != 1:
     usage()
 
 if args[0] == "check":
-    r = False if CheckForUpdates(root) is None else True
+    def Handler(op, pkg, old):
+        if op == "upgrade":
+            print "%s:  %s -> %s" % (pkg.Name(), old.Version(), pkg.Version())
+        else:
+            print "%s:  %s %s" % (pkg.Name(), op, pkg.Version())
+
+    if verbose > 0 or debug > 0:
+        pfcn = Handler
+    else:
+        pfcn = None
+    r = False if CheckForUpdates(root, pfcn) is None else True
 
     print >> sys.stderr, "Newer manifest found" if r else "No newer manifest found"
     if r:   
