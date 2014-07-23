@@ -49,6 +49,7 @@ from django.utils.translation import ugettext as __
 from dojango import forms
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
+from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -1344,6 +1345,48 @@ class InitialWizardVolumeForm(Form):
             }
 
         return groups
+
+    def _get_disk_size(self, disk, bysize):
+        size = None
+        for _size, disks in bysize.items():
+            if disk in disks:
+                size = _size
+                break
+        return size
+
+    def _groups_to_size(self, bysize, groups, swapsize):
+        size = 0
+        for group in groups.values():
+            lower = None
+            for disk in group['disks']:
+                _size = self._get_disk_size(disk, bysize)
+                if _size and (not lower or lower > _size):
+                    lower = _size - swapsize
+            if not lower:
+                continue
+
+            if group['type'] == 'mirror':
+                size += lower
+            elif group['type'] == 'raidz1':
+                size += lower * (len(group['disks']) - 1)
+            elif group['type'] == 'raidz2':
+                size += lower * (len(group['disks']) - 2)
+            elif group['type'] == 'stripe':
+                size += lower * len(group['disks'])
+        return humanize_size(size)
+
+    def choices_size(self):
+        swapsize = models.Advanced.objects.order_by('-id')[0].adv_swapondrive
+        swapsize *= 1024 * 1024 * 1024
+        types = defaultdict(dict)
+        bysize = self._get_unused_disks_by_size()
+        for _type, descr in self.fields['volume_type'].choices:
+            if _type == 'auto':
+                groups = self._grp_autoselect(bysize)
+            else:
+                groups = self._grp_predefined(bysize, _type)
+            types[_type] = self._groups_to_size(bysize, groups, swapsize)
+        return json.dumps(types)
 
     def clean(self):
         volume_type = self.cleaned_data.get('volume_type')
