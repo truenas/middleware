@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+import cPickle as pickle
 import json
 import logging
 import os
@@ -48,7 +49,6 @@ from django.http import (
     StreamingHttpResponse,
 )
 from django.shortcuts import render
-from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
@@ -506,6 +506,19 @@ def firmware_progress(request):
         except OSError:
             pass
 
+    content = json.dumps(data)
+    return HttpResponse(content, content_type='application/json')
+
+
+def initialwizard_progress(request):
+    data = {}
+    if os.path.exists(forms.WIZARD_PROGRESSFILE):
+        with open(forms.WIZARD_PROGRESSFILE, 'rb') as f:
+            data = f.read()
+        try:
+            data = pickle.loads(data)
+        except:
+            data = {}
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
 

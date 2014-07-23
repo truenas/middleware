@@ -45,6 +45,7 @@ urlpatterns = patterns('freenasUI.system.views',
             ('confirm', InitialWizardConfirmForm),
         ]
     ), name='system_initialwizard'),
+    url(r'^wizard/progress/$', 'initialwizard_progress', name="system_initialwizard_progress"),
     url(r'^reboot/$', 'reboot', name="system_reboot"),
     url(r'^reboot/dialog/$', 'reboot_dialog', name="system_reboot_dialog"),
     url(r'^reboot/run/$', 'reboot_run', name="system_reboot_run"),

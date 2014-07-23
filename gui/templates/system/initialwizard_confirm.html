@@ -4,7 +4,16 @@
       doSubmit({
         form: this,
         event: e,
-        url: '{{ request.path }}'
+        url: '{{ request.path }}',
+        progressbar: {
+          steps: [
+            {label: gettext("Setting up volume")},
+            {label: gettext("Creating shares")},
+            {label: gettext("Restarting services")}
+          ],
+          poolUrl: '{% url "system_initialwizard_progress" %}',
+          fileUpload: false
+        }
       });
     </script>
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">

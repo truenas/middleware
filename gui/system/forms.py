@@ -26,6 +26,7 @@
 #####################################################################
 
 from collections import defaultdict, OrderedDict
+import cPickle as pickle
 import json
 import logging
 import math
@@ -73,6 +74,7 @@ from freenasUI.storage.models import MountPoint, Volume, Scrub
 from freenasUI.system import models
 
 log = logging.getLogger('system.forms')
+WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
 
 
 def clean_path_execbit(path):
@@ -171,6 +173,16 @@ class InitialWizard(CommonWizard):
         ]
 
     def done(self, form_list, **kwargs):
+
+        progress = {
+            'step': 1,
+            'indeterminate': True,
+            'percent': 0,
+        }
+
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
         cleaned_data = self.get_all_cleaned_data()
         volume_name = cleaned_data.get('volume_name')
         volume_type = cleaned_data.get('volume_type')
@@ -209,8 +221,14 @@ class InitialWizard(CommonWizard):
             )
             Scrub.objects.create(scrub_volume=volume)
 
+            progress['step'] = 2
+            progress['indeterminate'] = False
+            progress['percent'] = 0
+            with open(WIZARD_PROGRESSFILE, 'wb') as f:
+                f.write(pickle.dumps(progress))
+
             services_restart = []
-            for share in shares:
+            for i, share in enumerate(shares):
                 if not share:
                     continue
 
@@ -365,18 +383,46 @@ class InitialWizard(CommonWizard):
                     )
                     services_restart.append(share_purpose)
 
+                progress['percent'] = int(
+                    (float(i + 1) / float(len(shares))) * 100
+                )
+                with open(WIZARD_PROGRESSFILE, 'wb') as f:
+                    f.write(pickle.dumps(progress))
+
+        progress['step'] = 3
+        progress['indeterminate'] = False
+        progress['percent'] = 1
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
 
         _n.reload("disk")  # Reloads collectd as well
+
+        progress['percent'] = 50
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
         _n.start("ix-system")
         _n.start("ix-syslogd")
         _n.restart("system_datasets")  # FIXME: may reload collectd again
+
+        progress['percent'] = 70
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
         _n.restart("cron")
         _n.reload("user")
 
         for service in services_restart:
             _n.restart(service)
+
+        progress['percent'] = 100
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
+        os.unlink(WIZARD_PROGRESSFILE)
 
         return JsonResp(
             self.request,
