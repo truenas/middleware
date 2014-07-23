@@ -704,7 +704,7 @@ class Installer(object):
         count = 0
         self._packages = []
         for pkg in self._manifest.Packages():
-            pkgFile = self._conf.FindPackageFile(pkg, self._manifest)
+            pkgFile = self._conf.FindPackageFile(pkg)
             if pkgFile is None:
                 raise InstallerPackageNotFoundException("%s-%s" % (pkg.Name(), pkg.Version()))
             self._packages.append({ pkg.Name() : pkgFile})
