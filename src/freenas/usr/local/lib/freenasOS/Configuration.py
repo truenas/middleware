@@ -356,20 +356,27 @@ class Configuration(object):
         for section in cfp.sections():
             if section == CONFIG_DEFAULT:
                 # Default, used to set search paths
-                sp = cfp.get(section, "search")
-                if sp is not None:
+                if cfp.has_option(section, "search"):
+                    sp = cfp.get(section, "search")
                     spa = sp.split()
                     # Handle backslash for line continuation
                     for L in spa:
                         if L == "\\":
                             continue
-                        self.AddSearchLocation(L)
+                            self.AddSearchLocation(L)
+                # Also see if it has a temp location defined
+                if cfp.has_option(section, "Temp Directory"):
+                    self._temp = cfp.get(section, "Temp Directory")
             else:
                 # This is a train name
-                train = Train(section, cfp.get(section, TRAIN_DESC_KEY))
-                train.SetLastSequence(cfp.get(section, TRAIN_SEQ_KEY))
-                train.SetLastCheckedTime(cfp.get(section, TRAIN_CHECKED_KEY))
-                self.AddTrain(train)
+                try:
+                    train = Train(section, cfp.get(section, TRAIN_DESC_KEY))
+                    train.SetLastSequence(cfp.get(section, TRAIN_SEQ_KEY))
+                    train.SetLastCheckedTime(cfp.get(section, TRAIN_CHECKED_KEY))
+                    self.AddTrain(train)
+                except:
+                    # Ignore errors (for now at least)
+                    pass
 
         self.MarkDirty()
         return
@@ -506,7 +513,8 @@ class Configuration(object):
                 
             if pkgdb is not None:
                 pkgInfo = pkgdb.FindPackage(package.Name())
-                curVers = pkgInfo[package.Name()]
+                if pkgInfo is not None:
+                    curVers = pkgInfo[package.Name()]
         else:
             curVers = upgrade_from
 
