@@ -23,6 +23,38 @@ def MakeString(obj):
     retval = json.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '), cls = ManifestEncoder)
     return retval
 
+def CompareManifests(m1, m2):
+    """
+    Compare two manifests.  The return value is an
+    array of tuples; each tuple is (package, op, old).
+    op is "delete", "upgrade", or "install"; for "upgrade",
+    the third element of the tuple will be the old version.
+    Deleted packages will always be first.
+    It assumes m1 is the older, and m2 is the newer.
+    """
+    old_packages = m1.Packages()
+    new_packages = m2.Packages()
+    old_list = {}
+
+    retval = []
+
+    for P in old_packages:
+        old_list[P.Name()] = P
+
+    for P in new_packages:
+        if P.Name() in old_list:
+            # Either it's the same version, or a new version
+            if old_list[P.Name()].Version() != P.Version():
+                retval.append((P, "upgrade", old_list[P.Name()]))
+            old_list.pop(P.Name())
+        else:
+            retval.append((P, "install", None))
+
+    for P in old_list:
+        retval.insert(0, (P, "delete", None))
+    
+    return retval
+                    
 class ManifestEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Package.Package):
