@@ -93,6 +93,14 @@ define([
       me._shareNFS = new RadioButton({}, me.dapShareNFS);
       me._shareiSCSI = new RadioButton({}, me.dapShareiSCSI);
 
+      on(me._shareCIFS, "change", function() {
+        if(this.get('value')) {
+          me._shareGuest.set('disabled', false);
+        } else {
+          me._shareGuest.set('disabled', true);
+        }
+      });
+
       on(me._shareAFP, "change", function() {
         if(this.get('value')) {
           me._shareAFP_TM.set('disabled', false);
