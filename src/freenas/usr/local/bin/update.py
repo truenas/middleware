@@ -33,15 +33,13 @@ def CheckForUpdates(root = None, handler = None):
     """
     conf = Configuration.Configuration(root)
     cur = conf.SystemManifest()
-#    m = conf.FindNewerManifest(cur.Sequence())
     m = conf.FindLatestManifest()
     print >> sys.stderr, "Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence() if m is not None else 0)
-    if handler is not None and m is not None and cur.Sequence() != m.Sequence():
-        diffs = Manifest.CompareManifests(cur, m)
-        for (pkg, op, old) in diffs:
-            handler(op, pkg, old)
-
     if m is not None and m.Sequence() > cur.Sequence():
+        if handler is not None:
+            diffs = Manifest.CompareManifests(cur, m)
+            for (pkg, op, old) in diffs:
+                handler(op, pkg, old)
         return m
     return None
 
@@ -75,10 +73,17 @@ def Update(root = None, conf = None, handler = None):
     if conf is None:
         conf = Configuration.Configuration(root = root)
 
+    for pkg in deleted_packages:
+        print >> sys.stderr, "Want to delete package %s" % pkg.Name()
+#        if conf.PackageDB().RemovePackageContents(pkg) == False:
+#            print >> sys.stderr, "Unable to remove contents package %s" % pkg.Name()
+#            sys.exit(1)
+#        conf.PackageDB().RemovePackage(pkg.Name())
+
     installer = Installer.Installer(manifest = new_man, root = root, config = conf)
     installer.GetPackages()
 
-    print "I MUST UPDATE OR MY HEAD WILL EXPLODE"
+    print "Packages = %s" % installer._packages
     return
 try:
     opts, args = getopt.getopt(sys.argv[1:], "qvdR:M:T:")
