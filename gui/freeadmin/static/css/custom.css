@@ -332,6 +332,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.LLDPIcon {
+    background-image:url('/static/images/ui/tree/lldp.png');
+    width:16px;
+    height:16px;
+}
 .SysDatasetIcon {
     background-image:url('/static/images/ui/tree/sysdataset.png');
     width:16px;
