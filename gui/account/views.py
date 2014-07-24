@@ -119,7 +119,10 @@ def json_users(request, exclude=None):
                 'label': user.pw_name,
             })
             idx += 1
-    return HttpResponse(json.dumps(json_user, indent=3))
+    return HttpResponse(
+        json.dumps(json_user, indent=3),
+        content_type='application/json',
+    )
 
 
 def json_groups(request):
@@ -145,7 +148,10 @@ def json_groups(request):
                 'label': grp.gr_name,
             })
             idx += 1
-    return HttpResponse(json.dumps(json_group, indent=3))
+    return HttpResponse(
+        json.dumps(json_group, indent=3),
+        content_type='application/json',
+    )
 
 
 def login_wrapper(
