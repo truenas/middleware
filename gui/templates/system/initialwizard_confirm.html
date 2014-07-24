@@ -1,11 +1,14 @@
 {% load freeadmin %}<div data-dojo-type="dijit.layout.ContentPane" class="objrefresh" doLayout="false">
   <form data-dojo-type="dijit.form.Form" action="." enctype="multipart/form-data" method="post">{% csrf_token %}
-    <script type="dojo/method" data-dojo-event="doSubmit" data-dojo-args="e">
-      doSubmit({
+    <script type="dojo/method" data-dojo-event="doSubmit" data-dojo-args="e, progressbar">
+      var attrs = {
         form: this,
         event: e,
-        url: '{{ request.path }}',
-        progressbar: {
+        url: '{{ request.path }}'
+      }
+
+      if(progressbar) {
+        attrs['progressbar'] = {
           steps: [
             {label: gettext("Setting up volume")},
             {label: gettext("Creating shares")},
@@ -14,11 +17,12 @@
           poolUrl: '{% url "system_initialwizard_progress" %}',
           fileUpload: false
         }
-      });
+      }
+      doSubmit(attrs);
     </script>
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
       {% block onSubmit %}
-      this.doSubmit(e);
+      this.doSubmit(e, true);
       {% endblock %}
     </script>
   <table class="form">
@@ -53,7 +57,7 @@
               type: "hidden"
             }).placeAt(btn.domNode.parentNode.parentNode);
             var form = getForm(btn);
-            form.doSubmit(evt);
+            form.doSubmit(evt, false);
           });
           </script>
         </button>
