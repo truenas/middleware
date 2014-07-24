@@ -27,8 +27,6 @@
 import grp
 import logging
 import pwd
-import sqlite3
-import types
 
 from freenasUI.common.system import (
     activedirectory_enabled,
@@ -36,7 +34,6 @@ from freenasUI.common.system import (
     ldap_enabled,
     nis_enabled,
     nt4_enabled,
-    FREENAS_DATABASE
 )
 
 from freenasUI.common.freenasldap import (
@@ -117,39 +114,19 @@ def bsdUsers_objects(**kwargs):
 
 
 def bsdGroups_objects(**kwargs):
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
+    from freenasUI.account.models import bsdGroups
 
-    sql = "SELECT * FROM account_bsdgroups"
+    qs = bsdGroups.objects.filter(**kwargs)
 
-    count = len(kwargs)
-    if count > 0:
-        sql += " WHERE ("
+    objects = {}
+    for group in qs:
+        obj = group.__dict__
+        obj.pop('_state', None)
+        if 'bsdgrp_gid' in kwargs:
+            objects[group.bsdgrp_gid] = obj
+        else:
+            objects[group.bsdgrp_group] = obj
 
-        i = 0
-        for k in kwargs.keys():
-            sql += "%s = '%s'" % (k, kwargs[k])
-            i += 1
-
-            if i != count:
-                sql += " AND "
-
-        sql += ")"
-
-    sql += " ORDER BY bsdgrp_builtin"
-
-    results = c.execute(sql)
-
-    objects = []
-    for row in results:
-        obj = {}
-        for key in row.keys():
-            obj[key] = row[key]
-        objects.append(obj)
-
-    c.close()
-    h.close()
     return objects
 
 
@@ -171,31 +148,29 @@ class FreeNAS_Local_Group(object):
 
         super(FreeNAS_Local_Group, self).__init__()
 
+        data = kwargs.pop('data', None)
+
         self._gr = None
         if group is not None:
-            self.__get_group(group)
+            self.__get_group(group, data=data)
 
         log.debug("FreeNAS_Local_Group.__init__: leave")
 
-    def __get_group(self, group):
+    def __get_group(self, group, data=None):
         log.debug("FreeNAS_local_Group.__get_group: enter")
         log.debug("FreeNAS_local_Group.__get_group: group = %s", group)
 
-        grfunc = None
-        objects = bsdGroups_objects(bsdgrp_group=group)
-        grfunc = grp.getgrnam
-        if not objects:
+        if not data and (
+            isinstance(group, int) or (
+                isinstance(group, (str, unicode)) and group.isdigit()
+            )
+        ):
             objects = bsdGroups_objects(bsdgrp_gid=group)
             if objects:
-                grfunc = grp.getgrgid
-                group = int(group)
-       
-        if objects:
-            group = objects[0]['bsdgrp_group']
-            grfunc = grp.getgrnam
+                group = objects[int(group)]['bsdgrp_group']
 
         try:
-            self._gr = grfunc(group.encode('utf-8'))
+            self._gr = grp.getgrnam(group.encode('utf-8'))
         except Exception, e:
             log.debug("Exception on grfunc: %s", e)
             self._gr = None
@@ -277,8 +252,8 @@ class FreeNAS_Groups(object):
 
         self.__bsd_groups = []
         objects = bsdGroups_objects()
-        for obj in objects:
-            self.__bsd_groups.append(FreeNAS_Group(obj['bsdgrp_group'], dflags=0))
+        for group, obj in objects.items():
+            self.__bsd_groups.append(FreeNAS_Group(group, data=obj, dflags=0))
 
         log.debug("FreeNAS_Groups.__init__: leave")
 
@@ -328,8 +303,7 @@ class FreeNAS_Local_User(object):
         ):
             objects = bsdUsers_objects(bsdusr_uid=user)
             if objects:
-                pwfunc = pwd.getpwuid
-                user = objects[0]['bsdusr_username']
+                user = objects[int(user)]['bsdusr_username']
 
         try:
             self._pw = pwd.getpwnam(user.encode('utf-8'))
