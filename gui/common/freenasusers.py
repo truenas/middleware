@@ -208,9 +208,10 @@ class FreeNAS_Group(object):
         log.debug("FreeNAS_Group.__new__: enter")
         log.debug("FreeNAS_Group.__new__: group = %s", group)
 
-        dflags = _get_dflags()
-        if kwargs.has_key('dflags'):
+        if 'dflags' in kwargs:
             dflags = kwargs['dflags']
+        else:
+            dflags = _get_dflags()
 
         obj = None
         if dflags & U_AD_ENABLED:
@@ -345,9 +346,10 @@ class FreeNAS_User(object):
         log.debug("FreeNAS_User.__new__: enter")
         log.debug("FreeNAS_User.__new__: user = %s", user)
 
-        dflags = _get_dflags()
-        if kwargs.has_key('dflags'):
+        if 'dflags' in kwargs:
             dflags = kwargs['dflags']
+        else:
+            dflags = _get_dflags()
 
         data = kwargs.pop('data', None)
 
