@@ -14,7 +14,7 @@ def post():
   if r.status_code == 202:
     print 'System shuting down ......'
   else:
-    pring 'System shut down --> Failed'
+    print 'System shut down --> Failed'
 
 def put():
   print 'No PUT function for system-shutdown!'
