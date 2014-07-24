@@ -690,8 +690,9 @@ class Installer(object):
             raise InstallerConfigurationException("No manifest file")
         return
 
-    def GetPackages(self, progressFunc = None):
-        # Load the packages in the given manifest.
+    def GetPackages(self, pkgList = None):
+        # Load the packages in pkgList.  If pkgList is not
+        # given, it loads the packages in the manifest.
         # This should change.
         # Note that we use /Install-tmp because /tmp is a symlink in
         # the install.  We don't need to use the installation directory,
@@ -700,18 +701,15 @@ class Installer(object):
         if os.path.exists(tempdir) == False:
             os.makedirs(tempdir)
 
-        total = float(len(self._manifest.Packages()))
-        count = 0
         self._packages = []
-        for pkg in self._manifest.Packages():
+        if pkgList is None:
+            pkgList = self._manifest.Packages()
+        for pkg in pkgList:
             pkgFile = self._conf.FindPackageFile(pkg)
             if pkgFile is None:
                 raise InstallerPackageNotFoundException("%s-%s" % (pkg.Name(), pkg.Version()))
             self._packages.append({ pkg.Name() : pkgFile})
-            if progressFunc is not None:
-                progressFunc(100 * count / total, pkg.Name())
-            count += 1
-        # At this point, self._packages has all of the packages,
+        # At this point, self._packages has all of the packages we want to install,
         # ready for installation
         return True
 

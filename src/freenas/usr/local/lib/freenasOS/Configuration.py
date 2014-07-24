@@ -304,8 +304,6 @@ class Configuration(object):
         if file is not None: self._config_path = file
         self._nopkgdb = nopkgdb
         self.LoadConfigurationFile(self._config_path)
-        self._dirty = False
-        return
 
     def SystemManifest(self):
         man = Manifest.Manifest(self)
@@ -349,7 +347,6 @@ class Configuration(object):
         except:
             return
 
-
         if cfp is None:
             return
 
@@ -363,7 +360,7 @@ class Configuration(object):
                     for L in spa:
                         if L == "\\":
                             continue
-                            self.AddSearchLocation(L)
+                        self.AddSearchLocation(L)
                 # Also see if it has a temp location defined
                 if cfp.has_option(section, "Temp Directory"):
                     self._temp = cfp.get(section, "Temp Directory")

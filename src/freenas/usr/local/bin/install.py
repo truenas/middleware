@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     installer = Installer.Installer(manifest = manifest, root = root, config = config)
 
-    if installer.GetPackages(PrintProgress) != True:
+    if installer.GetPackages() != True:
         print >> sys.stderr, "Huh, could not install and yet it returned"
 
     installer.InstallPackages(PrintProgress)

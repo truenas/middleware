@@ -54,7 +54,7 @@ def ScanTree(root):
 # We'll assume some defaults specific to ix.
 
 def usage():
-    print >> sys.stderr, "Usage: %s [-dv] -R <root> -N <name> -V <version> output_file" % sys.argv[0]
+    print >> sys.stderr, "Usage: %s [-dv] -R <root> -T template -N <name> -V <version> output_file" % sys.argv[0]
     sys.exit(1)
 
 SCRIPTS = [
@@ -128,14 +128,14 @@ def main():
     global debug, verbose
     # Some valid, but stupid, defaults.
     manifest = {
-        "www" : "http://www.freenas.org",
-        "arch" : "freebsd:9:x86:64",
-        "maintainer" : "something@freenas.org",
-        "comment" : "FreeNAS Package",
-        "origin" : "system/os",
-        "prefix" : "/",
-        "licenselogic" : "single",
-        "desc" : "FreeNAS Package",
+#        "www" : "http://www.freenas.org",
+#        "arch" : "freebsd:9:x86:64",
+#        "maintainer" : "something@freenas.org",
+#        "comment" : "FreeNAS Package",
+#        "origin" : "system/os",
+#        "prefix" : "/",
+#        "licenselogic" : "single",
+#        "desc" : "FreeNAS Package",
         }
     root = None
     try:
@@ -175,6 +175,7 @@ def main():
         usage()
     if "name" not in manifest:
         print >> sys.stderr, "Package must have a name"
+        print >> sys.stderr, manifest
         usage()
     if "version" not in manifest:
         print >> sys.stderr, "Package must have a version"
@@ -201,11 +202,11 @@ def main():
     tf.addfile(mani_file_info, mani_file)
     # Now add all of the files
     for file in manifest["files"].keys():
-        if verbose or debug > 0:  print >> sys.stderr, "Adding %s to archive" % file
+        if verbose or debug > 0:  print >> sys.stderr, "Adding file %s to archive" % file
         tf.add(root + file, arcname = file, recursive = False)
     # And now the directories
     for dir in manifest["directories"].keys():
-        if verbose or debug > 0:  print >> sys.stderr, "Adding %s to archive" % dir
+        if verbose or debug > 0:  print >> sys.stderr, "Adding directory %s to archive" % dir
         tf.add(root + dir, arcname = dir, recursive = False)
 
     return 0

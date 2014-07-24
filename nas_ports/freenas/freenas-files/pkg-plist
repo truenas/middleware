@@ -7,7 +7,6 @@ usr/local/bin/arc_summary.py
 usr/local/bin/arcstat.py
 usr/local/bin/check_packages
 usr/local/bin/crashuploader
-usr/local/bin/create_manifest
 usr/local/bin/custom-upssched-cmd
 usr/local/bin/freenas-debug
 usr/local/bin/ixdiagnose

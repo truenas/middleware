@@ -243,7 +243,7 @@ do-install:
 .for script in Configuration.py Installer.py Manifest.py Package.py Exceptions.py Train.py __init__.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/lib/freenasOS/${script} ${STAGEDIR}/${PREFIX}/usr/local/lib/freenasOS/${script}
 .endfor
-.for script in check_packages.py create_manifest.py create_package.py diff_packages.py pkgify.py update_freenas.py install.py update.py manifest_util.py
+.for script in check_packages.py diff_packages.py pkgify.py update_freenas.py install.py update.py manifest_util.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/${script} ${STAGEDIR}/${PREFIX}/usr/local/bin/${script:R}
 .endfor
 
