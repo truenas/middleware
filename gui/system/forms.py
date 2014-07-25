@@ -1169,6 +1169,10 @@ class InitialWizardShareForm(Form):
     share_usercreate = forms.BooleanField(
         required=False,
     )
+    share_userpw = forms.CharField(
+        required=False,
+        max_length=100,
+    )
     share_groupcreate = forms.BooleanField(
         required=False,
     )
