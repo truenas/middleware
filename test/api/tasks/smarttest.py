@@ -18,7 +18,7 @@ payload = {
           "smarttest_desc": ""
 }
 
-url = conn.url + 'system/smarttest/'
+url = conn.url + 'tasks/smarttest/'
 
 def smarttest_get():
   r = requests.get(url, auth = auth)
