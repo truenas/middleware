@@ -1263,7 +1263,7 @@ class InitialWizardVolumeForm(Form):
     def show_condition(cls, wizard):
         return (
             len(cls._types_avail(cls._get_unused_disks_by_size())) > 0
-        ) and Volume.objects.filter(vol_fstype='ZFS').exists()
+        )
 
     @staticmethod
     def _get_unused_disks():
