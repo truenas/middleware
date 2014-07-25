@@ -59,7 +59,8 @@ def TryGetNetworkFile(url, tmp, current_version = "1"):
     return retval
 
 class PackageDB:
-    DB_NAME = "var/db/ix/freenas-db"
+#    DB_NAME = "var/db/ix/freenas-db"
+    DB_NAME = "data/pkgdb/freenas-db"
     __db_path = None
     __db_root = ""
     __conn = None
@@ -514,6 +515,11 @@ class Configuration(object):
                     curVers = pkgInfo[package.Name()]
         else:
             curVers = upgrade_from
+
+        # If it's the same version, then we don't want to look
+        # for an upgrade, obviously.
+        if curVers == package.Version():
+            curVers = None
 
         if curVers is not None:
             # We want to look for an old version

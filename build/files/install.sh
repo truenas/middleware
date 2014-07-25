@@ -512,6 +512,9 @@ menu_install()
         ls /tmp/data > /dev/null
 	# Add the boot loader
 	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
+	# For the install to work, we need to have /data mounted.
+	test -d /tmp/data/data || mkdir /tmp/data/data
+	mount /dev/${_disk}p3 /tmp/data/data
 	/usr/local/bin/install -C /etc/freenas.conf -M /FreeNAS-MANIFEST /tmp/data
 	# Need to link the manifest file
 	rm -f /tmp/data/conf/base/etc/manifest
@@ -548,6 +551,7 @@ menu_install()
             install_worker.sh -D /tmp/data -m / install
         fi
 
+	umount /tmp/data/data
         umount /tmp/data
         rmdir /tmp/data
 	dialog --msgbox "The installer has preserved your database file.
@@ -558,7 +562,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	# For non-upgrade installs, the partition was erased.
 	# A boot partition was created, so we need to add two
 	# more partitions:  data and root
-	gpart add -t freebsd-ufs -s 20M -i 3 ${_disk}	# data, 20mbytes
+	gpart add -t freebsd-ufs -s 40M -i 3 ${_disk}	# data, 40mbytes
 	gpart add -t freebsd-ufs -i 2 ${_disk}		# The rest of the disk
 	# Add the boot loader
 	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
@@ -576,12 +580,15 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	newfs -n /dev/${_disk}p2
 	mkdir -p /tmp/data
 	mount /dev/${_disk}p2 /tmp/data
-	/usr/local/bin/update_freenas -R /tmp/data -M /FreeNAS-MANIFEST install
+	mkdir /tmp/data/data
+	mount /dev/${_disk}p3 /tmp/data/data
+	/usr/local/bin/install -C /etc/freenas.conf -M /FreeNAS-MANIFEST /tmp/data
 	# Need to link the manifest file
 	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
 	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
 	echo "/dev/${_disk}p3 /data ufs rw 2 2" >> /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
+	umount /tmp/data/data
 	umount /tmp/data
 	rmdir /tmp/data
 	# Hack, of course
