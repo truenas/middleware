@@ -77,7 +77,8 @@ class PackageDB:
             raise Exception("Cannot connect to database file %s" % self.__db_path)
 
         cur = self.__conn.cursor()
-        cur.execute("CREATE TABLE IF NOT EXISTS packages(name text primary key, version text not null, manifest text not null)")
+        cur.execute("CREATE TABLE IF NOT EXISTS packages(name text primary key, version text not null)")
+        cur.execute("CREATE TABLE IF NOT EXISTS scripts(package text not null, type text not null, script text not null)")
         cur.execute("""CREATE TABLE IF NOT EXISTS
 		files(package text not null,
 			path text primary key,
@@ -119,18 +120,15 @@ class PackageDB:
     def FindPackage(self, pkgName):
         self._connectdb()
         cur = self.__conn.cursor()
-        cur.execute("SELECT name, version, manifest FROM packages WHERE name = ?", (pkgName, ))
+        cur.execute("SELECT name, version FROM packages WHERE name = ?", (pkgName, ))
         rv = cur.fetchone()
         self._closedb()
         if rv is None: return None
         print >> sys.stderr, "rv = %s" % rv.keys()
         m = {}
-        if rv["manifest"] is not None and rv["manifest"] != "":
-            m = json.loads(rv["manifest"])
-        # This is slightly redundant -- the manifest has the name and version!
-        return { rv["name"] : rv["version"], "manifest" : m }
+        return { rv["name"] : rv["version"] }
 
-    def UpdatePackage(self, pkgName, curVers, newVers, manifest):
+    def UpdatePackage(self, pkgName, curVers, newVers, scripts):
         cur = self.FindPackage(pkgName)
         if cur is None:
             raise Exception("Package %s is not in system database, cannot update" % pkgName)
@@ -142,18 +140,47 @@ class PackageDB:
             return
         self._connectdb()
         cur = self.__conn.cursor()
-        cur.execute("UPDATE packages SET version = ?, manifest = ?  WHERE name = ?", (newVers, manifest, pkgName))
+        cur.execute("UPDATE packages SET version = ? WHERE name = ?", (newVers, manifest, pkgName))
+        cur.execute("DELETE FROM scripts WHERE package = ?", (pkgName,))
+        if scripts is not None:
+            for scriptType in scripts.keys():
+                cur.execute("INSERT INTO scripts(package, type, script) VALUES(?, ?, ?)",
+                            (pkgName, scriptType, scripts[scriptType]))
+
         self.__closedb()
 
-    def AddPackage(self, pkgName, vers, manifest):
+    def AddPackage(self, pkgName, vers, scripts):
         curVers = self.FindPackage(pkgName)
         if curVers is not None:
             raise Exception("Package %s is already in system database, cannot add" % pkgName)
         self._connectdb()
         cur = self.__conn.cursor()
-        cur.execute("INSERT INTO packages VALUES(?, ?,? )", (pkgName, vers, manifest))
+        cur.execute("INSERT INTO packages VALUES(?, ?)", (pkgName, vers))
+        if scripts is not None:
+            for scriptType in scripts.keys():
+                cur.execute("INSERT INTO scripts(package, type, script) VALUES(?, ?, ?)",
+                            (pkgName, scriptType, scripts[scriptType]))
         self._closedb()
 
+
+    def FindScriptForPackage(self, pkgName, scriptType = None):
+        cur = self._connectdb(cursor = True)
+        if scriptType is None:
+            cur.execute("SELECT type, script FROM scripts WHERE package = ?", (pkgName, ))
+        else:
+            cur.execute("SELECT type, script FROM scripts WHERE package = ? and type = ?",
+                        (pkgName, scriptType))
+
+        scripts = cur.fetchall()
+        self._closedb()
+        rv = []
+        for s in scripts:
+            tmp = {}
+            for k in s.keys():
+                tmp[k] = s[k]
+            rv.append(tmp)
+
+        return rv
 
     def FindFilesForPackage(self, pkgName = None):
         self._connectdb()
@@ -268,6 +295,16 @@ class PackageDB:
         self._closedb()
         return True
 
+    def RemovePackageScripts(self, pkgName):
+        if self.FindPackage(pkgName) is None:
+            print >> sys.stderr, "Package %s is not in database, cannot remove scripts" % pkgName
+            return False
+
+        cur = self._connectdb(cursor = True)
+        cur.execute("DELETE FROM scripts WHERE package = ?", (pkgName, ))
+        self._closedb()
+        return True
+
     def RemovePackageContents(self, pkgName, failDirectoryRemoval = False):
         if self.FindPackage(pkgName) is None:
             print >> sys.stderr, "Package %s is not in database" % pkgName
@@ -276,6 +313,8 @@ class PackageDB:
         if self.RemovePackageFiles(pkgName) == False:
             return False
         if self.RemovePackageDirectories(pkgName, failDirectoryRemoval) == False:
+            return False
+        if self.RemovePackageScripts(pkgName) == False:
             return False
 
         return True
@@ -287,10 +326,15 @@ class PackageDB:
             if len(flist) != 0:
                 print >> sys.stderr, "Can't remove package %s, it has %d files still" % (pkgName, len(flist))
                 raise Exception("Cannot remove package %s if it still has files" % pkgName)
-            self._connectdb()
-            cur = self.__conn.cursor()
-            cur.execute("DELETE FROM packages WHERE name = ?", (pkgName, ))
-            self._closedb()
+            dlist = self.FindScriptForPackage(pkgName)
+            if dlist is not None and len(dlist) != 0:
+                print >> sys.stderr, "Cannot remove package %s, it still has scripts" % pkgName
+                raise Exception("Cannot remove package %s as it still has scripts" % pkgName)
+
+        self._connectdb()
+        cur = self.__conn.cursor()
+        cur.execute("DELETE FROM packages WHERE name = ?", (pkgName, ))
+        self._closedb()
         return
 
 class Configuration(object):
@@ -424,9 +468,15 @@ class Configuration(object):
         self.MarkDirty()
         return
 
+    def TemporaryDirectory(self):
+        return self._temp
+
     def SetTemporaryDirectory(self, path):
         self._temp = path
         return
+
+    def CreateTemporaryFile(self):
+        return tempfile.TemporaryFile(dir = self._temp)
 
     def SearchForFile(self, path):
         # Iterate through the search locations,
