@@ -237,6 +237,7 @@ class PackageDB:
                 raise Exception("Cannot remove file %s" % path)
             file_list.append((path, ))
         cur.executemany("DELETE FROM files WHERE path = ?", file_list)
+        cur.execute("VACUUM")
         self._closedb()
         return True
 
@@ -263,6 +264,7 @@ class PackageDB:
                 raise Exception("Cannot remove directory %s" % path)
             dir_list.append((path, ))
         cur.executemany("DELETE FROM files WHERE path = ?", dir_list)
+        cur.execute("VACUUM")
         self._closedb()
         return True
 
