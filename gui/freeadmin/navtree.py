@@ -253,7 +253,7 @@ class NavTree(object):
 
         nav = TreeRoot(
             'initialwizard',
-            name=_('Initial Wizard'),
+            name=_('Wizard'),
             icon='WizardIcon',
             action='wizard',
             order=987,
