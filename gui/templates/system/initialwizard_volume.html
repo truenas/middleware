@@ -18,10 +18,10 @@
 
     var estimatedSize = function(value) {
       if(sizes[value]) {
-        domStyle.set(query(".wizardTotalSizeRow"), "display", "");
+        domStyle.set(query(".wizardTotalSizeRow")[0], "display", "");
         query(".wizardTotalSize")[0].innerHTML = sizes[value];
       } else {
-        domStyle.set(query(".wizardTotalSizeRow"), "display", "none");
+        domStyle.set(query(".wizardTotalSizeRow")[0], "display", "none");
       }
     }
 
@@ -35,7 +35,7 @@
       var radio = registry.getEnclosingWidget(item);
       on(item, "change", function() {
          var value = radio.get('value');
-	 estimatedSize(value);
+         estimatedSize(value);
       });
     });
   });
