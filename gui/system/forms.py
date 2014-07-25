@@ -1448,6 +1448,17 @@ class InitialWizardVolumeForm(Form):
             types[_type] = self._groups_to_size(bysize, groups, swapsize)
         return json.dumps(types)
 
+    def clean_volume_name(self):
+        volume_name = self.cleaned_data.get('volume_name')
+        if not volume_name:
+            return volume_name
+        qs = Volume.objects.filter(vol_name=volume_name)
+        if qs.exists():
+            raise forms.ValidationError(
+                _("A pool with this name already exists.")
+            )
+        return volume_name
+
     def clean(self):
         volume_type = self.cleaned_data.get('volume_type')
         if not volume_type:
