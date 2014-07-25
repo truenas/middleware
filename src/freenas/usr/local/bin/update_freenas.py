@@ -58,7 +58,7 @@ def Install(root = None, manifest = None):
     if manifest is not None:
         cur = Manifest.Manifest()
         try:
-            cur.load_path(manifest)
+            cur.LoadPath(manifest)
         except Exception as e:
             print >> sys.stderr, "Could not load manifest from %s: %s" % (manifest, str(e))
             return False

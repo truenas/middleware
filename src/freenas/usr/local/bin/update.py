@@ -75,13 +75,17 @@ def Update(root = None, conf = None, handler = None):
 
     for pkg in deleted_packages:
         print >> sys.stderr, "Want to delete package %s" % pkg.Name()
-#        if conf.PackageDB().RemovePackageContents(pkg) == False:
-#            print >> sys.stderr, "Unable to remove contents package %s" % pkg.Name()
-#            sys.exit(1)
-#        conf.PackageDB().RemovePackage(pkg.Name())
+        #        if conf.PackageDB().RemovePackageContents(pkg) == False:
+        #            print >> sys.stderr, "Unable to remove contents package %s" % pkg.Name()
+        #            sys.exit(1)
+        #        conf.PackageDB().RemovePackage(pkg.Name())
+
+    process_packages = []
+    for (pkg, old) in other_packages:
+        process_packages.append(pkg)
 
     installer = Installer.Installer(manifest = new_man, root = root, config = conf)
-    installer.GetPackages()
+    installer.GetPackages(process_packages)
 
     print "Packages = %s" % installer._packages
     return
