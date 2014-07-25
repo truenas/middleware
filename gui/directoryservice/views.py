@@ -333,8 +333,8 @@ def directoryservice_idmap_tdb2(request, id):
     })
 
 
-def directoryservice_idmap_backend(request, obj_type, idmap_type):
-    data = utils.get_idmap(obj_type, idmap_type)
+def directoryservice_idmap_backend(request, obj_type, obj_id, idmap_type):
+    data = utils.get_idmap(obj_type, obj_id, idmap_type)
     content = json.dumps(data)
     return HttpResponse(content, content_type="application/json")
 

@@ -26,17 +26,18 @@
 #####################################################################
 from freenasUI.directoryservice import models
 
-def get_ds_object(obj_type):
+
+def get_ds_object(obj_type, obj_id):
     ds_obj = None
 
     if obj_type == models.DS_TYPE_ACTIVEDIRECTORY:
-        ds_obj = models.ActiveDirectory.objects.all()[0]
+        ds_obj = models.ActiveDirectory.objects.filter(pk=obj_id)[0]
 
     elif obj_type == models.DS_TYPE_LDAP:
-        ds_obj = models.LDAP.objects.all()[0]
+        ds_obj = models.LDAP.objects.filter(pk=obj_id)[0]
 
     elif obj_type == models.DS_TYPE_NT4:
-        ds_obj = models.NT4.objects.all()[0]
+        ds_obj = models.NT4.objects.filter(pk=obj_id)[0]
 
     return ds_obj
 
@@ -68,134 +69,115 @@ def get_directoryservice_idmap_object(obj_type):
     return dsi
 
 
-def get_idmap_object(obj_type, idmap_type):
+def get_idmap_object(obj_type, obj_id, idmap_type):
     obj_type = int(obj_type)
 
-    dsi = get_directoryservice_idmap_object(obj_type)
-    if not dsi:
-        return None
-
     if idmap_type == "idmap_ad":
-        idmap = dsi.dsi_idmap_ad
+        idmap = models.idmap_ad.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     elif idmap_type == "idmap_autorid":
-        idmap = dsi.dsi_idmap_autorid
+        idmap = models.idmap_autorid.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     elif idmap_type == "idmap_hash":
-        idmap = dsi.dsi_idmap_hash
+        idmap = models.idmap_hash.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     elif idmap_type == "idmap_ldap":
-        idmap = dsi.dsi_idmap_ldap
+        idmap = models.idmap_ldap.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     elif idmap_type == "idmap_nss":
-        idmap = dsi.dsi_idmap_nss
+        idmap = models.idmap_nss.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     elif idmap_type == "idmap_rfc2307":
-        idmap = dsi.dsi_idmap_rfc2307
+        idmap = models.idmap_rfc2307.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     elif idmap_type == "idmap_rid":
-        idmap = dsi.dsi_idmap_rid
+        idmap = models.idmap_rid.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     elif idmap_type == "idmap_tdb":
-        idmap = dsi.dsi_idmap_tdb
+        idmap = models.idmap_tdb.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     elif idmap_type == "idmap_tdb2":
-        idmap = dsi.dsi_idmap_tdb2
+        idmap = models.idmap_tdb2.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     return idmap
 
 
-def get_idmap(obj_type, idmap_type):
+def get_idmap(obj_type, obj_id, idmap_type):
     obj_type = int(obj_type)
 
-    dsi = get_directoryservice_idmap_object(obj_type)
-    if not dsi:
-        dsi = models.directoryservice_idmap()
+    ds = get_ds_object(obj_type, obj_id)
 
-    idmap = get_idmap_object(obj_type, idmap_type)
+    try:
+        idmap = get_idmap_object(obj_type, obj_id, idmap_type)
+    except:
+        idmap = None
+
     if idmap_type == "idmap_ad":
         if not idmap:
             idmap = models.idmap_ad()
-            idmap.save()
-
-            dsi.dsi_idmap_ad = idmap
-            dsi.save() 
 
     elif idmap_type == "idmap_autorid":
         if not idmap:
             idmap = models.idmap_autorid()
-            idmap.save()
-
-            dsi.dsi_idmap_autorid = idamp
-            dsi.save() 
 
     elif idmap_type == "idmap_hash":
         if not idmap:
             idmap = models.idmap_hash()
-            idmap.save()
-
-            dsi.dsi_idmap_hash = idmap
-            dsi.save() 
 
     elif idmap_type == "idmap_ldap":
         if not idmap:
             idmap = models.idmap_ldap()
-            idmap.save()
-
-            dsi.dsi_idmap_ldap = idmap
-            dsi.save() 
 
     elif idmap_type == "idmap_nss":
         if not idmap:
             idmap = models.idmap_nss()
-            idmap.save()
-
-            dsi.dsi_idmap_nss = idmap
-            dsi.save() 
 
     elif idmap_type == "idmap_rfc2307":
         if not idmap:
             idmap = models.idmap_rfc2307()
-            idmap.save()
-
-            dsi.dsi_idmap_rfc2307 = idmap
-            dsi.save() 
 
     elif idmap_type == "idmap_rid":
         if not idmap:
             idmap = models.idmap_rid()
-            idmap.save()
-
-            dsi.dsi_idmap_rid = idmap
-            dsi.save() 
 
     elif idmap_type == "idmap_tdb":
         if not idmap:
             idmap = models.idmap_tdb()
-            idmap.save()
-
-            dsi.dsi_idmap_tdb = idmap
-            dsi.save() 
 
     elif idmap_type == "idmap_tdb2":
         if not idmap:
             idmap = models.idmap_tdb2()
-            idmap.save()
 
-            dsi.dsi_idmap_tdb2 = idmap
-            dsi.save() 
-
-    ds = get_ds_object(obj_type)
-    if obj_type == models.DS_TYPE_ACTIVEDIRECTORY:
-        ds.ad_idmap_backend_type = dsi
-
-    elif obj_type == models.DS_TYPE_LDAP:
-        ds.ldap_idmap_backend_type = dsi
-
-    elif obj_type == models.DS_TYPE_NT4:
-        ds.nt4_idmap_backend_type = dsi
-
-    ds.save()
+    idmap.idmap_ds_type = ds.ds_type
+    idmap.idmap_ds_id = ds.id
+    idmap.save()
 
     data = {
         'idmap_type': idmap_type,

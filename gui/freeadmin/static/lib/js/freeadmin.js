@@ -734,11 +734,11 @@ require([
         directoryservice_mutex_toggle('nt4_enable', nt4);
     }
 
-    directoryservice_idmap_get_edit_url = function(eid, ds_type) {
+    directoryservice_idmap_get_edit_url = function(eid, ds_type, ds_id) {
         var widget = registry.byId(eid);
         var idmap_backend = widget.get("value");
         var idmap_url = "/directoryservice/idmap_backend/" +
-            ds_type + "/" + idmap_backend + "/";
+            ds_type + "/" + ds_id + "/" + idmap_backend + "/";
         var edit_url = null;
         var id = -1;
 
@@ -760,14 +760,14 @@ require([
         return (edit_url);
     }
 
-    directoryservice_idmap_onclick = function(eid, ds_type) {
-        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type);
+    directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
+        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
 
         editObject("Edit Idmap", edit_url, [this,]);
     }
 
-    directoryservice_idmap_onload = function(eid, ds_type) {
-        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type);
+    directoryservice_idmap_onload = function(eid, ds_type, ds_id) {
+        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
 
         var table = dojo.query("#" + eid)[0];
         var td = table.parentNode;
@@ -775,7 +775,7 @@ require([
             "href": "#",
             "title": "Edit",
             "innerHTML": "Edit",
-            "onClick": "directoryservice_idmap_onclick('" + eid + "'," + ds_type + ");"
+            "onClick": "directoryservice_idmap_onclick('" + eid + "'," + ds_type + "," + ds_id + ");"
         });
 
         td.appendChild(node);
