@@ -219,8 +219,10 @@ class bsdUsers(Model):
         if self.bsdusr_unixhash:
             if self.bsdusr_unixhash == 'x' or self.bsdusr_unixhash == '*':
                 return False
+            if isinstance(raw_password, unicode):
+                raw_password = raw_password.encode('utf-8')
             return crypt.crypt(
-                raw_password.encode('utf8'), str(self.bsdusr_unixhash)
+                raw_password, str(self.bsdusr_unixhash)
             ) == str(self.bsdusr_unixhash)
 
     def delete(self, using=None, reload=True):
