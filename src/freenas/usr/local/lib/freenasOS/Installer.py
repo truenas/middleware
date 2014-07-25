@@ -553,8 +553,6 @@ def install_file(pkgfile, root):
     # Should DB be updated before or after installation?
     if old_pkg is not None:
         doing_update = True
-        old_manifest = old_pkg["manifest"]
-        old_scripts = None
         # If the new version is a delta package, we do things differently
         if pkgDeltaVersion is not None:
             if old_pkg[pkgName] != pkgDeltaVersion:
@@ -578,8 +576,7 @@ def install_file(pkgfile, root):
                 RemoveDirectory(full_path)
                 pkgdb.RemoveFileEntry(dir)
         else:
-            if old_scripts in old_manifest:
-                old_sripts = old_manifest[PKG_SCRIPTS_KEY]
+            old_scripts = pkgdb.FindScriptForPackage(pkgName)
             RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_DEINSTALL, root, PKG_PREFIX=prefix)
             RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_DEINSTALL, root, PKG_PREFIX=prefix, SCRIPT_ARG="DEINSTALL")
             if pkgdb.RemovePackageFiles(pkgName) == False:
@@ -590,16 +587,20 @@ def install_file(pkgfile, root):
             if pkgdb.RemovePackageDirectories(pkgName) == False:
                 print >> sys.stderr, "Could not remove directories from package %s" % pkgName
                 return False
+            if pkgdb.RemovePackageScripts(pkgName) == False:
+                print >> sys.stderr, "Could not remove scripts for package %s" % pkgName
+                return False
+
             if pkgdb.RemovePackage(pkgName) == False:
                 print >> sys.stderr, "Could not remove package %s from database" % pkgName
                 return False
-                    
+
     if pkgDeltaVersion is not None:
-        if pkgdb.UpdatePackage(pkgName, pkgDeltaVersion, pkgVersion, json.dumps(mjson)) == False:
+        if pkgdb.UpdatePackage(pkgName, pkgDeltaVersion, pkgVersion, pkgScripts) == False:
             print >> sys.stderr, "Could not update package from %s to %s in database" % (pkgDeltaVersion, pkgVersion)
             return False
         print "Updated package %s from %s to %s in database" % (pkgName, pkgDeltaVersion, pkgVersion)
-    elif pkgdb.AddPackage(pkgName, pkgVersion, json.dumps(mjson)) == False:
+    elif pkgdb.AddPackage(pkgName, pkgVersion, pkgScripts) == False:
         print >> sys.stderr, "Could not add package %s to database" % pkgName
         return False
                     
@@ -694,13 +695,6 @@ class Installer(object):
         # Load the packages in pkgList.  If pkgList is not
         # given, it loads the packages in the manifest.
         # This should change.
-        # Note that we use /Install-tmp because /tmp is a symlink in
-        # the install.  We don't need to use the installation directory,
-        # though.
-        tempdir = self._root + "/Install-tmp"
-        if os.path.exists(tempdir) == False:
-            os.makedirs(tempdir)
-
         self._packages = []
         if pkgList is None:
             pkgList = self._manifest.Packages()
