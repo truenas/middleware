@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-07-06 14:08+0000\n"
+"PO-Revision-Date: 2014-07-24 22:56+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1404655689.0\n"
+"X-POOTLE-MTIME: 1406242561.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapporteren"
@@ -293,3 +293,52 @@ msgstr "Delen"
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
 msgstr "Adreslijstservice"
+
+#: freeadmin/static/lib/js/freeadmin.js:1772
+#: freeadmin/static/lib/js/freeadmin.js:1863
+msgid "Initial Wizard"
+msgstr "Initiële wizard"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
+msgid "Share name"
+msgstr "Sharenaam"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
+msgid ""
+"This field may only contain alphanumeric and the following characters: \"_\""
+", \"-\", \".\"."
+msgstr ""
+"Dit veld mag alleen alfanumerieke en de volgende tekens bevattend: \"_\", "
+"\"-\", \".\"."
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
+msgid "Specify the size using B, K, M, G, T prefixes."
+msgstr "Geef de grootte op m.b.v. de voorvoegsels B, K, M, G, T."
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
+msgid "Add"
+msgstr "Toevoegen"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
+msgid "Delete"
+msgstr "Verwijderen"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
+msgid "Update"
+msgstr "Bijwerken"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
+msgid "Ownership"
+msgstr "Eigendom"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
+msgid "This user does not exist."
+msgstr "Deze gebruiker bestaat niet."
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
+msgid "This group does not exist."
+msgstr "Deze groep bestaat niet."
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
+msgid "Return"
+msgstr "Terug"

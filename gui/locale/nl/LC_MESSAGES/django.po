@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-07-12 14:47+0000\n"
+"PO-Revision-Date: 2014-07-24 22:53+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1405176432.0\n"
+"X-POOTLE-MTIME: 1406242387.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -3356,7 +3356,7 @@ msgstr ""
 
 #: sharing/models.py:149
 msgid "Read-only Access"
-msgstr "Alleen-lezen-toegang"
+msgstr "Alleen-lezentoegang"
 
 #: sharing/models.py:151
 msgid ""
@@ -9767,31 +9767,516 @@ msgstr "Weet u zeker dat u wilt doorgaan?"
 
 #: services/models.py:256
 msgid "Obey pam restrictions"
-msgstr ""
+msgstr "PAM-beperkingen volgen"
 
 #: services/models.py:258
 msgid ""
 "this parameter controls whether or not Sambashould obey PAM's account and "
 "session management directives"
 msgstr ""
+"deze parameter bepaalt of Samba de instructies voor account- en sessiebeheer "
+"van PAM moet volgen"
 
 #: services/models.py:591
 msgid "NAA...used only by the initiator"
-msgstr ""
+msgstr "NAA... alleen gebruikt door de initiator"
 
 #: services/models.py:595
-#, fuzzy
 msgid "Enable TPC"
-msgstr "TLS inschakelen"
+msgstr "TPC inschakelen"
 
 #: services/models.py:596
 msgid "Allow initiators to xcopy without authenticating to foreign targets."
 msgstr ""
+"Initiators mogen xcopy gebruiken zonder authenticatie bij afwijkende doelen."
 
 #: templates/directoryservice/activedirectory_edit.html:8
 #: templates/directoryservice/ldap_edit.html:8
 #: templates/directoryservice/nis_edit.html:8
 #: templates/directoryservice/nt4_edit.html:8
-#, fuzzy
 msgid "Rebuild Directory Service Cache"
-msgstr "Adreslijstservice"
+msgstr "Adreslijstservicecache opnieuw opbouwen"
+
+#: choices.py:787
+#: directoryservice/models.py:335
+msgid "ad"
+msgstr "ad"
+
+#: choices.py:788
+msgid "autorid"
+msgstr "autorid"
+
+#: choices.py:789
+msgid "hash"
+msgstr "hash"
+
+#: choices.py:790
+msgid "ldap"
+msgstr "ldap"
+
+#: choices.py:791
+msgid "nss"
+msgstr "nss"
+
+#: choices.py:792
+#: directoryservice/models.py:155
+msgid "rfc2307"
+msgstr "rfc2307"
+
+#: choices.py:793
+msgid "rid"
+msgstr "rid"
+
+#: choices.py:794
+msgid "tdb"
+msgstr "tdb"
+
+#: choices.py:795
+msgid "tdb2"
+msgstr "tdb2"
+
+#: directoryservice/models.py:134
+#: directoryservice/models.py:174
+#: directoryservice/models.py:221
+#: directoryservice/models.py:250
+#: directoryservice/models.py:299
+#: directoryservice/models.py:319
+#: directoryservice/models.py:424
+#: directoryservice/models.py:444
+#: directoryservice/models.py:464
+msgid "Range Low"
+msgstr "Bereik laag"
+
+#: directoryservice/models.py:138
+#: directoryservice/models.py:178
+#: directoryservice/models.py:225
+#: directoryservice/models.py:254
+#: directoryservice/models.py:303
+#: directoryservice/models.py:323
+#: directoryservice/models.py:428
+#: directoryservice/models.py:448
+#: directoryservice/models.py:468
+msgid "Range High"
+msgstr "Bereik hoog"
+
+#: directoryservice/models.py:142
+msgid "Schema Mode"
+msgstr "Schemamodus"
+
+#: directoryservice/models.py:145
+msgid ""
+"Defines the schema that idmap_ad should use when querying Active Directory "
+"regarding user and group information. This can be either the RFC2307 schema "
+"support included in Windows 2003 R2 or the Service for Unix (SFU) schema. "
+"For SFU 3.0 or 3.5 please choose \"sfu\", for SFU 2.0 please choose \"sfu20\""
+". Please note that primary group membership is currently always calculated "
+"via the \"primaryGroupID\" LDAP attribute."
+msgstr ""
+"Definieert het schema dat idmap_ad moet gebruiken bij het raadplegen van "
+"Active Directory betreffende gebruikers- en groepsinformatie. Dit kan zowel "
+"de bijgeleverde RFC2307-schemaondersteuning in Windows 2003 R2 zijn als het "
+"Service for Unix (SFU)-schema. Kies \"sfu\" voor SFU 3.0 of 3.5, kies "
+"\"sfu20\" voor SFU 2.0. Houd er rekening mee dat lidmaatschap van een "
+"primaire groep momenteel altijd wordt berekend via het LDAP-kenmerk "
+"\"primaryGroupID\"."
+
+#: directoryservice/models.py:156
+msgid "sfu"
+msgstr "sfu"
+
+#: directoryservice/models.py:157
+msgid "sfu20"
+msgstr "sfu20"
+
+#: directoryservice/models.py:163
+#: directoryservice/models.py:164
+msgid "AD Idmap"
+msgstr "AD-Idmap"
+
+#: directoryservice/models.py:182
+msgid "Range Size"
+msgstr "Grootte van bereik"
+
+#: directoryservice/models.py:184
+msgid ""
+"Defines the number of uids/gids available per domain range. The minimum "
+"needed value is 2000. SIDs with RIDs larger than this value will be mapped "
+"into extension ranges depending upon number of available ranges. If the "
+"autorid backend runs out of available ranges, mapping requests for new "
+"domains (or new extension ranges for domains already known) are ignored and "
+"the corresponding map is discarded."
+msgstr ""
+"Definieert het aantal beschikbare uid's/gid's per domeinbereik. De minimaal "
+"benodigde waarde is 2000. SID's met RID's hoger dan deze waarde zullen naar "
+"uitbreidingsbereiken worden toegewezen, afhankelijk van het aantal "
+"beschikbare bereiken. Als het autorid-back-end geen bereiken meer "
+"beschikbaar heeft, worden toewijzingsaanvragen voor nieuwe domeinen (of "
+"nieuwe uitbreidingsbereiken voor reeds bekende domeinen) genegeerd en de "
+"bijbehorende map verwijderd."
+
+#: directoryservice/models.py:197
+msgid ""
+"Turn the module into read-only mode. No new ranges will be allocated nor "
+"will new mappings be created in the idmap pool."
+msgstr ""
+"De module in alleen-lezenmodus zetten. Er worden geen nieuwe bereiken "
+"toegewezen of nieuwe toewijzingen in de idmap-pool aangemaakt."
+
+#: directoryservice/models.py:204
+msgid "Ignore Builtin"
+msgstr "Ingebouwde negeren"
+
+#: directoryservice/models.py:205
+msgid "Ignore any mapping requests for the BUILTIN domain."
+msgstr "Toewijzingsaanvragen voor het INGEBOUWDE domein negeren."
+
+#: directoryservice/models.py:210
+#: directoryservice/models.py:211
+msgid "AutoRID Idmap"
+msgstr "AutoRID-Idmap"
+
+#: directoryservice/models.py:229
+msgid "Name Map"
+msgstr "Naamtoewijzing"
+
+#: directoryservice/models.py:231
+msgid ""
+"Specifies the absolute path to the name mapping file used by the nss_info "
+"API. Entries in the file are of the form \"unix name = qualified domain "
+"name\". Mapping of both user and group names is supported."
+msgstr ""
+"Specificeert het absolute pad naar het naamtoewijzingsbestand dat door de "
+"nss_info-API wordt gebruikt. Vermeldingen in het bestand hebben de vorm \""
+"unix name = qualified domain name\". Toewijzing van zowel gebruikers- als "
+"groepsnamen wordt ondersteund."
+
+#: directoryservice/models.py:239
+#: directoryservice/models.py:240
+msgid "Hash Idmap"
+msgstr "Hash-idmap"
+
+#: directoryservice/models.py:261
+msgid ""
+"Defines the directory base suffix to use for SID/uid/gid mapping entries. If "
+"not defined, idmap_ldap will default to using the \"ldap idmap suffix\" "
+"option from smb.conf."
+msgstr ""
+"Definieert het te gebruiken bestandsmapachtervoegsel voor SID-/uid-/gid-"
+"toewijzingsvermeldingen. Wanneer niet gedefinieerd, zal idmap_ldap standaard "
+"de optie \"ldap idmap suffix\" van smb.conf gebruiken."
+
+#: directoryservice/models.py:268
+msgid "User DN"
+msgstr "DN van gebruiker"
+
+#: directoryservice/models.py:271
+msgid ""
+"Defines the user DN to be used for authentication. The secret for "
+"authenticating this user should be stored with net idmap secret (see net(8))"
+". If absent, the ldap credentials from the ldap passdb configuration are "
+"used, and if these are also absent, an anonymous bind will be performed as "
+"last fallback."
+msgstr ""
+"Definieert de te gebruiken DN van de gebruiker voor authenticatie. Het "
+"geheim voor authenticatie van deze gebruiker dient met 'net idmap secret' te "
+"worden opgeslagen (zie net(8)). Wanneer afwezig, worden de ldap-referenties "
+"van de ldap-passdb-configuratie gebruikt, en als deze ook ontbreken, wordt "
+"als laatste terugvalactie een anonieme binding uitgevoerd."
+
+#: directoryservice/models.py:283
+msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
+msgstr ""
+"Specificeert de te gebruiken LDAP-server voor SID-/uid-/gid-"
+"toewijzingsvermeldingen."
+
+#: directoryservice/models.py:288
+#: directoryservice/models.py:289
+msgid "LDAP Idmap"
+msgstr "LDAP-Idmap"
+
+#: directoryservice/models.py:308
+#: directoryservice/models.py:309
+msgid "NSS Idmap"
+msgstr "NSS-Idmap"
+
+#: directoryservice/models.py:327
+msgid "LDAP Server"
+msgstr "LDAP-server"
+
+#: directoryservice/models.py:330
+msgid ""
+"Defines the type of LDAP server to use. This can either be the LDAP server "
+"provided by the Active Directory server (ad) or a stand-alone LDAP server."
+msgstr ""
+"Definieert het te gebruiken type LDAP-server. Dit kan de LDAP-server zijn "
+"die door de Active Directory-server (ad) wordt geleverd, of een zelfstandige "
+"LDAP-server."
+
+#: directoryservice/models.py:336
+msgid "stand-alone"
+msgstr "zelfstandig"
+
+#: directoryservice/models.py:341
+msgid "User Bind Path"
+msgstr "Bindpad van gebruiker"
+
+#: directoryservice/models.py:343
+msgid ""
+"Specifies the bind path where user objects can be found in the LDAP server."
+msgstr ""
+"Specificeert het bindpad waar gebruikersobjecten zijn te vinden in de LDAP-"
+"server."
+
+#: directoryservice/models.py:348
+msgid "Group Bind Path"
+msgstr "Bindpad van groep"
+
+#: directoryservice/models.py:350
+msgid ""
+"Specifies the bind path where group objects can be found in the LDAP server."
+msgstr ""
+"Specificeert het bindpad waar groepsobjecten zijn te vinden in de LDAP-"
+"server."
+
+#: directoryservice/models.py:355
+msgid "User CN"
+msgstr "CN van gebruiker"
+
+#: directoryservice/models.py:356
+msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
+msgstr ""
+"Cn-kenmerk in plaats van uid-kenmerk opzoeken voor de gebruikersnaam in LDAP."
+
+#: directoryservice/models.py:362
+msgid "CN Realm"
+msgstr "CN-realm"
+
+#: directoryservice/models.py:363
+msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
+msgstr ""
+"Voeg @realm toe aan cn voor groepen (en gebruikers als user_cn is ingesteld) "
+"in LDAP."
+
+#: directoryservice/models.py:369
+msgid "LDAP Domain"
+msgstr "LDAP-domein"
+
+#: directoryservice/models.py:372
+msgid ""
+"When using the LDAP server in the Active Directory server, this allows to "
+"specify the domain where to access the Active Directory server. This allows "
+"using trust relationships while keeping all RFC 2307 records in one place. "
+"This parameter is optional, the default is to access the AD server in the "
+"current domain to query LDAPrecords."
+msgstr ""
+"Bij gebruik van de LDAP-server in de Active Directory-server kunt u hiermee "
+"het domein opgeven waar de Active Directory-server is te bereiken. Hierdoor "
+"is mogelijk om vertrouwensrelaties te gebruiken, terwijl alle RFC 2307-"
+"records op één plek worden gehouden. Deze parameter is optioneel; standaard "
+"wordt voor het opvragen van LDAP-records de AD-server in het huidige domein "
+"benaderd."
+
+#: directoryservice/models.py:383
+msgid "LDAP URL"
+msgstr "LDAP-URL"
+
+#: directoryservice/models.py:385
+msgid ""
+"When using a stand-alone LDAP server, this parameter specifies the ldap URL "
+"for accessing the LDAP server."
+msgstr ""
+"Bij gebruik van een zelfstandige LDAP-server specificeert deze parameter de "
+"ldap-URL voor het benaderen van de LDAP-server."
+
+#: directoryservice/models.py:391
+msgid "LDAP User DN"
+msgstr "DN van LDAP-gebruiker"
+
+#: directoryservice/models.py:394
+msgid ""
+"Defines the user DN to be used for authentication. The secret for "
+"authenticating this user should be stored with net idmap secret (see net(8))"
+". If absent, an anonymous bind will be performed."
+msgstr ""
+"Definieert de te gebruiken DN van de gebruiker voor authenticatie. Het "
+"geheim voor authenticatie van deze gebruiker dient met 'net idmap secret' te "
+"worden opgeslagen (zie net(8)). Wanneer afwezig, wordt een anonieme binding "
+"uitgevoerd."
+
+#: directoryservice/models.py:402
+msgid "LDAP Realm"
+msgstr "LDAP-realm"
+
+#: directoryservice/models.py:405
+msgid ""
+"Defines the realm to use in the user and group names. This is only required "
+"when using cn_realm together with a stand-alone ldap server."
+msgstr ""
+"Definieert de te gebruiken realm in de gebruikers- en groepsnamen. Dit is "
+"alleen vereist bij gebruik van cn_realm in combinatie met een zelfstandige "
+"ldap-server."
+
+#: directoryservice/models.py:413
+#: directoryservice/models.py:414
+msgid "RFC2307 Idmap"
+msgstr "RFC2307-Idmap"
+
+#: directoryservice/models.py:433
+#: directoryservice/models.py:434
+msgid "RID Idmap"
+msgstr "RID-Idmap"
+
+#: directoryservice/models.py:453
+#: directoryservice/models.py:454
+msgid "TDB Idmap"
+msgstr "TDB-idmap"
+
+#: directoryservice/models.py:474
+msgid ""
+"This option can be used to configure an external program for performing id "
+"mappings instead of using the tdb counter. The mappings are then stored int "
+"tdb2 idmap database."
+msgstr ""
+"Deze optie kan worden gebruikt om een extern programma voor het uitvoeren "
+"van id-toewijzingen te configureren in plaats van de tdb-teller te "
+"gebruiken. De toewijzingen worden dan in de tdb2-idmap-database opgeslagen."
+
+#: directoryservice/models.py:481
+#: directoryservice/models.py:482
+msgid "TDB2 Idmap"
+msgstr "TDB2-idmap"
+
+#: directoryservice/models.py:549
+msgid "Domain administrator account name"
+msgstr "Naam van domeinbeheerdersaccount"
+
+#: directoryservice/models.py:554
+msgid "Domain administrator account password."
+msgstr "Wachtwoord van domeinbeheerdersaccount."
+
+#: directoryservice/models.py:557
+#: directoryservice/models.py:662
+msgid "Use Default Domain"
+msgstr "Standaarddomein gebruiken"
+
+#: directoryservice/models.py:563
+#: directoryservice/models.py:702
+#: directoryservice/models.py:867
+msgid "Idmap backend"
+msgstr "Idmap-back-end"
+
+#: directoryservice/models.py:566
+#: directoryservice/models.py:705
+#: directoryservice/models.py:870
+msgid "Idmap backend for winbind."
+msgstr "Idmap-back-end voor winbind."
+
+#: freeadmin/navtree.py:256
+msgid "Initial Wizard"
+msgstr "Initiële wizard"
+
+#: middleware/notifier.py:2222
+msgid "Failed to create group %s"
+msgstr "Aanmaken van groep %s mislukt"
+
+#: system/forms.py:256
+msgid "Group does not exist: %s"
+msgstr "Groep bestaat niet: %s"
+
+#: system/forms.py:270
+msgid "User does not exist: %s"
+msgstr "Gebruiker bestaat niet: %s"
+
+#: system/forms.py:306
+msgid "Failed to create ZFS: %s"
+msgstr "Aanmaken van ZFS is mislukt: %s"
+
+#: system/forms.py:1136
+msgid "Share Name"
+msgstr "Sharenaam"
+
+#: system/forms.py:1140
+#: templates/system/initialwizard_volume.html:65
+msgid "Purpose"
+msgstr "Doel"
+
+#: system/forms.py:1144
+msgid "Unix (NFS)"
+msgstr "Unix (NFS)"
+
+#: system/forms.py:1145
+msgid "Block Storage (iSCSI)"
+msgstr "Blokopslag (iSCSI)"
+
+#: system/forms.py:1149
+msgid "Allow Guest"
+msgstr "Gast toestaan"
+
+#: system/forms.py:1157
+msgid "iSCSI Size"
+msgstr "iSCSI-grootte"
+
+#: system/forms.py:1208
+msgid "Pool Name"
+msgstr "Poolnaam"
+
+#: system/forms.py:1223
+msgid "Automatic"
+msgstr "Automatisch"
+
+#: system/forms.py:1227
+msgid "VMWare (RAID 10: Good Reliability, Good Performance)"
+msgstr "VMWare (RAID 10: goede betrouwbaarheid, goede prestaties)"
+
+#: system/forms.py:1231
+msgid "Backups (RAID Z2: Best Reliability, Less Storage)"
+msgstr "Back-ups (RAID Z2: beste betrouwbaarheid, minder opslag)"
+
+#: system/forms.py:1235
+msgid "Media (RAID Z1: Less Reliability, More Storage)"
+msgstr "Media (RAID Z1: mindere betrouwbaarheid, meer opslag)"
+
+#: system/forms.py:1239
+msgid "Logs (RAID 0: No Reliability, Max Performance / Storage)"
+msgstr "Logs (RAID 0: geen betrouwbaarheid, max. prestaties / opslag)"
+
+#: system/forms.py:1441
+msgid "No available disks have been found."
+msgstr "Er zijn geen beschikbare schijven gevonden."
+
+#: templates/system/initialwizard_confirm.html:29
+msgid ""
+"You are about to leave the Initial Wizard and perform all pending (saved) "
+"actions."
+msgstr ""
+"U gaat de initiële wizard verlaten en alle wachtende (opgeslagen) acties "
+"uitvoeren."
+
+#: templates/system/initialwizard_confirm.html:32
+msgid "Are you sure?"
+msgstr "Weet u het zeker?"
+
+#: templates/system/initialwizard_confirm.html:39
+msgid "Confirm"
+msgstr "Bevestigen"
+
+#: templates/system/initialwizard_confirm.html:46
+msgid "Return to Wizard"
+msgstr "Terug naar wizard"
+
+#: templates/system/initialwizard_confirm.html:62
+msgid "Exit without saving"
+msgstr "Afsluiten zonder opslaan"
+
+#: templates/system/initialwizard_shares.html:28
+msgid "Previous"
+msgstr "Vorige"
+
+#: templates/system/initialwizard_shares.html:44
+#: templates/system/initialwizard_volume.html:85
+msgid "Next"
+msgstr "Volgende"
+
+#: templates/system/initialwizard_volume.html:77
+msgid "Estimated Total Size"
+msgstr "Geschatte totale grootte"
