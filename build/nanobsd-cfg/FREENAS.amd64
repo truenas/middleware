@@ -83,6 +83,7 @@ options		KDB			# Kernel debugger related code
 options		KDB_TRACE		# Print a stack trace for a panic
 options 	DDB_CTF			# Kernel ELF linker loads CTF data
 options		DDB			# Support DDB.
+options         KGSSAPI
 
 # Make an SMP-capable kernel by default
 options 	SMP			# Symmetric MultiProcessor Kernel
